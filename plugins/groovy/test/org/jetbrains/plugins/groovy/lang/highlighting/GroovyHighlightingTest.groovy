@@ -15,8 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.lang.highlighting
 
-import com.siyeh.ig.junit.JUnitAbstractTestClassNamingConventionInspection
-import com.siyeh.ig.junit.JUnitTestClassNamingConventionInspection
+import com.siyeh.ig.junit.AbstractTestClassNamingConvention
+import com.siyeh.ig.junit.TestClassNamingConvention
+import com.siyeh.ig.naming.NewClassNamingConventionInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 
@@ -299,7 +300,10 @@ class Bar {{
 
   void testJUnitConvention() {
     myFixture.addClass("package junit.framework; public class TestCase {}")
-    doTest(new JUnitTestClassNamingConventionInspection(), new JUnitAbstractTestClassNamingConventionInspection())
+    def inspection = new NewClassNamingConventionInspection()
+    inspection.setEnabled(true, TestClassNamingConvention.TEST_CLASS_NAMING_CONVENTION_SHORT_NAME)
+    inspection.setEnabled(true, AbstractTestClassNamingConvention.ABSTRACT_TEST_CLASS_NAMING_CONVENTION_SHORT_NAME)
+    doTest(inspection)
   }
 
   void testDuplicateMethods() {

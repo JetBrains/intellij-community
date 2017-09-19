@@ -17,7 +17,6 @@ package com.intellij.util;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
@@ -122,14 +121,14 @@ public class PathsList  {
    * @return {@link VirtualFile}s on local file system (returns jars as files).
    */
   public List<VirtualFile> getVirtualFiles() {
-    return JBIterable.from(getPathList()).map(PATH_TO_LOCAL_VFILE).filter(Condition.NOT_NULL).toList();
+    return JBIterable.from(getPathList()).filterMap(PATH_TO_LOCAL_VFILE).toList();
   }
 
   /**
    * @return The same as {@link #getVirtualFiles()} but returns jars as {@code JarFileSystem} roots.
    */
   public List<VirtualFile> getRootDirs() {
-    return JBIterable.from(getPathList()).map(PATH_TO_DIR).filter(Condition.NOT_NULL).toList();
+    return JBIterable.from(getPathList()).filterMap(PATH_TO_DIR).toList();
   }
 
   public void addAll(List<String> allClasspath) {

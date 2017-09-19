@@ -76,7 +76,7 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
 
   protected void childrenChanged(PsiElement parent, final boolean stopProcessingForThisModificationCount) {
     if (parent instanceof PsiDirectory && isFlattenPackages()){
-      getUpdater().addSubtreeToUpdate(getRootNode());
+      addSubtreeToUpdateByRoot();
       return;
     }
 
@@ -97,7 +97,7 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
         }
       }
 
-      if (getUpdater().addSubtreeToUpdateByElement(parent)) {
+      if (addSubtreeToUpdateByElement(parent)) {
         break;
       }
 
@@ -110,28 +110,37 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
   public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
     String propertyName = event.getPropertyName();
     PsiElement element = event.getElement();
-    DefaultMutableTreeNode rootNode = getRootNode();
-    AbstractTreeUpdater updater = getUpdater();
     if (propertyName.equals(PsiTreeChangeEvent.PROP_ROOTS)) {
-      updater.addSubtreeToUpdate(rootNode);
+      addSubtreeToUpdateByRoot();
     }
     else if (propertyName.equals(PsiTreeChangeEvent.PROP_WRITABLE)){
-      if (!updater.addSubtreeToUpdateByElement(element) && element instanceof PsiFile) {
-        updater.addSubtreeToUpdateByElement(((PsiFile)element).getContainingDirectory());
+      if (!addSubtreeToUpdateByElement(element) && element instanceof PsiFile) {
+        addSubtreeToUpdateByElement(((PsiFile)element).getContainingDirectory());
       }
     }
     else if (propertyName.equals(PsiTreeChangeEvent.PROP_FILE_NAME) || propertyName.equals(PsiTreeChangeEvent.PROP_DIRECTORY_NAME)){
       if (element instanceof PsiDirectory && isFlattenPackages()){
-        updater.addSubtreeToUpdate(rootNode);
+        addSubtreeToUpdateByRoot();
         return;
       }
       final PsiElement parent = element.getParent();
-      if (parent == null || !updater.addSubtreeToUpdateByElement(parent)) {
-        updater.addSubtreeToUpdateByElement(element);
+      if (parent == null || !addSubtreeToUpdateByElement(parent)) {
+        addSubtreeToUpdateByElement(element);
       }
     }
     else if (propertyName.equals(PsiTreeChangeEvent.PROP_FILE_TYPES)){
-      updater.addSubtreeToUpdate(rootNode);
+      addSubtreeToUpdateByRoot();
     }
+  }
+
+  protected void addSubtreeToUpdateByRoot() {
+    AbstractTreeUpdater updater = getUpdater();
+    DefaultMutableTreeNode root = getRootNode();
+    if (updater != null && root != null) updater.addSubtreeToUpdate(root);
+  }
+
+  protected boolean addSubtreeToUpdateByElement(PsiElement element) {
+    AbstractTreeUpdater updater = getUpdater();
+    return updater != null && updater.addSubtreeToUpdateByElement(element);
   }
 }

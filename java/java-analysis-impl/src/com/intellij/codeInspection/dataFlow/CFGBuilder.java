@@ -568,8 +568,33 @@ public class CFGBuilder {
     }
   }
 
+  /**
+   * Inlines given lambda. Lambda parameters are assumed to be assigned already (if necessary).
+   * <p>
+   * Stack before: ...
+   * <p>
+   * Stack after: ... lambdaResult
+   *
+   * @param lambda lambda to inline
+   * @param resultNullness a required return value nullness
+   * @return this builder
+   */
   public CFGBuilder inlineLambda(PsiLambdaExpression lambda, Nullness resultNullness) {
-    myAnalyzer.inlineLambda(lambda, resultNullness);
+    PsiElement body = lambda.getBody();
+    PsiExpression expression = LambdaUtil.extractSingleExpressionFromBody(body);
+    if (expression != null) {
+      pushExpression(expression);
+      boxUnbox(expression, LambdaUtil.getFunctionalInterfaceReturnType(lambda));
+      if(resultNullness == Nullness.NOT_NULL) {
+        checkNotNull(expression, NullabilityProblem.nullableFunctionReturn);
+      }
+    } else if(body instanceof PsiCodeBlock) {
+      PsiVariable variable = createTempVariable(LambdaUtil.getFunctionalInterfaceReturnType(lambda));
+      myAnalyzer.inlineBlock((PsiCodeBlock)body, resultNullness, variable);
+      push(getFactory().getVarFactory().createVariableValue(variable, false));
+    } else {
+      pushUnknown();
+    }
     return this;
   }
 

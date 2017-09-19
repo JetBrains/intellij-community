@@ -23,11 +23,19 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  */
 public class OutputBuildEventImpl extends AbstractBuildEvent implements OutputBuildEvent {
+  private boolean myStdOut;
+
   public OutputBuildEventImpl(@Nullable Object parentId, @NotNull String message, boolean stdOut) {
     this(new Object(), parentId, message, stdOut);
   }
 
   public OutputBuildEventImpl(@NotNull Object eventId, @Nullable Object parentId, @NotNull String message, boolean stdOut) {
     super(eventId, parentId, -1, message);
+    myStdOut = stdOut;
+  }
+
+  @Override
+  public boolean isStdOut() {
+    return myStdOut;
   }
 }

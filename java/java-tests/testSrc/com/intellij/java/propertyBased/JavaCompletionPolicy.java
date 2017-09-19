@@ -15,12 +15,14 @@
  */
 package com.intellij.java.propertyBased;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.propertyBased.CompletionPolicy;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -56,7 +58,8 @@ class JavaCompletionPolicy extends CompletionPolicy {
   private static boolean isAdoptedOrphanPsiAfterClassEnd(PsiElement element) {
     PsiClass topmostClass = PsiTreeUtil.getTopmostParentOfType(element, PsiClass.class);
     if (topmostClass != null) {
-      PsiElement rBrace = topmostClass.getRBrace();
+      ASTNode rBrace = topmostClass.getNode().findChildByType(JavaTokenType.RBRACE); 
+      // not PsiClass#getRBrace, because we need the first one, and invalid classes can contain several '}'
       if (rBrace != null && rBrace.getTextRange().getStartOffset() < element.getTextRange().getStartOffset()) return true;
     }
     return false;
@@ -76,6 +79,11 @@ class JavaCompletionPolicy extends CompletionPolicy {
         SyntaxTraverser.psiApi().parents(ref).find(e -> e instanceof PsiMethod && ((PsiMethod)e).isConstructor()) != null) {
       // https://youtrack.jetbrains.com/issue/IDEA-174744 on red code
       return false;
+    }
+    if (PsiTreeUtil.getParentOfType(ref, PsiAnnotation.class) != null) {
+      if (target instanceof PsiMethod || target instanceof PsiField && !ExpressionUtils.isConstant((PsiField)target)) {
+        return false; // red code;
+      }
     }
     if (isStaticWithInstanceQualifier(ref, target)) {
       return false;

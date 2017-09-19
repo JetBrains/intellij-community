@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,9 @@ import com.intellij.openapi.updateSettings.impl.UpdateChannel
 import com.intellij.openapi.updateSettings.impl.UpdatesInfo
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.loadElement
+import org.junit.Assume.assumeTrue
 import org.junit.Test
+import java.io.IOException
 import java.net.URL
 import java.text.SimpleDateFormat
 import kotlin.test.assertEquals
@@ -28,13 +30,23 @@ import kotlin.test.assertNotNull
 
 class UpdateInfoParsingTest {
   @Test fun liveJetbrainsUpdateFile() {
-    val info = load(URL("http://www.jetbrains.com/updates/updates.xml").readText())
-    assertNotNull(info["IC"])
+    try {
+      val info = load(URL("https://www.jetbrains.com/updates/updates.xml").readText())
+      assertNotNull(info["IC"])
+    }
+    catch (e: IOException) {
+      assumeTrue(e.toString(), false)
+    }
   }
 
   @Test fun liveAndroidUpdateFile() {
-    val info = load(URL("https://dl.google.com/android/studio/patches/updates.xml").readText())
-    assertNotNull(info["AI"])
+    try {
+      val info = load(URL("https://dl.google.com/android/studio/patches/updates.xml").readText())
+      assertNotNull(info["AI"])
+    }
+    catch (e: IOException) {
+      assumeTrue(e.toString(), false)
+    }
   }
 
   @Test fun emptyChannels() {
@@ -66,7 +78,7 @@ class UpdateInfoParsingTest {
 
           <channel id="IDEA10EAP" name="IntelliJ IDEA X EAP" status="eap" licensing="eap" url="http://confluence.jetbrains.net/display/IDEADEV/IDEA+X+EAP">
             <build number="98.520" version="10" releaseDate="20110403">
-              <message>IntelliJ IDEA X RC is available. Please visit hhttp://confluence.jetbrains.net/display/IDEADEV/IDEA+X+EAP to learn more.</message>
+              <message>IntelliJ IDEA X RC is available. Please visit http://confluence.jetbrains.net/display/IDEADEV/IDEA+X+EAP to learn more.</message>
               <button name="Download" url="http://www.jetbrains.com/idea" download="true"/>
             </build>
           </channel>

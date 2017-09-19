@@ -87,7 +87,7 @@ public class ReformatBeforeCheckinHandler extends CheckinHandler implements Chec
       finishAction.run();
     };
 
-    if (reformat(configuration, true) && !DumbService.isDumb(myProject)) {
+    if (configuration.REFORMAT_BEFORE_PROJECT_COMMIT && !DumbService.isDumb(myProject)) {
       new ReformatCodeProcessor(
         myProject, CheckinHandlerUtil.getPsiFiles(myProject, files), FormatterUtil.REFORMAT_BEFORE_COMMIT_COMMAND_NAME, performCheckoutAction, true
       ).run();
@@ -97,9 +97,4 @@ public class ReformatBeforeCheckinHandler extends CheckinHandler implements Chec
     }
 
   }
-
-  private static boolean reformat(final VcsConfiguration configuration, boolean checkinProject) {
-    return checkinProject ? configuration.REFORMAT_BEFORE_PROJECT_COMMIT : configuration.REFORMAT_BEFORE_FILE_COMMIT;
-  }
-
 }

@@ -19,22 +19,18 @@ import com.intellij.codeInsight.JavaProjectCodeInsightSettings
 import com.intellij.ide.util.gotoByName.*
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.ProjectScope
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.Semaphore
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
-
-import javax.swing.*
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
 /**
@@ -106,13 +102,11 @@ class Impl extends Intf {
 
     def elements = getPopupElements(new GotoSymbolModel2(project), "xxx")
 
-    ReadAction.run {
-      assert intf.findMethodsByName('xxx1', false)[0] in elements
-      assert intf.findMethodsByName('xxx2', false)[0] in elements
+    assert intf.findMethodsByName('xxx1', false)[0] in elements
+    assert intf.findMethodsByName('xxx2', false)[0] in elements
 
-      assert impl.findMethodsByName('xxx3', false)[0] in elements
-      assert !(impl.findMethodsByName('xxx1', false)[0] in elements)
-    }
+    assert impl.findMethodsByName('xxx3', false)[0] in elements
+    assert !(impl.findMethodsByName('xxx1', false)[0] in elements)
   }
 
   void "test disprefer underscore"() {
@@ -161,12 +155,12 @@ class Intf {
     assert elements == files
   }
 
-  void "test middle matching for directories"() {
+  void "test middle matching for files and directories"() {
     def fooIndex = myFixture.addFileToProject("foo/index.html", "foo")
     def ooIndex = myFixture.addFileToProject("oo/index.html", "oo")
     def fooBarIndex = myFixture.addFileToProject("foo/bar/index.html", "foo bar")
-    def elements = getPopupElements(new GotoFileModel(project), "oo/index")
-    assert elements == [ooIndex, fooIndex, fooBarIndex]
+    assert getPopupElements(new GotoFileModel(project), "oo/index") == [ooIndex, fooIndex, fooBarIndex]
+    assert getPopupElements(new GotoFileModel(project), "ndex.html") == [fooIndex, ooIndex, fooBarIndex]
   }
 
   void "test prefer files from current directory"() {
@@ -187,6 +181,13 @@ class Intf {
     def file = myFixture.addFileToProject("foo/index.html", "foo")
     def popup = createPopup(new GotoFileModel(project))
     assert calcPopupElements(popup, "./foo/in") == [file]
+  }
+
+  void "test don't match path to jdk"() {
+    def objects = getPopupElements(new GotoFileModel(project), "Object.java", true)
+    assert objects.size() > 0
+    assert (objects[0] as PsiFile).virtualFile.path.contains("mockJDK")
+    assert getPopupElements(new GotoFileModel(project), "mockJDK/Object.java", true).size() == 0
   }
 
   void "test goto file can go to dir"() {
@@ -222,7 +223,7 @@ class Intf {
 
   void "test find method by qualified name"() {
     def clazz = myFixture.addClass("package foo.bar; class Goo { void zzzZzz() {} }")
-    def method = ApplicationManager.application.runReadAction( { clazz.methods[0] } as Computable)
+    def method = clazz.methods[0]
     assert getPopupElements(new GotoSymbolModel2(project), 'zzzZzz') == [method]
     assert getPopupElements(new GotoSymbolModel2(project), 'goo.zzzZzz') == [method]
     assert getPopupElements(new GotoSymbolModel2(project), 'foo.bar.goo.zzzZzz') == [method]
@@ -254,7 +255,7 @@ class Intf {
 
   void "test dollar"() {
     def bar = myFixture.addClass("package foo; class Bar { class Foo {} }")
-    def foo = ApplicationManager.application.runReadAction( { bar.innerClasses[0] } as Computable)
+    def foo = bar.innerClasses[0]
     myFixture.addClass("package goo; class Goo { }")
     assert getPopupElements(new GotoClassModel2(project), 'Bar$Foo') == [foo]
     assert getPopupElements(new GotoClassModel2(project), 'foo.Bar$Foo') == [foo]
@@ -288,9 +289,7 @@ class Intf {
   }
 
   private static filterJavaItems(List<Object> items) {
-    return ApplicationManager.application.runReadAction ({
-      return items.findAll { it instanceof PsiElement && it.language == JavaLanguage.INSTANCE }
-    } as Computable)
+    return items.findAll { it instanceof PsiElement && it.language == JavaLanguage.INSTANCE }
   }
 
   void "test super method in jdk"() {
@@ -363,7 +362,7 @@ class Intf {
 
   void "test out-of-project-content files"() {
     def scope = ProjectScope.getAllScope(project)
-    def file = ReadAction.compute { myFixture.javaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, scope).containingFile }
+    def file = myFixture.javaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, scope).containingFile
     def elements = getPopupElements(new GotoFileModel(project), "Object.class", true)
     assert file in elements
   }
@@ -382,13 +381,31 @@ class Intf {
   void "test file path matching without slashes"() {
     def fooBarFile = myFixture.addFileToProject("foo/bar/index_fooBar.html", "")
     def fbFile = myFixture.addFileToProject("fb/index_fb.html", "")
-    def fbSomeFile = myFixture.addFileToProject("fb/some/index_fbSome.html", "")
+    def fbSomeFile = myFixture.addFileToProject("fb/some.dir/index_fbSome.html", "")
     def someFbFile = myFixture.addFileToProject("some/fb/index_someFb.html", "")
-    def model = new GotoFileModel(project)
-    def popup = createPopup(model)
+
+    def popup = createPopup(new GotoFileModel(project))
     assert calcPopupElements(popup, "barindex") == [fooBarFile]
     assert calcPopupElements(popup, "fooindex") == [fooBarFile]
-    assert calcPopupElements(popup, "fbindex") == [fbFile, someFbFile, fbSomeFile, fooBarFile]
+    assert calcPopupElements(popup, "fbindex") == [fbFile, someFbFile, fooBarFile, fbSomeFile]
+    assert calcPopupElements(popup, "fbhtml") == [fbFile, someFbFile, fbSomeFile, fooBarFile]
+
+    // partial slashes
+    assert calcPopupElements(popup, "somefb/index.html") == [someFbFile]
+    assert calcPopupElements(popup, "somefb\\index.html") == [someFbFile]
+  }
+
+  void "test fix keyboard layout"() {
+    assert (getPopupElements(new GotoClassModel2(project), 'Ыекштп')[0] as PsiClass).name == 'String'
+    assert (getPopupElements(new GotoSymbolModel2(project), 'Ыекштп')[0] as PsiClass).name == 'String'
+    assert (getPopupElements(new GotoFileModel(project), 'Ыекштп')[0] as PsiFile).name == 'String.class'
+  }
+
+  void "test prefer exact case match"() {
+    def upper = myFixture.addClass("package foo; class SOMECLASS {}")
+    def camel = myFixture.addClass("package bar; class SomeClass {}")
+    assert getPopupElements(new GotoClassModel2(project), 'SomeClass') == [camel, upper]
+    assert getPopupElements(new GotoFileModel(project), 'SomeClass.java') == [camel.containingFile, upper.containingFile]
   }
 
   private List<Object> getPopupElements(ChooseByNameModel model, String text, boolean checkboxState = false) {
@@ -397,15 +414,16 @@ class Intf {
 
   static ArrayList<Object> calcPopupElements(ChooseByNamePopup popup, String text, boolean checkboxState = false) {
     List<Object> elements = ['empty']
-    def semaphore = new Semaphore()
-    semaphore.down()
-    SwingUtilities.invokeLater {
-      popup.scheduleCalcElements(text, checkboxState, ModalityState.NON_MODAL, { set ->
-        elements = set as List<Object>
-        semaphore.up()
-      } as Consumer<Set<?>>)
+    def semaphore = new Semaphore(1)
+    popup.scheduleCalcElements(text, checkboxState, ModalityState.NON_MODAL, { set ->
+      elements = set as List<Object>
+      semaphore.up()
+    } as Consumer<Set<?>>)
+    def start = System.currentTimeMillis()
+    while (!semaphore.waitFor(10) && System.currentTimeMillis() - start < 10_000_000) {
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
     }
-    if (!semaphore.waitFor(10000)) {
+    if (!semaphore.waitFor(10)) {
       printThreadDump()
       fail()
     }
@@ -424,13 +442,4 @@ class Intf {
     myPopup
   }
 
-  @Override
-  protected boolean runInDispatchThread() {
-    return false
-  }
-
-  @Override
-  protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
-    runnable.run()
-  }
 }

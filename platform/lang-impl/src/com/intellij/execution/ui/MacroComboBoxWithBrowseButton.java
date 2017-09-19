@@ -91,7 +91,7 @@ public class MacroComboBoxWithBrowseButton extends ComponentWithBrowseButton<Com
 
   @Override
   public void setText(String text) {
-    accessor.setText(getChildComponent(), text);
+    accessor.setText(getChildComponent(), text != null ? text : "");
   }
 
   public void setModule(Module module) {

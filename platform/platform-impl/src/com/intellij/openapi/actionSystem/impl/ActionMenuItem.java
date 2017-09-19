@@ -17,6 +17,7 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.internal.statistic.customUsageCollectors.actions.MainMenuCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -100,6 +101,14 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     }
   }
 
+  public AnAction getAnAction() {
+    return myAction.getAction();
+  }
+
+  public String getPlace() {
+    return myPlace;
+  }
+
   private static boolean isEnterKeyStroke(KeyStroke keyStroke) {
     return keyStroke.getKeyCode() == KeyEvent.VK_ENTER && keyStroke.getModifiers() == 0;
   }
@@ -114,6 +123,10 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
    */
   @Override
   public void fireActionPerformed(ActionEvent event) {
+    AnAction action = myAction.getAction();
+    if (action != null && ActionPlaces.MAIN_MENU.equals(myPlace)) {
+      MainMenuCollector.getInstance().record(action);
+    }
     TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> super.fireActionPerformed(event));
   }
 

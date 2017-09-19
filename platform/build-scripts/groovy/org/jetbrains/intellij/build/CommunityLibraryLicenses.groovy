@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -205,7 +205,7 @@ class CommunityLibraryLicenses {
                        url: "http://www.jgoodies.com/freeware/libraries/looks/", licenseUrl: "https://opensource.org/licenses/bsd-license.html"),
     new LibraryLicense(name: "jgraphx", libraryName: "jgraphx-3.4.0.1", version: "3.4.0.1", license: "BSD",
                        url: "https://github.com/jgraph/jgraphx"),
-    new LibraryLicense(name: "JNA", libraryName: "jna", version: "4.1.0", license: "LGPL 2.1", url: "https://github.com/java-native-access/jna",
+    new LibraryLicense(name: "JNA", libraryName: "jna", version: "4.5.0", license: "LGPL 2.1", url: "https://github.com/java-native-access/jna",
                        licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1.php"),
     new LibraryLicense(name: "jsch-agent-proxy for svnkit trilead", libraryName: "jsch.agentproxy.svnkit-trilead-ssh2.jar",
                        version: "0.0.9",
@@ -232,7 +232,7 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://opensource.org/licenses/BSD-3-Clause"),
     new LibraryLicense(name: "JUnit", libraryName: "JUnit3", version: "3.8.1", license: "CPL 1.0", url: "http://junit.org/"),
     new LibraryLicense(name: "JUnit", libraryName: "JUnit4", version: "4.11", license: "CPL 1.0", url: "http://junit.org/"),
-    new LibraryLicense(name: "junit5_rt", libraryName: "junit5_rt", version: "5.0.0", license: "Eclipse Public License 1.0",
+    new LibraryLicense(name: "JUnit5", libraryName: "JUnit5", version: "5.0.0", license: "Eclipse Public License 2.0",
                        url: "http://junit.org/"),
     new LibraryLicense(name: "jzlib", libraryName: "jzlib", version: "1.1.1", license: "BSD", url: "http://www.jcraft.com/jzlib/",
                        licenseUrl: "http://www.jcraft.com/jzlib/LICENSE.txt"),
@@ -289,8 +289,6 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "Objenesis", libraryName: "objenesis-1.2.jar", version: "1.2", license: "Apache 2.0", url: "http://objenesis.org/",
                        licenseUrl: "http://apache.org/licenses/LICENSE-2.0"),
-    new LibraryLicense(name: "opentest4j", libraryName: "opentest4j", version: "1.0.0", license: "Apache 2.0",
-                       url: "https://github.com/ota4j-team/opentest4j", licenseUrl: "http://apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "pycodestyle.py", attachedTo: "python-helpers", version: "2.3.1", license: "MIT", url: "http://pycodestyle.readthedocs.io/"),
     new LibraryLicense(name: "PicoContainer", libraryName: "picocontainer", version: "1.2", license: "BSD",
                        url: "https://github.com/codehaus/picocontainer", licenseUrl: "https://opensource.org/licenses/bsd-license.php"),
@@ -360,13 +358,13 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "sphinxcontrib-napoleon", attachedTo: "python-helpers", version: "0.3.11", license: "BSD",
                        url: "http://sphinxcontrib-napoleon.readthedocs.org/"),
     new LibraryLicense(name: "sqljet", version: "bundled with SVNKit", libraryName: "sqljet.jar", license: "link (commercial license)",
-                       url: "http://sqljet.com", licenseUrl: "http://svnkit.com/license.html"),
+                       url: "http://sqljet.com", licenseUrl: "https://github.com/JetBrains/intellij-community/blob/master/license/svnkit-license.txt"),
     new LibraryLicense(name: "StreamEx", version: "0.6.2", libraryName: "StreamEx", license: "Apache 2.0",
                        url: "https://github.com/amaembo/streamex", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "svnkit-javahl", version: "bundled with SVNKit", libraryName: "svnkit-javahl.jar",
-                       license: "link (commercial license)", url: "http://www.svnkit.com/", licenseUrl: "http://svnkit.com/license.html"),
+                       license: "link (commercial license)", url: "http://www.svnkit.com/", licenseUrl: "https://github.com/JetBrains/intellij-community/blob/master/license/svnkit-license.txt"),
     new LibraryLicense(name: "SVNKit", libraryName: "svnkit.jar", version: "1.8.12", license: "link (commercial license)",
-                       url: "http://www.svnkit.com/", licenseUrl: "http://svnkit.com/license.html"),
+                       url: "http://www.svnkit.com/", licenseUrl: "https://github.com/JetBrains/intellij-community/blob/master/license/svnkit-license.txt"),
     new LibraryLicense(name: "swingx", libraryName: "swingx", version: "1.6.2", license: "LGPL 2.1", url: "http://java.net/downloads/swingx/",
                        licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1.php"),
     new LibraryLicense(name: "TestNG", version: "6.9 snapshot", license: "Apache 2.0", url: "http://testng.org/doc/",

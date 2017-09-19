@@ -74,6 +74,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -472,13 +473,20 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     }
   }
 
+  protected Comparator<NodeDescriptor> createComparator() {
+    return new GroupByTypeComparator(ProjectView.getInstance(myProject), getId());
+  }
+
   public void installComparator() {
     installComparator(getTreeBuilder());
   }
 
   public void installComparator(AbstractTreeBuilder treeBuilder) {
-    final ProjectView projectView = ProjectView.getInstance(myProject);
-    treeBuilder.setNodeDescriptorComparator(new GroupByTypeComparator(projectView, getId()));
+    installComparator(treeBuilder, createComparator());
+  }
+
+  protected void installComparator(AbstractTreeBuilder builder, Comparator<NodeDescriptor> comparator) {
+    if (builder != null) builder.setNodeDescriptorComparator(comparator);
   }
 
   public JTree getTree() {

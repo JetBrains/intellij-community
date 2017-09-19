@@ -107,11 +107,11 @@ public interface ActionToolbar {
   boolean hasVisibleActions();
 
   /**
-   * @param component will be used for datacontext computations
+   * Will be used for data-context retrieval.
    */
-  void setTargetComponent(final JComponent component);
+  void setTargetComponent(JComponent component);
 
-  void setReservePlaceAutoPopupIcon(final boolean reserve);
+  void setReservePlaceAutoPopupIcon(boolean reserve);
 
   void setSecondaryActionsTooltip(String secondaryActionsTooltip);
 

@@ -27,7 +27,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -95,10 +94,9 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
   private boolean processAbbreviations(final String pattern, Processor<MatchedValue> consumer, DataContext context) {
     List<String> actionIds = AbbreviationManager.getInstance().findActions(pattern);
     JBIterable<MatchedValue> wrappers = JBIterable.from(actionIds)
-      .transform(myActionManager::getAction)
-      .filter(Condition.NOT_NULL)
+      .filterMap(myActionManager::getAction)
       .transform(action -> {
-        ActionWrapper wrapper = new ActionWrapper(action, myModel.myActionGroups.get(action), MatchMode.NAME, context);
+        ActionWrapper wrapper = new ActionWrapper(action, myModel.myActionGroups.get(action), MatchMode.NAME, context, myModel);
         return new MatchedValue(wrapper, pattern) {
           @NotNull
           @Override
@@ -110,7 +108,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     return processItems(pattern, wrappers, consumer);
   }
 
-  private boolean processTopHits(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
+  private static boolean processTopHits(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final CollectConsumer<Object> collector = new CollectConsumer<>();
     for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
@@ -178,7 +176,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
       for (OptionDescription description : optionDescriptions) {
         for (ActionFromOptionDescriptorProvider converter : ActionFromOptionDescriptorProvider.EP.getExtensions()) {
           AnAction action = converter.provide(description);
-          if (action != null) options.add(new ActionWrapper(action, null, MatchMode.NAME, dataContext));
+          if (action != null) options.add(new ActionWrapper(action, null, MatchMode.NAME, dataContext, myModel));
           options.add(description);
         }
       }
@@ -188,7 +186,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
 
   private boolean processActions(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
     Set<String> ids = ((ActionManagerImpl)myActionManager).getActionIds();
-    JBIterable<AnAction> actions = JBIterable.from(ids).transform(myActionManager::getAction).filter(Condition.NOT_NULL);
+    JBIterable<AnAction> actions = JBIterable.from(ids).filterMap(myActionManager::getAction);
     MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
 
     QuickActionProvider provider = dataContext.getData(QuickActionProvider.KEY);
@@ -196,11 +194,11 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
       actions = actions.append(provider.getActions(true));
     }
 
-    JBIterable<ActionWrapper> actionWrappers = actions.unique().transform(action -> {
+    JBIterable<ActionWrapper> actionWrappers = actions.unique().filterMap(action -> {
       MatchMode mode = myModel.actionMatches(pattern, matcher, action);
       if (mode == MatchMode.NONE) return null;
-      return new ActionWrapper(action, myModel.myActionGroups.get(action), mode, dataContext);
-    }).filter(Condition.NOT_NULL);
+      return new ActionWrapper(action, myModel.myActionGroups.get(action), mode, dataContext, myModel);
+    });
     return processItems(pattern, actionWrappers, consumer);
   }
 
@@ -208,20 +206,16 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
     Map<String, ApplyIntentionAction> intentionMap = myIntentions.getValue();
     JBIterable<ActionWrapper> intentions = JBIterable.from(intentionMap.keySet())
-      .transform(intentionText -> {
+      .filterMap(intentionText -> {
         ApplyIntentionAction intentionAction = intentionMap.get(intentionText);
         if (myModel.actionMatches(pattern, matcher, intentionAction) == MatchMode.NONE) return null;
-        return new ActionWrapper(intentionAction, intentionText, MatchMode.INTENTION, dataContext);
-      })
-      .filter(Condition.NOT_NULL);
+        return new ActionWrapper(intentionAction, intentionText, MatchMode.INTENTION, dataContext, myModel);
+      });
     return processItems(pattern, intentions, consumer);
   }
 
-  private boolean processItems(String pattern, JBIterable<? extends Comparable> items, Processor<MatchedValue> consumer) {
-    List<? extends Comparable> itemList = items.toList();
-    myModel.updateActions(ContainerUtil.findAll(itemList, ActionWrapper.class));
-    
-    List<MatchedValue> matched = ContainerUtil.map(itemList, o -> o instanceof MatchedValue ? (MatchedValue)o : new MatchedValue(o, pattern));
+  private static boolean processItems(String pattern, JBIterable<? extends Comparable> items, Processor<MatchedValue> consumer) {
+    List<MatchedValue> matched = ContainerUtil.newArrayList(items.map(o -> o instanceof MatchedValue ? (MatchedValue)o : new MatchedValue(o, pattern)));
     Collections.sort(matched);
     return ContainerUtil.process(matched, consumer);
   }

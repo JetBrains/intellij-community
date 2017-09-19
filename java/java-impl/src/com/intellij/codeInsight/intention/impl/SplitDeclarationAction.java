@@ -79,6 +79,9 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
     if (declaredElements.length == 1) {
       PsiLocalVariable var = (PsiLocalVariable)declaredElements[0];
       if (var.getInitializer() == null) return false;
+      if (var.getTypeElement().isInferredType()) {
+        return false;
+      } 
       PsiElement parent = decl.getParent();
       if (parent instanceof PsiForStatement) {
         String varName = var.getName();

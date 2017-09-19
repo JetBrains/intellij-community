@@ -58,19 +58,9 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
   }
 
   @Override
-  public Promise<Void> addModuleDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope) {
-    return addModuleDependency(from, to, scope, false);
-  }
-
-  @Override
   public Promise<Void> addLibraryDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope, boolean exported) {
     OrderEntryUtil.addLibraryToRoots(from, library, scope, exported);
     return Promises.resolvedPromise(null);
-  }
-
-  @Override
-  public Promise<Void> addLibraryDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope) {
-    return addLibraryDependency(from, library, scope, false);
   }
 
   @Override

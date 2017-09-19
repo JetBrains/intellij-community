@@ -25,7 +25,11 @@ public class JBDimension extends Dimension {
   float myJBUIScale = JBUI.scale(1f);
 
   public JBDimension(int width, int height) {
-    super(scale(width), scale(height));
+    this(width, height, true);
+  }
+
+  private JBDimension(int width, int height, boolean applyScale) {
+    super(applyScale ? scale(width) : width, applyScale ? scale(height) : height);
   }
 
   private static int scale(int size) {
@@ -33,10 +37,14 @@ public class JBDimension extends Dimension {
   }
 
   public static JBDimension create(Dimension from) {
+    return create(from, true);
+  }
+
+  public static JBDimension create(Dimension from, boolean applyScale) {
     if (from instanceof JBDimension) {
       return ((JBDimension)from);
     }
-    return new JBDimension(from.width, from.height);
+    return new JBDimension(from.width, from.height, applyScale);
   }
 
   public JBDimensionUIResource asUIResource() {

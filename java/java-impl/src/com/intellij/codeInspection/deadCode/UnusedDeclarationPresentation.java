@@ -42,6 +42,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.ui.HyperlinkAdapter;
@@ -520,7 +521,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
           //todo store in the graph
           tool.isIgnoreAccessors()) {
         final PsiModifierListOwner listOwner = ((RefMethod)element).getElement();
-        if (listOwner instanceof PsiMethod && PropertyUtil.isSimplePropertyAccessor((PsiMethod)listOwner)) {
+        if (listOwner instanceof PsiMethod && PropertyUtilBase.isSimplePropertyAccessor((PsiMethod)listOwner)) {
           return null;
         }
       }

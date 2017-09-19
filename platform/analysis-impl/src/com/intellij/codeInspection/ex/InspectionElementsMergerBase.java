@@ -20,7 +20,9 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 
 public abstract class InspectionElementsMergerBase extends InspectionElementsMerger {
@@ -71,10 +73,11 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
   }
 
   protected Element merge(Map<String, Element> inspectionElements, boolean includeDefaults) {
-    LinkedHashMap<String, Element> scopes = null;
-    List<Element> content = null;
+    LinkedHashMap<String, Element> scopes = new LinkedHashMap<>();
     boolean enabled = false;
     String level = null;
+
+    final Element toolElement = new Element(InspectionProfileImpl.INSPECTION_TOOL_TAG);
 
     for (String sourceToolName : getSourceToolNames()) {
       Element sourceElement = inspectionElements.get(sourceToolName);
@@ -95,12 +98,7 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
       }
 
       if (sourceElement != null) {
-        if (content == null) {
-          content = new ArrayList<>();
-          scopes = new LinkedHashMap<>();
-        }
-
-        collectContent(sourceElement, content, scopes);
+        collectContent(sourceToolName, sourceElement, toolElement, scopes);
 
         enabled |= Boolean.parseBoolean(sourceElement.getAttributeValue(ToolsImpl.ENABLED_ATTRIBUTE));
         if (level == null) {
@@ -108,8 +106,7 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
         }
       }
     }
-    if (content != null && !content.isEmpty()) {
-      final Element toolElement = new Element(InspectionProfileImpl.INSPECTION_TOOL_TAG);
+    if (!toolElement.getChildren().isEmpty()) {
       toolElement.setAttribute(InspectionProfileImpl.CLASS_TAG, getMergedToolName());
       toolElement.setAttribute(ToolsImpl.ENABLED_ATTRIBUTE, String.valueOf(enabled));
       if (level != null) {
@@ -120,9 +117,7 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
       for (Element scopeEl : scopes.values()) {
         toolElement.addContent(scopeEl);
       }
-      for (Element element : content) {
-        toolElement.addContent(element);
-      }
+      
       return toolElement;
     }
     return null;
@@ -132,23 +127,37 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
     return element != null ? element.getAttributeValue(ToolsImpl.LEVEL_ATTRIBUTE) : HighlightSeverity.WARNING.getName();
   }
 
-  protected static void collectContent(Element sourceElement, List<Element> options, Map<String, Element> scopes) {
+  protected void collectContent(String sourceToolName, Element sourceElement, Element toolElement, Map<String, Element> scopes) {
     if (sourceElement != null) {
+      Element wrapElement = wrapElement(sourceToolName, sourceElement, toolElement);
       for (Element element : sourceElement.getChildren()) {
         if ("scope".equals(element.getName())) {
           String scopeName = element.getAttributeValue("name");
           if (scopes.containsKey(scopeName)) {
-            Element scopeElement = scopes.get(scopeName);
-            for (Element scopeEl : element.getChildren()) {
-              scopeElement.addContent(scopeEl.clone());
-            }
-          } else {
-            scopes.put(scopeName, element.clone());
+            copyScopeContent(sourceToolName, element, scopes.get(scopeName));
           }
-          continue;
+          else if (scopeName != null) {
+            Element scopeElement = element.clone();
+            scopeElement.removeContent();
+            scopes.put(scopeName, scopeElement);
+            copyScopeContent(sourceToolName, element, scopeElement);
+          }
         }
-        options.add(element.clone());
+        else {
+          wrapElement.addContent(element.clone());
+        }
       }
     }
+  }
+
+  private void copyScopeContent(String sourceToolName, Element element, Element scopeElement) {
+    Element wrappedScope = wrapElement(sourceToolName, null, scopeElement);
+    for (Element scopeEl : element.getChildren()) {
+      wrappedScope.addContent(scopeEl.clone());
+    }
+  }
+
+  protected Element wrapElement(String sourceToolName, Element sourceElement, Element toolElement) {
+    return toolElement;
   }
 }

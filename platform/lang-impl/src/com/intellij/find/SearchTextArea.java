@@ -19,6 +19,8 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.editorHeaderActions.Utils;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeTooltip;
+import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.ide.ui.laf.intellij.MacIntelliJIconCache;
@@ -187,6 +189,15 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     myHelper = createHelper();
 
     myHistoryPopupButton = createButton(new ShowHistoryAction());
+    new DumbAwareAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        IdeTooltipManager.getInstance().show(new IdeTooltip(myTextArea, new Point(), new JLabel("The shortcut was changed. Press " +
+                                                                                                KeymapUtil.getKeystrokeText(
+                                                                                                  SearchTextField.SHOW_HISTORY_KEYSTROKE) +
+                                                                                                " to open search history.")), true, true);
+      }
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_H, InputEvent.CTRL_DOWN_MASK)), myTextArea);
     myClearButton = createButton(new ClearAction());
     myNewLineButton = createButton(new NewLineAction());
     myNewLineButton.setVisible(searchMode);

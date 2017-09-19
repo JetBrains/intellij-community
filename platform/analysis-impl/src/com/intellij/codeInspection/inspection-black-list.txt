@@ -140,8 +140,6 @@ com.siyeh.ig.j2me.OverlyLargePrimitiveArrayInitializerInspection
 com.siyeh.ig.javabeans.ClassWithoutNoArgConstructorInspection
 com.siyeh.ig.javadoc.UnnecessaryJavaDocLinkInspection
 com.siyeh.ig.jdk.AutoBoxingInspection
-com.siyeh.ig.junit.JUnitAbstractTestClassNamingConventionInspection
-com.siyeh.ig.junit.JUnitTestClassNamingConventionInspection
 com.siyeh.ig.junit.TestCaseWithNoTestMethodsInspection
 com.siyeh.ig.junit.TestMethodWithoutAssertionInspection
 com.siyeh.ig.logging.ClassWithMultipleLoggersInspection
@@ -163,15 +161,11 @@ com.siyeh.ig.migration.ForCanBeForeachInspection
 com.siyeh.ig.migration.IfCanBeSwitchInspection
 com.siyeh.ig.modularization.ModuleWithTooFewClassesInspection
 com.siyeh.ig.modularization.ModuleWithTooManyClassesInspection
-com.siyeh.ig.naming.AnnotationNamingConventionInspection
 com.siyeh.ig.naming.BooleanMethodNameMustStartWithQuestionInspection
-com.siyeh.ig.naming.ClassNamingConventionInspection
 com.siyeh.ig.naming.ConstantNamingConventionInspection
-com.siyeh.ig.naming.EnumeratedClassNamingConventionInspection
 com.siyeh.ig.naming.EnumeratedConstantNamingConventionInspection
 com.siyeh.ig.naming.InstanceMethodNamingConventionInspection
 com.siyeh.ig.naming.InstanceVariableNamingConventionInspection
-com.siyeh.ig.naming.InterfaceNamingConventionInspection
 com.siyeh.ig.naming.LocalVariableNamingConventionInspection
 com.siyeh.ig.naming.NonBooleanMethodNameMayNotStartWithQuestionInspection
 com.siyeh.ig.naming.OverloadedMethodsWithSameNumberOfParametersInspection
@@ -181,7 +175,6 @@ com.siyeh.ig.naming.ParameterNamingConventionInspection
 com.siyeh.ig.naming.QuestionableNameInspection
 com.siyeh.ig.naming.StaticMethodNamingConventionInspection
 com.siyeh.ig.naming.StaticVariableNamingConventionInspection
-com.siyeh.ig.naming.TypeParameterNamingConventionInspection
 com.siyeh.ig.numeric.CastThatLosesPrecisionInspection
 com.siyeh.ig.numeric.ImplicitNumericConversionInspection
 com.siyeh.ig.numeric.IntegerMultiplicationImplicitCastToLongInspection

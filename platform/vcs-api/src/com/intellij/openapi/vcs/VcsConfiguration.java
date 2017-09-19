@@ -130,11 +130,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean PRESELECT_EXISTING_CHANGELIST = false;
 
   public boolean OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT = false;
-  public boolean CHECK_FILES_UP_TO_DATE_BEFORE_COMMIT = false;
-
   public boolean REFORMAT_BEFORE_PROJECT_COMMIT = false;
-  public boolean REFORMAT_BEFORE_FILE_COMMIT = false;
-
   public boolean REARRANGE_BEFORE_PROJECT_COMMIT = false;
 
   public Map<String, ChangeBrowserSettings> CHANGE_BROWSER_SETTINGS = new HashMap<>();

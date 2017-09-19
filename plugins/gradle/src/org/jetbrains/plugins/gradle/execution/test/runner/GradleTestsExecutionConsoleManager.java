@@ -15,18 +15,21 @@
  */
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.JavaRerunFailedTestsAction;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
-import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.execution.testframework.sm.runner.ui.SMRootTestProxyFormatter;
+import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.execution.testframework.sm.runner.ui.TestTreeRenderer;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
@@ -43,7 +46,9 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.action.GradleRerunFailedTestsAction;
+import org.jetbrains.plugins.gradle.execution.filters.ReRunTaskFilter;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
@@ -64,36 +69,34 @@ public class GradleTestsExecutionConsoleManager
     return GradleConstants.SYSTEM_ID;
   }
 
-  @NotNull
+  @Nullable
   @Override
-  public GradleTestsExecutionConsole attachExecutionConsole(@NotNull final ExternalSystemTask task,
-                                                            @NotNull final Project project,
-                                                            @NotNull final ExternalSystemRunConfiguration configuration,
-                                                            @NotNull final Executor executor,
-                                                            @NotNull final ExecutionEnvironment env,
-                                                            @NotNull final ProcessHandler processHandler) {
-    final GradleConsoleProperties consoleProperties = new GradleConsoleProperties(configuration, executor);
-    String testFrameworkName = configuration.getSettings().getExternalSystemId().getReadableName();
+  public GradleTestsExecutionConsole attachExecutionConsole(@NotNull Project project,
+                                                            @NotNull ExternalSystemTask task,
+                                                            @Nullable ExecutionEnvironment env,
+                                                            @Nullable ProcessHandler processHandler) {
+    if (env == null) return null;
+    RunnerAndConfigurationSettings settings = env.getRunnerAndConfigurationSettings();
+    if (settings == null) return null;
+    RunConfiguration configuration = settings.getConfiguration();
+    if (!(configuration instanceof ExternalSystemRunConfiguration)) return null;
+    ExternalSystemRunConfiguration externalSystemRunConfiguration = (ExternalSystemRunConfiguration)configuration;
+
+    final GradleConsoleProperties consoleProperties = new GradleConsoleProperties(externalSystemRunConfiguration, env.getExecutor());
+    String testFrameworkName = externalSystemRunConfiguration.getSettings().getExternalSystemId().getReadableName();
     String splitterPropertyName = SMTestRunnerConnectionUtil.getSplitterPropertyName(testFrameworkName);
     final GradleTestsExecutionConsole consoleView = new GradleTestsExecutionConsole(consoleProperties, splitterPropertyName);
     SMTestRunnerConnectionUtil.initConsoleView(consoleView, testFrameworkName);
 
-    final TestTreeView testTreeView = consoleView.getResultsViewer().getTreeView();
+    SMTestRunnerResultsForm resultsViewer = consoleView.getResultsViewer();
+    final TestTreeView testTreeView = resultsViewer.getTreeView();
     if (testTreeView != null) {
       TestTreeRenderer originalRenderer = ObjectUtils.tryCast(testTreeView.getCellRenderer(), TestTreeRenderer.class);
       if (originalRenderer != null) {
         originalRenderer.setAdditionalRootFormatter(new SMRootTestProxyFormatter() {
           @Override
           public void format(@NotNull SMTestProxy.SMRootTestProxy testProxy, @NotNull TestTreeRenderer renderer) {
-            final TestStateInfo.Magnitude magnitude = testProxy.getMagnitudeInfo();
-            if (magnitude == TestStateInfo.Magnitude.RUNNING_INDEX) {
-              renderer.clear();
-              renderer.append(GradleBundle.message(
-                "gradle.test.runner.ui.tests.tree.presentation.labels.waiting.tests"),
-                              SimpleTextAttributes.REGULAR_ATTRIBUTES
-              );
-            }
-            else if (!testProxy.isInProgress() && testProxy.isEmptySuite()) {
+            if (!testProxy.isInProgress() && testProxy.isEmptySuite()) {
               renderer.clear();
               renderer.append(GradleBundle.message(
                 "gradle.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found"),
@@ -104,12 +107,29 @@ public class GradleTestsExecutionConsoleManager
         });
       }
     }
+    SMTestProxy.SMRootTestProxy testsRootNode = resultsViewer.getTestsRootNode();
+    testsRootNode.setSuiteStarted();
+    resultsViewer.onTestingStarted(testsRootNode);
+    if (processHandler != null) {
+      processHandler.addProcessListener(new ProcessAdapter() {
+        @Override
+        public void processTerminated(@NotNull ProcessEvent event) {
+          if (testsRootNode.isInProgress()) {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              testsRootNode.setFinished();
+              resultsViewer.onTestingFinished(testsRootNode);
+            });
+          }
+        }
+      });
+    }
 
     if (task instanceof ExternalSystemExecuteTaskTask) {
       final ExternalSystemExecuteTaskTask executeTask = (ExternalSystemExecuteTaskTask)task;
       if (executeTask.getArguments() == null || !StringUtil.contains(executeTask.getArguments(), "--tests")) {
         executeTask.appendArguments("--tests *");
       }
+      consoleView.addMessageFilter(new ReRunTaskFilter((ExternalSystemExecuteTaskTask)task, env));
     }
 
     return consoleView;

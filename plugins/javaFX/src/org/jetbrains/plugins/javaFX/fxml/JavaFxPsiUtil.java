@@ -185,7 +185,7 @@ public class JavaFxPsiUtil {
 
   public static PsiClassType getPropertyClassType(PsiElement member, final String superTypeFQN) {
     if (member instanceof PsiMember) {
-      final PsiType type = PropertyUtil.getPropertyType((PsiMember)member);
+      final PsiType type = PropertyUtilBase.getPropertyType((PsiMember)member);
       if (type instanceof PsiClassType) {
         final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
         final PsiClass attributeClass = resolveResult.getElement();
@@ -225,7 +225,7 @@ public class JavaFxPsiUtil {
   @Nullable
   public static PsiMethod findStaticPropertySetter(@NotNull String attributeName, @Nullable PsiClass classWithStaticProperty) {
     if (classWithStaticProperty == null) return null;
-    final String setterName = PropertyUtil.suggestSetterName(StringUtil.getShortName(attributeName));
+    final String setterName = PropertyUtilBase.suggestSetterName(StringUtil.getShortName(attributeName));
     final PsiMethod[] setters = classWithStaticProperty.findMethodsByName(setterName, true);
     for (PsiMethod setter : setters) {
       if (setter.hasModifierProperty(PsiModifier.PUBLIC) &&
@@ -247,12 +247,12 @@ public class JavaFxPsiUtil {
   }
 
   private static PsiMethod findPropertyGetter(final PsiClass psiClass, final String propertyName, final PsiType propertyType) {
-    final String getterName = PropertyUtil.suggestGetterName(propertyName, propertyType);
+    final String getterName = PropertyUtilBase.suggestGetterName(propertyName, propertyType);
     final PsiMethod[] getters = psiClass.findMethodsByName(getterName, true);
     for (PsiMethod getter : getters) {
       if (getter.hasModifierProperty(PsiModifier.PUBLIC) &&
           !getter.hasModifierProperty(PsiModifier.STATIC) &&
-          PropertyUtil.isSimplePropertyGetter(getter)) {
+          PropertyUtilBase.isSimplePropertyGetter(getter)) {
         return getter;
       }
     }
@@ -710,7 +710,7 @@ public class JavaFxPsiUtil {
       if (method.getParameterList().getParametersCount() != 0) {
         return getSetterArgumentType(method);
       }
-      final String propertyName = PropertyUtil.getPropertyName(method);
+      final String propertyName = PropertyUtilBase.getPropertyName(method);
       final PsiClass psiClass = containingClass != null ? containingClass : method.getContainingClass();
       if (propertyName != null && containingClass != null) {
         final PsiMethod setter = findInstancePropertySetter(psiClass, propertyName);
@@ -873,8 +873,8 @@ public class JavaFxPsiUtil {
     final Map<String, PsiMember> acceptableMembers = new THashMap<>();
     for (PsiMethod method : psiClass.getAllMethods()) {
       if (method.hasModifierProperty(PsiModifier.STATIC) || !method.hasModifierProperty(PsiModifier.PUBLIC)) continue;
-      if (PropertyUtil.isSimplePropertyGetter(method)) {
-        final String propertyName = PropertyUtil.getPropertyName(method);
+      if (PropertyUtilBase.isSimplePropertyGetter(method)) {
+        final String propertyName = PropertyUtilBase.getPropertyName(method);
         assert propertyName != null;
         acceptableMembers.put(propertyName, method);
       }
@@ -905,9 +905,9 @@ public class JavaFxPsiUtil {
     }
     for (PsiMethod method : psiClass.getAllMethods()) {
       if (method.hasModifierProperty(PsiModifier.STATIC) || !method.hasModifierProperty(PsiModifier.PUBLIC)) continue;
-      if (PropertyUtil.isSimplePropertyGetter(method)) {
+      if (PropertyUtilBase.isSimplePropertyGetter(method)) {
         PsiMember acceptableMember = method;
-        final String propertyName = PropertyUtil.getPropertyName(method);
+        final String propertyName = PropertyUtilBase.getPropertyName(method);
         assert propertyName != null;
 
         PsiMethod setter = findInstancePropertySetter(psiClass, propertyName);
@@ -989,12 +989,12 @@ public class JavaFxPsiUtil {
   @Nullable
   public static PsiMethod findInstancePropertySetter(@NotNull PsiClass psiClass, @Nullable String propertyName) {
     if (StringUtil.isEmpty(propertyName)) return null;
-    final String suggestedSetterName = PropertyUtil.suggestSetterName(propertyName);
+    final String suggestedSetterName = PropertyUtilBase.suggestSetterName(propertyName);
     final PsiMethod[] setters = psiClass.findMethodsByName(suggestedSetterName, true);
     for (PsiMethod setter : setters) {
       if (setter.hasModifierProperty(PsiModifier.PUBLIC) &&
           !setter.hasModifierProperty(PsiModifier.STATIC) &&
-          PropertyUtil.isSimplePropertySetter(setter)) {
+          PropertyUtilBase.isSimplePropertySetter(setter)) {
         return setter;
       }
     }
@@ -1057,11 +1057,11 @@ public class JavaFxPsiUtil {
 
   @Nullable
   private static PsiType getEventHandlerPropertyType(@NotNull PsiClass tagClass, @NotNull String eventName) {
-    final PsiMethod[] handlerSetterCandidates = tagClass.findMethodsByName(PropertyUtil.suggestSetterName(eventName), true);
+    final PsiMethod[] handlerSetterCandidates = tagClass.findMethodsByName(PropertyUtilBase.suggestSetterName(eventName), true);
     for (PsiMethod handlerSetter : handlerSetterCandidates) {
       if (!handlerSetter.hasModifierProperty(PsiModifier.STATIC) &&
           handlerSetter.hasModifierProperty(PsiModifier.PUBLIC)) {
-        final PsiType propertyType = PropertyUtil.getPropertyType(handlerSetter);
+        final PsiType propertyType = PropertyUtilBase.getPropertyType(handlerSetter);
         if (InheritanceUtil.isInheritor(propertyType, JavaFxCommonNames.JAVAFX_EVENT_EVENT_HANDLER)) {
           return propertyType;
         }
@@ -1137,7 +1137,7 @@ public class JavaFxPsiUtil {
   @NotNull
   public static String getPropertyName(@NotNull String memberName, boolean isMethod) {
     if (!isMethod) return memberName;
-    final String propertyName = PropertyUtil.getPropertyName(memberName);
+    final String propertyName = PropertyUtilBase.getPropertyName(memberName);
     return propertyName != null ? propertyName : memberName;
   }
 

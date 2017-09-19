@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.MultiLineTooltipUI;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
@@ -58,6 +60,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
   private JCheckBox myCatchCheckBox;
   private ClassFiltersField myCatchClassFilters;
   private JPanel myCatchFiltersPanel;
+  private JPanel myPassCountFieldPanel;
 
   private final FieldPanel myInstanceFiltersField;
 
@@ -100,6 +103,11 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
     ToolTipManager.sharedInstance().registerComponent(myInstanceFiltersField.getTextField());
 
     insert(myInstanceFiltersFieldPanel, myInstanceFiltersField);
+
+    myCatchClassFilters.setBorder(JBUI.Borders.emptyLeft(UIUtil.getCheckBoxTextHorizontalOffset(myCatchCheckBox)));
+    myInstanceFiltersField.setBorder(JBUI.Borders.emptyLeft(UIUtil.getCheckBoxTextHorizontalOffset(myInstanceFiltersCheckBox)));
+    myClassFiltersField.setBorder(JBUI.Borders.emptyLeft(UIUtil.getCheckBoxTextHorizontalOffset(myClassFiltersCheckBox)));
+    myPassCountFieldPanel.setBorder(JBUI.Borders.emptyLeft(UIUtil.getCheckBoxTextHorizontalOffset(myPassCountCheckbox)));
 
     DebuggerUIUtil.focusEditorOnCheck(myPassCountCheckbox, myPassCountField);
     DebuggerUIUtil.focusEditorOnCheck(myInstanceFiltersCheckBox, myInstanceFiltersField.getTextField());

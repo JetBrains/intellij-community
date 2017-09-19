@@ -27,7 +27,6 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -73,7 +72,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
 
     PsiManager.getInstance(project).addPsiTreeChangeListener(createPsiTreeChangeListener(project), this);
     FileStatusManager.getInstance(project).addFileStatusListener(new MyFileStatusListener(), this);
-    CopyPasteManager.getInstance().addContentChangedListener(new CopyPasteUtil.DefaultCopyPasteListener(getUpdater()), this);
+    CopyPasteUtil.addDefaultListener(this, this::addSubtreeToUpdateByElement);
 
     WolfTheProblemSolver.getInstance(project).addProblemListener(new MyProblemListener(), this);
 

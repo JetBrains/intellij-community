@@ -52,7 +52,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
   private static final String HOVER_PROPERTY = "JComboBox.mouseHover";
   private static final String PRESSED_PROPERTY = "JComboBox.mousePressed";
   private static final Border DEFAULT_EDITOR_BORDER = JBUI.Borders.empty(1, 0);
-  private static final Dimension ARROW_BUTTON_SIZE = new JBDimension(21, 24); // Count borders
+  private static final JBDimension ARROW_BUTTON_SIZE = new JBDimension(21, 24); // Count borders
 
   private MouseListener mouseListener;
 
@@ -224,6 +224,9 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
         try {
           Rectangle innerRect = new Rectangle(getSize());
           JBInsets.removeFrom(innerRect, getInsets());
+
+          int bw = comboBox.getClientProperty("JComponent.error.outline") == Boolean.TRUE ? 2 : 1; // see paintBorder()
+          JBInsets.removeFrom(innerRect, JBUI.insets(bw));
 
           // paint background
           if (comboBox.isEditable() && comboBox.isEnabled()) {
@@ -508,6 +511,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
   }
 
   private Dimension  getSizeWithButton(Dimension d) {
+    ARROW_BUTTON_SIZE.update();
     Insets i = comboBox.getInsets();
     int width = ARROW_BUTTON_SIZE.width + i.left;
     return new Dimension(Math.max(d.width + JBUI.scale(10), width),

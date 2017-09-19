@@ -158,6 +158,6 @@ public class FileBasedIndexProjectHandler implements IndexableFileSet, Disposabl
                                             Collection<VirtualFile> files,
                                             final Project project,
                                             final FileBasedIndexImpl index) {
-    CacheUpdateRunner.processFiles(indicator, true, files, project, content -> index.processRefreshedFile(project, content));
+    CacheUpdateRunner.processFiles(indicator, files, project, content -> index.processRefreshedFile(project, content));
   }
 }

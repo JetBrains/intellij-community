@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
@@ -148,14 +148,14 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
     Project project = field.getProject();
     final JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(project);
 
-    final String propertyName = PropertyUtil.suggestPropertyName(field, field.getName());
-    final String newPropertyName = PropertyUtil.suggestPropertyName(field, newName);
+    final String propertyName = PropertyUtilBase.suggestPropertyName(field, field.getName());
+    final String newPropertyName = PropertyUtilBase.suggestPropertyName(field, newName);
 
     boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
 
     PsiMethod[] getters = GetterSetterPrototypeProvider.findGetters(aClass, propertyName, isStatic);
 
-    PsiMethod setter = PropertyUtil.findPropertySetter(aClass, propertyName, isStatic, false);
+    PsiMethod setter = PropertyUtilBase.findPropertySetter(aClass, propertyName, isStatic, false);
 
     boolean shouldRenameSetterParameter = false;
 
@@ -170,7 +170,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
         String getterId = null;
         if (newGetterName == null) {
           getterId = getter.getName();
-          newGetterName = PropertyUtil.suggestGetterName(newPropertyName, field.getType(), getterId);
+          newGetterName = PropertyUtilBase.suggestGetterName(newPropertyName, field.getType(), getterId);
         }
         if (newGetterName.equals(getterId)) {
           continue;
@@ -192,7 +192,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
 
     String newSetterName = "";
     if (setter != null) {
-      newSetterName = PropertyUtil.suggestSetterName(newPropertyName);
+      newSetterName = PropertyUtilBase.suggestSetterName(newPropertyName);
       final String newSetterParameterName = manager.propertyNameToVariableName(newPropertyName, VariableKind.PARAMETER);
       if (newSetterName.equals(setter.getName())) {
         setter = null;
@@ -222,7 +222,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
       for (PsiMethod getter : getters) {
         String newGetterName = GetterSetterPrototypeProvider.suggestNewGetterName(propertyName, newPropertyName, getter);
         if (newGetterName == null) {
-          newGetterName = PropertyUtil.suggestGetterName(newPropertyName, field.getType(), getter.getName());
+          newGetterName = PropertyUtilBase.suggestGetterName(newPropertyName, field.getType(), getter.getName());
         }
         addOverriddenAndImplemented(getter, newGetterName, null, propertyName, manager, allRenames);
       }
@@ -243,6 +243,9 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
 
   private static boolean askToRenameAccesors(PsiMethod getter, PsiMethod setter, String newName, final Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return false;
+    boolean physicalGetter = getter != null && getter.isPhysical();
+    boolean physicalSetter = setter != null && setter.isPhysical();
+    if (!physicalGetter && !physicalSetter) return false;
     String text = RefactoringMessageUtil.getGetterSetterMessage(newName, RefactoringBundle.message("rename.title"), getter, setter);
     return Messages.showYesNoDialog(project, text, RefactoringBundle.message("rename.title"), Messages.getQuestionIcon()) != Messages.YES;
   }

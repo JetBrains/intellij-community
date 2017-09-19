@@ -20,7 +20,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -29,7 +28,6 @@ import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remote.*;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.PathMapper;
@@ -75,50 +73,9 @@ public abstract class PythonRemoteInterpreterManager {
                                                     @NotNull PyRemotePathMapper pathMapper)
     throws RemoteSdkException;
 
-  /**
-   * @deprecated use {@link com.jetbrains.python.run.PyRemoteProcessStarterManager#startRemoteProcess(Project, GeneralCommandLine, PythonRemoteInterpreterManager, PyRemoteSdkAdditionalDataBase, PyRemotePathMapper)}
-   */
-  @Deprecated
-  public abstract PyRemoteProcessHandlerBase startRemoteProcessWithPid(@Nullable Project project,
-                                                                       @NotNull PyRemoteSdkCredentials data,
-                                                                       @NotNull GeneralCommandLine commandLine,
-                                                                       @NotNull PyRemotePathMapper pathMapper)
-    throws RemoteSdkException;
-
   public abstract void addRemoteSdk(Project project, Component parentComponent, Collection<Sdk> existingSdks,
                                     NullableConsumer<Sdk> sdkCallback);
 
-
-  /**
-   * @deprecated use {@link com.jetbrains.python.run.PyRemoteProcessStarterManager#executeRemoteProcess(Project, String[], String, PythonRemoteInterpreterManager, PyRemoteSdkAdditionalDataBase, PyRemotePathMapper, boolean)}
-   */
-  @Deprecated
-  public abstract ProcessOutput runRemoteProcess(@Nullable Project project,
-                                                 RemoteSdkCredentials data,
-                                                 @NotNull PyRemotePathMapper pathMapper,
-                                                 String[] command,
-                                                 @Nullable String workingDir,
-                                                 boolean askForSudo)
-    throws RemoteSdkException;
-
-  /**
-   * @deprecated use {@link com.jetbrains.python.run.PyRemoteProcessStarterManager#executeRemoteProcess(Project, String[], String, PythonRemoteInterpreterManager, PyRemoteSdkAdditionalDataBase, PyRemotePathMapper, boolean)}
-   */
-  @Deprecated
-  public abstract ProcessOutput runRemoteProcess(@Nullable Project project,
-                                                 RemoteSdkCredentials data,
-                                                 @NotNull PyRemotePathMapper pathMapper,
-                                                 String[] command,
-                                                 @Nullable String workingDir,
-                                                 boolean askForSudo, String sdkHomePath)
-    throws RemoteSdkException;
-
-  @NotNull
-  public abstract RemoteSshProcess createRemoteProcess(@Nullable Project project,
-                                                       @NotNull PyRemoteSdkCredentials data,
-                                                       @NotNull PyRemotePathMapper pathMapper,
-                                                       @NotNull GeneralCommandLine commandLine, boolean allocatePty)
-    throws RemoteSdkException;
 
   public abstract boolean editSdk(@NotNull Project project, @NotNull SdkModificator sdkModificator, Collection<Sdk> existingSdks);
 
@@ -128,14 +85,6 @@ public abstract class PythonRemoteInterpreterManager {
                                                                     String path) throws ExecutionException;
 
   public abstract boolean ensureCanWrite(@Nullable Object projectOrComponent, RemoteSdkCredentials data, String path);
-
-  @Nullable
-  public abstract RemoteProjectSettings showRemoteProjectSettingsDialog(VirtualFile baseDir, RemoteSdkCredentials data);
-
-  public abstract void createDeployment(Project project,
-                                        VirtualFile projectDir,
-                                        RemoteProjectSettings settings,
-                                        RemoteSdkCredentials data);
 
   /**
    * @param sdk current sdk

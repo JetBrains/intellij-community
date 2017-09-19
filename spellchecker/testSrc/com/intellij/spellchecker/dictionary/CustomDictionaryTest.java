@@ -170,4 +170,21 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   public void testModifyDict() throws IOException {
     doTest();
   }
+
+  public void testUtf8Dict() throws IOException {
+    doNewDictTest();
+  }
+
+  public void testUtf16BEDict() throws IOException {
+    doNewDictTest();
+  }
+
+  public void testUtf16DictFirstWordToCheck() throws IOException {
+    doNewDictTest();
+  }
+
+  public void testUtf16LEDict() throws IOException {
+    doNewDictTest();
+  }
+  
 }

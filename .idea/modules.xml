@@ -20,7 +20,6 @@
       <module fileurl="file://$PROJECT_DIR$/android/android/android.iml" filepath="$PROJECT_DIR$/android/android/android.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/annotations/android-annotations.iml" filepath="$PROJECT_DIR$/android/tools-base/annotations/android-annotations.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/android/common/android-common.iml" filepath="$PROJECT_DIR$/android/common/android-common.iml" group="android" />
-      <module fileurl="file://$PROJECT_DIR$/android/android-gradle-jps/android-gradle-jps.iml" filepath="$PROJECT_DIR$/android/android-gradle-jps/android-gradle-jps.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/android/jps-plugin/android-jps-plugin.iml" filepath="$PROJECT_DIR$/android/jps-plugin/android-jps-plugin.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/android/android-plugin/android-plugin.iml" filepath="$PROJECT_DIR$/android/android-plugin/android-plugin.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/android/rt/android-rt.iml" filepath="$PROJECT_DIR$/android/rt/android-rt.iml" group="android" />
@@ -120,6 +119,7 @@
       <module fileurl="file://$PROJECT_DIR$/java/idea-ui/idea-ui-tests.iml" filepath="$PROJECT_DIR$/java/idea-ui/idea-ui-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/images/images.iml" filepath="$PROJECT_DIR$/images/images.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/build-scripts/icons/images-build-scripts.iml" filepath="$PROJECT_DIR$/platform/build-scripts/icons/images-build-scripts.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/tools/index-tools/index-tools.iml" filepath="$PROJECT_DIR$/tools/index-tools/index-tools.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/indexing-api/indexing-api.iml" filepath="$PROJECT_DIR$/platform/indexing-api/indexing-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/indexing-impl/indexing-impl.iml" filepath="$PROJECT_DIR$/platform/indexing-impl/indexing-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/instant-run/instant-run-annotations/instant-run-annotations.iml" filepath="$PROJECT_DIR$/android/tools-base/instant-run/instant-run-annotations/instant-run-annotations.iml" group="android/sdktools/instant-run" />

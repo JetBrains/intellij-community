@@ -244,10 +244,8 @@ public interface JavaElementType {
     private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
       @Override
       public void parse(final PsiBuilder builder) {
-        JavaParser.INSTANCE.getReferenceParser().parseType(builder, ReferenceParser.EAT_LAST_DOT |
-                                                                    ReferenceParser.ELLIPSIS |
-                                                                    ReferenceParser.WILDCARD |
-                                                                    myFlags);
+        int flags = ReferenceParser.EAT_LAST_DOT | ReferenceParser.ELLIPSIS | ReferenceParser.WILDCARD | myFlags;
+        JavaParser.INSTANCE.getReferenceParser().parseType(builder, flags);
       }
     };
 

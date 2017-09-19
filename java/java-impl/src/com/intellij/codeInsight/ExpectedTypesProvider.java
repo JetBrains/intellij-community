@@ -410,8 +410,8 @@ public class ExpectedTypesProvider {
     private void visitMethodReturnType(final PsiMethod scopeMethod, PsiType type, boolean tailTypeSemicolon) {
       if (type != null) {
         NullableComputable<String> expectedName;
-        if (PropertyUtil.isSimplePropertyAccessor(scopeMethod)) {
-          expectedName = () -> PropertyUtil.getPropertyName(scopeMethod);
+        if (PropertyUtilBase.isSimplePropertyAccessor(scopeMethod)) {
+          expectedName = () -> PropertyUtilBase.getPropertyName(scopeMethod);
         }
         else {
           expectedName = ExpectedTypeInfoImpl.NULL;
@@ -467,7 +467,7 @@ public class ExpectedTypesProvider {
         PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         PsiClass iterableClass =
           JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Iterable", statement.getResolveScope());
-        if (iterableClass != null && iterableClass.getTypeParameters().length == 1) {
+        if (iterableClass != null && iterableClass.getTypeParameters().length == 1 && !PsiType.NULL.equals(type)) {
           Map<PsiTypeParameter, PsiType> map = new HashMap<>();
           map.put(iterableClass.getTypeParameters()[0], PsiWildcardType.createExtends(manager, type));
           PsiType iterableType = factory.createType(iterableClass, factory.createSubstitutor(map));
@@ -1114,7 +1114,7 @@ public class ExpectedTypesProvider {
               typeArg != null && TypeConversionUtil.erasure(typeArg).equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
             PsiClass placeClass = PsiTreeUtil.getContextOfType(argument, PsiClass.class);
             PsiClass classClass = ((PsiClassType)parameterType).resolve();
-            if (placeClass != null && classClass != null) {
+            if (placeClass != null && classClass != null && classClass.getTypeParameters().length == 1) {
               return factory.createType(classClass, factory.createType(placeClass));
             }
           }

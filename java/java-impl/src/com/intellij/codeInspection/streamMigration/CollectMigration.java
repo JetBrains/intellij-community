@@ -28,6 +28,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus;
 import one.util.streamex.EntryStream;
@@ -45,6 +46,8 @@ import java.util.function.BiFunction;
 import static com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.isCallOf;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.psiutils.ControlFlowUtils.getInitializerUsageStatus;
+import static com.siyeh.ig.psiutils.Java8MigrationUtils.MapCheckCondition.fromConditional;
+import static com.siyeh.ig.psiutils.Java8MigrationUtils.extractLambdaCandidate;
 
 /**
  * @author Tagir Valeev
@@ -121,11 +124,11 @@ class CollectMigration extends BaseStreamApiMigration {
 
   @Nullable
   static CollectTerminal extractCollectTerminal(@NotNull TerminalBlock tb, @Nullable List<PsiVariable> nonFinalVariables) {
+    GroupingTerminal groupingTerminal = GroupingTerminal.tryExtract(tb, nonFinalVariables);
+    if(groupingTerminal != null) return groupingTerminal;
     if(nonFinalVariables != null && !nonFinalVariables.isEmpty()) {
       return null;
     }
-
-
     PsiMethodCallExpression call;
     call = tb.getSingleMethodCall();
     if (call == null) return null;
@@ -134,7 +137,7 @@ class CollectMigration extends BaseStreamApiMigration {
     if (tb.dependsOn(qualifierExpression)) return null;
 
     List<BiFunction<TerminalBlock, PsiMethodCallExpression, CollectTerminal>> extractors = Arrays
-      .asList(AddingTerminal::tryExtract, GroupingTerminal::tryExtract, ToMapTerminal::tryExtract, AddingAllTerminal::tryExtractAddAll);
+      .asList(AddingTerminal::tryExtract, GroupingTerminal::tryExtractJava8Style, ToMapTerminal::tryExtract, AddingAllTerminal::tryExtractAddAll);
 
     CollectTerminal terminal = StreamEx.of(extractors).map(extractor -> extractor.apply(tb, call)).nonNull().findFirst().orElse(null);
     if (terminal != null) {
@@ -386,13 +389,17 @@ class CollectMigration extends BaseStreamApiMigration {
   }
 
   static class GroupingTerminal extends CollectTerminal {
+
+    private final static CallMatcher LIST_ADD = CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_LIST, "add").parameterCount(1);
+    private final static CallMatcher COMPUTE_IF_ABSENT = CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP, "computeIfAbsent").parameterCount(2);
+
     private final AddingTerminal myDownstream;
     private final PsiExpression myKeyExpression;
 
-    GroupingTerminal(AddingTerminal downstream,
-                     PsiLocalVariable target,
-                     PsiExpression expression,
-                     InitializerUsageStatus status) {
+    GroupingTerminal(@NotNull AddingTerminal downstream,
+                     @NotNull PsiLocalVariable target,
+                     @NotNull PsiExpression expression,
+                     @NotNull InitializerUsageStatus status) {
       super(target, downstream.myLoop, status);
       myDownstream = downstream;
       myKeyExpression = expression;
@@ -428,29 +435,131 @@ class CollectMigration extends BaseStreamApiMigration {
     }
 
     @Nullable
-    public static GroupingTerminal tryExtract(TerminalBlock tb, PsiMethodCallExpression call) {
-      if (!isCallOf(call, CommonClassNames.JAVA_UTIL_COLLECTION, "add")) return null;
-      PsiReferenceExpression methodExpression = call.getMethodExpression();
-      PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+    static GroupingTerminal tryExtract(@NotNull TerminalBlock tb, @Nullable List<PsiVariable> nonFinalVariables) {
+      PsiStatement[] statements = tb.getStatements();
+      if (statements.length == 1) {
+        if(nonFinalVariables != null && !nonFinalVariables.isEmpty()) return null;
+        PsiMethodCallExpression call = tb.getSingleExpression(PsiMethodCallExpression.class);
+        return tryExtractJava8Style(tb, call);
+      }
+      if (statements.length == 2) {
+        if(nonFinalVariables != null && !nonFinalVariables.isEmpty()) return null;
+        return tryExtractWithIntermediateVariable(tb);
+      }
+      return tryExtractJava7Style(tb, statements, nonFinalVariables);
+    }
 
-      if (qualifierExpression instanceof PsiMethodCallExpression && tb.getCountExpression() == null) {
-        PsiMethodCallExpression qualifierCall = (PsiMethodCallExpression)qualifierExpression;
-        if (isCallOf(qualifierCall, CommonClassNames.JAVA_UTIL_MAP, "computeIfAbsent")) {
-          PsiExpression[] args = qualifierCall.getArgumentList().getExpressions();
-          if (args.length != 2 || !(args[1] instanceof PsiLambdaExpression)) return null;
-          PsiLambdaExpression lambda = (PsiLambdaExpression)args[1];
-          PsiExpression body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
-          if (ConstructionUtils.isEmptyCollectionInitializer(body)) {
-            PsiLocalVariable variable = extractQualifierVariable(tb, qualifierCall);
-            if (hasLambdaCompatibleEmptyInitializer(variable)) {
-              PsiType mapType = variable.getType();
-              PsiType valueType = PsiUtil.substituteTypeParameter(mapType, CommonClassNames.JAVA_UTIL_MAP, 1, false);
-              if (valueType == null) return null;
-              AddingTerminal adding = new AddingTerminal(valueType, body, tb.getVariable(), call);
-              InitializerUsageStatus status = getInitializerUsageStatus(variable, tb.getStreamSourceStatement());
-              return new GroupingTerminal(adding, variable, args[0], status);
-            }
-          }
+    /*
+      List<String> tmp = map.get(s.length());
+      if(tmp == null) {
+          tmp = new ArrayList<>();
+          map.put(s.length(), tmp);
+      }
+      tmp.add(s);
+     */
+    @Nullable
+    private static GroupingTerminal tryExtractJava7Style(@NotNull TerminalBlock terminalBlock,
+                                                         @NotNull PsiStatement[] statements,
+                                                         @Nullable List<PsiVariable> nonFinalVariables) {
+      if(nonFinalVariables != null && nonFinalVariables.size() != 1) return null;
+      if (statements.length != 3) return null;
+      PsiIfStatement ifStatement = tryCast(statements[1], PsiIfStatement.class);
+      if(ifStatement == null) return null;
+      Java8MigrationUtils.MapCheckCondition condition = fromConditional(ifStatement, false);
+      if(condition == null || !condition.hasVariable()) return null;
+      PsiStatement existsBranch = ControlFlowUtils.stripBraces(condition.getExistsBranch(ifStatement.getThenBranch(), ifStatement.getElseBranch()));
+      PsiStatement noneBranch = ControlFlowUtils.stripBraces(condition.getNoneBranch(ifStatement.getThenBranch(), ifStatement.getElseBranch()));
+      if(existsBranch != null) return null;
+      PsiExpression lambdaCandidate = extractLambdaCandidate(condition, noneBranch);
+      if(lambdaCandidate == null) return null;
+
+      PsiExpressionStatement additionToListStatement = tryCast(statements[2], PsiExpressionStatement.class);
+      if (additionToListStatement == null) return null;
+
+      PsiReferenceExpression valueReference = condition.getValueReference();
+      if(valueReference == null) return null;
+      PsiLocalVariable listVar = tryCast(valueReference.resolve(), PsiLocalVariable.class);
+      if (nonFinalVariables != null && !nonFinalVariables.get(0).equals(listVar) ||
+          listVar == null ||
+          !InheritanceUtil.isInheritor(listVar.getType(), CommonClassNames.JAVA_UTIL_LIST)) {
+        return null;
+      }
+      PsiLocalVariable mapVariable = ExpressionUtils.resolveLocalVariable(condition.getMapExpression());
+      if(mapVariable == null) return null;
+      PsiMethodCallExpression addCall = extractAddMethod(terminalBlock, additionToListStatement);
+      if(addCall == null) return null;
+      InitializerUsageStatus status = getInitializerUsageStatus(mapVariable, terminalBlock.getStreamSourceStatement());
+      AddingTerminal adding = new AddingTerminal(listVar.getType(), lambdaCandidate, terminalBlock.getVariable(), addCall);
+      return new GroupingTerminal(adding, mapVariable, condition.getKeyExpression(), status);
+    }
+
+    @Nullable
+    private static PsiMethodCallExpression extractAddMethod(@NotNull TerminalBlock terminalBlock,
+                                                            @NotNull PsiExpressionStatement additionToListStatement) {
+      PsiMethodCallExpression additionToList = tryCast(additionToListStatement.getExpression(), PsiMethodCallExpression.class);
+      if (!LIST_ADD.test(additionToList)) return null;
+      PsiExpression[] additionArgs = additionToList.getArgumentList().getExpressions();
+      PsiExpression arg = additionArgs[0];
+      PsiReferenceExpression referenceExpression = tryCast(arg, PsiReferenceExpression.class);
+      if (referenceExpression == null) return null;
+      PsiVariable savedVar = tryCast(referenceExpression.resolve(), PsiVariable.class);
+      if(savedVar == null) return null;
+      if (!savedVar.equals(terminalBlock.getVariable())) return null;
+      return additionToList;
+    }
+
+    @Nullable
+    public static GroupingTerminal tryExtractJava8Style(@NotNull TerminalBlock tb, @Nullable PsiMethodCallExpression call) {
+      if(call == null) return null;
+      PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
+      return tryExtractJava8Style(tb, tryCast(qualifier, PsiMethodCallExpression.class), tryCast(call, PsiMethodCallExpression.class));
+    }
+
+    /*
+    Map<Integer, List<String>> map = new HashMap<>();
+    for (String s : list) {
+        List<String> strings = map.computeIfAbsent(s.length(), k -> new ArrayList<>());
+        strings.add(s);
+    }
+ */
+    @Nullable
+    private static GroupingTerminal tryExtractWithIntermediateVariable(@NotNull TerminalBlock terminalBlock) {
+      PsiStatement[] statements = terminalBlock.getStatements();
+      PsiDeclarationStatement assignmentStmt = tryCast(statements[0], PsiDeclarationStatement.class);
+      if(assignmentStmt == null) return null;
+      PsiElement[] elements = assignmentStmt.getDeclaredElements();
+      if(elements.length != 1) return null;
+      PsiLocalVariable variable = tryCast(elements[0], PsiLocalVariable.class);
+      if(variable == null) return null;
+
+      PsiExpressionStatement addStmt = tryCast(statements[1], PsiExpressionStatement.class);
+      if(addStmt == null) return null;
+      PsiMethodCallExpression maybeAddCall = tryCast(addStmt.getExpression(), PsiMethodCallExpression.class);
+      if(maybeAddCall == null) return null;
+      PsiExpression qualifier = maybeAddCall.getMethodExpression().getQualifierExpression();
+      if(!ExpressionUtils.isReferenceTo(qualifier, variable)) return null;
+
+      return tryExtractJava8Style(terminalBlock, tryCast(variable.getInitializer(), PsiMethodCallExpression.class), maybeAddCall);
+    }
+
+    @Nullable
+    public static GroupingTerminal tryExtractJava8Style(@NotNull TerminalBlock tb,
+                                                        @Nullable PsiMethodCallExpression computeIfAbsentCall,
+                                                        @Nullable PsiMethodCallExpression addCall) {
+      if (!LIST_ADD.test(addCall) || !COMPUTE_IF_ABSENT.test(computeIfAbsentCall)) return null;
+      PsiExpression[] args = computeIfAbsentCall.getArgumentList().getExpressions();
+      if (args.length != 2 || !(args[1] instanceof PsiLambdaExpression)) return null;
+      PsiLambdaExpression lambda = (PsiLambdaExpression)args[1];
+      PsiExpression body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
+      if (ConstructionUtils.isEmptyCollectionInitializer(body)) {
+        PsiLocalVariable variable = extractQualifierVariable(tb, computeIfAbsentCall);
+        if (hasLambdaCompatibleEmptyInitializer(variable)) {
+          PsiType mapType = variable.getType();
+          PsiType valueType = PsiUtil.substituteTypeParameter(mapType, CommonClassNames.JAVA_UTIL_MAP, 1, false);
+          if (valueType == null) return null;
+          AddingTerminal adding = new AddingTerminal(valueType, body, tb.getVariable(), addCall);
+          InitializerUsageStatus status = getInitializerUsageStatus(variable, tb.getStreamSourceStatement());
+          return new GroupingTerminal(adding, variable, args[0], status);
         }
       }
       return null;
@@ -521,7 +630,6 @@ class CollectMigration extends BaseStreamApiMigration {
       return new ToMapTerminal(call, tb.getVariable(), variable, tb.getStreamSourceStatement(), status);
     }
   }
-
   static class SortingTerminal extends CollectTerminal {
     private final CollectTerminal myDownstream;
     private final PsiExpression myComparator;

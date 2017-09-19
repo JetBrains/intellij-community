@@ -252,7 +252,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     PrefixMatcher matcher = result.getPrefixMatcher();
     PsiElement parent = position.getParent();
 
-    if (JavaKeywordCompletion.addWildcardExtendsSuper(result, position)) {
+    if (new JavaKeywordCompletion(parameters, session).addWildcardExtendsSuper(result, position)) {
       return;
     }
 

@@ -36,7 +36,7 @@
                   <text resource-bundle="messages/DebuggerBundle" key="breakpoint.properties.panel.option.instance.filters"/>
                 </properties>
               </component>
-              <grid id="5231f" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+              <grid id="5231f" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -44,17 +44,10 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <hspacer id="eeee7">
-                    <constraints>
-                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false">
-                        <preferred-size width="15" height="-1"/>
-                      </grid>
-                    </constraints>
-                  </hspacer>
                   <xy id="28068" binding="myInstanceFiltersFieldPanel" layout-manager="XYLayout" hgap="-1" vgap="-1">
                     <margin top="0" left="0" bottom="0" right="0"/>
                     <constraints>
-                      <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties/>
                     <border type="none"/>
@@ -81,7 +74,7 @@
                   <text resource-bundle="messages/DebuggerBundle" key="breakpoint.properties.panel.option.class.filters"/>
                 </properties>
               </component>
-              <grid id="9bef6" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+              <grid id="9bef6" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -89,16 +82,9 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <hspacer id="ec2a">
-                    <constraints>
-                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false">
-                        <preferred-size width="15" height="-1"/>
-                      </grid>
-                    </constraints>
-                  </hspacer>
                   <component id="d2464" class="com.intellij.debugger.ui.breakpoints.ClassFiltersField" binding="myClassFiltersField" custom-create="true">
                     <constraints>
-                      <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties/>
                   </component>
@@ -123,7 +109,7 @@
                   <text resource-bundle="messages/DebuggerBundle" key="breakpoint.properties.panel.option.pass.count"/>
                 </properties>
               </component>
-              <grid id="71095" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+              <grid id="71095" binding="myPassCountFieldPanel" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -133,7 +119,7 @@
                 <children>
                   <component id="33fef" class="javax.swing.JTextField" binding="myPassCountField">
                     <constraints>
-                      <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
                         <preferred-size width="15" height="-1"/>
                       </grid>
                     </constraints>
@@ -142,13 +128,6 @@
                       <horizontalAlignment value="10"/>
                     </properties>
                   </component>
-                  <hspacer id="28e6f">
-                    <constraints>
-                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false">
-                        <preferred-size width="15" height="-1"/>
-                      </grid>
-                    </constraints>
-                  </hspacer>
                 </children>
               </grid>
             </children>
@@ -175,7 +154,7 @@
                   <text resource-bundle="messages/DebuggerBundle" key="breakpoint.properties.panel.option.catch.class.filters"/>
                 </properties>
               </component>
-              <grid id="63496" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+              <grid id="63496" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -183,16 +162,9 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <hspacer id="225e2">
-                    <constraints>
-                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false">
-                        <preferred-size width="15" height="-1"/>
-                      </grid>
-                    </constraints>
-                  </hspacer>
                   <component id="73a6e" class="com.intellij.debugger.ui.breakpoints.ClassFiltersField" binding="myCatchClassFilters" custom-create="true">
                     <constraints>
-                      <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties/>
                   </component>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,10 +34,7 @@ import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.extractclass.usageInfo.*;
@@ -602,7 +600,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     if (myGenerateAccessors) {
       getter = GenerateMembersUtil.suggestGetterName(field);
     } else {
-      final PsiMethod fieldGetter = PropertyUtil.findPropertyGetter(sourceClass, field.getName(), false, false);
+      final PsiMethod fieldGetter = PropertyUtilBase.findPropertyGetter(sourceClass, field.getName(), false, false);
       if (fieldGetter != null && isInMovedElement(fieldGetter)) {
         getter = fieldGetter.getName();
       }
@@ -612,7 +610,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     if (myGenerateAccessors) {
       setter = GenerateMembersUtil.suggestSetterName(field);
     } else {
-      final PsiMethod fieldSetter = PropertyUtil.findPropertySetter(sourceClass, field.getName(), false, false);
+      final PsiMethod fieldSetter = PropertyUtilBase.findPropertySetter(sourceClass, field.getName(), false, false);
       if (fieldSetter != null && isInMovedElement(fieldSetter)) {
         setter = fieldSetter.getName();
       }
@@ -707,7 +705,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       if (myMoveDestination != null) {
         directory = myMoveDestination.getTargetDirectory(containingDirectory);
       } else {
-        final Module module = ModuleUtil.findModuleForPsiElement(containingFile);
+        final Module module = ModuleUtilCore.findModuleForPsiElement(containingFile);
         assert module != null;
         directory = PackageUtil.findOrCreateDirectoryForPackage(module, newPackageName, containingDirectory, false, true);
       }

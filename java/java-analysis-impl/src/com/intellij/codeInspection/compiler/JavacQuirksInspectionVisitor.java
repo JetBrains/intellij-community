@@ -182,6 +182,10 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
       final String message = JavaErrorMessages.message("underscore.identifier.warn");
       myHolder.registerProblem(identifier, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
     }
+    else if (identifier.getParent() instanceof PsiClass && "var".equals(identifier.getText()) &&
+             myLanguageLevel.isLessThan(LanguageLevel.JDK_X)) {
+      myHolder.registerProblem(identifier, "Usage of 'var' as class name might not be supported in releases after java 9");
+    }
   }
 
   @Override

@@ -1,3 +1,5 @@
+import de.undercouch.gradle.tasks.download.DownloadAction
+
 /*
  * Copyright 2000-2016 JetBrains s.r.o.
  *
@@ -49,6 +51,47 @@ catch (UnknownHostException e) {
   logger.info('repo.labs.intellij.net is not reachable', e)
   project.ext.inJetBrainsNetwork = false
 }
+
+class DownloadActionWrapper extends DownloadAction {
+  DownloadActionWrapper(Project project) {
+    super(project)
+  }
+
+  @Override
+  void execute() throws IOException {
+    def destFile = getDest()
+    if (destFile == null || !destFile.exists()) {
+      def tempFile = new File(destFile.absolutePath + ".part")
+      dest(tempFile)
+      overwrite(true)
+      onlyIfNewer(false)
+      super.execute()
+      dest(destFile)
+      tempFile.renameTo(destFile)
+    }
+  }
+}
+
+class DownloadWrapperExtension implements Configurable<DownloadWrapperExtension> {
+  Project project
+
+  DownloadWrapperExtension(Project project) {
+    this.project = project
+  }
+
+  @Override
+  DownloadWrapperExtension configure(Closure cl) {
+    DownloadActionWrapper da = ConfigureUtil.configure(cl, new DownloadActionWrapper(project))
+    try {
+      da.execute()
+    }
+    catch (IOException e) {
+      throw new IllegalStateException("Could not download file", e)
+    }
+    return this
+  }
+}
+project.extensions.create('downloadWrapper', DownloadWrapperExtension.class, project)
 
 apply from: 'setupJdk.gradle'
 apply from: 'setupJbre.gradle'

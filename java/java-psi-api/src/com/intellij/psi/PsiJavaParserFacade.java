@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +68,7 @@ public interface PsiJavaParserFacade {
    * @throws IncorrectOperationException if the text is not a valid class body.
    */
   @NotNull
-  PsiClass createClassFromText(@NotNull @NonNls String text, @Nullable PsiElement context) throws IncorrectOperationException;
+  PsiClass createClassFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates a Java field from the specified text.
@@ -80,7 +79,7 @@ public interface PsiJavaParserFacade {
    * @throws IncorrectOperationException if the text is not a valid field body.
    */
   @NotNull
-  PsiField createFieldFromText(@NotNull @NonNls String text, @Nullable PsiElement context) throws IncorrectOperationException;
+  PsiField createFieldFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates a Java method from the specified text with the specified language level.
@@ -92,7 +91,7 @@ public interface PsiJavaParserFacade {
    * @throws IncorrectOperationException if the text is not a valid method body.
    */
   @NotNull
-  PsiMethod createMethodFromText(@NotNull @NonNls String text, @Nullable PsiElement context, LanguageLevel languageLevel) throws IncorrectOperationException;
+  PsiMethod createMethodFromText(@NotNull String text, @Nullable PsiElement context, LanguageLevel languageLevel) throws IncorrectOperationException;
 
   /**
    * Creates a Java method from the specified text.
@@ -103,10 +102,10 @@ public interface PsiJavaParserFacade {
    * @throws IncorrectOperationException if the text is not a valid method body.
    */
   @NotNull
-  PsiMethod createMethodFromText(@NotNull @NonNls String text, @Nullable PsiElement context) throws IncorrectOperationException;
+  PsiMethod createMethodFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException;
 
   /**
-   * Creates a Java parameter from the specified text.
+   * Creates a Java method parameter from the specified text.
    *
    * @param text    the text of the parameter to create.
    * @param context the PSI element used as context for resolving references from the parameter.
@@ -114,7 +113,7 @@ public interface PsiJavaParserFacade {
    * @throws IncorrectOperationException if the text is not a valid parameter body.
    */
   @NotNull
-  PsiParameter createParameterFromText(@NotNull @NonNls String text, @Nullable PsiElement context) throws IncorrectOperationException;
+  PsiParameter createParameterFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates a Java try-resource from the specified text.
@@ -137,7 +136,7 @@ public interface PsiJavaParserFacade {
    * @throws IncorrectOperationException if the text does not specify a valid type.
    */
   @NotNull
-  PsiType createTypeFromText(@NotNull @NonNls String text, @Nullable PsiElement context) throws IncorrectOperationException;
+  PsiType createTypeFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates a Java type element from the specified text.
@@ -149,7 +148,7 @@ public interface PsiJavaParserFacade {
    * @throws IncorrectOperationException if the text does not specify a valid type.
    */
   @NotNull
-  PsiTypeElement createTypeElementFromText(@NotNull @NonNls String text, @Nullable PsiElement context) throws IncorrectOperationException;
+  PsiTypeElement createTypeElementFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates a Java code reference from the specified text.
@@ -161,7 +160,7 @@ public interface PsiJavaParserFacade {
    * @throws IncorrectOperationException if the text does not specify a valid type.
    */
   @NotNull
-  PsiJavaCodeReferenceElement createReferenceFromText(@NotNull @NonNls String text, @Nullable PsiElement context) throws IncorrectOperationException;
+  PsiJavaCodeReferenceElement createReferenceFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates a Java code block from the specified text.
@@ -172,7 +171,7 @@ public interface PsiJavaParserFacade {
    * @throws IncorrectOperationException if the text does not specify a valid code block.
    */
   @NotNull
-  PsiCodeBlock createCodeBlockFromText(@NotNull @NonNls String text, @Nullable PsiElement context) throws IncorrectOperationException;
+  PsiCodeBlock createCodeBlockFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates a Java statement from the specified text.
@@ -183,7 +182,7 @@ public interface PsiJavaParserFacade {
    * @throws IncorrectOperationException if the text does not specify a valid statement.
    */
   @NotNull
-  PsiStatement createStatementFromText(@NotNull @NonNls String text, @Nullable PsiElement context) throws IncorrectOperationException;
+  PsiStatement createStatementFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates a Java expression from the specified text.
@@ -194,7 +193,7 @@ public interface PsiJavaParserFacade {
    * @throws IncorrectOperationException if the text does not specify a valid expression.
    */
   @NotNull
-  PsiExpression createExpressionFromText(@NotNull @NonNls String text, @Nullable PsiElement context) throws IncorrectOperationException;
+  PsiExpression createExpressionFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates a Java comment from the specified text.
@@ -216,7 +215,7 @@ public interface PsiJavaParserFacade {
    * @throws IncorrectOperationException if the text does not specify a valid type parameter.
    */
   @NotNull
-  PsiTypeParameter createTypeParameterFromText(@NotNull @NonNls String text, @Nullable PsiElement context) throws IncorrectOperationException;
+  PsiTypeParameter createTypeParameterFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates an annotation from the specified text.
@@ -227,7 +226,7 @@ public interface PsiJavaParserFacade {
    * @throws IncorrectOperationException if the text does not specify a valid annotation.
    */
   @NotNull
-  PsiAnnotation createAnnotationFromText(@NotNull @NonNls String annotationText, @Nullable PsiElement context) throws IncorrectOperationException;
+  PsiAnnotation createAnnotationFromText(@NotNull String annotationText, @Nullable PsiElement context) throws IncorrectOperationException;
 
   @NotNull
   PsiEnumConstant createEnumConstantFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException;

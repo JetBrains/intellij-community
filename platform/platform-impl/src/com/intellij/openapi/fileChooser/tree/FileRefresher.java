@@ -16,6 +16,7 @@
 package com.intellij.openapi.fileChooser.tree;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -35,6 +36,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * @author Sergey.Malenkov
  */
 public class FileRefresher implements Disposable {
+  private static final Logger LOG = Logger.getInstance(FileRefresher.class);
   private final ScheduledExecutorService executor = createBoundedScheduledExecutorService("FileRefresher", 1);
   private final boolean recursive;
   private final long delay;
@@ -97,6 +99,7 @@ public class FileRefresher implements Disposable {
    */
   public final void register(VirtualFile file) {
     if (file != null && !disposed.get()) {
+      LOG.debug("add file to watch recursive=", recursive, ": ", file);
       Object watcher = watch(file, recursive);
       if (watcher != null) {
         synchronized (watchers) {
@@ -114,6 +117,7 @@ public class FileRefresher implements Disposable {
    * Pauses files refreshing.
    */
   public final void pause() {
+    LOG.debug("pause");
     paused.set(true);
   }
 
@@ -122,19 +126,23 @@ public class FileRefresher implements Disposable {
    * If files are refreshing now, it will be restarted when finished.
    */
   public final void start() {
+    LOG.debug("start");
     paused.set(false);
     launch();
   }
 
   private void schedule() {
+    LOG.debug("schedule");
     if (disposed.get() || scheduled.getAndSet(true)) return;
     synchronized (files) {
       if (session != null || files.isEmpty()) return;
     }
+    LOG.debug("scheduled for ", delay, " seconds");
     executor.schedule(this::launch, delay, SECONDS);
   }
 
   private void launch() {
+    LOG.debug("launch");
     if (disposed.get() || launched.getAndSet(true)) return;
     RefreshSession session;
     synchronized (files) {
@@ -145,10 +153,12 @@ public class FileRefresher implements Disposable {
     }
     scheduled.set(false);
     launched.set(false);
+    LOG.debug("launched at ", System.currentTimeMillis());
     session.launch();
   }
 
   private void finish() {
+    LOG.debug("finished at ", System.currentTimeMillis());
     synchronized (files) {
       session = null;
     }
@@ -162,6 +172,7 @@ public class FileRefresher implements Disposable {
 
   @Override
   public void dispose() {
+    LOG.debug("dispose");
     if (!disposed.getAndSet(true)) {
       synchronized (watchers) {
         watchers.forEach(this::unwatch);

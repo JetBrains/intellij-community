@@ -112,8 +112,9 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
         String shortName = annotator.getPairedBatchInspectionShortName();
         if (shortName != null) {
           HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
-          LOG.assertTrue(key != null, "Paired tool '" + shortName + "' not found for external annotator: " + annotator);
-          if (!profile.isToolEnabled(key, myFile)) continue;
+          LOG.assertTrue(key != null || ApplicationManager.getApplication().isUnitTestMode(),
+                         "Paired tool '" + shortName + "' not found for external annotator: " + annotator);
+          if (key == null || !profile.isToolEnabled(key, myFile)) continue; //test should register corresponding paired tool for annotator to run
         }
 
         Object collectedInfo = editor != null ? annotator.collectInformation(psiRoot, editor, errorFound) : annotator.collectInformation(psiRoot);

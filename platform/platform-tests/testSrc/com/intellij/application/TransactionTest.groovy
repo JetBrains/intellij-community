@@ -47,6 +47,10 @@ class TransactionTest extends LightPlatformTestCase {
 
   @Override
   protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
+    if (app) {
+      guard.assertWriteActionAllowed()
+    }
+
     SwingUtilities.invokeLater(runnable)
     UIUtil.dispatchAllInvocationEvents()
   }
@@ -55,13 +59,11 @@ class TransactionTest extends LightPlatformTestCase {
   protected void setUp() throws Exception {
     super.setUp()
     assert LaterInvocator.currentModalityState == ModalityState.NON_MODAL
-    TransactionGuardImpl.testingTransactions = true
   }
 
   @Override
   protected void tearDown() throws Exception {
     UIUtil.dispatchAllInvocationEvents()
-    TransactionGuardImpl.testingTransactions = false
     log.clear()
     LaterInvocator.leaveAllModals()
     super.tearDown()

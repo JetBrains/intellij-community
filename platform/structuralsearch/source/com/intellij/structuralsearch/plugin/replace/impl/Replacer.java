@@ -116,7 +116,7 @@ public class Replacer {
         lastElement = elements[elements.length-1];
         parent = firstElement.getParent();
 
-        matchOptions.setScope(new LocalSearchScope(parent));
+        matchOptions.setScope(new LocalSearchScope(elements));
       } else {
         parent = ((LocalSearchScope)options.getMatchOptions().getScope()).getScope()[0];
         firstElement = parent.getFirstChild();
@@ -133,10 +133,8 @@ public class Replacer {
         resultPtrList.add(buildReplacement(result));
       }
 
-      sink.getMatches().clear();
-
       int startOffset = firstElement.getTextRange().getStartOffset();
-      int endOffset = filePattern ?0: parent.getTextLength() - (lastElement.getTextRange().getEndOffset());
+      int endOffset = filePattern ? 0 : parent.getTextLength() - lastElement.getTextRange().getEndOffset();
 
       // get nodes from text may contain
       PsiElement prevSibling = firstElement.getPrevSibling();

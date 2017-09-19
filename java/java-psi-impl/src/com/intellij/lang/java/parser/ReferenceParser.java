@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
@@ -39,6 +40,7 @@ public class ReferenceParser {
   public static final int DISJUNCTIONS = 0x10;
   public static final int CONJUNCTIONS = 0x20;
   public static final int INCOMPLETE_ANNO = 0x40;
+  public static final int VAR_TYPE = 0x80;
 
   public static class TypeInfo {
     public boolean isPrimitive;
@@ -94,12 +96,22 @@ public class ReferenceParser {
   private TypeInfo parseTypeInfo(PsiBuilder builder, int flags, boolean badWildcard) {
     if (builder.getTokenType() == null) return null;
 
-    final TypeInfo typeInfo = new TypeInfo();
+    TypeInfo typeInfo = new TypeInfo();
 
     PsiBuilder.Marker type = builder.mark();
     PsiBuilder.Marker anno = myParser.getDeclarationParser().parseAnnotations(builder);
 
-    final IElementType tokenType = builder.getTokenType();
+    IElementType tokenType = builder.getTokenType();
+    if (tokenType == JavaTokenType.IDENTIFIER &&
+        isSet(flags, VAR_TYPE) &&
+        PsiKeyword.VAR.equals(builder.getTokenText()) &&
+        getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_X)) {
+      builder.remapCurrentToken(tokenType = JavaTokenType.VAR_KEYWORD);
+    }
+    else if (tokenType == JavaTokenType.VAR_KEYWORD && !isSet(flags, VAR_TYPE)) {
+      builder.remapCurrentToken(tokenType = JavaTokenType.IDENTIFIER);
+    }
+
     if (expect(builder, ElementType.PRIMITIVE_TYPE_BIT_SET)) {
       typeInfo.isPrimitive = true;
     }
@@ -116,6 +128,12 @@ public class ReferenceParser {
     }
     else if (tokenType == JavaTokenType.IDENTIFIER) {
       parseJavaCodeReference(builder, isSet(flags, EAT_LAST_DOT), true, false, false, false, isSet(flags, DIAMONDS), typeInfo);
+    }
+    else if (tokenType == JavaTokenType.VAR_KEYWORD) {
+      builder.advanceLexer();
+      type.done(JavaElementType.TYPE);
+      typeInfo.marker = type;
+      return typeInfo;
     }
     else if (isSet(flags, DIAMONDS) && tokenType == JavaTokenType.GT) {
       if (anno == null) {
@@ -144,7 +162,7 @@ public class ReferenceParser {
       type.done(JavaElementType.TYPE);
       myParser.getDeclarationParser().parseAnnotations(builder);
 
-      final PsiBuilder.Marker bracket = builder.mark();
+      PsiBuilder.Marker bracket = builder.mark();
       if (!expect(builder, JavaTokenType.LBRACKET)) {
         bracket.drop();
         break;

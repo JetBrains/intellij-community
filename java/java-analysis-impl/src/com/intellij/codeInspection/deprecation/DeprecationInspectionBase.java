@@ -19,9 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
-import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,7 +29,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.PsiInlineDocTag;
 import com.intellij.psi.util.*;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
+import one.util.streamex.MoreCollectors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -275,7 +280,16 @@ abstract class DeprecationInspectionBase extends BaseJavaBatchLocalInspectionToo
     String description = JavaErrorMessages.message(forRemoval ? "marked.for.removal.symbol" : "deprecated.symbol",
                                                    HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY));
 
-    holder.registerProblem(elementToHighlight, getDescription(description, forRemoval, highlightType), highlightType, rangeInElement);
+    LocalQuickFix quickFix = null;
+    PsiMethodCallExpression methodCall = getMethodCall(elementToHighlight);
+    if (refElement instanceof PsiMethod && methodCall != null) {
+      PsiMethod replacement = findReplacementInJavaDoc((PsiMethod)refElement, methodCall);
+      if (replacement != null) {
+        quickFix = new ReplaceMethodCallFix((PsiMethodCallExpression)elementToHighlight.getParent().getParent(), replacement);
+      }
+    }
+
+    holder.registerProblem(elementToHighlight, getDescription(description, forRemoval, highlightType), highlightType, rangeInElement, quickFix);
   }
 
   private static boolean isMarkedForRemoval(PsiModifierListOwner element, boolean forRemoval) {
@@ -325,5 +339,81 @@ abstract class DeprecationInspectionBase extends BaseJavaBatchLocalInspectionToo
       }
     }
     return description;
+  }
+
+  private static PsiMethod findReplacementInJavaDoc(@NotNull PsiMethod method, @NotNull PsiMethodCallExpression call) {
+    if (method instanceof PsiConstructorCall) return null;
+    PsiDocComment doc = method.getDocComment();
+    if (doc == null) return null;
+
+    PsiDocTag[] docTags = PsiTreeUtil.getChildrenOfType(doc, PsiInlineDocTag.class);
+    PsiDocTag[] tags = doc.getTags();
+    PsiDocTag[] allTags = docTags == null ? tags : ArrayUtil.mergeArrays(docTags, tags);
+    if (allTags.length == 0) return null;
+    PsiMethod tagMethod = (PsiMethod)Arrays
+      .stream(allTags)
+      .filter(t -> {
+        String name = t.getName();
+        return "link".equals(name) || "see".equals(name);
+      })
+      .collect(MoreCollectors.onlyOne())
+      .map(tag -> tag.getValueElement())
+      .map(value -> value.getReference())
+      .map(reference -> reference.resolve())
+      .filter(resolved -> resolved instanceof PsiMethod)
+      .orElse(null);
+    return tagMethod == null || tagMethod.isDeprecated() || tagMethod.isEquivalentTo(method) || !areReplaceable(method, tagMethod, call)
+           ? null
+           : tagMethod;
+  }
+
+  private static boolean areReplaceable(@NotNull PsiMethod initial,
+                                        @NotNull PsiMethod suggestedReplacement,
+                                        @NotNull PsiMethodCallExpression call) {
+    if (!PsiResolveHelper.SERVICE.getInstance(call.getProject()).isAccessible(suggestedReplacement, call, null)) {
+      return false;
+    }
+
+    boolean isInitialStatic = initial.hasModifierProperty(PsiModifier.STATIC);
+    boolean isSuggestedStatic = suggestedReplacement.hasModifierProperty(PsiModifier.STATIC);
+    if (isInitialStatic && !isSuggestedStatic) {
+      return false;
+    }
+    if (!isInitialStatic && !isSuggestedStatic && !InheritanceUtil.isInheritorOrSelf(getQualifierClass(call), suggestedReplacement.getContainingClass(), true)) {
+      return false;
+    }
+
+    String qualifierText;
+    if (isInitialStatic) {
+      qualifierText = ObjectUtils.notNull(suggestedReplacement.getContainingClass()).getQualifiedName() + ".";
+    } else {
+      PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
+      qualifierText = qualifierExpression == null ? "" : (qualifierExpression.getText() + ".");
+    }
+
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(initial.getProject());
+    PsiExpressionList arguments = call.getArgumentList();
+    PsiMethodCallExpression suggestedCall = (PsiMethodCallExpression)elementFactory
+      .createExpressionFromText(qualifierText + suggestedReplacement.getName() + arguments.getText(), call);
+
+    MethodCandidateInfo result = ObjectUtils.tryCast(suggestedCall.resolveMethodGenerics(), MethodCandidateInfo.class);
+    return result != null && result.isApplicable();
+  }
+
+  @Nullable
+  private static PsiClass getQualifierClass(@NotNull PsiMethodCallExpression call) {
+    PsiExpression expression = call.getMethodExpression().getQualifierExpression();
+    if (expression == null) {
+      return RefactoringChangeUtil.getThisClass(call);
+    }
+    return PsiUtil.resolveClassInType(expression.getType());
+  }
+
+  @Nullable
+  private static PsiMethodCallExpression getMethodCall(@NotNull PsiElement element) {
+    if (!(element instanceof PsiIdentifier)) return null;
+    PsiElement parent = element.getParent();
+    if (!(parent instanceof PsiReferenceExpression)) return null;
+    return ObjectUtils.tryCast(parent.getParent(), PsiMethodCallExpression.class);
   }
 }

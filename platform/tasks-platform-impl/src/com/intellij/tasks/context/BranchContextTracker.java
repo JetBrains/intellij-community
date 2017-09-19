@@ -18,6 +18,7 @@ public class BranchContextTracker implements BranchChangeListener {
 
   private final WorkingContextManager myContextManager;
   private final Project myProject;
+  private String myLastBranch;
 
   private BranchContextTracker(Project project) {
     myProject = project;
@@ -27,6 +28,7 @@ public class BranchContextTracker implements BranchChangeListener {
 
   @Override
   public void branchWillChange(@NotNull String branchName) {
+    myLastBranch = branchName;
     myContextManager.saveContext(getContextName(branchName), null);
   }
 
@@ -40,12 +42,20 @@ public class BranchContextTracker implements BranchChangeListener {
 
     myContextManager.clearContext();
     myContextManager.loadContext(contextName);
-    NOTIFICATION.createNotification(null, null, "Branch context has been loaded<br>" +
-                                                "<a href='off'>Turn off the feature</a>", NotificationType.INFORMATION, (notification, event) -> {
+    String content = "User interface layout has been restored to what it was in branch ‘" + branchName + "'<br>";
+    if (myLastBranch != null && myContextManager.hasContext(getContextName(myLastBranch))) {
+      content += "<a href='restore'>Rollback to '" + myLastBranch + "' layout</a>&nbsp;&nbsp;";
+    }
+    content += "<a href='configure'>Configure</a>";
+
+    NOTIFICATION.createNotification(null, null, content, NotificationType.INFORMATION, (notification, event) -> {
       if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
-      if ("off".equals(event.getDescription())) {
-        vcsConfiguration.RELOAD_CONTEXT = false;
-        notification.expire();
+      if ("configure".equals(event.getDescription())) {
+        new ConfigureBranchContextDialog(myProject).show();
+      }
+      else if ("restore".equals(event.getDescription())) {
+        myContextManager.clearContext();
+        myContextManager.loadContext(getContextName(myLastBranch));
       }
     }).notify(myProject);
   }

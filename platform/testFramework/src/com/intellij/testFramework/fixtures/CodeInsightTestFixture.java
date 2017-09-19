@@ -390,12 +390,12 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   void testCompletion(@TestDataFile @NotNull String fileBefore,
                       @NotNull @TestDataFile String fileAfter,
-                      @NotNull String... additionalFiles);
+                      @TestDataFile @NotNull String... additionalFiles);
 
   void testCompletionTyping(@NotNull @TestDataFile String fileBefore,
                             @NotNull String toType,
                             @NotNull @TestDataFile String fileAfter,
-                            @NotNull String... additionalFiles);
+                            @TestDataFile @NotNull String... additionalFiles);
 
   /**
    * Runs basic completion in caret position in fileBefore.
@@ -416,7 +416,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   void testRename(@NotNull @TestDataFile String fileBefore,
                   @NotNull @TestDataFile String fileAfter,
                   @NotNull String newName,
-                  @NotNull String... additionalFiles);
+                  @TestDataFile @NotNull String... additionalFiles);
 
   void testRename(@NotNull @TestDataFile String fileAfter, @NotNull String newName);
 
@@ -429,7 +429,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @NotNull
   RangeHighlighter[] testHighlightUsages(@NotNull @TestDataFile String... files);
 
-  void moveFile(@NotNull @TestDataFile String filePath, @NotNull String to, @NotNull String... additionalFiles);
+  void moveFile(@NotNull @TestDataFile String filePath, @NotNull String to, @TestDataFile @NotNull String... additionalFiles);
 
   /**
    * Returns gutter renderer at the caret position.

@@ -15,6 +15,7 @@
  */
 package com.intellij.build.events;
 
+import com.intellij.execution.filters.Filter;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
@@ -34,6 +35,9 @@ import java.util.function.Supplier;
 public interface StartBuildEvent extends StartEvent {
   String getBuildTitle();
 
+  @NotNull
+  String getWorkingDir();
+
   @Nullable
   ProcessHandler getProcessHandler();
 
@@ -42,6 +46,9 @@ public interface StartBuildEvent extends StartEvent {
 
   @NotNull
   AnAction[] getRestartActions();
+
+  @NotNull
+  Filter[] getExecutionFilters();
 
   @Nullable
   Supplier<RunContentDescriptor> getContentDescriptorSupplier();

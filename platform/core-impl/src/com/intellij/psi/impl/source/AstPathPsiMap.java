@@ -28,14 +28,19 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.Collections;
-import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Stream;
 
 /**
  * A weak cache for all instantiated stub-based PSI to allow {@link CompositeElement#getPsi()} return it when AST is reloaded.<p/>
+ * 
+ * All methods should be called under an external lock (view provider's PsiLock), except for 
+ * ({@link #getCachedPsi(AstPath)} which can be called without lock.
+ * 
  * @author peter
  */
 class AstPathPsiMap {
@@ -45,6 +50,7 @@ class AstPathPsiMap {
    * Otherwise the files end up retaining lots of maps with all-gc-ed stuff inside, but the maps are still very large.
    */
   private final ConcurrentMap<AstPath, MyReference> myMap = ContainerUtil.newConcurrentMap();
+  private volatile Boolean myHasUnbindableCachedPsi = null;
 
   private static final Key<MyReferenceQueue> STUB_PSI_REFS = Key.create("STUB_PSI_REFS");
   private final MyReferenceQueue myQueue;
@@ -56,27 +62,23 @@ class AstPathPsiMap {
 
   void invalidatePsi() {
     myQueue.cleanupStaleReferences();
-    for (MyReference reference : myMap.values()) {
-      StubBasedPsiElementBase<?> psi = SoftReference.dereference(reference);
-      if (psi != null) {
-        DebugUtil.onInvalidated(psi);
-        psi.setSubstrateRef(SubstrateRef.createInvalidRef(psi));
-      }
-    }
+    getAllCachedPsi().forEach(psi -> {
+      DebugUtil.onInvalidated(psi);
+      psi.setSubstrateRef(SubstrateRef.createInvalidRef(psi));
+    });
     myMap.clear();
+    myHasUnbindableCachedPsi = false;
   }
 
   void switchToStrongRefs() {
     myQueue.cleanupStaleReferences();
-    for (MyReference reference : myMap.values()) {
-      StubBasedPsiElementBase<?> psi = SoftReference.dereference(reference);
-      if (psi != null) {
-        CompositeElement node = (CompositeElement)psi.getNode();
-        node.setPsi(psi);
-        psi.setSubstrateRef(SubstrateRef.createAstStrongRef(node));
-      }
-    }
+    getAllCachedPsi().forEach(psi -> {
+      CompositeElement node = (CompositeElement)psi.getNode();
+      node.setPsi(psi);
+      psi.setSubstrateRef(SubstrateRef.createAstStrongRef(node));
+    });
     myMap.clear();
+    myHasUnbindableCachedPsi = false;
   }
 
   @Nullable
@@ -91,18 +93,34 @@ class AstPathPsiMap {
     // otherwise another thread could invoke StubRef.getNode and fail since file's AST isn't set yet
     psi.setSubstrateRef(key);
     myMap.put(key, new MyReference(psi, key, myQueue));
+    clearStubIndexCache();
     return psi;
   }
 
-  List<StubBasedPsiElementBase<?>> getAllCachedPsi() {
+  Stream<? extends StubBasedPsiElementBase<?>> getAllCachedPsi() {
     myQueue.cleanupStaleReferences();
-    if (myMap.isEmpty()) return Collections.emptyList();
+    if (myMap.isEmpty()) return Stream.empty();
 
-    List<StubBasedPsiElementBase<?>> result = ContainerUtil.newArrayList();
-    for (MyReference reference : myMap.values()) {
-      ContainerUtil.addIfNotNull(result, reference.get());
+    return myMap.values().stream().map(Reference::get).filter(Objects::nonNull);
+  }
+
+  boolean hasUnbindableCachedPsi() {
+    Boolean answer = myHasUnbindableCachedPsi;
+    if (answer == null) {
+      myHasUnbindableCachedPsi = answer = calcHasUnbindableCachedPsi();
     }
-    return result;
+    return answer;
+  }
+
+  private boolean calcHasUnbindableCachedPsi() {
+    myQueue.cleanupStaleReferences();
+    if (myMap.isEmpty()) return false;
+
+    return getAllCachedPsi().anyMatch(e -> e.getStubIndex() < 0);
+  }
+
+  void clearStubIndexCache() {
+    myHasUnbindableCachedPsi = null;
   }
 
   private static class MyReference extends WeakReference<StubBasedPsiElementBase<?>> {
@@ -125,7 +143,9 @@ class AstPathPsiMap {
         if (reference == null) break;
 
         AstPath key = reference.pathRef;
-        key.getContainingFile().getRefToPsi().myMap.remove(key, reference);
+        AstPathPsiMap refToPsi = key.getContainingFile().getRefToPsi();
+        refToPsi.myMap.remove(key, reference);
+        refToPsi.clearStubIndexCache();
       }
     }
 

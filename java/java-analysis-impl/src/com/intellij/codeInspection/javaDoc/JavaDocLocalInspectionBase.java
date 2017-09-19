@@ -24,7 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.*;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -297,7 +297,7 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
     if (IGNORE_DEPRECATED && isDeprecated(psiMethod)) {
       return null;
     }
-    if (myIgnoreSimpleAccessors && PropertyUtil.isSimplePropertyAccessor(psiMethod)) {
+    if (myIgnoreSimpleAccessors && PropertyUtilBase.isSimplePropertyAccessor(psiMethod)) {
       return null;
     }
 

@@ -175,6 +175,12 @@ public class ParameterInfoComponent extends JPanel {
     }
 
     @Override
+    public void setupRawUIComponentPresentation(String htmlText) {
+      myPanels[i].setup(htmlText, getDefaultParameterColor());
+      myPanels[i].setBorder(isLastParameterOwner() ? LAST_ITEM_BORDER : BOTTOM_BORDER);
+    }
+
+    @Override
     public String setupUIComponentPresentation(final String[] texts, final EnumSet<Flag>[] flags, final Color background) {
       final String resultedText = myPanels[i].setup(texts, myEscapeFunction, flags, background);
       myPanels[i].setBorder(isLastParameterOwner() ? LAST_ITEM_BORDER : BOTTOM_BORDER);
@@ -301,6 +307,16 @@ public class ParameterInfoComponent extends JPanel {
     @Override
     public String toString() {
       return Stream.of(myOneLineComponents).filter(Objects::nonNull).map(Object::toString).collect(Collectors.joining());
+    }
+
+    private void setup(String htmlText, Color background) {
+      removeAll();
+      myOneLineComponents = new OneLineComponent[1];
+      myOneLineComponents[0] = new OneLineComponent();
+      myOneLineComponents[0].doSetup(htmlText, background);
+      add(myOneLineComponents[0], new GridBagConstraints(0,0,1,1,1,0,
+                                                         GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                                         new Insets(0,0,0,0),0,0));
     }
 
     private String setup(String text,
@@ -447,18 +463,22 @@ public class ParameterInfoComponent extends JPanel {
     }
 
     private String setup(@NotNull String text, @NotNull Map<TextRange, ParameterInfoUIContextEx.Flag> flagsMap, @NotNull Color background) {
+      if (flagsMap.isEmpty()) {
+        return doSetup(text, background);
+      }
+      else {
+        String labelText = buildLabelText(text, flagsMap);
+        return doSetup(labelText, background);
+      }
+    }
+
+    private String doSetup(@NotNull String text, @NotNull Color background) {
       myLabel.setBackground(background);
       setBackground(background);
 
       myLabel.setForeground(JBColor.foreground());
 
-      if (flagsMap.isEmpty()) {
-        myLabel.setText(XmlStringUtil.wrapInHtml(text));
-      }
-      else {
-        String labelText = buildLabelText(text, flagsMap);
-        myLabel.setText(labelText);
-      }
+      myLabel.setText(XmlStringUtil.wrapInHtml(text));
 
       //IDEA-95904 Darcula parameter info pop-up colors hard to read
       if (UIUtil.isUnderDarcula()) {
@@ -466,6 +486,7 @@ public class ParameterInfoComponent extends JPanel {
       }
       return myLabel.getText();
     }
+
     private String buildLabelText(@NotNull final String text, @NotNull final Map<TextRange, ParameterInfoUIContextEx.Flag> flagsMap) {
       final StringBuilder labelText = new StringBuilder(text);
       final String disabledTag = FLAG_TO_TAG.get(ParameterInfoUIContextEx.Flag.DISABLE);
@@ -510,7 +531,7 @@ public class ParameterInfoComponent extends JPanel {
         faultMap.put(highlightRange.getEndOffset(), endTag.length());
 
       }
-      return XmlStringUtil.wrapInHtml(labelText);
+      return labelText.toString();
     }
 
     private String getTag(@NotNull final String tagValue) {

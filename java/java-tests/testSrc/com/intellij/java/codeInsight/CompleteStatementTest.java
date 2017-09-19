@@ -84,6 +84,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testForIncrementExpressionAndBody() { doTest(); }
   public void testEmptyBeforeReturn() { doTest(); }
   public void testIf() { doTest(); }
+  public void testIfWithoutParentheses() { doTest(); }
   public void testBeforeStatement() { doTest(); }
   public void testTry1() { doTest(); }
   public void testInsideResourceVariable() { doTest(); }

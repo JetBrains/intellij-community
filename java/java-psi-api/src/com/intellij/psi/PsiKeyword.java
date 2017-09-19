@@ -84,4 +84,6 @@ public interface PsiKeyword extends PsiJavaToken {
   String TRANSITIVE = "transitive";
   String TO = "to";
   String WITH = "with";
+
+  String VAR = "var";
 }

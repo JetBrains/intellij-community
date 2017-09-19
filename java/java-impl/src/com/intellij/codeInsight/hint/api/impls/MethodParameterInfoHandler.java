@@ -236,7 +236,10 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       return;
     }
 
-    int index = ParameterInfoUtils.getCurrentParameterIndex(o.getNode(), context.getOffset(), JavaTokenType.COMMA);
+    int offset = context.getOffset();
+    TextRange elRange = o.getTextRange();
+    int index = offset <= elRange.getStartOffset() || offset >= elRange.getEndOffset()
+                ? -1 : ParameterInfoUtils.getCurrentParameterIndex(o.getNode(), offset, JavaTokenType.COMMA);
     context.setCurrentParameter(index);
 
     Object[] candidates = context.getObjectsToView();
@@ -593,6 +596,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
             assert substitutor.isValid();
             paramType = substitutor.substitute(paramType);
           }
+          if (context.isSingleParameterInfo()) buffer.append("<b>");
           appendModifierList(buffer, param);
           buffer.append(paramType.getPresentableText(true));
           String name = param.getName();
@@ -600,9 +604,16 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
             buffer.append(" ");
             buffer.append(name);
           }
+          if (context.isSingleParameterInfo()) buffer.append("</b>");
         }
 
-        if (!context.isSingleParameterInfo()) {
+        if (context.isSingleParameterInfo()) {
+          String javaDoc = new JavaDocInfoGenerator(param.getProject(), param).generateMethodParameterJavaDoc();
+          if (javaDoc != null) {
+            buffer.append("&nbsp;&nbsp;<i>").append(javaDoc).append("</i>");
+          }
+        }
+        else {
           int endOffset = buffer.length();
 
           if (j < numParams - 1) {
@@ -625,15 +636,22 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       buffer.append(")");
     }
 
-    return context.setupUIComponentPresentation(
-      buffer.toString(),
-      highlightStartOffset,
-      highlightEndOffset,
-      !context.isUIComponentEnabled(),
-      method.isDeprecated() && !context.isSingleParameterInfo() && !context.isSingleOverload(),
-      false,
-      context.getDefaultParameterColor()
-    );
+    String text = buffer.toString();
+    if (context.isSingleParameterInfo()) {
+      context.setupRawUIComponentPresentation(text);
+      return text;
+    }
+    else {
+      return context.setupUIComponentPresentation(
+        text,
+        highlightStartOffset,
+        highlightEndOffset,
+        !context.isUIComponentEnabled(),
+        method.isDeprecated() && !context.isSingleParameterInfo() && !context.isSingleOverload(),
+        false,
+        context.getDefaultParameterColor()
+      );
+    }
   }
 
   private static void appendModifierList(@NotNull StringBuilder buffer, @NotNull PsiModifierListOwner owner) {

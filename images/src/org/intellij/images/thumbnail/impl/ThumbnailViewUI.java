@@ -656,6 +656,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     }
 
     private final class VFSListener implements VirtualFileListener {
+        @Override
         public void contentsChanged(@NotNull VirtualFileEvent event) {
             VirtualFile file = event.getFile();
             if (list != null) {
@@ -667,6 +668,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             }
         }
 
+        @Override
         public void fileDeleted(@NotNull VirtualFileEvent event) {
             VirtualFile file = event.getFile();
             VirtualFile root = thumbnailView.getRoot();
@@ -678,14 +680,17 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             }
         }
 
+        @Override
         public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
             refresh();
         }
 
+        @Override
         public void fileCreated(@NotNull VirtualFileEvent event) {
             refresh();
         }
 
+        @Override
         public void fileMoved(@NotNull VirtualFileMoveEvent event) {
             refresh();
         }

@@ -16,7 +16,9 @@
 package com.siyeh.ipp.modifiers;
 
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
@@ -71,6 +73,10 @@ abstract class ModifierIntention extends Intention implements LowPriorityAction 
       return;
     }
     final MultiMap<PsiElement, String> conflicts = checkForConflicts(member);
+    if (conflicts == null) {
+      //canceled by user
+      return;
+    }
     final Project project = member.getProject();
     final boolean conflictsDialogOK;
     if (conflicts.isEmpty()) {
@@ -142,27 +148,35 @@ abstract class ModifierIntention extends Intention implements LowPriorityAction 
       return MultiMap.emptyInstance();
     }
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
-    if (member instanceof PsiMethod) {
-      JavaChangeSignatureUsageProcessor.ConflictSearcher.searchForHierarchyConflicts((PsiMethod)member, conflicts, getModifier());
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      if (member instanceof PsiMethod) {
+        JavaChangeSignatureUsageProcessor.ConflictSearcher.searchForHierarchyConflicts((PsiMethod)member, conflicts, getModifier());
+      }
+      final PsiModifierList modifierListCopy = ReadAction.compute(() -> {
+        PsiModifierList copy = (PsiModifierList)modifierList.copy();
+        copy.setModifierProperty(getModifier(), true);
+        return copy;
+      });
+      
+      final Query<PsiReference> search = ReferencesSearch.search(member, member.getUseScope());
+      search.forEach(reference -> {
+        final PsiElement element = reference.getElement();
+        if (JavaResolveUtil.isAccessible(member, member.getContainingClass(), modifierListCopy, element, null, null)) {
+          return true;
+        }
+        final PsiElement context = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiField.class, PsiClass.class, PsiFile.class);
+        if (context == null) {
+          return true;
+        }
+        conflicts.putValue(element, RefactoringBundle.message("0.with.1.visibility.is.not.accessible.from.2",
+                                                              RefactoringUIUtil.getDescription(member, false),
+                                                              PsiBundle.visibilityPresentation(getModifier()),
+                                                              RefactoringUIUtil.getDescription(context, true)));
+        return true;
+      });
+    }, RefactoringBundle.message("detecting.possible.conflicts"), true, member.getProject())) {
+      return null;
     }
-    final PsiModifierList modifierListCopy = (PsiModifierList)modifierList.copy();
-    modifierListCopy.setModifierProperty(getModifier(), true);
-    final Query<PsiReference> search = ReferencesSearch.search(member, member.getUseScope());
-    search.forEach(reference -> {
-      final PsiElement element = reference.getElement();
-      if (JavaResolveUtil.isAccessible(member, member.getContainingClass(), modifierListCopy, element, null, null)) {
-        return true;
-      }
-      final PsiElement context = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiField.class, PsiClass.class, PsiFile.class);
-      if (context == null) {
-        return true;
-      }
-      conflicts.putValue(element, RefactoringBundle.message("0.with.1.visibility.is.not.accessible.from.2",
-                                                            RefactoringUIUtil.getDescription(member, false),
-                                                            PsiBundle.visibilityPresentation(getModifier()),
-                                                            RefactoringUIUtil.getDescription(context, true)));
-      return true;
-    });
     return conflicts;
   }
 

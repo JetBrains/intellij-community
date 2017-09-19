@@ -25,6 +25,7 @@ import com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher.runIdeLocally
 import com.intellij.testGuiFramework.launcher.ide.CommunityIde
 import com.intellij.testGuiFramework.launcher.ide.Ide
 import com.intellij.testGuiFramework.launcher.ide.IdeType
+import com.intellij.testGuiFramework.remote.server.JUnitServer
 import com.intellij.testGuiFramework.remote.server.JUnitServerHolder
 import com.intellij.testGuiFramework.remote.transport.*
 import org.junit.Assert
@@ -99,22 +100,44 @@ class GuiTestLocalRunner @Throws(InitializationError::class)
         }
       }
       if (message.type == MessageType.RESTART_IDE) {
-        //close previous IDE
-        server.send(TransportMessage(MessageType.CLOSE_IDE))
-        //await to close previous process
-        GuiTestLocalLauncher.process?.waitFor(2, TimeUnit.MINUTES)
-        //restart JUnitServer to let accept a new connection
-        server.stopServer()
-        server.start()
-        //start a new one IDE
-        val localIde = ide ?: getIdeFromAnnotation(this@GuiTestLocalRunner.testClass.javaClass)
-        runIdeLocally(port = server.getPort(), ide = localIde)
-        //check connection
-        //start test if needed
-        val jUnitTestContainer = JUnitTestContainer(method.declaringClass, method.name)
-        server.send(TransportMessage(MessageType.RUN_TEST, jUnitTestContainer))
+        restartIdeAndStartTestAgain(server, method)
+        sendRunTestCommand(method, server)
+      }
+      if (message.type == MessageType.RESTART_IDE_AND_RESUME) {
+        val additionalInfoLabel = message.content
+        if (additionalInfoLabel !is String) throw Exception("Additional info for a resuming test should have a String type!")
+        restartIdeAndStartTestAgain(server, method, resumeTest = true)
+        sendResumeTestCommand(method, server, additionalInfoLabel)
       }
     }
+  }
+
+  private fun restartIdeAndStartTestAgain(server: JUnitServer,
+                                          method: FrameworkMethod, resumeTest: Boolean = false) {
+    //close previous IDE
+    server.send(TransportMessage(MessageType.CLOSE_IDE))
+    //await to close previous process
+    GuiTestLocalLauncher.process?.waitFor(2, TimeUnit.MINUTES)
+    //restart JUnitServer to let accept a new connection
+    server.stopServer()
+    server.start()
+    //start a new one IDE
+    val localIde = ide ?: getIdeFromAnnotation(this@GuiTestLocalRunner.testClass.javaClass)
+    runIdeLocally(port = server.getPort(), ide = localIde)
+    //check connection
+    //start test if needed
+  }
+
+  private fun sendRunTestCommand(method: FrameworkMethod,
+                                 server: JUnitServer) {
+    val jUnitTestContainer = JUnitTestContainer(method.declaringClass, method.name)
+    server.send(TransportMessage(MessageType.RUN_TEST, jUnitTestContainer))
+  }
+
+  private fun sendResumeTestCommand(method: FrameworkMethod,
+                                 server: JUnitServer, resumeTestLabel: String) {
+    val jUnitTestContainer = JUnitTestContainer(method.declaringClass, method.name, additionalInfo = resumeTestLabel)
+    server.send(TransportMessage(MessageType.RESUME_TEST, jUnitTestContainer))
   }
 
   private fun runOnClientSide(method: FrameworkMethod, notifier: RunNotifier) {

@@ -56,27 +56,25 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
     myManager = psiManager;
     myAdditionalIndexableFileSet = new AdditionalIndexableFileSet(project);
 
-    myDefaultResolveScopesCache = ConcurrentFactoryMap.createMap(key-> {
+    myDefaultResolveScopesCache = ConcurrentFactoryMap.createMap(
+      key -> {
         GlobalSearchScope scope = null;
-        for(ResolveScopeProvider resolveScopeProvider: ResolveScopeProvider.EP_NAME.getExtensions()) {
+        for (ResolveScopeProvider resolveScopeProvider : ResolveScopeProvider.EP_NAME.getExtensions()) {
           scope = resolveScopeProvider.getResolveScope(key, myProject);
           if (scope != null) break;
         }
         if (scope == null) scope = getInherentResolveScope(key);
         for (ResolveScopeEnlarger enlarger : ResolveScopeEnlarger.EP_NAME.getExtensions()) {
-          final SearchScope extra = enlarger.getAdditionalResolveScope(key, myProject);
+          SearchScope extra = enlarger.getAdditionalResolveScope(key, myProject);
           if (extra != null) {
             scope = scope.union(extra);
           }
         }
-
         return scope;
       },
+      ContainerUtil::createConcurrentWeakKeySoftValueMap);
 
-                                                                 ContainerUtil::createConcurrentWeakKeySoftValueMap
-
-    );
-    ((PsiManagerImpl) psiManager).registerRunnableToRunOnChange(myDefaultResolveScopesCache::clear);
+    ((PsiManagerImpl)psiManager).registerRunnableToRunOnChange(myDefaultResolveScopesCache::clear);
   }
 
   private GlobalSearchScope getResolveScopeFromProviders(@NotNull final VirtualFile vFile) {
@@ -98,7 +96,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
       }
       return allScope;
     }
-    
+
     return LibraryScopeCache.getInstance(myProject).getLibraryScope(projectFileIndex.getOrderEntriesForFile(vFile));
   }
 

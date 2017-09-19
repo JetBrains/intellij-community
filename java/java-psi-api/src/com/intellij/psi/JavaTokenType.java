@@ -151,4 +151,6 @@ public interface JavaTokenType extends TokenType {
   IElementType TRANSITIVE_KEYWORD = new IJavaElementType("TRANSITIVE");
   IElementType TO_KEYWORD = new IJavaElementType("TO");
   IElementType WITH_KEYWORD = new IJavaElementType("WITH");
+
+  IElementType VAR_KEYWORD = new IJavaElementType("VAR");
 }

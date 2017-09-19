@@ -101,14 +101,17 @@ public class CvsEntriesManager implements VirtualFileListener {
     }
   }
 
+  @Override
   public void beforePropertyChange(@NotNull VirtualFilePropertyEvent event) {
     processEvent(event);
   }
 
+  @Override
   public void beforeContentsChange(@NotNull VirtualFileEvent event) {
     processEvent(event);
   }
 
+  @Override
   public void contentsChanged(@NotNull VirtualFileEvent event) {
     fireStatusChanged(event.getFile());
   }
@@ -151,14 +154,17 @@ public class CvsEntriesManager implements VirtualFileListener {
     return getInfoFor(parent).getIgnoreFilter();
   }
 
+  @Override
   public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
     processEvent(event);
   }
 
+  @Override
   public void beforeFileMovement(@NotNull VirtualFileMoveEvent event) {
     processEvent(event);
   }
 
+  @Override
   public void fileCreated(@NotNull VirtualFileEvent event) {
     processEvent(event);
   }

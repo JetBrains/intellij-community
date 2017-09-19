@@ -105,11 +105,11 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog<VirtualFile> {
       return TreeModelBuilder.buildFromVirtualFiles(myProject, isShowFlatten(), changes);
     }
 
-    protected List<VirtualFile> getSelectedObjects(final ChangesBrowserNode node) {
+    protected List<VirtualFile> getSelectedObjects(final ChangesBrowserNode<?> node) {
       return node.getAllFilesUnder();
     }
 
-    protected VirtualFile getLeadSelectedObject(final ChangesBrowserNode node) {
+    protected VirtualFile getLeadSelectedObject(final ChangesBrowserNode<?> node) {
       final Object o = node.getUserObject();
       if (o instanceof VirtualFile) {
         return (VirtualFile) o;

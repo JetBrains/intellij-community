@@ -18,6 +18,7 @@ package com.intellij.testGuiFramework.impl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.testGuiFramework.launcher.GuiTestOptions
 import com.intellij.testGuiFramework.remote.JUnitClientListener
 import com.intellij.testGuiFramework.remote.client.ClientHandler
 import com.intellij.testGuiFramework.remote.client.JUnitClient
@@ -63,7 +64,6 @@ class GuiTestThread : Thread(GUI_TEST_THREAD_NAME) {
     }
   }
 
-
   private fun createInitHandlers(): Array<ClientHandler> {
     val testHandler = object : ClientHandler {
       override fun accept(message: TransportMessage) = message.type == MessageType.RUN_TEST
@@ -74,7 +74,21 @@ class GuiTestThread : Thread(GUI_TEST_THREAD_NAME) {
         testQueue.add(content)
       }
     }
-    return arrayOf(testHandler)
+
+    val testResumeHandler = object : ClientHandler {
+      override fun accept(message: TransportMessage) = message.type == MessageType.RESUME_TEST
+
+      override fun handle(message: TransportMessage) {
+        val content = (message.content as JUnitTestContainer)
+        if (content.additionalInfo.isEmpty()) throw Exception("Cannot resume test without any additional info (label where to resume) in JUnitTestContainer")
+        System.setProperty(GuiTestOptions.RESUME_LABEL, content.additionalInfo)
+        System.setProperty(GuiTestOptions.RESUME_TEST, "${content.testClass.canonicalName}#${content.methodName}")
+        LOG.info("Added test to testQueue: $content")
+        testQueue.add(content)
+      }
+    }
+
+    return arrayOf(testHandler, testResumeHandler)
   }
 
 

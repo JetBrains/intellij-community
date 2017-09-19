@@ -70,6 +70,7 @@ import java.util.stream.Stream;
 @State(name = "DebuggerManager", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class DebuggerManagerImpl extends DebuggerManagerEx implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerManagerImpl");
+  public static final String LOCALHOST_ADDRESS_FALLBACK = "127.0.0.1";
 
   private final Project myProject;
   private final HashMap<ProcessHandler, DebuggerSession> mySessions = new HashMap<>();
@@ -449,7 +450,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     }
 
     final TransportServiceWrapper transportService = TransportServiceWrapper.getTransportService(useSockets);
-    final String debugAddress = debuggerInServerMode && useSockets ? "127.0.0.1:" + address : address;
+    final String debugAddress = debuggerInServerMode && useSockets ? LOCALHOST_ADDRESS_FALLBACK + ":" + address : address;
     String debuggeeRunProperties = "transport=" + transportService.transportId() + ",address=" + debugAddress;
     if (debuggerInServerMode) {
       debuggeeRunProperties += ",suspend=y,server=n";
@@ -498,7 +499,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       parameters.getVMParametersList().replaceOrPrepend("-classic", forceClassicVM ? "-classic" : "");
     });
 
-    return new RemoteConnection(useSockets, "127.0.0.1", address, debuggerInServerMode);
+    return new RemoteConnection(useSockets, LOCALHOST_ADDRESS_FALLBACK, address, debuggerInServerMode);
   }
 
   private static boolean shouldForceNoJIT(Sdk jdk) {

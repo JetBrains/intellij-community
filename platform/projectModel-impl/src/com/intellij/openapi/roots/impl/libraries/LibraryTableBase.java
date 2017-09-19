@@ -224,8 +224,8 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     myModel.writeExternal(element);
   }
 
-  public class LibraryModel implements ModifiableModel, JDOMExternalizable, Listener, Disposable {
-    private final ArrayList<Library> myLibraries = new ArrayList<>();
+  class LibraryModel implements ModifiableModel, JDOMExternalizable, Listener, Disposable {
+    private final List<Library> myLibraries = new ArrayList<>();
     private volatile Map<String, Library> myLibraryByNameCache;
     private boolean myWritable;
 

@@ -409,7 +409,7 @@ private int getObjects() {
 
   void testForInAssignability() {
     testHighlighting('''\
-for (int <warning descr="Cannot assign 'String' to 'int'">x</warning> in ['a']){}
+for (<warning descr="Cannot assign 'String' to 'int'">int x</warning> in ['a']){}
 ''')
   }
 
@@ -916,6 +916,19 @@ import groovy.transform.CompileStatic
 def method() {
     Closure<String> cl = {"str"}
     cl()
+}
+'''
+  }
+
+  void 'test string tuple assignment'() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+@CompileStatic
+class TestType {
+    static def bar(Object[] list) {
+        def (String name, Integer matcherEnd) = [list[0], list[2] as Integer]
+    }
 }
 '''
   }

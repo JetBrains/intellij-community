@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ui.FontInfo;
+import com.intellij.util.ui.JBDimension;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -39,6 +40,7 @@ public final class FontComboBox extends ComboBox {
   private static final FontInfoRenderer RENDERER = new FontInfoRenderer();
 
   private Model myModel;
+  private JBDimension myPrefSize;
 
   public FontComboBox() {
     this(false);
@@ -52,7 +54,7 @@ public final class FontComboBox extends ComboBox {
     super(new Model(withAllStyles, filterNonLatin, noFontItem));
     Dimension size = getPreferredSize();
     size.width = size.height * 8;
-    setPreferredSize(size);
+    myPrefSize = JBDimension.create(size, false);
     setSwingPopup(true);
     setRenderer(RENDERER);
     getModel().addListDataListener(new ListDataListener() {
@@ -71,6 +73,13 @@ public final class FontComboBox extends ComboBox {
         }
       }
     });
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    if (isPreferredSizeSet() || myPrefSize == null) return super.getPreferredSize();
+    myPrefSize.update();
+    return myPrefSize;
   }
 
   public boolean isMonospacedOnly() {

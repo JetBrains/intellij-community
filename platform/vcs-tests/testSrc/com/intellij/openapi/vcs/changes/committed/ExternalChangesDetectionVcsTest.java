@@ -24,11 +24,11 @@ import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.vcs.AbstractJunitVcsTestCase;
 import com.intellij.util.Processor;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
@@ -53,50 +53,40 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
 
   @Before
   public void setUp() {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-      try {
-        final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
-        myTempDirTestFixture = fixtureFactory.createTempDirTestFixture();
-        myTempDirTestFixture.setUp();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
+      myTempDirTestFixture = fixtureFactory.createTempDirTestFixture();
+      myTempDirTestFixture.setUp();
 
-        myClientRoot = new File(myTempDirTestFixture.getTempDirPath(), "clientroot");
-        myClientRoot.mkdir();
+      myClientRoot = new File(myTempDirTestFixture.getTempDirPath(), "clientroot");
+      myClientRoot.mkdir();
 
-        initProject(myClientRoot, ExternalChangesDetectionVcsTest.this.getTestName());
+      initProject(myClientRoot, ExternalChangesDetectionVcsTest.this.getTestName());
 
-        myVcs = new MockAbstractVcs(myProject);
-        myVcs.setChangeProvider(new MyMockChangeProvider());
-        myVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
-        myVcsManager.registerVcs(myVcs);
-        myVcsManager.setDirectoryMapping("", myVcs.getName());
+      myVcs = new MockAbstractVcs(myProject);
+      myVcs.setChangeProvider(new MyMockChangeProvider());
+      myVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
+      myVcsManager.registerVcs(myVcs);
+      myVcsManager.setDirectoryMapping("", myVcs.getName());
 
-        myLFS = LocalFileSystem.getInstance();
-        myChangeListManager = ChangeListManager.getInstance(myProject);
-        myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
+      myLFS = LocalFileSystem.getInstance();
+      myChangeListManager = ChangeListManager.getInstance(myProject);
+      myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
     });
   }
 
   @After
   public void tearDown() {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-      try {
-        myVcsManager.unregisterVcs(myVcs);
-        myVcs = null;
-        myVcsManager = null;
-        myChangeListManager = null;
-        myVcsDirtyScopeManager = null;
-        tearDownProject();
-        myTempDirTestFixture.tearDown();
-        myTempDirTestFixture = null;
-        FileUtil.delete(myClientRoot);
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myVcsManager.unregisterVcs(myVcs);
+      myVcs = null;
+      myVcsManager = null;
+      myChangeListManager = null;
+      myVcsDirtyScopeManager = null;
+      tearDownProject();
+      myTempDirTestFixture.tearDown();
+      myTempDirTestFixture = null;
+      FileUtil.delete(myClientRoot);
     });
   }
 

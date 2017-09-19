@@ -815,7 +815,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     if (!app.isDispatchThread() || task.isHeadless()) {
       // for headless tasks we need to ensure async execution. 
       // Otherwise calls to AntConfiguration.getInstance() from the task will cause SOE
-      app.invokeLater(task::queue, ModalityState.any());
+      app.invokeLater(task::queue);
     }
     else {
       task.queue();

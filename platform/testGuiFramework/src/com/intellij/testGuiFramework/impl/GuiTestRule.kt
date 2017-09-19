@@ -79,7 +79,7 @@ class GuiTestRule : TestRule {
     .around(Timeout(10, TimeUnit.MINUTES))!!
 
   override fun apply(base: Statement?, description: Description?): Statement {
-    myTestName = "${description!!.className}.${description.methodName}"
+    myTestName = "${description!!.className}#${description.methodName}"
     return myRuleChain.apply(base, description)
   }
 

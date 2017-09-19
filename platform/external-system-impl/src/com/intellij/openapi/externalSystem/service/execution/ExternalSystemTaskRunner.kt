@@ -50,7 +50,7 @@ class ExternalSystemTaskRunner : GenericProgramRunner<RunnerSettings>() {
     state.setContentDescriptor(runContentDescriptor)
     val descriptor = object : RunContentDescriptor(runContentDescriptor.executionConsole, runContentDescriptor.processHandler,
                                                    runContentDescriptor.component, runContentDescriptor.displayName,
-                                                   runContentDescriptor.icon, runContentDescriptor.activationCallback,
+                                                   runContentDescriptor.icon, null,
                                                    runContentDescriptor.restartActions) {
       override fun isHiddenContent(): Boolean = true
     }

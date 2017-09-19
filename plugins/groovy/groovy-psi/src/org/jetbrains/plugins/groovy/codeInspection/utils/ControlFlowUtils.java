@@ -415,19 +415,9 @@ public class ControlFlowUtils {
   }
 
   private static boolean statementIsLastInBlock(@NotNull GrStatementOwner block, @NotNull GrStatement statement) {
-    final GrStatement[] statements = block.getStatements();
-    for (int i = statements.length - 1; i >= 0; i--) {
-      final GrStatement childStatement = statements[i];
-      if (statement.equals(childStatement)) {
-        return true;
-      }
-      if (!(childStatement instanceof GrReturnStatement)) {
-        return false;
-      }
-    }
-    return false;
+    GrStatement lastStatement = ArrayUtil.getLastElement(block.getStatements());
+    return statement == lastStatement;
   }
-
 
   @NotNull
   public static List<GrStatement> collectReturns(@Nullable PsiElement element) {

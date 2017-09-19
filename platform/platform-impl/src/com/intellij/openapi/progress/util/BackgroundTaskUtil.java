@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBus;
@@ -47,6 +48,27 @@ import java.util.concurrent.atomic.AtomicReference;
 public class BackgroundTaskUtil {
   private static final Logger LOG = Logger.getInstance(BackgroundTaskUtil.class);
 
+  /**
+    * Executor to perform <i>possibly</i> long operation on pooled thread.
+    * If computation was performed within given time frame,
+    * the computed callback will be executed synchronously (avoiding unnecessary <tt>invokeLater()</tt>).
+    * In this case, {@code onSlowAction} will not be executed at all.
+    * <ul>
+    * <li> If the computation is fast, execute callback synchronously.
+    * <li> If the computation is slow, execute <tt>onSlowAction</tt> synchronously. When the computation is completed, execute callback in EDT.
+    * </ul><p>
+    * It can be used to reduce blinking when background task might be completed fast.<br>
+    * A Simple approach:
+    * <pre>
+    * onSlowAction.run() // show "Loading..."
+    * executeOnPooledThread({
+    *   Runnable callback = backgroundTask(); // some background computations
+    *   invokeLater(callback); // apply changes
+    * });
+    * </pre>
+    * will lead to "Loading..." visible between current moment and execution of invokeLater() event.
+    * This period can be very short and looks like 'jumping' if background operation is fast.
+    */
   @NotNull
   @CalledInAwt
   public static ProgressIndicator executeAndTryWait(@NotNull Function<ProgressIndicator, /*@NotNull*/ Runnable> backgroundTask,
@@ -194,7 +216,14 @@ public class BackgroundTaskUtil {
                                                                  boolean onPooledThread) {
     ProgressIndicator indicator = new EmptyProgressIndicator(modalityState);
     indicator.start();
-    Runnable toRun = () -> ProgressManager.getInstance().runProcess(task, indicator);
+    Runnable toRun = () -> {
+      try {
+        ProgressManager.getInstance().runProcess(task, indicator);
+      }
+      catch (ProcessCanceledException pce) {
+        // ignore: expected cancellation
+      }
+    };
 
     if (onPooledThread) {
       CompletableFuture<?> future = CompletableFuture.runAsync(toRun, AppExecutorUtil.getAppExecutorService());
@@ -208,14 +237,22 @@ public class BackgroundTaskUtil {
         }
       };
 
-      Disposer.register(parent, disposable);
+      if (!registerIfParentNotDisposed(parent, disposable)) {
+        indicator.cancel();
+        return indicator;
+      }
       future.whenComplete((o, e) -> Disposer.dispose(disposable));
     }
     else {
       Disposable disposable = () -> {
         if (indicator.isRunning()) indicator.cancel();
       };
-      Disposer.register(parent, disposable);
+
+      if (!registerIfParentNotDisposed(parent, disposable)) {
+        indicator.cancel();
+        return indicator;
+      }
+
       try {
         toRun.run();
       }
@@ -224,6 +261,20 @@ public class BackgroundTaskUtil {
       }
     }
     return indicator;
+  }
+
+  private static boolean registerIfParentNotDisposed(@NotNull Disposable parent, @NotNull Disposable disposable) {
+    return ReadAction.compute(() -> {
+      if (Disposer.isDisposed(parent)) return false;
+      try {
+        Disposer.register(parent, disposable);
+        return true;
+      }
+      catch(IncorrectOperationException ioe) {
+        LOG.error(ioe);
+        return false;
+      }
+    });
   }
 
   @CalledInAny
@@ -235,6 +286,8 @@ public class BackgroundTaskUtil {
    * Wraps {@link MessageBus#syncPublisher(Topic)} in a dispose check,
    * and throws a {@link ProcessCanceledException} if the project is disposed,
    * instead of throwing an assertion which would happen otherwise.
+   *
+   * @see #syncPublisher(Topic)
    */
   @CalledInAny
   @NotNull

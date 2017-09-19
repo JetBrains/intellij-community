@@ -867,8 +867,10 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createCollectionToArrayFix(@NotNull PsiExpression collectionExpression, @NotNull PsiArrayType arrayType) {
-    return new ConvertCollectionToArrayFix(collectionExpression, arrayType);
+  public IntentionAction createCollectionToArrayFix(@NotNull PsiExpression collectionExpression,
+                                                    @NotNull PsiExpression expressionToReplace,
+                                                    @NotNull PsiArrayType arrayType) {
+    return new ConvertCollectionToArrayFix(collectionExpression, expressionToReplace, arrayType);
   }
 
   @NotNull
@@ -893,6 +895,6 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createDeleteSideEffectAwareFix(@NotNull PsiExpressionStatement statement) {
-    return new DeleteSideEffectsAwareFix(statement);
+    return new DeleteSideEffectsAwareFix(statement, statement.getExpression());
   }
 }

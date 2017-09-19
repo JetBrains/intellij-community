@@ -55,7 +55,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   final AtomicInteger myCurrentUnsafeProgressCount = new AtomicInteger(0);
   private final AtomicInteger myCurrentModalProgressCount = new AtomicInteger(0);
 
-  private static final boolean ENABLED = !"disabled".equals(System.getProperty("idea.ProcessCanceledException"));
+  public static final boolean ENABLED = !"disabled".equals(System.getProperty("idea.ProcessCanceledException"));
   private static CheckCanceledHook ourCheckCanceledHook;
   private ScheduledFuture<?> myCheckCancelledFuture; // guarded by threadsUnderIndicator
 

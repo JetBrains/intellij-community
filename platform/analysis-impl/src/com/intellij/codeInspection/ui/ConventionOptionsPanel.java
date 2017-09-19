@@ -38,8 +38,15 @@ import java.util.regex.Pattern;
 public class ConventionOptionsPanel extends JPanel {
 
   private static final Logger LOG = Logger.getInstance(ConventionOptionsPanel.class);
-
+  @Deprecated
   public ConventionOptionsPanel(@NotNull final InspectionProfileEntry owner,
+                                @NonNls final String minLengthProperty, @NonNls final String maxLengthProperty,
+                                @NonNls final String regexProperty, @NonNls final String regexPatternProperty,
+                                JComponent... extraOptions) {
+    this((Object)owner, minLengthProperty, maxLengthProperty, regexProperty, regexPatternProperty, extraOptions);
+  }
+
+  public ConventionOptionsPanel(@NotNull final Object owner,
                                 @NonNls final String minLengthProperty, @NonNls final String maxLengthProperty,
                                 @NonNls final String regexProperty, @NonNls final String regexPatternProperty,
                                 JComponent... extraOptions) {
@@ -149,19 +156,19 @@ public class ConventionOptionsPanel extends JPanel {
     add(new JPanel(), constraints);
   }
 
-  private static void setPropertyIntegerValue(InspectionProfileEntry owner, String property, Integer value) {
+  private static void setPropertyIntegerValue(Object owner, String property, Integer value) {
     setPropertyValue(owner, property, value);
   }
 
-  private static Integer getPropertyIntegerValue(InspectionProfileEntry owner, String property) {
+  private static Integer getPropertyIntegerValue(Object owner, String property) {
     return (Integer)getPropertyValue(owner, property);
   }
 
-  private static void setPropertyValue(@NotNull InspectionProfileEntry owner, String property, Object value) {
+  private static void setPropertyValue(@NotNull Object owner, String property, Object value) {
     ReflectionUtil.setField(owner.getClass(), owner, null, property, value);
   }
 
-  private static Object getPropertyValue(InspectionProfileEntry owner, String property) {
+  private static Object getPropertyValue(Object owner, String property) {
     return ReflectionUtil.getField(owner.getClass(), owner, null, property);
   }
 }

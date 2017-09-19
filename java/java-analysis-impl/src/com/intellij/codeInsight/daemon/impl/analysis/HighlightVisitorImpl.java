@@ -382,7 +382,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           QuickFixAction.registerQuickFixAction(info, AdjustFunctionContextFix.createFix(entry.getKey()));
           if (entry.getKey() instanceof PsiExpression) {
             PsiExpression expr = (PsiExpression)entry.getKey();
-            HighlightUtil.addLambdaReturnTypeFixes(info, expression, expr);
+            HighlightFixUtil.registerLambdaReturnTypeFixes(info, expression, expr);
           }
           myHolder.add(info);
         }
@@ -657,6 +657,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myHolder.add(HighlightClassUtil.checkClassAlreadyImported(aClass, identifier));
       if (!(parent instanceof PsiAnonymousClass) && aClass.getNameIdentifier() == identifier) {
         myHolder.add(HighlightNamesUtil.highlightClassName(aClass, identifier, colorsScheme));
+      }
+      if (!myHolder.hasErrorResults() && myLanguageLevel.isAtLeast(LanguageLevel.JDK_X)) {
+        myHolder.add(HighlightClassUtil.checkVarClassConflict(aClass, identifier));
       }
       if (!myHolder.hasErrorResults() && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
         myHolder.add(GenericsHighlightUtil.checkUnrelatedDefaultMethods(aClass, identifier));
@@ -1346,7 +1349,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (method != null && !result.isAccessible()) {
       String accessProblem = HighlightUtil.buildProblemWithAccessDescription(expression, method, result);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(accessProblem).create();
-      HighlightUtil.registerAccessQuickFixAction((PsiMember)method, expression, info, result.getCurrentFileResolveScope());
+      HighlightFixUtil.registerAccessQuickFixAction((PsiMember)method, expression, info, result.getCurrentFileResolveScope());
       myHolder.add(info);
     }
     else {
@@ -1643,6 +1646,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitVariable(PsiVariable variable) {
     super.visitVariable(variable);
     try {
+      if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkVarTypeApplicability(variable));
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkVariableInitializerType(variable));
     }
     catch (IndexNotReadyException ignored) { }

@@ -36,8 +36,8 @@ class CreateEnumConstantAction(targetClass: PsiClass, request: CreateFieldReques
   private val myData: EnumConstantData?
     get() {
       val targetClass = myTargetClass.element
-      if (targetClass == null || !request.isValid) return null
-      return extractRenderData(targetClass, request)
+      if (targetClass == null || !myRequest.isValid) return null
+      return extractRenderData(targetClass, myRequest)
     }
 
   override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {

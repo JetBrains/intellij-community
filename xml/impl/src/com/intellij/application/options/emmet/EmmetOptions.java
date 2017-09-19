@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import java.util.Set;
 public class EmmetOptions implements PersistentStateComponent<EmmetOptions> {
   private boolean myEmmetEnabled = true;
   private int myEmmetExpandShortcut = TemplateSettings.TAB_CHAR;
-  private boolean myPreviewEnabled = false;
+  private boolean myPreviewEnabled = true;
   @NotNull
   private Set<String> myFiltersEnabledByDefault = ContainerUtil.newHashSet();
   private boolean myHrefAutoDetectEnabled = true;

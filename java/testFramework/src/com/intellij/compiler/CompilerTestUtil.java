@@ -94,10 +94,10 @@ public class CompilerTestUtil {
             modulesToRestore.add(module);
           }
         }
-        table.removeJdk(internalJdk);
         for (Module module : modulesToRestore) {
           ModuleRootModificationUtil.setModuleSdk(module, internalJdk);
         }
+        table.removeJdk(internalJdk);
         BuildManager.getInstance().clearState(project);
       });
     });

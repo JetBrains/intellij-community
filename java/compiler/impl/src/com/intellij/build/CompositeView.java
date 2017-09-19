@@ -82,7 +82,7 @@ public class CompositeView<S extends ComponentContainer, T extends ComponentCont
     CardLayout cl = (CardLayout)(getLayout());
     cl.show(this, primary ? PRIMARY_PANEL : SECONDARY_PANEL);
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(getView(primary).getComponent(), true);
+      IdeFocusManager.getGlobalInstance().requestFocus(getView(primary).getPreferredFocusableComponent(), true);
     });
     myPrimary = primary;
   }

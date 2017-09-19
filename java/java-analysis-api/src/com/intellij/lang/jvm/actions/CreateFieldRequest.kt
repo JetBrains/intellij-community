@@ -16,6 +16,7 @@
 package com.intellij.lang.jvm.actions
 
 import com.intellij.lang.jvm.JvmModifier
+import com.intellij.lang.jvm.types.JvmSubstitutor
 
 interface CreateFieldRequest {
 
@@ -36,6 +37,18 @@ interface CreateFieldRequest {
    * @return expected types of the field to be created
    */
   val fieldType: ExpectedTypes
+
+  /**
+   * Given:
+   * - target class: `A<T>`
+   * - expected field type: `String`
+   * - usage: `new A<String>.foo`
+   *
+   * To make newly created field `foo` have type `T` the substitutor is needed to provide mapping T -> String.
+   *
+   * @return call-site substitutor for the target
+   */
+  val targetSubstitutor: JvmSubstitutor
 
   /**
    * Implementation are free to render any modifiers as long as they don't contradict with requested ones.

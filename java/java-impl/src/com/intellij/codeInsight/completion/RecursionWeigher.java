@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.psi.filters.element.ExcludeSillyAssignment;
 import com.intellij.psi.impl.search.MethodDeepestSuperSearcher;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.CommonProcessors;
 import org.jetbrains.annotations.NotNull;
@@ -170,15 +171,15 @@ class RecursionWeigher extends LookupElementWeigher {
 
   @Nullable
   private String getSetterPropertyName(@Nullable PsiMethod calledMethod) {
-    if (PropertyUtil.isSimplePropertySetter(calledMethod)) {
+    if (PropertyUtilBase.isSimplePropertySetter(calledMethod)) {
       assert calledMethod != null;
-      return PropertyUtil.getPropertyName(calledMethod);
+      return PropertyUtilBase.getPropertyName(calledMethod);
     }
     PsiReferenceExpression reference = ExcludeSillyAssignment.getAssignedReference(myPosition);
     if (reference != null) {
       PsiElement target = reference.resolve();
       if (target instanceof PsiField) {
-        return PropertyUtil.suggestPropertyName((PsiField)target);
+        return PropertyUtilBase.suggestPropertyName((PsiField)target);
       }
     }
     return null;
@@ -189,12 +190,12 @@ class RecursionWeigher extends LookupElementWeigher {
     if (prop == null) return false;
 
     if (lookupObject instanceof PsiField &&
-        prop.equals(PropertyUtil.suggestPropertyName((PsiField)lookupObject))) {
+        prop.equals(PropertyUtilBase.suggestPropertyName((PsiField)lookupObject))) {
       return true;
     }
     if (lookupObject instanceof PsiMethod &&
-        PropertyUtil.isSimplePropertyGetter((PsiMethod)lookupObject) &&
-        prop.equals(PropertyUtil.getPropertyName((PsiMethod)lookupObject))) {
+        PropertyUtilBase.isSimplePropertyGetter((PsiMethod)lookupObject) &&
+        prop.equals(PropertyUtilBase.getPropertyName((PsiMethod)lookupObject))) {
       return true;
     }
     return false;

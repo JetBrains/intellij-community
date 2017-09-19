@@ -603,6 +603,12 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-22272
+  public void testAlightDictLiteralOnValueSubscriptionsAndSlices() {
+    getPythonCodeStyleSettings().DICT_ALIGNMENT = PyCodeStyleSettings.DICT_ALIGNMENT_ON_VALUE;
+    doTest();
+  }
+
   // PY-14962
   public void testAlignDictLiteralOnColon() {
     getPythonCodeStyleSettings().DICT_ALIGNMENT = PyCodeStyleSettings.DICT_ALIGNMENT_ON_COLON;

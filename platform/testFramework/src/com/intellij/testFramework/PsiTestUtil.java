@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.RunResult;
@@ -34,6 +35,7 @@ import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -194,7 +196,7 @@ public class PsiTestUtil {
     ModuleRootModificationUtil.updateModel(module, model -> model.removeContentEntry(findContentEntryWithAssertion(model, contentRoot)));
   }
 
-  public static void removeSourceRoot(Module module, VirtualFile root) {
+  public static void removeSourceRoot(@NotNull Module module, @NotNull VirtualFile root) {
     ModuleRootModificationUtil.updateModel(module, model -> {
       ContentEntry entry = findContentEntryWithAssertion(model, root);
       for (SourceFolder sourceFolder : entry.getSourceFolders()) {
@@ -247,6 +249,20 @@ public class PsiTestUtil {
   public static void addLibrary(Module module, String libName, String libPath, String... jarArr) {
     ModuleRootModificationUtil.updateModel(module, model -> addLibrary(module, model, libName, libPath, jarArr));
   }
+  public static void addLibrary(@NotNull Disposable parent, Module module, String libName, String libPath, String... jarArr) {
+    Ref<Library> ref = new Ref<>();
+    ModuleRootModificationUtil.updateModel(module, model -> ref.set(addLibrary(module, model, libName, libPath, jarArr)));
+    Disposer.register(parent, () -> {
+      Library library = ref.get();
+      ModuleRootModificationUtil.updateModel(module, model -> model.removeOrderEntry(model.findLibraryOrderEntry(library)));
+      WriteCommandAction.runWriteCommandAction(null, ()-> {
+        LibraryTable table = ProjectLibraryTable.getInstance(module.getProject());
+        LibraryTable.ModifiableModel model = table.getModifiableModel();
+        model.removeLibrary(library);
+        model.commit();
+      });
+    });
+  }
 
   public static void addProjectLibrary(Module module, String libName, List<String> classesRootPaths) {
     List<VirtualFile> roots = ContainerUtil.map(classesRootPaths, path -> VirtualFileManager.getInstance().refreshAndFindFileByUrl(VfsUtil.getUrlForLibraryRoot(new File(path))));
@@ -263,6 +279,7 @@ public class PsiTestUtil {
     return result.get();
   }
 
+  @NotNull
   private static Library addProjectLibrary(Module module,
                                            ModifiableRootModel model,
                                            String libName,
@@ -302,11 +319,12 @@ public class PsiTestUtil {
     return result.getResultObject();
   }
 
-  public static void addLibrary(Module module,
-                                ModifiableRootModel model,
-                                String libName,
-                                String libPath,
-                                String... jarArr) {
+  @NotNull
+  public static Library addLibrary(Module module,
+                                   ModifiableRootModel model,
+                                   String libName,
+                                   String libPath,
+                                   String... jarArr) {
     List<VirtualFile> classesRoots = new ArrayList<>();
     for (String jar : jarArr) {
       if (!libPath.endsWith("/") && !jar.startsWith("/")) {
@@ -323,7 +341,7 @@ public class PsiTestUtil {
       assert root != null : "Library root folder not found: " + path + "!/";
       classesRoots.add(root);
     }
-    addProjectLibrary(module, model, libName, classesRoots, Collections.emptyList());
+    return addProjectLibrary(module, model, libName, classesRoots, Collections.emptyList());
   }
 
   public static void addLibrary(Module module,

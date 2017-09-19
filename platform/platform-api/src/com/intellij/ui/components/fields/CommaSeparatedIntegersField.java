@@ -15,66 +15,56 @@
  */
 package com.intellij.ui.components.fields;
 
-import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.components.fields.valueEditors.CommaSeparatedIntegersValueEditor;
+import com.intellij.ui.components.fields.valueEditors.ValueEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-public class CommaSeparatedIntegersField extends AbstractValueInputField<List<Integer>> {
+/**
+ * A validating text component for comma-separated integer values. Extra spaces before and/or after comma are ignored.
+ */
+public class CommaSeparatedIntegersField extends JBTextField {
 
-  private final int myMinValue;
-  private final int myMaxValue;
+  private final ValueEditor<List<Integer>> myValueEditor;
 
-  public CommaSeparatedIntegersField(int minValue, int maxValue, String optionalText) {
-    super(Collections.emptyList());
-    myMinValue = minValue;
-    myMaxValue = maxValue;
+  @SuppressWarnings("unused") // Default constructor
+  public CommaSeparatedIntegersField() {
+    this(null, Integer.MIN_VALUE, Integer.MAX_VALUE, null);
+  }
+
+  public CommaSeparatedIntegersField(@Nullable String valueName, int minValue, int maxValue, String optionalText) {
+    myValueEditor = new CommaSeparatedIntegersValueEditor(this, valueName, minValue, maxValue);
     getEmptyText().setText(optionalText);
   }
 
+  public void setValue(@NotNull List<Integer> newValue) {
+    myValueEditor.setValue(newValue);
+  }
 
   @NotNull
-  @Override
-  protected List<Integer> parseValue(@Nullable String text) {
-    if (text == null || text.isEmpty()) return Collections.emptyList();
-    String[] chunks = text.split("\\s*,\\s*");
-    List<Integer> values = new ArrayList<>(chunks.length);
-    for (String chunk : chunks) {
-      try {
-        int value = Integer.parseInt(chunk);
-        if (value < myMinValue || value > myMaxValue) {
-          throw new InvalidDataException("Value " + value + " is out of range " + myMinValue + ".." + myMaxValue);
-        }
-        values.add(value);
-      }
-      catch (NumberFormatException nfe) {
-        throw new InvalidDataException("Value '" + chunk + "' is not an integer number");
-      }
-    }
-    Collections.sort(values);
-    return values;
+  public List<Integer> getValue() {
+    return myValueEditor.getValue();
   }
 
-  @Override
-  protected String valueToString(@NotNull List<Integer> valueList) {
-    return intListToString(valueList);
+  public void setDefaultValue(@NotNull List<Integer> defaultValue) {
+    myValueEditor.setDefaultValue(defaultValue);
   }
 
-  @Override
-  protected void assertValid(@NotNull List<Integer> valueList) {
-
+  @NotNull
+  public List<Integer> getDefaultValue() {
+    return myValueEditor.getDefaultValue();
   }
 
-  public static String intListToString(@NotNull List<Integer> valueList) {
-    StringBuilder sb = new StringBuilder();
-    for (Integer value : valueList) {
-      if (sb.length() != 0) sb.append(", ");
-      sb.append(value);
-    }
-    return sb.toString();
+  @Nullable
+  public String getValueName() {
+    return myValueEditor.getValueName();
   }
 
+  public void validateContent() throws ConfigurationException {
+    myValueEditor.validateContent();
+  }
 }

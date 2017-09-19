@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.internal.statistic.customUsageCollectors.actions.MainMenuCollector;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.SystemInfo;
@@ -509,8 +512,13 @@ public class BegMenuItemUI extends BasicMenuItemUI {
     if(msm==null){
       msm=MenuSelectionManager.defaultManager();
     }
+    ActionMenuItem item = (ActionMenuItem)menuItem;
+    AnAction action = item.getAnAction();
+    if (action != null && ActionPlaces.MAIN_MENU.equals(item.getPlace())) {
+      MainMenuCollector.getInstance().record(action);
+    }
     msm.clearSelectedPath();
-    ((ActionMenuItem)menuItem).fireActionPerformed(
+    item.fireActionPerformed(
       new ActionEvent(
         menuItem,
         ActionEvent.ACTION_PERFORMED,

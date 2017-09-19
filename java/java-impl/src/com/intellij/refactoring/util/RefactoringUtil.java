@@ -1401,14 +1401,14 @@ public class RefactoringUtil {
   }
 
   private static void collectTypeParametersInDependencies(Condition<PsiTypeParameter> filter, Set<PsiTypeParameter> used) {
-    HashSet<PsiTypeParameter> typeParametersInDependencies = new HashSet<>();
-    for (PsiTypeParameter parameter : used) {
-      collectTypeParameters(typeParametersInDependencies, parameter, filter);
-    }
-    typeParametersInDependencies.removeAll(used);
-    if (!typeParametersInDependencies.isEmpty()) {
-      collectTypeParametersInDependencies(filter, typeParametersInDependencies);
-      used.addAll(typeParametersInDependencies);
+    Stack<PsiTypeParameter> toProcess = new Stack<>();
+    toProcess.addAll(used);
+    while (!toProcess.isEmpty()) {
+      PsiTypeParameter parameter = toProcess.pop();
+      HashSet<PsiTypeParameter> dependencies = new HashSet<>();
+      collectTypeParameters(dependencies, parameter, param -> filter.value(param) && !used.contains(param));
+      used.addAll(dependencies);
+      toProcess.addAll(dependencies);
     }
   }
 

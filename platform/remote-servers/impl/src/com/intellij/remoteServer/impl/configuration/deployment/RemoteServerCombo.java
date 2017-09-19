@@ -128,6 +128,9 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
     if (item != null) {
       item.onBrowseAction();
     }
+    else {
+      editServer(RemoteServerListConfigurable.createConfigurable(myServerType, null));
+    }
   }
 
   private void onItemChosen(ActionEvent e) {

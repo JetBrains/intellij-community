@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression;
@@ -74,7 +75,10 @@ public class GrCastFix extends GroovyFix implements LocalQuickFix {
     }
     else if (element instanceof GrExpression) {
       return (GrExpression)element;
+    } else if (parent instanceof GrForInClause) {
+      return ((GrForInClause)parent).getIteratedExpression();
     }
+
     PsiFile file = element.getContainingFile();
     VirtualFile virtualFile = file.getVirtualFile();
     String url = virtualFile == null ? "" : virtualFile.getPresentableUrl();

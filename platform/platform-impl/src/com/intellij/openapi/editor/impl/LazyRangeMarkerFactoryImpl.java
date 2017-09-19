@@ -32,6 +32,7 @@ import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 public class LazyRangeMarkerFactoryImpl extends LazyRangeMarkerFactory {
@@ -79,7 +80,7 @@ public class LazyRangeMarkerFactoryImpl extends LazyRangeMarkerFactory {
   }
 
   private static void addToLazyMarkersList(@NotNull LazyMarker marker, @NotNull VirtualFile file) {
-    WeakList<LazyMarker> markers = getMarkers(file);
+    Collection<LazyMarker> markers = getMarkers(file);
 
     if (markers == null) {
       markers = file.putUserDataIfAbsent(LAZY_MARKERS_KEY, new WeakList<>());
@@ -88,7 +89,7 @@ public class LazyRangeMarkerFactoryImpl extends LazyRangeMarkerFactory {
   }
 
   private static void removeFromLazyMarkersList(@NotNull LazyMarker marker, @NotNull VirtualFile file) {
-    WeakList<LazyMarker> markers = getMarkers(file);
+    Collection<LazyMarker> markers = getMarkers(file);
 
     if (markers != null) {
       markers.remove(marker);

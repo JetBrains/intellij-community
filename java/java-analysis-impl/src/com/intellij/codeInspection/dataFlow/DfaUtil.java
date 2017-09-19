@@ -24,8 +24,6 @@ import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
@@ -220,8 +218,10 @@ public class DfaUtil {
     }
     PsiClass aClass = Objects.requireNonNull(target.getContainingClass());
     PsiClassInitializer[] initializers = aClass.getInitializers();
-    Predicate<PsiElement> writesToTarget = element -> !ReferencesSearch.search(target, new LocalSearchScope(element))
-      .forEach(e -> !(e instanceof PsiExpression) || !PsiUtil.isAccessedForWriting((PsiExpression)e));
+    Predicate<PsiElement> writesToTarget = element ->
+      !PsiTreeUtil.processElements(element, e -> !(e instanceof PsiExpression) ||
+                                                 !PsiUtil.isAccessedForWriting((PsiExpression)e) ||
+                                                 !ExpressionUtils.isReferenceTo((PsiExpression)e, target));
     Predicate<PsiElement> hasSideEffectCall = element -> !PsiTreeUtil.findChildrenOfType(element, PsiMethodCallExpression.class).stream()
       .map(PsiMethodCallExpression::resolveMethod).allMatch(method -> method != null && ControlFlowAnalyzer.isPure(method));
     for (PsiClassInitializer initializer : initializers) {
@@ -374,7 +374,7 @@ public class DfaUtil {
         final ValuableDataFlowRunner.ValuableDfaVariableState curState = (ValuableDataFlowRunner.ValuableDfaVariableState)memState.getVariableState(var);
         final FList<PsiExpression> curValue = curState.myConcatenation;
         final FList<PsiExpression> nextValue;
-        if (type == JavaTokenType.PLUSEQ && !prevValue.isEmpty() && rightValue != null) {
+        if (type == JavaTokenType.PLUSEQ && !prevValue.isEmpty()) {
           nextValue = prevValue.prepend(rightValue);
         }
         else {

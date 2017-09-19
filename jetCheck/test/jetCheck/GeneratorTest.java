@@ -61,7 +61,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   public void testSortedDoublesNonDescending() {
     PropertyFailure<List<Double>> failure = checkFalsified(listsOf(doubles()),
                                                            l -> isSorted(l.stream().sorted().collect(Collectors.toList())),
-                                                           58);
+                                                           28);
     assertEquals(2, failure.getMinimalCounterexample().getExampleValue().size());
   }
 

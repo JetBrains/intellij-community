@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.project.Project;
@@ -92,6 +93,8 @@ abstract class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
   }
 
   private void doSwitch(@NotNull final Editor editor, @NotNull Caret caret, @NotNull Project project) {
+    if (editor.isViewer() || !EditorModificationUtil.requestWriting(editor)) return;
+
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     PsiElement exprList = getExpressionList(editor, caret.getOffset(), project);
     if (!(exprList instanceof PsiExpressionList)) return;

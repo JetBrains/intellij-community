@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,10 @@ package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
 import org.jetbrains.idea.devkit.inspections.quickfix.UseCoupleQuickFix;
-
-import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -36,43 +33,42 @@ public class UseCoupleInspection extends DevKitInspectionBase {
     return new JavaElementVisitor() {
 
       @Override
-      public void visitTypeElement(PsiTypeElement type) {
-        final String canonicalText = type.getType().getCanonicalText();
-        if (canonicalText.startsWith(PAIR_FQN)) {
-          if (canonicalText.contains("<") && canonicalText.endsWith(">")) {
-            String genericTypes = canonicalText.substring(canonicalText.indexOf('<') + 1, canonicalText.length() - 1);
-            final List<String> types = StringUtil.split(genericTypes, ",");
-            if (types.size() == 2 && StringUtil.equals(types.get(0), types.get(1))) {
-              final List<String> parts = StringUtil.split(types.get(0), ".");
-              String typeName = parts.get(parts.size() - 1);
-              final String name = "Change to Couple<" + typeName + ">";
-              holder.registerProblem(type, name, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new UseCoupleQuickFix(name));
+      public void visitTypeElement(PsiTypeElement typeElement) {
+        super.visitTypeElement(typeElement);
+        final PsiType type = typeElement.getType();
+        if ((type instanceof PsiClassType)) {
+          final PsiClassType classType = (PsiClassType)type;
+          final String canonicalText = classType.rawType().getCanonicalText();
+          if (PAIR_FQN.equals(canonicalText)) {
+            final PsiType[] parameters = classType.getParameters();
+            if (parameters.length == 2 && parameters[0].equals(parameters[1])) {
+                final String name = "Replace with 'Couple<" + parameters[0].getPresentableText() + ">'";
+                holder.registerProblem(typeElement, name, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new UseCoupleQuickFix(name));
             }
           }
-
         }
-        super.visitTypeElement(type);
       }
 
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-        if (expression.getText().startsWith("Pair.create")) {
-          final PsiReference reference = expression.getMethodExpression().getReference();
-          if (reference != null) {
-            final PsiElement method = reference.resolve();
-            if (method instanceof PsiMethod) {
-              final PsiClass psiClass = ((PsiMethod)method).getContainingClass();
-              if (psiClass != null && PAIR_FQN.equals(psiClass.getQualifiedName())) {
-                final PsiType[] types = expression.getArgumentList().getExpressionTypes();
-                if (types.length == 2 && types[0].equals(types[1])) {
-                  final String name = "Change to Couple.of";
-                  holder.registerProblem(expression, name, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new UseCoupleQuickFix(name));
+        super.visitMethodCallExpression(expression);
+        final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+        if ("create".equals(methodExpression.getReferenceName())) {
+          final PsiMethod method = expression.resolveMethod();
+          if (method != null) {
+            final PsiClass psiClass = method.getContainingClass();
+            if (psiClass != null && PAIR_FQN.equals(psiClass.getQualifiedName())) {
+              final PsiType[] types = expression.getArgumentList().getExpressionTypes();
+              if (types.length == 2 && types[0].equals(types[1])) {
+                final PsiElement nameElement = methodExpression.getReferenceNameElement();
+                if (nameElement != null) {
+                  final String name = "Replace with 'Couple.of()'";
+                  holder.registerProblem(nameElement, name, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new UseCoupleQuickFix(name));
                 }
               }
             }
           }
         }
-        super.visitMethodCallExpression(expression);
       }
     };
   }

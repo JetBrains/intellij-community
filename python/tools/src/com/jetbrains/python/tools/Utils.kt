@@ -16,17 +16,10 @@
 package com.jetbrains.python.tools
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PythonModuleTypeBase
@@ -34,6 +27,7 @@ import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.tools.sdkTools.PySdkTools
 import com.jetbrains.python.tools.sdkTools.SdkCreationType
+import org.jetbrains.index.stubs.openProjectWithSdk
 import java.io.File
 
 internal val TestPath = System.getenv("PYCHARM_PERF_ENVS")
@@ -49,67 +43,23 @@ fun createSdkForPerformance(module: Module,
 }
 
 
-fun openProjectWithSdk(projectPath: String, sdkHome: String?): Pair<Project?, Sdk?> {
-  println("Opening project at $projectPath")
-  val project: Project? = ProjectManager.getInstance().loadAndOpenProject(projectPath)
+fun openProjectWithPythonSdk(projectPath: String, sdkHome: String?): Pair<Project?, Sdk?> {
+  val sdkProducer = createPythonSdkProducer(sdkHome)
+  return openProjectWithSdk(projectPath, PythonModuleTypeBase.PYTHON_MODULE, sdkProducer)
+}
 
-  try {
-  val module = getOrCreateModule(project!!, projectPath)
-
-  val sdk =
+fun createPythonSdkProducer(sdkHome: String?): (Project, Module) -> Sdk? {
+  return { project: Project, module: Module ->
     if (sdkHome != null) {
-  val sdk = createSdkForPerformance(module, SdkCreationType.SDK_PACKAGES_AND_SKELETONS, sdkHome)
-
-  UIUtil.invokeAndWaitIfNeeded(Runnable {
-    ApplicationManager.getApplication().runWriteAction({
-                                                         PythonSdkUpdater.update(sdk, null, project, null)
-                                                       })
-  })
-
-
-    ModuleRootModificationUtil.setModuleSdk(module, sdk)
-
-
-  assert(ModuleRootManager.getInstance(module).orderEntries().classesRoots.size > 5)
+      val sdk = createSdkForPerformance(module, SdkCreationType.SDK_PACKAGES_AND_SKELETONS, sdkHome)
+      UIUtil.invokeAndWaitIfNeeded(Runnable {
+        ApplicationManager.getApplication().runWriteAction({ PythonSdkUpdater.update(sdk, null, project, null) })
+      })
       sdk
     }
     else {
       null
     }
-
-  assert(ModuleManager.getInstance(project).modules.size == 1)
-
-    return Pair(project, sdk)
-  }
-  catch (e: Throwable) {
-    if (project != null) {
-      UIUtil.invokeAndWaitIfNeeded(Runnable {
-        ProjectManager.getInstance().closeProject(project)
-        WriteAction.run<Throwable> {
-          Disposer.dispose(project)
-        }
-      })
-    }
-    throw e
   }
 }
 
-fun getOrCreateModule(project: Project, projectPath: String): Module {
-  if (ModuleManager.getInstance(project).modules.isNotEmpty()) {
-    return ModuleManager.getInstance(project).modules[0]
-  }
-  else {
-    val module: Module = ApplicationManager.getApplication().runWriteAction(
-      Computable<Module> { ModuleManager.getInstance(project).newModule(projectPath, PythonModuleTypeBase.PYTHON_MODULE) }
-    )
-
-    val root = VfsUtil.findFileByIoFile(File(projectPath), true)!!
-
-    ModuleRootModificationUtil.updateModel(module, { t ->
-      val e = t.addContentEntry(root)
-      e.addSourceFolder(root, false)
-    })
-
-    return module
-  }
-}

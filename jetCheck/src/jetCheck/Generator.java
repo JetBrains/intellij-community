@@ -223,7 +223,7 @@ public class Generator<T> {
     return from(data -> {
       long i1 = data.drawInt();
       long i2 = data.drawInt();
-      return Double.longBitsToDouble((i1 << 32) + i2);
+      return Double.longBitsToDouble((i1 << 32) + (i2 & 0xffffffffL));
     });
   }
 

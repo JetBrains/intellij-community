@@ -43,6 +43,11 @@ import java.io.File;
 public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
   public static final LightProjectDescriptor JAVA_1_4 = new DefaultLightProjectDescriptor() {
     @Override
+    public Sdk getSdk() {
+      return IdeaTestUtil.getMockJdk14();
+    }
+
+    @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_4);
     }

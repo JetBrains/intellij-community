@@ -58,6 +58,7 @@ public class DelegateMethodsTest extends LightCodeInsightTestCase {
   public void testMultipleOverrideAnnotations() { doTest(); }
   public void testStripSuppressWarningsAnnotation() { doTest(); }
   public void testDoNotOverrideFinal() { doTest(); }
+  public void testEnsureCorrectOverride() { doTest(); }
   public void testAllowDelegateToFinal() { doTest(); }
   public void testDelegateWithSubstitutionOverrides() { doTest(); }
   public void testDelegateWithSubstitutionNoOverrides() { doTest(); }

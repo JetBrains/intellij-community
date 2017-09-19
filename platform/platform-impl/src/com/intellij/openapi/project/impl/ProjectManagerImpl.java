@@ -254,7 +254,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
     if (getLeakedProjectsCount() >= MAX_LEAKY_PROJECTS) {
       System.gc();
-      List<Project> copy = getLeakedProjects();
+      Collection<Project> copy = getLeakedProjects();
       myProjects.clear();
       if (ContainerUtil.collect(copy.iterator()).size() >= MAX_LEAKY_PROJECTS) {
         throw new TooManyProjectLeakedException(copy);
@@ -263,7 +263,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @TestOnly
-  private List<Project> getLeakedProjects() {
+  private Collection<Project> getLeakedProjects() {
     myProjects.remove(getDefaultProject()); // process queue
     return myProjects.keySet().stream().filter(project -> project.isDisposed() && !((ProjectImpl)project).isTemporarilyDisposed()).collect(Collectors.toCollection(UnsafeWeakList::new));
   }

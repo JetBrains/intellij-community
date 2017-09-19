@@ -17,7 +17,6 @@ package com.intellij.internal.statistic.customUsageCollectors.ui;
 
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.internal.statistic.CollectUsagesException;
 import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
@@ -35,7 +34,7 @@ import java.util.Set;
 class UiInfoUsageCollector extends UsagesCollector {
   @NotNull
   @Override
-  public Set<UsageDescriptor> getUsages() throws CollectUsagesException {
+  public Set<UsageDescriptor> getUsages() {
     Set<UsageDescriptor> set = new THashSet<>();
 
     add(set, "Nav Bar visible", navbar() ? 1 : 0);

@@ -91,7 +91,7 @@ public class SpellCheckerManager implements Disposable {
         boolean customDic = FileUtilRt.extensionEquals(path, "dic") &&
                             settings.getDictionaryFoldersPaths().stream().anyMatch(dicFolderPath -> isAncestor(dicFolderPath, path, true));
         if (customDic) {
-          spellChecker.loadDictionary(new FileLoader(path, path));
+          spellChecker.loadDictionary(new FileLoader(path));
           restartInspections();
         }
       }
@@ -103,7 +103,7 @@ public class SpellCheckerManager implements Disposable {
 
         if (spellChecker.isDictionaryLoad(path)) {
           spellChecker.removeDictionary(path);
-          spellChecker.loadDictionary(new FileLoader(path, path));
+          spellChecker.loadDictionary(new FileLoader(path));
           restartInspections();
         }
       }
@@ -146,7 +146,7 @@ public class SpellCheckerManager implements Disposable {
             spellChecker.removeDictionary(s);
           }
           else if (!dictionaryIsLoad && dictionaryShouldBeLoad) {
-            spellChecker.loadDictionary(new FileLoader(s, s));
+            spellChecker.loadDictionary(new FileLoader(s));
           }
         });
       }
@@ -192,7 +192,7 @@ public class SpellCheckerManager implements Disposable {
       for (String folder : settings.getDictionaryFoldersPaths()) {
         SPFileUtil.processFilesRecursively(folder, s -> {
           if (!disabledDictionaries.contains(s)) {
-            loaders.add(new FileLoader(s, s));
+            loaders.add(new FileLoader(s));
           }
         });
 

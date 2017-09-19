@@ -121,7 +121,7 @@ object GuiTestLocalLauncher {
         process!!.waitFor(timeOut, timeOutUnit)
       else
         process!!.waitFor()
-      if (process!!.exitValue() != 1) {
+      if (process!!.exitValue() == 0) {
         println("${ide.ideType} process completed successfully")
         LOG.info("${ide.ideType} process completed successfully")
       }

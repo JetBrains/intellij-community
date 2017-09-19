@@ -22,6 +22,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,13 +52,13 @@ public class BeanProperty {
 
   @NotNull
   public String getName() {
-    final String name = PropertyUtil.getPropertyName(myMethod);
+    final String name = PropertyUtilBase.getPropertyName(myMethod);
     return name == null ? "" : name;
   }
 
   @NotNull
   public PsiType getPropertyType() {
-    PsiType type = PropertyUtil.getPropertyType(myMethod);
+    PsiType type = PropertyUtilBase.getPropertyType(myMethod);
     assert type != null;
     return type;
   }
@@ -69,29 +70,29 @@ public class BeanProperty {
 
   @Nullable
   public PsiMethod getGetter() {
-    if (PropertyUtil.isSimplePropertyGetter(myMethod)) {
+    if (PropertyUtilBase.isSimplePropertyGetter(myMethod)) {
       return myMethod;
     }
-    return PropertyUtil.findPropertyGetter(myMethod.getContainingClass(), getName(), false, true);
+    return PropertyUtilBase.findPropertyGetter(myMethod.getContainingClass(), getName(), false, true);
   }
 
   @Nullable
   public PsiMethod getSetter() {
-    if (PropertyUtil.isSimplePropertySetter(myMethod)) {
+    if (PropertyUtilBase.isSimplePropertySetter(myMethod)) {
       return myMethod;
     }
-    return PropertyUtil.findPropertySetter(myMethod.getContainingClass(), getName(), false, true);
+    return PropertyUtilBase.findPropertySetter(myMethod.getContainingClass(), getName(), false, true);
   }
 
   public void setName(String newName) throws IncorrectOperationException {
     final PsiMethod setter = getSetter();
     final PsiMethod getter = getGetter();
     if (getter != null) {
-      final String getterName = PropertyUtil.suggestGetterName(newName, getter.getReturnType());
+      final String getterName = PropertyUtilBase.suggestGetterName(newName, getter.getReturnType());
       getter.setName(getterName);
     }
     if (setter != null) {
-      final String setterName = PropertyUtil.suggestSetterName(newName);
+      final String setterName = PropertyUtilBase.suggestSetterName(newName);
       setter.setName(setterName);
     }
   }
@@ -103,6 +104,6 @@ public class BeanProperty {
 
   @Nullable
   public static BeanProperty createBeanProperty(@NotNull PsiMethod method) {
-    return PropertyUtil.isSimplePropertyAccessor(method) ? new BeanProperty(method) : null;
+    return PropertyUtilBase.isSimplePropertyAccessor(method) ? new BeanProperty(method) : null;
   }
 }

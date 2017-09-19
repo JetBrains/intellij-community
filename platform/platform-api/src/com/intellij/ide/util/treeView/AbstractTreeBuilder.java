@@ -198,7 +198,7 @@ public class AbstractTreeBuilder implements Disposable {
    * 2.Paths contain "model" element returned by getElement
    */
   protected Object getTreeStructureElement(NodeDescriptor nodeDescriptor) {
-    return nodeDescriptor.getElement();
+    return nodeDescriptor == null ? null : nodeDescriptor.getElement();
   }
 
 

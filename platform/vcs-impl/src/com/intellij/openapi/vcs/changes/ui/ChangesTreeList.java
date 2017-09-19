@@ -76,38 +76,38 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
   private boolean myShowFlatten;
   private boolean myIsModelFlat;
 
-  @NotNull private final Set<T> myIncludedChanges;
+  @NotNull private final List<T> myRawChanges = new ArrayList<>();
+  @NotNull private final Set<T> myIncludedChanges = new HashSet<>();
   @NotNull private Runnable myDoubleClickHandler = EmptyRunnable.getInstance();
   private boolean myAlwaysExpandList;
 
-  @NotNull private final MyTreeCellRenderer myNodeRenderer;
-
-  @NonNls private static final String ROOT = "root";
-
   @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
 
-  @Nullable private final Runnable myInclusionListener;
+  @Nullable private Runnable myInclusionListener;
   @Nullable private ChangeNodeDecorator myChangeDecorator;
-  private Runnable myGenericSelectionListener;
   @NotNull private final CopyProvider myTreeCopyProvider;
   private TreeState myNonFlatTreeState;
 
   public ChangesTreeList(@NotNull Project project,
                          @NotNull Collection<T> initiallyIncluded,
-                         final boolean showCheckboxes,
-                         final boolean highlightProblems,
-                         @Nullable final Runnable inclusionListener,
-                         @Nullable final ChangeNodeDecorator decorator) {
-    super(ChangesBrowserNode.create(project, ROOT));
+                         boolean showCheckboxes,
+                         boolean highlightProblems,
+                         @Nullable Runnable inclusionListener,
+                         @Nullable ChangeNodeDecorator decorator) {
+    this(project, showCheckboxes, highlightProblems);
+    myIncludedChanges.addAll(initiallyIncluded);
+    myInclusionListener = inclusionListener;
+    myChangeDecorator = decorator;
+  }
+
+  public ChangesTreeList(@NotNull Project project,
+                         boolean showCheckboxes,
+                         boolean highlightProblems) {
+    super(ChangesBrowserNode.createRoot(project));
     myProject = project;
     myShowCheckboxes = showCheckboxes;
     myHighlightProblems = highlightProblems;
-    myInclusionListener = inclusionListener;
-    myChangeDecorator = decorator;
-    myIncludedChanges = new HashSet<>(initiallyIncluded);
     myAlwaysExpandList = true;
-    final ChangesBrowserNodeRenderer nodeRenderer = new ChangesBrowserNodeRenderer(myProject, () -> myShowFlatten, myHighlightProblems);
-    myNodeRenderer = new MyTreeCellRenderer(nodeRenderer);
     myCheckboxWidth = new JCheckBox().getPreferredSize().width;
 
     setHorizontalAutoScrollingEnabled(false);
@@ -115,7 +115,9 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     setShowsRootHandles(true);
     setOpaque(false);
     new TreeSpeedSearch(this, ChangesBrowserNode.TO_TEXT_CONVERTER);
-    setCellRenderer(myNodeRenderer);
+
+    final ChangesBrowserNodeRenderer nodeRenderer = new ChangesBrowserNodeRenderer(myProject, () -> myShowFlatten, myHighlightProblems);
+    setCellRenderer(new MyTreeCellRenderer(nodeRenderer));
 
     new MyToggleSelectionAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), this);
     registerKeyboardAction(new ActionListener() {
@@ -166,7 +168,7 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
       }
     }.installOn(this);
 
-    new TreeLinkMouseListener(myNodeRenderer.myTextRenderer) {
+    new TreeLinkMouseListener(nodeRenderer) {
       @Override
       protected int getRendererRelativeX(@NotNull MouseEvent e, @NotNull JTree tree, @NotNull TreePath path) {
         int x = super.getRendererRelativeX(e, tree, path);
@@ -183,7 +185,7 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     }.installOn(this);
     SmartExpander.installOn(this);
 
-    setShowFlatten(PropertiesComponent.getInstance(myProject).isTrueValue(FLATTEN_OPTION_KEY));
+    myShowFlatten = PropertiesComponent.getInstance(myProject).isTrueValue(FLATTEN_OPTION_KEY);
 
     String emptyText = StringUtil.capitalize(DiffBundle.message("diff.count.differences.status.text", 0));
     setEmptyText(emptyText);
@@ -195,18 +197,22 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     getEmptyText().setText(emptyText);
   }
 
-  public void addSelectionListener(final Runnable runnable) {
-    myGenericSelectionListener = runnable;
+  public void addSelectionListener(@NotNull Runnable runnable) {
     addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        myGenericSelectionListener.run();
+        runnable.run();
       }
     });
   }
 
+  public void setInclusionListener(@Nullable Runnable runnable) {
+    myInclusionListener = runnable;
+  }
+
   public void setChangeDecorator(@Nullable ChangeNodeDecorator changeDecorator) {
     myChangeDecorator = changeDecorator;
+    rebuildTree(null);
   }
 
   public void setDoubleClickHandler(@NotNull final Runnable doubleClickHandler) {
@@ -223,6 +229,10 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
 
   public boolean isShowFlatten() {
     return myShowFlatten;
+  }
+
+  public boolean isShowCheckboxes() {
+    return myShowCheckboxes;
   }
 
   /**
@@ -242,7 +252,7 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
       myNonFlatTreeState = TreeState.createOn(this, getRoot());
     }
     myShowFlatten = showFlatten;
-    setChangesToDisplay(getChanges());
+    rebuildTree(null);
     if (!myAlwaysExpandList && !myShowFlatten && myNonFlatTreeState != null) {
       myNonFlatTreeState.applyTo(this, getRoot());
     }
@@ -256,7 +266,7 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     treeUI.setRightChildIndent(!isFlat ? UIUtil.getTreeRightChildIndent() : 0);
   }
 
-  protected boolean isCurrentModelFlat() {
+  private boolean isCurrentModelFlat() {
     boolean isFlat = true;
     Enumeration enumeration = getRoot().depthFirstEnumeration();
 
@@ -267,12 +277,22 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     return isFlat;
   }
 
-  public void setChangesToDisplay(final List<T> changes) {
+  public void setChangesToDisplay(final List<? extends T> changes) {
     setChangesToDisplay(changes, null);
   }
 
-  public void setChangesToDisplay(final List<T> changes, @Nullable final VirtualFile toSelect) {
-    final DefaultTreeModel model = buildTreeModel(changes, myChangeDecorator);
+  public void setChangesToDisplay(final List<? extends T> changes, @Nullable final VirtualFile toSelect) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myProject.isDisposed()) return;
+
+    myRawChanges.clear();
+    myRawChanges.addAll(changes);
+
+    rebuildTree(toSelect);
+  }
+
+  private void rebuildTree(@Nullable VirtualFile toSelect) {
+    final DefaultTreeModel model = buildTreeModel(myRawChanges, myChangeDecorator);
     TreeState state = null;
     if (!myAlwaysExpandList) {
       state = TreeState.createOn(this, getRoot());
@@ -286,55 +306,47 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
       return;
     }
 
-    final Runnable runnable = () -> {
-      if (myProject.isDisposed()) return;
-      TreeUtil.expandAll(ChangesTreeList.this);
+    TreeUtil.expandAll(this);
 
-      int selectedTreeRow = -1;
+    int selectedTreeRow = -1;
 
-      if (myShowCheckboxes) {
-        if (myIncludedChanges.size() > 0) {
-          ChangesBrowserNode root = (ChangesBrowserNode)model.getRoot();
-          Enumeration enumeration = root.depthFirstEnumeration();
+    if (myShowCheckboxes) {
+      if (myIncludedChanges.size() > 0) {
+        ChangesBrowserNode root = (ChangesBrowserNode)model.getRoot();
+        Enumeration enumeration = root.depthFirstEnumeration();
 
-          while (enumeration.hasMoreElements()) {
-            ChangesBrowserNode node = (ChangesBrowserNode)enumeration.nextElement();
-            @SuppressWarnings("unchecked")
-            final CheckboxTree.NodeState state1 = getNodeStatus(node);
-            if (node != root && state1 == CheckboxTree.NodeState.CLEAR) {
-              collapsePath(new TreePath(node.getPath()));
-            }
+        while (enumeration.hasMoreElements()) {
+          ChangesBrowserNode node = (ChangesBrowserNode)enumeration.nextElement();
+          @SuppressWarnings("unchecked")
+          final CheckboxTree.NodeState state1 = getNodeStatus(node);
+          if (node != root && state1 == CheckboxTree.NodeState.CLEAR) {
+            collapsePath(new TreePath(node.getPath()));
           }
+        }
 
-          enumeration = root.depthFirstEnumeration();
-          while (enumeration.hasMoreElements()) {
-            ChangesBrowserNode node = (ChangesBrowserNode)enumeration.nextElement();
-            @SuppressWarnings("unchecked")
-            final CheckboxTree.NodeState state1 = getNodeStatus(node);
-            if (state1 == CheckboxTree.NodeState.FULL && node.isLeaf()) {
-              selectedTreeRow = getRowForPath(new TreePath(node.getPath()));
-              break;
-            }
+        enumeration = root.depthFirstEnumeration();
+        while (enumeration.hasMoreElements()) {
+          ChangesBrowserNode node = (ChangesBrowserNode)enumeration.nextElement();
+          @SuppressWarnings("unchecked")
+          final CheckboxTree.NodeState state1 = getNodeStatus(node);
+          if (state1 == CheckboxTree.NodeState.FULL && node.isLeaf()) {
+            selectedTreeRow = getRowForPath(new TreePath(node.getPath()));
+            break;
           }
         }
       }
-      if (toSelect != null) {
-        int rowInTree = findRowContainingFile((TreeNode)model.getRoot(), toSelect);
-        if (rowInTree > -1) {
-          selectedTreeRow = rowInTree;
-        }
-      }
-
-      if (selectedTreeRow >= 0) {
-        setSelectionRow(selectedTreeRow);
-      }
-      TreeUtil.showRowCentered(ChangesTreeList.this, selectedTreeRow, false);
-    };
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      runnable.run();
-    } else {
-      SwingUtilities.invokeLater(runnable);
     }
+    if (toSelect != null) {
+      int rowInTree = findRowContainingFile((TreeNode)model.getRoot(), toSelect);
+      if (rowInTree > -1) {
+        selectedTreeRow = rowInTree;
+      }
+    }
+
+    if (selectedTreeRow >= 0) {
+      setSelectionRow(selectedTreeRow);
+    }
+    TreeUtil.showRowCentered(this, selectedTreeRow, false);
   }
 
   private int findRowContainingFile(@NotNull TreeNode root, @NotNull final VirtualFile toSelect) {
@@ -373,14 +385,9 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     toggleChanges(getSelectedChanges());
   }
 
-  /**
-   * TODO: This method does not respect T type parameter while filling the result - just "Change" class is used
-   * TODO: ("ChangesBrowserNode.getAllChangesUnder()").
-   */
   @NotNull
   public List<T> getChanges() {
-    //noinspection unchecked
-    return ((ChangesBrowserNode)getRoot()).getAllChangesUnder();
+    return getSelectedObjects(getRoot());
   }
 
   @NotNull
@@ -392,7 +399,6 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     else {
       LinkedHashSet<T> changes = ContainerUtil.newLinkedHashSet();
       for (TreePath path : paths) {
-        //noinspection unchecked
         changes.addAll(getSelectedObjects((ChangesBrowserNode)path.getLastPathComponent()));
       }
       return ContainerUtil.newArrayList(changes);
@@ -406,10 +412,10 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     return getChanges();
   }
 
-  protected abstract List<T> getSelectedObjects(final ChangesBrowserNode<T> node);
+  protected abstract List<T> getSelectedObjects(final ChangesBrowserNode<?> node);
 
   @Nullable
-  protected abstract T getLeadSelectedObject(final ChangesBrowserNode node);
+  protected abstract T getLeadSelectedObject(final ChangesBrowserNode<?> node);
 
   @Nullable
   public T getHighestLeadSelection() {
@@ -417,15 +423,15 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     if (path == null) {
       return null;
     }
-    //noinspection unchecked
-    return getLeadSelectedObject((ChangesBrowserNode<T>)path.getLastPathComponent());
+
+    return getLeadSelectedObject((ChangesBrowserNode)path.getLastPathComponent());
   }
 
   @Nullable
   public T getLeadSelection() {
     final TreePath path = getSelectionPath();
-    //noinspection unchecked
-    return path == null ? null : ContainerUtil.getFirstItem(getSelectedObjects(((ChangesBrowserNode<T>)path.getLastPathComponent())));
+
+    return path == null ? null : ContainerUtil.getFirstItem(getSelectedObjects(((ChangesBrowserNode)path.getLastPathComponent())));
   }
 
   @NotNull
@@ -489,7 +495,7 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
 
   @NotNull
   public Collection<T> getIncludedChanges() {
-    return myIncludedChanges;
+    return ContainerUtil.filter(getChanges(), change -> myIncludedChanges.contains(change));
   }
 
   public void expandAll() {
@@ -567,7 +573,7 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
         @SuppressWarnings("unchecked")
         CheckboxTree.NodeState state = getNodeStatus((ChangesBrowserNode)value);
         myCheckBox.setSelected(state != CheckboxTree.NodeState.CLEAR);
-        //noinspection unchecked
+
         myCheckBox.setEnabled(tree.isEnabled() && isNodeEnabled((ChangesBrowserNode)value));
         revalidate();
 
@@ -585,7 +591,7 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
   }
 
 
-  private CheckboxTree.NodeState getNodeStatus(ChangesBrowserNode<T> node) {
+  private CheckboxTree.NodeState getNodeStatus(ChangesBrowserNode<?> node) {
     boolean hasIncluded = false;
     boolean hasExcluded = false;
 
@@ -603,7 +609,7 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     return CheckboxTree.NodeState.CLEAR;
   }
 
-  protected boolean isNodeEnabled(ChangesBrowserNode<T> node) {
+  protected boolean isNodeEnabled(ChangesBrowserNode<?> node) {
     return getNodeStatus(node) != CheckboxTree.NodeState.PARTIAL;
   }
 
@@ -637,10 +643,10 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     HashSet<T> changesSet = new HashSet<>(changes);
     final List<TreePath> treeSelection = new ArrayList<>(changes.size());
     TreeUtil.traverse(getRoot(), node -> {
-      @SuppressWarnings("unchecked")
-      final T change = (T) ((DefaultMutableTreeNode) node).getUserObject();
-      if (changesSet.contains(change)) {
-        treeSelection.add(new TreePath(((DefaultMutableTreeNode) node).getPath()));
+      DefaultMutableTreeNode mutableNode = (DefaultMutableTreeNode)node;
+      //noinspection SuspiciousMethodCalls
+      if (changesSet.contains(mutableNode.getUserObject())) {
+        treeSelection.add(new TreePath(mutableNode.getPath()));
       }
       return true;
     });

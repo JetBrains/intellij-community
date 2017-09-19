@@ -47,6 +47,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
@@ -136,30 +137,23 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
 
   @Override
   public void tearDown() {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-      try {
-        if (mySetUp) {
-          if (myConsoleView != null) {
-            Disposer.dispose(myConsoleView);
-            myConsoleView = null;
-          }
-          if (myDescriptor != null) {
-            Disposer.dispose(myDescriptor);
-            myDescriptor = null;
-          }
-
-
-          PyUnitTestTask.super.tearDown();
-
-          mySetUp = false;
+    EdtTestUtil.runInEdtAndWait(() -> {
+      if (mySetUp) {
+        if (myConsoleView != null) {
+          Disposer.dispose(myConsoleView);
+          myConsoleView = null;
         }
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    }
+        if (myDescriptor != null) {
+          Disposer.dispose(myDescriptor);
+          myDescriptor = null;
+        }
 
-    );
+
+        super.tearDown();
+
+        mySetUp = false;
+      }
+    });
   }
 
   @Override

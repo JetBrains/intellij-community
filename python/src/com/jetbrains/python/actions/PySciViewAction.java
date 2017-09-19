@@ -32,7 +32,10 @@ import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ui.UIUtil;
@@ -52,8 +55,6 @@ public class PySciViewAction extends ToggleAction implements DumbAware {
   private static final String TEXT_SCI_VIEW = "Scientific Mode";
 
   private boolean wasConsoleVisible = false;
-  private ToolWindowType myDocumentationType = ToolWindowType.FLOATING;
-  private boolean myDocumentationAutoHide = true;
 
   public static final String ACTION_ID = "PySciView";
   private ToolWindowType myDataViewType = ToolWindowType.FLOATING;
@@ -135,14 +136,6 @@ public class PySciViewAction extends ToggleAction implements DumbAware {
     }
     setDocFontSize();
 
-    final ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.DOCUMENTATION);
-    if (window != null) {
-      window.setAnchor(ToolWindowAnchor.RIGHT, null);
-      myDocumentationType = window.getType();
-      myDocumentationAutoHide = window.isAutoHide();
-      window.setType(ToolWindowType.DOCKED, null);
-      window.setAutoHide(false);
-    }
   }
 
   private static void setDocFontSize() {
@@ -167,8 +160,6 @@ public class PySciViewAction extends ToggleAction implements DumbAware {
 
     final ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.DOCUMENTATION);
     if (window != null) {
-      window.setType(myDocumentationType, null);
-      window.setAutoHide(myDocumentationAutoHide);
       DocumentationManager.getInstance(project).restorePopupBehavior();
       final JBPopup hint = DocumentationManager.getInstance(project).getDocInfoHint();
       if (hint != null) {

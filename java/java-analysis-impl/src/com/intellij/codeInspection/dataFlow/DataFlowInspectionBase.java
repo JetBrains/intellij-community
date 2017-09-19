@@ -258,6 +258,12 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
           holder.registerProblem(element, InspectionsBundle.message("dataflow.message.npe.methodref.invocation"),
                                  createMethodReferenceNPEFixes((PsiMethodReferenceExpression)element).toArray(LocalQuickFix.EMPTY_ARRAY));
         }
+        else if (element instanceof PsiNewExpression) {
+          List<LocalQuickFix> fixes = createNPEFixes(((PsiNewExpression)element).getQualifier(), (PsiExpression)element, onTheFly);
+          holder.registerProblem(getElementToHighlight((PsiCall)element),
+                                 InspectionsBundle.message("dataflow.message.npe.inner.class.construction"),
+                                 fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+        }
         else {
           reportCallMayProduceNpe(holder, (PsiMethodCallExpression)element, holder.isOnTheFly());
         }
