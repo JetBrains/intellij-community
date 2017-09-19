@@ -35,7 +35,7 @@ public class NamingConventionBean {
     initPattern();
   }
 
-  private Pattern m_regexPattern;
+  protected Pattern m_regexPattern;
   
    public boolean isValid(String name) {
     final int length = name.length();
