@@ -892,9 +892,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (state.applyCondition(factory.createCondition(value, RelationType.NE, factory.getConstFactory().getNull()))) {
         return nextInstruction(runner, state);
       }
-      if (visitor instanceof StandardInstructionVisitor) {
-        ((StandardInstructionVisitor)visitor).skipConstantConditionReporting(myCall);
-      }
       return DfaInstructionState.EMPTY_ARRAY;
     }
 

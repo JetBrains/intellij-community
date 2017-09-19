@@ -51,7 +51,7 @@ class Main {
     if (val != null) {
       return val;
     }
-    if (defVal.equals(val)) {
+    if (<warning descr="Condition 'defVal.equals(val)' is always 'false'">defVal.equals(val)</warning>) {
       return val;
     }
     return defVal;
@@ -68,7 +68,7 @@ class Main {
     if (<warning descr="Condition 'val == defVal' is always 'false'">val == defVal</warning>) {
       return val;
     }
-    if (defVal.equals(val)) {
+    if (<warning descr="Condition 'defVal.equals(val)' is always 'false'">defVal.equals(val)</warning>) {
       return val;
     }
     return defVal;
