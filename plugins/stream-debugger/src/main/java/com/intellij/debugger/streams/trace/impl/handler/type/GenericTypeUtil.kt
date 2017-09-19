@@ -13,77 +13,64 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.trace.impl.handler.type;
+package com.intellij.debugger.streams.trace.impl.handler.type
 
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.TypeConversionUtil;
-import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Set;
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiType
+import com.intellij.psi.util.InheritanceUtil
+import com.intellij.psi.util.TypeConversionUtil
+import one.util.streamex.StreamEx
+import org.jetbrains.annotations.Contract
 
 /**
  * @author Vitaliy.Bibaev
  */
-public class GenericTypeUtil {
-  private static final Set<GenericType> OPTIONAL_TYPES = StreamEx
-    .of(GenericType.OPTIONAL, GenericType.OPTIONAL_INT, GenericType.OPTIONAL_LONG, GenericType.OPTIONAL_DOUBLE)
-    .toSet();
+object GenericTypeUtil {
+  private val OPTIONAL_TYPES = StreamEx
+    .of(GenericType.OPTIONAL, GenericType.OPTIONAL_INT, GenericType.OPTIONAL_LONG,
+        GenericType.OPTIONAL_DOUBLE)
+    .toSet()
 
-  @NotNull
-  public static GenericType fromStreamPsiType(@NotNull PsiType streamPsiType) {
-    if (InheritanceUtil.isInheritor(streamPsiType, CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM)) return GenericType.INT;
-    if (InheritanceUtil.isInheritor(streamPsiType, CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM)) return GenericType.LONG;
-    if (InheritanceUtil.isInheritor(streamPsiType, CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM)) return GenericType.DOUBLE;
-    if (PsiType.VOID.equals(streamPsiType)) return GenericType.VOID;
+  fun fromStreamPsiType(streamPsiType: PsiType): GenericType {
+    if (InheritanceUtil.isInheritor(streamPsiType, CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM)) return GenericType.INT
+    if (InheritanceUtil.isInheritor(streamPsiType, CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM)) return GenericType.LONG
+    if (InheritanceUtil.isInheritor(streamPsiType, CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM))
+      return GenericType
+        .DOUBLE
+    return if (PsiType.VOID == streamPsiType) GenericType.VOID else GenericType.OBJECT
 
-    return GenericType.OBJECT;
   }
 
-  @NotNull
-  public static GenericType fromPsiClass(@NotNull PsiClass psiClass) {
-    if (InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM)) return GenericType.INT;
-    if (InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM)) return GenericType.LONG;
-    if (InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM)) return GenericType.DOUBLE;
+  fun fromPsiClass(psiClass: PsiClass): GenericType {
+    if (InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM)) return GenericType.INT
+    if (InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM)) return GenericType.LONG
+    return if (InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM)) GenericType.DOUBLE
+    else GenericType.OBJECT
 
-    return GenericType.OBJECT;
   }
 
-  @NotNull
-  public static GenericType fromPsiType(@NotNull PsiType type) {
-    if (PsiType.VOID.equals(type)) return GenericType.VOID;
-    if (PsiType.INT.equals(type)) return GenericType.INT;
-    if (PsiType.DOUBLE.equals(type)) return GenericType.DOUBLE;
-    if (PsiType.LONG.equals(type)) return GenericType.LONG;
-    if (PsiType.BOOLEAN.equals(type)) return GenericType.BOOLEAN;
-    return new ClassTypeImpl(TypeConversionUtil.erasure(type).getCanonicalText());
+  fun fromPsiType(type: PsiType): GenericType {
+    if (PsiType.VOID == type) return GenericType.VOID
+    if (PsiType.INT == type) return GenericType.INT
+    if (PsiType.DOUBLE == type) return GenericType.DOUBLE
+    if (PsiType.LONG == type) return GenericType.LONG
+    return if (PsiType.BOOLEAN == type) GenericType.BOOLEAN else ClassTypeImpl(TypeConversionUtil.erasure(type).canonicalText)
   }
 
   @Contract(pure = true)
-  private static boolean isOptional(@NotNull GenericType type) {
-    return OPTIONAL_TYPES.contains(type);
+  private fun isOptional(type: GenericType): Boolean {
+    return OPTIONAL_TYPES.contains(type)
   }
 
-  @NotNull
-  public static GenericType unwrapOptional(@NotNull GenericType type) {
-    assert isOptional(type);
+  fun unwrapOptional(type: GenericType): GenericType {
+    assert(isOptional(type))
 
-    if (type.equals(GenericType.OPTIONAL_INT)) {
-      return GenericType.INT;
+    return when (type) {
+      GenericType.OPTIONAL_INT -> GenericType.INT
+      GenericType.OPTIONAL_LONG -> GenericType.LONG
+      GenericType.OPTIONAL_DOUBLE -> GenericType.DOUBLE
+      else -> GenericType.OBJECT
     }
-
-    if (type.equals(GenericType.OPTIONAL_LONG)) {
-      return GenericType.LONG;
-    }
-
-    if (type.equals(GenericType.OPTIONAL_DOUBLE)) {
-      return GenericType.DOUBLE;
-    }
-
-    return GenericType.OBJECT;
   }
 }

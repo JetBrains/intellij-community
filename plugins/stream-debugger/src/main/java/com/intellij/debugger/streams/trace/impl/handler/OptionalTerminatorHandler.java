@@ -38,7 +38,7 @@ public class OptionalTerminatorHandler implements TerminatorCallHandler {
 
   public OptionalTerminatorHandler(@NotNull TerminatorStreamCall call, @NotNull String resultExpression) {
     myTerminatorHandler = new TerminatorHandler(call.getTypeBefore());
-    myOptionalType = GenericTypeUtil.unwrapOptional(call.getResultType());
+    myOptionalType = GenericTypeUtil.INSTANCE.unwrapOptional(call.getResultType());
     myResultExpression = resultExpression;
   }
 

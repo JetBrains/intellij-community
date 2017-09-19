@@ -52,7 +52,7 @@ public class JavaChainTransformerImpl implements ChainTransformer.Java {
     final PsiType qualifierType = qualifierExpression == null ? null : qualifierExpression.getType();
     final GenericType typeAfterQualifier = qualifierType == null
                                            ? getGenericTypeOfThis(qualifierExpression)
-                                           : GenericTypeUtil.fromStreamPsiType(qualifierType);
+                                           : GenericTypeUtil.INSTANCE.fromStreamPsiType(qualifierType);
     final QualifierExpressionImpl qualifier =
       qualifierExpression == null
       ? new QualifierExpressionImpl("", TextRange.EMPTY_RANGE, typeAfterQualifier)
@@ -71,8 +71,8 @@ public class JavaChainTransformerImpl implements ChainTransformer.Java {
   private GenericType getGenericTypeOfThis(PsiExpression expression) {
     final PsiClass klass = ClassUtils.getContainingClass(expression);
 
-    return klass == null ? GenericType.OBJECT
-                         : GenericTypeUtil.fromPsiClass(klass);
+    return klass == null ? GenericType.Companion.getOBJECT()
+                         : GenericTypeUtil.INSTANCE.fromPsiClass(klass);
   }
 
   @NotNull
@@ -141,11 +141,11 @@ public class JavaChainTransformerImpl implements ChainTransformer.Java {
 
   @NotNull
   private static GenericType resolveType(@NotNull PsiMethodCallExpression call) {
-    return GenericTypeUtil.fromStreamPsiType(extractType(call));
+    return GenericTypeUtil.INSTANCE.fromStreamPsiType(extractType(call));
   }
 
   @NotNull
   private static GenericType resolveTerminationCallType(@NotNull PsiMethodCallExpression call) {
-    return GenericTypeUtil.fromPsiType(extractType(call));
+    return GenericTypeUtil.INSTANCE.fromPsiType(extractType(call));
   }
 }

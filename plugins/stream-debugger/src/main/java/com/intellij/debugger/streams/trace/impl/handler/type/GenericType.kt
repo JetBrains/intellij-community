@@ -13,33 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.trace.impl.handler.type;
+package com.intellij.debugger.streams.trace.impl.handler.type
 
-import com.intellij.psi.CommonClassNames;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.CommonClassNames
 
 /**
  * @author Vitaliy.Bibaev
  */
-public interface GenericType {
-  @NotNull
-  String getVariableTypeName();
+interface GenericType {
+  val variableTypeName: String
 
-  @NotNull
-  String getGenericTypeName();
+  val genericTypeName: String
 
-  @NotNull
-  String getDefaultValue();
+  val defaultValue: String
 
-  GenericType BOOLEAN = new GenericTypeImpl("boolean", "java.lang.Boolean", "false");
-  GenericType INT = new GenericTypeImpl("int", "java.lang.Integer", "0");
-  GenericType DOUBLE = new GenericTypeImpl("double", "java.lang.Double", "0.");
-  GenericType LONG = new GenericTypeImpl("long", "java.lang.Long", "0L");
-  GenericType OBJECT = new ClassTypeImpl("java.lang.Object");
-  GenericType VOID = new GenericTypeImpl("void", "java.lang.Void", "null");
+  interface CompositeType : GenericType {
+    val elementType: GenericType
+  }
 
-  GenericType OPTIONAL = new ClassTypeImpl(CommonClassNames.JAVA_UTIL_OPTIONAL);
-  GenericType OPTIONAL_INT = new ClassTypeImpl("java.util.OptionalInt");
-  GenericType OPTIONAL_LONG = new ClassTypeImpl("java.util.OptionalLong");
-  GenericType OPTIONAL_DOUBLE = new ClassTypeImpl("java.util.OptionalDouble");
+  companion object {
+    val BOOLEAN: GenericType = GenericTypeImpl("boolean", "java.lang.Boolean", "false")
+    val INT: GenericType = GenericTypeImpl("int", "java.lang.Integer", "0")
+    val DOUBLE: GenericType = GenericTypeImpl("double", "java.lang.Double", "0.")
+    val LONG: GenericType = GenericTypeImpl("long", "java.lang.Long", "0L")
+
+    val OBJECT: GenericType = ClassTypeImpl("java.lang.Object", "new java.lang.Object()")
+    val VOID: GenericType = GenericTypeImpl("void", "java.lang.Void", "null")
+    val OPTIONAL: GenericType = ClassTypeImpl(CommonClassNames.JAVA_UTIL_OPTIONAL)
+    val OPTIONAL_INT: GenericType = ClassTypeImpl("java.util.OptionalInt")
+
+    val OPTIONAL_LONG: GenericType = ClassTypeImpl("java.util.OptionalLong")
+
+    val OPTIONAL_DOUBLE: GenericType = ClassTypeImpl("java.util.OptionalDouble")
+  }
 }

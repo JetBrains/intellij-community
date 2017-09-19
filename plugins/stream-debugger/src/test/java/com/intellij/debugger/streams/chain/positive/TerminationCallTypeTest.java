@@ -28,23 +28,23 @@ import java.util.List;
  */
 public class TerminationCallTypeTest extends StreamChainBuilderPositiveTestBase {
   public void testVoidType() throws Exception {
-    doTest(GenericType.VOID);
+    doTest(GenericType.Companion.getVOID());
   }
 
   public void testBooleanType() throws Exception {
-    doTest(GenericType.BOOLEAN);
+    doTest(GenericType.Companion.getBOOLEAN());
   }
 
   public void testIntType() throws Exception {
-    doTest(GenericType.INT);
+    doTest(GenericType.Companion.getINT());
   }
 
   public void testDoubleType() throws Exception {
-    doTest(GenericType.DOUBLE);
+    doTest(GenericType.Companion.getDOUBLE());
   }
 
   public void testLongType() throws Exception {
-    doTest(GenericType.LONG);
+    doTest(GenericType.Companion.getLONG());
   }
 
   public void testReferenceType() throws Exception {

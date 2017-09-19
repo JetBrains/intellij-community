@@ -30,43 +30,44 @@ import static com.intellij.debugger.streams.trace.impl.handler.type.GenericType.
  */
 public class PrimitiveObjectBuilderPositiveTest extends StreamChainBuilderPositiveTestBase {
   public void testSimpleObject() {
-    doTest(OBJECT);
+    doTest(Companion.getOBJECT());
   }
 
   public void testSimpleInt() {
-    doTest(INT);
+    doTest(Companion.getINT());
   }
 
   public void testSimpleDouble() {
-    doTest(DOUBLE);
+    doTest(Companion.getDOUBLE());
   }
 
   public void testSimpleLong() {
-    doTest(LONG);
+    doTest(Companion.getLONG());
   }
 
   public void testObj2Int() {
-    doTest(OBJECT, INT);
+    doTest(Companion.getOBJECT(), Companion.getINT());
   }
 
   public void testObj2Long() {
-    doTest(OBJECT, LONG);
+    doTest(Companion.getOBJECT(), Companion.getLONG());
   }
 
   public void testObj2Double() {
-    doTest(OBJECT, DOUBLE);
+    doTest(Companion.getOBJECT(), Companion.getDOUBLE());
   }
 
   public void testPrimitiveIdentity() {
-    doTest(INT, INT);
+    doTest(Companion.getINT(), Companion.getINT());
   }
 
   public void testPrimitive2Obj() {
-    doTest(DOUBLE, OBJECT);
+    doTest(Companion.getDOUBLE(), Companion.getOBJECT());
   }
 
   public void testFewTransitions() {
-    doTest(OBJECT, INT, INT, OBJECT, DOUBLE, OBJECT, LONG);
+    doTest(Companion.getOBJECT(), Companion.getINT(), Companion.getINT(), Companion.getOBJECT(), Companion.getDOUBLE(),
+           Companion.getOBJECT(), Companion.getLONG());
   }
 
   private void doTest(@NotNull GenericType producerAfterType,

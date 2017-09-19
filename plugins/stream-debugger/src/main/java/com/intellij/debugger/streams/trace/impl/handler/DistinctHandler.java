@@ -18,13 +18,10 @@ package com.intellij.debugger.streams.trace.impl.handler;
 import com.intellij.debugger.streams.trace.dsl.CodeBlock;
 import com.intellij.debugger.streams.trace.dsl.Expression;
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression;
-import com.intellij.debugger.streams.trace.dsl.impl.java.JavaCodeBlock;
-import com.intellij.debugger.streams.trace.dsl.impl.java.JavaStatementFactory;
 import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import com.intellij.debugger.streams.trace.impl.handler.type.ClassTypeImpl;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -50,9 +47,11 @@ public class DistinctHandler extends HandlerBase.Intermediate {
     final String variablePrefix = "distinct" + callNumber;
     final String storeMapType = String.format("java.util.Map<java.lang.Integer, %s>", myBeforeType.getGenericTypeName());
     myStoreMapVariable =
-      new HashMapVariableImpl(variablePrefix + "Store", GenericType.OBJECT, new ClassTypeImpl(storeMapType), false);
-    myResolveMapVariable = new HashMapVariableImpl(variablePrefix + "Resolve", GenericType.INT, GenericType.INT, false);
-    myReverseUtilMapVariable = new HashMapVariableImpl(variablePrefix + "ReverseUtil", GenericType.INT, GenericType.INT, false);
+      new HashMapVariableImpl(variablePrefix + "Store", GenericType.Companion.getOBJECT(), new ClassTypeImpl(storeMapType), false);
+    myResolveMapVariable = new HashMapVariableImpl(variablePrefix + "Resolve", GenericType.Companion.getINT(),
+                                                   GenericType.Companion.getINT(), false);
+    myReverseUtilMapVariable = new HashMapVariableImpl(variablePrefix + "ReverseUtil", GenericType.Companion.getINT(),
+                                                       GenericType.Companion.getINT(), false);
   }
 
   @NotNull

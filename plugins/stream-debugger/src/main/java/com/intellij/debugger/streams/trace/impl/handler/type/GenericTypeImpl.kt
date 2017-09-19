@@ -13,60 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.trace.impl.handler.type;
+package com.intellij.debugger.streams.trace.impl.handler.type
 
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Objects;
+import java.util.Objects
 
 /**
  * @author Vitaliy.Bibaev
  */
-public class GenericTypeImpl implements GenericType {
-  private final String myPrimitiveName;
-  private final String myGenericName;
-  private final String myDefaultValue;
+open class GenericTypeImpl(override val variableTypeName: String,
+                           override val genericTypeName: String,
+                           override val defaultValue: String) : GenericType {
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(myPrimitiveName, myGenericName);
+  override fun hashCode(): Int {
+    return Objects.hash(variableTypeName, genericTypeName)
   }
 
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
+  override fun equals(other: Any?): Boolean {
+    if (this === other) {
+      return true
     }
 
-    if (obj instanceof GenericType) {
-      final GenericType type = (GenericType)obj;
-      return myPrimitiveName.equals(type.getVariableTypeName()) && myGenericName.equals(type.getGenericTypeName());
-    }
-
-    return false;
-  }
-
-  public GenericTypeImpl(@NotNull String primitiveName, @NotNull String genericName, @NotNull String defaultValue) {
-    myPrimitiveName = primitiveName;
-    myGenericName = genericName;
-    myDefaultValue = defaultValue;
-  }
-
-  @NotNull
-  @Override
-  public String getVariableTypeName() {
-    return myPrimitiveName;
-  }
-
-  @NotNull
-  @Override
-  public String getGenericTypeName() {
-    return myGenericName;
-  }
-
-  @NotNull
-  @Override
-  public String getDefaultValue() {
-    return myDefaultValue;
+    return other is GenericType && variableTypeName == other.variableTypeName && genericTypeName == other.genericTypeName
   }
 }

@@ -162,7 +162,7 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
     final String resultExpression;
     final String additionalDeclarations;
     final String additionalEvaluation;
-    if (resultType.equals(GenericType.VOID)) {
+    if (resultType.equals(GenericType.Companion.getVOID())) {
       additionalDeclarations = "";
       additionalEvaluation = chain.getText() + ";" + LINE_SEPARATOR;
       resultExpression = "new Object[1]";
