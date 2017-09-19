@@ -127,9 +127,14 @@ public abstract class BaseUpdateAction extends PatchAction {
 
   @Override
   protected void doRevert(File toFile, File backupFile) throws IOException {
-    Utils.delete(toFile);
     if (myInPlace) {
-      Utils.copy(backupFile, toFile);
+      if (!toFile.exists() || isModified(toFile)) {
+        Utils.delete(toFile);
+        Utils.copy(backupFile, toFile);
+      }
+    }
+    else {
+      Utils.delete(toFile);
     }
   }
 
