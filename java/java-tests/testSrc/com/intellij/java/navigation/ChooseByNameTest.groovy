@@ -402,8 +402,8 @@ class Intf {
   }
 
   void "test prefer exact case match"() {
-    def upper = myFixture.addClass("class SOMECLASS {}")
-    def camel = myFixture.addClass("class SomeClass {}")
+    def upper = myFixture.addClass("package foo; class SOMECLASS {}")
+    def camel = myFixture.addClass("package bar; class SomeClass {}")
     assert getPopupElements(new GotoClassModel2(project), 'SomeClass') == [camel, upper]
     assert getPopupElements(new GotoFileModel(project), 'SomeClass.java') == [camel.containingFile, upper.containingFile]
   }
