@@ -166,6 +166,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     super.clearCaches();
   }
 
+  @Nullable
   @Override
   public XmlNSDescriptor getDefaultNSDescriptor(final String namespace, final boolean strict) {
     long curExtResourcesModCount = ExternalResourceManagerEx.getInstanceEx().getModificationCount(getProject());
@@ -233,9 +234,11 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
         }
         nsDescriptor = getDefaultNSDescriptor(htmlns, false);
       }
-      final XmlFile descriptorFile = nsDescriptor.getDescriptorFile();
-      if (descriptorFile != null) {
-        return getCachedHtmlNsDescriptor(descriptorFile);
+      if (nsDescriptor != null) {
+        final XmlFile descriptorFile = nsDescriptor.getDescriptorFile();
+        if (descriptorFile != null) {
+          return getCachedHtmlNsDescriptor(descriptorFile);
+        }
       }
       return new HtmlNSDescriptorImpl(nsDescriptor);
     }
