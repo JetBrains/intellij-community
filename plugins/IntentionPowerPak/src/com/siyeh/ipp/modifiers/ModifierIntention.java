@@ -16,6 +16,7 @@
 package com.siyeh.ipp.modifiers;
 
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -151,8 +152,12 @@ abstract class ModifierIntention extends Intention implements LowPriorityAction 
       if (member instanceof PsiMethod) {
         JavaChangeSignatureUsageProcessor.ConflictSearcher.searchForHierarchyConflicts((PsiMethod)member, conflicts, getModifier());
       }
-      final PsiModifierList modifierListCopy = (PsiModifierList)modifierList.copy();
-      modifierListCopy.setModifierProperty(getModifier(), true);
+      final PsiModifierList modifierListCopy = ReadAction.compute(() -> {
+        PsiModifierList copy = (PsiModifierList)modifierList.copy();
+        copy.setModifierProperty(getModifier(), true);
+        return copy;
+      });
+      
       final Query<PsiReference> search = ReferencesSearch.search(member, member.getUseScope());
       search.forEach(reference -> {
         final PsiElement element = reference.getElement();
