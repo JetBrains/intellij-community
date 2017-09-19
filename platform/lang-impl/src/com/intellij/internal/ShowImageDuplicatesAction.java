@@ -96,13 +96,7 @@ public class ShowImageDuplicatesAction extends AnAction {
         try {
           ReadAction.run(() -> {
             final String md5 = getMD5Checksum(file.getInputStream());
-            if (realDuplicates.containsKey(md5)) {
-              realDuplicates.get(md5).add(file);
-            } else {
-              final HashSet<VirtualFile> set = new HashSet<>();
-              set.add(file);
-              realDuplicates.put(md5, set);
-            }
+            realDuplicates.computeIfAbsent(md5, k -> new HashSet<>()).add(file);
           });
         }
         catch (Exception ignored) {
