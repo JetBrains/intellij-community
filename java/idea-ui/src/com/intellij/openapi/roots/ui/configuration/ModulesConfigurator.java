@@ -440,24 +440,10 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     else {
       wizard = new NewProjectWizard(myProject, dialogParent, this);
     }
-    if (wizard.showAndGet()) {
-      final ProjectBuilder builder = wizard.getProjectBuilder();
-      if (builder instanceof ModuleBuilder) {
-        final ModuleBuilder moduleBuilder = (ModuleBuilder)builder;
-        if (moduleBuilder.getName() == null) {
-          moduleBuilder.setName(wizard.getProjectName());
-        }
-        if (moduleBuilder.getModuleFilePath() == null) {
-          moduleBuilder.setModuleFilePath(wizard.getModuleFilePath());
-        }
-      }
-      if (!builder.validate(myProject, myProject)) {
-        return null;
-      }
-      return wizard.getProjectBuilder();
+    if (!wizard.showAndGet()) {
+      return null;
     }
-
-    return null;
+    return wizard.getBuilder(myProject);
   }
 
 

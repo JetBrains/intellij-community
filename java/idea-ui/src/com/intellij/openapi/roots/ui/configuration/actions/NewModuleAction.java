@@ -64,19 +64,8 @@ public class NewModuleAction extends AnAction implements DumbAware {
 
   @Nullable
   public Module createModuleFromWizard(Project project, @Nullable Object dataFromContext, AbstractProjectWizard wizard) {
-    final ProjectBuilder builder = wizard.getProjectBuilder();
-    if (builder instanceof ModuleBuilder) {
-      final ModuleBuilder moduleBuilder = (ModuleBuilder)builder;
-      if (moduleBuilder.getName() == null) {
-        moduleBuilder.setName(wizard.getProjectName());
-      }
-      if (moduleBuilder.getModuleFilePath() == null) {
-        moduleBuilder.setModuleFilePath(wizard.getModuleFilePath());
-      }
-    }
-    if (!builder.validate(project, project)) {
-      return null;
-    }
+    final ProjectBuilder builder = wizard.getBuilder(project);
+    if (builder == null) return null;
     Module module;
     if (builder instanceof ModuleBuilder) {
       module = ((ModuleBuilder) builder).commitModule(project, null);
