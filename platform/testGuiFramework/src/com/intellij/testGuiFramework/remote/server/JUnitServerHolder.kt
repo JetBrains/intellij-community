@@ -18,9 +18,7 @@ package com.intellij.testGuiFramework.remote.server
 object JUnitServerHolder {
 
   private val myServer: JUnitServer by lazy {
-    val server = JUnitServerImpl()
-    server.start()
-    server
+    JUnitServerImpl()
   }
 
   fun getServer(): JUnitServer {

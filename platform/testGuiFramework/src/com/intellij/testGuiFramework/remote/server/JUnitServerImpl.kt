@@ -58,22 +58,16 @@ class JUnitServerImpl: JUnitServer {
   }
 
   override fun start() {
-    execOnParallelThread {
-      try {
-        connection = serverSocket.accept()
-        LOG.info("Server accepted client on port: ${connection.port}")
+    connection = serverSocket.accept()
+    LOG.info("Server accepted client on port: ${connection.port}")
 
-        objectOutputStream = ObjectOutputStream(connection.getOutputStream())
-        serverSendThread = ServerSendThread(connection, objectOutputStream)
-        serverSendThread.start()
+    objectOutputStream = ObjectOutputStream(connection.getOutputStream())
+    serverSendThread = ServerSendThread(connection, objectOutputStream)
+    serverSendThread.start()
 
-        objectInputStream = ObjectInputStream(connection.getInputStream())
-        serverReceiveThread = ServerReceiveThread(connection, objectInputStream)
-        serverReceiveThread.start()
-      } catch (e: Exception) {
-        failHandler?.invoke(e)
-      }
-    }
+    objectInputStream = ObjectInputStream(connection.getInputStream())
+    serverReceiveThread = ServerReceiveThread(connection, objectInputStream)
+    serverReceiveThread.start()
   }
 
   override fun send(message: TransportMessage) {
