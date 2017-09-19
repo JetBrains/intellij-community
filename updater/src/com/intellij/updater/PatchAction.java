@@ -88,7 +88,7 @@ public abstract class PatchAction {
     if (optional) myFlags |= OPTIONAL; else myFlags &= ~OPTIONAL;
   }
 
-  protected static FileType getFileType(File file) throws IOException {
+  protected static FileType getFileType(File file) {
     if (Utils.isLink(file)) return FileType.SYMLINK;
     if (Utils.isExecutable(file)) return FileType.EXECUTABLE_FILE;
     return FileType.REGULAR_FILE;

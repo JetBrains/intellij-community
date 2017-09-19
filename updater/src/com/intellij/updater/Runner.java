@@ -275,14 +275,14 @@ public class Runner {
     Utils.cleanup();
   }
 
-  private static void install(String jarFile, String destFolder) throws Exception {
+  private static void install(String jarFile, String destFolder) {
     new SwingUpdaterUI(ui -> {
       logger().info("Installing patch to the " + destFolder);
       return doInstall(jarFile, ui, destFolder);
     });
   }
 
-  private static void apply(String jarFile, String destFolder, boolean toolboxUi) throws Exception {
+  private static void apply(String jarFile, String destFolder, boolean toolboxUi) {
     logger().info("Applying patch to the " + destFolder);
     UpdaterUI ui = toolboxUi ? new ToolboxUpdaterUI() : new ConsoleUpdaterUI();
     boolean success = doInstall(jarFile, ui, destFolder);
@@ -291,7 +291,7 @@ public class Runner {
     }
   }
 
-  private static boolean doInstall(String jarFile, UpdaterUI ui, String destFolder) throws OperationCancelledException {
+  private static boolean doInstall(String jarFile, UpdaterUI ui, String destFolder) {
     try {
       try {
         File patchFile = Utils.getTempFile("patch");

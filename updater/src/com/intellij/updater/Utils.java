@@ -38,7 +38,7 @@ public class Utils {
     return fileName.endsWith(".zip") || fileName.endsWith(".jar");
   }
 
-  private static File findUniqueName(String path) throws IOException {
+  private static File findUniqueName(String path) {
     int index = 0;
     File myTempFile;
     do {
@@ -129,7 +129,7 @@ public class Utils {
     }
   }
 
-  public static boolean isLink(File file) throws IOException {
+  public static boolean isLink(File file) {
     return Files.isSymbolicLink(file.toPath());
   }
 
