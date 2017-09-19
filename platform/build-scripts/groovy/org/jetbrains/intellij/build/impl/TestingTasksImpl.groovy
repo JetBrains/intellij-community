@@ -60,11 +60,14 @@ class TestingTasksImpl extends TestingTasks {
     FileUtilRt.createParentDirs(classpathFile)
     classpathFile.text = testsClasspath.findAll({ new File(it).exists() }).join('\n')
 
+    File snapshotsDir = createSnapshotsDirectory()
+    String hprofSnapshotFilePath = new File(snapshotsDir, "intellij-tests-oom.hprof").absolutePath
     List<String> jvmArgs = [
       "-ea",
       "-server",
       "-Xbootclasspath/a:${context.getModuleOutputPath(context.findRequiredModule("boot"))}".toString(),
       "-XX:+HeapDumpOnOutOfMemoryError",
+      "-XX:HeapDumpPath=$hprofSnapshotFilePath".toString(),
       "-XX:ReservedCodeCacheSize=300m",
       "-XX:SoftRefLRUPolicyMSPerMB=50",
       "-XX:+UseConcMarkSweepGC",
@@ -192,6 +195,19 @@ class TestingTasksImpl extends TestingTasks {
      else
       //run other suites instead of BootstrapTests
       runJUnitTask(jvmArgs, systemProperties, testsClasspath)
+
+    if (new File(hprofSnapshotFilePath).exists()) {
+      context.notifyArtifactBuilt(hprofSnapshotFilePath)
+    }
+  }
+
+  @Override
+  @CompileDynamic
+  File createSnapshotsDirectory() {
+    File snapshotsDir = new File("$context.paths.projectHome/out/snapshots")
+    context.ant.delete(dir: snapshotsDir)
+    context.ant.mkdir(dir: snapshotsDir)
+    return snapshotsDir
   }
 
   @CompileDynamic
