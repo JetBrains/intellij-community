@@ -19,6 +19,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UnorderedPair;
@@ -41,6 +42,8 @@ import java.util.*;
 
 
 public class DfaMemoryStateImpl implements DfaMemoryState {
+  private static final Logger LOG = Logger.getInstance(DfaMemoryStateImpl.class);
+
   private final DfaValueFactory myFactory;
 
   private final List<EqClass> myEqClasses;
@@ -318,6 +321,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       myEqClasses.add(aClass);
     }
     addToMap(dfaValue.getID(), resultIndex);
+    checkInvariants();
 
     return tryMergeClassByQualifier(resultIndex);
   }
@@ -585,8 +589,21 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       myDistinctClasses.add(createPair(c1Index, low(c) == c2Index ? high(c) : low(c)));
     }
     myEqClasses.set(c2Index, null);
+    checkInvariants();
 
     return true;
+  }
+
+  private void checkInvariants() {
+    if (!LOG.isDebugEnabled()) return;
+    myIdToEqClassesIndices.forEachEntry((id, eqClasses) -> {
+      for (int classNum : eqClasses) {
+        if (myEqClasses.get(classNum) == null) {
+          LOG.debug("Invariant violated: null-class for id=" + myFactory.getValue(id));
+        }
+      }
+      return true;
+    });
   }
 
   private static int low(long l) {
@@ -1279,6 +1296,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     removeAllFromMap(idPlain);
     removeAllFromMap(idNegated);
+    checkInvariants();
     myVariableStates.remove(varPlain);
     if (varNegated != null) {
       myVariableStates.remove(varNegated);
