@@ -47,5 +47,6 @@
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="module" module-name="dom-tests" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="TestNG" level="project" />
+    <orderEntry type="module" module-name="compiler-tests" scope="TEST" />
   </component>
 </module>
