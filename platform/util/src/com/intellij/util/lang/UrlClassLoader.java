@@ -277,12 +277,7 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   @Override
-  @Nullable  // Accessed from PluginClassLoader via reflection // TODO do we need it?
   public URL findResource(final String name) {
-    return findResourceImpl(name);
-  }
-
-  protected URL findResourceImpl(final String name) {
     Resource res = _getResource(name);
     return res != null ? res.getURL() : null;
   }
@@ -311,7 +306,6 @@ public class UrlClassLoader extends ClassLoader {
     }
   }
 
-  // Accessed from PluginClassLoader via reflection // TODO do we need it?
   @Override
   protected Enumeration<URL> findResources(String name) throws IOException {
     return getClassPath().getResources(name, true);

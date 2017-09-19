@@ -17,7 +17,6 @@ package com.intellij.ide.plugins.cl;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -28,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.*;
 
@@ -149,18 +147,17 @@ public class PluginClassLoader extends UrlClassLoader {
 
   @Override
   public URL findResource(String name) {
-    URL resource = findResourceImpl(name);
+    URL resource = super.findResource(name);
     if (resource != null) return resource;
 
     for (ClassLoader parent : myParents) {
-      URL parentResource = fetchResource(parent, name);
+      URL parentResource = parent.getResource(name);
       if (parentResource != null) return parentResource;
     }
 
     return null;
   }
 
-  @Nullable
   @Override
   public InputStream getResourceAsStream(String name) {
     InputStream stream = super.getResourceAsStream(name);
@@ -179,7 +176,7 @@ public class PluginClassLoader extends UrlClassLoader {
     @SuppressWarnings("unchecked") Enumeration<URL>[] resources = new Enumeration[myParents.length + 1];
     resources[0] = super.findResources(name);
     for (int idx = 0; idx < myParents.length; idx++) {
-      resources[idx + 1] = fetchResources(myParents[idx], name);
+      resources[idx + 1] = myParents[idx].getResources(name);
     }
     return new DeepEnumeration(resources);
   }
@@ -203,41 +200,6 @@ public class PluginClassLoader extends UrlClassLoader {
     }
 
     return null;
-  }
-
-  private static URL fetchResource(ClassLoader cl, String resourceName) {
-    try {
-      Method findResource = getFindResourceMethod(cl.getClass(), "findResource");
-      return findResource != null ? (URL)findResource.invoke(cl, resourceName) : null;
-    }
-    catch (Exception e) {
-      Logger.getInstance(PluginClassLoader.class).error(e);
-      return null;
-    }
-  }
-
-  private static Enumeration<URL> fetchResources(ClassLoader cl, String resourceName) {
-    try {
-      Method findResources = getFindResourceMethod(cl.getClass(), "findResources");
-      @SuppressWarnings("unchecked") Enumeration<URL> e = findResources != null ? (Enumeration)findResources.invoke(cl, resourceName) : null;
-      return e;
-    }
-    catch (Exception e) {
-      Logger.getInstance(PluginClassLoader.class).error(e);
-      return null;
-    }
-  }
-
-  private static Method getFindResourceMethod(Class<?> clClass, String methodName) {
-    try {
-      Method declaredMethod = clClass.getDeclaredMethod(methodName, String.class);
-      declaredMethod.setAccessible(true);
-      return declaredMethod;
-    }
-    catch (NoSuchMethodException e) {
-      Class superclass = clClass.getSuperclass();
-      return superclass == null || superclass.equals(Object.class) ? null : getFindResourceMethod(superclass, methodName);
-    }
   }
 
   public PluginId getPluginId() {
