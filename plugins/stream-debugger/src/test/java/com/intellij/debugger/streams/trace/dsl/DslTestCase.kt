@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.streams.trace.dsl
 
+import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
@@ -299,6 +300,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
     doTest {
       val lst = list(types.longType, "lst")
       declare(lst.defaultDeclaration())
+      +lst.add(TextExpression("100"))
       +lst.get(0).call("methodWithSideEffect")
       +lst.set(1, lst.get(0))
       +lst.contains(lst.size())
