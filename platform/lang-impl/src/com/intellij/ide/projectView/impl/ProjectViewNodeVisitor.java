@@ -19,28 +19,24 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.tree.AbstractTreeNodeVisitor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreePath;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import static com.intellij.psi.util.PsiUtilCore.getVirtualFile;
+
 class ProjectViewNodeVisitor extends AbstractTreeNodeVisitor<PsiElement> {
-  public ProjectViewNodeVisitor(@NotNull PsiElement element) {
-    super(create(element), (Predicate<TreePath>)null);
-  }
+  private final VirtualFile file;
 
-  public ProjectViewNodeVisitor(@NotNull PsiElement element, Predicate<TreePath> predicate) {
+  public ProjectViewNodeVisitor(@NotNull PsiElement element, VirtualFile file, Predicate<TreePath> predicate) {
     super(create(element), predicate);
-  }
-
-  public ProjectViewNodeVisitor(@NotNull PsiElement element, Consumer<TreePath> consumer) {
-    super(create(element), consumer);
+    this.file = file;
   }
 
   @Override
@@ -48,19 +44,23 @@ class ProjectViewNodeVisitor extends AbstractTreeNodeVisitor<PsiElement> {
     return node instanceof ProjectViewNode && contains((ProjectViewNode)node, element) || super.contains(node, element);
   }
 
-  protected boolean contains(@NotNull ProjectViewNode node, @NotNull PsiElement element) {
-    PsiFile pf = element.getContainingFile();
-    if (pf != null) {
-      VirtualFile vf = pf.getVirtualFile();
-      if (vf != null) return node.contains(vf);
-    }
-    LOG.debug("no virtual file for element ", element);
-    return false;
+  private boolean contains(@NotNull ProjectViewNode node, @NotNull PsiElement element) {
+    return contains(node, this.file) || contains(node, getVirtualFile(element));
+  }
+
+  private static boolean contains(@NotNull ProjectViewNode node, VirtualFile file) {
+    return file != null && node.contains(file);
   }
 
   @Override
-  protected boolean isAncestor(Object value, @NotNull PsiElement element) {
-    return super.isAncestor(value, element);
+  protected PsiElement getContent(@NotNull AbstractTreeNode node) {
+    Object value = node.getValue();
+    return value instanceof PsiElement ? (PsiElement)value : null;
+  }
+
+  @Override
+  protected boolean isAncestor(@NotNull PsiElement content, @NotNull PsiElement element) {
+    return PsiTreeUtil.isAncestor(content, element, true);
   }
 
   private static Supplier<PsiElement> create(@NotNull PsiElement element) {
