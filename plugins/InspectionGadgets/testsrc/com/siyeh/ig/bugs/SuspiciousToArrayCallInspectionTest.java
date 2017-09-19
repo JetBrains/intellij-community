@@ -47,6 +47,31 @@ public class SuspiciousToArrayCallInspectionTest extends LightInspectionTestCase
            "}");
   }
 
+  public void testQuestionMark() {
+    doTest("import java.util.List;\n" +
+           "\n" +
+           "class Test {\n" +
+           "  Integer[] test(List<?> list) {\n" +
+           "    return list.toArray(/*Array of type 'java.lang.Object[]' expected*/new Integer[0]/**/);\n" +
+           "  }\n" +
+           "}");
+  }
+
+  public void testWrongGeneric() {
+    doTest("import java.util.*;\n" +
+           "\n" +
+           "class Test {\n" +
+           "  static class X<T> extends ArrayList<Integer> {}\n" +
+           "  Integer[] test(X<Double> x) {\n" +
+           "    return x.toArray(new Integer[0]);\n" +
+           "  }\n" +
+           "\n" +
+           "  Double[] test2(X<Double> x) {\n" +
+           "    return x.toArray(/*Array of type 'java.lang.Integer[]' expected*/new Double[0]/**/);\n" +
+           "  }\n" +
+           "}");
+  }
+
   @Override
   protected InspectionProfileEntry getInspection() {
     return new SuspiciousToArrayCallInspection();
