@@ -38,6 +38,8 @@
                         serviceImplementation="com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.progress.ProgressManager"
                         serviceImplementation="com.intellij.openapi.progress.impl.ProgressManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.application.PermanentInstallationID"
+                        serviceImplementation="com.intellij.openapi.application.PermanentInstallationIDImpl"/>
 
     <applicationService serviceImplementation="com.intellij.ide.ui.customization.CustomActionsSchema"/>
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,13 +31,13 @@ import java.util.prefs.Preferences;
 /**
  * UUID identifying pair user@computer
  */
-public class PermanentInstallationID {
+public class PermanentInstallationIDImpl extends PermanentInstallationID {
   private static final String OLD_USER_ON_MACHINE_ID_KEY = "JetBrains.UserIdOnMachine";
   private static final String INSTALLATION_ID_KEY = "user_id_on_machine";
-  private static final String INSTALLATION_ID = calculateInstallationId();
+  public static final String INSTALLATION_ID = calculateInstallationId();
 
-  @NotNull
-  public static String get() {
+  @Override
+  protected String calculateId() {
     return INSTALLATION_ID;
   }
 
