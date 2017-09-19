@@ -20,10 +20,12 @@ import com.intellij.debugger.streams.resolve.AppendResolver
 import com.intellij.debugger.streams.resolve.IntervalMapResolver
 import com.intellij.debugger.streams.resolve.PairMapResolver
 import com.intellij.debugger.streams.resolve.PrependResolver
-import com.intellij.debugger.streams.trace.impl.handler.DistinctByKeyHandler
-import com.intellij.debugger.streams.trace.impl.handler.DistinctHandler
-import com.intellij.debugger.streams.trace.impl.handler.DistinctKeysHandler
-import com.intellij.debugger.streams.trace.impl.handler.DistinctValuesHandler
+import com.intellij.debugger.streams.trace.dsl.Dsl
+import com.intellij.debugger.streams.trace.dsl.impl.DslImpl
+import com.intellij.debugger.streams.trace.impl.handler.unified.DistinctByKeyHandler
+import com.intellij.debugger.streams.trace.impl.handler.unified.DistinctKeysHandler
+import com.intellij.debugger.streams.trace.impl.handler.unified.DistinctTraceHandler
+import com.intellij.debugger.streams.trace.impl.handler.unified.DistinctValuesHandler
 import com.intellij.openapi.project.Project
 
 
@@ -33,6 +35,7 @@ import com.intellij.openapi.project.Project
 class StreamExLibrarySupport(project: Project)
   : LibrarySupportBase(LibraryImpl("StreamEx", JavaLanguage(project), "one.util.streamex"),
                        StandardLibrarySupport(project)) {
+  private val dsl: Dsl = DslImpl(description.language.statementFactory)
   init {
     addIntermediateOperationsSupport(*filterOperations(
       "atLeast", "atMost", "less", "greater", "filterBy", "filterKeys", "filterValues", "filterKeyValue",
@@ -55,12 +58,12 @@ class StreamExLibrarySupport(project: Project)
       DistinctOperation("distinct", { num, call ->
         val arguments = call.arguments
         if (arguments.isEmpty() || arguments[0].type == "int") {
-          return@DistinctOperation DistinctHandler(num, call)
+          return@DistinctOperation DistinctTraceHandler(num, call, dsl)
         }
-        return@DistinctOperation DistinctByKeyHandler(num, call)
+        return@DistinctOperation DistinctByKeyHandler(num, call, dsl)
       }),
-      DistinctOperation("distinctKeys", ::DistinctKeysHandler),
-      DistinctOperation("distinctValues", ::DistinctValuesHandler)
+      DistinctOperation("distinctKeys", { num, call -> DistinctKeysHandler(num, call, dsl) }),
+      DistinctOperation("distinctValues", { num, call -> DistinctValuesHandler(num, call, dsl) })
     )
 
     addIntermediateOperationsSupport(ConcatOperation("append", AppendResolver()),

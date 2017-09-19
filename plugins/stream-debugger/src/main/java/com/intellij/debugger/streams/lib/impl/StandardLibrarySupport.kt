@@ -15,7 +15,8 @@
  */
 package com.intellij.debugger.streams.lib.impl
 
-import com.intellij.debugger.streams.trace.impl.handler.DistinctHandler
+import com.intellij.debugger.streams.trace.dsl.impl.DslImpl
+import com.intellij.debugger.streams.trace.impl.handler.unified.DistinctTraceHandler
 import com.intellij.debugger.streams.trace.impl.interpret.AllMatchTraceInterpreter
 import com.intellij.debugger.streams.trace.impl.interpret.AnyMatchTraceInterpreter
 import com.intellij.debugger.streams.trace.impl.interpret.NoneMatchTraceInterpreter
@@ -26,6 +27,8 @@ import com.intellij.openapi.project.Project
  */
 class StandardLibrarySupport(project: Project)
   : LibrarySupportBase(LibraryImpl("Java 8 Stream API", JavaLanguage(project), "java.util.stream")) {
+  private val dsl = DslImpl(description.language.statementFactory)
+
   init {
     addIntermediateOperationsSupport(FilterOperation("filter"),
                                      FilterOperation("limit"),
@@ -42,21 +45,21 @@ class StandardLibrarySupport(project: Project)
                                      FlatMappingOperation("flatMapToInt"),
                                      FlatMappingOperation("flatMapToLong"),
                                      FlatMappingOperation("flatMapToDouble"),
-                                     DistinctOperation("distinct", ::DistinctHandler),
+                                     DistinctOperation("distinct", { num, call -> DistinctTraceHandler(num, call, dsl) }),
                                      SortedOperation("sorted"),
-                                     ParallelOperation("parallel"))
+                                     ParallelOperation("parallel", dsl))
 
     addTerminationOperationsSupport(MatchingOperation("anyMatch",
-                                                      AnyMatchTraceInterpreter()),
+                                                      AnyMatchTraceInterpreter(), dsl),
                                     MatchingOperation("allMatch",
-                                                      AllMatchTraceInterpreter()),
+                                                      AllMatchTraceInterpreter(), dsl),
                                     MatchingOperation("noneMatch",
-                                                      NoneMatchTraceInterpreter()),
-                                    OptionalResultOperation("min"),
-                                    OptionalResultOperation("max"),
-                                    OptionalResultOperation("findAny"),
-                                    OptionalResultOperation("findFirst"),
-                                    ToCollectionOperation("toArray"),
-                                    ToCollectionOperation("collect"))
+                                                      NoneMatchTraceInterpreter(), dsl),
+                                    OptionalResultOperation("min", dsl),
+                                    OptionalResultOperation("max", dsl),
+                                    OptionalResultOperation("findAny", dsl),
+                                    OptionalResultOperation("findFirst", dsl),
+                                    ToCollectionOperation("toArray", dsl),
+                                    ToCollectionOperation("collect", dsl))
   }
 }
