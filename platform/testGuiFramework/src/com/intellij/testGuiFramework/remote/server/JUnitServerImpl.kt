@@ -22,6 +22,7 @@ import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.net.ServerSocket
 import java.net.Socket
+import java.net.SocketException
 import java.util.*
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.CountDownLatch
@@ -50,11 +51,14 @@ class JUnitServerImpl: JUnitServer {
   lateinit private var objectInputStream: ObjectInputStream
   lateinit private var objectOutputStream: ObjectOutputStream
 
+  private val SOCKET_TIME_OUT = 180000
+  private val TEST_TIME_OUT = 300000L
+
   private val port: Int
 
   init {
     port = serverSocket.localPort
-    serverSocket.soTimeout = 180000
+    serverSocket.soTimeout = SOCKET_TIME_OUT
   }
 
   override fun start() {
@@ -75,8 +79,10 @@ class JUnitServerImpl: JUnitServer {
     LOG.info("Add message to send pool: $message ")
   }
 
-  override fun receive(): TransportMessage =
-    receivingMessages.take()
+  override fun receive(): TransportMessage {
+    return receivingMessages.poll(TEST_TIME_OUT, TimeUnit.MILLISECONDS)
+           ?: throw SocketException("Client doesn't respond. Either the test has hanged or IDE crushed.")
+  }
 
   override fun sendAndWaitAnswer(message: TransportMessage)
     = sendAndWaitAnswerBase(message)
