@@ -1,1 +1,1 @@
-var array: kotlin.Array<kotlin.Int> = kotlin.arrayOfNulls<kotlin.Int>(10)
+var array: kotlin.Array<kotlin.Int?> = kotlin.arrayOfNulls(1)

@@ -1,1 +1,1 @@
-var map: kotlin.collections.LinkedHashMap<kotlin.Int, kotlin.Boolean>
+var map: kotlin.collections.MutableMap<kotlin.Int, kotlin.Boolean>

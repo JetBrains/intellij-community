@@ -1,1 +1,1 @@
-final java.util.HashMap<java.lang.Integer, java.lang.Integer> map = new java.util.HashMap<>();
+final java.util.Map<java.lang.Integer, java.lang.Integer> map = new java.util.HashMap<>();

@@ -1,1 +1,1 @@
-java.util.LinkedHashMap<java.lang.Integer, java.lang.Boolean> map;
+java.util.Map<java.lang.Integer, java.lang.Boolean> map;

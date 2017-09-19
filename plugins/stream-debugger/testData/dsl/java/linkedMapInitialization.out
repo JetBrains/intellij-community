@@ -1,1 +1,1 @@
-final java.util.LinkedHashMap<java.lang.Integer, java.lang.Boolean> map = new java.util.LinkedHashMap<>();
+final java.util.Map<java.lang.Integer, java.lang.Boolean> map = new java.util.HashMap<>();
