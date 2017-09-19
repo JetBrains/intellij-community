@@ -90,7 +90,7 @@ class JUnitServerImpl: JUnitServer {
   override fun sendAndWaitAnswer(message: TransportMessage, timeout: Long, timeUnit: TimeUnit)
     = sendAndWaitAnswerBase(message, timeout, timeUnit)
 
-  fun sendAndWaitAnswerBase(message: TransportMessage, timeout: Long = 0L, timeUnit: TimeUnit = TimeUnit.SECONDS): Unit {
+  private fun sendAndWaitAnswerBase(message: TransportMessage, timeout: Long = 0L, timeUnit: TimeUnit = TimeUnit.SECONDS) {
     val countDownLatch = CountDownLatch(1)
     val waitHandler = createCallbackServerHandler({ countDownLatch.countDown() }, message.id)
     addHandler(waitHandler)
@@ -187,10 +187,7 @@ class JUnitServerImpl: JUnitServer {
           assert(obj is TransportMessage)
           val message = obj as TransportMessage
           receivingMessages.put(message)
-          val copied: Array<ServerHandler> = handlers.toTypedArray().copyOf()
-          copied
-            .filter { it.acceptObject(message) }
-            .forEach { it.handleObject(message) }
+          handlers.filter { it.acceptObject(message) }.forEach { it.handleObject(message) }
         }
       } catch (e: Exception) {
         if (e is InvalidClassException) LOG.error("Probably serialization error:", e)
