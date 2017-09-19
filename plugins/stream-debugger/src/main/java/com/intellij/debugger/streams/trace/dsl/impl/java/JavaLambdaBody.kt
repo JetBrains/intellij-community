@@ -22,7 +22,7 @@ import com.intellij.debugger.streams.trace.dsl.StatementFactory
  * @author Vitaliy.Bibaev
  */
 class JavaLambdaBody(statementFactory: StatementFactory, override val argName: String) : JavaCodeBlock(statementFactory), LambdaBody {
-  override fun toCode(indent: Int): String = if (isExpression()) statements.first().toCode(0) else super.toCode(indent)
+  override fun toCode(indent: Int): String = if (isExpression()) getStatements().first().toCode() else super.toCode(indent)
 
-  fun isExpression(): Boolean = statements.size == 1
+  fun isExpression(): Boolean = size == 1
 }
