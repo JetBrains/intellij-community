@@ -58,7 +58,7 @@ public interface PsiTypeElement extends PsiElement, PsiAnnotationOwner {
 
 
   /**
-   * Returns true when variable is declared as <code>var name;</code>
+   * Returns {@code true} when a variable is declared as {@code var name;}
    * 
    * The actual type should be inferred according to the JEP 286: Local-Variable Type Inference
    * (http://openjdk.java.net/jeps/286). 

@@ -450,7 +450,7 @@ public class HighlightUtil extends HighlightUtilBase {
             .range(variable).create();
         }
 
-        if (lType instanceof PsiArrayType) {
+        if (lType instanceof PsiArrayType && !lType.equals(typeElement.getType())) {
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
             .descriptionAndTooltip("'var' is not allowed as an element type of an array")
             .range(variable)

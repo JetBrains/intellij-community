@@ -98,26 +98,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       }
       else if (PsiUtil.isJavaToken(child, JavaTokenType.VAR_KEYWORD)) {
         assert type == null : this;
-        if (parent instanceof PsiParameter) {
-          PsiElement declarationScope = ((PsiParameter)parent).getDeclarationScope();
-          if (declarationScope instanceof PsiForeachStatement) {
-            PsiExpression iteratedValue = ((PsiForeachStatement)declarationScope).getIteratedValue();
-            if (iteratedValue != null) {
-              type = JavaGenericsUtil.getCollectionItemType(iteratedValue);
-            }
-          }
-        }
-        else {
-          for (PsiElement e = this; e != null; e = e.getNextSibling()) {
-            if (e instanceof PsiExpression) {
-              if (!(e instanceof PsiArrayInitializerExpression) &&
-                  !isSelfReferenced((PsiExpression)e, parent)) {
-                type = ((PsiExpression)e).getType();
-              }
-              break;
-            }
-          }
-        }
+        type = inferVarType(parent);
       }
       else if (child instanceof PsiJavaCodeReferenceElement) {
         assert type == null : this;
@@ -172,6 +153,30 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     }
 
     return type;
+  }
+
+  private PsiType inferVarType(PsiElement parent) {
+    if (parent instanceof PsiParameter) {
+      PsiElement declarationScope = ((PsiParameter)parent).getDeclarationScope();
+      if (declarationScope instanceof PsiForeachStatement) {
+        PsiExpression iteratedValue = ((PsiForeachStatement)declarationScope).getIteratedValue();
+        if (iteratedValue != null) {
+          return JavaGenericsUtil.getCollectionItemType(iteratedValue);
+        }
+      }
+    }
+    else {
+      for (PsiElement e = this; e != null; e = e.getNextSibling()) {
+        if (e instanceof PsiExpression) {
+          if (!(e instanceof PsiArrayInitializerExpression) &&
+              !isSelfReferenced((PsiExpression)e, parent)) {
+            return ((PsiExpression)e).getType();
+          }
+          return null;
+        }
+      }
+    }
+    return null;
   }
 
   private static boolean isSelfReferenced(PsiExpression initializer, PsiElement parent) {
