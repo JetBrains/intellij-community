@@ -23,12 +23,14 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
+import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.rejectedPromise
 import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.debugger.frame.CallFrameView
 import org.jetbrains.debugger.values.StringValue
+import java.awt.Color
 import java.util.*
 
 /**
@@ -201,14 +203,14 @@ class ExecutionStackView(val suspendContext: SuspendContext<*>,
             result = emptyList()
           }
           else {
-            result = ArrayList<XStackFrame>(count)
-            for (i in firstFrameIndex..frames.size - 1) {
+            result = ArrayList(count)
+            for (i in firstFrameIndex until frames.size) {
               if (i == 0) {
                 result.add(topFrame!!)
                 continue
               }
 
-              val frame = frames.get(i)
+              val frame = frames[i]
               val asyncFunctionName = frame.asyncFunctionName
               if (asyncFunctionName != null) {
                 result.add(AsyncFramesHeader(asyncFunctionName))
@@ -237,12 +239,13 @@ class ExecutionStackView(val suspendContext: SuspendContext<*>,
   }
 }
 
-private val PREFIX_ATTRIBUTES = SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC, UIUtil.getInactiveTextColor())
-private val NAME_ATTRIBUTES = SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC or SimpleTextAttributes.STYLE_BOLD, UIUtil.getInactiveTextColor())
+private val ASYNC_HEADER_ATTRIBUTES = SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE or SimpleTextAttributes.STYLE_BOLD,
+                                                           UIUtil.getInactiveTextColor())
 
-private class AsyncFramesHeader(val asyncFunctionName: String) : XStackFrame() {
+private class AsyncFramesHeader(val asyncFunctionName: String) : XStackFrame(), XDebuggerFramesList.ItemWithCustomBackgroundColor {
   override fun customizePresentation(component: ColoredTextContainer) {
-    component.append("Async call from ", PREFIX_ATTRIBUTES)
-    component.append(asyncFunctionName, NAME_ATTRIBUTES)
+    component.append("Async call from $asyncFunctionName", ASYNC_HEADER_ATTRIBUTES)
   }
+
+  override fun getBackgroundColor(): Color? = null
 }
