@@ -2,6 +2,7 @@ package com.jetbrains.env;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -103,12 +104,14 @@ public class PyEnvTaskRunner {
           e);
       }
       finally {
-        try {
-          testTask.tearDown();
-        }
-        catch (Exception e) {
-          throw new RuntimeException("Couldn't tear down task", e);
-        }
+        TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+          try {
+            testTask.tearDown();
+          }
+          catch (Exception e) {
+            throw new RuntimeException("Couldn't tear down task", e);
+          }
+        });
       }
     }
 

@@ -23,6 +23,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -386,10 +387,9 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
 
   public void addTextToEditor(final String text) {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-                                   getConsoleView().setInputText(text);
-                                   PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-                                 }
-    );
+    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+      getConsoleView().setInputText(text);
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    });
   }
 }

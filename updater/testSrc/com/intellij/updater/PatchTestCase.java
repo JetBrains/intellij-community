@@ -87,8 +87,7 @@ public abstract class PatchTestCase extends UpdaterTestCase {
     // splits the list into groups
     Collection<List<T>> groups = list.stream().collect(groupingBy(classifier, LinkedHashMap::new, toList())).values();
     // verifies the list is monotonic
-    List<T> joined = groups.stream().reduce(new ArrayList<>(list.size()), (acc, elements) -> { acc.addAll(elements); return acc; });
-    assertThat(list).isEqualTo(joined);
+    assertThat(list).isEqualTo(groups.stream().flatMap(Collection::stream).collect(toList()));
     // sorts group elements and concatenates groups into a list
     return groups.stream()
       .map(elements -> elements.stream().sorted(sorter))

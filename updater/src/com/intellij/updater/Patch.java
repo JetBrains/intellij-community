@@ -275,7 +275,6 @@ public class Patch {
     List<ValidationResult> results = new ArrayList<>();
 
     Set<String> deletedPaths = new HashSet<>();
-    Runner.logger().info("Validating installation...");
     forEach(myActions, "Validating installation...", ui, true, action -> {
       ValidationResult result = action.validate(toDir);
 
@@ -374,7 +373,7 @@ public class Patch {
       }
     }
 
-    // on OS X we need to update bundle timestamp to reset Info.plist caches.
+    // on macOS, we need to update bundle timestamp to reset Info.plist caches
     //noinspection ResultOfMethodCallIgnored
     toDir.setLastModified(System.currentTimeMillis());
 
@@ -393,6 +392,8 @@ public class Patch {
                               UpdaterUI ui,
                               boolean canBeCancelled,
                               ActionsProcessor processor) throws OperationCancelledException, IOException {
+    Runner.logger().info(title + " [" + actions.size() + " actions]");
+
     ui.startProcess(title);
     if (canBeCancelled) ui.checkCancelled();
 

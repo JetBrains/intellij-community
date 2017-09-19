@@ -66,6 +66,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParamsEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.ApplicableTo;
@@ -170,50 +171,24 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     if (hasErrorElements(info.getArgumentList())) return;
 
     if (!checkCannotInferArgumentTypes(info)) return;
-    final GroovyResolveResult constructorResolveResult = info.advancedResolve();
-    final PsiElement constructor = constructorResolveResult.getElement();
 
-    if (constructor != null) {
-      if (!checkConstructorApplicability(constructorResolveResult, info, true)) return;
+    GroovyResolveResult[] results = info.multiResolve();
+    boolean checkUnknowkArgs = results.length == 1;
+
+    for (GroovyResolveResult result : results) {
+      PsiElement resolved = result.getElement();
+      if (resolved instanceof PsiMethod) {
+        if (!checkConstructorApplicability(result, info, checkUnknowkArgs)) return;
+      }
     }
-    else {
-      final GroovyResolveResult[] results = info.multiResolve();
-      if (results.length > 0) {
-        for (GroovyResolveResult result : results) {
-          PsiElement resolved = result.getElement();
-          if (resolved instanceof PsiMethod) {
-            if (!checkConstructorApplicability(result, info, false)) return;
-          }
-        }
-        registerError(
-          info.getElementToHighlight(),
-          GroovyBundle.message("constructor.call.is.ambiguous"),
-          null,
-          ProblemHighlightType.GENERIC_ERROR
-        );
-      }
-      else {
-        final GrExpression[] expressionArguments = info.getExpressionArguments();
-        final boolean hasClosureArgs = info.getClosureArguments().length > 0;
-        final boolean hasNamedArgs = info.getNamedArguments().length > 0;
-        if (hasClosureArgs ||
-            hasNamedArgs && expressionArguments.length > 0 ||
-            !hasNamedArgs && expressionArguments.length > 0 && !isOnlyOneMapParam(expressionArguments)) {
-          final GroovyResolveResult[] resolveResults = info.multiResolveClass();
-          if (resolveResults.length == 1) {
-            final PsiElement element = resolveResults[0].getElement();
-            if (element instanceof PsiClass) {
-              registerError(
-                info.getElementToHighlight(),
-                GroovyBundle.message("cannot.apply.default.constructor", ((PsiClass)element).getName()),
-                null,
-                ProblemHighlightType.GENERIC_ERROR
-              );
-              return;
-            }
-          }
-        }
-      }
+
+    if (results.length > 1) {
+      registerError(
+        info.getElementToHighlight(),
+        GroovyBundle.message("constructor.call.is.ambiguous"),
+        null,
+        ProblemHighlightType.GENERIC_ERROR
+      );
     }
 
     checkNamedArgumentsType(info);
@@ -543,14 +518,22 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
       registerCannotApplyError(method.getName(), info);
       return;
     }
-    final String typesString = buildArgTypesList(argumentTypes);
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
-    final PsiClassType containingType = factory.createType(containingClass, methodResolveResult.getSubstitutor());
-    final String canonicalText = containingType.getInternalCanonicalText();
-    String message =
-      method.isConstructor() ? GroovyBundle.message("cannot.apply.constructor", method.getName(), canonicalText, typesString)
-                             : GroovyBundle.message("cannot.apply.method1", method.getName(), canonicalText, typesString);
-
+    final String message;
+    if (method instanceof DefaultConstructor) {
+      message = GroovyBundle.message("cannot.apply.default.constructor", method.getName());
+    }
+    else {
+      final String typesString = buildArgTypesList(argumentTypes);
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
+      final PsiClassType containingType = factory.createType(containingClass, methodResolveResult.getSubstitutor());
+      final String canonicalText = containingType.getInternalCanonicalText();
+      if (method.isConstructor()) {
+        message = GroovyBundle.message("cannot.apply.constructor", method.getName(), canonicalText, typesString);
+      }
+      else {
+        message = GroovyBundle.message("cannot.apply.method1", method.getName(), canonicalText, typesString);
+      }
+    }
     registerError(
       info.getElementToHighlight(),
       message,

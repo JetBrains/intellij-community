@@ -13,7 +13,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
@@ -34,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
+import javax.swing.*;
 import java.io.File;
 import java.util.List;
 import java.util.concurrent.Semaphore;
@@ -172,12 +172,11 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
   }
 
   public void tearDown() throws Exception {
+    assert SwingUtilities.isEventDispatchThread();
     if (myFixture != null) {
-      EdtTestUtil.runInEdtAndWait(() -> {
-        for (Sdk sdk : ProjectJdkTable.getInstance().getSdksOfType(PythonSdkType.getInstance())) {
-          WriteAction.run(() -> ProjectJdkTable.getInstance().removeJdk(sdk));
-        }
-      });
+      for (Sdk sdk : ProjectJdkTable.getInstance().getSdksOfType(PythonSdkType.getInstance())) {
+        WriteAction.run(() -> ProjectJdkTable.getInstance().removeJdk(sdk));
+      }
       myFixture.tearDown();
       myFixture = null;
     }

@@ -47,7 +47,7 @@ public class ConsoleUpdaterUI implements UpdaterUI {
   }
 
   @Override
-  public void checkCancelled() throws OperationCancelledException { }
+  public void checkCancelled() { }
 
   @Override
   public void setDescription(String oldBuildDesc, String newBuildDesc) {

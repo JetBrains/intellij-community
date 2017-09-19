@@ -138,8 +138,8 @@ object UpdateInstaller {
       val launcher = PathManager.findBinFile("launcher.exe")
       val elevator = PathManager.findBinFile("elevator.exe")  // "launcher" depends on "elevator"
       if (launcher != null && elevator != null && launcher.canExecute() && elevator.canExecute()) {
-        Restarter.createTempExecutable(elevator)
         args += Restarter.createTempExecutable(launcher).path
+        Restarter.createTempExecutable(elevator)
       }
     }
 

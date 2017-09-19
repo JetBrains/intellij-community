@@ -537,14 +537,10 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   private void assertNothingHasChanged(Patch patch,
                                        PatchFileCreator.PreparationResult preparationResult,
                                        Map<String, ValidationResult.Option> options) throws Exception {
-    Map<String, Long> before = patch.digestFiles(myOlderDir, Collections.emptyList(), false, TEST_UI);
+    Map<String, Long> before = digest(patch, myOlderDir);
     PatchFileCreator.apply(preparationResult, options, TEST_UI);
-    Map<String, Long> after = patch.digestFiles(myOlderDir, Collections.emptyList(), false, TEST_UI);
-
-    DiffCalculator.Result diff = DiffCalculator.calculate(before, after);
-    assertTrue(diff.filesToCreate.isEmpty());
-    assertTrue(diff.filesToDelete.isEmpty());
-    assertTrue(diff.filesToUpdate.isEmpty());
+    Map<String, Long> after = digest(patch, myOlderDir);
+    assertEquals(before, after);
   }
 
   private void assertAppliedAndRevertedCorrectly() throws Exception {

@@ -1004,4 +1004,24 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     }
     LOG.debug("final i = " + i);
   }
+
+  public void testDirectoryPointersWork() throws Exception {
+    final File dir = createTempDirectory();
+    VirtualFile vDir = LocalFileSystem.getInstance().findFileByIoFile(dir);
+    assertNotNull(vDir);
+    VirtualFile deep = createChildDirectory(vDir, "deep");
+
+    LoggingListener listener = new LoggingListener();
+    Disposable disposable = Disposer.newDisposable();
+    VirtualFilePointer ptr = myVirtualFilePointerManager.createDirectoryPointer(vDir.getUrl(), false, disposable, listener);
+
+    createChildData(vDir, "1");
+    assertEquals("[before:true, after:true]", listener.getLog().toString());
+    Disposer.dispose(disposable);
+    listener = new LoggingListener();
+    myVirtualFilePointerManager.createDirectoryPointer(vDir.getUrl(), true, this.disposable, listener);
+
+    createChildData(deep, "1");
+    assertEquals("[before:true, after:true]", listener.getLog().toString());
+  }
 }

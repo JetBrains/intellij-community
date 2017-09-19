@@ -33,8 +33,9 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 
-@SuppressWarnings({"UseJBColor", "UndesirableClassUsage", "UseDPIAwareInsets", "SSBasedInspection"})
+@SuppressWarnings({"UseJBColor", "UndesirableClassUsage", "UseDPIAwareInsets", "SSBasedInspection", "UseDPIAwareBorders"})
 public class SwingUpdaterUI implements UpdaterUI {
   private static final int RESULT_REQUIRES_RESTART = 42;
 
@@ -47,7 +48,7 @@ public class SwingUpdaterUI implements UpdaterUI {
   private static final String EXIT_BUTTON_TITLE = "Exit";
   private static final String PROCEED_BUTTON_TITLE = "Proceed";
 
-  private final InstallOperation myOperation;
+  private final Predicate<UpdaterUI> myOperation;
 
   private final JLabel myProcessTitle;
   private final JProgressBar myProcessProgress;
@@ -63,7 +64,7 @@ public class SwingUpdaterUI implements UpdaterUI {
   private final AtomicBoolean hasError = new AtomicBoolean(false);
   private boolean myApplied;
 
-  public SwingUpdaterUI(InstallOperation operation) {
+  public SwingUpdaterUI(Predicate<UpdaterUI> operation) {
     myOperation = operation;
 
     myProcessTitle = new JLabel(" ");
@@ -191,10 +192,7 @@ public class SwingUpdaterUI implements UpdaterUI {
 
     new Thread(() -> {
       try {
-        myApplied = myOperation.execute(this);
-      }
-      catch (OperationCancelledException ignore) {
-        Runner.printStackTrace(ignore);
+        myApplied = myOperation.test(this);
       }
       catch(Throwable e) {
         Runner.printStackTrace(e);
@@ -363,11 +361,6 @@ public class SwingUpdaterUI implements UpdaterUI {
   @Override
   public void checkCancelled() throws OperationCancelledException {
     if (isCancelled.get()) throw new OperationCancelledException();
-  }
-
-  @FunctionalInterface
-  public interface InstallOperation {
-    boolean execute(UpdaterUI ui) throws OperationCancelledException;
   }
 
   private static class MyTableModel extends AbstractTableModel {

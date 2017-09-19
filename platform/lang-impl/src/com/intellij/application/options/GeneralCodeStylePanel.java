@@ -128,8 +128,6 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myIndentsDetectionPanel
       .setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("settings.code.style.general.indents.detection")));
 
-    myMarkerOptionsPanel.setBorder(
-      IdeBorderFactory.createTitledBorder(ApplicationBundle.message("settings.code.style.general.formatter.marker.options.title"), true));
     myPanel.setBorder(JBUI.Borders.empty(0, 10));
     myScrollPane = ScrollPaneFactory.createScrollPane(null, true);
     myScrollPane.setViewport(new GradientViewport(myPanel, JBUI.insetsTop(5), true));
@@ -149,6 +147,8 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myVisualGuidesHint.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
     myLineSeparatorHint.setForeground(JBColor.GRAY);
     myLineSeparatorHint.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
+
+    myMarkersPanel.setBorder(JBUI.Borders.emptyLeft(30));
   }
 
   @Override

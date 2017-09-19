@@ -728,56 +728,15 @@ String xx = 5
 
 xx = 'abc'
 ''')
-
   }
 
+  void testInnerClassConstructorDefault() { doTest() }
 
-  void testInnerClassConstructor0() {
-    testHighlighting('''\
-class A {
-  class Inner {
-    def Inner() {}
-  }
+  void testInnerClassConstructorNoArg() { doTest() }
 
-  def foo() {
-    new Inner() //correct
-  }
+  void testInnerClassConstructorWithArg() { doTest() }
 
-  static def bar() {
-    new <error>Inner</error>() //semi-correct
-    new Inner(new A()) //correct
-  }
-}
-
-new A.Inner() //semi-correct
-new A.Inner(new A()) //correct
-''')
-  }
-
-  void testInnerClassConstructor1() {
-    testHighlighting('''\
-class A {
-  class Inner {
-    def Inner(A a) {}
-  }
-
-  def foo() {
-    new Inner(new A()) //correct
-    new Inner<warning>()</warning>
-    new Inner<warning>(new A(), new A())</warning>
-  }
-
-  static def bar() {
-    new Inner(new A(), new A()) //correct
-    new Inner<warning>(new A())</warning> //incorrect: first arg is recognized as an enclosing instance arg
-  }
-}
-
-new A.Inner<warning>()</warning> //incorrect
-new A.Inner<warning>(new A())</warning> //incorrect: first arg is recognized as an enclosing instance arg
-new A.Inner(new A(), new A()) //correct
-''')
-  }
+  void testInnerClassConstructorWithAnotherArg() { doTest() }
 
   void testClosureIsNotAssignableToSAMInGroovy2_1() {
     testHighlighting('''\

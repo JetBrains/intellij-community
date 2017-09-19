@@ -712,6 +712,12 @@ public class PsiImplUtil {
     return false;
   }
 
+  public static boolean hasArguments(@NotNull GrCall call) {
+    if (hasClosureArguments(call)) return true;
+    GrArgumentList list = call.getArgumentList();
+    return hasExpressionArguments(list) || hasNamedArguments(list);
+  }
+
   public static PsiElement findTailingSemicolon(@NotNull GrStatement statement) {
     final PsiElement nextNonSpace = PsiUtil.skipWhitespaces(statement.getNextSibling(), true);
     if (nextNonSpace != null && nextNonSpace.getNode().getElementType() == GroovyTokenTypes.mSEMI) {

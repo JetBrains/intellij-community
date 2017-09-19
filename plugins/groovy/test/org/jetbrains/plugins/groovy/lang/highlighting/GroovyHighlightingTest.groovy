@@ -943,7 +943,7 @@ class A {
   class B {}
 }
 
-A.B foo = new A.<warning descr="Cannot reference non-static symbol 'A.B' from static context">B</warning>()
+A.B foo = new A.B()
 ''', GrUnresolvedAccessInspection)
   }
 
@@ -1771,7 +1771,7 @@ class MyCommand {
     testHighlighting('''\
 class MyController {
      def list() {
-         def myInnerClass = new MyCommand.<warning descr="Cannot reference non-static symbol 'MyCommand.MyInnerClass' from static context">MyInnerClass</warning>()
+         def myInnerClass = new MyCommand.MyInnerClass()
          print myInnerClass
     }
 }
@@ -1799,8 +1799,6 @@ class MyCommand {
 ''')
 
     myFixture.enableInspections(GrUnresolvedAccessInspection)
-
-    GrUnresolvedAccessInspection.getInstance(myFixture.file, myFixture.project).myHighlightInnerClasses = false
     myFixture.testHighlighting(true, false, true)
   }
 
@@ -1820,8 +1818,6 @@ class MyCommand {
 ''')
 
     myFixture.enableInspections(GrUnresolvedAccessInspection)
-
-    GrUnresolvedAccessInspection.getInstance(myFixture.file, myFixture.project).myHighlightInnerClasses = false
     myFixture.testHighlighting(true, false, true)
   }
 

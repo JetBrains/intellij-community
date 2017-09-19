@@ -26,7 +26,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.search.JavaOverridingMethodsSearcher;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
@@ -60,7 +59,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   private final Set<BinopInstruction> myReachable = new THashSet<>();
   private final Set<BinopInstruction> myCanBeNullInInstanceof = new THashSet<>();
   private final MultiMap<PushInstruction, Object> myPossibleVariableValues = MultiMap.createSet();
-  private final Set<PsiElement> myNotToReportReachability = new THashSet<>();
   private final Set<InstanceofInstruction> myUsefulInstanceofs = new THashSet<>();
 
   @Override
@@ -685,10 +683,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return states.toArray(new DfaInstructionState[states.size()]);
   }
 
-  public void skipConstantConditionReporting(@Nullable PsiElement anchor) {
-    ContainerUtil.addIfNotNull(myNotToReportReachability, anchor);
-  }
-
   private void handleInstanceof(InstanceofInstruction instruction, DfaValue dfaRight, DfaValue dfaLeft) {
     if (dfaLeft instanceof DfaTypeValue && dfaRight instanceof DfaTypeValue) {
       if (!((DfaTypeValue)dfaLeft).isNotNull()) {
@@ -823,14 +817,5 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   public boolean canBeNull(BinopInstruction instruction) {
     return myCanBeNullInInstanceof.contains(instruction);
-  }
-
-  public boolean silenceConstantCondition(@Nullable PsiElement element) {
-    for (PsiElement skipped : myNotToReportReachability) {
-      if (PsiTreeUtil.isAncestor(element, skipped, false)) {
-        return true;
-      }
-    }
-    return false;
   }
 }

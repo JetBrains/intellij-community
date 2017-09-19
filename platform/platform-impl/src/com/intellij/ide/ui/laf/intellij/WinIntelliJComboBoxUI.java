@@ -222,11 +222,12 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
       public void paint(Graphics g) {
         Graphics2D g2 = (Graphics2D)g.create();
         try {
-          Rectangle innerRect = new Rectangle(getSize());
-          JBInsets.removeFrom(innerRect, getInsets());
+          Rectangle outerRect = new Rectangle(getSize());
+          Rectangle innerRect = new Rectangle(outerRect);
 
-          int bw = comboBox.getClientProperty("JComponent.error.outline") == Boolean.TRUE ? 2 : 1; // see paintBorder()
-          JBInsets.removeFrom(innerRect, JBUI.insets(bw));
+          JBInsets.removeFrom(outerRect, comboBox.getComponentOrientation().isLeftToRight() ?
+                                         JBUI.insets(1, 0, 1, 1) : JBUI.insets(1, 1, 1, 0));
+          JBInsets.removeFrom(innerRect, getInsets());
 
           // paint background
           if (comboBox.isEditable() && comboBox.isEnabled()) {
@@ -243,8 +244,6 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
           // paint border around button when combobox is editable
           if (comboBox.isEditable() && comboBox.isEnabled()) {
             Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
-            Rectangle outerRect = new Rectangle(innerRect);
-            JBInsets.addTo(outerRect, JBUI.insets(1));
             border.append(outerRect, false);
             border.append(innerRect, false);
 
@@ -435,12 +434,12 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     try {
       checkFocus();
 
-      Rectangle r = new Rectangle(x, y, width, height);
-      int bw = 1;
+      Rectangle outerRect = new Rectangle(x, y, width, height);
+      Rectangle innerRect = new Rectangle(outerRect);
+      JBInsets.removeFrom(innerRect, JBUI.insets(2));
 
       if (comboBox.getClientProperty("JComponent.error.outline") == Boolean.TRUE) {
         g2.setColor(hasFocus ? ACTIVE_ERROR_COLOR : INACTIVE_ERROR_COLOR);
-        bw = 2;
       } else if (comboBox.isEnabled()) {
         if (comboBox.isEditable()) {
           if (hasFocus) {
@@ -457,21 +456,17 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
             g2.setColor(UIManager.getColor("Button.intellij.native.borderColor"));
           }
         }
-        JBInsets.removeFrom(r, JBUI.insets(1));
+        JBInsets.removeFrom(outerRect, JBUI.insets(1));
       } else {
         g2.setColor(UIManager.getColor("Button.intellij.native.borderColor"));
 
         float alpha = comboBox.isEditable() ? 0.35f : 0.47f;
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-
-        JBInsets.removeFrom(r, JBUI.insets(1));
+        JBInsets.removeFrom(outerRect, JBUI.insets(1));
       }
 
       Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
-      border.append(r, false);
-
-      Rectangle innerRect = new Rectangle(r);
-      JBInsets.removeFrom(innerRect, JBUI.insets(bw));
+      border.append(outerRect, false);
       border.append(innerRect, false);
       g2.fill(border);
     } finally {
