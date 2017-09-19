@@ -37,6 +37,7 @@ public class LightAdvLVTIHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   public void testSimpleAvailability() { doTest(); }
   public void testVarClassNameConflicts() { doTest(); }
+  public void testStandaloneInVarContext() { doTest(); }
 
   @Override
   protected Sdk getProjectJDK() {
