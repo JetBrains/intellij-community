@@ -382,7 +382,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           QuickFixAction.registerQuickFixAction(info, AdjustFunctionContextFix.createFix(entry.getKey()));
           if (entry.getKey() instanceof PsiExpression) {
             PsiExpression expr = (PsiExpression)entry.getKey();
-            HighlightUtil.addLambdaReturnTypeFixes(info, expression, expr);
+            HighlightFixUtil.registerLambdaReturnTypeFixes(info, expression, expr);
           }
           myHolder.add(info);
         }
@@ -1349,7 +1349,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (method != null && !result.isAccessible()) {
       String accessProblem = HighlightUtil.buildProblemWithAccessDescription(expression, method, result);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(accessProblem).create();
-      HighlightUtil.registerAccessQuickFixAction((PsiMember)method, expression, info, result.getCurrentFileResolveScope());
+      HighlightFixUtil.registerAccessQuickFixAction((PsiMember)method, expression, info, result.getCurrentFileResolveScope());
       myHolder.add(info);
     }
     else {

@@ -17,7 +17,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightFixUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -142,7 +142,7 @@ public class VariableTypeFromCallFix implements IntentionAction {
       }
       final PsiElement resolve = ((PsiReferenceExpression)expression).resolve();
       if (resolve instanceof PsiVariable) {
-        result.addAll(HighlightUtil.getChangeVariableTypeFixes((PsiVariable)resolve, parameterType));
+        result.addAll(HighlightFixUtil.getChangeVariableTypeFixes((PsiVariable)resolve, parameterType));
       }
     }
     return result;
