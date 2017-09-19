@@ -79,7 +79,7 @@ public class BraceHighlightingHandler {
    * Holds weak references to the editors that are being processed at non-EDT.
    * <p/>
    * Is intended to be used to avoid submitting unnecessary new processing request from EDT, i.e. it's assumed that the collection
-   * is accessed from the single thread (EDT).
+   * Must be accessed from the EDT only.
    */
   private static final Set<Editor> PROCESSED_EDITORS = Collections.newSetFromMap(ContainerUtil.createWeakMap());
 
@@ -120,30 +120,21 @@ public class BraceHighlightingHandler {
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(() ->
-        ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(()->
-        ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(()->{
+        {
+        try {
+        ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(()->{
+        if (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(()->{
           if (!isValidEditor(editor)) {
-            ApplicationManager.getApplication().invokeLater(removeEditorFromProcessed);
+            removeFromProcessedLater(editor);
             return;
           }
           @SuppressWarnings("ConstantConditions") // the `project` is valid after the `isValidEditor` call
           @NotNull final Project project = editor.getProject();
 
           final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
-          final PsiFile injected;
-          try {
-            if (psiFile instanceof PsiBinaryFile || !isValidFile(psiFile)) {
-              injected = null;
-            }
-            else {
-              injected = getInjectedFileIfAny(editor, project, offset, psiFile, alarm);
-            }
-          }
-          catch (RuntimeException e) {
-            // Reset processing flag in case of unexpected exception.
-            ApplicationManager.getApplication().invokeLater(removeEditorFromProcessed);
-            throw e;
-          }
+          PsiFile injected = psiFile instanceof PsiBinaryFile || !isValidFile(psiFile)
+                             ? null
+                             : getInjectedFileIfAny(editor, project, offset, psiFile, alarm);
           ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> {
             try {
               if (isValidEditor(editor) && isValidFile(injected)) {
@@ -156,8 +147,18 @@ public class BraceHighlightingHandler {
               removeEditorFromProcessed.run();
             }
           }, modalityState);
-        })
-      ))) {
+        })) {
+          removeFromProcessedLater(editor);
+          }}
+      );
+      }
+      catch(Exception e) {
+        // Reset processing flag in case of unexpected exception.
+        removeFromProcessedLater(editor);
+        throw e;
+      }
+     }
+          )) {
         // write action is queued in AWT. restart after it's finished
         ApplicationManager.getApplication().invokeLater(() -> {
           removeEditorFromProcessed.run();
@@ -165,6 +166,10 @@ public class BraceHighlightingHandler {
         }, modalityState);
       }
     });
+  }
+
+  private static void removeFromProcessedLater(@NotNull Editor editor) {
+    ApplicationManager.getApplication().invokeLater(() -> PROCESSED_EDITORS.remove(editor));
   }
 
   private static boolean isValidFile(PsiFile file) {
