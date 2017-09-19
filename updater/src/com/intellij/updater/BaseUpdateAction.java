@@ -120,7 +120,7 @@ public abstract class BaseUpdateAction extends PatchAction {
   }
 
   protected void replaceUpdated(File from, File dest) throws IOException {
-    // on OS X code signing caches seem to be associated with specific file ids, so we need to remove the original file.
+    // on macOS, code signing caches seem to be associated with specific file ids, so we need to remove the original file
     Utils.delete(dest);
     Utils.copy(from, dest);
   }

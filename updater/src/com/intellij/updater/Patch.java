@@ -374,7 +374,7 @@ public class Patch {
       }
     }
 
-    // on OS X we need to update bundle timestamp to reset Info.plist caches.
+    // on macOS, we need to update bundle timestamp to reset Info.plist caches
     //noinspection ResultOfMethodCallIgnored
     toDir.setLastModified(System.currentTimeMillis());
 
