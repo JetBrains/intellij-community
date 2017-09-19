@@ -273,19 +273,19 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
   }
 
-  private void setDisabledIcon(Icon icon) {
-    myDisabledIcon = icon;
-  }
-
   void updateToolTipText() {
     String text = myPresentation.getText();
     String description = myPresentation.getDescription();
     if (Registry.is("ide.helptooltip.enabled")) {
       String shortcut = KeymapUtil.getFirstKeyboardShortcutText(myAction);
-      new HelpTooltip().setTitle(text).setDescription(description).setShortcut(shortcut).installOn(this);
+      new HelpTooltip().setTitle(text).setDescription(description).setShortcut(shortcut).setLocation(getTooltipLocation()).installOn(this);
     } else {
       setToolTipText(text == null ? description : text);
     }
+  }
+
+  protected HelpTooltip.Alignment getTooltipLocation() {
+    return HelpTooltip.Alignment.BOTTOM;
   }
 
   public void paintComponent(Graphics g) {
@@ -386,7 +386,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       repaint();
     }
     else if (Presentation.PROP_DISABLED_ICON.equals(propertyName)) {
-      setDisabledIcon(myPresentation.getDisabledIcon());
+      myDisabledIcon = myPresentation.getDisabledIcon();
       repaint();
     }
     else if ("selected".equals(propertyName)) {

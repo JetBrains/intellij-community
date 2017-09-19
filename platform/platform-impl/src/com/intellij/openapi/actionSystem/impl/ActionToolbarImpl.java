@@ -17,6 +17,7 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -44,6 +45,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -387,7 +389,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (action.displayTextInToolbar()) {
       int mnemonic = KeyEvent.getExtendedKeyCodeForChar(action.getTemplatePresentation().getMnemonic());
 
-      ActionButtonWithText buttonWithText = new ActionButtonWithText(action, presentation, place, minimumSize);
+      ActionButtonWithText buttonWithText = new ActionButtonWithText(action, presentation, place, minimumSize) {
+        @Override protected HelpTooltip.Alignment getTooltipLocation() {
+          return tooltipLocation();
+        }
+      };
+
       if (mnemonic != KeyEvent.VK_UNDEFINED) {
         buttonWithText.registerKeyboardAction(new ActionListener() {
           @Override
@@ -404,14 +411,23 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       return buttonWithText;
     }
 
-    final ActionButton actionButton = new ActionButton(action, presentation, place, minimumSize) {
+    ActionButton actionButton = new ActionButton(action, presentation, place, minimumSize) {
       @Override
       protected DataContext getDataContext() {
         return getToolbarDataContext();
       }
+
+      @Override
+      protected HelpTooltip.Alignment getTooltipLocation() {
+        return tooltipLocation();
+      }
     };
     actionButton.setLook(look);
     return actionButton;
+  }
+
+  private HelpTooltip.Alignment tooltipLocation() {
+    return myOrientation == SwingConstants.VERTICAL ? HelpTooltip.Alignment.RIGHT: HelpTooltip.Alignment.BOTTOM;
   }
 
   private ActionButton createToolbarButton(final AnAction action) {
@@ -971,7 +987,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   @Override
-  public void setOrientation(final int orientation) {
+  public void setOrientation(@MagicConstant(intValues = {SwingConstants.HORIZONTAL, SwingConstants.VERTICAL}) int orientation) {
     if (SwingConstants.HORIZONTAL != orientation && SwingConstants.VERTICAL != orientation) {
       throw new IllegalArgumentException("wrong orientation: " + orientation);
     }
