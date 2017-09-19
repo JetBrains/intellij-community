@@ -13,19 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.trace.impl.handler.type;
-
-import org.jetbrains.annotations.NotNull;
+package com.intellij.debugger.streams.trace.impl.handler.type
 
 /**
  * @author Vitaliy.Bibaev
  */
-public class ClassTypeImpl extends GenericTypeImpl {
-  public ClassTypeImpl(@NotNull String name, @NotNull String defaultValue) {
-    super(name, name, defaultValue);
-  }
-
-  public ClassTypeImpl(@NotNull String name) {
-    this(name, "null");
-  }
-}
+open class ClassTypeImpl @JvmOverloads constructor(name: String, defaultValue: String = "null")
+  : GenericTypeImpl(name, name, defaultValue)
