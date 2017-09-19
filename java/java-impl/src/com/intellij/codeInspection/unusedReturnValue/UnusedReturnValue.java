@@ -24,7 +24,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +50,7 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
       if (refMethod.isConstructor()) return null;
       if (!refMethod.getSuperMethods().isEmpty()) return null;
       if (refMethod.getInReferences().size() == 0) return null;
+      if (refMethod.isEntry()) return null;
 
       if (!refMethod.isReturnValueUsed()) {
         final PsiMethod psiMethod = (PsiMethod)refMethod.getElement();

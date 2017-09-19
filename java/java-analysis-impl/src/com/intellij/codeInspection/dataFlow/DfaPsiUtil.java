@@ -134,14 +134,14 @@ public class DfaPsiUtil {
 
     Ref<Nullness> result = Ref.create(Nullness.UNKNOWN);
     InheritanceUtil.processSuperTypes(type, true, eachType -> {
-      result.set(getTypeOwnNullability(result, eachType));
+      result.set(getTypeOwnNullability(eachType));
       return result.get() == Nullness.UNKNOWN;
     });
     return result.get();
   }
 
   @NotNull
-  private static Nullness getTypeOwnNullability(Ref<Nullness> result, PsiType eachType) {
+  private static Nullness getTypeOwnNullability(PsiType eachType) {
     for (PsiAnnotation annotation : eachType.getAnnotations()) {
       String qualifiedName = annotation.getQualifiedName();
       NullableNotNullManager nnn = NullableNotNullManager.getInstance(annotation.getProject());

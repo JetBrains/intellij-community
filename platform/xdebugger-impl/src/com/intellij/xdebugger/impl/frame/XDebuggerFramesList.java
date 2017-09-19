@@ -229,6 +229,9 @@ public class XDebuggerFramesList extends DebuggerFramesList {
     }
 
     Color getFrameBgColor(XStackFrame stackFrame) {
+      if (stackFrame instanceof ItemWithCustomBackgroundColor) {
+        return ((ItemWithCustomBackgroundColor)stackFrame).getBackgroundColor();
+      }
       VirtualFile virtualFile = getFile(stackFrame);
       if (virtualFile != null) {
         // handle null value
@@ -250,5 +253,10 @@ public class XDebuggerFramesList extends DebuggerFramesList {
 
   public interface ItemWithSeparatorAbove {
     boolean hasSeparatorAbove();
+  }
+
+  public interface ItemWithCustomBackgroundColor {
+    @Nullable
+    Color getBackgroundColor();
   }
 }

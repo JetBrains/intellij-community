@@ -185,7 +185,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
 
             ExternalSystemUtil.invokeLater(myProject, () -> new WriteAction() {
               @Override
-              protected void run(@NotNull Result result) throws Throwable {
+              protected void run(@NotNull Result result) {
                 for (Document each : copy) {
                   PsiDocumentManager.getInstance(myProject).commitDocument(each);
                   ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).saveDocument(each, false);
@@ -239,12 +239,18 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
   }
 
   private void scheduleUpdate(String projectPath) {
+    if (ExternalSystemUtil.isNoBackgroundMode()) {
+      return;
+    }
     Pair<ExternalSystemManager, ExternalProjectSettings> linkedProject = findLinkedProjectSettings(projectPath);
     if (linkedProject == null) return;
     scheduleUpdate(linkedProject);
   }
 
   private void scheduleUpdate(@NotNull Pair<ExternalSystemManager, ExternalProjectSettings> linkedProject) {
+    if (ExternalSystemUtil.isNoBackgroundMode()) {
+      return;
+    }
     ExternalSystemManager<?, ?, ?, ?, ?> manager = linkedProject.first;
     String projectPath = linkedProject.second.getExternalProjectPath();
     ProjectSystemId systemId = manager.getSystemId();

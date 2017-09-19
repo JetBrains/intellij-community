@@ -266,7 +266,7 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
       catch (NoSuchFieldException e) {
         throw new RuntimeException(e);
       }
-      myIntField = new IntegerField(0, 10);
+      myIntField = new IntegerField(null, 0, 10);
       myIntField.setColumns(6);
       myIntField.setName(title);
       myIntField.setMinimumSize(new Dimension(30, myIntField.getMinimumSize().height));

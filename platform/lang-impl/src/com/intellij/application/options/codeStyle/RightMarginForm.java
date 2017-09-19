@@ -76,10 +76,8 @@ public class RightMarginForm {
   }
 
   void createUIComponents() {
-    myRightMarginField = new IntegerField(0, CodeStyleSettings.MAX_RIGHT_MARGIN);
-    myRightMarginField.setName(ApplicationBundle.message("editbox.right.margin.columns"));
-    myVisualGuidesField = new CommaSeparatedIntegersField(0, CodeStyleSettings.MAX_RIGHT_MARGIN, "Optional");
-    myVisualGuidesField.setName(ApplicationBundle.message("settings.code.style.visual.guides"));
+    myRightMarginField = new IntegerField(ApplicationBundle.message("editbox.right.margin.columns"), 0, CodeStyleSettings.MAX_RIGHT_MARGIN);
+    myVisualGuidesField = new CommaSeparatedIntegersField(ApplicationBundle.message("settings.code.style.visual.guides"), 0, CodeStyleSettings.MAX_RIGHT_MARGIN, "Optional");
   }
 
   public void reset(@NotNull CodeStyleSettings settings) {

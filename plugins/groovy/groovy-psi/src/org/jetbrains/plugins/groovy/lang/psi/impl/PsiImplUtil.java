@@ -62,6 +62,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
@@ -184,6 +185,10 @@ public class PsiImplUtil {
       if (newExpr != addedParenth) {
         return oldExpr.replaceWithExpression(addedParenth, removeUnnecessaryParentheses);
       }
+    }
+
+    if (oldParent instanceof GrForInClause) {
+      return (GrExpression) oldExpr.replace(parenthesize(newExpr));
     }
 
     //if replace closure argument with expression

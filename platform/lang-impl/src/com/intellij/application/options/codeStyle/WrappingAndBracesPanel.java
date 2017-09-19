@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.presentation.CodeStyleSelectSettingPresentatio
 import com.intellij.psi.codeStyle.presentation.CodeStyleSettingPresentation;
 import com.intellij.psi.codeStyle.presentation.CodeStyleSoftMarginsPresentation;
 import com.intellij.ui.components.fields.CommaSeparatedIntegersField;
+import com.intellij.ui.components.fields.valueEditors.CommaSeparatedIntegersValueEditor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +42,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
   private MultiMap<String, String> myGroupToFields = new MultiMap<>();
   private Map<String, SettingsGroup> myFieldNameToGroup;
   private final CommaSeparatedIntegersField mySoftMarginsEditor =
-    new CommaSeparatedIntegersField(0, CodeStyleSettings.MAX_RIGHT_MARGIN, "Optional");
+    new CommaSeparatedIntegersField(null, 0, CodeStyleSettings.MAX_RIGHT_MARGIN, "Optional");
 
   public WrappingAndBracesPanel(CodeStyleSettings settings) {
     super(settings);
@@ -196,10 +197,10 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
   @NotNull
   private String getSoftMarginsString(@NotNull List<Integer> intList) {
     if (intList.size() > 0) {
-      return CommaSeparatedIntegersField.intListToString(intList);
+      return CommaSeparatedIntegersValueEditor.intListToString(intList);
     }
     List<Integer> defaultMargins = getSettings().getDefaultSoftMargins();
-    String defaultsStr = defaultMargins.size() > 0 ? CommaSeparatedIntegersField.intListToString(defaultMargins) : "None";
+    String defaultsStr = defaultMargins.size() > 0 ? CommaSeparatedIntegersValueEditor.intListToString(defaultMargins) : "None";
     return "Default: " + defaultsStr;
   }
 

@@ -45,6 +45,7 @@ public class MockSdk implements Sdk, SdkModificator {
   @NotNull private String myVersionString;
   private final MultiMap<OrderRootType, VirtualFile> myRoots;
   private final SdkTypeId mySdkType;
+  private SdkAdditionalData myData;
 
   public MockSdk(@NotNull String name,
           @NotNull String homePath,
@@ -90,7 +91,7 @@ public class MockSdk implements Sdk, SdkModificator {
   @Nullable
   @Override
   public SdkAdditionalData getSdkAdditionalData() {
-    return null;
+    return myData;
   }
 
   @NotNull
@@ -146,7 +147,7 @@ public class MockSdk implements Sdk, SdkModificator {
 
   @Override
   public void setSdkAdditionalData(SdkAdditionalData data) {
-    throwReadOnly();
+    myData = data;
   }
 
   @Override

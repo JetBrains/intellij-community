@@ -677,7 +677,9 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createCollectionToArrayFix(@NotNull PsiExpression collectionExpression, @NotNull PsiArrayType arrayType) {
+  public IntentionAction createCollectionToArrayFix(@NotNull PsiExpression collectionExpression,
+                                                    @NotNull PsiExpression expressionToReplace,
+                                                    @NotNull PsiArrayType arrayType) {
     return QuickFixes.EMPTY_FIX;
   }
 

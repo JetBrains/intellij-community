@@ -4,6 +4,8 @@ class Main {
         var a = 1;
         <error descr="'var' is not allowed in a compound declaration">var b = 2</error>, <error descr="'var' is not allowed in a compound declaration">c = 3.0;</error>
         <error descr="'var' is not allowed as an element type of an array">var d[] = new int[4];</error>
+        var d1 = new int[] {4};                                                                                          
+        var d2 = new int[4];                                                                                          
         <error descr="Cannot infer type: 'var' on variable without initializer">var e;</error>
         var f = <error descr="Array initializer is not allowed here">{ 6 }</error>;
         var g = (<error descr="Incompatible types. Found: 'int', required: 'null'">g = 7</error>);

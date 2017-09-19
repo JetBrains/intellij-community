@@ -17,9 +17,11 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,6 +37,7 @@ public class SwitchStatementsWithoutDefaultInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("switch.statements.without.default.display.name");
   }
 
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
@@ -118,14 +121,8 @@ public class SwitchStatementsWithoutDefaultInspection extends BaseInspection {
           numCases++;
         }
       }
-      final PsiField[] fields = aClass.getFields();
-      int numEnums = 0;
-      for (final PsiField field : fields) {
-        final PsiType fieldType = field.getType();
-        if (fieldType.equals(type)) {
-          numEnums++;
-        }
-      }
+      PsiEnumConstant[] enumConstants = PsiTreeUtil.getChildrenOfType(aClass, PsiEnumConstant.class);
+      int numEnums = enumConstants == null ? 0 : enumConstants.length;
       return numEnums == numCases;
     }
   }

@@ -48,7 +48,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
-import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.*;
@@ -100,7 +99,6 @@ import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
-import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 
 import javax.tools.*;
 import java.awt.*;
@@ -1186,7 +1184,6 @@ public class BuildManager implements Disposable {
     // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
     cmdLine.setCharset(mySystemCharset);
     cmdLine.addParameter("-D" + CharsetToolkit.FILE_ENCODING_PROPERTY + "=" + mySystemCharset.name());
-    cmdLine.addParameter("-D" + JpsGlobalLoader.FILE_TYPES_COMPONENT_NAME_KEY + "=" + FileTypeManagerImpl.getFileTypeComponentName());
     String[] propertiesToPass = {"user.language", "user.country", "user.region", PathManager.PROPERTY_PATHS_SELECTOR, "idea.case.sensitive.fs"};
     for (String name : propertiesToPass) {
       final String value = System.getProperty(name);

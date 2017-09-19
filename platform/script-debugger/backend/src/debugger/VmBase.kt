@@ -25,9 +25,5 @@ abstract class VmBase(override val debugListener: DebugEventListener) : Vm, Atta
 
   protected open fun computeEvaluateContext(): EvaluateContext? = null
 
-  override var captureAsyncStackTraces: Boolean
-    get() = false
-    set(value) { }
-
   override val childVMs: MutableList<Vm> = ContainerUtil.createConcurrentList()
 }

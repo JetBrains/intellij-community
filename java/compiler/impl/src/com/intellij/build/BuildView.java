@@ -57,7 +57,7 @@ class BuildView extends CompositeView<BuildConsoleView, ComponentContainer> impl
       @Override
       public void update(AnActionEvent e) {
         super.update(e);
-        e.getPresentation().setVisible(!BuildView.this.isPrimaryConsoleEnabled());
+        e.getPresentation().setVisible(!BuildView.this.isPrimaryViewEnabled());
       }
     };
     if (myComponentContainer instanceof BuildConsoleView) {

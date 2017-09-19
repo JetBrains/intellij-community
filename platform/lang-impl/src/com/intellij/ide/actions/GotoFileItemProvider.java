@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -116,6 +117,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       for (Object o : myModel.getElementsByName(fileName, everywhere, pattern)) {
         String fullName = myModel.getFullName(o);
         if (o instanceof PsiFileSystemItem && fullName != null) {
+          fullName = FileUtilRt.toSystemIndependentName(fullName);
           FList<TextRange> fragments = fullMatcher.matchingFragments(fullName);
           if (fragments != null && !fragments.isEmpty()) {
             group.add((PsiFileSystemItem)o);

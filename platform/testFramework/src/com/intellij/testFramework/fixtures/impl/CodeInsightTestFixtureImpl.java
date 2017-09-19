@@ -1209,7 +1209,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     for (Module module : ModuleManager.getInstance(getProject()).getModules()) {
       ModuleRootManager.getInstance(module).orderEntries().getAllLibrariesAndSdkClassesRoots(); // instantiate all VFPs
     }
-    myVirtualFilePointerTracker = new VirtualFilePointerTracker();
+    if (shouldTrackVirtualFilePointers()) {
+      myVirtualFilePointerTracker = new VirtualFilePointerTracker();
+    }
+  }
+  
+  protected boolean shouldTrackVirtualFilePointers() {
+    return true;
   }
 
   @Override
@@ -1237,7 +1243,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
     finally {
       super.tearDown();
-      myVirtualFilePointerTracker.assertPointersAreDisposed();
+      if (myVirtualFilePointerTracker != null) {
+        myVirtualFilePointerTracker.assertPointersAreDisposed();
+      }
     }
   }
 

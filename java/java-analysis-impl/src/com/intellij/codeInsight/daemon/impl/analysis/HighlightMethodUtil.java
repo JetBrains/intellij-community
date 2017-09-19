@@ -538,7 +538,7 @@ public class HighlightMethodUtil {
       if (rType != null && !variable.getType().isAssignableFrom(rType)) {
         PsiType expectedTypeByApplicabilityConstraints = resolveResult.getSubstitutor(false).substitute(resolved.getReturnType());
         if (expectedTypeByApplicabilityConstraints != null && !expectedTypeByApplicabilityConstraints.equals(rType)) {
-          HighlightUtil.registerChangeVariableTypeFixes(variable, expectedTypeByApplicabilityConstraints, methodCall, highlightInfo);
+          HighlightFixUtil.registerChangeVariableTypeFixes(variable, expectedTypeByApplicabilityConstraints, methodCall, highlightInfo);
         }
       }
     }
@@ -719,7 +719,7 @@ public class HighlightMethodUtil {
       HighlightInfo.newHighlightInfo(highlightInfoType).range(elementToHighlight).description(description).escapedToolTip(toolTip).create();
     registerMethodCallIntentions(info, methodCall, list, resolveHelper);
     if (element != null && !resolveResult.isStaticsScopeCorrect()) {
-      HighlightUtil.registerStaticProblemQuickFixAction(element, info, referenceToMethod);
+      HighlightFixUtil.registerStaticProblemQuickFixAction(element, info, referenceToMethod);
     }
 
     TextRange fixRange = getFixRange(elementToHighlight);
@@ -794,10 +794,10 @@ public class HighlightMethodUtil {
       registerMethodCallIntentions(info, methodCall, list, resolveHelper);
     }
     if (!resolveResult.isAccessible() && resolveResult.isStaticsScopeCorrect() && methodCandidate2 != null) {
-      HighlightUtil.registerAccessQuickFixAction((PsiMember)element, referenceToMethod, info, resolveResult.getCurrentFileResolveScope());
+      HighlightFixUtil.registerAccessQuickFixAction((PsiMember)element, referenceToMethod, info, resolveResult.getCurrentFileResolveScope());
     }
     if (element != null && !resolveResult.isStaticsScopeCorrect()) {
-      HighlightUtil.registerStaticProblemQuickFixAction(element, info, referenceToMethod);
+      HighlightFixUtil.registerStaticProblemQuickFixAction(element, info, referenceToMethod);
     }
 
     TextRange fixRange = getFixRange(elementToHighlight);
@@ -898,7 +898,7 @@ public class HighlightMethodUtil {
     for (CandidateInfo methodCandidate : methodCandidates) {
       PsiMethod method = (PsiMethod)methodCandidate.getElement();
       if (!methodCandidate.isAccessible() && PsiUtil.isApplicable(method, methodCandidate.getSubstitutor(), exprList)) {
-        HighlightUtil.registerAccessQuickFixAction(method, methodCall.getMethodExpression(), highlightInfo, methodCandidate.getCurrentFileResolveScope());
+        HighlightFixUtil.registerAccessQuickFixAction(method, methodCall.getMethodExpression(), highlightInfo, methodCandidate.getCurrentFileResolveScope());
       }
     }
   }
@@ -1645,7 +1645,7 @@ public class HighlightMethodUtil {
       String description = HighlightUtil.buildProblemWithAccessDescription(classReference, aClass, typeResolveResult);
       PsiElement element = ObjectUtils.notNull(classReference.getReferenceNameElement(), classReference);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
-      HighlightUtil.registerAccessQuickFixAction(aClass, classReference, info, null);
+      HighlightFixUtil.registerAccessQuickFixAction(aClass, classReference, info, null);
       holder.add(info);
       return;
     }
@@ -1801,7 +1801,7 @@ public class HighlightMethodUtil {
     String description = HighlightUtil.buildProblemWithAccessDescription(ref, resolved, result);
     HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(description).navigationShift(+1).create();
     if (result.isStaticsScopeCorrect()) {
-      HighlightUtil.registerAccessQuickFixAction(resolved, ref, info, result.getCurrentFileResolveScope());
+      HighlightFixUtil.registerAccessQuickFixAction(resolved, ref, info, result.getCurrentFileResolveScope());
     }
     return info;
   }

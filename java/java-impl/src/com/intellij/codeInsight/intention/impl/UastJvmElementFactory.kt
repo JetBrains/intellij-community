@@ -19,10 +19,14 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmModifiersOwner
+import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.JvmElementActionsFactory
 import com.intellij.lang.jvm.actions.MemberRequest
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiType
+import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.uast.*
 import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory as UastJvmCommonIntentionActionsFactory
 import com.intellij.codeInsight.intention.MethodInsertionInfo as UastMethodInsertionInfo
@@ -69,6 +73,31 @@ class UastJvmElementFactory(
         )
       ) ?: emptyList()
     }
+
+  override fun createAddMethodActions(targetClass: JvmClass, request: CreateMethodRequest): List<IntentionAction> {
+    val project = (targetClass as? PsiElement)?.project ?: return emptyList()
+    val factory = JavaPsiFacade.getElementFactory(project)
+    return with(request) {
+      getUastFactory(targetClass)?.createAddCallableMemberActions(
+        UastMethodInsertionInfo.Method(
+          targetClass.asUast(),
+          request.methodName,
+          modifiers.map { renderer.render(it) },
+          emptyList(),
+          returnType.firstOrNull()?.let { materializer.materialize(it.theType) } ?: PsiType.VOID,
+          parameters.mapIndexed { i, pair ->
+            factory.createParameter(
+              pair.first.names.firstOrNull() ?: "arg$i",
+              pair.second.firstOrNull()?.theType?.let { materializer.materialize(it) }
+              ?: PsiType.getTypeByName("java.lang.Object", project, GlobalSearchScope.allScope(project))
+            ).asUast<UParameter>()
+          },
+          modifiers.contains(JvmModifier.ABSTRACT)
+        )
+      ) ?: emptyList()
+    }
+  }
+
 
   override fun createAddPropertyActions(targetClass: JvmClass, request: MemberRequest.Property): List<IntentionAction> =
     with(request) {

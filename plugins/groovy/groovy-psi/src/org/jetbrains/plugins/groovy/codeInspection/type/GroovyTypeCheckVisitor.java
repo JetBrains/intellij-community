@@ -620,7 +620,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
                                  @NotNull PsiElement elementToHighlight) {
     if (rType == null) return;
     final ConversionResult result = TypesUtil.canAssign(lType, rType, context, ApplicableTo.ASSIGNMENT);
-    processResult(result, elementToHighlight, "cannot.assign", lType, rType);
+    processResult(result, elementToHighlight, "cannot.assign", lType, rType, LocalQuickFix.EMPTY_ARRAY);
   }
 
   protected void processAssignmentWithinMultipleAssignment(@Nullable PsiType targetType,
@@ -686,12 +686,13 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
                              @NotNull PsiElement elementToHighlight,
                              @NotNull @PropertyKey(resourceBundle = GroovyBundle.BUNDLE) String messageKey,
                              @NotNull PsiType lType,
-                             @NotNull PsiType rType) {
+                             @NotNull PsiType rType,
+                             @NotNull LocalQuickFix[] fixes) {
     if (result == ConversionResult.OK) return;
     registerError(
       elementToHighlight,
       GroovyBundle.message(messageKey, rType.getPresentableText(), lType.getPresentableText()),
-      LocalQuickFix.EMPTY_ARRAY,
+      fixes,
       result == ConversionResult.ERROR ? ProblemHighlightType.GENERIC_ERROR : ProblemHighlightType.GENERIC_ERROR_OR_WARNING
     );
   }
@@ -980,7 +981,9 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     if (iteratedType == null) return;
     final PsiType targetType = variable.getType();
 
-    processAssignment(targetType, iteratedType, forInClause, variable.getNameIdentifierGroovy());
+    final ConversionResult result = TypesUtil.canAssign(targetType, iteratedType, forInClause, ApplicableTo.ASSIGNMENT);
+    LocalQuickFix[] fixes = {new GrCastFix(TypesUtil.createListType(iterated, targetType), iterated)};
+    processResult(result, variable, "cannot.assign", targetType, iteratedType, fixes);
   }
 
   @Override

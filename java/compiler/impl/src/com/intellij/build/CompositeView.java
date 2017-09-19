@@ -87,7 +87,7 @@ public class CompositeView<S extends ComponentContainer, T extends ComponentCont
     myPrimary = primary;
   }
 
-  public boolean isPrimaryConsoleEnabled() {
+  public boolean isPrimaryViewEnabled() {
     return myPrimary;
   }
 
@@ -134,7 +134,7 @@ public class CompositeView<S extends ComponentContainer, T extends ComponentCont
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
-    final ComponentContainer consoleView = getView(isPrimaryConsoleEnabled());
+    final ComponentContainer consoleView = getView(isPrimaryViewEnabled());
     return consoleView instanceof DataProvider ? ((DataProvider)consoleView).getData(dataId) : null;
   }
 
@@ -159,7 +159,7 @@ public class CompositeView<S extends ComponentContainer, T extends ComponentCont
 
     @Override
     public boolean isSelected(final AnActionEvent event) {
-      return !isPrimaryConsoleEnabled();
+      return !isPrimaryViewEnabled();
     }
 
     @Override

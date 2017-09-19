@@ -167,6 +167,7 @@ class CompilationContextImpl implements CompilationContext {
     }
     messages.info("Incremental compilation: " + options.incrementalCompilation)
     if (options.incrementalCompilation) {
+      System.setProperty("kotlin.incremental.compilation", "true")
       outputDirectoriesToKeep.add(dataDirName)
       outputDirectoriesToKeep.add(classesDirName)
     }

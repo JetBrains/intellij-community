@@ -802,7 +802,7 @@ public class GenericsHighlightUtil {
       return null;
     }
     HighlightInfo highlightInfo = HighlightUtil.createIncompatibleTypeHighlightInfo(itemType, parameterType, parameter.getTextRange(), 0);
-    HighlightUtil.registerChangeVariableTypeFixes(parameter, itemType, expression, highlightInfo);
+    HighlightFixUtil.registerChangeVariableTypeFixes(parameter, itemType, expression, highlightInfo);
     return highlightInfo;
   }
 
@@ -1421,7 +1421,7 @@ public class GenericsHighlightUtil {
         }
         PsiSubstitutor substitutor = factory.createSubstitutor(map);
         PsiType suggestedType = factory.createType(aClass, substitutor);
-        HighlightUtil.registerChangeVariableTypeFixes(variable, suggestedType, variable.getInitializer(), highlightInfo);
+        HighlightFixUtil.registerChangeVariableTypeFixes(variable, suggestedType, variable.getInitializer(), highlightInfo);
       }
     }
   }

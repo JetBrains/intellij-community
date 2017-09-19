@@ -44,8 +44,6 @@ interface Vm : UserDataHolderEx {
    */
   fun setBreakOnException(catchMode: ExceptionCatchMode): Promise<*> = nullPromise()
 
-  var captureAsyncStackTraces: Boolean
-
   val presentableName: String
     get() = "main loop"
 
