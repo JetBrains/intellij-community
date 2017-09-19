@@ -16,6 +16,7 @@
 package com.jetbrains.env.ut;
 
 import com.google.common.collect.Lists;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -27,7 +28,6 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
@@ -36,11 +36,13 @@ import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -230,25 +232,30 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
 
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
-        environment.getRunner().execute(environment, new ProgramRunner.Callback() {
-          @Override
-          public void processStarted(RunContentDescriptor descriptor) {
-            myDescriptor = descriptor;
-            myProcessHandler = myDescriptor.getProcessHandler();
-            myProcessHandler.addProcessListener(new ProcessAdapter() {
-              @Override
-              public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-                myOutput.append(event.getText());
-              }
+
+        TransactionGuard.submitTransaction(config.getProject(), () -> {
+          try {
+            environment.getRunner().execute(environment, descriptor -> {
+              myDescriptor = descriptor;
+              myProcessHandler = myDescriptor.getProcessHandler();
+              myProcessHandler.addProcessListener(new ProcessAdapter() {
+                @Override
+                public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+                  myOutput.append(event.getText());
+                }
+              });
+              myConsoleView = (SMTRunnerConsoleView)descriptor.getExecutionConsole();
+              myTestProxy = myConsoleView.getResultsViewer().getTestsRootNode();
+              myConsoleView.getResultsViewer().addEventsListener(new TestResultsViewer.SMEventsAdapter() {
+                @Override
+                public void onTestingFinished(TestResultsViewer sender) {
+                  s.up();
+                }
+              });
             });
-            myConsoleView = (SMTRunnerConsoleView)descriptor.getExecutionConsole();
-            myTestProxy = myConsoleView.getResultsViewer().getTestsRootNode();
-            myConsoleView.getResultsViewer().addEventsListener(new TestResultsViewer.SMEventsAdapter() {
-              @Override
-              public void onTestingFinished(TestResultsViewer sender) {
-                s.up();
-              }
-            });
+          }
+          catch (final ExecutionException e) {
+            throw new ProcessCanceledException(e);
           }
         });
       }
