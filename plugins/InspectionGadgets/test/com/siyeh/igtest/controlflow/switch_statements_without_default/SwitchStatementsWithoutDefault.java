@@ -64,4 +64,21 @@ public class SwitchStatementsWithoutDefault
     enum MyEnum {
         foo, bar, baz;
     }
+
+    enum T {
+        A,
+        B;
+
+        public static T C = A;
+    }
+
+    public void test() {
+        T t = T.C;
+        switch (t) {
+            case A:
+                break;
+            case B:
+                break;
+        }
+    }
 }
