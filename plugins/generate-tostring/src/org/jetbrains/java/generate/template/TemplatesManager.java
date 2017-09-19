@@ -146,11 +146,16 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
         ContainerUtil.mapNotNull(elementClass.getMethods(),
                                  method -> {
                                    final String methodName = method.getName();
-                                   if (methodName.startsWith("set")) {
+                                   if (methodName.startsWith("set") || method.isSynthetic() || method.isBridge()) {
                                      //hide setters from completion list
                                      return null;
                                    }
-                                   return method.getGenericReturnType().toString() + " " + methodName + "();";
+                                   String parametersString = StringUtil.join(method.getParameters(),
+                                                                             param -> param.getParameterizedType().getTypeName() +
+                                                                                      " " +
+                                                                                      param.getName(), 
+                                                                             ", ");
+                                   return method.getGenericReturnType().getTypeName() + " " + methodName + "(" + parametersString + ");";
                                  });
       final String text = "interface " + elementClass.getSimpleName() + " {\n" + StringUtil.join(methodNames, "\n") + "}";
       final PsiClass aClass = JavaPsiFacade.getElementFactory(project).createClassFromText(text, null).getInnerClasses()[0];
