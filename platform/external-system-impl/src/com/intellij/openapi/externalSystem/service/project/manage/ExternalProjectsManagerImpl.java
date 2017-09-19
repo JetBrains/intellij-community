@@ -84,6 +84,7 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
     Disposer.register(this, myShortcutsManager);
     myTaskActivator = new ExternalSystemTaskActivator(project);
     myRunManagerListener = new ExternalSystemRunManagerListener(this);
+    myWatcher = new ExternalSystemProjectsWatcherImpl(myProject);
   }
 
   public static ExternalProjectsManagerImpl getInstance(@NotNull Project project) {
@@ -152,8 +153,6 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
 
   public void init() {
     if (isInitializationStarted.getAndSet(true)) return;
-
-    myWatcher = new ExternalSystemProjectsWatcherImpl(myProject);
     myWatcher.start();
 
     // load external projects data
