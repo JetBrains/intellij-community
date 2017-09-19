@@ -29,6 +29,6 @@ class JavaVariableDeclaration(override val variable: Variable,
     val modifier = if (!isMutable) "final " else ""
     val initCode = init.toCode()
     val right = if (initCode.trim().isEmpty()) "" else " = $initCode"
-    return "$modifier${variable.type} ${variable.name}$right".withIndent(indent)
+    return "$modifier${variable.type.variableTypeName} ${variable.name}$right".withIndent(indent)
   }
 }

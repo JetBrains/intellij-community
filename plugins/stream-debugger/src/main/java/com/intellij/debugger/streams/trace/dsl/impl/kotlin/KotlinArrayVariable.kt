@@ -20,17 +20,17 @@ import com.intellij.debugger.streams.trace.dsl.Expression
 import com.intellij.debugger.streams.trace.dsl.VariableDeclaration
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 import com.intellij.debugger.streams.trace.dsl.impl.VariableImpl
-import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
+import com.intellij.debugger.streams.trace.impl.handler.type.ArrayType
 
 /**
  * @author Vitaliy.Bibaev
  */
-class KotlinArrayVariable(override val elementType: GenericType, override val name: String)
-  : VariableImpl("kotlin.Array<${elementType.genericTypeName}>", name), ArrayVariable {
-  override fun get(index: Expression): Expression = TextExpression("$name[${index.toCode()}]")
+class KotlinArrayVariable(override val type: ArrayType, override val name: String)
+  : VariableImpl(type, name), ArrayVariable {
+  override fun get(index: Expression): Expression = TextExpression("$name[${index.toCode()}]!!")
 
   override fun set(index: Expression, value: Expression): Expression = TextExpression("$name[${index.toCode()}] = ${value.toCode()}")
 
   override fun defaultDeclaration(size: Expression): VariableDeclaration =
-    KotlinVariableDeclaration(this, false, "kotlin.arrayOfNulls<${elementType.variableTypeName}>(${size.toCode()})")
+    KotlinVariableDeclaration(this, false, type.defaultValue)
 }

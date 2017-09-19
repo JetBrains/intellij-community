@@ -30,7 +30,7 @@ class KotlinStatementFactory : StatementFactory {
   override fun createNewListExpression(elementType: GenericType, vararg args: Expression): Expression =
     TextExpression("kotlin.collections.mutableListOf<${elementType.genericTypeName}>(${StatementFactory.commaSeparate(*args)})")
 
-  override fun createListVariable(elementType: GenericType, name: String): ListVariable = KotlinListVariable(elementType, name)
+  override fun createListVariable(elementType: GenericType, name: String): ListVariable = KotlinListVariable(types.list(elementType), name)
 
   override fun not(expression: Expression): Expression = TextExpression("!${expression.toCode()}")
 
@@ -59,7 +59,7 @@ class KotlinStatementFactory : StatementFactory {
 
   override fun createLambda(argName: String, lambdaBody: LambdaBody): Lambda = KotlinLambda(argName, lambdaBody)
 
-  override fun createVariable(type: GenericType, name: String): Variable = VariableImpl(type.variableTypeName, name)
+  override fun createVariable(type: GenericType, name: String): Variable = VariableImpl(type, name)
 
   override fun and(left: Expression, right: Expression): Expression = TextExpression("${left.toCode()} && ${right.toCode()}")
 
@@ -74,9 +74,10 @@ class KotlinStatementFactory : StatementFactory {
     KotlinAssignmentStatement(variable, expression)
 
   override fun createMapVariable(keyType: GenericType, valueType: GenericType, name: String, linked: Boolean): MapVariable =
-    KotlinMapVariable(keyType, valueType, name, linked)
+    KotlinMapVariable(if (linked) types.linkedMap(keyType, valueType) else types.map(keyType, valueType), name)
 
-  override fun createArrayVariable(elementType: GenericType, name: String): ArrayVariable = KotlinArrayVariable(elementType, name)
+  override fun createArrayVariable(elementType: GenericType, name: String): ArrayVariable =
+    KotlinArrayVariable(types.array(elementType), name)
 
   override fun createScope(codeBlock: CodeBlock): Convertable =
     object : Convertable {

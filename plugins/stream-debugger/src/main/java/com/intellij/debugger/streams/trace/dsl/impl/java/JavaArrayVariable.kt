@@ -20,17 +20,17 @@ import com.intellij.debugger.streams.trace.dsl.Expression
 import com.intellij.debugger.streams.trace.dsl.VariableDeclaration
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 import com.intellij.debugger.streams.trace.dsl.impl.VariableImpl
-import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
+import com.intellij.debugger.streams.trace.impl.handler.type.ArrayType
 
 /**
  * @author Vitaliy.Bibaev
  */
-class JavaArrayVariable(override val elementType: GenericType, name: String)
-  : VariableImpl("${elementType.variableTypeName}[]", name), ArrayVariable {
+class JavaArrayVariable(override val type: ArrayType, name: String)
+  : VariableImpl(type, name), ArrayVariable {
   override fun get(index: Expression): Expression = TextExpression("$name[${index.toCode()}]")
 
   override fun set(index: Expression, value: Expression): Expression = TextExpression("$name[${index.toCode()}] = ${value.toCode()}")
 
   override fun defaultDeclaration(size: Expression): VariableDeclaration =
-    JavaVariableDeclaration(this, false, TextExpression("new ${elementType.variableTypeName}[${size.toCode()}]"))
+    JavaVariableDeclaration(this, false, TextExpression("new ${type.elementType.variableTypeName}[${size.toCode()}]"))
 }

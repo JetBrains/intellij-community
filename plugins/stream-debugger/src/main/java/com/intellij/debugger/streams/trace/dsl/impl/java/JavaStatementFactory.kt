@@ -56,7 +56,7 @@ class JavaStatementFactory : StatementFactory {
     return JavaLambda(argName, lambdaBody as JavaLambdaBody)
   }
 
-  override fun createVariable(type: GenericType, name: String): Variable = VariableImpl(type.variableTypeName, name)
+  override fun createVariable(type: GenericType, name: String): Variable = VariableImpl(type, name)
 
   override fun and(left: Expression, right: Expression): Expression = TextExpression("${left.toCode()} $$ ${right.toCode()}")
 
@@ -71,10 +71,10 @@ class JavaStatementFactory : StatementFactory {
     JavaAssignmentStatement(variable, expression)
 
   override fun createMapVariable(keyType: GenericType, valueType: GenericType, name: String, linked: Boolean): MapVariable =
-    JavaMapVariable(keyType, valueType, name, linked)
+    JavaMapVariable(types.map(keyType, valueType), name)
 
   override fun createArrayVariable(elementType: GenericType, name: String): ArrayVariable =
-    JavaArrayVariable(elementType, name)
+    JavaArrayVariable(types.array(elementType), name)
 
   override fun createScope(codeBlock: CodeBlock): Convertable = object : Convertable {
     override fun toCode(indent: Int): String = "{\n".withIndent(indent) +
@@ -102,7 +102,7 @@ class JavaStatementFactory : StatementFactory {
 
   override fun createNewListExpression(elementType: GenericType, vararg args: Expression): Expression {
     if (args.isEmpty()) {
-      return TextExpression("new java.util.ArrayList<${elementType.genericTypeName}>()")
+      return TextExpression(types.list(elementType).defaultValue)
     }
 
     return TextExpression("java.util.Arrays.asList(${args.joinToString(separator = ", ") { it.toCode() }})")
@@ -110,7 +110,7 @@ class JavaStatementFactory : StatementFactory {
 
   override fun createPeekCall(elementsType: GenericType, lambda: String): IntermediateStreamCall = PeekCall(lambda, elementsType)
 
-  override fun createListVariable(elementType: GenericType, name: String): ListVariable = JavaListVariable(elementType, name)
+  override fun createListVariable(elementType: GenericType, name: String): ListVariable = JavaListVariable(types.list(elementType), name)
 
   override fun not(expression: Expression): Expression = TextExpression("!${expression.toCode()}")
 }

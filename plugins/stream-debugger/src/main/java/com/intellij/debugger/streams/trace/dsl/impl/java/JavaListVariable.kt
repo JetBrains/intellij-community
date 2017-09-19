@@ -20,13 +20,14 @@ import com.intellij.debugger.streams.trace.dsl.ListVariable
 import com.intellij.debugger.streams.trace.dsl.VariableDeclaration
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 import com.intellij.debugger.streams.trace.dsl.impl.VariableImpl
-import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
+import com.intellij.debugger.streams.trace.impl.handler.type.ListType
 
 /**
  * @author Vitaliy.Bibaev
  */
-class JavaListVariable(override val elementType: GenericType, name: String)
-  : VariableImpl("java.util.List<${elementType.genericTypeName}>", name), ListVariable {
+class JavaListVariable(override val type: ListType, name: String)
+  : VariableImpl(type, name), ListVariable {
+
   override fun get(index: Expression): Expression = call("get", index)
   override fun set(index: Expression, newValue: Expression): Expression = call("set", index, newValue)
   override fun add(element: Expression): Expression = call("add", element)
@@ -36,5 +37,5 @@ class JavaListVariable(override val elementType: GenericType, name: String)
   override fun size(): Expression = call("size")
 
   override fun defaultDeclaration(): VariableDeclaration =
-    JavaVariableDeclaration(this, false, TextExpression("new java.util.ArrayList<${elementType.genericTypeName}>()"))
+    JavaVariableDeclaration(this, false, TextExpression(type.defaultValue))
 }

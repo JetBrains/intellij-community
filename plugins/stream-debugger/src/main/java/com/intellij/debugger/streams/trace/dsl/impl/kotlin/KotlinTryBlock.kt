@@ -27,7 +27,7 @@ class KotlinTryBlock(private val block: CodeBlock, statementFactory: StatementFa
     val descriptor = myCatchDescriptor ?: error("catch block must be specified")
     return "try {\n".withIndent(indent) +
            block.toCode(indent + 1) +
-           "} catch(${descriptor.variable.name} : ${descriptor.variable.type}) {\n" +
+           "} catch(${descriptor.variable.name} : ${descriptor.variable.type.variableTypeName}) {\n" +
            descriptor.block.toCode(indent + 1) +
            "}".withIndent(indent)
   }

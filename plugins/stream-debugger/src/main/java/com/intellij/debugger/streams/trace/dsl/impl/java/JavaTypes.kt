@@ -16,9 +16,7 @@
 package com.intellij.debugger.streams.trace.dsl.impl.java
 
 import com.intellij.debugger.streams.trace.dsl.Types
-import com.intellij.debugger.streams.trace.impl.handler.type.ClassTypeImpl
-import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
-import com.intellij.debugger.streams.trace.impl.handler.type.GenericTypeImpl
+import com.intellij.debugger.streams.trace.impl.handler.type.*
 import com.intellij.psi.CommonClassNames
 
 /**
@@ -53,8 +51,16 @@ class JavaTypes() : Types {
   override val stringType: GenericType = STRING
   override val longType: GenericType = LONG
 
-  override fun list(elementsType: GenericType): GenericType = ClassTypeImpl("java.util.List<${elementsType.genericTypeName}>")
+  override fun array(elementType: GenericType): ArrayType =
+    ArrayTypeImpl(elementType, { "$it[]" }, "new ${elementType.variableTypeName}[] {}")
 
-  override fun map(keyType: GenericType, valueType: GenericType): GenericType =
-    ClassTypeImpl("java.util.Map<${keyType.genericTypeName}, ${valueType.genericTypeName}>")
+  override fun map(keyType: GenericType, valueType: GenericType): MapType =
+    MapTypeImpl(keyType, valueType, { keys, values -> "java.util.Map<$keys, $values>" }, "new java.util.HashMap<>()")
+
+  override fun linkedMap(keyType: GenericType, valueType: GenericType): MapType =
+    MapTypeImpl(keyType, valueType, { keys, values -> "java.util.Map<$keys, $values>" }, "new java.util.LinkedHashMap<>()")
+
+  override fun list(elementsType: GenericType): ListType =
+    ListTypeImpl(elementsType, { "java.util.List<$it>" }, "new java.util.ArrayList<>()")
+
 }

@@ -17,24 +17,15 @@ package com.intellij.debugger.streams.trace.dsl.impl.kotlin
 
 import com.intellij.debugger.streams.trace.dsl.Expression
 import com.intellij.debugger.streams.trace.dsl.Lambda
-import com.intellij.debugger.streams.trace.dsl.Statement
 import com.intellij.debugger.streams.trace.dsl.VariableDeclaration
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 import com.intellij.debugger.streams.trace.dsl.impl.common.MapVariableBase
-import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
+import com.intellij.debugger.streams.trace.impl.handler.type.MapType
 
 /**
  * @author Vitaliy.Bibaev
  */
-class KotlinMapVariable(keyType: GenericType,
-                        valueType: GenericType,
-                        name: String,
-                        linked: Boolean)
-  : MapVariableBase(keyType, valueType, "${getType(linked)}<${keyType.genericTypeName}, ${valueType.genericTypeName}>", name) {
-  companion object {
-    fun getType(linked: Boolean): String = "kotlin.collections.${if (linked) "Linked" else ""}HashMap"
-  }
-
+class KotlinMapVariable(type: MapType, name: String) : MapVariableBase(type, name) {
   override fun get(key: Expression): Expression = TextExpression("${toCode()}[${key.toCode()}]")
 
   override fun set(key: Expression, newValue: Expression): Expression =
@@ -50,5 +41,5 @@ class KotlinMapVariable(keyType: GenericType,
     TextExpression("${toCode()}.getOrPut(${key.toCode()}, ${supplier.toCode()}")
 
   override fun defaultDeclaration(isMutable: Boolean): VariableDeclaration =
-    KotlinVariableDeclaration(this, false, "mutableMapOf()")
+    KotlinVariableDeclaration(this, false, type.defaultValue)
 }

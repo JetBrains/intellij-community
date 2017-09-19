@@ -15,14 +15,13 @@
  */
 package com.intellij.debugger.streams.trace.dsl
 
-import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
+import com.intellij.debugger.streams.trace.impl.handler.type.MapType
 
 /**
  * @author Vitaliy.Bibaev
  */
 interface MapVariable : Variable {
-  val keyType: GenericType
-  val valueType: GenericType
+  override val type: MapType
 
   fun get(key: Expression): Expression
   fun set(key: Expression, newValue: Expression): Expression

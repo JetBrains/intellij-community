@@ -16,8 +16,7 @@
 package com.intellij.debugger.streams.trace.dsl.impl.kotlin
 
 import com.intellij.debugger.streams.trace.dsl.Types
-import com.intellij.debugger.streams.trace.impl.handler.type.ClassTypeImpl
-import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
+import com.intellij.debugger.streams.trace.impl.handler.type.*
 
 /**
  * @author Vitaliy.Bibaev
@@ -34,12 +33,20 @@ class KotlinTypes private constructor() : Types by KotlinTypes {
     override val timeVariableType: GenericType = ClassTypeImpl("java.util.concurrent.atomic.AtomicInteger",
                                                                "new java.util.concurrent.atomic.AtomicInteger()")
 
-    override fun list(elementsType: GenericType): GenericType =
-      ClassTypeImpl("kotlin.collections.List<${elementsType.genericTypeName}>",
-                    "kotlin.collections.ArrayList<${elementsType.genericTypeName}>()")
+    override fun list(elementsType: GenericType): ListType =
+      ListTypeImpl(elementsType, { "kotlin.collections.MutableList<$it>" }, "kotlin.collections.mutableListOf()")
 
-    override fun map(keyType: GenericType, valueType: GenericType): GenericType =
-      ClassTypeImpl("kotlin.collections.Map<${keyType.genericTypeName}, ${valueType.genericTypeName}>",
-                    "kotlin.collections.HashMap<${keyType.genericTypeName}, ${valueType.genericTypeName}>()")
+    override fun array(elementType: GenericType): ArrayType =
+      ArrayTypeImpl(elementType, { "kotlin.Array<$it?>" }, "kotlin.arrayOfNulls(1)")
+
+    override fun map(keyType: GenericType, valueType: GenericType): MapType =
+      MapTypeImpl(keyType, valueType,
+                  { keys, values -> "kotlin.collections.MutableMap<$keys, $values>" },
+                  "kotlin.collections.mutableMapOf()")
+
+    override fun linkedMap(keyType: GenericType, valueType: GenericType): MapType =
+      MapTypeImpl(keyType, valueType,
+                  { keys, values -> "kotlin.collections.MutableMap<$keys, $values>" },
+                  "kotlin.collections.linkedMapOf()")
   }
 }

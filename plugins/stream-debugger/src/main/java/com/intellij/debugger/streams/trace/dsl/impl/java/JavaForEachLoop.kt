@@ -15,7 +15,10 @@
  */
 package com.intellij.debugger.streams.trace.dsl.impl.java
 
-import com.intellij.debugger.streams.trace.dsl.*
+import com.intellij.debugger.streams.trace.dsl.Convertable
+import com.intellij.debugger.streams.trace.dsl.Expression
+import com.intellij.debugger.streams.trace.dsl.ForLoopBody
+import com.intellij.debugger.streams.trace.dsl.Variable
 
 /**
  * @author Vitaliy.Bibaev
@@ -24,7 +27,7 @@ class JavaForEachLoop(private val iterateVariable: Variable,
                       private val collection: Expression,
                       private val loopBody: ForLoopBody) : Convertable {
   override fun toCode(indent: Int): String =
-    "for (${iterateVariable.type} ${iterateVariable.name} : ${collection.toCode(0)}) {\n".withIndent(indent) +
+    "for (${iterateVariable.type.variableTypeName} ${iterateVariable.name} : ${collection.toCode(0)}) {\n".withIndent(indent) +
     loopBody.toCode(indent + 1) +
     "}".withIndent(indent)
 }

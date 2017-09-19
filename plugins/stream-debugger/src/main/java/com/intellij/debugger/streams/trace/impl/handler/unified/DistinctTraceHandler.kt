@@ -38,11 +38,11 @@ class DistinctTraceHandler(num: Int, private val myCall: IntermediateStreamCall,
       val mapping = linkedMap(types.integerType, types.integerType, "mapping")
       declare(mapping.defaultDeclaration())
       val eqClasses = map(myCall.typeBefore, nestedMapType, "eqClasses")
-      declare(eqClasses, false)
+      declare(eqClasses, TextExpression(eqClasses.type.defaultValue), false)
       forEachLoop(variable(types.integerType, "beforeTime"), before.keys()) {
         val beforeValue = declare(variable(myCall.typeBefore, "beforeValue"), before.get(loopVariable), false)
         +eqClasses.computeIfAbsent(beforeValue, lambda("key") {
-          +nestedMapType.defaultValue
+          +TextExpression(nestedMapType.defaultValue)
         })
       }
 
@@ -52,7 +52,7 @@ class DistinctTraceHandler(num: Int, private val myCall: IntermediateStreamCall,
         val classes = map(types.integerType, myCall.typeBefore, "classes")
         declare(classes, eqClasses.get(afterValue), false)
         forEachLoop(variable(types.integerType, "classElementTime"), classes.keys()) {
-          mapping.set(loopVariable, afterTime)
+          +mapping.set(loopVariable, afterTime)
         }
       }
 

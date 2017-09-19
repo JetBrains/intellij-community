@@ -82,7 +82,7 @@ class MatchHandler(private val call: TerminatorStreamCall, dsl: Dsl) : HandlerBa
   override fun additionalCallsBefore(): List<IntermediateStreamCall> {
     val result = ArrayList(myBeforePeekInserter.additionalCallsBefore())
     val filterPredicate = (if (call.name == "allMatch") myPredicateVariable.call("negate") else myPredicateVariable).toCode()
-    val filterArg = CallArgumentImpl(myPredicateVariable.type, filterPredicate)
+    val filterArg = CallArgumentImpl(myPredicateVariable.type.variableTypeName, filterPredicate)
     result += IntermediateStreamCallImpl("filter", listOf(filterArg), call.typeBefore, call.typeBefore,
                                          TextRange.EMPTY_RANGE, call.packageName)
     return result

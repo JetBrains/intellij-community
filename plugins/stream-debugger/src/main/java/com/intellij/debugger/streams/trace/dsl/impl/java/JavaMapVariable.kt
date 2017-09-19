@@ -20,32 +20,25 @@ import com.intellij.debugger.streams.trace.dsl.Lambda
 import com.intellij.debugger.streams.trace.dsl.VariableDeclaration
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 import com.intellij.debugger.streams.trace.dsl.impl.common.MapVariableBase
-import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
+import com.intellij.debugger.streams.trace.impl.handler.type.MapType
 
 /**
  * @author Vitaliy.Bibaev
  */
-class JavaMapVariable(keyType: GenericType,
-                      valueType: GenericType,
-                      name: String,
-                      private val linked: Boolean)
-  : MapVariableBase(keyType, valueType, "${getMapType(linked)}<${keyType.genericTypeName}, ${valueType.genericTypeName}>", name) {
-  companion object {
-    fun getMapType(linked: Boolean): String = "java.util.${if (linked) "Linked" else ""}HashMap"
-  }
-
+class JavaMapVariable(type: MapType, name: String)
+  : MapVariableBase(type, name) {
   override fun get(key: Expression): Expression = call("get", key)
 
   override operator fun set(key: Expression, newValue: Expression): Expression = call("put", key, newValue)
 
   override fun contains(key: Expression): Expression = call("contains", key)
 
-  override fun defaultDeclaration(isMutable: Boolean): VariableDeclaration =
-    JavaVariableDeclaration(this, false, TextExpression("new ${getMapType(linked)}<>()"))
-
   override fun keys(): Expression = call("keySet")
 
   override fun size(): Expression = call("size")
 
   override fun computeIfAbsent(key: Expression, supplier: Lambda): Expression = call("computeIfAbsent", key, supplier)
+
+  override fun defaultDeclaration(isMutable: Boolean): VariableDeclaration =
+    JavaVariableDeclaration(this, false, TextExpression(type.defaultValue))
 }

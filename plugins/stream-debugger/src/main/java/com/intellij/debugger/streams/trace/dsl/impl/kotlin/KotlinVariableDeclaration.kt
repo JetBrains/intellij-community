@@ -27,6 +27,6 @@ class KotlinVariableDeclaration(override val variable: Variable,
   override fun toCode(indent: Int): String {
     val prefix = if (isMutable) "var" else "var"
     val suffix = if (init.trim().isEmpty()) "" else " = $init"
-    return "$prefix ${variable.name}: ${variable.type}$suffix".withIndent(indent)
+    return "$prefix ${variable.name}: ${variable.type.variableTypeName}$suffix".withIndent(indent)
   }
 }

@@ -15,11 +15,13 @@
  */
 package com.intellij.debugger.streams.trace.dsl
 
+import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
+
 /**
  * @author Vitaliy.Bibaev
  */
 interface Variable : Expression {
-  val type: String
+  val type: GenericType
   val name: String
 
   override fun toCode(indent: Int): String = name.withIndent(indent)

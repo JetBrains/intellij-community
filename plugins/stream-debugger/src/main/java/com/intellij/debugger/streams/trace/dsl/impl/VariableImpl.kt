@@ -17,11 +17,12 @@ package com.intellij.debugger.streams.trace.dsl.impl
 
 import com.intellij.debugger.streams.trace.dsl.Expression
 import com.intellij.debugger.streams.trace.dsl.Variable
+import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 
 /**
  * @author Vitaliy.Bibaev
  */
-open class VariableImpl(override val type: String, override val name: String) : Variable {
+open class VariableImpl(override val type: GenericType, override val name: String) : Variable {
   override fun call(callName: String, vararg args: Expression): Expression =
     TextExpression("$name.$callName(${args.joinToString(", ") { it.toCode() }})")
 
