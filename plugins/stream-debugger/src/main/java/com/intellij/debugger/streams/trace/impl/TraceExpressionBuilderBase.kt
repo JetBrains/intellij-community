@@ -129,7 +129,7 @@ abstract class TraceExpressionBuilderBase(private val myProject: Project, protec
         }
         else {
           val evaluationResult = array(resultType, "evaluationResult")
-          declare(evaluationResult, newSizedArray(resultType, 1), true)
+          declare(evaluationResult, newArray(resultType, TextExpression(resultType.defaultValue)), true)
           +evaluationResult.set(0, TextExpression(chain.text))
           streamResult.assign(evaluationResult)
         }
