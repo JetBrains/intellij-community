@@ -42,6 +42,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.Equality;
@@ -175,7 +176,8 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
 
   @Override
   public void exclude(@NotNull CommonProblemDescriptor descriptor) {
-    myExcludedElements.put(myProblemElements.getKeyFor(descriptor), descriptor);
+    RefEntity entity = ObjectUtils.notNull(myProblemElements.getKeyFor(descriptor), myResolvedElements.getKeyFor(descriptor));
+    myExcludedElements.put(entity, descriptor);
   }
 
   protected String getSeverityDelegateName() {
