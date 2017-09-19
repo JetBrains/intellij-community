@@ -27,7 +27,6 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -244,6 +243,9 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
 
   private static boolean askToRenameAccesors(PsiMethod getter, PsiMethod setter, String newName, final Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return false;
+    boolean physicalGetter = getter != null && getter.isPhysical();
+    boolean physicalSetter = setter != null && setter.isPhysical();
+    if (!physicalGetter && !physicalSetter) return false;
     String text = RefactoringMessageUtil.getGetterSetterMessage(newName, RefactoringBundle.message("rename.title"), getter, setter);
     return Messages.showYesNoDialog(project, text, RefactoringBundle.message("rename.title"), Messages.getQuestionIcon()) != Messages.YES;
   }
