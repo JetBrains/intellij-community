@@ -655,7 +655,8 @@ public class TypesUtil implements TypeConstants {
 
   @NotNull
   public static PsiClassType createListType(@NotNull PsiElement context, @Nullable PsiType type) {
-    return createGenericType(CommonClassNames.JAVA_UTIL_LIST, context, type);
+    PsiType boxedType = boxPrimitiveType(type, context.getManager(), context.getResolveScope());
+    return createGenericType(CommonClassNames.JAVA_UTIL_LIST, context, boxedType);
   }
 
   @NotNull

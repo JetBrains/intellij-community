@@ -25,7 +25,7 @@ class EmptyReturnTypeFix : BaseFix() {
     val resolveResult = referenceExpression.advancedResolve()
     if (!resolveResult.isAccessible || !resolveResult.isApplicable) return
     val method = resolveResult.element as? GrMethod ?: return
-    if (method is LightElement) return
+    if (method is LightElement || method.isConstructor) return
     method.returnTypeElementGroovy?.let { return }
 
     AddReturnTypeFix.applyFix(referenceExpression.project, method)

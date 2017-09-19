@@ -409,7 +409,7 @@ private int getObjects() {
 
   void testForInAssignability() {
     testHighlighting('''\
-for (int <warning descr="Cannot assign 'String' to 'int'">x</warning> in ['a']){}
+for (<warning descr="Cannot assign 'String' to 'int'">int x</warning> in ['a']){}
 ''')
   }
 
