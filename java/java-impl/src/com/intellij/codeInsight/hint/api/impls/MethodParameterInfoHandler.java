@@ -693,4 +693,9 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       updateMethodPresentation((PsiMethod)p, null, context);
     }
   }
+
+  @Override
+  public boolean supportsOverloadSwitching() {
+    return CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
+  }
 }

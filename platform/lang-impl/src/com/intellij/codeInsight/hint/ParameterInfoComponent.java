@@ -17,14 +17,17 @@
 package com.intellij.codeInsight.hint;
 
 import com.google.common.collect.ImmutableMap;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.util.Function;
+import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -48,6 +51,7 @@ public class ParameterInfoComponent extends JPanel {
   @NotNull private final ParameterInfoHandler myHandler;
 
   private final OneElementComponent[] myPanels;
+  private final JLabel myShortcutLabel;
 
   private final Font NORMAL_FONT;
   private final Font BOLD_FONT;
@@ -122,6 +126,13 @@ public class ParameterInfoComponent extends JPanel {
     pane.setBorder(null);
     pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     add(pane, BorderLayout.CENTER);
+
+    myShortcutLabel = new JLabel(CodeInsightBundle.message("parameter.info.switch.overload.shortcuts"));
+    myShortcutLabel.setForeground(new JBColor(0x787878, 0x787878));
+    Font labelFont = UIUtil.getLabelFont();
+    myShortcutLabel.setFont(labelFont.deriveFont(labelFont.getSize2D() - (SystemInfo.isWindows ? 1 : 2)));
+    myShortcutLabel.setBorder(new JBEmptyBorder(3, 0, 0, 0));
+    add(myShortcutLabel, BorderLayout.SOUTH);
 
     myCurrentParameterIndex = -1;
   }
@@ -254,6 +265,8 @@ public class ParameterInfoComponent extends JPanel {
         myHandler.updateUI(o, context);
       }
     }
+
+    myShortcutLabel.setVisible(!singleParameterInfo && myObjects.length > 1 && myHandler.supportsOverloadSwitching());
 
     invalidate();
     validate();
