@@ -893,6 +893,6 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createDeleteSideEffectAwareFix(@NotNull PsiExpressionStatement statement) {
-    return new DeleteSideEffectsAwareFix(statement);
+    return new DeleteSideEffectsAwareFix(statement, statement.getExpression());
   }
 }

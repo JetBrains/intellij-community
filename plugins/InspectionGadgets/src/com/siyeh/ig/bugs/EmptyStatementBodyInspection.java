@@ -15,16 +15,23 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.DeleteSideEffectsAwareFix;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -44,6 +51,7 @@ public class EmptyStatementBodyInspection extends BaseInspection {
     }
   }
 
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
@@ -78,6 +86,12 @@ public class EmptyStatementBodyInspection extends BaseInspection {
   @Override
   public boolean shouldInspect(PsiFile file) {
     return !FileTypeUtils.isInServerPageFile(file);
+  }
+
+  @Nullable
+  @Override
+  protected LocalQuickFix buildFix(Object... infos) {
+    return ObjectUtils.tryCast(ArrayUtil.getFirstElement(infos), LocalQuickFix.class);
   }
 
   @Override
@@ -123,11 +137,12 @@ public class EmptyStatementBodyInspection extends BaseInspection {
     public void visitIfStatement(@NotNull PsiIfStatement statement) {
       super.visitIfStatement(statement);
       final PsiStatement thenBranch = statement.getThenBranch();
+      final PsiStatement elseBranch = statement.getElseBranch();
       if (thenBranch != null && isEmpty(thenBranch)) {
-        registerStatementError(statement);
+        LocalQuickFix fix = elseBranch == null || isEmpty(elseBranch) ? createFix(statement, statement.getCondition()) : null;
+        registerStatementError(statement, fix);
         return;
       }
-      final PsiStatement elseBranch = statement.getElseBranch();
       if (elseBranch != null && isEmpty(elseBranch)) {
         final PsiElement elseToken = statement.getElseElement();
         if (elseToken == null) {
@@ -144,7 +159,15 @@ public class EmptyStatementBodyInspection extends BaseInspection {
       if (body == null || !isEmpty(body)) {
         return;
       }
-      registerStatementError(statement);
+      registerStatementError(statement, createFix(statement, statement.getExpression()));
+    }
+
+    @NotNull
+    private LocalQuickFix createFix(@NotNull PsiStatement statement, PsiExpression expression) {
+      if (expression == null) {
+        return new DeleteElementFix(statement);
+      }
+      return new DeleteSideEffectsAwareFix(statement, expression);
     }
 
     private boolean isEmpty(PsiElement element) {

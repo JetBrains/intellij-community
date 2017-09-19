@@ -191,27 +191,29 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
 
   @NotNull
   private LocalQuickFix[] createAndInitFixes(Object[] infos) {
-    final InspectionGadgetsFix[] fixes = createFixes(infos);
-    for (InspectionGadgetsFix fix : fixes) {
-      fix.setOnTheFly(onTheFly);
+    final LocalQuickFix[] fixes = createFixes(infos);
+    for (LocalQuickFix fix : fixes) {
+      if(fix instanceof InspectionGadgetsFix) {
+        ((InspectionGadgetsFix)fix).setOnTheFly(onTheFly);
+      }
     }
     return fixes;
   }
 
   @NotNull
-  private InspectionGadgetsFix[] createFixes(Object... infos) {
+  private LocalQuickFix[] createFixes(Object... infos) {
     if (!onTheFly && inspection.buildQuickFixesOnlyForOnTheFlyErrors()) {
       return InspectionGadgetsFix.EMPTY_ARRAY;
     }
-    final InspectionGadgetsFix[] fixes = inspection.buildFixes(infos);
+    final LocalQuickFix[] fixes = inspection.buildFixes(infos);
     if (fixes.length > 0) {
       return fixes;
     }
-    final InspectionGadgetsFix fix = inspection.buildFix(infos);
+    final LocalQuickFix fix = inspection.buildFix(infos);
     if (fix == null) {
       return InspectionGadgetsFix.EMPTY_ARRAY;
     }
-    return new InspectionGadgetsFix[]{fix};
+    return new LocalQuickFix[]{fix};
   }
 
   @Override
