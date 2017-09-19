@@ -18,14 +18,10 @@ package com.intellij.execution.junit;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
-import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author nik
@@ -46,23 +42,11 @@ public abstract class JUnitExternalLibraryDescriptor extends ExternalLibraryDesc
       return JavaSdkUtil.getJUnit4JarPaths();
     }
   };
-  public static final ExternalLibraryDescriptor JUNIT5 = new JUnitExternalLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5") {
+  public static final ExternalLibraryDescriptor JUNIT5 = new JUnitExternalLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.0.0") {
     @NotNull
     @Override
     public List<String> getLibraryClassesRoots() {
-      return Stream.of("org.junit.jupiter.api.Test", "org.opentest4j.AssertionFailedError", 
-                       "org.apiguardian.api.API", "org.junit.platform.commons.JUnitException")
-        .map(className -> {
-          try {
-            return PathUtil.getJarPathForClass(Class.forName(className));
-          }
-          catch (ClassNotFoundException e) {
-            LOG.info(e);
-          }
-          return null;
-        })
-        .filter(Objects::nonNull)
-        .collect(Collectors.toList());
+      return Collections.emptyList();
     }
   };
   private final String myVersion;
