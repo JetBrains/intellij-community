@@ -3235,9 +3235,7 @@ public class JBTabsImpl extends JComponent
       final Component each = getComponent(i);
       if (each instanceof JComponent) {
         final JComponent jc = (JComponent)each;
-        boolean layoutDone = UIUtil.isClientPropertyTrue(jc, LAYOUT_DONE);
-        jc.setVisible(layoutDone);
-        if (!layoutDone) {
+        if (!UIUtil.isClientPropertyTrue(jc, LAYOUT_DONE)) {
           layout(jc, new Rectangle(0, 0, 0, 0));
         }
       }
