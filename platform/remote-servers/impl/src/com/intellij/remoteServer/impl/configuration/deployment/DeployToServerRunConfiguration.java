@@ -32,10 +32,9 @@ import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
-import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
-import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator;
-import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
-import com.intellij.remoteServer.configuration.deployment.DeploymentSourceType;
+import com.intellij.remoteServer.configuration.deployment.*;
+import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerSettingsEditor.AnySource;
+import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerSettingsEditor.LockedSource;
 import com.intellij.remoteServer.impl.runtime.DeployToServerState;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -58,6 +57,7 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
   private final ServerType<S> myServerType;
   private final DeploymentConfigurator<D, S> myDeploymentConfigurator;
   private String myServerName;
+  private boolean myDeploymentSourceIsLocked;
   private DeploymentSource myDeploymentSource;
   private D myDeploymentConfiguration;
 
@@ -69,6 +69,11 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
     super(project, factory, name);
     myServerType = serverType;
     myDeploymentConfigurator = deploymentConfigurator;
+  }
+
+  void lockDeploymentSource(@NotNull SingletonDeploymentSourceType theOnlySourceType) {
+    myDeploymentSourceIsLocked = true;
+    myDeploymentSource = theOnlySourceType.getSingletonSource();
   }
 
   @NotNull
@@ -88,8 +93,11 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
   @NotNull
   @Override
   public SettingsEditor<DeployToServerRunConfiguration> getConfigurationEditor() {
-    SettingsEditor<DeployToServerRunConfiguration> commonEditor
-      = new DeployToServerSettingsEditor(myServerType, myDeploymentConfigurator, getProject());
+    //noinspection unchecked
+    SettingsEditor<DeployToServerRunConfiguration> commonEditor =
+      myDeploymentSourceIsLocked ? new LockedSource(myServerType, myDeploymentConfigurator, getProject(), myDeploymentSource)
+                                 : new AnySource(myServerType, myDeploymentConfigurator, getProject());
+
 
     SettingsEditorGroup<DeployToServerRunConfiguration> group = new SettingsEditorGroup<>();
     group.addEditor("Deployment", commonEditor);
@@ -149,6 +157,10 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
   }
 
   public void setDeploymentSource(DeploymentSource deploymentSource) {
+    if (myDeploymentSourceIsLocked) {
+      assert deploymentSource != null && deploymentSource == myDeploymentSource
+        : "Can't replace locked " + myDeploymentSource + " with " + deploymentSource;
+    }
     myDeploymentSource = deploymentSource;
   }
 
@@ -245,6 +257,9 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
     }
 
     DeployToServerRunConfiguration result = (DeployToServerRunConfiguration)super.clone();
+    if (myDeploymentSourceIsLocked) {
+      result.lockDeploymentSource((SingletonDeploymentSourceType)myDeploymentSource.getType());
+    }
 
     try {
       result.readExternal(element);

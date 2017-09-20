@@ -50,7 +50,7 @@ public class CloudRunConfigurationUtil {
     String name = generateRunConfigurationName(account, module);
 
     final ConfigurationFactoryEx configurationFactory =
-      DeployToServerConfigurationTypesRegistrar.getDeployConfigurationType(account.getType()).getFactory();
+      DeployToServerConfigurationTypesRegistrar.getDeployConfigurationType(account.getType()).getFactoryForType(deploymentSource.getType());
 
     final RunnerAndConfigurationSettings runSettings = runManager.createRunConfiguration(name, configurationFactory);
 
