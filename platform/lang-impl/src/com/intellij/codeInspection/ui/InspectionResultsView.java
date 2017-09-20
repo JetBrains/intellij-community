@@ -571,7 +571,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       }
     }
     if (previewEditor != null) {
-      ProblemPreviewEditorPresentation.setupFoldingsForNonProblemRanges(previewEditor, this);
+      ProblemPreviewEditorPresentation.setupFoldingsAndHighlightProblems(previewEditor, this);
     }
     mySplitter.setSecondComponent(editorPanel);
   }

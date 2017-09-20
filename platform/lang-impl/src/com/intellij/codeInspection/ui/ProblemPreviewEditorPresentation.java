@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 public class ProblemPreviewEditorPresentation {
   private final static int VIEW_ADDITIONAL_OFFSET = 4;
 
-  static void setupFoldingsForNonProblemRanges(@NotNull EditorEx editor, @NotNull InspectionResultsView view) {
+  static void setupFoldingsAndHighlightProblems(@NotNull EditorEx editor, @NotNull InspectionResultsView view) {
     List<UsageInfo> usages = Arrays.stream(view.getTree().getAllValidSelectedDescriptors())
       .filter(ProblemDescriptorBase.class::isInstance)
       .map(ProblemDescriptorBase.class::cast)
@@ -54,18 +54,18 @@ public class ProblemPreviewEditorPresentation {
         return range == null ? new UsageInfo(psi) : new UsageInfo(psi, range.getStartOffset(), range.getEndOffset());
       })
       .collect(Collectors.toList());
-    setupFoldingsForNonProblemRanges(editor, view, usages, view.getProject());
+    setupFoldingsAndHighlightProblems(editor, view, usages, view.getProject());
   }
 
 
-  public static void setupFoldingsForNonProblemRanges(@NotNull EditorEx editor, @NotNull Container editorContainer,
-                                                      @NotNull List<UsageInfo> usages, @NotNull Project project) {
+  public static void setupFoldingsAndHighlightProblems(@NotNull EditorEx editor, @NotNull Container editorContainer,
+                                                       @NotNull List<UsageInfo> usages, @NotNull Project project) {
     final Document doc = editor.getDocument();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     if (documentManager.isUncommited(doc)) {
       WriteAction.run(() -> documentManager.commitDocument(doc));
     }
-    final SortedSet<PreviewEditorFoldingRegion> foldingRegions = new TreeSet<>(Comparator.comparing(x -> x.startLine));
+    final SortedSet<PreviewEditorFoldingRegion> foldingRegions = new TreeSet<>();
     foldingRegions.add(new PreviewEditorFoldingRegion(0, doc.getLineCount()));
     boolean isUpdated = false;
     for (UsageInfo usage : usages) {
@@ -103,24 +103,20 @@ public class ProblemPreviewEditorPresentation {
     });
   }
 
-  private static boolean inRegion(int position, PreviewEditorFoldingRegion range) {
-    return range.startLine <= position && range.endLine > position;
-  }
-
-  private static void setupFoldings(EditorEx editor, SortedSet<PreviewEditorFoldingRegion> foldedRegions) {
+  public static void setupFoldings(EditorEx editor, SortedSet<PreviewEditorFoldingRegion> foldingRegions) {
     editor.getFoldingModel().runBatchFoldingOperation(() -> {
       editor.getFoldingModel().clearFoldRegions();
       editor.getMarkupModel().removeAllHighlighters();
-      for (PreviewEditorFoldingRegion region : foldedRegions) {
-        if (region.endLine - region.startLine > 1) {
+      for (PreviewEditorFoldingRegion region : foldingRegions) {
+        if (region.getEndLine() - region.getStartLine() > 1) {
           FoldRegion currentRegion = FoldingModelSupport.addFolding(editor,
-                                                                    region.startLine,
-                                                                    region.endLine,
+                                                                    region.getStartLine(),
+                                                                    region.getEndLine(),
                                                                     false);
           if (currentRegion != null) {
             DiffDrawUtil.createLineSeparatorHighlighter(editor,
-                                                        editor.getDocument().getLineStartOffset(region.startLine),
-                                                        editor.getDocument().getLineEndOffset(region.endLine - 1),
+                                                        editor.getDocument().getLineStartOffset(region.getStartLine()),
+                                                        editor.getDocument().getLineEndOffset(region.getEndLine() - 1),
                                                         () -> currentRegion.isValid() && !currentRegion.isExpanded());
           }
         }
@@ -134,43 +130,33 @@ public class ProblemPreviewEditorPresentation {
     final int startLine = Math.max(0, document.getLineNumber(toShowRange.getStartOffset()) - 1);
     final int endLine = Math.min(document.getLineCount(), document.getLineNumber(toShowRange.getEndOffset()) + 2);
     for (PreviewEditorFoldingRegion range : new ArrayList<>(foldingRegions)) {
-      final boolean startInRegion = inRegion(startLine, range);
-      final boolean endInRegion = inRegion(endLine, range);
+      final boolean startInRegion = range.contain(startLine);
+      final boolean endInRegion = range.contain(endLine);
       if (startInRegion && endInRegion) {
         foldingRegions.remove(range);
-        if (range.startLine != startLine) {
-          foldingRegions.add(new PreviewEditorFoldingRegion(range.startLine, startLine));
+        if (range.getStartLine() != startLine) {
+          foldingRegions.add(new PreviewEditorFoldingRegion(range.getStartLine(), startLine));
         }
-        if (endLine != range.endLine) {
-          foldingRegions.add(new PreviewEditorFoldingRegion(endLine, range.endLine));
+        if (endLine != range.getEndLine()) {
+          foldingRegions.add(new PreviewEditorFoldingRegion(endLine, range.getEndLine()));
         }
         return true;
       }
       if (startInRegion) {
         foldingRegions.remove(range);
-        if (range.startLine != startLine) {
-          foldingRegions.add(new PreviewEditorFoldingRegion(range.startLine, startLine));
+        if (range.getStartLine() != startLine) {
+          foldingRegions.add(new PreviewEditorFoldingRegion(range.getStartLine(), startLine));
         }
         isUpdated = true;
       }
       if (endInRegion) {
         foldingRegions.remove(range);
-        if (endLine != range.endLine) {
-          foldingRegions.add(new PreviewEditorFoldingRegion(endLine, range.endLine));
+        if (endLine != range.getEndLine()) {
+          foldingRegions.add(new PreviewEditorFoldingRegion(endLine, range.getEndLine()));
         }
         return true;
       }
     }
     return isUpdated;
-  }
-
-  private static class PreviewEditorFoldingRegion {
-    public final int startLine;
-    public final int endLine;
-
-    private PreviewEditorFoldingRegion(int startLine, int endLine) {
-      this.startLine = startLine;
-      this.endLine = endLine;
-    }
   }
 }
