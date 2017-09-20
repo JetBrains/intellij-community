@@ -540,6 +540,12 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
     return toolbarDecorator!!.createPanel()
   }
 
+  private fun defaultsSettingsChanged() {
+    isModified = !Comparing.equal(recentsLimit.text, recentsLimit.getClientProperty(INITIAL_VALUE_KEY)) ||
+                 !Comparing.equal(confirmation.isSelected, confirmation.getClientProperty(INITIAL_VALUE_KEY)) ||
+                 !Comparing.equal(runDashboardTypes, RunDashboardManager.getInstance(myProject).types)
+  }
+
   private fun createSettingsPanel(): JPanel {
     val bottomPanel = JPanel(GridBagLayout())
     val g = GridBag()
@@ -550,11 +556,11 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
 
     recentsLimit.document.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
-        isModified = !Comparing.equal(recentsLimit.text, recentsLimit.getClientProperty(INITIAL_VALUE_KEY))
+        defaultsSettingsChanged()
       }
     })
     confirmation.addChangeListener {
-      isModified = !Comparing.equal(confirmation.isSelected, confirmation.getClientProperty(INITIAL_VALUE_KEY))
+      defaultsSettingsChanged()
     }
     return bottomPanel
   }
@@ -632,7 +638,7 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
 
     updateRunDashboardTypes()
 
-    isModified = !Comparing.equal(runDashboardTypes, RunDashboardManager.getInstance(myProject).types)
+    defaultsSettingsChanged()
   }
 
   private val selectedConfigurationType: ConfigurationType?
@@ -714,7 +720,10 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
         manager.config.recentsLimit = recentLimit
         manager.checkRecentsLimit()
       }
+      recentsLimit.text = "" + recentLimit
+      recentsLimit.putClientProperty(INITIAL_VALUE_KEY, recentsLimit.text)
       manager.config.isRestartRequiresConfirmation = confirmation.isSelected
+      confirmation.putClientProperty(INITIAL_VALUE_KEY, confirmation.isSelected)
 
       val dashboardManager = RunDashboardManager.getInstance(myProject)
       if (!Comparing.equal(runDashboardTypes, dashboardManager.types)) {
