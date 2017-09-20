@@ -86,11 +86,6 @@ class JUnitClientImpl(val host: String, val port: Int, initHandlers: Array<Clien
     LOG.info("Stopping client on port: $clientPort ...")
     poolOfMessages.clear()
     handlers.clear()
-    clientReceiveThread.objectInputStream.close()
-    clientReceiveThread.join()
-    clientSendThread.objectOutputStream.close()
-    clientSendThread.join()
-    keepAliveThread.cancel()
     connection.close()
     keepAliveThread.cancel()
 
