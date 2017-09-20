@@ -57,9 +57,9 @@ private fun treeIterator(start: PsiElement?, next: (PsiElement) -> PsiElement?) 
   }
 
 @JvmOverloads
-fun PsiElement.treeWalkUp(processor: PsiScopeProcessor, state: ResolveState = ResolveState.initial()): Boolean {
+fun PsiElement.treeWalkUp(processor: PsiScopeProcessor, state: ResolveState = ResolveState.initial(), place: PsiElement = this): Boolean {
   for ((scope, lastParent) in getContexts()) {
-    if (!scope.processDeclarations(processor, state, lastParent, this)) return false
+    if (!scope.processDeclarations(processor, state, lastParent, place)) return false
     processor.handleEvent(DECLARATION_SCOPE_PASSED, scope)
   }
   return true
