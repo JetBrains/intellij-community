@@ -48,13 +48,13 @@ interface DslFactory {
   val String.expr: Expression
     get() = TextExpression(this)
 
-  fun and(left: Expression, right: Expression): Expression
+  infix fun Expression.and(right: Expression): Expression
 
-  fun equals(left: Expression, right: Expression): Expression
+  infix fun Expression.equals(right: Expression): Expression
 
-  fun same(left: Expression, right: Expression): Expression
+  infix fun Expression.same(right: Expression): Expression
 
-  fun not(expression: Expression): Expression
+  operator fun Expression.not(): Expression
 
   fun timeDeclaration(): VariableDeclaration
 

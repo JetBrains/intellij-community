@@ -81,13 +81,13 @@ class DslImpl(private val statementFactory: StatementFactory) : Dsl {
   override fun createPeekCall(elementsType: GenericType, lambda: String): IntermediateStreamCall =
     statementFactory.createPeekCall(elementsType, lambda)
 
-  override fun and(left: Expression, right: Expression): Expression = statementFactory.and(left, right)
+  override fun Expression.and(right: Expression): Expression = statementFactory.and(this, right)
 
-  override fun equals(left: Expression, right: Expression): Expression = statementFactory.equals(left, right)
+  override fun Expression.equals(right: Expression): Expression = statementFactory.equals(this, right)
 
-  override fun same(left: Expression, right: Expression): Expression = statementFactory.same(left, right)
+  override fun Expression.same(right: Expression): Expression = statementFactory.same(this, right)
 
-  override fun not(expression: Expression): Expression = statementFactory.not(expression)
+  override fun Expression.not(): Expression = statementFactory.not(this)
 
   private inner class MyContext : CodeContext, Dsl by DslImpl@ this, CodeBlock by statementFactory.createEmptyCompositeCodeBlock()
 }

@@ -96,7 +96,7 @@ open class DistinctByKeyHandler(callNumber: Int, private val myCall: Intermediat
         val valueAfter = declare(variable(types.ANY, "valueAfter"), myTime2ValueAfter.get(loopVariable), false)
         val key = declare(variable(types.ANY, "key"), nullExpression, true)
         integerIteration(myBeforeTimes.size(), forEachLoop@ this) {
-          ifBranch(and(same(valueAfter, myBeforeValues.get(loopVariable)), not(transitions.contains(myBeforeTimes.get(loopVariable))))) {
+          ifBranch((valueAfter same myBeforeValues.get(loopVariable)) and !transitions.contains(myBeforeTimes.get(loopVariable))) {
             key.assign(myKeys.get(loopVariable))
             statement { breakIteration() }
           }

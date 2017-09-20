@@ -257,7 +257,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
   fun testNegation() {
     doTest {
       val lst = list(types.INT, "lst")
-      statement { not(lst.contains("1".expr)) }
+      statement { !lst.contains("1".expr) }
     }
   }
 
