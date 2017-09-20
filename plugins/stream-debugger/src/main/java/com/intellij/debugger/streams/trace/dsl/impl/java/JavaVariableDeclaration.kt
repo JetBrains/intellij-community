@@ -15,7 +15,6 @@
  */
 package com.intellij.debugger.streams.trace.dsl.impl.java
 
-import com.intellij.debugger.streams.trace.dsl.Expression
 import com.intellij.debugger.streams.trace.dsl.Variable
 import com.intellij.debugger.streams.trace.dsl.VariableDeclaration
 
@@ -24,11 +23,10 @@ import com.intellij.debugger.streams.trace.dsl.VariableDeclaration
  */
 class JavaVariableDeclaration(override val variable: Variable,
                               override val isMutable: Boolean,
-                              private val init: Expression) : VariableDeclaration {
+                              private val init: String = "") : VariableDeclaration {
   override fun toCode(indent: Int): String {
     val modifier = if (!isMutable) "final " else ""
-    val initCode = init.toCode()
-    val right = if (initCode.trim().isEmpty()) "" else " = $initCode"
-    return "$modifier${variable.type.variableTypeName} ${variable.name}$right".withIndent(indent)
+    val initExpression = if (init.trim().isEmpty()) "" else " = $init"
+    return "$modifier${variable.type.variableTypeName} ${variable.name}$initExpression".withIndent(indent)
   }
 }

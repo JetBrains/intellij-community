@@ -40,5 +40,5 @@ class JavaMapVariable(type: MapType, name: String)
   override fun computeIfAbsent(key: Expression, supplier: Lambda): Expression = call("computeIfAbsent", key, supplier)
 
   override fun defaultDeclaration(isMutable: Boolean): VariableDeclaration =
-    JavaVariableDeclaration(this, false, TextExpression(type.defaultValue))
+    JavaVariableDeclaration(this, false, type.defaultValue)
 }

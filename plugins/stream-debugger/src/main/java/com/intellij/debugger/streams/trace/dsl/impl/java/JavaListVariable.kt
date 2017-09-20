@@ -37,5 +37,5 @@ class JavaListVariable(override val type: ListType, name: String)
   override fun size(): Expression = call("size")
 
   override fun defaultDeclaration(): VariableDeclaration =
-    JavaVariableDeclaration(this, false, TextExpression(type.defaultValue))
+    JavaVariableDeclaration(this, false, type.defaultValue)
 }

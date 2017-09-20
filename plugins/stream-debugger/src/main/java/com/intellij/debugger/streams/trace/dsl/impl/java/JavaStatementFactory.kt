@@ -33,10 +33,10 @@ class JavaStatementFactory : StatementFactory {
   override fun createEmptyCodeBlock(): CodeBlock = JavaCodeBlock(this)
 
   override fun createVariableDeclaration(variable: Variable, isMutable: Boolean): VariableDeclaration =
-    JavaVariableDeclaration(variable, isMutable, Expression.Empty)
+    JavaVariableDeclaration(variable, isMutable)
 
   override fun createVariableDeclaration(variable: Variable, init: Expression, isMutable: Boolean): VariableDeclaration =
-    JavaVariableDeclaration(variable, isMutable, init)
+    JavaVariableDeclaration(variable, isMutable, init.toCode())
 
   override fun createEmptyForLoopBody(iterateVariable: Variable): ForLoopBody = JavaForLoopBody(this, iterateVariable)
 
@@ -85,8 +85,7 @@ class JavaStatementFactory : StatementFactory {
   override fun createTryBlock(block: CodeBlock): TryBlock = JavaTryBlock(block, this)
 
   override fun createTimeVariableDeclaration(): VariableDeclaration =
-    JavaVariableDeclaration(createVariable(types.timeVariableType, "time"), false,
-                            TextExpression(types.timeVariableType.defaultValue))
+    JavaVariableDeclaration(createVariable(types.timeVariableType, "time"), false, types.timeVariableType.defaultValue)
 
   override fun currentTimeExpression(): Expression = TextExpression("time").call("get")
 

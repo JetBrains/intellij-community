@@ -24,7 +24,6 @@ import com.intellij.psi.CommonClassNames
  */
 class JavaTypes() : Types {
   companion object {
-
     val BOOLEAN: GenericType = GenericTypeImpl("boolean", "java.lang.Boolean", "false")
 
     val INT: GenericType = GenericTypeImpl("int", "java.lang.Integer", "0")
