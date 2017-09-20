@@ -71,7 +71,7 @@ class JavaStatementFactory : StatementFactory {
     JavaAssignmentStatement(variable, expression)
 
   override fun createMapVariable(keyType: GenericType, valueType: GenericType, name: String, linked: Boolean): MapVariable =
-    JavaMapVariable(types.map(keyType, valueType), name)
+    JavaMapVariable(if (linked) types.linkedMap(keyType, valueType) else types.map(keyType, valueType), name)
 
   override fun createArrayVariable(elementType: GenericType, name: String): ArrayVariable =
     JavaArrayVariable(types.array(elementType), name)
