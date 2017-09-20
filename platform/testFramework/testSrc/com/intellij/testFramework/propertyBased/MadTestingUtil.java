@@ -211,6 +211,7 @@ public class MadTestingUtil {
       PsiDocumentManager.getInstance(fixture.getProject()).commitAllDocuments();
       PsiFile file = PsiManager.getInstance(fixture.getProject()).findFile(vFile);
       if (file instanceof PsiBinaryFile || file instanceof PsiPlainTextFile) {
+        System.err.println("Can't check " + vFile + " due to incorrect file type: " + file + " of " + file.getClass());
         // no operations, but the just created file needs to be deleted (in FileWithActions#runActions)
         // todo a side-effect-free generator
         return Generator.constant(new FileWithActions(file, Collections.emptyList()));
