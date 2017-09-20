@@ -673,6 +673,17 @@ public class JBUI {
      * the context scale ({@link BaseScaleContext#usrScale}) or something else.
      */
     protected abstract double currentScale();
+
+    /**
+     * Synchronizes the state with the provided scaler.
+     *
+     * @return whether the state has been updated
+     */
+    public boolean update(@NotNull Scaler scaler) {
+      boolean updated = initialScale != scaler.initialScale;
+      initialScale = scaler.initialScale;
+      return updated;
+    }
   }
 
   /**
@@ -1053,6 +1064,7 @@ public class JBUI {
     protected JBIcon(JBIcon icon) {
       this();
       updateScaleContext(icon.getScaleContext());
+      myScaler.update(icon.myScaler);
     }
 
     protected boolean isIconPreScaled() {
