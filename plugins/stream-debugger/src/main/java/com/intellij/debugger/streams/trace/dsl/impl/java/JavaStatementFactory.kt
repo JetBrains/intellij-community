@@ -58,7 +58,7 @@ class JavaStatementFactory : StatementFactory {
 
   override fun createVariable(type: GenericType, name: String): Variable = VariableImpl(type, name)
 
-  override fun and(left: Expression, right: Expression): Expression = TextExpression("${left.toCode()} $$ ${right.toCode()}")
+  override fun and(left: Expression, right: Expression): Expression = TextExpression("${left.toCode()} && ${right.toCode()}")
 
   override fun equals(left: Expression, right: Expression): Expression =
     TextExpression("java.util.Objects.equals(${left.toCode()}, ${right.toCode()}")
