@@ -1005,6 +1005,29 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     LOG.debug("final i = " + i);
   }
 
+  public void testSeveralDirectoriesWithCommonPrefix() throws IOException {
+    File baseDir = createTempDirectory();
+    VirtualFile vDir = LocalFileSystem.getInstance().findFileByIoFile(baseDir);
+    assertNotNull(vDir);
+    vDir.getChildren();
+    vDir.refresh(false, true);
+
+    LoggingListener listener = new LoggingListener();
+    myVirtualFilePointerManager.create(vDir.getUrl() + "/d1/subdir", disposable, listener);
+    myVirtualFilePointerManager.create(vDir.getUrl() + "/d2/subdir", disposable, listener);
+
+    File dir = new File(baseDir, "d1");
+    FileUtil.createDirectory(dir);
+    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir).getChildren();
+    assertEquals("[before:false, after:false]", listener.getLog().toString());
+    listener.getLog().clear();
+
+    File subDir = new File(dir, "subdir");
+    FileUtil.createDirectory(subDir);
+    VirtualFile vSubDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(subDir);
+    assertEquals("[before:false, after:true]", listener.getLog().toString());
+  }
+
   public void testDirectoryPointersWork() throws Exception {
     final File dir = createTempDirectory();
     VirtualFile vDir = LocalFileSystem.getInstance().findFileByIoFile(dir);
