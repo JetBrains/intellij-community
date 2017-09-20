@@ -23,9 +23,11 @@
       <module fileurl="file://$PROJECT_DIR$/../analytics-library/tracker/analytics-tracker.iml" filepath="$PROJECT_DIR$/../analytics-library/tracker/analytics-tracker.iml" group="android/sdktools/analytics-library" />
       <module fileurl="file://$PROJECT_DIR$/../base/apkparser/analyzer/analyzer.iml" filepath="$PROJECT_DIR$/../base/apkparser/analyzer/analyzer.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android/android.iml" filepath="$PROJECT_DIR$/../adt/idea/android/android.iml" group="android" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-adb/android-adb.iml" filepath="$PROJECT_DIR$/../adt/idea/android-adb/android-adb.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../base/annotations/android-annotations.iml" filepath="$PROJECT_DIR$/../base/annotations/android-annotations.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google/android-apk/android-apk.iml" filepath="$PROJECT_DIR$/../vendor/google/android-apk/android-apk.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-common/android-common.iml" filepath="$PROJECT_DIR$/../adt/idea/android-common/android-common.iml" group="android" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-debuggers/android-debuggers.iml" filepath="$PROJECT_DIR$/../adt/idea/android-debuggers/android-debuggers.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-gradle-jps/android-gradle-jps.iml" filepath="$PROJECT_DIR$/../adt/idea/android-gradle-jps/android-gradle-jps.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/jps-plugin/android-jps-plugin.iml" filepath="$PROJECT_DIR$/../adt/idea/jps-plugin/android-jps-plugin.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-lang/android-lang.iml" filepath="$PROJECT_DIR$/../adt/idea/android-lang/android-lang.iml" group="android" />
@@ -275,7 +277,6 @@
       <module fileurl="file://$PROJECT_DIR$/../base/repository/repository.iml" filepath="$PROJECT_DIR$/../base/repository/repository.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/resources/resources.iml" filepath="$PROJECT_DIR$/resources/resources.iml" />
       <module fileurl="file://$PROJECT_DIR$/resources-en/resources-en.iml" filepath="$PROJECT_DIR$/resources-en/resources-en.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-adb/android-adb.iml" filepath="$PROJECT_DIR$/../adt/idea/android-adb/android-adb.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/platform/script-debugger/backend/script-debugger-backend.iml" filepath="$PROJECT_DIR$/platform/script-debugger/backend/script-debugger-backend.iml" group="platform/script-debugger" />
       <module fileurl="file://$PROJECT_DIR$/platform/script-debugger/debugger-ui/script-debugger-ui.iml" filepath="$PROJECT_DIR$/platform/script-debugger/debugger-ui/script-debugger-ui.iml" group="platform/script-debugger" />
       <module fileurl="file://$PROJECT_DIR$/../base/sdk-common/sdk-common.iml" filepath="$PROJECT_DIR$/../base/sdk-common/sdk-common.iml" group="android/sdktools" />
