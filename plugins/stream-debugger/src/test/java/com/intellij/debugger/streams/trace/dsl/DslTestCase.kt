@@ -204,6 +204,30 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
     }
   }
 
+  fun testCodeBlockReturn() {
+    doTest {
+      val a = declare(variable(types.INT, "a"), +"10", true)
+      doReturn(a)
+    }
+  }
+
+  fun testLambdaExpressionReturn() {
+    doTest {
+      +lambda("y") {
+        doReturn(lambdaArg)
+      }
+    }
+  }
+
+  fun testLambdaBlockReturn() {
+    doTest {
+      +lambda("y") {
+        +lambdaArg.call("method1")
+        doReturn(lambdaArg)
+      }
+    }
+  }
+
   fun testAssignment() {
     doTest {
       val a = declare(variable(types.INT, "a"), true)

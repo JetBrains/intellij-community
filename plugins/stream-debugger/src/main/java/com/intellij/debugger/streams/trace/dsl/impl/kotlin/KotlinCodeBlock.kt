@@ -15,10 +15,13 @@
  */
 package com.intellij.debugger.streams.trace.dsl.impl.kotlin
 
+import com.intellij.debugger.streams.trace.dsl.Expression
 import com.intellij.debugger.streams.trace.dsl.StatementFactory
 import com.intellij.debugger.streams.trace.dsl.impl.LineSeparatedCodeBlock
 
 /**
  * @author Vitaliy.Bibaev
  */
-open class KotlinCodeBlock(statementFactory: StatementFactory) : LineSeparatedCodeBlock(statementFactory)
+open class KotlinCodeBlock(statementFactory: StatementFactory) : LineSeparatedCodeBlock(statementFactory) {
+  override fun doReturn(expression: Expression) = addStatement(expression)
+}

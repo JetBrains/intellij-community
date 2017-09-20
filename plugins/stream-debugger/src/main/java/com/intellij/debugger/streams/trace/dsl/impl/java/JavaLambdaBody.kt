@@ -26,4 +26,13 @@ class JavaLambdaBody(statementFactory: StatementFactory, override val lambdaArg:
   override fun toCode(indent: Int): String = if (isExpression()) getStatements().first().toCode() else super.toCode(indent)
 
   fun isExpression(): Boolean = size == 1
+
+  override fun doReturn(expression: Expression) {
+    if (size == 0) {
+      addStatement(expression)
+    }
+    else {
+      super.doReturn(expression)
+    }
+  }
 }

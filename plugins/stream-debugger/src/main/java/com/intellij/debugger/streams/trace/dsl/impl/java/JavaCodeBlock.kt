@@ -15,10 +15,16 @@
  */
 package com.intellij.debugger.streams.trace.dsl.impl.java
 
+import com.intellij.debugger.streams.trace.dsl.Expression
 import com.intellij.debugger.streams.trace.dsl.StatementFactory
 import com.intellij.debugger.streams.trace.dsl.impl.LineSeparatedCodeBlock
+import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 
 /**
  * @author Vitaliy.Bibaev
  */
-open class JavaCodeBlock(statementFactory: StatementFactory) : LineSeparatedCodeBlock(statementFactory, ";")
+open class JavaCodeBlock(statementFactory: StatementFactory) : LineSeparatedCodeBlock(statementFactory, ";") {
+  override fun doReturn(expression: Expression) {
+    addStatement(TextExpression("return ${expression.toCode()}"))
+  }
+}
