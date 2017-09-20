@@ -123,13 +123,13 @@ abstract class TraceExpressionBuilderBase(private val myProject: Project, protec
     val resultType = chain.terminationCall.resultType
     return dsl.block {
       declare(streamResult, nullExpression, true)
+      val evaluationResult = array(resultType, "evaluationResult")
+      declare(evaluationResult, newArray(resultType, TextExpression(resultType.defaultValue)), true)
       tryBlock {
         if (resultType === GenericType.VOID) {
           streamResult.assign(newSizedArray(types.anyType, 1))
         }
         else {
-          val evaluationResult = array(resultType, "evaluationResult")
-          declare(evaluationResult, newArray(resultType, TextExpression(resultType.defaultValue)), true)
           +evaluationResult.set(0, TextExpression(chain.text))
           streamResult.assign(evaluationResult)
         }
