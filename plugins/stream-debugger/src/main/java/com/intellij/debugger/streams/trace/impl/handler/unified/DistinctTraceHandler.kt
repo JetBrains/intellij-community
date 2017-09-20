@@ -41,9 +41,12 @@ class DistinctTraceHandler(num: Int, private val myCall: IntermediateStreamCall,
       declare(eqClasses, TextExpression(eqClasses.type.defaultValue), false)
       forEachLoop(variable(types.integerType, "beforeTime"), before.keys()) {
         val beforeValue = declare(variable(myCall.typeBefore, "beforeValue"), before.get(loopVariable), false)
-        +eqClasses.computeIfAbsent(beforeValue, lambda("key") {
+        val computeIfAbsentExpression = eqClasses.computeIfAbsent(beforeValue, lambda("key") {
           +TextExpression(nestedMapType.defaultValue)
         })
+        val classItems = map(types.integerType, myCall.typeBefore, "classItems")
+        declare(classItems, computeIfAbsentExpression, false)
+        +classItems.set(loopVariable, beforeValue)
       }
 
       forEachLoop(variable(types.integerType, "afterTime"), after.keys()) {
