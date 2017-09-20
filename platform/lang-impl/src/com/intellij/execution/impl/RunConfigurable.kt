@@ -460,22 +460,24 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
   }
 
   private fun drawPressAddButtonMessage(configurationType: ConfigurationType?) {
-    val panel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0))
-    panel.border = EmptyBorder(30, 0, 0, 0)
-    panel.add(JLabel("Press the"))
+    val messagePanel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0))
+    messagePanel.border = EmptyBorder(30, 0, 0, 0)
+    messagePanel.add(JLabel("Press the"))
 
     val addIcon = ActionLink("", IconUtil.getAddIcon(), toolbarAddAction)
     addIcon.border = EmptyBorder(0, 0, 0, 5)
-    panel.add(addIcon)
+    messagePanel.add(addIcon)
 
     val configurationTypeDescription = if (configurationType != null)
       configurationType.configurationTypeDescription
     else
       ExecutionBundle.message("run.configuration.default.type.description")
-    panel.add(JLabel(ExecutionBundle.message("empty.run.configuration.panel.text.label3", configurationTypeDescription)))
-    val scrollPane = ScrollPaneFactory.createScrollPane(panel, true)
+    messagePanel.add(JLabel(ExecutionBundle.message("empty.run.configuration.panel.text.label3", configurationTypeDescription)))
 
     rightPanel.removeAll()
+    val panel = JPanel(BorderLayout())
+    panel.add(messagePanel, BorderLayout.CENTER)
+    val scrollPane = ScrollPaneFactory.createScrollPane(panel, true)
     rightPanel.add(scrollPane, BorderLayout.CENTER)
     if (configurationType == null) {
       val settingsPanel = JPanel(GridBagLayout())
@@ -494,12 +496,13 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
         val wrapper = JPanel(BorderLayout())
         wrapper.add(runDashboardTypesPanel, BorderLayout.CENTER)
         runDashboardTypesPanel.addChangeListener(this::defaultsSettingsChanged)
+        runDashboardTypesPanel.border = JBUI.Borders.empty(0, 0, 20, 0)
         wrapper.add(settingsWrapper, BorderLayout.SOUTH)
 
-        rightPanel.add(wrapper, BorderLayout.SOUTH)
+        panel.add(wrapper, BorderLayout.SOUTH)
       }
       else {
-        rightPanel.add(settingsWrapper, BorderLayout.SOUTH)
+        panel.add(settingsWrapper, BorderLayout.SOUTH)
       }
     }
     rightPanel.revalidate()
@@ -547,7 +550,7 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
     val bottomPanel = JPanel(GridBagLayout())
     val g = GridBag()
 
-    bottomPanel.add(confirmation, g.nextLine().insets(JBUI.insets(10, 0, 0, 0)).anchor(GridBagConstraints.WEST))
+    bottomPanel.add(confirmation, g.nextLine().coverLine())
     bottomPanel.add(create(recentsLimit, ExecutionBundle.message("temporary.configurations.limit"), BorderLayout.WEST),
                     g.nextLine().insets(JBUI.insets(10, 0, 0, 0)).anchor(GridBagConstraints.WEST))
 
