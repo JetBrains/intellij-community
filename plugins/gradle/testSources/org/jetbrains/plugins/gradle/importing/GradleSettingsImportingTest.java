@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.importing;
 
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
@@ -25,6 +26,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.FacetHandlerEx
 import com.intellij.openapi.externalSystem.service.project.manage.RunConfigHandlerExtension;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -45,6 +47,28 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
   @Parameterized.Parameters(name = "with Gradle-{0}")
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][]{{BASE_GRADLE_VERSION}});
+  }
+
+
+  @Test
+  public void testInspectionSettingsImport() throws Exception {
+    importProject(
+      "buildscript {\n" +
+      "  dependencies {\n" +
+      "     classpath files('" + getGradlePluginPath() + "')\n" +
+      "  }\n" +
+      "}\n" +
+      "apply plugin: 'org.jetbrains.gradle.plugin.idea-ext'\n" +
+      "idea {\n" +
+      "  project.settings {\n" +
+      "    inspections {\n" +
+      "    }\n" +
+      "  }\n" +
+      "}"
+    );
+
+    final InspectionProfileImpl profile = InspectionProfileManager.getInstance(myProject).getCurrentProfile();
+    assertEquals("Gradle Imported", profile.getName());
   }
 
 
