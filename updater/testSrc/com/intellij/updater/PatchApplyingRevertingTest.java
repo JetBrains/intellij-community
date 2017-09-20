@@ -88,14 +88,59 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   }
 
   @Test
-  public void testRevertedWhenFileToDeleteIsProcessLocked() throws Exception {
+  public void testRevertedWhenFileToDeleteIsLocked() throws Exception {
+    assumeTrue(UtilsTest.IS_WINDOWS);
+    doLockedFileTest();
+  }
+
+  @Test
+  public void testRevertedWhenFileToUpdateIsLocked() throws Exception {
+    assumeTrue(UtilsTest.IS_WINDOWS);
+    FileUtil.writeToFile(new File(myNewerDir, "bin/idea.bat"), "new text");
+    doLockedFileTest();
+  }
+
+  private void doLockedFileTest() throws Exception {
+    createPatch();
+
+    try (RandomAccessFile raf = new RandomAccessFile(new File(myOlderDir, "bin/idea.bat"), "rw")) {
+      int b = raf.read();
+      raf.seek(0);
+      raf.write(b);
+
+      PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
+      assertNotApplied(preparationResult);
+    }
+  }
+
+  @Test
+  public void testRevertedWhenDeleteFailed() throws Exception {
     createPatch();
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
-    List<PatchAction> actions = preparationResult.patch.getActions();
-    PatchAction original = actions.get(0);
+    PatchAction original = findAction(preparationResult.patch, "bin/idea.bat");
     assertThat(original).isInstanceOf(DeleteAction.class).hasFieldOrPropertyWithValue("path", "bin/idea.bat");
-    actions.set(0, new DeleteAction(preparationResult.patch, original.getPath(), original.getChecksum()) {
+    List<PatchAction> actions = preparationResult.patch.getActions();
+    actions.set(actions.indexOf(original), new DeleteAction(preparationResult.patch, original.getPath(), original.getChecksum()) {
+      @Override
+      protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
+        throw new IOException("dummy exception");
+      }
+    });
+
+    assertNotApplied(preparationResult);
+  }
+
+  @Test
+  public void testRevertedWhenUpdateFailed() throws Exception {
+    FileUtil.writeToFile(new File(myNewerDir, "bin/idea.bat"), "new text");
+    createPatch();
+
+    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
+    PatchAction original = findAction(preparationResult.patch, "bin/idea.bat");
+    assertThat(original).isInstanceOf(UpdateAction.class).hasFieldOrPropertyWithValue("path", "bin/idea.bat");
+    List<PatchAction> actions = preparationResult.patch.getActions();
+    actions.set(actions.indexOf(original), new UpdateAction(preparationResult.patch, original.getPath(), original.getChecksum()) {
       @Override
       protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
         throw new IOException("dummy exception");
