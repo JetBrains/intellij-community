@@ -232,7 +232,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
   fun testAssignment() {
     doTest {
       val a = declare(variable(types.INT, "a"), true)
-      a.assign("100".expr)
+      a assign "100".expr
     }
   }
 
@@ -240,9 +240,9 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
     doTest {
       val a = declare(variable(types.INT, "a"), true)
       ifBranch("true".expr) {
-        a.assign("100".expr)
+        a assign "100".expr
       }.elseBranch {
-        a.assign("200".expr)
+        a assign "200".expr
       }
     }
   }
@@ -335,7 +335,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
   fun testNewList() {
     doTest {
       val variable = list(types.INT, "lst")
-      variable.assign(newList(types.INT, "0".expr, "1".expr, "2".expr, "3".expr))
+      variable assign newList(types.INT, "0".expr, "1".expr, "2".expr, "3".expr)
     }
   }
 

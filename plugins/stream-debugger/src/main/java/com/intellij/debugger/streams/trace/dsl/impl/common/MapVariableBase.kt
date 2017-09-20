@@ -48,7 +48,7 @@ abstract class MapVariableBase(override val type: MapType, override val name: St
           statement { TextExpression("${i.toCode()}++") }
         }
 
-        resultArray.assign(newArray(dsl.types.ANY, keys, values))
+        resultArray assign newArray(dsl.types.ANY, keys, values)
       }
     }
   }

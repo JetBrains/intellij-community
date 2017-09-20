@@ -70,7 +70,7 @@ abstract class TraceExpressionBuilderBase(private val myProject: Project, protec
 
         val elapsedTime = declare(array(types.LONG, "elapsedTime"),
                                   newArray(types.LONG, "java.lang.System.nanoTime() - ${startTime.toCode()}".expr), false)
-        result.assign(newArray(types.ANY, info, streamResult, elapsedTime))
+        result assign newArray(types.ANY, info, streamResult, elapsedTime)
       }
     }
   }
@@ -127,16 +127,16 @@ abstract class TraceExpressionBuilderBase(private val myProject: Project, protec
       if (resultType != types.VOID) declare(evaluationResult, newArray(resultType, TextExpression(resultType.defaultValue)), true)
       tryBlock {
         if (resultType == types.VOID) {
-          streamResult.assign(newSizedArray(types.ANY, 1))
+          streamResult assign newSizedArray(types.ANY, 1)
           statement { TextExpression(chain.text) }
         }
         else {
           statement { evaluationResult.set(0, TextExpression(chain.text)) }
-          streamResult.assign(evaluationResult)
+          streamResult assign evaluationResult
         }
       }.catch(variable(types.EXCEPTION, "t")) {
         // TODO: add exception variable as a property of catch code block
-        streamResult.assign(newArray(types.EXCEPTION, "t".expr))
+        streamResult assign newArray(types.EXCEPTION, "t".expr)
       }
     }
   }
