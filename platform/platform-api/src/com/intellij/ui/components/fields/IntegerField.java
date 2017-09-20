@@ -33,9 +33,15 @@ public class IntegerField extends JBTextField {
   }
 
   public IntegerField(@Nullable String valueName, int minValue, int maxValue) {
-    myValueEditor = new IntegerValueEditor(this, valueName, minValue);
+    myValueEditor = new IntegerValueEditor(this, valueName, minValue) {
+      @Override
+      protected void onEmptyValue() {
+        updateEmptyValueText();
+      }
+    };
     myValueEditor.setMinValue(minValue);
     myValueEditor.setMaxValue(maxValue);
+    updateEmptyValueText();
   }
 
   public int getMinValue() {
@@ -92,5 +98,18 @@ public class IntegerField extends JBTextField {
   @NotNull
   public Integer getDefaultValue() {
     return myValueEditor.getDefaultValue();
+  }
+
+  public void resetToDefault() {
+    myValueEditor.setValue(myValueEditor.getDefaultValue());
+  }
+
+  public void updateEmptyValueText() {
+    getEmptyText().setText(getEmptyValueText());
+  }
+
+  @NotNull
+  protected String getEmptyValueText() {
+    return "";
   }
 }
