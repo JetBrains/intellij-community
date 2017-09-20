@@ -25,11 +25,13 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.ui.components.fields.CommaSeparatedIntegersField;
 import com.intellij.ui.components.fields.IntegerField;
+import com.intellij.ui.components.fields.valueEditors.CommaSeparatedIntegersValueEditor;
 import com.intellij.ui.components.fields.valueEditors.ValueEditor;
 import com.intellij.ui.components.labels.ActionLink;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * Can be used for languages which do not use standard "Wrapping and Braces" panel.
@@ -77,6 +79,12 @@ public class RightMarginForm {
     myRightMarginField.setCanBeEmpty(true);
     myRightMarginField.setDefaultValue(-1);
     myVisualGuidesField = new CommaSeparatedIntegersField(ApplicationBundle.message("settings.code.style.visual.guides"), 0, CodeStyleSettings.MAX_RIGHT_MARGIN, "Optional");
+    myVisualGuidesField.getValueEditor().addListener(new ValueEditor.Listener<List<Integer>>() {
+      @Override
+      public void valueChanged(@NotNull List<Integer> newValue) {
+        myVisualGuidesField.getEmptyText().setText(getDefaultVisualGuidesText(mySettings));
+      }
+    });
     myResetLink = new ActionLink("Reset", new ResetRightMarginAction());
   }
 
@@ -96,9 +104,10 @@ public class RightMarginForm {
         break;
       }
     }
-    myVisualGuidesField.setValue(settings.getSoftMargins(myLanguage));
+    myVisualGuidesField.setValue(langSettings.getSoftMargins());
     myResetLink.setVisible(langSettings.RIGHT_MARGIN >= 0);
     myRightMarginField.getEmptyText().setText(getDefaultRightMarginText(settings));
+    myVisualGuidesField.getEmptyText().setText(getDefaultVisualGuidesText(settings));
   }
 
   public void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException {
@@ -116,7 +125,7 @@ public class RightMarginForm {
     CommonCodeStyleSettings langSettings = settings.getCommonSettings(myLanguage);
     return langSettings.RIGHT_MARGIN != myRightMarginField.getValue() ||
            langSettings.WRAP_ON_TYPING != getSelectedWrapOnTypingValue() ||
-           !settings.getSoftMargins(myLanguage).equals(myVisualGuidesField.getValue());
+           !langSettings.getSoftMargins().equals(myVisualGuidesField.getValue());
   }
 
 
@@ -134,5 +143,11 @@ public class RightMarginForm {
 
   private static String getDefaultRightMarginText(@NotNull CodeStyleSettings settings) {
     return "Default: " + settings.getDefaultRightMargin();
+  }
+
+  private static String getDefaultVisualGuidesText(@NotNull CodeStyleSettings settings) {
+    List<Integer> softMargins = settings.getSoftMargins();
+    return "Default: " +
+           (softMargins.size() > 0 ? CommaSeparatedIntegersValueEditor.intListToString(settings.getSoftMargins()) : "None");
   }
 }
