@@ -124,10 +124,11 @@ abstract class TraceExpressionBuilderBase(private val myProject: Project, protec
     return dsl.block {
       declare(streamResult, nullExpression, true)
       val evaluationResult = array(resultType, "evaluationResult")
-      declare(evaluationResult, newArray(resultType, TextExpression(resultType.defaultValue)), true)
+      if (resultType != types.voidType) declare(evaluationResult, newArray(resultType, TextExpression(resultType.defaultValue)), true)
       tryBlock {
-        if (resultType === GenericType.VOID) {
+        if (resultType == types.voidType) {
           streamResult.assign(newSizedArray(types.anyType, 1))
+          +TextExpression(chain.text)
         }
         else {
           +evaluationResult.set(0, TextExpression(chain.text))
