@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -349,7 +349,7 @@ public class PluginDownloader {
       uriBuilder.addParameter("action", "download");
       uriBuilder.addParameter("id", descriptor.getPluginId().getIdString());
       uriBuilder.addParameter("build", buildNumberAsString);
-      uriBuilder.addParameter("uuid", PermanentInstallationID.get());
+      uriBuilder.addParameter("uuid", PermanentInstallationIDImpl.INSTALLATION_ID);
       return uriBuilder.build().toString();
     }
   }
