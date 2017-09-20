@@ -335,7 +335,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
             // because inner annotations are not permitted and it can cause infinite recursion
             PsiElement placeToStartWalking = isAnnotationRef(ref) ? getContainingFileSkippingStubFiles(ref) : ref;
             if (placeToStartWalking != null) {
-              treeWalkUp(placeToStartWalking, processor);
+              treeWalkUp(placeToStartWalking, processor, ResolveState.initial(), ref);
               GroovyResolveResult[] candidates = processor.getCandidates();
               if (candidates.length > 0) return candidates;
             }
