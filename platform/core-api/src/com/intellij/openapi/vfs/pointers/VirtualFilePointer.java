@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,12 +35,4 @@ public interface VirtualFilePointer {
   String getPresentableUrl();
 
   boolean isValid();
-
-  /**
-   * @return true if {@link VirtualFilePointerListener#validityChanged(VirtualFilePointer[])}
-   * should fired for every change beneath this directory (Used for jar directories in libraries)
-   */
-  default boolean isRecursive() {
-    return false;
-  }
 }
