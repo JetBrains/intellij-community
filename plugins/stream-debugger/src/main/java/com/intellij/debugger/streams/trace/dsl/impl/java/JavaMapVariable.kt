@@ -31,7 +31,7 @@ class JavaMapVariable(type: MapType, name: String)
 
   override operator fun set(key: Expression, newValue: Expression): Expression = call("put", key, newValue)
 
-  override fun contains(key: Expression): Expression = call("contains", key)
+  override fun contains(key: Expression): Expression = call("containsKey", key)
 
   override fun keys(): Expression = call("keySet")
 
