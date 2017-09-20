@@ -97,11 +97,6 @@ class AsyncProjectViewSupport {
       public void bookmarkChanged(@NotNull Bookmark bookmark) {
         updateByFile(bookmark.getFile());
       }
-
-      @Override
-      public void bookmarksOrderChanged() {
-        //do nothing
-      }
     });
     PsiManager.getInstance(project).addPsiTreeChangeListener(new ProjectViewPsiTreeChangeListener(project) {
       @Override
