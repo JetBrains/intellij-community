@@ -30,6 +30,8 @@ class KotlinTypes private constructor() : Types by KotlinTypes {
     override val doubleType: GenericType = ClassTypeImpl("kotlin.Double", "0.")
     override val stringType: GenericType = ClassTypeImpl("kotlin.String", "\"\"")
     override val basicExceptionType: GenericType = ClassTypeImpl("kotlin.Throwable", "kotlin.Throwable()")
+    override val voidType: GenericType = ClassTypeImpl("kotlin.Unit", "Unit")
+
     override val timeVariableType: GenericType = ClassTypeImpl("java.util.concurrent.atomic.AtomicInteger",
                                                                "new java.util.concurrent.atomic.AtomicInteger()")
 

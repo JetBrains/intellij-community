@@ -31,12 +31,12 @@ interface Types {
   val doubleType: GenericType
   val stringType: GenericType
   val basicExceptionType: GenericType
+  val voidType: GenericType
 
   val timeVariableType: GenericType
 
   val listOfAny: GenericType
     get() = list(anyType)
-
   fun array(elementType: GenericType): ArrayType
   fun list(elementsType: GenericType): ListType
   fun map(keyType: GenericType, valueType: GenericType): MapType
