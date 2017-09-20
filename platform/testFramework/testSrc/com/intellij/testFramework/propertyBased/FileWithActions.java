@@ -44,10 +44,18 @@ public class FileWithActions {
     return myFile.getVirtualFile().getPath() + "[" + StringUtil.join(myActions, a -> "\n  " + a, "") + "\n]";
   }
 
+  public String getConstructionCode() {
+    String path = myFile.getVirtualFile().getPath();
+    String actions = StringUtil.join(myActions, a -> "new " + a.getClass().getSimpleName() + "(" + a.getConstructorArguments() + ")", ",\n  ");
+    return "PsiFile file = myFixture.addFileToProject(\"" + StringUtil.trimStart(path, "/src/") + "\", fileText);\n" +
+           "new FileWithActions(file, Arrays.<MadTestingAction>asList(\n  " + actions + "\n)).runActions();";
+  }
+
   public boolean runActions() {
     Project project = myFile.getProject();
     new RunAll(() -> MadTestingUtil.changeAndRevert(project, () -> MadTestingAction.runActions(myActions)),
                () -> WriteAction.run(() -> myFile.getVirtualFile().delete(this))).run();
+    System.out.println(getConstructionCode());
     return true;
   }
 

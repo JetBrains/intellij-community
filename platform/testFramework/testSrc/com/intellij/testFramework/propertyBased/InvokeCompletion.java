@@ -59,7 +59,7 @@ public class InvokeCompletion extends ActionOnRange {
   private final CompletionPolicy myPolicy;
   private String myLog = "not invoked";
 
-  InvokeCompletion(PsiFile file, int offset, int itemIndexRaw, char completionChar, CompletionPolicy policy) {
+  public InvokeCompletion(PsiFile file, int offset, int itemIndexRaw, char completionChar, CompletionPolicy policy) {
     super(file, offset, offset);
     myItemIndexRaw = itemIndexRaw;
     myCompletionChar = completionChar;
@@ -68,7 +68,12 @@ public class InvokeCompletion extends ActionOnRange {
 
   @Override
   public String toString() {
-    return "InvokeCompletion{" + getVirtualFile().getPath() + ", " + myLog + ", raw=" + myInitialStart + "," + myItemIndexRaw + "}";
+    return "InvokeCompletion{" + getVirtualFile().getPath() + ", " + myLog + "}";
+  }
+
+  @Override
+  public String getConstructorArguments() {
+    return "file, " + myInitialStart + ", " + myItemIndexRaw + ", '" + StringUtil.escapeStringCharacters(String.valueOf(myCompletionChar)) + "', completionPolicy";
   }
 
   @Override
