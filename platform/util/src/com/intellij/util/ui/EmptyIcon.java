@@ -144,11 +144,13 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
 
   @Override
   public int getIconWidth() {
+    getScaleContext().update();
     return (int)ceil(scaleVal(width));
   }
 
   @Override
   public int getIconHeight() {
+    getScaleContext().update();
     return (int)ceil(scaleVal(height));
   }
 

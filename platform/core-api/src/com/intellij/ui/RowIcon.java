@@ -43,6 +43,10 @@ public class RowIcon extends CachingScalableJBIcon<RowIcon> {
   private final Icon[] myIcons;
   private Icon[] myScaledIcons;
 
+  {
+    getScaleContext().addUpdateListener(() -> updateSize());
+  }
+
   public RowIcon(int iconCount/*, int orientation*/) {
     this(iconCount, Alignment.TOP);
   }
@@ -127,7 +131,7 @@ public class RowIcon extends CachingScalableJBIcon<RowIcon> {
 
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
-    if (getScaleContext().update()) updateSize();
+    getScaleContext().update();
     int _x = x;
     int _y = y;
     for (Icon icon : myScaledIcons()) {
@@ -148,13 +152,13 @@ public class RowIcon extends CachingScalableJBIcon<RowIcon> {
 
   @Override
   public int getIconWidth() {
-    if (getScaleContext().update()) updateSize();
+    getScaleContext().update();
     return (int)ceil(scaleVal(myWidth, OBJ_SCALE));
   }
 
   @Override
   public int getIconHeight() {
-    if (getScaleContext().update()) updateSize();
+    getScaleContext().update();
     return (int)ceil(scaleVal(myHeight, OBJ_SCALE));
   }
 

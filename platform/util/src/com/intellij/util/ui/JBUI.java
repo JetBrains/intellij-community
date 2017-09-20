@@ -1053,6 +1053,8 @@ public class JBUI {
     private final Scaler myScaler = new Scaler(false) {
       @Override
       protected double currentScale() {
+        // Current user scale is taken from the scale context,
+        // so subclasses should maker sure the context is updated in time.
         return getScale(USR_SCALE);
       }
     };

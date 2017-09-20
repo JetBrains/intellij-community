@@ -45,6 +45,10 @@ public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> {
   private int myWidth;
   private int myHeight;
 
+  {
+    getScaleContext().addUpdateListener(() -> updateSize());
+  }
+
   public LayeredIcon(int layerCount) {
     myIcons = new Icon[layerCount];
     myDisabledLayers = new boolean[layerCount];
@@ -223,7 +227,7 @@ public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> {
 
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
-    if (getScaleContext().update()) updateSize();
+    getScaleContext().update();
     Icon[] icons = myScaledIcons();
     for (int i = 0; i < icons.length; i++) {
       Icon icon = icons[i];
@@ -244,17 +248,17 @@ public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> {
 
   @Override
   public int getIconWidth() {
-    if (getScaleContext().update() || myWidth <= 1) {
-      updateSize();
-    }
+    getScaleContext().update();
+    if (myWidth <= 1) updateSize();
+
     return (int)ceil(scaleVal(myWidth, OBJ_SCALE));
   }
 
   @Override
   public int getIconHeight() {
-    if (getScaleContext().update() || myHeight <= 1) {
-      updateSize();
-    }
+    getScaleContext().update();
+    if (myHeight <= 1) updateSize();
+
     return (int)ceil(scaleVal(myHeight, OBJ_SCALE));
   }
 
