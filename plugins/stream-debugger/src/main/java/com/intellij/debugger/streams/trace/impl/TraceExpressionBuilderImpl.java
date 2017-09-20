@@ -25,6 +25,7 @@ import com.intellij.debugger.streams.trace.TraceExpressionBuilder;
 import com.intellij.debugger.streams.trace.TraceHandler;
 import com.intellij.debugger.streams.trace.dsl.impl.DslImpl;
 import com.intellij.debugger.streams.trace.dsl.impl.java.JavaStatementFactory;
+import com.intellij.debugger.streams.trace.dsl.impl.java.JavaTypes;
 import com.intellij.debugger.streams.trace.impl.handler.PeekCall;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
@@ -162,7 +163,7 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
     final String resultExpression;
     final String additionalDeclarations;
     final String additionalEvaluation;
-    if (resultType.equals(GenericType.Companion.getVOID())) {
+    if (resultType.equals(JavaTypes.INSTANCE.getVoidType())) {
       additionalDeclarations = "";
       additionalEvaluation = chain.getText() + ";" + LINE_SEPARATOR;
       resultExpression = "new Object[1]";

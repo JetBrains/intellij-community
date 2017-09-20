@@ -20,8 +20,8 @@ import com.intellij.debugger.streams.trace.dsl.CodeBlock;
 import com.intellij.debugger.streams.trace.dsl.Expression;
 import com.intellij.debugger.streams.trace.dsl.VariableDeclaration;
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression;
+import com.intellij.debugger.streams.trace.dsl.impl.java.JavaTypes;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
-import com.intellij.debugger.streams.trace.impl.handler.type.GenericTypeUtil;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import com.intellij.debugger.streams.wrapper.TerminatorStreamCall;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +38,7 @@ public class OptionalTerminatorHandler implements TerminatorCallHandler {
 
   public OptionalTerminatorHandler(@NotNull TerminatorStreamCall call, @NotNull String resultExpression) {
     myTerminatorHandler = new TerminatorHandler(call.getTypeBefore());
-    myOptionalType = GenericTypeUtil.INSTANCE.unwrapOptional(call.getResultType());
+    myOptionalType = JavaTypes.INSTANCE.unwrapOptional(call.getResultType());
     myResultExpression = resultExpression;
   }
 

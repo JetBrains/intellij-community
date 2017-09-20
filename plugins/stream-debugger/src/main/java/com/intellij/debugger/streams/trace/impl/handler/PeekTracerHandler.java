@@ -20,6 +20,7 @@ import com.intellij.debugger.streams.trace.dsl.Expression;
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression;
 import com.intellij.debugger.streams.trace.dsl.impl.java.JavaCodeBlock;
 import com.intellij.debugger.streams.trace.dsl.impl.java.JavaStatementFactory;
+import com.intellij.debugger.streams.trace.dsl.impl.java.JavaTypes;
 import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
@@ -46,8 +47,8 @@ public class PeekTracerHandler extends HandlerBase.Intermediate {
     myTypeAfter = typeAfter;
 
     final String variablePrefix = String.format("%sPeek%d", name, num);
-    myBeforeVariable = new HashMapVariableImpl(variablePrefix + "before", GenericType.Companion.getINT(), typeBefore, true);
-    myAfterVariable = new HashMapVariableImpl(variablePrefix + "after", GenericType.Companion.getINT(), typeAfter, true);
+    myBeforeVariable = new HashMapVariableImpl(variablePrefix + "before", JavaTypes.INSTANCE.getIntegerType(), typeBefore, true);
+    myAfterVariable = new HashMapVariableImpl(variablePrefix + "after", JavaTypes.INSTANCE.getIntegerType(), typeAfter, true);
   }
 
   @NotNull

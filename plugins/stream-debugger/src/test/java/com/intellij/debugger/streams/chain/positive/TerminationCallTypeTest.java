@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.streams.chain.positive;
 
-import com.intellij.debugger.streams.trace.impl.handler.type.ClassTypeImpl;
+import com.intellij.debugger.streams.trace.dsl.impl.java.JavaTypes;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.psi.PsiElement;
@@ -28,27 +28,27 @@ import java.util.List;
  */
 public class TerminationCallTypeTest extends StreamChainBuilderPositiveTestBase {
   public void testVoidType() throws Exception {
-    doTest(GenericType.Companion.getVOID());
+    doTest(JavaTypes.INSTANCE.getVoidType());
   }
 
   public void testBooleanType() throws Exception {
-    doTest(GenericType.Companion.getBOOLEAN());
+    doTest(JavaTypes.INSTANCE.getBooleanType());
   }
 
   public void testIntType() throws Exception {
-    doTest(GenericType.Companion.getINT());
+    doTest(JavaTypes.INSTANCE.getIntegerType());
   }
 
   public void testDoubleType() throws Exception {
-    doTest(GenericType.Companion.getDOUBLE());
+    doTest(JavaTypes.INSTANCE.getDoubleType());
   }
 
   public void testLongType() throws Exception {
-    doTest(GenericType.Companion.getLONG());
+    doTest(JavaTypes.INSTANCE.getLongType());
   }
 
   public void testReferenceType() throws Exception {
-    doTest(new ClassTypeImpl("int[]"));
+    doTest(JavaTypes.INSTANCE.array(JavaTypes.INSTANCE.getIntegerType()));
   }
 
   @NotNull

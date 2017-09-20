@@ -16,18 +16,16 @@
 package com.intellij.debugger.streams.psi.impl
 
 import com.intellij.debugger.streams.psi.*
-import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
+import com.intellij.debugger.streams.trace.dsl.impl.java.JavaTypes
 import com.intellij.debugger.streams.wrapper.CallArgument
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.wrapper.StreamChain
 import com.intellij.debugger.streams.wrapper.impl.*
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiverOrThis
-import org.jetbrains.kotlin.types.typeUtil.supertypes
 
 /**
  * @author Vitaliy.Bibaev
@@ -36,18 +34,18 @@ class KotlinChainTransformerImpl : ChainTransformer.Kotlin {
   override fun transform(callChain: List<KtCallExpression>, context: PsiElement): StreamChain {
     val firstCall = callChain.first()
     val qualifiedExpression = firstCall.getQualifiedExpressionForReceiverOrThis()
-    firstCall.analyze().getType(firstCall)!!.supertypes()
-    val qualifier = QualifierExpressionImpl(qualifiedExpression.text, qualifiedExpression.textRange, GenericType.OBJECT)
+    // TODO: use kotlin types here?
+    val qualifier = QualifierExpressionImpl(qualifiedExpression.text, qualifiedExpression.textRange, JavaTypes.anyType)
 
     val intermediateCalls = mutableListOf<IntermediateStreamCall>()
     for (call in callChain.subList(0, callChain.size - 1)) {
       intermediateCalls += IntermediateStreamCallImpl(call.callName(), call.valueArguments.map { it.toCallArgument() },
-                                                      GenericType.OBJECT, GenericType.OBJECT, call.textRange,
+                                                      JavaTypes.anyType, JavaTypes.anyType, call.textRange,
                                                       call.receiverType()!!.getPackage(false))
     }
 
     val terminationsPsiCall = callChain.last()
-    val terminationCall = TerminatorStreamCallImpl(terminationsPsiCall.callName(), emptyList(), GenericType.OBJECT, GenericType.OBJECT,
+    val terminationCall = TerminatorStreamCallImpl(terminationsPsiCall.callName(), emptyList(), JavaTypes.anyType, JavaTypes.anyType,
                                                    terminationsPsiCall.textRange,
                                                    terminationsPsiCall.receiverType()!!.getPackage(false))
 

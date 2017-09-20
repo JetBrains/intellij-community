@@ -16,8 +16,8 @@
 package com.intellij.debugger.streams.psi.impl;
 
 import com.intellij.debugger.streams.psi.ChainTransformer;
+import com.intellij.debugger.streams.trace.dsl.impl.java.JavaTypes;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
-import com.intellij.debugger.streams.trace.impl.handler.type.GenericTypeUtil;
 import com.intellij.debugger.streams.wrapper.CallArgument;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
@@ -52,7 +52,7 @@ public class JavaChainTransformerImpl implements ChainTransformer.Java {
     final PsiType qualifierType = qualifierExpression == null ? null : qualifierExpression.getType();
     final GenericType typeAfterQualifier = qualifierType == null
                                            ? getGenericTypeOfThis(qualifierExpression)
-                                           : GenericTypeUtil.INSTANCE.fromStreamPsiType(qualifierType);
+                                           : JavaTypes.INSTANCE.fromStreamPsiType(qualifierType);
     final QualifierExpressionImpl qualifier =
       qualifierExpression == null
       ? new QualifierExpressionImpl("", TextRange.EMPTY_RANGE, typeAfterQualifier)
@@ -71,8 +71,8 @@ public class JavaChainTransformerImpl implements ChainTransformer.Java {
   private GenericType getGenericTypeOfThis(PsiExpression expression) {
     final PsiClass klass = ClassUtils.getContainingClass(expression);
 
-    return klass == null ? GenericType.Companion.getOBJECT()
-                         : GenericTypeUtil.INSTANCE.fromPsiClass(klass);
+    return klass == null ? JavaTypes.INSTANCE.getAnyType()
+                         : JavaTypes.INSTANCE.fromPsiClass(klass);
   }
 
   @NotNull
@@ -141,11 +141,11 @@ public class JavaChainTransformerImpl implements ChainTransformer.Java {
 
   @NotNull
   private static GenericType resolveType(@NotNull PsiMethodCallExpression call) {
-    return GenericTypeUtil.INSTANCE.fromStreamPsiType(extractType(call));
+    return JavaTypes.INSTANCE.fromStreamPsiType(extractType(call));
   }
 
   @NotNull
   private static GenericType resolveTerminationCallType(@NotNull PsiMethodCallExpression call) {
-    return GenericTypeUtil.INSTANCE.fromPsiType(extractType(call));
+    return JavaTypes.INSTANCE.fromPsiType(extractType(call));
   }
 }

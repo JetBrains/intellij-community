@@ -15,8 +15,6 @@
  */
 package com.intellij.debugger.streams.trace.impl.handler.type
 
-import com.intellij.psi.CommonClassNames
-
 /**
  * @author Vitaliy.Bibaev
  */
@@ -29,21 +27,5 @@ interface GenericType {
 
   interface CompositeType : GenericType {
     val elementType: GenericType
-  }
-
-  companion object {
-    val BOOLEAN: GenericType = GenericTypeImpl("boolean", "java.lang.Boolean", "false")
-    val INT: GenericType = GenericTypeImpl("int", "java.lang.Integer", "0")
-    val DOUBLE: GenericType = GenericTypeImpl("double", "java.lang.Double", "0.")
-    val LONG: GenericType = GenericTypeImpl("long", "java.lang.Long", "0L")
-
-    val OBJECT: GenericType = ClassTypeImpl("java.lang.Object", "new java.lang.Object()")
-    val VOID: GenericType = GenericTypeImpl("void", "java.lang.Void", "null")
-    val OPTIONAL: GenericType = ClassTypeImpl(CommonClassNames.JAVA_UTIL_OPTIONAL)
-    val OPTIONAL_INT: GenericType = ClassTypeImpl("java.util.OptionalInt")
-
-    val OPTIONAL_LONG: GenericType = ClassTypeImpl("java.util.OptionalLong")
-
-    val OPTIONAL_DOUBLE: GenericType = ClassTypeImpl("java.util.OptionalDouble")
   }
 }

@@ -17,12 +17,19 @@ package com.intellij.debugger.streams.trace.dsl.impl.java
 
 import com.intellij.debugger.streams.trace.dsl.Types
 import com.intellij.debugger.streams.trace.impl.handler.type.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiType
+import com.intellij.psi.util.InheritanceUtil
+import com.intellij.psi.util.TypeConversionUtil
+import one.util.streamex.StreamEx
+import org.jetbrains.annotations.Contract
 
 /**
  * @author Vitaliy.Bibaev
  */
 object JavaTypes : Types {
-  override val anyType: GenericType = ClassTypeImpl("java.lang.Object")
+  override val anyType: GenericType = ClassTypeImpl("java.lang.Object", "new java.lang.Object()")
 
   override val integerType: GenericType = GenericTypeImpl("int", "java.lang.Integer", "0")
 
@@ -48,4 +55,56 @@ object JavaTypes : Types {
   override fun list(elementsType: GenericType): ListType =
     ListTypeImpl(elementsType, { "java.util.List<$it>" }, "new java.util.ArrayList<>()")
 
+  private val optional: GenericType = ClassTypeImpl("java.util.Optional")
+  private val optionalInt: GenericType = ClassTypeImpl("java.util.OptionalInt")
+  private val optionalLong: GenericType = ClassTypeImpl("java.util.OptionalLong")
+  private val optionalDouble: GenericType = ClassTypeImpl("java.util.OptionalDouble")
+
+  private val OPTIONAL_TYPES = StreamEx.of(optional, optionalInt, optionalLong, optionalDouble).toSet()
+
+  fun fromStreamPsiType(streamPsiType: PsiType): GenericType {
+    return when {
+      InheritanceUtil.isInheritor(streamPsiType, CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM) -> integerType
+      InheritanceUtil.isInheritor(streamPsiType, CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM) -> longType
+      InheritanceUtil.isInheritor(streamPsiType, CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM) -> doubleType
+      PsiType.VOID == streamPsiType -> voidType
+      else -> anyType
+    }
+  }
+
+  fun fromPsiClass(psiClass: PsiClass): GenericType {
+    return when {
+      InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM) -> integerType
+      InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM) -> longType
+      InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM) -> doubleType
+      else -> anyType
+    }
+  }
+
+  fun fromPsiType(type: PsiType): GenericType {
+    return when (type) {
+      PsiType.VOID -> voidType
+      PsiType.INT -> integerType
+      PsiType.DOUBLE -> doubleType
+      PsiType.LONG -> longType
+      PsiType.BOOLEAN -> booleanType
+      else -> ClassTypeImpl(TypeConversionUtil.erasure(type).canonicalText)
+    }
+  }
+
+  @Contract(pure = true)
+  private fun isOptional(type: GenericType): Boolean {
+    return OPTIONAL_TYPES.contains(type)
+  }
+
+  fun unwrapOptional(type: GenericType): GenericType {
+    assert(isOptional(type))
+
+    return when (type) {
+      optionalInt -> integerType
+      optionalLong -> longType
+      optionalDouble -> doubleType
+      else -> anyType
+    }
+  }
 }

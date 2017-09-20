@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.streams.chain.positive;
 
+import com.intellij.debugger.streams.trace.dsl.impl.java.JavaTypes;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
@@ -30,44 +31,45 @@ import static com.intellij.debugger.streams.trace.impl.handler.type.GenericType.
  */
 public class PrimitiveObjectBuilderPositiveTest extends StreamChainBuilderPositiveTestBase {
   public void testSimpleObject() {
-    doTest(Companion.getOBJECT());
+    doTest(JavaTypes.INSTANCE.getAnyType());
   }
 
   public void testSimpleInt() {
-    doTest(Companion.getINT());
+    doTest(JavaTypes.INSTANCE.getIntegerType());
   }
 
   public void testSimpleDouble() {
-    doTest(Companion.getDOUBLE());
+    doTest(JavaTypes.INSTANCE.getDoubleType());
   }
 
   public void testSimpleLong() {
-    doTest(Companion.getLONG());
+    doTest(JavaTypes.INSTANCE.getLongType());
   }
 
   public void testObj2Int() {
-    doTest(Companion.getOBJECT(), Companion.getINT());
+    doTest(JavaTypes.INSTANCE.getAnyType(), JavaTypes.INSTANCE.getIntegerType());
   }
 
   public void testObj2Long() {
-    doTest(Companion.getOBJECT(), Companion.getLONG());
+    doTest(JavaTypes.INSTANCE.getAnyType(), JavaTypes.INSTANCE.getLongType());
   }
 
   public void testObj2Double() {
-    doTest(Companion.getOBJECT(), Companion.getDOUBLE());
+    doTest(JavaTypes.INSTANCE.getAnyType(), JavaTypes.INSTANCE.getDoubleType());
   }
 
   public void testPrimitiveIdentity() {
-    doTest(Companion.getINT(), Companion.getINT());
+    doTest(JavaTypes.INSTANCE.getIntegerType(), JavaTypes.INSTANCE.getIntegerType());
   }
 
   public void testPrimitive2Obj() {
-    doTest(Companion.getDOUBLE(), Companion.getOBJECT());
+    doTest(JavaTypes.INSTANCE.getDoubleType(), JavaTypes.INSTANCE.getAnyType());
   }
 
   public void testFewTransitions() {
-    doTest(Companion.getOBJECT(), Companion.getINT(), Companion.getINT(), Companion.getOBJECT(), Companion.getDOUBLE(),
-           Companion.getOBJECT(), Companion.getLONG());
+    doTest(JavaTypes.INSTANCE.getAnyType(), JavaTypes.INSTANCE.getIntegerType(), JavaTypes.INSTANCE.getIntegerType(),
+           JavaTypes.INSTANCE.getAnyType(), JavaTypes.INSTANCE.getDoubleType(), JavaTypes.INSTANCE.getAnyType(),
+           JavaTypes.INSTANCE.getLongType());
   }
 
   private void doTest(@NotNull GenericType producerAfterType,
@@ -111,7 +113,7 @@ public class PrimitiveObjectBuilderPositiveTest extends StreamChainBuilderPositi
   }
 
   @Override
-  void doTest() throws Exception {
+  void doTest() {
     throw new AssertionError();
   }
 }

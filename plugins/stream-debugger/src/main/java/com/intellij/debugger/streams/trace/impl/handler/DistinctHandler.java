@@ -18,6 +18,7 @@ package com.intellij.debugger.streams.trace.impl.handler;
 import com.intellij.debugger.streams.trace.dsl.CodeBlock;
 import com.intellij.debugger.streams.trace.dsl.Expression;
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression;
+import com.intellij.debugger.streams.trace.dsl.impl.java.JavaTypes;
 import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import com.intellij.debugger.streams.trace.impl.handler.type.ClassTypeImpl;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
@@ -47,11 +48,11 @@ public class DistinctHandler extends HandlerBase.Intermediate {
     final String variablePrefix = "distinct" + callNumber;
     final String storeMapType = String.format("java.util.Map<java.lang.Integer, %s>", myBeforeType.getGenericTypeName());
     myStoreMapVariable =
-      new HashMapVariableImpl(variablePrefix + "Store", GenericType.Companion.getOBJECT(), new ClassTypeImpl(storeMapType), false);
-    myResolveMapVariable = new HashMapVariableImpl(variablePrefix + "Resolve", GenericType.Companion.getINT(),
-                                                   GenericType.Companion.getINT(), false);
-    myReverseUtilMapVariable = new HashMapVariableImpl(variablePrefix + "ReverseUtil", GenericType.Companion.getINT(),
-                                                       GenericType.Companion.getINT(), false);
+      new HashMapVariableImpl(variablePrefix + "Store", JavaTypes.INSTANCE.getAnyType(), new ClassTypeImpl(storeMapType), false);
+    myResolveMapVariable = new HashMapVariableImpl(variablePrefix + "Resolve", JavaTypes.INSTANCE.getIntegerType(),
+                                                   JavaTypes.INSTANCE.getIntegerType(), false);
+    myReverseUtilMapVariable = new HashMapVariableImpl(variablePrefix + "ReverseUtil", JavaTypes.INSTANCE.getIntegerType(),
+                                                       JavaTypes.INSTANCE.getIntegerType(), false);
   }
 
   @NotNull

@@ -20,7 +20,7 @@ import com.intellij.debugger.streams.trace.dsl.Dsl
 import com.intellij.debugger.streams.trace.dsl.Expression
 import com.intellij.debugger.streams.trace.dsl.VariableDeclaration
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
-import com.intellij.debugger.streams.trace.impl.handler.type.GenericTypeUtil
+import com.intellij.debugger.streams.trace.dsl.impl.java.JavaTypes
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
 
@@ -36,7 +36,7 @@ class OptionalTerminationHandler(private val call: TerminatorStreamCall, private
 
   override fun getResultExpression(): Expression {
     val isPresent = dsl.newArray(dsl.types.booleanType, TextExpression(resultExpression).call("isPresent"))
-    val optionalType = GenericTypeUtil.unwrapOptional(call.resultType)
+    val optionalType = JavaTypes.unwrapOptional(call.resultType)
     val optionalContent = dsl.newArray(optionalType,
                                        TextExpression(resultExpression).call("orElse", TextExpression(optionalType.defaultValue)))
     val optionalData = dsl.newArray(dsl.types.anyType, isPresent, optionalContent)

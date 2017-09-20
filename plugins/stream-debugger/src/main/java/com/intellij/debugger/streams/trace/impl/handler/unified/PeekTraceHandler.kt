@@ -28,8 +28,8 @@ import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
  */
 open class PeekTraceHandler(num: Int, callName: String, private val myTypeBefore: GenericType, typeAfter: GenericType, dsl: Dsl)
   : HandlerBase.Intermediate(dsl) {
-  val beforeMap = dsl.linkedMap(GenericType.INT, myTypeBefore, "${callName}Peek${num}Before")
-  val afterMap = dsl.linkedMap(GenericType.INT, typeAfter, "${callName}Peek${num}After")
+  val beforeMap = dsl.linkedMap(dsl.types.integerType, myTypeBefore, "${callName}Peek${num}Before")
+  val afterMap = dsl.linkedMap(dsl.types.integerType, typeAfter, "${callName}Peek${num}After")
   override fun additionalVariablesDeclaration(): List<VariableDeclaration> =
     listOf(beforeMap.defaultDeclaration(), afterMap.defaultDeclaration())
 
