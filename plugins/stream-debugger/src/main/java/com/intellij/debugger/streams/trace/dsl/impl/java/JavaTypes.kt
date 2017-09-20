@@ -17,41 +17,24 @@ package com.intellij.debugger.streams.trace.dsl.impl.java
 
 import com.intellij.debugger.streams.trace.dsl.Types
 import com.intellij.debugger.streams.trace.impl.handler.type.*
-import com.intellij.psi.CommonClassNames
 
 /**
  * @author Vitaliy.Bibaev
  */
-class JavaTypes() : Types {
-  companion object {
-    val BOOLEAN: GenericType = GenericTypeImpl("boolean", "java.lang.Boolean", "false")
+object JavaTypes : Types {
+  override val anyType: GenericType = ClassTypeImpl("java.lang.Object")
 
-    val INT: GenericType = GenericTypeImpl("int", "java.lang.Integer", "0")
-    val DOUBLE: GenericType = GenericTypeImpl("double", "java.lang.Double", "0.")
-    val LONG: GenericType = GenericTypeImpl("long", "java.lang.Long", "0L")
-    val OBJECT: GenericType = ClassTypeImpl("java.lang.Object")
-    val VOID: GenericType = GenericTypeImpl("void", "java.lang.Void", "null")
-    val OPTIONAL: GenericType = ClassTypeImpl(CommonClassNames.JAVA_UTIL_OPTIONAL)
-    val OPTIONAL_INT: GenericType = ClassTypeImpl("java.util.OptionalInt")
+  override val integerType: GenericType = GenericTypeImpl("int", "java.lang.Integer", "0")
 
-    val OPTIONAL_LONG: GenericType = ClassTypeImpl("java.util.OptionalLong")
-    val OPTIONAL_DOUBLE: GenericType = ClassTypeImpl("java.util.OptionalDouble")
-    val THROWABLE: GenericType = ClassTypeImpl("java.lang.Throwable")
-    val STRING: GenericType = ClassTypeImpl("java.lang.String")
-  }
-  override val anyType: GenericType = OBJECT
-
-  override val integerType: GenericType = INT
-
-  override val booleanType: GenericType = BOOLEAN
-  override val doubleType: GenericType = DOUBLE
-  override val basicExceptionType: GenericType = THROWABLE
-  override val voidType: GenericType = VOID
+  override val booleanType: GenericType = GenericTypeImpl("boolean", "java.lang.Boolean", "false")
+  override val doubleType: GenericType = GenericTypeImpl("double", "java.lang.Double", "0.")
+  override val basicExceptionType: GenericType = ClassTypeImpl("java.lang.Throwable")
+  override val voidType: GenericType = GenericTypeImpl("void", "java.lang.Void", "null")
 
   override val timeVariableType: GenericType = ClassTypeImpl("java.util.concurrent.atomic.AtomicInteger",
                                                              "new java.util.concurrent.atomic.AtomicInteger()")
-  override val stringType: GenericType = STRING
-  override val longType: GenericType = LONG
+  override val stringType: GenericType = ClassTypeImpl("java.lang.String", "\"\"")
+  override val longType: GenericType = GenericTypeImpl("long", "java.lang.Long", "0L")
 
   override fun array(elementType: GenericType): ArrayType =
     ArrayTypeImpl(elementType, { "$it[]" }, "new ${elementType.variableTypeName}[] {}")

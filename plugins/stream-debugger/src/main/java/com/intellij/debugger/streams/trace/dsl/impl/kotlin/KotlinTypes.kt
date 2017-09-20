@@ -21,8 +21,7 @@ import com.intellij.debugger.streams.trace.impl.handler.type.*
 /**
  * @author Vitaliy.Bibaev
  */
-class KotlinTypes private constructor() : Types by KotlinTypes {
-  companion object : Types {
+object KotlinTypes : Types {
     override val anyType: GenericType = ClassTypeImpl("kotlin.Any", "kotlin.Any()")
     override val integerType: GenericType = ClassTypeImpl("kotlin.Int", "0")
     override val longType: GenericType = ClassTypeImpl("kotlin.Long", "0L")
@@ -50,5 +49,4 @@ class KotlinTypes private constructor() : Types by KotlinTypes {
       MapTypeImpl(keyType, valueType,
                   { keys, values -> "kotlin.collections.MutableMap<$keys, $values>" },
                   "kotlin.collections.linkedMapOf()")
-  }
 }

@@ -27,7 +27,7 @@ import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
  * @author Vitaliy.Bibaev
  */
 class JavaStatementFactory : StatementFactory {
-  override val types: Types = JavaTypes()
+  override val types: Types = JavaTypes
   override fun createEmptyCompositeCodeBlock(): CompositeCodeBlock = JavaCodeBlock(this)
 
   override fun createEmptyCodeBlock(): CodeBlock = JavaCodeBlock(this)
