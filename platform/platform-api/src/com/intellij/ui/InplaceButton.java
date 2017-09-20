@@ -18,10 +18,7 @@ package com.intellij.ui;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.Pass;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.ui.BaseButtonBehavior;
-import com.intellij.util.ui.CenteredIcon;
-import com.intellij.util.ui.TimedDeadzone;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 
 import javax.accessibility.*;
 import javax.swing.*;
@@ -47,6 +44,8 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
   private int myXTransform = 0;
   private int myYTransform = 0;
   private boolean myFill;
+
+  private JBDimension mySize;
 
   private boolean myHoveringEnabled;
 
@@ -129,12 +128,22 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
     height = Math.max(height, hovered.getIconHeight());
 
 
-    setPreferredSize(new Dimension(width, height));
+    JBDimension size = JBDimension.create(new Dimension(width, height), true);
+    if (mySize != null && !mySize.size().equals(size)) {
+      invalidate();
+    }
+    mySize = size;
 
     myIcon = regular;
     myRegular = new CenteredIcon(regular, width, height);
     myHovered = new CenteredIcon(hovered, width, height);
     myInactive = new CenteredIcon(inactive, width, height);
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    if (mySize == null || isPreferredSizeSet()) return super.getPreferredSize();
+    return mySize.size();
   }
 
   public InplaceButton setFillBg(boolean fill) {

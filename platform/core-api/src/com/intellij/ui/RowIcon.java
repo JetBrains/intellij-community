@@ -20,6 +20,7 @@ import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBUI.CachingScalableJBIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -28,7 +29,10 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
-public class RowIcon extends JBUI.UpdatingScalableJBIcon<RowIcon> {
+import static com.intellij.util.ui.JBUI.ScaleType.OBJ_SCALE;
+import static java.lang.Math.ceil;
+
+public class RowIcon extends CachingScalableJBIcon<RowIcon> {
   private final Alignment myAlignment;
 
   private int myWidth;
@@ -123,7 +127,7 @@ public class RowIcon extends JBUI.UpdatingScalableJBIcon<RowIcon> {
 
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
-    if (updateJBUIScale()) updateSize();
+    if (getScaleContext().update()) updateSize();
     int _x = x;
     int _y = y;
     for (Icon icon : myScaledIcons()) {
@@ -144,14 +148,14 @@ public class RowIcon extends JBUI.UpdatingScalableJBIcon<RowIcon> {
 
   @Override
   public int getIconWidth() {
-    if (updateJBUIScale()) updateSize();
-    return scaleVal(myWidth, Scale.INSTANCE);
+    if (getScaleContext().update()) updateSize();
+    return (int)ceil(scaleVal(myWidth, OBJ_SCALE));
   }
 
   @Override
   public int getIconHeight() {
-    if (updateJBUIScale()) updateSize();
-    return scaleVal(myHeight, Scale.INSTANCE);
+    if (getScaleContext().update()) updateSize();
+    return (int)ceil(scaleVal(myHeight, OBJ_SCALE));
   }
 
   private void updateSize() {

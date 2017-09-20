@@ -39,6 +39,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
+import static java.lang.Math.ceil;
+
 public class FileStatusColorsTable extends JBTable {
 
   private JBPopupMenu mySetColorMenu;
@@ -269,7 +271,7 @@ public class FileStatusColorsTable extends JBTable {
       final int iconWidth = getIconWidth();
       g.setColor(myColor);
 
-      final int size = scaleVal(COLOR_HEIGHT);
+      final int size = (int)ceil(scaleVal(COLOR_HEIGHT));
       final int y = j + (iconHeight - size) / 2;
 
       g.fillRect(i, y, iconWidth, size);

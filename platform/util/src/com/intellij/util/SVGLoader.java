@@ -41,8 +41,8 @@ import java.util.List;
 public class SVGLoader {
   private TranscoderInput input;
   private BufferedImage img;
-  private float width;
-  private float height;
+  private double width;
+  private double height;
 
   private enum SizeAttr {
     width,
@@ -121,7 +121,7 @@ public class SVGLoader {
     return load(null, stream, scale);
   }
 
-  public static Image load(@Nullable URL url, @NotNull InputStream stream , float scale) throws IOException {
+  public static Image load(@Nullable URL url, @NotNull InputStream stream , double scale) throws IOException {
     try {
       return new SVGLoader(url, stream, scale).createImage();
     }
@@ -130,7 +130,7 @@ public class SVGLoader {
     }
   }
 
-  private SVGLoader(@Nullable URL url, InputStream stream, float scale) throws IOException {
+  private SVGLoader(@Nullable URL url, InputStream stream, double scale) throws IOException {
     Document document = null;
     String uri = null;
     try {
