@@ -52,6 +52,7 @@ class CreateConfigurationMultipleCasesTask<T extends PyAbstractTestConfiguration
 
     result.add(getDir("tests_package/package_test"));
     result.add(getFile("tests_package/package_test", "test_in_package.py"));
+    result.add(getFile("/", "test_foo.py"));
     result.add(getFile("tests_package/package_test", "test_in_package.py").findTopLevelClass("TestLogic"));
 
     result.add(getDir("tests_folder"));
@@ -123,6 +124,9 @@ class CreateConfigurationMultipleCasesTask<T extends PyAbstractTestConfiguration
     else if (element instanceof PyFunction && elementName.endsWith("foo")) {
       Assert.assertEquals("non-test function should lead to level-based test", TestTargetType.PATH, target.getTargetType());
     }
+    else if (element instanceof PyFile && elementName.endsWith("test_foo.py")) {
+      Assert.assertEquals("Wrong path for file-based target", TestTargetType.PATH, target.getTargetType());
+    }
     else {
       throw new AssertionError("Unexpected configuration " + configuration);
     }
@@ -141,7 +145,7 @@ class CreateConfigurationMultipleCasesTask<T extends PyAbstractTestConfiguration
   @NotNull
   private PyFile getFile(@NotNull final String dirName, @NotNull final String fileName) {
     final PsiFile psiFile = getDir(dirName).findFile(fileName);
-    assert psiFile instanceof PyFile : "Bad file " + psiFile;
+    assert psiFile instanceof PyFile : "Bad file " + psiFile + "name: " + fileName;
     return (PyFile)psiFile;
   }
 }
