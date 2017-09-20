@@ -19,17 +19,18 @@ import com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher
 import org.junit.runner.Runner
 import org.junit.runner.notification.Failure
 import org.junit.runner.notification.RunNotifier
-import org.junit.runners.Suite
-import org.junit.runners.model.RunnerBuilder
+import org.junit.runners.Parameterized
+import org.junit.runners.parameterized.BlockJUnit4ClassRunnerWithParameters
+import org.junit.runners.parameterized.TestWithParameters
 
-class GuiTestSuite(val suiteClass: Class<*>, val builder: RunnerBuilder) : Suite(suiteClass, builder) {
+class GuiTestSuiteParam(val klass: Class<*>) : Parameterized(klass) {
 
   //IDE type to run suite tests with
-  val myIde = getIdeFromAnnotation(suiteClass)
+  val myIde = getIdeFromAnnotation(klass)
   var myFirstStart = true
   val UNDEFINED_FIRST_CLASS = "undefined"
   val myFirstStartClassName: String by lazy {
-    val annotation = suiteClass.getAnnotation(FirstStartWith::class.java)
+    val annotation = klass.getAnnotation(FirstStartWith::class.java)
     val value = annotation?.value
     if (value != null) value.java.canonicalName else UNDEFINED_FIRST_CLASS
   }
@@ -39,9 +40,19 @@ class GuiTestSuite(val suiteClass: Class<*>, val builder: RunnerBuilder) : Suite
     try {
       //let's start IDE to complete installation, import configs and etc before running tests
       if (myFirstStart) firstStart()
-      val testClass = runner.description.testClass
-      val guiTestLocalRunner = GuiTestLocalRunner(testClass, suiteClass, myIde)
-      super.runChild(guiTestLocalRunner, notifier)
+      val runnerWithParameters = runner as BlockJUnit4ClassRunnerWithParameters
+
+      val testNameField = BlockJUnit4ClassRunnerWithParameters::class.java.getDeclaredField("name")
+      testNameField.isAccessible = true
+      val testName: String = testNameField.get(runnerWithParameters) as String
+
+      val parametersListField = BlockJUnit4ClassRunnerWithParameters::class.java.getDeclaredField("parameters")
+      parametersListField.isAccessible = true
+      val parametersList = (parametersListField.get(runnerWithParameters) as Array<*>).toMutableList()
+
+      val testWithParams = TestWithParameters(testName, runner.testClass, parametersList)
+      val guiTestLocalRunnerParam = GuiTestLocalRunnerParam(testWithParams, myIde)
+      super.runChild(guiTestLocalRunnerParam, notifier)
     }
     catch (e: Exception) {
       LOG.error(e)
@@ -55,5 +66,4 @@ class GuiTestSuite(val suiteClass: Class<*>, val builder: RunnerBuilder) : Suite
     GuiTestLocalLauncher.firstStartIdeLocally(myIde, myFirstStartClassName)
     myFirstStart = false
   }
-
 }
