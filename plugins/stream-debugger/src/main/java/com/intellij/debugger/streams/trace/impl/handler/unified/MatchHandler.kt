@@ -37,13 +37,11 @@ class MatchHandler(private val call: TerminatorStreamCall, dsl: Dsl) : HandlerBa
     val PREDICATE_NAME = "predicate42"
   }
 
-  private val myBeforePeekInserter = PeekTraceHandler(0, "filterMatch", call.typeBefore, call.typeBefore, dsl)
-  private val myAfterPeekInserter = PeekTraceHandler(1, "match", call.typeBefore, call.typeBefore, dsl)
+  private val myPeekHandler = PeekTraceHandler(0, "filterMatch", call.typeBefore, call.typeBefore, dsl)
   private val myPredicateVariable = dsl.variable(ClassTypeImpl(call.arguments.first().type), PREDICATE_NAME)
   override fun additionalVariablesDeclaration(): List<VariableDeclaration> {
     val variables: MutableList<VariableDeclaration> = mutableListOf()
-    variables.addAll(myBeforePeekInserter.additionalVariablesDeclaration())
-    variables.addAll(myAfterPeekInserter.additionalVariablesDeclaration())
+    variables.addAll(myPeekHandler.additionalVariablesDeclaration())
     val predicate = call.arguments.first()
     // TODO: store GenericType in CallArgument?
     variables.add(dsl.declaration(myPredicateVariable, TextExpression(predicate.text), false))
@@ -54,17 +52,13 @@ class MatchHandler(private val call: TerminatorStreamCall, dsl: Dsl) : HandlerBa
   override fun prepareResult(): CodeBlock {
     return dsl.block {
       val result = array(types.anyType, "result")
-      declare(result, newSizedArray(types.anyType, 3), false)
+      declare(result, newSizedArray(types.anyType, 2), false)
       scope {
-        add(myBeforePeekInserter.prepareResult())
-        +result.set(0, myBeforePeekInserter.resultExpression)
+        add(myPeekHandler.prepareResult())
+        +result.set(0, myPeekHandler.resultExpression)
       }
-      scope {
-        add(myAfterPeekInserter.prepareResult())
-        +result.set(1, myAfterPeekInserter.resultExpression)
-      }
-      // TODO: avoid strange string literals in code
-      +result.set(2, TextExpression("streamResult"))
+      // TODO: avoid strange string literals in code (what is streamResult here ?!)
+      +result.set(1, TextExpression("streamResult"))
     }
   }
 
@@ -80,12 +74,12 @@ class MatchHandler(private val call: TerminatorStreamCall, dsl: Dsl) : HandlerBa
   override fun getResultExpression(): Expression = TextExpression("result")
 
   override fun additionalCallsBefore(): List<IntermediateStreamCall> {
-    val result = ArrayList(myBeforePeekInserter.additionalCallsBefore())
+    val result = ArrayList(myPeekHandler.additionalCallsBefore())
     val filterPredicate = (if (call.name == "allMatch") myPredicateVariable.call("negate") else myPredicateVariable).toCode()
     val filterArg = CallArgumentImpl(myPredicateVariable.type.variableTypeName, filterPredicate)
     result += IntermediateStreamCallImpl("filter", listOf(filterArg), call.typeBefore, call.typeBefore,
                                          TextRange.EMPTY_RANGE, call.packageName)
-    result.addAll(myAfterPeekInserter.additionalCallsBefore())
+    result.addAll(myPeekHandler.additionalCallsAfter())
     return result
   }
 

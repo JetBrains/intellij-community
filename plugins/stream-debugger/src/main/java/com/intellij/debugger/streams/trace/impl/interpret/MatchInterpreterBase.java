@@ -44,20 +44,18 @@ public abstract class MatchInterpreterBase implements CallTraceInterpreter {
   public TraceInfo resolve(@NotNull StreamCall call, @NotNull Value value) {
     if (value instanceof ArrayReference) {
       final ArrayReference array = (ArrayReference)value;
-      if (array.length() != 3) {
+      if (array.length() != 2) {
         throw new UnexpectedArrayLengthException("trace array for *match call should contain two items. Actual = " + array.length());
       }
 
-      final Value beforeFilter = array.getValue(0);
-      final Value afterFilter = array.getValue(1);
-      final Value streamResult = array.getValue(2);
+      final Value peeksResult = array.getValue(0);
+      final Value streamResult = array.getValue(1);
       final TraceElement streamResultElement = TraceElementImpl.ofResultValue(((ArrayReference)streamResult).getValue(0));
 
-      final TraceInfo beforeFilterInfo = myPeekResolver.resolve(call, beforeFilter);
-      final TraceInfo afterFilterInfo = myPeekResolver.resolve(call, afterFilter);
+      final TraceInfo peeksInfo = myPeekResolver.resolve(call, peeksResult);
 
-      final Collection<TraceElement> traceBeforeFilter = beforeFilterInfo.getValuesOrderBefore().values();
-      final Map<Integer, TraceElement> traceAfter = afterFilterInfo.getValuesOrderBefore();
+      final Collection<TraceElement> traceBeforeFilter = peeksInfo.getValuesOrderBefore().values();
+      final Map<Integer, TraceElement> traceAfter = peeksInfo.getValuesOrderAfter();
       final Collection<TraceElement> traceAfterFilter = traceAfter.values();
 
       final boolean result = getResult(traceBeforeFilter, traceAfterFilter);
