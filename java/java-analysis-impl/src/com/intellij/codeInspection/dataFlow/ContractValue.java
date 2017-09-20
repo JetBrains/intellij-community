@@ -109,8 +109,7 @@ public abstract class ContractValue {
       new IndependentValue(factory -> factory.getOptionalFactory().getOptional(true), "present");
     static final IndependentValue OPTIONAL_ABSENT =
       new IndependentValue(factory -> factory.getOptionalFactory().getOptional(false), "empty");
-    static final IndependentValue ZERO =
-      new IndependentValue(factory -> factory.getConstFactory().createFromValue(0, PsiType.INT, null), "0");
+    static final IndependentValue ZERO = new IndependentValue(factory -> factory.getInt(0), "0");
 
     private final Function<DfaValueFactory, DfaValue> mySupplier;
     private final String myPresentation;

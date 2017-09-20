@@ -40,6 +40,7 @@ public class DfaVariableValue extends DfaValue {
       myFactory = factory;
     }
 
+    @NotNull
     public DfaVariableValue createVariableValue(PsiVariable myVariable, boolean isNegated) {
       PsiType varType = myVariable.getType();
       if (varType instanceof PsiEllipsisType) {

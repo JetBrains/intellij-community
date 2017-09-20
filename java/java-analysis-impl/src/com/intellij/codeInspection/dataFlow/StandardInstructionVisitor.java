@@ -120,8 +120,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     boolean alwaysOutOfBounds = false;
     if (index != DfaUnknownValue.getInstance()) {
       DfaValueFactory factory = runner.getFactory();
-      DfaValue indexNonNegative =
-        factory.createCondition(index, RelationType.GE, factory.getConstFactory().createFromValue(0, PsiType.INT, null));
+      DfaValue indexNonNegative = factory.createCondition(index, RelationType.GE, factory.getInt(0));
       if (!memState.applyCondition(indexNonNegative)) {
         alwaysOutOfBounds = true;
       }

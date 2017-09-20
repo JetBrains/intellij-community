@@ -107,6 +107,11 @@ public class DfaValueFactory {
     return myExpressionFactory.getExpressionDfaValue(psiExpression);
   }
 
+  @NotNull
+  public DfaConstValue getInt(int value) {
+    return getConstFactory().createFromValue(value, PsiType.INT, null);
+  }
+
   @Nullable
   public DfaValue createLiteralValue(PsiLiteralExpression literal) {
     return getConstFactory().create(literal);
