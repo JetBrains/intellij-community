@@ -857,10 +857,12 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
 
       val configurationNodes = ArrayList<DefaultMutableTreeNode>()
       collectNodesRecursively(typeNode, configurationNodes, CONFIGURATION, TEMPORARY_CONFIGURATION)
-      if (countSettingsOfType(allSettings, `object`) != configurationNodes.size) {
+      val allTypeSettings = allSettings.filter { it.type == `object` }
+      if (allTypeSettings.size != configurationNodes.size) {
         return true
       }
 
+      var currentTypeSettingsCount = 0
       for (configurationNode in configurationNodes) {
         val userObject = configurationNode.userObject
         val settings: RunnerAndConfigurationSettings
@@ -877,9 +879,12 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
           continue
         }
 
-        val index = currentSettingCount++
+        currentSettingCount++
+        val index = currentTypeSettingsCount++
         // we compare by instance, equals is not implemented and in any case object modification is checked by other logic
-        if (allSettings.size <= index || allSettings[index] !== settings) {
+        // we compare by index among current types settings because indexes among all configurations may differ
+        // since temporary configurations are stored in the end
+        if (allTypeSettings.size <= index || allTypeSettings[index] !== settings) {
           return true
         }
       }
