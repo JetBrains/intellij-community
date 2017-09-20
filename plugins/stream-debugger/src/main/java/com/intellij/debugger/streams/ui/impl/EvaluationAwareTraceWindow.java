@@ -20,7 +20,6 @@ import com.intellij.debugger.streams.resolve.ResolvedStreamCall;
 import com.intellij.debugger.streams.resolve.ResolvedStreamChain;
 import com.intellij.debugger.streams.trace.*;
 import com.intellij.debugger.streams.trace.dsl.impl.java.JavaTypes;
-import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.ui.TraceController;
 import com.intellij.debugger.streams.wrapper.CallArgument;
 import com.intellij.debugger.streams.wrapper.QualifierExpression;
@@ -125,7 +124,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     for (int i = 1; i < myTabContents.size(); i++) {
       if (i == myTabContents.size() - 1 &&
           (resolvedTrace.exceptionThrown() ||
-           resolvedTrace.getSourceChain().getTerminationCall().getResultType().equals(JavaTypes.INSTANCE.getVoidType()))) {
+           resolvedTrace.getSourceChain().getTerminationCall().getResultType().equals(JavaTypes.INSTANCE.getVOID()))) {
         break;
       }
 
@@ -146,7 +145,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       myTabsPane.insertTab("Exception", AllIcons.Nodes.ErrorIntroduction, new ExceptionView(context, result), "", 0);
       myTabsPane.setSelectedIndex(0);
     }
-    else if (resolvedTrace.getSourceChain().getTerminationCall().getResultType().equals(JavaTypes.INSTANCE.getVoidType())) {
+    else if (resolvedTrace.getSourceChain().getTerminationCall().getResultType().equals(JavaTypes.INSTANCE.getVOID())) {
       resultTab.setContent(new JBLabel("There is no result of such stream chain", SwingConstants.CENTER), BorderLayout.CENTER);
     }
 
@@ -205,7 +204,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
 
     final ResolvedStreamCall.Terminator terminator = chain.getTerminator();
     final IntermediateState afterTerminationState = terminator.getStateAfter();
-    if (afterTerminationState != null && !terminator.getCall().getResultType().equals(JavaTypes.INSTANCE.getVoidType())) {
+    if (afterTerminationState != null && !terminator.getCall().getResultType().equals(JavaTypes.INSTANCE.getVOID())) {
 
       final TraceControllerImpl terminationController = new TraceControllerImpl(afterTerminationState);
 

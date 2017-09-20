@@ -30,8 +30,8 @@ import java.util.List;
 public class TerminatorHandler extends HandlerBase.Terminator {
   private final PeekTracerHandler myPeekTracerHandler;
 
-  public TerminatorHandler(@NotNull GenericType beforeType) {
-    myPeekTracerHandler = new PeekTracerHandler(Integer.MAX_VALUE, "terminator", beforeType, JavaTypes.INSTANCE.getAnyType());
+  TerminatorHandler(@NotNull GenericType beforeType) {
+    myPeekTracerHandler = new PeekTracerHandler(Integer.MAX_VALUE, "terminator", beforeType, JavaTypes.INSTANCE.getANY());
   }
 
   @NotNull

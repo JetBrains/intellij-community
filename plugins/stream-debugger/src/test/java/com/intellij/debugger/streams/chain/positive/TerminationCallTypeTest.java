@@ -27,28 +27,28 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public class TerminationCallTypeTest extends StreamChainBuilderPositiveTestBase {
-  public void testVoidType() throws Exception {
-    doTest(JavaTypes.INSTANCE.getVoidType());
+  public void testVoidType() {
+    doTest(JavaTypes.INSTANCE.getVOID());
   }
 
-  public void testBooleanType() throws Exception {
-    doTest(JavaTypes.INSTANCE.getBooleanType());
+  public void testBooleanType() {
+    doTest(JavaTypes.INSTANCE.getBOOLEAN());
   }
 
-  public void testIntType() throws Exception {
-    doTest(JavaTypes.INSTANCE.getIntegerType());
+  public void testIntType() {
+    doTest(JavaTypes.INSTANCE.getINT());
   }
 
-  public void testDoubleType() throws Exception {
-    doTest(JavaTypes.INSTANCE.getDoubleType());
+  public void testDoubleType() {
+    doTest(JavaTypes.INSTANCE.getDOUBLE());
   }
 
-  public void testLongType() throws Exception {
-    doTest(JavaTypes.INSTANCE.getLongType());
+  public void testLongType() {
+    doTest(JavaTypes.INSTANCE.getLONG());
   }
 
-  public void testReferenceType() throws Exception {
-    doTest(JavaTypes.INSTANCE.array(JavaTypes.INSTANCE.getIntegerType()));
+  public void testReferenceType() {
+    doTest(JavaTypes.INSTANCE.array(JavaTypes.INSTANCE.getINT()));
   }
 
   @NotNull
@@ -57,7 +57,7 @@ public class TerminationCallTypeTest extends StreamChainBuilderPositiveTestBase 
     return "terminationType";
   }
 
-  protected void doTest(@NotNull GenericType returnType) throws Exception {
+  protected void doTest(@NotNull GenericType returnType) {
     final PsiElement elementAtCaret = configureAndGetElementAtCaret();
     assertNotNull(elementAtCaret);
     final List<StreamChain> chains = getChainBuilder().build(elementAtCaret);

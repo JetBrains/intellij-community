@@ -22,17 +22,17 @@ import com.intellij.debugger.streams.trace.impl.handler.type.*
  * @author Vitaliy.Bibaev
  */
 object KotlinTypes : Types {
-    override val anyType: GenericType = ClassTypeImpl("kotlin.Any", "kotlin.Any()")
-    override val integerType: GenericType = ClassTypeImpl("kotlin.Int", "0")
-    override val longType: GenericType = ClassTypeImpl("kotlin.Long", "0L")
-    override val booleanType: GenericType = ClassTypeImpl("kotlin.Boolean", "false")
-    override val doubleType: GenericType = ClassTypeImpl("kotlin.Double", "0.")
-    override val stringType: GenericType = ClassTypeImpl("kotlin.String", "\"\"")
-    override val basicExceptionType: GenericType = ClassTypeImpl("kotlin.Throwable", "kotlin.Throwable()")
-    override val voidType: GenericType = ClassTypeImpl("kotlin.Unit", "Unit")
+    override val ANY: GenericType = ClassTypeImpl("kotlin.Any", "kotlin.Any()")
+    override val INT: GenericType = ClassTypeImpl("kotlin.Int", "0")
+    override val LONG: GenericType = ClassTypeImpl("kotlin.Long", "0L")
+    override val BOOLEAN: GenericType = ClassTypeImpl("kotlin.Boolean", "false")
+    override val DOUBLE: GenericType = ClassTypeImpl("kotlin.Double", "0.")
+    override val STRING: GenericType = ClassTypeImpl("kotlin.String", "\"\"")
+    override val EXCEPTION: GenericType = ClassTypeImpl("kotlin.Throwable", "kotlin.Throwable()")
+    override val VOID: GenericType = ClassTypeImpl("kotlin.Unit", "Unit")
 
-    override val timeVariableType: GenericType = ClassTypeImpl("java.util.concurrent.atomic.AtomicInteger",
-                                                               "new java.util.concurrent.atomic.AtomicInteger()")
+    override val TIME: GenericType = ClassTypeImpl("java.util.concurrent.atomic.AtomicInteger",
+                                                   "new java.util.concurrent.atomic.AtomicInteger()")
 
     override fun list(elementsType: GenericType): ListType =
       ListTypeImpl(elementsType, { "kotlin.collections.MutableList<$it>" }, "kotlin.collections.mutableListOf()")

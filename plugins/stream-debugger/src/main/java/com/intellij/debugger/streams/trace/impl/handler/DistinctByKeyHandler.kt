@@ -42,10 +42,10 @@ open class DistinctByKeyHandler(callNumber: Int, call: IntermediateStreamCall) :
   private val myKeyExtractor: CallArgument
   private val myTypeAfter = call.typeAfter
   private val myVariableName: String = KEY_EXTRACTOR_VARIABLE_PREFIX + callNumber
-  private val myBeforeTimes = ListVariableImpl(call.name + callNumber + "BeforeTimes", JavaTypes.integerType)
-  private val myBeforeValues = ListVariableImpl(call.name + callNumber + "BeforeValues", JavaTypes.anyType)
-  private val myKeys = ListVariableImpl(call.name + callNumber + "Keys", JavaTypes.anyType)
-  private val myTime2ValueAfter = HashMapVariableImpl(call.name + callNumber + "after", JavaTypes.integerType, JavaTypes.anyType, true)
+  private val myBeforeTimes = ListVariableImpl(call.name + callNumber + "BeforeTimes", JavaTypes.INT)
+  private val myBeforeValues = ListVariableImpl(call.name + callNumber + "BeforeValues", JavaTypes.ANY)
+  private val myKeys = ListVariableImpl(call.name + callNumber + "Keys", JavaTypes.ANY)
+  private val myTime2ValueAfter = HashMapVariableImpl(call.name + callNumber + "after", JavaTypes.INT, JavaTypes.ANY, true)
 
   init {
     val arguments = call.arguments
@@ -87,14 +87,14 @@ open class DistinctByKeyHandler(callNumber: Int, call: IntermediateStreamCall) :
     val peekPrepare = myPeekHandler.prepareResult()
 
     val ifAbsent = "k -> new java.util.ArrayList<Integer>()"
-    val keys2TimesBefore = HashMapVariableImpl("keys2Times", JavaTypes.anyType, ClassTypeImpl("java.util.List<Integer>"), false)
+    val keys2TimesBefore = HashMapVariableImpl("keys2Times", JavaTypes.ANY, ClassTypeImpl("java.util.List<Integer>"), false)
     val buildMap = "for (int i = 0; i < ${myKeys.name}.size(); i++) {" + LINE_SEPARATOR +
                    "  final Object key = ${myKeys.name}.get(i); " + LINE_SEPARATOR +
                    "  ${keys2TimesBefore.name}.computeIfAbsent(key, $ifAbsent).add(${myBeforeTimes.name}.get(i));" +
                    "}" + LINE_SEPARATOR
 
     val valuesAfterMapName = myTime2ValueAfter.name
-    val transitions = HashMapVariableImpl("transitionsMap", JavaTypes.integerType, JavaTypes.integerType, false)
+    val transitions = HashMapVariableImpl("transitionsMap", JavaTypes.INT, JavaTypes.INT, false)
     val buildTransitions = "for(final int afterTime : $valuesAfterMapName.keySet()) {" + LINE_SEPARATOR +
                            "  Object valueAfter = $valuesAfterMapName.get(afterTime);" + LINE_SEPARATOR +
                            "  Object key = null;" + LINE_SEPARATOR +
@@ -111,6 +111,7 @@ open class DistinctByKeyHandler(callNumber: Int, call: IntermediateStreamCall) :
                            "}" + LINE_SEPARATOR
 
     val transitionsToArray = transitions.convertToArray("transitionsArray")
+    @Suppress("UNUSED_VARIABLE")
     val res = peekPrepare.toCode() +
               Variable.declarationStatement(keys2TimesBefore) +
               Variable.declarationStatement(transitions) +

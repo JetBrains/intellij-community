@@ -71,7 +71,7 @@ public class JavaChainTransformerImpl implements ChainTransformer.Java {
   private GenericType getGenericTypeOfThis(PsiExpression expression) {
     final PsiClass klass = ClassUtils.getContainingClass(expression);
 
-    return klass == null ? JavaTypes.INSTANCE.getAnyType()
+    return klass == null ? JavaTypes.INSTANCE.getANY()
                          : JavaTypes.INSTANCE.fromPsiClass(klass);
   }
 

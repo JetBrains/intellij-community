@@ -38,10 +38,10 @@ open class DistinctByKeyHandler(callNumber: Int, private val myCall: Intermediat
   private val myKeyExtractor: CallArgument
   private val myTypeAfter = myCall.typeAfter
   private val myExtractorVariable: Variable
-  private val myBeforeTimes = dsl.list(dsl.types.integerType, myCall.name + callNumber + "BeforeTimes")
-  private val myBeforeValues = dsl.list(dsl.types.anyType, myCall.name + callNumber + "BeforeValues")
-  private val myKeys = dsl.list(dsl.types.anyType, myCall.name + callNumber + "Keys")
-  private val myTime2ValueAfter = dsl.linkedMap(dsl.types.integerType, dsl.types.anyType, myCall.name + callNumber + "after")
+  private val myBeforeTimes = dsl.list(dsl.types.INT, myCall.name + callNumber + "BeforeTimes")
+  private val myBeforeValues = dsl.list(dsl.types.ANY, myCall.name + callNumber + "BeforeValues")
+  private val myKeys = dsl.list(dsl.types.ANY, myCall.name + callNumber + "Keys")
+  private val myTime2ValueAfter = dsl.linkedMap(dsl.types.INT, dsl.types.ANY, myCall.name + callNumber + "after")
 
   init {
     val arguments = myCall.arguments
@@ -74,8 +74,8 @@ open class DistinctByKeyHandler(callNumber: Int, private val myCall: Intermediat
   }
 
   override fun prepareResult(): CodeBlock {
-    val keys2TimesBefore = dsl.map(dsl.types.anyType, dsl.types.list(dsl.types.integerType), "keys2Times")
-    val transitions = dsl.map(dsl.types.integerType, dsl.types.integerType, "transitionsMap")
+    val keys2TimesBefore = dsl.map(dsl.types.ANY, dsl.types.list(dsl.types.INT), "keys2Times")
+    val transitions = dsl.map(dsl.types.INT, dsl.types.INT, "transitionsMap")
     StreamEx.of(1).distinct().toList()
     return dsl.block {
       add(myPeekHandler.prepareResult())
@@ -83,18 +83,18 @@ open class DistinctByKeyHandler(callNumber: Int, private val myCall: Intermediat
       declare(transitions.defaultDeclaration())
 
       integerIteration(myKeys.size(), block@ this) {
-        val key = declare(variable(types.anyType, "key"), myKeys.get(loopVariable), false)
-        val lst = list(dsl.types.integerType, "lst")
+        val key = declare(variable(types.ANY, "key"), myKeys.get(loopVariable), false)
+        val lst = list(dsl.types.INT, "lst")
         declare(lst, keys2TimesBefore.computeIfAbsent(key, lambda("k") {
-          +newList(types.integerType)
+          +newList(types.INT)
         }), false)
         +lst.add(myBeforeTimes.get(loopVariable))
       }
 
-      forEachLoop(variable(types.integerType, "afterTime"), myTime2ValueAfter.keys()) {
+      forEachLoop(variable(types.INT, "afterTime"), myTime2ValueAfter.keys()) {
         val afterTime = loopVariable
-        val valueAfter = declare(variable(types.anyType, "valueAfter"), myTime2ValueAfter.get(loopVariable), false)
-        val key = declare(variable(types.anyType, "key"), nullExpression, true)
+        val valueAfter = declare(variable(types.ANY, "valueAfter"), myTime2ValueAfter.get(loopVariable), false)
+        val key = declare(variable(types.ANY, "key"), nullExpression, true)
         integerIteration(myBeforeTimes.size(), forEachLoop@ this) {
           ifBranch(and(same(valueAfter, myBeforeValues.get(loopVariable)), not(transitions.contains(myBeforeTimes.get(loopVariable))))) {
             key.assign(myKeys.get(loopVariable))
@@ -102,7 +102,7 @@ open class DistinctByKeyHandler(callNumber: Int, private val myCall: Intermediat
           }
         }
 
-        forEachLoop(variable(types.integerType, "beforeTime"), keys2TimesBefore.get(key)) {
+        forEachLoop(variable(types.INT, "beforeTime"), keys2TimesBefore.get(key)) {
           +transitions.set(loopVariable, afterTime)
         }
       }
@@ -112,7 +112,7 @@ open class DistinctByKeyHandler(callNumber: Int, private val myCall: Intermediat
   }
 
   override fun getResultExpression(): Expression =
-    dsl.newArray(dsl.types.anyType, myPeekHandler.resultExpression, TextExpression(TRANSITIONS_ARRAY_NAME))
+    dsl.newArray(dsl.types.ANY, myPeekHandler.resultExpression, TextExpression(TRANSITIONS_ARRAY_NAME))
 
   override fun additionalCallsBefore(): List<IntermediateStreamCall> = myPeekHandler.additionalCallsBefore()
 
@@ -127,9 +127,9 @@ open class DistinctByKeyHandler(callNumber: Int, private val myCall: Intermediat
   }
 
   private fun CodeContext.integerIteration(border: Expression, block: CodeBlock, init: ForLoopBody.() -> Unit) {
-    block.forLoop(declaration(variable(types.integerType, "i"), TextExpression("0"), true),
-            TextExpression("i < ${border.toCode()}"),
-            TextExpression("i = i + 1"), init)
+    block.forLoop(declaration(variable(types.INT, "i"), TextExpression("0"), true),
+                  TextExpression("i < ${border.toCode()}"),
+                  TextExpression("i = i + 1"), init)
   }
 
   private fun IntermediateStreamCall.updateArguments(args: List<CallArgument>): IntermediateStreamCall =

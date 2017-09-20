@@ -49,28 +49,28 @@ abstract class TraceExpressionBuilderBase(private val myProject: Project, protec
     val traceChain = buildTraceChain(chain, intermediateHandlers, terminatorHandler)
 
     val infoArraySize = 2 + intermediateHandlers.size
-    val info = dsl.array(dsl.types.anyType, "info")
-    val streamResult = dsl.variable(dsl.types.anyType, "streamResult")
+    val info = dsl.array(dsl.types.ANY, "info")
+    val streamResult = dsl.variable(dsl.types.ANY, "streamResult")
     val declarations = buildDeclarations(intermediateHandlers, terminatorHandler)
 
     val tracingCall = buildStreamExpression(traceChain, streamResult)
     val fillingInfoArray = buildFillInfo(intermediateHandlers, terminatorHandler, info)
 
-    val result = dsl.variable(dsl.types.anyType, resultVariableName)
+    val result = dsl.variable(dsl.types.ANY, resultVariableName)
 
     return dsl.code {
       scope {
         // TODO: avoid language dependent code
-        val startTime = declare(variable(types.longType, "startTime"), +"java.lang.System.nanoTime()", false)
-        declare(info, newSizedArray(types.anyType, infoArraySize), false)
+        val startTime = declare(variable(types.LONG, "startTime"), +"java.lang.System.nanoTime()", false)
+        declare(info, newSizedArray(types.ANY, infoArraySize), false)
         declare(timeDeclaration())
         add(declarations)
         add(tracingCall)
         add(fillingInfoArray)
 
-        val elapsedTime = declare(array(types.longType, "elapsedTime"),
-                                  newArray(types.longType, +"java.lang.System.nanoTime() - ${startTime.toCode()}"), false)
-        result.assign(newArray(types.anyType, info, streamResult, elapsedTime))
+        val elapsedTime = declare(array(types.LONG, "elapsedTime"),
+                                  newArray(types.LONG, +"java.lang.System.nanoTime() - ${startTime.toCode()}"), false)
+        result.assign(newArray(types.ANY, info, streamResult, elapsedTime))
       }
     }
   }
@@ -124,19 +124,19 @@ abstract class TraceExpressionBuilderBase(private val myProject: Project, protec
     return dsl.block {
       declare(streamResult, nullExpression, true)
       val evaluationResult = array(resultType, "evaluationResult")
-      if (resultType != types.voidType) declare(evaluationResult, newArray(resultType, TextExpression(resultType.defaultValue)), true)
+      if (resultType != types.VOID) declare(evaluationResult, newArray(resultType, TextExpression(resultType.defaultValue)), true)
       tryBlock {
-        if (resultType == types.voidType) {
-          streamResult.assign(newSizedArray(types.anyType, 1))
+        if (resultType == types.VOID) {
+          streamResult.assign(newSizedArray(types.ANY, 1))
           +TextExpression(chain.text)
         }
         else {
           +evaluationResult.set(0, TextExpression(chain.text))
           streamResult.assign(evaluationResult)
         }
-      }.catch(variable(types.basicExceptionType, "t")) {
+      }.catch(variable(types.EXCEPTION, "t")) {
         // TODO: add exception variable as a property of catch code block
-        streamResult.assign(newArray(types.basicExceptionType, +"t"))
+        streamResult.assign(newArray(types.EXCEPTION, +"t"))
       }
     }
   }

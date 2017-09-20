@@ -35,17 +35,17 @@ class KotlinChainTransformerImpl : ChainTransformer.Kotlin {
     val firstCall = callChain.first()
     val qualifiedExpression = firstCall.getQualifiedExpressionForReceiverOrThis()
     // TODO: use kotlin types here?
-    val qualifier = QualifierExpressionImpl(qualifiedExpression.text, qualifiedExpression.textRange, JavaTypes.anyType)
+    val qualifier = QualifierExpressionImpl(qualifiedExpression.text, qualifiedExpression.textRange, JavaTypes.ANY)
 
     val intermediateCalls = mutableListOf<IntermediateStreamCall>()
     for (call in callChain.subList(0, callChain.size - 1)) {
       intermediateCalls += IntermediateStreamCallImpl(call.callName(), call.valueArguments.map { it.toCallArgument() },
-                                                      JavaTypes.anyType, JavaTypes.anyType, call.textRange,
+                                                      JavaTypes.ANY, JavaTypes.ANY, call.textRange,
                                                       call.receiverType()!!.getPackage(false))
     }
 
     val terminationsPsiCall = callChain.last()
-    val terminationCall = TerminatorStreamCallImpl(terminationsPsiCall.callName(), emptyList(), JavaTypes.anyType, JavaTypes.anyType,
+    val terminationCall = TerminatorStreamCallImpl(terminationsPsiCall.callName(), emptyList(), JavaTypes.ANY, JavaTypes.ANY,
                                                    terminationsPsiCall.textRange,
                                                    terminationsPsiCall.receiverType()!!.getPackage(false))
 

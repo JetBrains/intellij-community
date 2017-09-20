@@ -34,27 +34,27 @@ class DistinctTraceHandler(num: Int, private val myCall: IntermediateStreamCall,
     val before = myPeekTracer.beforeMap
     val after = myPeekTracer.afterMap
     return dsl.block {
-      val nestedMapType = types.map(types.integerType, myCall.typeBefore)
-      val mapping = linkedMap(types.integerType, types.integerType, "mapping")
+      val nestedMapType = types.map(types.INT, myCall.typeBefore)
+      val mapping = linkedMap(types.INT, types.INT, "mapping")
       declare(mapping.defaultDeclaration())
       val eqClasses = map(myCall.typeBefore, nestedMapType, "eqClasses")
       declare(eqClasses, TextExpression(eqClasses.type.defaultValue), false)
-      forEachLoop(variable(types.integerType, "beforeTime"), before.keys()) {
+      forEachLoop(variable(types.INT, "beforeTime"), before.keys()) {
         val beforeValue = declare(variable(myCall.typeBefore, "beforeValue"), before.get(loopVariable), false)
         val computeIfAbsentExpression = eqClasses.computeIfAbsent(beforeValue, lambda("key") {
           +TextExpression(nestedMapType.defaultValue)
         })
-        val classItems = map(types.integerType, myCall.typeBefore, "classItems")
+        val classItems = map(types.INT, myCall.typeBefore, "classItems")
         declare(classItems, computeIfAbsentExpression, false)
         +classItems.set(loopVariable, beforeValue)
       }
 
-      forEachLoop(variable(types.integerType, "afterTime"), after.keys()) {
+      forEachLoop(variable(types.INT, "afterTime"), after.keys()) {
         val afterTime = loopVariable
         val afterValue = declare(variable(myCall.typeAfter, "afterValue"), after.get(loopVariable), false)
-        val classes = map(types.integerType, myCall.typeBefore, "classes")
+        val classes = map(types.INT, myCall.typeBefore, "classes")
         declare(classes, eqClasses.get(afterValue), false)
-        forEachLoop(variable(types.integerType, "classElementTime"), classes.keys()) {
+        forEachLoop(variable(types.INT, "classElementTime"), classes.keys()) {
           +mapping.set(loopVariable, afterTime)
         }
       }
@@ -62,12 +62,12 @@ class DistinctTraceHandler(num: Int, private val myCall: IntermediateStreamCall,
       add(mapping.convertToArray(dsl, "resolve"))
       add(myPeekTracer.prepareResult())
 
-      declare(variable(types.anyType, "peekResult"), myPeekTracer.resultExpression, false)
+      declare(variable(types.ANY, "peekResult"), myPeekTracer.resultExpression, false)
     }
   }
 
   override fun getResultExpression(): Expression =
-    dsl.newArray(dsl.types.anyType, TextExpression("peekResult"), TextExpression("resolve"))
+    dsl.newArray(dsl.types.ANY, TextExpression("peekResult"), TextExpression("resolve"))
 
   override fun additionalCallsBefore(): List<IntermediateStreamCall> = myPeekTracer.additionalCallsBefore()
 

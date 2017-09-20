@@ -24,52 +24,50 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import static com.intellij.debugger.streams.trace.impl.handler.type.GenericType.*;
-
 /**
  * @author Vitaliy.Bibaev
  */
 public class PrimitiveObjectBuilderPositiveTest extends StreamChainBuilderPositiveTestBase {
   public void testSimpleObject() {
-    doTest(JavaTypes.INSTANCE.getAnyType());
+    doTest(JavaTypes.INSTANCE.getANY());
   }
 
   public void testSimpleInt() {
-    doTest(JavaTypes.INSTANCE.getIntegerType());
+    doTest(JavaTypes.INSTANCE.getINT());
   }
 
   public void testSimpleDouble() {
-    doTest(JavaTypes.INSTANCE.getDoubleType());
+    doTest(JavaTypes.INSTANCE.getDOUBLE());
   }
 
   public void testSimpleLong() {
-    doTest(JavaTypes.INSTANCE.getLongType());
+    doTest(JavaTypes.INSTANCE.getLONG());
   }
 
   public void testObj2Int() {
-    doTest(JavaTypes.INSTANCE.getAnyType(), JavaTypes.INSTANCE.getIntegerType());
+    doTest(JavaTypes.INSTANCE.getANY(), JavaTypes.INSTANCE.getINT());
   }
 
   public void testObj2Long() {
-    doTest(JavaTypes.INSTANCE.getAnyType(), JavaTypes.INSTANCE.getLongType());
+    doTest(JavaTypes.INSTANCE.getANY(), JavaTypes.INSTANCE.getLONG());
   }
 
   public void testObj2Double() {
-    doTest(JavaTypes.INSTANCE.getAnyType(), JavaTypes.INSTANCE.getDoubleType());
+    doTest(JavaTypes.INSTANCE.getANY(), JavaTypes.INSTANCE.getDOUBLE());
   }
 
   public void testPrimitiveIdentity() {
-    doTest(JavaTypes.INSTANCE.getIntegerType(), JavaTypes.INSTANCE.getIntegerType());
+    doTest(JavaTypes.INSTANCE.getINT(), JavaTypes.INSTANCE.getINT());
   }
 
   public void testPrimitive2Obj() {
-    doTest(JavaTypes.INSTANCE.getDoubleType(), JavaTypes.INSTANCE.getAnyType());
+    doTest(JavaTypes.INSTANCE.getDOUBLE(), JavaTypes.INSTANCE.getANY());
   }
 
   public void testFewTransitions() {
-    doTest(JavaTypes.INSTANCE.getAnyType(), JavaTypes.INSTANCE.getIntegerType(), JavaTypes.INSTANCE.getIntegerType(),
-           JavaTypes.INSTANCE.getAnyType(), JavaTypes.INSTANCE.getDoubleType(), JavaTypes.INSTANCE.getAnyType(),
-           JavaTypes.INSTANCE.getLongType());
+    doTest(JavaTypes.INSTANCE.getANY(), JavaTypes.INSTANCE.getINT(), JavaTypes.INSTANCE.getINT(),
+           JavaTypes.INSTANCE.getANY(), JavaTypes.INSTANCE.getDOUBLE(), JavaTypes.INSTANCE.getANY(),
+           JavaTypes.INSTANCE.getLONG());
   }
 
   private void doTest(@NotNull GenericType producerAfterType,

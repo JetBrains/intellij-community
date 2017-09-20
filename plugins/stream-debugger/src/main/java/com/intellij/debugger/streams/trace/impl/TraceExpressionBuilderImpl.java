@@ -163,7 +163,7 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
     final String resultExpression;
     final String additionalDeclarations;
     final String additionalEvaluation;
-    if (resultType.equals(JavaTypes.INSTANCE.getVoidType())) {
+    if (resultType.equals(JavaTypes.INSTANCE.getVOID())) {
       additionalDeclarations = "";
       additionalEvaluation = chain.getText() + ";" + LINE_SEPARATOR;
       resultExpression = "new Object[1]";

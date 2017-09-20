@@ -90,7 +90,7 @@ class KotlinStatementFactory : StatementFactory {
   override fun createTryBlock(block: CodeBlock): TryBlock = KotlinTryBlock(block, this)
 
   override fun createTimeVariableDeclaration(): VariableDeclaration =
-    KotlinVariableDeclaration(createVariable(types.timeVariableType, "time"), false, types.timeVariableType.defaultValue)
+    KotlinVariableDeclaration(createVariable(types.TIME, "time"), false, types.TIME.defaultValue)
 
   override fun currentTimeExpression(): Expression = TextExpression("time.get()")
 

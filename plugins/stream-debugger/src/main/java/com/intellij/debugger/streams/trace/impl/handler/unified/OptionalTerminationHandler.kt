@@ -35,12 +35,12 @@ class OptionalTerminationHandler(private val call: TerminatorStreamCall, private
   override fun prepareResult(): CodeBlock = myTerminatorHandler.prepareResult()
 
   override fun getResultExpression(): Expression {
-    val isPresent = dsl.newArray(dsl.types.booleanType, TextExpression(resultExpression).call("isPresent"))
+    val isPresent = dsl.newArray(dsl.types.BOOLEAN, TextExpression(resultExpression).call("isPresent"))
     val optionalType = JavaTypes.unwrapOptional(call.resultType)
     val optionalContent = dsl.newArray(optionalType,
                                        TextExpression(resultExpression).call("orElse", TextExpression(optionalType.defaultValue)))
-    val optionalData = dsl.newArray(dsl.types.anyType, isPresent, optionalContent)
-    return dsl.newArray(dsl.types.anyType, myTerminatorHandler.resultExpression, optionalData)
+    val optionalData = dsl.newArray(dsl.types.ANY, isPresent, optionalContent)
+    return dsl.newArray(dsl.types.ANY, myTerminatorHandler.resultExpression, optionalData)
   }
 
   override fun additionalCallsBefore(): List<IntermediateStreamCall> = myTerminatorHandler.additionalCallsBefore()

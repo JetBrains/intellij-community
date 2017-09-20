@@ -47,7 +47,7 @@ class JavaTraceExpressionBuilder(private val project: Project, dsl: Dsl) : Trace
         LambdaToAnonymousTransformer.transform(block)
         ToObjectInheritorTransformer.transform(block)
 
-        val resultDeclaration = dsl.declaration(dsl.variable(dsl.types.anyType, resultVariableName), dsl.nullExpression, true).toCode()
+        val resultDeclaration = dsl.declaration(dsl.variable(dsl.types.ANY, resultVariableName), dsl.nullExpression, true).toCode()
         val result = "$resultDeclaration; \n " +
                      "${block.text} \n" +
                      resultVariableName

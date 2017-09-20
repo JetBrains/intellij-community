@@ -51,8 +51,8 @@ class MatchHandler(private val call: TerminatorStreamCall, dsl: Dsl) : HandlerBa
 
   override fun prepareResult(): CodeBlock {
     return dsl.block {
-      val result = array(types.anyType, "result")
-      declare(result, newSizedArray(types.anyType, 2), false)
+      val result = array(types.ANY, "result")
+      declare(result, newSizedArray(types.ANY, 2), false)
       scope {
         add(myPeekHandler.prepareResult())
         +result.set(0, myPeekHandler.resultExpression)

@@ -24,16 +24,16 @@ import com.intellij.debugger.streams.trace.impl.handler.type.MapType
  * @author Vitaliy.Bibaev
  */
 interface Types {
-  val anyType: GenericType
-  val integerType: GenericType
-  val longType: GenericType
-  val booleanType: GenericType
-  val doubleType: GenericType
-  val stringType: GenericType
-  val basicExceptionType: GenericType
-  val voidType: GenericType
+  val ANY: GenericType
+  val INT: GenericType
+  val LONG: GenericType
+  val BOOLEAN: GenericType
+  val DOUBLE: GenericType
+  val STRING: GenericType
+  val EXCEPTION: GenericType
+  val VOID: GenericType
 
-  val timeVariableType: GenericType
+  val TIME: GenericType
 
   fun array(elementType: GenericType): ArrayType
   fun list(elementsType: GenericType): ListType

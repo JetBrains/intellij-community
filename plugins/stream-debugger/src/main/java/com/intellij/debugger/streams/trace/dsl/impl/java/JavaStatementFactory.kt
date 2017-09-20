@@ -85,7 +85,7 @@ class JavaStatementFactory : StatementFactory {
   override fun createTryBlock(block: CodeBlock): TryBlock = JavaTryBlock(block, this)
 
   override fun createTimeVariableDeclaration(): VariableDeclaration =
-    JavaVariableDeclaration(createVariable(types.timeVariableType, "time"), false, types.timeVariableType.defaultValue)
+    JavaVariableDeclaration(createVariable(types.TIME, "time"), false, types.TIME.defaultValue)
 
   override fun currentTimeExpression(): Expression = TextExpression("time").call("get")
 

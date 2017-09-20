@@ -29,11 +29,11 @@ abstract class MapVariableBase(override val type: MapType, override val name: St
   : VariableImpl(type, name), MapVariable {
 
   override fun convertToArray(dsl: Dsl, arrayName: String): CodeBlock {
-    val resultArray = dsl.array(dsl.types.anyType, arrayName)
-    val size = dsl.variable(dsl.types.integerType, "size")
+    val resultArray = dsl.array(dsl.types.ANY, arrayName)
+    val size = dsl.variable(dsl.types.INT, "size")
     val keys = dsl.array(type.keyType, "keys")
     val values = dsl.array(type.valueType, "values")
-    val i = dsl.variable(dsl.types.integerType, "i")
+    val i = dsl.variable(dsl.types.INT, "i")
     val key = dsl.variable(type.keyType, "key")
     return dsl.block {
       declare(resultArray, true)
@@ -48,7 +48,7 @@ abstract class MapVariableBase(override val type: MapType, override val name: St
           +TextExpression("${i.toCode()}++")
         }
 
-        resultArray.assign(newArray(dsl.types.anyType, keys, values))
+        resultArray.assign(newArray(dsl.types.ANY, keys, values))
       }
     }
   }

@@ -47,8 +47,8 @@ public class PeekTracerHandler extends HandlerBase.Intermediate {
     myTypeAfter = typeAfter;
 
     final String variablePrefix = String.format("%sPeek%d", name, num);
-    myBeforeVariable = new HashMapVariableImpl(variablePrefix + "before", JavaTypes.INSTANCE.getIntegerType(), typeBefore, true);
-    myAfterVariable = new HashMapVariableImpl(variablePrefix + "after", JavaTypes.INSTANCE.getIntegerType(), typeAfter, true);
+    myBeforeVariable = new HashMapVariableImpl(variablePrefix + "before", JavaTypes.INSTANCE.getINT(), typeBefore, true);
+    myAfterVariable = new HashMapVariableImpl(variablePrefix + "after", JavaTypes.INSTANCE.getINT(), typeAfter, true);
   }
 
   @NotNull

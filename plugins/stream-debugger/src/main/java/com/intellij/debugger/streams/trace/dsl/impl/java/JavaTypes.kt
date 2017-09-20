@@ -29,19 +29,19 @@ import org.jetbrains.annotations.Contract
  * @author Vitaliy.Bibaev
  */
 object JavaTypes : Types {
-  override val anyType: GenericType = ClassTypeImpl("java.lang.Object", "new java.lang.Object()")
+  override val ANY: GenericType = ClassTypeImpl("java.lang.Object", "new java.lang.Object()")
 
-  override val integerType: GenericType = GenericTypeImpl("int", "java.lang.Integer", "0")
+  override val INT: GenericType = GenericTypeImpl("int", "java.lang.Integer", "0")
 
-  override val booleanType: GenericType = GenericTypeImpl("boolean", "java.lang.Boolean", "false")
-  override val doubleType: GenericType = GenericTypeImpl("double", "java.lang.Double", "0.")
-  override val basicExceptionType: GenericType = ClassTypeImpl("java.lang.Throwable")
-  override val voidType: GenericType = GenericTypeImpl("void", "java.lang.Void", "null")
+  override val BOOLEAN: GenericType = GenericTypeImpl("boolean", "java.lang.Boolean", "false")
+  override val DOUBLE: GenericType = GenericTypeImpl("double", "java.lang.Double", "0.")
+  override val EXCEPTION: GenericType = ClassTypeImpl("java.lang.Throwable")
+  override val VOID: GenericType = GenericTypeImpl("void", "java.lang.Void", "null")
 
-  override val timeVariableType: GenericType = ClassTypeImpl("java.util.concurrent.atomic.AtomicInteger",
-                                                             "new java.util.concurrent.atomic.AtomicInteger()")
-  override val stringType: GenericType = ClassTypeImpl("java.lang.String", "\"\"")
-  override val longType: GenericType = GenericTypeImpl("long", "java.lang.Long", "0L")
+  override val TIME: GenericType = ClassTypeImpl("java.util.concurrent.atomic.AtomicInteger",
+                                                 "new java.util.concurrent.atomic.AtomicInteger()")
+  override val STRING: GenericType = ClassTypeImpl("java.lang.String", "\"\"")
+  override val LONG: GenericType = GenericTypeImpl("long", "java.lang.Long", "0L")
 
   override fun array(elementType: GenericType): ArrayType =
     ArrayTypeImpl(elementType, { "$it[]" }, "new ${elementType.variableTypeName}[] {}")
@@ -64,30 +64,30 @@ object JavaTypes : Types {
 
   fun fromStreamPsiType(streamPsiType: PsiType): GenericType {
     return when {
-      InheritanceUtil.isInheritor(streamPsiType, CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM) -> integerType
-      InheritanceUtil.isInheritor(streamPsiType, CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM) -> longType
-      InheritanceUtil.isInheritor(streamPsiType, CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM) -> doubleType
-      PsiType.VOID == streamPsiType -> voidType
-      else -> anyType
+      InheritanceUtil.isInheritor(streamPsiType, CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM) -> INT
+      InheritanceUtil.isInheritor(streamPsiType, CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM) -> LONG
+      InheritanceUtil.isInheritor(streamPsiType, CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM) -> DOUBLE
+      PsiType.VOID == streamPsiType -> VOID
+      else -> ANY
     }
   }
 
   fun fromPsiClass(psiClass: PsiClass): GenericType {
     return when {
-      InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM) -> integerType
-      InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM) -> longType
-      InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM) -> doubleType
-      else -> anyType
+      InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM) -> INT
+      InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM) -> LONG
+      InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM) -> DOUBLE
+      else -> ANY
     }
   }
 
   fun fromPsiType(type: PsiType): GenericType {
     return when (type) {
-      PsiType.VOID -> voidType
-      PsiType.INT -> integerType
-      PsiType.DOUBLE -> doubleType
-      PsiType.LONG -> longType
-      PsiType.BOOLEAN -> booleanType
+      PsiType.VOID -> VOID
+      PsiType.INT -> INT
+      PsiType.DOUBLE -> DOUBLE
+      PsiType.LONG -> LONG
+      PsiType.BOOLEAN -> BOOLEAN
       else -> ClassTypeImpl(TypeConversionUtil.erasure(type).canonicalText)
     }
   }
@@ -101,10 +101,10 @@ object JavaTypes : Types {
     assert(isOptional(type))
 
     return when (type) {
-      optionalInt -> integerType
-      optionalLong -> longType
-      optionalDouble -> doubleType
-      else -> anyType
+      optionalInt -> INT
+      optionalLong -> LONG
+      optionalDouble -> DOUBLE
+      else -> ANY
     }
   }
 }
