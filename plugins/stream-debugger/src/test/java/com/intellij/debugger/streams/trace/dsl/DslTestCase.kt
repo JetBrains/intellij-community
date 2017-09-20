@@ -309,7 +309,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
     doTest {
       val map = map(types.INT, types.ANY, "map")
       +map.computeIfAbsent(+"key", lambda("y") {
-        +map.call("method")
+        doReturn(map.call("method"))
       })
     }
   }

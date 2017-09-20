@@ -62,13 +62,13 @@ open class DistinctByKeyHandler(callNumber: Int, private val myCall: Intermediat
 
   override fun transformCall(call: IntermediateStreamCall): IntermediateStreamCall {
     val newKeyExtractor = dsl.lambda("x") {
-      +myExtractorVariable.call("andThen", dsl.lambda("t") {
+      val valueBefore = declare(dsl.variable(myCall.typeBefore, "valueBefore"), lambdaArg, false)
+      doReturn(myExtractorVariable.call("andThen", dsl.lambda("t") {
         +myBeforeTimes.add(dsl.currentTime())
-        +myBeforeValues.add(TextExpression("x"))
-        +myKeys.add(TextExpression("t"))
-        // TODO: avoid string literals. It'll lead to problems in kotlin (see kotlin lambda return semantic)
-        +TextExpression("return t")
-      }).call("apply", TextExpression("x"))
+        +myBeforeValues.add(valueBefore)
+        +myKeys.add(lambdaArg)
+        doReturn(lambdaArg)
+      }).call("apply", TextExpression("x")))
     }.toCode()
     return call.updateArguments(listOf(CallArgumentImpl(myKeyExtractor.type, newKeyExtractor)))
   }
@@ -86,7 +86,7 @@ open class DistinctByKeyHandler(callNumber: Int, private val myCall: Intermediat
         val key = declare(variable(types.ANY, "key"), myKeys.get(loopVariable), false)
         val lst = list(dsl.types.INT, "lst")
         declare(lst, keys2TimesBefore.computeIfAbsent(key, lambda("k") {
-          +newList(types.INT)
+          doReturn(newList(types.INT))
         }), false)
         +lst.add(myBeforeTimes.get(loopVariable))
       }
@@ -119,7 +119,7 @@ open class DistinctByKeyHandler(callNumber: Int, private val myCall: Intermediat
   override fun additionalCallsAfter(): List<IntermediateStreamCall> {
     val callsAfter = ArrayList(myPeekHandler.additionalCallsAfter())
     val lambda = dsl.lambda("x") {
-      +myTime2ValueAfter.set(dsl.currentTime(), lambdaArg)
+      doReturn(myTime2ValueAfter.set(dsl.currentTime(), lambdaArg))
     }
 
     callsAfter.add(dsl.createPeekCall(myTypeAfter, lambda.toCode()))
@@ -154,13 +154,13 @@ open class DistinctByKeyHandler(callNumber: Int, private val myCall: Intermediat
 class DistinctKeysHandler(callNumber: Int, call: IntermediateStreamCall, dsl: Dsl)
   : DistinctByKeyHandler.DistinctByCustomKey(callNumber, call, "java.util.function.Function<java.util.Map.Entry, java.lang.Object>",
                                              dsl.lambda("x") {
-                                               +lambdaArg.call("getKey")
+                                               doReturn(lambdaArg.call("getKey"))
                                              }.toCode(),
                                              dsl)
 
 class DistinctValuesHandler(callNumber: Int, call: IntermediateStreamCall, dsl: Dsl)
   : DistinctByKeyHandler.DistinctByCustomKey(callNumber, call, "java.util.function.Function<java.util.Map.Entry, java.lang.Object>",
                                              dsl.lambda("x") {
-                                               +lambdaArg.call("getValue")
+                                               doReturn(lambdaArg.call("getValue"))
                                              }.toCode(),
                                              dsl)
