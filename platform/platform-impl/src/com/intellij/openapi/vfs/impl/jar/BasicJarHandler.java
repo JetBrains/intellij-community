@@ -36,6 +36,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.ZipFile;
 
+// JarHandler that keeps limited LRU number of ZipFile references opened for a while after they were used
+// Once the inactivity time passed the ZipFile is closed.
 public class BasicJarHandler extends ZipHandlerBase {
   private static final Logger LOG = Logger.getInstance("com.intellij.openapi.vfs.impl.jar.BasicJarHandler");
   private static final boolean doTracing = LOG.isTraceEnabled();
@@ -47,13 +49,12 @@ public class BasicJarHandler extends ZipHandlerBase {
     myFileSystem = (JarFileSystemImpl)JarFileSystem.getInstance();
     myHandle = new ZipResourceHandle();
   }
-
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") 
-  private static final LinkedHashMap<BasicJarHandler, ScheduledFuture<?>> ourInvalidationCache;
+ 
+  private static final LinkedHashMap<BasicJarHandler, ScheduledFuture<?>> ourOpenFileLimitGuard;
   
   static {
     final int maxSize = 30;
-    ourInvalidationCache = new LinkedHashMap<BasicJarHandler, ScheduledFuture<?>>(maxSize, true) {
+    ourOpenFileLimitGuard = new LinkedHashMap<BasicJarHandler, ScheduledFuture<?>>(maxSize, true) {
       @Override
       protected boolean removeEldestEntry(Map.Entry<BasicJarHandler, ScheduledFuture<?>> eldest, BasicJarHandler key, ScheduledFuture<?> value) {
         if(size() > maxSize) {
@@ -90,8 +91,8 @@ public class BasicJarHandler extends ZipHandlerBase {
   }
   
   public static void closeOpenedZipReferences() {
-    synchronized (ourInvalidationCache) {
-      ourInvalidationCache.keySet().forEach(BasicJarHandler::dispose);
+    synchronized (ourOpenFileLimitGuard) {
+      ourOpenFileLimitGuard.keySet().forEach(BasicJarHandler::dispose);
     }
   }
 
@@ -103,7 +104,7 @@ public class BasicJarHandler extends ZipHandlerBase {
   private final class ZipResourceHandle extends ResourceHandle<ZipFile> {
     private ZipFile myFile;
     private long myFileStamp;
-    private long myFileLength;
+    //private long myFileLength;
     private final ReentrantLock myLock = new ReentrantLock();
     private ScheduledFuture<?> myInvalidationRequest;
     
@@ -114,8 +115,8 @@ public class BasicJarHandler extends ZipHandlerBase {
       if (invalidationRequest != null) {
         invalidationRequest.cancel(false);
         myInvalidationRequest = null;
-        synchronized (ourInvalidationCache) {
-          ourInvalidationCache.remove(BasicJarHandler.this);
+        synchronized (ourOpenFileLimitGuard) {
+          ourOpenFileLimitGuard.remove(BasicJarHandler.this);
         }
       }
 
@@ -128,7 +129,7 @@ public class BasicJarHandler extends ZipHandlerBase {
         FileAttributes attributes = FileSystemUtil.getAttributes(fileToUse.getPath());
 
         myFileStamp = attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP;
-        myFileLength = attributes != null ? attributes.length : DEFAULT_LENGTH;
+        //myFileLength = attributes != null ? attributes.length : DEFAULT_LENGTH;
 
         ZipFile file = new ZipFile(fileToUse);
 
@@ -159,8 +160,8 @@ public class BasicJarHandler extends ZipHandlerBase {
 
       myLock.unlock();
 
-      synchronized (ourInvalidationCache) {
-        ourInvalidationCache.put(BasicJarHandler.this, invalidationRequest);
+      synchronized (ourOpenFileLimitGuard) {
+        ourOpenFileLimitGuard.put(BasicJarHandler.this, invalidationRequest);
       }
     }
 
