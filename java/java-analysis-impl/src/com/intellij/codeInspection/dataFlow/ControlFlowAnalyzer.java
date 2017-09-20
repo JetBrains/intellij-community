@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightVariableBuilder;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
@@ -879,12 +880,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private static class ApplyNotNullInstruction extends Instruction {
-    private final PsiMethodCallExpression myCall;
-
-    private ApplyNotNullInstruction(PsiMethodCallExpression call) {
-      myCall = call;
-    }
-
     @Override
     public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState state, InstructionVisitor visitor) {
       DfaValue value = state.pop();
@@ -1469,7 +1464,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       // stack: .., arg1, call-result
       ConditionalGotoInstruction ifFalse = addInstruction(new ConditionalGotoInstruction(null, true, null));
 
-      addInstruction(new ApplyNotNullInstruction(expression));
+      addInstruction(new ApplyNotNullInstruction());
       addInstruction(new PushInstruction(myFactory.getConstFactory().getTrue(), null));
       addInstruction(new GotoInstruction(getEndOffset(expression)));
 
@@ -1792,6 +1787,36 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       myInlinedBlockContext = oldBlock;
       // Pop transfer value
       addInstruction(new PopInstruction());
+    }
+  }
+
+  /**
+   * Create a temporary {@link PsiVariable} (not declared in the original code) to be used within this control flow.
+   *
+   * @param type a type of variable to create
+   * @return newly created variable
+   */
+  @NotNull
+  PsiVariable createTempVariable(@Nullable PsiType type) {
+    if(type == null) {
+      type = PsiType.VOID;
+    }
+    return new TempVariable(getInstructionCount(), type, getContext());
+  }
+
+  /**
+   * Checks whether supplied variable is a temporary variable created previously via {@link #createTempVariable(PsiType)}
+   *
+   * @param variable to check
+   * @return true if supplied variable is a temp variable.
+   */
+  public static boolean isTempVariable(PsiModifierListOwner variable) {
+    return variable instanceof TempVariable;
+  }
+
+  private static class TempVariable extends LightVariableBuilder<TempVariable> {
+    TempVariable(int index, @NotNull PsiType type, @NotNull PsiElement navigationElement) {
+      super("tmp$" + index, type, navigationElement);
     }
   }
 

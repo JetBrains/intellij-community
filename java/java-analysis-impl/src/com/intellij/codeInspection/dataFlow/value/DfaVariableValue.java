@@ -157,7 +157,7 @@ public class DfaVariableValue extends DfaValue {
   }
 
   public boolean isFlushableByCalls() {
-    if (myVariable instanceof PsiLocalVariable || myVariable instanceof PsiParameter || CFGBuilder.isTempVariable(myVariable)) {
+    if (myVariable instanceof PsiLocalVariable || myVariable instanceof PsiParameter || ControlFlowAnalyzer.isTempVariable(myVariable)) {
       return false;
     }
     boolean finalField = myVariable instanceof PsiVariable && myVariable.hasModifierProperty(PsiModifier.FINAL);

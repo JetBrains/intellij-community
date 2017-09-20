@@ -21,7 +21,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.light.LightVariableBuilder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
@@ -606,10 +605,7 @@ public class CFGBuilder {
    */
   @NotNull
   public PsiVariable createTempVariable(@Nullable PsiType type) {
-    if(type == null) {
-      type = PsiType.VOID;
-    }
-    return new TempVariable(myAnalyzer.getInstructionCount(), type, myAnalyzer.getContext());
+    return myAnalyzer.createTempVariable(type);
   }
 
   /**
@@ -621,21 +617,5 @@ public class CFGBuilder {
   public CFGBuilder chain(Consumer<CFGBuilder> operation) {
     operation.accept(this);
     return this;
-  }
-
-  /**
-   * Checks whether supplied variable is a temporary variable created previously via {@link #createTempVariable(PsiType)}
-   *
-   * @param variable to check
-   * @return true if supplied variable is a temp variable.
-   */
-  public static boolean isTempVariable(PsiModifierListOwner variable) {
-     return variable instanceof TempVariable;
-  }
-
-  private static class TempVariable extends LightVariableBuilder<TempVariable> {
-    TempVariable(int index, @NotNull PsiType type, @NotNull PsiElement navigationElement) {
-      super("tmp$" + index, type, navigationElement);
-    }
   }
 }
