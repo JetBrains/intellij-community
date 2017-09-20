@@ -55,7 +55,9 @@ public class MergedChangeDiffRequestProvider implements ChangeDiffRequestProvide
                              @NotNull ProgressIndicator indicator) throws ProcessCanceledException, DiffRequestProducerException {
     Change change = presentable.getChange();
     List<Change> sourceChanges = ((MergedChange)change).getSourceChanges();
-    return createRequest(presentable.getProject(), sourceChanges.get(0), sourceChanges.get(1), context, indicator);
+    SimpleDiffRequest request = createRequest(presentable.getProject(), sourceChanges.get(0), sourceChanges.get(1), context, indicator);
+    request.putUserData(DiffUserDataKeys.THREESIDE_DIFF_WITH_RESULT, true);
+    return request;
   }
 
   @NotNull

@@ -124,6 +124,28 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   }
 
   @NotNull
+  private static MergeConflictType invertConflictType(@NotNull MergeConflictType oldConflictType) {
+    TextDiffType oldDiffType = oldConflictType.getDiffType();
+
+    if (oldDiffType != TextDiffType.INSERTED && oldDiffType != TextDiffType.DELETED) {
+      return oldConflictType;
+    }
+
+    return new MergeConflictType(oldDiffType == TextDiffType.DELETED ? TextDiffType.INSERTED : TextDiffType.DELETED,
+                                 oldConflictType.isChange(Side.LEFT), oldConflictType.isChange(Side.RIGHT),
+                                 oldConflictType.canBeResolved());
+  }
+
+  @NotNull
+  private MergeConflictType convertConflictType(@NotNull FineMergeLineFragment fragment) {
+    MergeConflictType conflictType = fragment.getConflictType();
+    if (DiffUtil.getUserData(myRequest, myContext, DiffUserDataKeys.THREESIDE_DIFF_WITH_RESULT) == Boolean.TRUE) {
+      conflictType = invertConflictType(conflictType);
+    }
+    return conflictType;
+  }
+
+  @NotNull
   private Runnable apply(@NotNull final List<FineMergeLineFragment> fragments) {
     return () -> {
       myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
@@ -131,7 +153,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
 
       resetChangeCounters();
       for (FineMergeLineFragment fragment : fragments) {
-        MergeConflictType conflictType = fragment.getConflictType();
+        MergeConflictType conflictType = convertConflictType(fragment);
         MergeInnerDifferences innerFragments = fragment.getInnerFragments();
 
         SimpleThreesideDiffChange change = new SimpleThreesideDiffChange(fragment, conflictType, innerFragments, this);
