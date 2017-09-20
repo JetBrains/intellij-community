@@ -5,7 +5,7 @@ version: '$VERSION$'
 icon: $NAME$.png
 summary: $SUMMARY$
 description: $DESCRIPTION$
-grade: stable
+grade: $GRADE$
 confinement: classic
 architectures: [amd64]
 
