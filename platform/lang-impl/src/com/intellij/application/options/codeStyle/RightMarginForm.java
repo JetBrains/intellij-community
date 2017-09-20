@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.ui.components.fields.CommaSeparatedIntegersField;
 import com.intellij.ui.components.fields.IntegerField;
+import com.intellij.ui.components.fields.valueEditors.ValueEditor;
 import com.intellij.ui.components.labels.ActionLink;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,7 +53,7 @@ public class RightMarginForm {
   private CommaSeparatedIntegersField myVisualGuidesField;
   @SuppressWarnings("unused") private ActionLink myResetLink;
   private final Language myLanguage;
-  private CodeStyleSettings mySettings;
+  private final CodeStyleSettings mySettings;
 
   public RightMarginForm(@NotNull Language language, @NotNull CodeStyleSettings settings) {
     myLanguage = language;
@@ -65,14 +66,14 @@ public class RightMarginForm {
   }
 
   void createUIComponents() {
-    //noinspection ConstantConditions
-    myRightMarginField = new IntegerField(ApplicationBundle.message("editbox.right.margin.columns"), 0, CodeStyleSettings.MAX_RIGHT_MARGIN) {
-      @NotNull
+    myRightMarginField = new IntegerField(ApplicationBundle.message("editbox.right.margin.columns"), 0, CodeStyleSettings.MAX_RIGHT_MARGIN);
+    myRightMarginField.getValueEditor().addListener(new ValueEditor.Listener<Integer>() {
       @Override
-      protected String getEmptyValueText() {
-        return getDefaultRightMarginText();
+      public void valueChanged(@NotNull Integer newValue) {
+        myResetLink.setVisible(!newValue.equals(myRightMarginField.getDefaultValue()));
+        myRightMarginField.getEmptyText().setText(getDefaultRightMarginText(mySettings));
       }
-    };
+    });
     myRightMarginField.setCanBeEmpty(true);
     myRightMarginField.setDefaultValue(-1);
     myVisualGuidesField = new CommaSeparatedIntegersField(ApplicationBundle.message("settings.code.style.visual.guides"), 0, CodeStyleSettings.MAX_RIGHT_MARGIN, "Optional");
@@ -96,6 +97,8 @@ public class RightMarginForm {
       }
     }
     myVisualGuidesField.setValue(settings.getSoftMargins(myLanguage));
+    myResetLink.setVisible(langSettings.RIGHT_MARGIN >= 0);
+    myRightMarginField.getEmptyText().setText(getDefaultRightMarginText(settings));
   }
 
   public void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException {
@@ -129,7 +132,7 @@ public class RightMarginForm {
     return myTopPanel;
   }
 
-  private String getDefaultRightMarginText() {
-    return "Default: " + mySettings.getDefaultRightMargin();
+  private static String getDefaultRightMarginText(@NotNull CodeStyleSettings settings) {
+    return "Default: " + settings.getDefaultRightMargin();
   }
 }

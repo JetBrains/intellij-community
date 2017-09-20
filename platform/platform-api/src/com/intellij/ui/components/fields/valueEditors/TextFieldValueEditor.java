@@ -46,10 +46,8 @@ public abstract class TextFieldValueEditor<T> extends AbstractValueEditor<T> {
   @SuppressWarnings("unused")
   protected String validateTextOnChange(String text, DocumentEvent e) {
     try {
-      if (StringUtil.isEmptyOrSpaces(text)) {
-        onEmptyValue();
-      }
-      parseValue(text);
+      T newValue = parseValue(text);
+      fireValueChanged(newValue);
       return null;
     }
     catch (InvalidDataException ex) {
@@ -76,7 +74,5 @@ public abstract class TextFieldValueEditor<T> extends AbstractValueEditor<T> {
   public void setValueText(@NotNull String text) {
     myField.setText(text);
   }
-
-  protected void onEmptyValue() {}
 
 }
