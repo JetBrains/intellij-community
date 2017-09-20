@@ -95,28 +95,6 @@ public class PatchReader {
     return null;
   }
 
-  /*private void callAdditionalInfoExtensions() {
-    final Map<String, Map<String, CharSequence>> map = myAdditionalInfoParser.getResultMap();
-    if (! map.isEmpty()) {
-      PatchEP[] extensions = Extensions.getExtensions(PatchEP.EP_NAME, myProject);
-      final Map<String, PatchEP> byName = new HashMap<String, PatchEP>();
-      for (PatchEP extension : extensions) {
-        byName.put(extension.getName(), extension);
-      }
-      if (extensions == null || extensions.length == 0) return;
-      for (Map.Entry<String, Map<String, CharSequence>> entry : map.entrySet()) {
-        final String path = entry.getKey();
-        final Map<String, CharSequence> extensionToContents = entry.getValue();
-        for (Map.Entry<String, CharSequence> innerEntry : extensionToContents.entrySet()) {
-          final PatchEP patchEP = byName.get(innerEntry.getKey());
-          if (patchEP != null) {
-            patchEP.consumeContentBeforePatchApplied(path, innerEntry.getValue(), myCommitContext);
-          }
-        }
-      }
-    }
-  }*/
-
   /**
    * @deprecated use {@link PatchReader#getTextPatches()} or {@link PatchReader#getAllPatches()} instead
    */
