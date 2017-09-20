@@ -81,7 +81,8 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
       return;
     }
 
-    final JBList list = new JBList(buildModel(project));
+    DefaultListModel model = buildModel(project);
+    JBList list = new JBList(model);
 
     EditBookmarkDescriptionAction editDescriptionAction = new EditBookmarkDescriptionAction(project, list);
     DefaultActionGroup actions = new DefaultActionGroup();
@@ -169,6 +170,20 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
         }
       }
     });
+
+    BookmarkInContextInfo info = new BookmarkInContextInfo(e.getDataContext(), project).invoke();
+    if (info != null) {
+      Bookmark bookmark = info.getBookmarkAtPlace();
+      if (bookmark != null) {
+        for (int i = 0; i < model.getSize(); i++) {
+          Object item = model.getElementAt(i);
+          if (item instanceof BookmarkItem && ((BookmarkItem)item).getBookmark() == bookmark) {
+            list.setSelectedValue(item, true);
+            break;
+          }
+        }
+      }
+    }
   }
 
   @SuppressWarnings("unchecked")
