@@ -35,8 +35,6 @@ interface Types {
 
   val timeVariableType: GenericType
 
-  val listOfAny: GenericType
-    get() = list(anyType)
   fun array(elementType: GenericType): ArrayType
   fun list(elementsType: GenericType): ListType
   fun map(keyType: GenericType, valueType: GenericType): MapType

@@ -150,7 +150,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
 
   fun testForEach() {
     doTest {
-      val objects = declare(variable(types.listOfAny, "objects"), +"getObjects()", false)
+      val objects = declare(variable(types.list(types.anyType), "objects"), +"getObjects()", false)
       forEachLoop(variable(types.anyType, "object"), objects) {
         +(loopVariable.call("toString"))
       }
@@ -159,7 +159,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
 
   fun testForLoop() {
     doTest {
-      val objects = declare(variable(types.listOfAny, "objects"), +"getObjects()", false)
+      val objects = declare(variable(types.list(types.anyType), "objects"), +"getObjects()", false)
       val i = variable(types.integerType, "i")
       forLoop(declaration(i, +"0", true), +"i < $objects.size()", +"i++") {
         +(loopVariable.call("toString"))
@@ -169,7 +169,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
 
   fun testLoopWithBreak() {
     doTest {
-      val objects = declare(variable(types.listOfAny, "objects"), +"getObjects()", false)
+      val objects = declare(variable(types.list(types.anyType), "objects"), +"getObjects()", false)
       forEachLoop(variable(types.anyType, "object"), objects) {
         +breakIteration()
       }
@@ -178,7 +178,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
 
   fun testLoopWithNestedBreak() {
     doTest {
-      val objects = declare(variable(types.listOfAny, "objects"), +"getObjects()", false)
+      val objects = declare(variable(types.list(types.anyType), "objects"), +"getObjects()", false)
       forEachLoop(variable(types.anyType, "object"), objects) {
         ifBranch(loopVariable.property("isEmpty")) {
           +breakIteration()
