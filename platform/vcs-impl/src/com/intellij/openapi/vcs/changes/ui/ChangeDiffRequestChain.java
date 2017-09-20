@@ -39,9 +39,8 @@ public class ChangeDiffRequestChain extends UserDataHolderBase implements DiffRe
 
   @Override
   @NotNull
-  public List<Producer> getRequests() {
-    //noinspection unchecked
-    return (List<Producer>)myProducers;
+  public List<? extends Producer> getRequests() {
+    return myProducers;
   }
 
   @Override
