@@ -53,7 +53,7 @@ class JUnitServerImpl: JUnitServer {
   lateinit private var objectOutputStream: ObjectOutputStream
 
   private val SOCKET_TIME_OUT = 180000
-  private val TEST_TIME_OUT = 300000L
+  private val TEST_TIME_OUT = 600000L
 
   private val port: Int
 
