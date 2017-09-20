@@ -52,14 +52,13 @@ class JUnitServerImpl: JUnitServer {
   lateinit private var objectInputStream: ObjectInputStream
   lateinit private var objectOutputStream: ObjectOutputStream
 
-  private val SOCKET_TIME_OUT = 180000
-  private val TEST_TIME_OUT = 600000L
+  private val IDE_STARTUP_TIMEOUT = 180000
 
   private val port: Int
 
   init {
     port = serverSocket.localPort
-    serverSocket.soTimeout = SOCKET_TIME_OUT
+    serverSocket.soTimeout = IDE_STARTUP_TIMEOUT
   }
 
   override fun start() {
@@ -84,7 +83,7 @@ class JUnitServerImpl: JUnitServer {
   }
 
   override fun receive(): TransportMessage {
-    return receivingMessages.poll(TEST_TIME_OUT, TimeUnit.MILLISECONDS)
+    return receivingMessages.poll(IDE_STARTUP_TIMEOUT.toLong(), TimeUnit.MILLISECONDS)
            ?: throw SocketException("Client doesn't respond. Either the test has hanged or IDE crushed.")
   }
 
