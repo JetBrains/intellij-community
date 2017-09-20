@@ -55,10 +55,10 @@ class MatchHandler(private val call: TerminatorStreamCall, dsl: Dsl) : HandlerBa
       declare(result, newSizedArray(types.ANY, 2), false)
       scope {
         add(myPeekHandler.prepareResult())
-        +result.set(0, myPeekHandler.resultExpression)
+        statement { result.set(0, myPeekHandler.resultExpression) }
       }
       // TODO: avoid strange string literals in code (what is streamResult here ?!)
-      +result.set(1, TextExpression("streamResult"))
+      statement { result.set(1, TextExpression("streamResult")) }
     }
   }
 

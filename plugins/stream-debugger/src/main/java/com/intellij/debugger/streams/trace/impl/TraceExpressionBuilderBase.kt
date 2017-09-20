@@ -128,10 +128,10 @@ abstract class TraceExpressionBuilderBase(private val myProject: Project, protec
       tryBlock {
         if (resultType == types.VOID) {
           streamResult.assign(newSizedArray(types.ANY, 1))
-          +TextExpression(chain.text)
+          statement { TextExpression(chain.text) }
         }
         else {
-          +evaluationResult.set(0, TextExpression(chain.text))
+          statement { evaluationResult.set(0, TextExpression(chain.text)) }
           streamResult.assign(evaluationResult)
         }
       }.catch(variable(types.EXCEPTION, "t")) {
@@ -149,7 +149,7 @@ abstract class TraceExpressionBuilderBase(private val myProject: Project, protec
       for ((i, handler) in handlers.withIndex()) {
         scope {
           add(handler.prepareResult())
-          +info.set(i, handler.resultExpression)
+          statement { info.set(i, handler.resultExpression) }
         }
       }
     }

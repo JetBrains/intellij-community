@@ -29,6 +29,10 @@ abstract class CodeBlockBase(private val myFactory: StatementFactory) : Composit
     myStatements.add(this)
   }
 
+  override fun statement(statement: () -> Statement) {
+    myStatements.add(statement.invoke())
+  }
+
   override fun declare(variable: Variable, isMutable: Boolean): Variable =
     declare(myFactory.createVariableDeclaration(variable, isMutable))
 

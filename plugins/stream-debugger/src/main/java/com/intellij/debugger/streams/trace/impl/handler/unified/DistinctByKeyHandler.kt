@@ -64,9 +64,9 @@ open class DistinctByKeyHandler(callNumber: Int, private val myCall: Intermediat
     val newKeyExtractor = dsl.lambda("x") {
       val valueBefore = declare(dsl.variable(myCall.typeBefore, "valueBefore"), lambdaArg, false)
       doReturn(myExtractorVariable.call("andThen", dsl.lambda("t") {
-        +myBeforeTimes.add(dsl.currentTime())
-        +myBeforeValues.add(valueBefore)
-        +myKeys.add(lambdaArg)
+        statement { myBeforeTimes.add(dsl.currentTime()) }
+        statement { myBeforeValues.add(valueBefore) }
+        statement { myKeys.add(lambdaArg) }
         doReturn(lambdaArg)
       }).call("apply", TextExpression("x")))
     }.toCode()
@@ -88,7 +88,7 @@ open class DistinctByKeyHandler(callNumber: Int, private val myCall: Intermediat
         declare(lst, keys2TimesBefore.computeIfAbsent(key, lambda("k") {
           doReturn(newList(types.INT))
         }), false)
-        +lst.add(myBeforeTimes.get(loopVariable))
+        statement { lst.add(myBeforeTimes.get(loopVariable)) }
       }
 
       forEachLoop(variable(types.INT, "afterTime"), myTime2ValueAfter.keys()) {
@@ -98,12 +98,12 @@ open class DistinctByKeyHandler(callNumber: Int, private val myCall: Intermediat
         integerIteration(myBeforeTimes.size(), forEachLoop@ this) {
           ifBranch(and(same(valueAfter, myBeforeValues.get(loopVariable)), not(transitions.contains(myBeforeTimes.get(loopVariable))))) {
             key.assign(myKeys.get(loopVariable))
-            +breakIteration()
+            statement { breakIteration() }
           }
         }
 
         forEachLoop(variable(types.INT, "beforeTime"), keys2TimesBefore.get(key)) {
-          +transitions.set(loopVariable, afterTime)
+          statement { transitions.set(loopVariable, afterTime) }
         }
       }
 

@@ -41,6 +41,8 @@ interface CodeBlock : Statement {
 
   fun doReturn(expression: Expression)
 
+  fun statement(statement: () -> Statement)
+
   operator fun Statement.unaryPlus()
 
   fun Variable.assign(expression: Expression)

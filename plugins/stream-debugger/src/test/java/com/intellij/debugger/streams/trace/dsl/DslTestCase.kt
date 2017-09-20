@@ -152,7 +152,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
     doTest {
       val objects = declare(variable(types.list(types.ANY), "objects"), "getObjects()".expr, false)
       forEachLoop(variable(types.ANY, "object"), objects) {
-        +(loopVariable.call("toString"))
+        statement { (loopVariable.call("toString")) }
       }
     }
   }
@@ -162,7 +162,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
       val objects = declare(variable(types.list(types.ANY), "objects"), "getObjects()".expr, false)
       val i = variable(types.INT, "i")
       forLoop(declaration(i, "0".expr, true), "i < $objects.size()".expr, "i++".expr) {
-        +(loopVariable.call("toString"))
+        statement { (loopVariable.call("toString")) }
       }
     }
   }
@@ -171,7 +171,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
     doTest {
       val objects = declare(variable(types.list(types.ANY), "objects"), "getObjects()".expr, false)
       forEachLoop(variable(types.ANY, "object"), objects) {
-        +breakIteration()
+        statement { breakIteration() }
       }
     }
   }
@@ -181,7 +181,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
       val objects = declare(variable(types.list(types.ANY), "objects"), "getObjects()".expr, false)
       forEachLoop(variable(types.ANY, "object"), objects) {
         ifBranch(loopVariable.property("isEmpty")) {
-          +breakIteration()
+          statement { breakIteration() }
         }
       }
     }
@@ -190,7 +190,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
   fun testLambdaWithExpression() {
     doTest {
       +lambda("x") {
-        +lambdaArg.call("method")
+        statement { lambdaArg.call("method") }
       }
     }
   }
@@ -198,8 +198,8 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
   fun testLambdaWithCodeBlock() {
     doTest {
       +lambda("y") {
-        +lambdaArg.call("method1")
-        +lambdaArg.call("method2")
+        statement { lambdaArg.call("method1") }
+        statement { lambdaArg.call("method2") }
       }
     }
   }
@@ -216,13 +216,14 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
       +lambda("y") {
         doReturn(lambdaArg)
       }
+
     }
   }
 
   fun testLambdaBlockReturn() {
     doTest {
       +lambda("y") {
-        +lambdaArg.call("method1")
+        statement { lambdaArg.call("method1") }
         doReturn(lambdaArg)
       }
     }
@@ -249,14 +250,14 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
   fun testProperties() {
     doTest {
       val a = variable(types.INT, "a")
-      +a.property("myProperty")
+      statement { a.property("myProperty") }
     }
   }
 
   fun testNegation() {
     doTest {
       val lst = list(types.INT, "lst")
-      +(not(lst.contains("1".expr)))
+      statement { not(lst.contains("1".expr)) }
     }
   }
 
@@ -275,21 +276,21 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
   fun testMapGet() {
     doTest {
       val map = map(types.INT, types.ANY, "map")
-      +map.get("key".expr)
+      statement { map.get("key".expr) }
     }
   }
 
   fun testMapPut() {
     doTest {
       val map = map(types.INT, types.ANY, "map")
-      +map.set("key".expr, "value".expr)
+      statement { map.set("key".expr, "value".expr) }
     }
   }
 
   fun testMapContains() {
     doTest {
       val map = map(types.INT, types.ANY, "map")
-      +map.contains("key".expr)
+      statement { map.contains("key".expr) }
     }
   }
 
@@ -324,10 +325,10 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
     doTest {
       val lst = list(types.LONG, "lst")
       declare(lst.defaultDeclaration())
-      +lst.add(TextExpression("100"))
-      +lst.get(0).call("methodWithSideEffect")
-      +lst.set(1, lst.get(0))
-      +lst.contains(lst.size())
+      statement { lst.add(TextExpression("100")) }
+      statement { lst.get(0).call("methodWithSideEffect") }
+      statement { lst.set(1, lst.get(0)) }
+      statement { lst.contains(lst.size()) }
     }
   }
 
@@ -347,16 +348,16 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
   fun testArrayElementUsage() {
     doTest {
       val array = array(types.INT, "a")
-      +array[10]
-      +array["11".expr]
+      statement { array[10] }
+      statement { array["11".expr] }
     }
   }
 
   fun testArrayElementAssignment() {
     doTest {
       val array = array(types.INT, "a")
-      +(array.set(0, "1".expr))
-      +(array.set(1, "2".expr))
+      statement { array.set(0, "1".expr) }
+      statement { array.set(1, "2".expr) }
     }
   }
 

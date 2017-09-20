@@ -46,7 +46,7 @@ class DistinctTraceHandler(num: Int, private val myCall: IntermediateStreamCall,
         })
         val classItems = map(types.INT, myCall.typeBefore, "classItems")
         declare(classItems, computeIfAbsentExpression, false)
-        +classItems.set(loopVariable, beforeValue)
+        statement { classItems.set(loopVariable, beforeValue) }
       }
 
       forEachLoop(variable(types.INT, "afterTime"), after.keys()) {
@@ -55,7 +55,7 @@ class DistinctTraceHandler(num: Int, private val myCall: IntermediateStreamCall,
         val classes = map(types.INT, myCall.typeBefore, "classes")
         declare(classes, eqClasses.get(afterValue), false)
         forEachLoop(variable(types.INT, "classElementTime"), classes.keys()) {
-          +mapping.set(loopVariable, afterTime)
+          statement { mapping.set(loopVariable, afterTime) }
         }
       }
 

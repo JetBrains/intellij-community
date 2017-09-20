@@ -43,9 +43,9 @@ abstract class MapVariableBase(override val type: MapType, override val name: St
         declare(values.defaultDeclaration(size))
         declare(i, "0".expr, true)
         forEachLoop(key, keys()) {
-          +keys.set(i, loopVariable)
-          +values.set(i, get(loopVariable))
-          +TextExpression("${i.toCode()}++")
+          statement { keys.set(i, loopVariable) }
+          statement { values.set(i, get(loopVariable)) }
+          statement { TextExpression("${i.toCode()}++") }
         }
 
         resultArray.assign(newArray(dsl.types.ANY, keys, values))
