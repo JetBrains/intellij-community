@@ -25,6 +25,8 @@ interface JUnitServer {
 
   fun start()
 
+  fun isStarted(): Boolean
+
   fun send(message: TransportMessage)
 
   fun receive(): TransportMessage

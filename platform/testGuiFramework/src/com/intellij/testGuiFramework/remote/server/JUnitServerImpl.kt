@@ -47,6 +47,7 @@ class JUnitServerImpl: JUnitServer {
   lateinit private var serverSendThread: ServerSendThread
   lateinit private var serverReceiveThread: ServerReceiveThread
   lateinit private var connection: Socket
+  private var isStarted = false
 
   lateinit private var objectInputStream: ObjectInputStream
   lateinit private var objectOutputStream: ObjectOutputStream
@@ -72,7 +73,10 @@ class JUnitServerImpl: JUnitServer {
     objectInputStream = ObjectInputStream(connection.getInputStream())
     serverReceiveThread = ServerReceiveThread(connection, objectInputStream)
     serverReceiveThread.start()
+    isStarted = true
   }
+
+  override fun isStarted(): Boolean = isStarted
 
   override fun send(message: TransportMessage) {
     postingMessages.put(message)
