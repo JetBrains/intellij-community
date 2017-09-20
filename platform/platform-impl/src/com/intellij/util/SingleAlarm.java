@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,6 @@ public class SingleAlarm extends Alarm {
   }
 
   private void addRequest(int delay) {
-    _addRequest(task, delay, myThreadToUse == ThreadToUse.SWING_THREAD ? ModalityState.NON_MODAL : null);
+    _addRequest(task, delay, myThreadToUse == ThreadToUse.SWING_THREAD ? ModalityState.any() : null);
   }
 }
