@@ -84,6 +84,14 @@ public abstract class ServerType<C extends ServerConfiguration> {
     return Collections.emptyList();
   }
 
+  /**
+   * @return <code>false</code>, iif all supported deployment sources are of {@link SingletonDeploymentSourceType} type, so
+   * {@link DeploymentConfigurator#getAvailableDeploymentSources()} <strong>now is and always will be</strong> empty.
+   */
+  public boolean mayHaveProjectSpecificDeploymentSources() {
+    return true;
+  }
+
   @NotNull
   public abstract ServerConnector<?> createConnector(@NotNull C configuration, @NotNull ServerTaskExecutor asyncTasksExecutor);
 

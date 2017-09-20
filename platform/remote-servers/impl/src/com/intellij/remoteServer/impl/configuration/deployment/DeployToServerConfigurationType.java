@@ -46,11 +46,17 @@ public class DeployToServerConfigurationType extends ConfigurationTypeBase {
           "Deploy to " + serverType.getPresentableName() + " run configuration", serverType.getIcon());
 
     myServerType = serverType;
-    myMultiSourcesFactory = new MultiSourcesConfigurationFactory();
-    addFactory(myMultiSourcesFactory);
+    if (myServerType.mayHaveProjectSpecificDeploymentSources()) {
+      myMultiSourcesFactory = new MultiSourcesConfigurationFactory();
+      addFactory(myMultiSourcesFactory);
+    }
+    else {
+      myMultiSourcesFactory = null;
+    }
 
     for (SingletonDeploymentSourceType next : serverType.getSingletonDeploymentSourceTypes()) {
       SingletonTypeConfigurationFactory nextFactory = new SingletonTypeConfigurationFactory(next);
+      addFactory(nextFactory);
       myPerTypeFactories.put(next, nextFactory);
     }
   }
@@ -64,7 +70,11 @@ public class DeployToServerConfigurationType extends ConfigurationTypeBase {
     if (sourceType instanceof SingletonDeploymentSourceType && myServerType.getSingletonDeploymentSourceTypes().contains(sourceType)) {
       result = myPerTypeFactories.get(sourceType);
     }
-    return result == null ? myMultiSourcesFactory : result;
+    if (result == null) {
+      result = myMultiSourcesFactory;
+    }
+    assert result != null : "server type: " + myServerType + ", requested source type: " + sourceType;
+    return result;
   }
 
   /**
