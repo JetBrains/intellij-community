@@ -3,7 +3,7 @@ import java.util.Map;
 public class CastNeeded {
 
   public void testGetOrDefault(Map<String, Number> map, String key) {
-    f(((((map.containsKey(key) ? ((map.get(key))) : (null)<caret>)))));
+    f(((((map.containsKey(key) ? ((map.get(key))) : (null<caret>))))));
   }
 
   void f(char[] cs) {}
