@@ -53,9 +53,8 @@ open class DistinctByKeyHandler(callNumber: Int, call: IntermediateStreamCall, d
   override fun additionalVariablesDeclaration(): List<VariableDeclaration> {
     val extractor = dsl.declaration(myExtractorVariable, TextExpression(myKeyExtractor.text), false)
     val variables =
-      mutableListOf<VariableDeclaration>(extractor, myBeforeTimes.defaultDeclaration(),
-                                         myBeforeValues.defaultDeclaration(), myTime2ValueAfter.defaultDeclaration(),
-                                         myKeys.defaultDeclaration())
+      mutableListOf(extractor, myBeforeTimes.defaultDeclaration(), myBeforeValues.defaultDeclaration(),
+                    myTime2ValueAfter.defaultDeclaration(), myKeys.defaultDeclaration())
     variables.addAll(myPeekHandler.additionalVariablesDeclaration())
 
     return variables
@@ -83,26 +82,28 @@ open class DistinctByKeyHandler(callNumber: Int, call: IntermediateStreamCall, d
       declare(keys2TimesBefore.defaultDeclaration())
       declare(transitions.defaultDeclaration())
 
-      integerIteration(myKeys.size()) {
+      integerIteration(myKeys.size(), block@ this) {
         val key = declare(variable(types.anyType, "key"), myKeys.get(loopVariable), false)
-        +keys2TimesBefore.computeIfAbsent(key, lambda("k") {
+        val lst = list(dsl.types.integerType, "lst")
+        declare(lst, keys2TimesBefore.computeIfAbsent(key, lambda("k") {
           +newList(types.integerType)
-        }).call("add", myBeforeTimes.get(loopVariable))
+        }), false)
+        +lst.add(myBeforeTimes.get(loopVariable))
       }
 
       forEachLoop(variable(types.integerType, "afterTime"), myTime2ValueAfter.keys()) {
         val afterTime = loopVariable
         val valueAfter = declare(variable(types.anyType, "valueAfter"), myTime2ValueAfter.get(loopVariable), false)
         val key = declare(variable(types.anyType, "key"), nullExpression, true)
-        integerIteration(myBeforeTimes.size()) {
+        integerIteration(myBeforeTimes.size(), forEachLoop@ this) {
           ifBranch(and(same(valueAfter, myBeforeValues.get(loopVariable)), not(transitions.contains(myBeforeTimes.get(loopVariable))))) {
             key.assign(myKeys.get(loopVariable))
-            breakIteration()
+            +breakIteration()
           }
         }
 
         forEachLoop(variable(types.integerType, "beforeTime"), keys2TimesBefore.get(key)) {
-          transitions.set(loopVariable, afterTime)
+          +transitions.set(loopVariable, afterTime)
         }
       }
 
@@ -125,8 +126,8 @@ open class DistinctByKeyHandler(callNumber: Int, call: IntermediateStreamCall, d
     return callsAfter
   }
 
-  private fun CodeContext.integerIteration(border: Expression, init: ForLoopBody.() -> Unit) {
-    forLoop(declaration(variable(types.integerType, "i"), TextExpression("0"), true),
+  private fun CodeContext.integerIteration(border: Expression, block: CodeBlock, init: ForLoopBody.() -> Unit) {
+    block.forLoop(declaration(variable(types.integerType, "i"), TextExpression("0"), true),
             TextExpression("i < ${border.toCode()}"),
             TextExpression("i = i + 1"), init)
   }
