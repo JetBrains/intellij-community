@@ -61,6 +61,6 @@ public class SingleAlarm extends Alarm {
   }
 
   private void addRequest(int delay) {
-    _addRequest(task, delay, myThreadToUse == ThreadToUse.SWING_THREAD ? ModalityState.any() : null);
+    _addRequest(task, delay, myThreadToUse == ThreadToUse.SWING_THREAD ? ModalityState.NON_MODAL : null);
   }
 }
