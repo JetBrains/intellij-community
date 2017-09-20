@@ -19,5 +19,5 @@ package com.intellij.debugger.streams.trace.dsl
  * @author Vitaliy.Bibaev
  */
 interface LambdaBody : CodeBlock {
-  val argName: String
+  val lambdaArg: Expression
 }

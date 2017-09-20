@@ -190,7 +190,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
   fun testLambdaWithExpression() {
     doTest {
       +lambda("x") {
-        +(+argName).call("method")
+        +lambdaArg.call("method")
       }
     }
   }
@@ -198,8 +198,8 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
   fun testLambdaWithCodeBlock() {
     doTest {
       +lambda("y") {
-        +(+argName).call("method1")
-        +(+argName).call("method2")
+        +lambdaArg.call("method1")
+        +lambdaArg.call("method2")
       }
     }
   }

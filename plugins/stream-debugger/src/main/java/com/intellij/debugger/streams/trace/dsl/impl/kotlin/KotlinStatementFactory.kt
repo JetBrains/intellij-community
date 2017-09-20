@@ -55,7 +55,7 @@ class KotlinStatementFactory : StatementFactory {
                              afterThought: Expression, loopBody: ForLoopBody): Convertable =
     KotlinForLoop(initialization, condition, afterThought, loopBody)
 
-  override fun createEmptyLambdaBody(argName: String): LambdaBody = KotlinLambdaBody(argName, this)
+  override fun createEmptyLambdaBody(argName: String): LambdaBody = KotlinLambdaBody(TextExpression(argName), this)
 
   override fun createLambda(argName: String, lambdaBody: LambdaBody): Lambda = KotlinLambda(argName, lambdaBody)
 

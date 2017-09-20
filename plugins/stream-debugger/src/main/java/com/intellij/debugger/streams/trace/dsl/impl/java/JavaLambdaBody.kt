@@ -15,13 +15,14 @@
  */
 package com.intellij.debugger.streams.trace.dsl.impl.java
 
+import com.intellij.debugger.streams.trace.dsl.Expression
 import com.intellij.debugger.streams.trace.dsl.LambdaBody
 import com.intellij.debugger.streams.trace.dsl.StatementFactory
 
 /**
  * @author Vitaliy.Bibaev
  */
-class JavaLambdaBody(statementFactory: StatementFactory, override val argName: String) : JavaCodeBlock(statementFactory), LambdaBody {
+class JavaLambdaBody(statementFactory: StatementFactory, override val lambdaArg: Expression) : JavaCodeBlock(statementFactory), LambdaBody {
   override fun toCode(indent: Int): String = if (isExpression()) getStatements().first().toCode() else super.toCode(indent)
 
   fun isExpression(): Boolean = size == 1

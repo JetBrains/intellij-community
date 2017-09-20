@@ -49,7 +49,7 @@ class JavaStatementFactory : StatementFactory {
                              loopBody: ForLoopBody): Convertable =
     JavaForLoop(initialization, condition, afterThought, loopBody)
 
-  override fun createEmptyLambdaBody(argName: String): LambdaBody = JavaLambdaBody(this, argName)
+  override fun createEmptyLambdaBody(argName: String): LambdaBody = JavaLambdaBody(this, TextExpression(argName))
 
   override fun createLambda(argName: String, lambdaBody: LambdaBody): Lambda {
     assert(lambdaBody is JavaLambdaBody)

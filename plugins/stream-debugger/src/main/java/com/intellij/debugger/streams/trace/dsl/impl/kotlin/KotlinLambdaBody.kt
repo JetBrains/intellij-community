@@ -15,10 +15,11 @@
  */
 package com.intellij.debugger.streams.trace.dsl.impl.kotlin
 
+import com.intellij.debugger.streams.trace.dsl.Expression
 import com.intellij.debugger.streams.trace.dsl.LambdaBody
 import com.intellij.debugger.streams.trace.dsl.StatementFactory
 
 /**
  * @author Vitaliy.Bibaev
  */
-class KotlinLambdaBody(override val argName: String, statementFactory: StatementFactory) : KotlinCodeBlock(statementFactory), LambdaBody
+class KotlinLambdaBody(override val lambdaArg: Expression, statementFactory: StatementFactory) : KotlinCodeBlock(statementFactory), LambdaBody

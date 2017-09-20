@@ -119,7 +119,7 @@ open class DistinctByKeyHandler(callNumber: Int, private val myCall: Intermediat
   override fun additionalCallsAfter(): List<IntermediateStreamCall> {
     val callsAfter = ArrayList(myPeekHandler.additionalCallsAfter())
     val lambda = dsl.lambda("x") {
-      +myTime2ValueAfter.set(dsl.currentTime(), TextExpression(argName))
+      +myTime2ValueAfter.set(dsl.currentTime(), lambdaArg)
     }
 
     callsAfter.add(dsl.createPeekCall(myTypeAfter, lambda.toCode()))
@@ -154,13 +154,13 @@ open class DistinctByKeyHandler(callNumber: Int, private val myCall: Intermediat
 class DistinctKeysHandler(callNumber: Int, call: IntermediateStreamCall, dsl: Dsl)
   : DistinctByKeyHandler.DistinctByCustomKey(callNumber, call, "java.util.function.Function<java.util.Map.Entry, java.lang.Object>",
                                              dsl.lambda("x") {
-                                               +TextExpression(argName).call("getKey")
+                                               +lambdaArg.call("getKey")
                                              }.toCode(),
                                              dsl)
 
 class DistinctValuesHandler(callNumber: Int, call: IntermediateStreamCall, dsl: Dsl)
   : DistinctByKeyHandler.DistinctByCustomKey(callNumber, call, "java.util.function.Function<java.util.Map.Entry, java.lang.Object>",
                                              dsl.lambda("x") {
-                                               +TextExpression(argName).call("getValue")
+                                               +lambdaArg.call("getValue")
                                              }.toCode(),
                                              dsl)
