@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.openapi.application.impl.AnyModalityState.ANY;
 import static com.intellij.util.concurrency.AppExecutorUtil.createBoundedScheduledExecutorService;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -147,7 +148,7 @@ public class FileRefresher implements Disposable {
     RefreshSession session;
     synchronized (files) {
       if (this.session != null || files.isEmpty()) return;
-      session = RefreshQueue.getInstance().createSession(true, recursive, this::finish);
+      session = RefreshQueue.getInstance().createSession(true, recursive, this::finish, ANY);
       session.addAllFiles(files);
       this.session = session;
     }
