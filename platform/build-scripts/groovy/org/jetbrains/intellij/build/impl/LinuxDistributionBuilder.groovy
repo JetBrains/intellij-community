@@ -219,6 +219,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
           filter(token: "VERSION", value: version)
           filter(token: "SUMMARY", value: productName)
           filter(token: "DESCRIPTION", value: customizer.snapDescription)
+          filter(token: "GRADE", value: buildContext.applicationInfo.isEAP ? "devel" : "stable")
           filter(token: "SCRIPT", value: "bin/${buildContext.productProperties.baseFileName}.sh")
         }
       }
