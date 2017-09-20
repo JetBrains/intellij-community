@@ -26,19 +26,19 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 abstract class DslTestCase(private val directoryName: String, private val dsl: Dsl) : LightCodeInsightFixtureTestCase() {
   fun testCall() {
     doTest {
-      call(+"this", "method")
+      call("this".expr, "method")
     }
   }
 
   fun testCallOneArg() {
     doTest {
-      call(+"this", "method", +"10")
+      call("this".expr, "method", "10".expr)
     }
   }
 
   fun testCallManyArgs() {
     doTest {
-      call(+"this", "method", +"10", +"20", +"30")
+      call("this".expr, "method", "10".expr, "20".expr, "30".expr)
     }
   }
 
@@ -56,36 +56,36 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
 
   fun testDeclareVariableAndInit() {
     doTest {
-      declare(variable(types.INT, "a"), +"10", false)
+      declare(variable(types.INT, "a"), "10".expr, false)
     }
   }
 
   fun testUseVariable() {
     doTest {
-      declare(variable(types.INT, "a"), +"100", true)
-      declare(variable(types.INT, "b"), +"a", false)
+      declare(variable(types.INT, "a"), "100".expr, true)
+      declare(variable(types.INT, "b"), "a".expr, false)
     }
   }
 
   fun testMergeCodeBlocks() {
     val block = dsl.block {
-      declare(variable(types.INT, "b"), +"20", false)
+      declare(variable(types.INT, "b"), "20".expr, false)
     }
 
     doTest {
-      declare(variable(types.INT, "a"), +"10", false)
+      declare(variable(types.INT, "a"), "10".expr, false)
       add(block)
     }
   }
 
   fun testMergeCodeBlocksReversed() {
     val block = dsl.block {
-      declare(variable(types.INT, "a"), +"10", false)
+      declare(variable(types.INT, "a"), "10".expr, false)
     }
 
     doTest {
       add(block)
-      declare(variable(types.INT, "b"), +"20", false)
+      declare(variable(types.INT, "b"), "20".expr, false)
     }
   }
 
@@ -110,47 +110,47 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
 
   fun testIf() {
     doTest {
-      ifBranch(+"true") {
-        call(+"receiver", "success")
+      ifBranch("true".expr) {
+        call("receiver".expr, "success")
       }
     }
   }
 
   fun testIfElse() {
     doTest {
-      ifBranch(+"false") {
-        call(+"this", "success")
+      ifBranch("false".expr) {
+        call("this".expr, "success")
       }.elseBranch {
-        call(+"this", "fail")
+        call("this".expr, "fail")
       }
     }
   }
 
   fun testIfElseIf() {
     doTest {
-      ifBranch(+"false") {
-        call(+"this", "success")
-      }.elseIfBranch(+"true") {
-        call(+"this", "failSuccess")
+      ifBranch("false".expr) {
+        call("this".expr, "success")
+      }.elseIfBranch("true".expr) {
+        call("this".expr, "failSuccess")
       }
     }
   }
 
   fun testIfElseIfElse() {
     doTest {
-      ifBranch(+"false") {
-        call(+"this", "success")
-      }.elseIfBranch(+"true") {
-        call(+"this", "failSuccess")
+      ifBranch("false".expr) {
+        call("this".expr, "success")
+      }.elseIfBranch("true".expr) {
+        call("this".expr, "failSuccess")
       }.elseBranch {
-        call(+"this", "failFail")
+        call("this".expr, "failFail")
       }
     }
   }
 
   fun testForEach() {
     doTest {
-      val objects = declare(variable(types.list(types.ANY), "objects"), +"getObjects()", false)
+      val objects = declare(variable(types.list(types.ANY), "objects"), "getObjects()".expr, false)
       forEachLoop(variable(types.ANY, "object"), objects) {
         +(loopVariable.call("toString"))
       }
@@ -159,9 +159,9 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
 
   fun testForLoop() {
     doTest {
-      val objects = declare(variable(types.list(types.ANY), "objects"), +"getObjects()", false)
+      val objects = declare(variable(types.list(types.ANY), "objects"), "getObjects()".expr, false)
       val i = variable(types.INT, "i")
-      forLoop(declaration(i, +"0", true), +"i < $objects.size()", +"i++") {
+      forLoop(declaration(i, "0".expr, true), "i < $objects.size()".expr, "i++".expr) {
         +(loopVariable.call("toString"))
       }
     }
@@ -169,7 +169,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
 
   fun testLoopWithBreak() {
     doTest {
-      val objects = declare(variable(types.list(types.ANY), "objects"), +"getObjects()", false)
+      val objects = declare(variable(types.list(types.ANY), "objects"), "getObjects()".expr, false)
       forEachLoop(variable(types.ANY, "object"), objects) {
         +breakIteration()
       }
@@ -178,7 +178,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
 
   fun testLoopWithNestedBreak() {
     doTest {
-      val objects = declare(variable(types.list(types.ANY), "objects"), +"getObjects()", false)
+      val objects = declare(variable(types.list(types.ANY), "objects"), "getObjects()".expr, false)
       forEachLoop(variable(types.ANY, "object"), objects) {
         ifBranch(loopVariable.property("isEmpty")) {
           +breakIteration()
@@ -206,7 +206,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
 
   fun testCodeBlockReturn() {
     doTest {
-      val a = declare(variable(types.INT, "a"), +"10", true)
+      val a = declare(variable(types.INT, "a"), "10".expr, true)
       doReturn(a)
     }
   }
@@ -231,17 +231,17 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
   fun testAssignment() {
     doTest {
       val a = declare(variable(types.INT, "a"), true)
-      a.assign(+"100")
+      a.assign("100".expr)
     }
   }
 
   fun testNestedAssignment() {
     doTest {
       val a = declare(variable(types.INT, "a"), true)
-      ifBranch(+"true") {
-        a.assign(+"100")
+      ifBranch("true".expr) {
+        a.assign("100".expr)
       }.elseBranch {
-        a.assign(+"200")
+        a.assign("200".expr)
       }
     }
   }
@@ -256,7 +256,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
   fun testNegation() {
     doTest {
       val lst = list(types.INT, "lst")
-      +(not(lst.contains(+"1")))
+      +(not(lst.contains("1".expr)))
     }
   }
 
@@ -275,21 +275,21 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
   fun testMapGet() {
     doTest {
       val map = map(types.INT, types.ANY, "map")
-      +map.get(+"key")
+      +map.get("key".expr)
     }
   }
 
   fun testMapPut() {
     doTest {
       val map = map(types.INT, types.ANY, "map")
-      +map.set(+"key", +"value")
+      +map.set("key".expr, "value".expr)
     }
   }
 
   fun testMapContains() {
     doTest {
       val map = map(types.INT, types.ANY, "map")
-      +map.contains(+"key")
+      +map.contains("key".expr)
     }
   }
 
@@ -308,7 +308,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
   fun testMapComputeIfAbsent() {
     doTest {
       val map = map(types.INT, types.ANY, "map")
-      +map.computeIfAbsent(+"key", lambda("y") {
+      +map.computeIfAbsent("key".expr, lambda("y") {
         doReturn(map.call("method"))
       })
     }
@@ -334,7 +334,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
   fun testNewList() {
     doTest {
       val variable = list(types.INT, "lst")
-      variable.assign(newList(types.INT, +"0", +"1", +"2", +"3"))
+      variable.assign(newList(types.INT, "0".expr, "1".expr, "2".expr, "3".expr))
     }
   }
 
@@ -348,29 +348,29 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
     doTest {
       val array = array(types.INT, "a")
       +array[10]
-      +array[+"11"]
+      +array["11".expr]
     }
   }
 
   fun testArrayElementAssignment() {
     doTest {
       val array = array(types.INT, "a")
-      +(array.set(0, +"1"))
-      +(array.set(1, +"2"))
+      +(array.set(0, "1".expr))
+      +(array.set(1, "2".expr))
     }
   }
 
   fun testArrayDefaultDeclaration() {
     doTest {
       val a = array(types.INT, "array")
-      declare(a.defaultDeclaration(+"10"))
+      declare(a.defaultDeclaration("10".expr))
     }
   }
 
   fun testArrayCreateFromElements() {
     doTest {
       val a = array(types.DOUBLE, "array")
-      declare(a, newArray(types.DOUBLE, +"10.0", +"20.0"), false)
+      declare(a, newArray(types.DOUBLE, "10.0".expr, "20.0".expr), false)
     }
   }
 

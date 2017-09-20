@@ -65,7 +65,7 @@ class DslImpl(private val statementFactory: StatementFactory) : Dsl {
 
   override fun lambda(argName: String, init: LambdaBody.(Expression) -> Unit): Lambda {
     val lambdaBody = statementFactory.createEmptyLambdaBody(argName)
-    lambdaBody.init(+argName)
+    lambdaBody.init(argName.expr)
     return statementFactory.createLambda(argName, lambdaBody)
   }
 
@@ -80,8 +80,6 @@ class DslImpl(private val statementFactory: StatementFactory) : Dsl {
 
   override fun createPeekCall(elementsType: GenericType, lambda: String): IntermediateStreamCall =
     statementFactory.createPeekCall(elementsType, lambda)
-
-  override fun String.unaryPlus(): TextExpression = TextExpression(this)
 
   override fun and(left: Expression, right: Expression): Expression = statementFactory.and(left, right)
 

@@ -61,7 +61,7 @@ abstract class TraceExpressionBuilderBase(private val myProject: Project, protec
     return dsl.code {
       scope {
         // TODO: avoid language dependent code
-        val startTime = declare(variable(types.LONG, "startTime"), +"java.lang.System.nanoTime()", false)
+        val startTime = declare(variable(types.LONG, "startTime"), "java.lang.System.nanoTime()".expr, false)
         declare(info, newSizedArray(types.ANY, infoArraySize), false)
         declare(timeDeclaration())
         add(declarations)
@@ -69,7 +69,7 @@ abstract class TraceExpressionBuilderBase(private val myProject: Project, protec
         add(fillingInfoArray)
 
         val elapsedTime = declare(array(types.LONG, "elapsedTime"),
-                                  newArray(types.LONG, +"java.lang.System.nanoTime() - ${startTime.toCode()}"), false)
+                                  newArray(types.LONG, "java.lang.System.nanoTime() - ${startTime.toCode()}".expr), false)
         result.assign(newArray(types.ANY, info, streamResult, elapsedTime))
       }
     }
@@ -136,7 +136,7 @@ abstract class TraceExpressionBuilderBase(private val myProject: Project, protec
         }
       }.catch(variable(types.EXCEPTION, "t")) {
         // TODO: add exception variable as a property of catch code block
-        streamResult.assign(newArray(types.EXCEPTION, +"t"))
+        streamResult.assign(newArray(types.EXCEPTION, "t".expr))
       }
     }
   }

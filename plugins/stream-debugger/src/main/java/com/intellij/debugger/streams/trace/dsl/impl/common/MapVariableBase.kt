@@ -41,7 +41,7 @@ abstract class MapVariableBase(override val type: MapType, override val name: St
         declare(size, size(), false)
         declare(keys.defaultDeclaration(size))
         declare(values.defaultDeclaration(size))
-        declare(i, +"0", true)
+        declare(i, "0".expr, true)
         forEachLoop(key, keys()) {
           +keys.set(i, loopVariable)
           +values.set(i, get(loopVariable))

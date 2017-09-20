@@ -37,7 +37,7 @@ interface DslFactory {
 
   fun newSizedArray(elementType: GenericType, size: Expression): Expression
 
-  fun newSizedArray(elementType: GenericType, size: Int): Expression = newSizedArray(elementType, +"$size")
+  fun newSizedArray(elementType: GenericType, size: Int): Expression = newSizedArray(elementType, "$size".expr)
 
   fun map(keyType: GenericType, valueType: GenericType, name: String): MapVariable
 
@@ -45,7 +45,8 @@ interface DslFactory {
 
   fun declaration(variable: Variable, init: Expression, isMutable: Boolean): VariableDeclaration
 
-  operator fun String.unaryPlus(): TextExpression
+  val String.expr: Expression
+    get() = TextExpression(this)
 
   fun and(left: Expression, right: Expression): Expression
 
