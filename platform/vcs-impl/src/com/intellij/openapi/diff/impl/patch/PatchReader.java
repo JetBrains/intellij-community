@@ -180,21 +180,13 @@ public class PatchReader {
 
   @NotNull
   public ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> getAdditionalInfo(@Nullable Set<String> paths) {
-    ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> result;
     PatchSyntaxException e = myAdditionalInfoParser.getSyntaxException();
-
     if (e != null) {
-      result = () -> {
+      return () -> {
         throw e;
       };
     }
-    else {
-      Map<String, Map<String, CharSequence>> additionalInfo =
-        filter(myAdditionalInfoParser.getResultMap(), path -> paths == null || paths.contains(path));
-      result = () -> additionalInfo;
-    }
-
-    return result;
+    return () -> filter(myAdditionalInfoParser.getResultMap(), path -> paths == null || paths.contains(path));
   }
 
   private static class AdditionalInfoParser implements Parser {
