@@ -37,7 +37,7 @@ class MatchHandler(private val call: TerminatorStreamCall, dsl: Dsl) : HandlerBa
     val PREDICATE_NAME = "predicate42"
   }
 
-  private val myBeforePeekInserter = PeekTraceHandler(0, "match", call.typeBefore, call.typeBefore, dsl)
+  private val myBeforePeekInserter = PeekTraceHandler(0, "filterMatch", call.typeBefore, call.typeBefore, dsl)
   private val myAfterPeekInserter = PeekTraceHandler(1, "match", call.typeBefore, call.typeBefore, dsl)
   private val myPredicateVariable = dsl.variable(ClassTypeImpl(call.arguments.first().type), PREDICATE_NAME)
   override fun additionalVariablesDeclaration(): List<VariableDeclaration> {
@@ -56,11 +56,11 @@ class MatchHandler(private val call: TerminatorStreamCall, dsl: Dsl) : HandlerBa
       val result = array(types.anyType, "result")
       declare(result, newSizedArray(types.anyType, 3), false)
       scope {
-        +myBeforePeekInserter.prepareResult()
+        add(myBeforePeekInserter.prepareResult())
         +result.set(0, myBeforePeekInserter.resultExpression)
       }
       scope {
-        +myAfterPeekInserter.prepareResult()
+        add(myAfterPeekInserter.prepareResult())
         +result.set(1, myAfterPeekInserter.resultExpression)
       }
       // TODO: avoid strange string literals in code
@@ -72,7 +72,7 @@ class MatchHandler(private val call: TerminatorStreamCall, dsl: Dsl) : HandlerBa
     val args = call.arguments
     assert(args.size == 1, { "Only predicate should be specified" })
     val predicate = args.first()
-    val newPredicateBody = if (call.name == "allMatch") "true" else "false"
+    val newPredicateBody = if (call.name == "allMatch") "false" else "true"
     val newPredicate = dsl.lambda("x") { +TextExpression(newPredicateBody) }.toCode()
     return call.transformArgs(listOf(CallArgumentImpl(predicate.type, newPredicate)))
   }
@@ -85,6 +85,7 @@ class MatchHandler(private val call: TerminatorStreamCall, dsl: Dsl) : HandlerBa
     val filterArg = CallArgumentImpl(myPredicateVariable.type.variableTypeName, filterPredicate)
     result += IntermediateStreamCallImpl("filter", listOf(filterArg), call.typeBefore, call.typeBefore,
                                          TextRange.EMPTY_RANGE, call.packageName)
+    result.addAll(myAfterPeekInserter.additionalCallsBefore())
     return result
   }
 
