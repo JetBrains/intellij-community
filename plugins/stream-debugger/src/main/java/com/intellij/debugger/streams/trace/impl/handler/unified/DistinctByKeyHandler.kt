@@ -28,23 +28,23 @@ import one.util.streamex.StreamEx
 /**
  * @author Vitaliy.Bibaev
  */
-open class DistinctByKeyHandler(callNumber: Int, call: IntermediateStreamCall, dsl: Dsl) : HandlerBase.Intermediate(dsl) {
+open class DistinctByKeyHandler(callNumber: Int, private val myCall: IntermediateStreamCall, dsl: Dsl) : HandlerBase.Intermediate(dsl) {
   private companion object {
     val KEY_EXTRACTOR_VARIABLE_PREFIX = "keyExtractor"
     val TRANSITIONS_ARRAY_NAME = "transitionsArray"
   }
 
-  private val myPeekHandler = PeekTraceHandler(callNumber, "distinct", call.typeBefore, call.typeAfter, dsl)
+  private val myPeekHandler = PeekTraceHandler(callNumber, "distinct", myCall.typeBefore, myCall.typeAfter, dsl)
   private val myKeyExtractor: CallArgument
-  private val myTypeAfter = call.typeAfter
+  private val myTypeAfter = myCall.typeAfter
   private val myExtractorVariable: Variable
-  private val myBeforeTimes = dsl.list(dsl.types.integerType, call.name + callNumber + "BeforeTimes")
-  private val myBeforeValues = dsl.list(dsl.types.anyType, call.name + callNumber + "BeforeValues")
-  private val myKeys = dsl.list(dsl.types.anyType, call.name + callNumber + "Keys")
-  private val myTime2ValueAfter = dsl.linkedMap(dsl.types.integerType, dsl.types.anyType, call.name + callNumber + "after")
+  private val myBeforeTimes = dsl.list(dsl.types.integerType, myCall.name + callNumber + "BeforeTimes")
+  private val myBeforeValues = dsl.list(dsl.types.anyType, myCall.name + callNumber + "BeforeValues")
+  private val myKeys = dsl.list(dsl.types.anyType, myCall.name + callNumber + "Keys")
+  private val myTime2ValueAfter = dsl.linkedMap(dsl.types.integerType, dsl.types.anyType, myCall.name + callNumber + "after")
 
   init {
-    val arguments = call.arguments
+    val arguments = myCall.arguments
     assert(arguments.isNotEmpty(), { "Key extractor is not specified" })
     myKeyExtractor = arguments.first()
     myExtractorVariable = dsl.variable(ClassTypeImpl(myKeyExtractor.type), KEY_EXTRACTOR_VARIABLE_PREFIX + callNumber)
@@ -133,7 +133,7 @@ open class DistinctByKeyHandler(callNumber: Int, call: IntermediateStreamCall, d
   }
 
   private fun IntermediateStreamCall.updateArguments(args: List<CallArgument>): IntermediateStreamCall =
-    IntermediateStreamCallImpl(name, args, typeBefore, typeAfter, textRange, packageName)
+    IntermediateStreamCallImpl(myCall.name, args, typeBefore, typeAfter, textRange, packageName)
 
   open class DistinctByCustomKey(callNumber: Int,
                                  call: IntermediateStreamCall,
@@ -142,7 +142,7 @@ open class DistinctByKeyHandler(callNumber: Int, call: IntermediateStreamCall, d
                                  dsl: Dsl)
     : DistinctByKeyHandler(callNumber, call.transform(extractorType, extractorExpression), dsl) {
 
-    companion object {
+    private companion object {
       fun IntermediateStreamCall.transform(extractorType: String, extractorExpression: String): IntermediateStreamCall {
         return IntermediateStreamCallImpl("distinct", listOf(CallArgumentImpl(extractorType, extractorExpression)), typeBefore,
                                           typeAfter, TextRange.EMPTY_RANGE, packageName)
@@ -154,13 +154,13 @@ open class DistinctByKeyHandler(callNumber: Int, call: IntermediateStreamCall, d
 class DistinctKeysHandler(callNumber: Int, call: IntermediateStreamCall, dsl: Dsl)
   : DistinctByKeyHandler.DistinctByCustomKey(callNumber, call, "java.util.function.Function<java.util.Map.Entry, java.lang.Object>",
                                              dsl.lambda("x") {
-                                               +TextExpression("x").call("getKey", TextExpression(argName))
+                                               +TextExpression(argName).call("getKey")
                                              }.toCode(),
                                              dsl)
 
 class DistinctValuesHandler(callNumber: Int, call: IntermediateStreamCall, dsl: Dsl)
   : DistinctByKeyHandler.DistinctByCustomKey(callNumber, call, "java.util.function.Function<java.util.Map.Entry, java.lang.Object>",
                                              dsl.lambda("x") {
-                                               +TextExpression("x").call("getValue", TextExpression(argName))
+                                               +TextExpression(argName).call("getValue")
                                              }.toCode(),
                                              dsl)
