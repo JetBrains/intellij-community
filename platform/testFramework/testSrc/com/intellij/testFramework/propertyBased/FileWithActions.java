@@ -55,7 +55,6 @@ public class FileWithActions {
     Project project = myFile.getProject();
     new RunAll(() -> MadTestingUtil.changeAndRevert(project, () -> MadTestingAction.runActions(myActions)),
                () -> WriteAction.run(() -> myFile.getVirtualFile().delete(this))).run();
-    System.out.println(getConstructionCode());
     return true;
   }
 
