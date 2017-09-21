@@ -50,7 +50,7 @@ abstract class TraceExpressionBuilderBase(private val myProject: Project, protec
 
     val infoArraySize = 2 + intermediateHandlers.size
     val info = dsl.array(dsl.types.ANY, "info")
-    val streamResult = dsl.variable(dsl.types.ANY, "streamResult")
+    val streamResult = dsl.variable(dsl.types.nullable { ANY }, "streamResult")
     val declarations = buildDeclarations(intermediateHandlers, terminatorHandler)
 
     val tracingCall = buildStreamExpression(traceChain, streamResult)
