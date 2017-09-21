@@ -138,7 +138,7 @@ object GuiTestLocalLauncher {
   }
 
   private fun startIdeAndWait(ide: Ide, args: List<String>): Unit
-    = startIde(ide = ide, needToWait = true, args = args)
+    = startIde(ide = ide, needToWait = true, timeOut = 180, args = args)
 
 
   private fun createArgs(ide: Ide, mainClass: String = "com.intellij.idea.Main", port: Int = 0): List<String>
