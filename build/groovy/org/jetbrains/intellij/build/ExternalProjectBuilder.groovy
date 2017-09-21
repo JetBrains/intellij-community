@@ -48,7 +48,7 @@ class ExternalProjectBuilder extends JpsGantProjectBuilder {
       def values = properties.getProperty(name).split(":")
       values = values.collect { it -> Paths.get(root, it).toString() }
       myOutputs.put(name, values[0])
-      myRuntimeDeps.put(name, values[1..values.size()-1])
+      myRuntimeDeps.put(name, values)
     }
   }
 
