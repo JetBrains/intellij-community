@@ -121,17 +121,23 @@ object GuiTestLocalLauncher {
         process!!.waitFor(timeOut, timeOutUnit)
       else
         process!!.waitFor()
-      if (process!!.exitValue() == 0) {
-        println("${ide.ideType} process completed successfully")
-        LOG.info("${ide.ideType} process completed successfully")
+      try {
+        if (process!!.exitValue() == 0) {
+          println("${ide.ideType} process completed successfully")
+          LOG.info("${ide.ideType} process completed successfully")
+        }
+        else {
+          System.err.println("${ide.ideType} process execution error:")
+          val collectedError = BufferedReader(InputStreamReader(process!!.errorStream)).lines().collect(Collectors.joining("\n"))
+          System.err.println(collectedError)
+          LOG.error("${ide.ideType} process execution error:")
+          LOG.error(collectedError)
+          fail("Starting ${ide.ideType} failed.")
+        }
       }
-      else {
-        System.err.println("${ide.ideType} process execution error:")
-        val collectedError = BufferedReader(InputStreamReader(process!!.errorStream)).lines().collect(Collectors.joining("\n"))
-        System.err.println(collectedError)
-        LOG.error("${ide.ideType} process execution error:")
-        LOG.error(collectedError)
-        fail("Starting ${ide.ideType} failed.")
+      catch (e: IllegalThreadStateException) {
+        killProcessIfPossible()
+        throw e
       }
     }
 
