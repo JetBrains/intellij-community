@@ -834,6 +834,9 @@
         <constraint name="b" nameOfExprType="boolean" exprTypeWithinHierarchy="true" within="" contains="" />
       </searchConfiguration>
     </inspection_tool>
+    <inspection_tool class="SameParameterValue" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Tests" level="INFORMATION" enabled="true" />
+    </inspection_tool>
     <inspection_tool class="SassOldSyntax" enabled="false" enabled_by_default="false" level="WARNING" />
     <inspection_tool class="SassUnresolvedMixin" enabled="false" enabled_by_default="false" level="WARNING" />
     <inspection_tool class="SassUnresolvedVariable" enabled="false" enabled_by_default="false" level="WARNING" />
