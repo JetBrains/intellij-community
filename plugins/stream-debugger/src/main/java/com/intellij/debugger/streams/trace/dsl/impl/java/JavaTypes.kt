@@ -55,6 +55,8 @@ object JavaTypes : Types {
   override fun list(elementsType: GenericType): ListType =
     ListTypeImpl(elementsType, { "java.util.List<$it>" }, "new java.util.ArrayList<>()")
 
+  override fun nullable(typeSelector: Types.() -> GenericType): GenericType = this.typeSelector()
+
   private val optional: GenericType = ClassTypeImpl("java.util.Optional")
   private val optionalInt: GenericType = ClassTypeImpl("java.util.OptionalInt")
   private val optionalLong: GenericType = ClassTypeImpl("java.util.OptionalLong")

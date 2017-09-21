@@ -38,7 +38,7 @@ object KotlinTypes : Types {
       ListTypeImpl(elementsType, { "kotlin.collections.MutableList<$it>" }, "kotlin.collections.mutableListOf()")
 
     override fun array(elementType: GenericType): ArrayType =
-      ArrayTypeImpl(elementType, { "kotlin.Array<$it?>" }, "kotlin.arrayOfNulls(1)")
+      ArrayTypeImpl(nullable { elementType }, { "kotlin.Array<$it>" }, "kotlin.arrayOfNulls(1)")
 
     override fun map(keyType: GenericType, valueType: GenericType): MapType =
       MapTypeImpl(keyType, valueType,
@@ -49,4 +49,16 @@ object KotlinTypes : Types {
       MapTypeImpl(keyType, valueType,
                   { keys, values -> "kotlin.collections.MutableMap<$keys, $values>" },
                   "kotlin.collections.linkedMapOf()")
+
+  override fun nullable(typeSelector: Types.() -> GenericType): GenericType {
+    val type = this.typeSelector()
+    if (type.genericTypeName.last() == '?') return type
+    return when (type) {
+      is ArrayType -> ArrayTypeImpl(type.elementType, { "kotlin.Array<$it>?" }, type.defaultValue)
+      is ListType -> ListTypeImpl(type.elementType, { "kotlin.collections.MutableList<$it>?" }, type.defaultValue)
+      is MapType -> MapTypeImpl(type.keyType, type.valueType, { keys, values -> "kotlin.collections.MutableMap<$keys, $values>?" },
+                                type.defaultValue)
+      else -> ClassTypeImpl(type.genericTypeName + '?', type.defaultValue)
+    }
+  }
 }

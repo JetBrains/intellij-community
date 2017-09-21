@@ -382,6 +382,17 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
     }
   }
 
+  fun testNullableTypes() {
+    doTest {
+      declare(variable(types.ANY, "usualType"), false)
+      declare(variable(types.nullable { ANY }, "nullableType"), false)
+      declare(variable(types.array(types.nullable { ANY }), "arrayWithNullableElements"), false)
+      declare(variable(types.nullable { array(nullable { ANY }) }, "nullableArrayWithNullableElements"), false)
+      declare(variable(types.nullable { list(types.BOOLEAN) }, "nullableList"), false)
+      declare(variable(types.map(types.INT, types.nullable { ANY }), "mapWithNullableValues"), false)
+    }
+  }
+
   fun testTryBlock() {
     doTest {
       tryBlock {

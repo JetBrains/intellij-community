@@ -39,4 +39,6 @@ interface Types {
   fun list(elementsType: GenericType): ListType
   fun map(keyType: GenericType, valueType: GenericType): MapType
   fun linkedMap(keyType: GenericType, valueType: GenericType): MapType
+
+  fun nullable(typeSelector: Types.() -> GenericType): GenericType
 }
