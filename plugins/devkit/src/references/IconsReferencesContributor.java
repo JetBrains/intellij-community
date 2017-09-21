@@ -247,7 +247,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
           }
         }.getAllReferences();
       }
-    });
+    }, PsiReferenceRegistrar.HIGHER_PRIORITY);
   }
 
   private static void registerForPresentationAnnotation(@NotNull PsiReferenceRegistrar registrar) {
@@ -322,7 +322,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
           }
         };
       }
-    });
+    }, PsiReferenceRegistrar.HIGHER_PRIORITY);
   }
 
 

@@ -15,8 +15,12 @@
  */
 package org.jetbrains.idea.devkit.inspections;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
@@ -39,18 +43,23 @@ public class PresentationAnnotationInspectionTest extends JavaCodeInsightFixture
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
     String presentationJar = PathUtil.getJarPathForClass(Presentation.class);
     moduleBuilder.addLibrary("presentation", presentationJar);
+    String iconsJar = PathUtil.getJarPathForClass(AllIcons.class);
+    moduleBuilder.addLibrary("icons", iconsJar);
   }
+
 
   public void testValidIcon() {
     myFixture.testHighlighting("ValidIcon.java");
-  }
 
-  public void testValidIconConcatenation() {
-    myFixture.testHighlighting("ValidIconConcatenation.java");
-  }
+    PsiReference reference = myFixture.getReferenceAtCaretPosition("ValidIcon.java");
+    assertNotNull(reference);
+    PsiElement resolved = reference.resolve();
+    assertNotNull(resolved);
+    assertInstanceOf(resolved, PsiField.class);
 
-  public void testValidIconConstant() {
-    myFixture.testHighlighting("ValidIconConstant.java");
+    PsiField resolvedField = (PsiField)resolved;
+    String qualifiedName = resolvedField.getContainingClass().getQualifiedName();
+    assertEquals(AllIcons.Actions.class.getCanonicalName(), qualifiedName);
   }
 
   public void testEmptyIcon() {
@@ -59,13 +68,5 @@ public class PresentationAnnotationInspectionTest extends JavaCodeInsightFixture
 
   public void testInvalidIcon() {
     myFixture.testHighlighting("InvalidIcon.java");
-  }
-
-  public void testInvalidIconConcatenation() {
-    myFixture.testHighlighting("InvalidIconConcatenation.java");
-  }
-
-  public void testInvalidIconConstant() {
-    myFixture.testHighlighting("InvalidIconConstant.java");
   }
 }
