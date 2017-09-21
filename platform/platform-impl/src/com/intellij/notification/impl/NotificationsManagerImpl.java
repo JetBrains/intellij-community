@@ -341,7 +341,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
 
     boolean actions = !notification.getActions().isEmpty();
-    boolean showFullContent = layoutData.showFullContent || notification instanceof NotificationActionProvider;
+    boolean showFullContent = layoutData.showFullContent || notification instanceof NotificationFullContent;
 
     Color foregroundR = Gray._0;
     Color foregroundD = Gray._191;
