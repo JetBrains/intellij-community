@@ -19,6 +19,7 @@ import com.intellij.application.options.emmet.EmmetOptions;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
+import com.intellij.codeInsight.template.emmet.EmmetAbbreviationBalloon.EmmetContextHelp;
 import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGeneratorImpl;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -52,14 +53,15 @@ import java.util.Map;
 public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbAware, PopupAction {
   private static final String EMMET_RECENT_UPDATE_ABBREVIATIONS_KEY = "emmet.recent.update.abbreviations";
   private static final String EMMET_LAST_UPDATE_ABBREVIATIONS_KEY = "emmet.last.update.abbreviations";
-  private static final String DOCUMENTATION = "Update existing HTML tag with Emmet abbreviation:\n" +
-                                              ".class[attribute] to overwrite existing value;\n" +
+  private static final String DOCUMENTATION = "Update HTML tag with Emmet abbreviation:\n" +
+                                              ".class[attribute] to overwrite value;\n" +
                                               ".+class[attribute] to append value;\n" +
                                               ".-class[attribute] to remove value.\n" +
                                               "\n" +
                                               "For example, <code>.+c2[title=Hello]</code> abbreviation updates\n" +
                                               "<code>&lt;div class=\"c1\"&gt;</code> to \n" +
                                               "<code>&lt;div class=\"c1 c2\" title=\"Hello\"&gt;</code>.";
+  private static final EmmetContextHelp CONTEXT_HELP = new EmmetContextHelp(DOCUMENTATION);
 
   @NotNull
   @Override
@@ -79,7 +81,7 @@ public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbA
                                            catch (EmmetException ignore) {
                                            }
                                          }
-                                       }, DOCUMENTATION).show(new CustomTemplateCallback(editor, file));
+                                       }, CONTEXT_HELP).show(new CustomTemplateCallback(editor, file));
         }
       }
 
