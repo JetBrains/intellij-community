@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.NestedCopyType;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 
 import java.io.File;
 import java.util.List;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static org.jetbrains.idea.svn.SvnUtil.checkRepositoryVersion15;
+import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
 import static org.jetbrains.idea.svn.WorkingCopyFormat.ONE_DOT_EIGHT;
 import static org.jetbrains.idea.svn.integrate.SvnBranchPointsCalculator.WrapperInvertor;
 
@@ -226,6 +226,6 @@ public class QuickMerge extends BackgroundTaskGroup {
   }
 
   private static boolean areInSameHierarchy(@NotNull SVNURL url1, @NotNull SVNURL url2) {
-    return SVNURLUtil.isAncestor(url1, url2) || SVNURLUtil.isAncestor(url2, url1);
+    return isAncestor(url1, url2) || isAncestor(url2, url1);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,14 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.util.Map;
+
+import static com.google.common.net.UrlEscapers.urlFragmentEscaper;
+import static org.jetbrains.idea.svn.SvnUtil.ensureStartSlash;
+import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
 
 public class LatestExistentSearcher {
 
@@ -66,7 +69,7 @@ public class LatestExistentSearcher {
     myUrl = url;
     myRepositoryUrl = repositoryUrl;
     // TODO: Make utility method that compare relative urls checking all possible cases when start/end slash exists or not.
-    myRelativeUrl = SvnUtil.ensureStartSlash(SVNURLUtil.getRelativeURL(myRepositoryUrl, myUrl, true));
+    myRelativeUrl = ensureStartSlash(urlFragmentEscaper().escape(getRelativeUrl(myRepositoryUrl, myUrl)));
   }
 
   public long getDeletionRevision() {

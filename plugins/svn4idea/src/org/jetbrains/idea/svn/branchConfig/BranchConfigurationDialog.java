@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -46,6 +45,7 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.ObjectUtils.notNull;
 import static java.lang.Math.min;
+import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
 import static org.jetbrains.idea.svn.dialogs.SelectLocationDialog.selectLocation;
 
 public class BranchConfigurationDialog extends DialogWrapper {
@@ -152,8 +152,7 @@ public class BranchConfigurationDialog extends DialogWrapper {
       SVNURL url = parseUrl(myTrunkLocationTextField.getText());
 
       if (url != null) {
-        boolean isAncestor = SVNURLUtil.isAncestor(myRootUrl, url);
-        boolean areNotSame = isAncestor && !url.equals(myRootUrl);
+        boolean areNotSame = isAncestor(myRootUrl, url) && !url.equals(myRootUrl);
 
         if (areNotSame) {
           myConfiguration.setTrunkUrl(url.toDecodedString());
