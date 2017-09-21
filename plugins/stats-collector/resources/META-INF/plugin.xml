@@ -1,44 +1,44 @@
 <idea-plugin>
   <id>com.intellij.stats.completion</id>
   <name>Completion Stats Collector</name>
-  <version>0.0.525</version>
+  <version>0.0.526</version>
   <vendor email="yaroslav.lepenkin@jetbrains.com" url="http://www.jetbrains.com">JetBrains</vendor>
 
   <description><![CDATA[
       This plugin collects data about your usage of code completion, anonymises and sends it to us. Note, the plugin doesn’t send any of your personal data or code. All we send is just numbers calculated based on your completion usage patterns
     ]]></description>
-  
+
   <change-notes><![CDATA[
       Initial completion sorting via machine learning 
     ]]>
   </change-notes>
-  
+
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.platform</depends>
-  
+
   <idea-version since-build="172.0"/>
 
   <extensions defaultExtensionNs="com.intellij">
-    
-    <applicationService serviceInterface="com.intellij.stats.completion.CompletionLoggerProvider" 
+
+    <applicationService serviceInterface="com.intellij.stats.completion.CompletionLoggerProvider"
                         serviceImplementation="com.intellij.stats.completion.CompletionFileLoggerProvider">
     </applicationService>
-    
-    <applicationService serviceInterface="com.intellij.stats.completion.UrlProvider" 
+
+    <applicationService serviceInterface="com.intellij.stats.completion.UrlProvider"
                         serviceImplementation="com.intellij.stats.completion.InternalUrlProvider">
     </applicationService>
-    
-    <applicationService serviceInterface="com.intellij.stats.completion.FilePathProvider" 
-                        serviceImplementation="com.intellij.stats.completion.PluginDirectoryFilePathProvider" 
+
+    <applicationService serviceInterface="com.intellij.stats.completion.FilePathProvider"
+                        serviceImplementation="com.intellij.stats.completion.PluginDirectoryFilePathProvider"
                         testServiceImplementation="com.intellij.mocks.TestFilePathProvider">
     </applicationService>
-    
+
 
     <applicationService serviceInterface="com.intellij.stats.completion.StatisticSender"
                         serviceImplementation="com.intellij.stats.completion.StatisticSenderImpl"
                         testServiceImplementation="com.intellij.mocks.TestStatisticSender">
     </applicationService>
-    
+
     <applicationService serviceInterface="com.intellij.stats.completion.experiment.WebServiceStatus"
                         serviceImplementation="com.intellij.stats.completion.experiment.WebServiceStatusProvider">
     </applicationService>
@@ -56,7 +56,7 @@
     <applicationService serviceInterface="com.intellij.sorting.Ranker"
                         serviceImplementation="com.intellij.sorting.MLRanker">
     </applicationService>
-    
+
     <applicationService serviceInterface="com.intellij.stats.completion.InstallationIdProvider"
                         serviceImplementation="com.intellij.stats.completion.PermanentInstallationIdProvider">
     </applicationService>
@@ -64,7 +64,7 @@
     <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionFinalSorter$Factory"
                         serviceImplementation="com.intellij.sorting.MLSorterFactory">
     </applicationService>
-    
+
     <applicationService serviceImplementation="com.intellij.sorting.SortingTimeStatistics"/>
     <applicationService serviceImplementation="com.intellij.completion.enhancer.ContributorsTimeStatistics"/>
 
@@ -75,6 +75,7 @@
 
     <applicationConfigurable provider="com.intellij.plugin.PluginSettingsConfigurableProvider"/>
     <preloadingActivity implementation="com.intellij.completion.enhancer.FirstContributorPreloader" order="last"/>
+
   </extensions>
 
   <actions>

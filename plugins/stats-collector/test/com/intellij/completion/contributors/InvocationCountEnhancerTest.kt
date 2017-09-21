@@ -19,6 +19,7 @@ package com.intellij.completion.contributors
 import com.intellij.codeInsight.completion.CompletionContributorEP
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
+import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.enhancer.CompletionContributors
 import com.intellij.completion.enhancer.InvocationCountEnhancingContributor
@@ -43,8 +44,8 @@ class InvocationCountEnhancerTest : LightFixtureCompletionTestCase() {
 
         TestContributor.isEnabled = true
         InvocationCountEnhancingContributor.isEnabledInTests = true
-        beforeCharTyped = InvocationCountEnhancingContributor.charsTypedToPerformSecondCompletionRun
-        InvocationCountEnhancingContributor.charsTypedToPerformSecondCompletionRun = 0
+        beforeCharTyped = InvocationCountEnhancingContributor.RUN_COMPLETION_AFTER_CHARS
+        InvocationCountEnhancingContributor.RUN_COMPLETION_AFTER_CHARS = 0
 
         testContributor = CompletionContributorEP().apply {
             implementationClass = TestContributor::class.java.name
@@ -63,7 +64,6 @@ class InvocationCountEnhancerTest : LightFixtureCompletionTestCase() {
         myFixture.addClass("class Elf {}")
 
         myFixture.configureByText(JavaFileType.INSTANCE, text)
-        myFixture.type('E')
     }
 
     override fun tearDown() {
@@ -72,45 +72,64 @@ class InvocationCountEnhancerTest : LightFixtureCompletionTestCase() {
 
         TestContributor.isEnabled = false
         InvocationCountEnhancingContributor.isEnabledInTests = false
-        InvocationCountEnhancingContributor.charsTypedToPerformSecondCompletionRun = beforeCharTyped
+        InvocationCountEnhancingContributor.RUN_COMPLETION_AFTER_CHARS = beforeCharTyped
 
         super.tearDown()
     }
 
     fun `test basic completion all elements provided, those from higher invocation count at the bottom`() {
-        myFixture.complete(CompletionType.BASIC)
+        try {
+            InvocationCountEnhancingContributor.isEnabledInTests = false
+            myFixture.type('E')
+            myFixture.complete(CompletionType.BASIC)
+            assertThat(lookup.itemStrings()).isEqualTo(listOf(
+                    "EC_BASIC_COUNT_0",
+                    "EC_BASIC_COUNT_1",
+                    "Elf",
+                    "Embedded",
+                    "Test"
+            ))
+            myFixture.type('\b')
+        }
+        finally {
+            InvocationCountEnhancingContributor.isEnabledInTests = true
+        }
 
-        val elements = (lookup as LookupImpl).items
-        assertThat(elements.map { it.lookupString }).isEqualTo(
+        myFixture.type('E')
+        myFixture.complete(CompletionType.BASIC)
+        assertThat(lookup.itemStrings()).isEqualTo(
                 listOf(
-                        "EC_BASIC_COUNT_0",
-                        "EC_BASIC_COUNT_1",
                         "Elf",
                         "Embedded",
-                        "Test",
+                        "EC_BASIC_COUNT_0",
+                        "EC_BASIC_COUNT_1",
                         "EC_BASIC_COUNT_2",
                         "EC_BASIC_COUNT_3",
-                        "EC_BASIC_COUNT_4"
+                        "EC_BASIC_COUNT_4",
+                        "Test"
                 )
         )
     }
 
     fun `test class name completion all elements provided, those from higher invocation count at the bottom`() {
+        myFixture.type('E')
         myFixture.complete(CompletionType.CLASS_NAME)
 
-        val elements = (lookup as LookupImpl).items
-        assertThat(elements.map { it.lookupString }).isEqualTo(
+        assertThat(lookup.itemStrings()).isEqualTo(
                 listOf(
                         "Elf",
                         "Embedded",
                         "EC_CLASS_NAME_COUNT_0",
                         "EC_CLASS_NAME_COUNT_1",
-                        "Test",
                         "EC_CLASS_NAME_COUNT_2",
                         "EC_CLASS_NAME_COUNT_3",
-                        "EC_CLASS_NAME_COUNT_4"
+                        "EC_CLASS_NAME_COUNT_4",
+                        "Test"
                 )
         )
     }
 
 }
+
+
+private fun Lookup.itemStrings() = (this as LookupImpl).items.map { it.lookupString }
