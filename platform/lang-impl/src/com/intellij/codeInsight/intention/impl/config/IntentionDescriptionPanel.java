@@ -24,7 +24,7 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginManagerUISettings;
 import com.intellij.ide.ui.search.SearchUtil;
-import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.FileType;
@@ -121,18 +121,21 @@ public class IntentionDescriptionPanel {
     PluginId pluginId = actionMetaData == null ? null : actionMetaData.getPluginId();
     JComponent owner;
     if (pluginId == null) {
-      @NonNls String label = XmlStringUtil.wrapInHtml("<b>" + ApplicationNamesInfo.getInstance().getFullProductName() + "</b>");
+      ApplicationInfo info = ApplicationInfo.getInstance();
+      String label = XmlStringUtil.wrapInHtml(
+        info.getShortCompanyName() + " " +
+        info.getVersionName());
       owner = new JLabel(label);
     }
     else {
-      final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginId);
+      IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginId);
       HyperlinkLabel label = new HyperlinkLabel(CodeInsightBundle.message("powered.by.plugin", pluginDescriptor.getName()));
       label.addHyperlinkListener(new HyperlinkListener() {
         @Override
         public void hyperlinkUpdate(HyperlinkEvent e) {
-          final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
-          final PluginManagerConfigurable pluginConfigurable = new PluginManagerConfigurable(PluginManagerUISettings.getInstance());
-          final Project project = ProjectManager.getInstance().getDefaultProject();
+          ShowSettingsUtil util = ShowSettingsUtil.getInstance();
+          PluginManagerConfigurable pluginConfigurable = new PluginManagerConfigurable(PluginManagerUISettings.getInstance());
+          Project project = ProjectManager.getInstance().getDefaultProject();
           util.editConfigurable(project, pluginConfigurable, () -> pluginConfigurable.select(pluginDescriptor));
         }
       });
