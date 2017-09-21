@@ -170,11 +170,8 @@ public class TypeEvaluator {
       }
       return lType;
     }
-    else if (expr instanceof PsiPostfixExpression) {
-      return evaluateType(((PsiPostfixExpression)expr).getOperand());
-    }
-    else if (expr instanceof PsiPrefixExpression) {
-      return evaluateType(((PsiPrefixExpression)expr).getOperand());
+    else if (expr instanceof PsiUnaryExpression) {
+      return evaluateType(((PsiUnaryExpression)expr).getOperand());
     }
     else if (expr instanceof PsiParenthesizedExpression) {
       return evaluateType(((PsiParenthesizedExpression)expr).getExpression());

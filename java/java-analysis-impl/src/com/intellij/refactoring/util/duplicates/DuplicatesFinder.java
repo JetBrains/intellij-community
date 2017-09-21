@@ -357,12 +357,9 @@ public class DuplicatesFinder {
           ((PsiReferenceExpression)lExpression).resolve() instanceof PsiParameter) {
         return false;
       }
-    } else if (pattern instanceof PsiPrefixExpression) {
-      if (checkParameterModification(((PsiPrefixExpression)pattern).getOperand(), ((PsiPrefixExpression)pattern).getOperationTokenType(),
-                                     ((PsiPrefixExpression)candidate).getOperand())) return false;
-    } else if (pattern instanceof PsiPostfixExpression) {
-      if (checkParameterModification(((PsiPostfixExpression)pattern).getOperand(), ((PsiPostfixExpression)pattern).getOperationTokenType(),
-                                     ((PsiPostfixExpression)candidate).getOperand())) return false;
+    } else if (pattern instanceof PsiUnaryExpression) {
+      if (checkParameterModification(((PsiUnaryExpression)pattern).getOperand(), ((PsiUnaryExpression)pattern).getOperationTokenType(),
+                                     ((PsiUnaryExpression)candidate).getOperand())) return false;
     }
 
     if (pattern instanceof PsiJavaCodeReferenceElement) {

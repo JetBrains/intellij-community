@@ -244,7 +244,7 @@ public class DefUseUtil {
         if (!usefulWrites.get(i)) {
           PsiElement context = PsiTreeUtil.getNonStrictParentOfType(flow.getElement(i),
                                                                     PsiStatement.class, PsiAssignmentExpression.class,
-                                                                    PsiPostfixExpression.class, PsiPrefixExpression.class);
+                                                                    PsiUnaryExpression.class);
           PsiVariable psiVariable = writeInstruction.variable;
           if (context != null && !(context instanceof PsiTryStatement)) {
             if (context instanceof PsiDeclarationStatement && psiVariable.getInitializer() == null) {

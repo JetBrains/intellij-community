@@ -211,14 +211,9 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
    */
   @Contract("null -> null")
   static PsiExpression extractIncrementedLValue(PsiExpression expression) {
-    if (expression instanceof PsiPostfixExpression) {
-      if (JavaTokenType.PLUSPLUS.equals(((PsiPostfixExpression)expression).getOperationTokenType())) {
-        return ((PsiPostfixExpression)expression).getOperand();
-      }
-    }
-    else if (expression instanceof PsiPrefixExpression) {
-      if (JavaTokenType.PLUSPLUS.equals(((PsiPrefixExpression)expression).getOperationTokenType())) {
-        return ((PsiPrefixExpression)expression).getOperand();
+    if (expression instanceof PsiUnaryExpression) {
+      if (JavaTokenType.PLUSPLUS.equals(((PsiUnaryExpression)expression).getOperationTokenType())) {
+        return ((PsiUnaryExpression)expression).getOperand();
       }
     }
     else if (expression instanceof PsiAssignmentExpression) {

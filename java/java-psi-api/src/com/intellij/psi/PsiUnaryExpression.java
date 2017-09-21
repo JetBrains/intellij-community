@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,22 +17,22 @@ package com.intellij.psi;
 
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a Java postfix increment or decrement expression.
+ * Represents a Java unary operation (either prefix or postfix)
  */
-public interface PsiPostfixExpression extends PsiUnaryExpression {
+public interface PsiUnaryExpression extends PsiExpression {
   /**
-   * Returns the expression representing the operand of the increment or decrement.
+   * Returns the expression representing the operand of the unary operator.
    *
-   * @return the operand expression.
+   * @return the operand expression, or null if the expression is incomplete.
    */
-  @NotNull
+  @Nullable
   PsiExpression getOperand();
 
   /**
-   * Returns the token representing the operation performed (of type {@link JavaTokenType#PLUSPLUS} or
-   * {@link JavaTokenType#MINUSMINUS}).
+   * Returns the token representing the operation performed.
    *
    * @return the token for the operation performed.
    */

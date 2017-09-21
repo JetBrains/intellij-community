@@ -15,14 +15,14 @@
  */
 package com.intellij.psi;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a Java expression with an unary prefix operator.
  */
-public interface PsiPrefixExpression extends PsiExpression {
+public interface PsiPrefixExpression extends PsiUnaryExpression {
   /**
    * Returns the expression representing the operand of the unary operator.
    *

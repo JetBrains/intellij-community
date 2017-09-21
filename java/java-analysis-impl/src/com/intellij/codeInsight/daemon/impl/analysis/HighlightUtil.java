@@ -322,9 +322,7 @@ public class HighlightUtil extends HighlightUtilBase {
       lValue = assignment.getLExpression();
     }
     else if (PsiUtil.isIncrementDecrementOperation(expression)) {
-      lValue = expression instanceof PsiPostfixExpression
-               ? ((PsiPostfixExpression)expression).getOperand()
-               : ((PsiPrefixExpression)expression).getOperand();
+      lValue = ((PsiUnaryExpression)expression).getOperand();
     }
     else {
       lValue = null;
