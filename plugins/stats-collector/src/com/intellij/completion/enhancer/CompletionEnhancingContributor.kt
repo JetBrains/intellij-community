@@ -125,7 +125,7 @@ class InvocationCountEnhancingContributor : CompletionContributor() {
         if (ApplicationManager.getApplication().isUnitTestMode && !isEnabledInTests) return
 
         val addedElements = HashSet<LookupElement>()
-        val newSorter = sorter(parameters, result.prefixMatcher).weigh(CompletionNumberWeigher())
+        val newSorter = sorter(parameters, result.prefixMatcher).weighBefore("templates", CompletionNumberWeigher())
 
         val start = System.currentTimeMillis()
         result.runRemainingContributors(parameters, {
