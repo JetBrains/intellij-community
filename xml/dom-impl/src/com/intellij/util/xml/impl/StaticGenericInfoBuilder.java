@@ -52,7 +52,7 @@ public class StaticGenericInfoBuilder {
   private final Map<JavaMethodSignature, String[]> myCompositeCollectionGetters = new THashMap<>();
   private final Map<JavaMethodSignature, Pair<String,String[]>> myCompositeCollectionAdders = new THashMap<>();
   private final Map<XmlName, TIntObjectHashMap<Collection<JavaMethod>>> myFixedChildrenGetters =
-    FactoryMap.createMap(key -> new TIntObjectHashMap<>());
+    FactoryMap.create(key -> new TIntObjectHashMap<>());
   private final Map<JavaMethodSignature, AttributeChildDescriptionImpl> myAttributes = new THashMap<>();
 
   private boolean myValueElement;

@@ -205,7 +205,7 @@ public class DfaValueFactory {
   }
 
   private final Map<Pair<TransferTarget, FList<Trap>>, DfaControlTransferValue> myControlTransfers =
-    FactoryMap.createMap(p -> new DfaControlTransferValue(this, p.first, p.second));
+    FactoryMap.create(p -> new DfaControlTransferValue(this, p.first, p.second));
 
   private final DfaVariableValue.Factory myVarFactory;
   private final DfaConstValue.Factory myConstFactory;

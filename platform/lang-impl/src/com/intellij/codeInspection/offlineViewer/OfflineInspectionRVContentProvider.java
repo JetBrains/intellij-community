@@ -40,7 +40,7 @@ import java.util.function.Function;
 public class OfflineInspectionRVContentProvider extends InspectionRVContentProvider {
   private final Map<String, Map<String, Set<OfflineProblemDescriptor>>> myContent;
   private final Map<String, Map<OfflineProblemDescriptor, OfflineDescriptorResolveResult>> myResolvedDescriptor =
-    FactoryMap.createMap(key -> new THashMap<>());
+    FactoryMap.create(key -> new THashMap<>());
 
   public OfflineInspectionRVContentProvider(@NotNull Map<String, Map<String, Set<OfflineProblemDescriptor>>> content,
                                             @NotNull Project project) {

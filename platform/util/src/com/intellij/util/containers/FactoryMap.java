@@ -40,7 +40,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   private Map<K, V> myMap;
 
   /**
-   * Use {@link #createMap(Function)} instead
+   * Use {@link #create(Function)} instead
    */
   @Deprecated
   public FactoryMap() {
@@ -181,8 +181,17 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
         });
   }
 
+  /**
+   * Use {@link #create(Function)} instead. TODO to be removed in IDEA 2018
+   */
+  @Deprecated
   @NotNull
-  public static <K, V> Map<K, V> createMap(@NotNull final Function<K, V> computeValue) {
+  public static <K, V> FactoryMap<K, V> createMap(@NotNull final Function<K, V> computeValue) {
+    return (FactoryMap<K, V>)create(computeValue);
+  }
+
+  @NotNull
+  public static <K, V> Map<K, V> create(@NotNull final Function<K, V> computeValue) {
     //noinspection deprecation
     return new FactoryMap<K, V>() {
       @Nullable

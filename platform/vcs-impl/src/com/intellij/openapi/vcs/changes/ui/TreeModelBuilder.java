@@ -30,7 +30,6 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,10 +73,10 @@ public class TreeModelBuilder {
     myShowFlatten = showFlatten;
     myRoot = ChangesBrowserNode.createRoot(myProject);
     myModel = new DefaultTreeModel(myRoot);
-    myGroupingPoliciesCache = FactoryMap.createMap(key-> {
-          ChangesGroupingPolicyFactory factory = ChangesGroupingPolicyFactory.getInstance(myProject);
-          return factory != null ? factory.createGroupingPolicy(myModel) : null;
-        });
+    myGroupingPoliciesCache = FactoryMap.create(key -> {
+      ChangesGroupingPolicyFactory factory = ChangesGroupingPolicyFactory.getInstance(myProject);
+      return factory != null ? factory.createGroupingPolicy(myModel) : null;
+    });
     myFoldersCache = new HashMap<>();
   }
 

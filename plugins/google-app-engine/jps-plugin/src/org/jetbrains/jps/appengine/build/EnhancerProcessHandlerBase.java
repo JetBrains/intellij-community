@@ -37,7 +37,7 @@ import java.util.Map;
 public abstract class EnhancerProcessHandlerBase extends BaseOSProcessHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.appengine.enhancement.EnhancerProcessHandler");
   private Map<Key, EnhancerOutputParser> myParsers =
-    FactoryMap.createMap(key -> new EnhancerOutputParser(ProcessOutputTypes.STDERR.equals(key)));
+    FactoryMap.create(key -> new EnhancerOutputParser(ProcessOutputTypes.STDERR.equals(key)));
 
   public EnhancerProcessHandlerBase(Process process, @NotNull String commandLine, Charset charset) {
     super(process, commandLine, charset);
