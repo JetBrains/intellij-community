@@ -68,7 +68,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       pattern = pattern.substring(1);
     }
 
-    String sanitized = removeSlashes(StringUtil.replace(base.transformPattern(pattern), "\\", "/"));
+    String sanitized = getSanitizedPattern(pattern, myModel);
     NameGrouper grouper = new NameGrouper(sanitized.substring(sanitized.lastIndexOf('/') + 1));
     myModel.processNames(name -> grouper.processName(name), true);
     while (true) {
@@ -78,6 +78,16 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
         return false;
       }
     }
+  }
+
+  @NotNull
+  public static String getSanitizedPattern(@NotNull String pattern, GotoFileModel model) {
+    return removeSlashes(StringUtil.replace(ChooseByNamePopup.getTransformedPattern(pattern, model), "\\", "/"));
+  }
+
+  @NotNull
+  public static MinusculeMatcher getQualifiedNameMatcher(@NotNull String pattern) {
+    return NameUtil.buildMatcher("*" + StringUtil.replace(StringUtil.replace(pattern, "\\", "*\\*"), "/", "*/*"), NameUtil.MatchingCaseSensitivity.NONE);
   }
 
   @NotNull
@@ -237,7 +247,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }
 
     boolean processFiles(@NotNull String pattern, String sanitizedPattern, boolean everywhere, Processor<? super PsiFileSystemItem> processor) {
-      MinusculeMatcher fullMatcher = NameUtil.buildMatcher("*" + StringUtil.replace(sanitizedPattern, "/", "*/*"), NameUtil.MatchingCaseSensitivity.NONE);
+      MinusculeMatcher fullMatcher = getQualifiedNameMatcher(sanitizedPattern);
 
       boolean empty = true;
       List<List<String>> groups = groupByMatchingDegree(!pattern.startsWith("*"));

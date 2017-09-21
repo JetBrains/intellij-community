@@ -29,16 +29,21 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
 import java.util.Comparator;
 
@@ -134,7 +139,29 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> implements Dum
 
   @Override
   public PsiElementListCellRenderer getListCellRenderer() {
-    return new GotoFileCellRenderer(myMaxSize);
+    return new GotoFileCellRenderer(myMaxSize) {
+      @NotNull
+      @Override
+      protected ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {
+        ItemMatchers defaultMatchers = super.getItemMatchers(list, value);
+        if (!(value instanceof PsiFileSystemItem)) return defaultMatchers;
+
+        String shortName = getElementName(value);
+        String fullName = getFullName(value);
+        if (shortName != null && fullName != null && defaultMatchers.nameMatcher instanceof MinusculeMatcher) {
+          String sanitized = GotoFileItemProvider.getSanitizedPattern(((MinusculeMatcher)defaultMatchers.nameMatcher).getPattern(), GotoFileModel.this);
+          for (int i = sanitized.lastIndexOf('/') + 1; i < sanitized.length() - 1; i++) {
+            MinusculeMatcher nameMatcher = NameUtil.buildMatcher("*" + sanitized.substring(i), NameUtil.MatchingCaseSensitivity.NONE);
+            if (nameMatcher.matches(shortName)) {
+              String locationPattern = FileUtil.toSystemDependentName(StringUtil.trimEnd(sanitized.substring(0, i), "/"));
+              return new ItemMatchers(nameMatcher, GotoFileItemProvider.getQualifiedNameMatcher(locationPattern));
+            }
+          }
+        }
+
+        return defaultMatchers;
+      }
+    };
   }
 
   @Override
