@@ -32,7 +32,7 @@ object KotlinTypes : Types {
     override val VOID: GenericType = ClassTypeImpl("kotlin.Unit", "Unit")
 
     override val TIME: GenericType = ClassTypeImpl("java.util.concurrent.atomic.AtomicInteger",
-                                                   "new java.util.concurrent.atomic.AtomicInteger()")
+                                                   "java.util.concurrent.atomic.AtomicInteger()")
 
     override fun list(elementsType: GenericType): ListType =
       ListTypeImpl(elementsType, { "kotlin.collections.MutableList<$it>" }, "kotlin.collections.mutableListOf()")
