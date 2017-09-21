@@ -15,7 +15,6 @@
  */
 package com.intellij.xml.impl.schema;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.FieldCache;
@@ -44,7 +43,6 @@ import java.util.*;
  * @author Mike
  */
 public class ComplexTypeDescriptor extends TypeDescriptor {
-  private final static Logger LOG = Logger.getInstance(ComplexTypeDescriptor.class);
   protected final XmlNSDescriptorImpl myDocumentDescriptor;
 
   private static final FieldCache<XmlElementDescriptor[],ComplexTypeDescriptor,Object, XmlElement> myElementDescriptorsCache =
@@ -52,7 +50,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
     @Override
     protected XmlElementDescriptor[] compute(final ComplexTypeDescriptor complexTypeDescriptor, final XmlElement p) {
-      return complexTypeDescriptor.doCollectElements(p);
+      return complexTypeDescriptor.doCollectElements();
     }
 
     @Override
@@ -71,7 +69,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     new FieldCache<XmlAttributeDescriptor[], ComplexTypeDescriptor, Object, XmlElement>() {
     @Override
     protected final XmlAttributeDescriptor[] compute(final ComplexTypeDescriptor complexTypeDescriptor, XmlElement p) {
-      return complexTypeDescriptor.doCollectAttributes(p);
+      return complexTypeDescriptor.doCollectAttributes();
     }
 
     @Override
@@ -132,7 +130,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   }
 
   // Read-only calculation
-  private XmlElementDescriptor[] doCollectElements(@Nullable XmlElement context) {
+  private XmlElementDescriptor[] doCollectElements() {
     final Map<String,XmlElementDescriptor> map = new LinkedHashMap<>(5);
     createProcessor(map).startProcessing(myTag);
     addSubstitutionGroups(map, myDocumentDescriptor, new HashSet<>());
@@ -219,7 +217,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   }
 
   // Read-only calculation
-  private XmlAttributeDescriptor[] doCollectAttributes(@Nullable final XmlElement context) {
+  private XmlAttributeDescriptor[] doCollectAttributes() {
     final List<XmlAttributeDescriptorImpl> result = new ArrayList<>();
 
     XmlSchemaTagsProcessor processor = new XmlSchemaTagsProcessor(myDocumentDescriptor, "element") {
@@ -259,10 +257,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   }
 
   protected static void addElementDescriptor(Map<String, XmlElementDescriptor> result, XmlElementDescriptor element, String name) {
-    XmlElementDescriptor removed = result.remove(name);
-    if (removed != null) {
-      LOG.info(removed + " is replaced by " + element);
-    }
+    result.remove(name);
     result.put(name, element);
   }
 
@@ -457,7 +452,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
         if (descriptor instanceof ComplexTypeDescriptor) {
           ComplexTypeDescriptor complexTypeDescriptor = (ComplexTypeDescriptor)descriptor;
           if (dependencies != null) {
-            dependencies.add(((ComplexTypeDescriptor)descriptor).getDeclaration().getContainingFile());
+            dependencies.add(descriptor.getDeclaration().getContainingFile());
           }
 
           final CanContainAttributeType containAttributeType =
