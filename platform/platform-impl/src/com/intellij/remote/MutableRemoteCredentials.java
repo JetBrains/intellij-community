@@ -38,6 +38,10 @@ public interface MutableRemoteCredentials extends RemoteCredentials {
 
   void setPrivateKeyFile(String privateKeyFile);
 
+  /**
+   * @deprecated known_hosts file location is going to be a global setting
+   */
+  @Deprecated
   void setKnownHostsFile(String knownHostsFile);
 
   void setPassphrase(@Nullable String passphrase);
