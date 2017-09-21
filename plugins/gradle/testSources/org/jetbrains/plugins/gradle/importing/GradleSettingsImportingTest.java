@@ -26,15 +26,20 @@ import com.intellij.openapi.externalSystem.service.project.manage.FacetHandlerEx
 import com.intellij.openapi.externalSystem.service.project.manage.RunConfigHandlerExtension;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runners.Parameterized;
 
 import java.util.*;
+
+import static com.intellij.openapi.externalSystem.service.project.manage.ConfigurationDataService.EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED;
 
 /**
  * Created by Nikita.Skvortsov
@@ -49,6 +54,22 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     return Arrays.asList(new Object[][]{{BASE_GRADLE_VERSION}});
   }
 
+  @Before
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    Registry.get(EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED).setValue(true);
+  }
+
+  @After
+  @Override
+  public void tearDown() throws Exception {
+    try {
+      Registry.get(EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED).resetToDefault();
+    } finally {
+      super.tearDown();
+    }
+  }
 
   @Test
   public void testInspectionSettingsImport() throws Exception {
