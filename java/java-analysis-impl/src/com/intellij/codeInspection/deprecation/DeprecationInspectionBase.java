@@ -19,7 +19,10 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,16 +34,15 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.javadoc.PsiInlineDocTag;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import one.util.streamex.MoreCollectors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 abstract class DeprecationInspectionBase extends BaseJavaBatchLocalInspectionTool {
@@ -346,12 +348,10 @@ abstract class DeprecationInspectionBase extends BaseJavaBatchLocalInspectionToo
     PsiDocComment doc = method.getDocComment();
     if (doc == null) return null;
 
-    PsiDocTag[] docTags = PsiTreeUtil.getChildrenOfType(doc, PsiInlineDocTag.class);
-    PsiDocTag[] tags = doc.getTags();
-    PsiDocTag[] allTags = docTags == null ? tags : ArrayUtil.mergeArrays(docTags, tags);
-    if (allTags.length == 0) return null;
-    PsiMethod tagMethod = (PsiMethod)Arrays
-      .stream(allTags)
+    Collection<PsiDocTag> docTags = PsiTreeUtil.findChildrenOfType(doc, PsiDocTag.class);
+    if (docTags.isEmpty()) return null;
+    PsiMethod tagMethod = (PsiMethod)docTags
+      .stream()
       .filter(t -> {
         String name = t.getName();
         return "link".equals(name) || "see".equals(name);
