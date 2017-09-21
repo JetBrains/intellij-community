@@ -1,1 +1,1 @@
-var a: kotlin.Int = 10
+val a: kotlin.Int = 10

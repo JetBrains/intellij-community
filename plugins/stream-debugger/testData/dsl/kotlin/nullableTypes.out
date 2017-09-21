@@ -1,6 +1,6 @@
-var usualType: kotlin.Any
-var nullableType: kotlin.Any?
-var arrayWithNullableElements: kotlin.Array<kotlin.Any?>
-var nullableArrayWithNullableElements: kotlin.Array<kotlin.Any?>?
-var nullableList: kotlin.collections.MutableList<kotlin.Boolean>?
-var mapWithNullableValues: kotlin.collections.MutableMap<kotlin.Int, kotlin.Any?>
+val usualType: kotlin.Any
+val nullableType: kotlin.Any?
+val arrayWithNullableElements: kotlin.Array<kotlin.Any?>
+val nullableArrayWithNullableElements: kotlin.Array<kotlin.Any?>?
+val nullableList: kotlin.collections.MutableList<kotlin.Boolean>?
+val mapWithNullableValues: kotlin.collections.MutableMap<kotlin.Int, kotlin.Any?>

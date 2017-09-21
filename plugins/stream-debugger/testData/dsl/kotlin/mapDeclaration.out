@@ -1,1 +1,1 @@
-var map: kotlin.collections.MutableMap<kotlin.Int, kotlin.Boolean>
+val map: kotlin.collections.MutableMap<kotlin.Int, kotlin.Boolean>
