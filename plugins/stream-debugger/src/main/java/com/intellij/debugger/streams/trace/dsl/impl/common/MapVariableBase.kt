@@ -36,7 +36,7 @@ abstract class MapVariableBase(override val type: MapType, override val name: St
     val i = dsl.variable(dsl.types.INT, "i")
     val key = dsl.variable(type.keyType, "key")
     return dsl.block {
-      declare(resultArray, true)
+      declare(resultArray, dsl.newSizedArray(dsl.types.ANY, 0), true)
       scope {
         declare(size, size(), false)
         declare(keys.defaultDeclaration(size))
