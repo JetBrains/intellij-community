@@ -72,7 +72,7 @@ object GuiTestLocalLauncher {
     modulesList.module(TEST_GUI_FRAMEWORK_MODULE_NAME) ?: throw Exception("Unable to find module '$TEST_GUI_FRAMEWORK_MODULE_NAME'")
   }
 
-  fun killProcessIfPossible() {
+  private fun killProcessIfPossible() {
     try {
       if (process?.isAlive == true) process!!.destroyForcibly()
     }
@@ -95,11 +95,6 @@ object GuiTestLocalLauncher {
 
   fun firstStartIdeLocally(ide: Ide = Ide(CommunityIde(), 0, 0), firstStartClassName: String = "undefined") {
     val args = createArgsForFirstStart(ide = ide, firstStartClassName = firstStartClassName)
-    return startIdeAndWait(ide = ide, args = args)
-  }
-
-  fun firstStartIdeByPath(path: String, ide: Ide = Ide(CommunityIde(), 0, 0)) {
-    val args = createArgsForFirstStartByPath(ide, path)
     return startIdeAndWait(ide = ide, args = args)
   }
 
@@ -174,19 +169,6 @@ object GuiTestLocalLauncher {
     LOG.info("Running with args: ${resultingArgs.joinToString(" ")}")
 
     return resultingArgs
-  }
-
-
-  private fun createArgsForFirstStartByPath(ide: Ide, path: String, firstStartClassName: String = "undefined"): List<String> {
-
-    val classpath = PathUtils(path).makeClassPathBuilder().build(emptyList())
-    return listOf<String>()
-      .plus(getCurrentJavaExec())
-      .plus(getDefaultVmOptions(ide))
-      .plus("-Didea.gui.test.first.start.class=$firstStartClassName")
-      .plus("-classpath")
-      .plus(classpath)
-      .plus(com.intellij.testGuiFramework.impl.FirstStarter::class.qualifiedName!! + "Kt")
   }
 
   private fun createArgsByPath(path: String, port: Int = 0): List<String> {
