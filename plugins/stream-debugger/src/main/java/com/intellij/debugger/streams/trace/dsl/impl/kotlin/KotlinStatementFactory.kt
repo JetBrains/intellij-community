@@ -98,11 +98,12 @@ class KotlinStatementFactory : StatementFactory {
 
   override fun createNewArrayExpression(elementType: GenericType, vararg args: Expression): Expression {
     val arguments = args.joinToString { it.toCode() }
-    return TextExpression("kotlin.arrayOf<${elementType.genericTypeName}>($arguments)")
+    val type = KotlinTypes.nullable { elementType }
+    return TextExpression("kotlin.arrayOf<${type.genericTypeName}>($arguments)")
   }
 
   override fun createNewSizedArray(elementType: GenericType, size: Expression): Expression =
-    TextExpression("arrayOfNulls<${elementType.genericTypeName}>(${size.toCode()}")
+    TextExpression("arrayOfNulls<${elementType.genericTypeName}>(${size.toCode()})")
 
   override fun createPeekCall(elementsType: GenericType, lambda: String): IntermediateStreamCall = PeekCall(lambda, elementsType)
 }
