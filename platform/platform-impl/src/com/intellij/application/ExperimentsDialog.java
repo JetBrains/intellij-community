@@ -42,16 +42,20 @@ public class ExperimentsDialog extends DialogWrapper {
   @Nullable
   @Override
   protected JComponent createCenterPanel() {
-    JBTable table = new JBTable(createModel());
+    ExperimentalFeature[] features = Experiments.EP_NAME.getExtensions();
+    JBTable table = new JBTable(createModel(features));
     table.getEmptyText().setText("No features available");
     table.getColumnModel().getColumn(0).setCellRenderer(getIdRenderer());
     table.getColumnModel().getColumn(1).setCellRenderer(getValueRenderer());
     table.getColumnModel().getColumn(1).setCellEditor(new BooleanTableCellEditor());
     table.setStriped(true);
+    table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     JTextArea myDescription = new JTextArea(3, 50);
     myDescription.setWrapStyleWord(true);
     myDescription.setLineWrap(true);
     myDescription.setEditable(false);
+
+    table.getSelectionModel().addListSelectionListener((e) -> myDescription.setText(features[table.getSelectedRow()].description));
     final JScrollPane label = ScrollPaneFactory.createScrollPane(myDescription);
     BorderLayoutPanel descriptionPanel = JBUI.Panels.simplePanel(label)
       .withBorder(IdeBorderFactory.createTitledBorder("Description", false));
@@ -73,9 +77,9 @@ public class ExperimentsDialog extends DialogWrapper {
     };
   }
 
-  private TableModel createModel() {
+  private TableModel createModel(ExperimentalFeature[] experimentalFeatures) {
     return new AbstractTableModel() {
-      ExperimentalFeature[] features = Experiments.EP_NAME.getExtensions();
+      ExperimentalFeature[] features = experimentalFeatures;
 
       @Override
       public int getRowCount() {
@@ -100,6 +104,15 @@ public class ExperimentsDialog extends DialogWrapper {
       @Override
       public boolean isCellEditable(int rowIndex, int columnIndex) {
         return columnIndex == 1;
+      }
+
+      @Override
+      public String getColumnName(int column) {
+        switch (column) {
+          case 0: return "Name";
+          case 1: return "Value";
+          default: throw new IllegalArgumentException("Wrong column number");
+        }
       }
 
       @Override
