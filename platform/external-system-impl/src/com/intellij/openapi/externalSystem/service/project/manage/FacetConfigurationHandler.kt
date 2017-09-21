@@ -30,10 +30,10 @@ import com.intellij.openapi.project.Project
  * date: 12.09.2017.
  */
 
-class FacetHandler: ConfigurationHandler {
+class FacetConfigurationHandler : ConfigurationHandler {
 
   companion object {
-    val LOG = Logger.getInstance(FacetHandler::class.java)
+    val LOG = Logger.getInstance(FacetConfigurationHandler::class.java)
   }
 
   override fun apply(module: Module, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
@@ -82,7 +82,8 @@ class FacetHandler: ConfigurationHandler {
 
 class FacetHandlerExtensionManager {
   companion object {
-    fun handlerForType(typeName: String): FacetHandlerExtension<out Facet<out FacetConfiguration>>? =
-      Extensions.getExtensions(FacetHandlerExtension.EP_NAME).firstOrNull { it.canHandle(typeName) }
+    fun handlerForType(typeName: String): FacetConfigurationHandlerExtension<out Facet<out FacetConfiguration>>? =
+      Extensions.getExtensions(
+        FacetConfigurationHandlerExtension.EP_NAME).firstOrNull { it.canHandle(typeName) }
   }
 }

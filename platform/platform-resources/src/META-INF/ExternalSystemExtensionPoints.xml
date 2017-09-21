@@ -8,9 +8,9 @@
     <extensionPoint name="externalSystemConfigurationHandler"
                     interface="com.intellij.openapi.externalSystem.service.project.manage.ConfigurationHandler"/>
     <extensionPoint name="runConfigurationHandlerExtension"
-                    interface="com.intellij.openapi.externalSystem.service.project.manage.RunConfigHandlerExtension"/>
+                    interface="com.intellij.openapi.externalSystem.service.project.manage.RunConfigurationHandlerExtension"/>
     <extensionPoint name="facetHandlerExtension"
-                    interface="com.intellij.openapi.externalSystem.service.project.manage.FacetHandlerExtension"/>
+                    interface="com.intellij.openapi.externalSystem.service.project.manage.FacetConfigurationHandlerExtension"/>
     <extensionPoint name="externalSystemConfigLocator"
                     interface="com.intellij.openapi.externalSystem.service.settings.ExternalSystemConfigLocator"/>
     <extensionPoint name="externalSystemNotificationExtension"

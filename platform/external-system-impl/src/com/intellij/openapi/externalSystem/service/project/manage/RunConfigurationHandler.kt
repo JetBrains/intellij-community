@@ -83,12 +83,13 @@ class RunConfigurationHandler: ConfigurationHandler {
 
 class RunConfigHandlerExtensionManager {
   companion object {
-    fun handlerForType(typeName: String): RunConfigHandlerExtension? =
-      Extensions.getExtensions(RunConfigHandlerExtension.EP_NAME).firstOrNull { it.canHandle(typeName) }
+    fun handlerForType(typeName: String): RunConfigurationHandlerExtension? =
+      Extensions.getExtensions(
+        RunConfigurationHandlerExtension.EP_NAME).firstOrNull { it.canHandle(typeName) }
   }
 }
 
-class ApplicationRunConfigHandler: RunConfigHandlerExtension {
+class ApplicationRunConfigurationHandler : RunConfigurationHandlerExtension {
   override fun process(module: Module, name: String, cfg: Map<String, *>) {
     val cfgType = ConfigurationTypeUtil.findConfigurationType<ApplicationConfigurationType>(
       ApplicationConfigurationType::class.java)
