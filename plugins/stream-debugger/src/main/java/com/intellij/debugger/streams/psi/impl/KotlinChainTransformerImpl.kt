@@ -34,7 +34,6 @@ class KotlinChainTransformerImpl : ChainTransformer.Kotlin {
   override fun transform(callChain: List<KtCallExpression>, context: PsiElement): StreamChain {
     val firstCall = callChain.first()
     val qualifiedExpression = firstCall.getQualifiedExpressionForReceiverOrThis()
-    // TODO: use kotlin types here?
     val qualifier = QualifierExpressionImpl(qualifiedExpression.text, qualifiedExpression.textRange, KotlinTypes.ANY)
 
     val intermediateCalls = mutableListOf<IntermediateStreamCall>()
@@ -45,6 +44,7 @@ class KotlinChainTransformerImpl : ChainTransformer.Kotlin {
     }
 
     val terminationsPsiCall = callChain.last()
+    // TODO: infer true types
     val terminationCall = TerminatorStreamCallImpl(terminationsPsiCall.callName(), emptyList(), KotlinTypes.ANY, KotlinTypes.ANY,
                                                    terminationsPsiCall.textRange, terminationsPsiCall.receiverType()!!.getPackage(false))
 
