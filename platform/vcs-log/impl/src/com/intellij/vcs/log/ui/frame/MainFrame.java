@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowser;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
@@ -32,6 +33,7 @@ import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.actions.IntelliSortChooserPopupAction;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
+import com.intellij.vcs.log.ui.table.CommitSelectionListener;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.BekUtil;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
@@ -262,24 +264,30 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myChangesBrowserSplitter.dispose();
   }
 
-  private class MyCommitSelectionListenerForDiff extends CommitSelectionListenerForDiff {
+  private class MyCommitSelectionListenerForDiff extends CommitSelectionListener {
     protected MyCommitSelectionListenerForDiff() {
       super(myLogData, MainFrame.this.myGraphTable);
     }
 
     @Override
     protected void onEmptySelection() {
-      super.onEmptySelection();
+      myChangesBrowser.setChangesToDisplay(Collections.emptyList());
       myChangesBrowser.getViewer().setEmptyText("No commits selected");
     }
 
     @Override
-    protected void setChangesToDisplay(@NotNull List<Change> changes) {
+    protected void onDetailsLoaded(@NotNull List<VcsFullCommitDetails> detailsList) {
+      List<Change> changes = ContainerUtil.newArrayList();
+      List<VcsFullCommitDetails> detailsListReversed = ContainerUtil.reverse(detailsList);
+      for (VcsFullCommitDetails details : detailsListReversed) {
+        changes.addAll(details.getChanges());
+      }
+      changes = CommittedChangesTreeBrowser.zipChanges(changes);
       myChangesBrowser.setChangesToDisplay(changes);
     }
 
     @Override
-    protected void clearChanges() {
+    protected void onSelection(@NotNull int[] selection) {
       // just reset and wait for details to be loaded
       myChangesBrowser.setChangesToDisplay(Collections.emptyList());
       myChangesBrowser.getViewer().setEmptyText("");
