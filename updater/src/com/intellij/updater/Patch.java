@@ -247,7 +247,7 @@ public class Patch {
     File toDir = toBaseDir(rootDir);
     boolean checkWarnings = true;
     while (checkWarnings) {
-      //always collect files and folders to avoid cases such as IDEA-152249
+      // always collect files and folders - to avoid cases such as IDEA-152249
       files = Utils.collectRelativePaths(toDir);
       checkWarnings = false;
       for (String file : files) {
@@ -261,7 +261,7 @@ public class Patch {
     }
 
     if (myIsStrict) {
-      // In strict mode add delete actions for unknown files.
+      // in strict mode, add delete actions for unknown files
       for (PatchAction action : myActions) {
         files.remove(action.getPath());
       }

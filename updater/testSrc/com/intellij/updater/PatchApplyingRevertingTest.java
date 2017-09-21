@@ -130,7 +130,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     PatchAction original = findAction(preparationResult.patch, "bin/idea.bat");
-    assertThat(original).isInstanceOf(DeleteAction.class).hasFieldOrPropertyWithValue("path", "bin/idea.bat");
+    assertThat(original).isInstanceOf(DeleteAction.class);
     List<PatchAction> actions = preparationResult.patch.getActions();
     actions.set(actions.indexOf(original), new DeleteAction(preparationResult.patch, original.getPath(), original.getChecksum()) {
       @Override
@@ -149,7 +149,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     PatchAction original = findAction(preparationResult.patch, "bin/idea.bat");
-    assertThat(original).isInstanceOf(UpdateAction.class).hasFieldOrPropertyWithValue("path", "bin/idea.bat");
+    assertThat(original).isInstanceOf(UpdateAction.class);
     List<PatchAction> actions = preparationResult.patch.getActions();
     actions.set(actions.indexOf(original), new UpdateAction(preparationResult.patch, original.getPath(), original.getChecksum()) {
       @Override

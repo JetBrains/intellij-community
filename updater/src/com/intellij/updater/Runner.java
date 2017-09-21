@@ -62,10 +62,9 @@ public class Runner {
       checkCaseSensitivity(newFolder);
       initLogger();
 
-      // See usage for an explanation of these flags
-      boolean binary = Arrays.asList(args).contains("--zip_as_binary");
-      boolean strict = Arrays.asList(args).contains("--strict");
-      boolean normalized = Arrays.asList(args).contains("--normalized");
+      boolean binary = hasArgument(args, "zip_as_binary");
+      boolean strict = hasArgument(args, "strict");
+      boolean normalized = hasArgument(args, "normalized");
 
       String root = getArgument(args, "root");
       if (root == null) {
@@ -112,20 +111,34 @@ public class Runner {
       if ("install".equals(args[0])) {
         ui = new SwingUpdaterUI();
       }
-      else if (Arrays.asList(args).contains("--toolbox-ui")) {
+      else if (hasArgument(args, "toolbox-ui")) {
         ui = new ToolboxUpdaterUI();
       }
       else {
         ui = new ConsoleUpdaterUI();
       }
 
-      boolean backup = !Arrays.asList(args).contains("--no-backup");
+      boolean backup = !hasArgument(args, "no-backup");
       boolean success = install(jarFile, destFolder, ui, backup);
       System.exit(success ? 0 : 1);
     }
     else {
       printUsage();
     }
+  }
+
+  public static String getArgument(String[] args, String name) {
+    String flag = "--" + name + "=";
+    for (String param : args) {
+      if (param.startsWith(flag)) {
+        return param.substring(flag.length());
+      }
+    }
+    return null;
+  }
+
+  private static boolean hasArgument(String[] args, String name) {
+    return Arrays.asList(args).contains("--" + name);
   }
 
   public static void checkCaseSensitivity(String path) {
@@ -146,26 +159,9 @@ public class Runner {
     return map;
   }
 
-  // checks that log directory 1)exists 2)has write perm. and 3)has 1MB+ free space
-  private static boolean isValidDir(String folder, long space) {
-    File fileDir = new File(folder);
-    return fileDir.isDirectory() && fileDir.canWrite() && fileDir.getUsableSpace() >= space;
-  }
-
-  public static String getDir(long requiredFreeSpace) {
-    String dir = System.getProperty("idea.updater.log");
-    if (dir == null || !isValidDir(dir, requiredFreeSpace)) {
-      dir = System.getProperty("java.io.tmpdir");
-      if (!isValidDir(dir, requiredFreeSpace)) {
-        dir = System.getProperty("user.home");
-      }
-    }
-    return dir;
-  }
-
   private static void initLogger() {
     if (logger == null) {
-      String logDirectory = getDir(1_000_000L);
+      String logDirectory = Utils.findDirectory(1_000_000L);
       logPath = new File(logDirectory, "idea_updater.log").getAbsolutePath();
 
       FileAppender update = new FileAppender();
@@ -188,16 +184,6 @@ public class Runner {
       logger.setLevel(Level.ALL);
       logger.info("--- Updater started ---");
     }
-  }
-
-  public static String getArgument(String[] args, String name) {
-    String flag = "--" + name + "=";
-    for (String param : args) {
-      if (param.startsWith(flag)) {
-        return param.substring(flag.length());
-      }
-    }
-    return null;
   }
 
   public static List<String> extractArguments(String[] args, String paramName) {
@@ -330,7 +316,12 @@ public class Runner {
         List<ValidationResult> problems = preparationResult.validationResults;
         resolutions = problems.isEmpty() ? Collections.emptyMap() : ui.askUser(problems);
 
-        backupDir = backup ? Utils.createTempDir() : null;
+        backupDir = null;
+        if (backup) {
+          backupDir = Utils.getTempFile("backup");
+          if (!backupDir.mkdir()) throw new IOException("Cannot create backup directory: " + backupDir);
+        }
+
         applicationResult = PatchFileCreator.apply(preparationResult, resolutions, backupDir, ui);
       }
       catch (OperationCancelledException e) {
