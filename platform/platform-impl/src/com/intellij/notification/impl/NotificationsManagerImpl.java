@@ -811,6 +811,13 @@ public class NotificationsManagerImpl extends NotificationsManager {
           }
         }, action));
     }
+    AnAction helpAction = notification.getContextHelpAction();
+    if (helpAction != null) {
+      Presentation presentation = helpAction.getTemplatePresentation();
+      ContextHelpLabel helpLabel = new ContextHelpLabel(presentation.getText(), presentation.getDescription());
+      helpLabel.setForeground(UIUtil.getLabelDisabledForeground());
+      actionPanel.add(HorizontalLayout.LEFT, helpLabel);
+    }
 
     Insets hover = JBUI.insets(8, 5, 8, 7);
     int count = actionPanel.getComponentCount();
@@ -1270,7 +1277,8 @@ public class NotificationsManagerImpl extends NotificationsManager {
         width -= myLayoutData.configuration.actionGap + expandWidth;
 
         int components = myActionPanel.getComponentCount();
-        if (myActionPanel.getComponent(components - 1) instanceof DropDownAction) {
+        Component lastComponent = myActionPanel.getComponent(components - 1);
+        if (lastComponent instanceof DropDownAction || lastComponent instanceof ContextHelpLabel) {
           components--;
         }
         if (components > 2) {

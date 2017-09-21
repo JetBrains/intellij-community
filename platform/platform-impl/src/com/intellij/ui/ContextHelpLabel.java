@@ -22,6 +22,11 @@ import org.jetbrains.annotations.NotNull;
 
 public class ContextHelpLabel extends JBLabel {
 
+  public ContextHelpLabel(String label, String helpText) {
+    super(label);
+    init(helpText);
+  }
+
   public ContextHelpLabel(@NotNull String helpText) {
     super(AllIcons.General.ContextHelp);
     init(helpText);

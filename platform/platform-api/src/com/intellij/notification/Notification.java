@@ -67,6 +67,7 @@ public class Notification {
   private NotificationListener myListener;
   private String myDropDownText;
   private List<AnAction> myActions;
+  private AnAction myContextHelpAction;
 
   private AtomicReference<Boolean> myExpired = Atomics.newReference(false);
   private Runnable myWhenExpired;
@@ -282,6 +283,15 @@ public class Notification {
     }
     myActions.add(action);
     return this;
+  }
+
+  public Notification setContextHelpAction(AnAction action) {
+    myContextHelpAction = action;
+    return this;
+  }
+
+  public AnAction getContextHelpAction() {
+    return myContextHelpAction;
   }
 
   @NotNull
