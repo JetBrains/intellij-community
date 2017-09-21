@@ -713,6 +713,7 @@
       <action id="ShowRegistry" class="com.intellij.openapi.util.registry.ShowRegistryAction"/>
       <action id="SwitchBootJdk" class="com.intellij.openapi.util.SwitchBootJdkAction"/>
       <action id="UiDebugger" class="com.intellij.ui.debugger.ShowUiDebuggerAction"/>
+      <action id="ShowExperiments" class="com.intellij.application.ShowExperimentsAction"/>
     </group>
 
     <action id="Console.Open" class="com.intellij.openapi.actionSystem.EmptyAction"/>
