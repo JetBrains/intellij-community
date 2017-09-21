@@ -638,15 +638,7 @@ public class JBUI {
    * or not (given in a standard resolution, e.g. 16x16 for an icon).
    */
   public static abstract class Scaler {
-    protected double initialScale;
-
-    public Scaler() {
-      this(false);
-    }
-
-    public Scaler(boolean preScaled) {
-      initialScale = preScaled ? currentScale() : 1d;
-    }
+    protected double initialScale = currentScale();
 
     private double alignedScale() {
       return currentScale() / initialScale;
@@ -1050,7 +1042,7 @@ public class JBUI {
    * @author tav
    */
   public abstract static class JBIcon extends ScaleContextSupport<BaseScaleContext> implements Icon {
-    private final Scaler myScaler = new Scaler(false) {
+    private final Scaler myScaler = new Scaler() {
       @Override
       protected double currentScale() {
         // Current user scale is taken from the scale context,

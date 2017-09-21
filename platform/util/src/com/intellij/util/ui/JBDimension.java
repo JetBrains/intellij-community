@@ -152,8 +152,7 @@ public class JBDimension extends Dimension {
    */
   public JBDimension newSize() {
     update();
-    JBDimension d = new JBDimension(size2D.width, size2D.height, true);
-    return d;
+    return new JBDimension(size2D.width, size2D.height, true);
   }
 
   /**
@@ -199,10 +198,6 @@ public class JBDimension extends Dimension {
 }
 
 class MyScaler extends Scaler {
-  public MyScaler() {
-    super(true);
-  }
-
   @Override
   protected double currentScale() {
     return JBUI.scale(1f);
