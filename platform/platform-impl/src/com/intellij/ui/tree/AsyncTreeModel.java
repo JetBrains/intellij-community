@@ -124,6 +124,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
 
   @Override
   public void dispose() {
+    super.dispose();
     model.removeTreeModelListener(listener);
   }
 
@@ -135,19 +136,19 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
   @NotNull
   @Override
   public Promise<TreePath> getTreePath(Object object) {
-    return model instanceof Searchable ? resolve(((Searchable)model).getTreePath(object)) : rejectedPromise();
+    return !disposed && model instanceof Searchable ? resolve(((Searchable)model).getTreePath(object)) : rejectedPromise();
   }
 
   @NotNull
   @Override
   public Promise<TreePath> nextTreePath(@NotNull TreePath path, Object object) {
-    return model instanceof Navigatable ? resolve(((Navigatable)model).nextTreePath(path, object)) : rejectedPromise();
+    return !disposed && model instanceof Navigatable ? resolve(((Navigatable)model).nextTreePath(path, object)) : rejectedPromise();
   }
 
   @NotNull
   @Override
   public Promise<TreePath> prevTreePath(@NotNull TreePath path, Object object) {
-    return model instanceof Navigatable ? resolve(((Navigatable)model).prevTreePath(path, object)) : rejectedPromise();
+    return !disposed && model instanceof Navigatable ? resolve(((Navigatable)model).prevTreePath(path, object)) : rejectedPromise();
   }
 
   @NotNull
@@ -200,7 +201,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
 
   @Override
   public Object getRoot() {
-    if (!isValidThread()) return null;
+    if (disposed || !isValidThread()) return null;
     promiseRootEntry();
     Node node = tree.root;
     return node == null ? null : node.object;
@@ -300,11 +301,13 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
 
   @NotNull
   private Promise<Node> promiseRootEntry() {
+    if (disposed) return rejectedPromise();
     return tree.queue.promise(processor, () -> new CmdGetRoot("Load root", null));
   }
 
   @NotNull
   private Promise<Node> promiseChildren(@NotNull Node node) {
+    if (disposed) return rejectedPromise();
     return node.queue.promise(processor, () -> {
       node.setLoading(!showLoadingNode ? null : new Node(new LoadingNode(), true));
       return new CmdGetChildren("Load children", node, false);
@@ -312,7 +315,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
   }
 
   private Node getEntry(Object object) {
-    return object == null || !isValidThread() ? null : tree.map.get(object);
+    return disposed || object == null || !isValidThread() ? null : tree.map.get(object);
   }
 
   @NotNull
@@ -470,7 +473,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
 
     @Override
     public boolean isObsolete() {
-      return this != tree.queue.get();
+      return disposed || this != tree.queue.get();
     }
 
     @Override
@@ -541,7 +544,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
 
     @Override
     public boolean isObsolete() {
-      return this != node.queue.get();
+      return disposed || this != node.queue.get();
     }
 
     @Override

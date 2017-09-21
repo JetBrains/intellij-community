@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.fileChooser.tree;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.util.Pair;
@@ -59,7 +58,7 @@ import static java.util.stream.Collectors.toList;
 /**
  * @author Sergey.Malenkov
  */
-public final class FileTreeModel extends AbstractTreeModel implements Disposable, Identifiable, Searchable, InvokerSupplier {
+public final class FileTreeModel extends AbstractTreeModel implements Identifiable, Searchable, InvokerSupplier {
   private final Invoker invoker = new Invoker.BackgroundThread(this);
   private final State state;
   private volatile List<Root> roots;
@@ -88,10 +87,6 @@ public final class FileTreeModel extends AbstractTreeModel implements Disposable
       }
       treeStructureChanged(state.path, null, null);
     });
-  }
-
-  @Override
-  public void dispose() {
   }
 
   @Override

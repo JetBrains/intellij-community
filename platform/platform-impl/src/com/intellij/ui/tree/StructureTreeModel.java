@@ -57,8 +57,9 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   }
 
   public final void setComparator(Comparator<NodeDescriptor> comparator) {
+    if (disposed) return;
     if (comparator != null) {
-      this.comparator = (node1, node2) -> comparator.compare(node1.descriptor, node2.descriptor);
+      this.comparator = (node1, node2) -> comparator.compare(node1.getDescriptor(), node2.getDescriptor());
       invalidate();
     }
     else if (this.comparator != null) {
@@ -68,15 +69,18 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   }
 
   public void setStructure(AbstractTreeStructure structure) {
+    if (disposed) return;
     this.structure = structure;
     invalidate();
   }
 
   @Override
   public void dispose() {
-    root.set(null);
+    super.dispose();
     comparator = null;
     structure = null;
+    Node node = root.set(null);
+    if (node != null) node.dispose();
   }
 
   @NotNull
@@ -93,15 +97,11 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
 
   public final void invalidate() {
     invoker.invokeLaterIfNeeded(() -> {
+      if (disposed) return;
       root.invalidate();
       Node node = root.get();
-      if (node != null) {
-        node.invalidate();
-        treeStructureChanged(new TreePath(node), null, null);
-      }
-      else {
-        treeStructureChanged(null, null, null);
-      }
+      if (node != null) node.invalidate();
+      treeStructureChanged(null, null, null);
     });
   }
 
@@ -110,6 +110,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
       Object component = path.getLastPathComponent();
       if (component instanceof Node) {
         Node node = (Node)component;
+        if (disposed) return;
         node.invalidate();
         treeStructureChanged(path, null, null);
       }
@@ -118,7 +119,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
 
   @Override
   public final Object getRoot() {
-    if (!isValidThread()) return null;
+    if (disposed || !isValidThread()) return null;
     if (!root.isValid()) {
       root.set(getValidRoot());
     }
@@ -126,7 +127,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   }
 
   private Node getNode(Object object) {
-    if (!(object instanceof Node) || !isValidThread()) return null;
+    if (disposed || !(object instanceof Node) || !isValidThread()) return null;
     Node node = (Node)object;
     if (!node.children.isValid() && node.isNodeAncestor(root.get())) {
       List<Node> newChildren = getValidChildren(node);
@@ -197,10 +198,10 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
 
     Node node = root.get();
     boolean leaf = structure.isAlwaysLeaf(element);
-    if (node == null || leaf == node.getAllowsChildren() || !element.equals(node.descriptor.getElement())) {
+    if (node == null || leaf == node.getAllowsChildren() || !element.equals(node.getElement())) {
       node = new Node(structure.createDescriptor(element, null), leaf);
     }
-    node.descriptor.update();
+    node.update();
     return node;
   }
 
@@ -208,7 +209,10 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
     AbstractTreeStructure structure = this.structure;
     if (structure == null) return null;
 
-    Object parent = node.descriptor.getElement();
+    NodeDescriptor descriptor = node.getDescriptor();
+    if (descriptor == null) return null;
+
+    Object parent = descriptor.getElement();
     if (parent == null) return null;
 
     Object[] elements = structure.getChildElements(parent);
@@ -216,7 +220,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
 
     HashMap<Object, Node> map = new HashMap<>();
     node.getChildren().forEach(child -> {
-      Object element = child.descriptor.getElement();
+      Object element = child.getElement();
       if (element != null) map.put(element, child);
     });
     List<Node> list = new ArrayList<>(elements.length);
@@ -225,9 +229,9 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
         Node child = map.get(element);
         boolean leaf = structure.isAlwaysLeaf(element);
         if (child == null || leaf == child.getAllowsChildren()) {
-          child = new Node(structure.createDescriptor(element, node.descriptor), leaf);
+          child = new Node(structure.createDescriptor(element, descriptor), leaf);
         }
-        child.descriptor.update();
+        child.update();
         list.add(child);
       }
     }
@@ -238,13 +242,21 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
 
   private static final class Node extends DefaultMutableTreeNode {
     private final Reference<List<Node>> children = new Reference<>();
-    private final NodeDescriptor descriptor;
 
     private Node(@NotNull NodeDescriptor descriptor, boolean leaf) {
-      super(descriptor);
-      super.allowsChildren = !leaf;
-      this.descriptor = descriptor;
+      super(descriptor, !leaf);
       if (leaf) children.set(null);
+    }
+
+    private void dispose() {
+      setParent(null);
+      List<Node> list = children.set(null);
+      if (list != null) list.forEach(Node::dispose);
+    }
+
+    private void update() {
+      NodeDescriptor descriptor = getDescriptor();
+      if (descriptor != null) descriptor.update();
     }
 
     private void invalidate() {
@@ -256,8 +268,28 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
 
     @NotNull
     private List<Node> getChildren() {
-      List<Node> list = this.children.get();
+      List<Node> list = children.get();
       return list != null ? list : emptyList();
+    }
+
+    private NodeDescriptor getDescriptor() {
+      Object object = getUserObject();
+      return object instanceof NodeDescriptor ? (NodeDescriptor)object : null;
+    }
+
+    private Object getElement() {
+      NodeDescriptor descriptor = getDescriptor();
+      return descriptor == null ? null : descriptor.getElement();
+    }
+
+    @Override
+    public void setUserObject(Object object) {
+      throw new UnsupportedOperationException("cannot modify node");
+    }
+
+    @Override
+    public void setAllowsChildren(boolean value) {
+      throw new UnsupportedOperationException("cannot modify node");
     }
 
     @Override
