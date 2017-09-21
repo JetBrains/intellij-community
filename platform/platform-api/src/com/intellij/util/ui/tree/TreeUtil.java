@@ -986,6 +986,11 @@ public final class TreeUtil {
   }
 
   public static <T extends MutableTreeNode> void insertNode(@NotNull T child, @NotNull T parent, @Nullable DefaultTreeModel model,
+                                                            @NotNull Comparator<? super T> comparator) {
+    insertNode(child, parent, model, false, comparator);
+  }
+
+  public static <T extends MutableTreeNode> void insertNode(@NotNull T child, @NotNull T parent, @Nullable DefaultTreeModel model,
                                                             boolean allowDuplication, @NotNull Comparator<? super T> comparator) {
     int index = indexedBinarySearch(parent, child, comparator);
     if (index >= 0 && !allowDuplication) {
