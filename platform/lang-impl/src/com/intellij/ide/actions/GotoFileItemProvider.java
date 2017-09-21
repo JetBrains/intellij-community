@@ -26,9 +26,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.FixingLayoutMatcher;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -135,7 +133,8 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
 
     if (group.size() > 1) {
       Collections.sort(group,
-                       Comparator.<PsiFileSystemItem, Integer>comparing(nesting::get).
+                       Comparator.<PsiFileSystemItem, Boolean>comparing(f -> f instanceof PsiDirectory).
+                         thenComparing(nesting::get).
                          thenComparing(dirCloseness::get).
                          thenComparing(qualifierMatchingDegrees::get).
                          thenComparing(getPathProximityComparator()).
@@ -272,8 +271,9 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       List<List<String>> groups = new ArrayList<>();
 
       Comparator<MatchResult> comparator = (mr1, mr2) -> {
-        boolean exactPrefix1 = patternSuffix.equalsIgnoreCase(mr1.elementName);
-        boolean exactPrefix2 = patternSuffix.equalsIgnoreCase(mr2.elementName);
+        boolean exactPrefix1 = StringUtil.startsWithIgnoreCase(mr1.elementName, patternSuffix);
+        boolean exactPrefix2 = StringUtil.startsWithIgnoreCase(mr2.elementName, patternSuffix);
+        if (exactPrefix1 && exactPrefix2) return 0;
         if (exactPrefix1 != exactPrefix2) return exactPrefix1 ? -1 : 1;
         return mr1.compareDegrees(mr2, preferStartMatches);
       };

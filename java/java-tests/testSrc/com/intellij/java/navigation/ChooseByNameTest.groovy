@@ -196,29 +196,37 @@ class Intf {
 
     def popup = createPopup(new GotoFileModel(project), fooIndex)
 
-    def fooDir = null
-    def barDir = null
-    runInEdtAndWait {
-      fooDir = fooIndex.containingDirectory
-      barDir = barIndex.containingDirectory
-    }
+    def fooDir = fooIndex.containingDirectory
+    def barDir = barIndex.containingDirectory
 
     assert calcPopupElements(popup, "foo/") == [fooDir]
     assert calcPopupElements(popup, "foo\\") == [fooDir]
     assert calcPopupElements(popup, "/foo") == [fooDir]
     assert calcPopupElements(popup, "\\foo") == [fooDir]
-    assert calcPopupElements(popup, "foo") == []
+    assert calcPopupElements(popup, "foo") == [fooDir]
     assert calcPopupElements(popup, "/index.html") == [fooIndex]
     assert calcPopupElements(popup, "\\index.html") == [fooIndex]
-    assert calcPopupElements(popup, "index.html/") == [fooIndex]
-    assert calcPopupElements(popup, "index.html\\") == [fooIndex]
+    assert calcPopupElements(popup, "index.html/") == []
+    assert calcPopupElements(popup, "index.html\\") == []
 
     assert calcPopupElements(popup, "bar.txt/") == [barDir]
     assert calcPopupElements(popup, "bar.txt\\") == [barDir]
-    assert calcPopupElements(popup, "/bar.txt") == [barDir]
-    assert calcPopupElements(popup, "\\bar.txt") == [barDir]
-    assert calcPopupElements(popup, "bar.txt") == [barIndex]
+    assert calcPopupElements(popup, "/bar.txt") == [barIndex, barDir]
+    assert calcPopupElements(popup, "\\bar.txt") == [barIndex, barDir]
+    assert calcPopupElements(popup, "bar.txt") == [barIndex, barDir]
+    assert calcPopupElements(popup, "bar") == [barIndex, barDir]
     popup.close(false)
+  }
+
+  void "test prefer files to directories even if longer"() {
+    def fooFile = myFixture.addFileToProject('dir/fooFile.txt', '')
+    def fooDir = myFixture.addFileToProject('foo/barFile.txt', '').containingDirectory
+    
+    def popup = createPopup(new GotoFileModel(project))
+    def popupElements = calcPopupElements(popup, 'foo')
+
+    assert popupElements == [fooFile, fooDir]
+    assert popup.calcSelectedIndex(popupElements.toArray(), 'foo') == 0
   }
 
   void "test find method by qualified name"() {

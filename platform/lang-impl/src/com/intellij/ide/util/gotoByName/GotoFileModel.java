@@ -40,11 +40,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Comparator;
 
 /**
  * Model for "Go to | File" action
  */
-public class GotoFileModel extends FilteringGotoByModel<FileType> implements DumbAware {
+public class GotoFileModel extends FilteringGotoByModel<FileType> implements DumbAware, Comparator<Object> {
   private final int myMaxSize;
 
   public GotoFileModel(@NotNull Project project) {
@@ -185,5 +186,11 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> implements Dum
       return pattern.substring(0, pattern.length() - 1);
     }
     return pattern;
+  }
+
+  /** Just to remove smartness from {@link ChooseByNameBase#calcSelectedIndex} */
+  @Override
+  public int compare(Object o1, Object o2) {
+    return 0;
   }
 }
