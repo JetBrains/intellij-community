@@ -62,7 +62,7 @@ public class DeployToServerConfigurationType extends ConfigurationTypeBase {
   }
 
   /**
-   * @param forType hint for a type of deployment source or null if unknown
+   * @param sourceType hint for a type of deployment source or null if unknown
    */
   @NotNull
   public ConfigurationFactoryEx getFactoryForType(@Nullable DeploymentSourceType<?> sourceType) {
