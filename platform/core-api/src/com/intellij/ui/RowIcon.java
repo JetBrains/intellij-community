@@ -45,6 +45,7 @@ public class RowIcon extends CachingScalableJBIcon<RowIcon> {
 
   {
     getScaleContext().addUpdateListener(() -> updateSize());
+    setAutoUpdateScaleContext(false);
   }
 
   public RowIcon(int iconCount/*, int orientation*/) {

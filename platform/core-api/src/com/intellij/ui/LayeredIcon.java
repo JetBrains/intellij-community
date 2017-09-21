@@ -47,6 +47,7 @@ public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> {
 
   {
     getScaleContext().addUpdateListener(() -> updateSize());
+    setAutoUpdateScaleContext(false);
   }
 
   public LayeredIcon(int layerCount) {

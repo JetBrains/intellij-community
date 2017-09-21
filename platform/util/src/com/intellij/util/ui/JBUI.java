@@ -1045,11 +1045,11 @@ public class JBUI {
     private final Scaler myScaler = new Scaler() {
       @Override
       protected double currentScale() {
-        // Current user scale is taken from the scale context,
-        // so subclasses should maker sure the context is updated in time.
+        if (autoUpdateScaleContext) getScaleContext().update();
         return getScale(USR_SCALE);
       }
     };
+    private boolean autoUpdateScaleContext = true;
 
     protected JBIcon() {
       super(BaseScaleContext.create());
@@ -1059,6 +1059,7 @@ public class JBUI {
       this();
       updateScaleContext(icon.getScaleContext());
       myScaler.update(icon.myScaler);
+      autoUpdateScaleContext = icon.autoUpdateScaleContext;
     }
 
     protected boolean isIconPreScaled() {
@@ -1079,6 +1080,20 @@ public class JBUI {
      */
     protected double scaleVal(double value) {
       return myScaler.scaleVal(value);
+    }
+
+    /**
+     * Sets whether the scale context should be auto-updated by the {@link Scaler}.
+     * This ensures that {@link #scaleVal(double)} always uses up-to-date scale.
+     * This is useful when the icon doesn't need to recalculate its internal sizes
+     * on the scale context update and so it doesn't need the result of the update
+     * and/or it doesn't listen for updates. Otherwise, the value should be set to
+     * false and the scale context should be updated manually.
+     * <p>
+     * By default the value is true.
+     */
+    protected void setAutoUpdateScaleContext(boolean autoUpdate) {
+      autoUpdateScaleContext = autoUpdate;
     }
 
     @Override
