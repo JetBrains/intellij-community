@@ -25,7 +25,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.ui.components.fields.CommaSeparatedIntegersField;
 import com.intellij.ui.components.fields.IntegerField;
-import com.intellij.ui.components.fields.valueEditors.CommaSeparatedIntegersValueEditor;
 import com.intellij.ui.components.fields.valueEditors.ValueEditor;
 import com.intellij.ui.components.labels.ActionLink;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +50,7 @@ import java.util.List;
 public class RightMarginForm {
   private IntegerField myRightMarginField;
   private JPanel myTopPanel;
-  private JComboBox myWrapOnTypingCombo;
+  private JComboBox<String> myWrapOnTypingCombo;
   private CommaSeparatedIntegersField myVisualGuidesField;
   @SuppressWarnings("unused") private ActionLink myResetLink;
   private final Language myLanguage;
@@ -65,6 +64,7 @@ public class RightMarginForm {
     myWrapOnTypingCombo.setModel(new DefaultComboBoxModel(
       CodeStyleSettingsCustomizable.WRAP_ON_TYPING_OPTIONS
     ));
+    MarginOptionsUtil.customizeWrapOnTypingCombo(myWrapOnTypingCombo, settings);
   }
 
   void createUIComponents() {
@@ -73,7 +73,7 @@ public class RightMarginForm {
       @Override
       public void valueChanged(@NotNull Integer newValue) {
         myResetLink.setVisible(!newValue.equals(myRightMarginField.getDefaultValue()));
-        myRightMarginField.getEmptyText().setText(getDefaultRightMarginText(mySettings));
+        myRightMarginField.getEmptyText().setText(MarginOptionsUtil.getDefaultRightMarginText(mySettings));
       }
     });
     myRightMarginField.setCanBeEmpty(true);
@@ -82,7 +82,7 @@ public class RightMarginForm {
     myVisualGuidesField.getValueEditor().addListener(new ValueEditor.Listener<List<Integer>>() {
       @Override
       public void valueChanged(@NotNull List<Integer> newValue) {
-        myVisualGuidesField.getEmptyText().setText(getDefaultVisualGuidesText(mySettings));
+        myVisualGuidesField.getEmptyText().setText(MarginOptionsUtil.getDefaultVisualGuidesText(mySettings));
       }
     });
     myResetLink = new ActionLink("Reset", new ResetRightMarginAction());
@@ -106,8 +106,8 @@ public class RightMarginForm {
     }
     myVisualGuidesField.setValue(langSettings.getSoftMargins());
     myResetLink.setVisible(langSettings.RIGHT_MARGIN >= 0);
-    myRightMarginField.getEmptyText().setText(getDefaultRightMarginText(settings));
-    myVisualGuidesField.getEmptyText().setText(getDefaultVisualGuidesText(settings));
+    myRightMarginField.getEmptyText().setText(MarginOptionsUtil.getDefaultRightMarginText(settings));
+    myVisualGuidesField.getEmptyText().setText(MarginOptionsUtil.getDefaultVisualGuidesText(settings));
   }
 
   public void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException {
@@ -141,13 +141,4 @@ public class RightMarginForm {
     return myTopPanel;
   }
 
-  private static String getDefaultRightMarginText(@NotNull CodeStyleSettings settings) {
-    return "Default: " + settings.getDefaultRightMargin();
-  }
-
-  private static String getDefaultVisualGuidesText(@NotNull CodeStyleSettings settings) {
-    List<Integer> softMargins = settings.getSoftMargins();
-    return "Default: " +
-           (softMargins.size() > 0 ? CommaSeparatedIntegersValueEditor.intListToString(settings.getSoftMargins()) : "None");
-  }
 }

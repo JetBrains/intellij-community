@@ -37,8 +37,6 @@ import java.util.function.Function;
 
 public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
 
-  public static final String DEFAULT_VALUE_TEXT = ApplicationBundle.message("integer.option.default.value.text");
-
   private MultiMap<String, String> myGroupToFields = new MultiMap<>();
   private Map<String, SettingsGroup> myFieldNameToGroup;
   private final CommaSeparatedIntegersField mySoftMarginsEditor =
@@ -102,10 +100,10 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
 
   private Function<Integer,String> getDefaultIntValueRenderer(@NotNull String fieldName) {
     if ("RIGHT_MARGIN".equals(fieldName)) {
-      return integer -> DEFAULT_VALUE_TEXT + ": " + getSettings().getDefaultRightMargin();
+      return integer -> MarginOptionsUtil.getDefaultRightMarginText(getSettings());
     }
     else {
-      return integer -> DEFAULT_VALUE_TEXT;
+      return integer -> ApplicationBundle.message("integer.field.value.default");
     }
   }
 
@@ -199,9 +197,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     if (intList.size() > 0) {
       return CommaSeparatedIntegersValueEditor.intListToString(intList);
     }
-    List<Integer> defaultMargins = getSettings().getDefaultSoftMargins();
-    String defaultsStr = defaultMargins.size() > 0 ? CommaSeparatedIntegersValueEditor.intListToString(defaultMargins) : "None";
-    return "Default: " + defaultsStr;
+    return MarginOptionsUtil.getDefaultVisualGuidesText(getSettings());
   }
 
   @Nullable
