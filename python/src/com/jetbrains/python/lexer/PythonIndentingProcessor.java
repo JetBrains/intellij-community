@@ -415,7 +415,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
     for (int i = anchorIndex; i < myTokenQueue.size(); i++) {
       final PendingToken token = myTokenQueue.get(i);
       if (token instanceof PendingCommentToken) {
-        if (((PendingCommentToken)token).getIndent() != indent) {
+        if (((PendingCommentToken)token).getIndent() < indent) {
           break;
         }
         result = i + 1;

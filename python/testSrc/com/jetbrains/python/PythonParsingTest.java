@@ -546,15 +546,12 @@ public class PythonParsingTest extends ParsingTestCase {
   }
 
   // PY-17017
-  public void testCommentAtTheEndOfBlock() {
+  public void testTrailingBlockCommentsAtEndOfFile() {
     doTest();
   }
 
-  public void testRaggedTrailingComments() {
-    doTest();
-  }
-
-  public void testRaggedTrailingCommentsWithTrailingStatement() {
+  // PY-17017
+  public void testTrailingBlockCommentsFollowedByStatement() {
     doTest();
   }
 
