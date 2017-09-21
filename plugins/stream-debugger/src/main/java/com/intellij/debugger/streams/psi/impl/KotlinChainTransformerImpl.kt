@@ -21,9 +21,11 @@ import com.intellij.debugger.streams.wrapper.CallArgument
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.wrapper.StreamChain
 import com.intellij.debugger.streams.wrapper.impl.*
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiverOrThis
 
@@ -33,8 +35,11 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiverOrThis
 class KotlinChainTransformerImpl : ChainTransformer.Kotlin {
   override fun transform(callChain: List<KtCallExpression>, context: PsiElement): StreamChain {
     val firstCall = callChain.first()
-    val qualifiedExpression = firstCall.getQualifiedExpressionForReceiverOrThis()
-    val qualifier = QualifierExpressionImpl(qualifiedExpression.text, qualifiedExpression.textRange, KotlinTypes.ANY)
+    val parent = firstCall.parent
+    val qualifier = if (parent is KtDotQualifiedExpression)
+      QualifierExpressionImpl(parent.receiverExpression.text, parent.receiverExpression.textRange, KotlinTypes.ANY)
+    else
+      QualifierExpressionImpl("", TextRange.EMPTY_RANGE, KotlinTypes.ANY) // This possible only when this inherits Stream
 
     val intermediateCalls = mutableListOf<IntermediateStreamCall>()
     for (call in callChain.subList(0, callChain.size - 1)) {
