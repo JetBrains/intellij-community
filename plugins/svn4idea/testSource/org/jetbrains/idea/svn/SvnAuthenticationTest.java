@@ -81,14 +81,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
 
   @Override
   protected void tearDown() {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-      try {
-        super.tearDown();
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    });
+    EdtTestUtil.runInEdtAndWait(() -> super.tearDown());
 
     FileUtil.delete(new File(myConfiguration.getConfigurationDirectory()));
   }
