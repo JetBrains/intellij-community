@@ -694,7 +694,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   // E.g. "change(a/b/c/x.txt)" and "delete(a/b/c)" are conflicting because "a/b/c/x.txt" is under the "a/b/c" directory from the other event.
   //
   // returns index after the last grouped event.
-  private static int groupByPath(@NotNull List<VFileEvent> inEvents, int startIndex, Set<String> files, Set<String> middleDirs) {
+  private static int groupByPath(@NotNull List<VFileEvent> inEvents, int startIndex, @NotNull Set<String> files, @NotNull Set<String> middleDirs) {
     // store all paths from all events (including all parents)
     // check the each new event's path against this set and if it's there, this event is conflicting
 
@@ -729,7 +729,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     return i;
   }
 
-  private static boolean checkIfConflictingEvent(String path, Set<String> files, Set<String> middleDirs) {
+  private static boolean checkIfConflictingEvent(@NotNull String path, @NotNull Set<String> files, @NotNull Set<String> middleDirs) {
     if (!files.add(path) || middleDirs.contains(path)) {
       // conflicting event found for (non-strict) descendant, stop
       return true;
@@ -758,7 +758,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
                                int startIndex,
                                @NotNull List<Runnable> outApplyEvents,
                                @NotNull List<VFileEvent> outValidatedEvents,
-                               @NotNull Set<String> files, @NotNull Set<String> middleDirs) {
+                               @NotNull Set<String> files,
+                               @NotNull Set<String> middleDirs) {
     int endIndex = groupByPath(events, startIndex, files, middleDirs);
     // since all events in the group are mutually non-conflicting, we can re-arrange creations/deletions together
     groupCreations(events, startIndex, endIndex, outValidatedEvents, outApplyEvents);
