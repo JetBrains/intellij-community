@@ -29,8 +29,15 @@ import java.util.stream.Stream;
 /**
  * @author Konstantin Bulenkov
  */
+@SuppressWarnings("SSBasedInspection")
 public class Bootstrap {
   private static final String IJ_PLATFORM_UPDATER = "ijPlatformUpdater";
+
+  /**
+   * This property allows applying patches without creating backups. In this case a callee is responsible for that.
+   * Example: JetBrains Toolbox App copies a tool it wants to update and then applies the patch.
+   */
+  private static final String NO_BACKUP_PROPERTY = "no.backup";
 
   public static void main(String[] args) throws Exception {
     if (args.length != 1) return;
@@ -83,7 +90,14 @@ public class Bootstrap {
 
     final Class<?> runner = Bootstrap.class.getClassLoader().loadClass("com.intellij.updater.Runner");
     final Method main = runner.getMethod("main", String[].class);
-    main.invoke(null, (Object)new String[]{"apply", args[0], "--toolbox-ui"});
+    final List<String> runnerArgs = new ArrayList<>();
+    runnerArgs.add("apply");
+    runnerArgs.add(args[0]);
+    runnerArgs.add("--toolbox-ui");
+    if (Boolean.getBoolean(NO_BACKUP_PROPERTY)) {
+      runnerArgs.add("--no-backup");
+    }
+    main.invoke(null, (Object)runnerArgs.toArray(new String[0]));
   }
 
   private static void cleanUp() {

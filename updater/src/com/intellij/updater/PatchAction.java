@@ -150,7 +150,7 @@ public abstract class PatchAction {
       return lock != null;
     }
     catch (OverlappingFileLockException | IOException e) {
-      Runner.printStackTrace(e);
+      Runner.logger().warn(toFile, e);
       return false;
     }
   }

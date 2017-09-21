@@ -37,8 +37,8 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   private File myFile;
   protected PatchSpec myPatchSpec;
 
-  @Override
   @Before
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     myFile = getTempFile("patch.zip");
@@ -50,6 +50,17 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   @Test
   public void testCreatingAndApplying() throws Exception {
     assertAppliedAndReverted();
+  }
+
+  @Test
+  public void testCreatingAndApplyingWithoutBackup() throws Exception {
+    createPatch();
+    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
+    Map<String, Long> expected = digest(preparationResult.patch, myNewerDir);
+
+    PatchFileCreator.ApplicationResult applicationResult = PatchFileCreator.apply(preparationResult, Collections.emptyMap(), null, TEST_UI);
+    assertTrue(applicationResult.applied);
+    assertEquals(expected, digest(preparationResult.patch, myOlderDir));
   }
 
   @Test
@@ -144,6 +155,38 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
       @Override
       protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
         throw new IOException("dummy exception");
+      }
+    });
+
+    assertNotApplied(preparationResult);
+  }
+
+  @Test
+  public void testCancelledAtBackingUp() throws Exception {
+    createPatch();
+
+    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
+    List<PatchAction> actions = preparationResult.patch.getActions();
+    actions.add(new MyFailOnApplyPatchAction(preparationResult.patch) {
+      @Override
+      protected void doBackup(File toFile, File backupFile) {
+        TEST_UI.cancelled = true;
+      }
+    });
+
+    assertNotApplied(preparationResult);
+  }
+
+  @Test
+  public void testCancelledAtApplying() throws Exception {
+    createPatch();
+
+    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
+    List<PatchAction> actions = preparationResult.patch.getActions();
+    actions.add(new MyFailOnApplyPatchAction(preparationResult.patch) {
+      @Override
+      protected void doApply(ZipFile patchFile, File backupDir, File toFile) {
+        TEST_UI.cancelled = true;
       }
     });
 
@@ -545,7 +588,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   }
 
 
-  protected Patch createPatch() throws IOException, OperationCancelledException {
+  protected Patch createPatch() throws IOException {
     assertFalse(myFile.exists());
     Patch patch = PatchFileCreator.create(myPatchSpec, myFile, TEST_UI);
     assertTrue(myFile.exists());
@@ -573,8 +616,10 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
     File backup = getTempFile("backup");
     Map<String, Long> original = digest(patch, myOlderDir);
 
-    Patch.ApplicationResult applicationResult = PatchFileCreator.apply(preparationResult, options, backup, TEST_UI);
+    PatchFileCreator.ApplicationResult applicationResult = PatchFileCreator.apply(preparationResult, options, backup, TEST_UI);
     assertFalse(applicationResult.applied);
+
+    PatchFileCreator.revert(preparationResult, applicationResult.appliedActions, backup, TEST_UI);
     assertEquals(original, digest(patch, myOlderDir));
   }
 
@@ -609,16 +654,12 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
       }
     }
 
-    Patch.ApplicationResult applicationResult = PatchFileCreator.apply(preparationResult, options, backup, TEST_UI);
+    PatchFileCreator.ApplicationResult applicationResult = PatchFileCreator.apply(preparationResult, options, backup, TEST_UI);
     assertTrue(applicationResult.applied);
     assertEquals(target, digest(patch, myOlderDir));
 
     PatchFileCreator.revert(preparationResult, applicationResult.appliedActions, backup, TEST_UI);
     assertEquals(original, digest(patch, myOlderDir));
-  }
-
-  private static Map<String, Long> digest(Patch patch, File dir) throws IOException, OperationCancelledException {
-    return new TreeMap<>(patch.digestFiles(dir, Collections.emptyList(), false, TEST_UI));
   }
 
   private static class MyFailOnApplyPatchAction extends PatchAction {

@@ -111,8 +111,7 @@ public class Utils {
       }
       catch (IOException ignore) { }
 
-      try { Thread.sleep(10); }
-      catch (InterruptedException ignore) { }
+      pause(10);
     }
 
     throw new IOException("Cannot delete: " + path);
@@ -337,5 +336,10 @@ public class Utils {
     public synchronized void writeTo(OutputStream out) throws IOException {
       writeBytes(buf, count, out);
     }
+  }
+
+  public static void pause(long millis) {
+    try { Thread.sleep(millis); }
+    catch (InterruptedException ignore) { }
   }
 }
