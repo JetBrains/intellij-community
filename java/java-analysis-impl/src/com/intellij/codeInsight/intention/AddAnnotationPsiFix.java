@@ -25,6 +25,7 @@ import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.light.LightElement;
@@ -102,7 +103,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.add.annotation.family");
+    return "Add '" + StringUtil.getShortName(myAnnotation) + "' Annotation";
   }
 
   @Override
