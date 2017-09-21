@@ -769,15 +769,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       DialogWrapper.cleanupRootPane(rootPane);
       rootPane = null;
 
-      // http://bugs.sun.com/view_bug.do?bug_id=6614056
-      try {
-        synchronized (getTreeLock()) {
-          List<?> list = ReflectionUtil.getStaticFieldValue(Dialog.class, List.class, "modalDialogs");
-          list.remove(this);
-        }
-      }
-      catch (final Exception ignored) {
-      }
     }
 
     @Override
@@ -798,7 +789,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     public void paint(Graphics g) {
       if (!SystemInfo.isMac || UIUtil.isUnderAquaLookAndFeel()) {  // avoid rendering problems with non-aqua (alloy) LaFs under mac
         // actually, it's a bad idea to globally enable this for dialog graphics since renderers, for example, may not
-        // inherit graphics so rendering hints won't be applied and trees or lists may render ugly.
+        // inherit graphics so rendering hints won't be applied and £trees or lists may render ugly.
         UISettings.setupAntialiasing(g);
       }
 
