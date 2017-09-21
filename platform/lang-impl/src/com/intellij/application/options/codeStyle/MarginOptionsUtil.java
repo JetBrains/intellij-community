@@ -39,6 +39,10 @@ class MarginOptionsUtil {
        : ApplicationBundle.message("settings.soft.margins.empty.list")));
   }
 
+  static String getDefaultWrapOnTypingText(@NotNull CodeStyleSettings settings) {
+    return getDefaultValueText(settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN ? "Yes" : "No");
+  }
+
   static void customizeWrapOnTypingCombo(@NotNull JComboBox<String> wrapOnTypingCombo, @NotNull CodeStyleSettings settings) {
     wrapOnTypingCombo.setRenderer(new WrapOnTypingListCellRenderer(settings));
   }
@@ -59,7 +63,7 @@ class MarginOptionsUtil {
       for (int i = 0; i < CodeStyleSettingsCustomizable.WRAP_ON_TYPING_VALUES.length; i ++) {
         if (CodeStyleSettingsCustomizable.WRAP_ON_TYPING_VALUES[i] == CommonCodeStyleSettings.WrapOnTyping.DEFAULT.intValue) {
           if (CodeStyleSettingsCustomizable.WRAP_ON_TYPING_OPTIONS[i].equals(value)) {
-            setText(getDefaultValueText(mySettings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN ? "Yes" : "No"));
+            setText(getDefaultWrapOnTypingText(mySettings));
           }
         }
       }

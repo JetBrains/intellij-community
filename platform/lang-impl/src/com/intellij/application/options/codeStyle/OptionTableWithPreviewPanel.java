@@ -737,6 +737,12 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
       }
 
       Color background = table.getBackground();
+      if (key != null && value != null) {
+        JComponent customRenderer = getCustomValueRenderer(key.getOptionName(), value);
+        if (customRenderer != null) {
+          return customRenderer;
+        }
+      }
       if (value instanceof Boolean) {
         myCheckBox.setSelected(((Boolean)value).booleanValue());
         myCheckBox.setBackground(background);
@@ -757,12 +763,6 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
           myIntLabel.setText(value.toString());
         }
         return myIntLabel;
-      }
-      else if (key != null && value != null) {
-        JComponent customRenderer = getCustomValueRenderer(key.getOptionName(), value);
-        if (customRenderer != null) {
-          return customRenderer;
-        }
       }
 
       myCheckBox.putClientProperty("JComponent.sizeVariant", "small");
