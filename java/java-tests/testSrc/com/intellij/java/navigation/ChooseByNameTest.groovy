@@ -124,6 +124,12 @@ class Intf {
     assert gotoFile('re*.m') == [m, mod]
   }
 
+  void "test prefer exact filename match"() {
+    def i = addEmptyFile("foo/i.txt")
+    def index = addEmptyFile("index.html")
+    assert gotoFile('i') == [i, index]
+  }
+
   void "test consider dot-idea files out of project"() {
     def outside = addEmptyFile(".idea/workspace.xml")
     def inside = addEmptyFile("workspace.txt")

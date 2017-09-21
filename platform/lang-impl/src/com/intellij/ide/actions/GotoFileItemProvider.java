@@ -144,9 +144,10 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     if (group.size() > 1) {
       Collections.sort(group,
                        Comparator.<PsiFileSystemItem, Boolean>comparing(f -> f instanceof PsiDirectory).
+                         thenComparing(qualifierMatchingDegrees::get).
+                         thenComparing(i -> i.getName().toLowerCase()).
                          thenComparing(nesting::get).
                          thenComparing(dirCloseness::get).
-                         thenComparing(qualifierMatchingDegrees::get).
                          thenComparing(getPathProximityComparator()).
                          thenComparing(myModel::getFullName));
     }
