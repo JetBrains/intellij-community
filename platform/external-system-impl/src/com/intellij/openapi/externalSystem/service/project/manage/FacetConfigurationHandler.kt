@@ -47,7 +47,7 @@ class FacetConfigurationHandler : ConfigurationHandler {
 
   override fun apply(project: Project, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {}
 
-  private fun ConfigurationData.eachFacet(f: (String, String, Map<String, String>) -> Collection<Facet<out FacetConfiguration>>?):
+  private fun ConfigurationData.eachFacet(f: (String, String, Map<String, *>) -> Collection<Facet<out FacetConfiguration>>?):
     List<Facet<out FacetConfiguration>> {
     val runCfgMap = find("facets")
 
@@ -64,7 +64,7 @@ class FacetConfigurationHandler : ConfigurationHandler {
 
         val typeName = cfg["type"] as? String ?: name
         try {
-          return@map f(typeName, name, cfg as Map<String, String>)
+          return@map f(typeName, name, cfg as Map<String, *>)
         }
         catch (e: Exception) {
           RunConfigurationHandler.LOG.warn("Error occurred when importing run configuration ${name}: ${e.message}", e)

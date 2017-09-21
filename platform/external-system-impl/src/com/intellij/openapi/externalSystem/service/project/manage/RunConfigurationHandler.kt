@@ -49,7 +49,7 @@ class RunConfigurationHandler: ConfigurationHandler {
     }
   }
 
-  private fun ConfigurationData.eachRunConfiguration(f: (String, String, Map<String, String>) -> Unit) {
+  private fun ConfigurationData.eachRunConfiguration(f: (String, String, Map<String, *>) -> Unit) {
     val runCfgMap = find("runConfigurations")
 
     if (runCfgMap !is Map<*,*>) return
@@ -72,7 +72,7 @@ class RunConfigurationHandler: ConfigurationHandler {
       }
 
       try {
-        f(typeName, name, cfg as Map<String, String>)
+        f(typeName, name, cfg as Map<String, *>)
       } catch (e: Exception) {
         RunConfigurationHandler.LOG.warn("Error occurred when importing run configuration ${name}: ${e.message}", e)
       }
