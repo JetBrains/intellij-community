@@ -105,16 +105,22 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
     });
   }
 
-  public final void invalidate(@NotNull TreePath path) {
-    invoker.invokeLaterIfNeeded(() -> {
-      Object component = path.getLastPathComponent();
-      if (component instanceof Node) {
+  public final void invalidate(@NotNull TreePath path, boolean structure) {
+    Object component = path.getLastPathComponent();
+    if (component instanceof Node) {
+      invoker.invokeLaterIfNeeded(() -> {
         Node node = (Node)component;
         if (disposed) return;
-        node.invalidate();
-        treeStructureChanged(path, null, null);
-      }
-    });
+        node.update();
+        if (structure) {
+          node.invalidate();
+          treeStructureChanged(path, null, null);
+        }
+        else {
+          treeNodesChanged(path, null, null);
+        }
+      });
+    }
   }
 
   @Override

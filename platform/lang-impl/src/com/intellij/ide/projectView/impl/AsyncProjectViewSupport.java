@@ -175,7 +175,7 @@ class AsyncProjectViewSupport {
   }
 
   public void update(@NotNull TreePath path) {
-    myStructureTreeModel.invalidate(path);
+    myStructureTreeModel.invalidate(path, true);
   }
 
   public void update(@NotNull List<TreePath> list) {
