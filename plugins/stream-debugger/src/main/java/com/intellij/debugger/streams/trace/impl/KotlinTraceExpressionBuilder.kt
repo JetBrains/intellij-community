@@ -30,9 +30,9 @@ class KotlinTraceExpressionBuilder(project: Project, dsl: Dsl) : TraceExpression
 
   override fun createTraceExpression(chain: StreamChain): String {
     val expression = super.createTraceExpression(chain)
-    val resultDeclaration = dsl.declaration(dsl.variable(dsl.types.ANY, resultVariableName), dsl.nullExpression, true).toCode()
-    val result = "$resultDeclaration; \n " +
-                 "$expression \n" +
+    val resultDeclaration = dsl.declaration(dsl.variable(dsl.types.nullable { ANY }, resultVariableName), dsl.nullExpression, true)
+    val result = "${resultDeclaration.toCode()}\n " +
+                 "$expression\n" +
                  resultVariableName
 
     LOG.info("trace expression: \n$result")
