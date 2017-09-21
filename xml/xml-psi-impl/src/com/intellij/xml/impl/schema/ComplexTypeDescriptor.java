@@ -35,6 +35,7 @@ import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -118,6 +119,13 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   public ComplexTypeDescriptor(XmlNSDescriptorImpl documentDescriptor, XmlTag tag) {
     super(tag);
     myDocumentDescriptor = documentDescriptor;
+  }
+
+  @SuppressWarnings("ConstantConditions")
+  @NotNull
+  @Override
+  public XmlTag getDeclaration() {
+    return super.getDeclaration();
   }
 
   @Nullable
@@ -400,7 +408,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   }
 
   private CanContainAttributeType _canContainAttribute(String namespace,
-                                                       XmlTag tag,
+                                                       @NotNull XmlTag tag,
                                                        @Nullable String qName,
                                                        Set<String> visited,
                                                        @Nullable Set<Object> dependencies) {
@@ -452,7 +460,8 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
         if (descriptor instanceof ComplexTypeDescriptor) {
           ComplexTypeDescriptor complexTypeDescriptor = (ComplexTypeDescriptor)descriptor;
           if (dependencies != null) {
-            dependencies.add(descriptor.getDeclaration().getContainingFile());
+            XmlTag declaration = complexTypeDescriptor.getDeclaration();
+            dependencies.add(declaration.getContainingFile());
           }
 
           final CanContainAttributeType containAttributeType =
