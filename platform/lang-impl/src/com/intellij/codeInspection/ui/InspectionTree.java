@@ -38,7 +38,10 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeWillExpandListener;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.ExpandVetoException;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
@@ -50,7 +53,7 @@ public class InspectionTree extends Tree {
 
   @NotNull private final GlobalInspectionContextImpl myContext;
   @NotNull private final ExcludedInspectionTreeNodesManager myExcludedManager;
-  @NotNull private ExpansionTreeState<InspectionTreeNode> myState = new ExpansionTreeState<>(InspectionResultsViewComparator.getInstance());
+  @NotNull private InspectionTreeState myState = new InspectionTreeState();
   private boolean myQueueUpdate;
 
   public InspectionTree(@NotNull GlobalInspectionContextImpl context,
@@ -64,7 +67,7 @@ public class InspectionTree extends Tree {
     setRootVisible(false);
     setShowsRootHandles(true);
     UIUtil.setLineStyleAngled(this);
-    addTreeWillExpandListener(new TreeWillExpandListenerImpl(myState));
+    addTreeWillExpandListener(new ExpandListener());
 
     myState.getExpandedUserObjects().add(project);
 
@@ -356,12 +359,30 @@ public class InspectionTree extends Tree {
     myState.restoreExpansionAndSelection(this, treeNodesMightChange);
   }
 
-  public ExpansionTreeState<InspectionTreeNode> getTreeState() {
+  public void setState(@NotNull InspectionTreeState state) {
+    myState = state;
+  }
+
+  public InspectionTreeState getTreeState() {
     return myState;
   }
 
-  public void setTreeState(@NotNull ExpansionTreeState<InspectionTreeNode> treeState) {
+  public void setTreeState(@NotNull InspectionTreeState treeState) {
     myState = treeState;
+  }
+
+  private class ExpandListener implements TreeWillExpandListener {
+    @Override
+    public void treeWillExpand(TreeExpansionEvent event) throws ExpandVetoException {
+      final InspectionTreeNode node = (InspectionTreeNode)event.getPath().getLastPathComponent();
+      myState.getExpandedUserObjects().add(node.getUserObject());
+    }
+
+    @Override
+    public void treeWillCollapse(TreeExpansionEvent event) throws ExpandVetoException {
+      InspectionTreeNode node = (InspectionTreeNode)event.getPath().getLastPathComponent();
+      myState.getExpandedUserObjects().remove(node.getUserObject());
+    }
   }
 
   @NotNull

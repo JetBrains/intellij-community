@@ -30,7 +30,10 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.reference.RefVisitor;
-import com.intellij.codeInspection.ui.*;
+import com.intellij.codeInspection.ui.DefaultInspectionToolPresentation;
+import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.codeInspection.ui.InspectionToolPresentation;
+import com.intellij.codeInspection.ui.InspectionTreeState;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobLauncherImpl;
 import com.intellij.concurrency.SensitiveProgressWrapper;
@@ -107,7 +110,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   @NotNull
   private AnalysisUIOptions myUIOptions;
-  private ExpansionTreeState<InspectionTreeNode> myTreeState;
+  private InspectionTreeState myTreeState;
 
   public GlobalInspectionContextImpl(@NotNull Project project, @NotNull NotNullLazyValue<ContentManager> contentManager) {
     super(project);
@@ -120,7 +123,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     return myContentManager.getValue();
   }
 
-  public void setTreeState(ExpansionTreeState<InspectionTreeNode> treeState) {
+  public void setTreeState(InspectionTreeState treeState) {
     myTreeState = treeState;
   }
 
@@ -522,11 +525,11 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   }
 
   private void inspectFile(@NotNull final PsiFile file,
-                              @NotNull final TextRange range,
-                              @NotNull final InspectionManager inspectionManager,
-                              @NotNull List<Tools> localTools,
-                              @NotNull List<Tools> globalSimpleTools,
-                              @NotNull final Map<String, InspectionToolWrapper> wrappersMap) {
+                           @NotNull final TextRange range,
+                           @NotNull final InspectionManager inspectionManager,
+                           @NotNull List<Tools> localTools,
+                           @NotNull List<Tools> globalSimpleTools,
+                           @NotNull final Map<String, InspectionToolWrapper> wrappersMap) {
     Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
     if (document == null) return;
 
@@ -1018,7 +1021,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       }, ModalityState.defaultModalityState());
       return;
     }
-    
+
     Runnable runnable = () -> {
       if (!FileModificationService.getInstance().preparePsiElementsForWrite(files)) return;
       CleanupInspectionIntention.applyFixesNoSort(getProject(), "Code Cleanup", descriptors, null);

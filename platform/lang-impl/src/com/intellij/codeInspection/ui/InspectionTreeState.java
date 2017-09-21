@@ -16,39 +16,31 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Dmitry Batkovich
  */
-@SuppressWarnings("unchecked")
-public class ExpansionTreeState<T extends DefaultMutableTreeNode> {
-  private final Set<Object> myExpandedUserObjects;
-  @NotNull
-  private final Comparator<T> myComparator;
-  private TreeSelectionPath mySelectionPath;
-
-  public ExpansionTreeState(@NotNull Comparator<T> comparator) {
-    myExpandedUserObjects = new HashSet<>();
-    myComparator = comparator;
-  }
+public class InspectionTreeState {
+  private final Set<Object> myExpandedUserObjects = new HashSet<>();
+  private InspectionTreeSelectionPath mySelectionPath;
 
   public Set<Object> getExpandedUserObjects() {
     return myExpandedUserObjects;
   }
 
   public void setSelectionPath(TreePath selectionPath) {
-    mySelectionPath = new TreeSelectionPath(selectionPath);
+    mySelectionPath = new InspectionTreeSelectionPath(selectionPath);
   }
 
-  public void restoreExpansionAndSelection(JTree tree, boolean treeNodeMightChange) {
-    restoreExpansionStatus((T)tree.getModel().getRoot(), tree);
+  public void restoreExpansionAndSelection(InspectionTree tree, boolean treeNodeMightChange) {
+    restoreExpansionStatus((InspectionTreeNode)tree.getModel().getRoot(), tree);
     if (mySelectionPath != null) {
       mySelectionPath.restore(tree, treeNodeMightChange);
     } else {
@@ -56,50 +48,49 @@ public class ExpansionTreeState<T extends DefaultMutableTreeNode> {
     }
   }
 
-  private void restoreExpansionStatus(T node, JTree tree) {
+  private void restoreExpansionStatus(InspectionTreeNode node, InspectionTree tree) {
     if (getExpandedUserObjects().contains(node.getUserObject())) {
       //sortChildren(node);
       TreeNode[] pathToNode = node.getPath();
       tree.expandPath(new TreePath(pathToNode));
       Enumeration children = node.children();
       while (children.hasMoreElements()) {
-        T childNode = (T)children.nextElement();
+        InspectionTreeNode childNode = (InspectionTreeNode)children.nextElement();
         restoreExpansionStatus(childNode, tree);
       }
     }
   }
 
-  @SuppressWarnings("unchecked")
-  private class TreeSelectionPath {
+  private static class InspectionTreeSelectionPath {
     private final Object[] myPath;
     private final int[] myIndices;
 
-    public TreeSelectionPath(TreePath path) {
+    public InspectionTreeSelectionPath(TreePath path) {
       myPath = path.getPath();
       myIndices = new int[myPath.length];
       for (int i = 0; i < myPath.length - 1; i++) {
-        T node = (T)myPath[i];
-        myIndices[i + 1] = getChildIndex(node, (T)myPath[i + 1]);
+        InspectionTreeNode node = (InspectionTreeNode)myPath[i];
+        myIndices[i + 1] = getChildIndex(node, (InspectionTreeNode)myPath[i + 1]);
       }
     }
 
-    private int getChildIndex(T node, T child) {
+    private static int getChildIndex(InspectionTreeNode node, InspectionTreeNode child) {
       int idx = 0;
       Enumeration children = node.children();
       while (children.hasMoreElements()) {
-        T ch = (T)children.nextElement();
+        InspectionTreeNode ch = (InspectionTreeNode)children.nextElement();
         if (ch == child) break;
         idx++;
       }
       return idx;
     }
 
-    public void restore(JTree tree, boolean treeNodeMightChange) {
+    public void restore(InspectionTree tree, boolean treeNodeMightChange) {
       tree.getSelectionModel().removeSelectionPaths(tree.getSelectionModel().getSelectionPaths());
       TreeUtil.selectPath(tree, restorePath(tree, treeNodeMightChange));
     }
 
-    private TreePath restorePath(JTree tree, boolean treeNodeMightChange) {
+    private TreePath restorePath(InspectionTree tree, boolean treeNodeMightChange) {
       ArrayList<Object> newPath = new ArrayList<>();
 
       newPath.add(tree.getModel().getRoot());
@@ -109,13 +100,13 @@ public class ExpansionTreeState<T extends DefaultMutableTreeNode> {
 
     private void restorePath(ArrayList<Object> newPath, int idx, boolean treeNodeMightChange) {
       if (idx >= myPath.length) return;
-      T oldNode = (T)myPath[idx];
-      T newRoot = (T)newPath.get(idx - 1);
+      InspectionTreeNode oldNode = (InspectionTreeNode)myPath[idx];
+      InspectionTreeNode newRoot = (InspectionTreeNode)newPath.get(idx - 1);
 
       Enumeration children = newRoot.children();
       while (children.hasMoreElements()) {
-        T child = (T)children.nextElement();
-        if (treeNodeMightChange ? myComparator.compare(child, oldNode) == 0 : child == oldNode) {
+        InspectionTreeNode child = (InspectionTreeNode)children.nextElement();
+        if (treeNodeMightChange ? InspectionResultsViewComparator.getInstance().areEqual(child, oldNode) : child == oldNode) {
           newPath.add(child);
           restorePath(newPath, idx + 1, treeNodeMightChange);
           return;
