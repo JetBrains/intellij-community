@@ -85,7 +85,7 @@ public class EmmetAbbreviationBalloon {
     field.setPreferredSize(new Dimension(Math.max(220, fieldPreferredSize.width), fieldPreferredSize.height));
     field.setHistorySize(10);
 
-    ContextHelpLabel label = new ContextHelpLabel(myDocumentation);
+    ContextHelpLabel label = ContextHelpLabel.create(myDocumentation);
     label.setBorder(JBUI.Borders.empty(0, 3, 0, 1));
 
     panel.add(field, BorderLayout.CENTER);
