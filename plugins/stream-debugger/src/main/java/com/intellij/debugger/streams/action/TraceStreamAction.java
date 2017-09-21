@@ -24,13 +24,14 @@ import com.intellij.debugger.streams.psi.impl.*;
 import com.intellij.debugger.streams.trace.*;
 import com.intellij.debugger.streams.trace.dsl.impl.DslImpl;
 import com.intellij.debugger.streams.trace.dsl.impl.java.JavaStatementFactory;
+import com.intellij.debugger.streams.trace.dsl.impl.kotlin.KotlinStatementFactory;
 import com.intellij.debugger.streams.trace.impl.JavaTraceExpressionBuilder;
+import com.intellij.debugger.streams.trace.impl.KotlinTraceExpressionBuilder;
 import com.intellij.debugger.streams.trace.impl.TraceResultInterpreterImpl;
 import com.intellij.debugger.streams.ui.impl.ElementChooserImpl;
 import com.intellij.debugger.streams.ui.impl.EvaluationAwareTraceWindow;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
-import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -55,8 +56,8 @@ public class TraceStreamAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(TraceStreamAction.class);
 
   private final DebuggerPositionResolver myPositionResolver = new DebuggerPositionResolverImpl();
-  private final List<StreamChainBuilder> myBuilders = Arrays.asList(new JavaStreamChainBuilder(new JavaChainTransformerImpl()),
-                                                                    new KotlinJavaStreamChainBuilder());
+  private final List<StreamChainBuilder> myChainBuilders = Arrays.asList(new JavaStreamChainBuilder(new JavaChainTransformerImpl()),
+                                                                         new KotlinJavaStreamChainBuilder());
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -70,7 +71,7 @@ public class TraceStreamAction extends AnAction {
     final XDebugSession session = getCurrentSession(e);
     final PsiElement element = session == null ? null : myPositionResolver.getNearestElementToBreakpoint(session);
     if (element != null) {
-      final List<StreamChain> chains = myBuilders.stream()
+      final List<StreamChain> chains = myChainBuilders.stream()
         .filter(builder -> builder.isChainExists(element))
         .flatMap(builder -> builder.build(element).stream())
         .collect(Collectors.toList());
@@ -98,7 +99,7 @@ public class TraceStreamAction extends AnAction {
   }
 
   private boolean isChainExists(@NotNull PsiElement element) {
-    for (final StreamChainBuilder b : myBuilders) {
+    for (final StreamChainBuilder b : myChainBuilders) {
       if (b.isChainExists(element)) {
         return true;
       }
@@ -111,7 +112,9 @@ public class TraceStreamAction extends AnAction {
     final EvaluationAwareTraceWindow window = new EvaluationAwareTraceWindow(session, chain);
     ApplicationManager.getApplication().invokeLater(window::show);
     final Project project = session.getProject();
-    final TraceExpressionBuilder expressionBuilder = new JavaTraceExpressionBuilder(project, new DslImpl(new JavaStatementFactory()));
+    final TraceExpressionBuilder expressionBuilder = "JAVA".equals(chain.getContext().getLanguage().getID())
+                                                     ? new JavaTraceExpressionBuilder(project, new DslImpl(new JavaStatementFactory()))
+                                                     : new KotlinTraceExpressionBuilder(project, new DslImpl(new KotlinStatementFactory()));
     final TraceResultInterpreterImpl resultInterpreter = new TraceResultInterpreterImpl(project);
     final StreamTracer tracer = new EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter);
     tracer.trace(chain, new TracingCallback() {

@@ -20,8 +20,6 @@ import com.intellij.debugger.streams.resolve.AppendResolver
 import com.intellij.debugger.streams.resolve.IntervalMapResolver
 import com.intellij.debugger.streams.resolve.PairMapResolver
 import com.intellij.debugger.streams.resolve.PrependResolver
-import com.intellij.debugger.streams.trace.dsl.Dsl
-import com.intellij.debugger.streams.trace.dsl.impl.DslImpl
 import com.intellij.debugger.streams.trace.impl.handler.unified.DistinctByKeyHandler
 import com.intellij.debugger.streams.trace.impl.handler.unified.DistinctKeysHandler
 import com.intellij.debugger.streams.trace.impl.handler.unified.DistinctTraceHandler
@@ -35,7 +33,6 @@ import com.intellij.openapi.project.Project
 class StreamExLibrarySupport(project: Project)
   : LibrarySupportBase(LibraryImpl("StreamEx", JavaLanguage(project), "one.util.streamex"),
                        StandardLibrarySupport(project)) {
-  private val dsl: Dsl = DslImpl(description.language.statementFactory)
   init {
     addIntermediateOperationsSupport(*filterOperations(
       "atLeast", "atMost", "less", "greater", "filterBy", "filterKeys", "filterValues", "filterKeyValue",
@@ -55,15 +52,15 @@ class StreamExLibrarySupport(project: Project)
     addIntermediateOperationsSupport(*sortedOperations("sortedBy", "sortedByInt", "sortedByDouble", "sortedByLong", "reverseSorted"))
 
     addIntermediateOperationsSupport(
-      DistinctOperation("distinct", { num, call ->
+      DistinctOperation("distinct", { num, call,dsl ->
         val arguments = call.arguments
         if (arguments.isEmpty() || arguments[0].type == "int") {
           return@DistinctOperation DistinctTraceHandler(num, call, dsl)
         }
         return@DistinctOperation DistinctByKeyHandler(num, call, dsl)
       }),
-      DistinctOperation("distinctKeys", { num, call -> DistinctKeysHandler(num, call, dsl) }),
-      DistinctOperation("distinctValues", { num, call -> DistinctValuesHandler(num, call, dsl) })
+      DistinctOperation("distinctKeys", { num, call, dsl -> DistinctKeysHandler(num, call, dsl) }),
+      DistinctOperation("distinctValues", { num, call, dsl -> DistinctValuesHandler(num, call, dsl) })
     )
 
     addIntermediateOperationsSupport(ConcatOperation("append", AppendResolver()),

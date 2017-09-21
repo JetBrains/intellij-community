@@ -19,6 +19,7 @@ import com.intellij.debugger.streams.resolve.ValuesOrderResolver
 import com.intellij.debugger.streams.trace.CallTraceInterpreter
 import com.intellij.debugger.streams.trace.IntermediateCallHandler
 import com.intellij.debugger.streams.trace.TerminatorCallHandler
+import com.intellij.debugger.streams.trace.dsl.Dsl
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
 
@@ -34,9 +35,9 @@ interface Operation {
 }
 
 interface IntermediateOperation : Operation {
-  fun getTraceHandler(callOrder: Int, call: IntermediateStreamCall): IntermediateCallHandler
+  fun getTraceHandler(callOrder: Int, call: IntermediateStreamCall, dsl: Dsl): IntermediateCallHandler
 }
 
 interface TerminalOperation : Operation {
-  fun getTraceHandler(call: TerminatorStreamCall, resultExpression: String): TerminatorCallHandler
+  fun getTraceHandler(call: TerminatorStreamCall, resultExpression: String, dsl: Dsl): TerminatorCallHandler
 }

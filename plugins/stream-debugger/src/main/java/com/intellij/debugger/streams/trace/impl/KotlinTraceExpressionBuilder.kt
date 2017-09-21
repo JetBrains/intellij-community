@@ -15,14 +15,28 @@
  */
 package com.intellij.debugger.streams.trace.impl
 
-import com.intellij.debugger.streams.trace.TraceExpressionBuilder
+import com.intellij.debugger.streams.trace.dsl.Dsl
 import com.intellij.debugger.streams.wrapper.StreamChain
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
 
 /**
  * @author Vitaliy.Bibaev
  */
-class KotlinExpressionBuilder : TraceExpressionBuilder {
+class KotlinTraceExpressionBuilder(project: Project, dsl: Dsl) : TraceExpressionBuilderBase(project, dsl) {
+  private companion object {
+    private val LOG = Logger.getInstance(KotlinTraceExpressionBuilder::class.java)
+  }
+
   override fun createTraceExpression(chain: StreamChain): String {
-    return ""
+    val expression = super.createTraceExpression(chain)
+    val resultDeclaration = dsl.declaration(dsl.variable(dsl.types.ANY, resultVariableName), dsl.nullExpression, true).toCode()
+    val result = "$resultDeclaration; \n " +
+                 "$expression \n" +
+                 resultVariableName
+
+    LOG.info("trace expression: \n$result")
+
+    return result
   }
 }

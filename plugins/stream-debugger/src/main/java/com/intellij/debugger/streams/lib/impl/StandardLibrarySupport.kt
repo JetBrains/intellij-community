@@ -27,7 +27,6 @@ import com.intellij.openapi.project.Project
  */
 class StandardLibrarySupport(project: Project)
   : LibrarySupportBase(LibraryImpl("Java 8 Stream API", JavaLanguage(project), "java.util.stream")) {
-  private val dsl = DslImpl(description.language.statementFactory)
 
   init {
     addIntermediateOperationsSupport(FilterOperation("filter"),
@@ -45,21 +44,21 @@ class StandardLibrarySupport(project: Project)
                                      FlatMappingOperation("flatMapToInt"),
                                      FlatMappingOperation("flatMapToLong"),
                                      FlatMappingOperation("flatMapToDouble"),
-                                     DistinctOperation("distinct", { num, call -> DistinctTraceHandler(num, call, dsl) }),
+                                     DistinctOperation("distinct", { num, call, dsl -> DistinctTraceHandler(num, call, dsl) }),
                                      SortedOperation("sorted"),
-                                     ParallelOperation("parallel", dsl))
+                                     ParallelOperation("parallel"))
 
     addTerminationOperationsSupport(MatchingOperation("anyMatch",
-                                                      AnyMatchTraceInterpreter(), dsl),
+                                                      AnyMatchTraceInterpreter()),
                                     MatchingOperation("allMatch",
-                                                      AllMatchTraceInterpreter(), dsl),
+                                                      AllMatchTraceInterpreter()),
                                     MatchingOperation("noneMatch",
-                                                      NoneMatchTraceInterpreter(), dsl),
-                                    OptionalResultOperation("min", dsl),
-                                    OptionalResultOperation("max", dsl),
-                                    OptionalResultOperation("findAny", dsl),
-                                    OptionalResultOperation("findFirst", dsl),
-                                    ToCollectionOperation("toArray", dsl),
-                                    ToCollectionOperation("collect", dsl))
+                                                      NoneMatchTraceInterpreter()),
+                                    OptionalResultOperation("min"),
+                                    OptionalResultOperation("max"),
+                                    OptionalResultOperation("findAny"),
+                                    OptionalResultOperation("findFirst"),
+                                    ToCollectionOperation("toArray"),
+                                    ToCollectionOperation("collect"))
   }
 }

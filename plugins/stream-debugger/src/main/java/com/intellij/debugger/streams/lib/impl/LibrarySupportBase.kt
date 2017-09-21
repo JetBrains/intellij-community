@@ -41,13 +41,13 @@ abstract class LibrarySupportBase(override val description: Library,
     return object : HandlerFactory {
       override fun getForIntermediate(number: Int, call: IntermediateStreamCall): IntermediateCallHandler {
         val operation = mySupportedIntermediateOperations[call.name]
-        return operation?.getTraceHandler(number, call)
+        return operation?.getTraceHandler(number, call, dsl)
                ?: compatibleLibraryFactory.getForIntermediate(number, call)
       }
 
       override fun getForTermination(call: TerminatorStreamCall, resultExpression: String): TerminatorCallHandler {
         val terminalOperation = mySupportedTerminalOperations[call.name]
-        return terminalOperation?.getTraceHandler(call, resultExpression)
+        return terminalOperation?.getTraceHandler(call, resultExpression, dsl)
                ?: compatibleLibraryFactory.getForTermination(call, resultExpression)
       }
     }
