@@ -52,4 +52,12 @@ class ArrayInitializerLength {
       System.out.println("not ok");
     }
   }
+
+  void testExecutionOrder(Object obj) {
+    if(obj instanceof String) {
+      // should not warn about possible CCE
+      obj = new String[] {(String)obj};
+    }
+    System.out.println(obj);
+  }
 }

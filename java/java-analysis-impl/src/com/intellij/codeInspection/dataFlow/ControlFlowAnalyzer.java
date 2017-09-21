@@ -1606,23 +1606,17 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (var == null) {
         var = getFactory().getVarFactory().createVariableValue(createTempVariable(type), false);
       }
-      addInstruction(new PushInstruction(var, null, true));
-      addInstruction(new PushInstruction(getFactory().createTypeValue(type, Nullness.NOT_NULL), expression));
-      addInstruction(new AssignInstruction(expression, var)); // var remains on stack as an instruction result
-      final PsiExpression[] dimensions = expression.getArrayDimensions();
-      boolean sizeAssigned = false;
       DfaValue length = SpecialField.ARRAY_LENGTH.createValue(getFactory(), var);
+      addInstruction(new PushInstruction(length, null, true));
+      // stack: ... var.length
+      final PsiExpression[] dimensions = expression.getArrayDimensions();
+      boolean sizeOnStack = false;
       for (final PsiExpression dimension : dimensions) {
-        if (!sizeAssigned) {
-          addInstruction(new PushInstruction(length, null, true));
-          dimension.accept(this);
-          addInstruction(new AssignInstruction(dimension, null));
-          sizeAssigned = true;
+        dimension.accept(this);
+        if (sizeOnStack) {
+          addInstruction(new PopInstruction());
         }
-        else {
-          dimension.accept(this);
-        }
-        addInstruction(new PopInstruction());
+        sizeOnStack = true;
       }
       final PsiArrayInitializerExpression arrayInitializer = expression.getArrayInitializer();
       if (arrayInitializer != null) {
@@ -1634,11 +1628,24 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
           }
         }
         processArrayInitializers(arrayInitializer, ((PsiArrayType)type).getComponentType(), nullability);
-        addInstruction(new PushInstruction(length, null, true));
-        addInstruction(new PushInstruction(getFactory().getInt(arrayInitializer.getInitializers().length), null));
-        addInstruction(new AssignInstruction(null, null));
-        addInstruction(new PopInstruction());
+        if (!sizeOnStack) {
+          sizeOnStack = true;
+          addInstruction(new PushInstruction(getFactory().getInt(arrayInitializer.getInitializers().length), null));
+        }
       }
+      if (!sizeOnStack) {
+        pushUnknown();
+      }
+      // stack: ... var.length actual_size
+      addInstruction(new PushInstruction(var, null, true));
+      addInstruction(new PushInstruction(getFactory().createTypeValue(type, Nullness.NOT_NULL), expression));
+      addInstruction(new AssignInstruction(expression, var));
+      // stack: ... var.length actual_size var
+      addInstruction(new SpliceInstruction(3, 0, 2, 1));
+      // stack: ... var var.length actual_size
+      addInstruction(new AssignInstruction(null, length));
+      addInstruction(new PopInstruction());
+      // stack: ... var
     }
     else {
       pushUnknown(); // qualifier
