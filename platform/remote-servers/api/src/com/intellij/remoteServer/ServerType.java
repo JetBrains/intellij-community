@@ -85,7 +85,7 @@ public abstract class ServerType<C extends ServerConfiguration> {
   }
 
   /**
-   * @return <code>false</code>, iif all supported deployment sources are of {@link SingletonDeploymentSourceType} type, so
+   * @return <code>false</code>, if all supported deployment sources are of {@link SingletonDeploymentSourceType} type, so
    * {@link DeploymentConfigurator#getAvailableDeploymentSources()} <strong>now is and always will be</strong> empty.
    */
   public boolean mayHaveProjectSpecificDeploymentSources() {
