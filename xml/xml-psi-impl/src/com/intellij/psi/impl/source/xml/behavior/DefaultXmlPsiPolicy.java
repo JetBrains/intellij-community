@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.source.xml.behavior;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -42,7 +41,7 @@ public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
     final FileElement dummyParent = DummyHolderFactory.createHolder(text.getManager(), null, charTable).getTreeElement();
     final XmlTag rootTag =
       ((XmlFile)PsiFileFactory.getInstance(containingFile.getProject())
-        .createFileFromText(XMLLanguage.INSTANCE, "<a>" + displayText + "</a>")).getRootTag();
+        .createFileFromText("a.xml", "<a>" + displayText + "</a>")).getRootTag();
 
     assert rootTag != null;
     final XmlTagChild[] tagChildren = rootTag.getValue().getChildren();
