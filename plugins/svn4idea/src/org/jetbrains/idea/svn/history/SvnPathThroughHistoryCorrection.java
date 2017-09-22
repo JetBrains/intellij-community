@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.idea.svn.SvnUtil;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.util.Map;
@@ -41,7 +40,7 @@ public class SvnPathThroughHistoryCorrection implements LogEntryConsumer {
   }
 
   @Override
-  public void consume(LogEntry logEntry) throws SVNException {
+  public void consume(LogEntry logEntry) {
     if (myRoot) {
       return;
     }

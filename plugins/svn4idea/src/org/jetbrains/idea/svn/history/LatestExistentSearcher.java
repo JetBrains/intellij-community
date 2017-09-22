@@ -28,8 +28,6 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -106,7 +104,7 @@ public class LatestExistentSearcher {
         final LogEntryPath path = (LogEntryPath)o;
         if ((path.getType() == 'D') && (myRelativeUrl.equals(path.getPath()))) {
           latest.set(logEntry.getRevision());
-          throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE);
+          throw new SvnBindException("Latest existent revision found for " + myRelativeUrl);
         }
       }
     };

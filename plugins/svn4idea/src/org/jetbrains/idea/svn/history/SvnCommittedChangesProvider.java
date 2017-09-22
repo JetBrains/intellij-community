@@ -19,8 +19,8 @@ import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
-import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +31,6 @@ import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.branchConfig.ConfigureBranchesAction;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.StatusType;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -107,7 +106,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       SvnRepositoryLocation svnLocation = (SvnRepositoryLocation)location;
       SVNURL repositoryRoot = getRepositoryRoot(svnLocation);
       ChangeBrowserSettings.Filter filter = settings.createFilter();
-      Consumer<LogEntry> resultConsumer = logEntry -> {
+      ThrowableConsumer<LogEntry, SvnBindException> resultConsumer = logEntry -> {
         SvnChangeList list = new SvnChangeList(myVcs, svnLocation, logEntry, repositoryRoot);
         if (filter.accepts(list)) {
           consumer.consume(list);
@@ -130,7 +129,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     SvnRepositoryLocation svnLocation = (SvnRepositoryLocation)location;
     List<SvnChangeList> result = newArrayList();
     SVNURL repositoryRoot = getRepositoryRoot(svnLocation);
-    Consumer<LogEntry> resultConsumer = logEntry -> result.add(new SvnChangeList(myVcs, svnLocation, logEntry, repositoryRoot));
+    ThrowableConsumer<LogEntry, SvnBindException> resultConsumer =
+      logEntry -> result.add(new SvnChangeList(myVcs, svnLocation, logEntry, repositoryRoot));
     SvnTarget target = SvnTarget.fromURL(svnLocation.toSvnUrl(), createBeforeRevision(settings));
 
     getCommittedChangesImpl(settings, target, maxCount, resultConsumer, false, true);
@@ -149,14 +149,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       node -> finalConsumer.consume(new SvnChangeList(myVcs, svnLocation, node.getMe(), repositoryRoot), node));
     SvnMergeSourceTracker mergeSourceTracker = new SvnMergeSourceTracker(builder);
 
-    getCommittedChangesImpl(settings, SvnTarget.fromURL(svnLocation.toSvnUrl()), maxCount, logEntry -> {
-      try {
-        mergeSourceTracker.consume(logEntry);
-      }
-      catch (SVNException e) {
-        throw new RuntimeException(e);
-      }
-    }, true, false);
+    getCommittedChangesImpl(settings, SvnTarget.fromURL(svnLocation.toSvnUrl()), maxCount, mergeSourceTracker, true, false);
 
     builder.finish();
   }
@@ -178,7 +171,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   private void getCommittedChangesImpl(@NotNull ChangeBrowserSettings settings,
                                        @NotNull SvnTarget target,
                                        int maxCount,
-                                       @NotNull Consumer<LogEntry> resultConsumer,
+                                       @NotNull ThrowableConsumer<LogEntry, SvnBindException> resultConsumer,
                                        boolean includeMergedRevisions,
                                        boolean filterOutByDate) throws VcsException {
     progress(message("progress.text.changes.collecting.changes"),
@@ -221,7 +214,9 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   @NotNull
-  private LogEntryConsumer createLogHandler(@NotNull Consumer<LogEntry> resultConsumer, boolean filterOutByDate, @Nullable String author) {
+  private LogEntryConsumer createLogHandler(@NotNull ThrowableConsumer<LogEntry, SvnBindException> resultConsumer,
+                                            boolean filterOutByDate,
+                                            @Nullable String author) {
     return logEntry -> {
       if (myVcs.getProject().isDisposed()) throw new ProcessCanceledException();
 
