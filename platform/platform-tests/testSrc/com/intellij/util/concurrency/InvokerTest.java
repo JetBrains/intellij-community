@@ -22,6 +22,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -262,7 +263,7 @@ public class InvokerTest {
     invoker.invokeLater(() -> consumer.accept(error));
     String message;
     try {
-      latch.await();
+      latch.await(10, TimeUnit.SECONDS);
       message = error.get();
     }
     catch (InterruptedException ignore) {
