@@ -104,7 +104,8 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
 
       List<PluginId> dependentPluginIds;
       if (descriptor instanceof PluginNode) {
-        dependentPluginIds = ContainerUtil.filter(((PluginNode)descriptor).getDepends(), id -> !id.getIdString().startsWith("(optional)"));
+        dependentPluginIds = ContainerUtil
+          .filter(ContainerUtil.notNullize(((PluginNode)descriptor).getDepends()), id -> !id.getIdString().startsWith("(optional)"));
       }
       else {
         dependentPluginIds = Arrays.asList(descriptor.getDependentPluginIds());
