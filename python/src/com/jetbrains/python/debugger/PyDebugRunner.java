@@ -305,7 +305,6 @@ public class PyDebugRunner extends GenericProgramRunner {
 
     configureDebugParameters(project, debugParams, pyState, cmd);
 
-
     configureDebugEnvironment(project, cmd.getEnvironment());
 
     configureDebugConnectionParameters(debugParams, serverLocalPort);
@@ -322,6 +321,9 @@ public class PyDebugRunner extends GenericProgramRunner {
     }
     if (debuggerSettings.isLibrariesFilterEnabled()) {
       environment.put(PYDEVD_FILTER_LIBRARIES, "True");
+    }
+    if (debuggerSettings.isLoadValuesAsync()) {
+      environment.put(PyVariableViewSettings.PYDEVD_LOAD_VALUES_ASYNC, "True");
     }
 
     PydevConsoleRunnerFactory.putIPythonEnvFlag(project, environment);

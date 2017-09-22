@@ -17,9 +17,10 @@ from _pydevd_bundle.pydevd_comm import CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, C
     CMD_REMOVE_EXCEPTION_BREAK, CMD_LOAD_SOURCE, CMD_ADD_DJANGO_EXCEPTION_BREAK, CMD_REMOVE_DJANGO_EXCEPTION_BREAK, \
     CMD_EVALUATE_CONSOLE_EXPRESSION, InternalEvaluateConsoleExpression, InternalConsoleGetCompletions, \
     CMD_RUN_CUSTOM_OPERATION, InternalRunCustomOperation, CMD_IGNORE_THROWN_EXCEPTION_AT, CMD_ENABLE_DONT_TRACE, \
-    CMD_SHOW_RETURN_VALUES, ID_TO_MEANING, CMD_GET_DESCRIPTION, InternalGetDescription
+    CMD_SHOW_RETURN_VALUES, ID_TO_MEANING, CMD_GET_DESCRIPTION, InternalGetDescription, InternalLoadFullValue, \
+    CMD_LOAD_FULL_VALUE
 from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, DebugInfoHolder, dict_contains, dict_keys, \
-    STATE_RUN
+    STATE_RUN, NEXT_VALUE_SEPARATOR
 
 
 def process_net_command(py_db, cmd_id, seq, text):
@@ -217,6 +218,16 @@ def process_net_command(py_db, cmd_id, seq, text):
                             py_db.remove_return_values_flag = True
                         py_db.show_return_values = False
                     pydev_log.debug("Show return values: %s\n" % py_db.show_return_values)
+                except:
+                    traceback.print_exc()
+
+            elif cmd_id == CMD_LOAD_FULL_VALUE:
+                try:
+                    thread_id, frame_id, scopeattrs = text.split('\t', 2)
+                    vars = scopeattrs.split(NEXT_VALUE_SEPARATOR)
+
+                    int_cmd = InternalLoadFullValue(seq, thread_id, frame_id, vars)
+                    py_db.post_internal_command(int_cmd, thread_id)
                 except:
                     traceback.print_exc()
 

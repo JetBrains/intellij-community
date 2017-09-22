@@ -1326,6 +1326,30 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
+  @Test
+  public void testLoadValuesAsync() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_async_eval.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 14);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        List<PyDebugValue> frameVariables = loadFrame();
+        assertTrue(findDebugValueByName(frameVariables, "f").isLoadValueAsync());
+        String result = computeValueAsync(frameVariables, "f");
+        assertEquals("foo", result);
+
+        List<PyDebugValue> listChildren = loadChildren(frameVariables, "l");
+        assertTrue(findDebugValueByName(frameVariables, "l").isLoadValueAsync());
+        result = computeValueAsync(listChildren, "0");
+        assertEquals("list", result);
+      }
+    });
+  }
+
   //TODO: That doesn't work now: case from test_continuation.py and test_continuation2.py are treated differently by interpreter
   // (first line is executed in first case and last line in second)
 

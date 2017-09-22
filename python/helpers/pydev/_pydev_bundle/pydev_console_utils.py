@@ -9,6 +9,13 @@ from _pydevd_bundle import pydevd_xml
 from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items
 from _pydevd_bundle.pydevd_utils import to_string
 
+try:
+    import cStringIO as StringIO #may not always be available @UnusedImport
+except:
+    try:
+        import StringIO #@Reimport
+    except:
+        import io as StringIO
 
 # =======================================================================================================================
 # Null
@@ -450,15 +457,17 @@ class BaseInterpreterInterface:
             return True
 
     def getFrame(self):
+        xml = StringIO.StringIO()
         hidden_ns = self.get_ipython_hidden_vars_dict()
-        xml = "<xml>"
-        xml += pydevd_xml.frame_vars_to_xml(self.get_namespace(), hidden_ns)
-        xml += "</xml>"
+        xml.write("<xml>")
+        xml.write(pydevd_xml.frame_vars_to_xml(self.get_namespace(), hidden_ns))
+        xml.write("</xml>")
 
-        return xml
+        return xml.getvalue()
 
     def getVariable(self, attributes):
-        xml = "<xml>"
+        xml = StringIO.StringIO()
+        xml.write("<xml>")
         valDict = pydevd_vars.resolve_var(self.get_namespace(), attributes)
         if valDict is None:
             valDict = {}
@@ -466,11 +475,13 @@ class BaseInterpreterInterface:
         keys = valDict.keys()
 
         for k in keys:
-            xml += pydevd_vars.var_to_xml(valDict[k], to_string(k))
+            val = valDict[k]
+            evaluate_full_value = pydevd_xml.should_evaluate_full_value(val)
+            xml.write(pydevd_vars.var_to_xml(val, k, evaluate_full_value=evaluate_full_value))
 
-        xml += "</xml>"
+        xml.write("</xml>")
 
-        return xml
+        return xml.getvalue()
 
     def getArray(self, attr, roffset, coffset, rows, cols, format):
         name = attr.split("\t")[-1]
@@ -478,14 +489,21 @@ class BaseInterpreterInterface:
         return pydevd_vars.table_like_struct_to_xml(array, name, roffset, coffset, rows, cols, format)
 
     def evaluate(self, expression):
-        xml = "<xml>"
+        xml = StringIO.StringIO()
+        xml.write("<xml>")
         result = pydevd_vars.eval_in_context(expression, self.get_namespace(), self.get_namespace())
+        xml.write(pydevd_vars.var_to_xml(result, expression))
+        xml.write("</xml>")
+        return xml.getvalue()
 
-        xml += pydevd_vars.var_to_xml(result, expression)
-
-        xml += "</xml>"
-
-        return xml
+    def loadFullValue(self, expressions):
+        xml = StringIO.StringIO()
+        xml.write("<xml>")
+        for expression in expressions:
+            result = pydevd_vars.eval_in_context(expression, self.get_namespace(), self.get_namespace())
+            xml.write(pydevd_vars.var_to_xml(result, expression, evaluate_full_value=True))
+        xml.write("</xml>")
+        return xml.getvalue()
 
     def changeVariable(self, attr, value):
         def do_change_variable():

@@ -31,7 +31,7 @@ public class GetCompletionsCommand extends AbstractFrameCommand {
   }
 
   @Override
-  protected void processResponse(ProtocolFrame response) throws PyDebuggerException {
+  protected void processResponse(@NotNull ProtocolFrame response) throws PyDebuggerException {
     super.processResponse(response);
     try {
       myCompletions = PydevXmlUtils.xmlToCompletions(response.getPayload(), myActionToken);
