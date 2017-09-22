@@ -16,402 +16,95 @@
 package com.intellij.build;
 
 import com.intellij.build.events.*;
-import com.intellij.execution.filters.Filter;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.ui.*;
-import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComponentContainer;
-import com.intellij.openapi.ui.ThreeComponentsSplitter;
+import com.intellij.openapi.util.AtomicClearableLazyValue;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.impl.ContentImpl;
-import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import java.awt.*;
-import java.util.*;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Supplier;
 
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Experimental
 public abstract class AbstractViewManager implements BuildProgressListener, Disposable {
+  private static final Key<Boolean> PINNED_EXTRACTED_CONTENT = new Key<>("PINNED_EXTRACTED_CONTENT");
+
   protected final Project myProject;
   protected final BuildContentManager myBuildContentManager;
-  private final AtomicBoolean isInitializeStarted;
-  private final List<Runnable> myPostponedRunnables;
-  private final ProgressWatcher myProgressWatcher;
-  private final ThreeComponentsSplitter myThreeComponentsSplitter;
-  @Nullable
-  private final JBList<BuildInfo> myBuildsList;
-  private final Map<Object, BuildInfo> myBuildsMap;
-  private final Map<BuildInfo, BuildView> myViewMap;
-  private volatile Content myContent;
-  private volatile DefaultActionGroup myToolbarActions;
+  private final AtomicClearableLazyValue<MultipleBuildsView> myBuildsViewValue;
+  private final Set<MultipleBuildsView> myPinnedViews;
+  private final AtomicBoolean isDisposed = new AtomicBoolean(false);
 
   public AbstractViewManager(Project project, BuildContentManager buildContentManager) {
     myProject = project;
     myBuildContentManager = buildContentManager;
-    isInitializeStarted = new AtomicBoolean();
-    myPostponedRunnables = ContainerUtil.createConcurrentList();
-    myThreeComponentsSplitter = new ThreeComponentsSplitter();
-    Disposer.register(this, myThreeComponentsSplitter);
-    if (!isTabbedView()) {
-      myBuildsList = new JBList<>();
-      myBuildsList.setFixedCellHeight(UIUtil.LIST_FIXED_CELL_HEIGHT * 2);
-      myBuildsList.installCellRenderer(obj -> {
-        BuildInfo buildInfo = (BuildInfo)obj;
-        JPanel panel = new JPanel(new BorderLayout());
-        SimpleColoredComponent mainComponent = new SimpleColoredComponent();
-        mainComponent.setIcon(buildInfo.getIcon());
-        mainComponent.append(buildInfo.getTitle() + ": ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-        mainComponent.append(buildInfo.message, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        panel.add(mainComponent, BorderLayout.NORTH);
-        if (buildInfo.statusMessage != null) {
-          SimpleColoredComponent statusComponent = new SimpleColoredComponent();
-          statusComponent.setIcon(EmptyIcon.ICON_16);
-          statusComponent.append(buildInfo.statusMessage, SimpleTextAttributes.GRAY_ATTRIBUTES);
-          panel.add(statusComponent, BorderLayout.SOUTH);
-        }
-        return panel;
-      });
-    }
-    else {
-      myBuildsList = null;
-    }
-    myViewMap = ContainerUtil.newConcurrentMap();
-    myBuildsMap = ContainerUtil.newConcurrentMap();
-    myProgressWatcher = new ProgressWatcher();
+    myBuildsViewValue = new AtomicClearableLazyValue<MultipleBuildsView>() {
+      @NotNull
+      @Override
+      protected MultipleBuildsView compute() {
+        MultipleBuildsView buildsView = new MultipleBuildsView(myProject, myBuildContentManager, AbstractViewManager.this);
+        Disposer.register(AbstractViewManager.this, buildsView);
+        return buildsView;
+      }
+    };
+    myPinnedViews = ContainerUtil.newConcurrentSet();
   }
 
   protected abstract String getViewName();
 
-  protected boolean isTabbedView() {
-    return false;
-  }
-
   protected Map<BuildInfo, BuildView> getBuildsMap() {
-    return Collections.unmodifiableMap(myViewMap);
+    return myBuildsViewValue.getValue().getBuildsMap();
   }
 
   @Override
   public void onEvent(BuildEvent event) {
-    List<Runnable> runnables = new SmartList<>();
-    runnables.add(() -> {
-      if (event instanceof StartBuildEvent) {
-        if (!isTabbedView() && myBuildsList != null) {
-          long currentTime = System.currentTimeMillis();
-          DefaultListModel<BuildInfo> listModel = (DefaultListModel<BuildInfo>)myBuildsList.getModel();
-          boolean shouldBeCleared = !listModel.isEmpty();
-          for (int i = 0; i < listModel.getSize(); i++) {
-            BuildInfo info = listModel.getElementAt(i);
-            if (info.endTime == -1 || currentTime - info.endTime < TimeUnit.SECONDS.toMillis(1)) {
-              shouldBeCleared = false;
-              break;
-            }
-          }
-          if (shouldBeCleared) {
-            for (BuildView view : myViewMap.values()) {
-              Disposer.dispose(view);
-            }
-            listModel.clear();
-            myBuildsMap.clear();
-            myViewMap.clear();
-            myBuildsList.setVisible(false);
-            myThreeComponentsSplitter.setFirstComponent(null);
-            myThreeComponentsSplitter.setLastComponent(null);
-            myToolbarActions.removeAll();
-          }
-        }
-        myBuildsMap.computeIfAbsent(ObjectUtils.chooseNotNull(
-          event.getParentId(), event.getId()), o -> {
-          StartBuildEvent startBuildEvent = (StartBuildEvent)event;
-          return new BuildInfo(event.getId(), startBuildEvent.getBuildTitle(), startBuildEvent.getWorkingDir(), event.getEventTime());
-        });
-      }
-      else {
-        if (event.getParentId() != null) {
-          BuildInfo buildInfo = myBuildsMap.get(event.getParentId());
-          assert buildInfo != null;
-          myBuildsMap.put(event.getId(), buildInfo);
-        }
-      }
-    });
+    if (isDisposed.get()) return;
 
-    runnables.add(() -> {
-      final BuildInfo buildInfo = myBuildsMap.get(event.getId());
-      assert buildInfo != null;
-      if (event instanceof StartBuildEvent) {
-        buildInfo.message = event.getMessage();
-
-        if (!isTabbedView() && myBuildsList != null) {
-          DefaultListModel<BuildInfo> listModel = (DefaultListModel<BuildInfo>)myBuildsList.getModel();
-          listModel.addElement(buildInfo);
-        }
-
-        final RunContentDescriptor contentDescriptor;
-        Supplier<RunContentDescriptor> contentDescriptorSupplier = ((StartBuildEvent)event).getContentDescriptorSupplier();
-        contentDescriptor = contentDescriptorSupplier != null ? contentDescriptorSupplier.get() : null;
-        ProcessHandler processHandler = ((StartBuildEvent)event).getProcessHandler();
-        BuildView view = myViewMap.computeIfAbsent(buildInfo, info -> {
-          ExecutionConsole executionConsole = null;
-          BuildConsoleView buildConsoleView = null;
-          if (contentDescriptor != null) {
-            executionConsole = contentDescriptor.getExecutionConsole();
-            List<AnAction> leftToolbarActions = ContainerUtil.newArrayList();
-            RunnerLayoutUi layoutUi = contentDescriptor.getRunnerLayoutUi();
-            if (layoutUi instanceof RunnerLayoutUiImpl) {
-              RunnerLayoutUiImpl layoutUiImpl = (RunnerLayoutUiImpl)layoutUi;
-              layoutUiImpl.setLeftToolbarVisible(false);
-              layoutUiImpl.setContentToolbarBefore(false);
-              leftToolbarActions.addAll(layoutUiImpl.getActions());
-            }
-            JComponent component = contentDescriptor.getComponent();
-            AnAction[] leftToolbarActionsArray = leftToolbarActions.toArray(new AnAction[leftToolbarActions.size()]);
-            buildConsoleView = new BuildConsoleView() {
-              @Override
-              public void onEvent(BuildEvent event) {
-              }
-
-              @Override
-              public AnAction[] createConsoleActions() {
-                return leftToolbarActionsArray;
-              }
-
-              @Override
-              public JComponent getComponent() {
-                return component;
-              }
-
-              @Override
-              public JComponent getPreferredFocusableComponent() {
-                ExecutionConsole console = contentDescriptor.getExecutionConsole();
-                if (console != null) return console.getPreferredFocusableComponent();
-                return (component instanceof ComponentContainer)
-                       ? ((ComponentContainer)component).getPreferredFocusableComponent()
-                       : component;
-              }
-
-              @Override
-              public void dispose() {
-              }
-            };
-            Disposer.register(buildConsoleView, contentDescriptor);
-          }
-          if (buildConsoleView == null) {
-            buildConsoleView = new BuildTextConsoleView(myProject);
-            executionConsole = (ExecutionConsole)buildConsoleView;
-          }
-          if (executionConsole instanceof ConsoleView) {
-            for (Filter filter : ((StartBuildEvent)event).getExecutionFilters()) {
-              ((ConsoleView)executionConsole).addMessageFilter(filter);
-            }
-          }
-
-          final BuildView buildView =
-            new BuildView(myProject, buildConsoleView, ((StartBuildEvent)event),
-                          "build.toolwindow." + getViewName() + ".selection.state", isConsoleEnabledByDefault());
-          if (processHandler != null) {
-            if (buildConsoleView instanceof ConsoleView) {
-              ((ConsoleView)buildConsoleView).attachToProcess(processHandler);
-              Consumer<ConsoleView> attachedConsoleConsumer = ((StartBuildEvent)event).getAttachedConsoleConsumer();
-              if (attachedConsoleConsumer != null) {
-                attachedConsoleConsumer.consume((ConsoleView)buildConsoleView);
-              }
-            }
-            else if (executionConsole instanceof ConsoleView) {
-              Consumer<ConsoleView> attachedConsoleConsumer = ((StartBuildEvent)event).getAttachedConsoleConsumer();
-              if (attachedConsoleConsumer != null) {
-                attachedConsoleConsumer.consume((ConsoleView)executionConsole);
-              }
-            }
-            if (!processHandler.isStartNotified()) {
-              processHandler.startNotify();
-            }
-          }
-          Disposer.register(myThreeComponentsSplitter, buildView);
-          if (isTabbedView()) {
-            final JComponent consoleComponent = new JPanel(new BorderLayout());
-            consoleComponent.add(buildView, BorderLayout.CENTER);
-            DefaultActionGroup toolbarActions = new DefaultActionGroup();
-            consoleComponent.add(ActionManager.getInstance().createActionToolbar(
-              "BuildView", toolbarActions, false).getComponent(), BorderLayout.WEST);
-            toolbarActions.addAll(buildView.createConsoleActions());
-            Icon contentIcon = getContentIcon();
-            myContent = myBuildContentManager.addTabbedContent(
-              consoleComponent, getViewName(),
-              buildInfo.getTitle() + ", " + DateFormatUtil.formatDateTime(System.currentTimeMillis()) + " ",
-              contentIcon, buildView);
-          }
-          return buildView;
-        });
-
-        if (contentDescriptor != null) {
-          boolean activateToolWindow = contentDescriptor.isActivateToolWindowWhenAdded();
-          buildInfo.activateToolWindowWhenAdded = activateToolWindow;
-          boolean focusContent = contentDescriptor.isAutoFocusContent();
-          myBuildContentManager.setSelectedContent(
-            myContent, focusContent, focusContent, activateToolWindow, contentDescriptor.getActivationCallback());
-        }
-        else {
-          myBuildContentManager.setSelectedContent(myContent, true, true, true, null);
-        }
-        buildInfo.content = myContent;
-
-        if (!isTabbedView() && myThreeComponentsSplitter.getLastComponent() == null) {
-          myThreeComponentsSplitter.setLastComponent(view);
-          myToolbarActions.removeAll();
-          myToolbarActions.addAll(view.createConsoleActions());
-        }
-        if (!isTabbedView() && myBuildsList != null && myBuildsList.getModel().getSize() > 1) {
-          JBScrollPane scrollPane = new JBScrollPane();
-          scrollPane.setBorder(JBUI.Borders.empty());
-          scrollPane.setViewportView(myBuildsList);
-          myThreeComponentsSplitter.setFirstComponent(scrollPane);
-          myBuildsList.setVisible(true);
-          myBuildsList.setSelectedIndex(0);
-          myThreeComponentsSplitter.repaint();
-
-          for (BuildView consoleView : myViewMap.values()) {
-            BuildConsoleView buildConsoleView = consoleView.getPrimaryView();
-            if (buildConsoleView instanceof BuildTreeConsoleView) {
-              ((BuildTreeConsoleView)buildConsoleView).hideRootNode();
-            }
-          }
-        }
-        else {
-          myThreeComponentsSplitter.setFirstComponent(null);
-        }
-        onBuildStart(buildInfo);
-        myProgressWatcher.addBuild(buildInfo);
-        //view.getPrimaryView().print("\r", ConsoleViewContentType.SYSTEM_OUTPUT);
-
-        ((BuildContentManagerImpl)myBuildContentManager).startBuildNotified(buildInfo.content);
-      }
-      else {
-        if (event instanceof FinishBuildEvent) {
-          buildInfo.endTime = event.getEventTime();
-          buildInfo.message = event.getMessage();
-          buildInfo.result = ((FinishBuildEvent)event).getResult();
-          myProgressWatcher.stopBuild(buildInfo);
-          ((BuildContentManagerImpl)myBuildContentManager).finishBuildNotified(buildInfo.content);
-          onBuildFinish(buildInfo);
-        }
-        else {
-          buildInfo.statusMessage = event.getMessage();
-        }
-      }
-    });
-
-    runnables.add(() -> {
-      final BuildInfo buildInfo = myBuildsMap.get(event.getId());
-      BuildView view = myViewMap.get(buildInfo);
-      if (event instanceof OutputBuildEvent) {
-        ComponentContainer consoleView = view.getSecondaryView();
-        if (consoleView instanceof BuildConsoleView) {
-          ((BuildConsoleView)consoleView).onEvent(event);
-        }
-        else if ((consoleView instanceof ConsoleView)) {
-          ((ConsoleView)consoleView).print(event.getMessage(), ((OutputBuildEvent)event).isStdOut()
-                                                               ? ConsoleViewContentType.NORMAL_OUTPUT
-                                                               : ConsoleViewContentType.ERROR_OUTPUT);
-        }
-      }
-      else {
-        view.getPrimaryView().onEvent(event);
-      }
-    });
-
-    if (!isTabbedView() && myContent == null && myBuildsList != null) {
-      myPostponedRunnables.addAll(runnables);
-      if (isInitializeStarted.compareAndSet(false, true)) {
-        UIUtil.invokeLaterIfNeeded(() -> {
-          myBuildsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-          DefaultListModel<BuildInfo> listModel = new DefaultListModel<>();
-          myBuildsList.setModel(listModel);
-          myBuildsList.addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-              BuildInfo selectedBuild = myBuildsList.getSelectedValue();
-              if (selectedBuild == null) return;
-
-              BuildView view = myViewMap.get(selectedBuild);
-              JComponent lastComponent = myThreeComponentsSplitter.getLastComponent();
-              if (view != null && lastComponent != view.getComponent()) {
-                myThreeComponentsSplitter.setLastComponent(view.getComponent());
-                view.getComponent().setVisible(true);
-                if (lastComponent != null) {
-                  lastComponent.setVisible(false);
-                }
-                myToolbarActions.removeAll();
-                myToolbarActions.addAll(view.createConsoleActions());
-                view.getComponent().repaint();
-              }
-
-              int firstSize = myThreeComponentsSplitter.getFirstSize();
-              int lastSize = myThreeComponentsSplitter.getLastSize();
-              if (firstSize == 0 && lastSize == 0) {
-                EdtInvocationManager.getInstance().invokeLater(() -> {
-                  int width = Math.round(myThreeComponentsSplitter.getWidth() / 4f);
-                  myThreeComponentsSplitter.setFirstSize(width);
-                });
-              }
-            }
-          });
-
-          final JComponent consoleComponent = new JPanel(new BorderLayout());
-          consoleComponent.add(myThreeComponentsSplitter, BorderLayout.CENTER);
-          myToolbarActions = new DefaultActionGroup();
-          consoleComponent.add(ActionManager.getInstance().createActionToolbar(
-            "BuildView", myToolbarActions, false).getComponent(), BorderLayout.WEST);
-
-          myContent = new ContentImpl(consoleComponent, getViewName(), true);
-          myContent.setCloseable(false);
-          Icon contentIcon = getContentIcon();
-          myContent.setIcon(contentIcon);
-          myBuildContentManager.addContent(myContent);
-
-          List<Runnable> postponedRunnables = new ArrayList<>(myPostponedRunnables);
-          myPostponedRunnables.clear();
-          for (Runnable postponedRunnable : postponedRunnables) {
-            postponedRunnable.run();
-          }
-        });
-      }
+    MultipleBuildsView buildsView;
+    if (event instanceof StartBuildEvent) {
+      configurePinnedContent();
+      buildsView = myBuildsViewValue.getValue();
     }
     else {
-      UIUtil.invokeLaterIfNeeded(() -> {
-        for (Runnable runnable : runnables) {
-          runnable.run();
-        }
-      });
+      buildsView = myBuildsViewValue.getValue();
+      if (!buildsView.shouldConsume(event)) {
+        buildsView = myPinnedViews.stream()
+          .filter(pinnedView -> pinnedView.shouldConsume(event))
+          .findFirst().orElse(null);
+      }
     }
+    if (buildsView != null) {
+      buildsView.onEvent(event);
+    }
+  }
+
+  void configureToolbar(DefaultActionGroup toolbarActions,
+                        MultipleBuildsView buildsView,
+                        BuildView view) {
+    toolbarActions.removeAll();
+    toolbarActions.addAll(view.createConsoleActions());
+    toolbarActions.add(new PinBuildViewAction(buildsView));
+    toolbarActions.add(new CloseBuildContentAction(buildsView));
   }
 
   @Nullable
@@ -435,37 +128,9 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
 
   @Override
   public void dispose() {
-  }
-
-  private class ProgressWatcher implements Runnable {
-
-    private final Alarm myRefreshAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-    private final Set<BuildInfo> myBuilds = ContainerUtil.newConcurrentSet();
-
-    @Override
-    public void run() {
-      myRefreshAlarm.cancelAllRequests();
-      JComponent firstComponent = myThreeComponentsSplitter.getFirstComponent();
-      if (firstComponent != null) {
-        firstComponent.revalidate();
-        firstComponent.repaint();
-      }
-      if (!myBuilds.isEmpty()) {
-        myRefreshAlarm.addRequest(this, 300);
-      }
-    }
-
-    void addBuild(BuildInfo buildInfo) {
-      myBuilds.add(buildInfo);
-      if (myBuilds.size() > 1) {
-        myRefreshAlarm.cancelAllRequests();
-        myRefreshAlarm.addRequest(this, 300);
-      }
-    }
-
-    void stopBuild(BuildInfo buildInfo) {
-      myBuilds.remove(buildInfo);
-    }
+    isDisposed.set(true);
+    myPinnedViews.clear();
+    myBuildsViewValue.drop();
   }
 
   static class BuildInfo extends DefaultBuildDescriptor {
@@ -498,6 +163,127 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
         return AllIcons.Process.State.YellowStr;
       }
       return AllIcons.Process.State.GreenOK;
+    }
+  }
+
+  private void configurePinnedContent() {
+    MultipleBuildsView buildsView = myBuildsViewValue.getValue();
+    Content content = buildsView.getContent();
+    if (content != null && content.isPinned()) {
+      String tabName = getPinnedTabName(buildsView);
+      UIUtil.invokeLaterIfNeeded(() -> {
+        content.setPinnable(false);
+        content.setIcon(EmptyIcon.ICON_8);
+        content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
+        ((BuildContentManagerImpl)myBuildContentManager).updateTabDisplayName(content, tabName);
+      });
+      myPinnedViews.add(buildsView);
+      myBuildsViewValue.drop();
+      content.putUserData(PINNED_EXTRACTED_CONTENT, Boolean.TRUE);
+    }
+  }
+
+  private String getPinnedTabName(MultipleBuildsView buildsView) {
+    Map<BuildInfo, BuildView> buildsMap = buildsView.getBuildsMap();
+
+    AbstractViewManager.BuildInfo buildInfo =
+      buildsMap.keySet().stream()
+        .reduce((b1, b2) -> b1.getStartTime() <= b2.getStartTime() ? b1 : b2)
+        .orElse(null);
+    if (buildInfo != null) {
+      String title = buildInfo.getTitle();
+      String viewName = getViewName();
+      String tabName = viewName + ": " + StringUtil.trimStart(title, viewName);
+      if (buildsMap.size() > 1) {
+        tabName += String.format(" and %d more", buildsMap.size() - 1);
+      }
+      return tabName;
+    }
+    return getViewName();
+  }
+
+  private static class PinBuildViewAction extends DumbAwareAction implements Toggleable {
+    private final Content myContent;
+
+    public PinBuildViewAction(MultipleBuildsView buildsView) {
+      myContent = buildsView.getContent();
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      boolean selected = !myContent.isPinned();
+      if (selected) {
+        myContent.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
+      }
+      myContent.setPinned(selected);
+      e.getPresentation().putClientProperty(SELECTED_PROPERTY, selected);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      Boolean isPinnedAndExtracted = myContent.getUserData(PINNED_EXTRACTED_CONTENT);
+      if (isPinnedAndExtracted == Boolean.TRUE) {
+        e.getPresentation().setEnabledAndVisible(false);
+        return;
+      }
+
+      boolean isActiveTab = myContent.getManager().getSelectedContent() == myContent;
+      boolean selected = myContent.isPinned();
+
+      e.getPresentation().setIcon(AllIcons.General.Pin_tab);
+      e.getPresentation().putClientProperty(SELECTED_PROPERTY, selected);
+
+      String text;
+      if (!isActiveTab) {
+        text = selected ? IdeBundle.message("action.unpin.active.tab") : IdeBundle.message("action.pin.active.tab");
+      }
+      else {
+        text = selected ? IdeBundle.message("action.unpin.tab") : IdeBundle.message("action.pin.tab");
+      }
+      e.getPresentation().setText(text);
+      e.getPresentation().setEnabledAndVisible(true);
+    }
+  }
+
+  private class CloseBuildContentAction extends AnAction implements DumbAware {
+    private MultipleBuildsView myBuildsView;
+
+    public CloseBuildContentAction(MultipleBuildsView buildsView) {
+      myBuildsView = buildsView;
+      AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE);
+      copyFrom(action);
+      registerCustomShortcutSet(action.getShortcutSet(), buildsView.getContent().getPreferredFocusableComponent());
+
+      final Presentation templatePresentation = getTemplatePresentation();
+      templatePresentation.setIcon(AllIcons.Actions.Cancel);
+      templatePresentation.setText(ExecutionBundle.message("close.tab.action.name"));
+      templatePresentation.setDescription(null);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      if (myBuildsView == null) return;
+      Content content = myBuildsView.getContent();
+      final boolean removedOk = content.getManager().removeContent(content, true);
+      if (removedOk) {
+        if (myBuildsViewValue.getValue() == myBuildsView) {
+          myBuildsViewValue.drop();
+        }
+        else {
+          myPinnedViews.remove(myBuildsView);
+        }
+        myBuildsView = null;
+      }
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      if (myBuildsView.hasRunningBuilds()) {
+        e.getPresentation().setEnabled(false);
+      }
+      else {
+        e.getPresentation().setEnabled(myBuildsView != null);
+      }
     }
   }
 }

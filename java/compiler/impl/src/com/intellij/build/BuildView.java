@@ -52,6 +52,11 @@ class BuildView extends CompositeView<BuildConsoleView, ComponentContainer> impl
     AnAction stopAction = null;
     if (myEvent.getProcessHandler() != null) {
       stopAction = new StopProcessAction("Stop", "Stop", myEvent.getProcessHandler());
+      AnAction generalStopAction = ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM);
+      if (generalStopAction != null) {
+        stopAction.copyFrom(generalStopAction);
+        stopAction.registerCustomShortcutSet(generalStopAction.getShortcutSet(), this);
+      }
     }
     final DefaultActionGroup consoleActionGroup = new DefaultActionGroup() {
       @Override
