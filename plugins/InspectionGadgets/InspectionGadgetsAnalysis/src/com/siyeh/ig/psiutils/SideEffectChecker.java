@@ -139,23 +139,13 @@ public class SideEffectChecker {
     }
 
     @Override
-    public void visitPostfixExpression(@NotNull PsiPostfixExpression expression) {
+    public void visitUnaryExpression(@NotNull PsiUnaryExpression expression) {
       final IElementType tokenType = expression.getOperationTokenType();
       if (tokenType.equals(JavaTokenType.PLUSPLUS) || tokenType.equals(JavaTokenType.MINUSMINUS)) {
         addSideEffect(expression);
         return;
       }
-      super.visitPostfixExpression(expression);
-    }
-
-    @Override
-    public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
-      final IElementType tokenType = expression.getOperationTokenType();
-      if (tokenType.equals(JavaTokenType.PLUSPLUS) || tokenType.equals(JavaTokenType.MINUSMINUS)) {
-        addSideEffect(expression);
-        return;
-      }
-      super.visitPrefixExpression(expression);
+      super.visitUnaryExpression(expression);
     }
 
     @Override

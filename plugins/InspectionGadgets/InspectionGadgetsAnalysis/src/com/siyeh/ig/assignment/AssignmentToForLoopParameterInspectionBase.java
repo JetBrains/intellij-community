@@ -73,9 +73,9 @@ public class AssignmentToForLoopParameterInspectionBase extends BaseInspection {
     }
 
     @Override
-    public void visitPrefixExpression(
-      @NotNull PsiPrefixExpression expression) {
-      super.visitPrefixExpression(expression);
+    public void visitUnaryExpression(
+      @NotNull PsiUnaryExpression expression) {
+      super.visitUnaryExpression(expression);
       final IElementType tokenType = expression.getOperationTokenType();
       if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
           !tokenType.equals(JavaTokenType.MINUSMINUS)) {
@@ -85,20 +85,6 @@ public class AssignmentToForLoopParameterInspectionBase extends BaseInspection {
       if (operand == null) {
         return;
       }
-      checkForForLoopParam(operand);
-      checkForForeachLoopParam(operand);  //sensible due to autoboxing/unboxing
-    }
-
-    @Override
-    public void visitPostfixExpression(
-      @NotNull PsiPostfixExpression expression) {
-      super.visitPostfixExpression(expression);
-      final IElementType tokenType = expression.getOperationTokenType();
-      if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
-          !tokenType.equals(JavaTokenType.MINUSMINUS)) {
-        return;
-      }
-      final PsiExpression operand = expression.getOperand();
       checkForForLoopParam(operand);
       checkForForeachLoopParam(operand);  //sensible due to autoboxing/unboxing
     }
