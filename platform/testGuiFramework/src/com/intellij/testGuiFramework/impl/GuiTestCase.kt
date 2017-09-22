@@ -36,6 +36,7 @@ import com.intellij.testGuiFramework.impl.GuiTestUtilKt.isTextComponent
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.typeMatcher
 import com.intellij.testGuiFramework.launcher.system.SystemInfo
 import com.intellij.testGuiFramework.launcher.system.SystemInfo.isMac
+import com.intellij.testGuiFramework.util.Clipboard
 import com.intellij.testGuiFramework.util.Key
 import com.intellij.testGuiFramework.util.Shortcut
 import com.intellij.ui.CheckboxTree
@@ -478,6 +479,11 @@ open class GuiTestCase {
   fun shortcut(shortcut: Shortcut) = shortcut(shortcut.getKeystroke())
 
   fun shortcut(key: Key) = shortcut(key.name)
+
+  /**
+   * copies a given string to a system clipboard
+   */
+  fun copyToClipboard(string: String) = Clipboard.copyToClipboard(string)
 
   /**
    * Invoke action by actionId through its keystroke
