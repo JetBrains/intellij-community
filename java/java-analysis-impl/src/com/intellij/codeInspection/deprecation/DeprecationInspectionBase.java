@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 abstract class DeprecationInspectionBase extends BaseJavaBatchLocalInspectionTool {
   public boolean IGNORE_IN_SAME_OUTERMOST_CLASS;
@@ -356,10 +357,14 @@ abstract class DeprecationInspectionBase extends BaseJavaBatchLocalInspectionToo
         String name = t.getName();
         return "link".equals(name) || "see".equals(name);
       })
-      .collect(MoreCollectors.onlyOne())
       .map(tag -> tag.getValueElement())
+      .filter(Objects::nonNull)
       .map(value -> value.getReference())
+      .filter(Objects::nonNull)
       .map(reference -> reference.resolve())
+      .filter(Objects::nonNull)
+      .distinct()
+      .collect(MoreCollectors.onlyOne())
       .filter(resolved -> resolved instanceof PsiMethod)
       .orElse(null);
     return tagMethod == null || tagMethod.isDeprecated() || tagMethod.isEquivalentTo(method) || !areReplaceable(method, tagMethod, call)
