@@ -110,6 +110,13 @@ public class DfaPsiUtil {
       return inferParameterNullability((PsiParameter)owner);
     }
 
+    if (owner instanceof PsiMethod) {
+      PsiField field = PropertyUtil.getFieldOfGetter((PsiMethod)owner);
+      if (field != null && getElementNullability(resultType, field) == Nullness.NULLABLE) {
+        return Nullness.NULLABLE;
+      }
+    }
+
     return Nullness.UNKNOWN;
   }
 

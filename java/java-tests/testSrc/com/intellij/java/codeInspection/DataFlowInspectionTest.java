@@ -542,4 +542,8 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testInnerClass() { doTest(); }
   public void testCovariantReturn() { doTest(); }
   public void testArrayInitializerLength() { doTest(); }
+
+  public void testGetterOfNullableFieldIsNotAnnotated() { doTest(); }
+
+  public void testGetterOfNullableFieldIsNotNull() { doTest(); }
 }
