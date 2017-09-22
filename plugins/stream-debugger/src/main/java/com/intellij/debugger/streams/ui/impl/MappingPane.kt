@@ -17,11 +17,11 @@ package com.intellij.debugger.streams.ui.impl
 
 import com.intellij.debugger.streams.ui.LinkedValuesMapping
 import com.intellij.debugger.streams.ui.ValueWithPosition
-import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import java.awt.*
 import javax.swing.JPanel
 import javax.swing.SwingConstants
@@ -33,10 +33,13 @@ import javax.swing.SwingConstants
 class MappingPane(name: String,
                   private val beforeValues: List<ValueWithPosition>,
                   private val mapping: LinkedValuesMapping) : JPanel(BorderLayout()) {
-  companion object {
-    val SELECTED_LINK_COLOR: JBColor = JBColor.BLUE
-    val REGULAR_LINK_COLOR: JBColor = JBColor.GRAY
-    val REGULAR_LINK_COLOR_BRIGHT = ColorUtil.withAlpha(REGULAR_LINK_COLOR, 0.25)!!
+  private companion object {
+    val DARCULA_LINE_COLOR = LineColor(regular = JBColor.GRAY,
+                                       selected = JBColor.BLUE,
+                                       inactive = JBColor({ Color(92, 92, 92) }))
+    val INTELLIJ_LINE_COLOR = LineColor(regular = JBColor.GRAY,
+                                        selected = JBColor({ Color(0, 96, 229) }),
+                                        inactive = JBColor({ Color(204, 204, 204) }))
 
     val STROKE = BasicStroke(JBUI.scale(1.toFloat()))
   }
@@ -57,12 +60,13 @@ class MappingPane(name: String,
 
         val config = GraphicsUtil.setupAAPainting(g)
 
+        val colors = if (UIUtil.isUnderDarcula()) DARCULA_LINE_COLOR else INTELLIJ_LINE_COLOR
         if (isSelectedExist()) {
-          drawLines(g, REGULAR_LINK_COLOR_BRIGHT, false)
-          drawLines(g, SELECTED_LINK_COLOR, true)
+          drawLines(g, colors.inactive, false)
+          drawLines(g, colors.selected, true)
         }
         else {
-          drawLines(g, REGULAR_LINK_COLOR, false)
+          drawLines(g, colors.regular, false)
         }
 
         config.restore()
@@ -103,4 +107,6 @@ class MappingPane(name: String,
 
     private fun needToHighlight(left: ValueWithPosition, right: ValueWithPosition): Boolean = left.isHighlighted && right.isHighlighted
   }
+
+  private data class LineColor(val regular: JBColor, val selected: JBColor, val inactive: JBColor)
 }
