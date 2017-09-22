@@ -231,11 +231,15 @@ public class HighlightFixUtil {
     for (IntentionAction action : getChangeVariableTypeFixes(parameter, itemType)) {
       QuickFixAction.registerQuickFixAction(highlightInfo, action);
     }
+    registerChangeReturnTypeFix(highlightInfo, expr, parameter.getType());
+  }
+
+  static void registerChangeReturnTypeFix(@NotNull HighlightInfo highlightInfo, @Nullable PsiExpression expr, @NotNull PsiType toType) {
     if (expr instanceof PsiMethodCallExpression) {
       final PsiMethod method = ((PsiMethodCallExpression)expr).resolveMethod();
       if (method != null) {
         QuickFixAction.registerQuickFixAction(highlightInfo, PriorityActionWrapper
-          .lowPriority(method, QUICK_FIX_FACTORY.createMethodReturnFix(method, parameter.getType(), true)));
+          .lowPriority(method, QUICK_FIX_FACTORY.createMethodReturnFix(method, toType, true)));
       }
     }
   }

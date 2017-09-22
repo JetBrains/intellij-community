@@ -499,6 +499,7 @@ public class HighlightUtil extends HighlightUtilBase {
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createWrapWithAdapterFix(lType, expression));
       AddTypeArgumentsConditionalFix.register(highlightInfo, expression, lType);
       HighlightFixUtil.registerCollectionToArrayFixAction(highlightInfo, rType, lType, expression);
+      HighlightFixUtil.registerChangeReturnTypeFix(highlightInfo, expression, lType);
     }
     ChangeNewOperatorTypeFix.register(highlightInfo, expression, lType);
     return highlightInfo;
