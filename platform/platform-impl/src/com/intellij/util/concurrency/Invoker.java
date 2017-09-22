@@ -121,6 +121,10 @@ public abstract class Invoker implements Disposable {
     catch (Exception exception) {
       LOG.warn(exception);
     }
+    catch (Throwable throwable) {
+      LOG.warn(throwable);
+      throw throwable;
+    }
     finally {
       count.decrementAndGet();
     }
