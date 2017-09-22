@@ -137,6 +137,9 @@ public class PythonSdkUpdater implements StartupActivity {
       if (project != null && project.isDisposed()) {
         return;
       }
+      if (PythonSdkType.findSdkByKey(key) == null) {
+        return;
+      }
       ProgressManager.getInstance().run(new Task.Backgroundable(project, PyBundle.message("sdk.gen.updating.interpreter"), false) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {

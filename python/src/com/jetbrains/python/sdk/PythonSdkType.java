@@ -297,7 +297,7 @@ public final class PythonSdkType extends SdkType {
     if (pointerInfo == null) return;
     final Point point = pointerInfo.getLocation();
     PythonSdkDetailsStep
-      .show(project, sdkModel.getSdks(), null, parentComponent, point, sdk -> {
+      .show(project, sdkModel.getSdks(), null, parentComponent, point, null, sdk -> {
         if (sdk != null) {
           sdk.putUserData(SDK_CREATOR_COMPONENT_KEY, new WeakReference<>(parentComponent));
           sdkCreatedCallback.consume(sdk);
@@ -363,8 +363,7 @@ public final class PythonSdkType extends SdkType {
           }
         }
         // Python 3.3 virtualenvs can be found as described in PEP 405
-        final String pyVenvCfg = "pyvenv.cfg";
-        if (new File(root, pyVenvCfg).exists() || new File(bin, pyVenvCfg).exists()) {
+        if (new File(root, "pyvenv.cfg").exists()) {
           return root;
         }
       }
@@ -431,26 +430,22 @@ public final class PythonSdkType extends SdkType {
 
   @Override
   public String suggestSdkName(final String currentSdkName, final String sdkHome) {
-    String name = getVersionString(sdkHome);
-    return suggestSdkNameFromVersion(sdkHome, name);
-  }
-
-  private static String suggestSdkNameFromVersion(String sdkHome, String version) {
-    sdkHome = FileUtil.toSystemDependentName(sdkHome);
-    final String shortHomeName = FileUtil.getLocationRelativeToUserHome(sdkHome);
-    if (version != null) {
-      File virtualEnvRoot = getVirtualEnvRoot(sdkHome);
-      if (virtualEnvRoot != null) {
-        version += " virtualenv at " + FileUtil.getLocationRelativeToUserHome(virtualEnvRoot.getAbsolutePath());
-      }
-      else {
-        version += " (" + shortHomeName + ")";
-      }
+    final String name = StringUtil.notNullize(suggestBaseSdkName(sdkHome), "Unknown");
+    final File virtualEnvRoot = getVirtualEnvRoot(sdkHome);
+    if (virtualEnvRoot != null) {
+      final String path = FileUtil.getLocationRelativeToUserHome(virtualEnvRoot.getAbsolutePath());
+      return name + " virtualenv at " + path;
     }
     else {
-      version = "Unknown at " + shortHomeName;
-    } // last resort
-    return version;
+      return name;
+    }
+  }
+
+  @Nullable
+  public static String suggestBaseSdkName(@NotNull String sdkHome) {
+    final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdkHome);
+    if (flavor == null) return null;
+    return flavor.getName() + " " + flavor.getLanguageLevel(sdkHome);
   }
 
   @Override
@@ -674,7 +669,7 @@ public final class PythonSdkType extends SdkType {
 
   @Override
   @Nullable
-  public String getVersionString(final String sdkHome) {
+  public String getVersionString(@Nullable final String sdkHome) {
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdkHome);
     return flavor != null ? flavor.getVersionString(sdkHome) : null;
   }
