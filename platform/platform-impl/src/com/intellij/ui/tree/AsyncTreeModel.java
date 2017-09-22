@@ -414,7 +414,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
     return emptyList();
   }
 
-  private abstract class ObsolescentCommand implements Obsolescent, Command<Reference<Node>> {
+  private abstract static class ObsolescentCommand implements Obsolescent, Command<Node> {
     final AsyncPromise<Node> promise = new AsyncPromise<>();
     final String name;
     final Object object;
@@ -440,27 +440,20 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
     }
 
     @Override
-    public Reference<Node> get() {
+    public Node get() {
       started = true;
       LOG.debug("background command: ", this);
-      return Reference.create(() -> getNode(object));
+      return getNode(object);
     }
 
     @Override
-    public void accept(Reference<Node> reference) {
+    public void accept(Node node) {
       if (isObsolete()) {
         LOG.debug("obsolete command: ", this);
       }
-      else if (reference == null) {
-        LOG.debug("failed command: ", this);
-      }
-      else if (reference.isValid()) {
-        LOG.debug("foreground command: ", this);
-        setNode(reference.get());
-      }
       else {
-        LOG.debug("restart command: ", this);
-        processor.process(this); // restart command
+        LOG.debug("foreground command: ", this);
+        setNode(node);
       }
     }
   }
