@@ -21,6 +21,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.ValidateableNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.ui.tree.AbstractTreeModel;
@@ -36,6 +37,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 
+import static com.intellij.ui.tree.Reference.invoke;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.enumeration;
 import static java.util.Collections.unmodifiableList;
@@ -111,7 +113,12 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
       invoker.invokeLaterIfNeeded(() -> {
         Node node = (Node)component;
         if (disposed) return;
-        node.update();
+        try {
+          invoke(node::update);
+        }
+        catch (ProcessCanceledException ignore) {
+          // TODO: handle PCE somehow
+        }
         if (structure) {
           node.invalidate();
           treeStructureChanged(path, null, null);
