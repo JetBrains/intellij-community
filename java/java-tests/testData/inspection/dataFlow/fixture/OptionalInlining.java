@@ -1,5 +1,5 @@
 import org.jetbrains.annotations.Nullable;
-import java.util.Optional;
+import java.util.*;
 
 public class OptionalInlining {
   void testOrElse() {
@@ -177,7 +177,7 @@ public class OptionalInlining {
   void testIfPresent(Optional<String> opt) {
     opt.ifPresent(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
     opt.map(s -> s.isEmpty() ? 5 : 6).ifPresent(val -> {
-      if (val == 7) {
+      if (<warning descr="Condition 'val == 7' is always 'false'">val == 7</warning>) {
         System.out.println("oops");
       }
     });
@@ -227,5 +227,13 @@ public class OptionalInlining {
       .isPresent()</warning>;
 
     opt.filter(h -> h.s == null).map(h -> h.s.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>()).ifPresent(System.out::println);
+  }
+
+  private List<Integer> tryGetFromCache(List<String> keys, Map<String, Optional<Integer>> cache) {
+    List<Integer> result = new ArrayList<>();
+    for (String key : keys) {
+      cache.get(key).ifPresent(result::add);
+    }
+    return result;
   }
 }
