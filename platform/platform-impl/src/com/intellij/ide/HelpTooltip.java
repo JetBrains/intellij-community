@@ -386,7 +386,9 @@ public class HelpTooltip {
       setForeground(FONT_COLOR);
 
       View v = BasicHTML.createHTMLView(this, String.format("<html>%s</html>", text));
-      setText(v.getPreferredSpan(View.X_AXIS) > MAX_WIDTH ?
+      float width = v.getPreferredSpan(View.X_AXIS);
+      isMultiline = isMultiline || width > MAX_WIDTH;
+      setText(width > MAX_WIDTH ?
               String.format("<html><div width=%d>%s</div></html>", MAX_WIDTH, text) :
               String.format("<html>%s</html>", text));
     }
