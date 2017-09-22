@@ -17,10 +17,12 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.*;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -77,9 +79,11 @@ public class InspectionToolRegistrar implements Supplier<List<InspectionToolWrap
     final String shortName = ep.getShortName();
     final InspectionEP duplicate = shortNames.put(shortName, ep);
     if (duplicate != null) {
-      LOG.error("Short name '" + shortName + "' is not unique\n" +
-                "class '" + ep.instantiateTool().getClass().getCanonicalName() + "' in " + ep.getPluginDescriptor() +
-                "\nand\nclass'" + duplicate.instantiateTool().getClass().getCanonicalName() + "' in " + duplicate.getPluginDescriptor() + "\nconflict");
+      final PluginDescriptor descriptor = ep.getPluginDescriptor();
+      LOG.error(new PluginException(
+        "Short name '" + shortName + "' is not unique\nclass '" + ep.instantiateTool().getClass().getCanonicalName() + "' in " + descriptor +
+        "\nand\nclass'" + duplicate.instantiateTool().getClass().getCanonicalName() + "' in " + duplicate.getPluginDescriptor() + "\nconflict",
+        descriptor.getPluginId()));
     }
   }
 
