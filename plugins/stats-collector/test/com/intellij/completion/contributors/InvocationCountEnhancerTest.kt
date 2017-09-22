@@ -103,10 +103,10 @@ class InvocationCountEnhancerTest : LightFixtureCompletionTestCase() {
                         "Embedded",
                         "EC_BASIC_COUNT_0",
                         "EC_BASIC_COUNT_1",
+                        "Test",
                         "EC_BASIC_COUNT_2",
                         "EC_BASIC_COUNT_3",
-                        "EC_BASIC_COUNT_4",
-                        "Test"
+                        "EC_BASIC_COUNT_4"
                 )
         )
     }
@@ -121,10 +121,10 @@ class InvocationCountEnhancerTest : LightFixtureCompletionTestCase() {
                         "Embedded",
                         "EC_CLASS_NAME_COUNT_0",
                         "EC_CLASS_NAME_COUNT_1",
+                        "Test",
                         "EC_CLASS_NAME_COUNT_2",
                         "EC_CLASS_NAME_COUNT_3",
-                        "EC_CLASS_NAME_COUNT_4",
-                        "Test"
+                        "EC_CLASS_NAME_COUNT_4"
                 )
         )
     }
