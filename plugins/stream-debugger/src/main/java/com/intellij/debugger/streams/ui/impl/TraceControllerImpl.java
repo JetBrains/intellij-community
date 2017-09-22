@@ -19,7 +19,10 @@ import com.intellij.debugger.streams.trace.IntermediateState;
 import com.intellij.debugger.streams.trace.NextAwareState;
 import com.intellij.debugger.streams.trace.PrevAwareState;
 import com.intellij.debugger.streams.trace.TraceElement;
-import com.intellij.debugger.streams.ui.*;
+import com.intellij.debugger.streams.ui.PropagationDirection;
+import com.intellij.debugger.streams.ui.TraceContainer;
+import com.intellij.debugger.streams.ui.TraceController;
+import com.intellij.debugger.streams.ui.ValuesSelectionListener;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
@@ -33,17 +36,15 @@ import java.util.stream.Collectors;
 /**
  * @author Vitaliy.Bibaev
  */
-public class TraceControllerImpl implements TraceController, ValuesHighlightingListener {
-  private static final ValuesHighlightingListener EMPTY_LISTENER = (values, direction) -> {
-  };
-  private final List<TraceContainer> myListeners = new CopyOnWriteArrayList<>();
+public class TraceControllerImpl implements TraceController {
+  private final List<TraceContainer> myTraceContainers = new CopyOnWriteArrayList<>();
   private final ValuesSelectionListener mySelectionListener;
   private final IntermediateState myState;
   private final PrevAwareState myToPrev;
   private final NextAwareState myToNext;
 
-  private ValuesHighlightingListener myPrevListener = EMPTY_LISTENER;
-  private ValuesHighlightingListener myNextListener = EMPTY_LISTENER;
+  private TraceController myPrevListener = null;
+  private TraceController myNextListener = null;
 
   TraceControllerImpl(@NotNull IntermediateState state) {
     myState = state;
@@ -58,11 +59,11 @@ public class TraceControllerImpl implements TraceController, ValuesHighlightingL
     };
   }
 
-  void setPreviousListener(@NotNull ValuesHighlightingListener listener) {
+  void setPreviousController(@NotNull TraceController listener) {
     myPrevListener = listener;
   }
 
-  void setNextListener(@NotNull ValuesHighlightingListener listener) {
+  void setNextController(@NotNull TraceController listener) {
     myNextListener = listener;
   }
 
@@ -102,8 +103,21 @@ public class TraceControllerImpl implements TraceController, ValuesHighlightingL
   }
 
   @Override
+  public boolean isSelectionExists(@NotNull PropagationDirection direction) {
+    for (final TraceContainer container : myTraceContainers) {
+      if (container.highlightedExists()) {
+        return true;
+      }
+    }
+
+    return PropagationDirection.FORWARD.equals(direction)
+           ? selectionExistsForward()
+           : selectionExistsBackward();
+  }
+
+  @Override
   public void register(@NotNull TraceContainer listener) {
-    myListeners.add(listener);
+    myTraceContainers.add(listener);
     listener.addSelectionListener(mySelectionListener);
   }
 
@@ -123,27 +137,36 @@ public class TraceControllerImpl implements TraceController, ValuesHighlightingL
   }
 
   private void propagateForward(@NotNull List<TraceElement> values) {
+    if (myNextListener == null) return;
     final List<TraceElement> nextValues =
       values.stream().flatMap(x -> getNextValues(x).stream()).collect(Collectors.toList());
-
     myNextListener.highlightingChanged(nextValues, PropagationDirection.FORWARD);
   }
 
   private void propagateBackward(@NotNull List<TraceElement> values) {
+    if (myPrevListener == null) return;
     final List<TraceElement> prevValues =
       values.stream().flatMap(x -> getPrevValues(x).stream()).collect(Collectors.toList());
     myPrevListener.highlightingChanged(prevValues, PropagationDirection.BACKWARD);
   }
 
   private void highlightAll(@NotNull List<TraceElement> values) {
-    for (final TraceContainer listener : myListeners) {
+    for (final TraceContainer listener : myTraceContainers) {
       listener.highlight(values);
     }
   }
 
   private void selectAll(@NotNull List<TraceElement> values) {
-    for (final TraceContainer listener : myListeners) {
+    for (final TraceContainer listener : myTraceContainers) {
       listener.select(values);
     }
+  }
+
+  private boolean selectionExistsForward() {
+    return myNextListener != null && myNextListener.isSelectionExists(PropagationDirection.FORWARD);
+  }
+
+  private boolean selectionExistsBackward() {
+    return myPrevListener != null && myPrevListener.isSelectionExists(PropagationDirection.BACKWARD);
   }
 }

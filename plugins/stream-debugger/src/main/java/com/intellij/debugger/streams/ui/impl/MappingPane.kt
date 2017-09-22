@@ -16,6 +16,7 @@
 package com.intellij.debugger.streams.ui.impl
 
 import com.intellij.debugger.streams.ui.LinkedValuesMapping
+import com.intellij.debugger.streams.ui.TraceController
 import com.intellij.debugger.streams.ui.ValueWithPosition
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
@@ -32,7 +33,8 @@ import javax.swing.SwingConstants
  */
 class MappingPane(name: String,
                   private val beforeValues: List<ValueWithPosition>,
-                  private val mapping: LinkedValuesMapping) : JPanel(BorderLayout()) {
+                  private val mapping: LinkedValuesMapping,
+                  private val controller: TraceController) : JPanel(BorderLayout()) {
   private companion object {
     val DARCULA_LINE_COLOR = LineColor(regular = JBColor.GRAY,
                                        selected = JBColor.BLUE,
@@ -73,17 +75,8 @@ class MappingPane(name: String,
       }
     }
 
-    private fun isSelectedExist(): Boolean {
-      for (value in beforeValues) {
-        val linkedValues = mapping.getLinkedValues(value) ?: continue
-        val exists = linkedValues
-          .asSequence()
-          .any { needToHighlight(value, it) }
-        if (exists) return true
-      }
+    private fun isSelectedExist(): Boolean = controller.isSelectionExists
 
-      return false
-    }
 
     private fun drawLines(g: Graphics2D, color: Color, highlighted: Boolean) {
       val x1 = x

@@ -205,6 +205,11 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
     mySelectionDispatcher.addListener(listener);
   }
 
+  @Override
+  public boolean highlightedExists() {
+    return !isSelectionEmpty() || !myHighlighted.isEmpty();
+  }
+
   public void addPaintingListener(@NotNull PaintingListener listener) {
     myPaintingDispatcher.addListener(listener);
   }

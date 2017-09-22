@@ -191,8 +191,8 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       final PrevAwareState after = intermediate.getStateAfter();
       final TraceControllerImpl controller = new TraceControllerImpl(after);
 
-      prevController.setNextListener(controller);
-      controller.setPreviousListener(prevController);
+      prevController.setNextController(controller);
+      controller.setPreviousController(prevController);
       prevController = controller;
 
       controllers.add(controller);
@@ -204,8 +204,8 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
 
       final TraceControllerImpl terminationController = new TraceControllerImpl(afterTerminationState);
 
-      terminationController.setPreviousListener(prevController);
-      prevController.setNextListener(terminationController);
+      terminationController.setPreviousController(prevController);
+      prevController.setNextController(terminationController);
       controllers.add(terminationController);
     }
 
