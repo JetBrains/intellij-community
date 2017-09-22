@@ -1377,7 +1377,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(expression);
   }
 
-  private static enum Shortcut {
+  private enum Shortcut {
     NO_SHORTCUT, // a || b
     SKIP_CURRENT_OPERAND, // false || a
     STOP_EXPRESSION         // true || a
