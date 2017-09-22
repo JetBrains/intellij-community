@@ -21,7 +21,6 @@ import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -67,13 +66,6 @@ public class PySdkListCellRenderer extends ListCellRendererWrapper<Object> {
       else {
         name = sdk.getName();
       }
-      if (name.startsWith("Remote")) {
-        final String trimmedRemote = StringUtil.trim(name.substring("Remote".length()));
-        if (!trimmedRemote.isEmpty())
-          name = trimmedRemote;
-      }
-      final String flavorName = flavor == null ? "Python" : flavor.getName();
-      if (name.startsWith(flavorName)) name = StringUtil.trim(name.substring(flavorName.length()));
 
       if (isShortVersion){
         name = shortenName(name);
@@ -99,6 +91,7 @@ public class PySdkListCellRenderer extends ListCellRendererWrapper<Object> {
         setText(name);
         setIcon(icon);
       }
+      setToolTipText(sdk.getHomePath());
     }
     else if (SEPARATOR.equals(item))
       setSeparator();
