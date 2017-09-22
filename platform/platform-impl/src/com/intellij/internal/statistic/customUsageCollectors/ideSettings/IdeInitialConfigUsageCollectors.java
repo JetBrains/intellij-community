@@ -35,7 +35,7 @@ public final class IdeInitialConfigUsageCollectors {
 
     @NotNull
     @Override
-    public Set<UsageDescriptor> doGetUsages() throws CollectUsagesException {
+    public Set<UsageDescriptor> doGetUsages() {
       return Collections.singleton(StatisticsUtilKt.getEnumUsage("import", getConfigImport()));
     }
 
@@ -50,7 +50,7 @@ public final class IdeInitialConfigUsageCollectors {
 
     @NotNull
     @Override
-    public Set<UsageDescriptor> doGetUsages() throws CollectUsagesException {
+    public Set<UsageDescriptor> doGetUsages() {
       return Collections.singleton(new UsageDescriptor(getSkipRemainingPressedScreen(), 1));
     }
 
@@ -65,7 +65,7 @@ public final class IdeInitialConfigUsageCollectors {
 
     @NotNull
     @Override
-    public Set<UsageDescriptor> doGetUsages() throws CollectUsagesException {
+    public Set<UsageDescriptor> doGetUsages() {
       return getPredefinedDisabledPlugins().stream()
         .map(pluginDescriptor -> new UsageDescriptor(pluginDescriptor, 1))
         .collect(Collectors.toSet());
@@ -82,7 +82,7 @@ public final class IdeInitialConfigUsageCollectors {
 
     @NotNull
     @Override
-    public Set<UsageDescriptor> doGetUsages() throws CollectUsagesException {
+    public Set<UsageDescriptor> doGetUsages() {
       return getDownloadedPlugins().stream()
         .map(pluginId -> new UsageDescriptor(pluginId, 1))
         .collect(Collectors.toSet());
@@ -98,7 +98,7 @@ public final class IdeInitialConfigUsageCollectors {
   public static class SelectedKeymap extends Base {
 
     @Override
-    protected Set<UsageDescriptor> doGetUsages() throws CollectUsagesException {
+    protected Set<UsageDescriptor> doGetUsages() {
       final String keymapName = WelcomeWizardUtil.getWizardMacKeymap();
       if (StringUtil.isEmpty(keymapName)) {
         return Collections.emptySet();
@@ -118,7 +118,7 @@ public final class IdeInitialConfigUsageCollectors {
   public static class SelectedLAF extends Base {
 
     @Override
-    protected Set<UsageDescriptor> doGetUsages() throws CollectUsagesException {
+    protected Set<UsageDescriptor> doGetUsages() {
       final String laf = WelcomeWizardUtil.getWizardLAF();
       if (StringUtil.isEmpty(laf)) {
         return Collections.emptySet();
