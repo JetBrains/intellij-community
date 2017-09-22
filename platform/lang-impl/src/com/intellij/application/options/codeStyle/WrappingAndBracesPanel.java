@@ -18,10 +18,7 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.codeStyle.presentation.CodeStyleBoundedIntegerSettingPresentation;
 import com.intellij.psi.codeStyle.presentation.CodeStyleSelectSettingPresentation;
 import com.intellij.psi.codeStyle.presentation.CodeStyleSettingPresentation;
@@ -42,7 +39,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
   private MultiMap<String, String> myGroupToFields = new MultiMap<>();
   private Map<String, SettingsGroup> myFieldNameToGroup;
   private final CommaSeparatedIntegersField mySoftMarginsEditor =
-    new CommaSeparatedIntegersField(null, 0, CodeStyleSettings.MAX_RIGHT_MARGIN, "Optional");
+    new CommaSeparatedIntegersField(null, 0, CodeStyleConstraints.MAX_RIGHT_MARGIN, "Optional");
   private final JComboBox<String> myWrapOnTypingCombo = new ComboBox<>(WRAP_ON_TYPING_OPTIONS);
 
   public WrappingAndBracesPanel(CodeStyleSettings settings) {

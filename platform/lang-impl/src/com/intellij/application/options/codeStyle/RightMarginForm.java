@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.psi.codeStyle.CodeStyleConstraints;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -68,7 +69,8 @@ public class RightMarginForm {
   }
 
   void createUIComponents() {
-    myRightMarginField = new IntegerField(ApplicationBundle.message("editbox.right.margin.columns"), 0, CodeStyleSettings.MAX_RIGHT_MARGIN);
+    myRightMarginField = new IntegerField(ApplicationBundle.message("editbox.right.margin.columns"),
+                                          0, CodeStyleConstraints.MAX_RIGHT_MARGIN);
     myRightMarginField.getValueEditor().addListener(new ValueEditor.Listener<Integer>() {
       @Override
       public void valueChanged(@NotNull Integer newValue) {
@@ -78,7 +80,7 @@ public class RightMarginForm {
     });
     myRightMarginField.setCanBeEmpty(true);
     myRightMarginField.setDefaultValue(-1);
-    myVisualGuidesField = new CommaSeparatedIntegersField(ApplicationBundle.message("settings.code.style.visual.guides"), 0, CodeStyleSettings.MAX_RIGHT_MARGIN, "Optional");
+    myVisualGuidesField = new CommaSeparatedIntegersField(ApplicationBundle.message("settings.code.style.visual.guides"), 0, CodeStyleConstraints.MAX_RIGHT_MARGIN, "Optional");
     myVisualGuidesField.getValueEditor().addListener(new ValueEditor.Listener<List<Integer>>() {
       @Override
       public void valueChanged(@NotNull List<Integer> newValue) {

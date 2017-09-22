@@ -16,6 +16,7 @@
 package com.intellij.formatting;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.CodeStyleConstraints;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
@@ -98,7 +99,7 @@ public class CoreFormatterUtil {
         if (whiteSpace.containsLineFeeds()) return result;
       }
       block = block.getPreviousBlock();
-      if (result > CodeStyleSettings.MAX_RIGHT_MARGIN || block == null) return result;
+      if (result > CodeStyleConstraints.MAX_RIGHT_MARGIN || block == null) return result;
       result += block.getSymbolsAtTheLastLine();
       if (block.containsLineFeeds()) return result;
     }
