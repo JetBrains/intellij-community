@@ -78,8 +78,7 @@ class MappingPane(name: String,
         val linkedValues = mapping.getLinkedValues(value) ?: continue
         val exists = linkedValues
           .asSequence()
-          .filter { needToHighlight(value, it) }
-          .any()
+          .any { needToHighlight(value, it) }
         if (exists) return true
       }
 
