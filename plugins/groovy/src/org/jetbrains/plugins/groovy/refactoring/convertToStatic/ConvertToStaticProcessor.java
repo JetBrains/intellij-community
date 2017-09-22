@@ -15,13 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.convertToStatic;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
@@ -41,7 +40,8 @@ import org.jetbrains.plugins.groovy.refactoring.convertToStatic.fixes.BaseFix;
 import org.jetbrains.plugins.groovy.refactoring.convertToStatic.fixes.EmptyFieldTypeFix;
 import org.jetbrains.plugins.groovy.refactoring.convertToStatic.fixes.EmptyReturnTypeFix;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_COMPILE_DYNAMIC;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_COMPILE_STATIC;
@@ -84,29 +84,33 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
-    Queue<GroovyFile> files = new ArrayDeque<>(Arrays.asList(myFiles));
-
-    while (files.peek() != null) {
-      GroovyFile file = files.poll();
-      final Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
-      PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(file.getProject());
-      LOG.assertTrue(document != null);
-      psiDocumentManager.commitDocument(document);
-      LOG.assertTrue(file.isValid());
+    int counter = 0;
+    final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+    LOG.assertTrue(progressIndicator != null);
+    progressIndicator.setIndeterminate(false);
+    for( GroovyFile file: myFiles) {
+      counter++;
+      commitFile(file);
       if (file.isScript()) continue;
-
+      progressIndicator.setText2(file.getName());
+      progressIndicator.setFraction(counter / (double) myFiles.length);
       try {
         applyFixes(file);
         putCompileAnnotations(file);
-        checkErrors(file);
+        applyErrorFixes(file);
+        commitFile(file);
       } catch (Exception e) {
         LOG.error("Error in converting file: " + file.getName(), e);
       }
-
-
-      PsiDocumentManager.getInstance(myProject).commitDocument(document);
-      doPostProcessing(file);
     }
+  }
+
+  private void commitFile(@NotNull GroovyFile file) {
+    final Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
+    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(file.getProject());
+    LOG.assertTrue(document != null);
+    psiDocumentManager.commitDocument(document);
+    LOG.assertTrue(file.isValid());
   }
 
   private void applyFixes(GroovyFile file) {
@@ -122,7 +126,7 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
   private void putCompileAnnotations(@NotNull GroovyFile file) {
     GrTypeDefinition[] classes = file.getTypeDefinitions();
 
-    for (GrTypeDefinition typeDef : classes) { //put annotations
+    for (GrTypeDefinition typeDef : classes) {
       addAnnotation(typeDef, true);
     }
 
@@ -156,7 +160,7 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private static void checkErrors(@NotNull GroovyFile file) {
+  private static void applyErrorFixes(@NotNull GroovyFile file) {
     for (int iteration = 0; iteration < maxIterations; iteration++) {
       TypeChecker checker = new TypeChecker();
       file.accept(new PsiRecursiveElementVisitor() {
@@ -194,12 +198,5 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
       PsiAnnotation psiAnnotation = modifierList.findAnnotation(GROOVY_TRANSFORM_COMPILE_STATIC);
       if (psiAnnotation != null) psiAnnotation.delete();
     }
-  }
-
-  private void doPostProcessing(PsiElement newFile) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-
-    newFile = JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(newFile);
-    CodeStyleManager.getInstance(myProject).reformat(newFile);
   }
 }
