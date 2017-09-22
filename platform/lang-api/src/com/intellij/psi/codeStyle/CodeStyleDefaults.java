@@ -15,10 +15,8 @@
  */
 package com.intellij.psi.codeStyle;
 
-public interface CodeStyleConstraints {
-  int MAX_RIGHT_MARGIN = 1000;
-  int MIN_INDENT_SIZE = 0;
-  int MAX_INDENT_SIZE = 16;
-  int MIN_TAB_SIZE = 1;
-  int MAX_TAB_SIZE = 16;
+public interface CodeStyleDefaults {
+  int DEFAULT_INDENT_SIZE = 4;
+  int DEFAULT_TAB_SIZE = 4;
+  int DEFAULT_CONTINUATION_INDENT_SIZE = 8;
 }
