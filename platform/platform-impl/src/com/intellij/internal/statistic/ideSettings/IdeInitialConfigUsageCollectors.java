@@ -57,7 +57,7 @@ public final class IdeInitialConfigUsageCollectors {
     @NotNull
     @Override
     public GroupDescriptor getGroupId() {
-      return GroupDescriptor.create("Wizard:Skip remaining pressed");
+      return GroupDescriptor.create("Wizard_Skip remaining pressed");
     }
   }
 
@@ -74,7 +74,7 @@ public final class IdeInitialConfigUsageCollectors {
     @NotNull
     @Override
     public GroupDescriptor getGroupId() {
-      return GroupDescriptor.create("Wizard:Disabled plugins");
+      return GroupDescriptor.create("Wizard_Disabled plugins");
     }
   }
 
@@ -91,7 +91,7 @@ public final class IdeInitialConfigUsageCollectors {
     @NotNull
     @Override
     public GroupDescriptor getGroupId() {
-      return GroupDescriptor.create("Wizard:Downloaded plugins");
+      return GroupDescriptor.create("Wizard_Downloaded plugins");
     }
   }
 
@@ -111,7 +111,7 @@ public final class IdeInitialConfigUsageCollectors {
     @NotNull
     @Override
     public GroupDescriptor getGroupId() {
-      return GroupDescriptor.create("Wizard:Selected keymap");
+      return GroupDescriptor.create("Wizard_Selected keymap");
     }
   }
 
@@ -131,7 +131,7 @@ public final class IdeInitialConfigUsageCollectors {
     @NotNull
     @Override
     public GroupDescriptor getGroupId() {
-      return GroupDescriptor.create("Wizard:Selected LAF");
+      return GroupDescriptor.create("Wizard_Selected LAF");
     }
   }
 
