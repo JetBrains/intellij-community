@@ -55,15 +55,10 @@ public class PresentationAnnotationInspectionTest extends JavaCodeInsightFixture
     assertNotNull(reference);
     PsiElement resolved = reference.resolve();
     assertNotNull(resolved);
-    assertInstanceOf(resolved, PsiField.class);
 
-    PsiField resolvedField = (PsiField)resolved;
+    PsiField resolvedField = assertInstanceOf(resolved, PsiField.class);
     String qualifiedName = resolvedField.getContainingClass().getQualifiedName();
     assertEquals(AllIcons.Actions.class.getCanonicalName(), qualifiedName);
-  }
-
-  public void testEmptyIcon() {
-    myFixture.testHighlighting("EmptyIcon.java");
   }
 
   public void testInvalidIcon() {

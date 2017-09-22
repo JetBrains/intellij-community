@@ -1,5 +1,9 @@
 import com.intellij.ide.presentation.Presentation;
 
 @Presentation(icon = "<error descr="Cannot resolve symbol 'InvalidIconPath'">InvalidIconPath</error>")
-public class InvalidIcon {
+class InvalidIcon {
+}
+
+@Presentation(icon = "<error descr="Cannot resolve symbol ''"></error>")
+class EmptyIcon {
 }
