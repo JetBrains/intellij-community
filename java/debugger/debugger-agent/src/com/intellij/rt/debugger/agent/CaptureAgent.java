@@ -32,15 +32,15 @@ import java.util.jar.JarFile;
  * @author egor
  */
 public class CaptureAgent {
-  private static Instrumentation OurInstrumentation;
-  private static volatile List<CapturePoint> myCapturePoints = Arrays.asList(new CapturePoint
-                                                                               ("javax/swing/SwingUtilities", "invokeLater", 0)
-                                                                             //            ,
-                                                                             //            new CapturePoint("Test", "foo")
-  );
+  private static Instrumentation ourInstrumentation;
+  private static volatile Map<String, List<CapturePoint>> myCapturePoints = new HashMap<>();
+  static {
+    CapturePoint invokeLater = new CapturePoint("javax/swing/SwingUtilities", "invokeLater", 0);
+    myCapturePoints.put(invokeLater.myClassName, Collections.singletonList(invokeLater));
+  }
 
   public static void premain(String args, Instrumentation instrumentation) throws IOException {
-    OurInstrumentation = instrumentation;
+    ourInstrumentation = instrumentation;
     instrumentation.appendToBootstrapClassLoaderSearch(createTempJar("debugger-agent-storage.jar"));
     instrumentation.appendToSystemClassLoaderSearch(createTempJar("asm-all.jar"));
     instrumentation.addTransformer(new CaptureTransformer());
@@ -54,15 +54,14 @@ public class CaptureAgent {
                             Class<?> classBeingRedefined,
                             ProtectionDomain protectionDomain,
                             byte[] classfileBuffer) {
-      // TODO: speedup
-      for (CapturePoint capturePoint : myCapturePoints) {
-        if (capturePoint.myClassName.equals(className)) {
-          ClassReader reader = new ClassReader(classfileBuffer);
-          ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
-          CaptureInstrumentor visitor = new CaptureInstrumentor(Opcodes.ASM6, writer, capturePoint);
-          reader.accept(visitor, 0);
-          return writer.toByteArray();
+      List<CapturePoint> capturePoints = myCapturePoints.get(className);
+      if (!capturePoints.isEmpty()) {
+        ClassReader reader = new ClassReader(classfileBuffer);
+        ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
+        for (CapturePoint point : capturePoints) {
+          reader.accept(new CaptureInstrumentor(Opcodes.ASM6, writer, point), 0);
         }
+        return writer.toByteArray();
       }
       return null;
     }
@@ -134,16 +133,18 @@ public class CaptureAgent {
   // to be run from the debugger
   @SuppressWarnings("unused")
   public static void setCapturePoints(Object[][] capturePoints) throws UnmodifiableClassException {
-    Set<String> classNames = new HashSet<>();
-    for (CapturePoint point : myCapturePoints) {
-      classNames.add(point.myClassName);
-    }
+    Set<String> classNames = new HashSet<>(myCapturePoints.keySet());
 
-    List<CapturePoint> points = new ArrayList<>(capturePoints.length);
+    Map<String, List<CapturePoint>> points = new HashMap<>();
     for (Object[] capturePoint : capturePoints) {
       String className = (String)capturePoint[0];
       classNames.add(className);
-      points.add(new CapturePoint(className, (String)capturePoint[1], (int)capturePoint[2]));
+      List<CapturePoint> currentPoints = points.get(className);
+      if (currentPoints == null) {
+        currentPoints = new ArrayList<>();
+        points.put(className, currentPoints);
+      }
+      currentPoints.add(new CapturePoint(className, (String)capturePoint[1], (int)capturePoint[2]));
     }
     myCapturePoints = points;
 
@@ -156,6 +157,6 @@ public class CaptureAgent {
         e.printStackTrace();
       }
     }
-    OurInstrumentation.retransformClasses(classes.toArray(new Class[0]));
+    ourInstrumentation.retransformClasses(classes.toArray(new Class[0]));
   }
 }
