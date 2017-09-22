@@ -32,5 +32,5 @@ class KotlinArrayVariable(override val type: ArrayType, override val name: Strin
   override fun set(index: Expression, value: Expression): Expression = TextExpression("$name[${index.toCode()}] = ${value.toCode()}")
 
   override fun defaultDeclaration(size: Expression): VariableDeclaration =
-    KotlinVariableDeclaration(this, false, "kotlin.arrayOfNulls(${size.toCode()})")
+    KotlinVariableDeclaration(this, false, type.sizedDeclaration(size.toCode()))
 }

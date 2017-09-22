@@ -98,8 +98,12 @@ class KotlinStatementFactory : StatementFactory {
 
   override fun createNewArrayExpression(elementType: GenericType, vararg args: Expression): Expression {
     val arguments = args.joinToString { it.toCode() }
-    val type = KotlinTypes.nullable { elementType }
-    return TextExpression("kotlin.arrayOf<${type.genericTypeName}>($arguments)")
+    return when (elementType) {
+      types.INT -> TextExpression("kotlin.intArrayOf($arguments)")
+      types.LONG -> TextExpression("kotlin.longArrayOf($arguments)")
+      types.DOUBLE -> TextExpression("kotlin.doubleArrayOf($arguments)")
+      else -> TextExpression("kotlin.arrayOf<${types.nullable { elementType }.genericTypeName}>($arguments)")
+    }
   }
 
   override fun createNewSizedArray(elementType: GenericType, size: Expression): Expression =

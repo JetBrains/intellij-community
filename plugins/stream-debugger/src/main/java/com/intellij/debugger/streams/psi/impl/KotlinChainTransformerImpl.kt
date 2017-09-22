@@ -27,7 +27,6 @@ import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtValueArgument
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiverOrThis
 
 /**
  * @author Vitaliy.Bibaev

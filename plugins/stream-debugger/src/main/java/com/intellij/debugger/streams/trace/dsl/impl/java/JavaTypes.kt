@@ -44,7 +44,7 @@ object JavaTypes : Types {
   override val LONG: GenericType = GenericTypeImpl("long", "java.lang.Long", "0L")
 
   override fun array(elementType: GenericType): ArrayType =
-    ArrayTypeImpl(elementType, { "$it[]" }, "new ${elementType.variableTypeName}[] {}")
+    ArrayTypeImpl(elementType, { "$it[]" }, { "new ${elementType.variableTypeName}[$it]" })
 
   override fun map(keyType: GenericType, valueType: GenericType): MapType =
     MapTypeImpl(keyType, valueType, { keys, values -> "java.util.Map<$keys, $values>" }, "new java.util.HashMap<>()")

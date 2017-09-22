@@ -17,7 +17,6 @@ package com.intellij.debugger.streams.trace.dsl.impl.kotlin
 
 import com.intellij.debugger.streams.trace.dsl.Types
 import com.intellij.debugger.streams.trace.impl.handler.type.*
-
 /**
  * @author Vitaliy.Bibaev
  */
@@ -37,8 +36,12 @@ object KotlinTypes : Types {
     override fun list(elementsType: GenericType): ListType =
       ListTypeImpl(elementsType, { "kotlin.collections.MutableList<$it>" }, "kotlin.collections.mutableListOf()")
 
-    override fun array(elementType: GenericType): ArrayType =
-      ArrayTypeImpl(nullable { elementType }, { "kotlin.Array<$it>" }, "kotlin.arrayOfNulls(1)")
+  override fun array(elementType: GenericType): ArrayType = when (elementType) {
+    INT -> ArrayTypeImpl(INT, { "kotlin.IntArray" }, { "kotlin.IntArray($it)" })
+    LONG -> ArrayTypeImpl(LONG, { "kotlin.LongArray" }, { "kotlin.LongArray($it)" })
+    DOUBLE -> ArrayTypeImpl(DOUBLE, { "kotlin.DoubleArray" }, { "kotlin.DoubleArray($it)" })
+    else -> ArrayTypeImpl(nullable { elementType }, { "kotlin.Array<$it>" }, { "kotlin.arrayOfNulls($it)" })
+  }
 
     override fun map(keyType: GenericType, valueType: GenericType): MapType =
       MapTypeImpl(keyType, valueType,
@@ -54,7 +57,7 @@ object KotlinTypes : Types {
     val type = this.typeSelector()
     if (type.genericTypeName.last() == '?') return type
     return when (type) {
-      is ArrayType -> ArrayTypeImpl(type.elementType, { "kotlin.Array<$it>?" }, type.defaultValue)
+      is ArrayType -> ArrayTypeImpl(type.elementType, { "kotlin.Array<$it>?" }, { type.sizedDeclaration(it) })
       is ListType -> ListTypeImpl(type.elementType, { "kotlin.collections.MutableList<$it>?" }, type.defaultValue)
       is MapType -> MapTypeImpl(type.keyType, type.valueType, { keys, values -> "kotlin.collections.MutableMap<$keys, $values>?" },
                                 type.defaultValue)
@@ -62,3 +65,4 @@ object KotlinTypes : Types {
     }
   }
 }
+

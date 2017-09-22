@@ -32,5 +32,5 @@ class JavaArrayVariable(override val type: ArrayType, name: String)
   override fun set(index: Expression, value: Expression): Expression = TextExpression("$name[${index.toCode()}] = ${value.toCode()}")
 
   override fun defaultDeclaration(size: Expression): VariableDeclaration =
-    JavaVariableDeclaration(this, false, "new ${type.elementType.variableTypeName}[${size.toCode()}]")
+    JavaVariableDeclaration(this, false, type.sizedDeclaration(size.toCode()))
 }

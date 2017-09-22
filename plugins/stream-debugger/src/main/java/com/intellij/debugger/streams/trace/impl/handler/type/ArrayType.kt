@@ -15,4 +15,6 @@
  */
 package com.intellij.debugger.streams.trace.impl.handler.type
 
-interface ArrayType : GenericType.CompositeType
+interface ArrayType : GenericType.CompositeType {
+  fun sizedDeclaration(size: String): String
+}

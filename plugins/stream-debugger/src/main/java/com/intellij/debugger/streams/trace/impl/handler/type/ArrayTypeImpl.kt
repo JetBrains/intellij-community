@@ -18,5 +18,7 @@ package com.intellij.debugger.streams.trace.impl.handler.type
 /**
  * @author Vitaliy.Bibaev
  */
-class ArrayTypeImpl(override val elementType: GenericType, toName: (String) -> String, defaultValue: String)
-  : ClassTypeImpl(toName.invoke(elementType.variableTypeName), defaultValue), ArrayType
+class ArrayTypeImpl(override val elementType: GenericType, toName: (String) -> String, private val toDefaultValue: (String) -> String)
+  : ClassTypeImpl(toName.invoke(elementType.variableTypeName), toDefaultValue("1")), ArrayType {
+  override fun sizedDeclaration(size: String): String = toDefaultValue(size)
+}
