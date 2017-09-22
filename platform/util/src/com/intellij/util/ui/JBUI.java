@@ -775,7 +775,7 @@ public class JBUI {
       return onUpdated(updateAll(ctx));
     }
 
-    protected boolean updateAll(@NotNull BaseScaleContext ctx) {
+    protected <T extends BaseScaleContext> boolean updateAll(@NotNull T ctx) {
       boolean updated = usrScale.update(ctx.usrScale.value);
       return objScale.update(ctx.objScale.value) || updated;
     }
@@ -933,21 +933,16 @@ public class JBUI {
       return super.update(scale);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public boolean update(@Nullable ScaleContext ctx) {
-      if (ctx == null) return update();
+    @Override
+    protected <T extends BaseScaleContext> boolean updateAll(@NotNull T ctx) {
+      boolean updated = super.updateAll(ctx);
+      if (!(ctx instanceof ScaleContext)) return updated;
+      ScaleContext context = (ScaleContext)ctx;
 
       if (compRef != null) compRef.clear();
-      compRef = ctx.compRef;
+      compRef = context.compRef;
 
-      return onUpdated(updateAll(ctx));
-    }
-
-    protected boolean updateAll(@NotNull ScaleContext ctx) {
-      boolean updated = super.updateAll(ctx);
-      return sysScale.update(ctx.sysScale.value) || updated;
+      return sysScale.update(context.sysScale.value) || updated;
     }
 
     @Override
