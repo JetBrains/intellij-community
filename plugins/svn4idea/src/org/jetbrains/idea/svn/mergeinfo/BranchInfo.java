@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import java.io.File;
 import java.util.*;
 
 import static org.jetbrains.idea.svn.SvnUtil.append;
+import static org.jetbrains.idea.svn.SvnUtil.removePathTail;
 
 public class BranchInfo {
 
@@ -160,7 +161,7 @@ public class BranchInfo {
         try {
           mergeCheckResult = checkPathGoingUp(list.getNumber(), -1, branchPath, localPathInBranch, path, true);
         }
-        catch (VcsException | SVNException e) {
+        catch (VcsException e) {
           LOG.info(e);
           mergeCheckResult = SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
         }
@@ -183,7 +184,7 @@ public class BranchInfo {
                                                   final long targetRevision,
                                                   final String branchRootPath,
                                                   final String path,
-                                                  @NotNull String trunkUrl) throws SVNException, VcsException {
+                                                  @NotNull String trunkUrl) throws VcsException {
     SvnMergeInfoCache.MergeCheckResult result;
     String newTrunkUrl = SVNPathUtil.removeTail(trunkUrl).trim();
 
@@ -202,7 +203,7 @@ public class BranchInfo {
           Info svnInfo = myVcs.getInfo(new File(branchRootPath));
           result = svnInfo == null || svnInfo.getURL() == null
                    ? SvnMergeInfoCache.MergeCheckResult.NOT_MERGED
-                   : goUpInRepo(revisionAsked, targetRevision, svnInfo.getURL().removePathTail(), newTrunkUrl);
+                   : goUpInRepo(revisionAsked, targetRevision, removePathTail(svnInfo.getURL()), newTrunkUrl);
         }
       }
       else {
@@ -217,7 +218,7 @@ public class BranchInfo {
   private SvnMergeInfoCache.MergeCheckResult goUpInRepo(final long revisionAsked,
                                                         final long targetRevision,
                                                         final SVNURL branchUrl,
-                                                        final String trunkUrl) throws VcsException, SVNException {
+                                                        final String trunkUrl) throws VcsException {
     SvnMergeInfoCache.MergeCheckResult result;
     Set<Long> mergeInfo = myPathMergedMap.get(branchUrl.toString() + "@" + targetRevision);
 
@@ -232,7 +233,7 @@ public class BranchInfo {
 
       if (mergeinfoProperty == null) {
         final String newTrunkUrl = SVNPathUtil.removeTail(trunkUrl).trim();
-        final SVNURL newBranchUrl = branchUrl.removePathTail();
+        final SVNURL newBranchUrl = removePathTail(branchUrl);
         SVNURL absoluteTrunk = append(myInfo.getRepoUrl(), newTrunkUrl);
 
         result = newTrunkUrl.length() <= 1 ||
@@ -255,7 +256,7 @@ public class BranchInfo {
                                                               @NotNull String branchRootPath,
                                                               @NotNull String path,
                                                               final String trunkUrl,
-                                                              final boolean self) throws VcsException, SVNException {
+                                                              final boolean self) throws VcsException {
     SvnMergeInfoCache.MergeCheckResult result;
     final File pathFile = new File(path);
 

@@ -28,7 +28,7 @@ import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
-import org.tmatesoft.svn.core.SVNException;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -37,6 +37,7 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 import java.util.ArrayList;
 
 import static org.jetbrains.idea.svn.SvnUtil.append;
+import static org.jetbrains.idea.svn.SvnUtil.removePathTail;
 
 /**
 * @author Konstantin Kolosovsky.
@@ -81,7 +82,7 @@ public class DefaultBranchConfigInitializer implements Runnable {
       try {
         result = getDefaultConfiguration(vcs, rootUrl);
       }
-      catch (SVNException | VcsException e) {
+      catch (VcsException e) {
         LOG.info(e);
       }
     }
@@ -93,8 +94,7 @@ public class DefaultBranchConfigInitializer implements Runnable {
   }
 
   @NotNull
-  private static SvnBranchConfigurationNew getDefaultConfiguration(@NotNull SvnVcs vcs, @NotNull SVNURL url)
-    throws SVNException, VcsException {
+  private static SvnBranchConfigurationNew getDefaultConfiguration(@NotNull SvnVcs vcs, @NotNull SVNURL url) throws VcsException {
     SvnBranchConfigurationNew result = new SvnBranchConfigurationNew();
     result.setTrunkUrl(url.toString());
 
@@ -109,12 +109,12 @@ public class DefaultBranchConfigInitializer implements Runnable {
   }
 
   @Nullable
-  private static SVNURL getBranchLocationsParent(@NotNull SVNURL url) throws SVNException {
+  private static SVNURL getBranchLocationsParent(@NotNull SVNURL url) throws SvnBindException {
     while (!hasEmptyName(url) && !hasDefaultName(url)) {
-      url = url.removePathTail();
+      url = removePathTail(url);
     }
 
-    return hasDefaultName(url) ? url.removePathTail() : null;
+    return hasDefaultName(url) ? removePathTail(url) : null;
   }
 
   private static boolean hasEmptyName(@NotNull SVNURL url) {

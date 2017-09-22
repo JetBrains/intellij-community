@@ -39,7 +39,6 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.update.AutoSvnUpdater;
 import org.jetbrains.idea.svn.update.SingleRootSwitcher;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -49,6 +48,7 @@ import java.io.File;
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
+import static org.jetbrains.idea.svn.SvnUtil.removePathTail;
 
 public class CreateBranchOrTagAction extends BasicAction {
   @NotNull
@@ -74,13 +74,7 @@ public class CreateBranchOrTagAction extends BasicAction {
       File srcFile = new File(dialog.getCopyFromPath());
       SVNURL srcUrl = createUrl(dialog.getCopyFromUrl());
       SVNURL dstSvnUrl = createUrl(dstURL);
-      SVNURL parentUrl;
-      try {
-        parentUrl = dstSvnUrl.removePathTail();
-      }
-      catch (SVNException e) {
-        throw new SvnBindException(e);
-      }
+      SVNURL parentUrl = removePathTail(dstSvnUrl);
 
       if (!dirExists(vcs, parentUrl)) {
         int rc =

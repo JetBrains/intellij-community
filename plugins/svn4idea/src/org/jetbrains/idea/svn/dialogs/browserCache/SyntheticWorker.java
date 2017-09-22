@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -29,6 +30,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import static java.util.Collections.sort;
+import static org.jetbrains.idea.svn.SvnUtil.removePathTail;
 
 public class SyntheticWorker {
   private final SvnRepositoryCache myCache;
@@ -42,9 +44,9 @@ public class SyntheticWorker {
   public void removeSelf() {
     final String parentUrl;
     try {
-      parentUrl = myUrl.removePathTail().toString();
+      parentUrl = removePathTail(myUrl).toString();
     }
-    catch (SVNException e) {
+    catch (SvnBindException e) {
       return;
     }
 
@@ -76,10 +78,9 @@ public class SyntheticWorker {
 
   public void copyTreeToSelf(final RepositoryTreeNode node) {
     try {
-      node.doOnSubtree(new Adder(node.getURL().removePathTail().toString().length(), myUrl));
+      node.doOnSubtree(new Adder(removePathTail(node.getURL()).toString().length(), myUrl));
     }
-    catch (SVNException e) {
-      //
+    catch (SvnBindException ignored) {
     }
   }
 

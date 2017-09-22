@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,9 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.auth.AuthenticationService;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+
+import static org.jetbrains.idea.svn.SvnUtil.removePathTail;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -112,9 +113,9 @@ public class CertificateCallbackCase extends AuthCallbackCase {
 
     while (result != null && !StringUtil.isEmpty(result.getPath())) {
       try {
-        result = result.removePathTail();
+        result = removePathTail(result);
       }
-      catch (SVNException e) {
+      catch (SvnBindException e) {
         result = null;
       }
     }
