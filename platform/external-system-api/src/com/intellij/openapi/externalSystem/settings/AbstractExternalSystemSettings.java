@@ -175,7 +175,8 @@ public abstract class AbstractExternalSystemSettings<
           }
           getPublisher().onUseAutoImportChange(current.isUseAutoImport(), current.getExternalProjectPath());
         }
-        if (old.isCreateEmptyContentRootDirectories() != current.isCreateEmptyContentRootDirectories()) {
+        if (old.isCreateEmptyContentRootDirectories() != current.isCreateEmptyContentRootDirectories() ||
+            old.isUseQualifiedModuleNames() != current.isUseQualifiedModuleNames()) {
           ExternalProjectsManager.getInstance(getProject()).getExternalProjectsWatcher().markDirty(current.getExternalProjectPath());
         }
         checkSettings(old, current);

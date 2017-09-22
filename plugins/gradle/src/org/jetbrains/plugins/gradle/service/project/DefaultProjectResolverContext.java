@@ -130,6 +130,11 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     return mySettings == null || mySettings.isResolveModulePerSourceSet();
   }
 
+  @Override
+  public boolean isUseQualifiedModuleNames() {
+    return mySettings != null && mySettings.isUseQualifiedModuleNames();
+  }
+
   public File getGradleUserHome() {
     if (myGradleUserHome == null) {
       String serviceDirectory = mySettings == null ? null : mySettings.getServiceDirectory();

@@ -45,6 +45,7 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
 
   private boolean myUseAutoImport;
   private boolean myCreateEmptyContentRootDirectories;
+  private boolean myUseQualifiedModuleNames;
 
   public String getExternalProjectPath() {
     return myExternalProjectPath;
@@ -68,6 +69,14 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
 
   public void setCreateEmptyContentRootDirectories(boolean createEmptyContentRootDirectories) {
     myCreateEmptyContentRootDirectories = createEmptyContentRootDirectories;
+  }
+
+  public boolean isUseQualifiedModuleNames() {
+    return myUseQualifiedModuleNames;
+  }
+
+  public void setUseQualifiedModuleNames(boolean useQualifiedModuleNames) {
+    myUseQualifiedModuleNames = useQualifiedModuleNames;
   }
 
   @Override
