@@ -15,20 +15,39 @@
     ]]>
   </change-notes>
 
+  <depends>com.intellij.java-i18n</depends>
   <idea-version until-build="130.0" since-build="125.5"/>
 
-  <extensions defaultExtensionNs="com.intellij">
+  <extensions defaultExtensionNs="plugin.id">
     <toolWindow id="someToolWindow" factoryClass="com.jetbrains.test.SomeToolWindowFactory"/>
     <projectConfigurable id="someConfigurable" instance="com.jetbrains.test.SomeConfigurable"/>
     <fileEditorProvider implementation="com.jetbrains.test.SomeFileEditorProvider"/>
-    <applicationService serviceImplementation="com.jetbrains.test.SomeApplicationService"/>
-    <applicationService serviceInterface="com.jetbrains.test.SomeApplicationServiceInterface"
-                        serviceImplementation="com.jetbrains.test.SomeApplicationServiceImplementation"/>
+    <mockApplicationService serviceImplementation="com.jetbrains.test.SomeApplicationService"/>
     <dom.extender id="DomExtenderId" domClass="com.jetbrains.test.SomeDomClass" extenderClass="com.jetbrains.test.SomeExtenderClass"/>
   </extensions>
 
   <extensionPoints>
     <extensionPoint interface="com.jetbrains.test.MyExtensionPointClass" name="someExtensionPoint"/>
+
+    <extensionPoint name="toolWindow" beanClass="com.intellij.openapi.wm.ToolWindowEP">
+      <with attribute="factoryClass" implements="com.intellij.openapi.wm.ToolWindowFactory"/>
+      <with attribute="conditionClass" implements="com.intellij.openapi.util.Condition"/>
+    </extensionPoint>
+    <extensionPoint name="projectConfigurable"
+                    beanClass="com.intellij.openapi.options.ConfigurableEP"
+                    area="IDEA_PROJECT">
+      <with attribute="instanceClass" implements="com.intellij.openapi.options.Configurable"/>
+    </extensionPoint>
+    <extensionPoint name="fileEditorProvider"
+                    interface="com.intellij.openapi.fileEditor.FileEditorProvider"/>
+    <extensionPoint name="mockApplicationService"  beanClass="a.b.MockServiceDescriptor">
+      <with attribute="serviceImplementation" />
+    </extensionPoint>
+    <extensionPoint name="dom.extender"
+                    beanClass="com.intellij.util.xml.reflect.DomExtenderEP">
+      <with attribute="domClassName" implements="com.intellij.util.xml.DomElement"/>
+      <with attribute="extenderClass" implements="com.intellij.util.xml.reflect.DomExtender"/>
+    </extensionPoint>
   </extensionPoints>
 
   <application-components>

@@ -16,20 +16,30 @@
 package org.jetbrains.idea.devkit.navigation.structure;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.reflect.DomAttributeChildDescription;
+import com.intellij.util.xml.reflect.DomFixedChildDescription;
+import com.intellij.util.xml.reflect.DomGenericInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.dom.Action;
+import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender;
 
 import javax.swing.*;
+import java.util.List;
 
 public class PluginDescriptorStructureUtil {
-  private static final int LOCATION_MAX_LENGTH = 50;
+  private static final int LOCATION_MAX_LENGTH = 40;
 
   private PluginDescriptorStructureUtil() {
   }
@@ -37,142 +47,257 @@ public class PluginDescriptorStructureUtil {
 
   @NotNull
   public static String getTagDisplayText(@Nullable XmlTag tag) {
-    if (tag == null) {
+    DomElement element = getDomElement(tag);
+    if (element == null) {
       return DevKitBundle.message("error.plugin.xml.tag.invalid");
     }
 
-    @NonNls String tagName = tag.getLocalName();
-    if (tagName.equalsIgnoreCase("id")) {
-      return "ID";
-    }
-
-    if (tagName.equalsIgnoreCase("action")) {
-      String actionId = tag.getAttributeValue("id");
-      if (actionId != null) {
+    if (element instanceof Action) {
+      String actionId = ((Action)element).getId().getStringValue();
+      if (StringUtil.isNotEmpty(actionId)) {
         return actionId;
       }
     }
-    else if (tagName.equalsIgnoreCase("extensionPoint")) {
-      String displayText = tag.getAttributeValue("name");
-      if (displayText != null) {
-        return displayText;
+    else if (element instanceof ExtensionPoint) {
+      ExtensionPoint epElement = (ExtensionPoint)element;
+      String epName = epElement.getName().getStringValue();
+      if (StringUtil.isNotEmpty(epName)) {
+        return epName;
       }
-      displayText = toShortName(firstNotNullAttribute(tag, "interface", "beanClass"));
-      if (displayText != null) {
-        return displayText;
+      String epInterface = epElement.getInterface().getStringValue();
+      if (StringUtil.isNotEmpty(epInterface)) {
+        //noinspection ConstantConditions
+        return toShortName(epInterface);
+      }
+      String epBeanClass = epElement.getBeanClass().getStringValue();
+      if (StringUtil.isNotEmpty(epBeanClass)) {
+        //noinspection ConstantConditions
+        return toShortName(epBeanClass);
       }
     }
 
-    return toHumanReadableName(tagName); // default
-  }
-
-  @Nullable
-  public static String getTagLocationString(@Nullable XmlTag tag) {
-    if (tag == null) {
-      return null;
-    }
-
-    String tagName = tag.getLocalName();
-    String result = null;
-    if (tagName.equalsIgnoreCase("id") || tagName.equalsIgnoreCase("name") || tagName.equalsIgnoreCase("version") ||
-        tagName.equalsIgnoreCase("category") || tagName.equalsIgnoreCase("vendor") || tagName.equalsIgnoreCase("depends") ||
-        tagName.equalsIgnoreCase("resource-bundle")) {
-      result = tag.getValue().getText();
-    }
-    else if (tagName.equalsIgnoreCase("idea-version")) {
-      String sinceBuild = tag.getAttributeValue("since-build");
-      if (sinceBuild != null) {
-        String untilBuild = tag.getAttributeValue("until-build");
-        result = sinceBuild + "-" + (untilBuild != null ? untilBuild : "...");
-      }
-    }
-    else if (tagName.equalsIgnoreCase("extensions")) {
-      result = tag.getAttributeValue("defaultExtensionNs");
-    }
-    else if (tagName.equalsIgnoreCase("component")) {
-      result = toShortName(tag.getSubTagText("implementation-class"));
-    }
-    else if (tagName.equalsIgnoreCase("group")) {
-      result = tag.getAttributeValue("id");
-    }
-    else if (tagName.equalsIgnoreCase("add-to-group")) {
-      result = tag.getAttributeValue("group-id");
-    }
-    else if (tagName.equalsIgnoreCase("applicationService") || tagName.equalsIgnoreCase("projectService") ||
-             tagName.equalsIgnoreCase("moduleService")) {
-      result = tag.getAttributeValue("id");
-      if (result == null) {
-        result = toShortName(firstNotNullAttribute(tag, "serviceInterface", "serviceImplementation"));
-      }
-    }
-    else if (tagName.equalsIgnoreCase("intentionAction")) {
-      result = toShortName(tag.getSubTagText("className"));
-    }
-    else if (tagName.equalsIgnoreCase("keyboard-shortcut")) {
-      result = tag.getAttributeValue("first-keystroke");
-    }
-    else if (tagName.equalsIgnoreCase("dom.extender")) {
-      result = tag.getAttributeValue("id");
-      if (result == null) {
-        result = toShortName(tag.getAttributeValue("extenderClass"));
-      }
-    }
-    else {
-      result = guessTagLocation(tag);
-    }
-
-    return shorten(result);
+    return toHumanReadableName(element.getXmlElementName()); // default
   }
 
   @Nullable
   public static Icon getTagIcon(@Nullable XmlTag tag) {
-    if (tag == null) {
+    DomElement element = getDomElement(tag);
+    if (element == null) {
       return null;
     }
 
-    String tagName = tag.getLocalName();
-    if (tagName.equalsIgnoreCase("action")) {
-      String iconPath = tag.getAttributeValue("icon");
-      if (iconPath != null) {
-        Icon icon = IconLoader.findIcon(iconPath, false);
-        if (icon != null) {
-          return icon;
+    if (element instanceof Action) {
+      XmlAttributeValue iconAttrValue = ((Action)element).getIcon().getXmlAttributeValue();
+      if (iconAttrValue != null) {
+        //TODO do it via reference resolving
+        String iconPath = iconAttrValue.getValue();
+        if (iconPath != null) {
+          Icon icon = IconLoader.findIcon(iconPath, false);
+          if (icon != null) {
+            return icon;
+          }
         }
       }
     }
-    if (tagName.equalsIgnoreCase("group")) {
+    else if (element instanceof Group) {
       return AllIcons.Actions.GroupByPackage;
     }
 
     return AllIcons.Nodes.Tag;
   }
 
+  @Nullable
+  public static String getTagLocationString(@Nullable XmlTag tag) {
+    DomElement element = getDomElement(tag);
+    if (element == null) {
+      return null;
+    }
+
+    String result;
+    if (element instanceof IdeaVersion) {
+      result = getIdeaVersionLocation((IdeaVersion)element);
+    }
+    else if (element instanceof Extensions) {
+      result = getExtensionsLocation((Extensions)element);
+    }
+    else if (element instanceof ExtensionPoint) {
+      result = getExtensionPointLocation((ExtensionPoint)element);
+    }
+    else if (element instanceof Component) {
+      result = getComponentLocation((Component)element);
+    }
+    else if (element instanceof Group) {
+      result = getGroupLocation((Group)element);
+    }
+    else if (element instanceof AddToGroup) {
+      result = getAddToGroupLocation((AddToGroup)element);
+    }
+    else if (element instanceof Extension) {
+      result = getExtensionLocation(element);
+    }
+    else if (element.getParent() instanceof Action && "keyboard-shortcut".equalsIgnoreCase(element.getXmlElementName())) {
+      result = getKeyboardShortcutLocation(element);
+    }
+    else if (element instanceof Vendor) {
+      result = getVendorLocation((Vendor)element);
+    }
+    else if (element.getParent() instanceof IdeaPlugin && element instanceof GenericDomValue) {
+      result = getTopLevelNodeLocation(element);
+    }
+    else {
+      result = guessTagLocation(element);
+    }
+
+    return shorten(result);
+  }
+
 
   @Nullable
-  private static String firstNotNullAttribute(@NotNull XmlTag tag, @NotNull String... attributes) {
-    for (String attribute : attributes) {
-      String value = tag.getAttributeValue(attribute);
-      if (value != null) {
-        return value;
-      }
+  private static String getIdeaVersionLocation(IdeaVersion element) {
+    String since = element.getSinceBuild().getStringValue();
+    if (StringUtil.isNotEmpty(since)) {
+      String until = element.getUntilBuild().getStringValue();
+      return since + "-" + (StringUtil.isNotEmpty(until) ? until : "...");
     }
     return null;
   }
 
   @Nullable
-  private static String shorten(@Nullable String text) {
-    if (text == null) {
-      return null;
-    }
-    if (text.length() <= LOCATION_MAX_LENGTH) {
-      return text;
-    }
-    return StringUtil.trimMiddle(text, LOCATION_MAX_LENGTH);
+  private static String getExtensionsLocation(Extensions element) {
+    return element.getDefaultExtensionNs().getStringValue();
   }
 
   @Nullable
+  private static String getExtensionPointLocation(ExtensionPoint element) {
+    String result = null;
+    String epName = element.getName().getStringValue();
+    if (StringUtil.isNotEmpty(epName)) {
+      String epInterface = element.getInterface().getStringValue();
+      if (StringUtil.isNotEmpty(epInterface)) {
+        result = toShortName(epInterface);
+      }
+      String epBeanClass = element.getBeanClass().getStringValue();
+      if (StringUtil.isNotEmpty(epBeanClass)) {
+        result = toShortName(epBeanClass);
+      }
+    }
+    return result;
+  }
+
+  @Nullable
+  private static String getComponentLocation(Component element) {
+    String implementationClassText = element.getImplementationClass().getRawText();
+    return toShortName(implementationClassText);
+  }
+
+  @Nullable
+  private static String getGroupLocation(Group element) {
+    return element.getId().getStringValue();
+  }
+
+  @Nullable
+  private static String getAddToGroupLocation(AddToGroup element) {
+    return element.getGroupId().getStringValue();
+  }
+
+  @Nullable
+  private static String getExtensionLocation(DomElement element) {
+    String elementName = element.getXmlElementName();
+    if (elementName.equalsIgnoreCase("application-service") || elementName.equalsIgnoreCase("project-service") ||
+        elementName.equalsIgnoreCase("module-service")) {
+      String result = ((Extension)element).getId().getStringValue();
+      if (StringUtil.isEmpty(result)) {
+        result = toShortName(firstNotNullAttribute(element, "serviceInterface", "serviceImplementation"));
+      }
+      return result;
+    }
+    else if (elementName.equalsIgnoreCase("intentionAction")) {
+      return toShortName(getSubTagText(element, "className"));
+    }
+    else if (elementName.equalsIgnoreCase("dom.extender")) {
+      String result = ((Extension)element).getId().getStringValue();
+      if (StringUtil.isEmpty(result)) {
+        result = toShortName(firstNotNullAttribute(element, "extenderClass"));
+      }
+      return result;
+    }
+    else if (elementName.equalsIgnoreCase("stacktrace.fold")) {
+      return firstNotNullAttribute(element, "substring");
+    }
+    else {
+      return guessTagLocation(element);
+    }
+  }
+
+  @Nullable
+  private static String getKeyboardShortcutLocation(DomElement element) {
+    return firstNotNullAttribute(element, "first-keystroke");
+  }
+
+  @NotNull
+  private static String getVendorLocation(Vendor element) {
+    return element.getValue();
+  }
+
+  @Nullable
+  private static String getTopLevelNodeLocation(DomElement element) {
+    String tagName = element.getXmlElementName();
+    if (tagName.equalsIgnoreCase("id") || tagName.equalsIgnoreCase("name") || tagName.equalsIgnoreCase("version") ||
+        tagName.equalsIgnoreCase("category") || tagName.equalsIgnoreCase("depends") ||
+        tagName.equalsIgnoreCase("resource-bundle")) {
+      return ((GenericDomValue)element).getRawText();
+    }
+    return null;
+  }
+
+  @Nullable
+  private static String guessTagLocation(DomElement element) {
+    String location = null;
+
+    // avoid displaying location equal to display text for actions and EPs
+    if (!(element instanceof ExtensionPoint) && !(element instanceof Action)) {
+      location = firstNotNullAttribute(element, "id", "name", "displayName", "shortName");
+    }
+    if (location == null) {
+      location = toShortName(firstNotNullAttribute(
+        element, "instance", "class", "implementation", "implementationClass", "interface", "interfaceClass"));
+    }
+    if (location == null) {
+      location = firstNotNullAttribute(element, "file");
+    }
+
+    if (location != null) {
+      return location;
+    }
+
+    List<? extends DomAttributeChildDescription> descriptions = element.getGenericInfo().getAttributeChildrenDescriptions();
+    String possibleOnlyValue = null;
+    for (DomAttributeChildDescription description : descriptions) {
+      String value = description.getDomAttributeValue(element).getStringValue();
+      if (StringUtil.isEmpty(value)) {
+        continue;
+      }
+      if (possibleOnlyValue == null) {
+        possibleOnlyValue = value;
+      }
+      else {
+        // more than one attribute
+        possibleOnlyValue = null;
+        break;
+      }
+    }
+
+    if (possibleOnlyValue != null && StringUtil.countChars(possibleOnlyValue, '.') > 2) {
+      possibleOnlyValue = toShortName(possibleOnlyValue);
+    }
+
+    return possibleOnlyValue;
+  }
+
+
+  @Nullable
   private static String toShortName(@Nullable String fqName) {
-    if (fqName == null) {
+    if (fqName == null || fqName.contains(" ")) {
       return null;
     }
     String shortName = StringUtil.substringAfterLast(fqName, ".");
@@ -192,40 +317,65 @@ public class PluginDescriptorStructureUtil {
       .replaceAll("Dom", "DOM")
       .replaceAll("Sdk", "SDK")
       .replaceAll("Junit", "JUnit")
-      .replaceAll("Idea", "IDEA");
+      .replaceAll("Idea", "IDEA")
+      .replaceAll("Javaee", "JavaEE")
+      .replaceAll("Jsf", "JSF")
+      .replaceAll("Mvc", "MVC")
+      .replaceAll("El", "EL")
+      .replaceAll("Id", "ID");
 
     return result;
   }
 
   @Nullable
-  private static String guessTagLocation(XmlTag tag) {
-    String tagName = tag.getLocalName();
-    String location = null;
-
-    // avoid displaying location equal to display text for actions and EPs
-    if (!tagName.equalsIgnoreCase("extensionPoint") && !tagName.equalsIgnoreCase("action")) {
-      location = firstNotNullAttribute(tag, "id", "name", "displayName", "shortName");
+  private static String shorten(@Nullable String text) {
+    if (text == null) {
+      return null;
     }
-
-    if (location == null) {
-      location = toShortName(firstNotNullAttribute(
-        tag, "instance", "class", "implementation", "implementationClass", "interface", "interfaceClass"));
+    if (text.length() <= LOCATION_MAX_LENGTH) {
+      return text;
     }
-    if (location != null) {
-      return location;
-    }
+    return StringUtil.trimMiddle(text, LOCATION_MAX_LENGTH);
+  }
 
-    XmlAttribute[] attributes = tag.getAttributes();
-    if (attributes.length == 1) {
-      String onlyValue = attributes[0].getValue();
-      if (onlyValue != null) {
-        if (StringUtil.countChars(onlyValue, '.') > 2) {
-          return toShortName(onlyValue);
-        }
-        return onlyValue;
+  @Nullable
+  private static String firstNotNullAttribute(DomElement element, String... attributes) {
+    DomGenericInfo genericInfo = element.getGenericInfo();
+    for (String attribute : attributes) {
+      DomAttributeChildDescription description = genericInfo.getAttributeChildDescription(attribute);
+      if (description == null) {
+        continue;
+      }
+
+      String value = description.getDomAttributeValue(element).getStringValue();
+      if (StringUtil.isNotEmpty(value)) {
+        return value;
       }
     }
 
     return null;
+  }
+
+  @Nullable
+  private static String getSubTagText(DomElement element, @SuppressWarnings("SameParameterValue") String subTagName) {
+    DomFixedChildDescription subTagDescription = element.getGenericInfo().getFixedChildDescription(subTagName);
+    if (subTagDescription == null) {
+      return null;
+    }
+    return subTagDescription.getValues(element).stream()
+      .filter(e -> e instanceof ExtensionDomExtender.SimpleTagValue)
+      .map(e -> (ExtensionDomExtender.SimpleTagValue)e)
+      .map(ExtensionDomExtender.SimpleTagValue::getTagValue)
+      .findAny()
+      .orElse(null);
+  }
+
+  @Nullable
+  private static DomElement getDomElement(@Nullable XmlTag tag) {
+    if (tag == null) {
+      return null;
+    }
+    Project project = tag.getProject();
+    return DomManager.getDomManager(project).getDomElement(tag);
   }
 }

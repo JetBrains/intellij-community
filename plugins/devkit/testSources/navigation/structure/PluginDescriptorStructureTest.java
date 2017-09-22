@@ -21,68 +21,103 @@ import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.util.PathUtil;
+import com.intellij.util.xmlb.annotations.Attribute;
 
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertArrayEquals;
 
 @TestDataPath("$CONTENT_ROOT/testData/navigation/structure")
-public class PluginDescriptorStructureTest extends CodeInsightFixtureTestCase {
+public class PluginDescriptorStructureTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/navigation/structure";
   }
 
+  @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
+    String jarPath = PathUtil.getJarPathForClass(Attribute.class);
+    moduleBuilder.addLibrary("util", jarPath);
+  }
+
+
   public void testPluginDescriptorStructure() {
+    myFixture.addFileToProject("a/b/MockServiceDescriptor.java",
+                               "package a.b;" +
+                               "" +
+                               "import com.intellij.util.xmlb.annotations.Attribute; " +
+                               "" +
+                               "public class MockServiceDescriptor { " +
+                               "  @Attribute(\"serviceImplementation\")" +
+                               "  public String serviceImplementation; " +
+                               "}");
+
     VirtualFile file = myFixture.copyFileToProject("plugin.xml");
     myFixture.openFileInEditor(file);
+
     myFixture.testStructureView(component -> {
       StructureViewTreeElementWrapper root = (StructureViewTreeElementWrapper)component.getTreeStructure().getRootElement();
       TreeElement[] topLevelNodes = root.getValue().getChildren();
-      assertSize(11, topLevelNodes);
+      assertSize(12, topLevelNodes);
 
-      String[] expectedTopLevelNames = new String[] {"ID", "Name", "Version", "Vendor", "Description", "Change Notes", "IDEA Version",
-        "Extensions", "Extension Points", "Application Components", "Actions"};
+      String[] expectedTopLevelNames = new String[] {"ID", "Name", "Version", "Vendor", "Description", "Change Notes", "Depends",
+        "IDEA Version", "Extensions", "Extension Points", "Application Components", "Actions"};
       String[] actualTopLevelNames = Stream.of(topLevelNodes)
         .map(treeElement -> treeElement.getPresentation().getPresentableText())
         .toArray(String[]::new);
       assertArrayEquals(expectedTopLevelNames, actualTopLevelNames);
 
-      String[] expectedTopLevelLocations = new String[] {
-        "plugin.id", "MyPlugin", "1.0", "YourCompany", null, null, "125.5-130.0", "com.intellij", null, null, null};
+      String[] expectedTopLevelLocations = new String[] {"plugin.id", "MyPlugin", "1.0", "YourCompany", null, null,
+        "com.intellij.java-i18n", "125.5-130.0", "plugin.id", null, null, null};
       String[] actualTopLevelLocations = Stream.of(topLevelNodes)
         .map(treeElement -> treeElement.getPresentation().getLocationString())
         .toArray(String[]::new);
       assertArrayEquals(expectedTopLevelLocations, actualTopLevelLocations);
 
-      TreeElement[] extensionNodes = topLevelNodes[7].getChildren();
-      assertSize(6, extensionNodes);
+      TreeElement[] extensionNodes = topLevelNodes[8].getChildren();
+      assertSize(5, extensionNodes);
       String[] expectedExtensionNames = new String[] {"Tool Window", "Project Configurable", "File Editor Provider",
-        "Application Service", "Application Service", "DOM | Extender"};
+        "Mock Application Service", "DOM | Extender"};
       String[] actualExtensionNames = Stream.of(extensionNodes)
         .map(treeElement -> treeElement.getPresentation().getPresentableText())
         .toArray(String[]::new);
       assertArrayEquals(expectedExtensionNames, actualExtensionNames);
 
       String[] expectedExtensionLocations = new String[] {"someToolWindow", "someConfigurable", "SomeFileEditorProvider",
-        "SomeApplicationService", "SomeApplicationServiceInterface", "DomExtenderId"};
+        "SomeApplicationService", "DomExtenderId"};
       String[] actualExtensionLocations = Stream.of(extensionNodes)
         .map(treeElement -> treeElement.getPresentation().getLocationString())
         .toArray(String[]::new);
       assertArrayEquals(expectedExtensionLocations, actualExtensionLocations);
 
-      TreeElement[] epNodes = topLevelNodes[8].getChildren();
-      assertSize(1, epNodes);
-      assertEquals("someExtensionPoint", epNodes[0].getPresentation().getPresentableText());
-      assertEquals("MyExtensionPointClass", epNodes[0].getPresentation().getLocationString());
+      TreeElement[] epNodes = topLevelNodes[9].getChildren();
+      assertSize(6, epNodes);
 
-      TreeElement[] applicationComponentNodes = topLevelNodes[9].getChildren();
+
+
+      String[] expectedEpNames = new String[] {"someExtensionPoint", "toolWindow", "projectConfigurable", "fileEditorProvider",
+        "mockApplicationService", "dom.extender"};
+      String[] actualEpNames = Stream.of(epNodes)
+        .map(treeElement -> treeElement.getPresentation().getPresentableText())
+        .toArray(String[]::new);
+      assertArrayEquals(expectedEpNames, actualEpNames);
+
+      String[] expectedEpLocations = new String[] {"MyExtensionPointClass", "ToolWindowEP", "ConfigurableEP",
+        "FileEditorProvider", "MockServiceDescriptor", "DomExtenderEP"};
+      String[] actualEpLocations = Stream.of(epNodes)
+        .map(treeElement -> treeElement.getPresentation().getLocationString())
+        .toArray(String[]::new);
+      assertArrayEquals(expectedEpLocations, actualEpLocations);
+
+      TreeElement[] applicationComponentNodes = topLevelNodes[10].getChildren();
       assertSize(1, applicationComponentNodes);
       assertEquals("Component", applicationComponentNodes[0].getPresentation().getPresentableText());
       assertEquals("SomeApplicationComponent", applicationComponentNodes[0].getPresentation().getLocationString());
 
-      TreeElement[] actionNodes = topLevelNodes[10].getChildren();
+      TreeElement[] actionNodes = topLevelNodes[11].getChildren();
       assertSize(2, actionNodes);
       TreeElement groupNode = actionNodes[0];
       assertEquals("Group", groupNode.getPresentation().getPresentableText());
