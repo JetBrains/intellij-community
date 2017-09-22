@@ -26,9 +26,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.FixingLayoutMatcher;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -70,7 +68,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       pattern = pattern.substring(1);
     }
 
-    String sanitized = removeSlashes(StringUtil.replace(base.transformPattern(pattern), "\\", "/"));
+    String sanitized = getSanitizedPattern(pattern, myModel);
     NameGrouper grouper = new NameGrouper(sanitized.substring(sanitized.lastIndexOf('/') + 1));
     myModel.processNames(name -> grouper.processName(name), true);
     while (true) {
@@ -80,6 +78,16 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
         return false;
       }
     }
+  }
+
+  @NotNull
+  public static String getSanitizedPattern(@NotNull String pattern, GotoFileModel model) {
+    return removeSlashes(StringUtil.replace(ChooseByNamePopup.getTransformedPattern(pattern, model), "\\", "/"));
+  }
+
+  @NotNull
+  public static MinusculeMatcher getQualifiedNameMatcher(@NotNull String pattern) {
+    return NameUtil.buildMatcher("*" + StringUtil.replace(StringUtil.replace(pattern, "\\", "*\\*"), "/", "*/*"), NameUtil.MatchingCaseSensitivity.NONE);
   }
 
   @NotNull
@@ -135,9 +143,11 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
 
     if (group.size() > 1) {
       Collections.sort(group,
-                       Comparator.<PsiFileSystemItem, Integer>comparing(nesting::get).
-                         thenComparing(dirCloseness::get).
+                       Comparator.<PsiFileSystemItem, Boolean>comparing(f -> f instanceof PsiDirectory).
                          thenComparing(qualifierMatchingDegrees::get).
+                         thenComparing(i -> i.getName().toLowerCase()).
+                         thenComparing(nesting::get).
+                         thenComparing(dirCloseness::get).
                          thenComparing(getPathProximityComparator()).
                          thenComparing(myModel::getFullName));
     }
@@ -238,7 +248,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }
 
     boolean processFiles(@NotNull String pattern, String sanitizedPattern, boolean everywhere, Processor<? super PsiFileSystemItem> processor) {
-      MinusculeMatcher fullMatcher = NameUtil.buildMatcher("*" + StringUtil.replace(sanitizedPattern, "/", "*/*"), NameUtil.MatchingCaseSensitivity.NONE);
+      MinusculeMatcher fullMatcher = getQualifiedNameMatcher(sanitizedPattern);
 
       boolean empty = true;
       List<List<String>> groups = groupByMatchingDegree(!pattern.startsWith("*"));
@@ -272,8 +282,9 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       List<List<String>> groups = new ArrayList<>();
 
       Comparator<MatchResult> comparator = (mr1, mr2) -> {
-        boolean exactPrefix1 = patternSuffix.equalsIgnoreCase(mr1.elementName);
-        boolean exactPrefix2 = patternSuffix.equalsIgnoreCase(mr2.elementName);
+        boolean exactPrefix1 = StringUtil.startsWithIgnoreCase(mr1.elementName, patternSuffix);
+        boolean exactPrefix2 = StringUtil.startsWithIgnoreCase(mr2.elementName, patternSuffix);
+        if (exactPrefix1 && exactPrefix2) return 0;
         if (exactPrefix1 != exactPrefix2) return exactPrefix1 ? -1 : 1;
         return mr1.compareDegrees(mr2, preferStartMatches);
       };

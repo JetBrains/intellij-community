@@ -134,7 +134,7 @@ public class LatestExistentSearcher {
   private boolean detectStartRevision() {
     if (! myStartExistsKnown) {
       final SvnFileUrlMapping mapping = myVcs.getSvnFileUrlMapping();
-      final RootUrlInfo rootUrlInfo = mapping.getWcRootForUrl(myUrl.toString());
+      final RootUrlInfo rootUrlInfo = mapping.getWcRootForUrl(myUrl);
       if (rootUrlInfo == null) return true;
       final VirtualFile vf = rootUrlInfo.getVirtualFile();
       final Info info = myVcs.getInfo(vf);

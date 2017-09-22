@@ -30,11 +30,11 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
@@ -90,13 +90,8 @@ public abstract class MavenTestCase extends UsefulTestCase {
       getMavenGeneralSettings().setMavenHome(home);
     }
 
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-      try {
-        restoreSettingsFile();
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+    EdtTestUtil.runInEdtAndWait(() -> {
+      restoreSettingsFile();
 
       ApplicationManager.getApplication().runWriteAction(() -> {
         try {
@@ -122,14 +117,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
       MavenServerManager.getInstance().shutdown(true);
       MavenArtifactDownloader.awaitQuiescence(100, TimeUnit.SECONDS);
       myProject = null;
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-        try {
-          tearDownFixtures();
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      });
+      EdtTestUtil.runInEdtAndWait(() -> tearDownFixtures());
 
       MavenIndicesManager.getInstance().clear();
     }

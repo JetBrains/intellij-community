@@ -23,17 +23,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.TabbedContent;
+import com.intellij.ui.content.*;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +43,10 @@ import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.beans.PropertyChangeEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.util.ContentUtilEx.getFullName;
@@ -51,11 +54,13 @@ import static com.intellij.util.ContentUtilEx.getFullName;
 /**
  * @author Vladislav.Soroka
  */
-public class BuildContentManagerImpl implements BuildContentManager {
+public class BuildContentManagerImpl implements BuildContentManager, ContentManagerListener {
 
   public static final String Build = "Build";
   public static final String Sync = "Sync";
-  private static final String[] ourPresetOrder = {Build, Sync};
+  public static final String Run = "Run";
+  public static final String Debug = "Debug";
+  private static final String[] ourPresetOrder = {Build, Sync, Run, Debug};
   private Project myProject;
   private ToolWindow myToolWindow;
   private final List<Runnable> myPostponedRunnables = new ArrayList<>();
@@ -77,6 +82,7 @@ public class BuildContentManagerImpl implements BuildContentManager {
       toolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
       toolWindow.setIcon(AllIcons.Actions.Compile);
       myToolWindow = toolWindow;
+      myToolWindow.getContentManager().addContentManagerListener(this);
       for (Runnable postponedRunnable : myPostponedRunnables) {
         postponedRunnable.run();
       }
@@ -111,25 +117,34 @@ public class BuildContentManagerImpl implements BuildContentManager {
   @Override
   public void addContent(Content content) {
     runWhenInitialized(() -> {
+      if (!myToolWindow.isAvailable()) {
+        myToolWindow.setAvailable(true, null);
+      }
       ContentManager contentManager = myToolWindow.getContentManager();
       final String name = content.getTabName();
+      final String category = StringUtil.trimEnd(StringUtil.split(name, " ").get(0), ':');
       int idx = -1;
       for (int i = 0; i < ourPresetOrder.length; i++) {
         final String s = ourPresetOrder[i];
-        if (s.equals(name)) {
+        if (s.equals(category)) {
           idx = i;
+          break;
         }
       }
       final Content[] existingContents = contentManager.getContents();
       if (idx != -1) {
-        final Set<String> existingTabNames = new HashSet<>();
+        final MultiMap<String, String> existingCategoriesNames = MultiMap.createSmart();
         for (Content existingContent : existingContents) {
-          existingTabNames.add(existingContent.getTabName());
+          String tabName = existingContent.getTabName();
+          existingCategoriesNames.putValue(StringUtil.trimEnd(StringUtil.split(tabName, " ").get(0), ':'), tabName);
         }
-        int place = idx;
+
+        int place = 0;
         for (int i = 0; i < idx; i++) {
-          if (!existingTabNames.contains(ourPresetOrder[i])) {
-            --place;
+          String key = ourPresetOrder[i];
+          Collection<String> tabNames = existingCategoriesNames.get(key);
+          if (!key.equals(category)) {
+            place += tabNames.size();
           }
         }
         contentManager.addContent(content, place);
@@ -256,5 +271,28 @@ public class BuildContentManagerImpl implements BuildContentManager {
       ((ToolWindowImpl)myToolWindow).getContentUI()
         .propertyChange(new PropertyChangeEvent(this, ToolWindowContentUi.HIDE_ID_LABEL, oldValue, newValue));
     }
+  }
+
+  @Override
+  public void contentAdded(ContentManagerEvent event) {
+
+  }
+
+  @Override
+  public void contentRemoved(ContentManagerEvent event) {
+    ContentManager contentManager = myToolWindow.getContentManager();
+    if (contentManager.getContentCount() == 0) {
+      myToolWindow.setAvailable(false, null);
+    }
+  }
+
+  @Override
+  public void contentRemoveQuery(ContentManagerEvent event) {
+
+  }
+
+  @Override
+  public void selectionChanged(ContentManagerEvent event) {
+
   }
 }

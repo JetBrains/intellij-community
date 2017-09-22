@@ -259,6 +259,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   private AsyncResult<EditorsSplitters> getActiveSplittersAsync() {
     final AsyncResult<EditorsSplitters> result = new AsyncResult<>();
     final IdeFocusManager fm = IdeFocusManager.getInstance(myProject);
+    TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
     fm.doWhenFocusSettlesDown(() -> {
       if (myProject.isDisposed()) {
         result.setRejected();
@@ -272,7 +273,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       else {
         result.setDone(getMainSplitters());
       }
-    });
+    }, ModalityState.defaultModalityState());
     return result;
   }
 

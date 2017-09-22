@@ -59,11 +59,11 @@ public abstract class PatchTestCase extends UpdaterTestCase {
                     new File(myNewerDir, "lib/boot2.jar"));
   }
 
-  protected Patch createPatch() throws IOException, OperationCancelledException {
+  protected Patch createPatch() throws IOException {
     return createPatch(Function.identity());
   }
 
-  protected Patch createPatch(Function<PatchSpec, PatchSpec> tuner) throws IOException, OperationCancelledException {
+  protected Patch createPatch(Function<PatchSpec, PatchSpec> tuner) throws IOException {
     PatchSpec spec = tuner.apply(new PatchSpec()
       .setOldFolder(myOlderDir.getAbsolutePath())
       .setNewFolder(myNewerDir.getAbsolutePath()));
@@ -73,6 +73,10 @@ public abstract class PatchTestCase extends UpdaterTestCase {
   protected void resetNewerDir() throws IOException {
     FileUtil.delete(myNewerDir);
     FileUtil.copyDir(myOlderDir, myNewerDir);
+  }
+
+  protected static Map<String, Long> digest(Patch patch, File dir) throws IOException {
+    return new TreeMap<>(patch.digestFiles(dir, Collections.emptyList(), false));
   }
 
   protected static List<PatchAction> sortActions(List<PatchAction> actions) {

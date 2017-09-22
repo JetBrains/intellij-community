@@ -449,7 +449,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         }
       } : myButtonLook,
       myPlace, myPresentationFactory.getPresentation(action),
-      myMinimumButtonSize);
+      myMinimumButtonSize.size());
   }
 
   @Override
@@ -721,7 +721,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         int xOffset = 0;
         int yOffset = 0;
         // Calculate max size of a row. It's not possible to make more then 3 column toolbar
-        final int maxRowHeight = Math.max(heightToFit, componentCount * myMinimumButtonSize.height / 3);
+        final int maxRowHeight = Math.max(heightToFit, componentCount * myMinimumButtonSize.height() / 3);
         for (int i = 0; i < componentCount; i++) {
           if (yOffset + maxHeight > maxRowHeight) { // place component at new row
             yOffset = 0;
@@ -750,7 +750,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         int xOffset = 0;
         int yOffset = 0;
         // Calculate max size of a row. It's not possible to make more then 3 row toolbar
-        final int maxRowWidth = Math.max(widthToFit, componentCount * myMinimumButtonSize.width / 3);
+        final int maxRowWidth = Math.max(widthToFit, componentCount * myMinimumButtonSize.width() / 3);
         for (int i = 0; i < componentCount; i++) {
           final Dimension d = dims[i];
           if (xOffset + d.width > maxRowWidth) { // place component at new row
@@ -778,7 +778,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         int xOffset = 0;
         int yOffset = 0;
         // Calculate max size of a row. It's not possible to make more then 3 column toolbar
-        final int maxRowHeight = Math.max(heightToFit, componentCount * myMinimumButtonSize.height / 3);
+        final int maxRowHeight = Math.max(heightToFit, componentCount * myMinimumButtonSize.height() / 3);
         for (int i = 0; i < componentCount; i++) {
           final Dimension d = dims[i];
           if (yOffset + d.height > maxRowHeight) { // place component at new row
@@ -841,7 +841,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   @Override
   public Dimension getPreferredSize() {
     final ArrayList<Rectangle> bounds = new ArrayList<>();
-    if (myMinimumButtonSize != null) myMinimumButtonSize.update();
     calculateBounds(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE), bounds);
     if (bounds.isEmpty()) return JBUI.emptySize();
     int xLeft = Integer.MAX_VALUE;
@@ -882,7 +881,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
     if (myLayoutPolicy == AUTO_LAYOUT_POLICY) {
       final Insets i = getInsets();
-      return new Dimension(AllIcons.Ide.Link.getIconWidth() + i.left + i.right, myMinimumButtonSize.height + i.top + i.bottom);
+      return new Dimension(AllIcons.Ide.Link.getIconWidth() + i.left + i.right, myMinimumButtonSize.height() + i.top + i.bottom);
     }
     else {
       return super.getMinimumSize();
@@ -929,8 +928,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
     @Override
     public Dimension getPreferredSize() {
-      mySize.update();
-      return mySize;
+      return mySize.size();
     }
 
     @Override
@@ -975,7 +973,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   @Override
   public void setMinimumButtonSize(@NotNull final Dimension size) {
-    myMinimumButtonSize = JBDimension.create(size, false);
+    myMinimumButtonSize = JBDimension.create(size, true);
     for (int i = getComponentCount() - 1; i >= 0; i--) {
       final Component component = getComponent(i);
       if (component instanceof ActionButton) {

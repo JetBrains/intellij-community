@@ -93,4 +93,12 @@ public class IntegerField extends JBTextField {
   public Integer getDefaultValue() {
     return myValueEditor.getDefaultValue();
   }
+
+  public void resetToDefault() {
+    myValueEditor.setValue(myValueEditor.getDefaultValue());
+  }
+
+  public IntegerValueEditor getValueEditor() {
+    return myValueEditor;
+  }
 }

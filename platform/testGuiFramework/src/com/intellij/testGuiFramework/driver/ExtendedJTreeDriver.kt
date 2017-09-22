@@ -62,12 +62,17 @@ open class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
     = clickPath(tree, pathStrings, mouseClickInfo.button(), mouseClickInfo.times())
 
 
-  fun clickPath(tree: JTree, pathStrings: List<String>, button: MouseButton = MouseButton.LEFT_BUTTON, times: Int = 1, attempts: Int = DEFAULT_FIND_PATH_ATTEMPTS) {
+  fun clickPath(tree: JTree,
+                pathStrings: List<String>,
+                button: MouseButton = MouseButton.LEFT_BUTTON,
+                times: Int = 1,
+                attempts: Int = DEFAULT_FIND_PATH_ATTEMPTS) {
     val point = scrollToPath(tree, pathStrings)
     robot.click(tree, point, button, times)
     //check that path is selected or click it again
     if (!checkPathIsSelected(tree, pathStrings)) {
-      if (attempts == 0) throw Exception("Unable to click path in $DEFAULT_FIND_PATH_ATTEMPTS attempts due to it high mutability. Maybe this path is loading async.")
+      if (attempts == 0) throw Exception(
+        "Unable to click path in $DEFAULT_FIND_PATH_ATTEMPTS attempts due to it high mutability. Maybe this path is loading async.")
       clickPath(tree, pathStrings, button, times, attempts - 1)
     }
   }
@@ -82,9 +87,20 @@ open class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
     robot.click(tree, point, button, times)
     //check that path is selected or click it again
     if (!checkPathIsSelected(tree, xPathStrings, false)) {
-      if (attempts == 0) throw Exception("Unable to click path in $DEFAULT_FIND_PATH_ATTEMPTS attempts due to it high mutability. Maybe this path is loading async.")
+      if (attempts == 0) throw Exception(
+        "Unable to click path in $DEFAULT_FIND_PATH_ATTEMPTS attempts due to it high mutability. Maybe this path is loading async.")
       clickXPath(tree, xPathStrings, button, times, attempts - 1)
     }
+  }
+
+  fun doubleClickXPath(tree: JTree,
+                       xPathStrings: List<String>, attempts: Int = 3) {
+    clickXPath(tree, xPathStrings, button = MouseButton.LEFT_BUTTON, times = 2, attempts = attempts)
+  }
+
+  fun rightClickXPath(tree: JTree,
+                      xPathStrings: List<String>, attempts: Int = 3) {
+    clickXPath(tree, xPathStrings, button = MouseButton.RIGHT_BUTTON, times = 1, attempts = attempts)
   }
 
   fun checkPathExists(tree: JTree, pathStrings: List<String>) {
@@ -118,13 +134,27 @@ open class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
     if (!info.first) toggleCell(tree, info.second!!, info.third)
   }
 
+  fun expandXPath(tree: JTree, pathStrings: List<String>) {
+    val info: Triple<Boolean, Point, Int> = scrollToMatchingXPathAndGetToggleInfo(tree, pathStrings)
+    if (!info.first) toggleCell(tree, info.second!!, info.third)
+  }
+
   fun collapsePath(tree: JTree, pathStrings: List<String>) {
     val info = scrollToMatchingPathAndGetToggleInfo(tree, pathStrings)
     if (info.first) toggleCell(tree, info.second!!, info.third)
   }
 
+  fun collapseXPath(tree: JTree, pathStrings: List<String>) {
+    val info = scrollToMatchingXPathAndGetToggleInfo(tree, pathStrings)
+    if (info.first) toggleCell(tree, info.second!!, info.third)
+  }
+
   fun selectPath(tree: JTree, pathStrings: List<String>) {
     selectMatchingPath(tree, pathStrings)
+  }
+
+  fun selectXPath(tree: JTree, pathStrings: List<String>) {
+    selectMatchingXPath(tree, pathStrings)
   }
 
   fun scrollToPath(tree: JTree, pathStrings: List<String>): Point {
@@ -222,6 +252,16 @@ open class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
     }!!
   }
 
+  private fun scrollToMatchingXPathAndGetToggleInfo(tree: JTree,
+                                                   pathStrings: List<String>): Triple<Boolean, Point, Int> {
+    return computeOnEdt {
+      ComponentPreconditions.checkEnabledAndShowing(tree)
+      val matchingTreePath = matchingPathFor(tree, pathStrings, isUniquePath = false)
+      val point = scrollToTreePath(tree, matchingTreePath, location)
+      Triple.of(tree.isExpanded(matchingTreePath), point, tree.toggleClickCount)
+    }!!
+  }
+
   private fun makeVisible(tree: JTree, path: TreePath, expandWhenFound: Boolean): Boolean {
     var changed = false
     if (path.pathCount > 1) {
@@ -314,21 +354,25 @@ open class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
     fun findMatchingPath(tree: JTree, pathStrings: List<String>, isUniquePath: Boolean = true): TreePath {
       if (isUniquePath) return findMatchingPath(tree, pathStrings)
 
+      //remove node order if path is a not unique
+      val pathStringsWithoutOrder = if (isUniquePath) pathStrings else pathStrings.map { it.getWithoutOrder() }
+
       val model = tree.model
       if (tree.isRootVisible) {
-        if (pathStrings[0] != value(tree, model.root)) throw pathNotFound(pathStrings)
-        if (pathStrings.size == 1) return TreePath(arrayOf<Any>(model.root))
-        val result: TreePath = findMatchingPath(tree, model.root, pathStrings.subList(1, pathStrings.size)) ?: throw pathNotFound(
-          pathStrings)
+        if (pathStringsWithoutOrder[0] != value(tree, model.root)) throw pathNotFound(pathStringsWithoutOrder)
+        if (pathStringsWithoutOrder.size == 1) return TreePath(arrayOf<Any>(model.root))
+        val result: TreePath = findMatchingPath(tree, model.root,
+                                                pathStringsWithoutOrder.subList(1, pathStringsWithoutOrder.size)) ?: throw pathNotFound(
+          pathStringsWithoutOrder)
         return TreePath(arrayOf<Any>(model.root, *result.path))
       }
       else {
-        return findMatchingPath(tree, model.root, pathStrings) ?: throw pathNotFound(pathStrings)
+        return findMatchingPath(tree, model.root, pathStringsWithoutOrder) ?: throw pathNotFound(pathStringsWithoutOrder)
       }
     }
 
     /**
-     * this method tries to find any path. If tree contains multiple of searchable path it still accepts
+     * this method tries to find any path. If tree contains multiple of searchable path it still accepts.
      */
     private fun findMatchingPath(tree: JTree, node: Any, pathStrings: List<String>): TreePath? {
       val model = tree.model
@@ -378,9 +422,7 @@ open class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
       val childCount = model.getChildCount(node)
 
       val order = xPathStrings[0].getOrder() ?: 0
-      val original = if (xPathStrings[0].hasOrder()) xPathStrings[0].subSequence(0,
-                                                                                 xPathStrings[0].length - 2 - (order.toString().length))
-      else xPathStrings[0]
+      val original = getWithoutOrder(xPathStrings[0], order)
       var currentOrder = 0
 
       for (childIndex in 0..childCount - 1) {
@@ -402,6 +444,14 @@ open class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
       }
       return null
     }
+
+    private fun getWithoutOrder(potentiallyOrderedNode: String, order: Int): CharSequence {
+      return if (potentiallyOrderedNode.hasOrder()) potentiallyOrderedNode.subSequence(0,
+                                                                                       potentiallyOrderedNode.length - 2 - (order.toString().length))
+      else potentiallyOrderedNode
+    }
+
+    private fun String.getWithoutOrder(): String = getWithoutOrder(this, this.getOrder() ?: 0).toString()
 
     private fun String.hasOrder(): Boolean =
       Regex("\\(\\d\\)").find(this)?.value?.isNotEmpty() ?: false
@@ -566,6 +616,14 @@ open class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
 
   private fun selectMatchingPath(tree: JTree, pathStrings: List<String>): Point {
     val info = scrollToMatchingPath(tree, pathStrings)
+    robot.waitForIdle()
+    val where = info.third!!
+    if (!info.second) robot.click(tree, where)
+    return where
+  }
+
+  private fun selectMatchingXPath(tree: JTree, pathStrings: List<String>): Point {
+    val info = scrollToMatchingXPath(tree, pathStrings)
     robot.waitForIdle()
     val where = info.third!!
     if (!info.second) robot.click(tree, where)

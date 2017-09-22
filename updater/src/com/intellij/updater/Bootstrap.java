@@ -17,6 +17,7 @@ package com.intellij.updater;
 
 import java.io.*;
 import java.lang.reflect.Method;
+import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -32,12 +33,18 @@ import java.util.stream.Stream;
 public class Bootstrap {
   private static final String IJ_PLATFORM_UPDATER = "ijPlatformUpdater";
 
+  /**
+   * This property allows applying patches without creating backups. In this case a callee is responsible for that.
+   * Example: JetBrains Toolbox App copies a tool it wants to update and then applies the patch.
+   */
+  private static final String NO_BACKUP_PROPERTY = "no.backup";
+
   public static void main(String[] args) throws Exception {
     if (args.length != 1) return;
 
     String path = args[0].endsWith("\\") || args[0].endsWith("/") ? args[0] : args[0] + File.separator;
     if (isMac() && path.endsWith(".app/")) {
-      final File file = new File(path + "Contents");
+      File file = new File(path + "Contents");
       if (file.exists() && file.isDirectory()) {
         path += "Contents/";
       }
@@ -45,22 +52,28 @@ public class Bootstrap {
 
     cleanUp();
 
+    ClassLoader cl = Bootstrap.class.getClassLoader();
+    URL dependencies = cl.getResource("dependencies.txt");
+    if (dependencies == null) {
+      log("missing dependencies file");
+      return;
+    }
+
     List<URL> urls = new ArrayList<>();
-    final List<File> files = new ArrayList<>();
+    List<File> files = new ArrayList<>();
 
-    try (InputStream stream = Bootstrap.class.getClassLoader().getResourceAsStream("dependencies.txt")) {
-      try (BufferedReader br = new BufferedReader(new InputStreamReader(stream))) {
-        String line;
-        while ((line = br.readLine()) != null) {
-          final File file = new File(path + line);
-          final Path tmp = Files.createTempFile(IJ_PLATFORM_UPDATER + file.getName(), "");
+    urls.add(((JarURLConnection)dependencies.openConnection()).getJarFileURL());
 
-          try (OutputStream targetStream = Files.newOutputStream(tmp)) {
-             Files.copy(file.toPath(), targetStream);
-          }
-          urls.add(tmp.toFile().toURI().toURL());
-          files.add(tmp.toFile());
+    try (BufferedReader br = new BufferedReader(new InputStreamReader(dependencies.openStream()))) {
+      String line;
+      while ((line = br.readLine()) != null) {
+        File file = new File(path + line);
+        Path tmp = Files.createTempFile(IJ_PLATFORM_UPDATER + file.getName(), "");
+        try (OutputStream targetStream = Files.newOutputStream(tmp)) {
+          Files.copy(file.toPath(), targetStream);
         }
+        urls.add(tmp.toFile().toURI().toURL());
+        files.add(tmp.toFile());
       }
     }
 
@@ -70,52 +83,62 @@ public class Bootstrap {
         for (File file : files) {
           log("Deleting " + file.getName() + " - " + (file.delete() ? "OK" : "FAIL"));
         }
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
         log(e);
       }
     }));
-    for (URL url : urls) {
-      URLClassLoader classLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
-      Method method = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
-      method.setAccessible(true);
-      method.invoke(classLoader, url);
-    }
 
-    final Class<?> runner = Bootstrap.class.getClassLoader().loadClass("com.intellij.updater.Runner");
-    final Method main = runner.getMethod("main", String[].class);
-    main.invoke(null, (Object)new String[]{"apply", args[0], "--toolbox-ui"});
+    try (URLClassLoader loader = new URLClassLoader(urls.toArray(new URL[0]), null)) {
+      Class<?> runner = loader.loadClass("com.intellij.updater.Runner");
+      Method main = runner.getMethod("main", String[].class);
+
+      List<String> runnerArgs = new ArrayList<>();
+      runnerArgs.add("apply");
+      runnerArgs.add(args[0]);
+      runnerArgs.add("--toolbox-ui");
+      if (Boolean.getBoolean(NO_BACKUP_PROPERTY)) {
+        runnerArgs.add("--no-backup");
+      }
+
+      //noinspection SSBasedInspection
+      main.invoke(null, (Object)runnerArgs.toArray(new String[0]));
+    }
   }
 
   private static void cleanUp() {
     log("Cleaning up...");
     try {
-      final Path file = Files.createTempFile("", "");
+      Path file = Files.createTempFile("", "");
       try (Stream<Path> listing = Files.list(file.getParent())) {
         listing.forEach((p) -> {
-          if (!p.toFile().isDirectory() && p.toFile().getName().startsWith(IJ_PLATFORM_UPDATER)) try {
-            log("Deleting " + p.toString());
-            Files.delete(p);
-          }
-          catch (IOException e) {
-            log("Can't delete " + p.toString());
-            log(e);
+          if (!p.toFile().isDirectory() && p.toFile().getName().startsWith(IJ_PLATFORM_UPDATER)) {
+            try {
+              log("Deleting " + p.toString());
+              Files.delete(p);
+            }
+            catch (IOException e) {
+              log("Can't delete " + p.toString());
+              log(e);
+            }
           }
         });
       }
       Files.delete(file);
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       log(e);
     }
   }
 
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private static void log(String msg) {
-    //noinspection UseOfSystemOutOrSystemErr
     System.out.println(msg);
   }
 
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private static void log(Throwable ex) {
-    //noinspection CallToPrintStackTrace
-    ex.printStackTrace();
+    ex.printStackTrace(System.err);
   }
 
   private static boolean isMac() {

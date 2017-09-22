@@ -40,11 +40,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.update.AutoSvnUpdater;
+import org.tmatesoft.svn.core.SVNURL;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
   public SvnCheckinHandlerFactory() {
@@ -68,15 +71,15 @@ public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       public ReturnResult beforeCheckin(@Nullable CommitExecutor executor, PairConsumer<Object, Object> additionalDataConsumer) {
         if (executor instanceof LocalCommitExecutor) return ReturnResult.COMMIT;
         final SvnVcs vcs = SvnVcs.getInstance(project);
-        final MultiMap<String, WorkingCopyFormat> copiesInfo = splitIntoCopies(vcs, myChanges);
-        final List<String> repoUrls = new ArrayList<>();
-        for (Map.Entry<String, Collection<WorkingCopyFormat>> entry : copiesInfo.entrySet()) {
+        MultiMap<SVNURL, WorkingCopyFormat> copiesInfo = splitIntoCopies(vcs, myChanges);
+        List<SVNURL> repoUrls = newArrayList();
+        for (Map.Entry<SVNURL, Collection<WorkingCopyFormat>> entry : copiesInfo.entrySet()) {
           if (entry.getValue().size() > 1) {
             repoUrls.add(entry.getKey());
           }
         }
         if (! repoUrls.isEmpty()) {
-          final String join = StringUtil.join(repoUrls, ",\n");
+          String join = StringUtil.join(repoUrls, SVNURL::toDecodedString, ",\n");
           final int isOk = Messages.showOkCancelDialog(project,
             SvnBundle.message("checkin.different.formats.involved", repoUrls.size() > 1 ? 1 : 0, join),
             "Subversion: Commit Will Split", Messages.getWarningIcon());
@@ -119,8 +122,8 @@ public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
   }
 
   @NotNull
-  private static MultiMap<String, WorkingCopyFormat> splitIntoCopies(@NotNull SvnVcs vcs, @NotNull Collection<Change> changes) {
-    MultiMap<String, WorkingCopyFormat> result = MultiMap.createSet();
+  private static MultiMap<SVNURL, WorkingCopyFormat> splitIntoCopies(@NotNull SvnVcs vcs, @NotNull Collection<Change> changes) {
+    MultiMap<SVNURL, WorkingCopyFormat> result = MultiMap.createSet();
     SvnFileUrlMapping mapping = vcs.getSvnFileUrlMapping();
 
     for (Change change : changes) {

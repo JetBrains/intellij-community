@@ -33,6 +33,12 @@ public class DuplicateCondition {
       System.out.println("second");
       return;
     }
+    if (<warning descr="Duplicate condition 'x != y'">x != y</warning>) {
+      return;
+    }
+    if ((<warning descr="Duplicate condition '(y) != x'">(y) != x</warning>)) {
+      return;
+    }
   }
 
   public void foo()

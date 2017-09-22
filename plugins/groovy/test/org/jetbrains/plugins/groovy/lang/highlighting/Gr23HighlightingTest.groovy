@@ -497,4 +497,20 @@ class SomeClass implements T {}
 new SomeClass().<warning descr="Access to 'traitMethod' exceeds its access rights">traitMethod</warning>()
 ''', GroovyAccessibilityInspection
   }
+
+  void 'test spread argument highlight'() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+@CompileStatic
+class A {
+    def m(int a, String b) {
+
+    }
+    def m2(s) {
+        m(<error>*[1,""]</error>)
+    }
+}
+'''
+  }
 }

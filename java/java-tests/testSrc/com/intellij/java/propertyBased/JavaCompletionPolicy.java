@@ -75,6 +75,9 @@ class JavaCompletionPolicy extends CompletionPolicy {
         return false; // red code
       }
     }
+    if (target instanceof PsiVariable && PsiTreeUtil.isAncestor(target, ref, false)) {
+      return false; // non-initialized variable
+    }
     if (target instanceof PsiField &&
         SyntaxTraverser.psiApi().parents(ref).find(e -> e instanceof PsiMethod && ((PsiMethod)e).isConstructor()) != null) {
       // https://youtrack.jetbrains.com/issue/IDEA-174744 on red code
@@ -121,6 +124,12 @@ class JavaCompletionPolicy extends CompletionPolicy {
     }
     if (leaf.textMatches(PsiKeyword.TRUE) || leaf.textMatches(PsiKeyword.FALSE)) {
       return false; // boolean literal presence depends on expected types, which can be missing in red files
+    }
+    if (leaf.getParent() instanceof PsiNewExpression && ((PsiNewExpression)leaf.getParent()).getQualifier() != null) {
+      PsiJavaCodeReferenceElement reference = ((PsiNewExpression)leaf.getParent()).getClassOrAnonymousClassReference();
+      if (reference == null || reference.resolve() == null) {
+        return false; // this.new Foo isn't completed when there's no "Foo"
+      }
     }
     return true;
   }

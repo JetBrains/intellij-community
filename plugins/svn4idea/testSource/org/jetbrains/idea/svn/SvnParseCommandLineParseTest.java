@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -650,7 +651,7 @@ public class SvnParseCommandLineParseTest extends TestCase {
                           "</target>\n" +
                           "</status>";
     final String basePath = "C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main";
-    final SvnStatusHandler[] handler = new SvnStatusHandler[1];
+    Ref<SvnStatusHandler> handler = Ref.create();
     final File baseFile = new File(basePath);
     final SvnStatusHandler.ExternalDataCallback callback = CmdStatusClient.createStatusCallback(status1 -> {
       System.out.println(status1.getURL());
@@ -663,8 +664,8 @@ public class SvnParseCommandLineParseTest extends TestCase {
         .equals(status1.getFile())) {
         Assert.assertEquals("http://external/src/com/slave/SomeOtherClass.java", status1.getURL().toString());
       }
-    }, baseFile, createStubInfo(basePath, "http://mainurl/"), handler);
-    handler[0] = new SvnStatusHandler(callback, baseFile, o -> {
+    }, baseFile, createStubInfo(basePath, "http://mainurl/"), () -> handler.get().getPending());
+    handler.set(new SvnStatusHandler(callback, baseFile, o -> {
       try {
         if (new File("C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main\\slave").equals(o)) {
           return createStubInfo(o.getPath(), "http://external");
@@ -674,10 +675,10 @@ public class SvnParseCommandLineParseTest extends TestCase {
       catch (SVNException e) {
         throw new RuntimeException(e);
       }
-    });
+    }));
     SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-    parser.parse(new ByteArrayInputStream(status.getBytes(CharsetToolkit.UTF8_CHARSET)), handler[0]);
-    final MultiMap<String,PortableStatus> changes = handler[0].getCurrentListChanges();
+    parser.parse(new ByteArrayInputStream(status.getBytes(CharsetToolkit.UTF8_CHARSET)), handler.get());
+    final MultiMap<String, PortableStatus> changes = handler.get().getCurrentListChanges();
   }
 
   public void testStatusWithSwitched() throws Exception {

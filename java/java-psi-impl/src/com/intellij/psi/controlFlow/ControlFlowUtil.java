@@ -1973,11 +1973,8 @@ public class ControlFlowUtil {
       if (element instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)element).getLExpression() instanceof PsiReferenceExpression) {
         return ((PsiAssignmentExpression)element).getLExpression();
       }
-      else if (element instanceof PsiPostfixExpression) {
-        return ((PsiPostfixExpression)element).getOperand();
-      }
-      else if (element instanceof PsiPrefixExpression) {
-        return ((PsiPrefixExpression)element).getOperand();
+      else if (element instanceof PsiUnaryExpression) {
+        return ((PsiUnaryExpression)element).getOperand();
       }
       else if (element instanceof PsiDeclarationStatement) {
         //should not happen

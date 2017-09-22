@@ -1,5 +1,6 @@
 package org.jetbrains.protocolModelGenerator
 
+import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.jsonProtocol.ItemDescriptor
 import org.jetbrains.protocolReader.appendEnums
 
@@ -11,7 +12,12 @@ internal open class MemberScope(private val classScope: ClassScope, protected va
   override fun <T : ItemDescriptor> resolveType(typedObject: T) = classScope.generator.generator.resolveType(typedObject, this)
 
   fun generateEnum(description: String?, enumConstants: List<String>): BoxableType {
-    val enumName = capitalizeFirstChar(memberName)
+    var enumName = capitalizeFirstChar(memberName)
+    if (StringUtil.equalsIgnoreCase(enumName, "TYPE") &&
+        classScope.classContextNamespace.lastComponent.endsWith("EventData") ) {
+      // to avoid same name with companion object TYPE
+      enumName = "EventType"
+    }
     val namePath = NamePath(enumName, classScope.classContextNamespace)
     var type = classScope.generator.generator.nestedTypeMap.get(namePath)
     if (type == null) {

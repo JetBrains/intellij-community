@@ -49,6 +49,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static java.util.stream.Collectors.toList;
+import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 import static org.tmatesoft.svn.core.wc.SVNRevision.UNDEFINED;
 import static org.tmatesoft.svn.core.wc.SVNRevision.WORKING;
 
@@ -328,7 +329,8 @@ public class SvnQuickMergeTest extends Svn17TestCase {
   }
 
   private void waitQuickMerge(@NotNull String sourceUrl, @NotNull QuickMergeTestInteraction interaction) throws Exception {
-    MergeContext mergeContext = new MergeContext(myVcs, sourceUrl, getWcInfo(), SVNPathUtil.tail(sourceUrl), myWorkingCopyDir);
+    MergeContext mergeContext =
+      new MergeContext(myVcs, parseUrl(sourceUrl, false), getWcInfo(), SVNPathUtil.tail(sourceUrl), myWorkingCopyDir);
     QuickMerge quickMerge = new QuickMerge(mergeContext, interaction);
 
     getApplication().invokeAndWait(quickMerge::execute);

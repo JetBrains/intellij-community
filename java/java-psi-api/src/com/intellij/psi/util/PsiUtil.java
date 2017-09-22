@@ -332,15 +332,9 @@ public final class PsiUtil extends PsiUtilCore {
 
   @Contract("null -> false")
   public static boolean isIncrementDecrementOperation(@Nullable PsiElement element) {
-    if (element instanceof PsiPostfixExpression) {
-      final IElementType sign = ((PsiPostfixExpression)element).getOperationTokenType();
-      if (sign == JavaTokenType.PLUSPLUS || sign == JavaTokenType.MINUSMINUS)
-        return true;
-    }
-    else if (element instanceof PsiPrefixExpression) {
-      final IElementType sign = ((PsiPrefixExpression)element).getOperationTokenType();
-      if (sign == JavaTokenType.PLUSPLUS || sign == JavaTokenType.MINUSMINUS)
-        return true;
+    if (element instanceof PsiUnaryExpression) {
+      final IElementType sign = ((PsiUnaryExpression)element).getOperationTokenType();
+      return sign == JavaTokenType.PLUSPLUS || sign == JavaTokenType.MINUSMINUS;
     }
     return false;
   }

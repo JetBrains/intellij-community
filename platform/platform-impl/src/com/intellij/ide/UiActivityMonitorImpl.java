@@ -32,7 +32,7 @@ import javax.swing.*;
 import java.util.*;
 
 public class UiActivityMonitorImpl extends UiActivityMonitor implements ModalityStateListener, Disposable {
-  private final Map<Project, BusyContainer> myObjects = FactoryMap.createMap(this::create);
+  private final Map<Project, BusyContainer> myObjects = FactoryMap.create(this::create);
 
   @NotNull
   private BusyContainer create(Project key) {

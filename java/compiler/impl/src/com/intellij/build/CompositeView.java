@@ -77,10 +77,10 @@ public class CompositeView<S extends ComponentContainer, T extends ComponentCont
   }
 
   public void enableView(boolean primary) {
-    if (primary == myPrimary) return;
-
-    CardLayout cl = (CardLayout)(getLayout());
-    cl.show(this, primary ? PRIMARY_PANEL : SECONDARY_PANEL);
+    if (primary != myPrimary) {
+      CardLayout cl = (CardLayout)(getLayout());
+      cl.show(this, primary ? PRIMARY_PANEL : SECONDARY_PANEL);
+    }
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
       IdeFocusManager.getGlobalInstance().requestFocus(getView(primary).getPreferredFocusableComponent(), true);
     });

@@ -44,7 +44,7 @@ class MatchMigration extends BaseStreamApiMigration {
       PsiExpression value = returnStatement.getReturnValue();
       if (ExpressionUtils.isLiteral(value, Boolean.TRUE) || ExpressionUtils.isLiteral(value, Boolean.FALSE)) {
         boolean foundResult = (boolean)((PsiLiteralExpression)value).getValue();
-        PsiReturnStatement nextReturnStatement = StreamApiMigrationInspection.getNextReturnStatement(sourceStatement);
+        PsiReturnStatement nextReturnStatement = ControlFlowUtils.getNextReturnStatement(sourceStatement);
         if (nextReturnStatement != null) {
           PsiExpression returnValue = nextReturnStatement.getReturnValue();
           if(returnValue == null) return null;
@@ -59,7 +59,7 @@ class MatchMigration extends BaseStreamApiMigration {
             return returnValue.replace(elementFactory.createExpressionFromText(streamText, nextReturnStatement));
           }
           PsiElement result = sourceStatement.replace(elementFactory.createStatementFromText("return " + streamText + ";", sourceStatement));
-          if(!isReachable(nextReturnStatement)) {
+          if(!ControlFlowUtils.isReachable(nextReturnStatement)) {
             nextReturnStatement.delete();
           }
           return result;

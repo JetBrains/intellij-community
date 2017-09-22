@@ -88,7 +88,6 @@ com.siyeh.ig.classmetrics.ConstructorCountInspection
 com.siyeh.ig.classmetrics.FieldCountInspection
 com.siyeh.ig.classmetrics.MethodCountInspection
 com.siyeh.ig.cloneable.CloneableImplementsCloneInspection
-com.siyeh.ig.controlflow.ConditionalExpressionInspection
 com.siyeh.ig.controlflow.ConfusingElseInspection
 com.siyeh.ig.controlflow.DuplicateConditionInspection
 com.siyeh.ig.controlflow.EnumSwitchStatementWhichMissesCasesInspection

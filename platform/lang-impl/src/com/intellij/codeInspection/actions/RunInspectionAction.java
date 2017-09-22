@@ -48,12 +48,14 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.TitledSeparator;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -149,17 +151,19 @@ public class RunInspectionAction extends GotoActionBase {
         final JPanel fileFilter = fileFilterPanel.getPanel();
         if (toolWrapper.getTool().createOptionsPanel() != null) {
           JPanel additionPanel = new JPanel();
-          additionPanel.setLayout(new BoxLayout(additionPanel, BoxLayout.Y_AXIS));
-          additionPanel.add(fileFilter);
+          additionPanel.setLayout(new GridBagLayout());
+          additionPanel.add(fileFilter, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0));
           myUpdatedSettingsToolWrapper = copyToolWithSettings(toolWrapper);//new InheritOptionsForToolPanel(toolWrapper.getShortName(), project);
-          additionPanel.add(new TitledSeparator(IdeBundle.message("goto.inspection.action.choose.inherit.settings.from")));
+          additionPanel.add(new TitledSeparator(IdeBundle.message("goto.inspection.action.choose.inherit.settings.from")), new GridBagConstraints(0, 1, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0));
           JComponent optionsPanel = myUpdatedSettingsToolWrapper.getTool().createOptionsPanel();
           LOGGER.assertTrue(optionsPanel != null);
+          GridBagConstraints constraints =
+            new GridBagConstraints(0, 2, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0);
           if (UIUtil.hasScrollPane(optionsPanel)) {
-            additionPanel.add(optionsPanel);
+            additionPanel.add(optionsPanel, constraints);
           }
           else {
-            additionPanel.add(ScrollPaneFactory.createScrollPane(optionsPanel, SideBorder.NONE));
+            additionPanel.add(ScrollPaneFactory.createScrollPane(optionsPanel, SideBorder.NONE), constraints);
           }
           return additionPanel;
         } else {

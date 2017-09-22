@@ -395,13 +395,9 @@ class SliceUtil {
             return handToProcessor(rExpression, processor, parent, parentSubstitutor, parent.indexNesting, "");
           }
         }
-        if (parentExpr instanceof PsiPrefixExpression && ((PsiPrefixExpression)parentExpr).getOperand() == referenceExpression && ( ((PsiPrefixExpression)parentExpr).getOperationTokenType() == JavaTokenType.PLUSPLUS || ((PsiPrefixExpression)parentExpr).getOperationTokenType() == JavaTokenType.MINUSMINUS)) {
-          PsiPrefixExpression prefixExpression = (PsiPrefixExpression)parentExpr;
-          return handToProcessor(prefixExpression, processor, parent, parentSubstitutor, parent.indexNesting, "");
-        }
-        if (parentExpr instanceof PsiPostfixExpression && ((PsiPostfixExpression)parentExpr).getOperand() == referenceExpression && ( ((PsiPostfixExpression)parentExpr).getOperationTokenType() == JavaTokenType.PLUSPLUS || ((PsiPostfixExpression)parentExpr).getOperationTokenType() == JavaTokenType.MINUSMINUS)) {
-          PsiPostfixExpression postfixExpression = (PsiPostfixExpression)parentExpr;
-          return handToProcessor(postfixExpression, processor, parent, parentSubstitutor, parent.indexNesting, "");
+        if (parentExpr instanceof PsiUnaryExpression && ((PsiUnaryExpression)parentExpr).getOperand() == referenceExpression && ( ((PsiUnaryExpression)parentExpr).getOperationTokenType() == JavaTokenType.PLUSPLUS || ((PsiUnaryExpression)parentExpr).getOperationTokenType() == JavaTokenType.MINUSMINUS)) {
+          PsiUnaryExpression unaryExpression = (PsiUnaryExpression)parentExpr;
+          return handToProcessor(unaryExpression, processor, parent, parentSubstitutor, parent.indexNesting, "");
         }
       }
 

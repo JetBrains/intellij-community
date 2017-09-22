@@ -34,9 +34,9 @@ import java.util.Map;
  */
 public class PySyntaxHighlighterFactory extends SyntaxHighlighterFactory {
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
-  private final Map<LanguageLevel, PyHighlighter> myMap = FactoryMap.createMap(key -> new PyHighlighter(key));
+  private final Map<LanguageLevel, PyHighlighter> myMap = FactoryMap.create(key -> new PyHighlighter(key));
 
-  private final Map<LanguageLevel, PyHighlighter> myConsoleMap = FactoryMap.createMap(key -> new PyHighlighter(key) {
+  private final Map<LanguageLevel, PyHighlighter> myConsoleMap = FactoryMap.create(key -> new PyHighlighter(key) {
     @Override
     protected PythonHighlightingLexer createHighlightingLexer(LanguageLevel languageLevel) {
       return new PyConsoleHighlightingLexer(languageLevel);

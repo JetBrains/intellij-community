@@ -60,6 +60,8 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import static com.intellij.psi.codeStyle.CodeStyleSettings.*;
+
 public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   @SuppressWarnings("UnusedDeclaration")
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.GeneralCodeStylePanel");
@@ -205,8 +207,8 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
   private void createUIComponents() {
-    myRightMarginField = new IntegerField(ApplicationBundle.message("editbox.right.margin.columns"), 0, CodeStyleSettings.MAX_RIGHT_MARGIN);
-    myVisualGuides = new CommaSeparatedIntegersField(ApplicationBundle.message("settings.code.style.visual.guides"), 0, CodeStyleSettings.MAX_RIGHT_MARGIN, "Optional");
+    myRightMarginField = new IntegerField(ApplicationBundle.message("editbox.right.margin.columns"), 0, MAX_RIGHT_MARGIN);
+    myVisualGuides = new CommaSeparatedIntegersField(ApplicationBundle.message("settings.code.style.visual.guides"), 0, MAX_RIGHT_MARGIN, "Optional");
   }
 
   @Nullable

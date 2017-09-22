@@ -75,10 +75,6 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
     return new HgRepositoryLocation(repo.getUrl(), repo);
   }
 
-  public RepositoryLocation getLocationFor(FilePath root, String repositoryPath) {
-    return getLocationFor(root);
-  }
-
   @Nullable
   public VcsCommittedListsZipper getZipper() {
     return null;

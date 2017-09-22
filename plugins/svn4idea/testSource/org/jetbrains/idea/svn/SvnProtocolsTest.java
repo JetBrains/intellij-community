@@ -53,17 +53,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
+
 public class SvnProtocolsTest extends Svn17TestCase {
   // todo correct URL
   private final static String ourSSH_URL = "svn+ssh://unit-069:222/home/irina/svnrepo";
 
-  private final static String ourHTTP_URL = "http://unit-364.labs.intellij.net/svn/forMerge/tmp";
+  private final static SVNURL ourHTTP_URL = parseUrl("http://unit-364.labs.intellij.net/svn/forMerge/tmp", false);
   private final static String ourHTTPS_URL = "https://";
   private final static String ourSVN_URL = "svn://";
 
   //private final static String[] ourTestURL = {ourSSH_URL, ourHTTP_URL};
   // at the moment
-  private final static String[] ourTestURL = {ourHTTP_URL};
+  private final static SVNURL[] ourTestURL = {ourHTTP_URL};
 
   public static final String SSH_USER_NAME = "user";
   public static final String SSH_PASSWORD = "qwerty4321";
@@ -100,13 +102,13 @@ public class SvnProtocolsTest extends Svn17TestCase {
 
   @Test
   public void testBrowseRepository() throws Exception {
-    for (String s : ourTestURL) {
+    for (SVNURL s : ourTestURL) {
       System.out.println("Testing URL: " + s);
       testBrowseRepositoryImpl(s);
     }
   }
 
-  private void testBrowseRepositoryImpl(final String url) throws SVNException {
+  private void testBrowseRepositoryImpl(SVNURL url) throws SVNException {
     final List<SVNDirEntry> list = new ArrayList<>();
     final SVNRepository repository = myVcs.getSvnKitManager().createRepository(url);
     repository.getDir(".", -1, null, dirEntry -> list.add(dirEntry));
@@ -116,7 +118,7 @@ public class SvnProtocolsTest extends Svn17TestCase {
 
   @Test
   public void testCheckout() throws Exception {
-    for (String s : ourTestURL) {
+    for (SVNURL s : ourTestURL) {
       System.out.println("Testing URL: " + s);
       testCheckoutImpl(s);
     }
@@ -124,13 +126,13 @@ public class SvnProtocolsTest extends Svn17TestCase {
 
   @Test
   public void testHistory() throws Exception {
-    for (String s : ourTestURL) {
+    for (SVNURL s : ourTestURL) {
       System.out.println("Testing URL: " + s);
       testHistoryImpl(s);
     }
   }
 
-  private void testHistoryImpl(String s) throws VcsException {
+  private void testHistoryImpl(SVNURL s) throws VcsException {
     final VcsHistoryProvider provider = myVcs.getVcsHistoryProvider();
     final VcsAppendableHistoryPartnerAdapter partner = new VcsAppendableHistoryPartnerAdapter() {
       @Override
@@ -142,7 +144,8 @@ public class SvnProtocolsTest extends Svn17TestCase {
       }
     };
     try {
-      provider.reportAppendableHistory(VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(s, true), partner);
+      provider
+        .reportAppendableHistory(VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(s.toDecodedString(), true), partner);
     } catch (ProcessCanceledException e) {
       //ok
     }
@@ -195,7 +198,7 @@ public class SvnProtocolsTest extends Svn17TestCase {
     return file;
   }
 
-  private File testCheckoutImpl(final String url) throws IOException {
+  private File testCheckoutImpl(SVNURL url) throws IOException {
     final File root = FileUtil.createTempDirectory("checkoutRoot", "");
     root.deleteOnExit();
     Assert.assertTrue(root.exists());

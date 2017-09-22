@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -202,15 +202,7 @@ public class ControlFlowUtils {
       if (aClass == null) {
         return true;
       }
-      final PsiField[] fields = aClass.getFields();
-      int numEnums = 0;
-      for (final PsiField field : fields) {
-        final PsiType fieldType = field.getType();
-        if (fieldType.equals(type)) {
-          numEnums++;
-        }
-      }
-      if (numEnums != numCases) {
+      if (!hasChildrenOfTypeCount(aClass, numCases, PsiEnumConstant.class)) {
         return true;
       }
     }
@@ -528,7 +520,7 @@ public class ControlFlowUtils {
     return hasChildrenOfTypeCount(codeBlock, count, PsiStatement.class);
   }
 
-  static <T extends PsiElement> boolean hasChildrenOfTypeCount(@Nullable PsiElement element, int count, @NotNull Class<T> aClass) {
+  public static <T extends PsiElement> boolean hasChildrenOfTypeCount(@Nullable PsiElement element, int count, @NotNull Class<T> aClass) {
     if (element == null) return false;
     int i = 0;
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
@@ -943,6 +935,52 @@ public class ControlFlowUtils {
     if(parent instanceof PsiForeachStatement && ((PsiForeachStatement)parent).getIteratedValue() == cur) return true;
     if(parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getCondition() == cur) return true;
     return false;
+  }
+
+  /**
+   * Finds the return statement which will be always executed after the supplied statement. It supports constructs like this:
+   * <pre>{@code
+   * if(condition) {
+   *   statement(); // this statement is supplied as a parameter
+   * }
+   * return true; // this return statement will be returned
+   * }</pre>
+   *
+   * @param statement statement to find the return after
+   * @return the found return statement or null.
+   */
+  @Nullable
+  public static PsiReturnStatement getNextReturnStatement(PsiStatement statement) {
+    PsiElement nextStatement = PsiTreeUtil.skipWhitespacesAndCommentsForward(statement);
+    if (nextStatement instanceof PsiReturnStatement) return (PsiReturnStatement)nextStatement;
+    PsiElement parent = statement.getParent();
+    if (parent instanceof PsiCodeBlock) {
+      PsiStatement[] statements = ((PsiCodeBlock)parent).getStatements();
+      if (statements.length == 0 || statements[statements.length - 1] != statement) return null;
+      parent = parent.getParent();
+      if (!(parent instanceof PsiBlockStatement)) return null;
+      parent = parent.getParent();
+    }
+    if (parent instanceof PsiIfStatement) return getNextReturnStatement((PsiStatement)parent);
+    return null;
+  }
+
+  /**
+   * @param statement statement to test
+   * @return true if statement is reachable or code is incomplete and reachability cannot be defined
+   */
+  public static boolean isReachable(@NotNull PsiStatement statement) {
+    ControlFlow flow;
+    PsiCodeBlock block = PsiTreeUtil.getParentOfType(statement, PsiCodeBlock.class);
+    if (block == null) return true;
+    try {
+      flow = ControlFlowFactory.getInstance(statement.getProject())
+        .getControlFlow(block, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+    }
+    catch (AnalysisCanceledException e) {
+      return true;
+    }
+    return ControlFlowUtil.isInstructionReachable(flow, flow.getStartOffset(statement), 0);
   }
 
   public enum InitializerUsageStatus {

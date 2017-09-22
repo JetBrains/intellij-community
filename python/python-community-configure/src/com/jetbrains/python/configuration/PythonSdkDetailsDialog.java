@@ -74,7 +74,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   private final PyConfigurableInterpreterList myInterpreterList;
   private final ProjectSdksModel myProjectSdksModel;
 
-  private Map<Sdk, SdkModificator> myModificators = FactoryMap.createMap(sdk -> sdk.getSdkModificator());
+  private Map<Sdk, SdkModificator> myModificators = FactoryMap.create(sdk -> sdk.getSdkModificator());
   private Set<SdkModificator> myModifiedModificators = new HashSet<>();
   private final Project myProject;
 

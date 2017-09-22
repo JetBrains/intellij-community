@@ -114,6 +114,7 @@ import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.refactoring.rename.*;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
@@ -575,14 +576,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   public List<IntentionAction> getAvailableIntentions() {
     doHighlighting();
-    PsiFile file = getFile();
-    Editor editor = getEditor();
-    if (editor instanceof EditorWindow) {
-      editor = ((EditorWindow)editor).getDelegate();
-      file = InjectedLanguageUtil.getTopLevelFile(file);
-    }
-    assertNotNull(file);
-    return getAvailableIntentions(editor, file);
+    return getAvailableIntentions(getHostEditor(), getHostFileAtCaret());
+  }
+
+  private Editor getHostEditor() {
+    return InjectedLanguageUtil.getTopLevelEditor(getEditor());
+  }
+
+  private PsiFile getHostFileAtCaret() {
+    return Objects.requireNonNull(PsiUtilBase.getPsiFileInEditor(getHostEditor(), getProject()));
   }
 
   @NotNull
@@ -617,7 +619,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void launchAction(@NotNull final IntentionAction action) {
-    invokeIntention(action, getFile(), getEditor(), action.getText());
+    invokeIntention(action, getHostFileAtCaret(), getHostEditor(), action.getText());
   }
 
   @Override

@@ -46,4 +46,13 @@ public class MatchResult {
     int result = compareDegrees(that, preferStartMatches);
     return result != 0 ? result : elementName.compareToIgnoreCase(that.elementName);
   }
+
+  @Override
+  public String toString() {
+    return "MatchResult{" +
+           "'" + elementName + '\'' +
+           ", degree=" + matchingDegree +
+           ", start=" + startMatch +
+           '}';
+  }
 }

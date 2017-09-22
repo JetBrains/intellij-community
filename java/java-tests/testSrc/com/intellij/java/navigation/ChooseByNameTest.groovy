@@ -50,7 +50,7 @@ class ChooseByNameTest extends LightCodeInsightFixtureTestCase {
     def wordSkipMatch = myFixture.addClass("class UiAbstractUtil {}")
     def camelMatch = myFixture.addClass("class UberInstructionUxTopicInterface {}")
     def middleMatch = myFixture.addClass("class BaseUiUtil {}")
-    def elements = getPopupElements(new GotoClassModel2(project), "uiuti")
+    def elements = gotoClass("uiuti")
     assert elements == [startMatch, wordSkipMatch, camelMatch, middleMatch]
   }
 
@@ -60,31 +60,22 @@ class ChooseByNameTest extends LightCodeInsightFixtureTestCase {
     def camelStartMatch = myFixture.addClass('class IntelligentTesting {}')
     def camelMiddleMatch = myFixture.addClass('class VeryIntelligentTesting {}')
 
-    assert getPopupElements(new GotoClassModel2(project), "*IT") == [endMatch, startMatch, camelStartMatch, camelMiddleMatch]
+    assert gotoClass("*IT") == [endMatch, startMatch, camelStartMatch, camelMiddleMatch]
   }
 
   void "test annotation syntax"() {
     def match = myFixture.addClass("@interface Anno1 {}")
     myFixture.addClass("class Anno2 {}")
-    def elements = getPopupElements(new GotoClassModel2(project), "@Anno")
-    assert elements == [match]
+    assert gotoClass("@Anno") == [match]
   }
 
   void "test no result for empty patterns"() {
     myFixture.addClass("@interface Anno1 {}")
     myFixture.addClass("class Anno2 {}")
 
-    def popup = createPopup(new GotoClassModel2(project))
-    assert calcPopupElements(popup, "") == []
-    popup.close(false)
-
-    popup = createPopup(new GotoClassModel2(project))
-    assert calcPopupElements(popup, "@") == []
-    popup.close(false)
-
-    popup = createPopup(new GotoFileModel(project))
-    assert calcPopupElements(popup, "foo/") == []
-    popup.close(false)
+    assert gotoClass("") == []
+    assert gotoClass("@") == []
+    assert gotoFile("foo/") == []
   }
 
   void "test filter overridden methods from goto symbol"() {
@@ -100,7 +91,7 @@ class Impl extends Intf {
 }
 """)
 
-    def elements = getPopupElements(new GotoSymbolModel2(project), "xxx")
+    def elements = gotoSymbol("xxx")
 
     assert intf.findMethodsByName('xxx1', false)[0] in elements
     assert intf.findMethodsByName('xxx2', false)[0] in elements
@@ -116,7 +107,7 @@ class Intf {
   void xxx2() {}
 }""")
 
-    def elements = getPopupElements(new GotoSymbolModel2(project), "xxx")
+    def elements = gotoSymbol("xxx")
 
     def xxx1 = null
     def xxx2 = null
@@ -128,46 +119,49 @@ class Intf {
   }
 
   void "test prefer exact extension matches"() {
-    def m = myFixture.addFileToProject("relaunch.m", "")
-    def mod = myFixture.addFileToProject("reference.mod", "")
-    def elements = getPopupElements(new GotoFileModel(project), "re*.m")
-    assert elements == [m, mod]
+    def m = addEmptyFile("relaunch.m")
+    def mod = addEmptyFile("reference.mod")
+    assert gotoFile('re*.m') == [m, mod]
+  }
+
+  void "test prefer exact filename match"() {
+    def i = addEmptyFile("foo/i.txt")
+    def index = addEmptyFile("index.html")
+    assert gotoFile('i') == [i, index]
   }
 
   void "test consider dot-idea files out of project"() {
-    def outside = myFixture.addFileToProject(".idea/workspace.xml", "")
-    def inside = myFixture.addFileToProject("workspace.txt", "")
-    assert getPopupElements(new GotoFileModel(project), "work", false) == [inside]
-    assert getPopupElements(new GotoFileModel(project), "work", true) == [inside, outside]
+    def outside = addEmptyFile(".idea/workspace.xml")
+    def inside = addEmptyFile("workspace.txt")
+    assert gotoFile("work", false) == [inside]
+    assert gotoFile("work", true) == [inside, outside]
   }
 
   void "test prefer better path matches"() {
     def fooIndex = myFixture.addFileToProject("foo/index.html", "foo")
     def fooBarIndex = myFixture.addFileToProject("foo/bar/index.html", "foo bar")
     def barFooIndex = myFixture.addFileToProject("bar/foo/index.html", "bar foo")
-    def elements = getPopupElements(new GotoFileModel(project), "foo/index")
-    assert elements == [fooIndex, barFooIndex, fooBarIndex]
+    assert gotoFile("foo/index") == [fooIndex, barFooIndex, fooBarIndex]
   }
 
   void "test sort same-named items by path"() {
     def files = (30..10).collect { i -> myFixture.addFileToProject("foo$i/index.html", "foo$i") }.reverse()
-    def elements = getPopupElements(new GotoFileModel(project), "index")
-    assert elements == files
+    assert gotoFile('index') == files
   }
 
   void "test middle matching for files and directories"() {
     def fooIndex = myFixture.addFileToProject("foo/index.html", "foo")
     def ooIndex = myFixture.addFileToProject("oo/index.html", "oo")
     def fooBarIndex = myFixture.addFileToProject("foo/bar/index.html", "foo bar")
-    assert getPopupElements(new GotoFileModel(project), "oo/index") == [ooIndex, fooIndex, fooBarIndex]
-    assert getPopupElements(new GotoFileModel(project), "ndex.html") == [fooIndex, ooIndex, fooBarIndex]
+    assert gotoFile("oo/index") == [ooIndex, fooIndex, fooBarIndex]
+    assert gotoFile("ndex.html") == [fooIndex, ooIndex, fooBarIndex]
   }
 
   void "test prefer files from current directory"() {
     def fooIndex = myFixture.addFileToProject("foo/index.html", "foo")
     def barIndex = myFixture.addFileToProject("bar/index.html", "bar")
-    def fooContext = myFixture.addFileToProject("foo/context.html", "")
-    def barContext = myFixture.addFileToProject("bar/context.html", "")
+    def fooContext = addEmptyFile("foo/context.html")
+    def barContext = addEmptyFile("bar/context.html")
 
     def popup = createPopup(new GotoFileModel(project), fooContext)
     assert calcPopupElements(popup, "index") == [fooIndex, barIndex]
@@ -176,116 +170,126 @@ class Intf {
     popup = createPopup(new GotoFileModel(project), barContext)
     assert calcPopupElements(popup, "index") == [barIndex, fooIndex]
   }
+  
+  private PsiFile addEmptyFile(String relativePath) {
+    return myFixture.addFileToProject(relativePath, "")
+  }
 
   void "test accept file paths starting with a dot"() {
-    def file = myFixture.addFileToProject("foo/index.html", "foo")
-    def popup = createPopup(new GotoFileModel(project))
-    assert calcPopupElements(popup, "./foo/in") == [file]
+    def file = addEmptyFile("foo/index.html")
+    assert gotoFile("./foo/in") == [file]
   }
 
   void "test don't match path to jdk"() {
-    def objects = getPopupElements(new GotoFileModel(project), "Object.java", true)
+    def objects = gotoFile("Object.java", true)
     assert objects.size() > 0
     assert (objects[0] as PsiFile).virtualFile.path.contains("mockJDK")
-    assert getPopupElements(new GotoFileModel(project), "mockJDK/Object.java", true).size() == 0
+    assert gotoFile("mockJDK/Object.java", true).size() == 0
   }
 
   void "test goto file can go to dir"() {
-    PsiFile fooIndex = myFixture.addFileToProject("foo/index.html", "foo")
-    PsiFile barIndex = myFixture.addFileToProject("bar.txt/bar.txt", "foo")
+    PsiFile fooIndex = addEmptyFile("foo/index.html")
+    PsiFile barIndex = addEmptyFile("bar.txt/bar.txt")
 
     def popup = createPopup(new GotoFileModel(project), fooIndex)
 
-    def fooDir = null
-    def barDir = null
-    runInEdtAndWait {
-      fooDir = fooIndex.containingDirectory
-      barDir = barIndex.containingDirectory
-    }
+    def fooDir = fooIndex.containingDirectory
+    def barDir = barIndex.containingDirectory
 
     assert calcPopupElements(popup, "foo/") == [fooDir]
     assert calcPopupElements(popup, "foo\\") == [fooDir]
     assert calcPopupElements(popup, "/foo") == [fooDir]
     assert calcPopupElements(popup, "\\foo") == [fooDir]
-    assert calcPopupElements(popup, "foo") == []
+    assert calcPopupElements(popup, "foo") == [fooDir]
     assert calcPopupElements(popup, "/index.html") == [fooIndex]
     assert calcPopupElements(popup, "\\index.html") == [fooIndex]
-    assert calcPopupElements(popup, "index.html/") == [fooIndex]
-    assert calcPopupElements(popup, "index.html\\") == [fooIndex]
+    assert calcPopupElements(popup, "index.html/") == []
+    assert calcPopupElements(popup, "index.html\\") == []
 
     assert calcPopupElements(popup, "bar.txt/") == [barDir]
     assert calcPopupElements(popup, "bar.txt\\") == [barDir]
-    assert calcPopupElements(popup, "/bar.txt") == [barDir]
-    assert calcPopupElements(popup, "\\bar.txt") == [barDir]
-    assert calcPopupElements(popup, "bar.txt") == [barIndex]
+    assert calcPopupElements(popup, "/bar.txt") == [barIndex, barDir]
+    assert calcPopupElements(popup, "\\bar.txt") == [barIndex, barDir]
+    assert calcPopupElements(popup, "bar.txt") == [barIndex, barDir]
+    assert calcPopupElements(popup, "bar") == [barIndex, barDir]
     popup.close(false)
+  }
+
+  void "test prefer files to directories even if longer"() {
+    def fooFile = addEmptyFile('dir/fooFile.txt')
+    def fooDir = addEmptyFile('foo/barFile.txt').containingDirectory
+    
+    def popup = createPopup(new GotoFileModel(project))
+    def popupElements = calcPopupElements(popup, 'foo')
+
+    assert popupElements == [fooFile, fooDir]
+    assert popup.calcSelectedIndex(popupElements.toArray(), 'foo') == 0
   }
 
   void "test find method by qualified name"() {
     def clazz = myFixture.addClass("package foo.bar; class Goo { void zzzZzz() {} }")
     def method = clazz.methods[0]
-    assert getPopupElements(new GotoSymbolModel2(project), 'zzzZzz') == [method]
-    assert getPopupElements(new GotoSymbolModel2(project), 'goo.zzzZzz') == [method]
-    assert getPopupElements(new GotoSymbolModel2(project), 'foo.bar.goo.zzzZzz') == [method]
-    assert getPopupElements(new GotoSymbolModel2(project), 'foo.zzzZzz') == [method]
-    assert getPopupElements(new GotoSymbolModel2(project), 'bar.zzzZzz') == [method]
-    assert getPopupElements(new GotoSymbolModel2(project), 'bar.goo.zzzZzz') == [method]
+    assert gotoSymbol('zzzZzz') == [method]
+    assert gotoSymbol('goo.zzzZzz') == [method]
+    assert gotoSymbol('foo.bar.goo.zzzZzz') == [method]
+    assert gotoSymbol('foo.zzzZzz') == [method]
+    assert gotoSymbol('bar.zzzZzz') == [method]
+    assert gotoSymbol('bar.goo.zzzZzz') == [method]
   }
 
   void "test line and column suffix"() {
     def c = myFixture.addClass("package foo; class Bar {}")
-    assert getPopupElements(new GotoClassModel2(project), 'Bar') == [c]
-    assert getPopupElements(new GotoClassModel2(project), 'Bar:2') == [c]
-    assert getPopupElements(new GotoClassModel2(project), 'Bar:2:3') == [c]
-    assert getPopupElements(new GotoClassModel2(project), 'Bar:[2:3]') == [c]
-    assert getPopupElements(new GotoClassModel2(project), 'Bar:[2,3]') == [c]
+    assert gotoClass('Bar') == [c]
+    assert gotoClass('Bar:2') == [c]
+    assert gotoClass('Bar:2:3') == [c]
+    assert gotoClass('Bar:[2:3]') == [c]
+    assert gotoClass('Bar:[2,3]') == [c]
   }
 
   void "test custom line suffixes"() {
-    def file = myFixture.addFileToProject("Bar.txt", "")
-    def model = new GotoFileModel(project)
-    assert getPopupElements(model, 'Bar:2') == [file]
-    assert getPopupElements(model, 'Bar(2)') == [file]
-    assert getPopupElements(model, 'Bar on line 2') == [file]
-    assert getPopupElements(model, 'Bar at line 2') == [file]
-    assert getPopupElements(model, 'Bar 2:39') == [file]
-    assert getPopupElements(model, 'Bar#L2') == [file]
-    assert getPopupElements(model, 'Bar?l=2') == [file]
+    def file = addEmptyFile("Bar.txt")
+    assert gotoFile('Bar:2') == [file]
+    assert gotoFile('Bar(2)') == [file]
+    assert gotoFile('Bar on line 2') == [file]
+    assert gotoFile('Bar at line 2') == [file]
+    assert gotoFile('Bar 2:39') == [file]
+    assert gotoFile('Bar#L2') == [file]
+    assert gotoFile('Bar?l=2') == [file]
   }
 
   void "test dollar"() {
     def bar = myFixture.addClass("package foo; class Bar { class Foo {} }")
     def foo = bar.innerClasses[0]
     myFixture.addClass("package goo; class Goo { }")
-    assert getPopupElements(new GotoClassModel2(project), 'Bar$Foo') == [foo]
-    assert getPopupElements(new GotoClassModel2(project), 'foo.Bar$Foo') == [foo]
-    assert getPopupElements(new GotoClassModel2(project), 'foo.B$F') == [foo]
-    assert !getPopupElements(new GotoClassModel2(project), 'foo$Foo')
-    assert !getPopupElements(new GotoClassModel2(project), 'foo$Bar')
-    assert !getPopupElements(new GotoClassModel2(project), 'foo$Bar$Foo')
-    assert !getPopupElements(new GotoClassModel2(project), 'foo$Goo')
+    assert gotoClass('Bar$Foo') == [foo]
+    assert gotoClass('foo.Bar$Foo') == [foo]
+    assert gotoClass('foo.B$F') == [foo]
+    assert !gotoClass('foo$Foo')
+    assert !gotoClass('foo$Bar')
+    assert !gotoClass('foo$Bar$Foo')
+    assert !gotoClass('foo$Goo')
   }
 
   void "test anonymous classes"() {
     def goo = myFixture.addClass("package goo; class Goo { Runnable r = new Runnable() {}; }")
-    assert getPopupElements(new GotoClassModel2(project), 'Goo$1') == [goo]
-    assert getPopupElements(new GotoSymbolModel2(project), 'Goo$1') == [goo]
+    assert gotoClass('Goo$1') == [goo]
+    assert gotoSymbol('Goo$1') == [goo]
   }
 
   void "test qualified name matching"() {
     def bar = myFixture.addClass("package foo.bar; class Bar { }")
     def bar2 = myFixture.addClass("package goo.baz; class Bar { }")
-    assert getPopupElements(new GotoClassModel2(project), 'foo.Bar') == [bar]
-    assert getPopupElements(new GotoClassModel2(project), 'foo.bar.Bar') == [bar]
-    assert getPopupElements(new GotoClassModel2(project), 'goo.Bar') == [bar2]
-    assert getPopupElements(new GotoClassModel2(project), 'goo.baz.Bar') == [bar2]
+    assert gotoClass('foo.Bar') == [bar]
+    assert gotoClass('foo.bar.Bar') == [bar]
+    assert gotoClass('goo.Bar') == [bar2]
+    assert gotoClass('goo.baz.Bar') == [bar2]
   }
 
   void "test try lowercase pattern if nothing matches"() {
     def match = myFixture.addClass("class IPRoi { }")
     def nonMatch = myFixture.addClass("class InspectionProfileImpl { }")
-    assert getPopupElements(new GotoClassModel2(project), 'IPRoi') == [match]
-    assert getPopupElements(new GotoClassModel2(project), 'IproImpl') == [nonMatch]
+    assert gotoClass('IPRoi') == [match]
+    assert gotoClass('IproImpl') == [nonMatch]
   }
 
   private static filterJavaItems(List<Object> items) {
@@ -305,13 +309,13 @@ class Intf {
       sdkRun3 = myFixture.javaFacade.findClass("java.security.PrivilegedExceptionAction").methods[0]
     }
 
-    def withLibs = filterJavaItems(getPopupElements(new GotoSymbolModel2(project), 'run ', true))
+    def withLibs = filterJavaItems(gotoSymbol('run ', true))
     withLibs.remove(sdkRun2)
     withLibs.remove(sdkRun3)
     assert withLibs == [sdkRun]
     assert !(ourRun in withLibs)
 
-    def noLibs = filterJavaItems(getPopupElements(new GotoSymbolModel2(project), 'run ', false))
+    def noLibs = filterJavaItems(gotoSymbol('run ', false))
     assert noLibs == [ourRun]
     assert !(sdkRun in noLibs)
   }
@@ -327,15 +331,15 @@ class Intf {
       sub = subClass.methods[0]
     }
 
-    assert getPopupElements(new GotoSymbolModel2(project), 'Ba.xpai', false) == [base]
-    assert getPopupElements(new GotoSymbolModel2(project), 'Su.xpai', false) == [sub]
+    assert gotoSymbol('Ba.xpai', false) == [base]
+    assert gotoSymbol('Su.xpai', false) == [sub]
   }
 
   void "test groovy script class with non-identifier name"() {
-    GroovyFile file1 = myFixture.addFileToProject('foo.groovy', '') as GroovyFile
-    GroovyFile file2 = myFixture.addFileToProject('foo-bar.groovy', '') as GroovyFile
+    GroovyFile file1 = addEmptyFile('foo.groovy') as GroovyFile
+    GroovyFile file2 = addEmptyFile('foo-bar.groovy') as GroovyFile
 
-    def variants = getPopupElements(new GotoSymbolModel2(project), 'foo', false)
+    def variants = gotoSymbol('foo', false)
     runInEdtAndWait { assert variants == [file1.scriptClass, file2.scriptClass] }
   }
 
@@ -363,7 +367,7 @@ class Intf {
   void "test out-of-project-content files"() {
     def scope = ProjectScope.getAllScope(project)
     def file = myFixture.javaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, scope).containingFile
-    def elements = getPopupElements(new GotoFileModel(project), "Object.class", true)
+    def elements = gotoFile("Object.class", true)
     assert file in elements
   }
 
@@ -379,33 +383,44 @@ class Intf {
   }
 
   void "test file path matching without slashes"() {
-    def fooBarFile = myFixture.addFileToProject("foo/bar/index_fooBar.html", "")
-    def fbFile = myFixture.addFileToProject("fb/index_fb.html", "")
-    def fbSomeFile = myFixture.addFileToProject("fb/some.dir/index_fbSome.html", "")
-    def someFbFile = myFixture.addFileToProject("some/fb/index_someFb.html", "")
+    def fooBarFile = addEmptyFile("foo/bar/index_fooBar.html")
+    def fbFile = addEmptyFile("fb/index_fb.html")
+    def fbSomeFile = addEmptyFile("fb/some.dir/index_fbSome.html")
+    def someFbFile = addEmptyFile("some/fb/index_someFb.html")
 
-    def popup = createPopup(new GotoFileModel(project))
-    assert calcPopupElements(popup, "barindex") == [fooBarFile]
-    assert calcPopupElements(popup, "fooindex") == [fooBarFile]
-    assert calcPopupElements(popup, "fbindex") == [fbFile, someFbFile, fooBarFile, fbSomeFile]
-    assert calcPopupElements(popup, "fbhtml") == [fbFile, someFbFile, fbSomeFile, fooBarFile]
+    assert gotoFile("barindex") == [fooBarFile]
+    assert gotoFile("fooindex") == [fooBarFile]
+    assert gotoFile("fbindex") == [fbFile, someFbFile, fooBarFile, fbSomeFile]
+    assert gotoFile("fbhtml") == [fbFile, someFbFile, fbSomeFile, fooBarFile]
 
     // partial slashes
-    assert calcPopupElements(popup, "somefb/index.html") == [someFbFile]
-    assert calcPopupElements(popup, "somefb\\index.html") == [someFbFile]
+    assert gotoFile("somefb/index.html") == [someFbFile]
+    assert gotoFile("somefb\\index.html") == [someFbFile]
   }
 
   void "test fix keyboard layout"() {
-    assert (getPopupElements(new GotoClassModel2(project), 'Ыекштп')[0] as PsiClass).name == 'String'
-    assert (getPopupElements(new GotoSymbolModel2(project), 'Ыекштп')[0] as PsiClass).name == 'String'
-    assert (getPopupElements(new GotoFileModel(project), 'Ыекштп')[0] as PsiFile).name == 'String.class'
+    assert (gotoClass('Ыекштп')[0] as PsiClass).name == 'String'
+    assert (gotoSymbol('Ыекштп')[0] as PsiClass).name == 'String'
+    assert (gotoFile('Ыекштп')[0] as PsiFile).name == 'String.class'
   }
 
   void "test prefer exact case match"() {
     def upper = myFixture.addClass("package foo; class SOMECLASS {}")
     def camel = myFixture.addClass("package bar; class SomeClass {}")
-    assert getPopupElements(new GotoClassModel2(project), 'SomeClass') == [camel, upper]
-    assert getPopupElements(new GotoFileModel(project), 'SomeClass.java') == [camel.containingFile, upper.containingFile]
+    assert gotoClass('SomeClass') == [camel, upper]
+    assert gotoFile('SomeClass.java') == [camel.containingFile, upper.containingFile]
+  }
+  
+  private List<Object> gotoClass(String text, boolean checkboxState = false) {
+    return getPopupElements(new GotoClassModel2(project), text, checkboxState)
+  }
+
+  private List<Object> gotoSymbol(String text, boolean checkboxState = false) {
+    return getPopupElements(new GotoSymbolModel2(project), text, checkboxState)
+  }
+  
+  private List<Object> gotoFile(String text, boolean checkboxState = false) {
+    return getPopupElements(new GotoFileModel(project), text, checkboxState)
   }
 
   private List<Object> getPopupElements(ChooseByNameModel model, String text, boolean checkboxState = false) {

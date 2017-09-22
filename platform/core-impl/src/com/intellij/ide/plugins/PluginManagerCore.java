@@ -307,7 +307,7 @@ public class PluginManagerCore {
     return ourId2Index.get(id);
   }
 
-  static boolean isModuleDependency(@NotNull PluginId dependentPluginId) {
+  public static boolean isModuleDependency(@NotNull PluginId dependentPluginId) {
     return dependentPluginId.getIdString().startsWith(MODULE_DEPENDENCY_PREFIX);
   }
 

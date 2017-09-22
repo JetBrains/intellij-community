@@ -92,8 +92,8 @@ public class ChainCompletionContext {
     myResolveScope = context.getResolveScope();
     myProject = context.getProject();
     myResolveHelper = PsiResolveHelper.SERVICE.getInstance(myProject);
-    myQualifierClassResolver = FactoryMap.createMap(sign -> sign.resolveQualifier(myProject, myResolveScope, accessValidator()));
-    myResolver = FactoryMap.createMap(sign -> sign.resolve(myProject, myResolveScope, accessValidator()));
+    myQualifierClassResolver = FactoryMap.create(sign1 -> sign1.resolveQualifier(myProject, myResolveScope, accessValidator()));
+    myResolver = FactoryMap.create(sign -> sign.resolve(myProject, myResolveScope, accessValidator()));
   }
 
   @NotNull

@@ -1,15 +1,13 @@
 package com.intellij.tasks.context;
 
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationType;
+import com.intellij.notification.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.vcs.BranchChangeListener;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.event.HyperlinkEvent;
 
 public class BranchContextTracker implements BranchChangeListener {
 
@@ -42,20 +40,27 @@ public class BranchContextTracker implements BranchChangeListener {
 
     myContextManager.clearContext();
     myContextManager.loadContext(contextName);
-    String content = "User interface layout has been restored to what it was in branch ‘" + branchName + "'<br>";
-    if (myLastBranch != null && myContextManager.hasContext(getContextName(myLastBranch))) {
-      content += "<a href='restore'>Rollback to '" + myLastBranch + "' layout</a>&nbsp;&nbsp;";
-    }
-    content += "<a href='configure'>Configure</a>";
 
-    NOTIFICATION.createNotification(null, null, content, NotificationType.INFORMATION, (notification, event) -> {
-      if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
-      if ("configure".equals(event.getDescription())) {
+    Notification notification =
+      NOTIFICATION.createNotification("Workspace is restored as it was in branch ‘" + branchName + "'", NotificationType.INFORMATION);
+    if (myLastBranch != null && myContextManager.hasContext(getContextName(myLastBranch))) {
+      notification.addAction(new NotificationAction("Rollback") {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          myContextManager.clearContext();
+          myContextManager.loadContext(getContextName(myLastBranch));
+        }
+      });
+    }
+    notification.addAction(new NotificationAction("Configure...") {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
         new ConfigureBranchContextDialog(myProject).show();
       }
-      else if ("restore".equals(event.getDescription())) {
-        myContextManager.clearContext();
-        myContextManager.loadContext(getContextName(myLastBranch));
+    }).setContextHelpAction(new AnAction("What is workspace?", "Workspace includes open editors, current run configuration, and breakpoints.", null) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+
       }
     }).notify(myProject);
   }

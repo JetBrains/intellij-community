@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Collection;
 
 public class SwitchStatementsWithoutDefaultInspection extends BaseInspection {
 
@@ -69,9 +71,6 @@ public class SwitchStatementsWithoutDefaultInspection extends BaseInspection {
       if (switchStatementHasDefault(statement)) {
         return;
       }
-      if (m_ignoreFullyCoveredEnums && switchStatementIsFullyCoveredEnum(statement)) {
-        return;
-      }
       registerStatementError(statement);
     }
 
@@ -80,26 +79,18 @@ public class SwitchStatementsWithoutDefaultInspection extends BaseInspection {
       if (body == null) {
         return true; // do not warn about incomplete code
       }
-      final PsiStatement[] statements = body.getStatements();
-      if (statements.length == 0) {
-        return true; // do not warn when no switch branches are present at all
+      final Collection<PsiSwitchLabelStatement> labelStatements = PsiTreeUtil.findChildrenOfType(body, PsiSwitchLabelStatement.class);
+      // warn only when switch branches are present
+      if (labelStatements.isEmpty() || labelStatements.stream().anyMatch(PsiSwitchLabelStatement::isDefaultCase)) {
+        return true;
       }
-      for (final PsiStatement child : statements) {
-        if (!(child instanceof PsiSwitchLabelStatement)) {
-          continue;
-        }
-        final PsiSwitchLabelStatement switchLabelStatement = (PsiSwitchLabelStatement)child;
-        if (switchLabelStatement.isDefaultCase()) {
-          return true;
-        }
-      }
-      return false;
+      return m_ignoreFullyCoveredEnums && switchStatementIsFullyCoveredEnum(statement, labelStatements.size());
     }
 
-    private boolean switchStatementIsFullyCoveredEnum(PsiSwitchStatement statement) {
+    private boolean switchStatementIsFullyCoveredEnum(PsiSwitchStatement statement, int branchCount) {
       final PsiExpression expression = statement.getExpression();
       if (expression == null) {
-        return false;
+        return true; // don't warn on incomplete code
       }
       final PsiType type = expression.getType();
       if (!(type instanceof PsiClassType)) {
@@ -107,23 +98,7 @@ public class SwitchStatementsWithoutDefaultInspection extends BaseInspection {
       }
       final PsiClassType classType = (PsiClassType)type;
       final PsiClass aClass = classType.resolve();
-      if (aClass == null || !aClass.isEnum()) {
-        return false;
-      }
-      final PsiCodeBlock body = statement.getBody();
-      if (body == null) {
-        return false;
-      }
-      final PsiStatement[] statements = body.getStatements();
-      int numCases = 0;
-      for (final PsiStatement child : statements) {
-        if (child instanceof PsiSwitchLabelStatement) {
-          numCases++;
-        }
-      }
-      PsiEnumConstant[] enumConstants = PsiTreeUtil.getChildrenOfType(aClass, PsiEnumConstant.class);
-      int numEnums = enumConstants == null ? 0 : enumConstants.length;
-      return numEnums == numCases;
+      return aClass != null && aClass.isEnum() && ControlFlowUtils.hasChildrenOfTypeCount(aClass, branchCount, PsiEnumConstant.class);
     }
   }
 }

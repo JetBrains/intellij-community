@@ -106,13 +106,23 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     return UIUtil.getListBackground();
   }
 
+  public static class ItemMatchers {
+    @Nullable public final Matcher nameMatcher;
+    @Nullable public final Matcher locationMatcher;
+
+    public ItemMatchers(@Nullable Matcher nameMatcher, @Nullable Matcher locationMatcher) {
+      this.nameMatcher = nameMatcher;
+      this.locationMatcher = locationMatcher;
+    }
+  }
+
   private class LeftRenderer extends ColoredListCellRenderer {
     private final String myModuleName;
-    private final Matcher myMatcher;
+    private final ItemMatchers myMatchers;
 
-    public LeftRenderer(final String moduleName, Matcher matcher) {
+    public LeftRenderer(final String moduleName, @NotNull ItemMatchers matchers) {
       myModuleName = moduleName;
-      myMatcher = matcher;
+      myMatchers = matchers;
     }
 
     @Override
@@ -152,7 +162,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         if (nameAttributes == null) nameAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color);
 
         assert name != null : "Null name for PSI element " + element + " (by " + PsiElementListCellRenderer.this + ")";
-        SpeedSearchUtil.appendColoredFragmentForMatcher(name,  this, nameAttributes, myMatcher, bgColor, selected);
+        SpeedSearchUtil.appendColoredFragmentForMatcher(name, this, nameAttributes, myMatchers.nameMatcher, bgColor, selected);
         if (!element.isValid()) {
           append(" Invalid", SimpleTextAttributes.ERROR_ATTRIBUTES);
           return;
@@ -161,7 +171,8 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
         String containerText = getContainerTextForLeftComponent(element, name + (myModuleName != null ? myModuleName + "        " : ""));
         if (containerText != null) {
-          append(" " + containerText, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
+          SimpleTextAttributes locationAttrs = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY);
+          SpeedSearchUtil.appendColoredFragmentForMatcher(" " + containerText, this, locationAttrs, myMatchers.locationMatcher, bgColor, selected);
         }
       }
       else if (!customizeNonPsiElementLeftRenderer(this, list, value, index, selected, hasFocus)) {
@@ -205,7 +216,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       myRightComponentWidth += spacer.getPreferredSize().width;
     }
 
-    ListCellRenderer leftRenderer = new LeftRenderer(null, MatcherHolder.getAssociatedMatcher(list));
+    ListCellRenderer leftRenderer = new LeftRenderer(null, getItemMatchers(list, value));
     final Component leftCellRendererComponent = leftRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     add(leftCellRendererComponent, LEFT);
     final Color bg = isSelected ? UIUtil.getListSelectionBackground() : leftCellRendererComponent.getBackground();
@@ -217,6 +228,11 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       spacer.setBackground(bg);
     }
     return this;
+  }
+
+  @NotNull
+  protected ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {
+    return new ItemMatchers(MatcherHolder.getAssociatedMatcher(list), null);
   }
 
   protected void setFocusBorderEnabled(boolean enabled) {

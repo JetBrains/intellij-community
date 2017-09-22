@@ -16,12 +16,15 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -31,7 +34,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -49,8 +51,9 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
   private static class StringBufferReplaceableByStringFix extends InspectionGadgetsFix {
 
     private final boolean isStringBuilder;
-    private final List<PsiComment> leadingComments = new ArrayList<>();
-    private final List<PsiElement> commentsAndWhitespace = new ArrayList<>();
+    private final List<PsiComment> leadingComments = new SmartList<>();
+    private final List<PsiComment> comments = new SmartList<>();
+    private int currentLine = -1;
 
     StringBufferReplaceableByStringFix(boolean isStringBuilder) {
       this.isStringBuilder = isStringBuilder;
@@ -59,12 +62,9 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
     @NotNull
     @Override
     public String getName() {
-      if (isStringBuilder) {
-        return InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix");
-      }
-      else {
-        return InspectionGadgetsBundle.message("string.buffer.replaceable.by.string.quickfix");
-      }
+      return isStringBuilder
+             ? InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")
+             : InspectionGadgetsBundle.message("string.buffer.replaceable.by.string.quickfix");
     }
 
     @NotNull
@@ -198,13 +198,16 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
 
     @Nullable
     StringBuilder buildStringExpression(PsiElement element, @NonNls StringBuilder result) {
+      if (currentLine < 0) {
+        currentLine = getLineNumber(element);
+      }
       if (element instanceof PsiNewExpression) {
         final PsiNewExpression newExpression = (PsiNewExpression)element;
         final PsiExpressionList argumentList = newExpression.getArgumentList();
         if (argumentList == null) {
           return null;
         }
-        addCommentsBefore(argumentList, result);
+        addCommentsBefore(argumentList, false, result);
         final PsiExpression[] arguments = argumentList.getExpressions();
         if (arguments.length == 1) {
           final PsiExpression argument = arguments[0];
@@ -248,10 +251,7 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
             return null;
           }
           if (arguments.length > 1) {
-            if (result.length() != 0) {
-              insertPlus(result);
-            }
-            addCommentsBefore(argumentList, result);
+            addCommentsBefore(argumentList, result.length() != 0, result);
             result.append("String.valueOf").append(argumentList.getText());
             return result;
           }
@@ -259,8 +259,7 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
           final PsiType type = argument.getType();
           final String argumentText = argument.getText();
           if (result.length() != 0) {
-            insertPlus(result);
-            addCommentsBefore(argument, result);
+            addCommentsBefore(argument, true, result);
             if (ParenthesesUtils.getPrecedence(argument) > ParenthesesUtils.ADDITIVE_PRECEDENCE ||
                 (type instanceof PsiPrimitiveType && ParenthesesUtils.getPrecedence(argument) == ParenthesesUtils.ADDITIVE_PRECEDENCE)) {
               result.append('(').append(argumentText).append(')');
@@ -278,7 +277,7 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
             }
           }
           else {
-            addCommentsBefore(argumentList, result);
+            addCommentsBefore(argumentList, false, result);
             if (type instanceof PsiPrimitiveType) {
               if (argument instanceof PsiLiteralExpression) {
                 final PsiLiteralExpression literalExpression = (PsiLiteralExpression)argument;
@@ -317,46 +316,46 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
       return result;
     }
 
-    private void addCommentsBefore(PsiElement anchor, StringBuilder out) {
+    private void addCommentsBefore(PsiElement anchor, boolean insertPlus, StringBuilder out) {
+      final boolean operationSignOnNextLine = CodeStyleSettingsManager.getSettings(anchor.getProject())
+        .getCommonSettings(JavaLanguage.INSTANCE).BINARY_OPERATION_SIGN_ON_NEXT_LINE;
+      final int lineNumber = getLineNumber(anchor);
+      final boolean insertNewLine = currentLine != lineNumber;
+      currentLine = lineNumber;
       final int offset = anchor.getTextOffset();
-      boolean newlineAdded = false;
-      boolean newlineEncountered = false;
-      for (final Iterator<PsiElement> iterator = commentsAndWhitespace.iterator(); iterator.hasNext(); ) {
+      if (insertPlus && !operationSignOnNextLine) {
+        out.append('+');
+      }
+      for (final Iterator<PsiComment> iterator = comments.iterator(); iterator.hasNext(); ) {
         final PsiElement element = iterator.next();
         if (element.getTextOffset() >= offset) {
           break;
         }
-        if (element instanceof PsiComment) {
-          final PsiComment comment = (PsiComment)element;
-          if (out.length() == 0) {
-            leadingComments.add(comment);
+        final PsiComment comment = (PsiComment)element;
+        if (out.length() == 0) {
+          leadingComments.add(comment);
+        }
+        else {
+          final PsiElement prev = comment.getPrevSibling();
+          if (prev instanceof PsiWhiteSpace) {
+            out.append(prev.getText());
           }
-          else {
-            final PsiElement prev = comment.getPrevSibling();
-            if (prev instanceof PsiWhiteSpace) {
-              out.append(prev.getText());
-            }
-            out.append(comment.getText());
-            final PsiElement next = comment.getNextSibling();
-            if (next instanceof PsiWhiteSpace) {
-              final String text = next.getText();
-              if (text.contains("\n")) {
-                newlineAdded = true;
-              }
+          out.append(comment.getText());
+          final PsiElement next = comment.getNextSibling();
+          if (next instanceof PsiWhiteSpace) {
+            final String text = next.getText();
+            if (!text.contains("\n")) {
               out.append(text);
             }
           }
         }
-        else if (element instanceof PsiWhiteSpace) {
-          final String text = element.getText();
-          if (text.contains("\n")) {
-            newlineEncountered = true;
-          }
-        }
         iterator.remove();
       }
-      if (newlineEncountered && !newlineAdded && out.length() != 0) {
-        out.append("\n");
+      if (insertNewLine && out.length() > 0) {
+        out.append('\n');
+      }
+      if (insertPlus && operationSignOnNextLine) {
+        out.append('+');
       }
     }
 
@@ -374,73 +373,34 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
 
     private void addTrailingCommentsAfter(PsiElement anchor) {
       final PsiElement parent = anchor.getParent();
-      for (int i = commentsAndWhitespace.size() - 1; i >= 0; i--) {
-        final PsiElement element = commentsAndWhitespace.get(i);
-        if (element instanceof PsiComment) {
-          final PsiComment comment = (PsiComment)element;
-          parent.addAfter(comment, anchor);
-          final PsiElement sibling = comment.getPrevSibling();
-          if (sibling instanceof PsiWhiteSpace) {
-            parent.addAfter(sibling, anchor);
-          }
+      for (int i = comments.size() - 1; i >= 0; i--) {
+        final PsiComment comment = comments.get(i);
+        parent.addAfter(comment, anchor);
+        final PsiElement sibling = comment.getPrevSibling();
+        if (sibling instanceof PsiWhiteSpace) {
+          parent.addAfter(sibling, anchor);
         }
       }
-      commentsAndWhitespace.clear();
+      comments.clear();
     }
 
     void collectComments(PsiElement element) {
-      commentsAndWhitespace.addAll(PsiTreeUtil.findChildrenOfAnyType(element, PsiComment.class, PsiWhiteSpace.class));
+      comments.addAll(PsiTreeUtil.findChildrenOfType(element, PsiComment.class));
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiExpressionStatement) && !(parent instanceof PsiDeclarationStatement)) {
         return;
       }
       PsiComment comment = PsiTreeUtil.getNextSiblingOfType(element, PsiComment.class);
       while (comment != null) {
-        commentsAndWhitespace.add(comment);
+        comments.add(comment);
         comment = PsiTreeUtil.getNextSiblingOfType(comment, PsiComment.class);
-      }
-      final PsiElement sibling = parent.getNextSibling();
-      if (sibling instanceof PsiWhiteSpace) {
-        commentsAndWhitespace.add(sibling);
       }
     }
 
-    private static void insertPlus(@NonNls StringBuilder result) {
-      final int lastIndex = result.length() - 1;
-      if (result.charAt(lastIndex) == '\n') {
-        int index = result.length() - 2;
-        while (index > 0) {
-          if (result.charAt(index) == '\n') {
-            break;
-          }
-          index--;
-        }
-        boolean insideLiteral = false;
-        boolean escape = false;
-        while (index < lastIndex) {
-          final char c = result.charAt(index);
-          if (c == '"' && !escape) {
-            insideLiteral = !insideLiteral;
-          }
-          else if (c == '\\' && insideLiteral) {
-            escape = true;
-            index++;
-            continue;
-          }
-          else if (!insideLiteral && c == '/' && result.charAt(index + 1) == '/') {
-            if (index != 0) {
-              result.insert(index, "+ ");
-            }
-            return;
-          }
-          index++;
-          escape = false;
-        }
-        result.insert(lastIndex, '+');
-      }
-      else {
-        result.append('+');
-      }
+    private static int getLineNumber(PsiElement element) {
+      final Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(element.getContainingFile());
+      assert document != null;
+      return document.getLineNumber(element.getTextRange().getStartOffset());
     }
 
     private class StringBuildingVisitor extends JavaRecursiveElementWalkingVisitor {

@@ -17,7 +17,6 @@ package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus;
@@ -123,17 +122,5 @@ abstract class BaseStreamApiMigration {
     else {
       statement.delete();
     }
-  }
-
-  static boolean isReachable(PsiReturnStatement target) {
-    ControlFlow flow;
-    try {
-      flow = ControlFlowFactory.getInstance(target.getProject())
-        .getControlFlow(target.getParent(), LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
-    }
-    catch (AnalysisCanceledException e) {
-      return true;
-    }
-    return ControlFlowUtil.isInstructionReachable(flow, flow.getStartOffset(target), 0);
   }
 }

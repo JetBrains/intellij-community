@@ -16,6 +16,7 @@
 package com.intellij.openapi.fileChooser.tree;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,6 +27,7 @@ import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import java.util.ArrayList;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 import static com.intellij.util.concurrency.AppExecutorUtil.createBoundedScheduledExecutorService;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -40,6 +42,7 @@ public class FileRefresher implements Disposable {
   private final ScheduledExecutorService executor = createBoundedScheduledExecutorService("FileRefresher", 1);
   private final boolean recursive;
   private final long delay;
+  private final Supplier<ModalityState> supplier;
   private final ArrayList<Object> watchers = new ArrayList<>();
   private final ArrayList<VirtualFile> files = new ArrayList<>();
   private final AtomicBoolean scheduled = new AtomicBoolean();
@@ -51,12 +54,14 @@ public class FileRefresher implements Disposable {
   /**
    * @param recursive {@code true} if files should be considered as roots
    * @param delay     an amount of seconds before refreshing files
+   * @param supplier  a provider for modality state that can be invoked on background thread
    * @throws IllegalArgumentException if the specified delay is not positive
    */
-  public FileRefresher(boolean recursive, long delay) {
+  public FileRefresher(boolean recursive, long delay, Supplier<ModalityState> supplier) {
     if (delay <= 0) throw new IllegalArgumentException("delay");
     this.recursive = recursive;
     this.delay = delay;
+    this.supplier = supplier;
   }
 
   /**
@@ -147,7 +152,10 @@ public class FileRefresher implements Disposable {
     RefreshSession session;
     synchronized (files) {
       if (this.session != null || files.isEmpty()) return;
-      session = RefreshQueue.getInstance().createSession(true, recursive, this::finish);
+      ModalityState state = supplier == null ? null : supplier.get();
+      if (state == null) state = ModalityState.any();
+      LOG.debug("modality state ", state);
+      session = RefreshQueue.getInstance().createSession(true, recursive, this::finish, state);
       session.addAllFiles(files);
       this.session = session;
     }

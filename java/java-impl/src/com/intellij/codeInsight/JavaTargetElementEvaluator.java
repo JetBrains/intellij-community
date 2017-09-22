@@ -22,7 +22,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.search.JavaOverridingMethodsSearcher;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -105,7 +104,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
         !InheritanceUtil.isInheritorOrSelf(specificQualifierClass, qualifierClass, true)) {
       return null;
     }
-    return JavaOverridingMethodsSearcher.findOverridingMethod(method.getProject(), specificQualifierClass, method, qualifierClass);
+    return MethodSignatureUtil.findMethodBySuperMethod(specificQualifierClass, method, true);
   }
 
   @Override

@@ -64,11 +64,11 @@ import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
 
 public class SvnHistoryProvider
@@ -267,7 +267,7 @@ public class SvnHistoryProvider
 
   private static abstract class LogLoader {
     protected final boolean myShowMergeSources;
-    protected String myUrl;
+    protected SVNURL myUrl;
     protected boolean mySupport15;
     protected final SvnVcs myVcs;
     protected final FilePath myFile;
@@ -303,7 +303,7 @@ public class SvnHistoryProvider
       if (myException != null) throw myException;
     }
 
-    protected abstract void preliminary();
+    protected abstract void preliminary() throws SvnBindException;
 
     protected abstract void load();
   }
@@ -326,16 +326,16 @@ public class SvnHistoryProvider
         myException = new VcsException("File " + myFile.getPath() + " is not under Subversion control");
         return;
       }
-      myUrl = myInfo.getURL().toDecodedString();
+      myUrl = myInfo.getURL();
     }
 
     @Override
     protected void load() {
       SVNURL repoRootURL = myInfo.getRepositoryRootURL();
-      String relativeUrl = getRelativeUrl(repoRootURL.toDecodedString(), myUrl);
+      String relativeUrl = getRelativeUrl(repoRootURL, myUrl);
       
       if (myPI != null) {
-        myPI.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", myUrl));
+        myPI.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", myUrl.toDecodedString()));
       }
       final SVNRevision pegRevision = myInfo.getRevision();
       final SvnTarget target = SvnTarget.fromFile(myFile.getIOFile(), myPeg);
@@ -345,9 +345,7 @@ public class SvnHistoryProvider
           myFrom == null ? SVNRevision.HEAD : myFrom,
           myTo == null ? SVNRevision.create(1) : myTo,
           false, true, myShowMergeSources && mySupport15, myLimit, null,
-          new MyLogEntryHandler(myVcs, myUrl, pegRevision, relativeUrl,
-                                createConsumerAdapter(myConsumer),
-                                repoRootURL, myFile.getCharset()));
+          new MyLogEntryHandler(myVcs, myUrl, pegRevision, relativeUrl, createConsumerAdapter(myConsumer), repoRootURL));
       }
       catch (VcsException e) {
         myException = e;
@@ -374,48 +372,40 @@ public class SvnHistoryProvider
     }
 
     @Override
-    protected void preliminary() {
-      myUrl = myFile.getPath().replace('\\', '/');
+    protected void preliminary() throws SvnBindException {
+      myUrl = createUrl(myFile.getPath(), false);
     }
 
     @Override
     protected void load() {
       if (myPI != null) {
-        myPI.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", myUrl));
+        myPI.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", myUrl.toDecodedString()));
       }
 
       try {
         if (myForceBackwards) {
-          SVNURL svnurl = SVNURL.parseURIEncoded(myUrl);
-          if (! existsNow(svnurl)) {
-            loadBackwards(svnurl);
+          if (!existsNow(myUrl)) {
+            loadBackwards(myUrl);
             return;
           }
         }
 
-        final SVNURL svnurl = SVNURL.parseURIEncoded(myUrl);
         SVNRevision operationalFrom = myFrom == null ? SVNRevision.HEAD : myFrom;
         // TODO: try to rewrite without separately retrieving repository url by item url - as this command could require authentication
         // TODO: and it is not "clear enough/easy to implement" with current design (for some cases) how to cache credentials (if in
         // TODO: non-interactive mode)
-        final SVNURL rootURL = SvnUtil.getRepositoryRoot(myVcs, svnurl);
+        final SVNURL rootURL = SvnUtil.getRepositoryRoot(myVcs, myUrl);
         if (rootURL == null) {
-          throw new VcsException("Could not find repository root for URL: " + myUrl);
+          throw new VcsException("Could not find repository root for URL: " + myUrl.toDecodedString());
         }
-        String relativeUrl = getRelativeUrl(rootURL.toDecodedString(), myUrl);
-        SvnTarget target = SvnTarget.fromURL(svnurl, myPeg == null ? myFrom : myPeg);
+        String relativeUrl = getRelativeUrl(rootURL, myUrl);
+        SvnTarget target = SvnTarget.fromURL(myUrl, myPeg == null ? myFrom : myPeg);
         RepositoryLogEntryHandler handler =
           new RepositoryLogEntryHandler(myVcs, myUrl, SVNRevision.UNDEFINED, relativeUrl, createConsumerAdapter(myConsumer), rootURL);
 
         myVcs.getFactory(target).createHistoryClient()
           .doLog(target, operationalFrom, myTo == null ? SVNRevision.create(1) : myTo, false, true, myShowMergeSources && mySupport15,
                  myLimit, null, handler);
-      }
-      catch (SVNCancelException e) {
-        //
-      }
-      catch (SVNException e) {
-        myException = new VcsException(e);
       }
       catch (VcsException e) {
         myException = e;
@@ -431,7 +421,7 @@ public class SvnHistoryProvider
       }
 
       SVNURL rootURL = info.getRepositoryRootURL();
-      String relativeUrl = getRelativeUrl(rootURL.toDecodedString(), myUrl);
+      String relativeUrl = getRelativeUrl(rootURL, myUrl);
       final RepositoryLogEntryHandler repositoryLogEntryHandler =
         new RepositoryLogEntryHandler(myVcs, myUrl, SVNRevision.UNDEFINED, relativeUrl, revision -> myConsumer.consume(revision), rootURL);
       repositoryLogEntryHandler.setThrowCancelOnMeetPathCreation(true);
@@ -475,12 +465,11 @@ public class SvnHistoryProvider
     private final ProgressIndicator myIndicator;
     protected final SvnVcs myVcs;
     protected final SvnPathThroughHistoryCorrection myLastPathCorrector;
-    private final Charset myCharset;
     protected final ThrowableConsumer<VcsFileRevision, SVNException> myResult;
     private final String myLastPath;
     private VcsFileRevision myPrevious;
     private final SVNRevision myPegRevision;
-    protected final String myUrl;
+    protected final SVNURL myUrl;
     private final SvnMergeSourceTracker myTracker;
     protected SVNURL myRepositoryRoot;
     private boolean myThrowCancelOnMeetPathCreation;
@@ -489,15 +478,14 @@ public class SvnHistoryProvider
       myThrowCancelOnMeetPathCreation = throwCancelOnMeetPathCreation;
     }
 
-    public MyLogEntryHandler(SvnVcs vcs, final String url,
+    public MyLogEntryHandler(SvnVcs vcs, SVNURL url,
                              final SVNRevision pegRevision,
                              String lastPath,
                              final ThrowableConsumer<VcsFileRevision, SVNException> result,
-                             SVNURL repoRootURL, Charset charset) {
+                             SVNURL repoRootURL) {
       myVcs = vcs;
       myLastPathCorrector = new SvnPathThroughHistoryCorrection(lastPath);
       myLastPath = lastPath;
-      myCharset = charset;
       myIndicator = ProgressManager.getInstance().getProgressIndicator();
       myResult = result;
       myPegRevision = pegRevision;
@@ -610,17 +598,17 @@ public class SvnHistoryProvider
       final SVNURL url = myRepositoryRoot.appendPath(myLastPath, true);
 //      final SVNURL url = entryPath != null ? myRepositoryRoot.appendPath(entryPath.getPath(), true) :
 //                         myRepositoryRoot.appendPath(myLastPathCorrector.getBefore(), false);
-      return new SvnFileRevision(myVcs, myPegRevision, rev, url.toString(), author, date, message, copyPath);
+      return new SvnFileRevision(myVcs, myPegRevision, rev, url, author, date, message, copyPath);
     }
   }
 
   private static class RepositoryLogEntryHandler extends MyLogEntryHandler {
-    public RepositoryLogEntryHandler(final SvnVcs vcs, final String url,
+    public RepositoryLogEntryHandler(final SvnVcs vcs, SVNURL url,
                                      final SVNRevision pegRevision,
                                      String lastPath,
                                      final ThrowableConsumer<VcsFileRevision, SVNException> result,
                                      SVNURL repoRootURL) {
-      super(vcs, url, pegRevision, lastPath, result, repoRootURL, null);
+      super(vcs, url, pegRevision, lastPath, result, repoRootURL);
     }
 
     @Override
@@ -628,7 +616,7 @@ public class SvnHistoryProvider
       throws SVNException {
       final SVNURL url = entryPath == null ? myRepositoryRoot.appendPath(myLastPathCorrector.getBefore(), false) :
                          myRepositoryRoot.appendPath(entryPath.getPath(), true);
-      return new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, url.toString(), copyPath);
+      return new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, url, copyPath);
     }
   }
 

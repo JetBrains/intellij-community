@@ -275,24 +275,14 @@ public class VariableAccessUtils {
       (PsiExpressionStatement)statement;
     PsiExpression expression = expressionStatement.getExpression();
     expression = ParenthesesUtils.stripParentheses(expression);
-    if (expression instanceof PsiPrefixExpression) {
-      final PsiPrefixExpression prefixExpression =
-        (PsiPrefixExpression)expression;
-      final IElementType tokenType = prefixExpression.getOperationTokenType();
+    if (expression instanceof PsiUnaryExpression) {
+      final PsiUnaryExpression unaryExpression =
+        (PsiUnaryExpression)expression;
+      final IElementType tokenType = unaryExpression.getOperationTokenType();
       if (!tokenType.equals(incremented ? JavaTokenType.PLUSPLUS : JavaTokenType.MINUSMINUS)) {
         return false;
       }
-      final PsiExpression operand = prefixExpression.getOperand();
-      return evaluatesToVariable(operand, variable);
-    }
-    if (expression instanceof PsiPostfixExpression) {
-      final PsiPostfixExpression postfixExpression =
-        (PsiPostfixExpression)expression;
-      final IElementType tokenType = postfixExpression.getOperationTokenType();
-      if (!tokenType.equals(incremented ? JavaTokenType.PLUSPLUS : JavaTokenType.MINUSMINUS)) {
-        return false;
-      }
-      final PsiExpression operand = postfixExpression.getOperand();
+      final PsiExpression operand = unaryExpression.getOperand();
       return evaluatesToVariable(operand, variable);
     }
     if (expression instanceof PsiAssignmentExpression) {

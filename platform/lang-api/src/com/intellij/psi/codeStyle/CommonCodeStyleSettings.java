@@ -38,6 +38,8 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.psi.codeStyle.CodeStyleDefaults.*;
+
 /**
  * Common code style settings can be used by several programming languages. Each language may have its own
  * instance of {@code CommonCodeStyleSettings}.
@@ -925,9 +927,9 @@ public class CommonCodeStyleSettings {
 
   //-------------------------Indent options-------------------------------------------------
   public static class IndentOptions implements Cloneable, JDOMExternalizable {
-    public int INDENT_SIZE = 4;
-    public int CONTINUATION_INDENT_SIZE = 8;
-    public int TAB_SIZE = 4;
+    public int INDENT_SIZE = DEFAULT_INDENT_SIZE;
+    public int CONTINUATION_INDENT_SIZE = DEFAULT_CONTINUATION_INDENT_SIZE;
+    public int TAB_SIZE = DEFAULT_TAB_SIZE;
     public boolean USE_TAB_CHARACTER = false;
     public boolean SMART_TABS = false;
     public int LABEL_INDENT_SIZE = 0;

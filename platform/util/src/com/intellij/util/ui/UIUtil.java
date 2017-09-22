@@ -29,6 +29,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
+import com.intellij.util.ui.JBUI.ScaleContext;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.Language;
@@ -378,6 +379,13 @@ public class UIUtil {
    */
   public static boolean isJreHiDPI(@Nullable Component comp) {
     return isJreHiDPI(comp != null ? comp.getGraphicsConfiguration() : null);
+  }
+
+  /**
+   * Returns whether the JRE-managed HiDPI mode is enabled and the provided system scale context is HiDPI.
+   */
+  public static boolean isJreHiDPI(@Nullable ScaleContext ctx) {
+    return isJreHiDPIEnabled() && JBUI.isHiDPI(JBUI.sysScale(ctx));
   }
 
   private static Boolean jreHiDPI;

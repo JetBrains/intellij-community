@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
   private static final boolean TRACE_CREATION = LOG.isDebugEnabled() || ApplicationManager.getApplication().isUnitTestMode();
 
   volatile FilePointerPartNode myNode; // null means disposed
+  boolean recursive; // true if the validityChanged() event should be fired for any change under this directory. Used for library jar directories.
 
   VirtualFilePointerImpl(@Nullable VirtualFilePointerListener listener) {
     super(TRACE_CREATION);
@@ -131,5 +132,10 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
 
   int incrementUsageCount(int delta) {
     return myNode.incrementUsageCount(delta);
+  }
+
+  @Override
+  public boolean isRecursive() {
+    return recursive;
   }
 }

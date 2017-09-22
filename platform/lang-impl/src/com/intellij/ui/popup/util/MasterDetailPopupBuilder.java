@@ -71,7 +71,7 @@ public class MasterDetailPopupBuilder implements MasterController {
         if (e.getKeyCode() == KeyEvent.VK_DELETE) {
           removeSelectedItems();
         }
-        else {
+        else if (e.getModifiersEx() == 0) {
           myDelegate.handleMnemonic(e, myProject, myPopup);
         }
       }
@@ -238,8 +238,8 @@ public class MasterDetailPopupBuilder implements MasterController {
       setUseDimensionServiceForXYLocation(myDimensionServiceKey != null).
       setSettingButton(toolBar).
       setSouthComponent(footerPanel).
-      setItemChoosenCallback(itemCallback).
-      setFilteringEnabled(o -> ((ItemWrapper)o).speedSearchText());
+      setItemChoosenCallback(itemCallback);
+      //setFilteringEnabled(o -> ((ItemWrapper)o).speedSearchText());
 
     if (myPopupTuner != null) {
       myPopupTuner.consume(builder);

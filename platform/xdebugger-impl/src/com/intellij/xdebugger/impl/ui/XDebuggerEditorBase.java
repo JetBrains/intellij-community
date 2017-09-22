@@ -208,8 +208,12 @@ public abstract class XDebuggerEditorBase implements Expandable {
   }
 
   public JComponent addExpand(JComponent component) {
-    BorderLayoutPanel panel = JBUI.Panels.simplePanel(component);
-    panel.setOpaque(false);
+    BorderLayoutPanel panel = new BorderLayoutPanel() {
+      @Override public Color getBackground() {
+        return component.getBackground();
+      }
+    };
+    panel.addToCenter(component);
     panel.addToRight(myExpandButton);
     return panel;
   }

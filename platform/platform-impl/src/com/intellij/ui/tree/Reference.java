@@ -54,14 +54,7 @@ final class Reference<T> {
   static <T> Reference<T> create(@NotNull Supplier<T> supplier) {
     Reference<T> reference = new Reference<>();
     try {
-      Runnable process = () -> reference.set(supplier.get());
-      ProgressManager manager = getProgressManager();
-      if (manager == null || isDispatchThread()) {
-        process.run();
-      }
-      else {
-        manager.runInReadActionWithWriteActionPriority(process, null);
-      }
+      invoke(() -> reference.set(supplier.get()));
     }
     catch (ProcessCanceledException ignore) {
     }
@@ -70,6 +63,16 @@ final class Reference<T> {
       return null;
     }
     return reference;
+  }
+
+  static void invoke(@NotNull Runnable process) {
+    ProgressManager manager = getProgressManager();
+    if (manager == null || isDispatchThread()) {
+      process.run();
+    }
+    else {
+      manager.runInReadActionWithWriteActionPriority(process, null);
+    }
   }
 
   private static ProgressManager getProgressManager() {

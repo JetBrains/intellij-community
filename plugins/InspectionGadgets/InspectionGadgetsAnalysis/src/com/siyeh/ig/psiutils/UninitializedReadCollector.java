@@ -355,14 +355,9 @@ public class UninitializedReadCollector {
       return expressionAssignsVariable(arrayExpression, variable, stamp, checkedMethods) ||
              expressionAssignsVariable(indexExpression, variable, stamp, checkedMethods);
     }
-    else if (expression instanceof PsiPrefixExpression) {
-      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
-      final PsiExpression operand = prefixExpression.getOperand();
-      return expressionAssignsVariable(operand, variable, stamp, checkedMethods);
-    }
-    else if (expression instanceof PsiPostfixExpression) {
-      final PsiPostfixExpression postfixExpression = (PsiPostfixExpression)expression;
-      final PsiExpression operand = postfixExpression.getOperand();
+    else if (expression instanceof PsiUnaryExpression) {
+      final PsiUnaryExpression unaryExpression = (PsiUnaryExpression)expression;
+      final PsiExpression operand = unaryExpression.getOperand();
       return expressionAssignsVariable(operand, variable, stamp, checkedMethods);
     }
     else if (expression instanceof PsiPolyadicExpression) {

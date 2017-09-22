@@ -77,7 +77,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     if (conflicts.isEmpty()) return null;
     if (conflicts.size() == 1) return conflicts.get(0);
 
-    final Map<MethodCandidateInfo, PsiSubstitutor> map = FactoryMap.createMap(key -> key.getSubstitutor(false));
+    final Map<MethodCandidateInfo, PsiSubstitutor> map = FactoryMap.create(key -> key.getSubstitutor(false));
     boolean atLeastOneMatch = checkParametersNumber(conflicts, getActualParametersLength(), map, true);
     if (conflicts.size() == 1) return conflicts.get(0);
 

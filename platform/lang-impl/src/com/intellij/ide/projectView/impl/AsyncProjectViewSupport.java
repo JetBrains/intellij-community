@@ -72,9 +72,8 @@ class AsyncProjectViewSupport {
     myStructureTreeModel.setComparator(comparator);
     myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, true);
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
-    tree.setModel(myAsyncTreeModel);
+    setModel(tree, myAsyncTreeModel);
     Disposer.register(parent, myAsyncTreeModel);
-    putClientProperty(tree, VISIT, visitor -> myAsyncTreeModel.visit(visitor, true));
     MessageBusConnection connection = project.getMessageBus().connect(parent);
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
@@ -176,7 +175,7 @@ class AsyncProjectViewSupport {
   }
 
   public void update(@NotNull TreePath path) {
-    myStructureTreeModel.invalidate(path);
+    myStructureTreeModel.invalidate(path, true);
   }
 
   public void update(@NotNull List<TreePath> list) {
@@ -202,5 +201,14 @@ class AsyncProjectViewSupport {
     if (file != null) return new ProjectViewFileVisitor(file, predicate);
     LOG.warn("cannot create visitor without element and/or file");
     return null;
+  }
+
+  private static void setModel(@NotNull JTree tree, @NotNull AsyncTreeModel model) {
+    tree.setModel(model);
+    putClientProperty(tree, VISIT, visitor -> model.visit(visitor, true));
+    Disposer.register(model, () -> {
+      putClientProperty(tree, VISIT, null);
+      tree.setModel(null);
+    });
   }
 }

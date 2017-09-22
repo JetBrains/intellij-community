@@ -20,7 +20,7 @@ public class ConfigureBranchContextDialog extends DialogWrapper {
   protected ConfigureBranchContextDialog(Project project) {
     super(project);
     myProject = project;
-    setTitle("Branch User Interface Layout");
+    setTitle("Branch Workspace Settings");
 
     myReloadContext.setSelected(VcsConfiguration.getInstance(project).RELOAD_CONTEXT);
     myReloadContext.addActionListener(e -> myShowNotification.setEnabled(myReloadContext.isSelected()));

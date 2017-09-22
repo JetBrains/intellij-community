@@ -608,8 +608,8 @@
                      groupKey="group.names.control.flow.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.controlflow.BreakStatementWithLabelInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ConditionalExpression" bundle="com.siyeh.InspectionGadgetsBundle" key="conditional.expression.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.controlflow.ConditionalExpressionInspection"/>
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="true"
+                     level="INFORMATION" implementationClass="com.siyeh.ig.controlflow.ConditionalExpressionInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ConditionalExpressionWithIdenticalBranches" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="conditional.expression.with.identical.branches.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.control.flow.issues" enabledByDefault="false" level="WARNING"

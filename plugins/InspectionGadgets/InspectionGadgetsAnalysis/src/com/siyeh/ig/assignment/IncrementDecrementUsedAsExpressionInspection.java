@@ -122,13 +122,9 @@ public class IncrementDecrementUsedAsExpressionInspection
 
   public static void extractPrefixPostfixExpressionToSeparateStatement(PsiElement element) {
     final PsiExpression operand;
-    if (element instanceof PsiPostfixExpression) {
-      final PsiPostfixExpression postfixExpression = (PsiPostfixExpression)element;
-      operand = postfixExpression.getOperand();
-    }
-    else if (element instanceof PsiPrefixExpression){
-      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)element;
-      operand = prefixExpression.getOperand();
+    if (element instanceof PsiUnaryExpression) {
+      final PsiUnaryExpression unaryExpression = (PsiUnaryExpression)element;
+      operand = unaryExpression.getOperand();
     }
     else {
       assert false;

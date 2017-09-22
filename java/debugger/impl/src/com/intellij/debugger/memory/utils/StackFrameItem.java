@@ -26,17 +26,20 @@ import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XStringValuePresentation;
@@ -80,6 +83,11 @@ public class StackFrameItem {
   @NotNull
   public String path() {
     return myLocation.declaringType().name();
+  }
+
+  @NotNull
+  public String method() {
+    return myLocation.method().name();
   }
 
   public int line() {
@@ -152,7 +160,7 @@ public class StackFrameItem {
           StackFrameItem frameItem = new StackFrameItem(location, vars);
           res.add(frameItem);
 
-          List<StackFrameItem> relatedStack = StackCapturingLineBreakpoint.getRelatedStack(frame, suspendContext);
+          List<StackFrameItem> relatedStack = StackCapturingLineBreakpoint.getRelatedStack(frame, suspendContext, false);
           if (!ContainerUtil.isEmpty(relatedStack)) {
             res.add(null); // separator
             res.addAll(relatedStack);
@@ -239,14 +247,27 @@ public class StackFrameItem {
 
     public CapturedStackFrame(DebugProcessImpl debugProcess, StackFrameItem item) {
       DebuggerManagerThreadImpl.assertIsManagerThread();
-      mySourcePosition = DebuggerUtilsEx.toXSourcePosition(debugProcess.getPositionManager().getSourcePosition(item.myLocation));
-      myIsSynthetic = DebuggerUtils.isSynthetic(item.myLocation.method());
-      myIsInLibraryContent =
-        DebuggerUtilsEx.isInLibraryContent(mySourcePosition != null ? mySourcePosition.getFile() : null, debugProcess.getProject());
       myPath = item.path();
-      myMethodName = item.myLocation.method().name();
+      myMethodName = item.method();
       myLineNumber = item.line();
       myVariables = item.myVariables;
+
+      Location location = item.myLocation;
+      if (location != null) {
+        mySourcePosition = DebuggerUtilsEx.toXSourcePosition(debugProcess.getPositionManager().getSourcePosition(location));
+      }
+      else {
+        mySourcePosition = ReadAction.compute(() -> {
+          PsiClass aClass = PositionManagerImpl.findClass(debugProcess.getProject(), item.path(), debugProcess.getSearchScope());
+          if (aClass != null) {
+            return XDebuggerUtil.getInstance().createPosition(aClass.getContainingFile().getVirtualFile(), myLineNumber - 1);
+          }
+          return null;
+        });
+      }
+      myIsSynthetic = location != null && DebuggerUtils.isSynthetic(location.method());
+      myIsInLibraryContent =
+        DebuggerUtilsEx.isInLibraryContent(mySourcePosition != null ? mySourcePosition.getFile() : null, debugProcess.getProject());
     }
 
     @Nullable
