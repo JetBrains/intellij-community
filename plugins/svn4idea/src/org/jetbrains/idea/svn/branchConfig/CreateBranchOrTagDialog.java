@@ -34,8 +34,8 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.RootUrlInfo;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.update.SvnRevisionPanel;
@@ -48,6 +48,11 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.io.File;
+
+import static com.intellij.openapi.ui.Messages.showErrorDialog;
+import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
+import static org.jetbrains.idea.svn.SvnUtil.removePathTail;
 
 public class CreateBranchOrTagDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.dialogs.CopyDialog");
@@ -85,7 +90,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     mySrcFile = file;
     myProject = project;
     setResizable(true);
-    setTitle(SvnBundle.message("dialog.title.branch"));
+    setTitle(message("dialog.title.branch"));
     getHelpAction().setEnabled(true);
     myUseThisVariantToLabel.setBorder(JBUI.Borders.emptyBottom(10));
     myProjectButton.setIcon(AllIcons.Nodes.IdeaProject);
@@ -100,7 +105,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
       }
     });
     myRepositoryField.addActionListener(e -> {
-      SVNURL url = SelectLocationDialog.selectLocation(project, mySrcURL.toString());
+      SVNURL url = SelectLocationDialog.selectLocation(project, mySrcURL);
       if (url != null) {
         myRepositoryField.setText(url.toString());
       }
@@ -111,12 +116,18 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
       }
     });
     myToURLText.addActionListener(e -> {
-      String url = myToURLText.getText();
-      String dstName = SVNPathUtil.tail(mySrcURL.toDecodedString());
-      url = SelectLocationDialog.selectCopyDestination(myProject, SVNPathUtil.removeTail(url),
-                                                SvnBundle.message("label.copy.select.location.dialog.copy.as"), dstName, false);
-      if (url != null) {
-        myToURLText.setText(url);
+      try {
+        SVNURL url = createUrl(myToURLText.getText());
+        String dstName = SVNPathUtil.tail(mySrcURL.toDecodedString());
+        SVNURL destination = SelectLocationDialog
+          .selectCopyDestination(myProject, removePathTail(url), message("label.copy.select.location.dialog.copy.as"), dstName, false);
+
+        if (destination != null) {
+          myToURLText.setText(destination.toString());
+        }
+      }
+      catch (SvnBindException ex) {
+        showErrorDialog(myProject, ex.getMessage(), message("dialog.title.select.repository.location"));
       }
     });
 
@@ -289,7 +300,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
       return false;
     }
     if (myBranchOrTagRadioButton.isSelected() && myBranchTagBaseComboBox.getComboBox().getSelectedItem() == null) {
-      myErrorLabel.setText(SvnBundle.message("create.branch.no.base.location.error"));
+      myErrorLabel.setText(message("create.branch.no.base.location.error"));
       return false;
     }
     String url = getToURL();
@@ -303,7 +314,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
           revision = SVNRevision.UNDEFINED;
         }
         if (!revision.isValid() || revision.isLocal()) {
-          myErrorLabel.setText(SvnBundle.message("create.branch.invalid.revision.error", myRevisionPanel.getRevisionText()));
+          myErrorLabel.setText(message("create.branch.invalid.revision.error", myRevisionPanel.getRevisionText()));
           return false;
         }
         return true;
@@ -312,7 +323,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
         Info info = SvnVcs.getInstance(myProject).getInfo(mySrcFile);
         String srcUrl = info != null && info.getURL() != null ? info.getURL().toString() : null;
         if (srcUrl == null) {
-          myErrorLabel.setText(SvnBundle.message("create.branch.no.working.copy.error", myWorkingCopyField.getText()));
+          myErrorLabel.setText(message("create.branch.no.working.copy.error", myWorkingCopyField.getText()));
           return false;
         }
         return true;

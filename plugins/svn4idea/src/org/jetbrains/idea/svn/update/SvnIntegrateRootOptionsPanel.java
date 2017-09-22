@@ -19,14 +19,16 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.FilePath;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNURL;
 
 import javax.swing.*;
 
+import static com.intellij.openapi.ui.Messages.showErrorDialog;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.dialogs.SelectLocationDialog.selectLocation;
 
@@ -53,10 +55,16 @@ public class SvnIntegrateRootOptionsPanel implements SvnPanel{
   private void setupUrlField(@NotNull TextFieldWithBrowseButton textField) {
     textField.setEditable(true);
     textField.addActionListener(e -> {
-      SVNURL selectedUrl = selectLocation(myVcs.getProject(), textField.getText());
+      try {
+        SVNURL url = createUrl(textField.getText(), false);
+        SVNURL selectedUrl = selectLocation(myVcs.getProject(), url);
 
-      if (selectedUrl != null) {
-        textField.setText(selectedUrl.toDecodedString());
+        if (selectedUrl != null) {
+          textField.setText(selectedUrl.toDecodedString());
+        }
+      }
+      catch (SvnBindException ex) {
+        showErrorDialog(myVcs.getProject(), ex.getMessage(), message("dialog.title.select.repository.location"));
       }
     });
   }
@@ -71,16 +79,16 @@ public class SvnIntegrateRootOptionsPanel implements SvnPanel{
   public void apply(@NotNull SvnConfiguration conf) throws ConfigurationException {
     if (isEmptyOrSpaces(myMergeText1.getText())) {
       myMergeText1.requestFocus();
-      throw new ConfigurationException(SvnBundle.message("source.url.could.not.be.empty.error.message"));
+      throw new ConfigurationException(message("source.url.could.not.be.empty.error.message"));
     }
 
     if (isEmptyOrSpaces(myMergeText2.getText())) {
       myMergeText2.requestFocus();
-      throw new ConfigurationException(SvnBundle.message("source.url.could.not.be.empty.error.message"));
+      throw new ConfigurationException(message("source.url.could.not.be.empty.error.message"));
     }
 
     if (myMergeText1.getText().equals(myMergeText2.getText()) && myRevision1.getRevisionText().equals(myRevision2.getRevisionText())) {
-      throw new ConfigurationException(SvnBundle.message("no.differences.between.sources.error.message"));
+      throw new ConfigurationException(message("no.differences.between.sources.error.message"));
     }
 
     MergeRootInfo rootInfo = conf.getMergeRootInfo(myRoot.getIOFile(), myVcs);

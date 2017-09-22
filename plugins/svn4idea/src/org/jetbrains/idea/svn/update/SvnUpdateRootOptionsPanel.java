@@ -39,6 +39,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 
+import static com.intellij.openapi.ui.Messages.showErrorDialog;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class SvnUpdateRootOptionsPanel implements SvnPanel{
@@ -153,13 +155,19 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
         }
         myBranchField.setText(SVNPathUtil.tail(url));
       }
-    }, SvnBundle.message("select.branch.popup.general.title"), myPanel);
+    }, message("select.branch.popup.general.title"), myPanel);
   }
 
   private void chooseUrl() {
-    SVNURL selected = SelectLocationDialog.selectLocation(myVcs.getProject(), myURLText.getText());
-    if (selected != null) {
-      myURLText.setText(selected.toDecodedString());
+    try {
+      SVNURL url = createUrl(myURLText.getText(), false);
+      SVNURL selected = SelectLocationDialog.selectLocation(myVcs.getProject(), url);
+      if (selected != null) {
+        myURLText.setText(selected.toDecodedString());
+      }
+    }
+    catch (SvnBindException e) {
+      showErrorDialog(myVcs.getProject(), e.getMessage(), message("dialog.title.select.repository.location"));
     }
   }
 
@@ -213,7 +221,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     rootInfo.setUpdateToRevision(myRevisionBox.isSelected());
     final SVNRevision revision = SVNRevision.parse(myRevisionText.getText());
      if (!revision.isValid()) {
-      throw new ConfigurationException(SvnBundle.message("invalid.svn.revision.error.message", myRevisionText.getText()));
+       throw new ConfigurationException(message("invalid.svn.revision.error.message", myRevisionText.getText()));
     }
     rootInfo.setRevision(revision);
   }

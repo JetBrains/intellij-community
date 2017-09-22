@@ -35,8 +35,6 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.browser.UrlOpeningExpander;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -44,6 +42,8 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 
 import static com.intellij.openapi.util.Pair.create;
+import static com.intellij.util.ObjectUtils.notNull;
+import static org.jetbrains.idea.svn.SvnUtil.append;
 
 /**
  * @author alex
@@ -62,7 +62,7 @@ public class SelectLocationDialog extends DialogWrapper {
 
   // todo check that works when authenticated
   @Nullable
-  public static SVNURL selectLocation(Project project, String url) {
+  public static SVNURL selectLocation(Project project, @NotNull SVNURL url) {
     SelectLocationDialog dialog = openDialog(project, url, null, null, true, false, null);
 
     return dialog == null || !dialog.isOK() ? null : dialog.getSelectedURL();
@@ -75,24 +75,24 @@ public class SelectLocationDialog extends DialogWrapper {
   }
 
   @Nullable
-  public static String selectCopyDestination(Project project, String url, String dstLabel, String dstName, boolean showFiles) {
+  public static SVNURL selectCopyDestination(Project project, @NotNull SVNURL url, String dstLabel, String dstName, boolean showFiles)
+    throws SvnBindException {
     SelectLocationDialog dialog =
       openDialog(project, url, dstLabel, dstName, showFiles, false, SvnBundle.message("select.location.invalid.url.message", url));
 
-    return dialog == null || !dialog.isOK() ? null : SVNPathUtil.append(dialog.getSelectedURL().toString(), dialog.getDestinationName());
+    return dialog == null || !dialog.isOK() ? null : append(notNull(dialog.getSelectedURL()), dialog.getDestinationName());
   }
 
   @Nullable
   private static SelectLocationDialog openDialog(Project project,
-                                                 String url,
+                                                 @NotNull SVNURL url,
                                                  String dstLabel,
                                                  String dstName,
                                                  boolean showFiles,
                                                  boolean allowActions,
                                                  String errorMessage) {
     try {
-      SVNURL svnUrl = SvnUtil.createUrl(url);
-      final SVNURL repositoryUrl = initRoot(project, svnUrl);
+      final SVNURL repositoryUrl = initRoot(project, url);
       if (repositoryUrl == null) {
         Messages.showErrorDialog(project, "Can not detect repository root for URL: " + url,
                                  SvnBundle.message("dialog.title.select.repository.location"));
@@ -267,8 +267,9 @@ public class SelectLocationDialog extends DialogWrapper {
     return ok;
   }
 
+  @NotNull
   public String getDestinationName() {
-    return SVNEncodingUtil.uriEncode(myDstText.getText().trim());
+    return myDstText.getText().trim();
   }
 
   @Nullable
