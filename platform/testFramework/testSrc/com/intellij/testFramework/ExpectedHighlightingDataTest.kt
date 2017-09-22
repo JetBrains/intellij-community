@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 
 public class ExpectedHighlightingDataTest {
@@ -135,6 +136,13 @@ public class ExpectedHighlightingDataTest {
     doTest(" ab ",
            asList(error(1, 2, "a1"), error(1, 2, "a2"), error(2, 3, "b1"), error(2, 3, "b2")),
            " <err descr=\"a1\"><err descr=\"a2\">a</err></err><err descr=\"b1\"><err descr=\"b2\">b</err></err> ");
+  }
+
+  @Test
+  public void firstEmpty() {
+    doTest(" ab ",
+           singletonList(error(0, 0, "a1")),
+           "<err descr=\"a1\"></err> ab ");
   }
 
   private static void doTest(String original, Collection<HighlightInfo> highlighting, String expected) {
