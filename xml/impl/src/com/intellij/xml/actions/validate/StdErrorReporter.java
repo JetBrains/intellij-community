@@ -26,14 +26,12 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.content.*;
-import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.xml.XmlBundle;
 import org.xml.sax.SAXParseException;
 
-import javax.swing.*;
 import java.util.concurrent.Future;
 
 public class StdErrorReporter extends ErrorReporter {
@@ -41,45 +39,24 @@ public class StdErrorReporter extends ErrorReporter {
   private static final Key<NewErrorTreeViewPanel> KEY = Key.create("ValidateXmlAction.KEY");
 
   private final NewErrorTreeViewPanel myErrorsView;
-  private final String CONTENT_NAME = XmlBundle.message("xml.validate.tab.content.title");
+  private final String myContentName;
   private final Project myProject;
-  private boolean myErrorsDetected = false;
 
-  public StdErrorReporter(ValidateXmlActionHandler handler, Project project, Runnable rerunAction) {
+  public StdErrorReporter(ValidateXmlActionHandler handler, PsiFile psiFile, Runnable rerunAction) {
     super(handler);
-    myProject = project;
-    myErrorsView = new NewErrorTreeViewPanel(project, null, true, true, rerunAction);
+    myProject = psiFile.getProject();
+    myContentName =  XmlBundle.message("xml.validate.tab.content.title", psiFile.getName());
+    myErrorsView = new NewErrorTreeViewPanel(myProject, null, true, true, rerunAction);
+    myErrorsView.getEmptyText().setText("No errors found");
   }
 
   @Override
   public void startProcessing() {
-    final Runnable task = () -> {
-      try {
-        ApplicationManager.getApplication().runReadAction(() -> super.startProcessing());
-
-        SwingUtilities.invokeLater(
-          () -> {
-            if (!myErrorsDetected) {
-              SwingUtilities.invokeLater(
-                () -> {
-                  removeCompileContents(null);
-                  WindowManager.getInstance().getStatusBar(myProject).setInfo(
-                    XmlBundle.message("xml.validate.no.errors.detected.status.message"));
-                }
-              );
-            }
-          }
-        );
-      }
-      finally {
-        Thread.interrupted(); // reset interrupted
-      }
-    };
-
     final MyProcessController processController = new MyProcessController();
     myErrorsView.setProcessController(processController);
     openMessageView();
-    processController.setFuture( ApplicationManager.getApplication().executeOnPooledThread(task) );
+    processController.setFuture(ApplicationManager.getApplication().executeOnPooledThread(
+      () -> ApplicationManager.getApplication().runReadAction(() -> super.startProcessing())));
 
     ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
   }
@@ -89,32 +66,17 @@ public class StdErrorReporter extends ErrorReporter {
     commandProcessor.executeCommand(
       myProject, () -> {
         MessageView messageView = MessageView.SERVICE.getInstance(myProject);
-        final Content content = ContentFactory.SERVICE.getInstance().createContent(myErrorsView.getComponent(), CONTENT_NAME, true);
+        final Content content = ContentFactory.SERVICE.getInstance().createContent(myErrorsView.getComponent(), myContentName, true);
         content.putUserData(KEY, myErrorsView);
         messageView.getContentManager().addContent(content);
         messageView.getContentManager().setSelectedContent(content);
         messageView.getContentManager().addContentManagerListener(new CloseListener(content, messageView.getContentManager()));
-        removeCompileContents(content);
+        ContentManagerUtil.cleanupContents(content, myProject, myContentName);
         messageView.getContentManager().addContentManagerListener(new MyContentDisposer(content, messageView));
       },
       XmlBundle.message("validate.xml.open.message.view.command.name"),
       null
     );
-  }
-  private void removeCompileContents(Content notToRemove) {
-    MessageView messageView = MessageView.SERVICE.getInstance(myProject);
-
-    for (Content content : messageView.getContentManager().getContents()) {
-      if (content.isPinned()) continue;
-      if (CONTENT_NAME.equals(content.getDisplayName()) && content != notToRemove) {
-        ErrorTreeView listErrorView = (ErrorTreeView)content.getComponent();
-        if (listErrorView != null) {
-          if (messageView.getContentManager().removeContent(content, true)) {
-            content.release();
-          }
-        }
-      }
-    }
   }
 
   @Override
@@ -124,23 +86,21 @@ public class StdErrorReporter extends ErrorReporter {
       LOG.debug("enter: processError(error='" + error + "')");
     }
 
-    myErrorsDetected = true;
-
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      SwingUtilities.invokeLater(
-        () -> {
-          final VirtualFile file = myHandler.getProblemFile(ex);
-          myErrorsView.addMessage(
-              problemType == ValidateXmlActionHandler.ProblemType.WARNING ? MessageCategory.WARNING : MessageCategory.ERROR,
-              new String[]{ex.getLocalizedMessage()},
-              file,
-              ex.getLineNumber() - 1,
-              ex.getColumnNumber() - 1,
-              null
-          );
-        }
-      );
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
     }
+    ApplicationManager.getApplication().invokeLater(() -> {
+        final VirtualFile file = myHandler.getProblemFile(ex);
+        myErrorsView.addMessage(
+            problemType == ValidateXmlActionHandler.ProblemType.WARNING ? MessageCategory.WARNING : MessageCategory.ERROR,
+            new String[]{ex.getLocalizedMessage()},
+            file,
+            ex.getLineNumber() - 1,
+            ex.getColumnNumber() - 1,
+            null
+        );
+      }
+    );
   }
 
   private static class MyContentDisposer implements ContentManagerListener {
