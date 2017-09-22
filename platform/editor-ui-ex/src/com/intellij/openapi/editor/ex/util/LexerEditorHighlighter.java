@@ -186,7 +186,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       int startOffset = mySegments.getSegmentStart(startIndex);
       int newEndOffset = e.getOffset() + e.getNewLength();
 
-      myLexer.start(text, startOffset, text.length(), myInitialState);
+      myLexer.start(text, startOffset, text.length(), myLexer instanceof RestartableLexer ? ((RestartableLexer)myLexer).getStartState() : myInitialState);
 
       int lastTokenStart = -1;
       int lastLexerState = -1;
