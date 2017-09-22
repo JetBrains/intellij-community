@@ -31,6 +31,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -47,6 +48,8 @@ import java.awt.font.TextLayout;
 import java.beans.PropertyChangeListener;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 
 public class HelpTooltip {
@@ -65,6 +68,7 @@ public class HelpTooltip {
   private static final int MAX_WIDTH = JBUI.scale(250);
 
   private static final String DOTS = "...";
+  private static final String PARAGRAPH_SPLITTER = "<p/?>";
 
   private String title;
   private String shortcut;
@@ -189,7 +193,7 @@ public class HelpTooltip {
     }
 
     if (StringUtil.isNotEmpty(description)) {
-      String[] pa = description.split("<p/>");
+      String[] pa = description.split(PARAGRAPH_SPLITTER);
       for (String p : pa) {
         if (!p.isEmpty()) {
           tipPanel.add(new Paragraph(p), VerticalLayout.TOP);
@@ -391,6 +395,38 @@ public class HelpTooltip {
       setText(width > MAX_WIDTH ?
               String.format("<html><div width=%d>%s</div></html>", MAX_WIDTH, text) :
               String.format("<html>%s</html>", text));
+
+      if (width > MAX_WIDTH) {
+        v = (View)getClientProperty(BasicHTML.propertyKey);
+        if (v != null) {
+          width = 0.0f;
+          for(View row : getRows(v)) {
+            float rWidth = row.getPreferredSpan(View.X_AXIS);
+            if (width < rWidth) {
+              width = rWidth;
+            }
+          }
+
+          v.setSize(width, v.getPreferredSpan(View.Y_AXIS));
+        }
+      }
+    }
+
+    private Collection<View> getRows(@NotNull View root) {
+      Collection<View> rows = new ArrayList<>();
+      visit(root, rows);
+      return rows;
+    }
+
+    private void visit(@NotNull View v, Collection<View> result) {
+      String cname = v.getClass().getCanonicalName();
+      if (cname != null && cname.contains("ParagraphView.Row")) {
+        result.add(v);
+      }
+
+      for(int i = 0; i < v.getViewCount(); i++) {
+        visit(v.getView(i), result);
+      }
     }
   }
 }
