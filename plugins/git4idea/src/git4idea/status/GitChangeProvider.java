@@ -177,7 +177,7 @@ public class GitChangeProvider implements ChangeProvider {
         if (beforePath != null) {
           myProcessedPaths.add(beforePath);
         }
-        final FilePath afterPath = ChangesUtil.getBeforePath(change);
+        final FilePath afterPath = ChangesUtil.getAfterPath(change);
         if (afterPath != null) {
           myProcessedPaths.add(afterPath);
         }
