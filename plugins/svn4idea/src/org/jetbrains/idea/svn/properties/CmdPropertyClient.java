@@ -25,7 +25,6 @@ import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.*;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -266,13 +265,10 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
                 new Attachment("output.xml", command.getOutput()));
       throw new SvnBindException(e);
     }
-    catch (SVNException e) {
-      throw new SvnBindException(e);
-    }
   }
 
   private static void invokeHandler(@NotNull SvnTarget target, @Nullable PropertyData data, @Nullable PropertyConsumer handler)
-    throws SVNException {
+    throws SvnBindException {
     if (handler != null && data != null) {
       if (target.isFile()) {
         handler.handleProperty(target.getFile(), data);
@@ -283,7 +279,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
   }
 
   private static void invokeHandler(long revision, @Nullable PropertyData data, @Nullable PropertyConsumer handler)
-    throws SVNException {
+    throws SvnBindException {
     if (handler != null && data != null) {
       handler.handleProperty(revision, data);
     }

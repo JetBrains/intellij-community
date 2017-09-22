@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.properties;
 
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.LineSeparator;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
@@ -205,17 +206,26 @@ public class SvnKitPropertyClient extends BaseSvnClient implements PropertyClien
       result = new ISVNPropertyHandler() {
         @Override
         public void handleProperty(File path, SVNPropertyData property) throws SVNException {
-          consumer.handleProperty(path, PropertyData.create(property));
+          callHandler(() -> consumer.handleProperty(path, PropertyData.create(property)));
         }
 
         @Override
         public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
-          consumer.handleProperty(url, PropertyData.create(property));
+          callHandler(() -> consumer.handleProperty(url, PropertyData.create(property)));
         }
 
         @Override
         public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
-          consumer.handleProperty(revision, PropertyData.create(property));
+          callHandler(() -> consumer.handleProperty(revision, PropertyData.create(property)));
+        }
+
+        private void callHandler(@NotNull ThrowableRunnable<SvnBindException> handler) throws SVNException {
+          try {
+            handler.run();
+          }
+          catch (SvnBindException e) {
+            throw e.toSVNException();
+          }
         }
       };
     }

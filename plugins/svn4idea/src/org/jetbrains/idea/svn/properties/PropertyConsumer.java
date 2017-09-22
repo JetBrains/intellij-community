@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,15 @@
  */
 package org.jetbrains.idea.svn.properties;
 
-import org.tmatesoft.svn.core.SVNException;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public interface PropertyConsumer {
+  void handleProperty(File path, PropertyData property) throws SvnBindException;
 
-  void handleProperty(File path, PropertyData property) throws SVNException;
+  void handleProperty(SVNURL url, PropertyData property) throws SvnBindException;
 
-  void handleProperty(SVNURL url, PropertyData property);
-
-  void handleProperty(long revision, PropertyData property);
+  void handleProperty(long revision, PropertyData property) throws SvnBindException;
 }

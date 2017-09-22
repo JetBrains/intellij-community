@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,8 @@ import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.integrate.MergeContext;
 import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.SVNMergeRangeList;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -185,9 +186,9 @@ public class OneShotMergeInfoHelper implements MergeChecker {
   @NotNull
   private PropertyConsumer createPropertyHandler() {
     return new PropertyConsumer() {
-      public void handleProperty(@NotNull File path, @NotNull PropertyData property) throws SVNException {
+      public void handleProperty(@NotNull File path, @NotNull PropertyData property) throws SvnBindException {
         String workingCopyRelativePath = getWorkingCopyRelativePath(path);
-        Map<String, SVNMergeRangeList> mergeInfo = parseMergeInfo(property);
+        Map<String, SVNMergeRangeList> mergeInfo = BranchInfo.parseMergeInfo(notNull(property.getValue()));
 
         synchronized (myMergeInfoLock) {
           myMergeInfoMap.put(toKey(workingCopyRelativePath), mergeInfo);
@@ -198,16 +199,6 @@ public class OneShotMergeInfoHelper implements MergeChecker {
       }
 
       public void handleProperty(long revision, PropertyData property) {
-      }
-
-      @NotNull
-      private Map<String, SVNMergeRangeList> parseMergeInfo(@NotNull PropertyData property) throws SVNException {
-        try {
-          return BranchInfo.parseMergeInfo(notNull(property.getValue()));
-        }
-        catch (SvnBindException e) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, e), e);
-        }
       }
     };
   }
