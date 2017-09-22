@@ -111,22 +111,6 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     return new StreamApiMigrationVisitor(holder, isOnTheFly);
   }
 
-  @Nullable
-  static PsiReturnStatement getNextReturnStatement(PsiStatement statement) {
-    PsiElement nextStatement = PsiTreeUtil.skipWhitespacesAndCommentsForward(statement);
-    if (nextStatement instanceof PsiReturnStatement) return (PsiReturnStatement)nextStatement;
-    PsiElement parent = statement.getParent();
-    if (parent instanceof PsiCodeBlock) {
-      PsiStatement[] statements = ((PsiCodeBlock)parent).getStatements();
-      if (statements.length == 0 || statements[statements.length - 1] != statement) return null;
-      parent = parent.getParent();
-      if (!(parent instanceof PsiBlockStatement)) return null;
-      parent = parent.getParent();
-    }
-    if (parent instanceof PsiIfStatement) return getNextReturnStatement((PsiStatement)parent);
-    return null;
-  }
-
   @Contract("null, null -> true; null, !null -> false")
   private static boolean sameReference(PsiExpression expr1, PsiExpression expr2) {
     if (expr1 == null && expr2 == null) return true;
@@ -570,7 +554,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     boolean shouldWarn = replaceTrivialForEach || tb.hasOperations();
     PsiReturnStatement returnStatement = (PsiReturnStatement)tb.getSingleStatement();
     PsiExpression value = returnStatement.getReturnValue();
-    PsiReturnStatement nextReturnStatement = getNextReturnStatement(statement);
+    PsiReturnStatement nextReturnStatement = ControlFlowUtils.getNextReturnStatement(statement);
     if (nextReturnStatement != null &&
         (ExpressionUtils.isLiteral(value, Boolean.TRUE) || ExpressionUtils.isLiteral(value, Boolean.FALSE))) {
       boolean foundResult = (boolean)((PsiLiteralExpression)value).getValue();

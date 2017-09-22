@@ -937,6 +937,52 @@ public class ControlFlowUtils {
     return false;
   }
 
+  /**
+   * Finds the return statement which will be always executed after the supplied statement. It supports constructs like this:
+   * <pre>{@code
+   * if(condition) {
+   *   statement(); // this statement is supplied as a parameter
+   * }
+   * return true; // this return statement will be returned
+   * }</pre>
+   *
+   * @param statement statement to find the return after
+   * @return the found return statement or null.
+   */
+  @Nullable
+  public static PsiReturnStatement getNextReturnStatement(PsiStatement statement) {
+    PsiElement nextStatement = PsiTreeUtil.skipWhitespacesAndCommentsForward(statement);
+    if (nextStatement instanceof PsiReturnStatement) return (PsiReturnStatement)nextStatement;
+    PsiElement parent = statement.getParent();
+    if (parent instanceof PsiCodeBlock) {
+      PsiStatement[] statements = ((PsiCodeBlock)parent).getStatements();
+      if (statements.length == 0 || statements[statements.length - 1] != statement) return null;
+      parent = parent.getParent();
+      if (!(parent instanceof PsiBlockStatement)) return null;
+      parent = parent.getParent();
+    }
+    if (parent instanceof PsiIfStatement) return getNextReturnStatement((PsiStatement)parent);
+    return null;
+  }
+
+  /**
+   * @param statement statement to test
+   * @return true if statement is reachable or code is incomplete and reachability cannot be defined
+   */
+  public static boolean isReachable(@NotNull PsiStatement statement) {
+    ControlFlow flow;
+    PsiCodeBlock block = PsiTreeUtil.getParentOfType(statement, PsiCodeBlock.class);
+    if (block == null) return true;
+    try {
+      flow = ControlFlowFactory.getInstance(statement.getProject())
+        .getControlFlow(block, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+    }
+    catch (AnalysisCanceledException e) {
+      return true;
+    }
+    return ControlFlowUtil.isInstructionReachable(flow, flow.getStartOffset(statement), 0);
+  }
+
   public enum InitializerUsageStatus {
     // Variable is declared just before the wanted place
     DECLARED_JUST_BEFORE,
