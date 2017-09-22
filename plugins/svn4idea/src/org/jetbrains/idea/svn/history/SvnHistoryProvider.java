@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
@@ -51,14 +52,11 @@ import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
-import org.tmatesoft.svn.util.SVNLogType;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -495,9 +493,7 @@ public class SvnHistoryProvider
         final LogEntry logEntry = svnLogEntryIntegerPair.getFirst();
 
         if (myIndicator != null) {
-          if (myIndicator.isCanceled()) {
-            SVNErrorManager.cancel(SvnBundle.message("exception.text.update.operation.cancelled"), SVNLogType.DEFAULT);
-          }
+          myIndicator.checkCanceled();
           myIndicator.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
         }
         LogEntryPath entryPath = null;
@@ -536,7 +532,7 @@ public class SvnHistoryProvider
           myPrevious = revision;
         }
         if (myThrowCancelOnMeetPathCreation && myUrl.equals(revision.getURL()) && entryPath != null && entryPath.getType() == 'A') {
-          throw new SVNCancelException();
+          throw new ProcessCanceledException();
         }
       });
     }
