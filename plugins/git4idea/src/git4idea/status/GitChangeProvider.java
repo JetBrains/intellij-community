@@ -195,6 +195,8 @@ public class GitChangeProvider implements ChangeProvider {
     public void feedBuilder(final ChangelistBuilder builder) throws VcsException {
       final VcsKey gitKey = GitVcs.getKey();
 
+      Map<VirtualFile, GitRevisionNumber> baseRevisions = new HashMap<>();
+
       for (Document document : myFileDocumentManager.getUnsavedDocuments()) {
         VirtualFile vf = myFileDocumentManager.getFile(document);
         if (vf == null || !vf.isValid()) continue;
@@ -206,7 +208,13 @@ public class GitChangeProvider implements ChangeProvider {
         final VirtualFile root = myVcsManager.getVcsRootFor(vf);
         if (root == null) continue;
 
-        final GitRevisionNumber beforeRevisionNumber = GitChangeUtils.resolveReference(myProject, root, "HEAD");
+
+        GitRevisionNumber beforeRevisionNumber = baseRevisions.get(root);
+        if (beforeRevisionNumber == null) {
+          beforeRevisionNumber = GitChangeUtils.resolveReference(myProject, root, "HEAD");
+          baseRevisions.put(root, beforeRevisionNumber);
+        }
+
         builder.processChange(new Change(GitContentRevision.createRevision(vf, beforeRevisionNumber, myProject),
                                          GitContentRevision.createRevision(vf, null, myProject), FileStatus.MODIFIED), gitKey);
       }
