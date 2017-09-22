@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -40,7 +39,6 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.VcsBackgroundTask;
-import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TLongArrayList;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.CalledInBackground;
@@ -54,7 +52,6 @@ import org.jetbrains.idea.svn.conflict.ConflictReason;
 import org.jetbrains.idea.svn.conflict.ConflictVersion;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
@@ -65,7 +62,10 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.application.ModalityState.defaultModalityState;
+import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.vcsUtil.VcsUtil.getFilePathOnNonLocal;
+import static org.jetbrains.idea.svn.SvnUtil.append;
 import static org.jetbrains.idea.svn.history.SvnHistorySession.getCurrentCommittedRevision;
 
 public class TreeConflictRefreshablePanel implements Disposable {
@@ -408,7 +408,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
                        ConflictVersion leftVersion, final String name, boolean directory) {
     final String leftPresentation = leftVersion == null ? name + ": (" + (directory ? "directory" : "file") +
                                                           (myChange.getBeforeRevision() == null ? ") added" : ") unversioned") :
-                                    name + ": " + FileUtil.toSystemIndependentName(ConflictVersion.toPresentableString(leftVersion));
+                                    name + ": " + toSystemIndependentName(ConflictVersion.toPresentableString(leftVersion));
     gb.insets.top = 10;
     main.add(new JLabel(leftPresentation), gb);
     ++gb.gridy;
@@ -482,14 +482,8 @@ public class TreeConflictRefreshablePanel implements Disposable {
       super(vcs.getProject(), version);
       myVcs = vcs;
       myPeg = peg;
-      try {
-        myPath = VcsUtil.getFilePathOnNonLocal(
-          version.getRepositoryRoot().appendPath(FileUtil.toSystemIndependentName(version.getPath()), true).toString(),
-          version.isDirectory());
-      }
-      catch (SVNException e) {
-        throw new VcsException(e);
-      }
+      myPath = getFilePathOnNonLocal(append(version.getRepositoryRoot(), toSystemIndependentName(version.getPath()), true).toString(),
+                                     version.isDirectory());
 
       mySessionAdapter = new VcsAppendableHistoryPartnerAdapter();
       /*mySessionAdapter.reportCreatedEmptySession(new SvnHistorySession(myVcs, Collections.<VcsFileRevision>emptyList(),

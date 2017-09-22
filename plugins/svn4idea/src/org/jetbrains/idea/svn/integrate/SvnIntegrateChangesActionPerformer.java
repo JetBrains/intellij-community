@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,11 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.branchConfig.SelectBranchPopup;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
-import org.tmatesoft.svn.core.SVNException;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+
+import static org.jetbrains.idea.svn.SvnUtil.append;
 
 public class SvnIntegrateChangesActionPerformer implements SelectBranchPopup.BranchSelectedCallback {
   private final SvnVcs myVcs;
@@ -83,15 +85,14 @@ public class SvnIntegrateChangesActionPerformer implements SelectBranchPopup.Bra
     try {
       if (realTargetUrl.length() > targetUrl.length()) {
         if (realTargetUrl.startsWith(targetUrl)) {
-          return myCurrentBranch.appendPath(realTargetUrl.substring(targetUrl.length()), true);
+          return append(myCurrentBranch, realTargetUrl.substring(targetUrl.length()), true);
         }
       }
       else if (realTargetUrl.equals(targetUrl)) {
         return myCurrentBranch;
       }
     }
-    catch (SVNException e) {
-      // tracked by return value
+    catch (SvnBindException ignored) {
     }
     return null;
   }

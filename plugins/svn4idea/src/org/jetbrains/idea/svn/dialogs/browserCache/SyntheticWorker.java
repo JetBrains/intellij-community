@@ -22,7 +22,6 @@ import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
 import java.util.ArrayList;
@@ -30,6 +29,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import static java.util.Collections.sort;
+import static org.jetbrains.idea.svn.SvnUtil.append;
 import static org.jetbrains.idea.svn.SvnUtil.removePathTail;
 
 public class SyntheticWorker {
@@ -125,14 +125,14 @@ public class SyntheticWorker {
         }
         myCache.put(convertUrl(repositoryTreeNode.getURL()).toString(), newChildren);
       }
-      catch (SVNException e) {
-        //
+      catch (SvnBindException ignored) {
       }
       return Boolean.FALSE;
     }
 
-    private SVNURL convertUrl(final SVNURL currentUrl) throws SVNException {
-      return myNewParentUrl.appendPath(currentUrl.toString().substring(myOldPrefixLen), true);
+    @NotNull
+    private SVNURL convertUrl(@NotNull SVNURL currentUrl) throws SvnBindException {
+      return append(myNewParentUrl, currentUrl.toString().substring(myOldPrefixLen), true);
     }
   }
 }

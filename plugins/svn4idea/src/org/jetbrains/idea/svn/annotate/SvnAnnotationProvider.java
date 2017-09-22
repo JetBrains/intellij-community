@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,8 +59,7 @@ import java.util.Map;
 
 import static com.intellij.openapi.fileEditor.impl.LoadTextUtil.getTextByBinaryPresentation;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
-import static org.jetbrains.idea.svn.SvnUtil.checkRepositoryVersion15;
-import static org.jetbrains.idea.svn.SvnUtil.getFileContents;
+import static org.jetbrains.idea.svn.SvnUtil.*;
 
 public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAnnotationProvider {
   private static final Object MERGED_KEY = new Object();
@@ -204,7 +203,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
       catch (VcsException e1) {
         exception[0] = e1;
       }
-      catch (SVNException | IOException e1) {
+      catch (IOException e1) {
         exception[0] = new VcsException(e);
       }
     }
@@ -243,7 +242,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
                                                       @NotNull SvnRevisionNumber revisionNumber,
                                                       @NotNull Info info,
                                                       @NotNull Charset charset,
-                                                      @NotNull VirtualFile current) throws VcsException, SVNException, IOException {
+                                                      @NotNull VirtualFile current) throws VcsException, IOException {
     final File wasFile = pair.getSecond().getIOFile();
     final File root = getCommonAncestor(wasFile, info.getFile());
 
@@ -263,7 +262,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     SVNURL wasUrl = wcRootInfo.getURL();
     final String[] strings = relativePath.replace('\\', '/').split("/");
     for (String string : strings) {
-      wasUrl = wasUrl.appendPath(string, true);
+      wasUrl = append(wasUrl, string, true);
     }
 
     final SVNRevision svnRevision = revisionNumber.getRevision();

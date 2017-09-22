@@ -30,7 +30,6 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -41,6 +40,7 @@ import java.util.Collection;
 
 import static com.intellij.openapi.ui.Messages.showErrorDialog;
 import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.SvnUtil.append;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class SvnUpdateRootOptionsPanel implements SvnPanel{
@@ -148,9 +148,9 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
       }
       else {
         try {
-          myURLText.setText(createUrl(url).appendPath(branchRelativeUrl, true).toDecodedString());
+          myURLText.setText(append(createUrl(url), branchRelativeUrl, true).toDecodedString());
         }
-        catch (SVNException | SvnBindException e) {
+        catch (SvnBindException e) {
           LOG.error(e);
         }
         myBranchField.setText(SVNPathUtil.tail(url));

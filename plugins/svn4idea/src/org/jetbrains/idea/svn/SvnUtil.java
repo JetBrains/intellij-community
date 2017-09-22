@@ -770,8 +770,13 @@ public class SvnUtil {
 
   @NotNull
   public static SVNURL append(@NotNull SVNURL parent, @NotNull String child) throws SvnBindException {
+    return append(parent, child, false);
+  }
+
+  @NotNull
+  public static SVNURL append(@NotNull SVNURL parent, @NotNull String child, boolean encoded) throws SvnBindException {
     try {
-      return parent.appendPath(child, false);
+      return parent.appendPath(child, encoded);
     }
     catch (SVNException e) {
       throw new SvnBindException(e);
@@ -816,13 +821,7 @@ public class SvnUtil {
       result = SvnTarget.fromFile(resolvePath(target.getFile(), path));
     }
     else {
-      try {
-        result =
-          SvnTarget.fromURL(checkAbsolute && URI.create(path).isAbsolute() ? createUrl(path) : target.getURL().appendPath(path, false));
-      }
-      catch (SVNException e) {
-        throw new SvnBindException(e);
-      }
+      result = SvnTarget.fromURL(checkAbsolute && URI.create(path).isAbsolute() ? createUrl(path) : append(target.getURL(), path));
     }
 
     return result;
