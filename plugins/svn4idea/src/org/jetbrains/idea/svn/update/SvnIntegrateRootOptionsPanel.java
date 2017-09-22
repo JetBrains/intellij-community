@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import javax.swing.*;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.dialogs.SelectLocationDialog.selectLocation;
 
 public class SvnIntegrateRootOptionsPanel implements SvnPanel{
@@ -63,7 +64,7 @@ public class SvnIntegrateRootOptionsPanel implements SvnPanel{
   private void setupRevisionField(@NotNull SvnRevisionPanel revisionField, @NotNull TextFieldWithBrowseButton textField) {
     revisionField.setProject(myVcs.getProject());
     revisionField.setRoot(myRoot.getVirtualFile());
-    revisionField.setUrlProvider(() -> textField.getText());
+    revisionField.setUrlProvider(() -> createUrl(textField.getText(), false));
   }
 
   @Override

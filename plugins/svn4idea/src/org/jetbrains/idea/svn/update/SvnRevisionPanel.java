@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,16 @@ package org.jetbrains.idea.svn.update;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
@@ -34,13 +37,16 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.util.List;
 
+import static com.intellij.openapi.ui.Messages.showErrorDialog;
+import static org.jetbrains.idea.svn.SvnBundle.message;
+
 public class SvnRevisionPanel extends JPanel {
   private JRadioButton mySpecified;
   private JRadioButton myHead;
   private JPanel myPanel;
   private TextFieldWithBrowseButton myRevisionField;
   private Project myProject;
-  private UrlProvider myUrlProvider;
+  private ThrowableComputable<SVNURL, SvnBindException> myUrlProvider;
   private final List<ChangeListener> myChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private VirtualFile myRoot;
 
@@ -81,11 +87,15 @@ public class SvnRevisionPanel extends JPanel {
 
   private void chooseRevision() {
     if (myProject != null && myUrlProvider != null) {
-      final SvnRepositoryLocation location = new SvnRepositoryLocation(myUrlProvider.getUrl());
-
-      final SvnChangeList version = SvnSelectRevisionUtil.chooseCommittedChangeList(myProject, location, myRoot);
-      if (version != null) {
-        myRevisionField.setText(String.valueOf(version.getNumber()));
+      try {
+        SvnRepositoryLocation location = new SvnRepositoryLocation(myUrlProvider.compute().toString());
+        SvnChangeList version = SvnSelectRevisionUtil.chooseCommittedChangeList(myProject, location, myRoot);
+        if (version != null) {
+          myRevisionField.setText(String.valueOf(version.getNumber()));
+        }
+      }
+      catch (SvnBindException e) {
+        showErrorDialog(myProject, e.getMessage(), message("error.cannot.load.revisions"));
       }
     }
   }
@@ -98,7 +108,7 @@ public class SvnRevisionPanel extends JPanel {
     myRoot = root;
   }
 
-  public void setUrlProvider(final UrlProvider urlProvider) {
+  public void setUrlProvider(@Nullable ThrowableComputable<SVNURL, SvnBindException> urlProvider) {
     myUrlProvider = urlProvider;
   }
 
@@ -113,7 +123,7 @@ public class SvnRevisionPanel extends JPanel {
 
     final SVNRevision result = SVNRevision.parse(myRevisionField.getText());
     if (!result.isValid()) {
-      throw new ConfigurationException(SvnBundle.message("invalid.svn.revision.error.message", myRevisionField.getText()));
+      throw new ConfigurationException(message("invalid.svn.revision.error.message", myRevisionField.getText()));
     }
 
     return result;
@@ -161,9 +171,5 @@ public class SvnRevisionPanel extends JPanel {
     for(ChangeListener listener: myChangeListeners) {
       listener.stateChanged(new ChangeEvent(this));
     }
-  }
-
-  public interface UrlProvider {
-    String getUrl();
   }
 }

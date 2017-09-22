@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,8 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.io.File;
+
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class CreateBranchOrTagDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.dialogs.CopyDialog");
@@ -136,7 +138,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
 
     myRevisionPanel.setRoot(mySrcVirtualFile);
     myRevisionPanel.setProject(myProject);
-    myRevisionPanel.setUrlProvider(() -> mySrcURL);
+    myRevisionPanel.setUrlProvider(() -> createUrl(mySrcURL));
     updateBranchTagBases();
 
     myRevisionPanel.addChangeListener(e -> getOKAction().setEnabled(isOKActionEnabled()));

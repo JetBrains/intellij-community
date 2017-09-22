@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,8 +59,7 @@ public class CheckoutOptionsDialog extends DialogWrapper {
   public CheckoutOptionsDialog(final Project project, SVNURL url, File target, final VirtualFile root, final String relativePath) {
     super(project, true);
     myRelativePath = relativePath;
-    final String urlText = url.toDecodedString();
-    myUrlLabel.setText(urlText);
+    myUrlLabel.setText(url.toDecodedString());
 
     fillTargetList(target);
     validateTargetSelected();
@@ -83,7 +82,7 @@ public class CheckoutOptionsDialog extends DialogWrapper {
 
     svnSelectRevisionPanel.setRoot(root);
     svnSelectRevisionPanel.setProject(project);
-    svnSelectRevisionPanel.setUrlProvider(() -> urlText);
+    svnSelectRevisionPanel.setUrlProvider(() -> url);
 
     setTitle(SvnBundle.message("checkout.options.dialog.title"));
     myDepthLabel.setLabelFor(myDepthCombo);

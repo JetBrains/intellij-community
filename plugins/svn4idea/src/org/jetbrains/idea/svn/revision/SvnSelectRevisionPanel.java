@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,13 @@ package org.jetbrains.idea.svn.revision;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.update.SvnRevisionPanel;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
@@ -37,7 +41,7 @@ public class SvnSelectRevisionPanel extends JPanel {
     mySvnRevisionPanel.setProject(project);
   }
 
-  public void setUrlProvider(final SvnRevisionPanel.UrlProvider urlProvider) {
+  public void setUrlProvider(@Nullable ThrowableComputable<SVNURL, SvnBindException> urlProvider) {
     mySvnRevisionPanel.setUrlProvider(urlProvider);
   }
 
