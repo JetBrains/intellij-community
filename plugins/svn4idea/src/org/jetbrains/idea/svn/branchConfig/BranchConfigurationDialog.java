@@ -33,6 +33,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
 import org.tmatesoft.svn.core.SVNURL;
 
 import javax.swing.*;
@@ -46,7 +47,6 @@ import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.ObjectUtils.notNull;
 import static java.lang.Math.min;
 import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
-import static org.jetbrains.idea.svn.dialogs.SelectLocationDialog.selectLocation;
 
 public class BranchConfigurationDialog extends DialogWrapper {
   private JPanel myTopPanel;
@@ -76,7 +76,7 @@ public class BranchConfigurationDialog extends DialogWrapper {
 
     myTrunkLocationTextField.setText(configuration.getTrunkUrl());
     myTrunkLocationTextField.addActionListener(e -> {
-      Pair<SVNURL, SVNURL> selectionData = selectLocation(project, rootUrl);
+      Pair<SVNURL, SVNURL> selectionData = SelectLocationDialog.selectLocationAndRoot(project, rootUrl);
 
       if (selectionData != null && selectionData.first != null) {
         myTrunkLocationTextField.setText(selectionData.first.toString());
@@ -105,7 +105,7 @@ public class BranchConfigurationDialog extends DialogWrapper {
 
         @Override
         public void run(AnActionButton button) {
-          Pair<SVNURL, SVNURL> result = selectLocation(project, notNull(usedRootUrl, rootUrl));
+          Pair<SVNURL, SVNURL> result = SelectLocationDialog.selectLocationAndRoot(project, notNull(usedRootUrl, rootUrl));
           if (result != null) {
             SVNURL selectedUrl = result.first;
             usedRootUrl = result.second;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ public class SelectLocationDialog extends DialogWrapper {
   }
 
   @Nullable
-  public static Pair<SVNURL, SVNURL> selectLocation(Project project, @NotNull SVNURL url) {
+  public static Pair<SVNURL, SVNURL> selectLocationAndRoot(Project project, @NotNull SVNURL url) {
     SelectLocationDialog dialog = new SelectLocationDialog(project, url, null, null, true, true);
     return dialog.showAndGet() ? create(dialog.getSelectedURL(), dialog.getRootUrl()) : null;
   }
