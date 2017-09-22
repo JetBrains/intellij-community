@@ -179,49 +179,47 @@ public class SMTestRunnerConnectionUtil {
       outputConsumer = new OutputToGeneralTestEventsConverter(testFrameworkName, consoleProperties);
     }
 
-    // events processor
-    final GeneralTestEventsProcessor eventsProcessor;
-    if (idBasedTestTree) {
-      eventsProcessor = new GeneralIdBasedToSMTRunnerEventsConvertor(consoleProperties.getProject(), resultsViewer.getTestsRootNode(), testFrameworkName);
-    }
-    else {
-      eventsProcessor = new GeneralToSMTRunnerEventsConvertor(consoleProperties.getProject(), resultsViewer.getTestsRootNode(), testFrameworkName);
-    }
-
-    if (locator != null) {
-      eventsProcessor.setLocator(locator);
-    }
-
-    if (printerProvider != null) {
-      eventsProcessor.setPrinterProvider(printerProvider);
-    }
-
     // UI actions
-    final SMTRunnerUIActionsHandler uiActionsHandler = new SMTRunnerUIActionsHandler(consoleProperties);
-
-    // subscribe to events
-
-    // subscribes event processor on output consumer events
-    outputConsumer.setProcessor(eventsProcessor);
-    // subscribes result viewer on event processor
-    eventsProcessor.addEventsListener(resultsViewer);
+    SMTRunnerUIActionsHandler uiActionsHandler = new SMTRunnerUIActionsHandler(consoleProperties);
     // subscribes test runner's actions on results viewer events
     resultsViewer.addEventsListener(uiActionsHandler);
+
+    outputConsumer.setTestingStartedHandler(() -> {
+      // events processor
+      GeneralTestEventsProcessor eventsProcessor;
+      if (idBasedTestTree) {
+        eventsProcessor = new GeneralIdBasedToSMTRunnerEventsConvertor(consoleProperties.getProject(), resultsViewer.getTestsRootNode(), testFrameworkName);
+      }
+      else {
+        eventsProcessor = new GeneralToSMTRunnerEventsConvertor(consoleProperties.getProject(), resultsViewer.getTestsRootNode(), testFrameworkName);
+      }
+
+      if (locator != null) {
+        eventsProcessor.setLocator(locator);
+      }
+
+      if (printerProvider != null) {
+        eventsProcessor.setPrinterProvider(printerProvider);
+      }
+      // subscribes result viewer on event processor
+      eventsProcessor.addEventsListener(resultsViewer);
+
+      // subscribes event processor on output consumer events
+      outputConsumer.setProcessor(eventsProcessor);
+    });
+
+    outputConsumer.startTesting();
 
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
       public void processTerminated(@NotNull final ProcessEvent event) {
         outputConsumer.flushBufferBeforeTerminating();
-        eventsProcessor.onFinishTesting();
-
-        Disposer.dispose(eventsProcessor);
+        outputConsumer.finishTesting();
         Disposer.dispose(outputConsumer);
       }
 
       @Override
       public void startNotified(@NotNull final ProcessEvent event) {
-        eventsProcessor.onStartTesting();
-        outputConsumer.onStartTesting();
       }
 
       @Override

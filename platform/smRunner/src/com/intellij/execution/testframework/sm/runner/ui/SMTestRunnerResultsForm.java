@@ -83,7 +83,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   @NonNls public static final String HISTORY_DATE_FORMAT = "yyyy.MM.dd 'at' HH'h' mm'm' ss's'";
   @NonNls private static final String DEFAULT_SM_RUNNER_SPLITTER_PROPERTY = "SMTestRunner.Splitter.Proportion";
 
-  public static final Color DARK_YELLOW = JBColor.YELLOW.darker();
   private static final Logger LOG = Logger.getInstance(SMTestRunnerResultsForm.class);
 
   private SMTRunnerTestTreeView myTreeView;
@@ -223,6 +222,9 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
    */
   public void onTestingStarted(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
     myAnimator.setCurrentTestCase(myTestsRootNode);
+    if (!myTestsRootNode.getChildren().isEmpty()) {
+      myTestsRootNode.getChildren().clear();
+    }
     myTreeBuilder.updateFromRoot();
 
     // Status line
@@ -243,6 +245,16 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     updateStatusLabel(false);
 
     // TODO : show info - "Loading..." msg
+
+    myTotalTestCount = 0;
+    myStartedTestCount = 0;
+    myFinishedTestCount = 0;
+    myFailedTestCount = 0;
+    myIgnoredTestCount = 0;
+    myTestsRunning = true;
+    myLastFailed = null;
+    myLastSelected = null;
+    myMentionedCategories.clear();
 
     fireOnTestingStarted();
   }
@@ -516,7 +528,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     return myStartedTestCount;
   }
 
-  protected int getFinishedTestCount() {
+  public int getFinishedTestCount() {
     return myFinishedTestCount;
   }
 
