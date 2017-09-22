@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.PlusMinusModify;
@@ -512,7 +511,7 @@ public class ChangeListWorker {
 
   @NotNull
   public List<File> getAffectedPaths() {
-    final SortedSet<FilePath> set = myIdx.getAffectedPaths();
+    final Set<FilePath> set = myIdx.getAffectedPaths();
     final List<File> result = new ArrayList<>(set.size());
     for (FilePath path : set) {
       result.add(path.getIOFile());
@@ -668,11 +667,7 @@ public class ChangeListWorker {
 
   public ThreeState haveChangesUnder(@NotNull VirtualFile virtualFile) {
     FilePath dir = VcsUtil.getFilePath(virtualFile);
-    FilePath changeCandidate = myIdx.getAffectedPaths().ceiling(dir);
-    if (changeCandidate == null) {
-      return ThreeState.NO;
-    }
-    return FileUtil.isAncestorThreeState(dir.getPath(), changeCandidate.getPath(), false);
+    return myIdx.haveChangesUnder(dir);
   }
 
   @NotNull
