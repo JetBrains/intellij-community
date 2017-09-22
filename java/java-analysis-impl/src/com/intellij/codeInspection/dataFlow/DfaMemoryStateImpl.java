@@ -694,6 +694,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
+  public boolean isEmptyStack() {
+    return myStack.isEmpty();
+  }
+
+  @Override
   public boolean applyInstanceofOrNull(@NotNull DfaRelationValue dfaCond) {
     DfaValue left = unwrap(dfaCond.getLeftOperand());
 

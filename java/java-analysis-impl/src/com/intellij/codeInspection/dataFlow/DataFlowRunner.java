@@ -188,6 +188,12 @@ public class DataFlowRunner {
           }
 
           DfaInstructionState[] after = acceptInstruction(visitor, instructionState);
+          if (LOG.isDebugEnabled() && instruction instanceof ControlTransferInstruction && after.length == 0) {
+            DfaMemoryState memoryState = instructionState.getMemoryState();
+            if (!memoryState.isEmptyStack() && !(memoryState.peek() instanceof DfaControlTransferValue)) {
+              LOG.error("Stack is corrupted at "+instructionState);
+            }
+          }
           for (DfaInstructionState state : after) {
             Instruction nextInstruction = state.getInstruction();
             if (nextInstruction.getIndex() >= endOffset) {
