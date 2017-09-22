@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.references;
 
+import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.find.FindModel;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -51,6 +52,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
@@ -126,7 +128,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
         }
 
         return new PsiReference[]{
-          new PsiReferenceBase<PsiElement>(element, true) {
+          new IconPsiReferenceBase(element) {
             @Override
             public PsiElement resolve() {
               String value = ((XmlAttributeValue)element).getValue();
@@ -260,7 +262,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
       public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
         if (!PsiUtil.isPluginProject(element.getProject())) return PsiReference.EMPTY_ARRAY;
         return new PsiReference[]{
-          new PsiReferenceBase<PsiElement>(element, true) {
+          new IconPsiReferenceBase(element) {
             @Override
             public PsiElement resolve() {
               String value = (String)((PsiLiteralExpression)element).getValue();
@@ -375,5 +377,18 @@ public class IconsReferencesContributor extends PsiReferenceContributor
     final String fqnClassName = isAllIcons ? "com.intellij.icons.AllIcons" : "icons." + className;
     return JavaPsiFacade.getInstance(project)
       .findClass(fqnClassName, isAllIcons ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project));
+  }
+
+  private static abstract class IconPsiReferenceBase extends PsiReferenceBase<PsiElement> implements EmptyResolveMessageProvider {
+    public IconPsiReferenceBase(PsiElement element) {
+      super(element, true);
+    }
+
+    @SuppressWarnings("UnresolvedPropertyKey")
+    @NotNull
+    @Override
+    public String getUnresolvedMessagePattern() {
+      return DevKitBundle.message("inspections.presentation.cannot.resolve.icon");
+    }
   }
 }
