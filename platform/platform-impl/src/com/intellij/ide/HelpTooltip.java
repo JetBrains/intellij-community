@@ -28,12 +28,15 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.plaf.basic.BasicHTML;
+import javax.swing.text.View;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -186,15 +189,11 @@ public class HelpTooltip {
     }
 
     if (StringUtil.isNotEmpty(description)) {
-      String[] pa = description.split("\n");
+      String[] pa = description.split("<p/>");
       for (String p : pa) {
-        JLabel label = new JLabel();
-        label.setForeground(FONT_COLOR);
-        int width = SwingUtilities2.stringWidth(label, label.getFontMetrics(label.getFont()), p);
-        isMultiline = isMultiline || width > MAX_WIDTH;
-        width = Math.min(MAX_WIDTH, width);
-        label.setText(String.format("<html><div width=%d>%s</div></html>", width, p));
-        tipPanel.add(label, VerticalLayout.TOP);
+        if (!p.isEmpty()) {
+          tipPanel.add(new Paragraph(p), VerticalLayout.TOP);
+        }
       }
     }
 
@@ -312,11 +311,10 @@ public class HelpTooltip {
     }
 
     @Override public void paintComponent(Graphics g) {
-      super.paintComponent(g);
-
       Graphics2D g2 = (Graphics2D)g.create();
       try {
         g2.setColor(FONT_COLOR);
+        GraphicsUtil.setupAntialiasing(g2);
         if (lineMeasurer == null) {
           FontRenderContext frc = g2.getFontRenderContext();
           lineMeasurer = new LineBreakMeasurer(titleString.getIterator(), frc);
@@ -376,6 +374,21 @@ public class HelpTooltip {
       } finally {
         g2.dispose();
       }
+    }
+  }
+
+  private class Paragraph extends JLabel {
+    private Paragraph(String text) {
+      init(text);
+    }
+
+    private void init(String text) {
+      setForeground(FONT_COLOR);
+
+      View v = BasicHTML.createHTMLView(this, String.format("<html>%s</html>", text));
+      setText(v.getPreferredSpan(View.X_AXIS) > MAX_WIDTH ?
+              String.format("<html><div width=%d>%s</div></html>", MAX_WIDTH, text) :
+              String.format("<html>%s</html>", text));
     }
   }
 }
