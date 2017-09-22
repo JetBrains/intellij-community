@@ -15,7 +15,6 @@
  */
 package com.intellij.psi;
 
-import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -38,12 +37,4 @@ public interface PsiPostfixExpression extends PsiUnaryExpression {
    */
   @NotNull
   PsiJavaToken getOperationSign();
-
-  /**
-   * Returns the type of the token representing the operation performed.
-   *
-   * @return the token type.
-   */
-  @NotNull
-  IElementType getOperationTokenType();
 }
