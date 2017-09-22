@@ -240,16 +240,21 @@ public class HighlightFixUtil {
     }
   }
 
+  /**
+   * @param variable variable to create change type fixes for
+   * @param itemType a desired variable type
+   * @return a list of created fix actions
+   */
   @NotNull
-  public static List<IntentionAction> getChangeVariableTypeFixes(@NotNull PsiVariable parameter, PsiType itemType) {
+  public static List<IntentionAction> getChangeVariableTypeFixes(@NotNull PsiVariable variable, PsiType itemType) {
     if (itemType instanceof PsiMethodReferenceType) return Collections.emptyList();
     List<IntentionAction> result = new ArrayList<>();
     if (itemType != null) {
       for (ChangeVariableTypeQuickFixProvider fixProvider : Extensions.getExtensions(ChangeVariableTypeQuickFixProvider.EP_NAME)) {
-        Collections.addAll(result, fixProvider.getFixes(parameter, itemType));
+        Collections.addAll(result, fixProvider.getFixes(variable, itemType));
       }
     }
-    IntentionAction changeFix = getChangeParameterClassFix(parameter.getType(), itemType);
+    IntentionAction changeFix = getChangeParameterClassFix(variable.getType(), itemType);
     if (changeFix != null) result.add(changeFix);
     return result;
   }

@@ -2930,4 +2930,16 @@ public class HighlightUtil extends HighlightUtilBase {
 
     return message;
   }
+
+  /**
+   * @param variable variable to create change type fixes for
+   * @param itemType a desired variable type
+   * @return a list of created fix actions
+   * @deprecated Will be removed in 2018.1. Use {@link HighlightFixUtil#getChangeVariableTypeFixes(PsiVariable, PsiType)} instead.
+   */
+  @Deprecated
+  @NotNull
+  public static List<IntentionAction> getChangeVariableTypeFixes(@NotNull PsiVariable variable, PsiType itemType) {
+    return HighlightFixUtil.getChangeVariableTypeFixes(variable, itemType);
+  }
 }
