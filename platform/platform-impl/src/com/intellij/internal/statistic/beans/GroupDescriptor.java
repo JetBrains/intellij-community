@@ -38,6 +38,9 @@ public class GroupDescriptor {
 
   private GroupDescriptor(String id, double priority) {
     if (StringUtil.isEmptyOrSpaces(id)) throw new IllegalArgumentException("Invalid ID: '" + id + "'");
+    checkSeparator(id, ConvertUsagesUtil.GROUP_SEPARATOR);
+    checkSeparator(id, ConvertUsagesUtil.GROUPS_SEPARATOR);
+    checkSeparator(id, ConvertUsagesUtil.GROUP_VALUE_SEPARATOR);
     if (id.length() > MAX_ID_LENGTH) {
       Logger.getInstance(GroupDescriptor.class).error("ID too long: '" + id + "', truncated");
       id = id.substring(0, MAX_ID_LENGTH);
@@ -45,6 +48,13 @@ public class GroupDescriptor {
 
     myId = ConvertUsagesUtil.ensureProperKey(id);
     myPriority = priority;
+  }
+
+  private static void checkSeparator(String id, char separator) {
+    if (id.contains(Character.toString(separator))) {
+      Logger.getInstance(GroupDescriptor.class).
+        error("ID should not contain separator \'" + ConvertUsagesUtil.GROUP_SEPARATOR + "\'. Please fix ID \"" + id + "\"");
+    }
   }
 
   public String getId() {
