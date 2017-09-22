@@ -108,6 +108,18 @@ public class CondaEnvSdkFlavor extends CPythonSdkFlavor {
     return false;
   }
 
+  @Nullable
+  public static File getCondaEnvRoot(@NotNull final String binaryPath) {
+    final File binary = new File(binaryPath);
+    final File bin = binary.getParentFile();
+    if (bin == null) return null;
+    final File root = bin.getParentFile();
+    if (root == null) return null;
+    final File rootContainer = root.getParentFile();
+    if (rootContainer == null) return null;
+    return "envs".equals(rootContainer.getName()) ? root : null;
+  }
+
   @Override
   public Icon getIcon() {
     return PythonIcons.Python.Condaenv;

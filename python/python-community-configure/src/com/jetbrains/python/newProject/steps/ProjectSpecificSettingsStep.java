@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.newProject.steps;
 
+import com.google.common.collect.Iterables;
 import com.intellij.execution.ExecutionException;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
@@ -36,7 +37,10 @@ import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HideableDecorator;
 import com.intellij.ui.TextAccessor;
+import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.PathUtil;
+import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
@@ -48,8 +52,11 @@ import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.remote.PyProjectSynchronizer;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
+import com.jetbrains.python.sdk.PreferredSdkComparator;
+import com.jetbrains.python.sdk.PyLazySdk;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.add.PyAddNewVirtualEnvPanel;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +68,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.io.File;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -70,6 +77,9 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
   private PythonSdkChooserCombo mySdkCombo;
   private boolean myInstallFramework;
   private Sdk mySdk;
+  @Nullable private JPanel mySelectedInterpretersPanel;
+  @Nullable private PyAddNewVirtualEnvPanel myNewVirtualEnvPanel;
+
   /**
    * For remote projects path for project on remote side
    */
@@ -84,9 +94,9 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     super(projectGenerator, callback);
   }
 
-  private void acceptsSdk(@NotNull final DirectoryProjectGenerator<?> generator,
-                          @NotNull final Sdk sdk,
-                          @NotNull final File projectDirectory) throws PythonProjectGenerator.PyNoProjectAllowedOnSdkException {
+  private static void acceptsSdk(@NotNull final DirectoryProjectGenerator<?> generator,
+                                 @NotNull final Sdk sdk,
+                                 @NotNull final File projectDirectory) throws PythonProjectGenerator.PyNoProjectAllowedOnSdkException {
     if (generator instanceof PythonProjectGenerator) {
       ((PythonProjectGenerator<?>)generator).checkProjectCanBeCreatedOnSdk(sdk, projectDirectory);
     }
@@ -131,6 +141,10 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     if (!(myProjectGenerator instanceof PythonProjectGenerator)) return null;
     if (mySdk != null) return mySdk;
     if (((PythonProjectGenerator)myProjectGenerator).hideInterpreter()) return null;
+    if (mySelectedInterpretersPanel != null && mySelectedInterpretersPanel == myNewVirtualEnvPanel) {
+      return new PyLazySdk("Uninitialized virtual environment at " + myNewVirtualEnvPanel.getPath(),
+                           () -> myNewVirtualEnvPanel != null ? myNewVirtualEnvPanel.getOrCreateSdk() : null);
+    }
     return (Sdk)mySdkCombo.getComboBox().getSelectedItem();
   }
 
@@ -181,6 +195,10 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
       if (myRemotePathField != null) {
         myRemotePathField.addTextChangeListener(this::checkValid);
       }
+
+      if (myNewVirtualEnvPanel != null) {
+        myNewVirtualEnvPanel.addChangeListener(this::checkValid);
+      }
       
       UiNotifyConnector.doWhenFirstShown(mySdkCombo, this::checkValid);
     }
@@ -209,6 +227,14 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     myInstallFramework = false;
     if (!super.checkValid()) {
       return false;
+    }
+
+    if (myNewVirtualEnvPanel != null) {
+      final List<ValidationInfo> validationInfos = myNewVirtualEnvPanel.validateAll();
+      if (!validationInfos.isEmpty()) {
+        setErrorText(StringUtil.join(validationInfos, info -> info.message, "\n"));
+        return false;
+      }
     }
 
     if (myProjectGenerator instanceof PythonProjectGenerator) {
@@ -257,10 +283,6 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
           if (PyPackageUtil.packageManagementEnabled(sdk)) {
             myInstallFramework = true;
             final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
-            if (packages == null) {
-              warningList.add(frameworkName + " will be installed on the selected interpreter");
-              return false;
-            }
             if (!PyPackageUtil.hasManagement(packages)) {
               warningList.add("Python packaging tools and " + frameworkName + " will be installed on the selected interpreter");
             }
@@ -307,9 +329,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
         addInterpreterButton(locationPanel, location);
       }
       else {
-        final LabeledComponent<PythonSdkChooserCombo> labeled = createInterpreterCombo();
-        UIUtil.mergeComponentsWithAnchor(labeled, location);
-        panel.add(labeled);
+        panel.add(createInterpretersPanel());
       }
 
       final PythonRemoteInterpreterManager remoteInterpreterManager = PythonRemoteInterpreterManager.getInstance();
@@ -328,6 +348,60 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     }
 
     return super.createBasePanel();
+  }
+
+  @NotNull
+  private JPanel createInterpretersPanel() {
+    final JPanel container = new JPanel(new BorderLayout());
+    final JPanel decoratorPanel = new JPanel(new VerticalFlowLayout());
+    final HideableDecorator decorator = new HideableDecorator(decoratorPanel, "Project Interpreter", false);
+    decorator.setContentComponent(container);
+    final Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+    final List<Sdk> pythonSdks = PyConfigurableInterpreterList.getInstance(defaultProject).getAllPythonSdks();
+    Iterables.removeIf(pythonSdks, sdk -> !(sdk.getSdkType() instanceof PythonSdkType) || PythonSdkType.isInvalid(sdk));
+    Collections.sort(pythonSdks, new PreferredSdkComparator());
+    myNewVirtualEnvPanel = new PyAddNewVirtualEnvPanel(null, pythonSdks, myLocationField.getText().trim());
+    myLocationField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        myNewVirtualEnvPanel.setNewProjectPath(myLocationField.getText().trim());
+      }
+    });
+
+    final Map<JBRadioButton, JPanel> radioButtons = new LinkedHashMap<>();
+    final JBRadioButton newVirtualEnvButton = new JBRadioButton(myNewVirtualEnvPanel.getPanelName());
+    radioButtons.put(newVirtualEnvButton, myNewVirtualEnvPanel);
+    radioButtons.put(new JBRadioButton("Existing interpreter"), createInterpreterCombo());
+    final ButtonGroup buttonGroup = new ButtonGroup();
+    for (JBRadioButton button : radioButtons.keySet()) {
+      buttonGroup.add(button);
+    }
+
+    final FormBuilder formBuilder = FormBuilder.createFormBuilder();
+    for (Map.Entry<JBRadioButton, JPanel> entry : radioButtons.entrySet()) {
+      final JBRadioButton button = entry.getKey();
+      final JPanel panel = entry.getValue();
+      panel.setBorder(JBUI.Borders.emptyLeft(30));
+      formBuilder.addComponent(button);
+      formBuilder.addComponent(panel);
+      button.addItemListener(e -> {
+        mySelectedInterpretersPanel = panel;
+        for (JPanel p : radioButtons.values()) {
+          final boolean isCurrentPanel = p.equals(panel);
+          UIUtil.setEnabled(p, isCurrentPanel, true);
+          if (isCurrentPanel) {
+            decorator.setTitle("Project Interpreter: " + StringUtil.toTitleCase(button.getText()));
+          }
+        }
+      });
+    }
+
+    mySelectedInterpretersPanel = myNewVirtualEnvPanel;
+    newVirtualEnvButton.setSelected(true);
+
+    container.add(formBuilder.getPanel(), BorderLayout.NORTH);
+
+    return decoratorPanel;
   }
 
   private void createRemotePathField(@NotNull final JPanel panelToAddField,
@@ -410,7 +484,8 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
       public void actionPerformed(ActionEvent e) {
         final DialogBuilder builder = new DialogBuilder();
         final JPanel panel = new JPanel();
-        final LabeledComponent<PythonSdkChooserCombo> interpreterCombo = createInterpreterCombo();
+        final LabeledComponent<PythonSdkChooserCombo> interpreterCombo = LabeledComponent.create(createInterpreterCombo(),
+                                                                                                 "Interpreter", BorderLayout.WEST);
         if (mySdk != null) {
           mySdkCombo.getComboBox().setSelectedItem(mySdk);
         }
@@ -426,10 +501,11 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
   }
 
   @NotNull
-  private LabeledComponent<PythonSdkChooserCombo> createInterpreterCombo() {
+  private PythonSdkChooserCombo createInterpreterCombo() {
     final Project project = ProjectManager.getInstance().getDefaultProject();
     final List<Sdk> sdks = PyConfigurableInterpreterList.getInstance(project).getAllPythonSdks();
     VirtualEnvProjectFilter.removeAllAssociated(sdks);
+    Iterables.removeIf(sdks, sdk -> sdk != null && PythonSdkType.isInvalid(sdk));
     Sdk compatibleSdk = sdks.isEmpty() ? null : sdks.iterator().next();
     DirectoryProjectGenerator generator = getProjectGenerator();
     if (generator instanceof PyFrameworkProjectGenerator && !((PyFrameworkProjectGenerator)generator).supportsPython3()) {
@@ -442,13 +518,19 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     }
 
     final Sdk preferred = compatibleSdk;
-    mySdkCombo = new PythonSdkChooserCombo(project, sdks, sdk -> sdk == preferred);
+    mySdkCombo = new PythonSdkChooserCombo(project, sdks, myLocationField.getText().trim(), sdk -> sdk == preferred);
     if (SystemInfo.isMac && !UIUtil.isUnderDarcula()) {
       mySdkCombo.putClientProperty("JButton.buttonType", null);
     }
     mySdkCombo.setButtonIcon(PythonIcons.Python.InterpreterGear);
+    myLocationField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        mySdkCombo.setNewProjectPath(myLocationField.getText().trim());
+      }
+    });
 
-    return LabeledComponent.create(mySdkCombo, "Interpreter", BorderLayout.WEST);
+    return mySdkCombo;
   }
 
   /**

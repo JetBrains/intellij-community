@@ -21,12 +21,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGeneratorBase;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.remote.*;
+import com.jetbrains.python.sdk.PyLazySdk;
 import com.jetbrains.python.sdk.PySdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -144,6 +146,14 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     // If we deal with remote project -- use remote manager to configure it
     final PythonRemoteInterpreterManager remoteManager = PythonRemoteInterpreterManager.getInstance();
     final Sdk sdk = settings.getSdk();
+
+    if (sdk instanceof PyLazySdk) {
+      final Sdk createdSdk = ((PyLazySdk)sdk).create();
+      settings.setSdk(createdSdk);
+      if (createdSdk != null) {
+        SdkConfigurationUtil.addSdk(createdSdk);
+      }
+    }
 
     final PyProjectSynchronizer synchronizer = (remoteManager != null ? remoteManager.getSynchronizer(sdk) : null);
 
