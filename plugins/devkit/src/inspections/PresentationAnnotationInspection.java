@@ -53,6 +53,9 @@ public class PresentationAnnotationInspection extends DevKitUastInspectionBase {
           LOG.error("Unexpected null value of @Presentation#icon expression PSI: " + element);
           return;
         }
+        if (!iconExpressionPsi.isPhysical()) {
+          return;
+        }
 
         PsiReference[] references = iconExpressionPsi.getReferences();
         for (PsiReference reference : references) {
