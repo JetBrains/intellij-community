@@ -131,7 +131,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       else {
         projectName = projectFile.getName();
       }
-      String executionName = projectName + " build";
+      String executionName = "Build " + projectName;
       settings.setExecutionName(executionName);
       settings.setExternalProjectPath(rootProjectPath);
       settings.setTaskNames(ContainerUtil.collect(ContainerUtil.concat(cleanTasks, buildTasks).iterator()));
