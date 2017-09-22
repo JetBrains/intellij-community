@@ -49,11 +49,15 @@ import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
+import com.intellij.rt.debugger.agent.CaptureStorage;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
+import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -466,6 +470,16 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
 
     ApplicationManager.getApplication().runReadAction(() -> {
       JavaSdkUtil.addRtJar(parameters.getClassPath());
+      if (Registry.is("debugger.capture.points.agent")) {
+        String path = PathUtil.getJarPathForClass(CaptureStorage.class);
+        //TODO: for now works only in debug mode
+        String agent = "-javaagent:" +
+                       FileUtil.toSystemDependentName(PathUtil.getParentPath(PathUtil.getParentPath(path))) +
+                       "/artifacts/debugger_agent/debugger-agent.jar";
+        if (!parameters.getVMParametersList().hasParameter(agent)) {
+          parameters.getVMParametersList().add(agent);
+        }
+      }
 
       final Sdk jdk = parameters.getJdk();
       final boolean forceClassicVM = shouldForceClassicVM(jdk);
