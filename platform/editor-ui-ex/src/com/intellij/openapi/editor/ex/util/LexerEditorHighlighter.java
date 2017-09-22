@@ -186,7 +186,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       int startOffset = mySegments.getSegmentStart(startIndex);
       int newEndOffset = e.getOffset() + e.getNewLength();
 
-      myLexer.start(text, startOffset, text.length(), myLexer instanceof RestartableLexer ? ((RestartableLexer)myLexer).getStartState() : myInitialState);
+      myLexer.start(text, startOffset, text.length(), startOffset == 0 && myLexer instanceof RestartableLexer ? ((RestartableLexer)myLexer).getStartState() : myInitialState);
 
       int lastTokenStart = -1;
       int lastLexerState = -1;
@@ -455,7 +455,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       startOffset = mySegments.getSegmentStart(startIndex);
     }
 
-    myLexer.start(text, startOffset, text.length(), myInitialState);
+    myLexer.start(text, startOffset, text.length(), offset == 0 && myLexer instanceof RestartableLexer ? ((RestartableLexer)myLexer).getStartState() : myInitialState);
 
     while (myLexer.getTokenType() != null) {
       if (startIndex >= oldStartIndex) break;
