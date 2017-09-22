@@ -40,7 +40,6 @@ import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.update.SvnRevisionPanel;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -50,15 +49,13 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.io.File;
 
-import static org.jetbrains.idea.svn.SvnUtil.createUrl;
-
 public class CreateBranchOrTagDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.dialogs.CopyDialog");
 
   private final File mySrcFile;
-  private String mySrcURL;
+  private SVNURL mySrcURL;
   private final Project myProject;
-  private String myURL;
+  private SVNURL myURL;
 
   private TextFieldWithBrowseButton myToURLText;
 
@@ -103,7 +100,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
       }
     });
     myRepositoryField.addActionListener(e -> {
-      SVNURL url = SelectLocationDialog.selectLocation(project, mySrcURL);
+      SVNURL url = SelectLocationDialog.selectLocation(project, mySrcURL.toString());
       if (url != null) {
         myRepositoryField.setText(url.toString());
       }
@@ -115,8 +112,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     });
     myToURLText.addActionListener(e -> {
       String url = myToURLText.getText();
-      String dstName = SVNPathUtil.tail(mySrcURL);
-      dstName = SVNEncodingUtil.uriDecode(dstName);
+      String dstName = SVNPathUtil.tail(mySrcURL.toDecodedString());
       url = SelectLocationDialog.selectCopyDestination(myProject, SVNPathUtil.removeTail(url),
                                                 SvnBundle.message("label.copy.select.location.dialog.copy.as"), dstName, false);
       if (url != null) {
@@ -138,7 +134,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
 
     myRevisionPanel.setRoot(mySrcVirtualFile);
     myRevisionPanel.setProject(myProject);
-    myRevisionPanel.setUrlProvider(() -> createUrl(mySrcURL));
+    myRevisionPanel.setUrlProvider(() -> mySrcURL);
     updateBranchTagBases();
 
     myRevisionPanel.addChangeListener(e -> getOKAction().setEnabled(isOKActionEnabled()));
@@ -180,7 +176,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     }
     String relativeUrl;
     if (myWorkingCopyRadioButton.isSelected()) {
-      relativeUrl = myBranchConfiguration.getRelativeUrl(mySrcURL);
+      relativeUrl = myBranchConfiguration.getRelativeUrl(mySrcURL.toString());
     }
     else {
       relativeUrl = myBranchConfiguration.getRelativeUrl(myRepositoryField.getText());
@@ -230,7 +226,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     String revStr = "";
     Info info = vcs.getInfo(mySrcFile);
     if (info != null) {
-      mySrcURL = info.getURL() == null ? null : info.getURL().toString();
+      mySrcURL = info.getURL();
       revStr = String.valueOf(info.getRevision());
       myURL = mySrcURL;
     }
@@ -238,8 +234,8 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
       return;
     }
     myWorkingCopyField.setText(mySrcFile.toString());
-    myRepositoryField.setText(mySrcURL);
-    myToURLText.setText(myURL);
+    myRepositoryField.setText(mySrcURL.toString());
+    myToURLText.setText(myURL.toString());
     myRevisionPanel.setRevisionText(revStr);
     updateControls();
 
