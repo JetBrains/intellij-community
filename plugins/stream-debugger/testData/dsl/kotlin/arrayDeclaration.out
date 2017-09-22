@@ -1,1 +1,1 @@
-val a: kotlin.Array<kotlin.Int?>
+val a: kotlin.IntArray

@@ -1,1 +1,1 @@
-val array: kotlin.Array<kotlin.Double?> = kotlin.arrayOf<kotlin.Double?>(10.0, 20.0)
+val array: kotlin.DoubleArray = kotlin.doubleArrayOf(10.0, 20.0)
