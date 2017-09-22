@@ -233,17 +233,19 @@ public class ClassUtils {
   @Nullable
   public static PsiClassInitializer getDoubleBraceInitializer(PsiAnonymousClass aClass) {
     final PsiClassInitializer[] initializers = aClass.getInitializers();
-    if (initializers.length != 1) return null;
+    if (initializers.length != 1) {
+      return null;
+    }
     final PsiClassInitializer initializer = initializers[0];
-    if (initializer.hasModifierProperty(PsiModifier.STATIC)) return null;
-    final PsiField[] fields = aClass.getFields();
-    if (fields.length != 0) return null;
-    final PsiMethod[] methods = aClass.getMethods();
-    if (methods.length != 0) return null;
-    final PsiClass[] innerClasses = aClass.getInnerClasses();
-    if (innerClasses.length != 0) return null;
-    final PsiJavaCodeReferenceElement reference = aClass.getBaseClassReference();
-    if (reference.resolve() == null) return null;
+    if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
+      return null;
+    }
+    if (aClass.getFields().length != 0 || aClass.getMethods().length != 0 || aClass.getInnerClasses().length != 0) {
+      return null;
+    }
+    if (aClass.getBaseClassReference().resolve() == null) {
+      return null;
+    }
     return initializer;
   }
 
@@ -251,7 +253,7 @@ public class ClassUtils {
     if (aClass == null) {
       return false;
     }
-    if (!aClass.hasModifierProperty(PsiModifier.FINAL) && !hasOnlyPrivateConstructors(aClass)) {
+    if (!aClass.hasModifierProperty(PsiModifier.FINAL) || !hasOnlyPrivateConstructors(aClass)) {
       return false;
     }
     final PsiMethod[] methods = aClass.findMethodsByName("equals", true);

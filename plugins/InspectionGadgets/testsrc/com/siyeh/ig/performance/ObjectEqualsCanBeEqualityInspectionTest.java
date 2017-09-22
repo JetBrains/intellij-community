@@ -52,6 +52,14 @@ public class ObjectEqualsCanBeEqualityInspectionTest extends LightInspectionTest
            "}");
   }
 
+  public void testString() {
+    doTest("class X {" +
+           "  boolean isRighteous(String a) {" +
+           "    return a.equals(\"righteous\");" +
+           "  }" +
+           "}");
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
