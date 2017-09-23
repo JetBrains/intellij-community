@@ -440,7 +440,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @NotNull
   public final JBIterable<E> unique(@NotNull final Function<? super E, ?> identity) {
-    return filter(new StatefulFilter<E>() {
+    return filter(new SCond<E>() {
       HashSet<Object> visited;
 
       @Override
@@ -711,12 +711,22 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
-   * Collects all items and returns them as the new {@code JBIterable}.
+   * Collects all items into the specified collection and returns it wrapped in a new {@code JBIterable}.
    * This is equivalent to calling {@code JBIterable.from(addAllTo(c))}.
    */
   @NotNull
   public final JBIterable<E> collect(@NotNull Collection<E> collection) {
     return from(addAllTo(collection));
+  }
+
+  /**
+   * Collects all items into an {@link ArrayList} and returns them as the new {@code JBIterable}.
+   * @see JBIterable#collect(Collection)
+   */
+  @NotNull
+  public final JBIterable<E> collect() {
+    if (myIterable instanceof ArrayList) return this;
+    return collect(ContainerUtilRt.<E>newArrayList());
   }
 
   /**
@@ -801,11 +811,17 @@ public abstract class JBIterable<E> implements Iterable<E> {
     }
   }
 
-  public abstract static class StatefulFilter<T> extends Stateful<StatefulFilter> implements Condition<T> {
+  /**
+   * Stateful {@link Conditions}: a separate cloned instance is used for each iterator.
+   */
+  public abstract static class SCond<T> extends Stateful<SCond> implements Condition<T> { }
 
-  }
+  /**
+   * Stateful {@link Function}: a separate cloned instance is used for each iterator.
+   */
+  public abstract static class SFun<S, T> extends Stateful<SFun> implements Function<S, T> { }
 
-  public abstract static class StatefulTransform<S, T> extends Stateful<StatefulTransform> implements Function<S, T> {
+  @Deprecated
+  public abstract static class StatefulFilter<T> extends SCond<T> { }
 
-  }
 }
