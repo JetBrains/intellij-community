@@ -976,6 +976,11 @@ public class MavenProject {
 
     return null;
   }
+  
+  @Nullable
+  public String getReleaseLevel() {
+    return getCompilerLevel("release");
+  }
 
   @Nullable
   public String getSourceLevel() {
