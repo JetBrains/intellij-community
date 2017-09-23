@@ -99,7 +99,7 @@ public class TreeTraverserTest extends TestCase {
 
   private static final PairFunction<Integer, Integer, Integer> FIBONACCI = (k1, k2) -> k2 + k1;
 
-  private static final Function<Integer, Integer> FIBONACCI2 = new JBIterable.StatefulTransform<Integer, Integer>() {
+  private static final Function<Integer, Integer> FIBONACCI2 = new JBIterable.SFun<Integer, Integer>() {
     int k0;
     @Override
     public Integer fun(Integer k) {
@@ -120,8 +120,8 @@ public class TreeTraverserTest extends TestCase {
   }
 
   @NotNull
-  private static <E> JBIterable.StatefulFilter<E> UP_TO(final E o) {
-    return new JBIterable.StatefulFilter<E>() {
+  private static <E> JBIterable.SCond<E> UP_TO(final E o) {
+    return new JBIterable.SCond<E>() {
       boolean b;
 
       @Override
@@ -334,7 +334,7 @@ public class TreeTraverserTest extends TestCase {
   }
 
   public void testStatefulFilter() {
-    JBIterable<Integer> it = JBIterable.generate(1, INCREMENT).take(5).filter(new JBIterable.StatefulFilter<Integer>() {
+    JBIterable<Integer> it = JBIterable.generate(1, INCREMENT).take(5).filter(new JBIterable.SCond<Integer>() {
       int prev;
       @Override
       public boolean value(Integer integer) {
@@ -398,7 +398,7 @@ public class TreeTraverserTest extends TestCase {
 
     assertEquals(it.split(2, false).toList(), it.split(AFTER, o -> o % 2 == 0).map(o -> o.toList()).toList());
 
-    JBIterable<JBIterable<Integer>> statePart = it.split(GROUP, new JBIterable.StatefulFilter<Integer>() {
+    JBIterable<JBIterable<Integer>> statePart = it.split(GROUP, new JBIterable.SCond<Integer>() {
       int i = 4;
 
       @Override
@@ -794,7 +794,7 @@ public class TreeTraverserTest extends TestCase {
 
   public void testStatefulChildFilter() {
     JBTreeTraverser<Integer> t = numberTraverser();
-    class F extends JBIterable.StatefulFilter<Integer> {
+    class F extends JBIterable.SCond<Integer> {
       int count;
       boolean value;
       F(boolean initialVal) { value = initialVal; }
