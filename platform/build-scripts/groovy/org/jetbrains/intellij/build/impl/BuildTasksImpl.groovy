@@ -279,13 +279,13 @@ idea.fatal.error.notification=disabled
                       distributionJARsBuilder.platformModules +
                       buildContext.productProperties.additionalModulesToCompile +
                       (buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: [])
-    compileModules(moduleNames + buildContext.productProperties.productLayout.mainModules, buildContext.productProperties.modulesToCompileTests)
+    compileModules(moduleNames, buildContext.productProperties.modulesToCompileTests)
 
     def productLayout = buildContext.productProperties.productLayout
-    def pluginsToPublish = distributionJARsBuilder.getPluginsByModules(buildContext.productProperties.productLayout.pluginModulesToPublish)
+    def pluginsToPublish = distributionJARsBuilder.getPluginsByModules(buildContext.productProperties.productLayout.pluginModulesToPublish) 
     if (buildContext.shouldBuildDistributions()) {
       def providedModulesFilePath = "${buildContext.paths.artifacts}/${buildContext.productProperties.productCode}-builtinModules.json"
-      buildProvidedModulesList(providedModulesFilePath, moduleNames, productLayout.licenseFilesToBuildSearchableOptions)
+      buildProvidedModulesList(providedModulesFilePath, productLayout.mainModules, productLayout.licenseFilesToBuildSearchableOptions)
       if (buildContext.productProperties.productLayout.buildAllCompatiblePlugins) {
         if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
           pluginsToPublish = new PluginsCollector(buildContext, providedModulesFilePath).collectCompatiblePluginsToPublish()
