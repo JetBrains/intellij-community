@@ -821,7 +821,4 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   public abstract static class SFun<S, T> extends Stateful<SFun> implements Function<S, T> { }
 
-  @Deprecated
-  public abstract static class StatefulFilter<T> extends SCond<T> { }
-
 }
