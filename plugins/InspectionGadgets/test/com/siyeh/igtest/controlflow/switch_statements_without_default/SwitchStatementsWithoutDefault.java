@@ -81,4 +81,10 @@ public class SwitchStatementsWithoutDefault
                 break;
         }
     }
+
+    void empty(T t) {
+        switch (t) {
+
+        }
+    }
 }

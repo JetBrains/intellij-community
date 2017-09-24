@@ -17,16 +17,16 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.SwitchUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Collection;
 
 public class SwitchStatementsWithoutDefaultInspection extends BaseInspection {
 
@@ -68,23 +68,14 @@ public class SwitchStatementsWithoutDefaultInspection extends BaseInspection {
     @Override
     public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
       super.visitSwitchStatement(statement);
-      if (switchStatementHasDefault(statement)) {
+      final int count = SwitchUtils.calculateBranchCount(statement);
+      if (count <= 0) {
+        return;
+      }
+      if (m_ignoreFullyCoveredEnums && switchStatementIsFullyCoveredEnum(statement, count)) {
         return;
       }
       registerStatementError(statement);
-    }
-
-    private boolean switchStatementHasDefault(PsiSwitchStatement statement) {
-      final PsiCodeBlock body = statement.getBody();
-      if (body == null) {
-        return true; // do not warn about incomplete code
-      }
-      final Collection<PsiSwitchLabelStatement> labelStatements = PsiTreeUtil.findChildrenOfType(body, PsiSwitchLabelStatement.class);
-      // warn only when switch branches are present
-      if (labelStatements.isEmpty() || labelStatements.stream().anyMatch(PsiSwitchLabelStatement::isDefaultCase)) {
-        return true;
-      }
-      return m_ignoreFullyCoveredEnums && switchStatementIsFullyCoveredEnum(statement, labelStatements.size());
     }
 
     private boolean switchStatementIsFullyCoveredEnum(PsiSwitchStatement statement, int branchCount) {
@@ -92,12 +83,7 @@ public class SwitchStatementsWithoutDefaultInspection extends BaseInspection {
       if (expression == null) {
         return true; // don't warn on incomplete code
       }
-      final PsiType type = expression.getType();
-      if (!(type instanceof PsiClassType)) {
-        return false;
-      }
-      final PsiClassType classType = (PsiClassType)type;
-      final PsiClass aClass = classType.resolve();
+      final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
       return aClass != null && aClass.isEnum() && ControlFlowUtils.hasChildrenOfTypeCount(aClass, branchCount, PsiEnumConstant.class);
     }
   }

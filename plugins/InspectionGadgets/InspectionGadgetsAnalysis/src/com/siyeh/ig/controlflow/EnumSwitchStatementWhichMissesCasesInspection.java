@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,57 +15,45 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.psi.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiSwitchStatement;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class EnumSwitchStatementWhichMissesCasesInspection
-  extends BaseInspection {
+public class EnumSwitchStatementWhichMissesCasesInspection extends BaseInspection {
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "enum.switch.statement.which.misses.cases.display.name");
-  }
-
-  /**
-   * @noinspection PublicField
-   */
+  @SuppressWarnings("PublicField")
   public boolean ignoreSwitchStatementsWithDefault = false;
 
   @Override
   @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("enum.switch.statement.which.misses.cases.display.name");
+  }
+
+  @Override
+  @NotNull
   public String buildErrorString(Object... infos) {
-    final PsiSwitchStatement switchStatement =
-      (PsiSwitchStatement)infos[0];
-    assert switchStatement != null;
-    final PsiExpression switchStatementExpression =
-      switchStatement.getExpression();
-    assert switchStatementExpression != null;
-    final PsiType switchStatementType =
-      switchStatementExpression.getType();
-    assert switchStatementType != null;
-    final String switchStatementTypeText =
-      switchStatementType.getPresentableText();
-    return InspectionGadgetsBundle.message(
-      "enum.switch.statement.which.misses.cases.problem.descriptor",
-      switchStatementTypeText);
+    final String enumName = (String)infos[0];
+    return InspectionGadgetsBundle.message("enum.switch.statement.which.misses.cases.problem.descriptor", enumName);
   }
 
   @Override
   @Nullable
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "enum.switch.statement.which.misses.cases.option"),
-      this, "ignoreSwitchStatementsWithDefault");
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("enum.switch.statement.which.misses.cases.option"),
+                                          this, "ignoreSwitchStatementsWithDefault");
   }
 
   @Override
@@ -73,61 +61,27 @@ public class EnumSwitchStatementWhichMissesCasesInspection
     return new EnumSwitchStatementWhichMissesCasesVisitor();
   }
 
-  private class EnumSwitchStatementWhichMissesCasesVisitor
-    extends BaseInspectionVisitor {
+  private class EnumSwitchStatementWhichMissesCasesVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitSwitchStatement(
-      @NotNull PsiSwitchStatement statement) {
+    public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
       super.visitSwitchStatement(statement);
-      if (!switchStatementMissingCases(statement)) {
-        return;
-      }
-      registerStatementError(statement, statement);
-    }
-
-    private boolean switchStatementMissingCases(
-      PsiSwitchStatement statement) {
       final PsiExpression expression = statement.getExpression();
       if (expression == null) {
-        return false;
+        return;
       }
-      final PsiType type = expression.getType();
-      if (!(type instanceof PsiClassType)) {
-        return false;
-      }
-      final PsiClassType classType = (PsiClassType)type;
-      final PsiClass aClass = classType.resolve();
+      final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
       if (aClass == null || !aClass.isEnum()) {
-        return false;
+        return;
       }
-      final PsiCodeBlock body = statement.getBody();
-      if (body == null) {
-        return false;
+      final int count = SwitchUtils.calculateBranchCount(statement);
+      if (ignoreSwitchStatementsWithDefault && count < 0) {
+        return;
       }
-      final PsiStatement[] statements = body.getStatements();
-      int numCases = 0;
-      for (final PsiStatement child : statements) {
-        if (child instanceof PsiSwitchLabelStatement) {
-          final PsiSwitchLabelStatement switchLabelStatement =
-            (PsiSwitchLabelStatement)child;
-          if (!switchLabelStatement.isDefaultCase()) {
-            numCases++;
-          }
-          else if (ignoreSwitchStatementsWithDefault) {
-            return false;
-          }
-        }
+      if (count == 0 || ControlFlowUtils.hasChildrenOfTypeCount(aClass, Math.abs(count), PsiEnumConstant.class)) {
+        return;
       }
-      final PsiField[] fields = aClass.getFields();
-      int numEnums = 0;
-      for (final PsiField field : fields) {
-        if (!(field instanceof PsiEnumConstant)) {
-          continue;
-        }
-        numEnums++;
-      }
-      return numEnums != numCases;
+      registerStatementError(statement, aClass.getQualifiedName());
     }
   }
 }
