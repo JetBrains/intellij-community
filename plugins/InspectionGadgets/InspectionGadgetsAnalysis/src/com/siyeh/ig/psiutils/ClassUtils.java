@@ -18,6 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.codeInspection.concurrencyAnnotations.JCiPUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -112,11 +113,7 @@ public class ClassUtils {
     if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {
       return true;
     }
-    if (!(type instanceof PsiClassType)) {
-      return false;
-    }
-    final PsiClassType classType = (PsiClassType)type;
-    final PsiClass aClass = classType.resolve();
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
     if (aClass == null) {
       return false;
     }
