@@ -219,10 +219,6 @@ public class SMTestRunnerConnectionUtil {
       }
 
       @Override
-      public void startNotified(@NotNull final ProcessEvent event) {
-      }
-
-      @Override
       public void onTextAvailable(@NotNull final ProcessEvent event, @NotNull final Key outputType) {
         outputConsumer.process(event.getText(), outputType);
       }

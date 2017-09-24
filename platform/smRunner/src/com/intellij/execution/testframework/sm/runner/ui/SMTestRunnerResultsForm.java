@@ -221,6 +221,16 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
    * @return
    */
   public void onTestingStarted(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
+    myTotalTestCount = 0;
+    myStartedTestCount = 0;
+    myFinishedTestCount = 0;
+    myFailedTestCount = 0;
+    myIgnoredTestCount = 0;
+    myTestsRunning = true;
+    myLastFailed = null;
+    myLastSelected = null;
+    myMentionedCategories.clear();
+
     myAnimator.setCurrentTestCase(myTestsRootNode);
     if (!myTestsRootNode.getChildren().isEmpty()) {
       myTestsRootNode.getChildren().clear();
@@ -242,19 +252,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       myTestsRootNode.addSystemOutput("Testing started at " + DateFormatUtil.formatTime(myStartTime) + " ...\n");
     }
 
+    // update status text
     updateStatusLabel(false);
-
-    // TODO : show info - "Loading..." msg
-
-    myTotalTestCount = 0;
-    myStartedTestCount = 0;
-    myFinishedTestCount = 0;
-    myFailedTestCount = 0;
-    myIgnoredTestCount = 0;
-    myTestsRunning = true;
-    myLastFailed = null;
-    myLastSelected = null;
-    myMentionedCategories.clear();
 
     fireOnTestingStarted();
   }
@@ -532,7 +531,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     return myFinishedTestCount;
   }
 
-  protected int getFailedTestCount() {
+  public int getFailedTestCount() {
     return myFailedTestCount;
   }
 
@@ -540,7 +539,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     return myIgnoredTestCount;
   }
 
-  protected Color getTestsStatusColor() {
+  public Color getTestsStatusColor() {
     return myStatusLine.getStatusColor();
   }
 
