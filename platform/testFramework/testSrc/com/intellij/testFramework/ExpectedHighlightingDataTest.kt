@@ -30,6 +30,9 @@ class ExpectedHighlightingDataTest {
 
   @Test fun empty() = doTest("text", emptyList(), "text")
 
+  @Test fun fullLength() =
+    doTest("text", listOf(error(0, 4, "_")), """<err descr="_">text</err>""")
+
   @Test fun sequential() =
     doTest("_my text_",
            asList(error(1, 3, "1"), error(4, 8, "2")),
@@ -93,6 +96,9 @@ class ExpectedHighlightingDataTest {
     doTest(" ab ",
            asList(error(1, 2, "a1"), error(1, 2, "a2"), error(2, 3, "b1"), error(2, 3, "b2")),
            """ <err descr="a1"><err descr="a2">a</err></err><err descr="b1"><err descr="b2">b</err></err> """)
+
+  @Test fun zeroLengthAtZeroOffset() =
+    doTest("text", listOf(error(0, 0, "_")), """<err descr="_"></err>text""")
 
 
   private fun doTest(original: String, highlighting: Collection<HighlightInfo>, expected: String) =

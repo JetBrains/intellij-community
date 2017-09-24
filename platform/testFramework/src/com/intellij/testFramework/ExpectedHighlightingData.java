@@ -533,14 +533,15 @@ public class ExpectedHighlightingData {
 
     // combine highlighting data with original text
     StringBuilder sb = new StringBuilder();
-    Couple<Integer> result = composeText(sb, list, 0, text, text.length(), 0, showAttributesKeys);
-    sb.insert(0, text.substring(0, result.second));
+    int[] offsets = composeText(sb, list, 0, text, text.length(), -1, showAttributesKeys);
+    sb.insert(0, text.substring(0, offsets[1]));
     return sb.toString();
   }
 
-  private static Couple<Integer> composeText(StringBuilder sb,
-                                             List<Pair<String, HighlightInfo>> list, int index,
-                                             String text, int endPos, int startPos, boolean showAttributesKeys) {
+  private static int[] composeText(StringBuilder sb,
+                                   List<Pair<String, HighlightInfo>> list, int index,
+                                   String text, int endPos, int startPos,
+                                   boolean showAttributesKeys) {
     int i = index;
     while (i < list.size()) {
       Pair<String, HighlightInfo> pair = list.get(i);
@@ -553,27 +554,27 @@ public class ExpectedHighlightingData {
       HighlightInfo prev = i < list.size() - 1 ? list.get(i + 1).second : null;
 
       sb.insert(0, text.substring(info.endOffset, endPos));
-      sb.insert(0, "</" + severity + ">");
+      sb.insert(0, "</" + severity + '>');
       endPos = info.endOffset;
       if (prev != null && prev.endOffset > info.startOffset) {
-        Couple<Integer> result = composeText(sb, list, i + 1, text, endPos, info.startOffset, showAttributesKeys);
-        i = result.first - 1;
-        endPos = result.second;
+        int[] offsets = composeText(sb, list, i + 1, text, endPos, info.startOffset, showAttributesKeys);
+        i = offsets[0] - 1;
+        endPos = offsets[1];
       }
       sb.insert(0, text.substring(info.startOffset, endPos));
 
-      String str = "<" + severity + " descr=\"" + StringUtil.escapeQuotes(String.valueOf(info.getDescription())) + "\"";
+      String str = '<' + severity + " descr=\"" + StringUtil.escapeQuotes(String.valueOf(info.getDescription())) + '"';
       if (showAttributesKeys) {
-        str += " textAttributesKey=\"" + info.forcedTextAttributesKey + "\"";
+        str += " textAttributesKey=\"" + info.forcedTextAttributesKey + '"';
       }
-      str += ">";
+      str += '>';
       sb.insert(0, str);
 
       endPos = info.startOffset;
       i++;
     }
 
-    return Couple.of(i, endPos);
+    return new int[]{i, endPos};
   }
 
   private static boolean infosContainsExpectedInfo(Collection<HighlightInfo> infos, HighlightInfo expectedInfo) {
