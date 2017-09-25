@@ -141,20 +141,20 @@ class CollectMigration extends BaseStreamApiMigration {
     CollectTerminal terminal = StreamEx.of(extractors).map(extractor -> extractor.apply(tb, call)).nonNull().findFirst().orElse(null);
     if (terminal != null) {
       if (terminal.getStatus() == ControlFlowUtils.InitializerUsageStatus.UNKNOWN) return null;
-      terminal = includePostStatements(terminal, tb.getStreamSourceStatement());
+      terminal = includePostStatements(terminal, PsiTreeUtil.skipWhitespacesAndCommentsForward(tb.getStreamSourceStatement()));
     }
     return terminal;
   }
 
-  static CollectTerminal includePostStatements(CollectTerminal terminal, PsiStatement loop) {
+  @NotNull
+  static CollectTerminal includePostStatements(@NotNull CollectTerminal terminal, @Nullable PsiElement nextElement) {
+    if (nextElement == null) return terminal;
     List<BiFunction<CollectTerminal, PsiElement, CollectTerminal>> wrappers =
       Arrays.asList(SortingTerminal::tryWrap, ToArrayTerminal::tryWrap, NewListTerminal::tryWrap);
-    PsiElement nextStatement = loop;
     while (true) {
-      nextStatement = PsiTreeUtil.skipWhitespacesAndCommentsForward(nextStatement);
       CollectTerminal wrapped = null;
       for (BiFunction<CollectTerminal, PsiElement, CollectTerminal> wrapper : wrappers) {
-        wrapped = wrapper.apply(terminal, nextStatement);
+        wrapped = wrapper.apply(terminal, nextElement);
         if (wrapped != null) {
           terminal = wrapped;
           break;
@@ -163,6 +163,7 @@ class CollectMigration extends BaseStreamApiMigration {
       if (wrapped == null) {
         return terminal;
       }
+      nextElement = PsiTreeUtil.skipWhitespacesAndCommentsForward(nextElement);
     }
   }
 
@@ -176,7 +177,7 @@ class CollectMigration extends BaseStreamApiMigration {
   abstract static class CollectTerminal {
     private final PsiLocalVariable myTargetVariable;
     private final InitializerUsageStatus myStatus;
-    final PsiStatement myLoop;
+    private final PsiStatement myLoop;
 
     protected CollectTerminal(PsiLocalVariable variable, PsiStatement loop, InitializerUsageStatus status) {
       myTargetVariable = variable;
@@ -194,7 +195,7 @@ class CollectMigration extends BaseStreamApiMigration {
 
     String generateIntermediate() { return ""; }
 
-    StreamEx<PsiReferenceExpression> targetReferences() {
+    StreamEx<? extends PsiExpression> targetReferences() {
       List<PsiElement> usedElements = usedElements().toList();
       return StreamEx.of(ReferencesSearch.search(myTargetVariable).findAll()).select(PsiReferenceExpression.class)
         .filter(ref -> usedElements.stream().noneMatch(allowedUsage -> PsiTreeUtil.isAncestor(allowedUsage, ref, false)));
@@ -400,7 +401,7 @@ class CollectMigration extends BaseStreamApiMigration {
                      @NotNull PsiLocalVariable target,
                      @NotNull PsiExpression expression,
                      @NotNull InitializerUsageStatus status) {
-      super(target, downstream.myLoop, status);
+      super(target, null, status);
       myDownstream = downstream;
       myKeyExpression = expression;
     }
@@ -638,7 +639,7 @@ class CollectMigration extends BaseStreamApiMigration {
     private final PsiStatement myStatement;
 
     SortingTerminal(CollectTerminal downstream, PsiStatement statement, PsiExpression comparator) {
-      super(downstream.getTargetVariable(), downstream.myLoop, downstream.getStatus());
+      super(downstream.getTargetVariable(), null, downstream.getStatus());
       myDownstream = downstream;
       myStatement = statement;
       myComparator = comparator;
@@ -787,7 +788,7 @@ class CollectMigration extends BaseStreamApiMigration {
       String intermediateSteps = terminal.getIntermediateStepsFromCollection();
       if (intermediateSteps == null) return null;
 
-      List<PsiReferenceExpression> usages = terminal.targetReferences().toList();
+      List<? extends PsiExpression> usages = terminal.targetReferences().toList();
       if (usages.isEmpty()) return null;
       PsiMethodCallExpression toArrayCandidate = StreamEx.of(usages)
         .map(usage -> ExpressionUtils.getCallForQualifier(tryCast(usage, PsiExpression.class)))
@@ -878,6 +879,7 @@ class CollectMigration extends BaseStreamApiMigration {
         }
       }
       if (!(candidate instanceof PsiNewExpression)) return null;
+      if (!InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_COLLECTION)) return null;
       PsiExpressionList argumentList = ((PsiNewExpression)candidate).getArgumentList();
       if (argumentList == null) return null;
       PsiExpression[] args = argumentList.getExpressions();
