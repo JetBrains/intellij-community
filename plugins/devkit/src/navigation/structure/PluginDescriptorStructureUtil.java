@@ -243,10 +243,17 @@ public class PluginDescriptorStructureUtil {
   private static String getTopLevelNodeLocation(DomElement element) {
     String tagName = element.getXmlElementName();
     if (tagName.equalsIgnoreCase("id") || tagName.equalsIgnoreCase("name") || tagName.equalsIgnoreCase("version") ||
-        tagName.equalsIgnoreCase("category") || tagName.equalsIgnoreCase("depends") ||
-        tagName.equalsIgnoreCase("resource-bundle")) {
+        tagName.equalsIgnoreCase("category") || tagName.equalsIgnoreCase("resource-bundle")) {
       return ((GenericDomValue)element).getRawText();
     }
+    if (tagName.equalsIgnoreCase("depends")) {
+      String result = ((GenericDomValue)element).getRawText();
+      if ("true".equalsIgnoreCase(firstNotNullAttribute(element, "optional"))) {
+        result += " [optional]";
+      }
+      return result;
+    }
+
     return null;
   }
 
