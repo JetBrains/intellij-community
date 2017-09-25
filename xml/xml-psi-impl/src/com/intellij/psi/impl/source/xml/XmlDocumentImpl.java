@@ -227,11 +227,11 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
       }
 
       if (nsDescriptor == null) {
-        String htmlns = ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(getProject());
-        if (htmlns.isEmpty()) {
-          htmlns = Html5SchemaProvider.getHtml5SchemaLocation();
+        String htmlNs = ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(getProject());
+        if (htmlNs.isEmpty()) {
+          htmlNs = Html5SchemaProvider.getHtml5SchemaLocation();
         }
-        nsDescriptor = getDefaultNSDescriptor(htmlns, false);
+        nsDescriptor = getDefaultNSDescriptor(htmlNs, false);
       }
       if (nsDescriptor != null) {
         final XmlFile descriptorFile = nsDescriptor.getDescriptorFile();
@@ -280,7 +280,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     if (namespace == XmlUtil.EMPTY_URI) {
       final XmlFile xmlFile = XmlUtil.findNamespace(containingFile, namespace);
       if (xmlFile != null) {
-        return (XmlNSDescriptor)xmlFile.getDocument().getMetaData();
+        return getFromFile(xmlFile);
       }
     }
     try {
@@ -288,7 +288,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
         .createFileFromText(containingFile.getName() + ".dtd", DTDLanguage.INSTANCE, XmlUtil.generateDocumentDTD(this, false), false, false);
       if (fileFromText instanceof XmlFile) {
         fileFromText.putUserData(AUTO_GENERATED, Boolean.TRUE);
-        return (XmlNSDescriptor)((XmlFile)fileFromText).getDocument().getMetaData();
+        return getFromFile((XmlFile)fileFromText);
       }
     }
     catch (ProcessCanceledException ex) {
@@ -298,6 +298,12 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     } // e.g. dtd isn't mapped to xml type
 
     return null;
+  }
+
+  private static XmlNSDescriptor getFromFile(XmlFile xmlFile) {
+    XmlDocument document = xmlFile.getDocument();
+    assert document != null;
+    return (XmlNSDescriptor)document.getMetaData();
   }
 
   private static XmlNSDescriptor getCachedHtmlNsDescriptor(final XmlFile descriptorFile) {
