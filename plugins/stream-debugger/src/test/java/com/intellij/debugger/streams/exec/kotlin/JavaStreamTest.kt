@@ -16,8 +16,10 @@
 package com.intellij.debugger.streams.exec.kotlin
 
 /**
+ * TODO: add ability to run tests with kotlin
+ *
  * @author Vitaliy.Bibaev
  */
-class JavaStreamTest : KotlinEvaluationBase() {
-  fun testNothing() {}
+abstract class JavaStreamTest : KotlinEvaluationBase() {
+  // fun testNothing() {}
 }
