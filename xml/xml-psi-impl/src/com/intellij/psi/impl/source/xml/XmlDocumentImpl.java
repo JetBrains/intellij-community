@@ -52,7 +52,6 @@ import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.index.XmlNamespaceIndex;
 import com.intellij.xml.util.XmlNSDescriptorSequence;
 import com.intellij.xml.util.XmlUtil;
-import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -415,37 +414,6 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   @Override
   public PsiMetaData getMetaData() {
     return MetaRegistry.getMeta(this);
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public void dumpStatistics(){
-    System.out.println("Statistics:");
-    final TObjectIntHashMap<Object> map = new TObjectIntHashMap<>();
-
-    final PsiElementVisitor psiRecursiveElementVisitor = new XmlRecursiveElementVisitor(){
-      @NonNls private static final String TOKENS_KEY = "Tokens";
-      @NonNls private static final String ELEMENTS_KEY = "Elements";
-
-      @Override public void visitXmlToken(XmlToken token) {
-        inc(TOKENS_KEY);
-      }
-
-      @Override public void visitElement(PsiElement element) {
-        inc(ELEMENTS_KEY);
-        super.visitElement(element);
-      }
-
-      private void inc(final String key) {
-        map.put(key, map.get(key) + 1);
-      }
-    };
-
-    accept(psiRecursiveElementVisitor);
-
-    final Object[] keys = map.keys();
-    for (final Object key : keys) {
-      System.out.println(key + ": " + map.get(key));
-    }
   }
 
   @Override
