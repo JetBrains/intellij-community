@@ -25,7 +25,7 @@ import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
 /**
  * @author Vitaliy.Bibaev
  */
-class TerminatorTraceHandler(call: TerminatorStreamCall, dsl: Dsl) : HandlerBase.Terminal(dsl) {
+open class TerminatorTraceHandler(call: TerminatorStreamCall, dsl: Dsl) : HandlerBase.Terminal(dsl) {
   private val myPeekHandler = PeekTraceHandler(Int.MAX_VALUE, call.name, call.typeBefore, dsl.types.ANY, dsl)
 
   override fun additionalVariablesDeclaration(): List<VariableDeclaration> = myPeekHandler.additionalVariablesDeclaration()

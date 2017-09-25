@@ -60,7 +60,7 @@ public class SimplePeekCallTraceInterpreter implements CallTraceInterpreter {
       return resolveTrace((ArrayReference)keys, (ArrayReference)values);
     }
 
-    throw new UnexpectedValueException("key and values must be store in arrays in peek resolver");
+    throw new UnexpectedValueException("keys and values must be stored in arrays in peek resolver");
   }
 
   @NotNull

@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.trace.impl.handler
+package com.intellij.debugger.streams.trace.impl.handler.unified
 
-import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
+import com.intellij.debugger.streams.trace.dsl.Dsl
+import com.intellij.debugger.streams.trace.dsl.Expression
+import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
 
 /**
  * @author Vitaliy.Bibaev
  */
-class ToCollectionHandler(typeBefore: GenericType) : TerminatorHandler(typeBefore) {
-  override fun getResultExpression(): String {
-    return "new Object[] {" + super.getResultExpression() + ", new int[] { time.get() } }"
+class ToCollectionHandler(call: TerminatorStreamCall, dsl: Dsl) : TerminatorTraceHandler(call, dsl) {
+  override fun getResultExpression(): Expression {
+    return dsl.newArray(dsl.types.ANY, super.getResultExpression(), dsl.newArray(dsl.types.INT, dsl.currentTime()))
   }
 }
