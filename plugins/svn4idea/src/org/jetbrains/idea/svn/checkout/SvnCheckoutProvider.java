@@ -52,15 +52,13 @@ import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
 import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
 import org.jetbrains.idea.svn.dialogs.UpgradeFormatDialog;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.DefaultSVNCommitHandler;
-import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
-import org.tmatesoft.svn.core.wc.ISVNFileFilter;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.application.ModalityState.any;
@@ -261,10 +259,9 @@ public class SvnCheckoutProvider implements CheckoutProvider {
           final boolean isInContent = ReadAction.compute(() -> facade.isInContent(targetVf));
           CommitEventHandler handler = new IdeaCommitHandler(progressIndicator);
           boolean useFileFilter = !project.isDefault() && isInContent;
-          ISVNCommitHandler commitHandler =
-            useFileFilter ? new MyFilter(LocalFileSystem.getInstance(), new SvnExcludingIgnoredOperation.Filter(project)) : null;
-          long revision = vcs.getFactoryFromSettings().createImportClient()
-            .doImport(target, url, depth, message, includeIgnored, handler, commitHandler);
+          Predicate<File> filter = useFileFilter ? new MyFilter(new SvnExcludingIgnoredOperation.Filter(project)) : null;
+          long revision =
+            vcs.getFactoryFromSettings().createImportClient().doImport(target, url, depth, message, includeIgnored, handler, filter);
 
           if (revision > 0) {
             StatusBar.Info.set(message("status.text.comitted.revision", revision), project);
@@ -281,16 +278,16 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     }
   }
 
-  private static class MyFilter extends DefaultSVNCommitHandler implements ISVNFileFilter {
-    private final LocalFileSystem myLfs;
-    private final SvnExcludingIgnoredOperation.Filter myFilter;
+  private static class MyFilter implements Predicate<File> {
+    @NotNull private final LocalFileSystem myLfs = LocalFileSystem.getInstance();
+    @NotNull private final SvnExcludingIgnoredOperation.Filter myFilter;
 
-    private MyFilter(LocalFileSystem lfs, SvnExcludingIgnoredOperation.Filter filter) {
-      myLfs = lfs;
+    private MyFilter(@NotNull SvnExcludingIgnoredOperation.Filter filter) {
       myFilter = filter;
     }
 
-    public boolean accept(final File file) {
+    @Override
+    public boolean test(@NotNull File file) {
       final VirtualFile vf = myLfs.findFileByIoFile(file);
       return vf != null && myFilter.accept(vf);
     }

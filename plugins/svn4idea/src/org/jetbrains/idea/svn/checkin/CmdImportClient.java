@@ -8,16 +8,13 @@ import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class CmdImportClient extends BaseSvnClient implements ImportClient {
 
   @Override
@@ -27,8 +24,8 @@ public class CmdImportClient extends BaseSvnClient implements ImportClient {
                        @NotNull String message,
                        boolean noIgnore,
                        @Nullable CommitEventHandler handler,
-                       @Nullable ISVNCommitHandler commitHandler) throws VcsException {
-    // TODO: ISVNFileFilter from ISVNCommitHandler is not currently implemented
+                       @Nullable Predicate<File> filter) throws VcsException {
+    // TODO: Predicate<File> filter is not currently implemented
 
     List<String> parameters = new ArrayList<>();
 

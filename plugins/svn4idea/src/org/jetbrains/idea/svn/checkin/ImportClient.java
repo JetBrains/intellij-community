@@ -6,13 +6,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.SvnClient;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
 
 import java.io.File;
+import java.util.function.Predicate;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public interface ImportClient extends SvnClient {
 
   long doImport(@NotNull File path,
@@ -21,5 +18,5 @@ public interface ImportClient extends SvnClient {
                 @NotNull String message,
                 boolean noIgnore,
                 @Nullable CommitEventHandler handler,
-                @Nullable ISVNCommitHandler commitHandler) throws VcsException;
+                @Nullable Predicate<File> filter) throws VcsException;
 }
