@@ -54,7 +54,7 @@ public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
       Graphics2D g2 = (Graphics2D)g;
       g2.setColor(UIManager.getColor("FormattedTextField.background"));
 
-      double arc = JBUI.scale(6);
+      double arc = JBUI.scale(6f);
       Path2D rect = new Path2D.Double(Path2D.WIND_EVEN_ODD);
       rect.moveTo(x, i.top);
       rect.lineTo(x, c.getHeight() - i.bottom);
@@ -88,7 +88,7 @@ public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
     Insets i = spinner.getInsets();
     int iconWidth = DEFAULT_ICON.getIconWidth() + i.right;
     int iconHeight = DEFAULT_ICON.getIconHeight() + i.top + i.bottom;
-    return new Dimension(Math.max(d.width + 7, iconWidth), Math.max(d.height, iconHeight));
+    return new Dimension(Math.max(d.width + JBUI.scale(7), iconWidth), Math.max(d.height, iconHeight));
   }
 
   @Override
@@ -124,7 +124,7 @@ public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
     editor.setBounds(JBUI.scale(2) + i.left,
                      JBUI.scale(2) + i.top,
                      w - (i.left + i.right + DEFAULT_ICON.getIconWidth() + JBUI.scale(6)),
-                     h - (i.top + i.bottom + JBUI.scale(4)));
+                     h - (i.top + i.bottom + JBUI.scale(2)*2));
   }
 
   @Nullable Rectangle getArrowButtonBounds() {

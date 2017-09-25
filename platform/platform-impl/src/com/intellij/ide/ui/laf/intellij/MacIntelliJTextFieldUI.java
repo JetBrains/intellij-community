@@ -90,7 +90,7 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
       }
       else if (component.getBorder() instanceof MacIntelliJTextBorder) {
         g.setColor(component.getBackground());
-        g.fillRect(JBUI.scale(3), JBUI.scale(3), component.getWidth() - JBUI.scale(6), component.getHeight() - JBUI.scale(6));
+        g.fillRect(JBUI.scale(3), JBUI.scale(3), component.getWidth() - JBUI.scale(3)*2, component.getHeight() - JBUI.scale(3)*2);
       }
       else {
         super.paintBackground(g);
@@ -105,11 +105,11 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
       g2.translate(r.x, r.y);
 
-      int arc = JBUI.scale(6);
-      double lw = UIUtil.isRetina(g2) ? 0.5 : 1.0;
+      float arc = JBUI.scale(6f);
+      double lw = JBUI.scale(UIUtil.isRetina(g2) ? 0.5f : 1.0f);
       Shape outerShape = new RoundRectangle2D.Double(JBUI.scale(3), JBUI.scale(3),
-                                                     r.width - JBUI.scale(6),
-                                                     r.height - JBUI.scale(6),
+                                                     r.width - JBUI.scale(3)*2,
+                                                     r.height - JBUI.scale(3)*2,
                                                      arc, arc);
       g2.setColor(c.getBackground());
       g2.fill(outerShape);
@@ -117,8 +117,8 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
       Path2D path = new Path2D.Double(Path2D.WIND_EVEN_ODD);
       path.append(outerShape, false);
       path.append(new RoundRectangle2D.Double(JBUI.scale(3) + lw, JBUI.scale(3) + lw,
-                                              r.width - JBUI.scale(6) - lw*2,
-                                              r.height - JBUI.scale(6) - lw*2,
+                                              r.width - (JBUI.scale(3) + lw)*2,
+                                              r.height - (JBUI.scale(3) + lw)*2,
                                               arc-lw, arc-lw), false);
 
       g2.setColor(Gray.xBC);
@@ -141,11 +141,11 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
       g2.translate(r.x, r.y);
 
-      int arc = JBUI.scale(6);
-      double lw = UIUtil.isRetina(g2) ? 0.5 : 1.0;
+      float arc = JBUI.scale(6);
+      double lw = JBUI.scale(UIUtil.isRetina(g2) ? 0.5f : 1.0f);
       Shape outerShape = new RoundRectangle2D.Double(JBUI.scale(3), JBUI.scale(3),
-                                                     r.width - JBUI.scale(6),
-                                                     r.height - JBUI.scale(6),
+                                                     r.width - JBUI.scale(3)*2,
+                                                     r.height - JBUI.scale(3)*2,
                                                      arc, arc);
       g2.setColor(c.getBackground());
       g2.fill(outerShape);
@@ -153,8 +153,8 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
       Path2D path = new Path2D.Double(Path2D.WIND_EVEN_ODD);
       path.append(outerShape, false);
       path.append(new RoundRectangle2D.Double(JBUI.scale(3) + lw, JBUI.scale(3) + lw,
-                                              r.width - JBUI.scale(6) - lw*2,
-                                              r.height - JBUI.scale(6) - lw*2,
+                                              r.width - (JBUI.scale(3) + lw)*2,
+                                              r.height - (JBUI.scale(3) + lw)*2,
                                               arc-lw, arc-lw), false);
 
       g2.setColor(Gray.xBC);
