@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
@@ -23,6 +22,8 @@ import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.util.ui.CheckBox;
+import com.intellij.util.ui.FormBuilder;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -33,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -67,10 +67,10 @@ public class CollectionsMustHaveInitialCapacityInspection
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    JPanel p = new JPanel(new BorderLayout());
-    p.add(new SingleCheckboxOptionsPanel("don't report field's initializers", this, "myIgnoreFields"), BorderLayout.NORTH);
-    p.add(mySettings.createOptionsPanel(), BorderLayout.CENTER);
-    return p;
+    return new FormBuilder()
+      .addComponentFillVertically(mySettings.createOptionsPanel(), 0)
+      .addComponent(new CheckBox("Don't report field initializers", this, "myIgnoreFields"))
+      .getPanel();
   }
 
   @Pattern(VALID_ID_PATTERN)
