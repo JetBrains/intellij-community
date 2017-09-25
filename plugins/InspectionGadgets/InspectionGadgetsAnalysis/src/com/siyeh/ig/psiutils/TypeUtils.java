@@ -243,4 +243,10 @@ public class TypeUtils {
     }
     return type;
   }
+
+  @Contract("null -> null")
+  public static String resolvedClassName(PsiType type) {
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    return aClass == null ? null : aClass.getQualifiedName();
+  }
 }

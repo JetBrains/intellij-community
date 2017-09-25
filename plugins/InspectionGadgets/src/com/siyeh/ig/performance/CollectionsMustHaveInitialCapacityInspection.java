@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,14 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -95,8 +99,7 @@ public class CollectionsMustHaveInitialCapacityInspection
     return new CollectionInitialCapacityVisitor();
   }
 
-  private class CollectionInitialCapacityVisitor
-    extends BaseInspectionVisitor {
+  private class CollectionInitialCapacityVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitNewExpression(@NotNull PsiNewExpression expression) {
@@ -106,7 +109,7 @@ public class CollectionsMustHaveInitialCapacityInspection
       }
 
       final PsiType type = expression.getType();
-      if (!isCollectionWithInitialCapacity(type)) {
+      if (!mySettings.getCollectionClassesRequiringCapacity().contains(TypeUtils.resolvedClassName(type))) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
@@ -114,19 +117,6 @@ public class CollectionsMustHaveInitialCapacityInspection
         return;
       }
       registerNewExpressionError(expression);
-    }
-
-    private boolean isCollectionWithInitialCapacity(@Nullable PsiType type) {
-      if (!(type instanceof PsiClassType)) {
-        return false;
-      }
-      final PsiClassType classType = (PsiClassType)type;
-      final PsiClass resolved = classType.resolve();
-      if (resolved == null) {
-        return false;
-      }
-      final String className = resolved.getQualifiedName();
-      return mySettings.getCollectionClassesRequiringCapacity().contains(className);
     }
   }
 }

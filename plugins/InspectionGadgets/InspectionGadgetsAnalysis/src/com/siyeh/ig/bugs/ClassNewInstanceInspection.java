@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 Bas Leijdekkers
+ * Copyright 2009-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -116,7 +117,7 @@ public class ClassNewInstanceInspection extends BaseInspection {
       final PsiReferenceList throwsList = method.getThrowsList();
       final PsiClassType[] referencedTypes =
         throwsList.getReferencedTypes();
-      final Set<String> presentExceptionNames = new HashSet();
+      final Set<String> presentExceptionNames = new HashSet<>();
       for (PsiClassType referencedType : referencedTypes) {
         final String exceptionName = referencedType.getCanonicalText();
         presentExceptionNames.add(exceptionName);
@@ -145,7 +146,7 @@ public class ClassNewInstanceInspection extends BaseInspection {
       final Project project = tryStatement.getProject();
       final PsiParameter[] parameters =
         tryStatement.getCatchBlockParameters();
-      final Set<String> presentExceptionNames = new HashSet();
+      final Set<String> presentExceptionNames = new HashSet<>();
       for (PsiParameter parameter : parameters) {
         final PsiType type = parameter.getType();
         final String exceptionName = type.getCanonicalText();
@@ -180,30 +181,17 @@ public class ClassNewInstanceInspection extends BaseInspection {
   private static class ClassNewInstanceVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       @NonNls final String methodName = methodExpression.getReferenceName();
       if (!"newInstance".equals(methodName)) {
         return;
       }
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier == null) {
         return;
       }
-      final PsiType qualifierType = qualifier.getType();
-      if (!(qualifierType instanceof PsiClassType)) {
-        return;
-      }
-      final PsiClassType classType = (PsiClassType)qualifierType;
-      final PsiClass aClass = classType.resolve();
-      if (aClass == null) {
-        return;
-      }
-      final String className = aClass.getQualifiedName();
-      if (!CommonClassNames.JAVA_LANG_CLASS.equals(className)) {
+      if (!CommonClassNames.JAVA_LANG_CLASS.equals(TypeUtils.resolvedClassName(qualifier.getType()))) {
         return;
       }
       registerMethodCallError(expression);
