@@ -135,7 +135,6 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
 
   @Override
   public void advance() {
-    //System.out.println(getTokenType() + " '" + StringUtil.escapeStringCharacters(getTokenText()) + "'");
     if (getTokenType() == PyTokenTypes.LINE_BREAK) {
       final String text = getTokenText();
       int spaces = 0;
@@ -178,8 +177,6 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
   }
 
   protected void advanceBase() {
-    //final CharSequence baseTokenText = getBufferSequence().subSequence(getBaseTokenStart(), getBaseTokenEnd());
-    //System.out.println(getBaseTokenType() + " '" + StringUtil.escapeStringCharacters(baseTokenText.toString()) + "'");
     super.advance();
     checkSignificantTokens();
   }
