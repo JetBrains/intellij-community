@@ -8,6 +8,7 @@ from types import TracebackType
 from typing import Any, AnyStr, Generic, IO, Optional, Tuple, Type
 
 # global variables
+TMP_MAX: int
 tempdir = ...  # type: Optional[str]
 template = ...  # type: str
 

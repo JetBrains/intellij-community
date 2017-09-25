@@ -1,6 +1,6 @@
 # Stubs for fcntl
+from io import IOBase
 from typing import Any, IO, Union
-import typing
 
 FASYNC = ...  # type: int
 FD_CLOEXEC = ...  # type: int
@@ -75,7 +75,7 @@ LOCK_SH = ...  # type: int
 LOCK_UN = ...  # type: int
 LOCK_WRITE = ...  # type: int
 
-_AnyFile = Union[int, IO[Any]]
+_AnyFile = Union[int, IO[Any], IOBase]
 
 # TODO All these return either int or bytes depending on the value of
 # cmd (not on the type of arg).

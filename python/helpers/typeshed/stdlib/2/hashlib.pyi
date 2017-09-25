@@ -2,12 +2,14 @@
 
 from typing import Tuple, Union
 
-_DataType = Union[str, bytearray, buffer, memoryview]
+_DataType = Union[str, unicode, bytearray, buffer, memoryview]
 
-class _hash(object):
-    # This is not actually in the module namespace.
-    digest_size = 0
+class _hash(object):  # This is not actually in the module namespace.
+    name = ...  # type: str
     block_size = 0
+    digest_size = 0
+    digestsize = 0
+    def __init__(self, arg: _DataType = ...) -> None: ...
     def update(self, arg: _DataType) -> None: ...
     def digest(self) -> str: ...
     def hexdigest(self) -> str: ...

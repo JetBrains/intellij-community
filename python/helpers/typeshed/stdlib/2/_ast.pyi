@@ -5,7 +5,7 @@ __version__ = ...  # type: str
 
 PyCF_ONLY_AST = ...  # type: int
 
-identifier = str
+_identifier = str
 
 class AST:
     _attributes = ...  # type: typing.Tuple[str, ...]
@@ -33,13 +33,13 @@ class stmt(AST):
     col_offset = ...  # type: int
 
 class FunctionDef(stmt):
-    name = ...  # type: identifier
+    name = ...  # type: _identifier
     args = ...  # type: arguments
     body = ...  # type: typing.List[stmt]
     decorator_list = ...  # type: typing.List[expr]
 
 class ClassDef(stmt):
-    name = ...  # type: identifier
+    name = ...  # type: _identifier
     bases = ...  # type: typing.List[expr]
     body = ...  # type: typing.List[stmt]
     decorator_list = ...  # type: typing.List[expr]
@@ -107,7 +107,7 @@ class Import(stmt):
     names = ...  # type: typing.List[alias]
 
 class ImportFrom(stmt):
-    module = ...  # type: Optional[identifier]
+    module = ...  # type: Optional[_identifier]
     names = ...  # type: typing.List[alias]
     level = ...  # type: Optional[int]
 
@@ -117,7 +117,7 @@ class Exec(stmt):
     locals = ...  # type: Optional[expr]
 
 class Global(stmt):
-    names = ...  # type: typing.List[identifier]
+    names = ...  # type: typing.List[_identifier]
 
 class Expr(stmt):
     value = ...  # type: expr
@@ -222,7 +222,7 @@ class Str(expr):
 
 class Attribute(expr):
     value = ...  # type: expr
-    attr = ...  # type: identifier
+    attr = ...  # type: _identifier
     ctx = ...  # type: expr_context
 
 class Subscript(expr):
@@ -231,7 +231,7 @@ class Subscript(expr):
     ctx = ...  # type: expr_context
 
 class Name(expr):
-    id = ...  # type: identifier
+    id = ...  # type: _identifier
     ctx = ...  # type: expr_context
 
 class List(expr):
@@ -315,14 +315,14 @@ class ExceptHandler(AST):
 
 class arguments(AST):
     args = ...  # type: typing.List[expr]
-    vararg = ...  # type: Optional[identifier]
-    kwarg = ...  # type: Optional[identifier]
+    vararg = ...  # type: Optional[_identifier]
+    kwarg = ...  # type: Optional[_identifier]
     defaults = ...  # type: typing.List[expr]
 
 class keyword(AST):
-    arg = ...  # type: identifier
+    arg = ...  # type: _identifier
     value = ...  # type: expr
 
 class alias(AST):
-    name = ...  # type: identifier
-    asname = ...  # type: Optional[identifier]
+    name = ...  # type: _identifier
+    asname = ...  # type: Optional[_identifier]

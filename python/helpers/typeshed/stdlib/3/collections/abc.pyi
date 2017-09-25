@@ -10,6 +10,7 @@ if sys.version_info >= (3, 3):
         Iterable as Iterable,
         Iterator as Iterator,
         Sized as Sized,
+        Callable as Callable,
         Mapping as Mapping,
         MutableMapping as MutableMapping,
         Sequence as Sequence,
@@ -34,6 +35,7 @@ if sys.version_info >= (3, 5):
 
 if sys.version_info >= (3, 6):
     from . import (
+        Collection as Collection,
         Reversible as Reversible,
         AsyncGenerator as AsyncGenerator,
     )

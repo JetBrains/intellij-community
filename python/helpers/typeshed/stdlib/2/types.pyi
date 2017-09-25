@@ -3,7 +3,7 @@
 
 from typing import (
     Any, Callable, Dict, Iterable, Iterator, List, Optional,
-    Tuple, TypeVar, Union, overload,
+    Tuple, Type, TypeVar, Union, overload,
 )
 
 _T = TypeVar('_T')
@@ -19,11 +19,12 @@ BooleanType = bool
 ComplexType = complex
 StringType = str
 UnicodeType = unicode
-StringTypes = (StringType, UnicodeType)
+StringTypes = ...  # type: Tuple[Type[StringType], Type[UnicodeType]]
 BufferType = buffer
 TupleType = tuple
 ListType = list
-DictType = DictionaryType = dict
+DictType = dict
+DictionaryType = dict
 
 class _Cell:
     cell_contents = ...  # type: Any
@@ -81,6 +82,7 @@ class UnboundMethodType:
     im_class = ...  # type: type
     im_func = ...  # type: FunctionType
     im_self = ...  # type: object
+    __name__ = ...  # type: str
     __func__ = im_func
     __self__ = im_self
     def __init__(self, func: Callable, obj: object) -> None: ...
@@ -104,6 +106,7 @@ class ModuleType:
     __name__ = ...  # type: str
     __package__ = ...  # type: Optional[str]
     __path__ = ...  # type: Optional[Iterable[str]]
+    __dict__ = ...  # type: Dict[str, Any]
     def __init__(self, name: str, doc: Optional[str] = ...) -> None: ...
 FileType = file
 XRangeType = xrange

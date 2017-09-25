@@ -13,20 +13,36 @@ import threading
 _SysExcInfoType = Union[Tuple[type, BaseException, TracebackType],
                         Tuple[None, None, None]]
 if sys.version_info >= (3, 5):
-    _ExcInfoType = Union[None, bool, _SysExcInfoType, Exception]
+    _ExcInfoType = Union[None, bool, _SysExcInfoType, BaseException]
 else:
     _ExcInfoType = Union[None, bool, _SysExcInfoType]
 _ArgsType = Union[Tuple[Any, ...], Dict[str, Any]]
 _FilterType = Union['Filter', Callable[['LogRecord'], int]]
+_Level = Union[int, Text]
 
+raiseExceptions: bool
 
-class Logger:
+if sys.version_info >= (3,):
+    _levelToName = ...  # type: Dict[int, str]
+    _nameToLevel = ...  # type: Dict[str, int]
+else:
+    _levelNames = ...  # type: dict
+
+class Filterer(object):
+    filters = ...  # type: List[Filter]
+    def __init__(self) -> None: ...
+    def addFilter(self, filter: Filter) -> None: ...
+    def removeFilter(self, filter: Filter) -> None: ...
+    def filter(self, record: 'LogRecord') -> bool: ...
+
+class Logger(Filterer):
     name = ...  # type: str
     level = ...  # type: int
     parent = ...  # type: Union[Logger, PlaceHolder]
     propagate = ...  # type: bool
     handlers = ...  # type: List[Handler]
     disabled = ...  # type: int
+    def __init__(self, name: str, level: _Level = ...) -> None: ...
     def setLevel(self, lvl: Union[int, str]) -> None: ...
     def isEnabledFor(self, lvl: int) -> bool: ...
     def getEffectiveLevel(self) -> int: ...
@@ -110,6 +126,7 @@ class Logger:
 
 
 CRITICAL = ...  # type: int
+FATAL = ...  # type: int
 ERROR = ...  # type: int
 WARNING = ...  # type: int
 WARN = ...  # type: int
@@ -118,19 +135,11 @@ DEBUG = ...  # type: int
 NOTSET = ...  # type: int
 
 
-class Filterer(object):
-    filters = ...  # type: List[Filter]
-    def __init__(self) -> None: ...
-    def addFilter(self, filter: Filter) -> None: ...
-    def removeFilter(self, filter: Filter) -> None: ...
-    def filter(self, record: 'LogRecord') -> bool: ...
-
-
 class Handler(Filterer):
     level = ...  # type: int
     formatter = ...  # type: Optional[Formatter]
     lock = ...  # type: Optional[threading.Lock]
-    def __init__(self, level: int = ...) -> None: ...
+    def __init__(self, level: _Level = ...) -> None: ...
     def createLock(self) -> None: ...
     def acquire(self) -> None: ...
     def release(self) -> None: ...
@@ -322,6 +331,7 @@ else:
                   extra: Optional[Dict[str, Any]] = ..., **kwargs: Any) -> None: ...
     def log(lvl: int, msg: Text, *args: Any, exc_info: _ExcInfoType = ...,
             extra: Optional[Dict[str, Any]] = ..., **kwargs: Any) -> None: ...
+fatal = critical
 
 def disable(lvl: int) -> None: ...
 def addLevelName(lvl: int, levelName: str) -> None: ...
@@ -332,7 +342,7 @@ def makeLogRecord(attrdict: Mapping[str, Any]) -> LogRecord: ...
 if sys.version_info >= (3,):
     def basicConfig(*, filename: str = ..., filemode: str = ...,
                     format: str = ..., datefmt: str = ..., style: str = ...,
-                    level: int = ..., stream: IO[str] = ...,
+                    level: _Level = ..., stream: IO[str] = ...,
                     handlers: Iterable[Handler] = ...) -> None: ...
 else:
     @overload
@@ -340,10 +350,13 @@ else:
     @overload
     def basicConfig(*, filename: str = ..., filemode: str = ...,
                     format: str = ..., datefmt: str = ...,
-                    level: int = ..., stream: IO[str] = ...) -> None: ...
+                    level: _Level = ..., stream: IO[str] = ...) -> None: ...
 def shutdown() -> None: ...
 
 def setLoggerClass(klass: type) -> None: ...
+
+def captureWarnings(capture: bool) -> None: ...
+
 if sys.version_info >= (3,):
     def setLogRecordFactory(factory: Callable[..., LogRecord]) -> None: ...
 
@@ -353,6 +366,9 @@ if sys.version_info >= (3,):
 
 
 class StreamHandler(Handler):
+    stream = ...  # type IO[str]
+    if sys.version_info >= (3,):
+        terminator = ...  # type: str
     def __init__(self, stream: Optional[IO[str]] = ...) -> None: ...
 
 
