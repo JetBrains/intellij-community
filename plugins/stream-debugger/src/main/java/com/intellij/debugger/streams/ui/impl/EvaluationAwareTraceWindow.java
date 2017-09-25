@@ -21,7 +21,6 @@ import com.intellij.debugger.streams.resolve.ResolvedStreamChain;
 import com.intellij.debugger.streams.trace.*;
 import com.intellij.debugger.streams.trace.dsl.impl.java.JavaTypes;
 import com.intellij.debugger.streams.ui.TraceController;
-import com.intellij.debugger.streams.wrapper.CallArgument;
 import com.intellij.debugger.streams.wrapper.QualifierExpression;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
@@ -89,7 +88,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       final MyPlaceholder tab = new MyPlaceholder();
       final String callName = call.getName().replace(" ", "");
       myTabsPane.insertTab(callName, StreamDebuggerIcons.STREAM_CALL_TAB_ICON, tab,
-                           callName + formatArguments(call.getArguments()), i + 1);
+                           callName + TraceUtil.formatWithArguments(call), i + 1);
       myTabContents.add(tab);
     }
 

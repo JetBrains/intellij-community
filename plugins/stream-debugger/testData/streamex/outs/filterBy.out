@@ -10,7 +10,7 @@ filterBy
     after: 4
 toArray
     before: 4
-    after: 5
+    after: 6
 mappings for filterBy
   direct:
     1 -> nothing
