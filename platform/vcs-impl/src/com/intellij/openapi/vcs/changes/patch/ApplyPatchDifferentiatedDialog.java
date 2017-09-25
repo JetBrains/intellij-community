@@ -615,12 +615,15 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @Override
-    protected void toggleChanges(Collection<AbstractFilePatchInProgress.PatchChange> changes) {
-      if (changes.size() == 1 && !changes.iterator().next().isValid()) {
+    protected void toggleChanges(Collection<?> changes) {
+      List<AbstractFilePatchInProgress.PatchChange> patchChanges =
+        ContainerUtil.findAll(changes, AbstractFilePatchInProgress.PatchChange.class);
+
+      if (patchChanges.size() == 1 && !patchChanges.get(0).isValid()) {
         handleInvalidChangesAndToggle();
       }
       else {
-        super.toggleChanges(getOnlyValidChanges(changes));
+        super.toggleChanges(getOnlyValidChanges(patchChanges));
       }
     }
 

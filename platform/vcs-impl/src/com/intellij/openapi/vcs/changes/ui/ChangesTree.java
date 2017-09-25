@@ -42,7 +42,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -433,8 +432,8 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   @NotNull
-  private Collection<Object> getIncludedChanges() {
-    return ContainerUtil.filter(getChanges(), change -> myIncludedChanges.contains(change));
+  public Set<Object> getIncludedSet() {
+    return Collections.unmodifiableSet(myIncludedChanges);
   }
 
   public void expandAll() {
