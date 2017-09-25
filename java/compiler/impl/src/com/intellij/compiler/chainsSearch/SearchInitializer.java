@@ -22,9 +22,9 @@ import java.util.*;
 public class SearchInitializer {
   private final ChainCompletionContext myContext;
   private final LinkedList<OperationChain> myQueue;
-  private final LinkedHashMap<MethodCall, OperationChain> myChains;
+  private final LinkedHashMap<RefChainOperation, OperationChain> myChains;
 
-  public SearchInitializer(SortedSet<MethodRefAndOccurrences> indexValues,
+  public SearchInitializer(SortedSet<ChainOpAndOccurrences<? extends RefChainOperation>> indexValues,
                            ChainCompletionContext context) {
     myContext = context;
     int size = indexValues.size();
@@ -33,7 +33,7 @@ public class SearchInitializer {
     myQueue = new LinkedList<>();
     myChains = new LinkedHashMap<>(chains.size());
     for (OperationChain chain : chains) {
-      MethodCall signature = (MethodCall)chain.getHead();
+      RefChainOperation signature = chain.getHead();
       myQueue.add(chain);
       myChains.put(signature, chain);
     }
@@ -43,15 +43,15 @@ public class SearchInitializer {
     return myQueue;
   }
 
-  public LinkedHashMap<MethodCall, OperationChain> getChains() {
+  public LinkedHashMap<RefChainOperation, OperationChain> getChains() {
     return myChains;
   }
 
-  private void populateFrequentlyUsedMethod(SortedSet<MethodRefAndOccurrences> signatures,
+  private void populateFrequentlyUsedMethod(SortedSet<? extends ChainOpAndOccurrences> operations,
                                             List<OperationChain> chains) {
     int bestOccurrences = -1;
-    for (MethodRefAndOccurrences indexValue : signatures) {
-      OperationChain operationChain = OperationChain.create(indexValue.getSignature(), indexValue.getOccurrenceCount(), myContext);
+    for (ChainOpAndOccurrences indexValue : operations) {
+      OperationChain operationChain = OperationChain.create(indexValue.getOperation(), indexValue.getOccurrenceCount(), myContext);
       if (operationChain != null) {
         chains.add(operationChain);
         int occurrences = indexValue.getOccurrenceCount();

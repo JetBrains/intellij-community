@@ -30,6 +30,7 @@ public interface ChainOperation {
       myCastClass = castClass;
     }
 
+    @NotNull
     public PsiClass getCastClass() {
       return myCastClass;
     }

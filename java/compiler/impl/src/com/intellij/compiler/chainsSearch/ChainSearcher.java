@@ -41,12 +41,20 @@ public class ChainSearcher {
   private static SearchInitializer createInitializer(ChainSearchTarget target,
                                                      CompilerReferenceServiceEx referenceServiceEx,
                                                      ChainCompletionContext context) {
-    SortedSet<MethodRefAndOccurrences> methods = Collections.emptySortedSet();
+    SortedSet<ChainOpAndOccurrences<? extends RefChainOperation>> operations = new TreeSet<>();
     for (byte kind : target.getArrayKind()) {
-      SortedSet<MethodRefAndOccurrences> currentMethods = referenceServiceEx.findMethodReferenceOccurrences(target.getClassQName(), kind, context);
-      methods = methods == null ? currentMethods : unionSortedSet(currentMethods, methods);
+      SortedSet<ChainOpAndOccurrences<MethodCall>> methods = referenceServiceEx.findMethodReferenceOccurrences(target.getClassQName(), kind, context);
+      operations.addAll(methods);
     }
-    return new SearchInitializer(methods, context);
+
+    if (operations.isEmpty()) {
+      ChainOpAndOccurrences<TypeCast> typeCast = referenceServiceEx.getMostUsedTypeCast(target.getClassQName());
+      if (typeCast != null) {
+        operations.add(typeCast);
+      }
+    }
+
+    return new SearchInitializer(operations, context);
   }
 
   @NotNull
@@ -68,22 +76,22 @@ public class ChainSearcher {
 
       // otherwise try to find chain continuation
       boolean updated = false;
-      SortedSet<MethodRefAndOccurrences> candidates = referenceServiceEx.findMethodReferenceOccurrences(head.getQualifierRawName(), SignatureData.ZERO_DIM, context);
+      SortedSet<ChainOpAndOccurrences<MethodCall>> candidates = referenceServiceEx.findMethodReferenceOccurrences(head.getQualifierRawName(), SignatureData.ZERO_DIM, context);
       LightRef ref = head.getLightRef();
-      for (MethodRefAndOccurrences candidate : candidates) {
+      for (ChainOpAndOccurrences<MethodCall> candidate : candidates) {
         if (candidate.getOccurrenceCount() * ChainSearchMagicConstants.FILTER_RATIO < currentChain.getChainWeight()) {
           break;
         }
-        MethodCall sign = candidate.getSignature();
+        MethodCall sign = candidate.getOperation();
         if ((sign.isStatic() || !sign.getQualifierRawName().equals(context.getTarget().getClassQName())) &&
             (!(ref instanceof LightRef.JavaLightMethodRef) ||
-             referenceServiceEx.mayHappen(candidate.getSignature().getLightRef(), ref, ChainSearchMagicConstants.METHOD_PROBABILITY_THRESHOLD))) {
+             referenceServiceEx.mayHappen(candidate.getOperation().getLightRef(), ref, ChainSearchMagicConstants.METHOD_PROBABILITY_THRESHOLD))) {
 
           OperationChain
-            continuation = currentChain.continuationWithMethod(candidate.getSignature(), candidate.getOccurrenceCount(), context);
+            continuation = currentChain.continuationWithMethod(candidate.getOperation(), candidate.getOccurrenceCount(), context);
           if (continuation != null) {
             boolean stopChain =
-              candidate.getSignature().isStatic() || context.hasQualifier(context.resolvePsiClass(candidate.getSignature().getQualifierDef()));
+              candidate.getOperation().isStatic() || context.hasQualifier(context.resolvePsiClass(candidate.getOperation().getQualifierDef()));
             if (stopChain) {
               addChainIfNotPresent(continuation, result);
             }
@@ -126,7 +134,7 @@ public class ChainSearcher {
                                                                 List<OperationChain> result,
                                                                 ChainCompletionContext context,
                                                                 CompilerReferenceServiceEx referenceServiceEx) {
-    RefChainOperation signature = currentChain.getHeadMethodCall();
+    RefChainOperation signature = currentChain.getHead();
     // type cast + introduced qualifier: it's too complex chain
     if (currentChain.hasCast()) return;
     if (!context.getTarget().getClassQName().equals(signature.getQualifierRawName())) {
@@ -148,6 +156,7 @@ public class ChainSearcher {
   private static boolean addChainIfTerminal(OperationChain currentChain, List<OperationChain> result, int pathMaximalLength,
                                             ChainCompletionContext context) {
     RefChainOperation signature = currentChain.getHeadMethodCall();
+    if (signature == null) return false;
     RefChainOperation head = currentChain.getHead();
     if (((MethodCall)signature).isStatic() ||
         context.hasQualifier(context.resolvePsiClass(head.getQualifierDef())) ||

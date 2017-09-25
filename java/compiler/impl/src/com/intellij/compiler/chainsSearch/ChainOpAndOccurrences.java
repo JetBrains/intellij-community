@@ -17,17 +17,17 @@ package com.intellij.compiler.chainsSearch;
 
 import org.jetbrains.annotations.NotNull;
 
-public class MethodRefAndOccurrences implements Comparable<MethodRefAndOccurrences> {
-  private final MethodCall mySignature;
+public class ChainOpAndOccurrences<T extends RefChainOperation> implements Comparable<ChainOpAndOccurrences> {
+  private final T myOp;
   private final int myOccurrences;
 
-  public MethodRefAndOccurrences(final MethodCall signature, final int occurrences) {
-    mySignature = signature;
+  public ChainOpAndOccurrences(final T op, final int occurrences) {
+    myOp = op;
     myOccurrences = occurrences;
   }
 
-  public MethodCall getSignature() {
-    return mySignature;
+  public T getOperation() {
+    return myOp;
   }
 
   public int getOccurrenceCount() {
@@ -35,16 +35,16 @@ public class MethodRefAndOccurrences implements Comparable<MethodRefAndOccurrenc
   }
 
   @Override
-  public int compareTo(@NotNull final MethodRefAndOccurrences that) {
+  public int compareTo(@NotNull final ChainOpAndOccurrences that) {
     final int sub = -getOccurrenceCount() + that.getOccurrenceCount();
     if (sub != 0) {
       return sub;
     }
-    return mySignature.hashCode() - that.mySignature.hashCode();
+    return myOp.hashCode() - that.myOp.hashCode();
   }
 
   @Override
   public String toString() {
-    return getOccurrenceCount() + " for " + mySignature;
+    return getOccurrenceCount() + " for " + myOp;
   }
 }

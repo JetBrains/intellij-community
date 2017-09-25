@@ -40,25 +40,35 @@ public class OperationChain {
   private final PsiClass myQualifierClass;
 
   @Nullable
-  public static OperationChain create(@NotNull MethodCall signature,
+  public static OperationChain create(@NotNull RefChainOperation operation,
                                       int weight,
                                       @NotNull ChainCompletionContext context) {
-    PsiClass qualifier = context.resolvePsiClass(signature.getQualifierDef());
-    if (qualifier == null || (!signature.isStatic() && InheritanceUtil.isInheritorOrSelf(context.getTarget().getTargetClass(), qualifier, true))) {
-      return null;
+    if (operation instanceof MethodCall) {
+      MethodCall signature = (MethodCall) operation;
+      PsiClass qualifier = context.resolvePsiClass(signature.getQualifierDef());
+      if (qualifier == null || (!signature.isStatic() && InheritanceUtil.isInheritorOrSelf(context.getTarget().getTargetClass(), qualifier, true))) {
+        return null;
+      }
+      PsiMethod[] methods = context.resolve(signature);
+      if (methods.length == 0) return null;
+      Set<PsiClass> classes = Arrays.stream(methods)
+        .flatMap(m -> Arrays.stream(m.getParameterList().getParameters()))
+        .map(p -> PsiUtil.resolveClassInType(p.getType()))
+        .collect(Collectors.toSet());
+      PsiClass contextClass = context.getTarget().getTargetClass();
+      if (classes.contains(contextClass)) {
+        return null;
+      }
+      classes.add(contextClass);
+      return new OperationChain(qualifier, new ChainOperation[] {new ChainOperation.MethodCall(methods)}, signature, signature, weight);
     }
-    PsiMethod[] methods = context.resolve(signature);
-    if (methods.length == 0) return null;
-    Set<PsiClass> classes = Arrays.stream(methods)
-      .flatMap(m -> Arrays.stream(m.getParameterList().getParameters()))
-      .map(p -> PsiUtil.resolveClassInType(p.getType()))
-      .collect(Collectors.toSet());
-    PsiClass contextClass = context.getTarget().getTargetClass();
-    if (classes.contains(contextClass)) {
-      return null;
+    else {
+      TypeCast cast = (TypeCast)operation;
+      PsiClass operand = context.resolvePsiClass(cast.getLightRef());
+      PsiClass castType = context.resolvePsiClass(cast.getCastTypeRef());
+      if (operand == null || castType == null) return null;
+      return new OperationChain(operand, new ChainOperation[] {new ChainOperation.TypeCast(operand, castType)}, cast, null, weight);
     }
-    classes.add(contextClass);
-    return new OperationChain(qualifier, new ChainOperation[] {new ChainOperation.MethodCall(methods)}, signature, signature, weight);
   }
 
   private OperationChain(@NotNull PsiClass qualifierClass,
@@ -77,7 +87,7 @@ public class OperationChain {
     return Arrays.stream(myReverseOperations).anyMatch(op -> op instanceof ChainOperation.TypeCast);
   }
 
-  @NotNull
+  @Nullable
   public MethodCall getHeadMethodCall() {
     return myHeadMethodCall;
   }
@@ -118,20 +128,18 @@ public class OperationChain {
     ChainOperation[] newReverseOperations = new ChainOperation[length() + 1];
     System.arraycopy(myReverseOperations, 0, newReverseOperations, 0, myReverseOperations.length);
     newReverseOperations[length()] = head.getPath()[0];
-    return new OperationChain(head.getQualifierClass(), newReverseOperations, head.getHead(), signature, Math.min(weight, getChainWeight()));
+    return new OperationChain(head.getQualifierClass(), newReverseOperations, head.getHead() , signature, Math.min(weight, getChainWeight()));
   }
 
   @Nullable
   OperationChain continuationWithCast(@NotNull TypeCast cast,
                                       @NotNull ChainCompletionContext context) {
-    PsiClass operand = context.resolvePsiClass(cast.getLightRef());
-    PsiClass castType = context.resolvePsiClass(cast.getCastTypeRef());
-    if (operand == null || castType == null) return null;
-
+    OperationChain head = create(cast, 0, context);
+    if (head == null) return null;
     ChainOperation[] newReverseOperations = new ChainOperation[length() + 1];
     System.arraycopy(myReverseOperations, 0, newReverseOperations, 0, myReverseOperations.length);
-    newReverseOperations[length()] = new ChainOperation.TypeCast(operand, castType);
-    return new OperationChain(operand, newReverseOperations, cast, myHeadMethodCall, getChainWeight());
+    newReverseOperations[length()] = head.getPath()[0];
+    return new OperationChain(head.getQualifierClass(), newReverseOperations, head.getHead(), myHeadMethodCall, getChainWeight());
   }
 
   @Override

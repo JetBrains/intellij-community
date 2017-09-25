@@ -21,7 +21,8 @@ import com.intellij.compiler.backwardRefs.view.CompilerReferenceHierarchyTestInf
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
 import com.intellij.compiler.chainsSearch.ChainSearchMagicConstants;
 import com.intellij.compiler.chainsSearch.MethodCall;
-import com.intellij.compiler.chainsSearch.MethodRefAndOccurrences;
+import com.intellij.compiler.chainsSearch.ChainOpAndOccurrences;
+import com.intellij.compiler.chainsSearch.TypeCast;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.BuildManagerListener;
@@ -60,8 +61,6 @@ import com.intellij.util.io.PersistentEnumeratorBase;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
-import gnu.trove.TObjectIntHashMap;
-import gnu.trove.TObjectIntProcedure;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -223,9 +222,9 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
 
   @NotNull
   @Override
-  public SortedSet<MethodRefAndOccurrences> findMethodReferenceOccurrences(@NotNull String rawReturnType,
-                                                                           @SignatureData.IteratorKind byte iteratorKind,
-                                                                           @NotNull ChainCompletionContext context) {
+  public SortedSet<ChainOpAndOccurrences<MethodCall>> findMethodReferenceOccurrences(@NotNull String rawReturnType,
+                                                                         @SignatureData.IteratorKind byte iteratorKind,
+                                                                         @NotNull ChainCompletionContext context) {
     try {
       myReadDataLock.lock();
       try {
@@ -244,15 +243,15 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
             .distinct()
             .map(r -> {
               int count = myReader.getOccurrenceCount(r);
-              return count <= 1 ? null : new MethodRefAndOccurrences(
+              return count <= 1 ? null : new ChainOpAndOccurrences<>(
                 new MethodCall((LightRef.JavaLightMethodRef)r, sd, context),
                 count);
             }))
           .filter(Objects::nonNull)
-          .collect(Collectors.groupingBy(x -> x.getSignature(), Collectors.summarizingInt(x -> x.getOccurrenceCount())))
+          .collect(Collectors.groupingBy(x -> x.getOperation(), Collectors.summarizingInt(x -> x.getOccurrenceCount())))
           .entrySet()
           .stream()
-          .map(e -> new MethodRefAndOccurrences(e.getKey(), (int)e.getValue().getSum()))
+          .map(e -> new ChainOpAndOccurrences<>(e.getKey(), (int)e.getValue().getSum()))
           .collect(Collectors.toCollection(TreeSet::new));
       }
       finally {
@@ -262,6 +261,31 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     catch (Exception e) {
       onException(e, "find methods");
       return Collections.emptySortedSet();
+    }
+  }
+
+  @Nullable
+  @Override
+  public ChainOpAndOccurrences<TypeCast> getMostUsedTypeCast(@NotNull String operandQName)
+    throws ReferenceIndexUnavailableException {
+    try {
+      myReadDataLock.lock();
+      try {
+        if (myReader == null) throw new ReferenceIndexUnavailableException();
+        int nameId = getNameId(operandQName);
+        if (nameId == 0) return null;
+        LightRef.JavaLightClassRef target = new LightRef.JavaLightClassRef(nameId);
+        OccurrenceCounter<LightRef> typeCasts = myReader.getTypeCastOperands(target, null);
+        LightRef bestCast = typeCasts.getBest();
+        if (bestCast == null) return null;
+        return new ChainOpAndOccurrences<>(new TypeCast((LightRef.LightClassHierarchyElementDef)bestCast, target, this), typeCasts.getBestOccurrences());
+      }
+      finally {
+        myReadDataLock.unlock();
+      }
+    } catch (Exception e) {
+      onException(e, "best type cast search");
+      return null;
     }
   }
 
@@ -282,25 +306,11 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
 
         LightRef.LightClassHierarchyElementDef owner = method.getOwner();
 
-        TObjectIntHashMap<LightRef> typeCasts = myReader.getTypeCasts(owner, ids);
-
-        LightRef[] best = {null};
-        int[] bestFileCount = {0};
-
-        typeCasts.forEachEntry(new TObjectIntProcedure<LightRef>() {
-          @Override
-          public boolean execute(LightRef operandType, int matchedFileCount) {
-            if (ids.size() > probabilityThreshold * (ids.size() - matchedFileCount)) {
-              if (best[0] == null || bestFileCount[0] < matchedFileCount) {
-                best[0] = operandType;
-                bestFileCount[0] = matchedFileCount;
-              }
-            }
-            return true;
-          }
-        });
-
-        return (LightRef.LightClassHierarchyElementDef)best[0];
+        OccurrenceCounter<LightRef> bestTypeCast = myReader.getTypeCastOperands(owner, ids);
+        LightRef best = bestTypeCast.getBest();
+        return best != null && ids.size() > probabilityThreshold * (ids.size() - bestTypeCast.getBestOccurrences())
+               ? (LightRef.LightClassHierarchyElementDef)best
+               : null;
       }
       finally {
         myReadDataLock.unlock();
