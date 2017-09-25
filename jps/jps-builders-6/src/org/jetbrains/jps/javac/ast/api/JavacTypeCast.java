@@ -15,19 +15,26 @@
  */
 package org.jetbrains.jps.javac.ast.api;
 
-import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
+public class JavacTypeCast {
+  @NotNull
+  private final JavacRef.JavacClass myOperandType;
+  @NotNull
+  private final JavacRef.JavacClass myCastType;
 
-public interface JavacFileReferencesRegistrar {
-  void initialize();
+  public JavacTypeCast(@NotNull JavacRef.JavacClass operandType, @NotNull JavacRef.JavacClass castType) {
+    myOperandType = operandType;
+    myCastType = castType;
+  }
 
-  boolean isEnabled();
+  @NotNull
+  public JavacRef.JavacClass getOperandType() {
+    return myOperandType;
+  }
 
-  boolean onlyImports();
-
-  void registerFile(String filePath,
-                    TObjectIntHashMap<JavacRef> refs,
-                    Collection<JavacDef> defs,
-                    Collection<JavacTypeCast> casts);
+  @NotNull
+  public JavacRef.JavacClass getCastType() {
+    return myCastType;
+  }
 }

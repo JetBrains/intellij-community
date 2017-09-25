@@ -20,8 +20,9 @@ import com.intellij.compiler.backwardRefs.view.CompilerReferenceFindUsagesTestIn
 import com.intellij.compiler.backwardRefs.view.CompilerReferenceHierarchyTestInfo;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
 import com.intellij.compiler.chainsSearch.ChainSearchMagicConstants;
-import com.intellij.compiler.chainsSearch.MethodIncompleteSignature;
-import com.intellij.compiler.chainsSearch.SignatureAndOccurrences;
+import com.intellij.compiler.chainsSearch.MethodCall;
+import com.intellij.compiler.chainsSearch.MethodRefAndOccurrences;
+import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.BuildManagerListener;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -59,6 +60,8 @@ import com.intellij.util.io.PersistentEnumeratorBase;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
+import gnu.trove.TObjectIntHashMap;
+import gnu.trove.TObjectIntProcedure;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -220,8 +223,9 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
 
   @NotNull
   @Override
-  public SortedSet<SignatureAndOccurrences> findMethodReferenceOccurrences(@NotNull String rawReturnType,
-                                                                                                      @SignatureData.IteratorKind byte iteratorKind) {
+  public SortedSet<MethodRefAndOccurrences> findMethodReferenceOccurrences(@NotNull String rawReturnType,
+                                                                           @SignatureData.IteratorKind byte iteratorKind,
+                                                                           @NotNull ChainCompletionContext context) {
     try {
       myReadDataLock.lock();
       try {
@@ -240,15 +244,15 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
             .distinct()
             .map(r -> {
               int count = myReader.getOccurrenceCount(r);
-              return count <= 1 ? null : new SignatureAndOccurrences(
-                new MethodIncompleteSignature((LightRef.JavaLightMethodRef)r, sd, this),
+              return count <= 1 ? null : new MethodRefAndOccurrences(
+                new MethodCall((LightRef.JavaLightMethodRef)r, sd, context),
                 count);
             }))
           .filter(Objects::nonNull)
           .collect(Collectors.groupingBy(x -> x.getSignature(), Collectors.summarizingInt(x -> x.getOccurrenceCount())))
           .entrySet()
           .stream()
-          .map(e -> new SignatureAndOccurrences(e.getKey(), (int)e.getValue().getSum()))
+          .map(e -> new MethodRefAndOccurrences(e.getKey(), (int)e.getValue().getSum()))
           .collect(Collectors.toCollection(TreeSet::new));
       }
       finally {
@@ -258,6 +262,52 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     catch (Exception e) {
       onException(e, "find methods");
       return Collections.emptySortedSet();
+    }
+  }
+
+  /**
+   * finds one best candidate to do a cast type before given method call (eg.: <code>((B) a).someMethod()</code>). Follows given formula:
+   *
+   * #(files where method & type cast is occurred) / #(files where method is occurred) > 1 - 1 / probabilityThreshold
+   */
+  @Nullable
+  @Override
+  public LightRef.LightClassHierarchyElementDef mayCallOfTypeCast(@NotNull LightRef.JavaLightMethodRef method, int probabilityThreshold)
+    throws ReferenceIndexUnavailableException {
+    try {
+      myReadDataLock.lock();
+      try {
+        if (myReader == null) throw new ReferenceIndexUnavailableException();
+        final TIntHashSet ids = myReader.getAllContainingFileIds(method);
+
+        LightRef.LightClassHierarchyElementDef owner = method.getOwner();
+
+        TObjectIntHashMap<LightRef> typeCasts = myReader.getTypeCasts(owner, ids);
+
+        LightRef[] best = {null};
+        int[] bestFileCount = {0};
+
+        typeCasts.forEachEntry(new TObjectIntProcedure<LightRef>() {
+          @Override
+          public boolean execute(LightRef operandType, int matchedFileCount) {
+            if (ids.size() > probabilityThreshold * (ids.size() - matchedFileCount)) {
+              if (best[0] == null || bestFileCount[0] < matchedFileCount) {
+                best[0] = operandType;
+                bestFileCount[0] = matchedFileCount;
+              }
+            }
+            return true;
+          }
+        });
+
+        return (LightRef.LightClassHierarchyElementDef)best[0];
+      }
+      finally {
+        myReadDataLock.unlock();
+      }
+    } catch (Exception e) {
+      onException(e, "conditional probability");
+      return null;
     }
   }
 
