@@ -214,7 +214,7 @@ public class HelpTooltip {
     owner = component;
     myPopupBuilder = JBPopupFactory.getInstance().
       createComponentPopupBuilder(tipPanel, null).
-      setBorderColor(BORDER_COLOR);
+      setBorderColor(BORDER_COLOR).setShowShadow(false);
 
     myMouseListener = new MouseAdapter() {
       @Override public void mouseEntered(MouseEvent e) {
