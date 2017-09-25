@@ -75,7 +75,7 @@ public abstract class ChangesTree extends Tree implements TypeSafeDataProvider {
 
   @NotNull private final Set<Object> myIncludedChanges = new HashSet<>();
   @NotNull private Runnable myDoubleClickHandler = EmptyRunnable.getInstance();
-  private boolean myAlwaysExpandList;
+  private boolean myKeepTreeState = false;
 
   @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
 
@@ -90,7 +90,6 @@ public abstract class ChangesTree extends Tree implements TypeSafeDataProvider {
     myProject = project;
     myShowCheckboxes = showCheckboxes;
     myHighlightProblems = highlightProblems;
-    myAlwaysExpandList = true;
     myCheckboxWidth = new JCheckBox().getPreferredSize().width;
 
     setHorizontalAutoScrollingEnabled(false);
@@ -216,18 +215,18 @@ public abstract class ChangesTree extends Tree implements TypeSafeDataProvider {
   public void setShowFlatten(final boolean showFlatten) {
     if (myShowFlatten == showFlatten) return;
 
-    final List<Object> wasSelected = getSelectedChanges();
-    if (!myAlwaysExpandList && showFlatten) {
+    final List<Object> oldSelection = getSelectedChanges();
+    if (myKeepTreeState && showFlatten) {
       myNonFlatTreeState = TreeState.createOn(this, getRoot());
     }
 
     myShowFlatten = showFlatten;
     rebuildTree();
 
-    if (!myAlwaysExpandList && !showFlatten && myNonFlatTreeState != null) {
+    if (myKeepTreeState && !showFlatten && myNonFlatTreeState != null) {
       myNonFlatTreeState.applyTo(this, getRoot());
     }
-    select(wasSelected);
+    setSelectedChanges(oldSelection);
   }
 
   private void setChildIndent(boolean isFlat) {
@@ -254,7 +253,7 @@ public abstract class ChangesTree extends Tree implements TypeSafeDataProvider {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     TreeState state = null;
-    if (!myAlwaysExpandList) {
+    if (myKeepTreeState) {
       state = TreeState.createOn(this, getRoot());
     }
 
@@ -262,7 +261,7 @@ public abstract class ChangesTree extends Tree implements TypeSafeDataProvider {
     myIsModelFlat = isCurrentModelFlat();
     setChildIndent(myShowFlatten && myIsModelFlat);
 
-    if (!myAlwaysExpandList) {
+    if (myKeepTreeState) {
       //noinspection ConstantConditions
       state.applyTo(this, getRoot());
     }
@@ -283,9 +282,7 @@ public abstract class ChangesTree extends Tree implements TypeSafeDataProvider {
 
         while (enumeration.hasMoreElements()) {
           ChangesBrowserNode node = (ChangesBrowserNode)enumeration.nextElement();
-          @SuppressWarnings("unchecked")
-          final CheckboxTree.NodeState state1 = getNodeStatus(node);
-          if (node != root && state1 == CheckboxTree.NodeState.CLEAR) {
+          if (node != root && getNodeStatus(node) == CheckboxTree.NodeState.CLEAR) {
             collapsePath(new TreePath(node.getPath()));
           }
         }
@@ -293,9 +290,7 @@ public abstract class ChangesTree extends Tree implements TypeSafeDataProvider {
         enumeration = root.depthFirstEnumeration();
         while (enumeration.hasMoreElements()) {
           ChangesBrowserNode node = (ChangesBrowserNode)enumeration.nextElement();
-          @SuppressWarnings("unchecked")
-          final CheckboxTree.NodeState state1 = getNodeStatus(node);
-          if (state1 == CheckboxTree.NodeState.FULL && node.isLeaf()) {
+          if (node.isLeaf() && getNodeStatus(node) == CheckboxTree.NodeState.FULL) {
             selectedTreeRow = getRowForPath(new TreePath(node.getPath()));
             break;
           }
@@ -575,7 +570,7 @@ public abstract class ChangesTree extends Tree implements TypeSafeDataProvider {
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return (! myProject.isDisposed()) && !PropertiesComponent.getInstance(myProject).isTrueValue(FLATTEN_OPTION_KEY);
+      return !isShowFlatten();
     }
 
     @Override
@@ -585,7 +580,7 @@ public abstract class ChangesTree extends Tree implements TypeSafeDataProvider {
     }
   }
 
-  public void select(@NotNull Collection<?> changes) {
+  public void setSelectedChanges(@NotNull Collection<?> changes) {
     HashSet<Object> changesSet = new HashSet<>(changes);
     final List<TreePath> treeSelection = new ArrayList<>(changes.size());
     TreeUtil.traverse(getRoot(), node -> {
@@ -600,8 +595,8 @@ public abstract class ChangesTree extends Tree implements TypeSafeDataProvider {
     if (treeSelection.size() == 1) scrollPathToVisible(treeSelection.get(0));
   }
 
-  public void setAlwaysExpandList(boolean alwaysExpandList) {
-    myAlwaysExpandList = alwaysExpandList;
+  public void setKeepTreeState(boolean keepTreeState) {
+    myKeepTreeState = keepTreeState;
   }
 
   @Override
