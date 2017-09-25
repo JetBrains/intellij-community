@@ -14,6 +14,7 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
@@ -56,7 +57,7 @@ public class HgAddCommand {
       }.queue();
     }
     else {
-      HgUtil.executeOnPooledThread(() -> executeInCurrentThread(files), myProject);
+      BackgroundTaskUtil.executeOnPooledThread(myProject, () -> executeInCurrentThread(files));
     }
   }
 

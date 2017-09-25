@@ -28,7 +28,7 @@ public class IgnoresImportingTest extends MavenImportingTestCase {
     initProjectsManager(false);
   }
 
-  public void testDoNotImportIgnoredProjects() throws Exception {
+  public void testDoNotImportIgnoredProjects() {
     VirtualFile p1 = createModulePom("project1",
                                      "<groupId>test</groupId>" +
                                      "<artifactId>project1</artifactId>" +
@@ -44,7 +44,7 @@ public class IgnoresImportingTest extends MavenImportingTestCase {
     assertModules("project2");
   }
 
-  public void testAddingAndRemovingModulesWhenIgnoresChange() throws Exception {
+  public void testAddingAndRemovingModulesWhenIgnoresChange() {
     configConfirmationForYesAnswer();
 
     VirtualFile p1 = createModulePom("project1",
@@ -72,7 +72,7 @@ public class IgnoresImportingTest extends MavenImportingTestCase {
     assertModules("project1");
   }
 
-  public void testDoNotAskTwiceToRemoveIgnoredModule() throws Exception {
+  public void testDoNotAskTwiceToRemoveIgnoredModule() {
     AtomicInteger counter = configConfirmationForNoAnswer();
 
     VirtualFile p1 = createModulePom("project1",

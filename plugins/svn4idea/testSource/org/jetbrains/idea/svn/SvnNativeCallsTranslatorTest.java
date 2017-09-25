@@ -20,7 +20,7 @@ import junit.framework.TestCase;
 import org.tmatesoft.svn.core.internal.util.jna.ISVNGnomeKeyringLibrary;
 
 public class SvnNativeCallsTranslatorTest extends TestCase {
-  public void testMac() throws Exception {
+  public void testMac() {
     assertResult(SvnNativeCallsTranslator.forMac(new NativeLogReader.CallInfo("Test", -25293)), false);
     assertResult(SvnNativeCallsTranslator.forMac(new NativeLogReader.CallInfo("Test", 0)), null);
     assertResult(SvnNativeCallsTranslator.forMac(new NativeLogReader.CallInfo("Test", -67249)), false);
@@ -37,7 +37,7 @@ public class SvnNativeCallsTranslatorTest extends TestCase {
     }
   }
 
-  public void testWindows() throws Exception {
+  public void testWindows() {
     assertResult(SvnNativeCallsTranslator.forWindows(new NativeLogReader.CallInfo("ISVNKernel32Library#GetVersionExW", 1)), null);
     assertResult(SvnNativeCallsTranslator.forWindows(new NativeLogReader.CallInfo("ISVNWinCryptLibrary#CryptUnprotectData", "true")), null);
     assertResult(SvnNativeCallsTranslator.forWindows(new NativeLogReader.CallInfo("ISVNWinCryptLibrary#CryptUnprotectData", "false")), false);
@@ -45,7 +45,7 @@ public class SvnNativeCallsTranslatorTest extends TestCase {
     assertResult(SvnNativeCallsTranslator.forWindows(new NativeLogReader.CallInfo("ISVNSecurityLibrary#InitializeSecurityContextW", 0)), null);
   }
 
-  public void testLinux() throws Exception {
+  public void testLinux() {
     assertResult(SvnNativeCallsTranslator.forLinux(new NativeLogReader.CallInfo("ISVNGnomeKeyringLibrary#gnome_keyring_is_available", "true")), null);
     assertResult(SvnNativeCallsTranslator.forLinux(new NativeLogReader.CallInfo("ISVNGnomeKeyringLibrary#gnome_keyring_is_available", "false")), false);
     assertResult(SvnNativeCallsTranslator.forLinux(new NativeLogReader.CallInfo("ISVNGnomeKeyringLibrary#gnome_keyring_find_network_password_sync",

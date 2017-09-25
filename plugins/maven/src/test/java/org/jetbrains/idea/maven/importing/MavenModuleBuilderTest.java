@@ -41,11 +41,11 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     super.setUp();
     myBuilder = new MavenModuleBuilder();
 
-    createJdk("Java 1.5");
+    createJdk();
     setModuleNameAndRoot("module", getProjectPath());
   }
 
-  public void testCreatingBlank() throws Exception {
+  public void testCreatingBlank() {
     if (!hasMavenInstallation()) return;
 
     MavenId id = new MavenId("org.foo", "module", "1.0");
@@ -68,7 +68,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     assertTestSources("module", "src/test/java");
   }
 
-  public void testInheritJdkFromProject() throws Exception {
+  public void testInheritJdkFromProject() {
     if (!hasMavenInstallation()) return;
 
     createNewModule(new MavenId("org.foo", "module", "1.0"));
@@ -76,7 +76,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     assertTrue(manager.isSdkInherited());
   }
 
-  public void testCreatingFromArchetype() throws Exception {
+  public void testCreatingFromArchetype() {
     if (!hasMavenInstallation()) return;
 
     setArchetype(new MavenArchetype("org.apache.maven.archetypes", "maven-archetype-quickstart", "1.0", null, null));
@@ -117,7 +117,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
                  StringUtil.convertLineSeparators(VfsUtil.loadText(myProjectPom)));
   }
 
-  public void testAddingManagedProjectIfNoArrgerator() throws Exception {
+  public void testAddingManagedProjectIfNoArrgerator() {
     if (!hasMavenInstallation()) return;
 
     importProject("<groupId>test</groupId>" +
@@ -134,7 +134,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     assertEquals(2, myProjectsManager.getProjectsTreeForTests().getManagedFilesPaths().size());
   }
 
-  public void testDoNotAddManagedProjectIfAddingAsModuleToAggregator() throws Exception {
+  public void testDoNotAddManagedProjectIfAddingAsModuleToAggregator() {
     if (!hasMavenInstallation()) return;
 
     importProject("<groupId>test</groupId>" +
@@ -310,7 +310,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     myBuilder.setArchetype(archetype);
   }
 
-  private void createNewModule(MavenId id) throws Exception {
+  private void createNewModule(MavenId id) {
     myBuilder.setProjectId(id);
 
     new WriteAction() {

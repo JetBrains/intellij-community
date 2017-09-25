@@ -28,6 +28,7 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.WalkingState;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -153,7 +154,8 @@ public class SliceLeafAnalyzer {
   }
 
   public Map<SliceNode, Collection<PsiElement>> createMap() {
-    return ConcurrentFactoryMap.createMap(k->ContainerUtil.newConcurrentSet(myLeafEquality), ()->ContainerUtil.newConcurrentMap(ContainerUtil.<SliceNode>identityStrategy()));
+    return ConcurrentFactoryMap.createMap(k -> ConcurrentCollectionFactory.createConcurrentSet(myLeafEquality),
+                                          () -> ConcurrentCollectionFactory.createMap(ContainerUtil.<SliceNode>identityStrategy()));
   }
 
   static class SliceNodeGuide implements WalkingState.TreeGuide<SliceNode> {

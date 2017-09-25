@@ -56,7 +56,7 @@ import static com.jetbrains.edu.learning.stepic.EduStepicNames.LINK;
 public class EduStepikRestService extends RestService {
   private static final Logger LOG = Logger.getInstance(EduStepikRestService.class.getName());
   private static final Pattern OPEN_COURSE_PATTERN = Pattern.compile("/" + EDU_STEPIK_SERVICE_NAME + "\\?link=.+");
-  private static final Pattern COURSE_PATTERN = Pattern.compile("https://stepik\\.org/lesson/[a-zA-Z\\-]*-(\\d+)/step/(\\d+)");
+  private static final Pattern COURSE_PATTERN = Pattern.compile("https://stepik\\.org/lesson(?:/[a-zA-Z\\-]*-|/)(\\d+)/step/(\\d+)");
   private static final Pattern
     OAUTH_CODE_PATTERN = Pattern.compile("/" + RestService.PREFIX + "/" + EDU_STEPIK_SERVICE_NAME + "/oauth" + "\\?code=(\\w+)");
 

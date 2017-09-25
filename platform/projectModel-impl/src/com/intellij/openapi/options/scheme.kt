@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.options
 
+import com.intellij.configurationStore.CURRENT_NAME_CONVERTER
+import com.intellij.configurationStore.SchemeNameToFileName
 import com.intellij.configurationStore.StreamProvider
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.ServiceManager
@@ -50,7 +52,7 @@ abstract class SchemeManagerFactory {
                                                                  processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>,
                                                                  presentableName: String? = null,
                                                                  roamingType: RoamingType = RoamingType.DEFAULT,
-                                                                 isUseOldFileNameSanitize: Boolean = false,
+                                                                 schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
                                                                  streamProvider: StreamProvider? = null,
                                                                  directoryPath: Path? = null,
                                                                  autoSave: Boolean = true): SchemeManager<SCHEME>
@@ -73,6 +75,9 @@ abstract class SchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME: SCHEME> {
   open fun initScheme(scheme: MUTABLE_SCHEME) {
   }
 
+  /**
+   * Called on external scheme add or change file events.
+   */
   open fun onSchemeAdded(scheme: MUTABLE_SCHEME) {
   }
 
@@ -87,4 +92,16 @@ abstract class SchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME: SCHEME> {
    */
   @Suppress("KDocUnresolvedReference")
   open fun getState(scheme: SCHEME) = SchemeState.POSSIBLY_CHANGED
+
+  /**
+   * May be called from any thread - EDT is not guaranteed.
+   */
+  open fun beforeReloaded(schemeManager: SchemeManager<SCHEME>) {
+  }
+
+  /**
+   * May be called from any thread - EDT is not guaranteed.
+   */
+  open fun reloaded(schemeManager: SchemeManager<SCHEME>, schemes: Collection<SCHEME>) {
+  }
 }

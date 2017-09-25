@@ -130,7 +130,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
 
   @NotNull
   private static List<OrderEntry> findAllOrderEntriesWithOwnerModule(@NotNull Module ownerModule, @NotNull List<OrderEntry> entries) {
-    if (entries.size() == 0) return Collections.emptyList();
+    if (entries.isEmpty()) return Collections.emptyList();
 
     if (entries.size() == 1) {
       OrderEntry entry = entries.get(0);
@@ -155,19 +155,19 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   private static class FakeOrderEntry implements OrderEntry {
     private final Module myOwnerModule;
 
-    public FakeOrderEntry(Module ownerModule) {
+    FakeOrderEntry(Module ownerModule) {
       myOwnerModule = ownerModule;
     }
 
     @NotNull
     @Override
-    public VirtualFile[] getFiles(OrderRootType type) {
+    public VirtualFile[] getFiles(@NotNull OrderRootType type) {
       throw new IncorrectOperationException();
     }
 
     @NotNull
     @Override
-    public String[] getUrls(OrderRootType rootType) {
+    public String[] getUrls(@NotNull OrderRootType rootType) {
       throw new IncorrectOperationException();
     }
 
@@ -189,7 +189,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
     }
 
     @Override
-    public <R> R accept(RootPolicy<R> policy, @Nullable R initialValue) {
+    public <R> R accept(@NotNull RootPolicy<R> policy, @Nullable R initialValue) {
       throw new IncorrectOperationException();
     }
 

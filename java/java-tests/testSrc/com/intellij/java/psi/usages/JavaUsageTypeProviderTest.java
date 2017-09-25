@@ -28,17 +28,17 @@ import com.intellij.usages.impl.rules.UsageType;
  * @author nik
  */
 public class JavaUsageTypeProviderTest extends LightCodeInsightFixtureTestCase {
-  public void testNestedClassAccess() throws Exception {
+  public void testNestedClassAccess() {
     myFixture.configureByFiles("NestedClassAccess.java", "Foo.java");
     assertUsageType(UsageType.CLASS_NESTED_CLASS_ACCESS, myFixture.findClass("Foo"));
   }
 
-  public void testStaticMethodCall() throws Exception {
+  public void testStaticMethodCall() {
     myFixture.configureByFiles("StaticMethodCall.java", "Foo.java");
     assertUsageType(UsageType.CLASS_STATIC_MEMBER_ACCESS, myFixture.findClass("Foo"));
   }
 
-  public void testStaticFieldUsage() throws Exception {
+  public void testStaticFieldUsage() {
     myFixture.configureByFiles("StaticFieldUsage.java", "Foo.java");
     assertUsageType(UsageType.CLASS_STATIC_MEMBER_ACCESS, myFixture.findClass("Foo"));
   }

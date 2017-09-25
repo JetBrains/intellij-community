@@ -53,6 +53,8 @@ public interface NavBarModelExtension {
   Collection<VirtualFile> additionalRoots(Project project);
 
   @Nullable
-  @SuppressWarnings("unused")
-  default Object getData(String dataId, DataProvider provider) { return null; }
+  default Object getData(String dataId, @NotNull DataProvider provider) { return null; }
+
+  @Nullable
+  default String getPopupMenuGroup(@NotNull DataProvider provider) { return null; }
 }

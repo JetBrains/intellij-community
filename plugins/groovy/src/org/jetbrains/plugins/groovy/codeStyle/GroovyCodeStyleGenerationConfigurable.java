@@ -123,70 +123,70 @@ public class GroovyCodeStyleGenerationConfigurable implements CodeStyleConfigura
     private static void init() {
       PropertyManager staticFieldManager = new PropertyManager("listbox.members.order.static.fields") {
         @Override void apply(CodeStyleSettings settings, int value) {
-          settings.STATIC_FIELDS_ORDER_WEIGHT = value;
+          settings.getCustomSettings(GroovyCodeStyleSettings.class).STATIC_FIELDS_ORDER_WEIGHT = value;
         }
         @Override int getValue(CodeStyleSettings settings) {
-          return settings.STATIC_FIELDS_ORDER_WEIGHT;
+          return settings.getCustomSettings(GroovyCodeStyleSettings.class).STATIC_FIELDS_ORDER_WEIGHT;
         }
       };
       PROPERTIES.put(staticFieldManager.myName, staticFieldManager);
 
       PropertyManager instanceFieldManager = new PropertyManager("listbox.members.order.fields") {
         @Override void apply(CodeStyleSettings settings, int value) {
-          settings.FIELDS_ORDER_WEIGHT = value;
+          settings.getCustomSettings(GroovyCodeStyleSettings.class).FIELDS_ORDER_WEIGHT = value;
         }
         @Override int getValue(CodeStyleSettings settings) {
-          return settings.FIELDS_ORDER_WEIGHT;
+          return settings.getCustomSettings(GroovyCodeStyleSettings.class).FIELDS_ORDER_WEIGHT;
         }
       };
       PROPERTIES.put(instanceFieldManager.myName, instanceFieldManager);
 
       PropertyManager constructorManager = new PropertyManager("listbox.members.order.constructors") {
         @Override void apply(CodeStyleSettings settings, int value) {
-          settings.CONSTRUCTORS_ORDER_WEIGHT = value;
+          settings.getCustomSettings(GroovyCodeStyleSettings.class).CONSTRUCTORS_ORDER_WEIGHT = value;
         }
         @Override int getValue(CodeStyleSettings settings) {
-          return settings.CONSTRUCTORS_ORDER_WEIGHT;
+          return settings.getCustomSettings(GroovyCodeStyleSettings.class).CONSTRUCTORS_ORDER_WEIGHT;
         }
       };
       PROPERTIES.put(constructorManager.myName, constructorManager);
 
       PropertyManager staticMethodManager = new PropertyManager("listbox.members.order.static.methods") {
         @Override void apply(CodeStyleSettings settings, int value) {
-          settings.STATIC_METHODS_ORDER_WEIGHT = value;
+          settings.getCustomSettings(GroovyCodeStyleSettings.class).STATIC_METHODS_ORDER_WEIGHT = value;
         }
         @Override int getValue(CodeStyleSettings settings) {
-          return settings.STATIC_METHODS_ORDER_WEIGHT;
+          return settings.getCustomSettings(GroovyCodeStyleSettings.class).STATIC_METHODS_ORDER_WEIGHT;
         }
       };
       PROPERTIES.put(staticMethodManager.myName, staticMethodManager);
 
       PropertyManager instanceMethodManager = new PropertyManager("listbox.members.order.methods") {
         @Override void apply(CodeStyleSettings settings, int value) {
-          settings.METHODS_ORDER_WEIGHT = value;
+          settings.getCustomSettings(GroovyCodeStyleSettings.class).METHODS_ORDER_WEIGHT = value;
         }
         @Override int getValue(CodeStyleSettings settings) {
-          return settings.METHODS_ORDER_WEIGHT;
+          return settings.getCustomSettings(GroovyCodeStyleSettings.class).METHODS_ORDER_WEIGHT;
         }
       };
       PROPERTIES.put(instanceMethodManager.myName, instanceMethodManager);
 
       PropertyManager staticInnerClassManager = new PropertyManager("listbox.members.order.inner.static.classes") {
         @Override void apply(CodeStyleSettings settings, int value) {
-          settings.STATIC_INNER_CLASSES_ORDER_WEIGHT = value;
+          settings.getCustomSettings(GroovyCodeStyleSettings.class).STATIC_INNER_CLASSES_ORDER_WEIGHT = value;
         }
         @Override int getValue(CodeStyleSettings settings) {
-          return settings.STATIC_INNER_CLASSES_ORDER_WEIGHT;
+          return settings.getCustomSettings(GroovyCodeStyleSettings.class).STATIC_INNER_CLASSES_ORDER_WEIGHT;
         }
       };
       PROPERTIES.put(staticInnerClassManager.myName, staticInnerClassManager);
 
       PropertyManager innerClassManager = new PropertyManager("listbox.members.order.inner.classes") {
         @Override void apply(CodeStyleSettings settings, int value) {
-          settings.INNER_CLASSES_ORDER_WEIGHT = value;
+          settings.getCustomSettings(GroovyCodeStyleSettings.class).INNER_CLASSES_ORDER_WEIGHT = value;
         }
         @Override int getValue(CodeStyleSettings settings) {
-          return settings.INNER_CLASSES_ORDER_WEIGHT;
+          return settings.getCustomSettings(GroovyCodeStyleSettings.class).INNER_CLASSES_ORDER_WEIGHT;
         }
       };
       PROPERTIES.put(innerClassManager.myName, innerClassManager);

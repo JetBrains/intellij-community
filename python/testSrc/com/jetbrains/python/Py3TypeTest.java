@@ -606,6 +606,20 @@ public class Py3TypeTest extends PyTestCase {
            "expr = [e for e in [] if isinstance(e, A)]");
   }
 
+  // PY-24405
+  public void testAsyncWithType() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("str",
+                   "class AContext:\n" +
+                   "    async def __aenter__(self) -> str:\n" +
+                   "        pass\n" +
+                   "async def foo():\n" +
+                   "    async with AContext() as c:\n" +
+                   "        expr = c")
+    );
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

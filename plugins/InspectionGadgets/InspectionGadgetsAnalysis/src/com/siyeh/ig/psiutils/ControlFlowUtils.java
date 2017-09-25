@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -202,15 +202,7 @@ public class ControlFlowUtils {
       if (aClass == null) {
         return true;
       }
-      final PsiField[] fields = aClass.getFields();
-      int numEnums = 0;
-      for (final PsiField field : fields) {
-        final PsiType fieldType = field.getType();
-        if (fieldType.equals(type)) {
-          numEnums++;
-        }
-      }
-      if (numEnums != numCases) {
+      if (!hasChildrenOfTypeCount(aClass, numCases, PsiEnumConstant.class)) {
         return true;
       }
     }
@@ -397,6 +389,16 @@ public class ControlFlowUtils {
     }
   }
 
+
+  @NotNull
+  public static PsiStatement[] unwrapBlock(@Nullable PsiStatement statement) {
+    PsiBlockStatement block = ObjectUtils.tryCast(statement, PsiBlockStatement.class);
+    if (block != null) {
+      return block.getCodeBlock().getStatements();
+    }
+    return statement == null ? PsiStatement.EMPTY_ARRAY : new PsiStatement[]{statement};
+  }
+
   public static boolean statementCompletesWithStatement(@NotNull PsiStatement containingStatement, @NotNull PsiStatement statement) {
     PsiElement statementToCheck = statement;
     while (true) {
@@ -518,7 +520,7 @@ public class ControlFlowUtils {
     return hasChildrenOfTypeCount(codeBlock, count, PsiStatement.class);
   }
 
-  static <T extends PsiElement> boolean hasChildrenOfTypeCount(@Nullable PsiElement element, int count, @NotNull Class<T> aClass) {
+  public static <T extends PsiElement> boolean hasChildrenOfTypeCount(@Nullable PsiElement element, int count, @NotNull Class<T> aClass) {
     if (element == null) return false;
     int i = 0;
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
@@ -755,7 +757,7 @@ public class ControlFlowUtils {
    */
   private static boolean isVariableReferencedBeforeLoopEntry(final ControlFlow flow,
                                                              final int start,
-                                                             final PsiLoopStatement loop,
+                                                             final PsiStatement loop,
                                                              final PsiVariable variable) {
     final int loopStart = flow.getStartOffset(loop);
     final int loopEnd = flow.getEndOffset(loop);
@@ -802,7 +804,7 @@ public class ControlFlowUtils {
    * @return initializer usage status for variable
    */
   @NotNull
-  public static InitializerUsageStatus getInitializerUsageStatus(PsiVariable var, PsiLoopStatement loop) {
+  public static InitializerUsageStatus getInitializerUsageStatus(PsiVariable var, PsiStatement loop) {
     if(!(var instanceof PsiLocalVariable) || var.getInitializer() == null) return UNKNOWN;
     if(isDeclarationJustBefore(var, loop)) return DECLARED_JUST_BEFORE;
     // Check that variable is declared in the same method or the same lambda expression
@@ -871,16 +873,26 @@ public class ControlFlowUtils {
 
   /**
    * @param expression expression to check
-   * @return true if given expression can be converted to statement without semantics change
+   * @return true if given expression is always executed and can be converted to a statement
    */
   public static boolean canExtractStatement(PsiExpression expression) {
+    return canExtractStatement(expression, true);
+  }
+
+  /**
+   * @param expression    expression to check
+   * @param checkExecuted if true, expression will be considered non-extractable if it is not always executed within its topmost expression
+   *                      (e.g. appears in then/else branches in ?: expression)
+   * @return true if given expression can be converted to a statement
+   */
+  public static boolean canExtractStatement(PsiExpression expression, boolean checkExecuted) {
     PsiElement cur = expression;
     PsiElement parent = cur.getParent();
     while(parent instanceof PsiExpression || parent instanceof PsiExpressionList) {
       if(parent instanceof PsiLambdaExpression) {
         return true;
       }
-      if(parent instanceof PsiPolyadicExpression) {
+      if (checkExecuted && parent instanceof PsiPolyadicExpression) {
         PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
         IElementType type = polyadicExpression.getOperationTokenType();
         if ((type.equals(JavaTokenType.ANDAND) || type.equals(JavaTokenType.OROR)) && polyadicExpression.getOperands()[0] != cur) {
@@ -888,7 +900,7 @@ public class ControlFlowUtils {
           return false;
         }
       }
-      if(parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != cur) {
+      if (checkExecuted && parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != cur) {
         return false;
       }
       if(parent instanceof PsiMethodCallExpression) {
@@ -900,6 +912,12 @@ public class ControlFlowUtils {
       cur = parent;
       parent = cur.getParent();
     }
+    if (parent instanceof PsiStatement) {
+      PsiElement grandParent = parent.getParent();
+      if (checkExecuted && grandParent instanceof PsiForStatement && ((PsiForStatement)grandParent).getUpdate() == parent) {
+        return false;
+      }
+    }
     if(parent instanceof PsiReturnStatement || parent instanceof PsiExpressionStatement) return true;
     if(parent instanceof PsiLocalVariable) {
       PsiElement grandParent = parent.getParent();
@@ -907,9 +925,62 @@ public class ControlFlowUtils {
         return true;
       }
     }
+    if (parent instanceof PsiField) {
+      PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(parent);
+      PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(parent);
+      boolean multipleFieldsDeclaration = prev instanceof PsiJavaToken && ((PsiJavaToken)prev).getTokenType() == JavaTokenType.COMMA ||
+                                          next instanceof PsiJavaToken && ((PsiJavaToken)next).getTokenType() == JavaTokenType.COMMA;
+      return !multipleFieldsDeclaration;
+    }
     if(parent instanceof PsiForeachStatement && ((PsiForeachStatement)parent).getIteratedValue() == cur) return true;
     if(parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getCondition() == cur) return true;
     return false;
+  }
+
+  /**
+   * Finds the return statement which will be always executed after the supplied statement. It supports constructs like this:
+   * <pre>{@code
+   * if(condition) {
+   *   statement(); // this statement is supplied as a parameter
+   * }
+   * return true; // this return statement will be returned
+   * }</pre>
+   *
+   * @param statement statement to find the return after
+   * @return the found return statement or null.
+   */
+  @Nullable
+  public static PsiReturnStatement getNextReturnStatement(PsiStatement statement) {
+    PsiElement nextStatement = PsiTreeUtil.skipWhitespacesAndCommentsForward(statement);
+    if (nextStatement instanceof PsiReturnStatement) return (PsiReturnStatement)nextStatement;
+    PsiElement parent = statement.getParent();
+    if (parent instanceof PsiCodeBlock) {
+      PsiStatement[] statements = ((PsiCodeBlock)parent).getStatements();
+      if (statements.length == 0 || statements[statements.length - 1] != statement) return null;
+      parent = parent.getParent();
+      if (!(parent instanceof PsiBlockStatement)) return null;
+      parent = parent.getParent();
+    }
+    if (parent instanceof PsiIfStatement) return getNextReturnStatement((PsiStatement)parent);
+    return null;
+  }
+
+  /**
+   * @param statement statement to test
+   * @return true if statement is reachable or code is incomplete and reachability cannot be defined
+   */
+  public static boolean isReachable(@NotNull PsiStatement statement) {
+    ControlFlow flow;
+    PsiCodeBlock block = PsiTreeUtil.getParentOfType(statement, PsiCodeBlock.class);
+    if (block == null) return true;
+    try {
+      flow = ControlFlowFactory.getInstance(statement.getProject())
+        .getControlFlow(block, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+    }
+    catch (AnalysisCanceledException e) {
+      return true;
+    }
+    return ControlFlowUtil.isInstructionReachable(flow, flow.getStartOffset(statement), 0);
   }
 
   public enum InitializerUsageStatus {

@@ -21,17 +21,13 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.testFramework.LoggedErrorProcessor;
-import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.SkipInHeadlessEnvironment;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.*;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -81,22 +77,15 @@ public class LaterInvocatorTest extends PlatformTestCase {
         return "Window2";
       }
     };
-    final Exception[] exception = {null};
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-      try {
-        super.setUp();
-        final Object[] modalEntities = LaterInvocator.getCurrentModalEntities();
-        if (modalEntities.length > 0) {
-          LOG.error(
-            "Expect no modal entries. Probably some of the previous tests didn't left their entries. Top entry is: " + modalEntities[0]);
-        }
-      }
-      catch (Exception e) {
-        exception[0] = e;
+    EdtTestUtil.runInEdtAndWait(() -> {
+      super.setUp();
+      final Object[] modalEntities = LaterInvocator.getCurrentModalEntities();
+      if (modalEntities.length > 0) {
+        LOG.error(
+          "Expect no modal entries. Probably some of the previous tests didn't left their entries. Top entry is: " + modalEntities[0]);
       }
     });
-    if (exception[0] != null) throw exception[0];
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> TestCase.assertFalse("Can't run test " + ModalityState.current(), LaterInvocator.isInModalContext()));
+    EdtTestUtil.runInEdtAndWait(() -> TestCase.assertFalse("Can't run test " + ModalityState.current(), LaterInvocator.isInModalContext()));
 
     flushSwingQueue();
   }
@@ -129,26 +118,10 @@ public class LaterInvocatorTest extends PlatformTestCase {
       }
     });
 
-    final Exception[] exception = {null};
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          LaterInvocatorTest.super.tearDown();
-        }
-        catch (Exception e) {
-          exception[0] = e;
-        }
-      }
-
-      public String toString() {
-        return "super teardown";
-      }
-    });
-    if (exception[0] != null) throw exception[0];
+    EdtTestUtil.runInEdtAndWait(() -> super.tearDown());
   }
 
-  public void testReorder() throws InterruptedException, InvocationTargetException {
+  public void testReorder() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       LaterInvocator.enterModal(myWindow1);
       synchronized (this) {
@@ -164,7 +137,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
     });
   }
 
-  public void testTrueReorder() throws InvocationTargetException, InterruptedException {
+  public void testTrueReorder() {
     SwingUtilities.invokeLater(() -> {
       LaterInvocator.enterModal(myWindow1);
       ApplicationManager.getApplication().invokeLater(new MyRunnable("1"), ModalityState.NON_MODAL);
@@ -178,7 +151,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
     checkOrder(2);
   }
 
-  public void testEverInvoked() throws InvocationTargetException, InterruptedException {
+  public void testEverInvoked() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       LaterInvocator.enterModal(myWindow1);
       ApplicationManager.getApplication().invokeLater(ENTER_MODAL, ModalityState.NON_MODAL);
@@ -194,7 +167,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
     });
   }
 
-  public void testDoesNotInvokeWhenModal() throws InvocationTargetException, InterruptedException {
+  public void testDoesNotInvokeWhenModal() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       LaterInvocator.enterModal(myWindow1);
 
@@ -209,7 +182,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
     });
   }
 
-  public void testStress() throws Exception {
+  public void testStress() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       int N = 1000;
       //long start = System.currentTimeMillis();
@@ -274,7 +247,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
   }
 
 
-  public void testOrderWithSwingInvokeLater2() throws InterruptedException, InvocationTargetException {
+  public void testOrderWithSwingInvokeLater2() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       LaterInvocator.enterModal(myWindow1);
       synchronized (this) {
@@ -289,7 +262,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
     });
   }
 
-  public void testOrderWithSwingInvokeLater3() throws InterruptedException, InvocationTargetException {
+  public void testOrderWithSwingInvokeLater3() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       LaterInvocator.enterModal(myWindow1);
       synchronized (this) {
@@ -304,7 +277,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
     });
   }
 
-  public void testExpired() throws Exception {
+  public void testExpired() {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -333,7 +306,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
     });
   }
 
-  public void testOrderWithSwingInvokeLater4() throws InterruptedException, InvocationTargetException {
+  public void testOrderWithSwingInvokeLater4() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       SwingUtilities.invokeLater(ENTER_MODAL);
       flushSwingQueue();
@@ -356,7 +329,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
     });
   }
 
-  public void testDeadLock() throws InvocationTargetException, InterruptedException {
+  public void testDeadLock() throws InterruptedException {
     final Object lock = new Object();
     final boolean[] started = { false };
     final Thread thread = new Thread("later invokator test") {
@@ -599,7 +572,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
   public void testDispatchInvocationEventsVsInvokeLaterFromBgThreadRace() {
     Application app = ApplicationManager.getApplication();
     app.invokeAndWait(() -> {
-      for (int i = 0; i < 1000; i++) {
+      for (int i = 0; i < 20; i++) {
         AtomicBoolean executed = new AtomicBoolean();
         app.executeOnPooledThread(() -> app.invokeLater(EmptyRunnable.INSTANCE));
         app.invokeLater(() -> executed.set(true));

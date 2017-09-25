@@ -116,7 +116,7 @@ public class MoveClassTest extends RefactoringTestCase {
     PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir);
   }
 
-  private void performAction(String[] classNames, String newPackageName) throws Exception{
+  private void performAction(String[] classNames, String newPackageName) {
     final PsiClass[] classes = new PsiClass[classNames.length];
     for(int i = 0; i < classes.length; i++){
       String className = classNames[i];

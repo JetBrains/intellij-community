@@ -481,28 +481,24 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
       Insets insets = super.getInsets();
       Icon icon = getArrowIcon(isEnabled());
-      boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
 
       int x = size.width - icon.getIconWidth();
-      if (isEmpty) {
-        x /= 2;
-      } else {
-        if (UIUtil.isUnderWin10LookAndFeel()) {
-          x -= JBUI.scale(6);
-          x -= JBUI.scale(UIUtil.getParentOfType(ActionToolbar.class, this) != null ? 2 : 0);
-        } else {
-          x -= insets.right;
+      if (UIUtil.isUnderWin10LookAndFeel()) {
+        x -= JBUI.scale(6);
+        x -= JBUI.scale(UIUtil.getParentOfType(ActionToolbar.class, this) != null ? 2 : 0);
+      }
+      else {
+        x -= insets.right;
 
-          if (isSmallVariant()) {
-            x += JBUI.scale(1);
+        if (isSmallVariant()) {
+          x += JBUI.scale(1);
 
-            if (UIUtil.isUnderDefaultMacTheme()) {
-              x -= JBUI.scale(3);
-            }
+          if (UIUtil.isUnderDefaultMacTheme()) {
+            x -= JBUI.scale(3);
           }
-          else {
-            x += JBUI.scale(UIUtil.isUnderNimbusLookAndFeel() ? -3 : 2);
-          }
+        }
+        else {
+          x += JBUI.scale(UIUtil.isUnderNimbusLookAndFeel() ? -3 : 2);
         }
       }
 

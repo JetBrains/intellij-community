@@ -31,7 +31,7 @@ import java.util.Iterator;
  *  @author dsl
  */
 public class PsiUtilTest extends LightCodeInsightTestCase {
-  public void testTypeParameterIterator() throws Exception {
+  public void testTypeParameterIterator() {
     PsiClass classA = createClass("class A<T> {}");
     final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(classA);
     compareIterator(new String[]{"T"}, iterator);
@@ -43,19 +43,19 @@ public class PsiUtilTest extends LightCodeInsightTestCase {
     return classA;
   }
 
-  public void testTypeParameterIterator1() throws Exception {
+  public void testTypeParameterIterator1() {
     final PsiClass classA = createClass("class A<T> { class B<X> {}}");
     final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(classA.getInnerClasses()[0]);
     compareIterator(new String[]{"X","T"}, iterator);
   }
 
-  public void testTypeParameterIterator2() throws Exception {
+  public void testTypeParameterIterator2() {
     final PsiClass classA = createClass("class A<T> { static class B<X> {}}");
     final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(classA.getInnerClasses()[0]);
     compareIterator(new String[]{"X"}, iterator);
   }
 
-  public void testTypeParameterIterator3() throws Exception {
+  public void testTypeParameterIterator3() {
     final PsiClass classA = createClass("class A<T> { class B<X, Y> {}}");
     final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(classA.getInnerClasses()[0]);
     compareIterator(new String[]{"Y", "X", "T"}, iterator);

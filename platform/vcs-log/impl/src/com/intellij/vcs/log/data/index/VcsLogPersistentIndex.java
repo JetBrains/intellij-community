@@ -107,7 +107,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
     myIndexStorage = createIndexStorage(fatalErrorsConsumer, calcLogId(myProject, providers));
     if (myIndexStorage != null) {
-      myDataGetter = new IndexDataGetter(myProject, myRoots, myIndexStorage, myFatalErrorsConsumer);
+      myDataGetter = new IndexDataGetter(myProject, myRoots, myIndexStorage, myStorage, myFatalErrorsConsumer);
     }
     else {
       myDataGetter = null;
@@ -137,6 +137,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
   @Override
   public synchronized void scheduleIndex(boolean full) {
+    if (Disposer.isDisposed(this)) return;
     if (myCommitsToIndex.isEmpty() || myIndexStorage == null) return;
     // for fresh index, wait for complete log to load and index everything in one command
     if (myIndexStorage.isFresh() && !full) return;

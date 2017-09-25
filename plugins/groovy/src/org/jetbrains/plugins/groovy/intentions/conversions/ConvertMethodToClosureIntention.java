@@ -155,7 +155,7 @@ public class ConvertMethodToClosureIntention extends Intention {
       }
       return !method.isConstructor() &&
              isJavaIdentifier(method.getName()) &&
-             method.getBlock() != null &&
+             method.hasBlock() &&
              method.getParent() instanceof GrTypeDefinitionBody;
     }
   }

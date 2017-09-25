@@ -152,7 +152,7 @@ public class LineStatusTrackerRevertAutoTest extends BaseLineStatusTrackerTestCa
     assertEquals(myDocument.getText(), myUpToDateDocument.getText());
   }
 
-  private void checkRevertComplex(int iterations) throws Exception {
+  private void checkRevertComplex(int iterations) {
     BitSet lines = new BitSet();
 
     for (int i = 0; i < iterations; i++) {

@@ -61,6 +61,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RefManagerImpl extends RefManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.reference.RefManager");
@@ -81,13 +82,13 @@ public class RefManagerImpl extends RefManager {
 
   private final ConcurrentMap<Module, RefModule> myModules = ContainerUtil.newConcurrentMap();
   private final ProjectIterator myProjectIterator = new ProjectIterator();
-  private volatile boolean myDeclarationsFound;
+  private final AtomicBoolean myDeclarationsFound = new AtomicBoolean(false);
   private final PsiManager myPsiManager;
 
   private volatile boolean myIsInProcess;
   private volatile boolean myOfflineView;
 
-  private final List<RefGraphAnnotator> myGraphAnnotators = new ArrayList<>();
+  private final LinkedHashSet<RefGraphAnnotator> myGraphAnnotators = new LinkedHashSet<>();
   private GlobalInspectionContext myContext;
 
   private final Map<Key, RefManagerExtension> myExtensions = new THashMap<>();
@@ -132,7 +133,7 @@ public class RefManagerImpl extends RefManager {
     }
     if (myModules != null) {
       for (RefModule refModule : myModules.values()) {
-        refModule.accept(visitor);
+        if (myScope.containsModule(refModule.getModule())) refModule.accept(visitor);
       }
     }
     for (RefManagerExtension extension : myExtensions.values()) {
@@ -192,8 +193,7 @@ public class RefManagerImpl extends RefManager {
   }
 
   public void registerGraphAnnotator(@NotNull RefGraphAnnotator annotator) {
-    myGraphAnnotators.add(annotator);
-    if (annotator instanceof RefGraphAnnotatorEx) {
+    if (myGraphAnnotators.add(annotator) && annotator instanceof RefGraphAnnotatorEx) {
       ((RefGraphAnnotatorEx)annotator).initialize(this);
     }
   }
@@ -330,20 +330,19 @@ public class RefManagerImpl extends RefManager {
   }
 
   public void findAllDeclarations() {
-    if (!myDeclarationsFound) {
+    if (!myDeclarationsFound.getAndSet(true)) {
       long before = System.currentTimeMillis();
       final AnalysisScope scope = getScope();
       if (scope != null) {
         scope.accept(myProjectIterator);
       }
-      myDeclarationsFound = true;
 
       LOG.info("Total duration of processing project usages:" + (System.currentTimeMillis() - before));
     }
   }
 
   public boolean isDeclarationsFound() {
-    return myDeclarationsFound;
+    return myDeclarationsFound.get();
   }
 
   public void inspectionReadActionStarted() {
@@ -498,6 +497,23 @@ public class RefManagerImpl extends RefManager {
             }
           }
         }
+
+        for (PsiClass aClass : ((PsiClassOwner)containingFile).getClasses()) {
+          PsiClassType[] superTypes = aClass.getSuperTypes();
+          for (PsiClassType type : superTypes) {
+            PsiClass superClass = type.resolve();
+            if (superClass != null) {
+              RefElement superClassReference = getReference(superClass);
+              if (superClassReference != null) {
+                //in case of implicit inheritance, e.g. GroovyObject
+                //= no explicit reference is provided, dependency on groovy library could be treated as redundant though it is not
+                //inReference is not important in this case
+                ((RefElementImpl)refFile).addOutReference(superClassReference);
+              }
+            }
+          }
+        }
+
       }
       else if (element instanceof PsiFile) {
         VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);

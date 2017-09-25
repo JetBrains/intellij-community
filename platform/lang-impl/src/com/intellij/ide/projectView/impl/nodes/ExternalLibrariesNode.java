@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformIcons;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -122,11 +122,10 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
 
   private static boolean hasExternalEntries(ProjectFileIndex index, LibraryOrderEntry orderEntry) {
     for (VirtualFile file : LibraryGroupNode.getLibraryRoots(orderEntry)) {
-      if (!index.isInContent(PathUtil.getLocalFile(file))) return true;
+      if (!index.isInContent(VfsUtil.getLocalFile(file))) return true;
     }
     return false;
   }
-
 
   @Override
   protected void update(PresentationData presentation) {

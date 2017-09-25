@@ -410,6 +410,8 @@ public class FileSystemUtil {
     private static final int[] LNX_ARM32 = LNX_PPC32;
     private static final int[] BSD_32 =    { 8, 48, 32, 12, 16};
     private static final int[] BSD_64 =    { 8, 72, 40, 12, 16};
+    private static final int[] BSD_32_12 = {24, 96, 64, 28, 32};
+    private static final int[] BSD_64_12 = {24,112, 64, 28, 32};
     private static final int[] SUN_OS_32 = {20, 48, 64, 28, 32};
     private static final int[] SUN_OS_64 = {16, 40, 64, 24, 28};
 
@@ -431,9 +433,9 @@ public class FileSystemUtil {
       else if ("linux-arm".equals(Platform.RESOURCE_PREFIX)) myOffsets = LNX_ARM32;
       else if ("linux-ppc".equals(Platform.RESOURCE_PREFIX)) myOffsets = LNX_PPC32;
       else if ("linux-ppc64le".equals(Platform.RESOURCE_PREFIX)) myOffsets = LNX_PPC64;
-      else if ("freebsd-x86".equals(Platform.RESOURCE_PREFIX)) myOffsets = BSD_32;
-      else if ("darwin".equals(Platform.RESOURCE_PREFIX) ||
-               "freebsd-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = BSD_64;
+      else if ("darwin".equals(Platform.RESOURCE_PREFIX)) myOffsets = BSD_64;
+      else if ("freebsd-x86".equals(Platform.RESOURCE_PREFIX)) myOffsets = SystemInfo.isOsVersionAtLeast("12") ? BSD_32_12 : BSD_32;
+      else if ("freebsd-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = SystemInfo.isOsVersionAtLeast("12") ? BSD_64_12 : BSD_64;
       else if ("sunos-x86".equals(Platform.RESOURCE_PREFIX)) myOffsets = SUN_OS_32;
       else if ("sunos-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = SUN_OS_64;
       else throw new IllegalStateException("Unsupported OS/arch: " + SystemInfo.OS_NAME + "/" + SystemInfo.OS_ARCH);

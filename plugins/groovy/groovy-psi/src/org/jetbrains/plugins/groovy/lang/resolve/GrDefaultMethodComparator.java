@@ -69,6 +69,11 @@ public class GrDefaultMethodComparator extends GrMethodComparator {
 
     PsiParameter[] params1 = method1.getParameterList().getParameters();
     PsiParameter[] params2 = method2.getParameterList().getParameters();
+
+    if (argTypes != null && argTypes.length == 0) {
+      if (params2.length == 1 && params2[0].getType() instanceof PsiArrayType) return true;
+    }
+
     if (argTypes == null && params1.length != params2.length) return false;
 
     if (params1.length < params2.length) {

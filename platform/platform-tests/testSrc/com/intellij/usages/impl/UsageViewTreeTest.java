@@ -46,15 +46,12 @@ public class UsageViewTreeTest extends UsefulTestCase {
     super.setUp();
     myFixtureBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder("moduleGroups");
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(myFixtureBuilder.getFixture());
-    myDisposable = new Disposable() {
-      @Override
-      public void dispose() {
-        try {
-          myFixture.tearDown();
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+    myDisposable = () -> {
+      try {
+        myFixture.tearDown();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     };
     myFixture.setUp();
@@ -72,7 +69,7 @@ public class UsageViewTreeTest extends UsefulTestCase {
   public void testSimpleModule() throws Exception {
     addModule("main");
     PsiFile file = myFixture.addFileToProject("main/A.txt", "hello");
-    Usage[] usages = new Usage[] {new UsageInfo2UsageAdapter(new UsageInfo(file))};
+    Usage[] usages = {new UsageInfo2UsageAdapter(new UsageInfo(file))};
     assertUsageViewStructureEquals(usages, "Usage (1 usage)\n" +
                                            " Non-code usages (1 usage)\n" +
                                            "  main (1 usage)\n" +
@@ -83,7 +80,7 @@ public class UsageViewTreeTest extends UsefulTestCase {
   public void testModuleWithQualifiedName() throws Exception {
     addModule("xxx.main");
     PsiFile file = myFixture.addFileToProject("xxx.main/A.txt", "hello");
-    Usage[] usages = new Usage[] {new UsageInfo2UsageAdapter(new UsageInfo(file))};
+    Usage[] usages = {new UsageInfo2UsageAdapter(new UsageInfo(file))};
     UsageViewSettings.getInstance().FLATTEN_MODULES = false;
     ModuleGroupTestsKt.runWithQualifiedModuleNamesEnabled(() -> {
       assertUsageViewStructureEquals(usages, "Usage (1 usage)\n" +

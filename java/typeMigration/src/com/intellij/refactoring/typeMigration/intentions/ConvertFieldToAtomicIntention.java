@@ -1,6 +1,7 @@
 package com.intellij.refactoring.typeMigration.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.lang.java.JavaLanguage;
@@ -12,11 +13,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.AllowedApiFilterExtension;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationVariableTypeFixProvider;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,7 +83,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
     return AllowedApiFilterExtension.isClassAllowed(AtomicReference.class.getName(), element);
   }
 
-  private static PsiVariable getVariable(PsiElement element) {
+  PsiVariable getVariable(PsiElement element) {
     if (element instanceof PsiIdentifier) {
       final PsiElement parent = element.getParent();
       if (parent instanceof PsiLocalVariable || parent instanceof PsiField) {
@@ -134,7 +137,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
   static void postProcessVariable(@NotNull PsiVariable var, @NotNull String toType) {
 
     Project project = var.getProject();
-    if (var instanceof PsiField || CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS) {
+    if (var instanceof PsiField || CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
       PsiModifierList modifierList = assertNotNull(var.getModifierList());
       WriteAction.run(() -> {
         if (var.getInitializer() == null) {
@@ -145,7 +148,6 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
           else if (var instanceof PsiField) {
             ((PsiField)var).setInitializer(newInitializer);
           }
-          JavaCodeStyleManager.getInstance(var.getProject()).shortenClassReferences(var.getInitializer());
         }
 
         modifierList.setModifierProperty(PsiModifier.FINAL, true);
@@ -205,5 +207,29 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
   @Override
   public boolean startInWriteAction() {
     return false;
+  }
+
+  public static class ConvertNonFinalLocalToAtomicFix extends ConvertFieldToAtomicIntention implements HighPriorityAction {
+    private PsiElement myContext;
+
+    public ConvertNonFinalLocalToAtomicFix(PsiElement context) {
+      myContext = context;
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+      return getVariable(element) != null;
+    }
+
+    @Override
+    PsiVariable getVariable(PsiElement element) {
+      if(myContext instanceof PsiReferenceExpression && myContext.isValid()) {
+        PsiReferenceExpression ref = (PsiReferenceExpression)myContext;
+        if(PsiUtil.isAccessedForWriting(ref)) {
+          return ObjectUtils.tryCast(ref.resolve(), PsiLocalVariable.class);
+        }
+      }
+      return null;
+    }
   }
 }

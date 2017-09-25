@@ -15,5 +15,6 @@
     <orderEntry type="module" module-name="projectModel-impl" />
     <orderEntry type="module" module-name="java-indexing-api" exported="" />
     <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
   </component>
 </module>

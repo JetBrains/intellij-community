@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ClassNewInstanceInspectionTest extends LightInspectionTestCase {
 
-  public void testClassNewInstance() throws Exception {
+  public void testClassNewInstance() {
     doTest();
   }
 

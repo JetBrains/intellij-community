@@ -94,6 +94,21 @@ public abstract class AbstractCommand<T> {
 
   protected abstract void buildPayload(Payload payload);
 
+
+  @NotNull
+  public static String buildCondition(String expression) {
+    String condition;
+
+    if (expression != null) {
+      condition = expression.replaceAll("\n", NEW_LINE_CHAR);
+      condition = condition.replaceAll("\t", TAB_CHAR);
+    }
+    else {
+      condition = "None";
+    }
+    return condition;
+  }
+
   public boolean isResponseExpected() {
     return false;
   }

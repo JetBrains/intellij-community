@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public class ShowRecentTests extends AnAction {
 
     final TestStateStorage testStorage = TestStateStorage.getInstance(project);
     final TestLocator testLocator = new TestLocator(project);
-    final RecentTestRunnerImpl testRunner = new RecentTestRunnerImpl(project, testLocator);
+    final RecentTestRunnerImpl testRunner = new RecentTestRunnerImpl(testLocator);
     
     final Map<String, TestStateStorage.Record> records = testStorage.getRecentTests(TEST_LIMIT, getSinceDate());
 

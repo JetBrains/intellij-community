@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.dom.AntDomTarget;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -62,8 +63,12 @@ public class AntCreatePropertyFix implements LocalQuickFix {
 
   @NotNull
   public String getFamilyName() {
-    final String i18nName = AntBundle.message("ant.intention.create.property.family.name");
-    return (i18nName == null) ? "Create property" : i18nName;
+    return AntBundle.message("ant.intention.create.property.family.name");
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
@@ -75,55 +80,65 @@ public class AntCreatePropertyFix implements LocalQuickFix {
     if (myPropFile != null) {
       final VirtualFile vFile = myPropFile.getVirtualFile();
 
-      boolean canModify = true;
       if (myPropFile instanceof PsiFile) {
-        canModify = modificationService.prepareFileForWrite((PsiFile)myPropFile);
+        if (!modificationService.prepareFileForWrite((PsiFile)myPropFile)) {
+          return;
+        }
       }
       else if (vFile != null) {
-        canModify = modificationService.prepareVirtualFilesForWrite(project, Collections.singleton(vFile));
+        if (!modificationService.prepareVirtualFilesForWrite(project, Collections.singleton(vFile))) {
+          return;
+        }
       }
 
-      if (canModify) {
+      result = WriteAction.compute(() -> {
         final IProperty generatedProperty = myPropFile.addProperty(myCanonicalText, "");
-        result = vFile != null? new OpenFileDescriptor(project, vFile, generatedProperty.getPsiElement().getTextRange().getEndOffset()) : generatedProperty;
-      }
+        return vFile != null? new OpenFileDescriptor(project, vFile, generatedProperty.getPsiElement().getTextRange().getEndOffset()) : generatedProperty;
+      });
     }
     else {
       if (containingFile instanceof XmlFile) {
         final XmlFile xmlFile = (XmlFile)containingFile;
         final XmlTag rootTag = xmlFile.getRootTag();
-        if (rootTag != null && modificationService.prepareFileForWrite(xmlFile)) {
-          final XmlTag propTag = rootTag.createChildTag(PROPERTY, rootTag.getNamespace(), null, false);
-          propTag.setAttribute(NAME_ATTR, myCanonicalText);
-          propTag.setAttribute(VALUE_ATTR, "");
-          final DomElement contextElement = DomUtil.getDomElement(descriptor.getPsiElement());
-          PsiElement generated;
-          if (contextElement == null) {
-            generated = rootTag.addSubTag(propTag, true);
-          }
-          else {
-            final AntDomTarget containingTarget = contextElement.getParentOfType(AntDomTarget.class, false);
-            final DomElement anchor = containingTarget != null ? containingTarget : contextElement;
-            final XmlTag tag = anchor.getXmlTag();
-            if (!rootTag.equals(tag)) {
-              generated = tag.getParent().addBefore(propTag, tag);
-            }
-            else {
+        if (!modificationService.prepareFileForWrite(xmlFile)) {
+          return;
+        }
+        if (rootTag != null) {
+          result = WriteAction.compute(() -> {
+            final XmlTag propTag = rootTag.createChildTag(PROPERTY, rootTag.getNamespace(), null, false);
+            propTag.setAttribute(NAME_ATTR, myCanonicalText);
+            propTag.setAttribute(VALUE_ATTR, "");
+            final DomElement contextElement = DomUtil.getDomElement(descriptor.getPsiElement());
+            PsiElement generated;
+            if (contextElement == null) {
               generated = rootTag.addSubTag(propTag, true);
             }
-          }
-          if (generated instanceof XmlTag) {
-            final XmlAttribute valueAttrib = ((XmlTag)generated).getAttribute(VALUE_ATTR);
-            if (valueAttrib != null) {
-              final XmlAttributeValue valueElement = valueAttrib.getValueElement();
-              if (valueElement instanceof Navigatable) {
-                result = (Navigatable)valueElement;
+            else {
+              final AntDomTarget containingTarget = contextElement.getParentOfType(AntDomTarget.class, false);
+              final DomElement anchor = containingTarget != null ? containingTarget : contextElement;
+              final XmlTag tag = anchor.getXmlTag();
+              if (!rootTag.equals(tag)) {
+                generated = tag.getParent().addBefore(propTag, tag);
+              }
+              else {
+                generated = rootTag.addSubTag(propTag, true);
               }
             }
-          }
-          if (result == null && generated instanceof Navigatable) {
-            result = (Navigatable)generated;
-          }
+            Navigatable navigatable = null;
+            if (generated instanceof XmlTag) {
+              final XmlAttribute valueAttrib = ((XmlTag)generated).getAttribute(VALUE_ATTR);
+              if (valueAttrib != null) {
+                final XmlAttributeValue valueElement = valueAttrib.getValueElement();
+                if (valueElement instanceof Navigatable) {
+                  navigatable = (Navigatable)valueElement;
+                }
+              }
+            }
+            if (navigatable == null && generated instanceof Navigatable) {
+              navigatable = (Navigatable)generated;
+            }
+            return navigatable;
+          });
         }
       }
     }

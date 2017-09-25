@@ -209,8 +209,8 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
   @Override
   @NotNull
   public OrderEntry cloneEntry(@NotNull RootModelImpl rootModel,
-                               ProjectRootManagerImpl projectRootManager,
-                               VirtualFilePointerManager filePointerManager) {
+                               @NotNull ProjectRootManagerImpl projectRootManager,
+                               @NotNull VirtualFilePointerManager filePointerManager) {
     return new ModuleJdkOrderEntryImpl(this, rootModel, ProjectRootManagerImpl.getInstanceImpl(getRootModel().getModule().getProject()));
   }
 

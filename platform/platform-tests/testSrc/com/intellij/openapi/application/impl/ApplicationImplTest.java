@@ -117,14 +117,14 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   }
 
 
-  public void testRead50Write50LockPerformance() throws InterruptedException {
+  public void testRead50Write50LockPerformance() {
     final int readIterations = 600000;
     final int writeIterations = 600000;
 
     runReadWrites(readIterations, writeIterations, 2000);
   }
 
-  public void testRead100Write0LockPerformance() throws InterruptedException {
+  public void testRead100Write0LockPerformance() {
     final int readIterations = 60000000;
     final int writeIterations = 0;
 
@@ -504,7 +504,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     if (exception != null) throw exception;
   }
 
-  public void testRWLockPerformance() throws InterruptedException {
+  public void testRWLockPerformance() {
     long s = System.currentTimeMillis();
     while (System.currentTimeMillis() < s + 2000) {
       UIUtil.dispatchAllInvocationEvents();
@@ -556,7 +556,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     UIUtil.dispatchAllInvocationEvents();
   }
 
-  public void testSuspendWriteActionDelaysForeignReadActions() throws Exception {
+  public void testSuspendWriteActionDelaysForeignReadActions() {
     Semaphore mayStartForeignRead = new Semaphore();
     mayStartForeignRead.down();
 

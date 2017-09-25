@@ -15,13 +15,90 @@
  */
 package com.siyeh.ig.naming;
 
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.RenameFix;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
+import com.intellij.util.ui.CheckBox;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
-public class StaticVariableNamingConventionInspection extends StaticVariableNamingConventionInspectionBase {
+import javax.swing.*;
+
+public class StaticVariableNamingConventionInspection extends
+                                                      ConventionInspection {
+
+  private static final int DEFAULT_MIN_LENGTH = 5;
+  private static final int DEFAULT_MAX_LENGTH = 32;
+  @SuppressWarnings({"PublicField"})
+  public boolean checkMutableFinals = false;
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new RenameFix();
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("static.variable.naming.convention.display.name");
+  }
+
+  @Override
+  protected String getElementDescription() {
+    return InspectionGadgetsBundle.message("static.variable.naming.convention.element.description");
+  }
+
+  @Override
+  protected String getDefaultRegex() {
+    return "s_[a-z][A-Za-z\\d]*";
+  }
+
+  @Override
+  protected int getDefaultMinLength() {
+    return DEFAULT_MIN_LENGTH;
+  }
+
+  @Override
+  protected int getDefaultMaxLength() {
+    return DEFAULT_MAX_LENGTH;
+  }
+
+  @NotNull
+  @Override
+  public JComponent[] createExtraOptions() {
+    return new JComponent[]{
+      new CheckBox(InspectionGadgetsBundle.message("static.variable.naming.convention.mutable.option"), this, "checkMutableFinals")
+    };
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new NamingConventionsVisitor();
+  }
+
+  private class NamingConventionsVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitField(@NotNull PsiField field) {
+      if (!field.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      if (field.hasModifierProperty(PsiModifier.FINAL)) {
+        if (!checkMutableFinals) {
+          return;
+        }
+        else {
+          final PsiType type = field.getType();
+          if (ClassUtils.isImmutable(type)) {
+            return;
+          }
+        }
+      }
+      final String name = field.getName();
+      if (name == null) {
+        return;
+      }
+      if (isValid(name)) {
+        return;
+      }
+      registerFieldError(field, name);
+    }
   }
 }

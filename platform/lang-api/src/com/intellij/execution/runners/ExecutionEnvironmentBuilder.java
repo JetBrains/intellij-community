@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,8 @@ public final class ExecutionEnvironmentBuilder {
 
   @NotNull
   public static ExecutionEnvironmentBuilder create(@NotNull Executor executor, @NotNull RunnerAndConfigurationSettings settings) throws ExecutionException {
-    ExecutionEnvironmentBuilder builder = create(settings.getConfiguration().getProject(), executor, settings.getConfiguration());
+    RunConfiguration configuration = settings.getConfiguration();
+    ExecutionEnvironmentBuilder builder = create(configuration.getProject(), executor, configuration);
     return builder.runnerAndSettings(builder.myRunner, settings);
   }
 

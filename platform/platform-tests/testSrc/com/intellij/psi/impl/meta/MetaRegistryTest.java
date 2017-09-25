@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 * @author peter
 */
 public class MetaRegistryTest extends LightPlatformTestCase {
-  public void testChangingMetaData() throws Throwable {
+  public void testChangingMetaData() {
     final boolean[] flag = {false};
     MetaRegistry.addMetadataBinding(new ElementFilter() {
       @Override
@@ -62,7 +62,7 @@ public class MetaRegistryTest extends LightPlatformTestCase {
     flag[0] = true;
     new WriteCommandAction(LightPlatformTestCase.getProject()) {
       @Override
-      protected void run(@NotNull Result result) throws Throwable {
+      protected void run(@NotNull Result result) {
         tag.setName("b");
       }
     }.execute();

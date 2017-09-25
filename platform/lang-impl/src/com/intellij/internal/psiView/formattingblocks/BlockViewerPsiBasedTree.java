@@ -72,7 +72,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   private int myIgnoreBlockTreeSelectionMarker = 0;
   @Nullable
-  private HashMap<PsiElement, BlockTreeNode> myPsiToBlockMap;
+  private volatile HashMap<PsiElement, BlockTreeNode> myPsiToBlockMap;
 
   public BlockViewerPsiBasedTree(@NotNull Project project, @NotNull PsiTreeUpdater updater) {
     myProject = project;
@@ -127,6 +127,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
       Disposer.dispose(myBlockTreeBuilder);
       myBlockTreeBuilder = null;
     }
+    myPsiToBlockMap = null;
     ViewerPsiBasedTree.removeListenerOfClass(myBlockTree, BlockTreeSelectionListener.class);
   }
 

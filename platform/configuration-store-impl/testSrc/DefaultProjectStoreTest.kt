@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.refreshVfs
 import com.intellij.testFramework.*
@@ -100,7 +99,7 @@ internal class DefaultProjectStoreTest {
       createProjectAndUseInLoadComponentStateMode(tempDirManager, directoryBased = true) {
         val component = TestComponent()
         it.stateStore.initComponent(component, true)
-        assertThat(JDOMUtil.writeElement(component.state)).isEqualTo(JDOMUtil.writeElement(defaultTestComponent.state))
+        assertThat(component.state).isEqualTo(defaultTestComponent.state)
       }
     }
     finally {
@@ -116,6 +115,9 @@ internal class DefaultProjectStoreTest {
           <option name="myName" value="Foo" />
           <option name="notice" value="where" />
         </copyright>
+      </component>
+      <component name="GreclipseSettings">
+        <option name="greclipsePath" value="foo"/>
       </component>
       <component name="InspectionProjectProfileManager">
         <profile version="1.0">
@@ -179,6 +181,14 @@ internal class DefaultProjectStoreTest {
     val directoryTree = printDirectoryTree(tempDir)
     assertThat(directoryTree.trim()).isEqualTo("""
     ├──/
+      ├──compiler.xml
+    <?xml version="1.0" encoding="UTF-8"?>
+    <project version="4">
+      <component name="GreclipseSettings">
+        <option name="greclipsePath" value="foo" />
+      </component>
+    </project>
+
       ├──copyright/
         ├──Foo.xml
     <component name="CopyrightManager">
@@ -206,6 +216,7 @@ internal class DefaultProjectStoreTest {
     </component>
 
       ├──workspace.xml
+    <?xml version="1.0" encoding="UTF-8"?>
     <project version="4">
       <component name="ProjectLevelVcsManager" settingsEditedManually="false" />
       <component name="masterDetails">

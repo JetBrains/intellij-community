@@ -166,11 +166,11 @@ public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
     select(new Object[] {node}, false);
   }
 
-  private void updateFilter(final String text) throws Exception {
+  private void updateFilter(final String text) {
      update(text, null);
    }
 
-  private void update(final String text, @Nullable final Object selection) throws Exception {
+  private void update(final String text, @Nullable final Object selection) {
     myFilter.update(text, selection);
   }
 

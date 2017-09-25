@@ -45,83 +45,83 @@ public class AntParsingTest extends ParsingTestCase {
     return PluginPathManager.getPluginHomePath("ant") + "/tests/data/psi";
   }
 
-  public void testSingleProject() throws Exception {
+  public void testSingleProject() {
     doTest(true);
   }
 
-  public void testProjectWithDefaultTarget() throws Exception {
+  public void testProjectWithDefaultTarget() {
     doTest(true);
   }
 
-  public void testProjectWithDescriptions() throws Exception {
+  public void testProjectWithDescriptions() {
     doTest(true);
   }
 
-  public void testProjectWithDependentTargets() throws Exception {
+  public void testProjectWithDependentTargets() {
     doTest(true);
   }
 
-  public void testSimpleProperties() throws Exception {
+  public void testSimpleProperties() {
     doTest(true);
   }
 
-  public void testPropertyLocation() throws Exception {
+  public void testPropertyLocation() {
     doTest(true);
   }
 
-  public void testPropertyFile() throws Exception {
+  public void testPropertyFile() {
     doTest(true);
   }
 
-  public void testSimpleAntCall() throws Exception {
+  public void testSimpleAntCall() {
     doTest(true);
   }
 
-  public void testAntCallNestedTargets() throws Exception {
+  public void testAntCallNestedTargets() {
     doTest(true);
   }
 
-  public void testAntComments() throws Exception {
+  public void testAntComments() {
     doTest(true);
   }
 
-  public void testPrologEpilogue() throws Exception {
+  public void testPrologEpilogue() {
     doTest(true);
   }
 
-  public void testMacroDef() throws Exception {
+  public void testMacroDef() {
     doTest(true);
   }
 
-  public void testPresetDef() throws Exception {
+  public void testPresetDef() {
     doTest(true);
   }
 
-  public void testForwardMacroDef() throws Exception {
+  public void testForwardMacroDef() {
     doTest(true);
   }
 
-  public void testSequentialParallel() throws Exception {
+  public void testSequentialParallel() {
     doTest(true);
   }
 
-  public void testAvailable() throws Exception {
+  public void testAvailable() {
     doTest(true);
   }
 
-  public void testChecksum() throws Exception {
+  public void testChecksum() {
     doTest(true);
   }
 
-  public void testChecksum1() throws Exception {
+  public void testChecksum1() {
     doTest(true);
   }
 
-  public void testCondition() throws Exception {
+  public void testCondition() {
     doTest(true);
   }
 
-  public void testUptodate() throws Exception {
+  public void testUptodate() {
     doTest(true);
   }
 
@@ -129,47 +129,47 @@ public class AntParsingTest extends ParsingTestCase {
     doTest(SystemInfo.isWindows ? "_w" : "_u");
   }
 
-  public void testBasename() throws Exception {
+  public void testBasename() {
     doTest(true);
   }
 
-  public void testLoadFile() throws Exception {
+  public void testLoadFile() {
     doTest(true);
   }
 
-  public void testTempFile() throws Exception {
+  public void testTempFile() {
     doTest(true);
   }
 
-  public void testLength() throws Exception {
+  public void testLength() {
     doTest(true);
   }
 
-  public void testPathConvert() throws Exception {
+  public void testPathConvert() {
     doTest(true);
   }
 
-  public void testWhichResource() throws Exception {
+  public void testWhichResource() {
     doTest(true);
   }
 
-  public void testP4Counter() throws Exception {
+  public void testP4Counter() {
     doTest(true);
   }
 
-  public void testJarLibResolve() throws Exception {
+  public void testJarLibResolve() {
     doTest(true);
   }
 
-  public void testAntTask() throws Exception {
+  public void testAntTask() {
     doTest(true);
   }
 
-  public void testJava() throws Exception {
+  public void testJava() {
     doTest(true);
   }
 
-   public void testBuildNumber() throws Exception {
+   public void testBuildNumber() {
     doTest(true);
   }
 }

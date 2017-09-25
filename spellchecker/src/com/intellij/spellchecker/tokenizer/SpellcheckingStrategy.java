@@ -115,7 +115,7 @@ public class SpellcheckingStrategy {
         return;
       }
 
-      consumer.consumeToken(element, TextSplitter.getInstance());
+      consumer.consumeToken(element, PlainTextSplitter.getInstance());
     }
 
     private static boolean isHexString(final String s) {

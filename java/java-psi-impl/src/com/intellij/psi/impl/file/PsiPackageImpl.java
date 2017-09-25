@@ -24,6 +24,7 @@ import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
@@ -347,7 +348,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
         try {
           if (!processor.execute(aClass, state)) return false;
         }
-        catch (ProcessCanceledException e) {
+        catch (ProcessCanceledException | IndexNotReadyException e) {
           throw e;
         }
         catch (Exception e) {

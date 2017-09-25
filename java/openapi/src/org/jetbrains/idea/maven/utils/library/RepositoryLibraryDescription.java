@@ -112,7 +112,7 @@ public class RepositoryLibraryDescription {
   }
 
   public RepositoryLibraryProperties createDefaultProperties() {
-    return new RepositoryLibraryProperties(getGroupId(), getArtifactId(), ReleaseVersionId);
+    return new RepositoryLibraryProperties(getGroupId(), getArtifactId(), ReleaseVersionId, true);
   }
 
   public String getDisplayName(String version) {

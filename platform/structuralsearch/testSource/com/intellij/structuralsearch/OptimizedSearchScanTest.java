@@ -22,7 +22,7 @@ import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
  */
 public class OptimizedSearchScanTest extends StructuralSearchTestCase {
 
-  public void testClassByQName() throws Exception {
+  public void testClassByQName() {
     final String plan = findWordsToBeUsedWhenSearchingFor("A.f");
     assertEquals("[in code:f][in code:A]", plan);
   }

@@ -21,47 +21,47 @@ import org.jetbrains.annotations.NonNls;
 public class ConstraintsInferenceMiscTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/constraints";
 
-  public void testEqualityUnboundWildcard() throws Exception {
+  public void testEqualityUnboundWildcard() {
     doTest(false);
   }
 
-  public void testPrimitiveTypesCompatibility() throws Exception {
+  public void testPrimitiveTypesCompatibility() {
     doTest(false);
   }
 
-  public void testTypeCompatibilityUncheckedConversion() throws Exception {
+  public void testTypeCompatibilityUncheckedConversion() {
     doTest(false);
   }
 
-  public void testTypeCompatibilityUncheckedConversionReturnConstraints() throws Exception {
+  public void testTypeCompatibilityUncheckedConversionReturnConstraints() {
     doTest(false);
   }
 
-  public void testSubtypingExtendsSuper() throws Exception {
+  public void testSubtypingExtendsSuper() {
     doTest(false);
   }
 
-  public void testUncheckedBoundsWithErasure() throws Exception {
+  public void testUncheckedBoundsWithErasure() {
     doTest(false);
   }
 
-  public void testLambdaGroundTest() throws Exception {
+  public void testLambdaGroundTest() {
     doTest(false);
   }
 
-  public void testIntersectionTypeStrictSubtypingConstraint() throws Exception {
+  public void testIntersectionTypeStrictSubtypingConstraint() {
     doTest(false);
   }
 
-  public void testWildcardParameterizedReturnTypeConflictWithParameterTypes() throws Exception {
+  public void testWildcardParameterizedReturnTypeConflictWithParameterTypes() {
     doTest(false);
   }
 
-  public void testSubtypingConstraintWithSuperCapturedWildcard() throws Exception {
+  public void testSubtypingConstraintWithSuperCapturedWildcard() {
     doTest(false);
   }
 
-  public void testExceptionConstraintsWithProperAndNonProperThrows() throws Exception {
+  public void testExceptionConstraintsWithProperAndNonProperThrows() {
     doTest(false);
   }
 

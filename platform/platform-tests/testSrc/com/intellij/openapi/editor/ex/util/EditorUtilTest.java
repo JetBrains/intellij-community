@@ -19,7 +19,7 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
 public class EditorUtilTest extends LightPlatformCodeInsightTestCase {
-  public void testGetNotFoldedLineStartEndOffsets() throws Exception {
+  public void testGetNotFoldedLineStartEndOffsets() {
     configureFromFileText(getTestName(false) + ".txt",
                           "aaa\nbbb\nccc\nddd");
     EditorTestUtil.addFoldRegion(myEditor, 4, 8, "...", true);

@@ -66,7 +66,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.plaf.ButtonUI;
@@ -342,7 +341,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
 
     boolean actions = !notification.getActions().isEmpty();
-    boolean showFullContent = layoutData.showFullContent || notification instanceof NotificationActionProvider;
+    boolean showFullContent = layoutData.showFullContent || notification instanceof NotificationFullContent;
 
     Color foregroundR = Gray._0;
     Color foregroundD = Gray._191;
@@ -476,7 +475,13 @@ public class NotificationsManagerImpl extends NotificationsManager {
     configureBalloonScrollPane(pane, layoutData.fillColor);
 
     if (showFullContent) {
-      pane.setPreferredSize(text.getPreferredSize());
+      if (windowComponent == null) {
+        pane.setPreferredSize(text.getPreferredSize());
+      }
+      else {
+        pane.setPreferredSize(
+          new Dimension(text.getPreferredSize().width, (int)Math.min(layoutData.fullHeight, windowComponent.getHeight() * 0.75)));
+      }
     }
     else if (layoutData.twoLineHeight < layoutData.fullHeight) {
       text.setPreferredSize(null);
@@ -598,7 +603,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     if (buttons != null) {
       layoutData.groupId = null;
       layoutData.mergeData = null;
-      buttons.setBorder(new EmptyBorder(0, 0, JBUI.scale(5), JBUI.scale(7)));
+      buttons.setBorder(JBUI.Borders.empty(0, 0, 5, 7));
     }
 
     HoverAdapter hoverAdapter = new HoverAdapter();
@@ -805,6 +810,13 @@ public class NotificationsManagerImpl extends NotificationsManager {
             Notification.fire(notification, action, DataManager.getInstance().getDataContext(aSource));
           }
         }, action));
+    }
+    AnAction helpAction = notification.getContextHelpAction();
+    if (helpAction != null) {
+      Presentation presentation = helpAction.getTemplatePresentation();
+      ContextHelpLabel helpLabel = new ContextHelpLabel(presentation.getText(), presentation.getDescription());
+      helpLabel.setForeground(UIUtil.getLabelDisabledForeground());
+      actionPanel.add(HorizontalLayout.LEFT, helpLabel);
     }
 
     Insets hover = JBUI.insets(8, 5, 8, 7);
@@ -1265,7 +1277,8 @@ public class NotificationsManagerImpl extends NotificationsManager {
         width -= myLayoutData.configuration.actionGap + expandWidth;
 
         int components = myActionPanel.getComponentCount();
-        if (myActionPanel.getComponent(components - 1) instanceof DropDownAction) {
+        Component lastComponent = myActionPanel.getComponent(components - 1);
+        if (lastComponent instanceof DropDownAction || lastComponent instanceof ContextHelpLabel) {
           components--;
         }
         if (components > 2) {

@@ -46,17 +46,17 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest(false, false);
   }
 
-  private void doTest(final boolean delegate, final boolean createInner) throws Exception {
+  private void doTest(final boolean delegate, final boolean createInner) {
     doTest(delegate, createInner, IntroduceParameterObjectTest::generateParams);
   }
 
   private void doTest(final boolean delegate,
                       final boolean createInner,
-                      final Function<PsiMethod, ParameterInfoImpl[]> function) throws Exception {
+                      final Function<PsiMethod, ParameterInfoImpl[]> function) {
     doTest((rootDir, rootAfter) -> {
       PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(getProject()));
 
@@ -88,51 +88,51 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase {
     return datas;
   }
 
-  public void testInnerClass() throws Exception {
+  public void testInnerClass() {
     doTest(false, true);
   }
 
-  public void testInnerClassInInterface() throws Exception {
+  public void testInnerClassInInterface() {
     doTest(false, true);
   }
 
-  public void testCopyJavadoc() throws Exception {
+  public void testCopyJavadoc() {
     doTest(false, true);
   }
 
-  public void testUsedInnerClass() throws Exception {
+  public void testUsedInnerClass() {
     doTest(false, true);
   }
 
-  public void testPrimitive() throws Exception {
+  public void testPrimitive() {
     doTest();
   }
 
-  public void testVarargs() throws Exception {
+  public void testVarargs() {
     doTest();
   }
 
-  public void testIncrement() throws Exception {
+  public void testIncrement() {
     doTest();
   }
 
-  public void testHierarchy() throws Exception {
+  public void testHierarchy() {
     doTest();
   }
 
-  public void testLhassignment() throws Exception {
+  public void testLhassignment() {
     doTest();
   }
 
-  public void testSuperCalls() throws Exception {
+  public void testSuperCalls() {
     doTest();
   }
 
-  public void testTypeParameters() throws Exception {
+  public void testTypeParameters() {
     doTest();
   }
 
-  public void testTypeParametersWithSubstitution() throws Exception {
+  public void testTypeParametersWithSubstitution() {
     final LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(getProject());
     final LanguageLevel oldLevel = projectExtension.getLanguageLevel();
     try {
@@ -144,7 +144,7 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase {
     }
   }
 
-  public void testSameTypeAndVarargs() throws Exception {
+  public void testSameTypeAndVarargs() {
     doTest(false, false, method -> {
       final PsiParameter[] parameters = method.getParameterList().getParameters();
 
@@ -157,7 +157,7 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase {
     });
   }
 
-  public void testCopyJavadoc1() throws Exception {
+  public void testCopyJavadoc1() {
     doTest(false, true, method -> {
       final PsiParameter[] parameters = method.getParameterList().getParameters();
 
@@ -170,7 +170,7 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase {
     });
   }
 
-  public void testIncludeOneParameter() throws Exception {
+  public void testIncludeOneParameter() {
     doTestExistingClass("Param", "", false, "public", method -> {
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       PsiParameter parameter = parameters[1];
@@ -178,7 +178,7 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase {
     });
   }
 
-  public void testTypeParametersWithChosenSubtype() throws Exception {
+  public void testTypeParametersWithChosenSubtype() {
     doTest(false, true, psiMethod -> {
       final PsiParameter parameter = psiMethod.getParameterList().getParameters()[0];
       final PsiClass collectionClass = getJavaFacade().findClass(CommonClassNames.JAVA_UTIL_COLLECTION);
@@ -188,20 +188,20 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase {
     });
   }
 
-  public void testMultipleTypeParameters() throws Exception {
+  public void testMultipleTypeParameters() {
     doTest();
   }
 
-  public void testDelegate() throws Exception {
+  public void testDelegate() {
     doTest(true, false);
   }
 
-  private void doTestExistingClass(final String existingClassName, final String existingClassPackage, final boolean generateAccessors) throws Exception {
+  private void doTestExistingClass(final String existingClassName, final String existingClassPackage, final boolean generateAccessors) {
     doTestExistingClass(existingClassName, existingClassPackage, generateAccessors, null);
   }
 
   private void doTestExistingClass(final String existingClassName, final String existingClassPackage, final boolean generateAccessors,
-                                   final String newVisibility) throws Exception {
+                                   final String newVisibility) {
     doTestExistingClass(existingClassName, existingClassPackage, generateAccessors, newVisibility,
                         IntroduceParameterObjectTest::generateParams);
   }
@@ -210,7 +210,7 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase {
                                    final String existingClassPackage,
                                    final boolean generateAccessors,
                                    final String newVisibility,
-                                   final Function<PsiMethod, ParameterInfoImpl[]> function) throws Exception {
+                                   final Function<PsiMethod, ParameterInfoImpl[]> function) {
     doTest((rootDir, rootAfter) -> {
       PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(getProject()));
       if (aClass == null) {
@@ -235,15 +235,15 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase {
     });
   }
 
-  public void testIntegerWrapper() throws Exception {
+  public void testIntegerWrapper() {
     doTestExistingClass("Integer", "java.lang", false);
   }
 
-  public void testIntegerIncremental() throws Exception {
+  public void testIntegerIncremental() {
     checkExceptionThrown("Integer", "java.lang", "Setter for field 'value' is required");
   }
 
-  private void checkExceptionThrown(String existingClassName, String existingClassPackage, String exceptionMessage) throws Exception {
+  private void checkExceptionThrown(String existingClassName, String existingClassPackage, String exceptionMessage) {
     try {
       doTestExistingClass(existingClassName, existingClassPackage, false);
     }
@@ -254,32 +254,32 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase {
     fail("Conflict was not found");
   }
 
-  public void testGenerateGetterSetterForExistingBean() throws Exception {
+  public void testGenerateGetterSetterForExistingBean() {
     doTestExistingClass("Param", "", true);
   }
 
-  public void testExistingBeanVisibility() throws Exception {
+  public void testExistingBeanVisibility() {
     doTestExistingClass("Param", "p", false, VisibilityUtil.ESCALATE_VISIBILITY);
   }
 
-  public void testExistingBeanIfNoGeneration() throws Exception {
+  public void testExistingBeanIfNoGeneration() {
     checkExceptionThrown("Param", "", "Setter for field 'i' is required");
   }
 
-  public void testParamNameConflict() throws Exception {
+  public void testParamNameConflict() {
     doTestExistingClass("Param", "", true);
   }
 
 
-  public void testExistentBean() throws Exception {
+  public void testExistentBean() {
     doTestExistingClass("Param", "", false);
   }
 
-  public void testExistingWithAnotherFieldNames() throws Exception {
+  public void testExistingWithAnotherFieldNames() {
     doTestExistingClass("Param", "", true);
   }
 
-  public void testWrongBean() throws Exception {
+  public void testWrongBean() {
     checkExceptionThrown("Param", "", "Getter for field 'i' is required");
   }
 }

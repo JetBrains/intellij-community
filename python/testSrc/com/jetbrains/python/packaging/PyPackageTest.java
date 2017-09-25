@@ -11,7 +11,7 @@ import java.util.Collections;
 public class PyPackageTest extends TestCase {
 
   // http://legacy.python.org/dev/peps/pep-0386/
-  public void testIsAtLeastVersionNormal() throws Exception {
+  public void testIsAtLeastVersionNormal() {
     final PyPackage pyPackage = new PyPackage("somePackage", "1.2.3.4", null, Collections.emptyList());
     assertTrue("Failed to check normal version", pyPackage.matches(createRequirement("somePackage>=1.2")));
     assertTrue("Failed to check normal version", pyPackage.matches(createRequirement("somePackage>=1.2.3")));
@@ -27,7 +27,7 @@ public class PyPackageTest extends TestCase {
   }
 
 
-  public void testIsAtLeastVersionBeta() throws Exception {
+  public void testIsAtLeastVersionBeta() {
     final PyPackage pyPackage = new PyPackage("somePackage", "0.5a3", null, Collections.emptyList());
     assertTrue("Failed to check alpha version", pyPackage.matches(createRequirement("somePackage>=0.4")));
     assertTrue("Failed to check alpha version", pyPackage.matches(createRequirement("somePackage<=0.5")));

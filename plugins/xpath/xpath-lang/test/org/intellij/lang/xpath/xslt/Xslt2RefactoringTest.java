@@ -40,15 +40,15 @@ public class Xslt2RefactoringTest extends TestBase {
     settings.getIndentOptions(StdFileTypes.XML).INDENT_SIZE = 2;
   }
 
-  public void testExtractFunction() throws Throwable {
+  public void testExtractFunction() {
     doExtractFunction();
   }
 
-  public void testExtractFunction2() throws Throwable {
+  public void testExtractFunction2() {
     doExtractFunction();
   }
 
-  private void doExtractFunction() throws Throwable {
+  private void doExtractFunction() {
     myFixture.configureByFile(getTestFileName() + ".xsl");
     final Editor editor = myFixture.getEditor();
 

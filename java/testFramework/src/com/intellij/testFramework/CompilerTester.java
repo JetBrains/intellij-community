@@ -15,7 +15,9 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.CompilerTestUtil;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -53,6 +55,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author peter
@@ -204,6 +207,11 @@ public class CompilerTester {
     }
 
     callback.throwException();
+
+    if (!((CompilerManagerImpl)CompilerManager.getInstance(getProject())).waitForExternalJavacToTerminate(1, TimeUnit.MINUTES)) {
+      throw new RuntimeException("External javac thread is still running. Thread dump:" + ThreadDumper.dumpThreadsToString());
+    }
+
     return callback.getMessages();
   }
 
@@ -219,7 +227,7 @@ public class CompilerTester {
     private Throwable myError;
     private final List<CompilerMessage> myMessages = new ArrayList<>();
 
-    public ErrorReportingCallback(Semaphore semaphore) {
+    ErrorReportingCallback(Semaphore semaphore) {
       mySemaphore = semaphore;
     }
 

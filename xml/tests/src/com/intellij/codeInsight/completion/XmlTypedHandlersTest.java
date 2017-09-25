@@ -125,7 +125,7 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
     }
   }
 
-  public void testFooBar() throws Exception {
+  public void testFooBar() {
     doTest("<foo>\n" +
            "  <bar<caret></bar>\n" +
            "</foo>",
@@ -135,7 +135,7 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
            "</foo>");
   }
 
-  public void testWeb13982() throws Exception {
+  public void testWeb13982() {
     doTest(
       "<a foo=\"1\"\n" +
       "   bar=\"2\"><caret></a>",
@@ -149,7 +149,7 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
     );
   }
 
-  public void testWeb392() throws Exception {
+  public void testWeb392() {
     doTest(
       "<h1>Title</h1>\n" +
       "<p>body text</p><caret>",
@@ -162,13 +162,13 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
     );
   }
 
-  public void testPi() throws Exception {
+  public void testPi() {
     doTest("<<caret>", '?', "<?<caret> ?>");
     doTest("<caret>", '?', "?");
     doTest("<<caret> ?>", '?', "<?<caret> ?>");
   }
 
-  public void testAutoindentEndTag() throws Exception {
+  public void testAutoindentEndTag() {
     doTest(
       "<div>\n" +
       "    <p>\n" +
@@ -186,7 +186,7 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
     );
   }
 
-  public void testSelectionBraces() throws Exception {
+  public void testSelectionBraces() {
     boolean surround = CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED;
     try {
       CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = true;
@@ -198,7 +198,7 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
     }
   }
 
-  public void testSelectionBracesInner() throws Exception {
+  public void testSelectionBracesInner() {
     boolean surround = CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED;
     try {
       CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = true;
@@ -210,7 +210,7 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
     }
   }
 
-  public void testSelectionBracesStart() throws Exception {
+  public void testSelectionBracesStart() {
     boolean surround = CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED;
     try {
       CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = true;
@@ -222,7 +222,7 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
     }
   }
 
-  public void testSelectionBracesEnd() throws Exception {
+  public void testSelectionBracesEnd() {
     boolean surround = CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED;
     try {
       CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = true;
@@ -234,7 +234,7 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
     }
   }
 
-  public void testSelectionBracesShort() throws Exception {
+  public void testSelectionBracesShort() {
     boolean surround = CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED;
     try {
       CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = true;
@@ -247,7 +247,7 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
     }
   }
 
-  public void testSelectionBracesShortInner() throws Exception {
+  public void testSelectionBracesShortInner() {
     boolean surround = CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED;
     try {
       CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = true;

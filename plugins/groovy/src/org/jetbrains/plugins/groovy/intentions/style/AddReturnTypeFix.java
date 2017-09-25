@@ -99,15 +99,18 @@ public class AddReturnTypeFix implements IntentionAction {
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final GrMethod method = findMethod(file, editor.getCaretModel().getOffset());
     if (method == null) return;
-
-    PsiType type = method.getInferredReturnType();
-    if (type == null) type = PsiType.getJavaLangObject(PsiManager.getInstance(project), file.getResolveScope());
-    type = TypesUtil.unboxPrimitiveTypeWrapper(type);
-    GrReferenceAdjuster.shortenAllReferencesIn(method.setReturnType(type));
+    applyFix(project, method);
   }
 
   @Override
   public boolean startInWriteAction() {
     return true;
+  }
+
+  public static void applyFix(@NotNull Project project, @NotNull GrMethod method) {
+    PsiType type = method.getInferredReturnType();
+    if (type == null) type = PsiType.getJavaLangObject(PsiManager.getInstance(project), method.getResolveScope());
+    type = TypesUtil.unboxPrimitiveTypeWrapper(type);
+    GrReferenceAdjuster.shortenAllReferencesIn(method.setReturnType(type));
   }
 }

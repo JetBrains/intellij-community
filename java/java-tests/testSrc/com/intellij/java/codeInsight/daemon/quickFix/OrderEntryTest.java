@@ -72,7 +72,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  private void doTest(String fileName) throws Exception {
+  private void doTest(String fileName) {
     String testFullPath = BASE_PATH + fileName;
 
     VirtualFile root = ModuleRootManager.getInstance(myModule).getContentRoots()[0].getParent();
@@ -105,15 +105,15 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     return actionHint.findAndCheck(actions, () -> "Infos: " + infosBefore);
   }
 
-  public void testAddDependency() throws Exception {
+  public void testAddDependency() {
     doTest("B/src/y/AddDependency.java");
   }
 
-  public void testAddLibrary() throws Exception {
+  public void testAddLibrary() {
     doTest("B/src/y/AddLibrary.java");
   }
 
-  public void testAddCircularDependency() throws Exception {
+  public void testAddCircularDependency() {
     final Module a = ModuleManager.getInstance(getProject()).findModuleByName("A");
     final Module b = ModuleManager.getInstance(getProject()).findModuleByName("B");
     ModuleRootModificationUtil.addDependency(a, b);
@@ -131,19 +131,19 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  public void testAddJunit() throws Exception {
+  public void testAddJunit() {
     doTest("A/src/x/DoTest.java");
   }
 
-  public void testAddJunit4() throws Exception {
+  public void testAddJunit4() {
     doTest("A/src/x/DoTest4.java");
   }
 
-  public void testAddJunit4inJunit() throws Exception {
+  public void testAddJunit4inJunit() {
     doTest("A/src/x/DoTest4junit.java");
   }
 
-  public void testExistingJunit() throws Exception {
+  public void testExistingJunit() {
     doTest("B/src/y/AddExistingJunit.java");
   }
 

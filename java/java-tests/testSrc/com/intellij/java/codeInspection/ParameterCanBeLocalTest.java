@@ -25,12 +25,12 @@ public class ParameterCanBeLocalTest extends InspectionTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection";
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest("parameterCanBeLocal/" + getTestName(true), new ParameterCanBeLocalInspection());
   }
 
-  public void testSimple () throws Exception { doTest(); }
-  public void testIf () throws Exception { doTest(); }
-  public void testFor () throws Exception { doTest(); }
-  public void testReadOnly () throws Exception { doTest(); }
+  public void testSimple () { doTest(); }
+  public void testIf () { doTest(); }
+  public void testFor () { doTest(); }
+  public void testReadOnly () { doTest(); }
 }

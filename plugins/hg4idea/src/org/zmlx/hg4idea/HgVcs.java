@@ -25,6 +25,7 @@ import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
@@ -402,10 +403,10 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   @CalledInAwt
   public void enableIntegration() {
-    HgUtil.executeOnPooledThread(() -> {
+    BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
       Collection<VcsRoot> roots = ServiceManager.getService(myProject, VcsRootDetector.class).detect();
-      new HgIntegrationEnabler(HgVcs.this).enable(roots);
-    }, myProject);
+      new HgIntegrationEnabler(this).enable(roots);
+    });
   }
 
   @Override

@@ -15,6 +15,10 @@
  */
 package com.intellij.java.propertyBased;
 
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.propertyBased.IntentionPolicy;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,13 +32,21 @@ class JavaIntentionPolicy extends IntentionPolicy {
            actionText.startsWith("Attach annotations") || // changes project model
            actionText.startsWith("Change class type parameter") || // doesn't change file text (starts live template)
            actionText.startsWith("Rename reference") || // doesn't change file text (starts live template)
+           actionText.equals("Remove") || // IDEA-177220
            super.shouldSkipIntention(actionText);
   }
-}
 
-class JavaGreenIntentionPolicy extends JavaIntentionPolicy {
   @Override
-  protected boolean shouldSkipIntention(@NotNull String actionText) {
+  public boolean mayBreakCode(@NotNull IntentionAction action, @NotNull Editor editor, @NotNull PsiFile file) {
+    return mayBreakCompilation(action.getText()) || requiresRealJdk(action, file);
+  }
+
+  private static boolean requiresRealJdk(@NotNull IntentionAction action, @NotNull PsiFile file) {
+    return action.getText().contains("java.text.MessageFormat") && 
+           JavaPsiFacade.getInstance(file.getProject()).findClass("java.text.MessageFormat", file.getResolveScope()) == null;
+  }
+
+  protected static boolean mayBreakCompilation(String actionText) {
     return actionText.startsWith("Flip") || // doesn't care about compilability
            actionText.startsWith("Convert to string literal") || // can produce uncompilable code by design
            actionText.startsWith("Detail exceptions") || // can produce uncompilable code if 'catch' section contains 'instanceof's
@@ -42,7 +54,15 @@ class JavaGreenIntentionPolicy extends JavaIntentionPolicy {
            actionText.startsWith("Cast to ") || // produces uncompilable code by design
            actionText.startsWith("Unwrap 'else' branch (changes semantics)") || // might produce code with final variables are initialized several times
            actionText.startsWith("Create missing 'switch' branches") || // if all existing branches do 'return something', we don't automatically generate compilable code for new branches
-           actionText.startsWith("Unimplement") || // e.g. leaves red references to the former superclass methods
-           super.shouldSkipIntention(actionText);
+           actionText.startsWith("Unimplement"); // e.g. leaves red references to the former superclass methods
+  }
+
+}
+
+class JavaGreenIntentionPolicy extends JavaIntentionPolicy {
+
+  @Override
+  protected boolean shouldSkipIntention(@NotNull String actionText) {
+    return super.shouldSkipIntention(actionText) || mayBreakCompilation(actionText);
   }
 }

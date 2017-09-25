@@ -30,7 +30,7 @@ public class ReturnSeparatedFromComputationFixTest extends LightQuickFixParamete
     return new LocalInspectionTool[]{new ReturnSeparatedFromComputationInspection()};
   }
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,9 +143,9 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
   @NotNull
   private Collection<FilePath> getCommitables(@NotNull List<Change> changes) {
-    THashSet<FilePath> result = ContainerUtil.newTroveSet(ChangesUtil.FILE_PATH_BY_PATH_ONLY_HASHING_STRATEGY);
+    THashSet<FilePath> result = ContainerUtil.newTroveSet(ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY);
 
-    ChangesUtil.getAllPaths(changes.stream()).forEach(path -> {
+    ChangesUtil.getPaths(changes.stream()).forEach(path -> {
       if (result.add(path)) {
         addParents(result, path);
       }
@@ -242,7 +242,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
     ProgressTracker eventHandler = new SvnProgressCanceller() {
       @Override
-      public void consume(ProgressEvent event) throws SVNException {
+      public void consume(ProgressEvent event) {
         // TODO: indicator is null here when invoking "Add" action
         ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         File file = event.getFile();

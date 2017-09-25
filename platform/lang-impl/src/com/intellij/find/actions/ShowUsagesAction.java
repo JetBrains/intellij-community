@@ -146,7 +146,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   };
 
   private final boolean myShowSettingsDialogBefore;
-  private final UsageViewSettings myUsageViewSettings;
   private Runnable mySearchEverywhereRunnable;
 
   // used from plugin.xml
@@ -158,15 +157,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   private ShowUsagesAction(boolean showDialogBefore) {
     setInjectedContext(true);
     myShowSettingsDialogBefore = showDialogBefore;
-
-    final UsageViewSettings usageViewSettings = UsageViewSettings.getInstance();
-    myUsageViewSettings = new UsageViewSettings();
-    myUsageViewSettings.loadState(usageViewSettings);
-    myUsageViewSettings.GROUP_BY_FILE_STRUCTURE = false;
-    myUsageViewSettings.GROUP_BY_MODULE = false;
-    myUsageViewSettings.GROUP_BY_PACKAGE = false;
-    myUsageViewSettings.GROUP_BY_USAGE_TYPE = false;
-    myUsageViewSettings.GROUP_BY_SCOPE = false;
   }
 
   @Override
@@ -243,10 +233,11 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                                  @NotNull final FindUsagesOptions options) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final UsageViewSettings usageViewSettings = UsageViewSettings.getInstance();
+    final ShowUsagesSettings showUsagesSettings = ShowUsagesSettings.getInstance();
     final UsageViewSettings savedGlobalSettings = new UsageViewSettings();
 
     savedGlobalSettings.loadState(usageViewSettings);
-    usageViewSettings.loadState(myUsageViewSettings);
+    usageViewSettings.loadState(showUsagesSettings.getState());
 
     final Project project = handler.getProject();
     UsageViewManager manager = UsageViewManager.getInstance(project);
@@ -263,7 +254,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     }
 
     Disposer.register(usageView, () -> {
-      myUsageViewSettings.loadState(usageViewSettings);
+      showUsagesSettings.loadState(usageViewSettings);
       usageViewSettings.loadState(savedGlobalSettings);
     });
 

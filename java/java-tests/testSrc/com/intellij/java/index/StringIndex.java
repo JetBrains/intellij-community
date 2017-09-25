@@ -21,7 +21,9 @@ import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.IndexId;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.indexing.impl.*;
+import com.intellij.util.indexing.impl.IndexStorage;
+import com.intellij.util.indexing.impl.KeyCollectionBasedForwardIndex;
+import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -82,7 +84,7 @@ public class StringIndex {
     myIndex = new MapReduceIndex<String, String, PathContentPair>(extension, storage, new KeyCollectionBasedForwardIndex<String, String>(extension) {
       @NotNull
       @Override
-      public PersistentHashMap<Integer, Collection<String>> createMap() throws IOException {
+      public PersistentHashMap<Integer, Collection<String>> createMap() {
         return inputIndex;
       }
     }) {
@@ -107,7 +109,7 @@ public class StringIndex {
     return ContainerUtil.collect(myIndex.getData(word).getValueIterator());
   }
   
-  public boolean update(final String path, @Nullable String content, @Nullable String oldContent) throws StorageException {
+  public boolean update(final String path, @Nullable String content, @Nullable String oldContent) {
     return myIndex.update(Math.abs(path.hashCode()), toInput(path, content)).compute();
   }
 

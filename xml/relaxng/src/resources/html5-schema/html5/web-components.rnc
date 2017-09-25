@@ -34,7 +34,6 @@ namespace c = "http://n.validator.nu/custom-elements/"
 		|	fieldset.inner
 		|	select.inner
 		|	details.inner
-		|	menu.context.inner
 		)
 	common.elem.metadata |= template.elem
 	common.elem.phrasing |= template.elem

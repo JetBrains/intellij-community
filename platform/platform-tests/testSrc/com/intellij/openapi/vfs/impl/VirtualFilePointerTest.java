@@ -163,7 +163,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     }
   }
 
-  public void testUrlsHavingOnlyStartingSlashInCommon() throws Exception {
+  public void testUrlsHavingOnlyStartingSlashInCommon() {
     VirtualFilePointer p1 = myVirtualFilePointerManager.create("file:///a/p1", disposable, null);
     VirtualFilePointer p2 = myVirtualFilePointerManager.create("file:///b/p2", disposable, null);
     final LightVirtualFile root = new LightVirtualFile("/");
@@ -173,7 +173,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     assertSameElements(myVirtualFilePointerManager.getPointersUnder(b, "p2"), p2);
   }
 
-  public void testUrlsHavingOnlyStartingSlashInCommonAndInvalidUrlBetweenThem() throws Exception {
+  public void testUrlsHavingOnlyStartingSlashInCommonAndInvalidUrlBetweenThem() {
     VirtualFilePointer p1 = myVirtualFilePointerManager.create("file:///a/p1", disposable, null);
     myVirtualFilePointerManager.create("file://invalid/path", disposable, null);
     VirtualFilePointer p2 = myVirtualFilePointerManager.create("file:///b/p2", disposable, null);
@@ -608,7 +608,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     assertFalse(pointer.isValid());
   }
 
-  public void testContainerCreateDeletePerformance() throws Exception {
+  public void testContainerCreateDeletePerformance() {
     PlatformTestUtil.startPerformanceTest("VF container create/delete", 100, () -> {
       Disposable parent = Disposer.newDisposable();
       for (int i = 0; i < 10_000; i++) {
@@ -759,7 +759,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     }).assertTiming();
   }
 
-  public void testMultipleCreationOfTheSamePointerPerformance() throws IOException {
+  public void testMultipleCreationOfTheSamePointerPerformance() {
     final LoggingListener listener = new LoggingListener();
     final String url = VfsUtilCore.pathToUrl("/a/b/c/d/e");
     final VirtualFilePointer thePointer = myVirtualFilePointerManager.create(url, disposable, listener);
@@ -902,7 +902,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     assertEquals(file, pointer.getFile());
   }
 
-  public void testAlienVirtualFileSystemPointerRemovedFromUrlToIdentityCacheOnDispose() throws IOException {
+  public void testAlienVirtualFileSystemPointerRemovedFromUrlToIdentityCacheOnDispose() {
     VirtualFile mockVirtualFile = new MockVirtualFile("test_name", "test_text");
     Disposable disposable1 = Disposer.newDisposable();
     final VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(mockVirtualFile, disposable1, null);
@@ -1003,5 +1003,48 @@ public class VirtualFilePointerTest extends PlatformTestCase {
       }
     }
     LOG.debug("final i = " + i);
+  }
+
+  public void testSeveralDirectoriesWithCommonPrefix() throws IOException {
+    File baseDir = createTempDirectory();
+    VirtualFile vDir = LocalFileSystem.getInstance().findFileByIoFile(baseDir);
+    assertNotNull(vDir);
+    vDir.getChildren();
+    vDir.refresh(false, true);
+
+    LoggingListener listener = new LoggingListener();
+    myVirtualFilePointerManager.create(vDir.getUrl() + "/d1/subdir", disposable, listener);
+    myVirtualFilePointerManager.create(vDir.getUrl() + "/d2/subdir", disposable, listener);
+
+    File dir = new File(baseDir, "d1");
+    FileUtil.createDirectory(dir);
+    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir).getChildren();
+    assertEquals("[before:false, after:false]", listener.getLog().toString());
+    listener.getLog().clear();
+
+    File subDir = new File(dir, "subdir");
+    FileUtil.createDirectory(subDir);
+    VirtualFile vSubDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(subDir);
+    assertEquals("[before:false, after:true]", listener.getLog().toString());
+  }
+
+  public void testDirectoryPointersWork() throws Exception {
+    final File dir = createTempDirectory();
+    VirtualFile vDir = LocalFileSystem.getInstance().findFileByIoFile(dir);
+    assertNotNull(vDir);
+    VirtualFile deep = createChildDirectory(vDir, "deep");
+
+    LoggingListener listener = new LoggingListener();
+    Disposable disposable = Disposer.newDisposable();
+    VirtualFilePointer ptr = myVirtualFilePointerManager.createDirectoryPointer(vDir.getUrl(), false, disposable, listener);
+
+    createChildData(vDir, "1");
+    assertEquals("[before:true, after:true]", listener.getLog().toString());
+    Disposer.dispose(disposable);
+    listener = new LoggingListener();
+    myVirtualFilePointerManager.createDirectoryPointer(vDir.getUrl(), true, this.disposable, listener);
+
+    createChildData(deep, "1");
+    assertEquals("[before:true, after:true]", listener.getLog().toString());
   }
 }

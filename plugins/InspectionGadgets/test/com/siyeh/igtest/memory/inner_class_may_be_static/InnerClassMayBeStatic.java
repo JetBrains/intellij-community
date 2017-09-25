@@ -71,7 +71,7 @@ class SomeBeanUnitTest {
   }
 }
 class Outer {
-  class <warning descr="Inner class 'A' may be 'static'">A</warning> { // may be static
+  class A { // may be static
     B b;
   }
   class B extends  A {} // may not be static

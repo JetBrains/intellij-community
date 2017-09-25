@@ -1,0 +1,2 @@
+Manifest-Version: 1.0
+Premain-Class: com.intellij.rt.debugger.agent.CaptureAgent

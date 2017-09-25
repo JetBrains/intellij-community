@@ -70,7 +70,7 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
     assertFalse(issues[0].isClosed());
   }
 
-  public void testLogin() throws Exception {
+  public void testLogin() {
     myRepository.setUsername("german");
     myRepository.setUsername("wrong password");
     //noinspection ConstantConditions
@@ -114,7 +114,7 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
   /**
    * Holds only for JIRA > 5.x.x
    */
-  public void testExtractedErrorMessage() throws Exception {
+  public void testExtractedErrorMessage() {
     myRepository.setSearchQuery("foo < bar");
     try {
       myRepository.getIssues("", 50, 0);
@@ -220,7 +220,7 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
     assertEquals((hours * 60 + minutes) * 60, last.get("timeSpentSeconds").getAsInt());
   }
 
-  public void testParseVersionNumbers() throws Exception {
+  public void testParseVersionNumbers() {
     assertEquals("6.1.9", new JiraVersion("6.1-OD-09-WN").toString());
     assertEquals("5.0.6", new JiraVersion("5.0.6").toString());
     assertEquals("4.4.5", new JiraVersion("4.4.5").toString());

@@ -175,7 +175,7 @@ public class MostlySingularMultiMapTest extends TestCase {
                  map1.get("k3d"));
   }
 
-  public void testAddAllDoesntOwnOriginalValues() throws Exception {
+  public void testAddAllDoesntOwnOriginalValues() {
     MostlySingularMultiMap<String, String> mapEmpty = new MostlySingularMultiMap<>();
     MostlySingularMultiMap<String, String> mapWithOne = new MostlySingularMultiMap<>();
     MostlySingularMultiMap<String, String> mapWithMultiple = new MostlySingularMultiMap<>();

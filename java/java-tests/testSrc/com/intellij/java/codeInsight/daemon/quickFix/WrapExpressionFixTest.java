@@ -24,7 +24,7 @@ public class WrapExpressionFixTest extends LightQuickFixParameterizedTestCase {
     return LanguageLevel.JDK_1_6;
   }
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 

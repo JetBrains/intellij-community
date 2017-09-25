@@ -29,7 +29,7 @@ public class SuspiciousCollectionMethodCalls14Test extends LightCodeInsightFixtu
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/suspiciousCalls";
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     myFixture.enableInspections(myTool);
     myFixture.testHighlighting(getTestName(false) + ".java");
   }
@@ -40,7 +40,7 @@ public class SuspiciousCollectionMethodCalls14Test extends LightCodeInsightFixtu
     super.tearDown();
   }
 
-  public void testRemoveAll14() throws Exception { doTest(); }
+  public void testRemoveAll14() { doTest(); }
 
   @NotNull
   @Override

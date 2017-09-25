@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ public class PyOverrideTest extends PyTestCase {
   /**
    * Ensures loops in class hierarchy does not lead to SO
    */
-  public final void testCircle() throws Exception {
+  public final void testCircle() {
     doTest();
   }
 
@@ -115,7 +115,7 @@ public class PyOverrideTest extends PyTestCase {
 
   public void testImplement() {
     myFixture.configureByFile("override/" + getTestName(true) + ".py");
-    PyFunction toImplement = getTopLevelClass(0).getMethods()[1];
+    PyFunction toImplement = getTopLevelClass(0).getMethods()[0];
     PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), getTopLevelClass(1),
                                             Collections.singletonList(new PyMethodMember(toImplement)), true);
     myFixture.checkResultByFile("override/" + getTestName(true) + "_after.py", true);

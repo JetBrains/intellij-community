@@ -29,6 +29,7 @@ public abstract class BaseNavigateToSourceAction extends AnAction implements Dum
 
   protected BaseNavigateToSourceAction(boolean focusEditor) {
     myFocusEditor = focusEditor;
+    setInjectedContext(true);
   }
 
   public void actionPerformed(AnActionEvent e) {

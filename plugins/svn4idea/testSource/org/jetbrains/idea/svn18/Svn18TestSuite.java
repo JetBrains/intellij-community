@@ -1,7 +1,7 @@
 package org.jetbrains.idea.svn18;
 
 import org.jetbrains.idea.SvnTestCase;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.SvnMergeInfoTest;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TestRule;
@@ -20,7 +20,7 @@ public class Svn18TestSuite {
   @ClassRule
   public static TestRule configuration = new ExternalResource() {
     @Override
-    protected void before() throws Throwable {
+    protected void before() {
       SvnTestCase.ourGlobalTestDataDir = "testData18";
       SvnTestCase.ourGlobalUseNativeAcceleration = true;
     }

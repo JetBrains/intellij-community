@@ -48,6 +48,8 @@ import org.fest.swing.core.matcher.JButtonMatcher;
 import org.fest.swing.core.matcher.JLabelMatcher;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.edt.GuiTask;
+import org.fest.swing.exception.ComponentLookupException;
+import org.fest.swing.exception.WaitTimedOutError;
 import org.fest.swing.timing.Condition;
 import org.fest.swing.timing.Pause;
 import org.fest.swing.timing.Timeout;
@@ -64,6 +66,7 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.intellij.openapi.util.io.FileUtil.getRelativePath;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
@@ -82,9 +85,11 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   @NotNull private final File myProjectPath;
 
   private EditorFixture myEditor;
+  private MainToolbarFixture myToolbar;
+  private NavigationBarFixture myNavBar;
 
   @NotNull
-  public static IdeFrameFixture find(@NotNull final Robot robot, @Nullable final File projectPath, @Nullable final String projectName) {
+  public static IdeFrameFixture find(@NotNull final Robot robot, @Nullable final File projectPath, @Nullable final String projectName, long timeoutInSeconds) {
     final GenericTypeMatcher<IdeFrameImpl> matcher = new GenericTypeMatcher<IdeFrameImpl>(IdeFrameImpl.class) {
       @Override
       protected boolean isMatching(@NotNull IdeFrameImpl frame) {
@@ -98,16 +103,26 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
       }
     };
 
-    pause(new Condition("IdeFrame " + (projectPath != null ? quote(projectPath.getPath()) : "") + " to show up") {
-      @Override
-      public boolean test() {
-        Collection<IdeFrameImpl> frames = robot.finder().findAll(matcher);
-        return !frames.isEmpty();
-      }
-    }, GuiTestUtil.LONG_TIMEOUT);
+    try {
 
-    IdeFrameImpl ideFrame = robot.finder().find(matcher);
-    return new IdeFrameFixture(robot, ideFrame, new File(ideFrame.getProject().getBasePath()));
+
+      pause(new Condition("IdeFrame " + (projectPath != null ? quote(projectPath.getPath()) : "") + " to show up") {
+        @Override
+        public boolean test() {
+          Collection<IdeFrameImpl> frames = robot.finder().findAll(matcher);
+          return !frames.isEmpty();
+        }
+      }, Timeout.timeout(timeoutInSeconds, TimeUnit.SECONDS));
+
+      IdeFrameImpl ideFrame = robot.finder().find(matcher);
+      return new IdeFrameFixture(robot, ideFrame, new File(ideFrame.getProject().getBasePath()));
+    } catch (WaitTimedOutError timedOutError) {
+      throw new ComponentLookupException("Unable to find IdeFrame in " + timeoutInSeconds + " second(s)");
+    }
+  }
+
+  public static IdeFrameFixture find(@NotNull final Robot robot, @Nullable final File projectPath, @Nullable final String projectName) {
+    return find(robot, projectPath, projectName, 120L);
   }
 
   public IdeFrameFixture(@NotNull Robot robot, @NotNull IdeFrameImpl target, @NotNull File projectPath) {
@@ -210,6 +225,23 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     return myEditor;
   }
 
+  @NotNull
+  public MainToolbarFixture getToolbar() {
+    if (myToolbar == null) {
+      myToolbar = MainToolbarFixture.Companion.createMainToolbarFixture(robot(), this);
+    }
+
+    return myToolbar;
+  }
+
+  @NotNull
+  public NavigationBarFixture getNavigationBar() {
+    if (myNavBar == null) {
+      myNavBar = NavigationBarFixture.Companion.createNavigationBarFixture(robot(), this);
+    }
+
+    return myNavBar;
+  }
 
   //@NotNull
   //public GradleInvocationResult invokeProjectMake() {
@@ -501,7 +533,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
                            !progressManager.hasUnsafeProgressIndicator();
                   }
                 }
-      , GuiTestUtil.LONG_TIMEOUT);
+      , GuiTestUtil.TEN_MIN_TIMEOUT);
     robot().waitForIdle();
     return this;
   }

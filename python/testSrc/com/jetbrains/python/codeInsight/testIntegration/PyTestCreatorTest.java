@@ -33,7 +33,7 @@ import static org.easymock.EasyMock.expect;
  * @author Ilya.Kazakevich
  */
 public final class PyTestCreatorTest extends PyTestCase {
-  public void testCreateTest() throws Exception {
+  public void testCreateTest() {
 
     myFixture.configureByFile("/create_tests/create_tst.py");
 

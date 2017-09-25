@@ -85,13 +85,12 @@ public abstract class InstructionVisitor {
       return nextInstruction(instruction, runner, memState);
     }
 
-    ArrayList<DfaInstructionState> result = new ArrayList<>();
+    ArrayList<DfaInstructionState> result = new ArrayList<>(2);
 
-    DfaMemoryState thenState = memState.createCopy();
     DfaMemoryState elseState = memState.createCopy();
 
-    if (thenState.applyCondition(condTrue)) {
-      result.add(new DfaInstructionState(runner.getInstruction(instruction.getOffset()), thenState));
+    if (memState.applyCondition(condTrue)) {
+      result.add(new DfaInstructionState(runner.getInstruction(instruction.getOffset()), memState));
       markBranchReachable(instruction, true);
     }
 
@@ -100,7 +99,7 @@ public abstract class InstructionVisitor {
       markBranchReachable(instruction, false);
     }
 
-    return result.toArray(new DfaInstructionState[result.size()]);
+    return result.toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
   private static void markBranchReachable(ConditionalGotoInstruction instruction, boolean isTrueBranch) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,6 +110,10 @@ public abstract class Logger {
     debug(message);
   }
 
+  public void trace(@Nullable Throwable t) {
+    debug(t);
+  }
+
   public void info(@NotNull Throwable t) {
     info(t.getMessage(), t);
   }
@@ -129,7 +133,7 @@ public abstract class Logger {
   public abstract void warn(@NonNls String message, @Nullable Throwable t);
 
   public void error(@NonNls String message) {
-    error(message, new Throwable(), ArrayUtil.EMPTY_STRING_ARRAY);
+    error(message, new Throwable(message), ArrayUtil.EMPTY_STRING_ARRAY);
   }
   public void error(Object message) {
     error(String.valueOf(message));
@@ -147,7 +151,7 @@ public abstract class Logger {
   }
 
   public void error(@NonNls String message, @NonNls @NotNull String... details) {
-    error(message, new Throwable(), details);
+    error(message, new Throwable(message), details);
   }
 
   public void error(@NonNls String message, @Nullable Throwable e) {
@@ -165,7 +169,7 @@ public abstract class Logger {
     if (!value) {
       @NonNls String resultMessage = "Assertion failed";
       if (message != null) resultMessage += ": " + message;
-      error(resultMessage, new Throwable());
+      error(resultMessage, new Throwable(resultMessage));
     }
 
     //noinspection Contract

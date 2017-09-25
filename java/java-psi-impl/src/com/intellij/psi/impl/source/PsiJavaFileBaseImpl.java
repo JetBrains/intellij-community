@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,7 +108,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     }
 
     final PsiPackageStatement packageStatement = getPackageStatement();
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
     if (packageStatement != null) {
       if (!packageName.isEmpty()) {
         final PsiJavaCodeReferenceElement reference = packageStatement.getPackageReference();
@@ -119,7 +119,15 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       }
     }
     else if (!packageName.isEmpty()) {
-      addBefore(factory.createPackageStatement(packageName), getFirstChild());
+      PsiElement anchor = getFirstChild();
+      if (PsiPackage.PACKAGE_INFO_FILE.equals(getName())) {
+        // If javadoc is already present in a package-info.java file, position a new package statement after it,
+        // so that the package becomes documented.
+        while (anchor instanceof PsiWhiteSpace || anchor instanceof PsiComment) {
+          anchor = anchor.getNextSibling();
+        }
+      }
+      addBefore(factory.createPackageStatement(packageName), anchor);
     }
   }
 

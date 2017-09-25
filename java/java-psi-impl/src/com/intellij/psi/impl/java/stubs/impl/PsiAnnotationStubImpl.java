@@ -30,6 +30,7 @@ import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.reference.SoftReference;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -70,6 +71,7 @@ public class PsiAnnotationStubImpl extends StubBase<PsiAnnotation> implements Ps
       annotation = facade instanceof PsiElementFactoryImpl
           ? ((PsiElementFactoryImpl) facade).createAnnotationFromText(text, getPsi(), false)
           : facade.createAnnotationFromText(text, getPsi());
+      ((LightVirtualFile)annotation.getContainingFile().getViewProvider().getVirtualFile()).setWritable(false);
       myParsedFromRepository = new SoftReference<>(annotation);
       return annotation;
     }

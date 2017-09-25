@@ -29,7 +29,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.IconUtil;
@@ -123,7 +122,14 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
   @Override
   public JComponent createCustomComponent(final Presentation presentation) {
-    ComboBoxButton button = createComboBoxButton(presentation);
+    ComboBoxButton button = new ComboBoxButton(presentation) {
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension d = super.getPreferredSize();
+        d.width = Math.max(d.width, JBUI.scale(75));
+        return d;
+      }
+    };
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
     panel.setBorder(JBUI.Borders.emptyRight(2));
     panel.add(button);
@@ -255,7 +261,8 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
     @Override
     public boolean isDumbAware() {
-      return Registry.is("dumb.aware.run.configurations");
+      RunnerAndConfigurationSettings configuration = RunManager.getInstance(myProject).getSelectedConfiguration();
+      return configuration == null || configuration.getType().isDumbAware();
     }
   }
 

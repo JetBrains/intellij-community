@@ -28,3 +28,12 @@ abstract class  SampleMap<<warning descr="Type parameter 'T' extends 'final' cla
     }
   }
 }
+class XXX {
+  void x(List<Map.Entry<String, Object>> list) {
+    for (Map.Entry<<warning descr="Wildcard type argument '?' extends 'final' class 'String'">?</warning> extends String, Object> e : list) {}
+  }
+
+  void y(Map<<warning descr="Wildcard type argument '?' extends 'final' class 'String'">?</warning> extends String, ?> m) {
+    for (Map.Entry<? extends String, ?> entry : m.entrySet()) {}
+  }
+}

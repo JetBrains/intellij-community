@@ -74,6 +74,7 @@ class CompilationTasksImpl extends CompilationTasks {
     }
   }
 
+  @Override
   void resolveProjectDependencies() {
     new JpsCompilationRunner(context).resolveProjectDependencies()
   }

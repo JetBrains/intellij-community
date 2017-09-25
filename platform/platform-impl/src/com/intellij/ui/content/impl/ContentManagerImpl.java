@@ -667,6 +667,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     myUI = null;
     myDispatcher.getListeners().clear();
     dataProviders.clear();
+    myComponent = null;
   }
 
   @Override

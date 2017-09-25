@@ -42,7 +42,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
   @NonNls private static final String PRODUCTION_ON_TEST_ATTRIBUTE = "production-on-test";
 
   private final ModulePointer myModulePointer;
-  private boolean myExported = false;
+  private boolean myExported;
   @NotNull private DependencyScope myScope;
   private boolean myProductionOnTestDependency;
 
@@ -58,7 +58,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
     myScope = DependencyScope.COMPILE;
   }
 
-  ModuleOrderEntryImpl(Element element, RootModelImpl rootModel) throws InvalidDataException {
+  ModuleOrderEntryImpl(@NotNull Element element, @NotNull RootModelImpl rootModel) throws InvalidDataException {
     super(rootModel);
     myExported = element.getAttributeValue(EXPORTED_ATTR) != null;
     final String moduleName = element.getAttributeValue(MODULE_NAME_ATTR);
@@ -71,7 +71,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
     myProductionOnTestDependency = element.getAttributeValue(PRODUCTION_ON_TEST_ATTRIBUTE) != null;
   }
 
-  private ModuleOrderEntryImpl(ModuleOrderEntryImpl that, RootModelImpl rootModel) {
+  private ModuleOrderEntryImpl(@NotNull ModuleOrderEntryImpl that, @NotNull RootModelImpl rootModel) {
     super(rootModel);
     myModulePointer = ModulePointerManager.getInstance(rootModel.getProject()).create(that.myModulePointer.getModuleName());
     myExported = that.myExported;
@@ -95,13 +95,13 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
 
   @Override
   @NotNull
-  public VirtualFile[] getFiles(OrderRootType type) {
+  public VirtualFile[] getFiles(@NotNull OrderRootType type) {
     final OrderRootsEnumerator enumerator = getEnumerator(type);
     return enumerator != null ? enumerator.getRoots() : VirtualFile.EMPTY_ARRAY;
   }
 
   @Nullable
-  private OrderRootsEnumerator getEnumerator(OrderRootType type) {
+  private OrderRootsEnumerator getEnumerator(@NotNull OrderRootType type) {
     final Module module = myModulePointer.getModule();
     if (module == null) return null;
 
@@ -110,7 +110,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
 
   @Override
   @NotNull
-  public String[] getUrls(OrderRootType rootType) {
+  public String[] getUrls(@NotNull OrderRootType rootType) {
     final OrderRootsEnumerator enumerator = getEnumerator(rootType);
     return enumerator != null ? enumerator.getUrls() : ArrayUtil.EMPTY_STRING_ARRAY;
   }
@@ -121,7 +121,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
   }
 
   @Override
-  public <R> R accept(RootPolicy<R> policy, R initialValue) {
+  public <R> R accept(@NotNull RootPolicy<R> policy, R initialValue) {
     return policy.visitModuleOrderEntry(this, initialValue);
   }
 
@@ -161,10 +161,11 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
     return myModulePointer.getModuleName();
   }
 
+  @NotNull
   @Override
-  public OrderEntry cloneEntry(RootModelImpl rootModel,
-                               ProjectRootManagerImpl projectRootManager,
-                               VirtualFilePointerManager filePointerManager) {
+  public OrderEntry cloneEntry(@NotNull RootModelImpl rootModel,
+                               @NotNull ProjectRootManagerImpl projectRootManager,
+                               @NotNull VirtualFilePointerManager filePointerManager) {
     return new ModuleOrderEntryImpl(this, rootModel);
   }
 

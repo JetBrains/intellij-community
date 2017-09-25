@@ -71,8 +71,8 @@ public class DirDiffSettings {
   }
 
   public enum CompareMode {
-    CONTENT("Content"), // the most honest, the slowest. Compares size, if equal compares contents. Ignores timestamps
-    CONTENT_IGNORE_SEPARATORS("Content Ignoring Line Separators"),
+    CONTENT("Binary Content"), // the most honest, the slowest. Compares size, if equal compares contents. Ignores timestamps
+    TEXT("Text"), // compare by text representation (Ignore used charset/line separators).
     SIZE("Size"), // Compares size only
     TIMESTAMP("Size and Timestamp"); // Compares size, if equal compares timestamps
 

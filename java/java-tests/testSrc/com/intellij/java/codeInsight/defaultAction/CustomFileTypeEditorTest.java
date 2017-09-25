@@ -29,8 +29,6 @@ import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 
-import java.io.IOException;
-
 import static com.intellij.testFramework.EditorTestUtil.BACKSPACE_FAKE_CHAR;
 
 /**
@@ -39,7 +37,7 @@ import static com.intellij.testFramework.EditorTestUtil.BACKSPACE_FAKE_CHAR;
 public class CustomFileTypeEditorTest extends LightCodeInsightTestCase {
   private static final String BASE_PATH = "/codeInsight/defaultAction/customFileType/";
 
-  private void _testBlockNavigation(String test, String ext) throws Exception {
+  private void _testBlockNavigation(String test, String ext) {
     configureByFile(BASE_PATH + test + "." + ext);
     performEndBlockAction();
     checkResultByFile(BASE_PATH + test + "_after." + ext);
@@ -61,11 +59,11 @@ public class CustomFileTypeEditorTest extends LightCodeInsightTestCase {
     actionHandler.execute(getEditor(), getCurrentEditorDataContext());
   }
 
-  public void testBlockNavigation() throws Exception {
+  public void testBlockNavigation() {
     _testBlockNavigation("blockNavigation","cs");
   }
 
-  public void testInsertDeleteQuotes() throws Exception {
+  public void testInsertDeleteQuotes() {
     configureByFile(BASE_PATH + "InsertDeleteQuote.cs");
     EditorTestUtil.performTypingAction(getEditor(), '"');
     checkResultByFile(BASE_PATH + "InsertDeleteQuote_after.cs");
@@ -93,7 +91,7 @@ public class CustomFileTypeEditorTest extends LightCodeInsightTestCase {
     checkResultByFile(BASE_PATH+"InsertDeleteQuote.aj");
   }
 
-  public void testInsertDeleteBracket() throws Exception {
+  public void testInsertDeleteBracket() {
     configureByFile(BASE_PATH + "InsertDeleteBracket.cs");
     EditorTestUtil.performTypingAction(getEditor(), '[');
     checkResultByFile(BASE_PATH + "InsertDeleteBracket_after.cs");
@@ -107,7 +105,7 @@ public class CustomFileTypeEditorTest extends LightCodeInsightTestCase {
     checkResultByFile(BASE_PATH + "InsertDeleteBracket_after2.cs");
   }
 
-  public void testInsertDeleteParenth() throws Exception {
+  public void testInsertDeleteParenth() {
     configureByFile(BASE_PATH + "InsertDeleteParenth.cs");
     EditorTestUtil.performTypingAction(getEditor(), '(');
     checkResultByFile(BASE_PATH + "InsertDeleteParenth_after.cs");
@@ -129,13 +127,13 @@ public class CustomFileTypeEditorTest extends LightCodeInsightTestCase {
     checkResultByFile(BASE_PATH + "InsertDeleteParenth2_after.cs");
   }
 
-  private void checkTyping(String fileName, String before, char typed, String after) throws IOException {
+  private void checkTyping(String fileName, String before, char typed, String after) {
     configureFromFileText(fileName, before);
     EditorTestUtil.performTypingAction(getEditor(), typed);
     checkResultByText(after);
   }
 
-  public void testParenthesesBeforeNonWs() throws Exception {
+  public void testParenthesesBeforeNonWs() {
     checkTyping("a.cs", "<caret>a", '(', "(<caret>a");
     checkTyping("a.cs", "<caret>@a", '(', "(<caret>@a");
     checkTyping("a.cs", "<caret>(a", '(', "(<caret>(a");
@@ -151,7 +149,7 @@ public class CustomFileTypeEditorTest extends LightCodeInsightTestCase {
     checkTyping("a.cs", "<caret> (a", '[', "[<caret>] (a");
   }
 
-  public void testQuoteBeforeNonWs() throws Exception {
+  public void testQuoteBeforeNonWs() {
     checkTyping("a.cs", "<caret>a", '"', "\"<caret>a");
     checkTyping("a.cs", "<caret> ", '"', "\"<caret>\" ");
 
@@ -159,7 +157,7 @@ public class CustomFileTypeEditorTest extends LightCodeInsightTestCase {
     checkTyping("a.cs", "<caret> ", '\'', "'<caret>' ");
   }
 
-  public void testReplaceQuote() throws Exception {
+  public void testReplaceQuote() {
     checkTyping("a.cs", "<caret><selection>\"</selection>a\"", '\'', "\'<caret>a\"");
     checkTyping("a.cs", "<caret><selection>\"</selection>a\'", '\'', "\'<caret>a\'");
     checkTyping("a.cs", "\"a<caret><selection>\"</selection>", '\'', "\"a\'<caret>");
@@ -171,32 +169,32 @@ public class CustomFileTypeEditorTest extends LightCodeInsightTestCase {
     checkTyping("a.cs", "\'a<caret><selection>\'</selection>", '\"', "\'a\"<caret>");
   }
 
-  public void testNoPairedBracesInPlainText() throws Exception {
+  public void testNoPairedBracesInPlainText() {
     checkTyping("a.txt", "<caret>", '(', "(<caret>");
     checkTyping("a.txt", "{<caret>}", '}', "{}<caret>}");
   }
 
-  public void testClosingBraceInPlainText() throws Exception {
+  public void testClosingBraceInPlainText() {
     configureFromFileText("a.txt", "<caret>");
     EditorTestUtil.performTypingAction(getEditor(), '(');
     EditorTestUtil.performTypingAction(getEditor(), ')');
     checkResultByText("()<caret>");
   }
 
-  public void testInsertBraceOnEnter() throws Exception {
+  public void testInsertBraceOnEnter() {
     configureByFile(BASE_PATH + "InsertBraceOnEnter.cs");
     EditorTestUtil.performTypingAction(getEditor(), '\n');
     checkResultByFile(BASE_PATH + "InsertBraceOnEnter_after.cs");
   }
 
-  public void testInsertBraceOnEnterJavaFx() throws Exception {
+  public void testInsertBraceOnEnterJavaFx() {
     String testName = getTestName(false);
     configureByFile(BASE_PATH + testName + ".fx");
     EditorTestUtil.performTypingAction(getEditor(), '\n');
     checkResultByFile(BASE_PATH + testName + "_after.fx");
   }
 
-  public void testCpp() throws Exception {
+  public void testCpp() {
     EditorHighlighter highlighter = HighlighterFactory.createHighlighter(getProject(), "A.cpp");
     //                   0123456789012345678 9 0123 45 6 7
     highlighter.setText("#include try enum \"\\xff\\z\\\"xxx\"");
@@ -222,7 +220,7 @@ public class CustomFileTypeEditorTest extends LightCodeInsightTestCase {
     assertEquals(CustomHighlighterTokenType.STRING, iterator.getTokenType());
   }
 
-  public void testHaskel() throws Exception {
+  public void testHaskel() {
     EditorHighlighter highlighter = HighlighterFactory.createHighlighter(getProject(), "A.hs");
     //                   0123456789012345678 9 0123 45 6 7
     highlighter.setText("{-# #-} module");

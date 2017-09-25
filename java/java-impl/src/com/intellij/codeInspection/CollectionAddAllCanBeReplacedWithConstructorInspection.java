@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
@@ -31,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.performance.CollectionsListSettings;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +43,6 @@ import java.util.List;
  * @author Dmitry Batkovich
  */
 public class CollectionAddAllCanBeReplacedWithConstructorInspection extends BaseJavaBatchLocalInspectionTool {
-  private final static Logger LOG = Logger.getInstance(CollectionAddAllCanBeReplacedWithConstructorInspection.class);
 
   private final CollectionsListSettings mySettings = new CollectionsListSettings() {
     @Override
@@ -76,55 +75,58 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-        final String methodName = expression.getMethodExpression().getReferenceName();
-        if ("addAll".equals(methodName) || "putAll".equals(methodName)) {
-          if (expression.getArgumentList().getExpressions().length != 1) {
-            return;
-          }
-          final PsiExpression qualifierExpression = expression.getMethodExpression().getQualifierExpression();
-          if (!(qualifierExpression instanceof PsiReferenceExpression)) {
-            return;
-          }
-          final PsiElement parent = expression.getParent();
-          if (!(parent instanceof PsiExpressionStatement)) {
-            return;
-          }
-          final PsiElement resolvedReference = ((PsiReferenceExpression)qualifierExpression).resolve();
-          if (!(resolvedReference instanceof PsiLocalVariable)) {
-            return;
-          }
-          PsiLocalVariable variable = (PsiLocalVariable)resolvedReference;
-          final PsiType variableType = variable.getType();
-          if (!(variableType instanceof PsiClassType) || statementHasSubsequentAddAll(parent, variable, methodName)) {
-            return;
-          }
-          final PsiClass variableClass = ((PsiClassType)variableType).resolve();
-          if (variableClass == null) {
-            return;
-          }
-          PsiNewExpression assignmentExpression;
-          final Pair<Boolean, PsiNewExpression> pair = isProperAssignmentStatementFound(variable, expression);
-          if (pair.getFirst()) {
-            assignmentExpression = pair.getSecond();
-            if (assignmentExpression == null) {
-              if (checkLocalVariableAssignmentOrInitializer(variable.getInitializer())) {
-                assignmentExpression = (PsiNewExpression)variable.getInitializer();
-              } else {
-                return;
-              }
+        final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+        final PsiElement nameElement = methodExpression.getReferenceNameElement();
+        final String methodName = methodExpression.getReferenceName();
+        if (nameElement == null || !"addAll".equals(methodName) && !"putAll".equals(methodName)) {
+          return;
+        }
+        if (expression.getArgumentList().getExpressions().length != 1) {
+          return;
+        }
+        final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+        if (!(qualifierExpression instanceof PsiReferenceExpression)) {
+          return;
+        }
+        final PsiElement parent = expression.getParent();
+        if (!(parent instanceof PsiExpressionStatement)) {
+          return;
+        }
+        final PsiElement resolvedReference = ((PsiReferenceExpression)qualifierExpression).resolve();
+        if (!(resolvedReference instanceof PsiLocalVariable)) {
+          return;
+        }
+        PsiLocalVariable variable = (PsiLocalVariable)resolvedReference;
+        final PsiType variableType = variable.getType();
+        if (!(variableType instanceof PsiClassType) || statementHasSubsequentAddAll(parent, variable, methodName)) {
+          return;
+        }
+        final PsiClass variableClass = ((PsiClassType)variableType).resolve();
+        if (variableClass == null) {
+          return;
+        }
+        PsiNewExpression assignmentExpression;
+        final Pair<Boolean, PsiNewExpression> pair = isProperAssignmentStatementFound(variable, expression);
+        if (pair.getFirst()) {
+          assignmentExpression = pair.getSecond();
+          if (assignmentExpression == null) {
+            if (checkLocalVariableAssignmentOrInitializer(variable.getInitializer())) {
+              assignmentExpression = (PsiNewExpression)variable.getInitializer();
+            } else {
+              return;
             }
-          } else {
-            return;
           }
-          if (!isAddAllReplaceable(expression, assignmentExpression) || !checkUsages(variable, expression, assignmentExpression)) {
-            return;
-          }
-          final PsiMethod method = expression.resolveMethod();
-          if (method != null) {
-            //noinspection DialogTitleCapitalization
-            holder.registerProblem(expression, QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.description", methodName),
-                                   new ReplaceAddAllWithConstructorFix(assignmentExpression, expression));
-          }
+        } else {
+          return;
+        }
+        if (!isAddAllReplaceable(expression, assignmentExpression) || !checkUsages(variable, expression, assignmentExpression)) {
+          return;
+        }
+        final PsiMethod method = expression.resolveMethod();
+        if (method != null) {
+          //noinspection DialogTitleCapitalization
+          holder.registerProblem(nameElement, QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.description"),
+                                 new ReplaceAddAllWithConstructorFix(assignmentExpression, expression, methodName));
         }
       }
     };
@@ -169,7 +171,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
     return argumentList != null && argumentList.getExpressions().length == 0;
   }
 
-  private boolean hasProperConstructor(PsiClass psiClass) {
+  private static boolean hasProperConstructor(PsiClass psiClass) {
     for (PsiMethod psiMethod : psiClass.getConstructors()) {
       PsiParameterList parameterList = psiMethod.getParameterList();
       if(parameterList.getParametersCount() == 1) {
@@ -231,17 +233,26 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
   private static class ReplaceAddAllWithConstructorFix implements LocalQuickFix {
     private final SmartPsiElementPointer<PsiMethodCallExpression> myMethodCallExpression;
     private final SmartPsiElementPointer<PsiNewExpression> myAssignmentExpression;
+    private final String methodName;
 
-    private ReplaceAddAllWithConstructorFix(PsiNewExpression assignmentExpression, PsiMethodCallExpression expression) {
+    ReplaceAddAllWithConstructorFix(PsiNewExpression assignmentExpression, PsiMethodCallExpression expression, String methodName) {
       final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(assignmentExpression.getProject());
       myMethodCallExpression = smartPointerManager.createSmartPsiElementPointer(expression);
       myAssignmentExpression = smartPointerManager.createSmartPsiElementPointer(assignmentExpression);
+      this.methodName = methodName;
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getName() {
+      return QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.name", methodName);
     }
 
     @NotNull
     @Override
     public String getFamilyName() {
-      return QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.title");
+      return QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.family.name");
     }
 
     @Override

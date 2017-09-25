@@ -8,7 +8,7 @@ import junit.framework.Assert;
 public class ByteArrayQueueTest {
 
   @org.junit.Test
-  public void testSingleAdd() throws Exception {
+  public void testSingleAdd() {
     ByteArrayQueue queue = new ByteArrayQueue(0);
     byte value = 1;
     queue.add(value);
@@ -18,7 +18,7 @@ public class ByteArrayQueueTest {
   }
 
   @org.junit.Test
-  public void testResize1() throws Exception {
+  public void testResize1() {
     ByteArrayQueue queue = new ByteArrayQueue(4);
     byte[] buf = new byte[] {1, 2, 3, 4, 5};
     queue.addAll(buf);
@@ -30,7 +30,7 @@ public class ByteArrayQueueTest {
   }
 
   @org.junit.Test
-  public void testResize2() throws Exception {
+  public void testResize2() {
     ByteArrayQueue queue = new ByteArrayQueue(4);
     byte[] buf = new byte[] {1, 2, 3, 4, 5, 6, 7, 8};
     queue.addAll(buf);

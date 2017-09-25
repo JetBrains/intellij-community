@@ -28,7 +28,7 @@ public class PersistentOrderRootType extends OrderRootType {
   private final String myModulePathsName;
   private final String myOldSdkRootName;
 
-  protected PersistentOrderRootType(@NonNls String name, @NonNls @Nullable String sdkRootName, @NonNls @Nullable String modulePathsName, @NonNls final @Nullable String oldSdkRootName) {
+  protected PersistentOrderRootType(@NonNls String name, @NonNls @Nullable String sdkRootName, @NonNls @Nullable String modulePathsName, @Nullable @NonNls final String oldSdkRootName) {
     super(name);
     mySdkRootName = sdkRootName;
     myModulePathsName = modulePathsName;

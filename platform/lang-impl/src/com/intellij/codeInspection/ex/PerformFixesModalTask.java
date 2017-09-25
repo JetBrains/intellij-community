@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
-import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,16 +31,13 @@ public abstract class PerformFixesModalTask implements SequentialTask {
   @NotNull
   protected final Project myProject;
   private final CommonProblemDescriptor[] myDescriptors;
-  private final SequentialModalProgressTask myTask;
   private final PsiDocumentManager myDocumentManager;
   private int myCount = 0;
 
   public PerformFixesModalTask(@NotNull Project project,
-                               @NotNull CommonProblemDescriptor[] descriptors,
-                               @NotNull SequentialModalProgressTask task) {
+                               @NotNull CommonProblemDescriptor[] descriptors) {
     myProject = project;
     myDescriptors = descriptors;
-    myTask = task;
     myDocumentManager = PsiDocumentManager.getInstance(myProject);
   }
 
@@ -56,8 +52,20 @@ public abstract class PerformFixesModalTask implements SequentialTask {
 
   @Override
   public boolean iteration() {
+    return true;
+  }
+
+  public void doRun(ProgressIndicator indicator) {
+    while (!isDone()) {
+      if (indicator.isCanceled()) {
+        break;
+      }
+      iteration(indicator);
+    }
+  }
+
+  public boolean iteration(ProgressIndicator indicator) {
     final CommonProblemDescriptor descriptor = myDescriptors[myCount++];
-    ProgressIndicator indicator = myTask.getIndicator();
     if (indicator != null) {
       indicator.setFraction((double)myCount / myDescriptors.length);
       String presentableText = "usages";

@@ -16,7 +16,6 @@
 
 package com.intellij.codeInspection.reference;
 
-import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -26,9 +25,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
-import java.util.Collections;
 
 public class RefJavaUtilImpl extends RefJavaUtil{
 
@@ -137,29 +133,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
             final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(aClass);
             if (interfaceMethod != null) {
               refFrom.addReference(refFrom.getRefManager().getReference(interfaceMethod), interfaceMethod, psiFrom, false, true, null);
-
-              PsiElement body = null;
-              PsiElement topElement = null;
-              if (expression instanceof PsiLambdaExpression) {
-                body = ((PsiLambdaExpression)expression).getBody();
-                topElement = expression;
-              }
-              else {
-                final PsiElement resolve = ((PsiMethodReferenceExpression)expression).resolve();
-                if (resolve instanceof PsiMethod) {
-                  body = ((PsiMethod)resolve).getBody();
-                  topElement = resolve;
-                }
-              }
-
-              final Collection<PsiClassType> exceptionTypes = body != null ? ExceptionUtil.collectUnhandledExceptions(body, topElement, false) 
-                                                                           : Collections.emptyList();
-              RefElement refResolved = refFrom.getRefManager().getReference(interfaceMethod);
-              if (refResolved instanceof RefMethodImpl) {
-                for (final PsiClassType exceptionType : exceptionTypes) {
-                  ((RefMethodImpl)refResolved).updateThrowsList(exceptionType);
-                }
-              }
+              refFrom.getRefManager().fireNodeMarkedReferenced(interfaceMethod, expression);
             }
           }
         }

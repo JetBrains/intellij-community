@@ -50,7 +50,7 @@ public class MavenExecutionTest extends MavenImportingTestCase {
 
     new WriteAction<Object>() {
       @Override
-      protected void run(@NotNull Result<Object> objectResult) throws Throwable {
+      protected void run(@NotNull Result<Object> objectResult) {
         createProjectPom("<groupId>test</groupId>" +
                          "<artifactId>project</artifactId>" +
                          "<version>1</version>");
@@ -69,7 +69,7 @@ public class MavenExecutionTest extends MavenImportingTestCase {
 
     new WriteAction<Object>() {
       @Override
-      protected void run(@NotNull Result<Object> objectResult) throws Throwable {
+      protected void run(@NotNull Result<Object> objectResult) {
         createStdProjectFolders();
 
         importProject("<groupId>test</groupId>" +
@@ -113,7 +113,7 @@ public class MavenExecutionTest extends MavenImportingTestCase {
         public void processStarted(final RunContentDescriptor descriptor) {
           descriptor.getProcessHandler().addProcessListener(new ProcessAdapter() {
             @Override
-            public void processTerminated(ProcessEvent event) {
+            public void processTerminated(@NotNull ProcessEvent event) {
               sema.up();
               UIUtil.invokeLaterIfNeeded(() -> Disposer.dispose(descriptor));
             }

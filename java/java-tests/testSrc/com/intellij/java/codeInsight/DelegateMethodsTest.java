@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class DelegateMethodsTest extends LightCodeInsightTestCase {
-
   private static final String BASE_PATH = "/codeInsight/delegateMethods/";
 
   @NotNull
@@ -33,34 +32,17 @@ public class DelegateMethodsTest extends LightCodeInsightTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testMethodWithJavadoc () throws Exception {
-    doTest("1");
-  }
+  public void testMethodWithJavadoc() { doTest(); }
+  public void testStaticMemberWithNonStaticField() { doTest(); }
+  public void testTypeParam() { doTest(); }
+  public void testExistingMethodWithAnnotation() { doTest(); }
+  public void testDelegateToContainingClassField() { doTest(); }
+  public void testDelegateFromStaticClassField() { doTest(); }
 
-  public void testStaticMemberWithNonStaticField() throws Exception {
-    doTest();
-  }
-
-  public void testTypeParam() throws Exception {
-    doTest();
-  }
-
-  public void testExistingMethodWithAnnotation() throws Exception {
-    doTest();
-  }
-
-  public void testDelegateToContainingClassField() throws Exception {
-    doTest();
-  }
-  
-  public void testDelegateFromStaticClassField() throws Exception {
-    doTest();
-  }
-  
-  public void testCopyJavadoc() throws Exception {
+  public void testCopyJavadoc() {
     String testName = getTestName(false);
     configureByFile(BASE_PATH + "before" + testName + ".java");
-    final GenerateDelegateHandler handler = new GenerateDelegateHandler();
+    GenerateDelegateHandler handler = new GenerateDelegateHandler();
     try {
       handler.setToCopyJavaDoc(true);
       handler.invoke(getProject(), getEditor(), getFile());
@@ -70,61 +52,25 @@ public class DelegateMethodsTest extends LightCodeInsightTestCase {
     }
     checkResultByFile(BASE_PATH + "after" + testName + ".java");
   }
-  
-  public void testSuperSubstitution() throws Exception {
-    doTest();
-  }
-  
-  public void testCopyAnnotationWithParams() throws Exception {
-    doTest();
-  }
 
-  public void testMultipleOverrideAnnotations() throws Exception {
-    doTest();
-  }
+  public void testSuperSubstitution() { doTest(); }
+  public void testCopyAnnotationWithParams() { doTest(); }
+  public void testMultipleOverrideAnnotations() { doTest(); }
+  public void testStripSuppressWarningsAnnotation() { doTest(); }
+  public void testDoNotOverrideFinal() { doTest(); }
+  public void testEnsureCorrectOverride() { doTest(); }
+  public void testAllowDelegateToFinal() { doTest(); }
+  public void testDelegateWithSubstitutionOverrides() { doTest(); }
+  public void testDelegateWithSubstitutionNoOverrides() { doTest(); }
+  public void testSingleField() { doTest(); }
+  public void testInsideLambdaWithNonInferredTypeParameters() { doTest(); }
+  public void testTypeUseAnnotationsInReturnType() { doTest(); }
+  public void testTypeUseAnnotationsInArrayParameter() { doTest(); }
+  public void testPreserveEllipsisType() { doTest(); }
 
-  public void testStripSuppressWarningsAnnotation() throws Exception {
-    doTest();
-  }
-
-  public void testDoNotOverrideFinal() throws Exception {
-    doTest();
-  }
-
-  public void testAllowDelegateToFinal() throws Exception {
-    doTest();
-  }
-
-  public void testDelegateWithSubstitutionOverrides() throws Exception {
-    doTest();
-  }
-
-  public void testDelegateWithSubstitutionNoOverrides() throws Exception {
-    doTest();
-  }
-
-  public void testSingleField() throws Exception {
-    doTest();
-  }
-
-  public void testInsideLambdaWithNonInferredTypeParameters() throws Exception {
-    doTest();
-  }
-
-  public void testTypeUseAnnotationsInReturnType() throws Exception {
-    doTest();
-  }
-
-  public void testPreserveEllipsisType() throws Exception {
-    doTest();
-  }
-
-  private void doTest() throws Exception {
-    doTest(getTestName(false));
-  }
-
-  private void doTest(String testName) throws Exception {
-    configureByFile(BASE_PATH + "before" + testName+ ".java");
+  private void doTest() {
+    String testName = getTestName(false);
+    configureByFile(BASE_PATH + "before" + testName + ".java");
     new GenerateDelegateHandler().invoke(getProject(), getEditor(), getFile());
     checkResultByFile(BASE_PATH + "after" + testName + ".java");
   }

@@ -30,12 +30,12 @@ import java.io.File;
  */
 public class AddGradleDslDependencyActionTest extends LightPlatformCodeInsightFixtureTestCase {
 
-  public void testAddMavenDependencyInEmptyFile() throws Exception {
+  public void testAddMavenDependencyInEmptyFile() {
     AddGradleDslDependencyAction.TEST_THREAD_LOCAL.set(ContainerUtil.list(new MavenId("testGroupId", "testArtifactId", "1.0")));
     doTest("testAddMavenDependencyInEmptyFile.gradle");
   }
 
-  public void testAddMavenDependencyIntoExistingBlock() throws Exception {
+  public void testAddMavenDependencyIntoExistingBlock() {
     AddGradleDslDependencyAction.TEST_THREAD_LOCAL.set(ContainerUtil.list(new MavenId("testGroupId", "testArtifactId", "1.0")));
     doTest("testAddMavenDependencyIntoExistingBlock.gradle");
   }

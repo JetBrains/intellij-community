@@ -16,7 +16,7 @@
 package org.jetbrains.idea.svn.dialogs.browserCache;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.util.containers.SoftHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 
@@ -25,16 +25,14 @@ import java.util.List;
 import java.util.Map;
 
 public class SvnRepositoryCache {
-  private final Map<String, List<DirectoryEntry>> myMap;
-  private final Map<String, String> myErrorsMap;
+  private final Map<String, List<DirectoryEntry>> myMap = ContainerUtil.createSoftMap();
+  private final Map<String, String> myErrorsMap = ContainerUtil.createSoftMap();
 
   public static SvnRepositoryCache getInstance() {
     return ServiceManager.getService(SvnRepositoryCache.class);
   }
   
   private SvnRepositoryCache() {
-    myMap = new SoftHashMap<>();
-    myErrorsMap = new SoftHashMap<>();
   }
 
   @Nullable

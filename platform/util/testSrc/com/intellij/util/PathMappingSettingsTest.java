@@ -16,7 +16,7 @@ public class PathMappingSettingsTest {
   private PathMappingSettings myMappingSettings;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     myMappingSettings = new PathMappingSettings();
   }
 

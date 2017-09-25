@@ -28,7 +28,7 @@ import org.testng.annotations.Test;
 public class TestNGDataProviderTest extends LightCodeInsightFixtureTestCase {
   @BeforeMethod
   @Override
-  protected void setUp() throws Exception {
+  protected void setUp() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         TestNGDataProviderTest.super.setUp();
@@ -41,7 +41,7 @@ public class TestNGDataProviderTest extends LightCodeInsightFixtureTestCase {
 
   @AfterMethod
   @Override
-  protected void tearDown() throws Exception {
+  protected void tearDown() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         TestNGDataProviderTest.super.tearDown();
@@ -65,7 +65,7 @@ public class TestNGDataProviderTest extends LightCodeInsightFixtureTestCase {
   public void testNothing(){}
 
   @Test(dataProvider = "data")
-  public void test(final String path, final String... results) throws Throwable {
+  public void test(final String path, final String... results) {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         myFixture.addClass("package org.testng.annotations; public @interface DataProvider {}");

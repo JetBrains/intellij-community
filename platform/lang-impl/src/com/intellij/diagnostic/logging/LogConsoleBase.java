@@ -354,7 +354,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     if (process != null) {
       final ProcessAdapter stopListener = new ProcessAdapter() {
         @Override
-        public void processTerminated(final ProcessEvent event) {
+        public void processTerminated(@NotNull final ProcessEvent event) {
           process.removeProcessListener(this);
           stopRunning(true);
         }

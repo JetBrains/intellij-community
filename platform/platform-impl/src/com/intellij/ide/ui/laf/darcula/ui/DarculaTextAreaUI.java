@@ -17,14 +17,12 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicTextAreaUI;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.DefaultEditorKit;
-import javax.swing.text.JTextComponent;
-import javax.swing.text.Position;
+import javax.swing.text.*;
 import java.awt.event.KeyEvent;
 
 public class DarculaTextAreaUI extends BasicTextAreaUI{
@@ -50,5 +48,10 @@ public class DarculaTextAreaUI extends BasicTextAreaUI{
     throws BadLocationException {
     int position = DarculaUIUtil.getPatchedNextVisualPositionFrom(t, pos, direction);
     return position != -1 ? position : super.getNextVisualPositionFrom(t, pos, b, direction, biasRet);
+  }
+
+  @Override
+  protected Caret createCaret() {
+    return Registry.is("ide.text.mouse.selection.new") ? new TextFieldWithPopupHandlerUI.MyCaret(getComponent()) : super.createCaret();
   }
 }

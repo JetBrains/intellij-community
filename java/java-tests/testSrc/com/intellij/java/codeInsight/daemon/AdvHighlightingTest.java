@@ -179,7 +179,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(BASE_PATH + "/importDefaultPackage/x/InvalidUse.java", BASE_PATH + "/importDefaultPackage", false, false);
   }
 
-  public void testScopeBased() throws Exception {
+  public void testScopeBased() {
     NamedScope xScope = new NamedScope("xxx", new PatternPackageSet("x..*", PatternPackageSet.SCOPE_SOURCE, null));
     NamedScope utilScope = new NamedScope("util", new PatternPackageSet("java.util.*", PatternPackageSet.SCOPE_LIBRARY, null));
     NamedScopeManager scopeManager = NamedScopeManager.getInstance(getProject());
@@ -206,7 +206,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  public void testSharedScopeBased() throws Exception {
+  public void testSharedScopeBased() {
     NamedScope xScope = new NamedScope("xxx", new PatternPackageSet("x..*", PatternPackageSet.SCOPE_ANY, null));
     NamedScope utilScope = new NamedScope("util", new PatternPackageSet("java.util.*", PatternPackageSet.SCOPE_LIBRARY, null));
     NamedScopesHolder scopeManager = DependencyValidationManager.getInstance(getProject());
@@ -238,7 +238,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  public void testMultiJDKConflict() throws Exception {
+  public void testMultiJDKConflict() {
     String path = PathManagerEx.getTestDataPath() + BASE_PATH + "/" + getTestName(true);
     VirtualFile root = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
     assert root != null : path;
@@ -256,7 +256,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     assertEmpty(infos);
   }
 
-  public void testSameFQNClasses() throws Exception {
+  public void testSameFQNClasses() {
     String path = PathManagerEx.getTestDataPath() + BASE_PATH + "/" + getTestName(true);
     VirtualFile root = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
     assert root != null : path;
@@ -267,7 +267,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     assertEmpty(infos);
   }
 
-  public void testSameClassesInSourceAndLib() throws Exception {
+  public void testSameClassesInSourceAndLib() {
     String path = PathManagerEx.getTestDataPath() + BASE_PATH + "/" + getTestName(true);
     VirtualFile root = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
     assert root != null : path;

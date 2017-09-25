@@ -38,7 +38,7 @@ import java.util.List;
  */
 public class DomPerformanceTest extends DomHardCoreTestCase{
 
-  public void testVisitorPerformance() throws Throwable {
+  public void testVisitorPerformance() {
     final MyElement element = createElement("<root xmlns=\"adsf\" targetNamespace=\"adsf\"/>", MyElement.class);
 
     MetaRegistry.bindDataToElement(DomUtil.getFile(element).getDocument(), new XmlNSDescriptorImpl());
@@ -64,7 +64,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
 
     PlatformTestUtil.startPerformanceTest(getTestName(false), 300, new ThrowableRunnable() {
       @Override
-      public void run() throws Exception {
+      public void run() {
         newElement.acceptChildren(new DomElementVisitor() {
           @Override
           public void visitDomElement(DomElement element) {

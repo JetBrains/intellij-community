@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,12 @@
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.openapi.util.Key
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiType
-import com.intellij.psi.ResolveState
+import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
+import com.intellij.psi.util.CachedValueProvider.Result
+import com.intellij.psi.util.CachedValuesManager.getCachedValue
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultConstructor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.DynamicMembersHint
 
 @JvmField val NON_CODE = Key.create<Boolean?>("groovy.process.non.code.members")
@@ -38,3 +39,9 @@ fun shouldProcessDynamicMethods(processor: PsiScopeProcessor): Boolean {
 }
 
 fun wrapClassType(type: PsiType, context: PsiElement) = TypesUtil.createJavaLangClassType(type, context.project, context.resolveScope)
+
+fun getDefaultConstructor(clazz: PsiClass): PsiMethod {
+  return getCachedValue(clazz) {
+    Result.create(DefaultConstructor(clazz), clazz)
+  }
+}

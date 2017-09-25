@@ -98,15 +98,15 @@ public class XmlEmmetParser extends EmmetParser {
 
   @Nullable
   private String parseAttributeName() {
-    String name = "";
+    StringBuilder name = new StringBuilder();
     ZenCodingToken token = getToken();
     while (token != null) {
       if ((token instanceof IdentifierToken)) {
-        name += ((IdentifierToken)token).getText();
+        name.append(((IdentifierToken)token).getText());
       }
       else if (token instanceof OperationToken && 
                (((OperationToken)token).getSign() == '+' || ((OperationToken)token).getSign() == '-')) {
-        name += ((OperationToken)token).getSign();
+        name.append(((OperationToken)token).getSign());
       }
       else {
         break;
@@ -115,7 +115,7 @@ public class XmlEmmetParser extends EmmetParser {
       token = getToken();
     }
 
-    if (name.isEmpty()) {
+    if (name.length() == 0) {
       return null;
     }
 
@@ -130,7 +130,7 @@ public class XmlEmmetParser extends EmmetParser {
   }
   
   @NotNull
-  private static String getAttributeValueByToken(@Nullable ZenCodingToken token) {
+  private static String getAttributeValueByToken(@Nullable ZenCodingToken token, boolean allowOperations) {
     if (token == null) {
       return "";
     }
@@ -146,6 +146,9 @@ public class XmlEmmetParser extends EmmetParser {
     }
     else if (token instanceof NumberToken) {
       return Integer.toString(((NumberToken)token).getNumber());
+    }
+    else if (allowOperations && token instanceof OperationToken) {
+      return String.valueOf(((OperationToken)token).getSign());
     }
     else if (token == ZenCodingTokens.DOT || token == ZenCodingTokens.SHARP) {
       return token.toString();
@@ -186,6 +189,12 @@ public class XmlEmmetParser extends EmmetParser {
     Map<String, String> attributes = parseSelectors();
     if (mustHaveSelector && attributes.isEmpty()) {
       return null;
+    }
+
+    ZenCodingToken currentToken = getToken();
+    if (currentToken instanceof IdentifierToken && "/".equals(((IdentifierToken)currentToken).getText())) {
+      advance();
+      forceSingleTag = true;
     }
 
     TemplateToken templateToken = new TemplateToken(templateKey, attributes, forceSingleTag);
@@ -329,7 +338,7 @@ public class XmlEmmetParser extends EmmetParser {
       final String name = token == ZenCodingTokens.DOT ? getClassAttributeName() : HtmlUtil.ID_ATTRIBUTE_NAME;
       advance();
       token = getToken();
-      final String value = getAttributeValueByToken(token);
+      final String value = getAttributeValueByToken(token, false);
       if (!value.isEmpty()) {
         advance();
       }
@@ -402,7 +411,7 @@ public class XmlEmmetParser extends EmmetParser {
     String value;
     do {
       token = getToken();
-      value = getAttributeValueByToken(token);
+      value = getAttributeValueByToken(token, true);
       attrValueBuilder.append(value);
       if (!isEndOfAttribute(token)) {
         advance();

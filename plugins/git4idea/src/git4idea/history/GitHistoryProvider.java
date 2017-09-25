@@ -168,14 +168,14 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
     return ! processor.process(content.getContent());
   }
 
-  public void reportAppendableHistory(FilePath path, VcsAppendableHistorySessionPartner partner) throws VcsException {
+  public void reportAppendableHistory(FilePath path, VcsAppendableHistorySessionPartner partner) {
     reportAppendableHistory(path, null, partner);
   }
 
   @Override
   public void reportAppendableHistory(@NotNull FilePath path,
                                       @Nullable VcsRevisionNumber startingRevision,
-                                      @NotNull final VcsAppendableHistorySessionPartner partner) throws VcsException {
+                                      @NotNull final VcsAppendableHistorySessionPartner partner) {
     final VcsAbstractHistorySession emptySession = createSession(path, Collections.emptyList(), null);
     partner.reportCreatedEmptySession(emptySession);
 

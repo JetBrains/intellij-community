@@ -131,6 +131,6 @@ public class TabbedShowHistoryAction extends AbstractVcsAction {
 
   private static void showOldFileHistory(@NotNull Project project, @NotNull AbstractVcs vcs, @NotNull FilePath path) {
     VcsHistoryProvider provider = assertNotNull(vcs.getVcsHistoryProvider());
-    AbstractVcsHelper.getInstance(project).showFileHistory(provider, vcs.getAnnotationProvider(), path, null, vcs);
+    AbstractVcsHelper.getInstance(project).showFileHistory(provider, vcs.getAnnotationProvider(), path, vcs);
   }
 }

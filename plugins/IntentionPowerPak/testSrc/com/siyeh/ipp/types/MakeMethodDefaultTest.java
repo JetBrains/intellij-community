@@ -29,19 +29,19 @@ public class MakeMethodDefaultTest extends IPPTestCase {
     return "types/makeDefault";
   }
 
-  public void testInInterface() throws Exception {
+  public void testInInterface() {
     doTest();
   }
 
-  public void testAlreadyDefault() throws Exception {
+  public void testAlreadyDefault() {
     assertIntentionNotAvailable();
   }
 
-  public void testAlreadyHasBody() throws Exception {
+  public void testAlreadyHasBody() {
     assertIntentionNotAvailable();
   }
   
-  public void testAnnotationType() throws Exception {
+  public void testAnnotationType() {
     assertIntentionNotAvailable();
   }
   

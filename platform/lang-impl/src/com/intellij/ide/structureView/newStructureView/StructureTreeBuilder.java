@@ -31,7 +31,6 @@ import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.project.Project;
@@ -72,8 +71,7 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
     };
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(new MyPsiTreeChangeListener(), this);
 
-    CopyPasteUtil.DefaultCopyPasteListener copyPasteListener = new CopyPasteUtil.DefaultCopyPasteListener(getUpdater());
-    CopyPasteManager.getInstance().addContentChangedListener(copyPasteListener, this);
+    CopyPasteUtil.addDefaultListener(this, this::addSubtreeToUpdateByElement);
     initRootNode();
     myStructureModel.addModelListener(myModelListener);
     Disposer.register(this, new Disposable() {

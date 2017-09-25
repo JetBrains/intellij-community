@@ -38,9 +38,9 @@ public class UrlMappingRepositoryProvider extends BaseRepositoryProvider {
     if (!myVcs.getProject().isDefault()) {
       rootInfo = myTarget.isFile()
                  ? myVcs.getSvnFileUrlMapping().getWcRootForFilePath(myTarget.getFile())
-                 : myVcs.getSvnFileUrlMapping().getWcRootForUrl(myTarget.getURL().toDecodedString());
+                 : myVcs.getSvnFileUrlMapping().getWcRootForUrl(myTarget.getURL());
     }
 
-    return rootInfo != null ? new Repository(rootInfo.getRepositoryUrlUrl()) : null;
+    return rootInfo != null ? new Repository(rootInfo.getRepositoryUrl()) : null;
   }
 }

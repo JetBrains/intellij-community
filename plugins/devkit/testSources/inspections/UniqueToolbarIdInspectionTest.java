@@ -43,7 +43,7 @@ public class UniqueToolbarIdInspectionTest extends PluginModuleTestCase {
                        "}");
   }
 
-  public void testUsingEmptyToolbarId() throws Exception {
+  public void testUsingEmptyToolbarId() {
     myFixture.testHighlighting("UniqueToolbarIdTestDataClass.java");
   }
 }

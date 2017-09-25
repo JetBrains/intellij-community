@@ -78,7 +78,7 @@ public class IdeMouseEventDispatcherTest extends LightPlatformTestCase {
     }
   }
 
-  public void testActionTriggering() throws Exception {
+  public void testActionTriggering() {
     assertFalse(myDispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_PRESSED, 0, 0, 0, 0, 1, false, MouseEvent.BUTTON2)));
     MouseEvent mouseEvent = new MouseEvent(myEventSource, MouseEvent.MOUSE_RELEASED, 0, 0, 0, 0, 1, false, MouseEvent.BUTTON2);
     assertTrue(!myDispatcher.dispatchMouseEvent(mouseEvent) && mouseEvent.isConsumed());
@@ -86,7 +86,7 @@ public class IdeMouseEventDispatcherTest extends LightPlatformTestCase {
     assertEquals(1, myActionExecutionCount);
   }
 
-  public void testActionBlocking() throws Exception {
+  public void testActionBlocking() {
     assertFalse(myDispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_PRESSED, 0, 0, 0, 0, 1, false, MouseEvent.BUTTON2)));
     MouseEvent dragEvent = new MouseEvent(myEventSource, MouseEvent.MOUSE_DRAGGED, 0, 0, 0, 0, 0, false, MouseEvent.BUTTON2);
     assertFalse(myDispatcher.dispatchMouseEvent(dragEvent));
@@ -95,7 +95,7 @@ public class IdeMouseEventDispatcherTest extends LightPlatformTestCase {
     assertEquals(0, myActionExecutionCount);
   }
 
-  public void testModifiersArePickedAtMousePressed() throws Exception {
+  public void testModifiersArePickedAtMousePressed() {
     assertFalse(myDispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_PRESSED, 0, 0, 0, 0, 1, false, MouseEvent.BUTTON1)));
     assertFalse(myDispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_RELEASED, 0, InputEvent.CTRL_MASK, 0, 0, 1, false, MouseEvent.BUTTON1)));
     assertEquals(0, myActionExecutionCount);

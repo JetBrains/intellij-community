@@ -33,7 +33,6 @@
     <orderEntry type="module" module-name="vcs-impl" />
     <orderEntry type="module" module-name="icons" />
     <orderEntry type="library" name="jcip" level="project" />
-    <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="module" module-name="java-psi-impl" exported="" />
     <orderEntry type="module" module-name="RegExpSupport" />
     <orderEntry type="module" module-name="java-indexing-impl" exported="" />
@@ -41,7 +40,6 @@
     <orderEntry type="module" module-name="jps-model-impl" />
     <orderEntry type="module" module-name="java-analysis-impl" exported="" />
     <orderEntry type="module" module-name="external-system-api" />
-    <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="Xerces" level="project" />
     <orderEntry type="library" name="Velocity" level="project" />

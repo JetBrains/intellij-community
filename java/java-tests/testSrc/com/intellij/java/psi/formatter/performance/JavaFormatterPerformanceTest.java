@@ -75,7 +75,7 @@ public class JavaFormatterPerformanceTest extends JavaFormatterTestCase {
     }).useLegacyScaling().assertTiming();
   }
 
-  public void testPerformance2() throws Exception {
+  public void testPerformance2() {
     final CodeStyleSettings settings = getSettings();
     settings.setDefaultRightMargin(120);
     PlatformTestUtil.startPerformanceTest(getTestName(false), 4000, () -> {
@@ -88,7 +88,7 @@ public class JavaFormatterPerformanceTest extends JavaFormatterTestCase {
     }).useLegacyScaling().assertTiming();
   }
 
-  public void testPerformance3() throws Exception {
+  public void testPerformance3() {
     PlatformTestUtil.startPerformanceTest(getTestName(false), 3900, () -> {
       final CommonCodeStyleSettings settings = FormatterTestCase.getSettings(JavaLanguage.INSTANCE);
       settings.RIGHT_MARGIN = 80;

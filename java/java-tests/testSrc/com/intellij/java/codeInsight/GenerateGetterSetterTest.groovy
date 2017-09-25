@@ -18,9 +18,11 @@ package com.intellij.java.codeInsight
 import com.intellij.codeInsight.generation.ClassMember
 import com.intellij.codeInsight.generation.GenerateGetterHandler
 import com.intellij.codeInsight.generation.GenerateSetterHandler
+import com.intellij.codeInsight.generation.SetterTemplatesManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.ui.UIUtil
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
@@ -97,8 +99,35 @@ class Foo {
 '''
   }
 
+  void "test builder setter template"() {
+    myFixture.configureByText 'a.java', '''
+class X<T extends String> {
+   T field;
+   
+   <caret>
+}
+'''
+    try {
+      SetterTemplatesManager.instance.state.defaultTempalteName = "Builder"
+      generateSetter()
+      myFixture.checkResult '''
+class X<T extends String> {
+   T field;
+
+    public X<T> setField(T field) {
+        this.field = field;
+        return this;
+    }
+}
+'''
+    }
+    finally {
+      SetterTemplatesManager.instance.state.defaultTempalteName = null
+    }
+  }
+
   void "test strip field prefix"() {
-    def settings = CodeStyleSettingsManager.getInstance(getProject()).currentSettings
+    def settings = CodeStyleSettingsManager.getInstance(getProject()).currentSettings.getCustomSettings(JavaCodeStyleSettings.class)
     String oldPrefix = settings.FIELD_NAME_PREFIX
     try {
       settings.FIELD_NAME_PREFIX = "my"

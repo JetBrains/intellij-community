@@ -118,7 +118,7 @@ public class ChangeListTest extends ChangeListTestCase {
   }
 
   @Test
-  public void testForcesBegin() throws Exception {
+  public void testForcesBegin() {
     facade.beginChangeSet();
     add(facade, createFile(r, "f1"));
     facade.beginChangeSet();

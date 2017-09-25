@@ -66,16 +66,16 @@ public class ExtractParameterAsLocalVariableFixTest extends IGQuickFixesTestCase
   public void testSimpleMethod() {
     doTest(
       InspectionGadgetsBundle.message("extract.parameter.as.local.variable.quickfix"),
-      "class X {" +
-      "  void m(String s) {" +
-      "    /**/s = \"hello\";" +
-      "    System.out.println(s);" +
-      "  }" +
+      "class X {\n" +
+      "    void m(String s) {\n" +
+      "        /**/s = \"hello\";\n" +
+      "        System.out.println(s);\n" +
+      "    }\n" +
       "}",
       "class X {\n" +
       "    void m(String s) {\n" +
-      "        String s1 = \"hello\";\n" +
-      "        System.out.println(s1);\n" +
+      "        String hello = \"hello\";\n" +
+      "        System.out.println(hello);\n" +
       "    }\n" +
       "}"
     );
@@ -83,11 +83,11 @@ public class ExtractParameterAsLocalVariableFixTest extends IGQuickFixesTestCase
 
   public void testParenthesizedExpression() {
     doTest(InspectionGadgetsBundle.message("extract.parameter.as.local.variable.quickfix"),
-           "class X {" +
-           "  void m(int i) {" +
-           "    (/**/i)++;" +
-           "    System.out.println(i);" +
-           "  }" +
+           "class X {\n" +
+           "    void m(int i) {\n" +
+           "        (/**/i)++;\n" +
+           "        System.out.println(i);\n" +
+           "    }\n" +
            "}",
            "class X {\n" +
            "    void m(int i) {\n" +
@@ -101,41 +101,48 @@ public class ExtractParameterAsLocalVariableFixTest extends IGQuickFixesTestCase
   public void testSimpleForeach() {
     doTest(
       InspectionGadgetsBundle.message("extract.parameter.as.local.variable.quickfix"),
-      "class X {" +
-      "  void m() {" +
-      "    for (String s : new String[]{\"one\", \"two\", \"three\"})" +
-      "      s/**/ = \"four\";" +
-      "}}",
-      "class X {" +
-      "  void m() {\n" +
-      "    for (String s : new String[]{\"one\", \"two\", \"three\"}){\n" +
-      "        String s1 = \"four\";\n" +
+      "class X {\n" +
+      "    void m() {\n" +
+      "        for (String s : new String[]{\"one\", \"two\", \"three\"})\n" +
+      "            s/**/ = \"four\";\n" +
       "    }\n" +
-      "}}"
+      "}",
+
+      "class X {\n" +
+      "    void m() {\n" +
+      "        for (String s : new String[]{\"one\", \"two\", \"three\"}) {\n" +
+      "            String s1 = s;\n" +
+      "            s1 = \"four\";\n" +
+      "        }\n" +
+      "    }\n" +
+      "}"
     );
   }
 
   public void testSimpleCatchBlock() {
     doTest(
       InspectionGadgetsBundle.message("extract.parameter.as.local.variable.quickfix"),
-      "class X {" +
-      "  void m() {" +
-      "    try (java.io.InputStream in = null) {" +
-      "    } catch (java.io.IOException e) {" +
-      "      e/**/ = null;" +
-      "      System.out.println(e);" +
-      "    }" +
-      "  }" +
+      "import java.io.*;\n" +
+      "class X {\n" +
+      "    void m() {\n" +
+      "        try (InputStream in = null) {\n" +
+      "        } catch (IOException e) {\n" +
+      "            e/**/ = null;\n" +
+      "            System.out.println(e);\n" +
+      "        }\n" +
+      "    }\n" +
       "}",
 
-      "class X {" +
-      "  void m() {" +
-      "    try (java.io.InputStream in = null) {" +
-      "    } catch (java.io.IOException e) {\n" +
-      "    java.io.IOException e1 = null;\n" +
-      "    System.out.println(e1);\n" +
-      "}\n" +
-      "}}"
+      "import java.io.*;\n" +
+      "class X {\n" +
+      "    void m() {\n" +
+      "        try (InputStream in = null) {\n" +
+      "        } catch (IOException e) {\n" +
+      "            IOException o = null;\n" +
+      "            System.out.println(o);\n" +
+      "        }\n" +
+      "    }\n" +
+      "}"
     );
   }
 
@@ -157,11 +164,57 @@ public class ExtractParameterAsLocalVariableFixTest extends IGQuickFixesTestCase
            "     * @param customEnumElement name of custom element of the enumeration (attribute or method) whose values should be used to match equivalent {@code String}s.\n" +
            "     */\n" +
            "    void foo(String customEnumElement) {\n" +
-           "        String customEnumElement1 = customEnumElement;\n" +
-           "        if (customEnumElement1 != null) {\n" +
-           "            customEnumElement1 = customEnumElement1.trim();\n" +
+           "        String enumElement = customEnumElement;\n" +
+           "        if (enumElement != null) {\n" +
+           "            enumElement = enumElement.trim();\n" +
            "        }\n" +
            "    }\n" +
+           "}");
+  }
+
+  public void testSuperCall() {
+    doTest(InspectionGadgetsBundle.message("extract.parameter.as.local.variable.quickfix"),
+           "class Foo {\n" +
+           "    Foo(Object o ) {\n" +
+           "        super();\n" +
+           "        if (o != null) {\n" +
+           "            /**/o = o.toString();\n" +
+           "        }\n" +
+           "    }\n" +
+           "}",
+
+           "class Foo {\n" +
+           "    Foo(Object o ) {\n" +
+           "        super();\n" +
+           "        Object o1 = o;\n" +
+           "        if (o1 != null) {\n" +
+           "            o1 = o1.toString();\n" +
+           "        }\n" +
+           "    }\n" +
+           "}");
+  }
+
+  public void testCorrectVariableScope() {
+    doTest(InspectionGadgetsBundle.message("extract.parameter.as.local.variable.quickfix"),
+           "class Foo {\n" +
+           "    public final void setValue(String label, Object value) {\n" +
+           "        if (false) {\n" +
+           "            /**/value = null;\n" +
+           "        }\n" +
+           "        System.out.println(value);\n" +
+           "    }\n" +
+           "    \n" +
+           "}",
+
+           "class Foo {\n" +
+           "    public final void setValue(String label, Object value) {\n" +
+           "        Object o = value;\n" +
+           "        if (false) {\n" +
+           "            o = null;\n" +
+           "        }\n" +
+           "        System.out.println(o);\n" +
+           "    }\n" +
+           "    \n" +
            "}");
   }
 }

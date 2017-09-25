@@ -23,6 +23,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -147,11 +148,15 @@ public class AboutPopup {
       setOpaque(false);
       setBackground(myColor);
       setFocusable(true);
-      Calendar cal = appInfo.getBuildDate();
-      myLines.add(new AboutBoxLine(appInfo.getFullApplicationName(), true, null));
+
+      String appName = appInfo.getFullApplicationName();
+      String edition = ApplicationNamesInfo.getInstance().getEditionName();
+      if (edition != null) appName += " (" + edition + ")";
+      myLines.add(new AboutBoxLine(appName, true, null));
       appendLast();
 
       String buildInfo = IdeBundle.message("about.box.build.number", appInfo.getBuild().asString());
+      Calendar cal = appInfo.getBuildDate();
       String buildDate = "";
       if (appInfo.getBuild().isSnapshot()) {
         buildDate = new SimpleDateFormat("HH:mm, ").format(cal.getTime());

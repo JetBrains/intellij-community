@@ -19,7 +19,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
 public class ToggleColumnModeActionMultiCaretTest extends LightPlatformCodeInsightFixtureTestCase {
-  public void testSingleCaretWithoutSelection() throws Exception {
+  public void testSingleCaretWithoutSelection() {
     doTestToggleOnOff("line1\n" +
                       "line<caret>2",
 
@@ -31,7 +31,7 @@ public class ToggleColumnModeActionMultiCaretTest extends LightPlatformCodeInsig
     );
   }
 
-  public void testSingleCaretWithForwardSelection() throws Exception {
+  public void testSingleCaretWithForwardSelection() {
     doTestToggleOnOff("l<selection>ine1\n" +
                       "line<caret></selection>2",
 
@@ -43,7 +43,7 @@ public class ToggleColumnModeActionMultiCaretTest extends LightPlatformCodeInsig
     );
   }
 
-  public void testSingleCaretWithBackwardSelection() throws Exception {
+  public void testSingleCaretWithBackwardSelection() {
     doTestToggleOnOff("l<selection><caret>ine1\n" +
                       "line</selection>2",
 
@@ -55,7 +55,7 @@ public class ToggleColumnModeActionMultiCaretTest extends LightPlatformCodeInsig
     );
   }
 
-  public void testSingleCaretWithCrossSelection() throws Exception {
+  public void testSingleCaretWithCrossSelection() {
     doTestToggleOnOff("line<selection><caret>1\n" +
                       "l</selection>ine2",
 
@@ -67,7 +67,7 @@ public class ToggleColumnModeActionMultiCaretTest extends LightPlatformCodeInsig
     );
   }
 
-  public void testSingleCaretWithCrossSelection2() throws Exception {
+  public void testSingleCaretWithCrossSelection2() {
     doTestToggleOnOff("line<selection>1\n" +
                       "l<caret></selection>ine2",
 
@@ -79,7 +79,7 @@ public class ToggleColumnModeActionMultiCaretTest extends LightPlatformCodeInsig
     );
   }
 
-  public void testMultipleCarets() throws Exception {
+  public void testMultipleCarets() {
     doTestToggleOnOff("<caret>l<selection>ine1\n" +
                       "line<caret></selection>2",
 

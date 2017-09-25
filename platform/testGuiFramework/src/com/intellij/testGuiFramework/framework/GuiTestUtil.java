@@ -24,7 +24,7 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -42,6 +42,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture;
+import com.intellij.testGuiFramework.fixtures.RadioButtonFixture;
 import com.intellij.testGuiFramework.matcher.ClassNameMatcher;
 import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.ui.components.JBList;
@@ -106,6 +107,7 @@ public final class GuiTestUtil {
   public static final Timeout MINUTE_TIMEOUT = timeout(1, MINUTES);
   public static final Timeout SHORT_TIMEOUT = timeout(2, MINUTES);
   public static final Timeout LONG_TIMEOUT = timeout(5, MINUTES);
+  public static final Timeout TEN_MIN_TIMEOUT = timeout(10, MINUTES);
 
   public static final String GUI_TESTS_RUNNING_IN_SUITE_PROPERTY = "gui.tests.running.in.suite";
 
@@ -391,7 +393,7 @@ public final class GuiTestUtil {
     String testDataDirEnvVar = getSystemPropertyOrEnvironmentVariable(TEST_DATA_DIR);
     if (testDataDirEnvVar != null) return new File(testDataDirEnvVar);
 
-    String testDataPath = PathManager.getHomePath() + "/community/platform/testGuiFramework/testData";
+    String testDataPath = PathManagerEx.getCommunityHomePath() + "/platform/testGuiFramework/testData";
     assertNotNull(testDataPath);
     assertThat(testDataPath).isNotEmpty();
     testDataPath = toCanonicalPath(toSystemDependentName(testDataPath));
@@ -712,16 +714,32 @@ public final class GuiTestUtil {
    * Waits until no components match the given criteria under the given root
    */
   public static <T extends Component> void waitUntilGone(@NotNull final Robot robot,
-                                                         @NotNull final Container root,
+                                                         @Nullable final Container root,
                                                          @NotNull final GenericTypeMatcher<T> matcher) {
     Pause.pause(new Condition("Find component using " + matcher.toString()) {
       @Override
       public boolean test() {
-        Collection<T> allFound = robot.finder().findAll(root, matcher);
+        Collection<T> allFound = (root == null) ? robot.finder().findAll(matcher) : robot.finder().findAll(root, matcher);
         return allFound.isEmpty();
       }
     }, SHORT_TIMEOUT);
   }
+
+  /**
+   * Waits until no components match the given criteria under the given root
+   */
+  public static <T extends Component> void waitUntilGone(@NotNull final Robot robot,
+                                                         @Nullable final Container root, int timeoutInSeconds,
+                                                         @NotNull final GenericTypeMatcher<T> matcher) {
+    Pause.pause(new Condition("Find component using " + matcher.toString()) {
+      @Override
+      public boolean test() {
+        Collection<T> allFound = (root == null) ? robot.finder().findAll(matcher) : robot.finder().findAll(root, matcher);
+        return allFound.isEmpty();
+      }
+    }, timeout(timeoutInSeconds, SECONDS));
+  }
+
 
   @Nullable
   public static String getSystemPropertyOrEnvironmentVariable(@NotNull String name) {
@@ -815,24 +833,24 @@ public final class GuiTestUtil {
     return new JTreeFixture(robot, actionTree);
   }
 
-  public static JRadioButtonFixture findRadioButton(@NotNull Robot robot, @Nullable Container container, @NotNull String text, @NotNull Timeout timeout){
+  public static RadioButtonFixture findRadioButton(@NotNull Robot robot, @Nullable Container container, @NotNull String text, @NotNull Timeout timeout){
     JRadioButton radioButton = waitUntilFound(robot, container, new GenericTypeMatcher<JRadioButton>(JRadioButton.class) {
       @Override
       protected boolean isMatching(@Nonnull JRadioButton button) {
         return (button.getText() != null && button.getText().equals(text));
       }
     }, timeout);
-    return new JRadioButtonFixture(robot, radioButton);
+    return new RadioButtonFixture(robot, radioButton);
   }
 
-  public static JRadioButtonFixture findRadioButton(@NotNull Robot robot, @NotNull Container container, @NotNull String text){
+  public static RadioButtonFixture findRadioButton(@NotNull Robot robot, @NotNull Container container, @NotNull String text){
     JRadioButton radioButton = waitUntilFound(robot, container, new GenericTypeMatcher<JRadioButton>(JRadioButton.class) {
       @Override
       protected boolean isMatching(@Nonnull JRadioButton button) {
         return (button.getText() != null && button.getText().equals(text));
       }
     }, SHORT_TIMEOUT);
-    return new JRadioButtonFixture(robot, radioButton);
+    return new RadioButtonFixture(robot, radioButton);
   }
 
   public static JComboBoxFixture findComboBox(@NotNull Robot robot, @NotNull Container container, @NotNull String labelText) {

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.adapter;
 
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.IntentionPowerPackBundle;
@@ -175,8 +176,8 @@ public class AdapterToListenerIntention extends MutablyNamedIntention {
     final PsiModifierList modifierList = newMethod.getModifierList();
     modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
     final Project project = aClass.getProject();
-    final CodeStyleSettings codeStyleSettings =
-      CodeStyleSettingsManager.getSettings(project);
+    final JavaCodeStyleSettings codeStyleSettings =
+      JavaCodeStyleSettings.getInstance(project);
     if (codeStyleSettings.INSERT_OVERRIDE_ANNOTATION &&
         PsiUtil.isLanguageLevel6OrHigher(aClass)) {
       modifierList.addAnnotation("java.lang.Override");

@@ -33,7 +33,7 @@ public class LineSetIncrementalUpdateTest extends LightCodeInsightTestCase {
   @NonNls private static final String STRING5 = "  \n";
   @NonNls private static final String STRING6 = "\n";
 
-  public void testInsert() throws Exception {
+  public void testInsert() {
     LineSet.setTestingMode(true);
     try {
       configureFromFileText("test.jsp","<caret>");
@@ -47,7 +47,7 @@ public class LineSetIncrementalUpdateTest extends LightCodeInsightTestCase {
     }
   }
 
-  public void testDelete() throws Exception {
+  public void testDelete() {
 
     try {
       configureFromFileText("test.jsp","aaa\n<caret>bbb\n");
@@ -71,7 +71,7 @@ public class LineSetIncrementalUpdateTest extends LightCodeInsightTestCase {
   private static void doInsert() {
     new WriteCommandAction.Simple(getProject()) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         Document document = myEditor.getDocument();
         document.insertString(myEditor.getCaretModel().getOffset(), STRING6);
         document.insertString(myEditor.getCaretModel().getOffset(), STRING5);
@@ -86,7 +86,7 @@ public class LineSetIncrementalUpdateTest extends LightCodeInsightTestCase {
   private static void doDelete() {
     new WriteCommandAction.Simple(getProject()) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         Document document = myEditor.getDocument();
 
         document.deleteString(

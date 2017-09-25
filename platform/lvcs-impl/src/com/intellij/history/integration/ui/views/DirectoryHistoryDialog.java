@@ -44,7 +44,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -128,18 +127,18 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   }
 
   private ChangesTreeList<Change> createChangesTree() {
-    return new ChangesTreeList<Change>(myProject, Collections.emptyList(), false, false, null, null) {
+    return new ChangesTreeList<Change>(myProject, false, false) {
       @Override
       protected DefaultTreeModel buildTreeModel(List<Change> cc, ChangeNodeDecorator changeNodeDecorator) {
         return TreeModelBuilder.buildFromChanges(myProject, isShowFlatten(), cc, changeNodeDecorator);
       }
 
       @Override
-      protected List<Change> getSelectedObjects(ChangesBrowserNode node) {
+      protected List<Change> getSelectedObjects(ChangesBrowserNode<?> node) {
         return node.getAllChangesUnder();
       }
 
-      protected Change getLeadSelectedObject(final ChangesBrowserNode node) {
+      protected Change getLeadSelectedObject(final ChangesBrowserNode<?> node) {
         final Object o = node.getUserObject();
         if (o instanceof Change) {
           return (Change)o;

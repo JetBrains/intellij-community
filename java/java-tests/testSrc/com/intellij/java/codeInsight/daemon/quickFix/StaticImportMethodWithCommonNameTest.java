@@ -29,7 +29,7 @@ public class StaticImportMethodWithCommonNameTest extends LightCodeInsightFixtur
     }
   }
 
-  public void testFindStaticMember() throws Exception {
+  public void testFindStaticMember() {
     myFixture.configureByText("a.java", "class A { {String s = for<caret>mat(\"\",\"\");}}");
     final IntentionAction intention = myFixture.findSingleIntention(QuickFixBundle.message("static.import.method.text"));
     assertNotNull(intention);

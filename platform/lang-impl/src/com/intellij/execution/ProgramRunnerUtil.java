@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
@@ -30,14 +29,10 @@ import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,31 +87,12 @@ public class ProgramRunnerUtil {
         }
       }
 
-      ConfigurationType configurationType = runnerAndConfigurationSettings.getType();
-      if (configurationType != null) {
-        UsageTrigger.trigger("execute." + ConvertUsagesUtil.ensureProperKey(configurationType.getId()) + "." + environment.getExecutor().getId());
-      }
+      UsageTrigger.trigger("execute." + ConvertUsagesUtil.ensureProperKey(runnerAndConfigurationSettings.getType().getId()) + "." + environment.getExecutor().getId());
     }
 
     try {
       if (assignNewId) {
         environment.assignNewExecutionId();
-      }
-      if (DumbService.isDumb(project) && Registry.is("dumb.aware.run.configurations")) {
-        UIUtil.invokeLaterIfNeeded(() -> {
-          if (project.isDisposed()) {
-            return;
-          }
-
-          final String toolWindowId = ExecutionManager.getInstance(project).getContentManager().getToolWindowIdByEnvironment(environment);
-          ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-          if (toolWindowManager.canShowNotification(toolWindowId)) {
-            //noinspection SSBasedInspection
-            toolWindowManager.notifyByBalloon(toolWindowId, MessageType.INFO,
-                                              "Some actions may not work as expected if you start a Run/debug configuration while indexing is in progress.");
-          }
-        });
-
       }
 
       if (callback != null) {
@@ -142,9 +118,15 @@ public class ProgramRunnerUtil {
     }
   }
 
-  public static void executeConfiguration(@NotNull Project project,
-                                          @NotNull RunnerAndConfigurationSettings configuration,
-                                          @NotNull Executor executor) {
+  /**
+   * @deprecated Use {@link #executeConfiguration(RunnerAndConfigurationSettings, Executor)}
+   */
+  @Deprecated
+  public static void executeConfiguration(@SuppressWarnings("unused") @NotNull Project project, @NotNull RunnerAndConfigurationSettings configuration, @NotNull Executor executor) {
+    executeConfiguration(configuration, executor);
+  }
+
+  public static void executeConfiguration(@NotNull RunnerAndConfigurationSettings configuration, @NotNull Executor executor) {
     ExecutionEnvironmentBuilder builder;
     try {
       builder = ExecutionEnvironmentBuilder.create(executor, configuration);

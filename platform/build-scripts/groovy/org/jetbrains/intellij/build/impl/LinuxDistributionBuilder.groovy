@@ -66,7 +66,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
   @Override
   void buildArtifacts(String osSpecificDistPath) {
-    buildContext.executeStep("Build Linux .tar.gz", BuildOptions.LINUX_TAR_GZ_STEP) {
+    buildContext.executeStep("Build Linux .tar.gz", BuildOptions.LINUX_ARTIFACTS_STEP) {
       if (customizer.buildTarGzWithoutBundledJre) {
         buildTarGz(null, osSpecificDistPath)
       }
@@ -107,7 +107,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       }
     }
 
-    buildContext.ant.move(file: "${unixDistPath}/bin/executable.sh", tofile: "${unixDistPath}/bin/$name")
+    buildContext.ant.move(file: "${unixDistPath}/bin/executable-template.sh", tofile: "${unixDistPath}/bin/$name")
 
     String inspectScript = buildContext.productProperties.inspectCommandName
     if (inspectScript != "inspect") {
@@ -197,7 +197,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       buildContext.messages.progress("Preparing files")
 
       def desktopTemplate = "${buildContext.paths.communityHome}/platform/platform-resources/src/entry.desktop"
-      def productName = buildContext.applicationInfo.productName
+      def productName = buildContext.applicationInfo.productNameWithEdition
       buildContext.ant.copy(file: desktopTemplate, tofile: "${snapDir}/snap/gui/${customizer.snapName}.desktop") {
         filterset(begintoken: '$', endtoken: '$') {
           filter(token: "NAME", value: productName)
@@ -217,6 +217,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
           filter(token: "VERSION", value: version)
           filter(token: "SUMMARY", value: productName)
           filter(token: "DESCRIPTION", value: customizer.snapDescription)
+          filter(token: "GRADE", value: buildContext.applicationInfo.isEAP ? "devel" : "stable")
           filter(token: "SCRIPT", value: "bin/${buildContext.productProperties.baseFileName}.sh")
         }
       }
@@ -267,10 +268,11 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
   // keep in sync with AppUIUtil#getFrameClass
   private String getFrameClass() {
-    def name = buildContext.applicationInfo.productName
+    String name = buildContext.applicationInfo.productNameWithEdition
       .toLowerCase(Locale.US)
       .replace(' ', '-')
-      .replace("intellij-idea", "idea").replace("android-studio", "studio").replace("community-edition", "ce")
+      .replace("intellij-idea", "idea").replace("android-studio", "studio")
+      .replace("-community-edition", "-ce").replace("-ultimate-edition", "").replace("-professional-edition", "")
     "jetbrains-" + name
   }
 }

@@ -34,14 +34,15 @@ import com.intellij.psi.stubs.StubTree
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.reference.SoftReference
 import com.intellij.testFramework.LeakHunter
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.ref.GCUtil
+import groovy.transform.CompileStatic
 
 import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
-
 /**
  * @author peter
  */
@@ -68,7 +69,7 @@ class StubAstSwitchTest extends LightCodeInsightFixtureTestCase {
 
   void "test reachable psi classes remain valid when nothing changes"() {
     int count = 1000
-    List<SoftReference<PsiClass>> classList = (0..<count).collect { new SoftReference(myFixture.addClass("class Foo$it {}")) }
+    List<SoftReference<PsiClass>> classList = (0..<count).collect { new SoftReference<PsiClass>(myFixture.addClass("class Foo$it {}")) }
     System.gc()
     System.gc()
     System.gc()
@@ -332,5 +333,32 @@ class B {
     def stubTree = assertInstanceOf(file, DummyHolder).calcStubTree()
 
     assert stubTree.plainList.find { it.stubType == JavaStubElementTypes.ANONYMOUS_CLASS }
+  }
+
+  @CompileStatic
+  void "test getStub performance with cached PSI"() {
+    def text = "class Foo { " + "void bar(int a, int b, int c, int d, int e) { int x = null; }\n" * 1000 + "}"
+    def file = myFixture.addFileToProject "a.java", text
+
+    PsiMethod[] methods = ((PsiJavaFile) file).classes[0].methods
+    def params = methods.collect { PsiMethod method -> method.parameterList.parameters }
+    def literal = file.findElementAt(text.indexOf('null')).parent as PsiLiteralExpression // the only cached PSI without stubIndex
+
+    GCUtil.tryGcSoftlyReachableObjects()
+
+    def fileImpl = (PsiFileImpl)file
+    assert !fileImpl.treeElement
+    assert !fileImpl.stub
+    
+    PlatformTestUtil.startPerformanceTest('getStub performance', 100, { 
+      10_000.times { 
+        if (fileImpl.stub != null) {
+          throw new IllegalStateException("has stub")
+        }
+      }
+    }).assertTiming()
+    
+    assert params
+    assert literal
   }
 }

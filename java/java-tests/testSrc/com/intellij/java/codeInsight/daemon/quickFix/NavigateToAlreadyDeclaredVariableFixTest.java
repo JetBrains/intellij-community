@@ -20,7 +20,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 public class NavigateToAlreadyDeclaredVariableFixTest extends LightCodeInsightFixtureTestCase {
-  public void testNavigateToVariableOfDifferentType() throws Exception {
+  public void testNavigateToVariableOfDifferentType() {
     myFixture.configureByText("A.java", "class A {{int i = 0; i++; long <caret>i = 0;}}");
     IntentionAction intention = myFixture.findSingleIntention(QuickFixBundle.message("navigate.variable.declaration.text", "i"));
     assertNotNull(intention);

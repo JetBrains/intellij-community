@@ -96,7 +96,7 @@ public class RemoveRedundantUncheckedSuppressionTest extends LightQuickFixParame
     };
   }
 
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {

@@ -21,7 +21,8 @@ import java.io.Serializable
 /**
  * @author Sergey Karashevich
  */
-enum class Type {RUN_STARTED, STARTED, ASSUMPTION_FAILURE, RUN_FINISHED, FAILURE, FINISHED, IGNORED}
+enum class Type {RUN_STARTED, STARTED, ASSUMPTION_FAILURE, RUN_FINISHED, FAILURE, FINISHED, IGNORED }
+
 data class JUnitInfo(val type: Type, val obj: Any?, val testClassAndMethodName: String) : Serializable {
   companion object {
     fun getClassAndMethodName(description: Description) = "${description.className}#${description.methodName}"

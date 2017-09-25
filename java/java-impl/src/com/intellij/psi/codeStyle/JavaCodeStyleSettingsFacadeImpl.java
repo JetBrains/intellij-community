@@ -29,17 +29,17 @@ public class JavaCodeStyleSettingsFacadeImpl extends JavaCodeStyleSettingsFacade
 
   @Override
   public int getNamesCountToUseImportOnDemand() {
-    return myManager.getCurrentSettings().NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND;
+    return myManager.getCurrentSettings().getCustomSettings(JavaCodeStyleSettings.class).NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND;
   }
 
   @Override
   public boolean useFQClassNames() {
-    return myManager.getCurrentSettings().USE_FQ_CLASS_NAMES;
+    return myManager.getCurrentSettings().getCustomSettings(JavaCodeStyleSettings.class).USE_FQ_CLASS_NAMES;
   }
 
   @Override
   public boolean isJavaDocLeadingAsterisksEnabled() {
-    return myManager.getCurrentSettings().JD_LEADING_ASTERISKS_ARE_ENABLED;
+    return myManager.getCurrentSettings().getCustomSettings(JavaCodeStyleSettings.class).JD_LEADING_ASTERISKS_ARE_ENABLED;
   }
 
   @Override
@@ -49,11 +49,11 @@ public class JavaCodeStyleSettingsFacadeImpl extends JavaCodeStyleSettingsFacade
 
   @Override
   public boolean isGenerateFinalParameters() {
-    return myManager.getCurrentSettings().GENERATE_FINAL_PARAMETERS;
+    return myManager.getCurrentSettings().getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS;
   }
 
   @Override
   public boolean isGenerateFinalLocals() {
-    return myManager.getCurrentSettings().GENERATE_FINAL_LOCALS;
+    return myManager.getCurrentSettings().getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS;
   }
 }

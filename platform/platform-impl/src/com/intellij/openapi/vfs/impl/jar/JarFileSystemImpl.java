@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -39,7 +39,8 @@ public class JarFileSystemImpl extends JarFileSystem {
 
   public JarFileSystemImpl() {
     boolean noCopy = SystemProperties.getBooleanProperty("idea.jars.nocopy", !SystemInfo.isWindows);
-    myNoCopyJarPaths = noCopy ? null : ContainerUtil.newConcurrentSet(FileUtil.PATH_HASHING_STRATEGY);
+    //noinspection deprecation
+    myNoCopyJarPaths = noCopy ? null : ConcurrentCollectionFactory.createConcurrentSet(FileUtil.PATH_HASHING_STRATEGY);
 
     // to prevent platform .jar files from copying
     boolean runningFromDist = new File(PathManager.getLibPath(), "openapi.jar").exists();
@@ -47,8 +48,8 @@ public class JarFileSystemImpl extends JarFileSystem {
   }
 
   @Override
-  public void setNoCopyJarForPath(String pathInJar) {
-    if (myNoCopyJarPaths == null || pathInJar == null) return;
+  public void setNoCopyJarForPath(@NotNull String pathInJar) {
+    if (myNoCopyJarPaths == null) return;
     int index = pathInJar.indexOf(JAR_SEPARATOR);
     if (index < 0) return;
     String path = FileUtil.toSystemIndependentName(pathInJar.substring(0, index));
@@ -124,17 +125,21 @@ public class JarFileSystemImpl extends JarFileSystem {
 
   @Override
   public VirtualFile findFileByPath(@NotNull String path) {
-    return VfsImplUtil.findFileByPath(this, path);
+    return isValid(path) ? VfsImplUtil.findFileByPath(this, path) : null;
   }
 
   @Override
   public VirtualFile findFileByPathIfCached(@NotNull String path) {
-    return VfsImplUtil.findFileByPathIfCached(this, path);
+    return isValid(path) ? VfsImplUtil.findFileByPathIfCached(this, path) : null;
   }
 
   @Override
   public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
-    return VfsImplUtil.refreshAndFindFileByPath(this, path);
+    return isValid(path) ? VfsImplUtil.refreshAndFindFileByPath(this, path) : null;
+  }
+
+  private static boolean isValid(String path) {
+    return path.contains(JAR_SEPARATOR);
   }
 
   @Override

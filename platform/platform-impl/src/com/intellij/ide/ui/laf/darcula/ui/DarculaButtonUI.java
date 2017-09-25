@@ -65,9 +65,7 @@ public class DarculaButtonUI extends BasicButtonUI {
   }
 
   public static boolean isHelpButton(JComponent button) {
-    return (SystemInfo.isMac || UIUtil.isUnderDarcula() || UIUtil.isUnderWin10LookAndFeel())
-           && button instanceof JButton
-           && "help".equals(button.getClientProperty("JButton.buttonType"));
+    return button instanceof JButton && "help".equals(button.getClientProperty("JButton.buttonType"));
   }
 
   /**

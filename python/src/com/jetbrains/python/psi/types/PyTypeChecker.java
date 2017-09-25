@@ -90,12 +90,6 @@ public class PyTypeChecker {
       }
       return false;
     }
-    if (actualClassType != null && PyNames.BASESTRING.equals(actualClassType.getName())) {
-      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(actualClassType.getPyClass());
-      if (actualClassType.equals(builtinCache.getObjectType(PyNames.BASESTRING))) {
-        return match(expected, builtinCache.getStrOrUnicodeType(), context, substitutions, recursive);
-      }
-    }
     if (expected instanceof PyGenericType && substitutions != null) {
       final PyGenericType generic = (PyGenericType)expected;
       final PyType subst = substitutions.get(generic);

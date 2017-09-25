@@ -149,7 +149,7 @@ public class InferenceIncorporationPhase {
         if (aType instanceof PsiWildcardType) {
 
           for (PsiType eqBound : eqBounds) {
-            if (!isInferenceVariableOrFreshTypeParameter(eqBound)) {
+            if (!isInferenceVariableOrFreshTypeParameter(inferenceVariable, eqBound)) {
               return false;
             }
           }
@@ -177,7 +177,7 @@ public class InferenceIncorporationPhase {
             }
 
             for (PsiType lowerBound : lowerBounds) {
-              if (isInferenceVariableOrFreshTypeParameter(lowerBound)) {
+              if (isInferenceVariableOrFreshTypeParameter(inferenceVariable, lowerBound)) {
                 return false;
               }
             }
@@ -198,7 +198,7 @@ public class InferenceIncorporationPhase {
             }
 
             for (PsiType lowerBound : lowerBounds) {
-              if (isInferenceVariableOrFreshTypeParameter(lowerBound)) {
+              if (isInferenceVariableOrFreshTypeParameter(inferenceVariable, lowerBound)) {
                 return false;
               }
             }
@@ -239,10 +239,12 @@ public class InferenceIncorporationPhase {
     }
   }
 
-  private static Boolean isInferenceVariableOrFreshTypeParameter(PsiType eqBound) {
+  private static Boolean isInferenceVariableOrFreshTypeParameter(InferenceVariable inferenceVariable,
+                                                                 PsiType eqBound) {
     final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(eqBound);
     if (psiClass instanceof InferenceVariable ||
-        psiClass instanceof PsiTypeParameter && TypeConversionUtil.isFreshVariable((PsiTypeParameter)psiClass)) return true;
+        psiClass instanceof PsiTypeParameter && TypeConversionUtil.isFreshVariable((PsiTypeParameter)psiClass) ||
+        eqBound instanceof PsiCapturedWildcardType && eqBound.equals(inferenceVariable.getUserData(InferenceSession.ORIGINAL_CAPTURE))) return true;
     return false;
   }
 

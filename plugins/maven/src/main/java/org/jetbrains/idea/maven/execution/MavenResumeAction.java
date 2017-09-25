@@ -87,7 +87,7 @@ public class MavenResumeAction extends AnAction {
 
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void processTerminated(ProcessEvent event) {
+      public void processTerminated(@NotNull ProcessEvent event) {
         if (myState == STATE_WTF) return;
 
         if (event.getExitCode() == 0 && myBuildingProjectIndex != myMavenProjectNames.size()) {
@@ -111,7 +111,7 @@ public class MavenResumeAction extends AnAction {
       }
 
       @Override
-      public void onTextAvailable(ProcessEvent event, Key outputType) {
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         if (outputType != ProcessOutputTypes.STDOUT) return;
 
         String text = event.getText().trim();

@@ -25,6 +25,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
@@ -271,14 +272,16 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
                                           checkQualifier(((PsiMethodCallExpression)expression).getMethodExpression().getQualifier()), true);
     }
 
+    JavaCodeStyleSettings javaSettings =
+      CodeStyleSettingsManager.getSettings(expression.getProject()).getCustomSettings(JavaCodeStyleSettings.class);
     if (expression instanceof PsiInstanceOfExpression) {
       return new MethodReferenceCandidate(expression, true,
-                                          CodeStyleSettingsManager.getSettings(expression.getProject()).REPLACE_INSTANCEOF);
+                                          javaSettings.REPLACE_INSTANCEOF);
     }
     else if (expression instanceof PsiBinaryExpression) {
       if (ExpressionUtils.getValueComparedWithNull((PsiBinaryExpression)expression) != null) {
         return new MethodReferenceCandidate(expression, true,
-                                            CodeStyleSettingsManager.getSettings(expression.getProject()).REPLACE_NULL_CHECK);
+                                            javaSettings.REPLACE_NULL_CHECK);
       }
     }
     else if (expression instanceof PsiTypeCastExpression) {
@@ -290,7 +293,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
         }
         PsiType type = typeElement.getType();
         if (type instanceof PsiPrimitiveType || PsiUtil.resolveClassInType(type) instanceof PsiTypeParameter) return null;
-        return new MethodReferenceCandidate(expression, true, CodeStyleSettingsManager.getSettings(expression.getProject()).REPLACE_CAST);
+        return new MethodReferenceCandidate(expression, true, javaSettings.REPLACE_CAST);
       }
     }
     return null;

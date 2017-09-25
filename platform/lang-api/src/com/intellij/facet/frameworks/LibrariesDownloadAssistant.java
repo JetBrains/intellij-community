@@ -6,9 +6,7 @@ import com.intellij.facet.frameworks.beans.Artifacts;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.net.HttpConfigurable;
@@ -79,7 +77,7 @@ public class LibrariesDownloadAssistant {
       if (allArtifacts != null) {
         final Artifact[] vers = allArtifacts.getArtifacts();
         if (vers != null) {
-          versions.addAll(Arrays.asList(vers));
+          ContainerUtil.addAll(versions, Arrays.asList(vers));
         }
       }
     }

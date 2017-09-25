@@ -15,23 +15,35 @@
  */
 package com.siyeh.ig;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.PsiSuperMethodUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class JavaOverridingMethodUtil {
   private static final int MAX_OVERRIDDEN_METHOD_SEARCH = 20;
 
+  /**
+   * The method allows to search of overriding methods in "cheap enough" manner if it's possible.
+   *
+   * @param preFilter should filter out non-interesting methods (eg: methods non-annotated with some '@Override' annotation).
+   *                  It must not perform resolve, index queries or any other heavyweight operation since in the worst case all methods with name
+   *                  as the source method name will be processed.
+   *
+   * @return null if it's expensive to search for overriding methods in given case, otherwise returns stream of overriding methods for given preFilter
+   */
   @Nullable
   public static Stream<PsiMethod> getOverridingMethodsIfCheapEnough(@NotNull PsiMethod method,
                                                                     @Nullable GlobalSearchScope searchScope,
@@ -43,19 +55,36 @@ public class JavaOverridingMethodUtil {
     if (searchScope != null) {
       effectiveSearchScope = effectiveSearchScope.intersectWith(searchScope);
     }
-    PsiMethod[] methods =
-      StubIndex.getElements(JavaStubIndexKeys.METHODS, name, project, effectiveSearchScope, PsiMethod.class)
-        .stream()
-        .filter(m -> m != method)
-        .filter(preFilter)
-        .limit(MAX_OVERRIDDEN_METHOD_SEARCH + 1)
-        .toArray(PsiMethod[]::new);
 
-    // search should be deterministic
-    if (methods.length > MAX_OVERRIDDEN_METHOD_SEARCH) {
+    List<PsiMethod> methods = ContainerUtil.newArrayList();
+    if (!StubIndex.getInstance().processElements(JavaStubIndexKeys.METHODS,
+                                                name,
+                                                project,
+                                                effectiveSearchScope,
+                                                PsiMethod.class,
+                                            m -> {
+                                              ProgressManager.checkCanceled();
+                                              if (m == method) return true;
+                                              if (!preFilter.test(m)) return true;
+                                              methods.add(m);
+                                              return methods.size() <= MAX_OVERRIDDEN_METHOD_SEARCH;
+                                            })) {
       return null;
     }
 
-    return Stream.of(methods).filter(candidate -> PsiSuperMethodUtil.isSuperMethod(candidate, method));
+    return methods.stream().filter(candidate -> PsiSuperMethodUtil.isSuperMethod(candidate, method));
+  }
+
+  public static boolean containsAnnotationWithName(@NotNull PsiModifierListOwner modifierListOwner, @NotNull String shortAnnotationName) {
+    PsiModifierList list = modifierListOwner.getModifierList();
+    if (list != null) {
+      for (PsiAnnotation annotation : list.getAnnotations()) {
+        PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
+        if (ref != null && shortAnnotationName.equals(ref.getReferenceName())) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

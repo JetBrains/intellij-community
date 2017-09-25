@@ -65,6 +65,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     "  <warning>Warning</warning>\n" +
     "  <weak_warning>Weak warning</weak_warning>\n" +
     "  <deprecated>Deprecated symbol</deprecated>\n" +
+    "  <for_removal>Deprecated symbol marked for removal</for_removal>\n" +
     "  <unused>Unused symbol</unused>\n"+
     "  <wrong_ref>Unknown symbol</wrong_ref>\n" +
     "  <server_error>Problem from server</server_error>\n" +
@@ -133,6 +134,8 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.information"), HintUtil.INFORMATION_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.question"), HintUtil.QUESTION_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.error"), HintUtil.ERROR_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND),
+
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.visual.guides"), EditorColors.VISUAL_INDENT_GUIDE_COLOR, ColorDescriptor.Kind.FOREGROUND)
   };
 
   private static final Map<String, TextAttributesKey> ADDITIONAL_HIGHLIGHT_DESCRIPTORS = new HashMap<>();
@@ -157,6 +160,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
 
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("wrong_ref", CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("deprecated", CodeInsightColors.DEPRECATED_ATTRIBUTES);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("for_removal", CodeInsightColors.MARKED_FOR_REMOVAL_ATTRIBUTES);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("unused", CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("error", CodeInsightColors.ERRORS_ATTRIBUTES);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("warning", CodeInsightColors.WARNINGS_ATTRIBUTES);

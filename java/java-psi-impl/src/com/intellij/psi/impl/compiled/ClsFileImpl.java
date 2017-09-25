@@ -651,7 +651,9 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
           reader.accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
           if (visitor.getResult() != null) return stub;
         }
-        catch (OutOfOrderInnerClassException ignored) { }
+        catch (OutOfOrderInnerClassException e) {
+          if (LOG.isTraceEnabled()) LOG.trace(file.getPath());
+        }
       }
 
       return null;

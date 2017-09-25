@@ -35,7 +35,7 @@ public class PyPullUpPresenterTest extends PyRefactoringPresenterTestCase<PyPull
   /**
    * Checks that parents are returned in MRO order and no parents outside of source root are included
    */
-  public void testParentsOrder() throws Exception {
+  public void testParentsOrder() {
     final PyPullUpPresenter sut = configureByClass("Child");
     configureParent();
     myMocksControl.replay();
@@ -50,14 +50,14 @@ public class PyPullUpPresenterTest extends PyRefactoringPresenterTestCase<PyPull
   /**
    * Checks that refactoring does not work for classes with out of allowed parents
    */
-  public void testNoParents() throws Exception {
+  public void testNoParents() {
     ensureNoMembers("NoParentsAllowed");
   }
 
   /**
    * Ensures that presenter displays conflicts if destination class already has that members
    */
-  public void testConflicts() throws Exception {
+  public void testConflicts() {
     final PyPullUpPresenterImpl sut = configureByClass("ChildWithConflicts");
     configureParent();
     final Collection<PyMemberInfo<PyElement>> infos = getMemberInfos(sut);
@@ -87,21 +87,21 @@ public class PyPullUpPresenterTest extends PyRefactoringPresenterTestCase<PyPull
   /**
    * Checks that refactoring does not work for classes with out of members
    */
-  public void testNoMembers() throws Exception {
+  public void testNoMembers() {
     ensureNoMembers("NoMembers");
   }
 
   /**
    * Checks that refactoring does not work when C3 MRO can't be calculated
    */
-  public void testBadMro() throws Exception {
+  public void testBadMro() {
     ensureNoMembers("BadMro");
   }
 
   /**
    * Checks that parent can't be moved to itself
    */
-  public void testNoMoveParentToItSelf() throws Exception {
+  public void testNoMoveParentToItSelf() {
     final Collection<PyPresenterTestMemberEntry> memberNamesAndStatus = launchAndGetMembers("Foo", "Bar");
 
     compareMembers(memberNamesAndStatus, Matchers.containsInAnyOrder(new PyPresenterTestMemberEntry("__init__(self)", true, false, false),
@@ -112,14 +112,14 @@ public class PyPullUpPresenterTest extends PyRefactoringPresenterTestCase<PyPull
   /**
    * Checks that some members are not allowed (and may nto be abstract), while others are for Py2
    */
-  public void testMembersPy2() throws Exception {
+  public void testMembersPy2() {
     ensureCorrectMembersForHugeChild(false);
   }
 
   /**
    * Checks that some members are not allowed (and may nto be abstract), while others are for Py3
    */
-  public void testMembersPy3() throws Exception {
+  public void testMembersPy3() {
     setLanguageLevel(LanguageLevel.PYTHON30);
     ensureCorrectMembersForHugeChild(true);
   }
@@ -174,7 +174,7 @@ public class PyPullUpPresenterTest extends PyRefactoringPresenterTestCase<PyPull
   /**
    * Checks that refactoring does not work for classes with out of members
    */
-  private void ensureNoMembers(@NotNull final String className) throws Exception {
+  private void ensureNoMembers(@NotNull final String className) {
     try {
       final PyPullUpPresenter sut = configureByClass(className);
 

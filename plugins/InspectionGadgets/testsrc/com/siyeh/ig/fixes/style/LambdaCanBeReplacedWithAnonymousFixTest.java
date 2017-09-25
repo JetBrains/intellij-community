@@ -87,7 +87,7 @@ public class LambdaCanBeReplacedWithAnonymousFixTest extends IGQuickFixesTestCas
     doTest();
   }
 
-  public void testQualifyThisAndSuperInside() throws Exception {
+  public void testQualifyThisAndSuperInside() {
     doTest();
   }
 
@@ -99,15 +99,15 @@ public class LambdaCanBeReplacedWithAnonymousFixTest extends IGQuickFixesTestCas
     assertQuickfixNotAvailable();
   }
 
-  public void testIncorrectReturnStatementWhenLambdaIsVoidCompatibleButExpressionHasReturnValue() throws Exception {
+  public void testIncorrectReturnStatementWhenLambdaIsVoidCompatibleButExpressionHasReturnValue() {
     doTest();
   }
 
-  public void testForbidReplacementWhenParamsOrReturnWouldBeNotDenotableTypes1() throws Exception {
+  public void testForbidReplacementWhenParamsOrReturnWouldBeNotDenotableTypes1() {
     assertQuickfixNotAvailable();
   }
 
-  public void testRemoveRedundantCast() throws Exception {
+  public void testRemoveRedundantCast() {
     doTest();
   }
 

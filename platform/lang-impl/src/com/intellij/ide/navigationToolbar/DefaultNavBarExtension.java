@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,12 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiFileSystemItemProcessor;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -170,11 +170,9 @@ public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
     else if (psiElement instanceof PsiDirectory) {
       PsiDirectory psiDirectory = (PsiDirectory)psiElement;
       Project project = psiElement.getProject();
-
       PsiDirectory parentDirectory = psiDirectory.getParentDirectory();
-
       if (parentDirectory == null) {
-        VirtualFile jar = PathUtil.getLocalFile(psiDirectory.getVirtualFile());
+        VirtualFile jar = VfsUtil.getLocalFile(psiDirectory.getVirtualFile());
         if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(jar)) {
           parentDirectory = PsiManager.getInstance(project).findDirectory(jar.getParent());
         }

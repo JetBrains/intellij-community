@@ -143,25 +143,25 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     doTest();
   }
 
-  public void test13() throws Exception {
+  public void test13() {
     getSettings().HTML_KEEP_LINE_BREAKS = false;
     doTextTest("<root>\n" + "    <aaa/>\n" + "    <aaa></aaa>\n" + "    <aaa/>\n" + "</root>",
                "<root>\n" + "    <aaa/>\n" + "    <aaa></aaa>\n" + "    <aaa/>\n" + "</root>");
   }
 
-  public void testSpaces() throws Exception {
+  public void testSpaces() {
     doTextTest("<div> text <div/> text <div> text </div> </div>",
                "<div> text\n" + "    <div/>\n" + "    text\n" + "    <div> text</div>\n" + "</div>");
   }
 
-  public void testClosingDivOnNextLine() throws Throwable {
+  public void testClosingDivOnNextLine() {
     //getSettings().HTML_PLACE_ON_NEW_LINE += ",div";
     doTextTest("<div>ReSharper</div>", "<div>ReSharper</div>");
     doTextTest("<div>Re\nSharper</div>", "<div>Re\n    Sharper\n</div>");
     doTextTest("<div>Re\nSharper </div>", "<div>Re\n    Sharper\n</div>");
   }
 
-  public void testLineFeedAfterWrappedTag() throws Exception {
+  public void testLineFeedAfterWrappedTag() {
     doTextTest("<html><body><table></table></body></html>", "<html>\n" + "<body>\n" + "<table></table>\n" + "</body>\n" + "</html>");
 
     doTextTest("<html><body><table></table><tag></tag></body></html>",
@@ -176,7 +176,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
 
   }
 
-  public void testSCR3654() throws Exception {
+  public void testSCR3654() {
     getSettings().setDefaultRightMargin(5);
     getSettings().HTML_TEXT_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
 
@@ -207,7 +207,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     doTest();
   }
                                     
-  public void testHtmlReformatDoesntProduceAssertion() throws Exception {
+  public void testHtmlReformatDoesntProduceAssertion() {
     @NonNls String fileText =
       "<html>\n" +
       "  <head><title>Simple jsp page</title></head>\n" +
@@ -224,7 +224,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
       bodyTag.getTextRange().getEndOffset());
   }
 
-  public void testXhtmlReformatDoesntProduceAssertion() throws Exception {
+  public void testXhtmlReformatDoesntProduceAssertion() {
     @NonNls String fileText =
       "<html>\n" +
       "  <head><title>Simple jsp page</title></head>\n" +
@@ -262,7 +262,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     }
   }
 
-  public void testWeb456() throws Exception {
+  public void testWeb456() {
     doTextTest(
       "<html>\n" +
       "<body>\n" +
@@ -286,7 +286,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     );
   }
 
-  public void testWeb2405() throws Exception {
+  public void testWeb2405() {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     int noIndentMinLines = settings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES;
     settings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES = 3;
@@ -318,7 +318,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     }
   }
 
-  public void testWeb12840() throws Exception {
+  public void testWeb12840() {
     doTextTest(
       "<div \n" +
       "id=\"some\"\n" +
@@ -332,7 +332,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     );
   }
 
-  public void testWeb16223() throws Exception {
+  public void testWeb16223() {
     doTextTest(
       "<img\n" +
       "id=\"image-id\"\n" +
@@ -350,7 +350,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     );
   }
 
-  public void testWeb12937() throws Exception  {
+  public void testWeb12937() {
     doTextTest(
       "<div id=\"top\"></div><!-- /#top -->\n" +
       "<div id=\"nav\">\n" +
@@ -369,7 +369,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     return "Performance".equals(getTestName(false));
   }
   
-  public void test10809() throws Exception {
+  public void test10809() {
     doTextTest(
       "<p>foobar</p>\n" +
       "<div>foobar</div>\n" +
@@ -467,7 +467,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
     );
   }
 
-  public void testSpaceInEmptyTag() throws Exception {
+  public void testSpaceInEmptyTag() {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     settings.HTML_SPACE_INSIDE_EMPTY_TAG = true;
     doTextTest("<div class=\"emptyWithAttributes\"/>\n" +
@@ -478,7 +478,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
                "<div class=\"notEmpty\"></div>");
   }
 
-  public void testMultilineTags_NewlinesBeforeAndAfterAttributes() throws Exception {
+  public void testMultilineTags_NewlinesBeforeAndAfterAttributes() {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     settings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE = CodeStyleSettings.HtmlTagNewLineStyle.WhenMultiline;
     settings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE = CodeStyleSettings.HtmlTagNewLineStyle.WhenMultiline;

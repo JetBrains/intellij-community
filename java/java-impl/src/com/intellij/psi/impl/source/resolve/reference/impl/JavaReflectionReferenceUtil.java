@@ -102,9 +102,9 @@ public class JavaReflectionReferenceUtil {
     if (context == null) {
       return null;
     }
-    if (context instanceof PsiClassObjectAccessExpression) { // special case for JDK 1.4
+    if (context instanceof PsiClassObjectAccessExpression) {
       final PsiTypeElement operand = ((PsiClassObjectAccessExpression)context).getOperand();
-      return ReflectiveType.create(operand.getType());
+      return ReflectiveType.create(operand.getType(), true);
     }
 
     if (context instanceof PsiMethodCallExpression) {
@@ -118,7 +118,7 @@ public class JavaReflectionReferenceUtil {
             final PsiExpression argument = findDefinition(ParenthesesUtils.stripParentheses(expressions[0]));
             final String className = computeConstantExpression(argument, String.class);
             if (className != null) {
-              return ReflectiveType.create(findClass(className, context));
+              return ReflectiveType.create(findClass(className, context), true);
             }
           }
         }
@@ -154,7 +154,7 @@ public class JavaReflectionReferenceUtil {
           if (field.hasModifierProperty(PsiModifier.FINAL) && field.hasModifierProperty(PsiModifier.STATIC)) {
             final PsiPrimitiveType unboxedType = tryUnbox(field.getContainingClass(), (PsiClassType)type);
             if (unboxedType != null) {
-              return ReflectiveType.create(unboxedType);
+              return ReflectiveType.create(unboxedType, true);
             }
           }
         }
@@ -165,7 +165,7 @@ public class JavaReflectionReferenceUtil {
         final PsiType erasure = TypeConversionUtil.erasure(typeArgument);
         final PsiClass argumentClass = PsiTypesUtil.getPsiClass(erasure);
         if (argumentClass != null && !isJavaLangObject(argumentClass)) {
-          return ReflectiveType.create(argumentClass);
+          return ReflectiveType.create(argumentClass, false);
         }
       }
     }
@@ -212,7 +212,7 @@ public class JavaReflectionReferenceUtil {
         }
       }
     }
-    return ReflectiveType.create(expression.getType());
+    return ReflectiveType.create(expression.getType(), false);
   }
 
   @Contract("null,_->null")
@@ -224,9 +224,9 @@ public class JavaReflectionReferenceUtil {
   }
 
   @Nullable
-  public static PsiClass getReflectiveClass(PsiExpression context) {
+  public static ReflectiveClass getReflectiveClass(PsiExpression context) {
     final ReflectiveType reflectiveType = getReflectiveType(context);
-    return reflectiveType != null ? reflectiveType.getPsiClass() : null;
+    return reflectiveType != null ? reflectiveType.getReflectiveClass() : null;
   }
 
   @Nullable
@@ -405,7 +405,7 @@ public class JavaReflectionReferenceUtil {
 
   @NotNull
   public static String getTypeText(@NotNull PsiType type) {
-    final ReflectiveType reflectiveType = ReflectiveType.create(type);
+    final ReflectiveType reflectiveType = ReflectiveType.create(type, false);
     return reflectiveType.getQualifiedName();
   }
 
@@ -557,9 +557,11 @@ public class JavaReflectionReferenceUtil {
 
   public static class ReflectiveType {
     final PsiType myType;
+    final boolean myIsExact;
 
-    private ReflectiveType(@NotNull PsiType erasedType) {
+    private ReflectiveType(@NotNull PsiType erasedType, boolean isExact) {
       myType = erasedType;
+      myIsExact = isExact;
     }
 
     @NotNull
@@ -589,26 +591,48 @@ public class JavaReflectionReferenceUtil {
       return myType;
     }
 
+    public boolean isExact() {
+      return myIsExact;
+    }
+
+    @Nullable
+    public ReflectiveClass getReflectiveClass() {
+      PsiClass psiClass = getPsiClass();
+      if (psiClass != null) {
+        return new ReflectiveClass(psiClass, myIsExact);
+      }
+      return null;
+    }
+
+    @Nullable
+    public ReflectiveType getArrayComponentType() {
+      if (myType instanceof PsiArrayType) {
+        PsiType componentType = ((PsiArrayType)myType).getComponentType();
+        return new ReflectiveType(componentType, myIsExact);
+      }
+      return null;
+    }
+
     @Nullable
     public PsiClass getPsiClass() {
       return PsiTypesUtil.getPsiClass(myType);
     }
 
-    @Contract("!null -> !null; null -> null")
+    @Contract("!null,_ -> !null; null,_ -> null")
     @Nullable
-    public static ReflectiveType create(@Nullable PsiType originalType) {
+    public static ReflectiveType create(@Nullable PsiType originalType, boolean isExact) {
       if (originalType != null) {
-        return new ReflectiveType(erasure(originalType));
+        return new ReflectiveType(erasure(originalType), isExact);
       }
       return null;
     }
 
-    @Contract("!null -> !null; null -> null")
+    @Contract("!null,_ -> !null; null,_ -> null")
     @Nullable
-    public static ReflectiveType create(@Nullable PsiClass psiClass) {
+    public static ReflectiveType create(@Nullable PsiClass psiClass, boolean isExact) {
       if (psiClass != null) {
         final PsiElementFactory factory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
-        return new ReflectiveType(factory.createType(psiClass));
+        return new ReflectiveType(factory.createType(psiClass), isExact);
       }
       return null;
     }
@@ -617,7 +641,7 @@ public class JavaReflectionReferenceUtil {
     @Nullable
     public static ReflectiveType arrayOf(@Nullable ReflectiveType itemType) {
       if (itemType != null) {
-        return new ReflectiveType(itemType.myType.createArrayType());
+        return new ReflectiveType(itemType.myType.createArrayType(), itemType.myIsExact);
       }
       return null;
     }
@@ -629,6 +653,25 @@ public class JavaReflectionReferenceUtil {
         return ((PsiEllipsisType)erasure).toArrayType();
       }
       return erasure;
+    }
+  }
+
+  public static class ReflectiveClass {
+    final PsiClass myPsiClass;
+    final boolean myIsExact;
+
+    public ReflectiveClass(@NotNull PsiClass psiClass, boolean isExact) {
+      myPsiClass = psiClass;
+      myIsExact = isExact;
+    }
+
+    @NotNull
+    public PsiClass getPsiClass() {
+      return myPsiClass;
+    }
+
+    public boolean isExact() {
+      return myIsExact || myPsiClass.hasModifierProperty(PsiModifier.FINAL);
     }
   }
 

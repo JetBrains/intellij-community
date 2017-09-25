@@ -19,17 +19,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.project.model.JpsModuleManager;
 import org.jetbrains.jps.model.module.JpsModule;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * @author nik
  */
 public class JpsModuleManagerImpl implements JpsModuleManager {
-  private final Map<JpsModule, Module> myModules = new HashMap<>();
-
   @Override
   public Module getModule(JpsModule jpsModule) {
-    return myModules.get(jpsModule);
+    return null;
   }
 }

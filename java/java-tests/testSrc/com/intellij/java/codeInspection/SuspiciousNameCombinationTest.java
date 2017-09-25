@@ -37,9 +37,9 @@ public class SuspiciousNameCombinationTest extends LightInspectionTestCase {
     return new SuspiciousNameCombinationInspection();
   }
 
-  public void testAssignment() throws Exception { doTest();}
-  public void testInitializer() throws Exception { doTest();}
-  public void testParameter() throws Exception { doTest();}
-  public void testReturnValue() throws Exception { doTest();}
-  public void testExcluded() throws Exception { doTest();}
+  public void testAssignment() { doTest();}
+  public void testInitializer() { doTest();}
+  public void testParameter() { doTest();}
+  public void testReturnValue() { doTest();}
+  public void testExcluded() { doTest();}
 }

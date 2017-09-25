@@ -1,0 +1,16 @@
+PsiJavaFile:ForIncomplete10.java
+  PsiForStatement
+    PsiKeyword:for('for')
+    PsiJavaToken:LPARENTH('(')
+    PsiDeclarationStatement
+      PsiLocalVariable:x
+        PsiModifierList:
+          <empty list>
+        PsiTypeElement:var
+          PsiKeyword:var('var')
+        PsiWhiteSpace(' ')
+        PsiIdentifier:x('x')
+        PsiErrorElement:';' expected
+          <empty list>
+    PsiErrorElement:';' expected
+      <empty list>

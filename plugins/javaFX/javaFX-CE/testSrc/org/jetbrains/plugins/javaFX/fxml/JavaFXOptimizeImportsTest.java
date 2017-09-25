@@ -20,31 +20,31 @@ import com.intellij.openapi.application.PluginPathManager;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaFXOptimizeImportsTest extends AbstractJavaFXTestCase {
-  public void testCollapseOnDemand() throws Exception {
+  public void testCollapseOnDemand() {
     doTest();
   }
 
-  public void testRemoveUnused() throws Exception {
+  public void testRemoveUnused() {
     doTest();
   }
 
-  public void testDblImports() throws Exception {
+  public void testDblImports() {
     doTest();
   }
 
-  public void testStaticPropertiesAttrAndCustomComponents() throws Exception {
+  public void testStaticPropertiesAttrAndCustomComponents() {
     myFixture.addClass("import javafx.scene.layout.GridPane;\n" +
                        "public class MyGridPane extends GridPane {}\n");
     doTest();
   }
 
-  public void testStaticPropertiesTagAndCustomComponents() throws Exception {
+  public void testStaticPropertiesTagAndCustomComponents() {
     myFixture.addClass("import javafx.scene.layout.GridPane;\n" +
                        "public class MyGridPane extends GridPane {}\n");
     doTest();
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     myFixture.configureByFile(getTestName(true) + ".fxml");
     new OptimizeImportsProcessor(getProject(), myFixture.getFile()).run();
     myFixture.checkResultByFile(getTestName(true) + "_after.fxml");

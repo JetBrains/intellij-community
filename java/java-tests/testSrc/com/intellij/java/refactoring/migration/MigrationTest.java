@@ -27,37 +27,37 @@ import org.jetbrains.annotations.NotNull;
  * @author dsl
  */
 public class MigrationTest extends MultiFileTestCase {
-  public void testUnexistingClassInUnexistingPackage() throws Exception {
+  public void testUnexistingClassInUnexistingPackage() {
     doTest(createAction(new MigrationMap(new MigrationMapEntry[]{
       new MigrationMapEntry("qqq.aaa.Yahoo", "java.lang.String", MigrationMapEntry.CLASS, false)
     })));
   }
 
-  public void testToNonExistentClass() throws Exception {
+  public void testToNonExistentClass() {
     doTest(createAction(new MigrationMap(new MigrationMapEntry[]{
       new MigrationMapEntry("qqq.aaa.Yahoo", "zzz.bbb.QQQ", MigrationMapEntry.CLASS, false)
     })));
   }
 
-  public void testSameShortNameClass() throws Exception {
+  public void testSameShortNameClass() {
     doTest(createAction(new MigrationMap(new MigrationMapEntry[]{
       new MigrationMapEntry("aaa.Test", "bbb.Test", MigrationMapEntry.CLASS, false)
     })));
   }
 
-  public void testPackage() throws Exception {
+  public void testPackage() {
     doTest(createAction(new MigrationMap(new MigrationMapEntry[]{
       new MigrationMapEntry("qqq", "java.lang", MigrationMapEntry.PACKAGE, true)
     })));
   }
 
-  public void testPackageToNonExistentPackage() throws Exception {
+  public void testPackageToNonExistentPackage() {
     doTest(createAction(new MigrationMap(new MigrationMapEntry[]{
       new MigrationMapEntry("qqq", "zzz.bbb", MigrationMapEntry.PACKAGE, true)
     })));
   }
 
-  public void testTwoClasses() throws Exception {
+  public void testTwoClasses() {
     doTest(createAction(new MigrationMap(new MigrationMapEntry[]{
       new MigrationMapEntry("A", "A1", MigrationMapEntry.CLASS, true),
       new MigrationMapEntry("B", "B1", MigrationMapEntry.CLASS, true)

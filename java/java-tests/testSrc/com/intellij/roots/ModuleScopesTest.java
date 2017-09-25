@@ -132,7 +132,7 @@ public class ModuleScopesTest extends ModuleTestCase {
     return moduleB;
   }
 
-  public void testModuleTwiceInDependents() throws IOException {
+  public void testModuleTwiceInDependents() {
     Module m = createModule("m.iml", StdModuleTypes.JAVA);
     Module a = createModule("a.iml", StdModuleTypes.JAVA);
     Module b = createModule("b.iml", StdModuleTypes.JAVA);
@@ -151,7 +151,7 @@ public class ModuleScopesTest extends ModuleTestCase {
     assertTrue(deps.contains(file));
   }
 
-  public void testModuleContentWithDependenciesScopeRootOrdering() throws IOException {
+  public void testModuleContentWithDependenciesScopeRootOrdering() {
     Module m = createModule("m.iml", StdModuleTypes.JAVA);
     Module a = createModule("a.iml", StdModuleTypes.JAVA);
     Module b = createModule("b.iml", StdModuleTypes.JAVA);
@@ -187,7 +187,7 @@ public class ModuleScopesTest extends ModuleTestCase {
     assertEquals(0, deps.compare(cRoot, cRoot));
   }
 
-  public void testTestOnlyLibraryDependency() throws IOException {
+  public void testTestOnlyLibraryDependency() {
     Module m = createModule("a.iml", StdModuleTypes.JAVA);
     addLibrary(m, DependencyScope.TEST);
     VirtualFile libraryClass = myFixture.createFile("lib/Test.class");
@@ -201,7 +201,7 @@ public class ModuleScopesTest extends ModuleTestCase {
     assertEmpty(productionCompilationClasspath);
   }
 
-  public void testRuntimeModuleDependency() throws IOException {
+  public void testRuntimeModuleDependency() {
     Module moduleA = createModule("a.iml", StdModuleTypes.JAVA);
     addDependentModule(moduleA, DependencyScope.RUNTIME);
     final VirtualFile[] runtimeClasspath = getRuntimeClasspath(moduleA);
@@ -212,7 +212,7 @@ public class ModuleScopesTest extends ModuleTestCase {
     assertEmpty(production);
   }
 
-  public void testRuntimeLibraryDependency() throws IOException {
+  public void testRuntimeLibraryDependency() {
     Module m = createModule("a.iml", StdModuleTypes.JAVA);
     VirtualFile libraryRoot = addLibrary(m, DependencyScope.RUNTIME);
 
@@ -232,7 +232,7 @@ public class ModuleScopesTest extends ModuleTestCase {
     assertTrue(m.getModuleRuntimeScope(false).contains(libraryClass));
   }
 
-  public void testProvidedModuleDependency() throws IOException {
+  public void testProvidedModuleDependency() {
     Module moduleA = createModule("a.iml", StdModuleTypes.JAVA);
     addDependentModule(moduleA, DependencyScope.PROVIDED);
     VirtualFile[] runtimeClasspath = getRuntimeClasspath(moduleA);
@@ -241,7 +241,7 @@ public class ModuleScopesTest extends ModuleTestCase {
     assertEquals(1, compilationClasspath.length);
   }
 
-  public void testProvidedLibraryDependency() throws IOException {
+  public void testProvidedLibraryDependency() {
     Module m = createModule("a.iml", StdModuleTypes.JAVA);
     VirtualFile libraryRoot = addLibrary(m, DependencyScope.PROVIDED);
 
@@ -280,7 +280,7 @@ public class ModuleScopesTest extends ModuleTestCase {
     return libraryRoot;
   }
 
-  public void testLibUnderModuleContent() throws IOException {
+  public void testLibUnderModuleContent() {
     VirtualFile lib = myFixture.findOrCreateDir("lib");
     PsiTestUtil.addContentRoot(myModule, lib);
 

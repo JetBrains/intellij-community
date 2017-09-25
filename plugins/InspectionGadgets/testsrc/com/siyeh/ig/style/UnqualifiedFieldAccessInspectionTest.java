@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class UnqualifiedFieldAccessInspectionTest extends LightInspectionTestCase {
 
-  public void testUnqualifiedFieldAccess() throws Exception {
+  public void testUnqualifiedFieldAccess() {
     doTest();
   }
 

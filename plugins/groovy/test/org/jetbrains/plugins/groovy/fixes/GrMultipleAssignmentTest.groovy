@@ -67,8 +67,8 @@ import groovy.transform.CompileStatic
 
 @CompileStatic
 def foo() {
-    def storedList = bar()
-    def (a, b) = [storedList[0], storedList[1]]
+    def list = bar()
+    def (a, b) = [list[0], list[1]]
 }
 
 def bar() { [] }

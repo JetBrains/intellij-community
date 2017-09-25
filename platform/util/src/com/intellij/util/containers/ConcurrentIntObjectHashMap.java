@@ -300,9 +300,35 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
   private transient volatile int cellsBusy;
 
   /**
+   * A padded cell for distributing counts.  Adapted from LongAdder
+   * and Striped64.  See their internal docs for explanation.
+   */
+  static final class CounterCell {
+    volatile long p0;
+    volatile long p1;
+    volatile long p2;
+    volatile long p3;
+    volatile long p4;
+    volatile long p5;
+    volatile long p6;
+    volatile long value;
+    volatile long q0;
+    volatile long q1;
+    volatile long q2;
+    volatile long q3;
+    volatile long q4;
+    volatile long q5;
+    volatile long q6;
+
+    CounterCell(long x) {
+      value = x;
+    }
+  }
+
+  /**
    * Table of counter cells. When non-null, size is a power of 2.
    */
-  private transient volatile ConcurrentHashMap.CounterCell[] counterCells;
+  private transient volatile CounterCell[] counterCells;
 
   // views
   private transient ValuesView<V> values;
@@ -1066,11 +1092,11 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    * @param check if <0, don't check resize, if <= 1 only check if uncontended
    */
   private void addCount(long x, int check) {
-    ConcurrentHashMap.CounterCell[] as;
+    CounterCell[] as;
     long b, s;
     if ((as = counterCells) != null ||
         !U.compareAndSwapLong(this, BASECOUNT, b = baseCount, s = b + x)) {
-      ConcurrentHashMap.CounterCell a;
+      CounterCell a;
       long v;
       int m;
       boolean uncontended = true;
@@ -1343,8 +1369,8 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
     /* ---------------- Counter support -------------- */
 
   final long sumCount() {
-    ConcurrentHashMap.CounterCell[] as = counterCells;
-    ConcurrentHashMap.CounterCell a;
+    CounterCell[] as = counterCells;
+    CounterCell a;
     long sum = baseCount;
     if (as != null) {
       for (int i = 0; i < as.length; ++i) {
@@ -1366,19 +1392,19 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
     }
     boolean collide = false;                // True if last slot nonempty
     for (; ; ) {
-      ConcurrentHashMap.CounterCell[] as;
-      ConcurrentHashMap.CounterCell a;
+      CounterCell[] as;
+      CounterCell a;
       int n;
       long v;
       if ((as = counterCells) != null && (n = as.length) > 0) {
         if ((a = as[(n - 1) & h]) == null) {
           if (cellsBusy == 0) {            // Try to attach new Cell
-            ConcurrentHashMap.CounterCell r = new ConcurrentHashMap.CounterCell(x); // Optimistic create
+            CounterCell r = new CounterCell(x); // Optimistic create
             if (cellsBusy == 0 &&
                 U.compareAndSwapInt(this, CELLSBUSY, 0, 1)) {
               boolean created = false;
               try {               // Recheck under lock
-                ConcurrentHashMap.CounterCell[] rs;
+                CounterCell[] rs;
                 int m, j;
                 if ((rs = counterCells) != null &&
                     (m = rs.length) > 0 &&
@@ -1415,7 +1441,7 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
                  U.compareAndSwapInt(this, CELLSBUSY, 0, 1)) {
           try {
             if (counterCells == as) {// Expand table unless stale
-              ConcurrentHashMap.CounterCell[] rs = new ConcurrentHashMap.CounterCell[n << 1];
+              CounterCell[] rs = new CounterCell[n << 1];
               for (int i = 0; i < n; ++i) {
                 rs[i] = as[i];
               }
@@ -1435,8 +1461,8 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
         boolean init = false;
         try {                           // Initialize table
           if (counterCells == as) {
-            ConcurrentHashMap.CounterCell[] rs = new ConcurrentHashMap.CounterCell[2];
-            rs[h & 1] = new ConcurrentHashMap.CounterCell(x);
+            CounterCell[] rs = new CounterCell[2];
+            rs[h & 1] = new CounterCell(x);
             counterCells = rs;
             init = true;
           }
@@ -2759,7 +2785,7 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
         (k.getDeclaredField("baseCount"));
       CELLSBUSY = U.objectFieldOffset
         (k.getDeclaredField("cellsBusy"));
-      Class<?> ck = ConcurrentHashMap.CounterCell.class;
+      Class<?> ck = CounterCell.class;
       CELLVALUE = U.objectFieldOffset
         (ck.getDeclaredField("value"));
       Class<?> ak = Node[].class;

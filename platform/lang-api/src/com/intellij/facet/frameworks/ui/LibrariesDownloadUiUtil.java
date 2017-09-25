@@ -19,6 +19,7 @@ import com.intellij.facet.frameworks.LibrariesDownloadAssistant;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -73,8 +73,7 @@ public class LibrariesDownloadUiUtil {
                                 final URL... localUrls) {
     final ModalityState state = ModalityState.current();
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      final List<Object> newItems = new ArrayList<>();
-      newItems.addAll(Arrays.asList(LibrariesDownloadAssistant.getVersions(groupId, localUrls)));
+      final List<Object> newItems = new SmartList<>(LibrariesDownloadAssistant.getVersions(groupId, localUrls));
 
       ApplicationManager.getApplication().invokeLater(() -> {
         items.clear();

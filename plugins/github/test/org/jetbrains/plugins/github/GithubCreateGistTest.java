@@ -31,7 +31,7 @@ import java.util.List;
 public class GithubCreateGistTest extends GithubCreateGistTestBase {
   private final ProgressIndicator myIndicator = DumbProgressIndicator.INSTANCE;
 
-  public void testSimple() throws Throwable {
+  public void testSimple() {
     List<FileContent> expected = createContent();
 
     String url = GithubCreateGistAction.createGist(myProject, getAuthDataHolder(), myIndicator, expected, true, GIST_DESCRIPTION, null);
@@ -45,7 +45,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
     checkGistContent(expected);
   }
 
-  public void testAnonymous() throws Throwable {
+  public void testAnonymous() {
     List<FileContent> expected = createContent();
 
     String url = GithubCreateGistAction
@@ -65,7 +65,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
     GIST = null;
   }
 
-  public void testUnusedFilenameField() throws Throwable {
+  public void testUnusedFilenameField() {
     List<FileContent> expected = createContent();
 
     String url =
@@ -80,7 +80,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
     checkGistContent(expected);
   }
 
-  public void testUsedFilenameField() throws Throwable {
+  public void testUsedFilenameField() {
     List<FileContent> content = Collections.singletonList(new FileContent("file.txt", "file.txt content"));
     List<FileContent> expected = Collections.singletonList(new FileContent("filename", "file.txt content"));
 
@@ -96,7 +96,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
     checkGistContent(expected);
   }
 
-  public void testPublic() throws Throwable {
+  public void testPublic() {
     List<FileContent> expected = createContent();
 
     String url = GithubCreateGistAction.createGist(myProject, getAuthDataHolder(), myIndicator, expected, false, GIST_DESCRIPTION, null);
@@ -110,7 +110,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
     checkGistContent(expected);
   }
 
-  public void testEmpty() throws Throwable {
+  public void testEmpty() {
     List<FileContent> expected = Collections.emptyList();
 
     String url = GithubCreateGistAction.createGist(myProject, getAuthDataHolder(), myIndicator, expected, true, GIST_DESCRIPTION, null);

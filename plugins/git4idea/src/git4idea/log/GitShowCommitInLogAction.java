@@ -31,7 +31,7 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.vcs.log.impl.VcsLogContentProvider;
+import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import git4idea.GitVcs;
@@ -58,7 +58,7 @@ public class GitShowCommitInLogAction extends DumbAwareAction {
       return;
     }
 
-    VcsLogContentProvider.openMainLogAndExecute(project, logUi -> jumpToRevisionUnderProgress(project, logUi, revision));
+    VcsLogContentUtil.openMainLogAndExecute(project, logUi -> jumpToRevisionUnderProgress(project, logUi, revision));
   }
 
   @Nullable

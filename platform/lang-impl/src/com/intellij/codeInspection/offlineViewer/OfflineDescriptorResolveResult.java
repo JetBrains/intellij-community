@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ReadAction;
@@ -38,6 +39,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,14 +48,16 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Dmitry Batkovich
  */
 class OfflineDescriptorResolveResult {
   private static final Logger LOG = Logger.getInstance(OfflineDescriptorResolveResult.class);
-  private RefEntity myResolvedEntity;
-  private CommonProblemDescriptor myResolvedDescriptor;
+  private final RefEntity myResolvedEntity;
+  private final CommonProblemDescriptor myResolvedDescriptor;
+  private volatile boolean myExcluded;
 
   public OfflineDescriptorResolveResult(RefEntity resolvedEntity, CommonProblemDescriptor resolvedDescriptor) {
     myResolvedEntity = resolvedEntity;
@@ -68,6 +72,14 @@ class OfflineDescriptorResolveResult {
   @Nullable
   public CommonProblemDescriptor getResolvedDescriptor() {
     return myResolvedDescriptor;
+  }
+
+  public boolean isExcluded() {
+    return myExcluded;
+  }
+
+  public void setExcluded(boolean excluded) {
+    myExcluded = excluded;
   }
 
   @NotNull
@@ -94,7 +106,7 @@ class OfflineDescriptorResolveResult {
           return descriptor;
         }
       }
-      return createRerunGlobalToolDescriptor((GlobalInspectionToolWrapper)toolWrapper, element);
+      return createRerunGlobalToolDescriptor((GlobalInspectionToolWrapper)toolWrapper, element, offlineDescriptor);
     }
     if (!(toolWrapper instanceof LocalInspectionToolWrapper)) return null;
     final InspectionManager inspectionManager = InspectionManager.getInstance(presentation.getContext().getProject());
@@ -195,8 +207,11 @@ class OfflineDescriptorResolveResult {
   }
 
   private static CommonProblemDescriptor createRerunGlobalToolDescriptor(@NotNull GlobalInspectionToolWrapper wrapper,
-                                                                         @Nullable RefEntity entity) {
-    return new CommonProblemDescriptorImpl(new QuickFix[]{new QuickFix() {
+                                                                         @Nullable RefEntity entity,
+                                                                         OfflineProblemDescriptor offlineDescriptor) {
+    
+
+    QuickFix rerunFix = new QuickFix() {
       @Nls
       @NotNull
       @Override
@@ -216,6 +231,18 @@ class OfflineDescriptorResolveResult {
         }
         RunInspectionAction.runInspection(project, wrapper.getShortName(), file, null, psiFile);
       }
-    }}, "Problem detected by global inspection \'" + wrapper.getDisplayName() + "\'");
+
+      @Override
+      public boolean startInWriteAction() {
+        return false;
+      }
+    };
+    List<String> hints = offlineDescriptor.getHints();
+    if (hints != null && entity instanceof RefModule) {
+      List<QuickFix> fixes =
+        hints.stream().map(hint -> wrapper.getTool().getQuickFix(hint)).filter(f -> f != null).collect(Collectors.toList());
+      return new ModuleProblemDescriptorImpl(ArrayUtil.append(fixes.toArray(QuickFix.EMPTY_ARRAY), rerunFix), offlineDescriptor.getDescription(), ((RefModule)entity).getModule());
+    }
+    return new CommonProblemDescriptorImpl(new QuickFix[]{rerunFix}, offlineDescriptor.getDescription());
   }
 }

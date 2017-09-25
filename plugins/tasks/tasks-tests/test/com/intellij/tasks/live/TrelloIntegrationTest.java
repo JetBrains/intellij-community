@@ -150,7 +150,7 @@ public class TrelloIntegrationTest extends LiveIntegrationTestCase<TrelloReposit
     assertFalse(card.isVisible());
   }
 
-  public void testTestConnection() throws Exception {
+  public void testTestConnection() {
     assertNull(myRepository.createCancellableConnection().call());
 
     myRepository.setPassword("illegal password");

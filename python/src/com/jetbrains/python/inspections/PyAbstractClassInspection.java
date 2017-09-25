@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -62,18 +61,12 @@ public class PyAbstractClassInspection extends PyInspection {
       if (isAbstract(pyClass)) {
         return;
       }
-      final Set<PyFunction> toBeImplemented = new HashSet<>();
-      final Collection<PyFunction> functions = PyOverrideImplementUtil.getAllSuperFunctions(pyClass, myTypeEvalContext);
-      for (PyFunction method : functions) {
-        if (isAbstractMethodForClass(method, pyClass)) {
-          toBeImplemented.add(method);
-        }
-      }
+      final Set<PyFunction> toImplement = new HashSet<>(PyOverrideImplementUtil.getAllSuperAbstractMethods(pyClass, myTypeEvalContext));
       final ASTNode nameNode = pyClass.getNameNode();
-      if (!toBeImplemented.isEmpty() && nameNode != null) {
+      if (!toImplement.isEmpty() && nameNode != null) {
         registerProblem(nameNode.getPsi(),
                         PyBundle.message("INSP.NAME.abstract.class.$0.must.implement", pyClass.getName()),
-                        new PyImplementMethodsQuickFix(pyClass, toBeImplemented));
+                        new PyImplementMethodsQuickFix(pyClass, toImplement));
       }
     }
 
@@ -94,16 +87,6 @@ public class PyAbstractClassInspection extends PyInspection {
         }
       }
       return false;
-    }
-
-    private static boolean isAbstractMethodForClass(@NotNull PyFunction method, @NotNull PyClass cls) {
-      final String methodName = method.getName();
-      if (methodName == null ||
-          cls.findMethodByName(methodName, false, null) != null ||
-          cls.findClassAttribute(methodName, false, null) != null) {
-        return false;
-      }
-      return PyUtil.isDecoratedAsAbstract(method) || PyOverrideImplementUtil.raisesNotImplementedError(method);
     }
   }
 }

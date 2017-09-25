@@ -19,6 +19,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
+import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.inspections.PyUnusedLocalInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
@@ -35,7 +36,9 @@ public class PyRemoveParameterQuickFixTest extends PyQuickFixTestCase {
   }
 
   public void testDocstring() {
-    doQuickFixTest(PyUnusedLocalInspection.class, PyBundle.message("QFIX.NAME.remove.parameter"));
+    runWithDocStringFormat(DocStringFormat.REST, () ->
+      doQuickFixTest(PyUnusedLocalInspection.class, PyBundle.message("QFIX.NAME.remove.parameter"))
+    );
   }
 
   public void testUsage() {
@@ -43,7 +46,9 @@ public class PyRemoveParameterQuickFixTest extends PyQuickFixTestCase {
   }
 
   public void testSingleStarTwoParam() {
-    doQuickFixTest(PyUnusedLocalInspection.class, PyBundle.message("QFIX.NAME.remove.parameter"), LanguageLevel.PYTHON33);
+    runWithDocStringFormat(DocStringFormat.REST, () ->
+      doQuickFixTest(PyUnusedLocalInspection.class, PyBundle.message("QFIX.NAME.remove.parameter"), LanguageLevel.PYTHON33)
+    );
   }
 
   public void testSingleStar() {

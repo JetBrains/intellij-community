@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,8 +59,7 @@ public class ExternalProjectDataCache {
     myExternalRootProjects = ConcurrentFactoryMap.createMap(key->
       new ExternalProjectSerializer().load(key.first, key.second),
 
-                                                            () ->
-        ContainerUtil.newConcurrentMap(ExternalSystemUtil.HASHING_STRATEGY)
+                                                            () -> ConcurrentCollectionFactory.createMap(ExternalSystemUtil.HASHING_STRATEGY)
     );
   }
 

@@ -32,7 +32,7 @@ public class ConvertToThreadLocalIntention6Test extends LightQuickFixParameteriz
     return PlatformTestUtil.getCommunityPath() + "/java/typeMigration/testData";
   }
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 

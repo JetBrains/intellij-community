@@ -41,7 +41,7 @@ public class DomVirtualFileEventsTest extends DomHardCoreTestCase{
     }, getTestRootDisposable());
   }
 
-  public void testCreateFile() throws Throwable {
+  public void testCreateFile() {
     new WriteCommandAction.Simple(myProject) {
       @Override
       protected void run() throws Throwable {
@@ -60,7 +60,7 @@ public class DomVirtualFileEventsTest extends DomHardCoreTestCase{
     }.execute().throwException();
   }
 
-  public void testDeleteFile() throws Throwable {
+  public void testDeleteFile() {
     new WriteCommandAction.Simple(getProject()) {
       @Override
       protected void run() throws Throwable {
@@ -81,7 +81,7 @@ public class DomVirtualFileEventsTest extends DomHardCoreTestCase{
     }.execute().throwException();
   }
 
-  public void testRenameFile() throws Throwable {
+  public void testRenameFile() {
     new WriteCommandAction.Simple(getProject()) {
       @Override
       protected void run() throws Throwable {

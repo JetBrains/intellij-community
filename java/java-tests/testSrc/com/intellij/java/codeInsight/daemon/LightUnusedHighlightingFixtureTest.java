@@ -50,7 +50,7 @@ public class LightUnusedHighlightingFixtureTest extends LightCodeInsightFixtureT
     }, getTestRootDisposable());
   }
 
-  public void testMarkFieldsWhichAreExplicitlyWrittenAsUnused() throws Exception {
+  public void testMarkFieldsWhichAreExplicitlyWrittenAsUnused() {
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();
   }

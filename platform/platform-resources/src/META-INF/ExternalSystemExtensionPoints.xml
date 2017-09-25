@@ -5,6 +5,10 @@
                     interface="com.intellij.openapi.externalSystem.service.project.ExternalProjectsWorkspaceImpl$Contributor"/>
     <extensionPoint name="externalProjectDataService"
                     interface="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService"/>
+    <extensionPoint name="externalSystemConfigurationHandler"
+                    interface="com.intellij.openapi.externalSystem.service.project.manage.ConfigurationHandler"/>
+    <extensionPoint name="runConfigurationHandlerExtension"
+                    interface="com.intellij.openapi.externalSystem.service.project.manage.RunConfigHandlerExtension"/>
     <extensionPoint name="externalSystemConfigLocator"
                     interface="com.intellij.openapi.externalSystem.service.settings.ExternalSystemConfigLocator"/>
     <extensionPoint name="externalSystemNotificationExtension"

@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Batkovich
  */
-public class CreateSwitchIntention extends BaseElementAtCaretIntentionAction {
+public class CreateSwitchIntention extends BaseElementAtCaretIntentionAction implements LowPriorityAction {
   public static final String TEXT = "Create switch statement";
 
   @Override

@@ -267,13 +267,13 @@ public class MvcConsole implements Disposable {
       final Ref<Boolean> gotError = new Ref<>(false);
       handler.addProcessListener(new ProcessAdapter() {
         @Override
-        public void onTextAvailable(ProcessEvent event, Key key) {
+        public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key key) {
           if (key == ProcessOutputTypes.STDERR) gotError.set(true);
           LOG.debug("got text: " + event.getText());
         }
 
         @Override
-        public void processTerminated(ProcessEvent event) {
+        public void processTerminated(@NotNull ProcessEvent event) {
           final int exitCode = event.getExitCode();
           if (exitCode == 0 && !gotError.get().booleanValue()) {
             ApplicationManager.getApplication().invokeLater(() -> {

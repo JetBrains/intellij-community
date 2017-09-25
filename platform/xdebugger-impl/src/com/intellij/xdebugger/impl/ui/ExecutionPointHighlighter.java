@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -70,7 +71,7 @@ public class ExecutionPointHighlighter {
   public void show(final @NotNull XSourcePosition position, final boolean notTopFrame,
                    @Nullable final GutterIconRenderer gutterIconRenderer) {
     updateRequested.set(false);
-    AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
+    TransactionGuard.submitTransaction(myProject, () -> {
       updateRequested.set(false);
 
       mySourcePosition = position;

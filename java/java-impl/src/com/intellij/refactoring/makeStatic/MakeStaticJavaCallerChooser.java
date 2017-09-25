@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.changeSignature.MethodNodeBase;
+import com.intellij.refactoring.changeSignature.MemberNodeBase;
 import com.intellij.refactoring.changeSignature.inCallers.JavaCallerChooser;
 import com.intellij.refactoring.changeSignature.inCallers.JavaMethodNode;
 import com.intellij.usageView.UsageInfo;
@@ -73,12 +72,12 @@ abstract class MakeStaticJavaCallerChooser extends JavaCallerChooser {
   protected abstract ArrayList<UsageInfo> getTopLevelItems();
 
   @Override
-  protected JavaMethodNode createTreeNode(PsiMethod nodeMethod,
-                                          com.intellij.util.containers.HashSet<PsiMethod> called,
-                                          Runnable cancelCallback) {
+  protected JavaMethodNode createTreeNodeFor(PsiMethod nodeMethod,
+                                             com.intellij.util.containers.HashSet<PsiMethod> called,
+                                             Runnable cancelCallback) {
     final MakeStaticJavaMethodNode node =
       new MakeStaticJavaMethodNode(nodeMethod, called, cancelCallback, nodeMethod != null ? nodeMethod.getProject() : myProject);
-    if (getTopMethod().equals(nodeMethod)) {
+    if (getTopMember().equals(nodeMethod)) {
       node.setEnabled(false);
       node.setChecked(true);
     }
@@ -95,7 +94,7 @@ abstract class MakeStaticJavaCallerChooser extends JavaCallerChooser {
 
     @Override
     protected List<PsiMethod> computeCallers() {
-      if (getTopMethod().equals(getMethod())) {
+      if (getTopMember().equals(getMember())) {
         final ArrayList<UsageInfo> items = getTopLevelItems();
         return ContainerUtil.map(items, info -> (PsiMethod)info.getElement());
       }
@@ -104,7 +103,7 @@ abstract class MakeStaticJavaCallerChooser extends JavaCallerChooser {
 
 
     @Override
-    protected MethodNodeBase<PsiMethod> createNode(PsiMethod caller, HashSet<PsiMethod> called) {
+    protected MemberNodeBase<PsiMethod> createNode(PsiMethod caller, HashSet<PsiMethod> called) {
       return new MakeStaticJavaMethodNode(caller, called, myCancelCallback, myProject);
     }
 

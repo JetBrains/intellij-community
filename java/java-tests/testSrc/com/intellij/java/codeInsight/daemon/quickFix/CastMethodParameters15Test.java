@@ -19,7 +19,7 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 
 public class CastMethodParameters15Test extends LightQuickFixParameterizedTestCase {
 
-  public void testPrimitiveWrappers() throws Exception {
+  public void testPrimitiveWrappers() {
     doSingleTest(getTestName(false) + ".java");
   }
 

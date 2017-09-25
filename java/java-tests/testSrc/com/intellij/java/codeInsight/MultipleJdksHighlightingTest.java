@@ -105,12 +105,12 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     ModuleRootModificationUtil.addDependency(myJava3Module, myJava7Module);
   }
 
-  public void testGetClass() throws Exception {
+  public void testGetClass() {
     addDependencies_37_78();
     doTest();
   }
 
-  public void testWrongSuperInLibrary() throws Exception {
+  public void testWrongSuperInLibrary() {
     addDependencies_37_78();
     final String name = getTestName(false);
     for (Module module : new Module[] {myJava7Module, myJava8Module}) {
@@ -121,62 +121,62 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     myFixture.checkHighlighting();
   }
 
-  public void testWrongComparator() throws Exception {
+  public void testWrongComparator() {
     addDependencies_37_78();
    doTestWithoutLibrary();
   }
 
-  public void testWrongComparatorInUpperBound() throws Exception {
+  public void testWrongComparatorInUpperBound() {
     addDependencies_37_78();
     doTestWithoutLibrary();
   }
 
-  public void testGenericComparator() throws Exception {
+  public void testGenericComparator() {
     addDependencies_37_78();
     doTestWithoutLibrary();
   }
 
-  public void testGenericCallableWithDifferentTypeArgs() throws Exception {
+  public void testGenericCallableWithDifferentTypeArgs() {
     addDependencies_37_78();
     doTestWithoutLibrary();
   }
 
-  public void testSuperclassImplementsUnknownType() throws Exception {
+  public void testSuperclassImplementsUnknownType() {
     addDependencies_37_78();
     doTestWithoutLibrary();
   }
 
-  public void testDeclaredTypeOfVariableImplementsUnknownType() throws Exception {
+  public void testDeclaredTypeOfVariableImplementsUnknownType() {
     addDependencies_37_78();
     doTestWithoutLibrary();
   }
   
-  public void testSuperclassImplementsGenericsOfUnknownType() throws Exception {
+  public void testSuperclassImplementsGenericsOfUnknownType() {
     addDependencies_37_78();
     doTestWithoutLibrary();
   }
 
-  public void testSuperMethodNotExist() throws Exception {
+  public void testSuperMethodNotExist() {
     addDependencies_37_78();
     doTestWithoutLibrary();
   }
 
-  public void testNoOverriding() throws Exception {
+  public void testNoOverriding() {
     addDependencies_37_78();
     doTestWithoutLibrary();
   }
 
-  public void testStaticCallOnChildWithNotAccessibleParent() throws Exception {
+  public void testStaticCallOnChildWithNotAccessibleParent() {
     addDependencies_37_78();
     doTest3Modules();
   }
 
-  public void testBoxedTypesWhenPreGenericJDKPresentInProject() throws Exception {
+  public void testBoxedTypesWhenPreGenericJDKPresentInProject() {
     myFixture.configureByFiles("java8/p/" + getTestName(false) + ".java");
     myFixture.checkHighlighting();
   }
 
-  public void testRawAssignmentToGenerics() throws Exception {
+  public void testRawAssignmentToGenerics() {
     ModuleRootModificationUtil.addDependency(myJava7Module, myJava3Module);
     final String name = getTestName(false);
     myFixture.copyFileToProject("java3/p/" + name + ".java");
@@ -202,14 +202,14 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     myFixture.checkHighlighting();
   }
 
-  public void testLanguageLevelInReturnTypeCheck() throws Exception {
+  public void testLanguageLevelInReturnTypeCheck() {
     addDependencies_37_78();
     final String name = getTestName(false);
     myFixture.configureByFiles("java3/p/" + name + ".java", "java7/p/" + name + ".java");
     myFixture.checkHighlighting();
   }
 
-  public void testUnrelatedDefaultsFromDifferentJdkVersions() throws Exception {
+  public void testUnrelatedDefaultsFromDifferentJdkVersions() {
     ModuleRootModificationUtil.addDependency(myJava8Module, myJava7Module);
     myFixture.copyFileToProject("java7/p/I.java");
     myFixture.copyFileToProject("java8/p/I.java");
@@ -219,7 +219,7 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     myFixture.checkHighlighting();
   }
 
-  public void testMethodReferencePointingToDifferentJdk() throws Exception {
+  public void testMethodReferencePointingToDifferentJdk() {
     ModuleRootModificationUtil.addDependency(myJava8Module, myJava3Module);
     final String testName = getTestName(false);
     myFixture.copyFileToProject("java3/p/" + testName + ".java");
@@ -265,7 +265,7 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     assertContainsElements(MethodReferencesSearch.search(method).findAll(), ref);
   }
 
-  public void testConditionalAssignedToJava3Object() throws Exception {
+  public void testConditionalAssignedToJava3Object() {
     ModuleRootModificationUtil.addDependency(myJava8Module, myJava3Module);
     final String name = getTestName(false);
     myFixture.copyFileToProject("java3/p/" + name + ".java");

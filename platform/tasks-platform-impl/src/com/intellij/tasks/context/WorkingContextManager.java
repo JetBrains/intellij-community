@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.tasks.Task;
 import com.intellij.util.JdomKt;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.zip.JBZipEntry;
 import com.intellij.util.io.zip.JBZipFile;
@@ -113,6 +114,11 @@ public class WorkingContextManager {
     saveContext(entryName, CONTEXT_ZIP_POSTFIX, comment);
   }
 
+  public boolean hasContext(String entryName) {
+    return doEntryAction(CONTEXT_ZIP_POSTFIX, entryName, entry -> {});
+  }
+
+
   private synchronized void saveContext(@Nullable String entryName, String zipPostfix, @Nullable String comment) {
     JBZipFile archive = null;
     try {
@@ -140,7 +146,7 @@ public class WorkingContextManager {
     }
   }
 
-  private JBZipFile getTasksArchive(String postfix) throws IOException {
+  private JBZipFile getTasksArchive(String postfix) {
     File file = getArchiveFile(postfix);
     try {
       return new JBZipFile(file);
@@ -175,14 +181,20 @@ public class WorkingContextManager {
     loadContext(TASKS_ZIP_POSTFIX, task.getId() + TASK_XML_POSTFIX);
   }
 
-  private synchronized boolean loadContext(String zipPostfix, String entryName) {
+  private boolean loadContext(String zipPostfix, String entryName) {
+    return doEntryAction(zipPostfix, entryName, entry -> {
+      String s = new String(entry.getData(), CharsetToolkit.UTF8_CHARSET);
+      loadContext(JdomKt.loadElement(s));
+    });
+  }
+
+  private synchronized boolean doEntryAction(String zipPostfix, String entryName, ThrowableConsumer<JBZipEntry, Exception> action) {
     JBZipFile archive = null;
     try {
       archive = getTasksArchive(zipPostfix);
       JBZipEntry entry = archive.getEntry(StringUtil.startsWithChar(entryName, '/') ? entryName : "/" + entryName);
       if (entry != null) {
-        byte[] bytes = entry.getData();
-        loadContext(JdomKt.loadElement(new String(bytes)));
+        action.consume(entry);
         return true;
       }
     }
@@ -217,7 +229,7 @@ public class WorkingContextManager {
       List<JBZipEntry> entries = archive.getEntries();
       return ContainerUtil.mapNotNull(entries, (NullableFunction<JBZipEntry, ContextInfo>)entry -> entry.getName().startsWith("/context") ? new ContextInfo(entry.getName(), entry.getTime(), entry.getComment()) : null);
     }
-    catch (IOException e) {
+    catch (Exception e) {
       LOG.error(e);
       return Collections.emptyList();
     }
@@ -282,7 +294,7 @@ public class WorkingContextManager {
   }
 
   @TestOnly
-  public File getContextFile() throws IOException {
+  public File getContextFile() {
     return getArchiveFile(CONTEXT_ZIP_POSTFIX);
   }
 }

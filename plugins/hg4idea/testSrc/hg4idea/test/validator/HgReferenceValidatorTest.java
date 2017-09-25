@@ -15,8 +15,8 @@
  */
 package hg4idea.test.validator;
 
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import hg4idea.test.HgPlatformTest;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
@@ -62,15 +62,8 @@ public class HgReferenceValidatorTest extends HgPlatformTest {
 
   @Override
   @After
-  public void tearDown() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-      try {
-        HgReferenceValidatorTest.super.tearDown();
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    });
+  public void tearDown() {
+    EdtTestUtil.runInEdtAndWait(() -> super.tearDown());
   }
 
   @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors", "UnusedParameters"})

@@ -20,35 +20,35 @@ package org.jetbrains.ether;
  * Date: 09.08.11
  */
 public class ClassModifierTest extends IncrementalTestCase {
-  public ClassModifierTest() throws Exception {
+  public ClassModifierTest() {
     super("classModifiers");
   }
 
-  public void testAddStatic() throws Exception {
+  public void testAddStatic() {
     doTest();
   }
 
-  public void testRemoveStatic() throws Exception {
+  public void testRemoveStatic() {
     doTest();
   }
 
-  public void testDecAccess() throws Exception {
+  public void testDecAccess() {
     doTest();
   }
 
-  public void testSetAbstract() throws Exception {
+  public void testSetAbstract() {
     doTest();
   }
 
-  public void testDropAbstract() throws Exception {
+  public void testDropAbstract() {
     doTest();
   }
 
-  public void testSetFinal() throws Exception {
+  public void testSetFinal() {
     doTest();
   }
 
-  public void testSetFinal1() throws Exception {
+  public void testSetFinal1() {
     doTest();
   }
 }

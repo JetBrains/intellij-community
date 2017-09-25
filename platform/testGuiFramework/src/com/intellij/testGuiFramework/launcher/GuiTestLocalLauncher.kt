@@ -54,7 +54,7 @@ object GuiTestLocalLauncher {
 
   var process: Process? = null
 
-  val TEST_GUI_FRAMEWORK_MODULE_NAME = "testGuiFramework"
+  private val TEST_GUI_FRAMEWORK_MODULE_NAME = "testGuiFramework"
 
   val project: JpsProject by lazy {
     val home = PathManager.getHomePath()
@@ -65,16 +65,16 @@ object GuiTestLocalLauncher {
     jpsProject.changeOutputIfNeeded()
     jpsProject
   }
-  val modulesList: List<JpsModule> by lazy {
+  private val modulesList: List<JpsModule> by lazy {
     project.modules
   }
-  val testGuiFrameworkModule: JpsModule by lazy {
+  private val testGuiFrameworkModule: JpsModule by lazy {
     modulesList.module(TEST_GUI_FRAMEWORK_MODULE_NAME) ?: throw Exception("Unable to find module '$TEST_GUI_FRAMEWORK_MODULE_NAME'")
   }
 
-  fun killProcessIfPossible() {
+  private fun killProcessIfPossible() {
     try {
-      if (process?.isAlive ?: false) process!!.destroyForcibly()
+      if (process?.isAlive == true) process!!.destroyForcibly()
     }
     catch (e: KotlinNullPointerException) {
       LOG.error("Seems that process has already destroyed, right after condition")
@@ -98,16 +98,11 @@ object GuiTestLocalLauncher {
     return startIdeAndWait(ide = ide, args = args)
   }
 
-  fun firstStartIdeByPath(path: String, ide: Ide = Ide(CommunityIde(), 0, 0)) {
-    val args = createArgsForFirstStartByPath(ide, path)
-    return startIdeAndWait(ide = ide, args = args)
-  }
-
   private fun startIde(ide: Ide,
                        needToWait: Boolean = false,
                        timeOut: Long = 0,
                        timeOutUnit: TimeUnit = TimeUnit.SECONDS,
-                       args: List<String>): Unit {
+                       args: List<String>) {
     LOG.info("Running $ide locally \n with args: $args")
     val startLatch = CountDownLatch(1)
     thread(start = true, name = "IdeaTestThread") {
@@ -121,24 +116,30 @@ object GuiTestLocalLauncher {
         process!!.waitFor(timeOut, timeOutUnit)
       else
         process!!.waitFor()
-      if (process!!.exitValue() != 1) {
-        println("${ide.ideType} process completed successfully")
-        LOG.info("${ide.ideType} process completed successfully")
+      try {
+        if (process!!.exitValue() == 0) {
+          println("${ide.ideType} process completed successfully")
+          LOG.info("${ide.ideType} process completed successfully")
+        }
+        else {
+          System.err.println("${ide.ideType} process execution error:")
+          val collectedError = BufferedReader(InputStreamReader(process!!.errorStream)).lines().collect(Collectors.joining("\n"))
+          System.err.println(collectedError)
+          LOG.error("${ide.ideType} process execution error:")
+          LOG.error(collectedError)
+          fail("Starting ${ide.ideType} failed.")
+        }
       }
-      else {
-        System.err.println("${ide.ideType} process execution error:")
-        val collectedError = BufferedReader(InputStreamReader(process!!.errorStream)).lines().collect(Collectors.joining("\n"))
-        System.err.println(collectedError)
-        LOG.error("${ide.ideType} process execution error:")
-        LOG.error(collectedError)
-        fail("Starting ${ide.ideType} failed.")
+      catch (e: IllegalThreadStateException) {
+        killProcessIfPossible()
+        throw e
       }
     }
 
   }
 
-  private fun startIdeAndWait(ide: Ide, args: List<String>): Unit
-    = startIde(ide = ide, needToWait = true, args = args)
+  private fun startIdeAndWait(ide: Ide, args: List<String>)
+    = startIde(ide = ide, needToWait = true, timeOut = 180, args = args)
 
 
   private fun createArgs(ide: Ide, mainClass: String = "com.intellij.idea.Main", port: Int = 0): List<String>
@@ -170,22 +171,8 @@ object GuiTestLocalLauncher {
     return resultingArgs
   }
 
-
-  private fun createArgsForFirstStartByPath(ide: Ide, path: String, firstStartClassName: String = "undefined"): List<String> {
-
-    val classpath = PathUtils(path).makeClassPathBuilder().build(emptyList())
-    val resultingArgs = listOf<String>()
-      .plus(getCurrentJavaExec())
-      .plus(getDefaultVmOptions(ide))
-      .plus("-Didea.gui.test.first.start.class=$firstStartClassName")
-      .plus("-classpath")
-      .plus(classpath)
-      .plus(com.intellij.testGuiFramework.impl.FirstStarter::class.qualifiedName!! + "Kt")
-    return resultingArgs
-  }
-
   private fun createArgsByPath(path: String, port: Int = 0): List<String> {
-    val resultingArgs = mutableListOf<String>(
+    val resultingArgs = mutableListOf(
       path,
       "--args",
       GuiTestStarter.COMMAND_NAME
@@ -211,14 +198,15 @@ object GuiTestLocalLauncher {
       .plus("-Dsun.awt.disablegrab=true")
       .plus("-Dsun.io.useCanonCaches=false")
       .plus("-Djava.net.preferIPv4Stack=true")
-      .plus("-Dapple.laf.useScreenMenuBar=${GuiTestOptions.useAppleScreenMenuBar().toString()}")
-      .plus("-Didea.is.internal=${GuiTestOptions.isInternal().toString()}")
+      .plus("-Dapple.laf.useScreenMenuBar=${GuiTestOptions.useAppleScreenMenuBar()}")
+      .plus("-Didea.is.internal=${GuiTestOptions.isInternal()}")
       .plus("-Didea.config.path=${GuiTestOptions.getConfigPath()}")
       .plus("-Didea.system.path=${GuiTestOptions.getSystemPath()}")
       .plus("-Dfile.encoding=${GuiTestOptions.getEncoding()}")
       .plus("-Didea.platform.prefix=${ide.ideType.platformPrefix}")
       .plus("-Xdebug")
       .plus("-Xrunjdwp:transport=dt_socket,server=y,suspend=${GuiTestOptions.suspendDebug()},address=${GuiTestOptions.getDebugPort()}")
+      .plus("-Duse.linux.keychain=false")
   }
 
   private fun getCurrentJavaExec(): String {
@@ -241,7 +229,7 @@ object GuiTestLocalLauncher {
   private fun getTestClasspath(): List<File> {
     val classLoader = this.javaClass.classLoader
     val urlClassLoaderClass = classLoader.javaClass
-    val getUrlsMethod = urlClassLoaderClass.methods.filter { it.name.toLowerCase() == "geturls" }.firstOrNull()!!
+    val getUrlsMethod = urlClassLoaderClass.methods.firstOrNull { it.name.toLowerCase() == "geturls" }!!
     @Suppress("UNCHECKED_CAST")
     val urlsListOrArray = getUrlsMethod.invoke(classLoader)
     var urls = (urlsListOrArray as? List<*> ?: (urlsListOrArray as Array<*>).toList()).filterIsInstance(URL::class.java)
@@ -271,7 +259,7 @@ object GuiTestLocalLauncher {
   }
 
   private fun List<JpsModule>.module(moduleName: String): JpsModule? =
-    this.filter { it.name == moduleName }.firstOrNull()
+    this.firstOrNull { it.name == moduleName }
 
   private fun JpsModule.getClasspath(): MutableCollection<File> =
     JpsJavaExtensionService.dependencies(this).productionOnly().runtimeOnly().recursively().classes().roots

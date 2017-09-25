@@ -888,6 +888,14 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   public void addExceptionBreakpoint(XBreakpoint<? extends ExceptionBreakpointProperties> breakpoint) {
     myRegisteredExceptionBreakpoints.put(breakpoint.getProperties().getException(), breakpoint);
     if (isConnected()) {
+      String conditionExpression = breakpoint.getConditionExpression() == null
+                                   ? null
+                                   : breakpoint.getConditionExpression().getExpression();
+      breakpoint.getProperties().setCondition(conditionExpression);
+      String logExpression = breakpoint.getLogExpressionObject() == null
+                             ? null
+                             : breakpoint.getLogExpressionObject().getExpression();
+      breakpoint.getProperties().setLogExpression(logExpression);
       myDebugger.addExceptionBreakpoint(breakpoint.getProperties());
     }
   }
@@ -984,21 +992,21 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
 
   @Override
-  public void startNotified(ProcessEvent event) {
+  public void startNotified(@NotNull ProcessEvent event) {
   }
 
   @Override
-  public void processTerminated(ProcessEvent event) {
+  public void processTerminated(@NotNull ProcessEvent event) {
     myDebugger.close();
   }
 
   @Override
-  public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
+  public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
     myClosing = true;
   }
 
   @Override
-  public void onTextAvailable(ProcessEvent event, Key outputType) {
+  public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
   }
 
   public PyStackFrame createStackFrame(PyStackFrameInfo frameInfo) {

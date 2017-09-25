@@ -34,7 +34,7 @@ import java.util.List;
 public class DomExtensionsTest extends DomTestCase {
   private static final Key<Boolean> BOOL_KEY = Key.create("aaa");
 
-  public void testExtendAttributes() throws Throwable {
+  public void testExtendAttributes() {
     registerDomExtender(AttrDomExtender.class);
     assertEmpty(getCustomChildren(createElement("<a foo=\"xxx\"/>", MyElement.class)));
 
@@ -56,13 +56,13 @@ public class DomExtensionsTest extends DomTestCase {
     assertNotNull(element.getGenericInfo().getAttributeChildDescription("foo"));
   }
 
-  public void testCustomAttributeChildClass() throws Throwable {
+  public void testCustomAttributeChildClass() {
     registerDomExtender(AttrDomExtender3.class);
     final MyElement element = createElement("<a attr=\"xxx\"/>", MyElement.class);
     assertEquals("xxx", assertInstanceOf(assertOneElement(getCustomChildren(element)), MyAttribute.class).getXmlElementName());
   }
 
-  public void testUserData() throws Throwable {
+  public void testUserData() {
     registerDomExtender(AttrDomExtender3.class);
     final MyElement element = createElement("<a attr=\"xxx\"/>", MyElement.class);
     final DomAttributeChildDescription description = element.getGenericInfo().getAttributeChildDescription("xxx");
@@ -70,7 +70,7 @@ public class DomExtensionsTest extends DomTestCase {
     assertSame(Boolean.TRUE, description.getUserData(BOOL_KEY));
   }
 
-  public void testUseCustomConverter() throws Throwable {
+  public void testUseCustomConverter() {
     registerDomExtender(AttrDomExtender2.class);
     final MyElement myElement = createElement("<a attr=\"xxx\" xxx=\"zzz\" yyy=\"zzz\"/>", MyElement.class);
     assertUnorderedCollection(getCustomChildren(myElement), element -> {
@@ -96,7 +96,7 @@ public class DomExtensionsTest extends DomTestCase {
     });
   }
 
-  public void testFixedChildren() throws Throwable {
+  public void testFixedChildren() {
     registerDomExtender(FixedDomExtender.class);
     final MyElement myElement = createElement("<a attr=\"xxx\"><xxx>zzz</xxx><yyy attr=\"foo\"/><yyy attr=\"bar\"/></a>", MyElement.class);
     assertUnorderedCollection(getCustomChildren(myElement), element -> {
@@ -124,7 +124,7 @@ public class DomExtensionsTest extends DomTestCase {
     assertEquals(2, description.getCount());
   }
 
-  public void testCollectionChildren() throws Throwable {
+  public void testCollectionChildren() {
     registerDomExtender(CollectionDomExtender.class);
     final MyElement myElement = createElement("<a attr=\"xxx\"><xxx>zzz</xxx><xxx attr=\"foo\"/></a>", MyElement.class);
     assertUnorderedCollection(getCustomChildren(myElement), element -> {
@@ -137,7 +137,7 @@ public class DomExtensionsTest extends DomTestCase {
     assertNotNull(myElement.getGenericInfo().getCollectionChildDescription("xxx"));
   }
 
-  public void testCollectionAdders() throws Throwable {
+  public void testCollectionAdders() {
     registerDomExtender(CollectionDomExtender.class);
     final MyElement myElement = createElement("<a attr=\"xxx\"></a>", MyElement.class);
     final DomCollectionChildDescription description = myElement.getGenericInfo().getCollectionChildDescription("xxx");
@@ -148,7 +148,7 @@ public class DomExtensionsTest extends DomTestCase {
     assertSameElements(getCustomChildren(myElement), element0, element1, element2, element3);
   }
 
-  public void testCustomChildrenAccessFromExtender() throws Throwable {
+  public void testCustomChildrenAccessFromExtender() {
     registerDomExtender(MyCustomChildrenElement.class, CustomDomExtender.class);
     final MyCustomChildrenElement myElement = createElement("<a><xx/><yy/><concrete-child/><some-concrete-child/></a>", MyCustomChildrenElement.class);
     final DomCollectionChildDescription description = myElement.getGenericInfo().getCollectionChildDescription("xx");
@@ -159,7 +159,7 @@ public class DomExtensionsTest extends DomTestCase {
     assertNotNull(assertInstanceOf(myElement.getSomeConcreteChild(), MyConcreteElement.class).getXmlTag());
   }
 
-  public void testFirstChildRedefinitionOnExtending() throws Exception {
+  public void testFirstChildRedefinitionOnExtending() {
     registerDomExtender(MyCustomChildrenElement.class, ModestDomExtender.class);
 
     final MyCustomChildrenElement myElement = createElement("<a><concrete-child/><concrete-child/></a>", MyCustomChildrenElement.class);

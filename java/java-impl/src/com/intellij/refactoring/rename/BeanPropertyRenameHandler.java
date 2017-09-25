@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.beanProperties.BeanProperty;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.refactoring.openapi.impl.JavaRenameRefactoringImpl;
 import org.jetbrains.annotations.Contract;
@@ -91,7 +92,7 @@ public abstract class BeanPropertyRenameHandler implements RenameHandler {
     final PsiElement setterSubstitutor = substituteElementToRename(setter, editor);
     if (setterSubstitutor != null) {
       if (setterSubstitutor == setter) {
-        rename.addElement(setterSubstitutor, PropertyUtil.suggestSetterName(newName));
+        rename.addElement(setterSubstitutor, PropertyUtilBase.suggestSetterName(newName));
       }
       else {
         rename.addElement(setterSubstitutor, newName);
@@ -110,7 +111,7 @@ public abstract class BeanPropertyRenameHandler implements RenameHandler {
     final PsiElement getterSubstitutor = substituteElementToRename(getter, editor);
     if (getterSubstitutor != null) {
       if (getterSubstitutor == getter) {
-        rename.addElement(getterSubstitutor, PropertyUtil.suggestGetterName(newName, getter.getReturnType()));
+        rename.addElement(getterSubstitutor, PropertyUtilBase.suggestGetterName(newName, getter.getReturnType()));
       }
       else {
         rename.addElement(getterSubstitutor, newName);

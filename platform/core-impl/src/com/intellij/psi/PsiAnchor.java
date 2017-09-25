@@ -16,6 +16,7 @@
 
 package com.intellij.psi;
 
+import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -32,6 +33,8 @@ import com.intellij.psi.impl.smartPointers.SelfElementInfo;
 import com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
@@ -159,20 +162,13 @@ public abstract class PsiAnchor {
       return 0;
     }
 
-    final StubElement liveStub = psi.getStub();
+    StubElement liveStub = psi instanceof StubBasedPsiElementBase ? ((StubBasedPsiElementBase)psi).getGreenStub() : psi.getStub();
     if (liveStub != null) {
       return ((StubBase)liveStub).id;
     }
 
     PsiFileImpl file = (PsiFileImpl)psi.getContainingFile();
-    final StubTree stubTree = file.calcStubTree();
-    for (StubElement<?> stb : stubTree.getPlainList()) {
-      if (stb.getPsi() == psi) {
-        return ((StubBase)stb).id;
-      }
-    }
-
-    return -1; // it is possible via custom stub builder intentionally not producing stubs for stubbed elements
+    return file.calcTreeElement().getStubbedDescendants().indexOf((CompositeElement)psi.getNode());
   }
 
   private static class TreeRangeReference extends PsiAnchor {
@@ -405,18 +401,21 @@ public abstract class PsiAnchor {
       return null;
     }
     StubTree tree = fileImpl.getStubTree();
-
-    if (tree == null) {
-      if (fileImpl instanceof PsiFileImpl) {
-        // Note: as far as this is a realization of StubIndexReference fileImpl#getContentElementType() must be instance of IStubFileElementType
-        tree = ((PsiFileImpl)fileImpl).calcStubTree();
-      }
-      else {
-        if (throwIfNull) throw new AssertionError("Not PsiFileImpl: " + fileImpl.getClass());
-        return null;
-      }
+    if (tree != null) {
+      return findByStubs(index, elementType, throwIfNull, tree);
     }
+    
+    if (fileImpl instanceof PsiFileImpl) {
+      return findByAst(index, elementType, throwIfNull, ((PsiFileImpl)fileImpl).calcTreeElement());
+    }
+    else {
+      if (throwIfNull) throw new AssertionError("Not PsiFileImpl: " + fileImpl.getClass());
+      return null;
+    }
+  }
 
+  @Nullable
+  private static PsiElement findByStubs(int index, @NotNull IStubElementType elementType, boolean throwIfNull, StubTree tree) {
     List<StubElement<?>> list = tree.getPlainList();
     if (index >= list.size()) {
       if (throwIfNull) throw new AssertionError("Too large index: " + index + ">=" + list.size());
@@ -430,6 +429,22 @@ public abstract class PsiAnchor {
     }
 
     return stub.getPsi();
+  }
+  @Nullable
+  private static PsiElement findByAst(int index, @NotNull IStubElementType elementType, boolean throwIfNull, FileElement tree) {
+    List<CompositeElement> list = tree.getStubbedDescendants();
+    if (index >= list.size()) {
+      if (throwIfNull) throw new AssertionError("Too large index: " + index + ">=" + list.size());
+      return null;
+    }
+    CompositeElement node = list.get(index);
+
+    if (node.getElementType() != elementType) {
+      if (throwIfNull) throw new AssertionError("Element type mismatch: " + node.getElementType() + "!=" + elementType);
+      return null;
+    }
+
+    return node.getPsi();
   }
 
   public static class StubIndexReference extends PsiAnchor {

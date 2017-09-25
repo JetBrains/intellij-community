@@ -34,6 +34,7 @@ import com.intellij.openapi.roots.ui.configuration.LibrarySourceRootDetectorUtil
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -68,12 +69,16 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
   @Override
   public List<? extends RootDetector> getRootDetectors() {
     List<RootDetector> results = new ArrayList<>();
-    results.add(new FileTypeBasedRootFilter(OrderRootType.CLASSES, false, StdFileTypes.CLASS, "classes"));
-    results.add(new FileTypeBasedRootFilter(OrderRootType.CLASSES, true, StdFileTypes.CLASS, "jar directory"));
+    results.add(new DescendentBasedRootFilter(OrderRootType.CLASSES, false, "classes",
+                                              file -> StdFileTypes.CLASS.equals(file.getFileType())
+                                                      //some libraries store native libraries inside their JAR files and unpack them dynamically so we should detect such JARs as classes roots
+                                                      || file.getFileSystem() instanceof JarFileSystem && isNativeLibrary(file)));
+    results.add(DescendentBasedRootFilter.createFileTypeBasedFilter(OrderRootType.CLASSES, true, StdFileTypes.CLASS, "jar directory"));
     ContainerUtil.addAll(results, Extensions.getExtensions(LibrarySourceRootDetectorUtil.JAVA_SOURCE_ROOT_DETECTOR));
-    results.add(new FileTypeBasedRootFilter(OrderRootType.SOURCES, true, StdFileTypes.JAVA, "source archive directory"));
+    results.add(DescendentBasedRootFilter.createFileTypeBasedFilter(OrderRootType.SOURCES, true, StdFileTypes.JAVA, "source archive directory"));
     results.add(new JavadocRootDetector());
-    results.add(new AnnotationsRootFilter());
+    results.add(new DescendentBasedRootFilter(AnnotationOrderRootType.getInstance(), false, "external annotations",
+                                              file -> ExternalAnnotationsManager.ANNOTATIONS_XML.equals(file.getName())));
     results.add(new NativeLibraryRootFilter());
     return results;
   }
@@ -125,17 +130,6 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
           return true;
         }
       });
-    }
-  }
-
-  private static class AnnotationsRootFilter extends FileTypeBasedRootFilter {
-    private AnnotationsRootFilter() {
-      super(AnnotationOrderRootType.getInstance(), false, StdFileTypes.XML, "external annotations");
-    }
-
-    @Override
-    protected boolean isFileAccepted(VirtualFile virtualFile) {
-      return super.isFileAccepted(virtualFile) && virtualFile.getName().equals(ExternalAnnotationsManager.ANNOTATIONS_XML);
     }
   }
 

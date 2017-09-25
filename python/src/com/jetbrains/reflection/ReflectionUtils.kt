@@ -16,7 +16,6 @@
 package com.jetbrains.reflection
 
 import com.intellij.util.containers.HashMap
-import com.intellij.util.containers.SoftHashMap
 import java.beans.Introspector
 import java.beans.PropertyDescriptor
 import java.lang.ref.SoftReference
@@ -101,7 +100,7 @@ private fun KProperty<*>.isAnnotated(annotation: KClass<*>): Boolean {
 }
 
 
-private val membersCache: MutableMap<KClass<*>, SoftReference<Collection<KProperty<*>>>> = SoftHashMap()
+private val membersCache: MutableMap<KClass<*>, SoftReference<Collection<KProperty<*>>>> = com.intellij.util.containers.ContainerUtil.createSoftMap()
 
 private fun KClass<*>.memberPropertiesCached(): Collection<KProperty<*>> {
   synchronized(membersCache) {

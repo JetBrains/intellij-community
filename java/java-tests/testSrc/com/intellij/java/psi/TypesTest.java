@@ -47,7 +47,7 @@ public class TypesTest extends GenericsTestCase {
     }
   }
 
-  public void testSimpleStuff() throws Exception {
+  public void testSimpleStuff() {
     final JavaPsiFacadeEx psiManager = getJavaFacade();
     final PsiElementFactory factory = psiManager.getElementFactory();
     final PsiClass classA = psiManager.findClass("A");
@@ -80,7 +80,7 @@ public class TypesTest extends GenericsTestCase {
     assertFalse(objectIteratorType.equals(aListIteratorType));
   }
 
-  public void testRawTypes() throws Exception {
+  public void testRawTypes() {
     final JavaPsiFacadeEx psiManager = getJavaFacade();
     final PsiElementFactory factory = psiManager.getElementFactory();
     final PsiClass classA = psiManager.findClass("A");
@@ -106,7 +106,7 @@ public class TypesTest extends GenericsTestCase {
     assertEquals(rawIteratorType, methodCallType);
   }
 
-  public void testSubstWithInheritor() throws Exception {
+  public void testSubstWithInheritor() {
     final JavaPsiFacadeEx psiManager = getJavaFacade();
     final PsiElementFactory factory = psiManager.getElementFactory();
     final PsiClass classA = psiManager.findClass("A");
@@ -136,7 +136,7 @@ public class TypesTest extends GenericsTestCase {
     assertFalse(objectIteratorType.equals(integerIteratorType));
   }
 
-  public void testSimpleRawTypeInMethodArg() throws Exception {
+  public void testSimpleRawTypeInMethodArg() {
     final JavaPsiFacadeEx psiManager = getJavaFacade();
     final PsiElementFactory factory = psiManager.getElementFactory();
     final PsiClass classA = psiManager.findClass("A");
@@ -169,7 +169,7 @@ public class TypesTest extends GenericsTestCase {
 
 
 
-  public void testRawTypeInMethodArg() throws Exception {
+  public void testRawTypeInMethodArg() {
     final PsiClass classA = getJavaFacade().findClass("A");
     assertNotNull(classA);
 
@@ -184,7 +184,7 @@ public class TypesTest extends GenericsTestCase {
     assertEquals("test.List", methodFromList.getContainingClass().getQualifiedName());
   }
 
-  public void testBoundedParams() throws Exception {
+  public void testBoundedParams() {
     final JavaPsiFacadeEx psiManager = getJavaFacade();
     final PsiElementFactory factory = psiManager.getElementFactory();
     final PsiClass classA = psiManager.findClass("A");
@@ -203,7 +203,7 @@ public class TypesTest extends GenericsTestCase {
     assertTrue(varType.isAssignableFrom(initializerType));
   }
 
-  public void testRawTypeExtension() throws Exception {
+  public void testRawTypeExtension() {
     final JavaPsiFacadeEx psiManager = getJavaFacade();
     final PsiElementFactory factory = psiManager.getElementFactory();
     final PsiClass classA = psiManager.findClass("A");
@@ -239,7 +239,7 @@ public class TypesTest extends GenericsTestCase {
     assertEquals(typeT, type);
   }
 
-  public void testAssignableSubInheritor() throws Exception {
+  public void testAssignableSubInheritor() {
     final JavaPsiFacadeEx psiManager = getJavaFacade();
     final PsiElementFactory factory = psiManager.getElementFactory();
     final PsiClass classCollection = psiManager.findClass("test.Collection");
@@ -254,7 +254,7 @@ public class TypesTest extends GenericsTestCase {
     assertTrue(typeCollectionOfString.isAssignableFrom(typeListOfString));
   }
 
-  public void testComplexInheritance() throws Exception {
+  public void testComplexInheritance() {
     final JavaPsiFacadeEx psiManager = getJavaFacade();
     final PsiElementFactory factory = psiManager.getElementFactory();
     final PsiClass classA = psiManager.findClass("A");
@@ -271,7 +271,7 @@ public class TypesTest extends GenericsTestCase {
     assertTrue(collectionOfInteger.isAssignableFrom(type));
   }
 
-  public void testListListInheritance() throws Exception {
+  public void testListListInheritance() {
     final JavaPsiFacadeEx psiManager = getJavaFacade();
     final PsiElementFactory factory = psiManager.getElementFactory();
     final PsiClass classA = psiManager.findClass("A");
@@ -292,7 +292,7 @@ public class TypesTest extends GenericsTestCase {
     assertEquals(typeListOfInteger, type2);
   }
 
-  public void testSpaceInTypeParameterList() throws Exception {
+  public void testSpaceInTypeParameterList() {
     final JavaPsiFacadeEx psiManager = getJavaFacade();
     final PsiElementFactory factory = psiManager.getElementFactory();
     final PsiClass classA = psiManager.findClass("A");
@@ -306,7 +306,7 @@ public class TypesTest extends GenericsTestCase {
     assertEquals(typeListOfListOfInteger, type);
   }
 
-  public void testMethodTypeParameter() throws Exception {
+  public void testMethodTypeParameter() {
     final JavaPsiFacadeEx psiManager = getJavaFacade();
     final PsiElementFactory factory = psiManager.getElementFactory();
     final PsiClass classA = psiManager.findClass("A");
@@ -337,7 +337,7 @@ public class TypesTest extends GenericsTestCase {
             PsiUtil.isApplicable(methodSort, methodResolve.getSubstitutor(), methodCallExpression.getArgumentList()));
   }
 
-  public void testRawArrayTypes() throws Exception {
+  public void testRawArrayTypes() {
     final JavaPsiFacadeEx psiManager = getJavaFacade();
     final PsiElementFactory factory = psiManager.getElementFactory();
     final PsiClass classA = psiManager.findClass("A");
@@ -371,7 +371,7 @@ public class TypesTest extends GenericsTestCase {
     assertTrue(Comparing.equal(typeOfGetListOfArrayCall, typeRawList));
   }
 
-  public void testWildcardTypeParsing() throws Exception{
+  public void testWildcardTypeParsing() {
     final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule);
     final PsiClassType javaLangObject = PsiType.getJavaLangObject(myPsiManager, scope);
 
@@ -408,7 +408,7 @@ public class TypesTest extends GenericsTestCase {
     assertEquals(unboundedWildcard.getSuperBound(), PsiType.NULL);
   }
 
-  public void testWildcardTypesAssignable() throws Exception {
+  public void testWildcardTypesAssignable() {
     PsiClassType listOfExtendsBase = (PsiClassType)myJavaFacade.getElementFactory().createTypeFromText("test.List<? extends usages.Base>", null);
     PsiClassType.ClassResolveResult classResolveResult = listOfExtendsBase.resolveGenerics();
     PsiClass listClass = classResolveResult.getElement();
@@ -423,7 +423,7 @@ public class TypesTest extends GenericsTestCase {
     assertTrue(listOfExtendsBase.isAssignableFrom(listOfIntermediate));
   }
 
-  public void testEllipsisType() throws Exception {
+  public void testEllipsisType() {
     PsiElementFactory factory = myJavaFacade.getElementFactory();
     PsiMethod method = factory.createMethodFromText("void foo (int ... args) {}", null);
     PsiType paramType = method.getParameterList().getParameters()[0].getType();
@@ -436,7 +436,7 @@ public class TypesTest extends GenericsTestCase {
     assertTrue(typeFromText instanceof PsiEllipsisType);
   }
 
-  public void testBinaryNumericPromotion() throws Exception {
+  public void testBinaryNumericPromotion() {
     PsiElementFactory factory = myJavaFacade.getElementFactory();
     final PsiExpression conditional = factory.createExpressionFromText("b ? new Integer (0) : new Double(0.0)", null);
     assertEquals(PsiType.DOUBLE, conditional.getType());
@@ -444,7 +444,7 @@ public class TypesTest extends GenericsTestCase {
     assertEquals(PsiType.INT, shift.getType());
   }
 
-  public void testUnaryExpressionType() throws Exception {
+  public void testUnaryExpressionType() {
     final PsiElementFactory factory = myJavaFacade.getElementFactory();
     final PsiExpression plusPrefix = factory.createExpressionFromText("+Integer.valueOf(1)", null);
     assertEquals(PsiType.INT, plusPrefix.getType());

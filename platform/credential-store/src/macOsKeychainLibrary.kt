@@ -25,9 +25,7 @@ import gnu.trove.TIntObjectHashMap
 val isMacOsCredentialStoreSupported: Boolean
   get() = SystemInfo.isMacIntel64 && SystemInfo.isMacOSLeopard
 
-private val LIBRARY by lazy {
-  Native.loadLibrary("Security", MacOsKeychainLibrary::class.java) as MacOsKeychainLibrary
-}
+private val LIBRARY by lazy { Native.loadLibrary("Security", MacOsKeychainLibrary::class.java) }
 
 private const val errSecSuccess = 0
 private const val errSecItemNotFound = -25300

@@ -31,7 +31,7 @@ public class ConvertToStringLiteralTest extends JavaCodeInsightFixtureTestCase {
     myIntention = QuickFixBundle.message("convert.to.string.text");
   }
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     CodeInsightTestUtil.doIntentionTest(myFixture, myIntention, "Simple.java", "Simple_after.java");
   }
 

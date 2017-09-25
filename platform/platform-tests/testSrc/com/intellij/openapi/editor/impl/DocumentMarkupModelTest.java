@@ -47,7 +47,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Dmitry Avdeev
  */
 public class DocumentMarkupModelTest extends LightPlatformCodeInsightFixtureTestCase {
-  public void testInfoTestAttributes() throws Exception {
+  public void testInfoTestAttributes() {
     LanguageExtensionPoint<Annotator> extension = new LanguageExtensionPoint<>();
     extension.language="TEXT";
     extension.implementationClass = TestAnnotator.class.getName();
@@ -72,7 +72,7 @@ public class DocumentMarkupModelTest extends LightPlatformCodeInsightFixtureTest
     RangeHighlighterEx highlighter = model.addPersistentLineHighlighter(2, 0, null);
     new WriteCommandAction<Void>(getProject()){
       @Override
-      protected void run(@NotNull Result<Void> result) throws Throwable {
+      protected void run(@NotNull Result<Void> result) {
         document.deleteString(document.getLineStartOffset(1), document.getTextLength());
       }
     }.execute();

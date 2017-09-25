@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -53,7 +52,7 @@ public class MockRuntimeConfiguration extends LocatableConfigurationBase impleme
   }
 
   @Override
-  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
+  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
     return null;
   }
 

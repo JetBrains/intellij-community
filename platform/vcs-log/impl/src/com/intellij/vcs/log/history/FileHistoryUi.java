@@ -41,7 +41,7 @@ import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.index.IndexDataGetter;
 import com.intellij.vcs.log.impl.CommonUiProperties;
-import com.intellij.vcs.log.impl.VcsLogContentProvider;
+import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
@@ -226,7 +226,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       VcsLogUiImpl mainLogUi = VcsProjectLog.getInstance(myProject).getMainLogUi();
       if (mainLogUi != null) {
         showWarningWithLink(mainText + ".", "Search in Log.", () -> {
-          if (VcsLogContentProvider.selectLogUi(myProject, mainLogUi)) {
+          if (VcsLogContentUtil.selectLogUi(myProject, mainLogUi)) {
             if (commitId instanceof Hash) {
               mainLogUi.jumpToCommit((Hash)commitId,
                                      notNull(VcsUtil.getVcsRootFor(myProject, myPath)),

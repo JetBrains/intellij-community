@@ -24,28 +24,28 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
  *  @author dsl
  */
 public class ExtendsBoundListTest extends LightCodeInsightTestCase {
-  public void testRemoveBoundFromFront() throws Exception {
+  public void testRemoveBoundFromFront() {
     final PsiTypeParameter typeParameter = getTypeParameter();
     WriteCommandAction.runWriteCommandAction(null, () -> typeParameter.getExtendsList().getReferenceElements()[0].delete());
 
     check();
   }
 
-  public void testRemoveBoundFromEnd() throws Exception {
+  public void testRemoveBoundFromEnd() {
     final PsiTypeParameter typeParameter = getTypeParameter();
     ApplicationManager.getApplication().runWriteAction(() -> typeParameter.getExtendsList().getReferenceElements()[1].delete());
 
     check();
   }
 
-  public void testRemoveBoundFromMiddle() throws Exception {
+  public void testRemoveBoundFromMiddle() {
     final PsiTypeParameter typeParameter = getTypeParameter();
     ApplicationManager.getApplication().runWriteAction(() -> typeParameter.getExtendsList().getReferenceElements()[1].delete());
 
     check();
   }
 
-  public void testAddBoundInTheMiddle() throws Exception {
+  public void testAddBoundInTheMiddle() {
     final PsiTypeParameter typeParameter = getTypeParameter();
     final PsiReferenceList extendsList = typeParameter.getExtendsList();
     final PsiClass cloneableClass = getJavaFacade().findClass("java.lang.Cloneable");
@@ -58,7 +58,7 @@ public class ExtendsBoundListTest extends LightCodeInsightTestCase {
     check();
   }
 
-  public void testAddBoundInFront() throws Exception {
+  public void testAddBoundInFront() {
     final PsiTypeParameter typeParameter = getTypeParameter();
     final PsiReferenceList extendsList = typeParameter.getExtendsList();
     final PsiClass cloneableClass = getJavaFacade().findClass("java.lang.Cloneable");
@@ -71,7 +71,7 @@ public class ExtendsBoundListTest extends LightCodeInsightTestCase {
     check();
   }
 
-  public void testAddBoundInEnd() throws Exception {
+  public void testAddBoundInEnd() {
     final PsiTypeParameter typeParameter = getTypeParameter();
     final PsiReferenceList extendsList = typeParameter.getExtendsList();
     final PsiClass cloneableClass = getJavaFacade().findClass("java.lang.Cloneable");
@@ -84,7 +84,7 @@ public class ExtendsBoundListTest extends LightCodeInsightTestCase {
     check();
   }
 
-  public void testAddBound() throws Exception {
+  public void testAddBound() {
     final PsiTypeParameter typeParameter = getTypeParameter();
     final PsiReferenceList extendsList = typeParameter.getExtendsList();
     final PsiClass cloneableClass = getJavaFacade().findClass(CommonClassNames.JAVA_LANG_RUNNABLE);
@@ -97,21 +97,21 @@ public class ExtendsBoundListTest extends LightCodeInsightTestCase {
     check();
   }
 
-  private void check() throws Exception {
+  private void check() {
     outputFile(getTestName(true) + "_after.java");
   }
 
-  private PsiTypeParameter getTypeParameter() throws Exception {
+  private PsiTypeParameter getTypeParameter() {
     inputFile(getTestName(true) + ".java");
     final PsiClass aClass = ((PsiJavaFile)getFile()).getClasses()[0];
     return aClass.getTypeParameters()[0];
   }
 
-  private void outputFile(String filename) throws Exception {
+  private void outputFile(String filename) {
     checkResultByFile("/psi/impl/extendsBoundList/" + filename);
   }
 
-  private void inputFile(String filename) throws Exception {
+  private void inputFile(String filename) {
     configureByFile("/psi/impl/extendsBoundList/" + filename);
   }
 }

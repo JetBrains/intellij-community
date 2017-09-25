@@ -15,10 +15,10 @@
  */
 package org.jetbrains.idea.maven;
 
-import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.externalSystem.test.ExternalSystemTestCase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -38,7 +38,6 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
-import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +52,6 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -78,7 +76,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     try {
       Messages.setTestDialog(TestDialog.DEFAULT);
       removeFromLocalRepository("test");
-      PathKt.delete(BuildManager.getInstance().getBuildSystemDirectory());
+      ExternalSystemTestCase.deleteBuildSystemDirectory();
     }
     finally {
       myProjectsManager = null;
@@ -255,13 +253,13 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
     getRootManager(moduleName).orderEntries().withoutSdk().withoutModuleSourceEntries().exportedOnly().process(new RootPolicy<Object>() {
       @Override
-      public Object visitModuleOrderEntry(ModuleOrderEntry e, Object value) {
+      public Object visitModuleOrderEntry(@NotNull ModuleOrderEntry e, Object value) {
         actual.add(e.getModuleName());
         return null;
       }
 
       @Override
-      public Object visitLibraryOrderEntry(LibraryOrderEntry e, Object value) {
+      public Object visitLibraryOrderEntry(@NotNull LibraryOrderEntry e, Object value) {
         actual.add(e.getLibraryName());
         return null;
       }
@@ -373,7 +371,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     return ModuleRootManager.getInstance(getModule(module));
   }
 
-  protected void importProject(@NonNls String xml) throws IOException {
+  protected void importProject(@NonNls String xml) {
     createProjectPom(xml);
     importProject();
   }
@@ -394,7 +392,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     doImportProjects(true, Arrays.asList(files));
   }
 
-  protected void importProjectWithMaven3(@NonNls String xml) throws IOException {
+  protected void importProjectWithMaven3(@NonNls String xml) {
     createProjectPom(xml);
     importProjectWithMaven3();
   }
@@ -518,7 +516,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     e.execute(new EmptyProgressIndicator());
   }
 
-  protected void removeFromLocalRepository(String relativePath) throws IOException {
+  protected void removeFromLocalRepository(String relativePath) {
     FileUtil.delete(new File(getRepositoryPath(), relativePath));
   }
 
@@ -534,8 +532,8 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     return sdk;
   }
 
-  protected static Sdk createJdk(String versionName) {
-    return IdeaTestUtil.getMockJdk17(versionName);
+  protected static Sdk createJdk() {
+    return IdeaTestUtil.getMockJdk17();
   }
 
   protected static AtomicInteger configConfirmationForYesAnswer() {

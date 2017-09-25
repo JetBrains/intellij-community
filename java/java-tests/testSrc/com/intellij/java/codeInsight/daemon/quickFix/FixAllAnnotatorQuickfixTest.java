@@ -38,7 +38,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class FixAllAnnotatorQuickfixTest extends LightQuickFixTestCase {
-  public void testAnnotator() throws Exception {
+  public void testAnnotator() {
     Annotator annotator = new MyAnnotator();
     Language javaLanguage = StdFileTypes.JAVA.getLanguage();
     LanguageAnnotators.INSTANCE.addExplicitExtension(javaLanguage, annotator);

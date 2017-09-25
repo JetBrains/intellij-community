@@ -20,6 +20,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.spellchecker.dictionary.EditableDictionary;
 import com.intellij.spellchecker.dictionary.ProjectDictionary;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -35,6 +36,8 @@ public class ProjectDictionaryState implements PersistentStateComponent<ProjectD
   public List<DictionaryState> dictionaryStates = new ArrayList<>();
 
   private ProjectDictionary projectDictionary;
+
+  private final EventDispatcher<DictionaryStateListener> myDictListenerEventDispatcher = EventDispatcher.create(DictionaryStateListener.class);
 
   public ProjectDictionaryState() {
   }
@@ -84,10 +87,15 @@ public class ProjectDictionaryState implements PersistentStateComponent<ProjectD
       }
     }
     projectDictionary = new ProjectDictionary(dictionaries);
+    myDictListenerEventDispatcher.getMulticaster().dictChanged(projectDictionary);
   }
 
   @Override
   public String toString() {
     return "ProjectDictionaryState{" + "projectDictionary=" + projectDictionary + '}';
+  }
+
+  public void addProjectDictListener(DictionaryStateListener listener) {
+    myDictListenerEventDispatcher.addListener(listener);
   }
 }

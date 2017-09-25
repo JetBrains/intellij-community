@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Bas Leijdekkers
+ * Copyright 2008-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -30,7 +29,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class ChangeModifierFix extends InspectionGadgetsFix {
-  public static final String FAMILY_NAME = "Change modifier";
 
   @PsiModifier.ModifierConstant private final String modifierText;
 
@@ -47,15 +45,13 @@ public class ChangeModifierFix extends InspectionGadgetsFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return FAMILY_NAME;
+    return "Change modifier";
   }
 
   @Override
-  public void doFix(Project project, ProblemDescriptor descriptor)
-    throws IncorrectOperationException {
+  public void doFix(Project project, ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
-    final PsiModifierListOwner modifierListOwner =
-      PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class);
+    final PsiModifierListOwner modifierListOwner = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class);
     if (modifierListOwner == null) {
       return;
     }

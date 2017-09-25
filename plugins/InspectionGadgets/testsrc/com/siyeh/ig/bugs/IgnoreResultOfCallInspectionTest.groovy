@@ -19,6 +19,7 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.LightProjectDescriptor
 import com.siyeh.ig.LightInspectionTestCase
+import org.jetbrains.annotations.NotNull
 
 @SuppressWarnings(["ResultOfMethodCallIgnored", "UnusedReturnValue"])
 class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
@@ -28,6 +29,7 @@ class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
     return new IgnoreResultOfCallInspection()
   }
 
+  @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     return JAVA_8

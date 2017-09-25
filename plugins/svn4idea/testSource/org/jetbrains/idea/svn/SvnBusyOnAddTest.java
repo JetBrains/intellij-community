@@ -24,7 +24,6 @@ import junit.framework.TestCase;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
 import org.junit.Test;
-import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
@@ -70,11 +69,11 @@ public class SvnBusyOnAddTest extends TestCase {
       db.open(ISVNWCDb.SVNWCDbOpenMode.ReadWrite, new DefaultSVNOptions(), true, true);
       SVNWCContext context = new SVNWCContext(db, new ISVNEventHandler() {
         @Override
-        public void handleEvent(SVNEvent event, double progress) throws SVNException {
+        public void handleEvent(SVNEvent event, double progress) {
         }
 
         @Override
-        public void checkCancelled() throws SVNCancelException {
+        public void checkCancelled() {
         }
       });
 
@@ -171,11 +170,11 @@ public class SvnBusyOnAddTest extends TestCase {
       db.open(ISVNWCDb.SVNWCDbOpenMode.ReadWrite, new DefaultSVNOptions(), true, true);
       context = new SVNWCContext(db, new ISVNEventHandler() {
         @Override
-        public void handleEvent(SVNEvent event, double progress) throws SVNException {
+        public void handleEvent(SVNEvent event, double progress) {
         }
 
         @Override
-        public void checkCancelled() throws SVNCancelException {
+        public void checkCancelled() {
         }
       });
 

@@ -67,7 +67,7 @@ public class CopyClassTest extends CodeInsightTestCase {
   private void doTest(final String oldName, final String copyName) throws Exception {
     String root = JavaTestUtil.getJavaTestDataPath() + "/refactoring/copyClass/" + getTestName(true);
 
-    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17("java 1.5"));
+    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
     myRootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
 
     performAction(oldName, copyName);

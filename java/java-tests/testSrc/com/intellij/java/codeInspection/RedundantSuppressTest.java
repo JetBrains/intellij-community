@@ -60,23 +60,23 @@ public class RedundantSuppressTest extends InspectionTestCase {
     super.tearDown();
   }
 
-  public void testModuleInfo() throws Exception {
+  public void testModuleInfo() {
     doTest();
   }
 
-  public void testDefaultFile() throws Exception {
+  public void testDefaultFile() {
     doTest();
   }
 
-  public void testAlternativeIds() throws Exception {
+  public void testAlternativeIds() {
     doTest();
   }
 
-  public void testIgnoreUnused() throws Exception {
+  public void testIgnoreUnused() {
     doTest();
   }
 
-  public void testSuppressAll() throws Exception {
+  public void testSuppressAll() {
     try {
       ((RedundantSuppressInspection)myWrapper.getTool()).IGNORE_ALL = true;
       doTest();
@@ -86,14 +86,14 @@ public class RedundantSuppressTest extends InspectionTestCase {
     }
   }
 
-  public void testInjections() throws Exception {
+  public void testInjections() {
     MyTestInjector testInjector = new MyTestInjector(getPsiManager());
     testInjector.injectAll(getTestRootDisposable());
     
     doTest();
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest("redundantSuppress/" + getTestName(true), myWrapper,"java 1.5",true);
   }
 }

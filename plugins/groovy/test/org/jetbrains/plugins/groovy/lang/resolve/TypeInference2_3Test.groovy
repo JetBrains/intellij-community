@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve
 
-import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
@@ -216,6 +215,83 @@ class Thing {
     class Idea {
       public static void main(String[] args) {
         ["bc", "a", ].sort { i<caret>t.size() }
+      }
+    }""", "java.lang.String")
+  }
+
+  void testSmartTypeOnDef() {
+    doTest("""\
+    class Idea {
+      public static void main(String[] args) {
+       def aa = new Object()
+       aa = "as"
+       a<caret>a
+      }
+    }""", "java.lang.String")
+  }
+
+  void testSmartType() {
+    doTest("""\
+    class Idea {
+      public static void main(String[] args) {
+       Object aa = new Object()
+       aa = "as"
+       a<caret>a
+      }
+    }""", "java.lang.String")
+  }
+
+  void testSmartTypeIf() {
+    doTest("""\
+    import groovy.transform.CompileStatic
+
+    @CompileStatic
+    class Idea {
+      public static void main(String[] args) {
+       Object aa = new Object()
+       if (aa instanceof String) {
+        a<caret>a
+       }
+       
+      }
+    }""", "java.lang.String")
+  }
+
+  void testSmartTypeIfOnDef() {
+    doTest("""\
+    class Idea {
+      public static void main(String[] args) {
+       def aa = new Object()
+       if (aa instanceof String) {
+        a<caret>a
+       }
+       
+      }
+    }""", "java.lang.String")
+  }
+
+  void testSmartTypeAssert() {
+    doTest("""\
+    class Idea {
+      public static void main(String[] args) {
+       Object aa = new Object()
+       assert aa instanceof String) 
+       a<caret>a
+       
+       
+      }
+    }""", "java.lang.String")
+  }
+
+  void testSmartTypeAssertOnDef() {
+    doTest("""\
+    class Idea {
+      public static void main(String[] args) {
+       def aa = new Object()
+       assert aa instanceof String) 
+       a<caret>a
+       
+       
       }
     }""", "java.lang.String")
   }

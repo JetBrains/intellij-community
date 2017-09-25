@@ -32,7 +32,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class TarjanTest {
   @Test
-  public void testResultGraph() throws Exception {
+  public void testResultGraph() {
     List<List<InferenceVariablesOrder.InferenceGraphNode<Integer>>> tarjan = InferenceVariablesOrder.tarjan(getNodes());
     String messages = StringUtil.join(tarjan, nodes -> StringUtil.join(nodes, node -> String.valueOf(node.getValue()), ", "), "\n");
     assertEquals("[9]\n" +
@@ -43,7 +43,7 @@ public class TarjanTest {
   }
 
   @Test
-  public void testAcyclic() throws Exception {
+  public void testAcyclic() {
     List<InferenceVariablesOrder.InferenceGraphNode<Integer>> acyclicNodes = InferenceVariablesOrder.initNodes(getNodes());
     String messages = StringUtil.join(acyclicNodes, node -> String.valueOf(node.getValue()), "\n");
     assertEquals("[9]\n" +

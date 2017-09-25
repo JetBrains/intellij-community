@@ -24,7 +24,7 @@ public abstract class XPath2HighlightingTestBase extends TestBase {
     myFixture.enableInspections(RedundantTypeConversion.class);
   }
 
-  protected void doXPathHighlighting() throws Throwable {
+  protected void doXPathHighlighting() {
     final String name = getTestFileName();
     myFixture.testHighlighting(true, false, false, name + ".xpath2");
   }

@@ -13,4 +13,7 @@ public class JUnit3TestMethodIsPublicVoidNoArg extends junit.framework.TestCase 
   public void <warning descr="Test method 'testFour()' should probably not have parameters">testFour</warning>(int i) {}
 
   public void testFive() {}
+  
+  //ignore when method doesn't look like test anymore
+  void testSix(int i) {}
 }

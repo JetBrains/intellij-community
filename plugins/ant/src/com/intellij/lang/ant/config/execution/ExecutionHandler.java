@@ -225,7 +225,7 @@ public final class ExecutionHandler {
     handler.addProcessListener(new ProcessAdapter() {
       private final StringBuilder myUnprocessedStdErr = new StringBuilder();
 
-      public void onTextAvailable(ProcessEvent event, Key outputType) {
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         if (outputType == ProcessOutputTypes.STDERR) {
           final String text = event.getText();
           synchronized (myUnprocessedStdErr) {
@@ -234,7 +234,7 @@ public final class ExecutionHandler {
         }
       }
 
-      public void processTerminated(ProcessEvent event) {
+      public void processTerminated(@NotNull ProcessEvent event) {
         final long buildTime = System.currentTimeMillis() - startTime;
         checkCancelTask.cancel();
         parser.setStopped(true);

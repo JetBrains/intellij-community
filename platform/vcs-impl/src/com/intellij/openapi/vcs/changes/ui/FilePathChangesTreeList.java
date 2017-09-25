@@ -35,12 +35,12 @@ public class FilePathChangesTreeList extends ChangesTreeList<FilePath> {
     return TreeModelBuilder.buildFromFilePaths(myProject, isShowFlatten(), changes);
   }
 
-  protected List<FilePath> getSelectedObjects(final ChangesBrowserNode<FilePath> node) {
+  protected List<FilePath> getSelectedObjects(final ChangesBrowserNode<?> node) {
     return node.getAllFilePathsUnder();
   }
 
   @Nullable
-  protected FilePath getLeadSelectedObject(final ChangesBrowserNode node) {
+  protected FilePath getLeadSelectedObject(final ChangesBrowserNode<?> node) {
     Object userObject = node.getUserObject();
     return userObject instanceof FilePath ? (FilePath)userObject : null;
   }

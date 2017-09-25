@@ -63,7 +63,7 @@ public class SequenceIteratorTest extends TestCase {
   }
 
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     final Iterator<Integer> iterator = compose(Arrays.asList(iter(arr1), iter(arr2), iter(arr3)));
     int cnt = 0;
     while (iterator.hasNext()) {
@@ -77,7 +77,7 @@ public class SequenceIteratorTest extends TestCase {
     return ContainerUtil.concatIterators(iterators);
   }
 
-  public void testOne() throws Exception {
+  public void testOne() {
     final Iterator<Integer> iterator = compose(Arrays.asList(iter(arr1)));
     int cnt = 0;
     while (iterator.hasNext()) {
@@ -87,7 +87,7 @@ public class SequenceIteratorTest extends TestCase {
     Assert.assertEquals(arr1.length, cnt);
   }
 
-  public void testOneOne() throws Exception {
+  public void testOneOne() {
     final Iterator<Integer> iterator = compose(Arrays.asList(iter(new Integer[]{1})));
     int cnt = 0;
     while (iterator.hasNext()) {
@@ -97,7 +97,7 @@ public class SequenceIteratorTest extends TestCase {
     Assert.assertEquals(1, cnt);
   }
 
-  public void testEmpty() throws Exception {
+  public void testEmpty() {
     final Iterator<Integer> iterator = compose(Arrays.asList(iter(new Integer[]{})));
     int cnt = 0;
     while (iterator.hasNext()) {
@@ -107,7 +107,7 @@ public class SequenceIteratorTest extends TestCase {
     Assert.assertEquals(0, cnt);
   }
 
-  public void testManyEmpty() throws Exception {
+  public void testManyEmpty() {
     final Iterator<Integer> iterator =
       compose(Arrays.asList(iter(new Integer[]{}), iter(new Integer[]{}), iter(new Integer[]{})));
     int cnt = 0;
@@ -118,7 +118,7 @@ public class SequenceIteratorTest extends TestCase {
     Assert.assertEquals(0, cnt);
   }
 
-  public void testRemoveSimple() throws Exception {
+  public void testRemoveSimple() {
     final ArrayList<Integer> list1 = new ArrayList<>(Arrays.asList(arr1));
     final ArrayList<Integer> list2 = new ArrayList<>(Arrays.asList(arr2));
     final ArrayList<Integer> list3 = new ArrayList<>(Arrays.asList(arr3));
@@ -138,7 +138,7 @@ public class SequenceIteratorTest extends TestCase {
     Assert.assertTrue(! list3.contains(103));
   }
 
-  public void testRemoveAfterLast() throws Exception {
+  public void testRemoveAfterLast() {
     final ArrayList<Integer> list1 = new ArrayList<>(Arrays.asList(arr1));
     final Iterator<Integer> it1 = list1.iterator();
     while (it1.hasNext()) {
@@ -160,7 +160,7 @@ public class SequenceIteratorTest extends TestCase {
     Assert.assertTrue(! list3.contains(105));
   }
 
-  public void testRemoveOnlyOne() throws Exception {
+  public void testRemoveOnlyOne() {
     final ArrayList<Integer> list1 = new ArrayList<>(Arrays.asList(new Integer[]{1}));
     final Iterator<Integer> iterator = compose(Arrays.asList(list1.iterator()));
     iterator.next();
@@ -168,7 +168,7 @@ public class SequenceIteratorTest extends TestCase {
     Assert.assertTrue(list1.isEmpty());
   }
 
-  public void testIterateWithEmptyInside() throws Exception {
+  public void testIterateWithEmptyInside() {
     final Iterator<Integer> iterator = compose(Arrays.asList(iter(arr1), iter(new Integer[]{}), iter(arr3)));
     int cnt = 0;
     int sum = 0;
@@ -181,7 +181,7 @@ public class SequenceIteratorTest extends TestCase {
     Assert.assertEquals(530, sum);
   }
 
-  public void testRemoveIfNextNotCalled() throws Exception {
+  public void testRemoveIfNextNotCalled() {
     final ArrayList<Integer> list1 = new ArrayList<>(Arrays.asList(new Integer[]{1}));
     final Iterator<Integer> iterator = compose(Arrays.asList(list1.iterator()));
     try {
@@ -192,7 +192,7 @@ public class SequenceIteratorTest extends TestCase {
     }
   }
 
-  public void testRemoveTwice() throws Exception {
+  public void testRemoveTwice() {
     final ArrayList<Integer> list1 = new ArrayList<>(Arrays.asList(new Integer[]{1, 2, 3, 4, 5}));
     final Iterator<Integer> iterator = compose(Arrays.asList(list1.iterator()));
     try {
@@ -205,7 +205,7 @@ public class SequenceIteratorTest extends TestCase {
     }
   }
 
-  public void testRemoveAll() throws Exception {
+  public void testRemoveAll() {
     final ArrayList<Integer> list1 = new ArrayList<>(Arrays.asList(1, 2));
     final ArrayList<Integer> list2 = new ArrayList<>(Arrays.asList(3, 4));
     final ArrayList<Integer> list3 = new ArrayList<>(Arrays.asList(5, 6));
@@ -221,7 +221,7 @@ public class SequenceIteratorTest extends TestCase {
     Assert.assertTrue(list3.isEmpty());
   }
 
-  public void testRemoveAllWithEmptyInside() throws Exception {
+  public void testRemoveAllWithEmptyInside() {
     final ArrayList<Integer> list1 = new ArrayList<>(Arrays.asList(1, 2));
     final ArrayList<Integer> list2 = new ArrayList<>();
     final ArrayList<Integer> list3 = new ArrayList<>(Arrays.asList(5, 6));
@@ -237,7 +237,7 @@ public class SequenceIteratorTest extends TestCase {
     Assert.assertTrue(list3.isEmpty());
   }
 
-  public void testRemoveLastAndFirstINNext() throws Exception {
+  public void testRemoveLastAndFirstINNext() {
     final ArrayList<Integer> list1 = new ArrayList<>(Arrays.asList(1, 2));
     final ArrayList<Integer> list2 = new ArrayList<>(Arrays.asList(3, 4));
     final ArrayList<Integer> list3 = new ArrayList<>(Arrays.asList(5, 6));

@@ -491,7 +491,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       if (showProgress && indicator != null) {
         handler.addProcessListener(new ProcessAdapter() {
           @Override
-          public void onTextAvailable(ProcessEvent event, Key outputType) {
+          public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
             if (outputType == ProcessOutputTypes.STDOUT || outputType == ProcessOutputTypes.STDERR) {
               for (String line : StringUtil.splitByLines(event.getText())) {
                 final String trimmed = line.trim();

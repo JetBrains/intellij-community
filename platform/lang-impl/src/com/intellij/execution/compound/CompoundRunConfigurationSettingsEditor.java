@@ -35,12 +35,12 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -49,7 +49,6 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
   private final RunManagerImpl myRunManager;
   private final SortedListModel<RunConfiguration> myModel;
   private CompoundRunConfiguration mySnapshot;
-
 
   public CompoundRunConfigurationSettingsEditor(@NotNull Project project) {
     myRunManager = RunManagerImpl.getInstanceImpl(project);
@@ -81,9 +80,10 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
       }
     }
     if (candidate instanceof CompoundRunConfiguration) {
-      Set<RunConfiguration> set = ((CompoundRunConfiguration)candidate).getSetToRun();
-      for (RunConfiguration configuration : set) {
-        if (!canBeAdded(configuration, root)) return false;
+      for (RunConfiguration configuration : ((CompoundRunConfiguration)candidate).getConfigurations()) {
+        if (!canBeAdded(configuration, root)) {
+          return false;
+        }
       }
     }
     return true;
@@ -92,23 +92,24 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
   @Override
   protected void resetEditorFrom(@NotNull CompoundRunConfiguration compoundRunConfiguration) {
     myModel.clear();
-    myModel.addAll(compoundRunConfiguration.getSetToRun());
+    myModel.addAll(compoundRunConfiguration.getConfigurations());
     mySnapshot = compoundRunConfiguration;
   }
 
   @Override
-  protected void applyEditorTo(@NotNull CompoundRunConfiguration s) throws ConfigurationException {
-    Set<RunConfiguration> checked = new HashSet<>();
+  protected void applyEditorTo(@NotNull CompoundRunConfiguration compoundConfiguration) throws ConfigurationException {
+    Set<RunConfiguration> checked = new THashSet<>();
     for (int i = 0; i < myModel.getSize(); i++) {
       RunConfiguration configuration = myModel.get(i);
         String message =
           LangBundle.message("compound.run.configuration.cycle", configuration.getType().getDisplayName(), configuration.getName());
-        if (!canBeAdded(configuration, s)) throw new ConfigurationException(message);
+        if (!canBeAdded(configuration, compoundConfiguration)) {
+          throw new ConfigurationException(message);
+        }
+
         checked.add(configuration);
     }
-    Set<RunConfiguration> toRun = s.getSetToRun();
-    toRun.clear();
-    toRun.addAll(checked);
+    compoundConfiguration.setConfigurations(checked);
   }
 
   @NotNull
@@ -126,7 +127,7 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
         }
 
         final List<RunConfiguration> configurations = ContainerUtil.filter(all,
-                                                                           configuration -> !mySnapshot.getSetToRun().contains(configuration) && canBeAdded(configuration, mySnapshot));
+                                                                           configuration -> !mySnapshot.getConfigurations().contains(configuration) && canBeAdded(configuration, mySnapshot));
         JBPopupFactory.getInstance().createListPopup(new MultiSelectionListPopupStep<RunConfiguration>(null, configurations){
           @Nullable
           @Override

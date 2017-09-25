@@ -45,7 +45,6 @@ import com.intellij.testFramework.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,16 +65,16 @@ public abstract class BaseConfigurationTestCase extends IdeaTestCase {
     super.tearDown();
   }
 
-  protected void addModule(String path) throws IOException {
+  protected void addModule(String path) {
     addModule(path, true);
   }
 
-  protected void addModule(String path, boolean addSource) throws IOException {
+  protected void addModule(String path, boolean addSource) {
     VirtualFile module1Content = findFile(path);
     createModule(module1Content, addSource);
   }
 
-  protected void createModule(VirtualFile module1Content, boolean addSource) throws IOException {
+  protected void createModule(VirtualFile module1Content, boolean addSource) {
     Module module = createEmptyModule();
     if (addSource) {
       PsiTestUtil.addSourceRoot(module, module1Content, true);
@@ -96,7 +95,7 @@ public abstract class BaseConfigurationTestCase extends IdeaTestCase {
     ModuleManager.getInstance(myProject).disposeModule(missingModule);
   }
 
-  protected Module createEmptyModule() throws IOException {
+  protected Module createEmptyModule() {
     Module module = createTempModule();
     myModulesToDispose.add(module);
     return module;

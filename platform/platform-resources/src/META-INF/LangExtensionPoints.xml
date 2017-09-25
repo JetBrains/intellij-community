@@ -462,7 +462,7 @@
     <extensionPoint name="runDashboardContributor"
                     interface="com.intellij.execution.dashboard.RunDashboardContributor"/>
     <extensionPoint name="runDashboardGroupingRule"
-                    interface="com.intellij.execution.dashboard.DashboardGroupingRule"/>
+                    interface="com.intellij.execution.dashboard.RunDashboardGroupingRule"/>
 
     <extensionPoint name="hectorComponentProvider" interface="com.intellij.openapi.editor.HectorComponentPanelsProvider"
                     area="IDEA_PROJECT"/>
@@ -882,6 +882,7 @@
 
     <extensionPoint name="goto.nonProjectScopeDisabler" beanClass="com.intellij.ide.actions.NonProjectScopeDisablerEP"/>
     <extensionPoint name="searchEverywhereClassifier" interface="com.intellij.ide.actions.SearchEverywhereClassifier"/>
+    <extensionPoint name="gotoFileCustomizer" interface="com.intellij.ide.util.gotoByName.GotoFileCustomizer"/>
     <extensionPoint qualifiedName="com.intellij.equivalenceDescriptorProvider"
                     interface="com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider"/>
 
@@ -912,6 +913,10 @@
 
     <extensionPoint name="breadcrumbsInfoProvider" interface="com.intellij.ui.breadcrumbs.BreadcrumbsProvider"/>
 
+    <extensionPoint name="filetype.prebuiltStubsProvider"
+                    beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.psi.stubs.PrebuiltStubsProvider"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>
 

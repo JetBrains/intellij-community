@@ -59,7 +59,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
                                                     final PsiType toType) {
     final RulesProvider provider = new RulesProvider() {
       @Override
-      public PsiType migrationType(PsiElement context) throws Exception {
+      public PsiType migrationType(PsiElement context) {
         return toType;
       }
 
@@ -90,7 +90,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
   protected void doTestFieldsType(@NotNull String className, @NotNull final PsiType migrationType, final String... fieldNames) {
     final RulesProvider provider = new RulesProvider() {
       @Override
-      public PsiType migrationType(PsiElement context) throws Exception {
+      public PsiType migrationType(PsiElement context) {
         return migrationType;
       }
 
@@ -116,7 +116,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
                                   final PsiType migrationType) {
     final RulesProvider provider = new RulesProvider() {
       @Override
-      public PsiType migrationType(PsiElement context) throws Exception {
+      public PsiType migrationType(PsiElement context) {
         return migrationType;
       }
 
@@ -136,7 +136,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
   protected void doTestFirstParamType(@NonNls final String methodName, String className, final PsiType migrationType) {
     final RulesProvider provider = new RulesProvider() {
       @Override
-      public PsiType migrationType(PsiElement context) throws Exception {
+      public PsiType migrationType(PsiElement context) {
         return migrationType;
       }
 
@@ -215,7 +215,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
   }
 
   interface RulesProvider {
-    PsiType migrationType(PsiElement context) throws Exception;
+    PsiType migrationType(PsiElement context);
 
     default PsiElement victim(PsiClass aClass) {
       fail("You need to override one of victim(PsiClass) or victims(PsiClass) methods");

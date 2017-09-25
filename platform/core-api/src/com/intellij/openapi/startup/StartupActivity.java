@@ -21,8 +21,9 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
- *
- * This may implement {@link com.intellij.openapi.project.DumbAware}.
+ * <p>
+ * If the activity implements {@link com.intellij.openapi.project.DumbAware} it will be started in a pooled thread under 'Loading Project' dialog,
+ * otherwise it will be started in the dispatch thread after the initialization
  */
 public interface StartupActivity {
 

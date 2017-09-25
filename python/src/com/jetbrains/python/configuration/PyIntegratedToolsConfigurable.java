@@ -39,7 +39,6 @@ import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.FileContentUtilCore;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.ReSTService;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
@@ -78,6 +77,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   private JCheckBox analyzeDoctest;
   private JPanel myDocStringsPanel;
   private JPanel myRestPanel;
+  private JCheckBox renderExternal;
 
   public PyIntegratedToolsConfigurable(@NotNull Module module) {
     myModule = module;
@@ -99,6 +99,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     myWorkDir.setText(service.getWorkdir());
     txtIsRst.setSelected(service.txtIsRst());
     analyzeDoctest.setSelected(myDocumentationSettings.isAnalyzeDoctest());
+    renderExternal.setSelected(myDocumentationSettings.isRenderExternalDocumentation());
     myRequirementsPathField.addBrowseFolderListener("Choose path to the package requirements file:", null, myProject,
                                                     FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
     myRequirementsPathField.setText(getRequirementsPath());
@@ -207,6 +208,9 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     if (analyzeDoctest.isSelected() != myDocumentationSettings.isAnalyzeDoctest()) {
       return true;
     }
+    if (renderExternal.isSelected() != myDocumentationSettings.isRenderExternalDocumentation()) {
+      return true;
+    }
     if (!ReSTService.getInstance(myModule).getWorkdir().equals(myWorkDir.getText())) {
       return true;
     }
@@ -235,6 +239,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
       FileContentUtil.reparseFiles(myProject, Lists.newArrayList(files), false);
     }
     myModel.apply();
+    myDocumentationSettings.setRenderExternalDocumentation(renderExternal.isSelected());
     myDocumentationSettings.setFormat((DocStringFormat)myDocstringFormatComboBox.getSelectedItem());
     final ReSTService reSTService = ReSTService.getInstance(myModule);
     reSTService.setWorkdir(myWorkDir.getText());
@@ -271,6 +276,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     myWorkDir.setText(ReSTService.getInstance(myModule).getWorkdir());
     txtIsRst.setSelected(ReSTService.getInstance(myModule).txtIsRst());
     analyzeDoctest.setSelected(myDocumentationSettings.isAnalyzeDoctest());
+    renderExternal.setSelected(myDocumentationSettings.isRenderExternalDocumentation());
     myRequirementsPathField.setText(getRequirementsPath());
   }
 

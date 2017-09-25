@@ -15,7 +15,7 @@ public class GuardBlockTest extends LightPlatformCodeInsightFixtureTestCase {
     return document.createGuardedBlock(start, end);
   }
 
-  public void testZero() throws Exception {
+  public void testZero() {
     myFixture.configureByText("x.txt", "xxxx");
     RangeMarker guard = createGuard(0, 0);
     guard.setGreedyToLeft(true);
@@ -24,14 +24,14 @@ public class GuardBlockTest extends LightPlatformCodeInsightFixtureTestCase {
     checkCanTypeIn(1);
   }
 
-  public void testInTheMiddle() throws Exception {
+  public void testInTheMiddle() {
     myFixture.configureByText("x.txt", "xxxxxxxx");
     createGuard(1, 4);
     checkUnableToTypeIn(2);
     checkCanTypeIn(0);
   }
 
-  public void testGreedy() throws Exception {
+  public void testGreedy() {
     myFixture.configureByText("x.txt", "012345678");
     {
       RangeMarker guard = createGuard(0, 5);
@@ -46,7 +46,7 @@ public class GuardBlockTest extends LightPlatformCodeInsightFixtureTestCase {
     checkCanTypeIn(5);
     checkUnableToTypeIn(0);
   }
-  public void testGreedyEnd() throws Exception {
+  public void testGreedyEnd() {
     myFixture.configureByText("x.txt", "012345678");
     {
       RangeMarker guard = createGuard(0, 5);
@@ -75,7 +75,7 @@ public class GuardBlockTest extends LightPlatformCodeInsightFixtureTestCase {
     myFixture.type("yy");
   }
 
-  public void testNoCompletion() throws Exception {
+  public void testNoCompletion() {
     String text = "abc abd a<caret> abx";
     myFixture.configureByText("x.txt", text);
     int offset = myFixture.getEditor().getCaretModel().getOffset();

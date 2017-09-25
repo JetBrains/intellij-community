@@ -24,6 +24,7 @@ import com.jetbrains.python.debugger.PositionConverterProvider;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyLocalPositionConverter;
 import com.jetbrains.python.debugger.PyPositionConverter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.OutputStream;
@@ -38,22 +39,22 @@ public class PyConsoleDebugProcessHandler extends ProcessHandler implements Posi
     myConsoleProcessHandler = processHandler;
     processHandler.addProcessListener(new ProcessListener() {
       @Override
-      public void startNotified(ProcessEvent event) {
+      public void startNotified(@NotNull ProcessEvent event) {
 
       }
 
       @Override
-      public void processTerminated(ProcessEvent event) {
+      public void processTerminated(@NotNull ProcessEvent event) {
         PyConsoleDebugProcessHandler.this.notifyProcessTerminated(event.getExitCode());
       }
 
       @Override
-      public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
+      public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
 
       }
 
       @Override
-      public void onTextAvailable(ProcessEvent event, Key outputType) {
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
       }
     });
 

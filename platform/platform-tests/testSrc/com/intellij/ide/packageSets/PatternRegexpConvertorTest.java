@@ -8,7 +8,7 @@ import com.intellij.psi.search.scope.packageSet.FilePatternPackageSet;
 import junit.framework.TestCase;
 
 public class PatternRegexpConvertorTest extends TestCase {
-   public void testConvertToRegexp() throws Exception {
+   public void testConvertToRegexp() {
      assertEquals("a\\.[^\\.]*", FilePatternPackageSet.convertToRegexp("a.*", '.'));
      assertEquals("a\\.(.*\\.)?[^\\.]*", FilePatternPackageSet.convertToRegexp("a..*", '.'));
      assertEquals("a\\/[^\\/]*", FilePatternPackageSet.convertToRegexp("a/*", '/'));

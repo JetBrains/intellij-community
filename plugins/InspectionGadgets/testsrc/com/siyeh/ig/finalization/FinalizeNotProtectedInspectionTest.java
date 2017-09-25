@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class FinalizeNotProtectedInspectionTest extends LightInspectionTestCase {
 
-  public void testFinalizeNotProtected() throws Exception {
+  public void testFinalizeNotProtected() {
     doTest();
   }
 

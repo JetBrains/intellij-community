@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.util.concurrency.Semaphore;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -50,7 +51,7 @@ public abstract class AbstractToolBeforeRunTask<ToolBeforeRunTask extends Abstra
   }
 
   @Override
-  public void writeExternal(Element element) {
+  public void writeExternal(@NotNull Element element) {
     super.writeExternal(element);
     if (myToolActionId != null) {
       element.setAttribute(ACTION_ID_ATTRIBUTE, myToolActionId);
@@ -58,7 +59,7 @@ public abstract class AbstractToolBeforeRunTask<ToolBeforeRunTask extends Abstra
   }
 
   @Override
-  public void readExternal(Element element) {
+  public void readExternal(@NotNull Element element) {
     super.readExternal(element);
     myToolActionId = element.getAttributeValue(ACTION_ID_ATTRIBUTE);
   }
@@ -77,17 +78,23 @@ public abstract class AbstractToolBeforeRunTask<ToolBeforeRunTask extends Abstra
   }
 
   public boolean execute(final DataContext context, final long executionId) {
+    T tool = findCorrespondingTool();
+    if (tool != null && !tool.isEnabled()) {
+      return true;
+    }
+    
     final Semaphore targetDone = new Semaphore();
     final Ref<Boolean> result = new Ref<>(false);
 
     try {
       ApplicationManager.getApplication().invokeAndWait(() -> ToolAction.runTool(myToolActionId, context, null, executionId, new ProcessAdapter() {
-        public void startNotified(final ProcessEvent event) {
+        @Override
+        public void startNotified(@NotNull final ProcessEvent event) {
           targetDone.down();
         }
 
         @Override
-        public void processTerminated(ProcessEvent event) {
+        public void processTerminated(@NotNull ProcessEvent event) {
           result.set(event.getExitCode() == 0);
           targetDone.up();
         }

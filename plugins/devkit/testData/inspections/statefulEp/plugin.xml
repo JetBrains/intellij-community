@@ -1,10 +1,13 @@
 <idea-plugin>
   <extensionPoints>
     <extensionPoint name="ep" beanClass="EP"/>
+    <extensionPoint name="projectService" beanClass="SD"/>
   </extensionPoints>
   <extensions>
     <ep implementation="Ext"/>
     <ep implementation="NonFix$Ext2"/>
     <ep implementation="ProjectComp"/>
+    <ep implementation="ProjectComp"/>
+    <projectService serviceImplementation="ProjectService"/>
   </extensions>
 </idea-plugin>

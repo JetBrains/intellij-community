@@ -40,6 +40,7 @@
   <depends>com.intellij.modules.lang</depends>
   <depends>org.intellij.groovy</depends>
   <depends optional="true" config-file="gradle-maven-integration.xml">org.jetbrains.idea.maven</depends>
+  <depends optional="true" config-file="gradle-coverage-integration.xml">com.intellij.modules.coverage</depends>
 
   <resource-bundle>i18n.GradleBundle</resource-bundle>
 
@@ -84,13 +85,15 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-
-    <projectTaskRunner implementation="org.jetbrains.plugins.gradle.execution.build.GradleProjectTaskRunner"/>
+    <projectTaskRunner implementation="org.jetbrains.plugins.gradle.execution.build.GradleProjectTaskRunner" id="gradle" order="first"/>
     <postStartupActivity implementation="org.jetbrains.plugins.gradle.service.project.GradleStartupActivity"/>
 
     <orderEnumerationHandlerFactory implementation="org.jetbrains.plugins.gradle.execution.GradleOrderEnumeratorHandler$FactoryImpl"/>
     <compileServer.plugin classpath="gradle-jps-plugin.jar"/>
     <consoleFilterProvider implementation="org.jetbrains.plugins.gradle.execution.GradleConsoleFilterProvider"/>
+    <stacktrace.fold substring="at org.gradle."/>
+    <stacktrace.fold substring="at org.jetbrains.plugins.gradle."/>
+    <stacktrace.fold substring="at com.intellij.openapi.externalSystem."/>
     <buildProcess.parametersProvider implementation="org.jetbrains.plugins.gradle.compiler.GradleBuildProcessParametersProvider"/>
 
     <resolveScopeEnlarger implementation="org.jetbrains.plugins.gradle.config.GradleBuildClasspathResolveScopeEnlarger"/>
@@ -106,8 +109,10 @@
                               order="last"/>
     <runConfigurationExtension implementation="org.jetbrains.plugins.gradle.execution.ProgramRunConfigurationExtension"/>
 
-    <externalSystemExecutionConsoleManager implementation="org.jetbrains.plugins.gradle.execution.GradleExecutionConsoleManager" order="last"/>
-    <externalSystemExecutionConsoleManager implementation="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsoleManager"/>
+    <externalSystemExecutionConsoleManager implementation="org.jetbrains.plugins.gradle.execution.GradleExecutionConsoleManager"
+                                           id="gradle"/>
+    <externalSystemExecutionConsoleManager
+        implementation="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsoleManager" id="gradleTest" order="before gradle"/>
     <externalSystemWorkspaceContributor implementation="org.jetbrains.plugins.gradle.service.project.GradleWorkspaceContributor"/>
     <projectImportProvider implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportProvider"/>
     <projectImportBuilder implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportBuilder"/>

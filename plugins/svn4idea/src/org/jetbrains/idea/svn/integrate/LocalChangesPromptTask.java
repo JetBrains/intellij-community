@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.FilePath;
@@ -28,7 +29,9 @@ import com.intellij.util.FilePathByPathComparator;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.history.SvnChangeList;
+import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,17 +42,17 @@ import java.util.Set;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.util.Conditions.alwaysTrue;
-import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vcs.VcsBundle.message;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
 import static com.intellij.util.containers.ContainerUtil.sorted;
 import static java.util.stream.Collectors.toSet;
+import static org.jetbrains.idea.svn.SvnUtil.*;
 import static org.jetbrains.idea.svn.integrate.Intersection.isEmpty;
 import static org.jetbrains.idea.svn.integrate.LocalChangesAction.continueMerge;
-import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.append;
-import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.getRelativePath;
 
 public class LocalChangesPromptTask extends BaseMergeTask {
+
+  private static final Logger LOG = Logger.getInstance(LocalChangesPromptTask.class);
 
   @Nullable private final List<SvnChangeList> myChangeListsToMerge;
   @NotNull private final Runnable myCallback;
@@ -63,11 +66,18 @@ public class LocalChangesPromptTask extends BaseMergeTask {
   }
 
   @Nullable
-  private File getLocalPath(String repositoryRelativePath) {
-    String absoluteUrl = append(myMergeContext.getWcInfo().getRepositoryRoot(), repositoryRelativePath);
-    String sourceRelativePath = getRelativePath(myMergeContext.getSourceUrl(), absoluteUrl);
+  private File getLocalPath(@NotNull String repositoryRelativePath) {
+    try {
+      SVNURL url = append(myMergeContext.getWcInfo().getRepoUrl(), repositoryRelativePath);
 
-    return !isEmptyOrSpaces(sourceRelativePath) ? new File(myMergeContext.getWcInfo().getPath(), sourceRelativePath) : null;
+      return isAncestor(myMergeContext.getSourceUrl(), url)
+             ? new File(myMergeContext.getWcInfo().getPath(), getRelativeUrl(myMergeContext.getSourceUrl(), url))
+             : null;
+    }
+    catch (SvnBindException e) {
+      LOG.info(e);
+      return null;
+    }
   }
 
   @Override

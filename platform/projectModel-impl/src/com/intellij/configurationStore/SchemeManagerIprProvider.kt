@@ -79,7 +79,7 @@ class SchemeManagerIprProvider(private val subStateTagName: String) : StreamProv
         continue
       }
 
-      nameToData.put(nameGenerator.generateUniqueName(FileUtil.sanitizeFileName(name, false) + ".xml"), child.toByteArray())
+      nameToData.put(nameGenerator.generateUniqueName("${FileUtil.sanitizeFileName(name, false)}.xml"), child.toByteArray())
     }
   }
 

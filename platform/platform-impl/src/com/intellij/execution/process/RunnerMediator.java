@@ -75,7 +75,7 @@ public class RunnerMediator {
 
   public ProcessHandler createProcess(@NotNull final GeneralCommandLine commandLine, final boolean useSoftKill) throws ExecutionException {
     if (SystemInfo.isWindows) {
-      injectRunnerCommand(commandLine);
+      injectRunnerCommand(commandLine, false);
     }
 
     return new CustomDestroyProcessHandler(commandLine, useSoftKill);
@@ -104,10 +104,12 @@ public class RunnerMediator {
     return null;
   }
 
-  static boolean injectRunnerCommand(@NotNull GeneralCommandLine commandLine) {
+  static boolean injectRunnerCommand(@NotNull GeneralCommandLine commandLine, boolean showConsole) {
     final String path = getRunnerPath();
     if (path != null) {
       commandLine.getParametersList().addAt(0, commandLine.getExePath());
+      if (showConsole)
+        commandLine.getParametersList().addAt(0, "/C");
       commandLine.setExePath(path);
       return true;
     }

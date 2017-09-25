@@ -41,6 +41,7 @@ public class MigrationMap {
     MigrationMap newMap = new MigrationMap();
     newMap.myName = myName;
     newMap.myDescription = myDescription;
+    newMap.myFileName = myFileName;
     for(int i = 0; i < myEntries.size(); i++){
       MigrationMapEntry entry = getEntryAt(i);
       newMap.addEntry(entry.cloneEntry());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,11 +33,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
-/**
- * @author max
- */
 public class GenerateComponentExternalizationAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.actions.GenerateComponentExternalizationAction");
+  private static final Logger LOG = Logger.getInstance(GenerateComponentExternalizationAction.class);
 
   @NonNls private final static String BASE_COMPONENT = "com.intellij.openapi.components.BaseComponent";
   @NonNls private final static String PERSISTENCE_STATE_COMPONENT = "com.intellij.openapi.components.PersistentStateComponent";
@@ -50,6 +47,7 @@ public class GenerateComponentExternalizationAction extends AnAction {
     super.beforeActionPerformedUpdate(e);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final PsiClass target = getComponentInContext(e.getDataContext());
     assert target != null;
@@ -126,6 +124,7 @@ public class GenerateComponentExternalizationAction extends AnAction {
     return contextClass;
   }
 
+  @Override
   public void update(AnActionEvent e) {
     super.update(e);
     final PsiClass target = getComponentInContext(e.getDataContext());

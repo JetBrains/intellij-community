@@ -59,4 +59,25 @@ public class ReplaceFormatStringWithConcatenationIntentionTest extends IPPTestCa
            "}");
   }
 
+  public void testMultipleWithNothingInBetween() {
+    doTest("class X {" +
+           "  String m(String tempDataFolderPath, String fileName) {" +
+           "    return String.format(\"%s/f%s%s\", /*_Replace 'String.format()' with concatenation*/tempDataFolderPath, Double.toString(Math.random()), fileName);" +
+           "  }" +
+           "}",
+
+           "class X {" +
+           "  String m(String tempDataFolderPath, String fileName) {" +
+           "    return tempDataFolderPath + \"/f\" + Double.toString(Math.random()) + fileName;" +
+           "  }" +
+           "}");
+  }
+
+  public void testPercentAtTheEnd() {
+    doTestIntentionNotAvailable("class X {" +
+           "  String x() {" +
+           "    String.format(/*_Replace 'String.format()' with concatenation*/\"nope%\", 1);" +
+           "  }" +
+           "}");
+  }
 }

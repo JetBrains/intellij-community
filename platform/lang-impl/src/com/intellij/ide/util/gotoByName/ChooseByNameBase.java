@@ -24,6 +24,7 @@ import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.actions.GotoFileAction;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
@@ -185,7 +186,7 @@ public abstract class ChooseByNameBase {
    * @param initialText initial text which will be in the lookup text field
    */
   protected ChooseByNameBase(Project project, @NotNull ChooseByNameModel model, String initialText, PsiElement context) {
-    this(project, model, new DefaultChooseByNameItemProvider(context), initialText, 0);
+    this(project, model, ChooseByNameModelEx.getItemProvider(model, context), initialText, 0);
   }
 
   @SuppressWarnings("UnusedDeclaration") // Used in MPS
@@ -867,6 +868,7 @@ public abstract class ChooseByNameBase {
         cancelListUpdater();
       }
     });
+    IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
     myTextPopup.show(layeredPane);
   }
 

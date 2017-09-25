@@ -26,23 +26,23 @@ public class RncIndexHighlightingTest extends AbstractIndexTest {
     return "highlighting/rnc";
   }
 
-  public void testBackwardIncludeRef() throws Throwable {
+  public void testBackwardIncludeRef() {
     doHighlightingTest("backward-include-ref.rnc");
   }
 
-  public void testInspectionUnusedDefine() throws Throwable {
+  public void testInspectionUnusedDefine() {
     doHighlightingTest("unused-define.rnc");
   }
 
-  public void testInspectionSuppressedUnusedDefine() throws Throwable {
+  public void testInspectionSuppressedUnusedDefine() {
     doHighlightingTest("suppressed-unused-define.rnc");
   }
 
-  public void testInspectionUsedDefine() throws Throwable {
+  public void testInspectionUsedDefine() {
     doHighlightingTest("used-define.rnc");
   }
 
-  public void testInclude1() throws Throwable {
+  public void testInclude1() {
     myTestFixture.configureByFiles("include1.rnc", "include1_1.rnc", "include1_2.rnc");
     doCustomHighlighting(true, false);
   }

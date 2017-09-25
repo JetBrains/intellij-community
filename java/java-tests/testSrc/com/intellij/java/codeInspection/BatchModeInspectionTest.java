@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BatchModeInspectionTest extends LightCodeInsightFixtureTestCase {
-  public void testEnsureReferencesAreRemoved() throws Exception {
+  public void testEnsureReferencesAreRemoved() {
     PsiClass aClass = myFixture.addClass("class Foo {public void bar(int i){}}");
     Project project = myFixture.getProject();
     RefManagerImpl refManager = new RefManagerImpl(project, new AnalysisScope(aClass.getContainingFile()), InspectionManager.getInstance(

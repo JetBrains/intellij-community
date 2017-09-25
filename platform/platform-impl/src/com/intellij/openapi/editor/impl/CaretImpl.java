@@ -41,15 +41,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.ui.EmptyClipboardOwner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.StringSelection;
 import java.util.List;
 
 public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
@@ -1195,18 +1192,9 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       }
 
       if (updateSystemSelection) {
-        updateSystemSelection();
+        myEditor.getCaretModel().updateSystemSelection();
       }
     });
-  }
-
-  private void updateSystemSelection() {
-    if (GraphicsEnvironment.isHeadless()) return;
-
-    final Clipboard clip = myEditor.getComponent().getToolkit().getSystemSelection();
-    if (clip != null) {
-      clip.setContents(new StringSelection(myEditor.getSelectionModel().getSelectedText(true)), EmptyClipboardOwner.INSTANCE);
-    }
   }
 
   @Override

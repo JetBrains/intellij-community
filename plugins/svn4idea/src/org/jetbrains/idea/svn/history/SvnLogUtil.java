@@ -74,7 +74,7 @@ public class SvnLogUtil implements SvnLogLoader {
       if ((!includeOldest) && (logEntry.getRevision() == toIncluding.getNumber())) {
         return;
       }
-      result.add(new SvnChangeList(myVcs, myLocation, logEntry, myRepositoryRoot.toString()));
+      result.add(new SvnChangeList(myVcs, myLocation, logEntry, myRepositoryRoot));
     };
   }
 }

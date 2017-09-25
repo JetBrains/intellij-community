@@ -32,7 +32,6 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.Assertion;
-import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 
 public class MergeFuncTest extends PlatformTestCase {
@@ -47,7 +46,7 @@ public class MergeFuncTest extends PlatformTestCase {
   private final Assertion CHECK = new Assertion();
   private ChangeCounter myCounters;
 
-  public void testNoConflicts() throws FilesTooBigForDiffException {
+  public void testNoConflicts() {
     useDocuments("a\nIns1\nb\nccc",
                  "a\nb\nccc",
                  "a\nb\ndddd");
@@ -84,7 +83,7 @@ public class MergeFuncTest extends PlatformTestCase {
     assertEquals(conflicts, myCounters.getConflictCounter());
   }
 
-  public void testConflictingChange() throws FilesTooBigForDiffException {
+  public void testConflictingChange() {
     useDocuments("1\n2\n3\nX\na\nb\nc\nY\nVer1\nVer12\nZ",
                           "X\na\nb\nc\nY\n" +  "Ver12\nVer23\nZ",
                           "X\n"   +   "Y\n"     +     "Ver23\nVer3\nZ");
@@ -106,7 +105,7 @@ public class MergeFuncTest extends PlatformTestCase {
     checkCounters(0, 2);
   }
 
-  public void testApplyMergeThenUndo() throws FilesTooBigForDiffException {
+  public void testApplyMergeThenUndo() {
     String baseText = "X\n1\n2\n3\nY";
     useDocuments("X\nb\nY", baseText, "X\na\nY");
     initMerge();
@@ -137,7 +136,7 @@ public class MergeFuncTest extends PlatformTestCase {
     assertEquals(0, getBaseIntervals().length);
   }
 
-  public void testApplyModifiedDeletedConflict() throws FilesTooBigForDiffException {
+  public void testApplyModifiedDeletedConflict() {
     String baseText = "X\n1\n2\n3\nY";
     useDocuments("X\nY", baseText, "X\na\nY");
     initMerge();
@@ -164,7 +163,7 @@ public class MergeFuncTest extends PlatformTestCase {
     assertEquals(0, getBaseIntervals().length);
   }
 
-  public void testInvalidatingChange() throws FilesTooBigForDiffException {
+  public void testInvalidatingChange() {
     useDocuments("X\n1\n2\nY", "X\n1\nIns\n2\nY", "X\n1\n2\nY");
     initMerge();
     MergeTestUtils.Range[] sideConflict = {MergeTestUtils.del(4, 0)};
@@ -180,7 +179,7 @@ public class MergeFuncTest extends PlatformTestCase {
     assertEquals(0, getBaseIntervals().length);
   }
 
-  public void testApplySeveralActions() throws FilesTooBigForDiffException {
+  public void testApplySeveralActions() {
     useDocuments("X\n1\nY\n2\nZ\n3\n4\nU\nW\n",
                  "X\na\nY\nb\nZ\nc\nU\nd\nW\n",
                  "X\na\nY\nB\nZ\nC\nU\nD\nW\n");
@@ -198,7 +197,7 @@ public class MergeFuncTest extends PlatformTestCase {
     MergeTestUtils.checkMarkup(myERight, new MergeTestUtils.Range[0]);
   }
 
-  public void testIgnoreChangeAction() throws FilesTooBigForDiffException {
+  public void testIgnoreChangeAction() {
     useDocuments("X\n1\nY\n2\nZ", "X\na\nY\nb\nZ", "X\na\nY\nB\nZ");
     initMerge();
     pressIgnoreActionIcon(myELeft, 0);
@@ -213,7 +212,7 @@ public class MergeFuncTest extends PlatformTestCase {
     MergeTestUtils.checkMarkup(myERight, new MergeTestUtils.Range[0]);
   }
 
-  public void testLongBase() throws FilesTooBigForDiffException {
+  public void testLongBase() {
     useDocuments("X\n1\n2\n3\nZ", "X\n1\nb\n3\nd\ne\nf\nZ", "X\na\nb\nc\nZ");
     initMerge();
     MergeTestUtils.checkMarkup(myELeft, new MergeTestUtils.Range[]{MergeTestUtils.conf(2, 6)});
@@ -221,7 +220,7 @@ public class MergeFuncTest extends PlatformTestCase {
     MergeTestUtils.checkMarkup(myERight, new MergeTestUtils.Range[]{MergeTestUtils.conf(2, 6)});
   }
 
-  public void testReplaceBaseWithBranch() throws FilesTooBigForDiffException {
+  public void testReplaceBaseWithBranch() {
     String leftVersion = "a\nX\nb\nc";
     useDocuments(leftVersion, "A\nX\nB\nc", "1\nX\n1\nc");
     initMerge();
@@ -233,7 +232,7 @@ public class MergeFuncTest extends PlatformTestCase {
     MergeTestUtils.checkMarkup(myERight, new MergeTestUtils.Range[0]);
   }
 
-  public void testError1() throws FilesTooBigForDiffException {
+  public void testError1() {
     useDocuments("start\n" +
                  "change\n" +
                  " a\n" +
@@ -248,7 +247,7 @@ public class MergeFuncTest extends PlatformTestCase {
     initMerge();
   }
 
-  public void testError2() throws FilesTooBigForDiffException {
+  public void testError2() {
     useDocuments("C\nX", "C\n", "C\n");
     initMerge();
     MergeTestUtils.checkMarkup(myERight, new MergeTestUtils.Range[0]);
@@ -256,7 +255,7 @@ public class MergeFuncTest extends PlatformTestCase {
     MergeTestUtils.checkMarkup(myELeft, new MergeTestUtils.Range[]{MergeTestUtils.ins(2, 1)});
   }
 
-  public void testError3() throws FilesTooBigForDiffException {
+  public void testError3() {
     useDocuments("original\nlocal\nlocal\nlocal\noriginal\n",
                  "original\noriginal\noriginal\noriginal\noriginal\n",
                  "original\nremote\nremote\nremote\noriginal\n");
@@ -298,7 +297,7 @@ public class MergeFuncTest extends PlatformTestCase {
     myRight = MergeTestUtils.createRODocument(right);
   }
 
-  private void initMerge() throws FilesTooBigForDiffException {
+  private void initMerge() {
     myMergeList = MergeList.create(myProject, myLeft, myBase, myRight);
     Editor[] editors = myUtils.createEditors(new Document[]{myLeft, myBase, myRight});
     myELeft = editors[0];
@@ -362,7 +361,7 @@ public class MergeFuncTest extends PlatformTestCase {
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
+  protected void invokeTestRunnable(@NotNull Runnable runnable) {
     runnable.run();
   }
 

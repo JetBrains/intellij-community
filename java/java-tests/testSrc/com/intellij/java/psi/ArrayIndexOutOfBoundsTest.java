@@ -52,14 +52,14 @@ public class ArrayIndexOutOfBoundsTest extends PsiTestCase {
     myProjectRoot = PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
   }
 
-  public void testSCR10930() throws Exception {
+  public void testSCR10930() {
     renamePackage();
     deleteNewPackage();
     restoreSources();
     renamePackage();
   }
 
-  public void testSimplerCase() throws Exception {
+  public void testSimplerCase() {
     renamePackage();
     restoreSources();
 
@@ -69,7 +69,7 @@ public class ArrayIndexOutOfBoundsTest extends PsiTestCase {
     assertEquals(4, psiFile.getChildren().length);
   }
 
-  public void testLongLivingClassAfterRename() throws Exception {
+  public void testLongLivingClassAfterRename() {
     PsiClass psiClass = myJavaFacade.findClass("bla.Bla", GlobalSearchScope.projectScope(getProject()));
     ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(psiClass);
     renamePackage();

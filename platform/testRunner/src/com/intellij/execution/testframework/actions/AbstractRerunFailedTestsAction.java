@@ -17,6 +17,7 @@ package com.intellij.execution.testframework.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -35,13 +36,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
@@ -102,6 +103,16 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     if (model == null || model.getRoot() == null) {
       return false;
     }
+
+    ExecutionEnvironment environment = e.getData(LangDataKeys.EXECUTION_ENVIRONMENT);
+    if (environment == null) {
+      return false;
+    }
+    RunnerAndConfigurationSettings settings = environment.getRunnerAndConfigurationSettings();
+    if (settings != null && !settings.getType().isDumbAware() && DumbService.isDumb(project)) {
+      return false;
+    }
+
     Filter filter = getFailuresFilter();
     for (AbstractTestProxy test : model.getRoot().getAllTests()) {
       //noinspection unchecked
@@ -334,6 +345,6 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
 
   @Override
   public boolean isDumbAware() {
-    return Registry.is("dumb.aware.run.configurations");
+    return true;
   }
 }

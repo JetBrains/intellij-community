@@ -19,6 +19,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
 import com.intellij.util.xmlb.annotations.Property;
@@ -105,7 +106,7 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
   public void setIgnoreWhitespacesInAnnotations(boolean ignoreWhitespacesInAnnotations) {
     if (myState.myIgnoreWhitespacesInAnnotations != ignoreWhitespacesInAnnotations) {
       myState.myIgnoreWhitespacesInAnnotations = ignoreWhitespacesInAnnotations;
-      myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).configurationChanged(HgVcs.getKey());
+      BackgroundTaskUtil.syncPublisher(myProject, VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).configurationChanged(HgVcs.getKey());
     }
   }
 

@@ -31,7 +31,7 @@ import java.util.List;
  */
 public class RealFetchTest extends LightPlatformCodeInsightFixtureTestCase {
 
-  public void testFetchDtd() throws Exception {
+  public void testFetchDtd() {
 
     final String url = "http://java.sun.com/dtd/preferences.dtd";
     assertEquals(url, ExternalResourceManager.getInstance().getResourceLocation(url, getProject()));

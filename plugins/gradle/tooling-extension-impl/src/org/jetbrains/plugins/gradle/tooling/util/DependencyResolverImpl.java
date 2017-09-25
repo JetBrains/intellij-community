@@ -19,11 +19,11 @@ package org.jetbrains.plugins.gradle.tooling.util;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
+import com.google.common.io.Files;
 import groovy.lang.MetaMethod;
 import groovy.lang.MetaProperty;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
@@ -65,7 +65,6 @@ import java.util.regex.Pattern;
 import static com.google.common.base.Predicates.isNull;
 import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.Iterables.filter;
-import static com.google.common.collect.Iterables.find;
 import static org.codehaus.groovy.runtime.StringGroovyMethods.capitalize;
 
 /**
@@ -1181,19 +1180,12 @@ public class DependencyResolverImpl implements DependencyResolver {
 
                     ComponentArtifactsResult artifactsResult = componentResultsMap.get(componentIdentifier);
                     if (artifactsResult != null) {
-                      final Set<ArtifactResult> sourceArtifacts = artifactsResult.getArtifacts(SourcesArtifact.class);
-                      ResolvedArtifactResult sourcesResult = sourceArtifacts != null && !sourceArtifacts.isEmpty()
-                                                             ? (ResolvedArtifactResult)find(sourceArtifacts, Predicates.instanceOf(ResolvedArtifactResult.class))
-                                                             : null;
+                      ResolvedArtifactResult sourcesResult = findMatchingArtifact(artifact, artifactsResult, SourcesArtifact.class);
                       if (sourcesResult != null) {
                         ((DefaultExternalLibraryDependency)dependency).setSource(sourcesResult.getFile());
                       }
 
-
-                      final Set<ArtifactResult> javadocArtifacts = artifactsResult.getArtifacts(JavadocArtifact.class);
-                      ResolvedArtifactResult javadocResult = javadocArtifacts != null && !javadocArtifacts.isEmpty()
-                                                             ? (ResolvedArtifactResult)find(javadocArtifacts, Predicates.instanceOf(ResolvedArtifactResult.class))
-                                                             : null;
+                      ResolvedArtifactResult javadocResult = findMatchingArtifact(artifact, artifactsResult, JavadocArtifact.class);
                       if (javadocResult != null) {
                         ((DefaultExternalLibraryDependency)dependency).setJavadoc(javadocResult.getFile());
                       }
@@ -1233,6 +1225,26 @@ public class DependencyResolverImpl implements DependencyResolver {
 
       return dependencies;
     }
+  }
+
+  @Nullable
+  private static ResolvedArtifactResult findMatchingArtifact(ResolvedArtifact artifact,
+                                                             ComponentArtifactsResult componentArtifacts,
+                                                             Class<? extends Artifact> artifactType) {
+    String baseName = Files.getNameWithoutExtension(artifact.getFile().getName());
+    Set<ArtifactResult> artifactResults = componentArtifacts.getArtifacts(artifactType);
+
+    if (artifactResults.size() == 1) {
+      ArtifactResult artifactResult = artifactResults.iterator().next();
+      return artifactResult instanceof ResolvedArtifactResult ? (ResolvedArtifactResult)artifactResult : null;
+    }
+
+    for (ArtifactResult result : artifactResults) {
+      if (result instanceof ResolvedArtifactResult && ((ResolvedArtifactResult)result).getFile().getName().startsWith(baseName)) {
+        return (ResolvedArtifactResult)result;
+      }
+    }
+    return null;
   }
 
   private static boolean isProjectDependencyArtifact(ResolvedArtifact artifact) {

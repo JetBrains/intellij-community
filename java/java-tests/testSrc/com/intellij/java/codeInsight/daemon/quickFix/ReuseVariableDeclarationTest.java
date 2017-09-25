@@ -20,7 +20,7 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 
 public class ReuseVariableDeclarationTest extends LightQuickFixParameterizedTestCase {
 
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {

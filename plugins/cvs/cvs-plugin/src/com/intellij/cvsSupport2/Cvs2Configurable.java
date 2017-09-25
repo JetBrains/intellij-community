@@ -59,7 +59,7 @@ class Cvs2Configurable implements Configurable {
     return !myComponent.equalsTo(getCvsConfiguration(), getAppLevelConfiguration());
   }
 
-  public void apply() throws ConfigurationException {
+  public void apply() {
     myComponent.saveTo(getCvsConfiguration(), getAppLevelConfiguration());
   }
 

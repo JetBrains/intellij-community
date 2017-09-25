@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -244,16 +245,17 @@ public class MethodUtils {
     return SuperMethodsSearch.search(method, null, true, false).findFirst();
   }
 
-  public static boolean isOverridden(PsiMethod method) {
-    if (method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC) || method.hasModifierProperty(PsiModifier.PRIVATE)) {
-      return false;
-    }
-    final Query<PsiMethod> overridingMethodQuery = OverridingMethodsSearch.search(method);
-    final PsiMethod result = overridingMethodQuery.findFirst();
-    return result != null;
+  /**
+   * This method can get very slow and use a lot of memory when invoked on a method that is overridden many times,
+   * like for example any of the methods of the {@link Object} class.
+   * This is because the underlying api currently calculates all inheritors eagerly.
+   * Try to avoid calling it in such cases.
+   */
+  public static boolean isOverridden(@NotNull PsiMethod method) {
+    return OverridingMethodsSearch.search(method).findFirst() != null;
   }
 
-  public static boolean isOverriddenInHierarchy(PsiMethod method, PsiClass baseClass) {
+  public static boolean isOverriddenInHierarchy(@NotNull PsiMethod method, @NotNull PsiClass baseClass) {
     // previous implementation:
     // final Query<PsiMethod> search = OverridingMethodsSearch.search(method);
     //for (PsiMethod overridingMethod : search) {
@@ -263,6 +265,9 @@ public class MethodUtils {
     //    }
     //}
     // was extremely slow and used an enormous amount of memory for clone()
+    if (!PsiUtil.canBeOverridden(method) || baseClass instanceof PsiAnonymousClass || baseClass.hasModifierProperty(PsiModifier.FINAL)) {
+      return false;
+    }
     final Query<PsiClass> search = ClassInheritorsSearch.search(baseClass, baseClass.getUseScope(), true, true, true);
     for (PsiClass inheritor : search) {
       final PsiMethod overridingMethod = inheritor.findMethodBySignature(method, false);
@@ -392,5 +397,19 @@ public class MethodUtils {
     if (method == null || !method.getName().equals("length") || method.getParameterList().getParametersCount() != 0) return false;
     PsiClass aClass = method.getContainingClass();
     return aClass != null && CommonClassNames.JAVA_LANG_STRING.equals(aClass.getQualifiedName());
+  }
+
+  public static boolean haveEquivalentModifierLists(PsiMethod method, PsiMethod superMethod) {
+    final PsiModifierList list1 = method.getModifierList();
+    final PsiModifierList list2 = superMethod.getModifierList();
+    if (list1.hasModifierProperty(PsiModifier.STRICTFP) != list2.hasModifierProperty(PsiModifier.STRICTFP) ||
+        list1.hasModifierProperty(PsiModifier.SYNCHRONIZED) != list2.hasModifierProperty(PsiModifier.SYNCHRONIZED) ||
+        list1.hasModifierProperty(PsiModifier.PUBLIC) != list2.hasModifierProperty(PsiModifier.PUBLIC) ||
+        list1.hasModifierProperty(PsiModifier.PROTECTED) != list2.hasModifierProperty(PsiModifier.PROTECTED) ||
+        list1.hasModifierProperty(PsiModifier.FINAL) != list2.hasModifierProperty(PsiModifier.FINAL) ||
+        list1.hasModifierProperty(PsiModifier.ABSTRACT) != list2.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      return false;
+    }
+    return AnnotationUtil.equal(list1.getAnnotations(), list2.getAnnotations());
   }
 }

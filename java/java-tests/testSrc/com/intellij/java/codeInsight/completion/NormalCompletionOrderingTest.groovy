@@ -443,8 +443,8 @@ interface TxANotAnno {}
     checkPreferredItems(0, 'fooBar', '_fooBar', 'FooBar')
   }
 
-  void testDispreferUnderscoredCaseMismatch() {
-    checkPreferredItems(0, 'fooBar', '__FOO_BAR')
+  void testDispreferUnderscoredCaseMatch() {
+    checkPreferredItems(0, 'fooBar', '__foo_bar')
   }
 
   void testStatisticsMattersOnNextCompletion() {
@@ -785,6 +785,10 @@ class ContainerUtil extends ContainerUtilRt {
 
   void testPreferConflictingFieldAfterThis() {
     checkPreferredItems 0, 'text'
+  }
+
+  void testDoNotPreselectShorterDeprecatedClasses() {
+    checkPreferredItems 1, 'XLong', 'XLonger'
   }
 
 }

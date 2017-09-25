@@ -29,7 +29,7 @@
     <orderEntry type="module" module-name="projectModel-impl" />
     <orderEntry type="library" name="Snappy-Java" level="project" />
     <orderEntry type="library" exported="" name="Netty" level="project" />
-    <orderEntry type="library" name="Sanselan" level="project" />
+    <orderEntry type="library" name="commons-imaging" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="jps-model-impl" />
     <orderEntry type="module" module-name="analysis-impl" exported="" />
@@ -49,5 +49,6 @@
     <orderEntry type="module" module-name="credential-store" scope="RUNTIME" />
     <orderEntry type="library" exported="" name="StreamEx" level="project" />
     <orderEntry type="library" name="jediterm-pty" level="project" />
+    <orderEntry type="module" module-name="tasks-platform-impl" scope="RUNTIME" />
   </component>
 </module>

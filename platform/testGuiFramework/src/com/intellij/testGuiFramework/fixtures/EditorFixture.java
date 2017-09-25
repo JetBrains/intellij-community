@@ -79,6 +79,7 @@ public class EditorFixture {
    */
   public final Robot robot;
   private final IdeFrameFixture myFrame;
+  private final EditorTabsFixture tabs;
 
   /**
    * Constructs a new editor fixture, tied to the given project
@@ -86,6 +87,7 @@ public class EditorFixture {
   public EditorFixture(Robot robot, IdeFrameFixture frame) {
     this.robot = robot;
     myFrame = frame;
+    tabs = new EditorTabsFixture(robot, frame);
   }
 
   /**
@@ -102,7 +104,9 @@ public class EditorFixture {
 
       // we should be sure that EditorComponent is already showing
       VirtualFile selectedFile = selectedFiles[0];
-      if (manager.getEditors(selectedFile).length == 0) return null;
+      if (manager.getEditors(selectedFile).length == 0) {
+        return null;
+      }
       else {
         FileEditor editor = manager.getEditors(selectedFile)[0];
         return editor.getComponent().isShowing() ? selectedFile : null;
@@ -439,34 +443,36 @@ public class EditorFixture {
       new ComponentDriver(robot).focusAndWaitForFocusGain(contentComponent);
       assertSame(contentComponent, FocusManager.getCurrentManager().getFocusOwner());
       return contentComponent;
-    } else {
+    }
+    else {
       fail("Expected to find editor to focus, but there is no current editor");
       return null;
     }
   }
 
   /**
-   * Moves the caret to the start of the given line number (0-based).
+   * Moves the caret to the start of the given visual line number.
    *
    * @param lineNumber the line number.
    */
   @NotNull
   public EditorFixture moveToLine(final int lineNumber) {
-    assertThat(lineNumber).isGreaterThanOrEqualTo(0);
-    execute(new GuiTask() {
+    assertThat(lineNumber).isGreaterThanOrEqualTo(1);
+    Integer offset = execute(new GuiQuery<Integer>() {
       @Override
-      protected void executeInEDT() throws Throwable {
-        // TODO: Do this via mouse clicks!
+      protected Integer executeInEDT() throws Throwable {
         FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
         Editor editor = manager.getSelectedTextEditor();
         if (editor != null) {
           Document document = editor.getDocument();
-          int offset = document.getLineStartOffset(lineNumber);
-          editor.getCaretModel().moveToOffset(offset);
-          editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+          return document.getLineStartOffset(lineNumber - 1);
+        }
+        else {
+          throw new Exception("Editor is null");
         }
       }
     });
+    moveTo(offset);
     return this;
   }
 
@@ -484,7 +490,7 @@ public class EditorFixture {
         Editor editor = manager.getSelectedTextEditor();
         assert editor != null;
         VisualPosition visualPosition = editor.offsetToVisualPosition(offset);
-        Point point= editor.visualPositionToXY(visualPosition);
+        Point point = editor.visualPositionToXY(visualPosition);
         Component editorComponent = robot.finder().find(editor.getComponent(), component -> component instanceof EditorComponentImpl);
         robot.click(editorComponent, point, button, 1);
       }
@@ -646,21 +652,42 @@ public class EditorFixture {
    *
    * @param tab the tab to switch to
    */
-  public EditorFixture selectEditorTab(@NotNull final Tab tab) {
+  public EditorFixture selectEditorView(@NotNull final Tab tab) {
     switch (tab) {
       case EDITOR:
-        selectEditorTab("Text");
+        selectEditorView("Text");
         break;
       case DESIGN:
-        selectEditorTab("Design");
+        selectEditorView("Design");
         break;
       case DEFAULT:
-        selectEditorTab((String)null);
+        selectEditorView((String)null);
         break;
       default:
         fail("Unknown tab " + tab);
     }
     return this;
+  }
+
+
+  /**
+   * Selects the editor with a given tab name.
+   */
+  public EditorFixture selectTab(@NotNull final String tabName) {
+    tabs.waitTab(tabName, 30).selectTab(tabName);
+    return this;
+  }
+
+  /**
+   * Closes the editor with a given tab name.
+   */
+  public EditorFixture closeTab(@NotNull final String tabName) {
+    tabs.closeTab(tabName);
+    return this;
+  }
+
+  public Boolean hasTab(@NotNull final String tabName) {
+    return tabs.hasTab(tabName);
   }
 
   /**
@@ -669,7 +696,7 @@ public class EditorFixture {
    *
    * @param tabName the label in the editor, or null for the default (first) tab
    */
-  public EditorFixture selectEditorTab(@Nullable final String tabName) {
+  public EditorFixture selectEditorView(@Nullable final String tabName) {
     execute(new GuiTask() {
       @Override
       protected void executeInEDT() throws Throwable {
@@ -705,7 +732,7 @@ public class EditorFixture {
    * find and select the given file.
    *
    * @param file the file to open
-   * @param tab which tab to open initially, if there are multiple editors
+   * @param tab  which tab to open initially, if there are multiple editors
    */
   public EditorFixture open(@NotNull final VirtualFile file, @NotNull final Tab tab) {
     execute(new GuiTask() {
@@ -749,7 +776,7 @@ public class EditorFixture {
    * find and select the given file.
    *
    * @param file the project-relative path (with /, not File.separator, as the path separator)
-   * @param tab which tab to open initially, if there are multiple editors
+   * @param tab  which tab to open initially, if there are multiple editors
    */
   public EditorFixture open(@NotNull final String relativePath, @NotNull Tab tab) {
     assertFalse("Should use '/' in test relative paths, not File.separator", relativePath.contains("\\"));
@@ -909,7 +936,8 @@ public class EditorFixture {
                              + KeyEvent.getKeyText(secondKeyStroke.getKeyCode()));
           driver.pressAndReleaseKey(component, secondKeyStroke.getKeyCode(), new int[]{secondKeyStroke.getModifiers()});
         }
-      } else {
+      }
+      else {
         fail("Editor not focused for action");
       }
     }
@@ -1029,7 +1057,7 @@ public class EditorFixture {
   //  }
   //
   //  if (switchToTabIfNecessary) {
-  //    selectEditorTab(Tab.DESIGN);
+  //    selectEditorView(Tab.DESIGN);
   //  }
   //
   //  return execute(new GuiQuery<LayoutEditorFixture>() {
@@ -1067,7 +1095,7 @@ public class EditorFixture {
   //  }
   //
   //  if (switchToTabIfNecessary) {
-  //    selectEditorTab(Tab.EDITOR);
+  //    selectEditorView(Tab.EDITOR);
   //  }
   //
   //  Boolean visible = GuiActionRunner.execute(new GuiQuery<Boolean>() {
@@ -1118,9 +1146,11 @@ public class EditorFixture {
     VirtualFile currentFile = getCurrentFile();
     if (name == null) {
       assertNull("Expected editor to not have an open file, but is showing " + currentFile, currentFile);
-    } else if (currentFile == null) {
+    }
+    else if (currentFile == null) {
       fail("Expected file " + name + " to be showing, but the editor is not showing anything");
-    } else {
+    }
+    else {
       assertEquals(name, currentFile.getName());
     }
   }
@@ -1133,15 +1163,21 @@ public class EditorFixture {
     VirtualFile currentFile = getCurrentFile();
     if (name == null) {
       assertNull("Expected editor to not have an open file, but is showing " + currentFile, currentFile);
-    } else if (currentFile == null) {
+    }
+    else if (currentFile == null) {
       fail("Expected file " + name + " to be showing, but the editor is not showing anything");
-    } else {
+    }
+    else {
       VirtualFile parent = currentFile.getParent();
       assertNotNull("File " + currentFile.getName() + " does not have a parent", parent);
       assertEquals(name, parent.getName());
     }
   }
 
+
+  public EditorNotificationPanelFixture notificationPanel() {
+    return EditorNotificationPanelFixture.Companion.findEditorNotificationPanel(robot, 30);
+  }
 
   /**
    * Common editor actions, invokable via {@link #invokeAction(EditorAction)}
@@ -1179,13 +1215,14 @@ public class EditorFixture {
    * The different tabs of an editor; used by for example {@link #open(VirtualFile, EditorFixture.Tab)} to indicate which
    * tab should be opened
    */
-  public enum Tab { EDITOR, DESIGN, DEFAULT }
+  public enum Tab {
+    EDITOR, DESIGN, DEFAULT
+  }
 
   public static class EditorNotFoundException extends Exception {
 
     public EditorNotFoundException(String message) {
       super(message);
     }
-
   }
 }

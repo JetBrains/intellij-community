@@ -61,7 +61,7 @@ public abstract class PyResolveTestCase extends PyTestCase {
     return reference;
   }
 
-  protected abstract PsiElement doResolve() throws Exception;
+  protected abstract PsiElement doResolve();
 
   protected <T extends PsiElement> T assertResolvesTo(final LanguageLevel langLevel, final Class<T> aClass, final String name) {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), langLevel);

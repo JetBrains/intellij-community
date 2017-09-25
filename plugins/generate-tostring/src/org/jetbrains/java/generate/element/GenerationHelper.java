@@ -17,19 +17,17 @@ package org.jetbrains.java.generate.element;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.VariableKind;
 
-import java.beans.Introspector;
 import java.util.List;
 
 public class GenerationHelper {
 
   //used in generate equals/hashCode
   @SuppressWarnings("unused")
-  public static String getUniqueLocalVarName(String base, List<Element> elements, CodeStyleSettings settings) {
+  public static String getUniqueLocalVarName(String base, List<Element> elements, JavaCodeStyleSettings settings) {
     base = settings.LOCAL_VARIABLE_NAME_PREFIX + base;
     String id = base;
     int index = 0;

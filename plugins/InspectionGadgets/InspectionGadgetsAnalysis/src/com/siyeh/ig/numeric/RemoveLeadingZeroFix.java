@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2016 Bas Leijdekkers
+ * Copyright 2010-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
@@ -34,7 +35,15 @@ class RemoveLeadingZeroFix extends InspectionGadgetsFix {
 
   @Override
   protected void doFix(Project project, ProblemDescriptor descriptor) {
-    final PsiLiteralExpression literal = (PsiLiteralExpression)descriptor.getPsiElement();
+    final PsiElement element = descriptor.getPsiElement();
+    if (!(element instanceof PsiLiteralExpression)) {
+      return;
+    }
+    final PsiLiteralExpression literal = (PsiLiteralExpression)element;
+    removeLeadingZeroes(literal);
+  }
+
+  static void removeLeadingZeroes(PsiLiteralExpression literal) {
     final String text = literal.getText();
     final int max = text.length() - (PsiType.LONG.equals(literal.getType()) ? 2 : 1);
     if (max < 1) {

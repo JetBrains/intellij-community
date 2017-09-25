@@ -18,11 +18,10 @@ package com.intellij.openapi.diff;
 import com.intellij.openapi.editor.Document;
 import com.intellij.testFramework.PlatformTestCase;
 
-import java.io.IOException;
 import java.util.Arrays;
 
 public class SimpleContentTest extends PlatformTestCase {
-  public void testEqualsAndDifferent() throws IOException {
+  public void testEqualsAndDifferent() {
     SimpleContent content1 = new SimpleContent("a\nb");
     SimpleContent content2 = new SimpleContent("a\nb");
     assertTrue(Arrays.equals(content1.getBytes(), content2.getBytes()));
@@ -45,7 +44,7 @@ public class SimpleContentTest extends PlatformTestCase {
     assertTrue(Arrays.equals("a\nb\r\nc".getBytes(), content.getBytes()));
   }
 
-  public void testModifyContent() throws IOException {
+  public void testModifyContent() {
     SimpleContent content = new SimpleContent("abc\r\ndef");
     content.setReadOnly(false);
     String originalText = content.getText();

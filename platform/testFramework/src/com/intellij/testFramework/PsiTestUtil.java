@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.RunResult;
@@ -34,24 +35,17 @@ import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
-import com.intellij.psi.stubs.PsiFileStub;
-import com.intellij.psi.stubs.StubTree;
-import com.intellij.psi.stubs.StubTreeBuilder;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileContentImpl;
-import com.intellij.util.indexing.IndexingDataKeys;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -202,7 +196,7 @@ public class PsiTestUtil {
     ModuleRootModificationUtil.updateModel(module, model -> model.removeContentEntry(findContentEntryWithAssertion(model, contentRoot)));
   }
 
-  public static void removeSourceRoot(Module module, VirtualFile root) {
+  public static void removeSourceRoot(@NotNull Module module, @NotNull VirtualFile root) {
     ModuleRootModificationUtil.updateModel(module, model -> {
       ContentEntry entry = findContentEntryWithAssertion(model, root);
       for (SourceFolder sourceFolder : entry.getSourceFolders()) {
@@ -242,8 +236,8 @@ public class PsiTestUtil {
     return Objects.requireNonNull(file.getManager().findFile(copy));
   }
 
-  public static void checkPsiMatchesTextIgnoringWhitespace(PsiFile file) {
-    compareFromAllRoots(file, f -> DebugUtil.psiTreeToString(f, true));
+  public static void checkPsiMatchesTextIgnoringNonCode(PsiFile file) {
+    compareFromAllRoots(file, f -> DebugUtil.psiToStringIgnoringNonCode(f));
   }
 
   public static void addLibrary(Module module, String libPath) {
@@ -254,6 +248,25 @@ public class PsiTestUtil {
 
   public static void addLibrary(Module module, String libName, String libPath, String... jarArr) {
     ModuleRootModificationUtil.updateModel(module, model -> addLibrary(module, model, libName, libPath, jarArr));
+  }
+  public static void addLibrary(@NotNull Disposable parent, Module module, String libName, String libPath, String... jarArr) {
+    Ref<Library> ref = new Ref<>();
+    ModuleRootModificationUtil.updateModel(module, model -> ref.set(addLibrary(module, model, libName, libPath, jarArr)));
+    Disposer.register(parent, () -> {
+      Library library = ref.get();
+      ModuleRootModificationUtil.updateModel(module, model -> model.removeOrderEntry(model.findLibraryOrderEntry(library)));
+      WriteCommandAction.runWriteCommandAction(null, ()-> {
+        LibraryTable table = ProjectLibraryTable.getInstance(module.getProject());
+        LibraryTable.ModifiableModel model = table.getModifiableModel();
+        model.removeLibrary(library);
+        model.commit();
+      });
+    });
+  }
+
+  public static void addProjectLibrary(Module module, String libName, List<String> classesRootPaths) {
+    List<VirtualFile> roots = ContainerUtil.map(classesRootPaths, path -> VirtualFileManager.getInstance().refreshAndFindFileByUrl(VfsUtil.getUrlForLibraryRoot(new File(path))));
+    addProjectLibrary(module, libName, roots, Collections.emptyList());
   }
 
   public static void addProjectLibrary(Module module, String libName, VirtualFile... classesRoots) {
@@ -266,6 +279,7 @@ public class PsiTestUtil {
     return result.get();
   }
 
+  @NotNull
   private static Library addProjectLibrary(Module module,
                                            ModifiableRootModel model,
                                            String libName,
@@ -274,7 +288,7 @@ public class PsiTestUtil {
     LibraryTable libraryTable = ProjectLibraryTable.getInstance(module.getProject());
     RunResult<Library> result = new WriteAction<Library>() {
       @Override
-      protected void run(@NotNull Result<Library> result) throws Throwable {
+      protected void run(@NotNull Result<Library> result) {
         Library library = libraryTable.createLibrary(libName);
         Library.ModifiableModel libraryModel = library.getModifiableModel();
         try {
@@ -305,11 +319,12 @@ public class PsiTestUtil {
     return result.getResultObject();
   }
 
-  public static void addLibrary(Module module,
-                                ModifiableRootModel model,
-                                String libName,
-                                String libPath,
-                                String... jarArr) {
+  @NotNull
+  public static Library addLibrary(Module module,
+                                   ModifiableRootModel model,
+                                   String libName,
+                                   String libPath,
+                                   String... jarArr) {
     List<VirtualFile> classesRoots = new ArrayList<>();
     for (String jar : jarArr) {
       if (!libPath.endsWith("/") && !jar.startsWith("/")) {
@@ -326,7 +341,7 @@ public class PsiTestUtil {
       assert root != null : "Library root folder not found: " + path + "!/";
       classesRoots.add(root);
     }
-    addProjectLibrary(module, model, libName, classesRoots, Collections.emptyList());
+    return addProjectLibrary(module, model, libName, classesRoots, Collections.emptyList());
   }
 
   public static void addLibrary(Module module,
@@ -349,7 +364,7 @@ public class PsiTestUtil {
   public static Module addModule(Project project, ModuleType type, String name, VirtualFile root) {
     return new WriteCommandAction<Module>(project) {
       @Override
-      protected void run(@NotNull Result<Module> result) throws Throwable {
+      protected void run(@NotNull Result<Module> result) {
         String moduleName;
         ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
         try {
@@ -429,32 +444,17 @@ public class PsiTestUtil {
   }
 
   public static void checkStubsMatchText(@NotNull PsiFile file) {
-    PsiUtilCore.ensureValid(file);
-    FileViewProvider viewProvider = file.getViewProvider();
-    if (viewProvider instanceof InjectedFileViewProvider) return;
-
-    StubTree tree = getStubTree(viewProvider.getStubBindingRoot());
-    if (tree == null) return;
-    
-    FileContentImpl fc = new FileContentImpl(viewProvider.getVirtualFile(), file.getText(), 0);
-    fc.putUserData(IndexingDataKeys.PROJECT, file.getProject());
-    PsiFileStub copyTree = (PsiFileStub) StubTreeBuilder.buildStubTree(fc);
-    if (copyTree == null) return;
-
-    String fromText = StringUtil.join(copyTree.getStubRoots(), DebugUtil::stubTreeToString, "\n");
-    String fromPsi = StringUtil.join(tree.getRoot().getStubRoots(), DebugUtil::stubTreeToString, "\n");
-    if (!fromText.equals(fromPsi)) {
-      Assert.assertEquals("Re-created from text:\n" + fromText, "Stubs from PSI structure:\n" + fromPsi);
+    try {
+      StubTextInconsistencyException.checkStubTextConsistency(file);
+    }
+    catch (StubTextInconsistencyException e) {
+      compareStubTexts(e);
     }
   }
 
-  @Nullable
-  private static StubTree getStubTree(PsiFile file) {
-    if (!(file instanceof PsiFileImpl)) return null;
-    if (((PsiFileImpl)file).getElementTypeForStubBuilder() == null) return null;
-
-    StubTree tree = ((PsiFileImpl)file).getStubTree();
-    return tree != null ? tree : ((PsiFileImpl)file).calcStubTree();
+  public static void compareStubTexts(@NotNull StubTextInconsistencyException e) {
+    Assert.assertEquals("Re-created from text:\n" + e.getStubsFromText(), "Stubs from PSI structure:\n" + e.getStubsFromPsi());
+    throw e;
   }
 
   public static void checkPsiStructureWithCommit(@NotNull PsiFile psiFile, Consumer<PsiFile> checker) {

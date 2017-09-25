@@ -20,6 +20,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
@@ -158,13 +159,22 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
           return null;
         }
         try {
-          final PsiStatement statement = elementFactory
-            .createStatementFromText(canonicalText + " v = new " + erasedText + "<>()", parameters.getPosition());
-          final PsiVariable declaredVar = (PsiVariable)((PsiDeclarationStatement)statement).getDeclaredElements()[0];
-          final PsiNewExpression initializer = (PsiNewExpression)declaredVar.getInitializer();
-          final boolean hasDefaultConstructorOrNoGenericsOne = PsiDiamondTypeImpl.hasDefaultConstructor(psiClass) ||
-                                                               !PsiDiamondTypeImpl.haveConstructorsGenericsParameters(psiClass);
-          if (hasDefaultConstructorOrNoGenericsOne) {
+          boolean hasDefaultConstructor = PsiDiamondTypeImpl.hasDefaultConstructor(psiClass);
+          boolean hasConstructorWithGenericsParameters = PsiDiamondTypeImpl.haveConstructorsGenericsParameters(psiClass);
+          if (hasDefaultConstructor || !hasConstructorWithGenericsParameters) {
+            String args;
+            if (hasDefaultConstructor) {
+              args = "";
+            }
+            else {
+              //just try to resolve to the first constructor
+              PsiParameter[] constructorParams = psiClass.getConstructors()[0].getParameterList().getParameters();
+              args = StringUtil.join(constructorParams, p -> PsiTypesUtil.getDefaultValueOfType(p.getType()), ",");
+            }
+            final PsiStatement statement = elementFactory
+              .createStatementFromText(canonicalText + " v = new " + erasedText + "<>(" + args + ")", parameters.getPosition());
+            final PsiVariable declaredVar = (PsiVariable)((PsiDeclarationStatement)statement).getDeclaredElements()[0];
+            final PsiNewExpression initializer = (PsiNewExpression)declaredVar.getInitializer();
             final PsiDiamondTypeImpl.DiamondInferenceResult inferenceResult = PsiDiamondTypeImpl.resolveInferredTypes(initializer);
             if (inferenceResult.getErrorMessage() == null &&
                 !psiClass.hasModifierProperty(PsiModifier.ABSTRACT) &&

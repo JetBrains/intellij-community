@@ -49,7 +49,7 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
   private NavBarPanel myPanel;
 
   public NavBarUpdateQueue(NavBarPanel panel) {
-    super("NavBar", Registry.intValue("navBar.updateMergeTime"), true, MergingUpdateQueue.ANY_COMPONENT, panel);
+    super("NavBar", Registry.intValue("navBar.updateMergeTime"), true, panel, panel);
     myPanel = panel;
     setTrackUiActivity(true);
     IdeEventQueue.getInstance().addActivityListener(() -> restartRebuild(), panel);
@@ -83,7 +83,7 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
     try {
       final NavBarModel model = myPanel.getModel();
       if (dataContext != null) {
-        if (CommonDataKeys.PROJECT.getData(dataContext) != myPanel.getProject() || myPanel.isNodePopupShowing()) {
+        if (CommonDataKeys.PROJECT.getData(dataContext) != myPanel.getProject() || myPanel.isNodePopupActive()) {
           requestModelUpdate(null, myPanel.getContextObject(), true);
           return;
         }
@@ -142,7 +142,7 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
       }
 
       if (focus != null && focus.isShowing()) {
-        if (!myPanel.hasFocus() && !myPanel.isNodePopupShowing()) {
+        if (!myPanel.hasFocus() && !myPanel.isNodePopupActive()) {
           requestModelUpdate(DataManager.getInstance().getDataContext(focus), null, false);
         }
       }

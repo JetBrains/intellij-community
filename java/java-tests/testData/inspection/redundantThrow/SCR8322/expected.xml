@@ -5,5 +5,15 @@
     <line>6</line>
     <description>IOException</description>
   </problem>
+  <problem>
+    <file>AClass.java</file>
+    <line>9</line>
+    <description>IOException</description>
+  </problem>
+  <problem>
+    <file>AClassTwo.java</file>
+    <line>7</line>
+    <description>IOException</description>
+  </problem>
 </problems>
 

@@ -16,7 +16,9 @@
 package com.intellij.application.options;
 
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.ui.OptionGroup;
+import org.jetbrains.annotations.NotNull;
 
 class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
   private FullyQualifiedNamesInJavadocOptionProvider myFqnInJavadocOption;
@@ -29,19 +31,23 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
 
   @Override
   public void apply(CodeStyleSettings settings) {
-    applyLayoutSettings(settings);
+    applyLayoutSettings(getJavaSettings(settings));
     myFqnInJavadocOption.apply(settings);
   }
 
   @Override
   public void reset(CodeStyleSettings settings) {
-    resetLayoutSettings(settings);
+    resetLayoutSettings(getJavaSettings(settings));
     myFqnInJavadocOption.reset(settings);
   }
 
   @Override
   public boolean isModified(CodeStyleSettings settings) {
-    return isModifiedLayoutSettings(settings) || myFqnInJavadocOption.isModified(settings); 
+    return isModifiedLayoutSettings(getJavaSettings(settings)) || myFqnInJavadocOption.isModified(settings);
+  }
+
+  private static JavaCodeStyleSettings getJavaSettings(@NotNull CodeStyleSettings settings) {
+    return settings.getCustomSettings(JavaCodeStyleSettings.class);
   }
   
 }

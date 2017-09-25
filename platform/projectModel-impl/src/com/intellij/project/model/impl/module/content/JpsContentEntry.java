@@ -218,6 +218,7 @@ public class JpsContentEntry implements ContentEntry, Disposable {
     return addSourceFolder(url, type, type.createDefaultProperties());
   }
 
+  @Override
   @NotNull
   public  <P extends JpsElement> SourceFolder addSourceFolder(@NotNull  String url, @NotNull JpsModuleSourceRootType<P> type, @NotNull P properties) {
     final JpsModuleSourceRoot sourceRoot = myModule.addSourceRoot(url, type, properties);

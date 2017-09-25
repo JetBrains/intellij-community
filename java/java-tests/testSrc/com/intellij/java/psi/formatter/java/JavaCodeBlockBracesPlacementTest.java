@@ -19,7 +19,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
 public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest {
 
-  public void testSimpleTryBlock() throws Exception {
+  public void testSimpleTryBlock() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
 
     String before = "try {} catch (Exception e) {\n" +
@@ -48,7 +48,7 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
   }
 
-  public void testSimpleCatchBlock() throws Exception {
+  public void testSimpleCatchBlock() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
 
     String before = "try {\n" +
@@ -77,7 +77,7 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
   }
 
-  public void testSimpleCatchAndTryBlock() throws Exception {
+  public void testSimpleCatchAndTryBlock() {
     String before = "try {} catch (Exception e) {      System.out.println(\"AA!\"); }";
     String after = "try {} catch (Exception e) { System.out.println(\"AA!\"); }";
     String afterExpanded = "try {\n" +
@@ -92,7 +92,7 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
   }
 
 
-  public void testDoWhileStatement() throws Exception {
+  public void testDoWhileStatement() {
     String before = "do {\n" +
                     "        System.out.println(\"AAA!\");\n" +
                     "} while (1 == 1);";
@@ -122,7 +122,7 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
   }
 
-  public void testSimpleDoWhileStatement() throws Exception {
+  public void testSimpleDoWhileStatement() {
     String before = "do {     System.out.println(\"AAA!\"); } while (1 == 1);";
     String after = "do { System.out.println(\"AAA!\"); } while (1 == 1);";
 
@@ -130,7 +130,7 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
     checkFormatterWithDifferentBraceStyles(before, after, after, after, after);
   }
 
-  public void testForEachStatement() throws Exception {
+  public void testForEachStatement() {
     String before = "for (String arg : args) {\n" +
                     "        System.out.println(\"AAA!\");\n" +
                     "}";
@@ -160,7 +160,7 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
   }
 
-  public void testSimpleForEachStatement() throws Exception {
+  public void testSimpleForEachStatement() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
 
     String before = "for (String arg : args) {     System.out.println(\"AAA!\"); }";
@@ -169,7 +169,7 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
     checkFormatterWithDifferentBraceStyles(before, after, after, after, after);
   }
 
-  public void testForStatement() throws Exception {
+  public void testForStatement() {
     String before = "for (int i = 0; i < 10; i = i + 3) {\n" +
                     "        System.out.println(\"AAA!\");\n" +
                     "}\n";
@@ -199,7 +199,7 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
   }
 
-  public void testSimpleForStatement() throws Exception {
+  public void testSimpleForStatement() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
 
     String before = "for (int i = 0; i < 10; i = i + 3) {    System.out.println(\"AAA!\"); }";
@@ -209,7 +209,7 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
   }
 
 
-  public void testSwitchStatement() throws Exception {
+  public void testSwitchStatement() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
 
@@ -257,7 +257,7 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
   }
 
-  public void testSynchronizedStatement() throws Exception {
+  public void testSynchronizedStatement() {
     String before = "synchronized (this) {\n" +
                     "       System.out.println(\"AAA!\");\n" +
                     "}";
@@ -287,7 +287,7 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
   }
 
-  public void testSimpleSynchronizedStatement() throws Exception {
+  public void testSimpleSynchronizedStatement() {
     String before = "synchronized (this) {     System.out.println(\"AAA!\"); }";
     String after = "synchronized (this) { System.out.println(\"AAA!\"); }";
 
@@ -295,7 +295,7 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
     checkFormatterWithDifferentBraceStyles(before, after, after, after, after);
   }
 
-  public void testWhileStatement() throws Exception {
+  public void testWhileStatement() {
     String before = "while (true) {\n" +
                     "        System.out.println(\"AAA\");\n" +
                     "}";
@@ -325,7 +325,7 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
   }
 
-  public void testSimpleWhileStatement() throws Exception {
+  public void testSimpleWhileStatement() {
     String before = "while (true) {    System.out.println(\"AAA\"); }";
     String after = "while (true) { System.out.println(\"AAA\"); }";
 
@@ -337,15 +337,14 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
                                                       String endOfLine,
                                                       String nextLine,
                                                       String nextLineShifted,
-                                                      String nextLineShiftedEach) throws Exception
-  {
+                                                      String nextLineShiftedEach) {
     formatAndCheck(CommonCodeStyleSettings.END_OF_LINE, before, endOfLine);
     formatAndCheck(CommonCodeStyleSettings.NEXT_LINE, before, nextLine);
     formatAndCheck(CommonCodeStyleSettings.NEXT_LINE_SHIFTED, before, nextLineShifted);
     formatAndCheck(CommonCodeStyleSettings.NEXT_LINE_SHIFTED2, before, nextLineShiftedEach);
   }
 
-  private void formatAndCheck(int braceStyle, String before, String after) throws Exception {
+  private void formatAndCheck(int braceStyle, String before, String after) {
     getSettings().BRACE_STYLE = braceStyle;
     doMethodTest(before, after);
   }

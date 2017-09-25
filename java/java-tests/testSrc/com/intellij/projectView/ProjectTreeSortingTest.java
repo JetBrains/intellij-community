@@ -71,7 +71,7 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
     super.tearDown();
   }
 
-  public void testSortByName() throws Exception {
+  public void testSortByName() {
     myProjectView.setSortByType(myPane.getId(), false);
     assertTree("-sortByName\n" +
                " a.java\n" +
@@ -81,7 +81,7 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
                " b.java\n");
   }
 
-  public void testSortByType() throws Exception {
+  public void testSortByType() {
     myProjectView.setSortByType(myPane.getId(), false);
     assertTree("-sortByType\n" +
                " a.java\n" +
@@ -97,7 +97,7 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
                " b.txt\n");
   }
 
-  public void testFoldersOnTop() throws Exception {
+  public void testFoldersOnTop() {
     // first, check with 'sort by type' disabled 
     myProjectView.setSortByType(myPane.getId(), false);
 
@@ -141,7 +141,7 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
                " c.txt\n");
   }
 
-  public void testSortByTypeBetweenFilesAndFolders() throws Exception {
+  public void testSortByTypeBetweenFilesAndFolders() {
     ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(false);
     myProjectView.setSortByType(myPane.getId(), false);
     assertTree("-sortByTypeBetweenFilesAndFolders\n" +
@@ -166,7 +166,7 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
                " +b_folder\n");
   }
 
-  public void testManualOrder() throws Exception {
+  public void testManualOrder() {
     MyOrderProvider provider = new MyOrderProvider(myProject);
     provider.setOrder("b_ordered.java",
                       "a_folder_ordered",

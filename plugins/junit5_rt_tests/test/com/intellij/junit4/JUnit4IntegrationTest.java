@@ -67,7 +67,7 @@ public class JUnit4IntegrationTest extends JUnitAbstractIntegrationTest {
   public String myJUnitVersion;
 
   @Before
-  public void before() throws Throwable {
+  public void before() {
     EdtTestUtil.runInEdtAndWait(() -> {
       setUp();
       Module module = createEmptyModule();
@@ -91,7 +91,7 @@ public class JUnit4IntegrationTest extends JUnitAbstractIntegrationTest {
   }
 
   @After
-  public void after() throws Throwable {
+  public void after() {
     EdtTestUtil.runInEdtAndWait(() -> {
       tearDown();
     });
@@ -103,7 +103,7 @@ public class JUnit4IntegrationTest extends JUnitAbstractIntegrationTest {
   }
 
   @Test
-  public void ignoredTestMethod() throws Throwable {
+  public void ignoredTestMethod() {
     EdtTestUtil.runInEdtAndWait(() -> {
       PsiClass psiClass = findClass(getModule1(), CLASS_NAME);
       assertNotNull(psiClass);

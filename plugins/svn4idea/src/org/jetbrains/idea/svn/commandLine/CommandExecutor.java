@@ -503,12 +503,12 @@ public class CommandExecutor {
   private class ProcessTracker extends ProcessAdapter {
 
     @Override
-    public void processTerminated(ProcessEvent event) {
+    public void processTerminated(@NotNull ProcessEvent event) {
       setExitCodeReference(event.getExitCode());
     }
 
     @Override
-    public void onTextAvailable(ProcessEvent event, Key outputType) {
+    public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
       if (ProcessOutputTypes.STDERR == outputType) {
         myWasError.set(true);
       }

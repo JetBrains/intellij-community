@@ -128,7 +128,7 @@ public class PyInlineLocalTest extends PyTestCase {
     }
   }
 
-  public void testOperatorPrecedence() throws Exception {
+  public void testOperatorPrecedence() {
     checkOperatorPrecedence("x = 10 ** 2", "power");
     checkOperatorPrecedence("x = 10 * 2", "multiplication");
     checkOperatorPrecedence("x = 10 / 2", "division");
@@ -146,11 +146,11 @@ public class PyInlineLocalTest extends PyTestCase {
   }
 
   // PY-15390
-  public void testMatMulPrecedence() throws Exception {
+  public void testMatMulPrecedence() {
     checkOperatorPrecedence("x = y @ z", "matrixMultiplication");
   }
 
-  private void checkOperatorPrecedence(@NotNull final String firstLine, @NotNull String resultPrefix) throws Exception {
+  private void checkOperatorPrecedence(@NotNull final String firstLine, @NotNull String resultPrefix) {
     myFixture.configureByFile("/refactoring/inlinelocal/operatorPrecedence/template.py");
     WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> myFixture.getEditor().getDocument().insertString(0, firstLine + "\n"));
     PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();

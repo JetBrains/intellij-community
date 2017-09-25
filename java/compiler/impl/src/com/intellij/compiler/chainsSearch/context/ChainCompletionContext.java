@@ -17,7 +17,7 @@ package com.intellij.compiler.chainsSearch.context;
 
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx;
-import com.intellij.compiler.chainsSearch.MethodIncompleteSignature;
+import com.intellij.compiler.chainsSearch.MethodCall;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -26,14 +26,12 @@ import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import gnu.trove.THashSet;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.LightRef;
@@ -65,22 +63,23 @@ public class ChainCompletionContext {
   @NotNull
   private final PsiResolveHelper myResolveHelper;
   @NotNull
-  private final Map<MethodIncompleteSignature, PsiClass> myQualifierClassResolver;
+  private final TIntObjectHashMap<PsiClass> myQualifierClassResolver;
   @NotNull
-  private final Map<MethodIncompleteSignature, PsiMethod[]> myResolver;
+  private final Map<MethodCall, PsiMethod[]> myResolver;
+  @NotNull
+  private final CompilerReferenceServiceEx myRefServiceEx;
 
   private final NotNullLazyValue<Set<LightRef>> myContextClassReferences = new NotNullLazyValue<Set<LightRef>>() {
     @NotNull
     @Override
     protected Set<LightRef> compute() {
-      CompilerReferenceServiceEx referenceServiceEx = (CompilerReferenceServiceEx)CompilerReferenceService.getInstance(myProject);
       return getContextTypes()
         .stream()
         .map(PsiUtil::resolveClassInType)
         .filter(Objects::nonNull)
         .map(c -> ClassUtil.getJVMClassName(c))
         .filter(Objects::nonNull)
-        .mapToInt(c -> referenceServiceEx.getNameId(c))
+        .mapToInt(c -> myRefServiceEx.getNameId(c))
         .filter(n -> n != 0)
         .mapToObj(n -> new LightRef.JavaLightClassRef(n)).collect(Collectors.toSet());
     }
@@ -95,8 +94,9 @@ public class ChainCompletionContext {
     myResolveScope = context.getResolveScope();
     myProject = context.getProject();
     myResolveHelper = PsiResolveHelper.SERVICE.getInstance(myProject);
-    myQualifierClassResolver = FactoryMap.createMap(sign -> sign.resolveQualifier(myProject, myResolveScope, accessValidator()));
-    myResolver = FactoryMap.createMap(sign -> sign.resolve(myProject, myResolveScope, accessValidator()));
+    myQualifierClassResolver = new TIntObjectHashMap<>();
+    myResolver = FactoryMap.create(sign -> sign.resolve());
+    myRefServiceEx = (CompilerReferenceServiceEx)CompilerReferenceService.getInstance(myProject);
   }
 
   @NotNull
@@ -114,6 +114,11 @@ public class ChainCompletionContext {
       }
     }
     return false;
+  }
+
+  @NotNull
+  public CompilerReferenceServiceEx getRefService() {
+    return myRefServiceEx;
   }
 
   @NotNull
@@ -162,16 +167,28 @@ public class ChainCompletionContext {
   }
 
   @Nullable
-  public PsiClass resolveQualifierClass(MethodIncompleteSignature sign) {
-    return myQualifierClassResolver.get(sign);
+  public PsiClass resolvePsiClass(LightRef.LightClassHierarchyElementDef aClass) {
+    int nameId = aClass.getName();
+    if (myQualifierClassResolver.contains(nameId)) {
+      return myQualifierClassResolver.get(nameId);
+    } else {
+      PsiClass psiClass = null;
+      String name = myRefServiceEx.getName(nameId);
+      PsiClass resolvedClass = JavaPsiFacade.getInstance(getProject()).findClass(name, myResolveScope);
+      if (resolvedClass != null && accessValidator().test(resolvedClass)) {
+        psiClass = resolvedClass;
+      }
+      myQualifierClassResolver.put(nameId, psiClass);
+      return psiClass;
+    }
   }
 
   @NotNull
-  public PsiMethod[] resolve(MethodIncompleteSignature sign) {
+  public PsiMethod[] resolve(MethodCall sign) {
     return myResolver.get(sign);
   }
 
-  private Predicate<PsiMember> accessValidator() {
+  public Predicate<PsiMember> accessValidator() {
     return m -> myResolveHelper.isAccessible(m, myContext, null);
   }
 
@@ -235,7 +252,7 @@ public class ChainCompletionContext {
 
     @Override
     public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-      if ((!(element instanceof PsiMethod) || PropertyUtil.isSimplePropertyAccessor((PsiMethod)element)) &&
+      if ((!(element instanceof PsiMethod) || PropertyUtilBase.isSimplePropertyAccessor((PsiMethod)element)) &&
           (!(element instanceof PsiVariable) || !myExcludedVariables.contains(element)) &&
           (!(element instanceof PsiMember) || myResolveHelper.isAccessible((PsiMember)element, myPlace, null))) {
         PsiType type = getType(element);

@@ -100,12 +100,18 @@ public class ParenthesesUtils {
   }
 
   public static boolean isCommutativeOperator(@NotNull IElementType token) {
-    return !(token.equals(JavaTokenType.MINUS) ||
-             token.equals(JavaTokenType.DIV) ||
-             token.equals(JavaTokenType.PERC) ||
-             token.equals(JavaTokenType.LTLT) ||
-             token.equals(JavaTokenType.GTGT) ||
-             token.equals(JavaTokenType.GTGTGT));
+    return token == JavaTokenType.PLUS || token == JavaTokenType.ASTERISK ||
+           token == JavaTokenType.EQEQ || token == JavaTokenType.NE ||
+           token == JavaTokenType.AND || token == JavaTokenType.OR || token == JavaTokenType.XOR;
+  }
+
+  public static boolean isCommutativeOperation(PsiPolyadicExpression expression) {
+    final IElementType tokenType = expression.getOperationTokenType();
+    if (!isCommutativeOperator(tokenType)) {
+      return false;
+    }
+    final PsiType type = expression.getType();
+    return type != null && !type.equalsToText(CommonClassNames.JAVA_LANG_STRING);
   }
 
   public static boolean isAssociativeOperation(PsiPolyadicExpression expression) {

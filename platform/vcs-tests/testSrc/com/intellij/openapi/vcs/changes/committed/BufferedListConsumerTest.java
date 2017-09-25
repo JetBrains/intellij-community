@@ -29,7 +29,7 @@ import java.util.*;
 public class BufferedListConsumerTest extends FileBasedTest {
 
   @Test
-  public void testHugeWriteRead() throws Exception {
+  public void testHugeWriteRead() {
     List<Thread> threads = new ArrayList<>();
     final Random random = new Random(17);
     final Set<Long> src = new HashSet<>(200);

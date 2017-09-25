@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 Bas Leijdekkers
+ * Copyright 2011-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,51 @@ package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class AddThisQualifierFix extends InspectionGadgetsFix {
+
+  private AddThisQualifierFix() {}
+
+  @Nullable
+  public static AddThisQualifierFix buildFix(PsiExpression expressionToQualify, PsiMember memberAccessed) {
+    if (!isThisQualifierPossible(expressionToQualify, memberAccessed)) {
+      return null;
+    }
+    return new AddThisQualifierFix();
+  }
+
+  private static boolean isThisQualifierPossible(PsiExpression memberAccessExpression, @NotNull PsiMember member) {
+    final PsiClass memberClass = member.getContainingClass();
+    if (memberClass == null) {
+      return false;
+    }
+    PsiClass containingClass = ClassUtils.getContainingClass(memberAccessExpression);
+    if (InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
+      // unqualified this.
+      return true;
+    }
+    do {
+      containingClass = ClassUtils.getContainingClass(containingClass);
+    }
+    while (containingClass != null && !InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true));
+    // qualified this needed, which is not possible on local or anonymous class.
+    return containingClass != null && !PsiUtil.isLocalOrAnonymousClass(containingClass);
+  }
 
   @Override
   @NotNull

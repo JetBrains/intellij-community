@@ -22,8 +22,6 @@ import git4idea.test.GitSingleRepoTest;
 import git4idea.test.GitTestUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-
 import static git4idea.test.GitExecutor.modify;
 
 public class GitUserFilterTest extends GitSingleRepoTest {
@@ -34,7 +32,7 @@ public class GitUserFilterTest extends GitSingleRepoTest {
     super.setUp();
     myVcsLogUserFilterTest = new VcsLogUserFilterTest(GitTestUtil.findGitLogProvider(myProject), myProject) {
       @NotNull
-      protected String commit(@NotNull VcsUser user) throws IOException {
+      protected String commit(@NotNull VcsUser user) {
         GitTestUtil.setupUsername(user.getName(), user.getEmail());
         String commit = modify("file.txt");
         GitTestUtil.setupDefaultUsername();

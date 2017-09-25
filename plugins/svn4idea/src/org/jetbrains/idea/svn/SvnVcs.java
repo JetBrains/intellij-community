@@ -51,7 +51,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.SoftHashMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
@@ -113,7 +112,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private static final VcsKey ourKey = createKey(VCS_NAME);
   public static final Topic<Runnable> WC_CONVERTED = new Topic<>("WC_CONVERTED", Runnable.class);
   private final Map<String, Map<String, Pair<PropertyValue, Trinity<Long, Long, Long>>>> myPropertyCache =
-    new SoftHashMap<>();
+    createSoftMap();
 
   @NotNull private final SvnConfiguration myConfiguration;
   private final SvnEntriesFileListener myEntriesFileListener;
@@ -797,7 +796,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
           continue;
         }
       }
-      infos.add(new MyPair<>(vf, url.toString(), s));
+      infos.add(new MyPair<>(vf, url, s));
     }
     List<MyPair<S>> filtered = new UniqueRootsFilter().filter(infos);
     List<S> converted = map(filtered, MyPair::getSrc);
@@ -808,10 +807,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   private static class MyPair<T> implements RootUrlPair {
     @NotNull private final VirtualFile myFile;
-    @NotNull private final String myUrl;
+    @NotNull private final SVNURL myUrl;
     private final T mySrc;
 
-    private MyPair(@NotNull VirtualFile file, @NotNull String url, T src) {
+    private MyPair(@NotNull VirtualFile file, @NotNull SVNURL url, T src) {
       myFile = file;
       myUrl = url;
       mySrc = src;
@@ -829,7 +828,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
     @NotNull
     @Override
-    public String getUrl() {
+    public SVNURL getUrl() {
       return myUrl;
     }
   }

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.newvfs.events;
 
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class VFileEvent {
   private final boolean myIsFromRefresh;
   private final Object myRequestor;
+  @NotNull private final AtomicNotNullLazyValue<String> myPath = AtomicNotNullLazyValue.createValue(this::computePath);
 
   public VFileEvent(Object requestor, final boolean isFromRefresh) {
     myRequestor = requestor;
@@ -40,8 +42,20 @@ public abstract class VFileEvent {
     return myRequestor;
   }
 
+  /**
+   * Returns the file path (in system independent format) affected by this event.<br/><br/>
+   *
+   * Note that the path might be cached, thus can become out-of-date if requested later,
+   * asynchronously from the event dispatching procedure
+   * (e.g. {@code event.getPath()} can become not equal to {@code event.getFile().getPath()}).
+   */
   @NotNull
-  public abstract String getPath();
+  public String getPath() {
+    return myPath.getValue();
+  }
+
+  @NotNull
+  protected abstract String computePath();
 
   /**
    * Returns the VirtualFile which this event belongs to.

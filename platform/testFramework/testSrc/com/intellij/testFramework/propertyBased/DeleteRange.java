@@ -28,7 +28,7 @@ import java.util.Objects;
 
 public class DeleteRange extends ActionOnRange {
 
-  DeleteRange(PsiFile file, int startOffset, int endOffset) {
+  public DeleteRange(PsiFile file, int startOffset, int endOffset) {
     super(file, startOffset, endOffset);
   }
 
@@ -53,7 +53,12 @@ public class DeleteRange extends ActionOnRange {
 
   @Override
   public String toString() {
-    return "DeleteRange{" + getVirtualFile().getPath() + " " + getCurrentRange() + ", raw=(" + myInitialStart + ", " + myInitialEnd + ")}";
+    return "DeleteRange{" + getVirtualFile().getPath() + " " + getCurrentRange() + "}";
+  }
+
+  @Override
+  public String getConstructorArguments() {
+    return "file, " + myInitialStart + ", " + myInitialEnd;
   }
 
   public void performAction() {

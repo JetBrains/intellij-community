@@ -21,11 +21,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ext.LibraryDependentToolWindow;
@@ -75,14 +78,26 @@ public class LibraryDependentToolWindowManager implements StartupActivity {
     if (dumbService == null) return;
 
     for (LibraryDependentToolWindow libraryToolWindow : Extensions.getExtensions(LibraryDependentToolWindow.EXTENSION_POINT_NAME)) {
-      boolean exists = dumbService.runReadActionInSmartMode(() -> !project.isDisposed() &&
-                                                                  libraryToolWindow.getLibrarySearchHelper().isLibraryExists(project));
+      Ref<Boolean> libraryExists = Ref.create(false);
+      Runnable runnable = () -> {
+        final Boolean exists = dumbService.runReadActionInSmartMode(() ->
+                                                                      !project.isDisposed() &&
+                                                                      libraryToolWindow.getLibrarySearchHelper().isLibraryExists(project));
+        libraryExists.set(exists);
+      };
+      while (!project.isDisposed()) {
+        boolean finished = ProgressIndicatorUtils.runWithWriteActionPriority(runnable, new ProgressIndicatorBase());
+        if (finished) {
+          break;
+        }
+        ProgressIndicatorUtils.yieldToPendingWriteActions();
+      }
 
       ApplicationManager.getApplication().invokeLater(() -> {
         final ToolWindowManagerEx toolWindowManagerEx = ToolWindowManagerEx.getInstanceEx(project);
         ToolWindow toolWindow = toolWindowManagerEx.getToolWindow(libraryToolWindow.id);
 
-        if (exists) {
+        if (libraryExists.get()) {
           if (toolWindow == null) {
             toolWindowManagerEx.initToolWindow(libraryToolWindow);
           }

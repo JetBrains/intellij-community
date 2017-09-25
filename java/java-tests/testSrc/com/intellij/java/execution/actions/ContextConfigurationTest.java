@@ -38,7 +38,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
 import com.intellij.testFramework.MapDataContext;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -55,7 +54,7 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
     addModule("commonConfiguration");
   }
 
-  public void testAbstractJUnit3TestCase() throws Exception {
+  public void testAbstractJUnit3TestCase() {
     String packageName = "abstractTests";
     String shortName = "AbstractTest";
     String qualifiedName = StringUtil.getQualifiedName(packageName, shortName);
@@ -69,7 +68,7 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
     checkGeneretedName(configuration, shortName + "." + METHOD_NAME);
   }
 
-  public void testMethodInAbstractJUnit3TestCase() throws Exception {
+  public void testMethodInAbstractJUnit3TestCase() {
     String packageName = "abstractTests";
     String shortName = "AbstractTestImpl1";
     String qualifiedName = StringUtil.getQualifiedName(packageName, shortName);
@@ -94,7 +93,7 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
   }
   
   //fake parameterized by providing corresponding location
-  public void testMethodInAbstractParameterizedTest() throws Exception {
+  public void testMethodInAbstractParameterizedTest() {
     String packageName = "abstractTests";
     String shortName = "AbstractTestImpl1";
     String qualifiedName = StringUtil.getQualifiedName(packageName, shortName);
@@ -140,7 +139,7 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
   }
 
 
-  public void testRecreateJUnitClass() throws IOException {
+  public void testRecreateJUnitClass() {
     createEmptyModule();
     addDependency(getModule2(), getModule1());
     PsiClass psiClass = findClass(getModule1(), CLASS_NAME);

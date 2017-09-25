@@ -71,7 +71,7 @@ public class HgLogCommand {
   /**
    * @param limit Pass -1 to set no limits on history
    */
-  public final List<HgFileRevision> execute(final HgFile hgFile, int limit, boolean includeFiles) throws HgCommandException {
+  public final List<HgFileRevision> execute(final HgFile hgFile, int limit, boolean includeFiles) {
     return execute(hgFile, limit, includeFiles, null);
   }
 

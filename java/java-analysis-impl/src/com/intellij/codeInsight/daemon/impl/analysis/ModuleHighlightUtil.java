@@ -62,11 +62,9 @@ public class ModuleHighlightUtil {
   private static final Attributes.Name MULTI_RELEASE = new Attributes.Name("Multi-Release");
 
   @Nullable
-  static PsiJavaModule getModuleDescriptor(@NotNull PsiFileSystemItem fsItem) {
-    VirtualFile file = fsItem.getVirtualFile();
+  static PsiJavaModule getModuleDescriptor(@Nullable VirtualFile file, @NotNull Project project) {
     if (file == null) return null;
 
-    Project project = fsItem.getProject();
     ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
     if (index.isInLibrary(file)) {
       VirtualFile root;

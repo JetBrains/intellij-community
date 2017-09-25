@@ -33,8 +33,12 @@ class LightJavadocGeneratorTest : LightCodeInsightFixtureTestCase() {
         </pre>
       </body>""".trimIndent())
 
-  fun testDocumentedModule() = doTestModule("/** One humble module. */\nmodule M.N { }", """
+  fun testDocumentedModule() = doTestModule("/** One humble module. */\n@Deprecated\nmodule M.N { }", """
       <body>
+        @
+        <a href="psi_element://java.lang.Deprecated">
+          <code>Deprecated</code>
+        </a>
         <pre>
           module
           <b>M.N</b>
@@ -45,7 +49,7 @@ class LightJavadocGeneratorTest : LightCodeInsightFixtureTestCase() {
   private fun doTestModule(text: String, expected: String) {
     val file = myFixture.configureByText("module-info.java", text)
     val module = (file as PsiJavaFile).moduleDeclaration!!
-    val docInfo = JavaDocInfoGeneratorFactory.create(project, module).generateDocInfo(null)!!
+    val docInfo = JavaDocInfoGeneratorFactory.create(project, module).generateDocInfo(null)!!.replace("&nbsp;", " ")
     val body = loadElement(docInfo).getChild("body")
     assertThat(body).isEqualTo(expected)
   }

@@ -47,7 +47,7 @@ object Templates {
   fun selectComboBox(itemName: String) = ".selectItem(\"$itemName\")"
 
   fun clickRadioButton(text: String) = "radioButton(\"$text\").select()"
-  fun invokeActionComment(actionId: String) = "//invoke an action \"$actionId\" via keystroke string "
+  fun invokeActionComment(actionId: String) = "//invokeAction(\"$actionId\")"
 
   fun shortcut(keyStrokeStr: String) = "shortcut(\"$keyStrokeStr\")"
   fun invokeMainMenuAction(menuActionId: String) = "invokeMainMenu(\"$menuActionId\")"

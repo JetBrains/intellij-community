@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
@@ -83,7 +84,9 @@ public class JavaMarkObjectActionHandler extends MarkObjectActionHandler {
       public Priority getPriority() {
         return Priority.HIGH;
       }
-      public void threadAction() {
+
+      @Override
+      public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         boolean sessionRefreshNeeded = true;
         try {
           if (markup != null) {

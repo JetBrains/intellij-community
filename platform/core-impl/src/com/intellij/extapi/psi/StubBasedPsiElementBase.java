@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.util.Key;
@@ -229,7 +230,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
    * Don't invoke this method, it's public for implementation reasons.
    */
   public final void setNode(@NotNull ASTNode node) {
-    mySubstrateRef = SubstrateRef.createAstStrongRef(node);
+    setSubstrateRef(SubstrateRef.createAstStrongRef(node));
   }
 
   /**
@@ -290,6 +291,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
 
   @Override
   public boolean isValid() {
+    ProgressManager.checkCanceled();
     return mySubstrateRef.isValid();
   }
 
@@ -531,7 +533,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   @Override
   protected Object clone() {
     final StubBasedPsiElementBase copy = (StubBasedPsiElementBase)super.clone();
-    copy.mySubstrateRef = SubstrateRef.createAstStrongRef(getNode());
+    copy.setSubstrateRef(SubstrateRef.createAstStrongRef(getNode()));
     return copy;
   }
 }

@@ -42,7 +42,7 @@ public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
 
   // load all parser definitions, instantiate all lexers & parsers to initialize all IElementType constants
   @SuppressWarnings("UnusedDeclaration")
-  public void testCount() throws Exception {
+  public void testCount() {
     int count = IElementType.getAllocatedTypesCount();
     LOG.debug("Preloaded: " + count +" element types");
     LanguageExtensionPoint[] extensions = Extensions.getExtensions(new ExtensionPointName<LanguageExtensionPoint>("com.intellij.lang.parserDefinition"));

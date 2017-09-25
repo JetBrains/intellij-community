@@ -16,7 +16,7 @@
 package com.jetbrains.env;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.jetbrains.python.sdkTools.SdkCreationType;
+import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
@@ -28,7 +28,7 @@ import org.junit.Test;
  */
 public final class PyCaseSensitiveResolveTest extends PyEnvTestCase {
   @Test
-  public void testCaseSensitive() throws Exception {
+  public void testCaseSensitive() {
     runTest(new PyExecutionFixtureTestTask(null) {
       @NotNull
       @Override

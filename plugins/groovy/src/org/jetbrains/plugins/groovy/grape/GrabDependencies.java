@@ -269,7 +269,7 @@ public class GrabDependencies implements IntentionAction {
     }
 
     @Override
-    public void notifyTextAvailable(String text, Key outputType) {
+    public void notifyTextAvailable(@NotNull String text, @NotNull Key outputType) {
       text = StringUtil.convertLineSeparators(text);
       if (LOG.isDebugEnabled()) {
         LOG.debug(outputType + text);

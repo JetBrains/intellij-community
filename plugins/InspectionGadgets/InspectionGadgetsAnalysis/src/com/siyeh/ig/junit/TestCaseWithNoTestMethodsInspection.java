@@ -33,7 +33,7 @@ import javax.swing.*;
 public class TestCaseWithNoTestMethodsInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
-  public boolean ignoreSupers = false;
+  public boolean ignoreSupers = true;
 
   @Override
   @NotNull

@@ -23,13 +23,13 @@ import java.util.Map;
 
 final class WeakKeySoftValueHashMap<K,V> extends RefKeyRefValueHashMap<K,V> implements Map<K,V>{
   WeakKeySoftValueHashMap() {
-    super(new WeakHashMap<K, ValueReference<K, V>>());
+    super((RefHashMap<K, ValueReference<K, V>>)ContainerUtil.<K, ValueReference<K, V>>createWeakMap());
   }
 
   private static class SoftValueReference<K,V> extends SoftReference<V> implements ValueReference<K,V> {
     @NotNull private final RefHashMap.Key<K> key;
 
-    private SoftValueReference(@NotNull WeakHashMap.Key<K> key, V referent, ReferenceQueue<? super V> q) {
+    private SoftValueReference(@NotNull RefHashMap.Key<K> key, V referent, ReferenceQueue<? super V> q) {
       super(referent, q);
       this.key = key;
     }
@@ -41,6 +41,7 @@ final class WeakKeySoftValueHashMap<K,V> extends RefKeyRefValueHashMap<K,V> impl
     }
   }
 
+  @NotNull
   @Override
   protected ValueReference<K, V> createValueReference(@NotNull RefHashMap.Key<K> key,
                                                       V referent,

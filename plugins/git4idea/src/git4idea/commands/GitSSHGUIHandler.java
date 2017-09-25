@@ -15,7 +15,9 @@
  */
 package git4idea.commands;
 
+import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.credentialStore.CredentialPromptDialog;
+import com.intellij.credentialStore.Credentials;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
@@ -36,7 +38,7 @@ import java.util.Vector;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.credentialStore.CredentialAttributesKt.CredentialAttributes;
+import static com.intellij.credentialStore.CredentialAttributesKt.*;
 
 /**
  * Swing GUI handler for the SSH events
@@ -69,9 +71,30 @@ public class GitSSHGUIHandler {
   @Nullable
   public String askPassphrase(final String username, final String keyPath, boolean resetPassword, final String lastError) {
     String error = processLastError(resetPassword, lastError);
+    CredentialAttributes oldAttributes = oldCredentialAttributes("PASSPHRASE:" + keyPath);
+    CredentialAttributes newAttributes = passphraseCredentialAttributes(keyPath);
+    Credentials credentials = getAndMigrateCredentials(oldAttributes, newAttributes);
+    if (credentials != null) {
+      return credentials.getPasswordAsString();
+    }
     return CredentialPromptDialog.askPassword(myProject, GitBundle.getString("ssh.ask.passphrase.title"),
                                               "Password for the SSH key \"" + PathUtil.getFileName(keyPath) + "\":",
-                                              CredentialAttributes(GitSSHGUIHandler.class, "PASSPHRASE:" + keyPath), resetPassword, error);
+                                              newAttributes, resetPassword, error);
+  }
+
+  @NotNull
+  private static CredentialAttributes oldCredentialAttributes(@NotNull String key) {
+    return CredentialAttributes(GitSSHGUIHandler.class, key);
+  }
+
+  @NotNull
+  private static CredentialAttributes passphraseCredentialAttributes(@NotNull String key) {
+    return new CredentialAttributes(generateServiceName("Git SSH Passphrase", key), key, GitSSHGUIHandler.class);
+  }
+
+  @NotNull
+  private static CredentialAttributes passwordCredentialAttributes(@NotNull String key) {
+    return new CredentialAttributes(generateServiceName("Git SSH Password", key), key, GitSSHGUIHandler.class);
   }
 
   /**
@@ -142,10 +165,16 @@ public class GitSSHGUIHandler {
   @Nullable
   public String askPassword(final String username, boolean resetPassword, final String lastError) {
     String error = processLastError(resetPassword, lastError);
+    CredentialAttributes oldAttributes = oldCredentialAttributes("PASSWORD:" + username);
+    CredentialAttributes newAttributes = passwordCredentialAttributes(username);
+    Credentials credentials = getAndMigrateCredentials(oldAttributes, newAttributes);
+    if (credentials != null) {
+      return credentials.getPasswordAsString();
+    }
     return CredentialPromptDialog.askPassword(myProject,
                                               GitBundle.getString("ssh.password.title"),
                                               GitBundle.message("ssh.password.message", username),
-                                              CredentialAttributes(GitSSHGUIHandler.class, "PASSWORD:" + username),
+                                              newAttributes,
                                               resetPassword,
                                               error);
   }

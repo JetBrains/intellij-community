@@ -107,6 +107,11 @@ public class DfaValueFactory {
     return myExpressionFactory.getExpressionDfaValue(psiExpression);
   }
 
+  @NotNull
+  public DfaConstValue getInt(int value) {
+    return getConstFactory().createFromValue(value, PsiType.INT, null);
+  }
+
   @Nullable
   public DfaValue createLiteralValue(PsiLiteralExpression literal) {
     return getConstFactory().create(literal);
@@ -200,7 +205,7 @@ public class DfaValueFactory {
   }
 
   private final Map<Pair<TransferTarget, FList<Trap>>, DfaControlTransferValue> myControlTransfers =
-    FactoryMap.createMap(p -> new DfaControlTransferValue(this, p.first, p.second));
+    FactoryMap.create(p -> new DfaControlTransferValue(this, p.first, p.second));
 
   private final DfaVariableValue.Factory myVarFactory;
   private final DfaConstValue.Factory myConstFactory;

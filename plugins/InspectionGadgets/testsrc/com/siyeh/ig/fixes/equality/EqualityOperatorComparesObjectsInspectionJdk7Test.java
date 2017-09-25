@@ -29,7 +29,7 @@ public class EqualityOperatorComparesObjectsInspectionJdk7Test extends EqualityO
   public void testNegatedObjectSafeComparison() { doTest(InspectionGadgetsBundle.message("inequality.to.safe.not.equals.quickfix")); }
 
   @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
+  protected void tuneFixture(JavaModuleFixtureBuilder builder) {
     builder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath())
       .setLanguageLevel(LanguageLevel.JDK_1_7);
   }

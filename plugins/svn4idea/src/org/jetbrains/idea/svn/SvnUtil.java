@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -334,7 +335,7 @@ public class SvnUtil {
     return ContainerUtil.groupBy(items, item -> {
       RootUrlInfo path = vcs.getSvnFileUrlMapping().getWcRootForFilePath(converter.convert(item).getIOFile());
 
-      return path == null ? UNKNOWN_REPOSITORY_AND_FORMAT : Pair.create(path.getRepositoryUrlUrl(), path.getFormat());
+      return path == null ? UNKNOWN_REPOSITORY_AND_FORMAT : Pair.create(path.getRepositoryUrl(), path.getFormat());
     });
   }
 
@@ -474,6 +475,7 @@ public class SvnUtil {
   }
 
   @Nullable
+  @Deprecated // Required for compatibility with external plugins.
   public static SVNURL getBranchForUrl(@NotNull SvnVcs vcs, @NotNull VirtualFile vcsRoot, @NotNull String urlValue) {
     SVNURL url = null;
 
@@ -502,14 +504,14 @@ public class SvnUtil {
     return result;
   }
 
-  public static boolean checkRepositoryVersion15(@NotNull SvnVcs vcs, @NotNull String url) {
+  public static boolean checkRepositoryVersion15(@NotNull SvnVcs vcs, @NotNull SVNURL url) {
     // Merge info tracking is supported in repositories since svn 1.5 (June 2008) - see http://subversion.apache.org/docs/release-notes/.
     // But still some users use 1.4 repositories and currently we need to know if repository supports merge info for some code flows.
 
     boolean result = false;
 
     try {
-      result = vcs.getFactory().createRepositoryFeaturesClient().supportsMergeTracking(createUrl(url));
+      result = vcs.getFactory().createRepositoryFeaturesClient().supportsMergeTracking(url);
     }
     catch (VcsException e) {
       LOG.info(e);
@@ -641,7 +643,19 @@ public class SvnUtil {
     return current;
   }
 
-  public static String getRelativeUrl(@NotNull String parentUrl, @NotNull String childUrl) {
+  public static boolean isAncestor(@NotNull SVNURL parentUrl, @NotNull SVNURL childUrl) {
+    return SVNPathUtil.isAncestor(parentUrl.toDecodedString(), childUrl.toDecodedString());
+  }
+
+  public static String getRelativeUrl(@NotNull SVNURL parentUrl, @NotNull SVNURL childUrl) {
+    return getRelativeUrl(parentUrl.toDecodedString(), childUrl.toDecodedString());
+  }
+
+  public static String getRelativeUrl(@NotNull SvnTarget parent, @NotNull SvnTarget child) {
+    return getRelativeUrl(toDecodedString(parent), toDecodedString(child));
+  }
+
+  private static String getRelativeUrl(@NotNull String parentUrl, @NotNull String childUrl) {
     return FileUtilRt.getRelativePath(parentUrl, childUrl, '/', true);
   }
 
@@ -666,16 +680,6 @@ public class SvnUtil {
     String result = base;
     for (String part : parts) {
       result = SVNPathUtil.append(result, part);
-    }
-    return result;
-  }
-
-  public static SVNURL appendMultiParts(@NotNull final SVNURL base, @NotNull final String subPath) throws SVNException {
-    if (StringUtil.isEmpty(subPath)) return base;
-    final List<String> parts = StringUtil.split(subPath.replace('\\', '/'), "/", true);
-    SVNURL result = base;
-    for (String part : parts) {
-      result = result.appendPath(part, false);
     }
     return result;
   }
@@ -745,9 +749,19 @@ public class SvnUtil {
   @NotNull
   public static SVNURL parseUrl(@NotNull String url) {
     try {
-      return SVNURL.parseURIEncoded(url);
+      return createUrl(url);
     }
-    catch (SVNException e) {
+    catch (SvnBindException e) {
+      throw createIllegalArgument(e);
+    }
+  }
+
+  @NotNull
+  public static SVNURL parseUrl(@NotNull String url, boolean encoded) {
+    try {
+      return createUrl(url, encoded);
+    }
+    catch (SvnBindException e) {
       throw createIllegalArgument(e);
     }
   }
@@ -762,7 +776,8 @@ public class SvnUtil {
     }
   }
 
-  public static IllegalArgumentException createIllegalArgument(SVNException e) {
+  @NotNull
+  public static IllegalArgumentException createIllegalArgument(@NotNull Exception e) {
     IllegalArgumentException runtimeException = new IllegalArgumentException();
     runtimeException.initCause(e);
     return runtimeException;
@@ -879,7 +894,13 @@ public class SvnUtil {
 
   private static class SqLiteJdbcWorkingCopyFormatOperation
     implements FileUtilRt.RepeatableIOOperation<WorkingCopyFormat, RuntimeException> {
+    private static final String SQLITE_JDBC_TEMP_DIR_PROPERTY = "org.sqlite.tmpdir";
+
     @NotNull private final File myDbFile;
+
+    static {
+      ensureTempFolder();
+    }
 
     public SqLiteJdbcWorkingCopyFormatOperation(@NotNull File dbFile) {
       myDbFile = dbFile;
@@ -913,6 +934,12 @@ public class SvnUtil {
       WorkingCopyFormat format = WorkingCopyFormat.getInstance(userVersion);
 
       return !WorkingCopyFormat.UNKNOWN.equals(format) ? format : null;
+    }
+
+    private static void ensureTempFolder() {
+      if (System.getProperty(SQLITE_JDBC_TEMP_DIR_PROPERTY) == null) {
+        System.setProperty(SQLITE_JDBC_TEMP_DIR_PROPERTY, PathManager.getTempPath());
+      }
     }
 
     private static void close(@Nullable Connection connection) {

@@ -21,7 +21,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 public class TemplateBuilderTest extends LightCodeInsightFixtureTestCase {
-  public void testRunInlineTemplate() throws Throwable {
+  public void testRunInlineTemplate() {
     TemplateManagerImpl.setTemplateTesting(myFixture.getProject(), myFixture.getTestRootDisposable());
     myFixture.configureByText("a.java", "class A {\n" +
                                         "  public String tes<caret>t() {\n" +

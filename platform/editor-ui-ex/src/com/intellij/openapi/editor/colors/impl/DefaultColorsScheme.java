@@ -41,21 +41,18 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
   }
 
   @Nullable
-  public TextAttributes getAttributes(@NotNull TextAttributesKey key, boolean isUseDefault) {
+  public TextAttributes getAttributes(@NotNull TextAttributesKey key, boolean useDefaults) {
     TextAttributes attrs = myAttributesMap.get(key);
-    if (attrs == null) {
-      if (key.getFallbackAttributeKey() != null) {
-        attrs = getFallbackAttributes(key.getFallbackAttributeKey());
-        if (attrs != null && attrs != TextAttributes.USE_INHERITED_MARKER) {
-          return attrs;
-        }
-      }
+    if (attrs != null) return attrs;
 
-      if (isUseDefault) {
-        attrs = getKeyDefaults(key);
-      }
-    }
-    return attrs;
+    TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
+    TextAttributes fallback = fallbackKey == null ? null : getFallbackAttributes(fallbackKey);
+    if (fallback != null && fallback != AbstractColorsScheme.INHERITED_ATTRS_MARKER) return fallback;
+
+    if (!useDefaults) return null;
+    TextAttributes keyDefaults = getKeyDefaults(key);
+    if (keyDefaults != null) return keyDefaults;
+    return fallbackKey == null ? null : getKeyDefaults(fallbackKey);
   }
 
   @Nullable
@@ -65,10 +62,23 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
 
   @Nullable
   @Override
-  public Color getColor(ColorKey key) {
-    if (key == null) return null;
+  public Color getColor(@Nullable ColorKey key) {
+    return key == null ? null : getColor(key, true);
+  }
+
+  @Nullable
+  public Color getColor(@NotNull ColorKey key, boolean useDefaults) {
     Color color = myColorsMap.get(key);
-    return color != null ? color : key.getDefaultColor();
+    if (color != null) return color;
+
+    ColorKey fallbackKey = key.getFallbackColorKey();
+    Color fallback = fallbackKey == null ? null : getFallbackColor(fallbackKey);
+    if (fallback != null && fallback != AbstractColorsScheme.INHERITED_COLOR_MARKER) return fallback;
+
+    if (!useDefaults) return null;
+    Color keyDefaults = key.getDefaultColor();
+    if (keyDefaults != null) return keyDefaults;
+    return fallbackKey == null ? null : fallbackKey.getDefaultColor();
   }
 
   @Override

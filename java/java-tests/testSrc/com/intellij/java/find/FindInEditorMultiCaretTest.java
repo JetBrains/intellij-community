@@ -25,10 +25,9 @@ import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
 import javax.swing.text.JTextComponent;
-import java.io.IOException;
 
 public class FindInEditorMultiCaretTest extends LightPlatformCodeInsightFixtureTestCase {
-  public void testBasic() throws IOException {
+  public void testBasic() {
     init("abc\n" +
          "abc\n" +
          "abc");
@@ -60,7 +59,7 @@ public class FindInEditorMultiCaretTest extends LightPlatformCodeInsightFixtureT
     assertNull(getEditorSearchComponent());
   }
 
-  public void testActionsInEditorWorkIndependently() throws IOException {
+  public void testActionsInEditorWorkIndependently() {
     init("abc\n" +
          "abc\n" +
          "abc");
@@ -94,7 +93,7 @@ public class FindInEditorMultiCaretTest extends LightPlatformCodeInsightFixtureT
     assertNotNull(getEditorSearchComponent());
   }
 
-  public void testCloseRetainsMulticaretSelection() throws IOException {
+  public void testCloseRetainsMulticaretSelection() {
     init("abc\n" +
          "abc\n" +
          "abc");
@@ -107,7 +106,7 @@ public class FindInEditorMultiCaretTest extends LightPlatformCodeInsightFixtureT
                       "abc");
   }
 
-  public void testTextModificationRemovesOldSelections() throws IOException {
+  public void testTextModificationRemovesOldSelections() {
     init("abc\n" +
          "abc\n" +
          "abc");
@@ -120,7 +119,7 @@ public class FindInEditorMultiCaretTest extends LightPlatformCodeInsightFixtureT
     assertEquals("bc", myFixture.getEditor().getSelectionModel().getSelectedText());
   }
 
-  public void testSecondFindNavigatesToTheSameOccurrence() throws IOException {
+  public void testSecondFindNavigatesToTheSameOccurrence() {
     init("ab<caret>c\n" +
          "abc\n" +
          "abc");
@@ -137,7 +136,7 @@ public class FindInEditorMultiCaretTest extends LightPlatformCodeInsightFixtureT
                       "abc");
   }
   
-  public void testFindNextRetainsOnlyOneCaretIfNotUsedAsMoveToNextOccurrence() throws Exception {
+  public void testFindNextRetainsOnlyOneCaretIfNotUsedAsMoveToNextOccurrence() {
     init("<caret>To be or not to be?");
     initFind();
     setTextToFind("be");
@@ -149,7 +148,7 @@ public class FindInEditorMultiCaretTest extends LightPlatformCodeInsightFixtureT
     checkResultByText("To be or not to <selection>be<caret></selection>?");
   }
 
-  public void testSelectAllDuringReplace() throws Exception {
+  public void testSelectAllDuringReplace() {
     init("some text");
     initReplace();
     setTextToFind("e");

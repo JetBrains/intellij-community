@@ -127,9 +127,13 @@ public class CodeInsightUtil {
     }
     if (endOffset != element2.getTextRange().getEndOffset()) return PsiElement.EMPTY_ARRAY;
 
-    if (parent instanceof PsiCodeBlock && parent.getParent() instanceof PsiBlockStatement &&
+    if (parent instanceof PsiCodeBlock &&
         element1 == ((PsiCodeBlock)parent).getLBrace() && element2 == ((PsiCodeBlock)parent).getRBrace()) {
-      return new PsiElement[]{parent.getParent()};
+      if (parent.getParent() instanceof PsiBlockStatement) {
+        return new PsiElement[]{parent.getParent()};
+      }
+      PsiElement[] children = parent.getChildren();
+      return getStatementsInRange(children, ((PsiCodeBlock)parent).getFirstBodyElement(), ((PsiCodeBlock)parent).getLastBodyElement());
     }
 
 /*
@@ -139,6 +143,11 @@ public class CodeInsightUtil {
 */
 
     PsiElement[] children = parent.getChildren();
+    return getStatementsInRange(children, element1, element2);
+  }
+
+  @NotNull
+  private static PsiElement[] getStatementsInRange(PsiElement[] children, PsiElement element1, PsiElement element2) {
     ArrayList<PsiElement> array = new ArrayList<>();
     boolean flag = false;
     for (PsiElement child : children) {
@@ -415,7 +424,7 @@ public class CodeInsightUtil {
 
       PsiType argSubstitution = expectedType.getSubstitutor().substitute(parameter);
       PsiType substitution = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper()
-        .getSubstitutionForTypeParameter(typeParam, paramSubstitution, argSubstitution, false, PsiUtil.getLanguageLevel(context));
+        .getSubstitutionForTypeParameter(typeParam, paramSubstitution, argSubstitution, true, PsiUtil.getLanguageLevel(context));
       if (substitution != null && substitution != PsiType.NULL) {
         return substitution;
       }

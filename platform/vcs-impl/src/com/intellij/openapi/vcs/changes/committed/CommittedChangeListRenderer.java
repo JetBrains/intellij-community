@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -184,11 +184,6 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
       return description.substring(0, pos).trim();
     }
     return description.substring(0, description.length()-1);
-  }
-
-  @NotNull
-  public Dimension getPreferredSize() {
-    return new Dimension(2000, super.getPreferredSize().height);
   }
 
   public static int getRowX(JTree tree, int depth) {

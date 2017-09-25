@@ -51,4 +51,19 @@ public class SuppressStaticFlags {
       System.out.println("Literals");
     }
   }
+
+
+
+  public static final boolean nonCompileTimeConstant = new java.util.Random().nextBoolean();
+
+  public void hello1(Object file) {
+    if (file == null) {
+      return;
+    }
+    if (<warning descr="Condition 'file == null && nonCompileTimeConstant' is always 'false'"><warning descr="Condition 'file == null' is always 'false'">file == null</warning> && nonCompileTimeConstant</warning>) {
+      return;
+    }
+    System.out.println("hello");
+  }
+
 }

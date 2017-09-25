@@ -40,11 +40,11 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
   /**
    * Returns a root entry of an archive hosted by a given local file
    * (i.e.: file:///path/to/jar.jar => jar:///path/to/jar.jar!/),
-   * or null if the file does not host this file system.
+   * or {@code null} if the file does not host this file system.
    */
   @Nullable
   public VirtualFile getRootByLocal(@NotNull VirtualFile file) {
-    return findFileByPath(getRootPathByLocal(file));
+    return isCorrectFileType(file) ? findFileByPath(getRootPathByLocal(file)) : null;
   }
 
   @NotNull
@@ -55,7 +55,7 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
   /**
    * Returns a root entry of an archive which hosts a given entry file
    * (i.e.: jar:///path/to/jar.jar!/resource.xml => jar:///path/to/jar.jar!/),
-   * or null if the file does not belong to this file system.
+   * or {@code null} if the file does not belong to this file system.
    */
   @Nullable
   public VirtualFile getRootByEntry(@NotNull VirtualFile entry) {
@@ -65,7 +65,7 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
   /**
    * Returns a local file of an archive which hosts a given entry file
    * (i.e.: jar:///path/to/jar.jar!/resource.xml => file:///path/to/jar.jar),
-   * or null if the file does not belong to this file system.
+   * or {@code null} if the file does not belong to this file system.
    */
   @Nullable
   public VirtualFile getLocalByEntry(@NotNull VirtualFile entry) {
@@ -238,7 +238,7 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
   /**
    * Returns a local file of an archive which hosts a root with the given path
    * (i.e.: "jar:///path/to/jar.jar!/" => file:///path/to/jar.jar),
-   * or null if the local file is of incorrect type.
+   * or {@code null} if the local file is of incorrect type.
    */
   @Nullable
   public VirtualFile findLocalByRootPath(@NotNull String rootPath) {

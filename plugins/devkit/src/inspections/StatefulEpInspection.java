@@ -26,9 +26,11 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.util.ExtensionCandidate;
 import org.jetbrains.idea.devkit.util.ExtensionLocator;
 import org.jetbrains.uast.UClass;
 
@@ -42,13 +44,20 @@ public class StatefulEpInspection extends DevKitUastInspectionBase {
     if (fields.length == 0) return super.checkClass(psiClass, manager, isOnTheFly);
 
     final boolean isQuickFix = InheritanceUtil.isInheritor(psiClass, LocalQuickFix.class.getCanonicalName());
-    if (isQuickFix || ExtensionLocator.isRegisteredExtension(psiClass)) {
-      final boolean isProjectComponent = InheritanceUtil.isInheritor(psiClass, ProjectComponent.class.getCanonicalName());
+    ExtensionLocator locator = new ExtensionLocator(psiClass);
+    List<ExtensionCandidate> targets = locator.findCandidates();
+    if (isQuickFix || !targets.isEmpty()) {
+      boolean isProjectComponent = InheritanceUtil.isInheritor(psiClass, ProjectComponent.class.getCanonicalName());
+      boolean projectService = ContainerUtil.find(targets, candidate -> {
+        XmlTag element = candidate.pointer.getElement();
+        String name = element != null ? element.getName() : null;
+        return "projectService".equals(name);
+      }) != null;
 
       List<ProblemDescriptor> result = ContainerUtil.newArrayList();
-      for (final PsiField field : fields) {
+      for (PsiField field : fields) {
         for (Class c : new Class[]{PsiElement.class, PsiReference.class, Project.class}) {
-          if (c == Project.class && (field.hasModifierProperty(PsiModifier.FINAL) || isProjectComponent)) continue;
+          if (c == Project.class && (field.hasModifierProperty(PsiModifier.FINAL) || isProjectComponent || projectService)) continue;
           String message = c == PsiElement.class
                            ? "Potential memory leak: don't hold PsiElement, use SmartPsiElementPointer instead" +
                              (isQuickFix ? "; also see LocalQuickFixOnPsiElement" : "")

@@ -21,12 +21,12 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.SoftHashMap;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +45,7 @@ public class SvnMergeInfoCache {
 
   @NotNull private final Project myProject;
   // key - working copy root url
-  @NotNull private final Map<String, MyCurrentUrlData> myCurrentUrlMapping;
+  @NotNull private final Map<SVNURL, MyCurrentUrlData> myCurrentUrlMapping;
 
   public static Topic<SvnMergeInfoCacheListener> SVN_MERGE_INFO_CACHE =
     new Topic<>("SVN_MERGE_INFO_CACHE", SvnMergeInfoCacheListener.class);
@@ -79,11 +79,11 @@ public class SvnMergeInfoCache {
                                    @NotNull SvnChangeList list,
                                    @NotNull WCInfoWithBranches.Branch selectedBranch,
                                    final String branchPath) {
-    MyCurrentUrlData rootMapping = myCurrentUrlMapping.get(info.getRootUrl());
+    MyCurrentUrlData rootMapping = myCurrentUrlMapping.get(info.getUrl());
     BranchInfo mergeChecker = null;
     if (rootMapping == null) {
       rootMapping = new MyCurrentUrlData();
-      myCurrentUrlMapping.put(info.getRootUrl(), rootMapping);
+      myCurrentUrlMapping.put(info.getUrl(), rootMapping);
     } else {
       mergeChecker = rootMapping.getBranchInfo(branchPath);
     }
@@ -103,7 +103,7 @@ public class SvnMergeInfoCache {
 
   @Nullable
   private BranchInfo getBranchInfo(@NotNull WCInfoWithBranches info, String branchPath) {
-    MyCurrentUrlData rootMapping = myCurrentUrlMapping.get(info.getRootUrl());
+    MyCurrentUrlData rootMapping = myCurrentUrlMapping.get(info.getUrl());
 
     return rootMapping != null ? rootMapping.getBranchInfo(branchPath) : null;
   }
@@ -124,7 +124,7 @@ public class SvnMergeInfoCache {
     private final String myPath;
     private volatile long myRevision;
 
-    CopyRevison(final SvnVcs vcs, final String path, @NotNull SVNURL repositoryRoot, final String branchUrl, final String trunkUrl) {
+    CopyRevison(final SvnVcs vcs, final String path, @NotNull SVNURL repositoryRoot, final String branchUrl, @NotNull SVNURL trunkUrl) {
       myPath = path;
       myRevision = -1;
 
@@ -134,7 +134,7 @@ public class SvnMergeInfoCache {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            myData = new FirstInBranch(vcs, repositoryRoot, branchUrl, trunkUrl).run();
+            myData = new FirstInBranch(vcs, repositoryRoot, branchUrl, trunkUrl.toString()).run();
           }
           catch (VcsException e) {
             logAndShow(e);
@@ -143,8 +143,8 @@ public class SvnMergeInfoCache {
 
         @Override
         public void onSuccess() {
-          if (!vcs.getProject().isDisposed() && myData != null && myData.getCopySourceRevision() != -1) {
-            vcs.getProject().getMessageBus().syncPublisher(SVN_MERGE_INFO_CACHE).copyRevisionUpdated();
+          if (myData != null && myData.getCopySourceRevision() != -1) {
+            BackgroundTaskUtil.syncPublisher(vcs.getProject(), SVN_MERGE_INFO_CACHE).copyRevisionUpdated();
           }
         }
 
@@ -173,10 +173,9 @@ public class SvnMergeInfoCache {
   private static class MyCurrentUrlData {
 
     // key - working copy local path
-    @NotNull private final Map<String, BranchInfo> myBranchInfo;
+    @NotNull private final Map<String, BranchInfo> myBranchInfo = ContainerUtil.createSoftMap();
 
     private MyCurrentUrlData() {
-      myBranchInfo = new SoftHashMap<>();
     }
 
     public BranchInfo getBranchInfo(final String branchUrl) {

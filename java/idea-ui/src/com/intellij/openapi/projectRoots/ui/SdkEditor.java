@@ -72,7 +72,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
   // GUI components
   private JPanel myMainPanel;
   private TabbedPaneWrapper myTabbedPane;
-  private Project myProject;
+  private final Project myProject;
   private final SdkModel mySdkModel;
   private JLabel myHomeFieldLabel;
   private String myVersionString;
@@ -199,7 +199,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
       for (SdkPathEditor pathEditor : myPathEditors.values()) {
         pathEditor.apply(sdkModificator);
       }
-      ApplicationManager.getApplication().runWriteAction(() -> sdkModificator.commitChanges());
+      ApplicationManager.getApplication().runWriteAction(sdkModificator::commitChanges);
       for (final AdditionalDataConfigurable configurable : getAdditionalDataConfigurable()) {
         if (configurable != null) {
           configurable.apply();
@@ -435,6 +435,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
       throw new UnsupportedOperationException(); // not supported for this editor
     }
 
+    @NotNull
     @Override
     public VirtualFile[] getRoots(OrderRootType rootType) {
       final PathEditor editor = myPathEditors.get(rootType);
@@ -443,17 +444,17 @@ public class SdkEditor implements Configurable, Place.Navigator {
     }
 
     @Override
-    public void addRoot(VirtualFile root, OrderRootType rootType) {
+    public void addRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType) {
       myPathEditors.get(rootType).addPaths(root);
     }
 
     @Override
-    public void removeRoot(VirtualFile root, OrderRootType rootType) {
+    public void removeRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType) {
       myPathEditors.get(rootType).removePaths(root);
     }
 
     @Override
-    public void removeRoots(OrderRootType rootType) {
+    public void removeRoots(@NotNull OrderRootType rootType) {
       myPathEditors.get(rootType).clearList();
     }
 

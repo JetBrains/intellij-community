@@ -22,56 +22,56 @@ import org.intellij.lang.xpath.TestBase;
 import org.intellij.lang.xpath.xslt.impl.XsltChecker;
 
 public class XsltBasicTest extends TestBase {
-  public void testSupportedXslt10() throws Throwable {
+  public void testSupportedXslt10() {
     doTestXsltSupport();
   }
 
-  public void testSupportedXslt10_Loaded() throws Throwable {
+  public void testSupportedXslt10_Loaded() {
     doTestXsltSupport();
   }
 
-  public void testSupportedXslt11() throws Throwable {
+  public void testSupportedXslt11() {
     doTestXsltSupport();
   }
 
-  public void testSupportedSimplifiedXslt() throws Throwable {
+  public void testSupportedSimplifiedXslt() {
     doTestXsltSupport();
   }
 
-  public void testSupportedSimplifiedXslt_Loaded() throws Throwable {
+  public void testSupportedSimplifiedXslt_Loaded() {
     doTestXsltSupport();
   }
 
-  public void testSupportedXslt20() throws Throwable {
+  public void testSupportedXslt20() {
     doTestXsltSupport();
   }
 
-  public void testUnsupportedXsltNoVersion() throws Throwable {
+  public void testUnsupportedXsltNoVersion() {
     doTestXsltSupport();
   }
 
-  public void testUnsupportedXsltNoVersion_Loaded() throws Throwable {
+  public void testUnsupportedXsltNoVersion_Loaded() {
     doTestXsltSupport();
   }
 
-  public void testUnsupportedNoXslt() throws Throwable {
+  public void testUnsupportedNoXslt() {
     doTestXsltSupport();
   }
 
-  public void testUnsupportedNoXslt_Loaded() throws Throwable {
+  public void testUnsupportedNoXslt_Loaded() {
     doTestXsltSupport();
   }
 
-  public void testUnsupportedNoXslt2() throws Throwable {
+  public void testUnsupportedNoXslt2() {
     doTestXsltSupport();
   }
 
   // actually a PSI test: IDEADEV-35024
-  public void testUnsupportedNoXslt2_Loaded() throws Throwable {
+  public void testUnsupportedNoXslt2_Loaded() {
     doTestXsltSupport();
   }
 
-  private void doTestXsltSupport() throws Throwable {
+  private void doTestXsltSupport() {
     configure();
 
     final XsltChecker.LanguageLevel level = XsltSupport.getXsltLanguageLevel(myFixture.getFile());
@@ -84,7 +84,7 @@ public class XsltBasicTest extends TestBase {
     }
   }
 
-  private void configure() throws Throwable {
+  private void configure() {
     final String fileName = getTestFileName();
     String path = fileName.replaceAll("_.*$", "") + ".xsl";
     final VirtualFile file = myFixture.copyFileToProject(path);

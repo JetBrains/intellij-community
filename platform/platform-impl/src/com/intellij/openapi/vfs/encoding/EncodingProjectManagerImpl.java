@@ -33,6 +33,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SimpleModificationTracker;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.Processor;
@@ -61,6 +62,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   // we should avoid changed file
   private String myOldUTFGuessing;
   private boolean myNative2AsciiForPropertiesFilesWasSpecified;
+  private BOMForNewUTF8Files myBOMForNewUTF8Files = BOMForNewUTF8Files.NEVER;
 
   public EncodingProjectManagerImpl(Project project, EncodingManager ideEncodingManager) {
     myProject = project;
@@ -177,16 +179,14 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
       oldCharset = myProjectCharset;
       myProjectCharset = charset;
     }
+    else if (charset == null) {
+      oldCharset = myMapping.remove(virtualFileOrDir);
+    }
     else {
-      if (charset == null) {
-        oldCharset = myMapping.remove(virtualFileOrDir);
-      }
-      else {
-        oldCharset = myMapping.put(virtualFileOrDir, charset);
-      }
+      oldCharset = myMapping.put(virtualFileOrDir, charset);
     }
 
-    if (!Comparing.equal(oldCharset, charset)) {
+    if (!Comparing.equal(oldCharset, charset) || virtualFileOrDir != null && !Comparing.equal(virtualFileOrDir.getCharset(), charset)) {
       myModificationTracker.incModificationCount();
       if (virtualFileOrDir != null) {
         virtualFileOrDir.setCharset(virtualFileOrDir.getBOM() == null ? charset : null);
@@ -374,11 +374,11 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     }
   }
 
-  private boolean tryStartReloadWithProgress(@NotNull final Runnable reloadAction) {
+  private void tryStartReloadWithProgress(@NotNull final Runnable reloadAction) {
     Boolean suppress = SUPPRESS_RELOAD.get();
-    if (suppress == Boolean.TRUE) return false;
+    if (suppress == Boolean.TRUE) return;
     FileDocumentManager.getInstance().saveAllDocuments();  // consider all files as unmodified
-    return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> suppressReloadDuring(reloadAction), "Reload Files", false, myProject);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> suppressReloadDuring(reloadAction), "Reload Files", false, myProject);
   }
 
   private void reloadAllFilesUnder(@Nullable final VirtualFile root) {
@@ -451,5 +451,44 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   @Nullable
   public Charset getCachedCharsetFromContent(@NotNull Document document) {
     return myIdeEncodingManager.getCachedCharsetFromContent(document);
+  }
+
+  public enum BOMForNewUTF8Files {
+    ALWAYS("with BOM"),
+    NEVER("with NO BOM"),
+    WINDOWS_ONLY("with BOM under Windows, with no BOM otherwise");
+
+    private final String name;
+
+    BOMForNewUTF8Files(@NotNull String name) {
+      this.name = name;
+    }
+
+    @Override
+    public String toString() {
+      return name;
+    }
+  }
+  void setBOMForNewUtf8Files(@NotNull BOMForNewUTF8Files option) {
+    myBOMForNewUTF8Files = option;
+  }
+
+  @NotNull
+  BOMForNewUTF8Files getBOMForNewUTF8Files() {
+    return myBOMForNewUTF8Files;
+  }
+
+  @Override
+  public boolean shouldAddBOMForNewUtf8File() {
+    switch (myBOMForNewUTF8Files) {
+      case ALWAYS:
+        return true;
+      case NEVER:
+        return false;
+      case WINDOWS_ONLY:
+        return SystemInfo.isWindows;
+      default:
+        throw new IllegalStateException(myBOMForNewUTF8Files.toString());
+    }
   }
 }

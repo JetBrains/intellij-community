@@ -64,6 +64,9 @@ import java.util.List;
  */
 public class GradleRunnerUtil {
 
+  /**
+   * @deprecated to be removed in the 2018.1 version
+   */
   public static DuplexConsoleView attachTaskExecutionView(@NotNull final Project project,
                                                           @NotNull final ConsoleView consoleView,
                                                           final boolean isTaskConsoleEnabledByDefault,

@@ -28,6 +28,7 @@ public class RemoteDebugProcessHandler extends ProcessHandler{
     myProject = project;
   }
 
+  @Override
   public void startNotify() {
     final DebugProcess debugProcess = DebuggerManager.getInstance(myProject).getDebugProcess(this);
     final DebugProcessListener listener = new DebugProcessListener() {
@@ -51,6 +52,7 @@ public class RemoteDebugProcessHandler extends ProcessHandler{
     }
   }
 
+  @Override
   protected void destroyProcessImpl() {
     DebugProcess debugProcess = DebuggerManager.getInstance(myProject).getDebugProcess(this);
     if(debugProcess != null) {
@@ -58,6 +60,7 @@ public class RemoteDebugProcessHandler extends ProcessHandler{
     }
   }
 
+  @Override
   protected void detachProcessImpl() {
     DebugProcess debugProcess = DebuggerManager.getInstance(myProject).getDebugProcess(this);
     if(debugProcess != null) {
@@ -65,10 +68,12 @@ public class RemoteDebugProcessHandler extends ProcessHandler{
     }
   }
 
+  @Override
   public boolean detachIsDefault() {
     return true;
   }
 
+  @Override
   public OutputStream getProcessInput() {
     return null;
   }

@@ -15,6 +15,7 @@
  */
 package git4idea.annotate;
 
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
@@ -41,7 +42,7 @@ public class GitRepositoryForAnnotationsListener {
     return new GitRepositoryChangeListener() {
       @Override
       public void repositoryChanged(@NotNull GitRepository repository) {
-        final VcsAnnotationRefresher refresher = myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED);
+        final VcsAnnotationRefresher refresher = BackgroundTaskUtil.syncPublisher(myProject, VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED);
         refresher.dirtyUnder(repository.getRoot());
       }
     };

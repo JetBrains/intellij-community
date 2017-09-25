@@ -41,12 +41,12 @@ public class JavaSOEOnReparsePerformanceTest extends LightDaemonAnalyzerTestCase
     super.tearDown();
   }
 
-  public void testOnHugeBinaryExprInFile() throws Exception {
+  public void testOnHugeBinaryExprInFile() {
     configureFromFileText("a.java", "class A { String s = \"\"; }");
     doTest();
   }
 
-  public void testOnHugeBinaryExprInCodeBlock() throws Exception {
+  public void testOnHugeBinaryExprInCodeBlock() {
     configureFromFileText("a.java", "class A { void m() { String s = \"\"; } }");
     doTest();
   }

@@ -47,31 +47,31 @@ public class RenameMethodMultiTest extends MultiFileTestCase {
     return "/refactoring/renameMethod/multi/";
   }
 
-  public void testStaticImport1() throws Exception {
+  public void testStaticImport1() {
     doTest("pack1.A", "void staticMethod(int i)", "renamedStaticMethod");
   }
 
-  public void testStaticImport2() throws Exception {
+  public void testStaticImport2() {
     doTest("pack1.A", "void staticMethod(int i)", "renamedStaticMethod");
   }
 
-  public void testStaticImport3() throws Exception {
+  public void testStaticImport3() {
     doTest("pack1.A", "void staticMethod(int i)", "renamedStaticMethod");
   }
 
-  public void testStaticImport4() throws Exception {
+  public void testStaticImport4() {
     doTest("pack1.A", "void staticMethod(int i)", "renamedStaticMethod");
   }
 
-  public void testStaticImport5() throws Exception {
+  public void testStaticImport5() {
     doAutomaticRenameMethod("pack1.A", "void staticMethod(int i)", "renamedStaticMethod");
   }
 
-  public void testDefaultAnnotationMethod() throws Exception {
+  public void testDefaultAnnotationMethod() {
     doTest("pack1.A", "int value()", "intValue");
   }
 
-  public void testRename2OverrideFinal() throws Exception {
+  public void testRename2OverrideFinal() {
     try {
       doTest("p.B", "void method()", "finalMethod");
     }
@@ -84,34 +84,34 @@ public class RenameMethodMultiTest extends MultiFileTestCase {
     fail("Conflicts were not found");
   }
 
-  public void testRename2HideFromAnonymous() throws Exception {
+  public void testRename2HideFromAnonymous() {
     doTest("p.Foo", "void buzz(int i)", "bazz");
   }
 
-  public void testAlignedMultilineParameters() throws Exception {
+  public void testAlignedMultilineParameters() {
     CommonCodeStyleSettings javaSettings = getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE);
     javaSettings.ALIGN_MULTILINE_PARAMETERS = true;
     javaSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest("void test123(int i, int j)", "test123asd");
   }
 
-  public void testAutomaticallyRenamedOverloads() throws Exception {
+  public void testAutomaticallyRenamedOverloads() {
     doAutomaticRenameMethod("p.Foo", "void foo()", "bar");
   }
 
-  public void testOnlyChildMethod() throws Exception {
+  public void testOnlyChildMethod() {
     doTest("p.Foo", "void foo()", "bar");
   }
 
-  public void testExpandStaticImportToAvoidConflictingResolve() throws Exception {
+  public void testExpandStaticImportToAvoidConflictingResolve() {
     doTest("bar.Bar", "void createBar()", "bar");
   }
 
-  private void doTest(final String methodSignature, final String newName) throws Exception {
+  private void doTest(final String methodSignature, final String newName) {
     doTest(getTestName(false), methodSignature, newName);
   }
 
-  private void doTest(final String className, final String methodSignature, final String newName) throws Exception {
+  private void doTest(final String className, final String methodSignature, final String newName) {
     doTest((rootDir, rootAfter) -> {
       final JavaPsiFacade manager = getJavaFacade();
       final PsiClass aClass = manager.findClass(className, GlobalSearchScope.moduleScope(myModule));
@@ -125,7 +125,7 @@ public class RenameMethodMultiTest extends MultiFileTestCase {
     });
   }
 
-  private void doAutomaticRenameMethod(final String className, final String methodSignature, final String newName) throws Exception {
+  private void doAutomaticRenameMethod(final String className, final String methodSignature, final String newName) {
     doTest((rootDir, rootAfter) -> {
       final JavaPsiFacade manager = getJavaFacade();
       final PsiClass aClass = manager.findClass(className, GlobalSearchScope.moduleScope(myModule));

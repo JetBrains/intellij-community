@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupActionProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementAction;
+import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.emmet.ZenCodingTemplate;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.impl.CustomLiveTemplateLookupElement;
@@ -29,7 +30,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 
@@ -39,8 +40,12 @@ public class EmmetLookupActionProvider implements LookupActionProvider {
     if (element instanceof CustomLiveTemplateLookupElement  && 
         ((CustomLiveTemplateLookupElement)element).getCustomLiveTemplate() instanceof ZenCodingTemplate) {
 
-      final PsiElement context = lookup.getPsiElement();
-      final ZenCodingGenerator generator = context != null ? ZenCodingTemplate.findApplicableDefaultGenerator(context, false) : null;
+      PsiFile file = lookup.getPsiFile();
+      if (file == null) {
+        return;
+      }
+      CustomTemplateCallback callback = new CustomTemplateCallback(lookup.getEditor(), file);
+      final ZenCodingGenerator generator = ZenCodingTemplate.findApplicableDefaultGenerator(callback, false);
       if (generator != null) {
         consumer.consume(new LookupElementAction(PlatformIcons.EDIT, "Edit Emmet settings") {
           @Override

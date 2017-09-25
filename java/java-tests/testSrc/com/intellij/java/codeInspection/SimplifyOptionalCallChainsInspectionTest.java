@@ -37,7 +37,7 @@ public class SimplifyOptionalCallChainsInspectionTest extends LightQuickFixParam
     return new LocalInspectionTool[]{new SimplifyOptionalCallChainsInspection()};
   }
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 

@@ -83,32 +83,32 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
     SEARCH_OVERLOADED_METHODS = search;
   }
 
-  @SuppressWarnings({"WeakerAccess"}) public boolean SEARCH_OVERLOADED_METHODS = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean SEARCH_IN_LIBRARIES = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean SKIP_RESULTS_WHEN_ONE_USAGE = false;
+  @SuppressWarnings("WeakerAccess") public boolean SEARCH_OVERLOADED_METHODS;
+  @SuppressWarnings("WeakerAccess") public boolean SEARCH_IN_LIBRARIES;
+  @SuppressWarnings("WeakerAccess") public boolean SKIP_RESULTS_WHEN_ONE_USAGE;
 
-  @SuppressWarnings({"WeakerAccess"}) public String FIND_DIRECTION = FIND_DIRECTION_FORWARD;
-  @SuppressWarnings({"WeakerAccess"}) public String FIND_ORIGIN = FIND_ORIGIN_FROM_CURSOR;
-  @SuppressWarnings({"WeakerAccess"}) public String FIND_SCOPE = FIND_SCOPE_GLOBAL;
-  @SuppressWarnings({"WeakerAccess"}) public String FIND_CUSTOM_SCOPE = null;
+  @SuppressWarnings("WeakerAccess") public String FIND_DIRECTION = FIND_DIRECTION_FORWARD;
+  @SuppressWarnings("WeakerAccess") public String FIND_ORIGIN = FIND_ORIGIN_FROM_CURSOR;
+  @SuppressWarnings("WeakerAccess") public String FIND_SCOPE = FIND_SCOPE_GLOBAL;
+  @SuppressWarnings("WeakerAccess") public String FIND_CUSTOM_SCOPE;
 
-  @SuppressWarnings({"WeakerAccess"}) public boolean CASE_SENSITIVE_SEARCH = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean LOCAL_CASE_SENSITIVE_SEARCH = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean PRESERVE_CASE_REPLACE = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean WHOLE_WORDS_ONLY = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean COMMENTS_ONLY = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean STRING_LITERALS_ONLY = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean EXCEPT_COMMENTS = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean EXCEPT_COMMENTS_AND_STRING_LITERALS = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean EXCEPT_STRING_LITERALS = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean LOCAL_WHOLE_WORDS_ONLY = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean REGULAR_EXPRESSIONS = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean LOCAL_REGULAR_EXPRESSIONS = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean WITH_SUBDIRECTORIES = true;
-  @SuppressWarnings({"WeakerAccess"}) public boolean SHOW_RESULTS_IN_SEPARATE_VIEW = false;
+  @SuppressWarnings("WeakerAccess") public boolean CASE_SENSITIVE_SEARCH;
+  @SuppressWarnings("WeakerAccess") public boolean LOCAL_CASE_SENSITIVE_SEARCH;
+  @SuppressWarnings("WeakerAccess") public boolean PRESERVE_CASE_REPLACE;
+  @SuppressWarnings("WeakerAccess") public boolean WHOLE_WORDS_ONLY;
+  @SuppressWarnings("WeakerAccess") public boolean COMMENTS_ONLY;
+  @SuppressWarnings("WeakerAccess") public boolean STRING_LITERALS_ONLY;
+  @SuppressWarnings("WeakerAccess") public boolean EXCEPT_COMMENTS;
+  @SuppressWarnings("WeakerAccess") public boolean EXCEPT_COMMENTS_AND_STRING_LITERALS;
+  @SuppressWarnings("WeakerAccess") public boolean EXCEPT_STRING_LITERALS;
+  @SuppressWarnings("WeakerAccess") public boolean LOCAL_WHOLE_WORDS_ONLY;
+  @SuppressWarnings("WeakerAccess") public boolean REGULAR_EXPRESSIONS;
+  @SuppressWarnings("WeakerAccess") public boolean LOCAL_REGULAR_EXPRESSIONS;
+  @SuppressWarnings("WeakerAccess") public boolean WITH_SUBDIRECTORIES = true;
+  @SuppressWarnings("WeakerAccess") public boolean SHOW_RESULTS_IN_SEPARATE_VIEW;
 
-  @SuppressWarnings({"WeakerAccess"}) public String SEARCH_SCOPE = DEFAULT_SEARCH_SCOPE;
-  @SuppressWarnings({"WeakerAccess"}) public String FILE_MASK;
+  @SuppressWarnings("WeakerAccess") public String SEARCH_SCOPE = DEFAULT_SEARCH_SCOPE;
+  @SuppressWarnings("WeakerAccess") public String FILE_MASK;
 
   @Tag("recentFileMasks")
   @Property(surroundWithTag = false)
@@ -403,10 +403,7 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
     EXCEPT_STRING_LITERALS = selected;
   }
 
-  @State(
-    name = "FindRecents",
-    storages = {@Storage(value = "find.recents.xml", roamingType = RoamingType.DISABLED)}
-  )
+  @State(name = "FindRecents", storages = @Storage(value = "find.recents.xml", roamingType = RoamingType.DISABLED))
   static final class FindRecents extends FindInProjectSettingsBase {
     public static FindRecents getInstance() {
       return ServiceManager.getService(FindRecents.class);

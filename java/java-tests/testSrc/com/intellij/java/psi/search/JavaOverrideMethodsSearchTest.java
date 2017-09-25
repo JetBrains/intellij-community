@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 public class JavaOverrideMethodsSearchTest extends LightCodeInsightFixtureTestCase {
-  public void testSearchInLocalScopePerformance() throws Exception {
+  public void testSearchInLocalScopePerformance() {
     myFixture.addClass("public interface I {void m();}");
     for (int i = 0; i < 1000; i++) {
       final int dirIdx = i % 100;

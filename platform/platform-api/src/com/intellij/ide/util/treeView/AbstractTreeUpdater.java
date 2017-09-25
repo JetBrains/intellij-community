@@ -119,6 +119,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     assert !toAdd.isExpired();
 
     final AbstractTreeUi ui = myTreeBuilder.getUi();
+    if (ui == null) return;
 
     if (ui.isUpdatingChildrenNow(toAdd.getNode())) {
       toAdd.expire();
@@ -180,7 +181,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
 
 
     myNodeQueue.add(toAdd);
-    myTreeBuilder.getUi().addActivity();
+    ui.addActivity();
 
     myUpdateCount = newUpdateCount;
     toAdd.setUpdateStamp(myUpdateCount);
@@ -257,7 +258,8 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
         @Override
         public void perform() {
           try {
-            myTreeBuilder.getUi().updateSubtreeNow(eachPass, false);
+            AbstractTreeUi ui = myTreeBuilder.getUi();
+            if (ui != null) ui.updateSubtreeNow(eachPass, false);
           }
           catch (ProcessCanceledException ignored) {
           }
@@ -265,9 +267,10 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
       });
     }
 
-    if (isReleased()) return;
+    AbstractTreeUi ui = myTreeBuilder.getUi();
+    if (ui == null) return;
 
-    myTreeBuilder.getUi().maybeReady();
+    ui.maybeReady();
 
     maybeRunAfterUpdate();
   }
@@ -419,8 +422,11 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     }
     myUpdateQueue.cancelAllUpdates();
 
-    for (TreeUpdatePass each : passes) {
-      myTreeBuilder.getUi().addToCancelled(each.getNode());
+    AbstractTreeUi ui = myTreeBuilder.getUi();
+    if (ui != null) {
+      for (TreeUpdatePass each : passes) {
+        ui.addToCancelled(each.getNode());
+      }
     }
   }
 }

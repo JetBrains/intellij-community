@@ -27,7 +27,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class RequestsMergerTest extends TestCase {
-  public void testManyIntoOne() throws Exception {
+  public void testManyIntoOne() {
     final MyTestVictim victim = new MyTestVictim();
     final RequestsMerger merger = new RequestsMerger(victim, victim);
 

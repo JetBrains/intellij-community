@@ -41,7 +41,7 @@ public class PyDynamicTypesTest extends PyEnvTestCase {
   
   @Staging
   @Test
-  public void test1() throws Exception {
+  public void test1() {
     doTest(getTestName(true) + ".py");
   }
 
@@ -49,7 +49,7 @@ public class PyDynamicTypesTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/" + "dynamicTypes", scriptName) {
 
       @Override
-      public void before() throws Exception {
+      public void before() {
         PyDebuggerOptionsProvider.getInstance(myFixture.getProject()).setSaveCallSignatures(true);
       }
 

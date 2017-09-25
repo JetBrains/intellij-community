@@ -41,6 +41,6 @@ public class PropertiesParsingTest extends ParsingTestCase {
     return PluginPathManager.getPluginHomePath("properties") + "/testData/propertiesFile/psi";
   }
 
-  public void testProp1() throws Exception { doTest(true); }
-  public void testComments() throws Exception { doTest(true); }
+  public void testProp1() { doTest(true); }
+  public void testComments() { doTest(true); }
 }

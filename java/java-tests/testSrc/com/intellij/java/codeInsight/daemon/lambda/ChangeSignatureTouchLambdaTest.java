@@ -26,23 +26,23 @@ public class ChangeSignatureTouchLambdaTest extends ChangeSignatureBaseTest {
     doTest(null, null, null, new ParameterInfoImpl[] {new ParameterInfoImpl(-1, "b", PsiType.BOOLEAN)}, new ThrownExceptionInfo[0], false);
   }
 
-  public void testMethodArgument() throws Exception {
+  public void testMethodArgument() {
     doTest(null, null, null, new ParameterInfoImpl[] {new ParameterInfoImpl(-1, "b", PsiType.BOOLEAN)}, new ThrownExceptionInfo[0], false);
   }
 
-  public void testDefaultMethodTouched() throws Exception {
+  public void testDefaultMethodTouched() {
     doTest(null, null, null, new ParameterInfoImpl[] {new ParameterInfoImpl(-1, "b", PsiType.BOOLEAN)}, new ThrownExceptionInfo[0], false);
   }
 
-  public void testDelegateInInterface() throws Exception {
+  public void testDelegateInInterface() {
     doTest(null, null, null, new ParameterInfoImpl[] {new ParameterInfoImpl(-1, "b", PsiType.BOOLEAN, "false")}, new ThrownExceptionInfo[0], true);
   }
 
-  public void testAddExceptionToCatchInOneLineLambda() throws Exception {
+  public void testAddExceptionToCatchInOneLineLambda() {
     doTest(null, null, new String[] {"java.io.IOException"}, false);
   }
 
-  public void testAddUncheckedExceptionInMethodRef() throws Exception {
+  public void testAddUncheckedExceptionInMethodRef() {
     doTest(null, null, new String[] {"java.lang.NullPointerException"}, false);
   }
 

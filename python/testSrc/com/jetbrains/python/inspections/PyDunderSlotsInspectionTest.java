@@ -17,13 +17,14 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 
-public class PyDunderSlotsInspectionTest extends PyTestCase {
+public class PyDunderSlotsInspectionTest extends PyInspectionTestCase {
 
   // PY-12773
   public void testClassAttrAssignmentAndSlots() {
@@ -241,16 +242,22 @@ public class PyDunderSlotsInspectionTest extends PyTestCase {
   }
 
   private void doTestPy2() {
-    runWithLanguageLevel(LanguageLevel.PYTHON26, this::doTestPy);
+    runWithLanguageLevel(LanguageLevel.PYTHON26, this::doTest);
   }
 
   private void doTestPy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTestPy);
+    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
   }
 
-  private void doTestPy() {
-    final String path = "inspections/PyDunderSlotsInspection/" + getTestName(true) + ".py";
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyDunderSlotsInspection.class;
+  }
 
+  @Override
+  protected void doTest() {
+    final String path = getTestFilePath();
     final VirtualFile file = myFixture.getTempDirFixture().getFile(path);
     if (file != null) {
       try {
@@ -260,9 +267,6 @@ public class PyDunderSlotsInspectionTest extends PyTestCase {
         throw new UncheckedIOException(e);
       }
     }
-
-    myFixture.configureByFile(path);
-    myFixture.enableInspections(PyDunderSlotsInspection.class);
-    myFixture.checkHighlighting(true, false, false);
+    super.doTest();
   }
 }

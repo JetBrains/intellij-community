@@ -49,7 +49,7 @@ public class ResolveInCodeFragmentTest extends ResolveTestCase {
     });
   }
 
-  public void testjavaLangClass() throws Exception {
+  public void testjavaLangClass() {
     PsiCodeFragment codeFragment = JavaCodeFragmentFactory.getInstance(myProject).createExpressionCodeFragment(
           "Boolean.getBoolean(\"true\")", null, null, true);
 

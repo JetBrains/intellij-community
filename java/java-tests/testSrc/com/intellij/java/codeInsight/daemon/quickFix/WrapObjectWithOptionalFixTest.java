@@ -21,7 +21,7 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
  * @author Dmitry Batkovich
  */
 public class WrapObjectWithOptionalFixTest extends LightQuickFixParameterizedTestCase {
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 

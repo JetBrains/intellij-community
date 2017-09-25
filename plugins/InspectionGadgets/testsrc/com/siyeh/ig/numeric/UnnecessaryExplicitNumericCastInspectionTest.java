@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class UnnecessaryExplicitNumericCastInspectionTest extends LightInspectionTestCase {
 
-  public void testUnnecessaryExplicitNumericCast() throws Exception {
+  public void testUnnecessaryExplicitNumericCast() {
     doTest();
   }
 

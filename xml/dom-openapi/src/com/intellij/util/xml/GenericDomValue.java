@@ -16,6 +16,7 @@
 package com.intellij.util.xml;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -35,5 +36,6 @@ public interface GenericDomValue<T> extends DomElement, MutableGenericValue<T>{
   /**
    * @return text of the value as it is specified in the underlying XML. No conversions or substitutions are made 
    */
+  @Nullable
   String getRawText();
 }

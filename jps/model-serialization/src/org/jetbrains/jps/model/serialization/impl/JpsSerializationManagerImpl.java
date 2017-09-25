@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsGlobal;
 import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.serialization.*;
 
 import java.io.IOException;
@@ -40,6 +41,14 @@ public class JpsSerializationManagerImpl extends JpsSerializationManager {
     Map<String, String> pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.getGlobal());
     JpsProjectLoader.loadProject(model.getProject(), pathVariables, projectPath);
     return model;
+  }
+
+  @NotNull
+  @Override
+  public JpsProject loadProject(@NotNull String projectPath, @NotNull Map<String, String> pathVariables) throws IOException {
+    JpsModel model = JpsElementFactory.getInstance().createModel();
+    JpsProjectLoader.loadProject(model.getProject(), pathVariables, projectPath);
+    return model.getProject();
   }
 
   @Override

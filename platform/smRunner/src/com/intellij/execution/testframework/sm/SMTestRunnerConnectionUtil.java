@@ -34,7 +34,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testIntegration.TestLocationProvider;
 import com.intellij.util.io.URLUtil;
@@ -180,53 +179,47 @@ public class SMTestRunnerConnectionUtil {
       outputConsumer = new OutputToGeneralTestEventsConverter(testFrameworkName, consoleProperties);
     }
 
-    // events processor
-    final GeneralTestEventsProcessor eventsProcessor;
-    if (idBasedTestTree) {
-      eventsProcessor = new GeneralIdBasedToSMTRunnerEventsConvertor(consoleProperties.getProject(), resultsViewer.getTestsRootNode(), testFrameworkName);
-    }
-    else {
-      eventsProcessor = new GeneralToSMTRunnerEventsConvertor(consoleProperties.getProject(), resultsViewer.getTestsRootNode(), testFrameworkName);
-    }
-
-    if (locator != null) {
-      eventsProcessor.setLocator(locator);
-    }
-
-    if (printerProvider != null) {
-      eventsProcessor.setPrinterProvider(printerProvider);
-    }
-
     // UI actions
-    final SMTRunnerUIActionsHandler uiActionsHandler = new SMTRunnerUIActionsHandler(consoleProperties);
-
-    // subscribe to events
-
-    // subscribes event processor on output consumer events
-    outputConsumer.setProcessor(eventsProcessor);
-    // subscribes result viewer on event processor
-    eventsProcessor.addEventsListener(resultsViewer);
+    SMTRunnerUIActionsHandler uiActionsHandler = new SMTRunnerUIActionsHandler(consoleProperties);
     // subscribes test runner's actions on results viewer events
     resultsViewer.addEventsListener(uiActionsHandler);
 
+    outputConsumer.setTestingStartedHandler(() -> {
+      // events processor
+      GeneralTestEventsProcessor eventsProcessor;
+      if (idBasedTestTree) {
+        eventsProcessor = new GeneralIdBasedToSMTRunnerEventsConvertor(consoleProperties.getProject(), resultsViewer.getTestsRootNode(), testFrameworkName);
+      }
+      else {
+        eventsProcessor = new GeneralToSMTRunnerEventsConvertor(consoleProperties.getProject(), resultsViewer.getTestsRootNode(), testFrameworkName);
+      }
+
+      if (locator != null) {
+        eventsProcessor.setLocator(locator);
+      }
+
+      if (printerProvider != null) {
+        eventsProcessor.setPrinterProvider(printerProvider);
+      }
+      // subscribes result viewer on event processor
+      eventsProcessor.addEventsListener(resultsViewer);
+
+      // subscribes event processor on output consumer events
+      outputConsumer.setProcessor(eventsProcessor);
+    });
+
+    outputConsumer.startTesting();
+
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void processTerminated(final ProcessEvent event) {
+      public void processTerminated(@NotNull final ProcessEvent event) {
         outputConsumer.flushBufferBeforeTerminating();
-        eventsProcessor.onFinishTesting();
-
-        Disposer.dispose(eventsProcessor);
+        outputConsumer.finishTesting();
         Disposer.dispose(outputConsumer);
       }
 
       @Override
-      public void startNotified(final ProcessEvent event) {
-        eventsProcessor.onStartTesting();
-        outputConsumer.onStartTesting();
-      }
-
-      @Override
-      public void onTextAvailable(final ProcessEvent event, final Key outputType) {
+      public void onTextAvailable(@NotNull final ProcessEvent event, @NotNull final Key outputType) {
         outputConsumer.process(event.getText(), outputType);
       }
     });
@@ -242,11 +235,21 @@ public class SMTestRunnerConnectionUtil {
     @NotNull
     @Override
     public List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+      return getLocation(protocol, path, null, project, scope);
+    }
+
+    @NotNull
+    @Override
+    public List<Location> getLocation(@NotNull String protocol,
+                                      @NotNull String path,
+                                      @Nullable String metainfo,
+                                      @NotNull Project project,
+                                      @NotNull GlobalSearchScope scope) {
       if (URLUtil.FILE_PROTOCOL.equals(protocol)) {
         return FileUrlProvider.INSTANCE.getLocation(protocol, path, project, scope);
       }
-      else if (!DumbService.isDumb(project) || DumbService.isDumbAware(myLocator) || Registry.is("dumb.aware.run.configurations")) {
-        return myLocator.getLocation(protocol, path, project, scope);
+      else if (!DumbService.isDumb(project) || DumbService.isDumbAware(myLocator)) {
+        return myLocator.getLocation(protocol, path, metainfo, project, scope);
       }
       else {
         return Collections.emptyList();

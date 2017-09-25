@@ -26,13 +26,12 @@ import junit.framework.Assert;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class FilterDescendantFilesTest extends PlatformTestCase {
   @Test
-  public void testSecondModuleSameLevelAsProject() throws Throwable {
+  public void testSecondModuleSameLevelAsProject() {
     final File tmpDir = createDir(new File(FileUtil.getTempDirectory()), "tmpDir");
     final File child1 = createDir(tmpDir, "child1");
     final File child2 = createDir(tmpDir, "child2");
@@ -44,7 +43,7 @@ public class FilterDescendantFilesTest extends PlatformTestCase {
   }
 
   @Test
-  public void testUsual() throws Throwable {
+  public void testUsual() {
     File tmp = new File(FileUtil.getTempDirectory());
     final File tmpDir = createDir(tmp, "tmpDir");
     final File child1 = createDir(tmpDir, "child1");
@@ -71,7 +70,7 @@ public class FilterDescendantFilesTest extends PlatformTestCase {
     return result;
   }
 
-  private File createDir(final File parent, final String name) throws IOException {
+  private File createDir(final File parent, final String name) {
     final File result = new File(parent, name);
     for (int i = 0; i < 100; i++) {
       if (result.mkdirs()) break;

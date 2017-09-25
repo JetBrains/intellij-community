@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class UnnecessaryFinalOnLocalVariableOrParameterInspectionJava8Test extends LightInspectionTestCase {
 
-  public void testFinalWithoutInnerClass() throws Exception {
+  public void testFinalWithoutInnerClass() {
     doTest("class Issue {\n" +
            "    public static void main(String[] args) {\n" +
            "        /*Unnecessary 'final' on variable 's'*/final/**/ Integer s;\n" +

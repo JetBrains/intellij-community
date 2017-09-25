@@ -65,7 +65,7 @@ public class XmlSchemaTypeInheritanceTest extends CodeInsightFixtureTestCase {
     Assert.assertTrue(baseNode.contains(new SchemaTypeInfo("tFlowElement", true, ourNs)));
   }
 
-  public void testIndex() throws Exception {
+  public void testIndex() {
     myFixture.copyDirectoryToProject("", "");
 
     final Project project = getProject();

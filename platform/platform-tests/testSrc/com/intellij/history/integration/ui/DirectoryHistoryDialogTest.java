@@ -22,11 +22,10 @@ import com.intellij.history.integration.ui.views.DirectoryChange;
 import com.intellij.history.integration.ui.views.DirectoryHistoryDialog;
 import com.intellij.openapi.util.Disposer;
 
-import java.io.IOException;
 import java.util.Collections;
 
 public class DirectoryHistoryDialogTest extends LocalHistoryUITestCase {
-  public void testDialogWorks() throws IOException {
+  public void testDialogWorks() {
     DirectoryHistoryDialog d = new DirectoryHistoryDialog(myProject, myGateway, myRoot);
     Disposer.dispose(d);
   }

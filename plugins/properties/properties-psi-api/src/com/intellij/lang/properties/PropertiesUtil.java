@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.reference.SoftLazyValue;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
@@ -98,32 +101,42 @@ public class PropertiesUtil {
   }
 
   @NotNull
-  static String getDefaultBaseName(@NotNull final VirtualFile file) {
-    final String name = file.getName();
+  static String getDefaultBaseName(@NotNull final PsiFile file) {
+    return CachedValuesManager.getCachedValue(file, new CachedValueProvider<String>() {
+      @NotNull
+      @Override
+      public Result<String> compute() {
+        return Result.create(computeBaseName(), file);
+      }
 
-    if (!StringUtil.containsChar(name, '_')) {
-      return FileUtil.getNameWithoutExtension(name);
-    }
+      private String computeBaseName() {
+        final String name = file.getName();
 
-    final Matcher matcher = LOCALE_PATTERN.matcher(name);
-    final String baseNameWithExtension;
-
-    int matchIndex = 0;
-    while (matcher.find(matchIndex)) {
-      final MatchResult matchResult = matcher.toMatchResult();
-      final String[] splitted = matchResult.group(1).split("_");
-      if (splitted.length > 1) {
-        final String langCode = splitted[1];
-        if (!LOCALES_LANGUAGE_CODES.getValue().contains(langCode)) {
-          matchIndex = matchResult.start(1) + 1;
-          continue;
+        if (!StringUtil.containsChar(name, '_')) {
+          return FileUtil.getNameWithoutExtension(name);
         }
-        baseNameWithExtension = name.substring(0, matchResult.start(1)) + name.substring(matchResult.end(1));
+
+        final Matcher matcher = LOCALE_PATTERN.matcher(name);
+        final String baseNameWithExtension;
+
+        int matchIndex = 0;
+        while (matcher.find(matchIndex)) {
+          final MatchResult matchResult = matcher.toMatchResult();
+          final String[] splitted = matchResult.group(1).split("_");
+          if (splitted.length > 1) {
+            final String langCode = splitted[1];
+            if (!LOCALES_LANGUAGE_CODES.getValue().contains(langCode)) {
+              matchIndex = matchResult.start(1) + 1;
+              continue;
+            }
+            baseNameWithExtension = name.substring(0, matchResult.start(1)) + name.substring(matchResult.end(1));
+            return FileUtil.getNameWithoutExtension(baseNameWithExtension);
+          }
+        }
+        baseNameWithExtension = name;
         return FileUtil.getNameWithoutExtension(baseNameWithExtension);
       }
-    }
-    baseNameWithExtension = name;
-    return FileUtil.getNameWithoutExtension(baseNameWithExtension);
+    });
   }
 
   @NotNull

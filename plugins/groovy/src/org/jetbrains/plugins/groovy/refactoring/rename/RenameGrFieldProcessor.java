@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiFormatUtilBase;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.rename.RenameJavaVariableProcessor;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
@@ -231,7 +228,7 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
     final PsiMethod getter = GroovyPropertyUtils.findGetterForField(field);
     if (getter instanceof GrAccessorMethod) {
       final PsiMethod newGetter =
-        PropertyUtil.findPropertyGetter(containingClass, newName, field.hasModifierProperty(PsiModifier.STATIC), true);
+        PropertyUtilBase.findPropertyGetter(containingClass, newName, field.hasModifierProperty(PsiModifier.STATIC), true);
       if (newGetter != null && !(newGetter instanceof GrAccessorMethod)) {
         conflicts.putValue(newGetter, GroovyRefactoringBundle
           .message("implicit.getter.will.by.overriden.by.method", field.getName(), newGetter.getName()));
@@ -240,7 +237,7 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
     final PsiMethod setter = GroovyPropertyUtils.findSetterForField(field);
     if (setter instanceof GrAccessorMethod) {
       final PsiMethod newSetter =
-        PropertyUtil.findPropertySetter(containingClass, newName, field.hasModifierProperty(PsiModifier.STATIC), true);
+        PropertyUtilBase.findPropertySetter(containingClass, newName, field.hasModifierProperty(PsiModifier.STATIC), true);
       if (newSetter != null && !(newSetter instanceof GrAccessorMethod)) {
         conflicts.putValue(newSetter, GroovyRefactoringBundle
           .message("implicit.setter.will.by.overriden.by.method", field.getName(), newSetter.getName()));

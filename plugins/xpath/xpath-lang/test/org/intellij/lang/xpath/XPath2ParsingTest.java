@@ -17,102 +17,102 @@ package org.intellij.lang.xpath;
 
 public class XPath2ParsingTest extends TestBase {
 
-  public void testComments() throws Throwable {
+  public void testComments() {
     doXPathHighlighting();
   }
 
-  public void testNodeComp() throws Throwable {
+  public void testNodeComp() {
     doXPathHighlighting();
   }
 
-  public void testNewOps() throws Throwable {
+  public void testNewOps() {
     doXPathHighlighting();
   }
 
-  public void testSequence() throws Throwable {
+  public void testSequence() {
     doXPathHighlighting();
   }
 
-  public void testEmptySequence() throws Throwable {
+  public void testEmptySequence() {
     doXPathHighlighting();
   }
 
-  public void testRange() throws Throwable {
+  public void testRange() {
     doXPathHighlighting();
   }
 
-  public void testIfThenElse() throws Throwable {
+  public void testIfThenElse() {
     doXPathHighlighting();
   }
 
-  public void testIfThenElseMissing() throws Throwable {
+  public void testIfThenElseMissing() {
     doXPathHighlighting();
   }
 
-  public void testForLoop() throws Throwable {
+  public void testForLoop() {
     doXPathHighlighting();
   }
 
-  public void testSomeEvery() throws Throwable {
+  public void testSomeEvery() {
     doXPathHighlighting();
   }
 
-  public void testTypeExpressions() throws Throwable {
+  public void testTypeExpressions() {
     doXPathHighlighting();
   }
 
-  public void testDoubleLiterals() throws Throwable {
+  public void testDoubleLiterals() {
     doXPathHighlighting();
   }
 
-  public void testWildcardNamespace() throws Throwable {
+  public void testWildcardNamespace() {
     doXPathHighlighting();
   }
 
-  public void testInvalidWildcard() throws Throwable {
+  public void testInvalidWildcard() {
     doXPathHighlighting();
   }
 
-  public void testMissingInstanceOfType() throws Throwable {
+  public void testMissingInstanceOfType() {
     doXPathHighlighting();
   }
 
-  public void testMissingSatisfiesExpression() throws Throwable {
+  public void testMissingSatisfiesExpression() {
     doXPathHighlighting();
   }
 
-  public void testValidTypeOccurrenceIndicators() throws Throwable {
+  public void testValidTypeOccurrenceIndicators() {
     doXPathHighlighting();
   }
 
-  public void testInvalidTypeOccurrenceIndicator1() throws Throwable {
+  public void testInvalidTypeOccurrenceIndicator1() {
     doXPathHighlighting();
   }
 
-  public void testInvalidTypeOccurrenceIndicator2() throws Throwable {
+  public void testInvalidTypeOccurrenceIndicator2() {
     doXPathHighlighting();
   }
 
-  public void testNonKeywords() throws Throwable {
+  public void testNonKeywords() {
     doXPathHighlighting();
   }
 
   // IDEA-70681
-  public void testCastWithMultiplication() throws Throwable {
+  public void testCastWithMultiplication() {
     doXPathHighlighting();
   }
 
   // IDEA-70688
-  public void testKindTestWithStar() throws Throwable {
+  public void testKindTestWithStar() {
     doXPathHighlighting();
   }
 
-  public void testUnionSubExpression() throws Throwable {
+  public void testUnionSubExpression() {
     doXPathHighlighting();
   }
 
   // IDEA-67413
-  private void doXPathHighlighting() throws Throwable {
+  private void doXPathHighlighting() {
     final String name = getTestFileName();
     myFixture.testHighlighting(false, false, false, name + ".xpath2");
   }

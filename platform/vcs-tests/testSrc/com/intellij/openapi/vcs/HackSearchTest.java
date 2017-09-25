@@ -36,25 +36,25 @@ public class HackSearchTest extends TestCase {
     mySearch = new HackSearch<>(o -> new Z(o.getInt()), o -> new Z(o.getInt()), new ZComparator());
   }
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     final int idx = mySearch.search(Arrays.asList(new S[]{s(1), s(2), s(4), s(10)}), new T(5));
     Assert.assertEquals(3, idx);
   }
 
-  public void testSame() throws Exception {
+  public void testSame() {
     final int idx = mySearch.search(Arrays.asList(new S[]{s(1), s(2), s(4), s(5), s(10)}), new T(5));
     Assert.assertEquals(3, idx);
   }
 
-  public void testBefore() throws Exception {
+  public void testBefore() {
     final int idx = mySearch.search(Arrays.asList(new S[]{s(10), s(20), s(40), s(50), s(60)}), new T(5));
     Assert.assertEquals(0, idx);
   }
-  public void testFirst() throws Exception {
+  public void testFirst() {
     final int idx = mySearch.search(Arrays.asList(new S[]{s(1), s(2), s(4), s(5), s(10)}), new T(1));
     Assert.assertEquals(0, idx);
   }
-  public void testLast() throws Exception {
+  public void testLast() {
     final int idx = mySearch.search(Arrays.asList(new S[]{s(1), s(2), s(4), s(5), s(10)}), new T(15));
     Assert.assertEquals(5, idx);
   }

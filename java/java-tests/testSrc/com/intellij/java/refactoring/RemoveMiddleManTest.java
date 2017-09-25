@@ -46,7 +46,7 @@ public class RemoveMiddleManTest extends MultiFileTestCase {
     return "/refactoring/removemiddleman/";
   }
 
-  private void doTest(final String conflict) throws Exception {
+  private void doTest(final String conflict) {
     doTest((rootDir, rootAfter) -> {
       PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.allScope(getProject()));
 
@@ -76,24 +76,24 @@ public class RemoveMiddleManTest extends MultiFileTestCase {
     });
   }
 
-  public void testNoGetter() throws Exception {
+  public void testNoGetter() {
     doTest((String)null);
   }
 
-  public void testSiblings() throws Exception {
+  public void testSiblings() {
     doTest("foo() will be deleted. Hierarchy will be broken");
   }
 
   
-  public void testInterface() throws Exception {
+  public void testInterface() {
     doTest("foo() will be deleted. Hierarchy will be broken");
   }
 
-  public void testPresentGetter() throws Exception {
+  public void testPresentGetter() {
     doTest("foo() will be deleted. Hierarchy will be broken");
   }
 
-  public void testInterfaceDelegation() throws Exception {
+  public void testInterfaceDelegation() {
     doTest("foo() will be deleted. Hierarchy will be broken");
   }
 }

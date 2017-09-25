@@ -409,7 +409,7 @@ private int getObjects() {
 
   void testForInAssignability() {
     testHighlighting('''\
-for (int <warning descr="Cannot assign 'String' to 'int'">x</warning> in ['a']){}
+for (<warning descr="Cannot assign 'String' to 'int'">int x</warning> in ['a']){}
 ''')
   }
 
@@ -728,56 +728,15 @@ String xx = 5
 
 xx = 'abc'
 ''')
-
   }
 
+  void testInnerClassConstructorDefault() { doTest() }
 
-  void testInnerClassConstructor0() {
-    testHighlighting('''\
-class A {
-  class Inner {
-    def Inner() {}
-  }
+  void testInnerClassConstructorNoArg() { doTest() }
 
-  def foo() {
-    new Inner() //correct
-  }
+  void testInnerClassConstructorWithArg() { doTest() }
 
-  static def bar() {
-    new <error>Inner</error>() //semi-correct
-    new Inner(new A()) //correct
-  }
-}
-
-new A.Inner() //semi-correct
-new A.Inner(new A()) //correct
-''')
-  }
-
-  void testInnerClassConstructor1() {
-    testHighlighting('''\
-class A {
-  class Inner {
-    def Inner(A a) {}
-  }
-
-  def foo() {
-    new Inner(new A()) //correct
-    new Inner<warning>()</warning>
-    new Inner<warning>(new A(), new A())</warning>
-  }
-
-  static def bar() {
-    new Inner(new A(), new A()) //correct
-    new Inner<warning>(new A())</warning> //incorrect: first arg is recognized as an enclosing instance arg
-  }
-}
-
-new A.Inner<warning>()</warning> //incorrect
-new A.Inner<warning>(new A())</warning> //incorrect: first arg is recognized as an enclosing instance arg
-new A.Inner(new A(), new A()) //correct
-''')
-  }
+  void testInnerClassConstructorWithAnotherArg() { doTest() }
 
   void testClosureIsNotAssignableToSAMInGroovy2_1() {
     testHighlighting('''\
@@ -833,6 +792,29 @@ def foo() {
 '''
   }
 
+  void testMultiAssignmentWithTypeError() {
+    testHighlighting'''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+def foo() {
+    def list = ["", ""]
+    def (Integer a, b) = <error>list</error>
+}
+'''
+  }
+
+  void testMultiAssignmentLiteralWithTypeError() {
+    testHighlighting'''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+def foo() {
+    def (Integer <error>a</error>, b) = ["", ""]
+}
+'''
+  }
+
   void testMultiAssignment() {
     testHighlighting'''
 import groovy.transform.CompileStatic
@@ -840,6 +822,72 @@ import groovy.transform.CompileStatic
 @CompileStatic
 def foo() {
     def (a, b) = [1, 2]
+}
+'''
+  }
+
+  void testRawListReturn() {
+    testHighlighting'''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+List foo() {
+    return [""]
+}
+'''
+  }
+
+  void 'test optional argument on CompileStatic'() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+@CompileStatic
+class A {
+    A(String args) {}
+
+    def foo() {
+        new A<error>()</error>
+    }
+}
+'''
+  }
+
+  void 'test optional vararg argument on CompileStatic'() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+@CompileStatic
+class A {
+    A(String... args) {}
+
+    def foo() {
+        new A()
+    }
+}
+'''
+  }
+
+  void 'test optional closure arg on CompileStatic'() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+@CompileStatic
+def method() {
+    Closure<String> cl = {"str"}
+    cl()
+}
+'''
+  }
+
+  void 'test string tuple assignment'() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+@CompileStatic
+class TestType {
+    static def bar(Object[] list) {
+        def (String name, Integer matcherEnd) = [list[0], list[2] as Integer]
+    }
 }
 '''
   }

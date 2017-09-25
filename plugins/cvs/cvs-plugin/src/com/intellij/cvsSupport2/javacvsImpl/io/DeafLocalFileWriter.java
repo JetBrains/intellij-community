@@ -44,14 +44,13 @@ public class DeafLocalFileWriter implements ILocalFileWriter{
     CvsUtil.skip(inputStream, length);
   }
 
-  public void renameLocalFile(FileObject fileObject, ICvsFileSystem cvsFileSystem, String newFileName)
-    throws IOException {
+  public void renameLocalFile(FileObject fileObject, ICvsFileSystem cvsFileSystem, String newFileName) {
 
   }
 
   public void removeLocalFile(FileObject fileObject,
                               ICvsFileSystem cvsFileSystem,
-                              IFileReadOnlyHandler fileReadOnlyHandler) throws IOException {
+                              IFileReadOnlyHandler fileReadOnlyHandler) {
   }
 
   public void writeTextFile(FileObject fileObject,

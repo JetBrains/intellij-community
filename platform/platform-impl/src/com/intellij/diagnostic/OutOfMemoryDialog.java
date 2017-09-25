@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.util.Locale;
 
 public class OutOfMemoryDialog extends DialogWrapper {
   private final MemoryKind myMemoryKind;
@@ -64,12 +65,12 @@ public class OutOfMemoryDialog extends DialogWrapper {
 
     myIconLabel.setIcon(Messages.getErrorIcon());
     myMessageLabel.setText(DiagnosticBundle.message("diagnostic.out.of.memory.error", memoryKind.optionName));
-    myMessageLabel.setBorder(JBUI.Borders.empty(0, 0, 10, 0));
+    myMessageLabel.setBorder(JBUI.Borders.emptyBottom(10));
 
     File file = VMOptions.getWriteFile();
     if (file != null) {
       mySettingsFileHintLabel.setText(DiagnosticBundle.message("diagnostic.out.of.memory.willBeSavedTo", file.getPath()));
-      mySettingsFileHintLabel.setBorder(JBUI.Borders.empty(10, 0, 0, 0));
+      mySettingsFileHintLabel.setBorder(JBUI.Borders.emptyTop(10));
     }
     else {
       mySettingsFileHintLabel.setVisible(false);
@@ -161,7 +162,7 @@ public class OutOfMemoryDialog extends DialogWrapper {
       TimeoutUtil.sleep(250);  // to give UI chance to update
       String message = "";
       try {
-        String name = ApplicationNamesInfo.getInstance().getLowercaseProductName();
+        String name = ApplicationNamesInfo.getInstance().getFullProductName().replace(' ', '-').toLowerCase(Locale.US);
         String path = SystemProperties.getUserHome() + File.separator + "heapDump-" + name + '-' + System.currentTimeMillis() + ".hprof.zip";
         MemoryDumpHelper.captureMemoryDumpZipped(path);
         message = "Dumped to " + path;

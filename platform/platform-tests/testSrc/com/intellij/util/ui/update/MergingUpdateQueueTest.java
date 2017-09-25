@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class MergingUpdateQueueTest extends UsefulTestCase {
-  public void testOnShowNotify() throws Exception {
+  public void testOnShowNotify() {
     final MyUpdate first = new MyUpdate("first");
     final MyUpdate second = new MyUpdate("second");
 
@@ -52,7 +52,7 @@ public class MergingUpdateQueueTest extends UsefulTestCase {
     assertAfterProcessing(second, true, true);
   }
 
-  public void testPriority() throws Exception {
+  public void testPriority() {
     final boolean[] attemps = new boolean[3];
 
     final MyQueue queue = new MyQueue();
@@ -98,7 +98,7 @@ public class MergingUpdateQueueTest extends UsefulTestCase {
     assertAfterProcessing(third, true, true);
   }
 
-  public void testDoNoExecuteExpired() throws Throwable {
+  public void testDoNoExecuteExpired() {
 
     final boolean[] expired = new boolean[1];
 
@@ -128,7 +128,7 @@ public class MergingUpdateQueueTest extends UsefulTestCase {
   }
 
 
-  public void testOnShowNotifyMerging() throws Exception {
+  public void testOnShowNotifyMerging() {
     final MyUpdate twin1 = new MyUpdate("twin");
     final MyUpdate twin2 = new MyUpdate("twin");
 
@@ -147,7 +147,7 @@ public class MergingUpdateQueueTest extends UsefulTestCase {
     assertAfterProcessing(twin2, true, true);
   }
 
-  public void testExecuteWhenActive() throws Exception {
+  public void testExecuteWhenActive() {
     final MyQueue queue = new MyQueue();
 
     queue.showNotify();
@@ -164,7 +164,7 @@ public class MergingUpdateQueueTest extends UsefulTestCase {
     assertAfterProcessing(second, true, true);
   }
 
-  public void testMergeWhenActive() throws Exception {
+  public void testMergeWhenActive() {
     final MyQueue queue = new MyQueue();
 
     queue.showNotify();
@@ -181,15 +181,15 @@ public class MergingUpdateQueueTest extends UsefulTestCase {
     assertAfterProcessing(twin2, true, true);
   }
 
-  public void testEatByQueue() throws Exception {
+  public void testEatByQueue() {
     executeEatingTest(false);
   }
 
-  public void testEatUpdatesInQueue() throws Exception {
+  public void testEatUpdatesInQueue() {
     executeEatingTest(true);
   }
 
-  private static void executeEatingTest(boolean foodFirst) throws Exception{
+  private static void executeEatingTest(boolean foodFirst) {
     final MyQueue queue = new MyQueue();
     queue.showNotify();
 
@@ -215,7 +215,7 @@ public class MergingUpdateQueueTest extends UsefulTestCase {
     assertAfterProcessing(food, false, false);
   }
 
-  public void testConcurrentFlushing() throws Exception {
+  public void testConcurrentFlushing() {
     final MyQueue queue = new MyQueue();
     queue.showNotify();
 
@@ -255,7 +255,7 @@ public class MergingUpdateQueueTest extends UsefulTestCase {
     assertTrue(Boolean.TRUE.equals(executed.get()));
   }
 
-  public void testConcurrentQueueing() throws Exception {
+  public void testConcurrentQueueing() {
     final MyQueue queue = new MyQueue();
     queue.showNotify();
 

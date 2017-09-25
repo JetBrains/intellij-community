@@ -383,7 +383,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
 
       @Nullable
       @Override
-      protected String getLastCommitMessage(@NotNull VirtualFile repo) throws VcsException {
+      protected String getLastCommitMessage(@NotNull VirtualFile repo) {
         HgCommandExecutor commandExecutor = new HgCommandExecutor(myProject);
         List<String> args = new ArrayList<>();
         args.add("-r");

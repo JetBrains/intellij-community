@@ -22,7 +22,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
 import com.siyeh.ig.callMatcher.CallMapper;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +63,7 @@ public class CollectionFactoryInliner implements CallInliner {
       .push(factory.createTypeValue(call.getType(), Nullness.NOT_NULL))
       .assign() // leave tmpVar on stack: it's result of method call
       .push(factoryInfo.mySizeField.createValue(factory, variableValue)) // tmpVar.size = <size>
-      .push(factory.getConstFactory().createFromValue(factoryInfo.mySize, PsiType.INT, null))
+      .push(factory.getInt(factoryInfo.mySize))
       .assign()
       .pop();
     return true;

@@ -383,9 +383,4 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     }
   }
 
-  @Nullable
-  @Override
-  protected String getHelpId() {
-    return "ixPasteSelected";
-  }
 }

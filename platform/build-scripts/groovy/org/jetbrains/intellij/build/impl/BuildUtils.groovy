@@ -17,11 +17,14 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.AntClassLoader
 import org.apache.tools.ant.BuildException
 import org.apache.tools.ant.Main
 import org.apache.tools.ant.Project
+import org.apache.tools.ant.types.Path
+import org.apache.tools.ant.util.SplitClassLoader
 import org.codehaus.groovy.tools.RootLoader
 
 /**
@@ -81,5 +84,42 @@ class BuildUtils {
     catch (Throwable ignored) {
       return System.out
     }
+  }
+
+  /**
+   * Defines ftp task using libraries from IntelliJ IDEA project sources.
+   */
+  @CompileDynamic
+  static void defineFtpTask(AntBuilder ant, String communityLib) {
+    def ftpTaskLoaderRef = "FTP_TASK_CLASS_LOADER"
+    if (ant.project.hasReference(ftpTaskLoaderRef)) return
+
+    /*
+      We need this to ensure that FTP task class isn't loaded by the main Ant classloader, otherwise Ant will try to load FTPClient class
+      by the main Ant classloader as well and fail because 'commons-net-*.jar' isn't included to Ant classpath.
+      Probably we could call FTPClient directly to avoid this hack.
+     */
+    Path ftpPath = new Path(ant.project)
+    ftpPath.createPathElement().setLocation(new File("$communityLib/commons-net-3.3.jar"))
+    ftpPath.createPathElement().setLocation(new File("$communityLib/ant/lib/ant-commons-net.jar"))
+    ant.project.addReference(ftpTaskLoaderRef, new SplitClassLoader(ant.project.getClass().getClassLoader(), ftpPath, ant.project,
+                                                                    ["FTP", "FTPTaskConfig"] as String[]))
+    ant.taskdef(name: "ftp", classname: "org.apache.tools.ant.taskdefs.optional.net.FTP", loaderRef: ftpTaskLoaderRef)
+  }
+
+  /**
+   * Defines sshexec task using libraries from IntelliJ IDEA project sources.
+   */
+  @CompileDynamic
+  static void defineSshTask(AntBuilder ant, String communityLib) {
+    def sshTaskLoaderRef = "SSH_TASK_CLASS_LOADER"
+    if (ant.project.hasReference(sshTaskLoaderRef)) return
+    
+    Path pathSsh = new Path(ant.project)
+    pathSsh.createPathElement().setLocation(new File("$communityLib/jsch-0.1.54.jar"))
+    pathSsh.createPathElement().setLocation(new File("$communityLib/ant/lib/ant-jsch.jar"))
+    ant.project.addReference(sshTaskLoaderRef, new SplitClassLoader(ant.project.getClass().getClassLoader(), pathSsh, ant.project,
+                                                                    ["SSHExec", "SSHBase", "LogListener", "SSHUserInfo"] as String[]))
+    ant.taskdef(name: "sshexec", classname: "org.apache.tools.ant.taskdefs.optional.ssh.SSHExec", loaderRef: sshTaskLoaderRef)
   }
 }

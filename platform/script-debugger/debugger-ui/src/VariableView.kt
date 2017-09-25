@@ -16,6 +16,7 @@
 package org.jetbrains.debugger
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.Navigatable
@@ -431,13 +432,17 @@ class VariableView(override val variableName: String, private val variable: Vari
 
       val valueString = value.valueString
       // only WIP reports normal description
-      if (valueString != null && valueString.endsWith("]") && ARRAY_DESCRIPTION_PATTERN.matcher(valueString).find()) {
+      if (valueString != null && (valueString.endsWith(")") || valueString.endsWith(']')) &&
+          ARRAY_DESCRIPTION_PATTERN.matcher(valueString).find()) {
         node.setPresentation(icon, null, valueString, true)
       }
       else {
         context.evaluateContext.evaluate("a.length", Collections.singletonMap<String, Any>("a", value), false)
           .done(node) { node.setPresentation(icon, null, "Array[${it.value.valueString}]", true) }
-          .rejected(node) { node.setPresentation(icon, null, "Internal error: $it", false) }
+          .rejected(node) {
+            logger<VariableView>().error("Failed to evaluate array length: $it")
+            node.setPresentation(icon, null, valueString ?: "Array", true)
+          }
       }
     }
 
@@ -481,7 +486,7 @@ private fun createNumberPresentation(value: String): XValuePresentation {
   return if (value == PrimitiveValue.NA_N_VALUE || value == PrimitiveValue.INFINITY_VALUE) XKeywordValuePresentation(value) else XNumericValuePresentation(value)
 }
 
-private val ARRAY_DESCRIPTION_PATTERN = Pattern.compile("^[a-zA-Z\\d]+\\[\\d+\\]$")
+private val ARRAY_DESCRIPTION_PATTERN = Pattern.compile("^[a-zA-Z\\d]+[\\[(]\\d+[\\])]$")
 
 private class ArrayPresentation(length: Int, className: String?) : XValuePresentation() {
   private val length = Integer.toString(length)

@@ -39,7 +39,7 @@ public class DelegateWithDefaultParamValueTest extends LightQuickFixParameterize
     }
   }
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
 
   }

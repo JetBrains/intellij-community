@@ -25,6 +25,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -37,7 +38,7 @@ public class FormatCommentsProcessor implements PreFormatProcessor {
     PsiElement e = SourceTreeToPsiMap.treeElementToPsi(element);
     assert e != null;
     final Project project = e.getProject();
-    if (!CodeStyleSettingsManager.getSettings(project).ENABLE_JAVADOC_FORMATTING ||
+    if (!CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).ENABLE_JAVADOC_FORMATTING ||
         element.getPsi().getContainingFile().getLanguage() != JavaLanguage.INSTANCE
         || InjectedLanguageManager.getInstance(project).isInjectedFragment(element.getPsi().getContainingFile()))
     {

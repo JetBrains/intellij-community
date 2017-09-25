@@ -81,11 +81,13 @@ public class JpsLibraryTableImpl implements LibraryTable, Disposable {
     myDispatcher.removeListener(listener);
   }
 
+  @NotNull
   @Override
   public Library createLibrary() {
     return createLibrary(null);
   }
 
+  @NotNull
   @Override
   public Library createLibrary(@NonNls String name) {
     final ModifiableModel model = getModifiableModel();
@@ -114,11 +116,13 @@ public class JpsLibraryTableImpl implements LibraryTable, Disposable {
     return new JpsLibrariesModel(myModel.myJpsLibraries);
   }
 
+  @NotNull
   @Override
   public String getTableLevel() {
     return myTableLevel;
   }
 
+  @NotNull
   @Override
   public LibraryTablePresentation getPresentation() {
     return myPresentation;
@@ -136,16 +140,19 @@ public class JpsLibraryTableImpl implements LibraryTable, Disposable {
       }
     }
 
+    @NotNull
     @Override
     public Library createLibrary(String name) {
       return createLibrary(name, null);
     }
 
+    @NotNull
     @Override
     public Library createLibrary(String name, @Nullable PersistentLibraryKind type) {
       return createLibrary(name, type, null);
     }
 
+    @NotNull
     @Override
     public Library createLibrary(String name, @Nullable PersistentLibraryKind type, @Nullable ProjectModelExternalSource externalSource) {
       throw new UnsupportedOperationException("'createLibrary' not implemented in " + getClass().getName());

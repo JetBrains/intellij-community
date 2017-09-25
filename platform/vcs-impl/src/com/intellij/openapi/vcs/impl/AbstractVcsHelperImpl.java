@@ -73,6 +73,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.AppIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManagerUtil;
 import com.intellij.ui.content.MessageView;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.AsynchConsumer;
@@ -80,7 +81,6 @@ import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ConfirmationDialog;
-import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
@@ -117,24 +117,20 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
         messageView.getContentManager().addContent(content);
         Disposer.register(content, errorTreeView);
         messageView.getContentManager().setSelectedContent(content);
-        removeContents(content, tabDisplayName);
+        ContentManagerUtil.cleanupContents(content, myProject, tabDisplayName);
 
         ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
       });
     }, VcsBundle.message("command.name.open.error.message.view"), null);
   }
 
-  public void showFileHistory(@NotNull VcsHistoryProvider historyProvider,
-                              @NotNull FilePath path,
-                              @NotNull AbstractVcs vcs,
-                              @Nullable String repositoryPath) {
-    showFileHistory(historyProvider, vcs.getAnnotationProvider(), path, repositoryPath, vcs);
+  public void showFileHistory(@NotNull VcsHistoryProvider historyProvider, @NotNull FilePath path, @NotNull AbstractVcs vcs) {
+    showFileHistory(historyProvider, vcs.getAnnotationProvider(), path, vcs);
   }
 
   public void showFileHistory(@NotNull VcsHistoryProvider historyProvider,
                               @Nullable AnnotationProvider annotationProvider,
                               @NotNull FilePath path,
-                              @Nullable String repositoryPath,
                               @NotNull AbstractVcs vcs) {
     FileHistoryRefresherI refresher = FileHistoryRefresher.findOrCreate(historyProvider, path, vcs);
     refresher.run(false, true);
@@ -247,7 +243,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
   }
 
-  private static String[] getExceptionMessages(VcsException exception) {
+  private static String[] getExceptionMessages(@NotNull VcsException exception) {
     String[] messages = exception.getMessages();
     if (messages.length == 0) messages = new String[]{VcsBundle.message("exception.text.unknown.error")};
     final List<String> list = new ArrayList<>();
@@ -271,7 +267,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myProject.isDisposed()) return;
       if (isEmpty) {
-        removeContents(null, tabDisplayName);
+        ContentManagerUtil.cleanupContents(null, myProject, tabDisplayName);
         return;
       }
 
@@ -323,23 +319,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
   }
 
-  protected void removeContents(Content notToRemove, final String tabDisplayName) {
-    MessageView messageView = MessageView.SERVICE.getInstance(myProject);
-    Content[] contents = messageView.getContentManager().getContents();
-    for (Content content : contents) {
-      LOG.assertTrue(content != null);
-      if (content.isPinned()) continue;
-      if (tabDisplayName.equals(content.getDisplayName()) && content != notToRemove) {
-        ErrorTreeView listErrorView = (ErrorTreeView)content.getComponent();
-        if (listErrorView != null) {
-          if (messageView.getContentManager().removeContent(content, true)) {
-            content.release();
-          }
-        }
-      }
-    }
-  }
-
   public List<VcsException> runTransactionRunnable(AbstractVcs vcs, TransactionRunnable runnable, Object vcsParameters) {
     List<VcsException> exceptions = new ArrayList<>();
 
@@ -347,12 +326,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     boolean transactionSupported = transactionProvider != null;
 
     if (transactionSupported) {
-      try {
-        transactionProvider.startTransaction(vcsParameters);
-      }
-      catch (VcsException e) {
-        return Collections.singletonList(e);
-      }
+      transactionProvider.startTransaction(vcsParameters);
     }
 
     runnable.run(exceptions);

@@ -26,22 +26,22 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class AbstractRegionToKillRingTest extends LightPlatformCodeInsightTestCase {
 
-  public void testNoSelection() throws Exception {
+  public void testNoSelection() {
     doTest("this is a test string");
   }
 
-  public void testSingleLineSelection() throws Exception {
+  public void testSingleLineSelection() {
     doTest("this is a t<selection>est str</selection>ing");
   }
 
-  public void testMultiLineSelection() throws Exception {
+  public void testMultiLineSelection() {
     doTest(
       "this is the fir<selection>st string\n" +
       "this is the sec</selection>ond string"
     );
   }
   
-  protected abstract void doTest(@NotNull String text) throws Exception;
+  protected abstract void doTest(@NotNull String text);
 
   /**
    * Checks current editor and returns tuple of {@code (selected text; text over than selected)}.

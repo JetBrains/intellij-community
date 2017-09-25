@@ -35,7 +35,7 @@ public class GuessContainerElementTypeTest extends LightCodeInsightTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void test1() throws Exception{
+  public void test1() {
     configureByFile(BASE_PATH + "/Test1.java");
     PsiType[] result = guessContainerElementTypes();
     assertNotNull(result);
@@ -43,7 +43,7 @@ public class GuessContainerElementTypeTest extends LightCodeInsightTestCase {
     assertTrue(result[0].equalsToText("java.lang.String"));
   }
 
-  public void test2() throws Exception{
+  public void test2() {
     configureByFile(BASE_PATH + "/Test2.java");
     PsiType[] result = guessContainerElementTypes();
     assertNotNull(result);

@@ -33,7 +33,7 @@ import java.util.List;
 public class JavaSmartReformatPerformanceTest extends AbstractJavaFormatterTest {
 
 
-  public void testSmartReformatPerformanceInLargeFile_AsUsedInPostponedFormatting() throws Exception {
+  public void testSmartReformatPerformanceInLargeFile_AsUsedInPostponedFormatting() {
     String initial = loadFile("/performance/bigFile.java");
 
     final PsiFile file = createFile("A.java", "");

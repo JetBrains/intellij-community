@@ -32,7 +32,7 @@ public class StatisticsManagerTest extends LightPlatformTestCase {
     return StatisticsManager.getInstance().getUseCount(new StatisticsInfo(TEST_CONTEXT, value));
   }
 
-  public void testIncUseCount() throws Throwable {
+  public void testIncUseCount() {
     incUseCount("b", 1);
     assertEquals(1, getUseCount("b"));
     assertEquals(0, getUseCount("c"));
@@ -42,13 +42,13 @@ public class StatisticsManagerTest extends LightPlatformTestCase {
     assertEquals(1, getUseCount("c"));
   }
 
-  public void testFlexibility() throws Throwable {
+  public void testFlexibility() {
     incUseCount("b", 100);
     incUseCount("c", 4);
     assertTrue(getUseCount("c") > getUseCount("b"));
   }
 
-  public void testReturn() throws Throwable {
+  public void testReturn() {
     incUseCount("b", 100);
     incUseCount("c", 4);
     incUseCount("b", 1);

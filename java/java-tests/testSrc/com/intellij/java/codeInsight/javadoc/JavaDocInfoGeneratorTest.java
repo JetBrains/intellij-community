@@ -355,7 +355,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     verifyJavaDoc(getTestClass());
   }
 
-  public void testHideNonDocumentedFlowAnnotations() throws IOException {
+  public void testHideNonDocumentedFlowAnnotations() {
     ModuleRootModificationUtil.setModuleSdk(myModule, removeAnnotationsJar(PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk17())));
 
     PsiMethod mapPut = myJavaFacade.findClass(CommonClassNames.JAVA_UTIL_MAP, GlobalSearchScope.allScope(myProject))

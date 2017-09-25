@@ -27,7 +27,6 @@ import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.IOException;
 
 public class ProjectRootUtilSymlinkedFilesTest extends PlatformTestCase {
   private File myNonContentDir;
@@ -65,19 +64,19 @@ public class ProjectRootUtilSymlinkedFilesTest extends PlatformTestCase {
     PsiTestUtil.addLibrary(getModule(), myLibraryVDir.getPath());
   }
 
-  public void testNoFilesInContent() throws Exception {
+  public void testNoFilesInContent() {
     assertEquals(myNonContentVFile, ProjectRootUtil.findSymlinkedFileInContent(getProject(), myNonContentVFile));
   }
 
-  public void testLinkedDirInContent() throws Exception {
+  public void testLinkedDirInContent() {
     doTestLinkedDirInProjectRoots(true);
   }
 
-  public void testLinkedDirInLibrary() throws Exception {
+  public void testLinkedDirInLibrary() {
     doTestLinkedDirInProjectRoots(false);
   }
 
-  public void doTestLinkedDirInProjectRoots(boolean content) throws Exception {
+  public void doTestLinkedDirInProjectRoots(boolean content) {
     String linkedPath = (content ? myContentDir : myLibraryDir).getPath() + "/linked";
     IoTestUtil.createSymLink(myNonContentDir.getPath(), linkedPath, true);
     
@@ -87,7 +86,7 @@ public class ProjectRootUtilSymlinkedFilesTest extends PlatformTestCase {
   }
 
   // not supported
-  public void _testLinkedFileInSources() throws Exception {
+  public void _testLinkedFileInSources() {
     String linkedPath = myContentDir.getPath() + "/linked.txt";
     IoTestUtil.createSymLink(myNonContentVFile.getPath(), linkedPath, true);
     
@@ -95,7 +94,7 @@ public class ProjectRootUtilSymlinkedFilesTest extends PlatformTestCase {
     assertEquals(linkedVFile, ProjectRootUtil.findSymlinkedFileInContent(getProject(), myNonContentVFile));
   }
   
-  public void testFileWithTheSameNotButNotLinked() throws Exception {
+  public void testFileWithTheSameNotButNotLinked() {
     new WriteAction<Object>() {
       @Override
       protected void run(@NotNull Result<Object> result) throws Throwable {
@@ -106,7 +105,7 @@ public class ProjectRootUtilSymlinkedFilesTest extends PlatformTestCase {
     assertEquals(myNonContentVFile, ProjectRootUtil.findSymlinkedFileInContent(getProject(), myNonContentVFile));
   }
 
-  public void testWhenSeveralLinkedAlwaysReturnTheSameFile() throws Exception {
+  public void testWhenSeveralLinkedAlwaysReturnTheSameFile() {
     String linkedPath1 = myContentDir.getPath() + "/linked1";
     IoTestUtil.createSymLink(myNonContentDir.getPath(), linkedPath1, true);
     VirtualFile linkedVFile1 = VfsUtil.findFileByIoFile(new File(linkedPath1, myNonContentFile.getName()), true);
@@ -124,15 +123,15 @@ public class ProjectRootUtilSymlinkedFilesTest extends PlatformTestCase {
     }
   }
 
-  public void testLinkedAndCanonicalUnderContent() throws Exception {
+  public void testLinkedAndCanonicalUnderContent() {
     doTestLinkedAndCanonicalUnderRoot(true);
   }
   
-  public void testLinkedAndCanonicalUnderLibraryRoot() throws Exception {
+  public void testLinkedAndCanonicalUnderLibraryRoot() {
     doTestLinkedAndCanonicalUnderRoot(false);
   }
 
-  private void doTestLinkedAndCanonicalUnderRoot(boolean content) throws InterruptedException, IOException {
+  private void doTestLinkedAndCanonicalUnderRoot(boolean content) {
     String linkedPath = myContentDir.getPath() + "/linked";
     IoTestUtil.createSymLink(myNonContentDir.getPath(), linkedPath, true);
 

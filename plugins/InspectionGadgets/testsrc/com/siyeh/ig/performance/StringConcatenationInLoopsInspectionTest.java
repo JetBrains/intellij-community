@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class StringConcatenationInLoopsInspectionTest extends LightInspectionTestCase {
 
-  public void testStringConcatenationInLoop() throws Exception {
+  public void testStringConcatenationInLoop() {
     doTest();
   }
 

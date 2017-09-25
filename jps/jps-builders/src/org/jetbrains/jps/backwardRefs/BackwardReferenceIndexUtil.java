@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.backwardRefs;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Factory;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -23,23 +24,31 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.jps.backwardRefs.index.CompiledFileData;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
+import org.jetbrains.jps.javac.ast.api.JavacTypeCast;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 public class BackwardReferenceIndexUtil {
+  private static final Logger LOG = Logger.getInstance(BackwardReferenceIndexUtil.class);
+
   static void registerFile(String filePath,
                            TObjectIntHashMap<? extends JavacRef> refs,
-                           List<JavacDef> defs,
+                           Collection<JavacDef> defs,
+                           Collection<JavacTypeCast> casts,
                            final BackwardReferenceIndexWriter writer) {
 
     try {
       final int fileId = writer.enumeratePath(filePath);
       int funExprId = 0;
 
-      final Map<LightRef, Void> definitions = new HashMap<>(defs.size());
-      final Map<LightRef, Collection<LightRef>> backwardHierarchyMap = new HashMap<>();
-      final Map<SignatureData, Collection<LightRef>> signatureData = new THashMap<>();
+      Map<LightRef, Void> definitions = new HashMap<>(defs.size());
+      Map<LightRef, Collection<LightRef>> backwardHierarchyMap = new HashMap<>();
+      Map<SignatureData, Collection<LightRef>> signatureData = new THashMap<>();
+      THashMap<LightRef, Collection<LightRef>> castMap = new THashMap<>();
+
 
       final AnonymousClassEnumerator anonymousClassEnumerator = new AnonymousClassEnumerator();
 
@@ -50,6 +59,10 @@ public class BackwardReferenceIndexUtil {
           final LightRef.LightClassHierarchyElementDef aClass;
           if (sym.isAnonymous()) {
             final JavacRef[] classes = ((JavacDef.JavacClassDef)def).getSuperClasses();
+            if (classes.length == 0) {
+              LOG.info("Seems that compilation will finish with errors in anonymous class inside file " + filePath);
+              continue;
+            }
             aClass = anonymousClassEnumerator.addAnonymous(sym.getName(), writer.asClassUsage(classes[0]));
           } else {
             aClass = writer.asClassUsage(sym);
@@ -102,7 +115,16 @@ public class BackwardReferenceIndexUtil {
       if (exception[0] != null) {
         throw exception[0];
       }
-      writer.writeData(fileId, new CompiledFileData(backwardHierarchyMap, convertedRefs, definitions, signatureData));
+
+      for (JavacTypeCast cast : casts) {
+        LightRef enumeratedCastType = writer.enumerateNames(cast.getCastType(), name -> null);
+        if (enumeratedCastType == null) continue;
+        LightRef enumeratedOperandType = writer.enumerateNames(cast.getOperandType(), name -> null);
+        if (enumeratedOperandType == null) continue;
+        castMap.computeIfAbsent(enumeratedCastType, t -> new SmartList<>()).add(enumeratedOperandType);
+      }
+
+      writer.writeData(fileId, new CompiledFileData(backwardHierarchyMap, castMap, convertedRefs, definitions, signatureData));
     }
     catch (IOException e) {
       writer.setRebuildCause(e);

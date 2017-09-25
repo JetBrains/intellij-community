@@ -85,7 +85,7 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
     assertEquals("pkg2.Application", configuration.MAIN_CLASS_NAME);
   }
 
-  public void testRenameJUnitPackage() throws IOException {
+  public void testRenameJUnitPackage() {
     PsiPackage psiPackage = mySource.createPackage("pkg");
     JUnitConfiguration configuration = createJUnitConfiguration(psiPackage, AllInPackageConfigurationProducer.class, new MapDataContext());
     rename(psiPackage, "pkg2");
@@ -203,7 +203,7 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
     new MoveMembersProcessor(myProject, null, options).run();
   }
 
-  private void initModule() throws IOException {
+  private void initModule() {
     mySource.initModule();
     mySource.copyJdkFrom(myModule);
     mySource.addLibrary(findFile(MOCK_JUNIT));

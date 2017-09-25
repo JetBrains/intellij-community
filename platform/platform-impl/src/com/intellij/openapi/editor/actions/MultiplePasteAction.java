@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.DefaultEditorKit;
@@ -125,6 +126,13 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
       super(project, UIBundle.message("choose.content.to.paste.dialog.title"), true, true);
       setOKButtonText(UIBundle.message("choose.content.to.paste.dialog.ok.button"));
     }
+
+    @Nullable
+    @Override
+    protected String getHelpId() {
+      return "ixPasteSelected";
+    }
+
 
     @Override
     protected String getStringRepresentationFor(final Transferable content) {

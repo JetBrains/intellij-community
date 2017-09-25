@@ -52,7 +52,7 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
   private Random myRandom;
 
   @Override
-  protected void setUp() throws Exception {
+  protected void setUp() {
     EdtTestUtil.runInEdtAndWait(() -> {
       try {
         super.setUp();
@@ -69,7 +69,7 @@ public class BackgroundTaskQueueTest extends PlatformTestCase {
   }
 
   @Override
-  protected void tearDown() throws Exception {
+  protected void tearDown() {
     myThreadRunner.finish();
 
     EdtTestUtil.runInEdtAndWait((() -> {

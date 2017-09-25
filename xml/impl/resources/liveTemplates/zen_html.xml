@@ -149,7 +149,7 @@
       <option name="JSP" value="true"/>
     </context>
   </template>
-  <template description="&lt;basefont/&gt;" name="basefont" toReformat="true" toShortenFQNames="true" value="&lt;basefont/&gt;">
+  <template description="&lt;basefont&gt;" name="basefont" toReformat="true" toShortenFQNames="true" value="&lt;basefont&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
       <option name="JSX_HTML" value="true"/>
@@ -163,7 +163,7 @@
       <option name="JSP" value="true"/>
     </context>
   </template>
-  <template description="&lt;frame/&gt;" name="frame" toReformat="true" toShortenFQNames="true" value="&lt;frame/&gt;">
+  <template description="&lt;frame&gt;" name="frame" toReformat="true" toShortenFQNames="true" value="&lt;frame&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
       <option name="JSX_HTML" value="true"/>
@@ -226,7 +226,7 @@
   <template description="&lt;link rel=&quot;import&quot; href=&quot;&quot;&gt;"
             name="link:import" toReformat="true" toShortenFQNames="true"
             value="&lt;link rel=&quot;import&quot; href=&quot;$HTML$.html&quot;&gt;">
-    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="HTML"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;component&quot;" expression="" name="HTML"/>
     <context>
       <option name="HTML_TEXT" value="true"/>
       <option name="JSX_HTML" value="true"/>
@@ -236,7 +236,7 @@
   <template description="&lt;link rel=&quot;import&quot; href=&quot;&quot;&gt;"
             name="link:im" toReformat="true" toShortenFQNames="true"
             value="&lt;link rel=&quot;import&quot; href=&quot;$HTML$.html&quot;&gt;">
-    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="HTML"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;component&quot;" expression="" name="HTML"/>
     <context>
       <option name="HTML_TEXT" value="true"/>
       <option name="JSX_HTML" value="true"/>
@@ -253,9 +253,9 @@
       <option name="JSP" value="true"/>
     </context>
   </template>
-  <template description="&lt;link rel=&quot;shortcut icon&quot; type=&quot;image/x-icon&quot; href=&quot;favicon.ico&quot;&gt;"
+  <template description="&lt;link rel=&quot;shortcut icon&quot; href=&quot;favicon.ico&quot; type=&quot;image/x-icon&quot;&gt;"
             name="link:favicon" toReformat="true" toShortenFQNames="true"
-            value="&lt;link rel=&quot;shortcut icon&quot; type=&quot;image/x-icon&quot; href=&quot;$FAVICON$&quot;&gt;">
+            value="&lt;link rel=&quot;shortcut icon&quot; href=&quot;$FAVICON$&quot; type=&quot;image/x-icon&quot;&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;favicon.ico&quot;" expression="" name="FAVICON"/>
     <context>
       <option name="HTML_TEXT" value="true"/>
@@ -272,9 +272,9 @@
       <option name="JSP" value="true"/>
     </context>
   </template>
-  <template description="&lt;link rel=&quot;alternate&quot; type=&quot;application/rss+xml&quot; title=&quot;RSS&quot; href=&quot;rss.xml&quot;&gt;"
+  <template description="&lt;link rel=&quot;alternate&quot; href=&quot;rss.xml&quot; type=&quot;application/rss+xml&quot; title=&quot;RSS&quot;&gt;"
             name="link:rss" toReformat="true" toShortenFQNames="true"
-            value="&lt;link rel=&quot;alternate&quot; type=&quot;application/rss+xml&quot; title=&quot;RSS&quot; href=&quot;$RSS$&quot;&gt;">
+            value="&lt;link rel=&quot;alternate&quot; href=&quot;$RSS$&quot; type=&quot;application/rss+xml&quot; title=&quot;RSS&quot;&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;rss.xml&quot;" expression="" name="RSS"/>
     <context>
       <option name="HTML_TEXT" value="true"/>
@@ -282,9 +282,9 @@
       <option name="JSP" value="true"/>
     </context>
   </template>
-  <template description="&lt;link rel=&quot;alternate&quot; type=&quot;application/atom+xml&quot; title=&quot;Atom&quot; href=&quot;atom.xml&quot;&gt;"
+  <template description="&lt;link rel=&quot;alternate&quot; href=&quot;atom.xml&quot; type=&quot;application/atom+xml&quot; title=&quot;Atom&quot;&gt;"
             name="link:atom" toReformat="true" toShortenFQNames="true"
-            value="&lt;link rel=&quot;alternate&quot; type=&quot;application/atom+xml&quot; title=&quot;Atom&quot; href=&quot;$ATOM$&quot;&gt;">
+            value="&lt;link rel=&quot;alternate&quot; href=&quot;$ATOM$&quot; type=&quot;application/atom+xml&quot; title=&quot;Atom&quot;&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;atom.xml&quot;" expression="" name="ATOM"/>
     <context>
       <option name="HTML_TEXT" value="true"/>
@@ -327,14 +327,11 @@
       <option name="JSP" value="true"/>
     </context>
   </template>
-  <template description="&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0&quot;&gt;" 
+  <template description="&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;"
             name="meta:vp" toReformat="true"
-            toShortenFQNames="true" value="&lt;meta name=&quot;viewport&quot; content=&quot;width=$WIDTH$, user-scalable=$SCALABLE$, initial-scale=$INITIAL_SCALE$, maximum-scale=$MAX_SCALE$, minimum-scale=$MIN_SCALE$&quot;&gt;">
+            toShortenFQNames="true" value="&lt;meta name=&quot;viewport&quot; content=&quot;width=$WIDTH$, initial-scale=$INITIAL_SCALE$&quot;&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;device-width&quot;" expression="" name="WIDTH"/>
-    <variable alwaysStopAt="true" defaultValue="&quot;no&quot;" expression="" name="SCALABLE"/>
     <variable alwaysStopAt="true" defaultValue="&quot;1.0&quot;" expression="" name="INITIAL_SCALE"/>
-    <variable alwaysStopAt="true" defaultValue="&quot;1.0&quot;" expression="" name="MAX_SCALE"/>
-    <variable alwaysStopAt="true" defaultValue="&quot;1.0&quot;" expression="" name="MIN_SCALE"/>
     <context>
       <option name="HTML_TEXT" value="true"/>
       <option name="JSX_HTML" value="true"/>
@@ -390,8 +387,8 @@
       <option name="JSP" value="true"/>
     </context>
   </template>
-  <template description="&lt;img srcset=&quot;...&quot; src=&quot;...&quot; alt=&quot;...&quot;&gt;" name="img:s" toReformat="true" toShortenFQNames="true"
-            value="&lt;img srcset=&quot;$VAR0$&quot; src=&quot;$VAR1$&quot; alt=&quot;$VAR2$&quot;&gt;">
+  <template description="&lt;img src=&quot;...&quot; alt=&quot;...&quot; srcset=&quot;...&quot;&gt;" name="img:s" toReformat="true" toShortenFQNames="true"
+            value="&lt;img src=&quot;$VAR1$&quot; alt=&quot;$VAR2$&quot; srcset=&quot;$VAR0$&quot;&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
@@ -401,8 +398,8 @@
       <option name="JSP" value="true"/>
     </context>
   </template>
-  <template description="&lt;img srcset=&quot;...&quot; src=&quot;...&quot; alt=&quot;...&quot;&gt;" name="img:srcset" toReformat="true" toShortenFQNames="true"
-            value="&lt;img srcset=&quot;$VAR0$&quot; src=&quot;$VAR1$&quot; alt=&quot;$VAR2$&quot;&gt;">
+  <template description="&lt;img src=&quot;...&quot; alt=&quot;...&quot; srcset=&quot;...&quot;&gt;" name="img:srcset" toReformat="true" toShortenFQNames="true"
+            value="&lt;img src=&quot;$VAR1$&quot; alt=&quot;$VAR2$&quot; srcset=&quot;$VAR0$&quot;&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
@@ -412,8 +409,8 @@
       <option name="JSP" value="true"/>
     </context>
   </template>
-  <template description="&lt;img sizes=&quot;...&quot; srcset=&quot;...&quot; src=&quot;...&quot; alt=&quot;...&quot;&gt;" name="img:z" toReformat="true" toShortenFQNames="true"
-            value="&lt;img sizes=&quot;$VAR0$&quot; srcset=&quot;$VAR1$&quot; src=&quot;$VAR2$&quot; alt=&quot;$VAR3$&quot;&gt;">
+  <template description="&lt;img src=&quot;...&quot; alt=&quot;...&quot; sizes=&quot;...&quot; srcset=&quot;...&quot;&gt;" name="img:z" toReformat="true" toShortenFQNames="true"
+            value="&lt;img src=&quot;$VAR2$&quot; alt=&quot;$VAR3$&quot; sizes=&quot;$VAR0$&quot; srcset=&quot;$VAR1$&quot;&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
@@ -424,8 +421,8 @@
       <option name="JSP" value="true"/>
     </context>
   </template>
-  <template description="&lt;img sizes=&quot;...&quot; srcset=&quot;...&quot; src=&quot;...&quot; alt=&quot;...&quot;&gt;" name="img:sizes" toReformat="true" toShortenFQNames="true"
-            value="&lt;img sizes=&quot;$VAR0$&quot; srcset=&quot;$VAR1$&quot; src=&quot;$VAR2$&quot; alt=&quot;$VAR3$&quot;&gt;">
+  <template description="&lt;img src=&quot;...&quot; alt=&quot;...&quot; sizes=&quot;...&quot; srcset=&quot;...&quot;&gt;" name="img:sizes" toReformat="true" toShortenFQNames="true"
+            value="&lt;img src=&quot;$VAR2$&quot; alt=&quot;$VAR3$&quot; sizes=&quot;$VAR0$&quot; srcset=&quot;$VAR1$&quot;&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
@@ -571,8 +568,8 @@
       <option name="JSP" value="true"/>
     </context>
   </template>
-  <template description="&lt;source media=&quot;(...)&quot; sizes=&quot;...&quot; srcset=&quot;...&quot;&gt;" name="src:mz" toReformat="true" toShortenFQNames="true" 
-            value="&lt;source media=&quot;($VAR0$)&quot; sizes=&quot;$VAR1$&quot; srcset=&quot;$VAR2$&quot;&gt;">
+  <template description="&lt;source media=&quot;(...)&quot; srcset=&quot;...&quot; sizes=&quot;...&quot;&gt;" name="src:mz" toReformat="true" toShortenFQNames="true"
+            value="&lt;source media=&quot;($VAR0$)&quot; srcset=&quot;$VAR2$&quot; sizes=&quot;$VAR1$&quot;&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;min-width: &quot;" expression="" name="VAR0"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
@@ -582,8 +579,8 @@
       <option name="JSP" value="true"/>
     </context>
   </template>
-  <template description="&lt;source media=&quot;(...)&quot; sizes=&quot;...&quot; srcset=&quot;...&quot;&gt;" name="source:media:sizes" toReformat="true" toShortenFQNames="true" 
-            value="&lt;source media=&quot;($VAR0$)&quot; sizes=&quot;$VAR1$&quot; srcset=&quot;$VAR2$&quot;&gt;">
+  <template description="&lt;source media=&quot;(...)&quot; srcset=&quot;...&quot; sizes=&quot;...&quot;&gt;" name="source:media:sizes" toReformat="true" toShortenFQNames="true"
+            value="&lt;source media=&quot;($VAR0$)&quot; srcset=&quot;$VAR2$&quot; sizes=&quot;$VAR1$&quot;&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;min-width: &quot;" expression="" name="VAR0"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
@@ -676,8 +673,9 @@
       <option name="JSP" value="true"/>
     </context>
   </template>
-  <template description="&lt;area shape=&quot;default&quot; href=&quot;...&quot; alt=&quot;...&quot;&gt;" name="area:d" toReformat="true"
-            toShortenFQNames="true" value="&lt;area shape=&quot;default&quot; href=&quot;$VAR0$&quot; alt=&quot;$VAR1$&quot;&gt;">
+  <template description="&lt;area shape=&quot;default&quot; coords=&quot;...&quot; href=&quot;...&quot; alt=&quot;...&quot;&gt;" name="area:d" toReformat="true"
+            toShortenFQNames="true" value="&lt;area shape=&quot;default&quot; coords=&quot;$COORDS$&quot; href=&quot;$VAR0$&quot; alt=&quot;$VAR1$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="COORDS"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
     <context>
@@ -1086,7 +1084,7 @@
       <option name="JSP" value="true"/>
     </context>
   </template>
-  <template description="&lt;isindex/&gt;" name="isindex" toReformat="true" toShortenFQNames="true" value="&lt;isindex/&gt;">
+  <template description="&lt;isindex&gt;" name="isindex" toReformat="true" toShortenFQNames="true" value="&lt;isindex&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
       <option name="JSX_HTML" value="true"/>
@@ -1649,8 +1647,8 @@
     </context>
   </template>
   
-  <template description="&lt;img srcset=&quot;...&quot; src=&quot;...&quot; alt=&quot;...&quot;&gt;" name="ri:d" toReformat="true" toShortenFQNames="true"
-            value="&lt;img srcset=&quot;$VAR0$&quot; src=&quot;$VAR1$&quot; alt=&quot;$VAR2$&quot;&gt;">
+  <template description="&lt;img src=&quot;...&quot; alt=&quot;...&quot; srcset=&quot;...&quot;&gt;" name="ri:d" toReformat="true" toShortenFQNames="true"
+            value="&lt;img src=&quot;$VAR1$&quot; alt=&quot;$VAR2$&quot; srcset=&quot;$VAR0$&quot;&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
@@ -1660,8 +1658,8 @@
       <option name="JSP" value="true"/>
     </context>
   </template>
-  <template description="&lt;img srcset=&quot;...&quot; src=&quot;...&quot; alt=&quot;...&quot;&gt;" name="ri:dpr" toReformat="true" toShortenFQNames="true"
-            value="&lt;img srcset=&quot;$VAR0$&quot; src=&quot;$VAR1$&quot; alt=&quot;$VAR2$&quot;&gt;">
+  <template description="&lt;img src=&quot;...&quot; alt=&quot;...&quot; srcset=&quot;...&quot;&gt;" name="ri:dpr" toReformat="true" toShortenFQNames="true"
+            value="&lt;img src=&quot;$VAR1$&quot; alt=&quot;$VAR2$&quot; srcset=&quot;$VAR0$&quot;&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
@@ -1671,8 +1669,8 @@
       <option name="JSP" value="true"/>
     </context>
   </template>
-  <template description="&lt;img sizes=&quot;...&quot; srcset=&quot;...&quot; src=&quot;...&quot; alt=&quot;...&quot;&gt;" name="ri:v" toReformat="true" toShortenFQNames="true"
-            value="&lt;img sizes=&quot;$VAR0$&quot; srcset=&quot;$VAR1$&quot; src=&quot;$VAR2$&quot; alt=&quot;$VAR3$&quot;&gt;">
+  <template description="&lt;img src=&quot;...&quot; alt=&quot;...&quot; sizes=&quot;...&quot; srcset=&quot;...&quot;&gt;" name="ri:v" toReformat="true" toShortenFQNames="true"
+            value="&lt;img src=&quot;$VAR2$&quot; alt=&quot;$VAR3$&quot; sizes=&quot;$VAR0$&quot; srcset=&quot;$VAR1$&quot;&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
@@ -1683,8 +1681,8 @@
       <option name="JSP" value="true"/>
     </context>
   </template>
-  <template description="&lt;img sizes=&quot;...&quot; srcset=&quot;...&quot; src=&quot;...&quot; alt=&quot;...&quot;&gt;" name="ri:viewport" toReformat="true" toShortenFQNames="true"
-            value="&lt;img sizes=&quot;$VAR0$&quot; srcset=&quot;$VAR1$&quot; src=&quot;$VAR2$&quot; alt=&quot;$VAR3$&quot;&gt;">
+  <template description="&lt;img src=&quot;...&quot; alt=&quot;...&quot; sizes=&quot;...&quot; srcset=&quot;...&quot;&gt;" name="ri:viewport" toReformat="true" toShortenFQNames="true"
+            value="&lt;img src=&quot;$VAR2$&quot; alt=&quot;$VAR3$&quot; sizes=&quot;$VAR0$&quot; srcset=&quot;$VAR1$&quot;&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>

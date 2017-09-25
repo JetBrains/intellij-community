@@ -15,20 +15,23 @@
  */
 package com.intellij.execution.junit;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.util.PathUtil;
-import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author nik
  */
 public abstract class JUnitExternalLibraryDescriptor extends ExternalLibraryDescriptor {
+  private static final Logger LOG = Logger.getInstance(JUnitExternalLibraryDescriptor.class);
   public static final ExternalLibraryDescriptor JUNIT3 = new JUnitExternalLibraryDescriptor("3") {
     @NotNull
     @Override
@@ -47,13 +50,19 @@ public abstract class JUnitExternalLibraryDescriptor extends ExternalLibraryDesc
     @NotNull
     @Override
     public List<String> getLibraryClassesRoots() {
-      try {
-        return Arrays.asList(PathUtil.getJarPathForClass(Class.forName("org.junit.jupiter.api.Test")),
-                             PathUtil.getJarPathForClass(Class.forName("org.opentest4j.AssertionFailedError")));
-      }
-      catch (ClassNotFoundException e) {
-        throw new RuntimeException(e);
-      }
+      return Stream.of("org.junit.jupiter.api.Test", "org.opentest4j.AssertionFailedError", 
+                       "org.apiguardian.api.API", "org.junit.platform.commons.JUnitException")
+        .map(className -> {
+          try {
+            return PathUtil.getJarPathForClass(Class.forName(className));
+          }
+          catch (ClassNotFoundException e) {
+            LOG.info(e);
+          }
+          return null;
+        })
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
     }
   };
   private final String myVersion;

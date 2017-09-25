@@ -30,6 +30,7 @@ import com.intellij.refactoring.util.VariableData;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.UniqueNameGenerator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -340,6 +341,11 @@ public class InputVariables {
         }
       }
     }
+  }
+
+  public void foldExtractedParameter(@NotNull PsiVariable extractedParameter, @NotNull PsiExpression value) {
+    myFoldingAvailable = true;
+    myFolding.putCallArgument(extractedParameter, value);
   }
 
   public boolean isFoldingSelectedByDefault() {

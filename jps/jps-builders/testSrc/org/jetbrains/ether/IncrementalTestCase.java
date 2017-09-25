@@ -72,7 +72,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
   }
 
   @Override
-  protected File doGetProjectDir() throws IOException {
+  protected File doGetProjectDir() {
     return workDir;
   }
 

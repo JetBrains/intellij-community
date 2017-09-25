@@ -24,11 +24,15 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.*;
 
 public abstract class UndoRedoAction extends DumbAwareAction {
   public UndoRedoAction() {
@@ -60,9 +64,13 @@ public abstract class UndoRedoAction extends DumbAwareAction {
   }
 
   private static UndoManager getUndoManager(FileEditor editor, DataContext dataContext) {
-    final Boolean isModalContext = PlatformDataKeys.IS_MODAL_CONTEXT.getData(dataContext);
-    if (editor == null && isModalContext != null && isModalContext) {
-      return Registry.is("undo.use.for.swing.in.modal.context") ? SwingUndoManagerWrapper.fromContext(dataContext) : null;
+    if (editor == null && Registry.is("undo.use.for.swing.in.modal.context")) {
+      Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+      JRootPane rootPane = UIUtil.getRootPane(component);
+      JBPopup popup = rootPane != null ? (JBPopup)rootPane.getClientProperty(JBPopup.KEY) : null;
+      if (popup != null && popup.isModalContext()) {
+        return SwingUndoManagerWrapper.fromContext(dataContext);
+      }
     }
 
     Project project = getProject(editor, dataContext);

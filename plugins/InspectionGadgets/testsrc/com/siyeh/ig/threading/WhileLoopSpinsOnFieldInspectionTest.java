@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class WhileLoopSpinsOnFieldInspectionTest extends LightInspectionTestCase {
 
-  public void testWhileLoopSpinsOnField() throws Exception {
+  public void testWhileLoopSpinsOnField() {
     doTest();
   }
 

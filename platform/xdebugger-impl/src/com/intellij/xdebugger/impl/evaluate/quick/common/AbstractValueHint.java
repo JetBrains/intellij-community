@@ -252,6 +252,7 @@ public abstract class AbstractValueHint {
       return false;
     }
 
+    AppUIUtil.targetToDevice(myCurrentHint.getComponent(), myEditor.getComponent());
     Point p = HintManagerImpl.getHintPosition(myCurrentHint, myEditor, myEditor.xyToLogicalPosition(myPoint), HintManager.UNDER);
     HintHint hint = HintManagerImpl.createHintHint(myEditor, p, myCurrentHint, HintManager.UNDER, true);
     hint.setShowImmediately(true);
@@ -327,7 +328,8 @@ public abstract class AbstractValueHint {
   }
 
   protected <D> void showTreePopup(@NotNull DebuggerTreeCreator<D> creator, @NotNull D descriptor) {
-    DebuggerTreeWithHistoryPopup.showTreePopup(creator, descriptor, getEditor(), myPoint, getProject(), myHideRunnable);
+    Point point = new Point(myPoint.x, myPoint.y + myEditor.getLineHeight());
+    DebuggerTreeWithHistoryPopup.showTreePopup(creator, descriptor, myEditor, point, getProject(), myHideRunnable);
   }
 
   @Override

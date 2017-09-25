@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@ import com.intellij.application.options.ModulesComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ui.DefaultJreSelector;
 import com.intellij.execution.ui.JrePathEditor;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.PanelWithAnchor;
@@ -45,7 +43,6 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
   private final JrePathEditor myJrePathEditor;
 
   private final PluginRunConfiguration myPRC;
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.run.PluginRunConfigurationEditor");
 
   public PluginRunConfigurationEditor(final PluginRunConfiguration prc) {
     myPRC = prc;
@@ -77,7 +74,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
 
 
   @Override
-  public void applyEditorTo(@NotNull PluginRunConfiguration prc) throws ConfigurationException {
+  public void applyEditorTo(@NotNull PluginRunConfiguration prc) {
     prc.setModule(myModules.getSelectedModule());
     prc.VM_PARAMETERS = getVMParameters().getText();
     prc.PROGRAM_PARAMETERS = getProgramParameters().getText();
@@ -102,9 +99,8 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
     myProgramParameters.setLabelLocation(BorderLayout.WEST);
     myProgramParameters.setAnchor(myModuleLabel);
 
-    int ipady = UIUtil.isUnderWin10LookAndFeel() ? 0 : UIUtil.DEFAULT_VGAP;
     GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                                   JBUI.insets(2, 0, 0, 0), UIUtil.DEFAULT_HGAP, ipady);
+                                                   JBUI.insets(2, 0, 0, 0), UIUtil.DEFAULT_HGAP, 0);
     wholePanel.add(myVMParameters, gc);
     wholePanel.add(myProgramParameters, gc);
     gc.gridwidth = 1;

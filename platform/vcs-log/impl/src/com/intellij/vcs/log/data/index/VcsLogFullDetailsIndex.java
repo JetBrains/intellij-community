@@ -109,7 +109,7 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
     return myMapReduceIndex.getData(key).forEach((id, value) -> consumer.test(value, id));
   }
 
-  public void update(int commitId, @NotNull VcsFullCommitDetails details) throws IOException {
+  public void update(int commitId, @NotNull VcsFullCommitDetails details) {
     checkDisposed();
     myMapReduceIndex.update(commitId, details).compute();
   }
@@ -211,7 +211,7 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
     }
 
     @Override
-    public void putInputData(int inputId, @NotNull Map<Integer, T> data) throws IOException {
+    public void putInputData(int inputId, @NotNull Map<Integer, T> data) {
     }
 
     @Override
@@ -219,11 +219,11 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
     }
 
     @Override
-    public void clear() throws IOException {
+    public void clear() {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
     }
   }
 }

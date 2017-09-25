@@ -46,7 +46,7 @@ public class GithubUrlUtilTest extends TestCase {
     }
   }
 
-  public void testRemoveTrailingSlash() throws Throwable {
+  public void testRemoveTrailingSlash() {
     TestCase<String> tests = new TestCase<>();
 
     tests.add("http://github.com/", "http://github.com");
@@ -58,7 +58,7 @@ public class GithubUrlUtilTest extends TestCase {
     runTestCase(tests, in -> removeTrailingSlash(in));
   }
 
-  public void testRemoveProtocolPrefix() throws Throwable {
+  public void testRemoveProtocolPrefix() {
     TestCase<String> tests = new TestCase<>();
 
     tests.add("github.com/user/repo/", "github.com/user/repo/");
@@ -80,7 +80,7 @@ public class GithubUrlUtilTest extends TestCase {
     runTestCase(tests, in -> removeProtocolPrefix(in));
   }
 
-  public void testIsGithubUrl1() throws Throwable {
+  public void testIsGithubUrl1() {
     TestCase<Boolean> tests = new TestCase<>();
 
     tests.add("http://github.com/user/repo", true);
@@ -109,7 +109,7 @@ public class GithubUrlUtilTest extends TestCase {
     runTestCase(tests, in -> isGithubUrl(in, "http://GitHub.com"));
   }
 
-  public void testIsGithubUrl2() throws Throwable {
+  public void testIsGithubUrl2() {
     TestCase<Boolean> tests = new TestCase<>();
 
     tests.add("http://git.code.example.co.jp/user/repo", true);
@@ -126,7 +126,7 @@ public class GithubUrlUtilTest extends TestCase {
     runTestCase(tests, in -> isGithubUrl(in, "git.code.example.co.jp/api"));
   }
 
-  public void testGetApiUrlWithoutProtocol() throws Throwable {
+  public void testGetApiUrlWithoutProtocol() {
     TestCase<String> tests = new TestCase<>();
 
     tests.add("github.com", "api.github.com");
@@ -143,7 +143,7 @@ public class GithubUrlUtilTest extends TestCase {
     runTestCase(tests, in -> getApiUrlWithoutProtocol(in));
   }
 
-  public void testGetUserAndRepositoryFromRemoteUrl() throws Throwable {
+  public void testGetUserAndRepositoryFromRemoteUrl() {
     TestCase<GithubFullPath> tests = new TestCase<>();
 
     tests.add("http://github.com/username/reponame/", new GithubFullPath("username", "reponame"));
@@ -168,7 +168,7 @@ public class GithubUrlUtilTest extends TestCase {
     runTestCase(tests, in -> getUserAndRepositoryFromRemoteUrl(in));
   }
 
-  public void testMakeGithubRepoFromRemoteUrl() throws Throwable {
+  public void testMakeGithubRepoFromRemoteUrl() {
     TestCase<String> tests = new TestCase<>();
 
     tests.add("http://github.com/username/reponame/", "https://github.com/username/reponame");
@@ -194,7 +194,7 @@ public class GithubUrlUtilTest extends TestCase {
     runTestCase(tests, in -> makeGithubRepoUrlFromRemoteUrl(in, "https://github.com"));
   }
 
-  public void testGetHostFromUrl() throws Throwable {
+  public void testGetHostFromUrl() {
     TestCase<String> tests = new TestCase<>();
 
     tests.add("github.com", "github.com");
@@ -221,7 +221,7 @@ public class GithubUrlUtilTest extends TestCase {
     runTestCase(tests, in -> getHostFromUrl(in));
   }
 
-  public void testGetApiUrl() throws Throwable {
+  public void testGetApiUrl() {
     TestCase<String> tests = new TestCase<>();
 
     tests.add("github.com", "https://api.github.com");

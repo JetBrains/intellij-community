@@ -24,7 +24,6 @@ import com.intellij.history.integration.ui.models.RevisionItem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.List;
 
 public class HistoryDialogModelTest extends IntegrationTestCase {
@@ -61,7 +60,7 @@ public class HistoryDialogModelTest extends IntegrationTestCase {
   }
 
   @Test
-  public void testDoesNotRecomputeRevisionsEveryTime() throws IOException {
+  public void testDoesNotRecomputeRevisionsEveryTime() {
     assertEquals(3, m.getRevisions().size());
 
     setContent(f, "xxx");

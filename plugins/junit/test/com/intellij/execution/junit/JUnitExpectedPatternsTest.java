@@ -21,12 +21,12 @@ import org.junit.Test;
 
 public class JUnitExpectedPatternsTest {
   @Test
-  public void testArrayComparison() throws Exception {
+  public void testArrayComparison() {
     Assert.assertNotNull(ExpectedPatterns.createExceptionNotification("arrays first differed at element [0]; expected: java.lang.String<Text> but was: java.lang.StringBuilder<Text>"));
   }
 
   @Test
-  public void testHamcrestAssertThatWithReason() throws Exception {
+  public void testHamcrestAssertThatWithReason() {
     Assert.assertNotNull(ExpectedPatterns.createExceptionNotification("reason\n" +
                                                                       "Expected: is \"aaa\\naa\"\n" +
                                                                       "     but: was \"bbb\\nbb\""));

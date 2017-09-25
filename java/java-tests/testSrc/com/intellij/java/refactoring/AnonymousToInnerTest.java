@@ -34,19 +34,19 @@ public class AnonymousToInnerTest extends LightCodeInsightTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testGenericTypeParameters() throws Exception {  // IDEADEV-29446
+  public void testGenericTypeParameters() {  // IDEADEV-29446
     doTest("MyIterator", true);
   }
 
-  public void testInsideInterface() throws Exception {  // IDEADEV-29446
+  public void testInsideInterface() {  // IDEADEV-29446
     doTest("MyRunnable", true);
   }
   
-  public void testCollapseDiamonds() throws Exception {  // IDEADEV-29446
+  public void testCollapseDiamonds() {  // IDEADEV-29446
     doTest("MyPredicate", true);
   }
   
-  public void testCanBeStatic() throws Exception {
+  public void testCanBeStatic() {
     configureByFile(TEST_ROOT + getTestName(true) + ".java");
     AnonymousToInnerHandler handler = new AnonymousToInnerHandler(){
       @Override
@@ -62,7 +62,7 @@ public class AnonymousToInnerTest extends LightCodeInsightTestCase {
   }
   
 
-  private void doTest(final String newClassName, final boolean makeStatic) throws Exception {
+  private void doTest(final String newClassName, final boolean makeStatic) {
     configureByFile(TEST_ROOT + getTestName(true) + ".java");
     AnonymousToInnerHandler handler = new AnonymousToInnerHandler() {
       @Override

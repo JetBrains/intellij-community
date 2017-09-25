@@ -90,7 +90,7 @@ public class JavaFxFieldToPropertyTest extends DaemonAnalyzerTestCase {
     checkResultByFile(getTestName(false) + "_after.java");
   }
 
-  protected IntentionAction getIntentionAction() throws Exception {
+  protected IntentionAction getIntentionAction() {
     final List<HighlightInfo> infos = doHighlighting();
     final Editor editor = getEditor();
     final PsiFile file = getFile();

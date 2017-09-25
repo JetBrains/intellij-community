@@ -286,14 +286,19 @@ public class BuildDataManager implements StorageOwner {
   private void closeSourceToOutputStorages() throws IOException {
     IOException ex = null;
     try {
-      for (AtomicNotNullLazyValue<SourceToOutputMappingImpl> mapping : mySourceToOutputs.values()) {
+      for (AtomicNotNullLazyValue<SourceToOutputMappingImpl> lazy : mySourceToOutputs.values()) {
         try {
-          mapping.getValue().close();
-        }
-        catch (IOException e) {
-          if (ex == null) {
-            ex = e;
+          final SourceToOutputMappingImpl mapping = lazy.getValue();
+          try {
+            mapping.close();
           }
+          catch (IOException e) {
+            if (ex == null) {
+              ex = e;
+            }
+          }
+        }
+        catch (Throwable ignored) {
         }
       }
     }

@@ -188,21 +188,33 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     }
   }
 
-  override fun browseUsingPath(url: String?, browserPath: String?, browser: WebBrowser?, project: Project?, additionalParameters: Array<String>): Boolean {
+  override fun browseUsingPath(url: String?,
+                               browserPath: String?,
+                               browser: WebBrowser?,
+                               project: Project?,
+                               openInNewWindow: Boolean,
+                               additionalParameters: Array<String>): Boolean {
     var browserPathEffective = browserPath
     var launchTask: (() -> Unit)? = null
     if (browserPath == null && browser != null) {
       browserPathEffective = PathUtil.toSystemDependentName(browser.path)
-      launchTask = { browseUsingPath(url, null, browser, project, additionalParameters) }
+      launchTask = { browseUsingPath(url, null, browser, project, openInNewWindow, additionalParameters) }
     }
-    return doLaunch(url, browserPathEffective, browser, project, additionalParameters, launchTask)
+    return doLaunch(url, browserPathEffective, browser, project, openInNewWindow, additionalParameters, launchTask)
   }
 
-  private fun doLaunch(url: String?, browserPath: String?, browser: WebBrowser?, project: Project?, additionalParameters: Array<String>, launchTask: (() -> Unit)?): Boolean {
+  private fun doLaunch(url: String?,
+                       browserPath: String?,
+                       browser: WebBrowser?,
+                       project: Project?,
+                       openInNewWindow: Boolean,
+                       additionalParameters: Array<String>,
+                       launchTask: (() -> Unit)?): Boolean {
     if (!checkPath(browserPath, browser, project, launchTask)) {
       return false
     }
-    return doLaunch(url, BrowserUtil.getOpenBrowserCommand(browserPath!!, false), browser, project, additionalParameters, launchTask)
+    return doLaunch(url, BrowserUtil.getOpenBrowserCommand(browserPath!!, openInNewWindow), browser, project, additionalParameters,
+                    launchTask)
   }
 
   @Contract("null, _, _, _ -> false")

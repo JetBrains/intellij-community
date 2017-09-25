@@ -50,20 +50,20 @@ public final class ShellCommand {
   }
 
   @NotNull
-  public HgCommandResult execute(boolean showTextOnIndicator, boolean isBinary) throws ShellCommandException, InterruptedException {
+  public HgCommandResult execute(boolean showTextOnIndicator, boolean isBinary) throws ShellCommandException {
     CommandResultCollector listener = new CommandResultCollector(isBinary);
     execute(showTextOnIndicator, isBinary, listener);
     return listener.getResult();
   }
 
   public void execute(boolean showTextOnIndicator, boolean isBinary, @NotNull HgLineProcessListener listener)
-    throws ShellCommandException, InterruptedException {
+    throws ShellCommandException {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     try {
       OSProcessHandler processHandler = isBinary ? new BinaryOSProcessHandler(myCommandLine) : new OSProcessHandler(myCommandLine);
       ProcessAdapter outputAdapter = new ProcessAdapter() {
         @Override
-        public void onTextAvailable(ProcessEvent event, Key outputType) {
+        public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
           for (String line : LineHandlerHelper.splitText(event.getText())) {
             if (ProcessOutputTypes.STDOUT == outputType && indicator != null && showTextOnIndicator) {
               indicator.setText2(line);
@@ -73,7 +73,7 @@ public final class ShellCommand {
         }
 
         @Override
-        public void processTerminated(ProcessEvent event) {
+        public void processTerminated(@NotNull ProcessEvent event) {
           listener.setExitCode(event.getExitCode());
         }
       };

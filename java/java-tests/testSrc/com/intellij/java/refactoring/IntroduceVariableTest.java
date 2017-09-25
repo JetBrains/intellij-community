@@ -531,7 +531,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("m", false, false, false, "java.util.function.IntFunction<java.lang.Class<?>[]>"));
   }
 
-  public void testCapturedWildcardUpperBoundSuggestedAsType() throws Exception {
+  public void testCapturedWildcardUpperBoundSuggestedAsType() {
     doTest(new MockIntroduceVariableHandler("m", false, false, false, "I"));
   }
 
@@ -563,11 +563,11 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     });
   }
 
-  public void testChooseIntersectionConjunctBasedOnFollowingCalls() throws Exception {
+  public void testChooseIntersectionConjunctBasedOnFollowingCalls() {
     doTest(new MockIntroduceVariableHandler("m", false, false, false, "IA"));
   }
 
-  public void testChooseTypeExpressionWhenNotDenotable() throws Exception {
+  public void testChooseTypeExpressionWhenNotDenotable() {
     doTest(new MockIntroduceVariableHandler("m", false, false, false, "Foo"));
   }
 

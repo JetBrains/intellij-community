@@ -31,7 +31,7 @@ public class JavaLineWrapTest extends AbstractLineWrapPositionStrategyTest {
   }
 
   @Test
-  public void testNoWrapOnVarArgs() throws Exception {
+  public void testNoWrapOnVarArgs() {
     String document = "void method(String p1, String p2, Boolean b1, <WRAP>String...a<EDGE>rgs) {}";
     doTest(myLineWrapStrategy, document, false);
   }

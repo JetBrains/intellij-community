@@ -169,6 +169,8 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   private void parseRawSoftWraps() {
+    myPlacesToUseSoftWraps.clear();
+
     if (StringUtil.isEmpty(myOptions.USE_SOFT_WRAPS)) {
       return;
     }

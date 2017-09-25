@@ -59,7 +59,7 @@ class BundledJreManager {
   }
 
   /**
-   * Return path to a .tar.gz archive containing distribution of JRE for Mac OS which will be bundled with the product
+   * Return path to a .tar.gz archive containing distribution of JRE for macOS which will be bundled with the product
    */
   String findMacJreArchive() {
     return findJreArchive("osx")?.absolutePath

@@ -28,6 +28,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -38,6 +39,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
+import icons.DvcsImplIcons;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -289,18 +291,14 @@ public class HgBranchPopupActions {
   public static class CurrentBranch extends BranchActions implements PopupElementWithAdditionalInfo {
     public CurrentBranch(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
       super(project, repositories, branchName);
+      setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, DvcsImplIcons.FavoriteOnHover,
+               DvcsImplIcons.NotFavoriteOnHover);
     }
 
     @NotNull
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
       return AnAction.EMPTY_ARRAY;
-    }
-
-    @Nullable
-    @Override
-    public String getPrefixInfo() {
-      return "current";
     }
   }
   
@@ -327,11 +325,11 @@ public class HgBranchPopupActions {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        HgUtil.executeOnPooledThread(() -> {
+        BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
           for (HgRepository repository : myRepositories) {
             HgBookmarkCommand.deleteBookmarkSynchronously(myProject, repository.getRoot(), myBranchName);
           }
-        }, myProject);
+        });
       }
     }
   }
@@ -340,18 +338,13 @@ public class HgBranchPopupActions {
 
     public CurrentActiveBookmark(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
       super(project, repositories, branchName);
+      setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, DvcsImplIcons.FavoriteOnHover, DvcsImplIcons.NotFavoriteOnHover);
     }
 
     @NotNull
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
       return new AnAction[]{new BookmarkActions.DeleteBookmarkAction(myProject, myRepositories, myBranchName)};
-    }
-
-    @Nullable
-    @Override
-    public String getPrefixInfo() {
-      return "active";
     }
   }
 }

@@ -19,19 +19,29 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 import static icons.DvcsImplIcons.*;
 
 public abstract class BranchActionGroup extends ActionGroup implements DumbAware {
 
   private boolean myIsFavorite;
-  private final LayeredIcon myIcon;
-  private final LayeredIcon myHoveredIcon;
+  private LayeredIcon myIcon;
+  private LayeredIcon myHoveredIcon;
 
   public BranchActionGroup() {
     super("", true);
-    myIcon = new LayeredIcon(Favorite, EmptyIcon.ICON_16);
-    myHoveredIcon = new LayeredIcon(FavoriteOnHover, NotFavoriteOnHover);
+    setIcons(Favorite, EmptyIcon.ICON_16, FavoriteOnHover, NotFavoriteOnHover);
+  }
+
+  protected void setIcons(@NotNull Icon favorite,
+                          @NotNull Icon notFavorite,
+                          @NotNull Icon favoriteOnHover,
+                          @NotNull Icon notFavoriteOnHover) {
+    myIcon = new LayeredIcon(favorite, notFavorite);
+    myHoveredIcon = new LayeredIcon(favoriteOnHover, notFavoriteOnHover);
     getTemplatePresentation().setIcon(myIcon);
     getTemplatePresentation().setHoveredIcon(myHoveredIcon);
     updateIcons();

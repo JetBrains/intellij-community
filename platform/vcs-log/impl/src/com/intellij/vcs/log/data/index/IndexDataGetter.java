@@ -16,12 +16,15 @@
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TIntObjectHashMap;
@@ -40,39 +43,32 @@ public class IndexDataGetter {
   @NotNull private final Project myProject;
   @NotNull private final Set<VirtualFile> myRoots;
   @NotNull private final VcsLogPersistentIndex.IndexStorage myIndexStorage;
+  @NotNull private final VcsLogStorage myLogStorage;
   @NotNull private final FatalErrorHandler myFatalErrorsConsumer;
 
   public IndexDataGetter(@NotNull Project project,
                          @NotNull Set<VirtualFile> roots,
-                         @NotNull VcsLogPersistentIndex.IndexStorage storage,
+                         @NotNull VcsLogPersistentIndex.IndexStorage indexStorage,
+                         @NotNull VcsLogStorage logStorage,
                          @NotNull FatalErrorHandler fatalErrorsConsumer) {
     myProject = project;
     myRoots = roots;
-    myIndexStorage = storage;
+    myIndexStorage = indexStorage;
+    myLogStorage = logStorage;
     myFatalErrorsConsumer = fatalErrorsConsumer;
   }
 
   @Nullable
   public String getFullMessage(int index) {
-    try {
-      return myIndexStorage.messages.get(index);
-    }
-    catch (IOException e) {
-      myFatalErrorsConsumer.consume(this, e);
-    }
-    return null;
+    return executeAndCatch(() -> myIndexStorage.messages.get(index));
   }
 
   @NotNull
   public Set<FilePath> getFileNames(@NotNull FilePath path, int commit) {
     VirtualFile root = VcsUtil.getVcsRootFor(myProject, path);
     if (myRoots.contains(root)) {
-      try {
-        return myIndexStorage.paths.getFileNames(path, commit);
-      }
-      catch (IOException | StorageException e) {
-        myFatalErrorsConsumer.consume(this, e);
-      }
+      Set<FilePath> result = executeAndCatch(() -> myIndexStorage.paths.getFileNames(path, commit));
+      if (result != null) return result;
     }
 
     return Collections.emptySet();
@@ -84,32 +80,57 @@ public class IndexDataGetter {
 
     VirtualFile root = VcsUtil.getVcsRootFor(myProject, path);
     if (myRoots.contains(root)) {
-      try {
-        myIndexStorage.paths.iterateCommits(path, (changes, commit) -> {
-          try {
-            List<Integer> parents = myIndexStorage.parents.get(commit);
-            result.add(commit, changes.first, changes.second, parents);
-          }
-          catch (IOException e) {
-            myFatalErrorsConsumer.consume(this, e);
-          }
-        });
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (RuntimeException e) {
-        if (e.getCause() instanceof IOException || e.getCause() instanceof StorageException) {
-          myIndexStorage.markCorrupted();
-          myFatalErrorsConsumer.consume(this, e);
-        }
-      }
-      catch (IOException | StorageException e) {
-        myFatalErrorsConsumer.consume(this, e);
-      }
+      executeAndCatch(() -> {
+        myIndexStorage.paths.iterateCommits(path, (changes, commit) -> executeAndCatch(() -> {
+          List<Integer> parents = myIndexStorage.parents.get(commit);
+          result.add(commit, changes.first, changes.second, parents);
+          return null;
+        }));
+        return null;
+      });
     }
 
     return result;
+  }
+
+  @Nullable
+  private <T> T executeAndCatch(@NotNull Throwable2Computable<T, IOException, StorageException> computable) {
+    try {
+      return computable.compute();
+    }
+    catch (IOException | StorageException e) {
+      myIndexStorage.markCorrupted();
+      myFatalErrorsConsumer.consume(this, e);
+    }
+    catch (RuntimeException e) {
+      if (e.getCause() instanceof IOException || e.getCause() instanceof StorageException) {
+        myIndexStorage.markCorrupted();
+        myFatalErrorsConsumer.consume(this, e);
+      }
+      else {
+        throw e;
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  public List<Hash> getParents(int index) {
+    try {
+      List<Integer> parentsIndexes = myIndexStorage.parents.get(index);
+      if (parentsIndexes == null) return Collections.emptyList();
+      List<Hash> result = ContainerUtil.newArrayList();
+      for (int parentIndex : parentsIndexes) {
+        CommitId id = myLogStorage.getCommitId(parentIndex);
+        if (id == null) return Collections.emptyList();
+        result.add(id.getHash());
+      }
+      return result;
+    }
+    catch (IOException e) {
+      myFatalErrorsConsumer.consume(this, e);
+    }
+    return Collections.emptyList();
   }
 
   public class FileNamesData {

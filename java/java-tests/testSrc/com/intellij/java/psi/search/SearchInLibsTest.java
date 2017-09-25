@@ -64,27 +64,27 @@ public class SearchInLibsTest extends PsiTestCase {
     ModuleRootModificationUtil.addModuleLibrary(myModule, "lib", classesRoots, sourceRoots);
   }
 
-  public void testFindUsagesInProject() throws Exception {
+  public void testFindUsagesInProject() {
     doTest("ProjectClass", new String[]{"ProjectClass.java"}, GlobalSearchScope.projectScope(myProject));
   }
-  public void testFindUsagesInProject1() throws Exception {
+  public void testFindUsagesInProject1() {
     doTest("LibraryClass1", new String[]{"ProjectClass.java"}, GlobalSearchScope.projectScope(myProject));
   }
-  public void testFindUsagesInProject2() throws Exception {
+  public void testFindUsagesInProject2() {
     doTest("LibraryClass2", new String[]{}, GlobalSearchScope.projectScope(myProject));
   }
 
-  public void testFindUsagesInLibs() throws Exception {
+  public void testFindUsagesInLibs() {
     doTest("ProjectClass", new String[]{"ProjectClass.java"}, GlobalSearchScope.allScope(myProject));
   }
-  public void testFindUsagesInLibs1() throws Exception {
+  public void testFindUsagesInLibs1() {
     doTest("LibraryClass1", new String[]{"LibraryClass2.java", "ProjectClass.java"}, GlobalSearchScope.allScope(myProject));
   }
-  public void testFindUsagesInLibs2() throws Exception {
+  public void testFindUsagesInLibs2() {
     doTest("LibraryClass2", new String[]{"LibraryClass1.java"}, GlobalSearchScope.allScope(myProject));
   }
 
-  public void testFindInPathInLibraryDirActuallySearchesInTheirSourcesToo() throws Exception {
+  public void testFindInPathInLibraryDirActuallySearchesInTheirSourcesToo() {
     FindModel model = new FindModel();
     final PsiClass aClass = myJavaFacade.findClass("LibraryClass1");
     assertNotNull(aClass);
@@ -102,7 +102,7 @@ public class SearchInLibsTest extends PsiTestCase {
     assertSize(2, usages);
   }
 
-  public void testFindInPathInLibrariesIsNotBrokenAgain() throws Exception {
+  public void testFindInPathInLibrariesIsNotBrokenAgain() {
     FindModel model = new FindModel();
     final PsiClass aClass = myJavaFacade.findClass("LibraryClass1");
     assertNotNull(aClass);
@@ -120,7 +120,7 @@ public class SearchInLibsTest extends PsiTestCase {
     assertEquals(3, usages.size());
   }
 
-  public void testFindInPathInLibrarySourceDirShouldSearchJustInThisDirectoryOnly() throws Exception {
+  public void testFindInPathInLibrarySourceDirShouldSearchJustInThisDirectoryOnly() {
     FindModel model = new FindModel();
     final PsiClass aClass = myJavaFacade.findClass("x.X");
     assertNotNull(aClass);
@@ -142,11 +142,11 @@ public class SearchInLibsTest extends PsiTestCase {
     assertEquals("X.java", info.getFile().getName());
   }
 
-  public void testInnerSourceRoot() throws Exception {
+  public void testInnerSourceRoot() {
     doTest("ProjectClass2", new String[]{"ProjectClass2.java"}, GlobalSearchScope.projectScope(myProject));
   }
 
-  private void doTest(String classNameToSearch, String[] expectedFileNames, SearchScope scope) throws Exception {
+  private void doTest(String classNameToSearch, String[] expectedFileNames, SearchScope scope) {
     final PsiClass aClass = myJavaFacade.findClass(classNameToSearch);
     assertNotNull(aClass);
 

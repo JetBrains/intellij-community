@@ -75,14 +75,14 @@ public class OutputFileUtil {
       startedProcess.addProcessListener(new ProcessAdapter() {
         private PrintStream myOutput;
         @Override
-        public void onTextAvailable(ProcessEvent event, Key outputType) {
+        public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
           if (configuration.collectOutputFromProcessHandler() && myOutput != null && outputType != ProcessOutputTypes.SYSTEM) {
             myOutput.print(event.getText());
           }
         }
 
         @Override
-        public void startNotified(ProcessEvent event) {
+        public void startNotified(@NotNull ProcessEvent event) {
           try {
             myOutput = new PrintStream(new FileOutputStream(file));
           }
@@ -92,7 +92,7 @@ public class OutputFileUtil {
         }
 
         @Override
-        public void processTerminated(ProcessEvent event) {
+        public void processTerminated(@NotNull ProcessEvent event) {
           startedProcess.removeProcessListener(this);
           if (myOutput != null) {
             myOutput.close();

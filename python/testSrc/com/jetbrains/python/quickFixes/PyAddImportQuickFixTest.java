@@ -27,11 +27,11 @@ import org.jetbrains.annotations.NotNull;
 public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
 
   // PY-19773
-  public void testReexportedName() throws Exception {
+  public void testReexportedName() {
     doMultiFileAutoImportTest("Import 'flask.request'");
   }
 
-  public void testOsPathFunctions() throws Exception {
+  public void testOsPathFunctions() {
     doMultiFileAutoImportTest("Import 'os.path.join()'");
   }
 

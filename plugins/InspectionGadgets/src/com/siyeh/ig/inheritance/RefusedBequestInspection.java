@@ -81,7 +81,7 @@ public class RefusedBequestInspection extends RefusedBequestInspectionBase {
       final StringBuilder statementText = new StringBuilder();
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       if (returnType != null && !PsiType.VOID.equals(returnType)) {
-        if (CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS) {
+        if (CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
           statementText.append("final ");
         }
         statementText.append(returnType.getCanonicalText()).append(' ');

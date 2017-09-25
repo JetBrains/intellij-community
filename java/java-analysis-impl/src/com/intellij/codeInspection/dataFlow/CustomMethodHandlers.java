@@ -15,10 +15,13 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMapper;
@@ -67,8 +70,14 @@ public class CustomMethodHandlers {
     .register(staticCall(JAVA_LANG_MATH, "abs").parameterTypes("long"),
               (args, memState, factory) -> mathAbs(args.myArguments, memState, factory, true));
 
-  public static CustomMethodHandler find(PsiMethodCallExpression call) {
-    return CUSTOM_METHOD_HANDLERS.mapFirst(call);
+  public static CustomMethodHandler find(MethodCallInstruction instruction) {
+    PsiElement context = instruction.getContext();
+    if(context instanceof PsiMethodCallExpression) {
+      return CUSTOM_METHOD_HANDLERS.mapFirst((PsiMethodCallExpression)context);
+    } else if(context instanceof PsiMethodReferenceExpression) {
+      return CUSTOM_METHOD_HANDLERS.mapFirst((PsiMethodReferenceExpression)context);
+    }
+    return null;
   }
 
   private static List<DfaMemoryState> stringStartsEnds(DfaCallArguments args,

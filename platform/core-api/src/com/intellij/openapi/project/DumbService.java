@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
 import com.intellij.util.ThrowableRunnable;
@@ -86,6 +87,7 @@ public abstract class DumbService {
   /**
    * Pause the current thread until dumb mode ends, and then run the read action. Index is guaranteed to be available inside that read action,
    * unless this method is already called with read access allowed.
+   * @throws ProcessCanceledException if the project is closed during dumb mode
    */
   public <T> T runReadActionInSmartMode(@NotNull final Computable<T> r) {
     final Ref<T> result = new Ref<>();
@@ -114,9 +116,12 @@ public abstract class DumbService {
   /**
    * Pause the current thread until dumb mode ends, and then run the read action. Index is guaranteed to be available inside that read action,
    * unless this method is already called with read access allowed.
+   * @throws ProcessCanceledException if the project is closed during dumb mode
    */
-  public void runReadActionInSmartMode(@NotNull final Runnable r) {
+  public void runReadActionInSmartMode(@NotNull Runnable r) {
     if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+      // we can't wait for smart mode to begin (it'd result in a deadlock),
+      // so let's just pretend it's already smart and fail with IndexNotReadyException if not
       r.run();
       return;
     }
@@ -124,6 +129,9 @@ public abstract class DumbService {
     while (true) {
       waitForSmartMode();
       boolean success = ReadAction.compute(() -> {
+        if (getProject().isDisposed()) {
+          throw new ProcessCanceledException();
+        }
         if (isDumb()) {
           return false;
         }
@@ -156,11 +164,15 @@ public abstract class DumbService {
   }
 
   /**
-   * Invoke the runnable later on EventDispatchThread AND when IDEA isn't in dumb mode
-   * @param runnable runnable
+   * Invoke the runnable later on EventDispatchThread AND when IDEA isn't in dumb mode.
+   * The runnable won't be invoked if the project is disposed during dumb mode
    */
   public abstract void smartInvokeLater(@NotNull Runnable runnable);
 
+  /**
+   * Invoke the runnable later on EventDispatchThread with the given modality state AND when IDEA isn't in dumb mode.
+   * The runnable won't be invoked if the project is disposed during dumb mode
+   */
   public abstract void smartInvokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState);
 
   private static final NotNullLazyKey<DumbService, Project> INSTANCE_KEY = ServiceManager.createLazyKey(DumbService.class);

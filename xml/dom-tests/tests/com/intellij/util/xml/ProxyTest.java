@@ -111,7 +111,7 @@ public class ProxyTest extends TestCase {
     public abstract String foo();
   }
 
-  public void testAddInterfaces() throws Throwable {
+  public void testAddInterfaces() {
     final BaseImpl proxy = AdvancedProxy.createProxy(BaseImpl.class, BaseIEx.class);
     assertEquals(proxy.sayA(), "a");
     assertEquals(((BaseI)proxy).sayA(), "a");
@@ -141,12 +141,11 @@ public class ProxyTest extends TestCase {
     public abstract static class AbstractBaseImpl extends AbstractBase {}
   }
 
-  public void testCovariantFromInterface() throws Throwable {
+  public void testCovariantFromInterface() {
     final AbstractBase.AbstractBaseImpl proxy = AdvancedProxy.createProxy(AbstractBase.AbstractBaseImpl.class, ArrayUtil.EMPTY_CLASS_ARRAY,
                                                                           new InvocationHandler() {
                                                                             @Override
-                                                                            public Object invoke(Object proxy, Method method, Object[] args)
-                                                                              throws Throwable {
+                                                                            public Object invoke(Object proxy, Method method, Object[] args) {
                                                                               return "a";
                                                                             }
                                                                           }, false, new Object[0]);
@@ -172,11 +171,11 @@ public class ProxyTest extends TestCase {
     }
   }
 
-  public void testCovariantFromBaseClass() throws Throwable {
+  public void testCovariantFromBaseClass() {
     final CovariantFromBaseClassTest.Impl proxy = AdvancedProxy.createProxy(CovariantFromBaseClassTest.Impl.class,
                                                                             ArrayUtil.EMPTY_CLASS_ARRAY, new InvocationHandler() {
         @Override
-        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        public Object invoke(Object proxy, Method method, Object[] args) {
           return "a";
         }
       }, false, new Object[0]);
@@ -188,7 +187,7 @@ public class ProxyTest extends TestCase {
   public void testGenericMethodInvocationJava8() throws Throwable {
     ConcreteInterface proxy = AdvancedProxy.createProxy(new InvocationHandler() {
       @Override
-      public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+      public Object invoke(Object proxy, Method method, Object[] args) {
         return 42;
       }
     }, null, ConcreteInterface.class);

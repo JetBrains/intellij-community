@@ -103,7 +103,7 @@ public class IpnbConvertToPythonAction extends AnAction {
       final KillableColoredProcessHandler processHandler = new KillableColoredProcessHandler(commandLine);
       processHandler.addProcessListener(new ProcessAdapter() {
         @Override
-        public void processTerminated(ProcessEvent event) {
+        public void processTerminated(@NotNull ProcessEvent event) {
           VfsUtil.markDirtyAndRefresh(true, false, true, virtualFile.getParent());
         }
       });

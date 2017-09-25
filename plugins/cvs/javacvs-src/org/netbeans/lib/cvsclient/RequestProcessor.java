@@ -270,7 +270,7 @@ public final class RequestProcessor implements IRequestProcessor {
     }
 
     @Override
-    protected void after() throws CommandException {
+    protected void after() {
     }
   }
 

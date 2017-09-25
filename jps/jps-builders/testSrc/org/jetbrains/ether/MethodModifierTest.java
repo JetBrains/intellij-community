@@ -20,44 +20,44 @@ package org.jetbrains.ether;
  * Date: 04.10.11
  */
 public class MethodModifierTest extends IncrementalTestCase {
-  public MethodModifierTest() throws Exception {
+  public MethodModifierTest() {
     super("methodModifiers");
   }
 
-  public void testDecConstructorAccess() throws Exception {
+  public void testDecConstructorAccess() {
     doTest();
   }
 
-  public void testIncAccess() throws Exception {
+  public void testIncAccess() {
     doTest();
   }
 
-  public void testSetAbstract() throws Exception {
+  public void testSetAbstract() {
     doTest();
   }
 
-  public void testSetFinal() throws Exception {
+  public void testSetFinal() {
     doTest();
   }
 
-  public void testSetPrivate() throws Exception {
+  public void testSetPrivate() {
     doTest();
   }
 
-  public void testSetProtected() throws Exception {
+  public void testSetProtected() {
     doTest();
   }
 
 
-  public void testUnsetFinal() throws Exception {
+  public void testUnsetFinal() {
     doTest();
   }
 
-  public void testUnsetStatic() throws Exception {
+  public void testUnsetStatic() {
     doTest();
   }
 
-  public void testSetStatic() throws Exception {
+  public void testSetStatic() {
     doTest();
   }
 }

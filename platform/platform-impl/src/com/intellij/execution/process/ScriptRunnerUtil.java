@@ -68,7 +68,7 @@ public final class ScriptRunnerUtil {
     final StringBuilder outputBuilder = new StringBuilder();
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void onTextAvailable(ProcessEvent event, Key outputType) {
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         if (outputTypeFilter.value(outputType)) {
           final String text = event.getText();
           outputBuilder.append(text);
@@ -118,7 +118,7 @@ public final class ScriptRunnerUtil {
     if (LOG.isDebugEnabled()) {
       processHandler.addProcessListener(new ProcessAdapter() {
         @Override
-        public void onTextAvailable(ProcessEvent event, Key outputType) {
+        public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
           LOG.debug(outputType + ": " + event.getText());
         }
       });
@@ -198,7 +198,7 @@ public final class ScriptRunnerUtil {
     }
 
     @Override
-    public void onTextAvailable(ProcessEvent event, Key outputType) {
+    public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
       final String text = event.getText();
       if (myScriptOutputType.value(outputType)) {
         myFilteredOutput.append(text);

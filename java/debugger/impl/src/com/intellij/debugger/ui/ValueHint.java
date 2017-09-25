@@ -23,6 +23,7 @@ import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JVMName;
 import com.intellij.debugger.engine.JVMNameUtil;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
@@ -54,6 +55,7 @@ import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
 import com.sun.jdi.Method;
 import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -119,7 +121,7 @@ public class ValueHint extends AbstractValueHint {
         }
 
         @Override
-        public void threadAction() {
+        public void threadAction(@NotNull SuspendContextImpl suspendContext) {
           try {
             final EvaluationContextImpl evaluationContext = debuggerContext.createEvaluationContext();
 
@@ -186,13 +188,13 @@ public class ValueHint extends AbstractValueHint {
             final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(getProject()).getContext();
             final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
             debugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
-                          @Override
-                          public void threadAction() {
-                            descriptor.setRenderer(debugProcess.getAutoRenderer(descriptor));
-                            final String expressionText = ReadAction.compute(() -> myCurrentExpression.getText());
-                            createAndShowTree(expressionText, descriptor);
-                          }
-                        });
+              @Override
+              public void threadAction(@NotNull SuspendContextImpl suspendContext) {
+                descriptor.setRenderer(debugProcess.getAutoRenderer(descriptor));
+                final String expressionText = ReadAction.compute(() -> myCurrentExpression.getText());
+                createAndShowTree(expressionText, descriptor);
+              }
+            });
           });
         }
         if (!showHint(component)) return;

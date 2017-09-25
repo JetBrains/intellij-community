@@ -16,6 +16,7 @@
 package git4idea.repo;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -23,11 +24,9 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
-import com.intellij.util.concurrency.QueueProcessor;
-import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.vfs.AsyncVfsEventsListener;
+import com.intellij.vfs.AsyncVfsEventsPostProcessor;
 import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
@@ -35,8 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 /**
  * <p>
@@ -83,7 +80,7 @@ import static com.intellij.util.containers.ContainerUtil.newArrayList;
  *   while myDefinitelyUntrackedFiles is modified along with native request to Git.
  * </p>
  */
-public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
+public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListener {
 
   private static final Logger LOG = Logger.getInstance(GitUntrackedFilesHolder.class);
 
@@ -102,8 +99,6 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   private final Object LOCK = new Object();
   private final GitRepositoryManager myRepositoryManager;
 
-  private final QueueProcessor<List<? extends VFileEvent>> myEventsProcessor;
-
   GitUntrackedFilesHolder(@NotNull GitRepository repository, @NotNull GitRepositoryFiles gitFiles) {
     myProject = repository.getProject();
     myRepository = repository;
@@ -115,15 +110,14 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
 
     myRepositoryManager = GitUtil.getRepositoryManager(myProject);
     myRepositoryFiles = gitFiles;
-
-    myEventsProcessor = new QueueProcessor<>(events -> processEvents(events), myProject.getDisposed());
   }
 
   void setupVfsListener(@NotNull Project project) {
-    if (!project.isDisposed()) {
-      MessageBusConnection connection = project.getMessageBus().connect(this);
-      connection.subscribe(VirtualFileManager.VFS_CHANGES, this);
-    }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      if (!project.isDisposed()) {
+        AsyncVfsEventsPostProcessor.getInstance().addListener(this, this);
+      }
+    });
   }
 
   @Override
@@ -234,11 +228,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   }
 
   @Override
-  public void after(@NotNull List<? extends VFileEvent> events) {
-    myEventsProcessor.add(newArrayList(events));
-  }
-
-  private void processEvents(@NotNull List<? extends VFileEvent> events) {
+  public void filesChanged(@NotNull List<VFileEvent> events) {
     boolean allChanged = false;
     Set<VirtualFile> filesToRefresh = new HashSet<>();
 

@@ -17,10 +17,9 @@ jrePlatformsToDownload(targetOs).each { platform ->
       outputs.file(outputFile)
       doLast {
         logger.info("Downloading $jbrexArtifactName to $outputFile")
-        download {
+        downloadWrapper {
           src "$jdkRepo/${jbrexArtifactName}.tar.gz"
           dest outputFile
-          onlyIfNewer true
         }
       }
     }
@@ -50,10 +49,12 @@ jrePlatformsToDownload(targetOs).each { platform ->
         commandLine 'tar', '-xpf', "${downloadOutputs.singleFile.absolutePath}", '--directory', outputDir
         if (platform != 'osx') {
           doLast { 
-            exec { 
-              commandLine 'mv', "$outputDir/lib/tools.jar", "$outputDir/jre/lib/"
-              ignoreExitValue = true
-            } 
+            if (file("$outputDir/lib/tools.jar").exists()) {
+              exec {
+                commandLine 'mv', "$outputDir/lib/tools.jar", "$outputDir/jre/lib/"
+                ignoreExitValue = true
+              }
+            }
           }
         }
       }

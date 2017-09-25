@@ -144,7 +144,7 @@ public interface VcsLogProvider {
   Collection<String> getContainingBranches(@NotNull VirtualFile root, @NotNull Hash commitHash) throws VcsException;
 
   /**
-   * In order to tune log for it's VCS, provider may set value to one of the properties specified in {@link com.intellij.vcs.log.VcsLogProperties}.
+   * In order to tune log for it's VCS, provider may set value to one of the properties specified in {@link VcsLogProperties}.
    *
    * @param property Property instance to return value for.
    * @param <T>      Type of property value.

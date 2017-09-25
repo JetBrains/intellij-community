@@ -17,6 +17,7 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -44,6 +45,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -94,7 +96,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
    */
   private final List<Rectangle> myComponentBounds = new ArrayList<>();
 
-  private Dimension myMinimumButtonSize = JBUI.emptySize();
+  private JBDimension myMinimumButtonSize = JBUI.emptySize();
 
   /**
    * @see ActionToolbar#getLayoutPolicy()
@@ -387,7 +389,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (action.displayTextInToolbar()) {
       int mnemonic = KeyEvent.getExtendedKeyCodeForChar(action.getTemplatePresentation().getMnemonic());
 
-      ActionButtonWithText buttonWithText = new ActionButtonWithText(action, presentation, place, minimumSize);
+      ActionButtonWithText buttonWithText = new ActionButtonWithText(action, presentation, place, minimumSize) {
+        @Override protected HelpTooltip.Alignment getTooltipLocation() {
+          return tooltipLocation();
+        }
+      };
+
       if (mnemonic != KeyEvent.VK_UNDEFINED) {
         buttonWithText.registerKeyboardAction(new ActionListener() {
           @Override
@@ -404,14 +411,23 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       return buttonWithText;
     }
 
-    final ActionButton actionButton = new ActionButton(action, presentation, place, minimumSize) {
+    ActionButton actionButton = new ActionButton(action, presentation, place, minimumSize) {
       @Override
       protected DataContext getDataContext() {
         return getToolbarDataContext();
       }
+
+      @Override
+      protected HelpTooltip.Alignment getTooltipLocation() {
+        return tooltipLocation();
+      }
     };
     actionButton.setLook(look);
     return actionButton;
+  }
+
+  private HelpTooltip.Alignment tooltipLocation() {
+    return myOrientation == SwingConstants.VERTICAL ? HelpTooltip.Alignment.RIGHT: HelpTooltip.Alignment.BOTTOM;
   }
 
   private ActionButton createToolbarButton(final AnAction action) {
@@ -433,7 +449,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         }
       } : myButtonLook,
       myPlace, myPresentationFactory.getPresentation(action),
-      myMinimumButtonSize);
+      myMinimumButtonSize.size());
   }
 
   @Override
@@ -705,7 +721,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         int xOffset = 0;
         int yOffset = 0;
         // Calculate max size of a row. It's not possible to make more then 3 column toolbar
-        final int maxRowHeight = Math.max(heightToFit, componentCount * myMinimumButtonSize.height / 3);
+        final int maxRowHeight = Math.max(heightToFit, componentCount * myMinimumButtonSize.height() / 3);
         for (int i = 0; i < componentCount; i++) {
           if (yOffset + maxHeight > maxRowHeight) { // place component at new row
             yOffset = 0;
@@ -734,7 +750,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         int xOffset = 0;
         int yOffset = 0;
         // Calculate max size of a row. It's not possible to make more then 3 row toolbar
-        final int maxRowWidth = Math.max(widthToFit, componentCount * myMinimumButtonSize.width / 3);
+        final int maxRowWidth = Math.max(widthToFit, componentCount * myMinimumButtonSize.width() / 3);
         for (int i = 0; i < componentCount; i++) {
           final Dimension d = dims[i];
           if (xOffset + d.width > maxRowWidth) { // place component at new row
@@ -762,7 +778,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         int xOffset = 0;
         int yOffset = 0;
         // Calculate max size of a row. It's not possible to make more then 3 column toolbar
-        final int maxRowHeight = Math.max(heightToFit, componentCount * myMinimumButtonSize.height / 3);
+        final int maxRowHeight = Math.max(heightToFit, componentCount * myMinimumButtonSize.height() / 3);
         for (int i = 0; i < componentCount; i++) {
           final Dimension d = dims[i];
           if (yOffset + d.height > maxRowHeight) { // place component at new row
@@ -865,7 +881,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
     if (myLayoutPolicy == AUTO_LAYOUT_POLICY) {
       final Insets i = getInsets();
-      return new Dimension(AllIcons.Ide.Link.getIconWidth() + i.left + i.right, myMinimumButtonSize.height + i.top + i.bottom);
+      return new Dimension(AllIcons.Ide.Link.getIconWidth() + i.left + i.right, myMinimumButtonSize.height() + i.top + i.bottom);
     }
     else {
       return super.getMinimumSize();
@@ -899,7 +915,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   private final class MySeparator extends JComponent {
-    private final Dimension mySize;
+    private final JBDimension mySize;
 
     public MySeparator() {
       if (myOrientation == SwingConstants.HORIZONTAL) {
@@ -912,7 +928,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
     @Override
     public Dimension getPreferredSize() {
-      return mySize;
+      return mySize.size();
     }
 
     @Override
@@ -957,7 +973,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   @Override
   public void setMinimumButtonSize(@NotNull final Dimension size) {
-    myMinimumButtonSize = size;
+    myMinimumButtonSize = JBDimension.create(size, true);
     for (int i = getComponentCount() - 1; i >= 0; i--) {
       final Component component = getComponent(i);
       if (component instanceof ActionButton) {
@@ -969,7 +985,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   @Override
-  public void setOrientation(final int orientation) {
+  public void setOrientation(@MagicConstant(intValues = {SwingConstants.HORIZONTAL, SwingConstants.VERTICAL}) int orientation) {
     if (SwingConstants.HORIZONTAL != orientation && SwingConstants.VERTICAL != orientation) {
       throw new IllegalArgumentException("wrong orientation: " + orientation);
     }

@@ -31,7 +31,7 @@ import static com.intellij.formatting.FormatterTestUtils.Action.REFORMAT_WITH_CO
  */
 public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
 
-  public void testChainedMethodsAlignment() throws Exception {
+  public void testChainedMethodsAlignment() {
     // Inspired by IDEA-30369
     getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
     getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
@@ -39,7 +39,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     doTest();
   }
 
-  public void testMethodAndChainedField() throws Exception {
+  public void testMethodAndChainedField() {
     // Inspired by IDEA-79806
 
     getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
@@ -51,7 +51,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
   
-  public void testChainedMethodWithComments() throws Exception {
+  public void testChainedMethodWithComments() {
     getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
     doMethodTest("AAAAA.b()\n" +
                  ".c() // comment after line\n" +
@@ -86,7 +86,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
                "}");
   }
   
-  public void testMultipleMethodAnnotationsCommentedInTheMiddle() throws Exception {
+  public void testMultipleMethodAnnotationsCommentedInTheMiddle() {
     getSettings().BLANK_LINES_AFTER_CLASS_HEADER = 1;
     getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 4;
 
@@ -111,7 +111,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testTernaryOperator() throws Exception {
+  public void testTernaryOperator() {
     // Inspired by IDEADEV-13018
     getSettings().ALIGN_MULTILINE_TERNARY_OPERATION = true;
 
@@ -157,7 +157,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       "}");
   }
 
-  public void testMethodBrackets() throws Exception {
+  public void testMethodBrackets() {
     // Inspired by IDEA-53013
     getSettings().ALIGN_MULTILINE_METHOD_BRACKETS = true;
     getSettings().ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = false;
@@ -257,7 +257,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testTabsAndFieldsInColumnsAlignment() throws Exception {
+  public void testTabsAndFieldsInColumnsAlignment() {
     // Inspired by IDEA-56242
     getSettings().ALIGN_GROUP_FIELD_DECLARATIONS = true;
     getIndentOptions().USE_TAB_CHARACTER = true;
@@ -319,7 +319,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testAlignThrowsKeyword() throws Exception {
+  public void testAlignThrowsKeyword() {
     // Inspired by IDEA-63820
 
     getSettings().ALIGN_THROWS_KEYWORD = true;
@@ -341,7 +341,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testAlignResourceList() throws Exception {
+  public void testAlignResourceList() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
 
     getSettings().ALIGN_MULTILINE_RESOURCES = true;
@@ -358,7 +358,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
   }
 
 
-  public void testChainedMethodCallsAfterFieldsChain_WithAlignment() throws Exception {
+  public void testChainedMethodCallsAfterFieldsChain_WithAlignment() {
     getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
     getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
 
@@ -389,7 +389,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     doMethodTest(onlyMethodCalls, formatedMethodCalls);
   }
 
-  public void testChainedMethodCallsAfterFieldsChain_WithoutAlignment() throws Exception {
+  public void testChainedMethodCallsAfterFieldsChain_WithoutAlignment() {
     getSettings().ALIGN_MULTILINE_CHAINED_METHODS = false;
     getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
 
@@ -402,7 +402,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testChainedMethodCalls_WithChopDownIfLongOption() throws Exception {
+  public void testChainedMethodCalls_WithChopDownIfLongOption() {
     getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
     getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM; // it's equal to "Chop down if long"
     getSettings().RIGHT_MARGIN = 50;
@@ -421,7 +421,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     doMethodTest(before, before);
   }
 
-  public void testChainedMethodCalls_WithWrapIfNeededOption() throws Exception {
+  public void testChainedMethodCalls_WithWrapIfNeededOption() {
     getSettings().ALIGN_MULTILINE_CHAINED_METHODS = false;
     getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().RIGHT_MARGIN = 50;

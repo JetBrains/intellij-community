@@ -25,7 +25,7 @@ public abstract class AbstractInputStreamReader extends Reader {
 
 	// Abstract ===============================================================
 
-	protected abstract int readChar(InputStream inputStream) throws IOException;
+	protected abstract int readChar(InputStream inputStream);
 
 	// Fields =================================================================
 

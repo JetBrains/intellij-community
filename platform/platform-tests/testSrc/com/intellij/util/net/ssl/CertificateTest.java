@@ -60,7 +60,7 @@ public class CertificateTest extends LightPlatformTestCase {
   private X509Certificate myAuthorityCertificate;
 
 
-  public void testSetUp() throws Exception {
+  public void testSetUp() {
     assertTrue(myTrustManager.containsCertificate(AUTHORITY_CN));
   }
 

@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -97,7 +98,11 @@ public class SingleStatementInBlockInspection extends BaseInspection {
     @Override
     protected boolean isApplicable(PsiStatement body) {
       if (body instanceof PsiBlockStatement) {
-        final PsiStatement[] statements = ((PsiBlockStatement)body).getCodeBlock().getStatements();
+        final PsiCodeBlock codeBlock = ((PsiBlockStatement)body).getCodeBlock();
+        if (PsiUtilCore.hasErrorElementChild(codeBlock)) {
+          return false;
+        }
+        final PsiStatement[] statements = codeBlock.getStatements();
         if (statements.length == 1 && !(statements[0] instanceof PsiDeclarationStatement) && !isDanglingElseProblem(statements[0], body)) {
           final PsiFile file = body.getContainingFile();
           //this inspection doesn't work in JSP files, as it can't tell about tags

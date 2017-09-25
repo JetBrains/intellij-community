@@ -107,7 +107,7 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
       Thread.sleep(100);
       new WriteCommandAction(myProject, myFile) {
         @Override
-        protected void run(@NotNull final Result result) throws Throwable {
+        protected void run(@NotNull final Result result) {
           writeActionInProgress = true;
           documentManager.commitAllDocuments();
           writeStep(random);
@@ -192,7 +192,7 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull final Runnable runnable) throws Exception {
+  protected void invokeTestRunnable(@NotNull final Runnable runnable) {
     runnable.run();
   }
 }

@@ -39,7 +39,7 @@ public class I18nizeTest extends LightCodeInsightTestCase {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/i18nize";
   }
 
-  private void doTest(@NonNls String ext) throws Exception {
+  private void doTest(@NonNls String ext) {
     configureByFile(getBasePath() + "/before"+getTestName(false)+"."+ext);
     I18nizeAction action = new I18nizeAction();
     DataContext dataContext = DataManager.getInstance().getDataContext(myEditor.getComponent());
@@ -69,11 +69,11 @@ public class I18nizeTest extends LightCodeInsightTestCase {
     }
   }
 
-  public void testLiteral() throws Exception {doTest("java");}
-  public void testOutsideLiteral() throws Exception {doTest("java");}
-  public void testLiteralRightSubSelection() throws Exception {doTest("java");}
-  public void testCaretAtPlus() throws Exception {doTest("java");}
+  public void testLiteral() {doTest("java");}
+  public void testOutsideLiteral() {doTest("java");}
+  public void testLiteralRightSubSelection() {doTest("java");}
+  public void testCaretAtPlus() {doTest("java");}
 
-  public void testLongConcat() throws Exception {doTest("java");}
-  public void testCharacterLiteral() throws Exception {doTest("java");}
+  public void testLongConcat() {doTest("java");}
+  public void testCharacterLiteral() {doTest("java");}
 }

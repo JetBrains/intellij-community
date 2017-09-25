@@ -52,20 +52,22 @@ public class LibrariesModifiableModel implements LibraryTableBase.ModifiableMode
     myLibraryEditorListener = libraryEditorListener;
   }
 
+  @NotNull
   @Override
   public Library createLibrary(String name) {
     return createLibrary(name, null);
   }
 
+  @NotNull
   @Override
   public Library createLibrary(String name, @Nullable PersistentLibraryKind type) {
     return createLibrary(name, type, null);
   }
 
+  @NotNull
   @Override
   public Library createLibrary(String name, @Nullable PersistentLibraryKind type, @Nullable ProjectModelExternalSource externalSource) {
     final Library library = getLibrariesModifiableModel().createLibrary(name, type, externalSource);
-    //createLibraryEditor(library);
     final BaseLibrariesConfigurable configurable = ProjectStructureConfigurable.getInstance(myProject).getConfigurableFor(library);
     configurable.createLibraryNode(library);
     return library;

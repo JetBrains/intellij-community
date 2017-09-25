@@ -80,24 +80,28 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTableBase.Modifi
     return result.toArray(new Library[result.size()]);
   }
 
+  @NotNull
   @Override
   public Library createLibrary() {
     return createLibrary(null);
   }
 
+  @NotNull
   @Override
   public Library createLibrary(String name) {
     return createLibrary(name, null);
   }
 
+  @NotNull
   @Override
   public Library createLibrary(String name, @Nullable PersistentLibraryKind type) {
     return createLibrary(name, type, null);
   }
 
+  @NotNull
   @Override
   public Library createLibrary(String name, @Nullable PersistentLibraryKind kind, @Nullable ProjectModelExternalSource externalSource) {
-    LibraryOrderEntry orderEntry = new ModuleLibraryOrderEntryImpl(name, kind, myRootModel, myProjectRootManager, externalSource);
+    ModuleLibraryOrderEntryImpl orderEntry = new ModuleLibraryOrderEntryImpl(name, kind, myRootModel, myProjectRootManager, externalSource);
     myRootModel.addOrderEntry(orderEntry);
     return orderEntry.getLibrary();
   }
@@ -128,11 +132,13 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTableBase.Modifi
     return new ConvertingIterator<>(filteringIterator, ORDER_ENTRY_TO_LIBRARY_CONVERTOR);
   }
 
+  @NotNull
   @Override
   public String getTableLevel() {
     return LibraryTableImplUtil.MODULE_LEVEL;
   }
 
+  @NotNull
   @Override
   public LibraryTablePresentation getPresentation() {
     return MODULE_LIBRARY_TABLE_PRESENTATION;

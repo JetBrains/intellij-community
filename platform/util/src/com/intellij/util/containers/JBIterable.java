@@ -80,6 +80,21 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
+   * Lambda-friendly construction method.
+   */
+  @NotNull
+  public static <E> JBIterable<E> create(@Nullable final Producer<Iterator<E>> producer) {
+    if (producer == null) return empty();
+    return new JBIterable<E>() {
+      @NotNull
+      @Override
+      public Iterator<E> iterator() {
+        return producer.produce();
+      }
+    };
+  }
+
+  /**
    * Returns a {@code JBIterable} that wraps {@code iterable}, or {@code iterable} itself if it
    * is already a {@code JBIterable}.
    */
@@ -148,7 +163,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
-   * Returns a {@code JBIterable} containing the one {@code element}.
+   * Returns a {@code JBIterable} containing the one {@code element} if is not null.
    */
   @NotNull
   public static <E> JBIterable<E> of(@Nullable E element) {
@@ -189,24 +204,28 @@ public abstract class JBIterable<E> implements Iterable<E> {
     });
   }
 
+  /**
+   * Returns iterator, useful for graph traversal.
+   *
+   * @see TreeTraversal.TracingIt
+   */
   @NotNull
   public <T extends Iterator<E>> T typedIterator() {
     return (T) iterator();
   }
 
-  public boolean processEach(@NotNull Processor<E> processor) {
+  public final boolean processEach(@NotNull Processor<E> processor) {
     return ContainerUtil.process(this, processor);
   }
 
-  public void consumeEach(@NotNull Consumer<E> consumer) {
+  public final void consumeEach(@NotNull Consumer<E> consumer) {
     for (E e : this) {
       consumer.consume(e);
     }
   }
 
   /**
-   * Returns a string representation of this iterable up to 50 elements, with the format
-   * {@code (e1, e2, ..., en [, ...] )} for debugging purposes.
+   * Returns a string representation of this iterable for debugging purposes.
    */
   @NotNull
   @Override
@@ -247,14 +266,21 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @Nullable
   public final E get(int index) {
-    if (myIterable instanceof List) {
-      return index >= ((List)myIterable).size() ? null : ((List<E>)myIterable).get(index);
+    List<E> list = asRandomAccess(myIterable);
+    if (list != null) {
+      return index >= list.size() ? null : list.get(index);
     }
     return skip(index).first();
   }
 
+  @Nullable
+  private static <E> List<E> asRandomAccess(@Nullable Iterable<E> iterable) {
+    //noinspection CastConflictsWithInstanceof
+    return iterable instanceof RandomAccess? (List<E>)iterable : null;
+  }
+
   /**
-   * Returns a {@code JBIterable} whose iterators traverse first the elements of this iterable,
+   * Returns a {@code JBIterable} which iterators traverse first the elements of this iterable,
    * followed by those of {@code other}. The iterators are not polled until necessary.
    * <p/>
    * <p>The returned iterable's {@code Iterator} supports {@code remove()} when the corresponding
@@ -277,17 +303,21 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
-   * Returns a {@code JBIterable} whose iterators traverse first the elements of this iterable,
-   * followed by {@code elements}.
+   * Returns a {@code JBIterable} which iterators traverse first the elements of this iterable,
+   * followed by the {@code elements}.
    */
   @NotNull
   public final JBIterable<E> append(@NotNull E[] elements) {
     return this == EMPTY ? of(elements) : append(Arrays.asList(elements));
   }
 
+  /**
+   * Returns a {@code JBIterable} which iterators traverse first the elements of this iterable,
+   * followed by {@code element} if it is not null.
+   */
   @NotNull
-  public final JBIterable<E> append(@Nullable E e) {
-    return e == null ? this : this == EMPTY ? of(e) : append(Collections.singleton(e));
+  public final JBIterable<E> append(@Nullable E element) {
+    return element == null ? this : this == EMPTY ? of(element) : append(Collections.singleton(element));
   }
 
   /**
@@ -373,10 +403,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   /**
    * Returns a {@code JBIterable} that applies {@code function} to each element of this
    * iterable and concatenates the produced iterables in one.
-   * <p/>
-   * <p>The returned iterable's iterator supports {@code remove()} if an underlying iterable's
-   * iterator does. After a successful {@code remove()} call, this iterable no longer
-   * contains the corresponding element.
+   * Nulls are supported and silently skipped.
    */
   @NotNull
   public <T> JBIterable<T> flatten(@NotNull final Function<? super E, ? extends Iterable<? extends T>> function) {
@@ -413,7 +440,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @NotNull
   public final JBIterable<E> unique(@NotNull final Function<? super E, ?> identity) {
-    return filter(new StatefulFilter<E>() {
+    return filter(new SCond<E>() {
       HashSet<Object> visited;
 
       @Override
@@ -444,8 +471,26 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @Nullable
   public final E first() {
+    List<E> list = asRandomAccess(myIterable);
+    if (list != null) {
+      return list.isEmpty() ? null : list.get(0);
+    }
     Iterator<E> iterator = myIterable.iterator();
     return iterator.hasNext() ? iterator.next() : null;
+  }
+
+  /**
+   * Returns the first element in this iterable if it is the only one, otherwise null.
+   */
+  @Nullable
+  public final E single() {
+    List<E> list = asRandomAccess(myIterable);
+    if (list != null) {
+      return list.size() != 1 ? null : list.get(0);
+    }
+    Iterator<E> iterator = myIterable.iterator();
+    E first = iterator.hasNext() ? iterator.next() : null;
+    return iterator.hasNext() ? null : first;
   }
 
   /**
@@ -453,13 +498,13 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @Nullable
   public final E last() {
-    if (myIterable instanceof List) {
-      return ContainerUtil.getLastItem((List<E>)myIterable);
+    List<E> list = asRandomAccess(myIterable);
+    if (list != null) {
+      return list.isEmpty() ? null : list.get(list.size() - 1);
     }
-    Iterator<E> iterator = myIterable.iterator();
     E cur = null;
-    while (iterator.hasNext()) {
-      cur = iterator.next();
+    for (E e : myIterable) {
+      cur = e;
     }
     return cur;
   }
@@ -497,7 +542,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
-   * Synonym for transform()
+   * Synonym for transform().
    *
    * @see JBIterable#transform(Function)
    */
@@ -507,9 +552,21 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
+   * Synonym for map(..).filter(notNull()).
+   *
+   * @see JBIterable#map(Function)
+   * @see JBIterable#filter(Condition)
+   */
+  @NotNull
+  public final <T> JBIterable<T> filterMap(@NotNull Function<? super E, T> function) {
+    return map(function).filter(Conditions.<T>notNull());
+  }
+
+  /**
    * "Maps" and "flattens" this iterable.
    *
-   * @see JBIterable#transform(Function)
+   * @see JBIterable#map(Function)
+   * @see JBIterable#flatten(Function)
    */
   @NotNull
   public final <T> JBIterable<T> flatMap(Function<? super E, ? extends Iterable<? extends T>> function) {
@@ -517,18 +574,40 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
+   * Returns the iterable which elements are interleaved with the separator.
+   */
+  @NotNull
+  public final JBIterable<E> join(@Nullable final E separator) {
+    return intercept(new Function<Iterator<E>, Iterator<E>>() {
+      @Override
+      public Iterator<E> fun(Iterator<E> iterator) {
+        final Iterator<E> original = iterator;
+        return new JBIterator<E>() {
+          boolean flag;
+          @Override
+          protected E nextImpl() {
+            if (!original.hasNext()) return stop();
+            return (flag = !flag) ? original.next() : separator;
+          }
+        };
+      }
+    });
+  }
+
+
+  /**
    * Splits this {@code JBIterable} into iterable of lists of the specified size.
    * If 'strict' flag is true only groups of size 'n' are returned.
    */
   @NotNull
   public final JBIterable<List<E>> split(final int size, final boolean strict) {
-    return split(size).map(new Function<JBIterable<E>, List<E>>() {
+    return split(size).filterMap(new Function<JBIterable<E>, List<E>>() {
       @Override
       public List<E> fun(JBIterable<E> es) {
         List<E> list = es.addAllTo(ContainerUtilRt.<E>newArrayListWithCapacity(size));
-        return strict && list.size() < size? null : list;
+        return strict && list.size() < size ? null : list;
       }
-    }).filter(Condition.NOT_NULL);
+    });
   }
 
   /**
@@ -625,6 +704,32 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
+   * Determines whether this iterable is not empty.
+   */
+  public final boolean isNotEmpty() {
+    return !isEmpty();
+  }
+
+  /**
+   * Collects all items into the specified collection and returns it wrapped in a new {@code JBIterable}.
+   * This is equivalent to calling {@code JBIterable.from(addAllTo(c))}.
+   */
+  @NotNull
+  public final JBIterable<E> collect(@NotNull Collection<E> collection) {
+    return from(addAllTo(collection));
+  }
+
+  /**
+   * Collects all items into an {@link ArrayList} and returns them as the new {@code JBIterable}.
+   * @see JBIterable#collect(Collection)
+   */
+  @NotNull
+  public final JBIterable<E> collect() {
+    if (myIterable instanceof ArrayList) return this;
+    return collect(ContainerUtilRt.<E>newArrayList());
+  }
+
+  /**
    * Returns an {@code List} containing all of the elements from this iterable in
    * proper sequence.
    */
@@ -649,8 +754,23 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * appears.
    */
   @NotNull
-  public final <V> Map<E, V> toMap(Convertor<E, V> valueFunction) {
-    return Collections.unmodifiableMap(ContainerUtil.newMapFromKeys(iterator(), valueFunction));
+  public final <V> Map<E, V> toMap(Convertor<E, V> toValue) {
+    Map<E, V> map = ContainerUtil.newLinkedHashMap();
+    for (E e : this) map.put(e, toValue.convert(e));
+    return map.isEmpty() ? Collections.<E, V>emptyMap() : Collections.unmodifiableMap(map);
+  }
+
+  /**
+   * Returns an {@code Map} for which the elements of this {@code JBIterable} are the values in
+   * the same order, mapped to values by the given function. If this iterable contains duplicate
+   * elements, the returned map will contain each distinct element once in the order it first
+   * appears.
+   */
+  @NotNull
+  public final <K> Map<K, E> toReverseMap(Convertor<E, K> toKey) {
+    Map<K, E> map = ContainerUtil.newLinkedHashMap();
+    for (E e : this) map.put(toKey.convert(e), e);
+    return map.isEmpty() ? Collections.<K, E>emptyMap() : Collections.unmodifiableMap(map);
   }
 
   /**
@@ -691,11 +811,14 @@ public abstract class JBIterable<E> implements Iterable<E> {
     }
   }
 
-  public abstract static class StatefulFilter<T> extends Stateful<StatefulFilter> implements Condition<T> {
+  /**
+   * Stateful {@link Conditions}: a separate cloned instance is used for each iterator.
+   */
+  public abstract static class SCond<T> extends Stateful<SCond> implements Condition<T> { }
 
-  }
+  /**
+   * Stateful {@link Function}: a separate cloned instance is used for each iterator.
+   */
+  public abstract static class SFun<S, T> extends Stateful<SFun> implements Function<S, T> { }
 
-  public abstract static class StatefulTransform<S, T> extends Stateful<StatefulTransform> implements Function<S, T> {
-
-  }
 }

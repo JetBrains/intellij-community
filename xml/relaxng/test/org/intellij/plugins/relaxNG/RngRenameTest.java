@@ -31,11 +31,11 @@ public class RngRenameTest extends HighlightingTestBase {
     return "rename/rng";
   }
 
-  public void testRenameRef1() throws Throwable {
+  public void testRenameRef1() {
     doTestRename("rename-ref-1", "start");
   }
 
-  private void doTestRename(String name, String newName) throws Throwable {
+  private void doTestRename(String name, String newName) {
     doTestRename(name, "rng", newName);
   }
 }

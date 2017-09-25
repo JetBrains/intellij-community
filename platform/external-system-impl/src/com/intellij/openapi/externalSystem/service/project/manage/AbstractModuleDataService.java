@@ -132,13 +132,13 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
 
       RootPolicy<Object> visitor = new RootPolicy<Object>() {
         @Override
-        public Object visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, Object value) {
+        public Object visitLibraryOrderEntry(@NotNull LibraryOrderEntry libraryOrderEntry, Object value) {
           modifiableRootModel.removeOrderEntry(libraryOrderEntry);
           return value;
         }
 
         @Override
-        public Object visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, Object value) {
+        public Object visitModuleOrderEntry(@NotNull ModuleOrderEntry moduleOrderEntry, Object value) {
           modifiableRootModel.removeOrderEntry(moduleOrderEntry);
           return value;
         }

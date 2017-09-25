@@ -17,23 +17,27 @@ package com.intellij.execution.impl
 
 import com.intellij.configurationStore.SerializableScheme
 import com.intellij.configurationStore.deserializeAndLoadState
-import com.intellij.configurationStore.serializeInto
+import com.intellij.configurationStore.serializeStateInto
 import com.intellij.execution.*
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.impl.BasePathMacroManager
+import com.intellij.openapi.components.impl.ProjectPathMacroManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionException
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import gnu.trove.THashMap
 import gnu.trove.THashSet
 import org.jdom.Element
+import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.util.*
 
 private val LOG = logger<RunnerAndConfigurationSettings>()
@@ -84,13 +88,13 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
   override fun isTemporary() = level == RunConfigurationLevel.TEMPORARY
 
-  override fun isShared() = level == RunConfigurationLevel.PROJECT
-
   override fun setTemporary(value: Boolean) {
     level = if (value) RunConfigurationLevel.TEMPORARY else RunConfigurationLevel.WORKSPACE
   }
 
-  fun setShared(value: Boolean) {
+  override fun isShared() = level == RunConfigurationLevel.PROJECT
+
+  override fun setShared(value: Boolean) {
     if (value) {
       level = RunConfigurationLevel.PROJECT
     }
@@ -114,7 +118,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
   override fun getName(): String {
     val configuration = configuration
     if (isTemplate) {
-      return "<template> of ${configuration.factory.name}"
+      return "<template> of ${configuration.factory.id}"
     }
     return configuration.name
   }
@@ -240,7 +244,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
       }
 
       element.setAttribute(CONFIGURATION_TYPE_ATTRIBUTE, factory.type.id)
-      element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.name)
+      element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.id)
       if (folderName != null) {
         element.setAttribute(FOLDER_NAME, folderName!!)
       }
@@ -277,11 +281,25 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
         PathMacroManager.getInstance(it).collapsePathsRecursively(element)
       }
     }
+    val project = configuration.project
+    val macroManager = PathMacroManager.getInstance(project)
+
+    // https://youtrack.jetbrains.com/issue/IDEA-178510
+    val projectParentPath = project.basePath?.let { PathUtilRt.getParentPath(it) }
+    if (!projectParentPath.isNullOrEmpty()) {
+      val replacePathMap = (macroManager as? ProjectPathMacroManager)?.replacePathMap
+      if (replacePathMap != null) {
+        replacePathMap.addReplacement(projectParentPath, '$' + PathMacroUtil.PROJECT_DIR_MACRO_NAME + "$/..", true)
+        BasePathMacroManager.collapsePaths(element, true, replacePathMap)
+        return
+      }
+    }
+    PathMacroManager.getInstance(project).collapsePathsRecursively(element)
   }
 
   private fun serializeConfigurationInto(configuration: RunConfiguration, element: Element) {
     if (configuration is PersistentStateComponent<*>) {
-      configuration.state!!.serializeInto(element)
+      configuration.serializeStateInto(element)
     }
     else {
       configuration.writeExternal(element)
@@ -427,20 +445,18 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
     private fun findRunner(runnerId: String): ProgramRunner<*>? {
       val runnersById = ProgramRunner.PROGRAM_RUNNER_EP.extensions.filter { runnerId == it.runnerId }
-      return if (runnersById.isEmpty()) {
-        null
-      }
-      else if (runnersById.size == 1) {
-        runnersById.firstOrNull()
-      }
-      else {
-        LOG.error("More than one runner found for ID: $runnerId")
-        for (executor in ExecutorRegistry.getInstance().registeredExecutors) {
-          runnersById.firstOrNull { it.canRun(executor.id, configuration)  }?.let {
-            return it
+      return when {
+        runnersById.isEmpty() -> null
+        runnersById.size == 1 -> runnersById.firstOrNull()
+        else -> {
+          LOG.error("More than one runner found for ID: $runnerId")
+          for (executor in ExecutorRegistry.getInstance().registeredExecutors) {
+            runnersById.firstOrNull { it.canRun(executor.id, configuration)  }?.let {
+              return it
+            }
           }
+          null
         }
-        null
       }
     }
 

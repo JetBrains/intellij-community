@@ -41,7 +41,7 @@ public class ScalaModelBuilderImplTest extends AbstractModelBuilderTest {
   }
 
   @Test
-  public void testScalaModel() throws Exception {
+  public void testScalaModel() {
     DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getIdeaProject().getModules();
 
     List<ScalaModel> scalaModels = ContainerUtil.mapNotNull(ideaModules,

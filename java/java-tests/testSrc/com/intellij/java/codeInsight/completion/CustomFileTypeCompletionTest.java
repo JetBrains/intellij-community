@@ -21,8 +21,6 @@ import com.intellij.openapi.fileTypes.MockLanguageFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-
 /**
  * @author Maxim.Mossienko
  */
@@ -35,7 +33,7 @@ public class CustomFileTypeCompletionTest extends LightCompletionTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testKeyWordCompletion() throws Exception {
+  public void testKeyWordCompletion() {
     configureByFile(BASE_PATH + "1.cs");
     checkResultByFile(BASE_PATH + "1_after.cs");
 
@@ -43,28 +41,28 @@ public class CustomFileTypeCompletionTest extends LightCompletionTestCase {
     checkResultByFile(BASE_PATH + "2_after.cs");
   }
 
-  public void testWordCompletion() throws Throwable {
+  public void testWordCompletion() {
     configureByFile(BASE_PATH + "WordCompletion.cs");
     testByCount(2, "while", "whiwhiwhi");
   }
 
-  public void testErlang() throws Throwable {
+  public void testErlang() {
     configureByFile(BASE_PATH + "Erlang.erl");
     testByCount(2, "case", "catch");
   }
 
-  public void testComment() throws Throwable {
+  public void testComment() {
     configureByFile(BASE_PATH + "foo.cs");
     testByCount(0, new String[] { null });
   }
 
-  public void testEmptyFile() throws Throwable {
+  public void testEmptyFile() {
     configureFromFileText("a.cs", "<caret>");
     complete();
     testByCount(1, "abstract", "x");
   }
 
-  public void testPlainTextSubstitution() throws IOException {
+  public void testPlainTextSubstitution() {
     FileTypeManagerEx.getInstanceEx().registerFileType(MockLanguageFileType.INSTANCE, "xxx");
     try {
       configureFromFileText("a.xxx", "aaa a<caret>");

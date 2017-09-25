@@ -25,7 +25,7 @@ public class RemoveRedundantElseFixTest extends LightQuickFixParameterizedTestCa
     enableInspectionTool(new ConfusingElseInspection());
   }
 
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {

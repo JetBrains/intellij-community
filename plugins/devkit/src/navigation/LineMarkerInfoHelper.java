@@ -20,16 +20,21 @@ import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.ui.ColorUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.util.PointableCandidate;
 
+import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -53,6 +58,8 @@ class LineMarkerInfoHelper {
       }
       return name;
     });
+
+  private static final String MODULE_SUFFIX_PATTERN = " <font color='" + ColorUtil.toHex(UIUtil.getInactiveTextColor()) + "'>[{0}]</font>";
 
 
   private LineMarkerInfoHelper() {
@@ -96,9 +103,16 @@ class LineMarkerInfoHelper {
 
       PsiFile file = tag.getContainingFile();
       String path = file.getVirtualFile().getPath();
+
+      String fileDisplayName = file.getName();
+      Module module = ModuleUtilCore.findModuleForPsiElement(file);
+      if (module != null) {
+        fileDisplayName += MessageFormat.format(MODULE_SUFFIX_PATTERN, module.getName());
+      }
+
       return DevKitBundle.message(tooltipPatternPropertyName,
-                                         path, String.valueOf(tag.getTextRange().getStartOffset()), nameProvider.fun(tag),
-                                         path, file.getName());
+                                  path, String.valueOf(tag.getTextRange().getStartOffset()), nameProvider.fun(tag),
+                                  fileDisplayName);
     };
   }
 }

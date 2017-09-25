@@ -23,11 +23,12 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.RetrievableIcon;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBUI.ScaleType;
+import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.util.ui.JBUI.RasterJBIcon;
+import com.intellij.util.ui.JBUI.BaseScaleContext.UpdateListener;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +46,8 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 
+import static com.intellij.util.ui.JBUI.ScaleType.*;
+
 public final class IconLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.IconLoader");
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
@@ -52,9 +55,9 @@ public final class IconLoader {
   /**
    * This cache contains mapping between icons and disabled icons.
    */
-  private static final Map<Icon, Icon> ourIcon2DisabledIcon = new WeakHashMap<Icon, Icon>(200);
+  private static final Map<Icon, Icon> ourIcon2DisabledIcon = ContainerUtil.createWeakMap(200);
   @NonNls private static final List<IconPathPatcher> ourPatchers = new ArrayList<IconPathPatcher>(2);
-  public static boolean STRICT = false;
+  public static boolean STRICT;
 
   private static boolean USE_DARK_ICONS = UIUtil.isUnderDarcula();
 
@@ -71,7 +74,7 @@ public final class IconLoader {
     }
   };
 
-  private static boolean ourIsActivated = false;
+  private static boolean ourIsActivated;
 
   private IconLoader() { }
 
@@ -378,7 +381,7 @@ public final class IconLoader {
     return icon;
   }
 
-  private static final class CachedImageIcon extends JBUI.UpdatingJBIcon implements ScalableIcon {
+  private static final class CachedImageIcon extends RasterJBIcon implements ScalableIcon {
     private volatile Object myRealIcon;
     private String myOriginalPath;
     private ClassLoader myClassLoader;
@@ -390,6 +393,16 @@ public final class IconLoader {
 
     private ImageFilter[] myFilters;
     private final MyScaledIconsCache myScaledIconsCache = new MyScaledIconsCache();
+
+    {
+      // For instance, ShadowPainter updates the context from outside.
+      getScaleContext().addUpdateListener(new UpdateListener() {
+        @Override
+        public void contextUpdated() {
+          myRealIcon = null;
+        }
+      });
+    }
 
     private CachedImageIcon(@NotNull CachedImageIcon icon) {
       myRealIcon = null; // to be computed
@@ -417,29 +430,22 @@ public final class IconLoader {
       return myFilters[0];
     }
 
-    @Override
-    public boolean updateJBUIScale(Graphics2D g) {
-      if (needUpdateJBUIScale(g)) {
-        getRealIcon(g); // force update
-        return true;
-      }
-      return false;
-    }
-
     @NotNull
     private synchronized ImageIcon getRealIcon() {
       return getRealIcon(null);
     }
 
     @NotNull
-    private synchronized ImageIcon getRealIcon(@Nullable Graphics g) {
-      if (!isValid() || needUpdateJBUIScale((Graphics2D)g)) {
+    private synchronized ImageIcon getRealIcon(ScaleContext ctx) {
+      if (updateScaleContext(ctx)) {
+        myRealIcon = null;
+      }
+      if (!isValid()) {
         if (isLoaderDisabled()) return EMPTY_ICON;
         myRealIcon = null;
         dark = USE_DARK_ICONS;
-        super.updateJBUIScale((Graphics2D)g);
         setGlobalFilter(IMAGE_FILTER);
-        if (!isValid()) myScaledIconsCache.clear();
+        myScaledIconsCache.clear();
         if (numberOfPatchers != ourPatchers.size()) {
           numberOfPatchers = ourPatchers.size();
           Pair<String, Class> patchedPath = patchPath(myOriginalPath);
@@ -465,7 +471,7 @@ public final class IconLoader {
         if (icon != null) return icon;
       }
 
-      icon = myScaledIconsCache.getOrLoadIcon(getJBUIScale(ScaleType.PIX));
+      icon = myScaledIconsCache.getOrScaleIcon(1f);
 
       if (icon != null) {
         if (icon.getIconWidth() < 50 && icon.getIconHeight() < 50) {
@@ -486,7 +492,10 @@ public final class IconLoader {
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      getRealIcon(g).paintIcon(c, g, x, y);
+      // Component is preferable to Graphics as a scale provider, as it lets the context stick
+      // to the comp's actual scale via the update method.
+      ScaleContext ctx = c != null ? ScaleContext.create(c) : ScaleContext.create((Graphics2D)g);
+      getRealIcon(ctx).paintIcon(c, g, x, y);
     }
 
     @Override
@@ -515,7 +524,7 @@ public final class IconLoader {
 
       getRealIcon(); // force state update & cache reset
 
-      Icon icon = myScaledIconsCache.getOrScaleIcon(getJBUIScale(ScaleType.PIX), scale);
+      Icon icon = myScaledIconsCache.getOrScaleIcon(scale);
       if (icon != null) {
         return icon;
       }
@@ -528,85 +537,58 @@ public final class IconLoader {
       return icon;
     }
 
-    private class MyScaledIconsCache {
-      // Map {false -> image}, {true -> image@2x}
-      private Map<Boolean, SoftReference<Image>> origImagesCache = Collections.synchronizedMap(new HashMap<Boolean, SoftReference<Image>>(2));
+    private Image loadFromUrl(ScaleContext ctx) {
+      return ImageLoader.loadFromUrl(myUrl, true, myFilters, ctx);
+    }
 
+    private class MyScaledIconsCache {
       private static final int SCALED_ICONS_CACHE_LIMIT = 5;
 
       // Map {pixel scale -> icon}
-      private Map<Float, SoftReference<ImageIcon>> scaledIconsCache = Collections.synchronizedMap(new LinkedHashMap<Float, SoftReference<ImageIcon>>(SCALED_ICONS_CACHE_LIMIT) {
+      private Map<Double, SoftReference<ImageIcon>> scaledIconsCache = Collections.synchronizedMap(new LinkedHashMap<Double, SoftReference<ImageIcon>>(SCALED_ICONS_CACHE_LIMIT) {
         @Override
-        public boolean removeEldestEntry(Map.Entry<Float, SoftReference<ImageIcon>> entry) {
+        public boolean removeEldestEntry(Map.Entry<Double, SoftReference<ImageIcon>> entry) {
           return size() > SCALED_ICONS_CACHE_LIMIT;
         }
       });
 
       /**
-       * Retrieves the orig image (1x, 2x) based on the pixScale.
+       * Retrieves the orig icon scaled by the provided scale.
        */
-      private Image getOrLoadOrigImage(boolean needRetinaImage) {
-        Image image = SoftReference.dereference(origImagesCache.get(needRetinaImage));
-        if (image != null) return image;
+      public ImageIcon getOrScaleIcon(final float scale) {
+        updateScale(OBJ_SCALE.of(scale));
 
-        image = ImageLoader.loadFromUrl(myUrl, false, myFilters, needRetinaImage ? 2f : 1f);
-        if (image == null) return null;
-        origImagesCache.put(needRetinaImage, new SoftReference<Image>(image));
-        return image;
-      }
-
-      /**
-       * Retrieves the orig icon based on the pixScale, then scale it by the instanceScale.
-       */
-      public ImageIcon getOrScaleIcon(float pixScale, float instanceScale) {
-        final float effectiveScale = pixScale * instanceScale;
-        ImageIcon icon = SoftReference.dereference(scaledIconsCache.get(effectiveScale));
+        ImageIcon icon = SoftReference.dereference(scaledIconsCache.get(getScale(PIX_SCALE)));
         if (icon != null) {
           return icon;
         }
-
         Image image;
         if (svg) {
           image = doWithTmpRegValue("ide.svg.icon", true, new Callable<Image>() {
             @Override
             public Image call() {
-              return ImageLoader.loadFromUrl(myUrl, true, myFilters, effectiveScale);
+              return loadFromUrl(getScaleContext());
             }
           });
         }
         else {
-          boolean needRetinaImage = JBUI.isHiDPI(effectiveScale);
-          image = getOrLoadOrigImage(needRetinaImage);
-          if (image == null) return null;
-
-          if (!UIUtil.isJreHiDPIEnabled() && needRetinaImage) {
-            instanceScale = effectiveScale / 2f; // the image is 2x raw BufferedImage, compensate it
-          }
-
-          image = ImageUtil.scaleImage(image, instanceScale);
+          image = loadFromUrl(getScaleContext());
         }
         icon = checkIcon(image, myUrl);
+
         if (icon != null && (icon.getIconWidth() * icon.getIconHeight() * 4) < ImageLoader.CACHED_IMAGE_MAX_SIZE) {
-          scaledIconsCache.put(effectiveScale, new SoftReference<ImageIcon>(icon));
+          scaledIconsCache.put(getScale(PIX_SCALE), new SoftReference<ImageIcon>(icon));
         }
         return icon;
       }
 
-      /**
-       * Retrieves the orig icon based on the pixScale.
-       */
-      public ImageIcon getOrLoadIcon(float pixScale) {
-        return getOrScaleIcon(pixScale, 1f);
-      }
-
       public void clear() {
         scaledIconsCache.clear();
-        origImagesCache.clear();
       }
     }
   }
 
-  public abstract static class LazyIcon extends JBUI.UpdatingJBIcon {
+  public abstract static class LazyIcon extends RasterJBIcon {
     private boolean myWasComputed;
     private Icon myIcon;
     private boolean isDarkVariant = USE_DARK_ICONS;
@@ -615,7 +597,10 @@ public final class IconLoader {
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      final Icon icon = getOrComputeIcon(g);
+      if (updateScaleContext(ScaleContext.create((Graphics2D)g))) {
+        myIcon = null;
+      }
+      final Icon icon = getOrComputeIcon();
       if (icon != null) {
         icon.paintIcon(c, g, x, y);
       }
@@ -634,13 +619,11 @@ public final class IconLoader {
     }
 
     protected final synchronized Icon getOrComputeIcon() {
-      return getOrComputeIcon(null);
-    }
-
-    protected final synchronized Icon getOrComputeIcon(@Nullable Graphics g) {
-      if (!myWasComputed || isDarkVariant != USE_DARK_ICONS || needUpdateJBUIScale((Graphics2D)g) || filter != IMAGE_FILTER || numberOfPatchers != ourPatchers.size()) {
+      if (!myWasComputed || isDarkVariant != USE_DARK_ICONS ||
+          myIcon == null ||
+          filter != IMAGE_FILTER || numberOfPatchers != ourPatchers.size())
+      {
         isDarkVariant = USE_DARK_ICONS;
-        updateJBUIScale((Graphics2D)g);
         filter = IMAGE_FILTER;
         myWasComputed = true;
         numberOfPatchers = ourPatchers.size();
@@ -660,7 +643,7 @@ public final class IconLoader {
       Icon icon = getOrComputeIcon();
       if (icon != null) {
         if (icon instanceof CachedImageIcon) {
-          Image img = ((CachedImageIcon)icon).myScaledIconsCache.getOrLoadOrigImage(false);
+          Image img = ((CachedImageIcon)icon).loadFromUrl(ScaleContext.create(USR_SCALE.of(1d), SYS_SCALE.of(1d)));
           if (img != null) {
             icon = new ImageIcon(img);
           }

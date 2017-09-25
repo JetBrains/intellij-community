@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.inspections.EditorQuickFixProvider;
 import com.intellij.uiDesigner.inspections.FormErrorCollector;
@@ -109,7 +110,7 @@ public class I18nFormInspection extends StringDescriptorInspection {
     if (componentClass == null) {
       return false;
     }
-    PsiMethod setter = PropertyUtil.findPropertySetter(componentClass, propertyName, false, true);
+    PsiMethod setter = PropertyUtilBase.findPropertySetter(componentClass, propertyName, false, true);
     if (setter != null) {
       PsiParameter[] parameters = setter.getParameterList().getParameters();
       if (parameters.length == 1 &&

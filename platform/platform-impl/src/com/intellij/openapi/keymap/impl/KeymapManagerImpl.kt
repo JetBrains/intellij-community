@@ -61,7 +61,7 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
         }
       }
 
-      override fun reloaded(schemeManager: SchemeManager<Keymap>) {
+      override fun reloaded(schemeManager: SchemeManager<Keymap>, schemes: Collection<Keymap>) {
         if (schemeManager.currentScheme == null) {
           // listeners expect that event will be fired in EDT
           AppUIUtil.invokeOnEdt {

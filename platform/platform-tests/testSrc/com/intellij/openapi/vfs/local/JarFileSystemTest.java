@@ -54,6 +54,8 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testFindFile() throws IOException {
+    assertNull(JarFileSystem.getInstance().findFileByPath("/invalid/path"));
+
     String rtJarPath = PlatformTestUtil.getRtJarPath();
 
     VirtualFile jarRoot = findByPath(rtJarPath + JarFileSystem.JAR_SEPARATOR);

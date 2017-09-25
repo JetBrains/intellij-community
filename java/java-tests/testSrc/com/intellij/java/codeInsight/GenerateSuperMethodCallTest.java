@@ -34,12 +34,12 @@ public class GenerateSuperMethodCallTest extends LightCodeInsightTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testImplement() throws Exception { doTest(); }
-  public void testOverride() throws Exception { doTest(); }
-  public void testOverrideInNestedBlock() throws Exception { doTest(); }
+  public void testImplement() { doTest(); }
+  public void testOverride() { doTest(); }
+  public void testOverrideInNestedBlock() { doTest(); }
 
 
-  private void doTest() throws Exception {
+  private void doTest() {
     String name = getTestName(false);
     configureByFile("/codeInsight/generateSuperMethodCall/before" +
                     name +

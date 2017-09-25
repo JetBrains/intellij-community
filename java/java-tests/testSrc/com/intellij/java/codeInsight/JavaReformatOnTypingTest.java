@@ -57,7 +57,7 @@ public class JavaReformatOnTypingTest extends LightPlatformCodeInsightFixtureTes
     doTest("class T { int a=<caret> }", "2", "class T { int a=2 }");
   }
 
-  public void test_AddSpacesAroundAssignmentOperator() throws Exception {
+  public void test_AddSpacesAroundAssignmentOperator() {
     doTest("class T { int<caret> }", "=", "class T { int =<caret> }");
   }
   

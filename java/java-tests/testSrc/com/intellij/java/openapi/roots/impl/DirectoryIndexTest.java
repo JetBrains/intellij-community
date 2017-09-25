@@ -334,7 +334,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
   public void testAddProjectDir() {
     new WriteCommandAction.Simple(getProject()) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         VirtualFile newDir = createChildDirectory(myModule1Dir.getParent(), "newDir");
         createChildDirectory(newDir, "subdir");
 
@@ -374,7 +374,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
   public void testAddModule() {
     new WriteCommandAction.Simple(getProject()) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         VirtualFile newModuleContent = createChildDirectory(myRootVFile, "newModule");
         createChildDirectory(newModuleContent, "subDir");
         ModuleManager moduleManager = ModuleManager.getInstance(myProject);
@@ -396,7 +396,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
 
     new WriteCommandAction.Simple(getProject()) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         ModuleManager moduleManager = ModuleManager.getInstance(myProject);
         Module module = moduleManager.newModule(myRootVFile.getPath() + "/newModule.iml", StdModuleTypes.JAVA.getId());
         PsiTestUtil.addContentRoot(module, module4);
@@ -412,7 +412,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
 
     new WriteCommandAction.Simple(getProject()) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         ModuleManager moduleManager = ModuleManager.getInstance(myProject);
         ModifiableModuleModel model = moduleManager.getModifiableModel();
         model.disposeModule(myModule);

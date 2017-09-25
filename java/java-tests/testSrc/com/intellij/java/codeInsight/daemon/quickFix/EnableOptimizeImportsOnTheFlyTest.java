@@ -19,23 +19,22 @@ import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
 import com.intellij.codeInsight.daemon.quickFix.ActionHint;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
+import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import org.jetbrains.annotations.NotNull;
 
 
 public class EnableOptimizeImportsOnTheFlyTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
+
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new UnusedImportLocalInspection()};
+  protected void setUp() throws Exception {
+    super.setUp();
+    enableInspectionTool(new UnusedImportInspection());
   }
 
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
-  protected void doAction(@NotNull final ActionHint actionHint, final String testFullPath, final String testName)
-    throws Exception {
+  protected void doAction(@NotNull final ActionHint actionHint, final String testFullPath, final String testName) {
     CodeInsightWorkspaceSettings.getInstance(ourProject).setOptimizeImportsOnTheFly(false, getTestRootDisposable());
     IntentionAction action = findActionAndCheck(actionHint, testFullPath);
     if (action != null) {

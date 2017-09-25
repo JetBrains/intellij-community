@@ -208,7 +208,7 @@ public class JavaExecutionStack extends XExecutionStack {
 
         // replace the rest with the related stack (if available)
         if (Registry.is("debugger.capture.points") && frame instanceof JavaStackFrame) {
-          List<StackFrameItem> relatedStack = StackCapturingLineBreakpoint.getRelatedStack(frameProxy, suspendContext);
+          List<StackFrameItem> relatedStack = StackCapturingLineBreakpoint.getRelatedStack(frameProxy, suspendContext, true);
           if (!ContainerUtil.isEmpty(relatedStack)) {
             int i = 0;
             boolean separator = true;

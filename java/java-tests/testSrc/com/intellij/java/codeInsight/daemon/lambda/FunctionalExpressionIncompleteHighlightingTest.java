@@ -28,11 +28,11 @@ public class FunctionalExpressionIncompleteHighlightingTest extends LightDaemonA
     enableInspectionTool(new UnusedDeclarationInspection());
   }
 
-  public void testMissedFunctionalInterfaceMethodReturnType() throws Exception {
+  public void testMissedFunctionalInterfaceMethodReturnType() {
     doTest();
   }
 
-  public void testInsideParenthesis() throws Exception {
+  public void testInsideParenthesis() {
     doTest();
   }
 

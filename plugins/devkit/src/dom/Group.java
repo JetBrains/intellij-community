@@ -93,7 +93,12 @@ public interface Group extends Actions, ActionOrGroup {
 	 * @return the value of the separator child.
 	 */
 	@NotNull
-	List<GenericDomValue<String>> getSeparators();
+	List<Separator> getSeparators();
+	/**
+	 * Adds new child to the list of separator children.
+	 * @return created child
+	 */
+	Separator addSeparator();
 
 
 	/**

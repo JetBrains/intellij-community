@@ -28,7 +28,7 @@ public class ReplaceWithConstantFixTest extends LightQuickFixParameterizedTestCa
     return new LocalInspectionTool[]{new DuplicateStringLiteralInspection()};
   }
 
-  public void test() throws Exception {
+  public void test() {
      doAllTests();
    }
 

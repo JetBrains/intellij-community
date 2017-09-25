@@ -72,7 +72,7 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
     assertContent("content", e);
   }
 
-  public void testCurrentRevisionForDirectoryAfterPurge() throws Exception {
+  public void testCurrentRevisionForDirectoryAfterPurge() {
     Clock.setTime(10);
     VirtualFile f = createDirectory("dir");
     getVcs().getChangeListInTests().purgeObsolete(0);
@@ -182,7 +182,7 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
     assertNull(rr.get(3).findEntry());
   }
 
-  public void testRevisionForDirectoryWithTheSameNameAsDeletedOne() throws IOException {
+  public void testRevisionForDirectoryWithTheSameNameAsDeletedOne() {
     VirtualFile dir = createDirectory("dir");
     delete(dir);
     dir = createDirectory("dir");

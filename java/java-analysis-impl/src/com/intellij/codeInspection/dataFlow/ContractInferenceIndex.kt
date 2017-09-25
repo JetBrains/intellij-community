@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,12 @@ package com.intellij.codeInspection.dataFlow
 
 import com.intellij.lang.LighterAST
 import com.intellij.lang.LighterASTNode
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.impl.source.JavaLightStubBuilder
-import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.PsiMethodImpl
-import com.intellij.psi.impl.source.tree.JavaElementType
 import com.intellij.psi.impl.source.tree.JavaElementType.*
 import com.intellij.psi.impl.source.tree.LightTreeUtil
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor
-import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.stub.JavaStubImplUtil
 import com.intellij.util.gist.GistManager
 import java.util.*
 
@@ -96,18 +93,4 @@ private fun createData(body: LighterASTNode,
   return MethodData(nullity, purity, contracts, notNullParams, body.startOffset, body.endOffset)
 }
 
-fun getIndexedData(method: PsiMethodImpl): MethodData? = gist.getFileData(method.containingFile)?.get(methodIndex(method))
-
-private fun methodIndex(method: PsiMethodImpl): Int? {
-  val file = method.containingFile as PsiFileImpl
-  if (file.elementTypeForStubBuilder == null) return null
-
-  val stubTree = try {
-    file.stubTree ?: file.calcStubTree()
-  } catch (e: ProcessCanceledException) {
-    throw e
-  } catch (e: RuntimeException) {
-    throw RuntimeException("While inferring contract for " + PsiUtil.getMemberQualifiedName(method), e)
-  }
-  return stubTree.plainList.filter { it.stubType == JavaElementType.METHOD }.map { it.psi }.indexOf(method)
-}
+fun getIndexedData(method: PsiMethodImpl): MethodData? = gist.getFileData(method.containingFile)?.get(JavaStubImplUtil.getMethodStubIndex(method))

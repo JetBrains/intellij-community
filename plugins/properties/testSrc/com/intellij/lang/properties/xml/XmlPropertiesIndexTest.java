@@ -38,7 +38,7 @@ public class XmlPropertiesIndexTest extends LightPlatformCodeInsightFixtureTestC
     assertTrue(map.containsKey(XmlPropertiesIndex.MARKER_KEY));
   }
 
-  public void testSystemId() throws Exception {
+  public void testSystemId() {
     final VirtualFile file = myFixture.configureByFile("wrong.xml").getVirtualFile();
     Map<XmlPropertiesIndex.Key, String> map = new XmlPropertiesIndex().map(FileContentImpl.createByFile(file));
 

@@ -22,27 +22,27 @@ import com.jetbrains.python.PyBundle;
  */
 public class PyConvertMethodToPropertyIntentionTest extends PyIntentionTestCase {
 
-  public void testParamList() throws Exception {
+  public void testParamList() {
     doNegativeTest(PyBundle.message("INTN.convert.method.to.property"));
   }
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     doIntentionTest(PyBundle.message("INTN.convert.method.to.property"));
   }
 
-  public void testProperty() throws Exception {
+  public void testProperty() {
     doNegativeTest(PyBundle.message("INTN.convert.method.to.property"));
   }
 
-  public void testEmptyReturn() throws Exception {
+  public void testEmptyReturn() {
     doNegativeTest(PyBundle.message("INTN.convert.method.to.property"));
   }
 
-  public void testYield() throws Exception {
+  public void testYield() {
     doIntentionTest(PyBundle.message("INTN.convert.method.to.property"));
   }
 
-  public void testNoReturn() throws Exception {
+  public void testNoReturn() {
     doNegativeTest(PyBundle.message("INTN.convert.method.to.property"));
   }
 

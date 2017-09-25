@@ -137,7 +137,6 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
-    //noinspection unchecked
     for (Element suiteElement : element.getChildren(SUITE)) {
       final CoverageRunner coverageRunner = BaseCoverageSuite.readRunnerAttribute(suiteElement);
       // skip unknown runners
@@ -373,7 +372,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
                               final RunnerSettings runnerSettings) {
     handler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void processTerminated(final ProcessEvent event) {
+      public void processTerminated(@NotNull final ProcessEvent event) {
         processGatheredCoverage(configuration, runnerSettings);
       }
     });

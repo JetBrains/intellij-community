@@ -176,7 +176,7 @@ public class ArrangementSettingsSerializationTest {
   }
 
   @Test
-  public void testEmptyGroupings() throws Exception {
+  public void testEmptyGroupings() {
     final StdArrangementSettings settings = new StdArrangementSettings();
     final ArrangementAtomMatchCondition condition = new ArrangementAtomMatchCondition(FIELD);
     settings.addRule(new StdArrangementMatchRule(new StdArrangementEntryMatcher(condition), BY_NAME));
@@ -192,7 +192,7 @@ public class ArrangementSettingsSerializationTest {
   }
 
   @Test
-  public void testEmptyRules() throws Exception {
+  public void testEmptyRules() {
     final StdArrangementSettings settings = new StdArrangementSettings();
     settings.addGrouping(new ArrangementGroupingRule(OVERRIDDEN_METHODS, BY_NAME));
 

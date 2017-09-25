@@ -21,27 +21,27 @@ public class RncAnnotationParsingTest extends AbstractParsingTest {
     super("annotations");
   }
 
-  public void testSimple1() throws Throwable {
+  public void testSimple1() {
    doTest(true);
   }
 
-  public void testSimple2() throws Throwable {
+  public void testSimple2() {
    doTest(true);
   }
 
-  public void testNested() throws Throwable {
+  public void testNested() {
    doTest(true);
   }
 
-  public void testGrammarLevel() throws Throwable {
+  public void testGrammarLevel() {
    doTest(true);
   }
 
-  public void testFollowing() throws Throwable {
+  public void testFollowing() {
    doTest(true);
   }
 
-  public void testFollowingIncomplete() throws Throwable {
+  public void testFollowingIncomplete() {
    doTest(true);
   }
 }

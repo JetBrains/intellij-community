@@ -142,7 +142,7 @@ public class FrequentlyUsedInheritorInspectionTest extends CompilerReferencesTes
   }
 
   @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
   }
 }

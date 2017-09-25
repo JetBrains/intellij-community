@@ -28,7 +28,6 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
@@ -71,7 +70,7 @@ public class ProjectStartupRunner implements StartupActivity, DumbAware {
 
   private static void scheduleRunActivities(@NotNull Project project) {
     JobScheduler.getScheduler().schedule(() -> {
-      if (!((StartupManagerEx)StartupManager.getInstance(project)).postStartupActivityPassed() && !Registry.is("dumb.aware.run.configurations")) {
+      if (!((StartupManagerEx)StartupManager.getInstance(project)).postStartupActivityPassed()) {
         scheduleRunActivities(project);
       }
       else {

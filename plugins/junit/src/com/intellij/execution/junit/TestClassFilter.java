@@ -82,9 +82,6 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
     if (sourceScope == null) throw new JUnitUtil.NoJUnitException();
     final JUnitUtil.NoJUnitException[] ex = new JUnitUtil.NoJUnitException[1];
     final PsiClass testCase = ReadAction.compute(() -> {
-      if (TestObject.isJUnit5(module, sourceScope, sourceScope.getProject())) {
-        return null;
-      }
       try {
         return module == null ? JUnitUtil.getTestCaseClass(sourceScope) : JUnitUtil.getTestCaseClass(module);
       }

@@ -31,6 +31,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.Project;
@@ -351,7 +352,10 @@ class SearchForUsagesRunnable implements Runnable {
 
   private void searchUsages(@NotNull final AtomicBoolean findStartedBalloonShown) {
     ProgressIndicator indicator = ProgressWrapper.unwrap(ProgressManager.getInstance().getProgressIndicator());
-    assert indicator != null : "must run find usages under progress";
+    if (indicator == null) throw new IllegalStateException("must run find usages under progress");
+    if (!ApplicationManager.getApplication().isDispatchThread()) {
+      CoreProgressManager.assertUnderProgress(indicator);
+    }
     TooManyUsagesStatus.createFor(indicator);
     Alarm findUsagesStartedBalloon = new Alarm();
     findUsagesStartedBalloon.addRequest(() -> {
@@ -363,7 +367,7 @@ class SearchForUsagesRunnable implements Runnable {
 
     usageSearcher.generate(usage -> {
       ProgressIndicator indicator1 = ProgressWrapper.unwrap(ProgressManager.getInstance().getProgressIndicator());
-      assert indicator1 != null : "must run find usages under progress";
+      if (indicator1 == null) throw new IllegalStateException("must run find usages under progress");
       if (indicator1.isCanceled()) return false;
 
       if (!UsageViewManagerImpl.isInScope(usage, mySearchScopeToWarnOfFallingOutOf)) {

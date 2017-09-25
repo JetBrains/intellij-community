@@ -27,7 +27,10 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
+import com.intellij.debugger.ui.breakpoints.RunToCursorBreakpoint;
 import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
+import com.intellij.debugger.ui.overhead.OverheadProducer;
+import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -41,6 +44,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.VMDisconnectedException;
@@ -155,7 +159,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
               protected void action() throws Exception {
                 int processed = 0;
                 for (Event event : eventSet) {
-                  if (myReturnValueWatcher != null && myReturnValueWatcher.isEnabled()) {
+                  if (myReturnValueWatcher != null && myReturnValueWatcher.isTrackingEnabled()) {
                     if (myReturnValueWatcher.processEvent(event)) {
                       processed++;
                       continue;
@@ -318,7 +322,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       final EventRequestManager requestManager = machineProxy.eventRequestManager();
 
       if (machineProxy.canGetMethodReturnValues()) {
-        myReturnValueWatcher = new MethodReturnValueWatcher(requestManager);
+        myReturnValueWatcher = new MethodReturnValueWatcher(requestManager, this);
       }
 
       final ThreadStartRequest threadStartRequest = requestManager.createThreadStartRequest();
@@ -365,8 +369,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
       }
 
       @Override
-      protected void action() throws Exception {
-        StackCapturingLineBreakpoint.recreateAll(DebugProcessEvents.this);
+      protected void action() {
+        StackCapturingLineBreakpoint.deleteAll(DebugProcessEvents.this);
+        StackCapturingLineBreakpoint.createAll(DebugProcessEvents.this);
       }
     });
   }
@@ -442,7 +447,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         final MethodFilter methodFilter = hint.getMethodFilter();
         if (methodFilter instanceof NamedMethodFilter && !hint.wasStepTargetMethodMatched()) {
           final String message = "Method <b>" + ((NamedMethodFilter)methodFilter).getMethodName() + "()</b> has not been called";
-          XDebugSessionImpl.NOTIFICATION_GROUP.createNotification(message, MessageType.INFO).notify(project);
+          XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification(message, MessageType.INFO).notify(project);
         }
         if (hint.wasStepTargetMethodMatched() && hint.isResetIgnoreFilters()) {
           checkPositionNotFiltered(suspendContext.getThread(), filters -> mySession.resetIgnoreStepFiltersFlag());
@@ -474,7 +479,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
         final LocatableEventRequestor requestor = (LocatableEventRequestor) getRequestsManager().findRequestor(event.request());
 
         boolean resumePreferred = requestor != null && DebuggerSettings.SUSPEND_NONE.equals(requestor.getSuspendPolicy());
-        boolean requestHit;
+        boolean requestHit = false;
+        long start = requestor instanceof OverheadProducer && !(requestor instanceof RunToCursorBreakpoint) ? System.currentTimeMillis() : 0;
         try {
           requestHit = (requestor != null) && requestor.processLocatableEvent(this, event);
         }
@@ -490,6 +496,13 @@ public class DebugProcessEvents extends DebugProcessImpl {
           }, ModalityState.NON_MODAL);
           requestHit = considerRequestHit[0];
           resumePreferred = !requestHit;
+        }
+        finally {
+          if (start > 0) {
+            OverheadTimings.add(DebugProcessEvents.this, (OverheadProducer)requestor,
+                                requestHit || requestor instanceof StackCapturingLineBreakpoint ? 1 : 0,
+                                System.currentTimeMillis() - start);
+          }
         }
 
         if (requestHit && requestor instanceof Breakpoint) {
@@ -528,7 +541,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
   private void notifySkippedBreakpoints(LocatableEvent event) {
     if (event != null) {
-      XDebugSessionImpl.NOTIFICATION_GROUP
+      XDebuggerManagerImpl.NOTIFICATION_GROUP
         .createNotification(DebuggerBundle.message("message.breakpoint.skipped", event.location()), MessageType.INFO)
         .notify(getProject());
     }

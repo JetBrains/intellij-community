@@ -44,7 +44,7 @@ public class ConfigurationFromEditorTest extends LightCodeInsightFixtureTestCase
     return (JUnitConfiguration)settings.getConfiguration();
   }
 
-  public void testPatternConfigurationFromSelection() throws Exception {
+  public void testPatternConfigurationFromSelection() {
     JUnitConfiguration configuration = setupConfigurationContext("import org.junit.Test; public class MyTest {\n" +
                                                                  "<selection>@Test\n" +
                                                                  "public void t1(){}\n" +
@@ -61,7 +61,7 @@ public class ConfigurationFromEditorTest extends LightCodeInsightFixtureTestCase
     assertSameElements(patterns, "MyTest,t1", "MyTest,t2");
   }
 
-  public void testPatternConfigurationFromMultipleCarets() throws Exception {
+  public void testPatternConfigurationFromMultipleCarets() {
     JUnitConfiguration configuration = setupConfigurationContext("import org.junit.Test; public class MyTest {\n" +
                                                                  "@Test\n" +
                                                                  "public void t<caret>1(){}\n" +

@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.reference;
 
-import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Comparing;
@@ -232,7 +231,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   private void initializeSuperMethods(PsiMethod method) {
-    if (getRefManager().isOfflineView()) return;
+    if (getRefManager().isOfflineView() || !getRefManager().isDeclarationsFound()) return;
     for (PsiMethod psiSuperMethod : method.findSuperMethods()) {
       if (getRefManager().belongsToScope(psiSuperMethod)) {
         RefMethodImpl refSuperMethod = (RefMethodImpl)getRefManager().getReference(psiSuperMethod);
@@ -304,52 +303,22 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   private void collectUncaughtExceptions(@NotNull PsiMethod method) {
-    if (isExternalOverride()) return;
     if (getRefManager().isOfflineView()) return;
-    @NonNls final String name = method.getName();
-    if (getOwnerClass().isTestCase() && name.startsWith("test")) return;
 
-    if (getSuperMethods().isEmpty()) {
-      PsiClassType[] throwsList = method.getThrowsList().getReferencedTypes();
-      if (throwsList.length > 0) {
-        List<String> unThrownExceptions = throwsList.length == 1 ? new SmartList<>() : new ArrayList<>(throwsList.length);
-        for (final PsiClassType type : throwsList) {
-          PsiClass aClass = type.resolve();
-          String fqn = aClass == null ? null : aClass.getQualifiedName();
-          if (fqn != null) {
-            unThrownExceptions.add(fqn);
-          }
-        }
-        synchronized (this) {
-          myUnThrownExceptions = unThrownExceptions;
+    PsiClassType[] throwsList = method.getThrowsList().getReferencedTypes();
+    if (throwsList.length > 0) {
+      List<String> unThrownExceptions = throwsList.length == 1 ? new SmartList<>() : new ArrayList<>(throwsList.length);
+      for (final PsiClassType type : throwsList) {
+        PsiClass aClass = type.resolve();
+        String fqn = aClass == null ? null : aClass.getQualifiedName();
+        if (fqn != null) {
+          unThrownExceptions.add(fqn);
         }
       }
-    }
-
-    final PsiCodeBlock body = method.getBody();
-    if (body == null) return;
-
-    final Collection<PsiClassType> exceptionTypes = getUnhandledExceptions(body, method, method.getContainingClass());
-    for (final PsiClassType exceptionType : exceptionTypes) {
-      updateThrowsList(exceptionType);
-    }
-  }
-
-  public static Set<PsiClassType> getUnhandledExceptions(PsiCodeBlock body, PsiMethod method, PsiClass containingClass) {
-    Collection<PsiClassType> types = ExceptionUtil.collectUnhandledExceptions(body, method, false);
-    Set<PsiClassType> unhandled = new HashSet<>(types);
-    if (method.isConstructor()) {
-      // there may be field initializer throwing exception
-      // that exception must be caught in the constructor
-      PsiField[] fields = containingClass.getFields();
-      for (final PsiField field : fields) {
-        if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
-        PsiExpression initializer = field.getInitializer();
-        if (initializer == null) continue;
-        unhandled.addAll(ExceptionUtil.collectUnhandledExceptions(initializer, field));
+      synchronized (this) {
+        myUnThrownExceptions = unThrownExceptions;
       }
     }
-    return unhandled;
   }
 
   public synchronized void removeUnThrownExceptions(PsiClass unThrownException) {
@@ -600,11 +569,8 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   public void updateThrowsList(PsiClassType exceptionType) {
-    if (!getSuperMethods().isEmpty()) {
-      for (RefMethod refSuper : getSuperMethods()) {
-        ((RefMethodImpl)refSuper).updateThrowsList(exceptionType);
-      }
-      return;
+    for (RefMethod refSuper : getSuperMethods()) {
+      ((RefMethodImpl)refSuper).updateThrowsList(exceptionType);
     }
     synchronized (this) {
       List<String> unThrownExceptions = myUnThrownExceptions;

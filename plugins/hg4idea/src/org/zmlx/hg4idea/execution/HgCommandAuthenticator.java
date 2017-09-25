@@ -156,6 +156,6 @@ class HgCommandAuthenticator {
 
   @NotNull
   private static CredentialAttributes createCredentialAttributes(@NotNull String url) {
-    return new CredentialAttributes(CredentialAttributesKt.SERVICE_NAME_PREFIX + " HG — " + url, null);
+    return new CredentialAttributes(CredentialAttributesKt.generateServiceName("HG", url), null);
   }
 }

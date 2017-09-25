@@ -35,15 +35,15 @@ class GitGuiTest : GitGuiTestCase() {
   fun testGitImport(){
     val vcsName = "Git"
     val gitApp = "path_to_git_repo"
-    val projectPath = getMasterProjectDirPath(gitApp)
+    val projectPath = guiTestRule.getMasterProjectDirPath(gitApp)
 
     welcomeFrame {
       checkoutFrom()
-      JBListPopupFixture.findListPopup(myRobot).invokeAction(vcsName)
+      JBListPopupFixture.findListPopup(robot()).invokeAction(vcsName)
 
       dialog("Clone Repository") {
         val labelText = "Git Repository URL:"
-        val editorComboBox = myRobot.finder().findByLabel(this.target(), labelText, EditorComboBox::class.java)
+        val editorComboBox = robot().finder().findByLabel(this.target(), labelText, EditorComboBox::class.java)
         GuiActionRunner.execute(object : GuiTask() {
           @Throws(Throwable::class)
           override fun executeInEDT() {
@@ -55,7 +55,7 @@ class GitGuiTest : GitGuiTestCase() {
       message(VcsBundle.message("checkout.title")).clickYes()
       dialog("Import Project") {
         button("Next").click()
-        val textField = GuiTestUtil.findTextField(myRobot, "Project name:").click()
+        val textField = GuiTestUtil.findTextField(robot(), "Project name:").click()
         button("Next").click()
         button("Next").click()
         button("Next").click() //libraries
@@ -64,7 +64,7 @@ class GitGuiTest : GitGuiTestCase() {
         button("Finish").click()
       }
     }
-    val ideFrame = findIdeFrame()
+    val ideFrame = guiTestRule.findIdeFrame()
     ideFrame.waitForBackgroundTasksToFinish()
 
 
@@ -73,7 +73,7 @@ class GitGuiTest : GitGuiTestCase() {
     val editor = ideFrame.editor
     editor.open(testJavaPath)
 
-    ToolWindowFixture.showToolwindowStripes(myRobot)
+    ToolWindowFixture.showToolwindowStripes(robot())
 
     //prevent from ProjectLeak (if the project is closed during the indexing
     DumbService.getInstance(ideFrame.project).waitForSmartMode()

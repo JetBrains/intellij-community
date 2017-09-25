@@ -71,13 +71,6 @@ public class InternalProjectTaskRunner extends ProjectTaskRunner {
     return true;
   }
 
-  @Override
-  public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
-                                                         @NotNull ExecuteRunConfigurationTask task,
-                                                         @Nullable Executor executor) {
-    return null;
-  }
-
   public static Map<Class<? extends ProjectTask>, List<ProjectTask>> groupBy(@NotNull Collection<? extends ProjectTask> tasks) {
     return tasks.stream().collect(Collectors.groupingBy(o -> {
       if (o instanceof ModuleFilesBuildTask) return ModuleFilesBuildTask.class;

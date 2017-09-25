@@ -21,7 +21,7 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
  * @author ven
  */
 public class CreateParameterFromUsageTest extends LightQuickFixParameterizedTestCase {
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {

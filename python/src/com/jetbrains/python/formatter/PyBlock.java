@@ -390,12 +390,11 @@ public class PyBlock implements ASTBlock {
     }
 
     if (settings.DICT_ALIGNMENT == DICT_ALIGNMENT_ON_VALUE) {
-      if (isValueOfKeyValuePairOfDictLiteral(child) && !ourListElementTypes.contains(childType)) {
+      // Align not the whole value but its left bracket if it starts with it
+      if (isValueOfKeyValuePairOfDictLiteral(child) && !isOpeningBracket(child.getFirstChildNode())) {
         childAlignment = myParent.myDictAlignment;
       }
-      else if (isValueOfKeyValuePairOfDictLiteral(myNode) &&
-               ourListElementTypes.contains(parentType) &&
-               PyTokenTypes.OPEN_BRACES.contains(childType)) {
+      else if (isValueOfKeyValuePairOfDictLiteral(myNode) && isOpeningBracket(child)) {
         childAlignment = myParent.myParent.myDictAlignment;
       }
     }
@@ -417,6 +416,10 @@ public class PyBlock implements ASTBlock {
     }
 
     return new PyBlock(this, child, childAlignment, childIndent, childWrap, myContext);
+  }
+
+  private static boolean isOpeningBracket(@Nullable ASTNode node) {
+    return node != null && PyTokenTypes.OPEN_BRACES.contains(node.getElementType()) && node == node.getTreeParent().getFirstChildNode();
   }
 
   private static boolean isValueOfKeyValuePairOfDictLiteral(@NotNull ASTNode node) {
@@ -737,7 +740,7 @@ public class PyBlock implements ASTBlock {
         if (myNode.getElementType() == PyElementTypes.CLASS_DECLARATION) {
           final PyStatement[] statements = ((PyStatementList)psi2).getStatements();
           if (statements.length > 0 && statements[0] instanceof PyFunction) {
-            return getBlankLinesForOption(settings.BLANK_LINES_AROUND_METHOD);
+            return getBlankLinesForOption(pySettings.BLANK_LINES_BEFORE_FIRST_METHOD);
           }
         }
         if (childType1 == PyTokenTypes.COLON && needLineBreakInStatement()) {
@@ -816,9 +819,9 @@ public class PyBlock implements ASTBlock {
   }
 
   @NotNull
-  private Spacing getBlankLinesForOption(int option) {
-    final int blankLines = option + 1;
-    return Spacing.createSpacing(0, 0, blankLines,
+  private Spacing getBlankLinesForOption(int minBlankLines) {
+    final int lineFeeds = minBlankLines + 1;
+    return Spacing.createSpacing(0, 0, lineFeeds,
                                  myContext.getSettings().KEEP_LINE_BREAKS,
                                  myContext.getSettings().KEEP_BLANK_LINES_IN_DECLARATIONS);
   }

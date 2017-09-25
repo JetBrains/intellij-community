@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -86,8 +87,12 @@ public class CompletionUtil {
     return null;
   }
 
-  public static boolean shouldShowFeature(final CompletionParameters parameters, @NonNls final String id) {
-    if (FeatureUsageTracker.getInstance().isToBeAdvertisedInLookup(id, parameters.getPosition().getProject())) {
+  public static boolean shouldShowFeature(CompletionParameters parameters, @NonNls final String id) {
+    return shouldShowFeature(parameters.getPosition().getProject(), id);
+  }
+
+  public static boolean shouldShowFeature(Project project, @NonNls String id) {
+    if (FeatureUsageTracker.getInstance().isToBeAdvertisedInLookup(id, project)) {
       FeatureUsageTracker.getInstance().triggerFeatureShown(id);
       return true;
     }

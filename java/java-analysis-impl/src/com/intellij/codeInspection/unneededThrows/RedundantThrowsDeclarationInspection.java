@@ -20,13 +20,14 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,6 +45,8 @@ import java.util.List;
 public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.unneededThrows.RedundantThrows");
 
+  public boolean IGNORE_ENTRY_POINTS = false;
+
   private final RedundantThrowsDeclarationLocalInspection myLocalInspection = new RedundantThrowsDeclarationLocalInspection(this);
 
   @Nls
@@ -50,6 +54,12 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
   @Override
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.redundant.throws.display.name");
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel("Ignore exceptions thrown by entry points methods", this, "IGNORE_ENTRY_POINTS");
   }
 
   @Override
@@ -63,14 +73,15 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
       final RefMethod refMethod = (RefMethod)refEntity;
       if (refMethod.isSyntheticJSP()) return null;
 
-      if (refMethod.hasSuperMethods()) return null;
+    //  if (refMethod.hasSuperMethods()) return null;
 
-      if (refMethod.isEntry()) return null;
+      if (IGNORE_ENTRY_POINTS && refMethod.isEntry()) return null;
 
       PsiClass[] unThrown = refMethod.getUnThrownExceptions();
       if (unThrown == null) return null;
 
       PsiMethod psiMethod = (PsiMethod)refMethod.getElement();
+      if (psiMethod == null) return null;
       PsiClassType[] throwsList = psiMethod.getThrowsList().getReferencedTypes();
       PsiJavaCodeReferenceElement[] throwsRefs = psiMethod.getThrowsList().getReferenceElements();
       List<ProblemDescriptor> problems = null;
@@ -161,6 +172,12 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
     return fix instanceof MyQuickFix ? ((MyQuickFix)fix).myHint : null;
   }
 
+  @Nullable
+  @Override
+  public RefGraphAnnotator getAnnotator(@NotNull RefManager refManager) {
+    return new RedundantThrowsGraphAnnotator(refManager);
+  }
+
   private static class MyQuickFix implements LocalQuickFix {
     private final ProblemDescriptionsProcessor myProcessor;
     private final String myHint;
@@ -232,15 +249,22 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
         //check read-only status for derived methods
         if (!FileModificationService.getInstance().preparePsiElementsForWrite(refsToDelete)) return;
 
-        for (final PsiJavaCodeReferenceElement aRefsToDelete : refsToDelete) {
-          if (aRefsToDelete.isValid()) {
-            aRefsToDelete.delete();
+        WriteAction.run(() -> {
+          for (final PsiJavaCodeReferenceElement aRefsToDelete : refsToDelete) {
+            if (aRefsToDelete.isValid()) {
+              aRefsToDelete.delete();
+            }
           }
-        }
+        });
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
     }
 
     private static void removeException(final RefMethod refMethod,
@@ -265,11 +289,9 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
           }
         }
       } else {
-        final Query<Pair<PsiMethod,PsiMethod>> query = AllOverridingMethodsSearch.search(psiMethod.getContainingClass());
-        query.forEach(pair -> {
-          if (pair.first == psiMethod) {
-            removeException(null, exceptionType, refsToDelete, pair.second);
-          }
+        final Query<PsiMethod> query = OverridingMethodsSearch.search(psiMethod);
+        query.forEach(m -> {
+          removeException(null, exceptionType, refsToDelete, m);
           return true;
         });
       }

@@ -24,6 +24,7 @@ import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Functions;
 import com.intellij.util.containers.ContainerUtil;
@@ -427,13 +428,13 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   private void parseProperties(PsiMethod method, JavaElementArrangementEntry entry) {
     String propertyName = null;
     boolean getter = true;
-    if (PropertyUtil.isSimplePropertyGetter(method)) {
+    if (PropertyUtilBase.isSimplePropertyGetter(method)) {
       entry.addModifier(GETTER);
-      propertyName = PropertyUtil.getPropertyNameByGetter(method);
+      propertyName = PropertyUtilBase.getPropertyNameByGetter(method);
     }
-    else if (PropertyUtil.isSimplePropertySetter(method)) {
+    else if (PropertyUtilBase.isSimplePropertySetter(method)) {
       entry.addModifier(SETTER);
-      propertyName = PropertyUtil.getPropertyNameBySetter(method);
+      propertyName = PropertyUtilBase.getPropertyNameBySetter(method);
       getter = false;
     }
 

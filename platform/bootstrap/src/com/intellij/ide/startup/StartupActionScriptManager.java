@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,236 +16,196 @@
 package com.intellij.ide.startup;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.io.ZipUtil;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.*;
-import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author cdr
  */
-@SuppressWarnings("HardCodedStringLiteral")
 public class StartupActionScriptManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.StartupActionScriptManager");
-  @NonNls public static final String STARTUP_WIZARD_MODE = "StartupWizardMode";
+  public static final String STARTUP_WIZARD_MODE = "StartupWizardMode";
 
-  @NonNls private static final String ACTION_SCRIPT_FILE = "action.script";
+  private static final String ACTION_SCRIPT_FILE = "action.script";
 
-  private StartupActionScriptManager() {
-  }
+  private StartupActionScriptManager() { }
 
   public static synchronized void executeActionScript() throws IOException {
-    List<ActionCommand> commands = loadActionScript();
-
-    for (ActionCommand actionCommand : commands) {
-      actionCommand.execute();
+    try {
+      List<ActionCommand> commands = loadActionScript();
+      for (ActionCommand actionCommand : commands) {
+        actionCommand.execute();
+      }
     }
-    if (!commands.isEmpty()) {
-      commands.clear();
-
-      saveActionScript(commands);
+    finally {
+      saveActionScript(null);  // deleting a file should not cause an exception
     }
   }
 
   public static synchronized void addActionCommand(ActionCommand command) throws IOException {
+    addActionCommands(Collections.singletonList(command));
+  }
+
+  public static synchronized void addActionCommands(List<ActionCommand> commands) throws IOException {
     if (Boolean.getBoolean(STARTUP_WIZARD_MODE)) {
-      command.execute();
-      return;
-    }
-    final List<ActionCommand> commands = loadActionScript();
-    commands.add(command);
-    saveActionScript(commands);
-  }
-
-  private static String getActionScriptPath() {
-    String systemPath = PathManager.getPluginTempPath();
-    return systemPath + File.separator + ACTION_SCRIPT_FILE;
-  }
-
-  private static List<ActionCommand> loadActionScript() throws IOException {
-    File file = new File(getActionScriptPath());
-    if (file.exists()) {
-      boolean fileCorrupted = false;
-      FileInputStream fis = new FileInputStream(file);
-      try {
-        //noinspection unchecked, IOResourceOpenedButNotSafelyClosed
-        return (List<ActionCommand>)new ObjectInputStream(fis).readObject();
-      }
-      catch (Throwable e) {    // ClassNotFoundException / IOException
-        fileCorrupted = true;
-        LOG.error("Internal file was corrupted. Problem is fixed.\nIf some plugins has been installed/uninstalled, please re-install/-uninstall them.", e);
-        //noinspection InstanceofCatchParameter
-        if (e instanceof IOException) throw (IOException)e;
-
-        return new ArrayList<ActionCommand>();
-      }
-      finally {
-        try {
-          fis.close();
-        } finally {
-          if (fileCorrupted) FileUtil.delete(file); // do not need corrupted file anymore
-        }
+      for (ActionCommand command : commands) {
+        command.execute();
       }
     }
     else {
-      return new ArrayList<ActionCommand>();
+      List<ActionCommand> script = loadActionScript();
+      script.addAll(commands);
+      saveActionScript(script);
     }
   }
 
-  private static void saveActionScript(List<ActionCommand> commands) throws IOException {
-    File temp = new File(PathManager.getPluginTempPath());
-    boolean exists = true;
-    if (!temp.exists()) {
-      exists = temp.mkdirs();
-    }
-
-    if (exists) {
-      File file = new File(getActionScriptPath());
-      ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file, false));
-      try {
-        oos.writeObject(commands);
-      }
-      finally {
-        oos.close();
-      }
-    }
+  private static File getActionScriptFile() {
+    return new File(PathManager.getPluginTempPath(), ACTION_SCRIPT_FILE);
   }
 
-  private static boolean canCreateFile(File file) {
-    return FileUtilRt.ensureCanCreateFile(file);
+  private static List<ActionCommand> loadActionScript() throws IOException {
+    File scriptFile = getActionScriptFile();
+    if (scriptFile.isFile()) {
+      try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(scriptFile))) {
+        Object data = ois.readObject();
+        if (data instanceof ActionCommand[]) {
+          return new ArrayList<>(Arrays.asList((ActionCommand[])data));
+        }
+        else if (data instanceof List && ((List)data).size() == 0) {
+          return new ArrayList<>();
+        }
+        else {
+          throw new IOException("Unexpected object: " + data + "/" + data.getClass());
+        }
+      }
+      catch (ReflectiveOperationException e) {
+        throw new IOException("Stream error: " + scriptFile, e);
+      }
+    }
+
+    return new ArrayList<>();
+  }
+
+  private static void saveActionScript(@Nullable List<ActionCommand> commands) throws IOException {
+    File scriptFile = getActionScriptFile();
+    if (commands != null) {
+      File tempDir = scriptFile.getParentFile();
+      if (!(tempDir.exists() || tempDir.mkdirs())) {
+        throw new IOException("Cannot create directory: " + tempDir);
+      }
+      try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(scriptFile, false))) {
+        oos.writeObject(commands.toArray(ActionCommand.EMPTY_ARRAY));
+      }
+    }
+    else if (scriptFile.exists()) {
+      FileUtilRt.delete(scriptFile);
+    }
   }
 
   public interface ActionCommand {
+    ActionCommand[] EMPTY_ARRAY = new ActionCommand[0];
     void execute() throws IOException;
   }
 
   public static class CopyCommand implements Serializable, ActionCommand {
-    @NonNls private static final String action = "copy";
-    private final File mySource;
-    private final File myDestination;
+    private static final long serialVersionUID = 201708031943L;
 
-    public CopyCommand(File source, File destination) {
-      myDestination = destination;
-      mySource = source;
-    }
+    private final String mySource;
+    private final String myDestination;
 
-    public String toString() {
-      return action + "[" + mySource.getAbsolutePath() +
-             (myDestination == null ? "" : ", " + myDestination.getAbsolutePath()) + "]";
+    public CopyCommand(@NotNull File source, @NotNull File destination) {
+      mySource = source.getAbsolutePath();
+      myDestination = destination.getAbsolutePath();
     }
 
     @Override
     public void execute() throws IOException {
-      // create dirs for destination
-      File parentFile = myDestination.getParentFile();
-      if (! parentFile.exists())
-        if (! myDestination.getParentFile().mkdirs()) {
-          JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                        MessageFormat.format("<html>Cannot create parent directory [{0}] of {1}<br>Please, check your access rights on folder <br>{2}",
-                                        parentFile.getAbsolutePath(), myDestination.getAbsolutePath(), parentFile.getParent()),
-                                        "Installing Plugin",
-                                        JOptionPane.ERROR_MESSAGE);
-        }
+      File source = new File(mySource), destination = new File(myDestination);
 
-      if (!mySource.exists()) {
-        // NOTE: Please don't use LOG.error here - this will block IDEA startup in case of problems with plugin installation (IDEA-54045)
+      if (!source.isFile()) {
+        throw new IOException("Source file missing: " + source);
+      }
 
-        //noinspection HardCodedStringLiteral,UseOfSystemOutOrSystemErr
-        System.err.println("Source file " + mySource.getAbsolutePath() + " does not exist for action " + this);
+      File destDir = destination.getParentFile();
+      if (!(destDir.exists() || destDir.mkdirs())) {
+        throw new IOException("Cannot create directory: " + destDir);
       }
-      else if (!canCreateFile(myDestination)) {
-        JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                      MessageFormat.format("<html>Cannot copy {0}<br>to<br>{1}<br>Please, check your access rights on folder <br>{2}",
-                                                           mySource.getAbsolutePath(),  myDestination.getAbsolutePath(), myDestination.getParent()),
-                                      "Installing Plugin", JOptionPane.ERROR_MESSAGE);
-      }
-      else {
-        FileUtilRt.copy(mySource, myDestination);
-      }
+
+      FileUtilRt.copy(source, destination);
     }
 
+    @Override
+    public String toString() {
+      return "copy[" + mySource + "," + myDestination + "]";
+    }
   }
 
   public static class UnzipCommand implements Serializable, ActionCommand {
-    @NonNls private static final String action = "unzip";
-    private final File mySource;
-    private final FilenameFilter myFilenameFilter;
-    private final File myDestination;
+    private static final long serialVersionUID = 201708031943L;
 
-    public UnzipCommand(File source, File destination) {
+    private final String mySource;
+    private final String myDestination;
+    private final FilenameFilter myFilenameFilter;
+
+    public UnzipCommand(@NotNull File source, @NotNull File destination) {
       this(source, destination, null);
     }
 
-    public UnzipCommand(File source, File destination, FilenameFilter filenameFilter) {
-      myDestination = destination;
-      mySource = source;
+    public UnzipCommand(@NotNull File source, @NotNull File destination, FilenameFilter filenameFilter) {
+      mySource = source.getAbsolutePath();
+      myDestination = destination.getAbsolutePath();
       myFilenameFilter = filenameFilter;
     }
 
-    public String toString() {
-      return action + "[" + mySource.getAbsolutePath() +
-             (myDestination == null ? "" : ", " + myDestination.getAbsolutePath()) + "]";
+    @Override
+    public void execute() throws IOException {
+      File source = new File(mySource), destination = new File(myDestination);
+
+      if (!source.isFile()) {
+        throw new IOException("Source file missing: " + source);
+      }
+
+      File destDir = destination.getParentFile();
+      if (!(destDir.exists() || destDir.mkdirs())) {
+        throw new IOException("Cannot create directory: " + destDir);
+      }
+
+      ZipUtil.extract(source, destination, myFilenameFilter);
     }
 
     @Override
-    public void execute() throws IOException {
-      if (!mySource.exists()) {
-        // Note, that we can not use LOG at this moment because it throws AssertionError 
-        //noinspection HardCodedStringLiteral,UseOfSystemOutOrSystemErr
-        System.err.println("Source file " + mySource.getAbsolutePath() + " does not exist for action " + this);
-      }
-      else if (!canCreateFile(myDestination)) {
-        JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                      MessageFormat.format("<html>Cannot unzip {0}<br>to<br>{1}<br>Please, check your access rights on folder <br>{2}",
-                                                           mySource.getAbsolutePath(), myDestination.getAbsolutePath(), myDestination),
-                                      "Installing Plugin", JOptionPane.ERROR_MESSAGE);
-      }
-      else {
-        try {
-          ZipUtil.extract(mySource, myDestination, myFilenameFilter);
-        }
-        catch(Exception ex) {
-          //noinspection CallToPrintStackTrace
-          ex.printStackTrace();
-          JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                        MessageFormat.format("<html>Failed to extract ZIP file {0}<br>to<br>{1}<br>You may need to re-download the plugin you tried to install.",
-                                                             mySource.getAbsolutePath(), myDestination.getAbsolutePath()),
-                                        "Installing Plugin", JOptionPane.ERROR_MESSAGE);
-        }
-      }
+    public String toString() {
+      return "unzip[" + mySource + "," + myDestination + "]";
     }
-
   }
 
   public static class DeleteCommand implements Serializable, ActionCommand {
-    @NonNls private static final String action = "delete";
-    private final File mySource;
+    private static final long serialVersionUID = 201708031943L;
 
-    public DeleteCommand(File source) {
-      mySource = source;
-    }
+    private final String mySource;
 
-    public String toString() {
-      return action + "[" + mySource.getAbsolutePath() + "]";
+    public DeleteCommand(@NotNull File source) {
+      mySource = source.getAbsolutePath();
     }
 
     @Override
     public void execute() throws IOException {
-      if (mySource != null && mySource.exists() && !FileUtilRt.delete(mySource)) {
-        //noinspection HardCodedStringLiteral,UseOfSystemOutOrSystemErr
-        System.err.println("Action " + this + " failed.");
-        JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                      MessageFormat.format("<html>Cannot delete {0}<br>Please, check your access rights on folder <br>{1}",
-                                                           mySource.getAbsolutePath(), mySource.getAbsolutePath()),
-                                      "Installing Plugin", JOptionPane.ERROR_MESSAGE);
+      File source = new File(mySource);
+      if (source.exists() && !FileUtilRt.delete(source)) {
+        throw new IOException("Cannot delete: " + source);
       }
+    }
+
+    @Override
+    public String toString() {
+      return "delete[" + mySource + "]";
     }
   }
 }

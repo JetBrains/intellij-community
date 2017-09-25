@@ -290,7 +290,9 @@ public class JarsBuilder {
           .appendToPath(relativeOutputPath, relativePath));
 
         if (inputStream == null) {
-          addDirectoryEntry(jarOutputStream, pathInJar + "/", writtenPaths);
+          if (!pathInJar.endsWith("/")) {
+            addDirectoryEntry(jarOutputStream, pathInJar + "/", writtenPaths);
+          }
         }
         else if (writtenPaths.add(pathInJar)) {
           ZipEntry newEntry = new ZipEntry(pathInJar);

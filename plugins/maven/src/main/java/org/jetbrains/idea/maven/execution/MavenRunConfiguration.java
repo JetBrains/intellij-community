@@ -95,7 +95,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
         result.setShouldDestroyProcessRecursively(true);
         result.addProcessListener(new ProcessAdapter() {
           @Override
-          public void processTerminated(ProcessEvent event) {
+          public void processTerminated(@NotNull ProcessEvent event) {
             updateProjectsFolders();
           }
         });

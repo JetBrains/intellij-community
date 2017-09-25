@@ -26,19 +26,19 @@ public class ElementCompletionTest extends HighlightingTestBase {
     return "completion";
   }
 
-  public void testElementCompletionRoot() throws Throwable {
+  public void testElementCompletionRoot() {
     doTestCompletion("element-completion-root.xml", "bar", "baz", "completion-1", "completion-2", "completion-3", "foo", "x");
   }
 
-  public void testElementCompletion1() throws Throwable {
+  public void testElementCompletion1() {
     doTestCompletion("element-completion-1.xml", new String[]{ "foo" });
   }
 
-  public void testElementCompletion2() throws Throwable {
+  public void testElementCompletion2() {
     doTestCompletion("element-completion-2.xml", "foo", "bar", "baz");
   }
 
-  public void testElementCompletion3() throws Throwable {
+  public void testElementCompletion3() {
     final WebEditorOptions options = WebEditorOptions.getInstance();
     final boolean oldValue = options.isAutomaticallyInsertRequiredAttributes();
     try {

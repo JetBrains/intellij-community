@@ -135,9 +135,8 @@ class JavaLangReflectVarHandleInvocationChecker {
             if (arrayType != null) {
               checkCallReceiver(methodCall, arrayType, holder);
 
-              final PsiType rawArrayType = arrayType.getType();
-              if (rawArrayType instanceof PsiArrayType) {
-                final ReflectiveType valueType = ReflectiveType.create(((PsiArrayType)rawArrayType).getComponentType());
+              final ReflectiveType valueType = arrayType.getArrayComponentType();
+              if (valueType != null) {
                 checkVarHandleAccessSignature(methodCall, valueType, 2, holder);
               }
             }

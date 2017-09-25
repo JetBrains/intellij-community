@@ -29,7 +29,6 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
-import com.intellij.openapi.module.ModuleGrouperKt;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.Factory;
@@ -874,7 +873,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         if (paths.contains(moduleNode.getData().getLinkedExternalProjectPath())) continue;
 
         resultProjectDataNode.addChild(moduleNode);
-        if (!ModuleGrouperKt.isQualifiedModuleNamesEnabled()) {
+        if (!projectConnectionDataNodeFunction.myResolverContext.isUseQualifiedModuleNames()) {
           // adjust ide module group
           final ModuleData moduleData = moduleNode.getData();
           if (moduleData.getIdeModuleGroup() != null) {
@@ -920,7 +919,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     GradleProjectResolverExtension projectResolverChain;
     if (settings != null) {
       List<ClassHolder<? extends GradleProjectResolverExtension>> extensionClasses = settings.getResolverExtensions();
-
+      if(extensionClasses.isEmpty()) {
+        extensionClasses.add(ClassHolder.from(BaseGradleProjectResolverExtension.class));
+      }
       Deque<GradleProjectResolverExtension> extensions = new ArrayDeque<>();
       for (ClassHolder<? extends GradleProjectResolverExtension> holder : extensionClasses) {
         final GradleProjectResolverExtension extension;

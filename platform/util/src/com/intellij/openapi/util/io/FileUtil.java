@@ -78,6 +78,15 @@ public class FileUtil extends FileUtilRt {
     return StringUtil.join(parts, File.separator);
   }
 
+  /**
+   * Gets the relative path from the {@code base} to the {@code file} regardless existence or the type of the {@code base}.
+   * <p>
+   * NOTE: if the file(not directory) passed as the {@code base} the result can not be used as a relative path from the {@code base} parent directory to the {@code file}
+   *
+   * @param base the base
+   * @param file the file
+   * @return the relative path from the {@code base} to the {@code file} or {@code null}
+   */
   @Nullable
   public static String getRelativePath(File base, File file) {
     return FileUtilRt.getRelativePath(base, file);
@@ -479,17 +488,7 @@ public class FileUtil extends FileUtilRt {
   @SuppressWarnings("Duplicates")
   private static void performCopy(@NotNull File fromFile, @NotNull File toFile, final boolean syncTimestamp) throws IOException {
     if (filesEqual(fromFile, toFile)) return;
-    final FileOutputStream fos;
-    try {
-      fos = openOutputStream(toFile);
-    }
-    catch (IOException e) {
-      if (SystemInfo.isWindows && e.getMessage() != null && e.getMessage().contains("denied") &&
-          WinUACTemporaryFix.nativeCopy(fromFile, toFile, syncTimestamp)) {
-        return;
-      }
-      throw e;
-    }
+    final FileOutputStream fos = openOutputStream(toFile);
 
     try {
       final FileInputStream fis = new FileInputStream(fromFile);
@@ -1193,7 +1192,7 @@ public class FileUtil extends FileUtilRt {
   public static String sanitizeFileName(@NotNull String name) {
     return sanitizeFileName(name, true);
   }
-  
+
   @NotNull
   public static String sanitizeFileName(@NotNull String name, boolean strict) {
     StringBuilder result = null;

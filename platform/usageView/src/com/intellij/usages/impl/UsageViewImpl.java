@@ -231,6 +231,7 @@ public class UsageViewImpl implements UsageView {
               return expandingAll ? EmptyEnumeration.getInstance() : super.getExpandedDescendants(parent);
             }
           };
+          myTree.setName("UsageViewTree");
 
           myRootPanel = new MyPanel(myTree);
           Disposer.register(this, myRootPanel);

@@ -28,7 +28,6 @@ import org.testng.xml.XmlInclude;
 import org.testng.xml.XmlSuite;
 import org.testng.xml.XmlTest;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Arrays;
@@ -38,7 +37,7 @@ import java.util.List;
 public class TestNGTreeHierarchyTest {
  
   @Test
-  public void testOneTestMethod() throws Exception {
+  public void testOneTestMethod() {
     final XmlSuite suite = new XmlSuite();
     final XmlTest test = new XmlTest();
     final XmlClass xmlClass = new XmlClass("a.ATest", false);
@@ -56,7 +55,7 @@ public class TestNGTreeHierarchyTest {
   }
 
   @Test
-  public void testSkipTestMethod() throws Exception {
+  public void testSkipTestMethod() {
 
     final StringBuffer buf = new StringBuffer();
     final IDEATestNGRemoteListener listener = createListener(buf);
@@ -77,7 +76,7 @@ public class TestNGTreeHierarchyTest {
   }
 
   @Test
-  public void testParallelTestExecutionPreserveInvocationCount() throws Exception {
+  public void testParallelTestExecutionPreserveInvocationCount() {
     final StringBuffer buf = new StringBuffer();
     final IDEATestNGRemoteListener listener = createListener(buf);
     listener.onStart((ISuite)null);
@@ -107,7 +106,7 @@ public class TestNGTreeHierarchyTest {
   }
 
   @Test
-  public void testParallelSameNameTestExecution() throws Exception {
+  public void testParallelSameNameTestExecution() {
     final StringBuffer buf = new StringBuffer();
     final IDEATestNGRemoteListener listener = createListener(buf);
     listener.onStart((ISuite)null);
@@ -138,7 +137,7 @@ public class TestNGTreeHierarchyTest {
   }
 
   @Test
-  public void testFailureWithoutStart() throws Exception {
+  public void testFailureWithoutStart() {
 
     final StringBuffer buf = new StringBuffer();
     final IDEATestNGRemoteListener listener = createListener(buf);
@@ -159,7 +158,7 @@ public class TestNGTreeHierarchyTest {
   }
 
   @Test
-  public void testSkipMethodAfterStartTest() throws Exception {
+  public void testSkipMethodAfterStartTest() {
     final StringBuffer buf = new StringBuffer();
     final IDEATestNGRemoteListener listener = createListener(buf);
     listener.onStart((ISuite)null);
@@ -181,7 +180,7 @@ public class TestNGTreeHierarchyTest {
   }
 
   @Test
-  public void testOneTestMethodWithMultipleInvocationCount() throws Exception {
+  public void testOneTestMethodWithMultipleInvocationCount() {
     final XmlSuite suite = new XmlSuite();
     final XmlTest test = new XmlTest();
     final XmlClass xmlClass = new XmlClass("a.ATest", false);
@@ -207,7 +206,7 @@ public class TestNGTreeHierarchyTest {
   }
 
   @Test
-  public void testConfigurationMethods() throws Exception {
+  public void testConfigurationMethods() {
     final StringBuffer buf = new StringBuffer();
     final IDEATestNGRemoteListener listener = createListener(buf);
     final String className = "a.ATest";
@@ -256,7 +255,7 @@ public class TestNGTreeHierarchyTest {
   }
 
   @Test
-  public void testConfigurationFailure() throws Exception {
+  public void testConfigurationFailure() {
     final StringBuffer buf = new StringBuffer();
     final IDEATestNGRemoteListener listener = createListener(buf);
     final String className = "a.ATest";
@@ -279,7 +278,7 @@ public class TestNGTreeHierarchyTest {
   }
   
   @Test
-  public void testAfterMethodWithInjectedTestResult() throws Exception {
+  public void testAfterMethodWithInjectedTestResult() {
     final StringBuffer buf = new StringBuffer();
     final IDEATestNGRemoteListener listener = createListener(buf);
     final String className = "a.ATest";
@@ -309,7 +308,7 @@ public class TestNGTreeHierarchyTest {
   }
 
   @Test
-  public void testNullParameters() throws Exception {
+  public void testNullParameters() {
     final StringBuffer buf = new StringBuffer();
     final IDEATestNGRemoteListener listener = createListener(buf);
     final MockTestNGResult result = new MockTestNGResult("ATest", "testMe", null, new Object[]{null, null});
@@ -325,7 +324,7 @@ public class TestNGTreeHierarchyTest {
   }
 
   @Test
-  public void testIncludedMethods() throws Exception {
+  public void testIncludedMethods() {
     final StringBuffer buf = new StringBuffer();
     final IDEATestNGRemoteListener listener = createListener(buf);
     final MockTestNGResult result = new MockTestNGResult("ATest", "testMe", null, new Object[]{null, null}) {
@@ -384,7 +383,7 @@ public class TestNGTreeHierarchyTest {
   private static IDEATestNGRemoteListener createListener(final StringBuffer buf) {
     return new IDEATestNGRemoteListener(new PrintStream(new OutputStream() {
         @Override
-        public void write(int b) throws IOException {
+        public void write(int b) {
           buf.append(new String(new byte[]{(byte)b}));
         }
       })) {

@@ -4,7 +4,7 @@ import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.PythonHelpersLocator;
-import com.jetbrains.python.sdkTools.SdkCreationType;
+import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -17,7 +17,7 @@ public class PythonGeneratorTest extends PyEnvTestCase {
     runPythonTest(new PyProcessWithConsoleTestTask<PyUnitTestProcessRunner>("/helpers", SdkCreationType.EMPTY_SDK) {
       @NotNull
       @Override
-      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+      protected PyUnitTestProcessRunner createProcessRunner() {
         return new PyUnitTestProcessRunner("test_generator.py", 0);
       }
 

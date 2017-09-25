@@ -27,7 +27,6 @@ import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -72,11 +71,11 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
     }
   }
 
-  protected void initText(@NotNull @NonNls String fileText) throws IOException {
+  protected void initText(@NotNull @NonNls String fileText) {
     init(fileText, TestFileType.TEXT);
   }
   
-  protected void init(@NotNull @NonNls String fileText, @NotNull TestFileType type) throws IOException {
+  protected void init(@NotNull @NonNls String fileText, @NotNull TestFileType type) {
     configureFromFileText(getFileName(type), fileText);
   }
 

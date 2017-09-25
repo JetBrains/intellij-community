@@ -267,7 +267,7 @@ public class SvnCommittedViewTest extends Svn16TestCase {
     }
   }
 
-  protected void checkList(final List<SvnChangeList> lists, final long revision, final Data[] content) throws Exception {
+  protected void checkList(final List<SvnChangeList> lists, final long revision, final Data[] content) {
     SvnChangeList list = null;
     for (SvnChangeList changeList : lists) {
       if (changeList.getNumber() == revision) {

@@ -33,21 +33,21 @@ class CommentOnLineWithSourcePredicate implements PsiElementPredicate {
       return false;
     }
     final IElementType type = comment.getTokenType();
-    if (!JavaTokenType.C_STYLE_COMMENT.equals(type) && !JavaTokenType.END_OF_LINE_COMMENT.equals(type)) {
+    if (JavaTokenType.C_STYLE_COMMENT.equals(type)) {
+      if (!comment.getText().endsWith("*/")) {
+        return false;
+      }
+    }
+    else if (!JavaTokenType.END_OF_LINE_COMMENT.equals(type)) {
       return false; // can't move JSP comments
     }
     final PsiElement prevSibling = PsiTreeUtil.prevLeaf(element);
     if (prevSibling == null || prevSibling.getTextLength() == 0) {
       return false;
     }
-    if (!isLineBreakWhiteSpace(prevSibling)) {
+    if (!(prevSibling instanceof PsiWhiteSpace)) {
       return true;
     }
-    final PsiElement nextSibling = PsiTreeUtil.nextLeaf(element);
-    return !isLineBreakWhiteSpace(nextSibling);
-  }
-
-  static boolean isLineBreakWhiteSpace(PsiElement element) {
-    return element instanceof PsiWhiteSpace && element.getText().indexOf('\n') >= 0;
+    return prevSibling.getText().indexOf('\n') < 0 && PsiTreeUtil.prevLeaf(prevSibling) != null;
   }
 }

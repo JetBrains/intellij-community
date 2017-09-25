@@ -57,7 +57,7 @@ public class HgHistoryUtil {
   @NotNull
   public static List<VcsCommitMetadata> loadMetadata(@NotNull final Project project,
                                                      @NotNull final VirtualFile root, int limit,
-                                                     @NotNull List<String> parameters) throws VcsException {
+                                                     @NotNull List<String> parameters) {
 
     final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
@@ -319,8 +319,7 @@ public class HgHistoryUtil {
 
   @NotNull
   public static List<TimedVcsCommit> readAllHashes(@NotNull Project project, @NotNull VirtualFile root,
-                                                   @NotNull final Consumer<VcsUser> userRegistry, @NotNull List<String> params)
-    throws VcsException {
+                                                   @NotNull final Consumer<VcsUser> userRegistry, @NotNull List<String> params) {
 
     final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {

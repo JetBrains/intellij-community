@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.github;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Clock;
 import com.intellij.testFramework.VfsTestUtil;
@@ -45,7 +44,7 @@ public abstract class GithubCreatePullRequestTestBase extends GithubTest {
   protected String BRANCH_NAME;
 
   @Override
-  protected void beforeTest() throws Exception {
+  protected void beforeTest() {
     Random rnd = new Random();
     long time = Clock.getTime();
     BRANCH_NAME = "branch_" + getTestName(false) + "_" + DateFormatUtil.formatDate(time).replace('/', '-') + "_" + rnd.nextLong();
@@ -60,7 +59,7 @@ public abstract class GithubCreatePullRequestTestBase extends GithubTest {
   }
 
   @Override
-  protected void afterTest() throws Exception {
+  protected void afterTest() {
     deleteRemoteBranch();
   }
 

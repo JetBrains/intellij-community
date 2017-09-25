@@ -182,6 +182,10 @@
       <add-to-group group-id="ViewMenu" relative-to-action="QuickActions" anchor="after"/>
     </group>
 
+    <action id="ShowGutterIconsSettings" class="com.intellij.application.options.editor.GutterIconsConfigurable$ShowSettingsAction">
+      <add-to-group group-id="EditorGutterPopupMenu"/>
+    </action>
+
     <action id="FixDocComment" class="com.intellij.codeInsight.editorActions.FixDocCommentAction"/>
 
     <action id="ViewNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarAction">
@@ -301,11 +305,9 @@
     
     <group id="ParameterNameHints" popup="true">
       <action id="ShowSettingsWithAddedPattern" class="com.intellij.codeInsight.hints.ShowSettingsWithAddedPattern"/>
+      <action id="ToggleInlineHintsAction" class="com.intellij.codeInsight.hints.ToggleInlineHintsAction"/>
+      <action id="ToggleCompletionHintsAction" class="com.intellij.codeInsight.hints.ToggleCompletionHintsAction"/>
     </group>
-    
-    <action id="ToggleInlineHintsAction" class="com.intellij.codeInsight.hints.ToggleInlineHintsAction">
-      <add-to-group group-id="ParameterNameHints"/>
-    </action>
     
     <!-- Analyze -->
     <action id="SliceBackward" class="com.intellij.slicer.SliceBackwardAction"/>
@@ -843,6 +845,11 @@
       <reference ref="XDebugger.ValueGroup"/>
     </group>
 
+    <group id="XDebugger.Evaluate.Code.Fragment.Editor.Popup">
+      <reference ref="BasicEditorPopupMenu"/>
+      <reference ref="EditorToggleUseSoftWraps"/>
+    </group>
+
     <group id="XDebugger.Settings" icon="AllIcons.General.SecondaryGroup" popup="true">
       <action id="XDebugger.Inline" class="com.intellij.xdebugger.impl.actions.UseInlineDebuggerAction"/>
       <separator/>
@@ -888,6 +895,31 @@
 
       <add-to-group group-id="VersionControlsGroup" anchor="first"/>
       <add-to-group group-id="VcsGroups" anchor="first"/>
+    </group>
+
+    <group id="Vcs.Operations.Popup">
+      <group id="Vcs.Operations.Popup.VcsAware" class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$VcsAware">
+        <group id="Vcs.Operations.Popup.VcsNameSeparator" class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$VcsNameSeparator"/>
+        <reference id="ChangesView.AddUnversioned"/>
+        <reference id="CheckinProject"/>
+        <reference id="CheckinFiles"/>
+        <reference id="ChangesView.Revert"/>
+        <separator/>
+        <reference id="Vcs.ShowTabbedFileHistory"/>
+        <reference id="Annotate"/>
+        <reference id="Compare.SameVersion"/>
+        <reference id="ChangesView.Move"/>
+      </group>
+      <separator/>
+      <group id="Vcs.Operations.Popup.Vcs.Providers"
+             class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$Providers"/>
+      <group id="Vcs.Operations.Popup.NonVcsAware" class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$NonVcsAware">
+        <reference id="Start.Use.Vcs"/>
+        <reference id="Vcs.Checkout"/>
+      </group>
+      <separator text="Local History"/>
+      <reference id="LocalHistory.ShowHistory"/>
+      <reference id="LocalHistory.PutLabel"/>
     </group>
 
     <group id="TestTreePopupMenu">
@@ -1019,8 +1051,10 @@
     </group>
 
     <group id="RunDashboardContentToolbar">
-      <action id="RunDashboard.Run" class="com.intellij.execution.dashboard.actions.RunAction"/>
-      <action id="RunDashboard.Debug" class="com.intellij.execution.dashboard.actions.DebugAction"/>
+      <!--suppress PluginXmlValidity -->
+      <action id="RunDashboard.Run" class="com.intellij.execution.dashboard.actions.RunAction" use-shortcut-of="RunClass"/>
+      <!--suppress PluginXmlValidity -->
+      <action id="RunDashboard.Debug" class="com.intellij.execution.dashboard.actions.DebugAction" use-shortcut-of="DebugClass"/>
       <action id="RunDashboard.Stop" class="com.intellij.execution.dashboard.actions.StopAction"/>
     </group>
 

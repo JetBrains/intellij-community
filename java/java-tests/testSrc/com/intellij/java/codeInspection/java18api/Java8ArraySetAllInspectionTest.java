@@ -30,7 +30,7 @@ public class Java8ArraySetAllInspectionTest extends LightQuickFixParameterizedTe
     return new LocalInspectionTool[]{new Java8ArraySetAllInspection()};
   }
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 

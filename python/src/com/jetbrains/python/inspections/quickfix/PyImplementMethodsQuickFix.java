@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.override.PyMethodMember;
 import com.jetbrains.python.codeInsight.override.PyOverrideImplementUtil;
@@ -29,15 +30,15 @@ import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Set;
 
 public class PyImplementMethodsQuickFix extends LocalQuickFixOnPsiElement {
 
+  @NotNull
   private final Set<PyFunction> myToImplement;
 
-  public PyImplementMethodsQuickFix(PyClass aClass, Set<PyFunction> toImplement) {
-   super(aClass);
+  public PyImplementMethodsQuickFix(@NotNull PyClass cls, @NotNull Set<PyFunction> toImplement) {
+    super(cls);
     myToImplement = toImplement;
   }
 
@@ -47,6 +48,7 @@ public class PyImplementMethodsQuickFix extends LocalQuickFixOnPsiElement {
     return PyBundle.message("QFIX.NAME.implement.methods");
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getFamilyName() {
@@ -59,17 +61,10 @@ public class PyImplementMethodsQuickFix extends LocalQuickFixOnPsiElement {
 
     if (editor != null && startElement instanceof PyClass) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        ArrayList<PyMethodMember> list = new ArrayList<>();
-        for (PyFunction function: myToImplement) {
-          list.add(new PyMethodMember(function));
-        }
-        PyOverrideImplementUtil.overrideMethods(editor, (PyClass)startElement, list, true);
+        PyOverrideImplementUtil.overrideMethods(editor, (PyClass)startElement, ContainerUtil.map(myToImplement, PyMethodMember::new), true);
       }
       else {
-        PyOverrideImplementUtil
-          .chooseAndOverrideOrImplementMethods(project, editor,
-                                               (PyClass)startElement, myToImplement,
-                                               "Select Methods to Implement", true);
+        PyOverrideImplementUtil.chooseAndImplementMethods(project, editor, (PyClass)startElement, myToImplement);
       }
     }
   }

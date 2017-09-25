@@ -33,9 +33,11 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -136,6 +138,13 @@ public class PyExceptionBreakpointType
       return exception;
     }
     return "";
+  }
+
+  @Nullable
+  @Override
+  public XDebuggerEditorsProvider getEditorsProvider(@NotNull XBreakpoint<PyExceptionBreakpointProperties> breakpoint,
+                                                     @NotNull Project project) {
+    return new PyDebuggerEditorsProvider();
   }
 
   @Override

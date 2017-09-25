@@ -265,7 +265,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
     assertTrue(childFile.delete());
   }
 
-  public void testFindRoot() throws IOException {
+  public void testFindRoot() {
     VirtualFile root = myFS.findFileByPath("wrong_path");
     assertNull(root);
 
@@ -371,7 +371,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
     }
   }
 
-  public void testWindowsHiddenDirectory() throws Exception {
+  public void testWindowsHiddenDirectory() {
     if (!SystemInfo.isWindows) {
       System.err.println(getName() + " skipped: " + SystemInfo.OS_NAME);
       return;
@@ -460,7 +460,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
     assertNull(vFile);
   }
 
-  public void testNoMoreFakeRoots() throws Exception {
+  public void testNoMoreFakeRoots() {
     try {
       PersistentFS.getInstance().findRoot("", myFS);
       fail("should fail by assertion in PersistentFsImpl.findRoot()");
@@ -714,7 +714,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
     });
   }
 
-  public void testBrokenSymlinkMove() throws IOException, InterruptedException {
+  public void testBrokenSymlinkMove() throws IOException {
     if (!SystemInfo.areSymLinksSupported) {
       System.err.println(getName() + " skipped: " + SystemInfo.OS_NAME);
       return;

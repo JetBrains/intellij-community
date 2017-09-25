@@ -30,11 +30,11 @@ public class RepositoryLibraryPropertiesDialog extends DialogWrapper {
   public RepositoryLibraryPropertiesDialog(@Nullable Project project,
                                            RepositoryLibraryPropertiesModel model,
                                            RepositoryLibraryDescription description,
-                                           final boolean changesRequired) {
+                                           final boolean changesRequired, final boolean allowExcludingTransitiveDependencies) {
     super(project);
     this.model = model;
     propertiesEditor =
-      new RepositoryLibraryPropertiesEditor(project, model, description, new RepositoryLibraryPropertiesEditor.ModelChangeListener() {
+      new RepositoryLibraryPropertiesEditor(project, model, description, allowExcludingTransitiveDependencies, new RepositoryLibraryPropertiesEditor.ModelChangeListener() {
         @Override
         public void onChange(RepositoryLibraryPropertiesEditor editor) {
           setOKActionEnabled(editor.isValid() && (!changesRequired || editor.hasChanges()));

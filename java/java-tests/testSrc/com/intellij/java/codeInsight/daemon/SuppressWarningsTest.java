@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NonNls;
 public class SuppressWarningsTest extends LightDaemonAnalyzerTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting";
 
-  private void doTest(boolean checkWarnings) throws Exception {
+  private void doTest(boolean checkWarnings) {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
   }
 
@@ -33,7 +33,7 @@ public class SuppressWarningsTest extends LightDaemonAnalyzerTestCase {
     enableInspectionTool(new UnusedDeclarationInspection());
   }
 
-  public void testSuppressed() throws Exception {
+  public void testSuppressed() {
     doTest(true);
   }
 }

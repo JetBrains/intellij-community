@@ -237,17 +237,16 @@ internal fun updateState(states: MutableMap<String, Any>, key: String, newState:
   return true
 }
 
-private fun arrayEquals(a: ByteArray, a2: ByteArray, aSize: Int = a.size): Boolean {
+private fun arrayEquals(a: ByteArray, a2: ByteArray, size: Int = a.size): Boolean {
   if (a === a2) {
     return true
   }
 
-  val length = aSize
-  if (a2.size != length) {
+  if (a2.size != size) {
     return false
   }
 
-  for (i in 0..length - 1) {
+  for (i in 0 until size) {
     if (a[i] != a2[i]) {
       return false
     }

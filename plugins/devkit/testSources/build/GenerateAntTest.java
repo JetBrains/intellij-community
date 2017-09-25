@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.compiler.ant.BuildTargetsFactory;
@@ -35,7 +34,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 public class GenerateAntTest extends IdeaTestCase {
-
   public void testP1() throws Exception {
     final VirtualFile parent = myModule.getModuleFile().getParent();
     assertNotNull(parent);
@@ -56,7 +54,7 @@ public class GenerateAntTest extends IdeaTestCase {
                             "    <zipfileset dir=\"${module." + lowercased + ".basedir}/classes\"/>\n" +
                             "    <zipfileset file=\"${module." + lowercased + ".basedir}/META-INF/plugin.xml\" prefix=\"META-INF\"/>\n" +
                             "    <manifest>\n" +
-                            "      <attribute name=\"Created-By\" value=\"IntelliJ IDEA Community Edition\"/>\n" +
+                            "      <attribute name=\"Created-By\" value=\"IntelliJ IDEA\"/>\n" +
                             "      <attribute name=\"Manifest-Version\" value=\"1.0\"/>\n" +
                             "    </manifest>\n" +
                             "  </jar>\n" +

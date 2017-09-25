@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,26 +26,24 @@ import java.util.List;
 
 public interface SvnFileUrlMapping extends AbstractVcs.RootsConvertor {
   @Nullable
-  SVNURL getUrlForFile(final File file);
+  SVNURL getUrlForFile(@NotNull File file);
 
   @Nullable
-  File getLocalPath(@NotNull String url);
+  File getLocalPath(@NotNull SVNURL url);
 
   @Nullable
-  RootUrlInfo getWcRootForUrl(final String url);
+  RootUrlInfo getWcRootForUrl(@NotNull SVNURL url);
 
+  @NotNull
   List<RootUrlInfo> getAllWcInfos();
 
   @Nullable
-  RootUrlInfo getWcRootForFilePath(final File file);
+  RootUrlInfo getWcRootForFilePath(@NotNull File file);
 
-  /**
-   * @return true if roots under SVN set by the user differs from real WC roots (are under specified roots)
-   */
-  boolean rootsDiffer();
-
+  @NotNull
   List<RootUrlInfo> getErrorRoots();
 
+  @NotNull
   VirtualFile[] getNotFilteredRoots();
 
   boolean isEmpty();

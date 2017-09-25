@@ -99,16 +99,11 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class, false);
     if (lambdaExpression != null) {
-      PsiElement body = lambdaExpression.getBody();
-      if (body instanceof PsiExpression) {
-        lambdaExpression = (PsiLambdaExpression)RefactoringUtil.expandExpressionLambdaToCodeBlock(body);
-        body = lambdaExpression.getBody();
-      }
+      PsiCodeBlock body = RefactoringUtil.expandExpressionLambdaToCodeBlock(lambdaExpression);
 
       PsiClass targetClass = PsiTreeUtil.getParentOfType(lambdaExpression, PsiClass.class);
       if (targetClass == null) return;
-      LOG.assertTrue(body instanceof PsiCodeBlock);
-      PsiElement[] elements = ((PsiCodeBlock)body).getStatements();
+      PsiElement[] elements = body.getStatements();
 
       HashSet<PsiField> usedFields = new HashSet<>();
       boolean canBeStatic = ExtractMethodProcessor.canBeStatic(targetClass, lambdaExpression, elements, usedFields) && usedFields.isEmpty();

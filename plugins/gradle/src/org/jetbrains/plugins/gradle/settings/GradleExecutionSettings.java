@@ -49,6 +49,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   @Nullable
   private String myIdeProjectPath;
   private boolean resolveModulePerSourceSet = true;
+  private boolean useQualifiedModuleNames = false;
 
   public GradleExecutionSettings(@Nullable String gradleHome,
                                  @Nullable String serviceDirectory,
@@ -114,6 +115,14 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   public void setResolveModulePerSourceSet(boolean resolveModulePerSourceSet) {
     this.resolveModulePerSourceSet = resolveModulePerSourceSet;
+  }
+
+  public boolean isUseQualifiedModuleNames() {
+    return useQualifiedModuleNames;
+  }
+
+  public void setUseQualifiedModuleNames(boolean useQualifiedModuleNames) {
+    this.useQualifiedModuleNames = useQualifiedModuleNames;
   }
 
   @NotNull

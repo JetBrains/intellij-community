@@ -23,6 +23,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -53,6 +54,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
       JavaCompletionUtil.insertClassReference(psiClass, context.getFile(), start, start + insertedName.length());
     }
   };
+  static final Key<Boolean> FUNCTIONAL_EXPR_ITEM = Key.create("FUNCTIONAL_EXPR_ITEM");
 
   private static boolean isLambdaContext(@NotNull PsiElement element) {
     final PsiElement rulezzRef = element.getParent();
@@ -105,13 +107,16 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
                 .withPresentableText(paramsString + " -> {}")
                 .withTypeText(functionalInterfaceType.getPresentableText())
                 .withIcon(AllIcons.Nodes.Function);
-            LookupElement lambdaElement = builder.withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
-            result.consume(smart ? lambdaElement : PrioritizedLookupElement.withPriority(lambdaElement, 1));
+            builder.putUserData(FUNCTIONAL_EXPR_ITEM, true);
+            result.consume(builder.withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE));
           }
 
           addMethodReferenceVariants(
             smart, addInheritors, parameters, matcher, functionalInterfaceType, functionalInterfaceMethod, params, originalPosition, substitutor,
-            element -> result.consume(smart ? JavaSmartCompletionContributor.decorate(element, Arrays.asList(expectedTypes)) : element));
+            element -> {
+              element.putUserData(FUNCTIONAL_EXPR_ITEM, true);
+              result.consume(smart ? JavaSmartCompletionContributor.decorate(element, Arrays.asList(expectedTypes)) : element);
+            });
         }
       }
     }

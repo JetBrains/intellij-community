@@ -15,6 +15,8 @@
  */
 package com.intellij.configurationStore
 
+import com.intellij.configurationStore.schemeManager.createDir
+import com.intellij.configurationStore.schemeManager.getOrCreateChild
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.StateSplitter
 import com.intellij.openapi.components.StateSplitterEx
@@ -22,12 +24,10 @@ import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.DirectoryStorageUtil
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.LineSeparator
 import com.intellij.util.SmartList
-import com.intellij.util.SystemProperties
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.isEmpty
@@ -206,7 +206,7 @@ open class DirectoryBasedStorage(private val dir: Path,
 
           val file = dir.getOrCreateChild(fileName, this)
           // we don't write xml prolog due to historical reasons (and should not in any case)
-          writeFile(null, this, file, storeElement, LineSeparator.fromString(if (file.exists()) loadFile(file).second else SystemProperties.getLineSeparator()), false)
+          writeFile(null, this, file, storeElement, getOrDetectLineSeparator(file) ?: LineSeparator.getSystemLineSeparator(), false)
         }
         catch (e: IOException) {
           LOG.error(e)
@@ -241,17 +241,18 @@ open class DirectoryBasedStorage(private val dir: Path,
   }
 }
 
-private val NON_EXISTENT_FILE_DATA = Pair.create<ByteArray, String>(null, SystemProperties.getLineSeparator())
-
 /**
  * @return pair.first - file contents (null if file does not exist), pair.second - file line separators
  */
-private fun loadFile(file: VirtualFile?): Pair<ByteArray, String> {
-  if (file == null || !file.exists()) {
-    return NON_EXISTENT_FILE_DATA
+private fun getOrDetectLineSeparator(file: VirtualFile): LineSeparator? {
+  if (!file.exists()) {
+    return null
   }
 
-  val bytes = file.contentsToByteArray()
-  val lineSeparator = file.detectedLineSeparator ?: detectLineSeparators(Charsets.UTF_8.decode(ByteBuffer.wrap(bytes)), null).separatorString
-  return Pair.create<ByteArray, String>(bytes, lineSeparator)
+  file.detectedLineSeparator?.let {
+    return LineSeparator.fromString(it)
+  }
+  val lineSeparator = detectLineSeparators(Charsets.UTF_8.decode(ByteBuffer.wrap(file.contentsToByteArray())))
+  file.detectedLineSeparator = lineSeparator.separatorString
+  return lineSeparator
 }

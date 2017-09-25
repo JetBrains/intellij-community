@@ -36,8 +36,7 @@ public class MockDelayingChangeProvider implements ChangeProvider {
   }
 
   public void getChanges(@NotNull final VcsDirtyScope dirtyScope, @NotNull final ChangelistBuilder builder, @NotNull final ProgressIndicator progress,
-                         @NotNull final ChangeListManagerGate addGate)
-    throws VcsException {
+                         @NotNull final ChangeListManagerGate addGate) {
     synchronized (myLock) {
       if (myExecuteInsideUpdate == null) {
         return;

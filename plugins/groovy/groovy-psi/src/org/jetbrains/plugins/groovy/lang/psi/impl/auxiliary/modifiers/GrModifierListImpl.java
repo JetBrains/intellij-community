@@ -308,7 +308,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     final PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(qualifiedName, getResolveScope());
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
     GrAnnotation annotation;
-    if (psiClass != null && psiClass.isAnnotationType()) {
+    if (psiClass != null) {
       annotation = (GrAnnotation)addAfter(factory.createModifierFromText("@xxx"), null);
       annotation.getClassReference().bindToElement(psiClass);
     }

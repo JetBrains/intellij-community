@@ -9,7 +9,7 @@ import org.jetbrains.plugins.javaFX.resources.JavaFxResourcePropertyValueInspect
  */
 public class JavaFxResourcePropertyValueInspectionTest extends AbstractJavaFXTestCase {
 
-  public void testResourceKeyInEnumAttribute() throws Exception {
+  public void testResourceKeyInEnumAttribute() {
     myFixture.addFileToProject("messages.properties", "correct.alignment=BASELINE_RIGHT\n" +
                                                       "incorrect.alignment=INCORRECT_VALUE\n");
     doTest();

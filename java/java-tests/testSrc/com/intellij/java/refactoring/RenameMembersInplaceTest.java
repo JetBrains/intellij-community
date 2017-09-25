@@ -45,55 +45,55 @@ public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testInnerClass() throws Exception {
+  public void testInnerClass() {
     doTestInplaceRename("NEW_NAME");
   }
   
-  public void testClassWithConstructorReferenceInside() throws Exception {
+  public void testClassWithConstructorReferenceInside() {
     doTestInplaceRename("NewName");
   }
   
-  public void testIncomplete() throws Exception {
+  public void testIncomplete() {
     doTestInplaceRename("Klazz");
   }
   
-  public void testConstructor() throws Exception {
+  public void testConstructor() {
     doTestInplaceRename("Bar");
   }
 
-  public void testSuperMethod() throws Exception {
+  public void testSuperMethod() {
     doTestInplaceRename("xxx");
   }
   
-  public void testSuperMethodAnonymousInheritor() throws Exception {
+  public void testSuperMethodAnonymousInheritor() {
     doTestInplaceRename("xxx");
   }
 
-  public void testMultipleConstructors() throws Exception {
+  public void testMultipleConstructors() {
     doTestInplaceRename("Bar");
   }
 
-  public void testClassWithMultipleConstructors() throws Exception {
+  public void testClassWithMultipleConstructors() {
     doTestInplaceRename("Bar");
   }
   
-  public void testMethodWithJavadocRef() throws Exception {
+  public void testMethodWithJavadocRef() {
     doTestInplaceRename("bar");
   }
   
-  public void testEnumConstructor() throws Exception {
+  public void testEnumConstructor() {
     doTestInplaceRename("Bar");
   }
 
-  public void testMethodWithMethodRef() throws Exception {
+  public void testMethodWithMethodRef() {
     doTestInplaceRename("bar");
   }
 
-  public void testRenameFieldInIncompleteStatement() throws Exception {
+  public void testRenameFieldInIncompleteStatement() {
     doTestInplaceRename("bar");
   }
 
-  public void testSameNamedMethodsInOneFile() throws Exception {
+  public void testSameNamedMethodsInOneFile() {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
 
     final PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.getInstance().getAllAccepted());
@@ -111,7 +111,7 @@ public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
     final Editor finalEditor = editor;
     new WriteCommandAction.Simple(project) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         finalEditor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), "newDoSomething ");
       }
     }.execute().throwException();
@@ -123,7 +123,7 @@ public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
-  public void testNameSuggestion() throws Exception {
+  public void testNameSuggestion() {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
 
     final PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.getInstance().getAllAccepted());
@@ -137,7 +137,7 @@ public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
-  public void testConflictingMethodName() throws Exception {
+  public void testConflictingMethodName() {
     try {
       doTestInplaceRename("bar");
     }
@@ -149,7 +149,7 @@ public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
     fail("Conflict was not detected");
   }
 
-  public void testNearParameterHint() throws Exception {
+  public void testNearParameterHint() {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
     int originalCaretPosition = myEditor.getCaretModel().getOffset();
     EditorTestUtil.addInlay(myEditor, originalCaretPosition);
@@ -165,7 +165,7 @@ public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
     assertTrue(myEditor.getCaretModel().getLogicalPosition().leansForward); // check caret is still to the right
   }
 
-  private void doTestInplaceRename(final String newName) throws Exception {
+  private void doTestInplaceRename(final String newName) {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
 
     final PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.getInstance().getAllAccepted());

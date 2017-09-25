@@ -18,7 +18,7 @@ Launcher then creates threads to read/write them to console.
 -------
 How to build.
 You may open .sln from Visual Studio or use msbuild from VS command prompt:
- msbuild Elevator.sln /p:Configuration=release
+ msbuild Elevator.sln /p:Configuration=release /property:Platform=x86
 
 
 Building and signing on TC:
@@ -41,3 +41,8 @@ Check you got "spam" in out.txt and "err" in "err.txt"
 Ensure permissions
 > launcher.exe python.exe -c "print(open('c:\\windows\\eggs.txt', 'w'))"
 Check no error
+
+--------
+How to check errors.
+Both tools report errors as error codes, stderr and event log under "Application".
+No event ids are registered, but you can check eventId and find appropriate ReportEvent call.

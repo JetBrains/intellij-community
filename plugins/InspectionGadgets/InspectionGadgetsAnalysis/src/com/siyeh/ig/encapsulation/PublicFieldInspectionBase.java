@@ -30,7 +30,7 @@ public class PublicFieldInspectionBase extends BaseInspection {
   public boolean ignoreEnums = false;
 
   @SuppressWarnings({"PublicField"})
-  public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet();
+  public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet("org.junit.runners.Parameterized.Parameter");
 
   @Override
   @NotNull

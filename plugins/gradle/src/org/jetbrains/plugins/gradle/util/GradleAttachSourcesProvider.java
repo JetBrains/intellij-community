@@ -37,9 +37,9 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.initialization.BuildLayoutParameters;
 import org.jetbrains.annotations.NotNull;
@@ -152,7 +152,7 @@ public class GradleAttachSourcesProvider implements AttachSourcesProvider {
   @NotNull
   private static File getSourceFile(String artifactCoordinates, VirtualFile classesFile, Project project) {
     LibraryData data = new LibraryData(GradleConstants.SYSTEM_ID, artifactCoordinates);
-    data.addPath(LibraryPathType.BINARY, PathUtil.getLocalFile(classesFile).getPath());
+    data.addPath(LibraryPathType.BINARY, VfsUtil.getLocalFile(classesFile).getPath());
     String serviceDirectory = GradleSettings.getInstance(project).getServiceDirectoryPath();
     File gradleUserHome =
       serviceDirectory != null ? new File(serviceDirectory) : new BuildLayoutParameters().getGradleUserHomeDir();

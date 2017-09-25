@@ -76,6 +76,7 @@ public class AggregatedDictionary implements EditableDictionary {
   public void replaceAll(@Nullable Collection<String> words) {
     Set<String> oldWords = getProjectDictionary().getWords();
     getProjectDictionary().replaceAll(words);
+    getCachedDictionary().addToDictionary(words);
     if (oldWords != null) {
       for (String word : oldWords) {
         if (words == null || !words.contains(word)) {

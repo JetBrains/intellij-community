@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.engine;
 
-import com.intellij.execution.ExecutionException;
+import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -30,6 +30,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.xdebugger.attach.XDefaultLocalAttachGroup;
 import com.intellij.xdebugger.attach.XLocalAttachDebugger;
 import com.intellij.xdebugger.attach.XLocalAttachDebuggerProvider;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author egor
@@ -51,7 +53,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     }
 
     @Override
-    public void attachDebugSession(@NotNull Project project, @NotNull ProcessInfo processInfo) throws ExecutionException {
+    public void attachDebugSession(@NotNull Project project, @NotNull ProcessInfo processInfo) {
       Pair<String, Integer> address = getAttachAddress(processInfo);
       assert address != null;
 
@@ -68,15 +70,16 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
 
       String name = getAttachString(address);
       RunnerAndConfigurationSettings runSettings = RunManager.getInstance(project)
-        .createRunConfiguration(name, ConfigurationTypeUtil.findConfigurationType("Remote").getConfigurationFactories()[0]);
+        .createRunConfiguration(name, Objects.requireNonNull(ConfigurationTypeUtil.findConfigurationType("Remote")).getConfigurationFactories()[0]);
 
       RunConfiguration remoteConfiguration = runSettings.getConfiguration();
-      ReflectionUtil.setField(remoteConfiguration.getClass(), remoteConfiguration, String.class, "HOST", address.first);
+      String host = address.first != null && !"*".equals(address.first) ? address.first : DebuggerManagerImpl.LOCALHOST_ADDRESS_FALLBACK;
+      ReflectionUtil.setField(remoteConfiguration.getClass(), remoteConfiguration, String.class, "HOST", host);
       ReflectionUtil.setField(remoteConfiguration.getClass(), remoteConfiguration, String.class, "PORT", String.valueOf(address.second));
       ReflectionUtil.setField(remoteConfiguration.getClass(), remoteConfiguration, boolean.class, "USE_SOCKET_TRANSPORT", true);
       ReflectionUtil.setField(remoteConfiguration.getClass(), remoteConfiguration, boolean.class, "SERVER_MODE", false);
 
-      ProgramRunnerUtil.executeConfiguration(project, runSettings, DefaultDebugExecutor.getDebugExecutorInstance());
+      ProgramRunnerUtil.executeConfiguration(runSettings, DefaultDebugExecutor.getDebugExecutorInstance());
     }
   };
 
@@ -124,6 +127,6 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
   }
 
   private static Pair<String, Integer> getAttachAddress(ProcessInfo processInfo) {
-    return DebugAttachDetector.getAttachAddress(StringUtil.split(processInfo.getCommandLine(), " "));
+    return DebugAttachDetector.getAttachAddress(ParametersListUtil.parse(processInfo.getCommandLine()));
   }
 }

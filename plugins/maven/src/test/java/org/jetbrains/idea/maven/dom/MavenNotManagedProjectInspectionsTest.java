@@ -29,7 +29,7 @@ public class MavenNotManagedProjectInspectionsTest extends MavenDomTestCase {
     setRepositoryPath(new File(myDir, "repo").getPath());
   }
 
-  public void testWorkForNonMavenProjects() throws Throwable {
+  public void testWorkForNonMavenProjects() {
     Module m = createModule("module");
     PsiTestUtil.addContentRoot(m, myProjectRoot);
 
@@ -53,7 +53,7 @@ public class MavenNotManagedProjectInspectionsTest extends MavenDomTestCase {
     checkHighlighting(); // should not fail nor highlight errors
   }
 
-  public void testEnablingInspectionForNonMavenProjectsAfterImport() throws Throwable {
+  public void testEnablingInspectionForNonMavenProjectsAfterImport() {
     if (ignore()) return;
     // can not reproduce in tests because of StartupManager.runWhenProjectIsInitialized
     // relies on ProjectManager.isProjectOpen. In tests the project is never being opened.

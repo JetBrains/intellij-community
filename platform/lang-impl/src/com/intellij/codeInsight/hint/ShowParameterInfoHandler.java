@@ -74,7 +74,13 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     invoke(project, editor, file, lbraceOffset, highlightedElement, false);
   }
 
-  public static void invoke(final Project project, final Editor editor, PsiFile file, int lbraceOffset, PsiElement highlightedElement, boolean requestFocus) {
+  public static void invoke(final Project project, final Editor editor, PsiFile file, 
+                            int lbraceOffset, PsiElement highlightedElement, boolean requestFocus) {
+    invoke(project, editor, file, lbraceOffset, highlightedElement, requestFocus, false);
+  }
+
+  public static void invoke(final Project project, final Editor editor, PsiFile file, 
+                            int lbraceOffset, PsiElement highlightedElement, boolean requestFocus, boolean singleParameterHint) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -88,7 +94,8 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
       file,
       offset,
       lbraceOffset,
-      requestFocus
+      requestFocus,
+      singleParameterHint
     );
 
     context.setHighlightedElement(highlightedElement);
@@ -137,7 +144,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
                                            ParameterInfoHandler handler,
                                            boolean requestFocus) {
     ParameterInfoComponent component = new ParameterInfoComponent(descriptors, editor, handler, requestFocus);
-    component.update();
+    component.update(false);
 
     final LightweightHint hint = new LightweightHint(component);
     hint.setSelectingHint(true);

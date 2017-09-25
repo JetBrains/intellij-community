@@ -97,7 +97,7 @@ object EventDispatcher {
     } else {
       val actionManager = ActionManager.getInstance()
       val mainActions = (actionManager.getAction(IdeActions.GROUP_MAIN_MENU) as ActionGroup).getFlatIdList()
-      if (mainActions.contains(actionManager.getId(action))) ScriptGenerator.processMainMenuActionEvent(action)
+      if (mainActions.contains(actionManager.getId(action))) ScriptGenerator.processMainMenuActionEvent(action, event)
     }
   }
 

@@ -42,7 +42,7 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner {
   @Override
   public int startRunnerWithArgs(String[] args, String name, int count, boolean sendTree) {
     try {
-      myListener.initialize();
+      myListener.initialize(!sendTree);
       final String[] packageNameRef = new String[1];
       final LauncherDiscoveryRequest discoveryRequest = JUnit5TestRunnerUtil.buildRequest(args, packageNameRef);
       myTestPlan = myLauncher.discover(discoveryRequest);
@@ -57,6 +57,9 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner {
           myListener.sendTree(myTestPlan, packageNameRef[0]);
         }
         while (--count > 0);
+      }
+      else {
+        myListener.setTestPlan(myTestPlan);
       }
 
       myLauncher.execute(discoveryRequest, listeners.toArray(new TestExecutionListener[0]));
@@ -76,8 +79,11 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner {
     Launcher launcher = LauncherFactory.create();
     myTestPlan = launcher.discover(discoveryRequest);
     final Set<TestIdentifier> roots = myTestPlan.getRoots();
-    
-    return roots.isEmpty() ? null : roots.iterator().next();
+    if (roots.isEmpty()) return null;
+    return roots.stream()
+      .filter(identifier -> !myTestPlan.getChildren(identifier).isEmpty())
+      .findFirst()
+      .orElse(null);
   }
 
   @Override

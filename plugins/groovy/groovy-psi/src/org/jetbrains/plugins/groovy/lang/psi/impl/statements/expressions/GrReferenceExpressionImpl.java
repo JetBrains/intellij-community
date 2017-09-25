@@ -26,6 +26,7 @@ import com.intellij.psi.impl.source.resolve.ResolveCache.PolyVariantResolver;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -47,7 +48,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
@@ -275,7 +275,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     if (resolved instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)resolved;
-      if (PropertyUtil.isSimplePropertySetter(method) && !method.getName().equals(getReferenceName())) {
+      if (PropertyUtilBase.isSimplePropertySetter(method) && !method.getName().equals(getReferenceName())) {
         return method.getParameterList().getParameters()[0].getType();
       }
 
@@ -376,14 +376,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       final PsiType type;
       if (resolved instanceof GrField) {
         type = ((GrField)resolved).getType();
-      }
-      else if (resolved instanceof GrVariable) {
-        type = ((GrVariable)resolved).getDeclaredType();
-      }
-      else if (resolved instanceof GrAccessorMethod) {
-        type = ((GrAccessorMethod)resolved).getProperty().getType();
-      }
-      else {
+      } else {
         type = null;
       }
       if (type != null) {

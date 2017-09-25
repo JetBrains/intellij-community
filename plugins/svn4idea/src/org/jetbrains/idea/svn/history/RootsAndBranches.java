@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.Couple;
@@ -271,8 +272,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
           myDataLoader.reloadInfo(wcInfoWithBranches);
         if (newInfo == null) {
           // reload all items
-          myProject.getMessageBus()
-            .syncPublisher(SvnVcs.WC_CONVERTED).run();
+          BackgroundTaskUtil.syncPublisher(myProject, SvnVcs.WC_CONVERTED).run();
           // do not reload right now
           return wcInfoWithBranches;
         }

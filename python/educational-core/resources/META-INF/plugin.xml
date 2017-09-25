@@ -157,8 +157,6 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceInterface="com.intellij.codeInsight.documentation.DocumentationManager"
-                      serviceImplementation="com.jetbrains.edu.learning.StudyDocumentationManager" overrides="true"/>
     <applicationConfigurable groupId="tools" instance="com.jetbrains.edu.learning.settings.StudyConfigurable"
                              id="com.jetbrains.edu.learning.settings.StudyConfigurable"
                              displayName="Education"/>
@@ -174,7 +172,7 @@
     <renameHandler implementation="com.jetbrains.edu.learning.StudyRenameHandler"/>
     <refactoring.moveHandler implementation="com.jetbrains.edu.learning.StudyMoveDelegate" order="first"/>
     <statistics.usagesCollector implementation="com.jetbrains.edu.learning.statistics.EduUsagesCollector"/>
-    <applicationService serviceImplementation="com.jetbrains.edu.learning.statistics.EduUsagesCollector"/>
+    <applicationService serviceImplementation="com.jetbrains.edu.learning.statistics.EduStatistics"/>
     <applicationService serviceImplementation="com.jetbrains.edu.learning.StudySettings"/>
     <editorTabTitleProvider implementation="com.jetbrains.edu.learning.StudyTabTitleProvider"/>
     <typedHandler implementation="com.jetbrains.edu.learning.StudyTypeHandlerDelegate" order="first, before completionAutoPopup"/>

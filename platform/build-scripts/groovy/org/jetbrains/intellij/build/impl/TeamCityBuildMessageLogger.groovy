@@ -18,6 +18,7 @@ package org.jetbrains.intellij.build.impl
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.Project
 import org.jetbrains.intellij.build.BuildMessageLogger
+import org.jetbrains.intellij.build.CompilationErrorsLogMessage
 import org.jetbrains.intellij.build.LogMessage
 
 import java.util.function.BiFunction
@@ -75,6 +76,15 @@ class TeamCityBuildMessageLogger extends BuildMessageLogger {
         String messageText = escape(message.text.substring(index + 1))
         printTeamCityMessage("compilationStarted", false, "compiler='$compiler']");
         printTeamCityMessage("message", false, "text='$messageText' status='ERROR']");
+        printTeamCityMessage("compilationFinished", false, "compiler='$compiler']");
+        break
+      case LogMessage.Kind.COMPILATION_ERRORS:
+        String compiler = escape((message as CompilationErrorsLogMessage).compilerName)
+        printTeamCityMessage("compilationStarted", false, "compiler='$compiler']");
+        (message as CompilationErrorsLogMessage).errorMessages.each {
+          String messageText = escape(it)
+          printTeamCityMessage("message", false, "text='$messageText' status='ERROR']");
+        }
         printTeamCityMessage("compilationFinished", false, "compiler='$compiler']");
         break
     }

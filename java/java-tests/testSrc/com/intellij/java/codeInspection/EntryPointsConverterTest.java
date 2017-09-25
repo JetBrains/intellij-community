@@ -24,23 +24,23 @@ import junit.framework.TestCase;
 import org.jdom.Element;
 
 public class EntryPointsConverterTest extends TestCase {
-  public void testMethodConverter1() throws Exception {
+  public void testMethodConverter1() {
     doTest("method", "String java.lang.String.replace(char oldChar, char newChar)", "java.lang.String String replace(char oldChar, char newChar)");
   }
 
-  public void testMethodConverter2() throws Exception {
+  public void testMethodConverter2() {
     doTest("method", "void java.lang.String.replace(char oldChar, char newChar)", "java.lang.String void replace(char oldChar, char newChar)");
   }
 
-  public void testMethodConverter3() throws Exception {
+  public void testMethodConverter3() {
     doTest("method", "java.lang.String.String(char oldChar)", "java.lang.String String(char oldChar)");
   }
 
-  public void testFieldConverter() throws Exception {
+  public void testFieldConverter() {
     doTest("field", "java.lang.String.myFakeField", "java.lang.String myFakeField");
   }
 
-  private static void doTest(String type, String fqName, String expectedFQName) throws Exception {
+  private static void doTest(String type, String fqName, String expectedFQName) {
     final Element entryPoints = setUpEntryPoint(type, fqName);
 
     final HashMap<String, SmartRefElementPointer> persistentEntryPoints = new HashMap<>();

@@ -22,6 +22,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
@@ -207,7 +208,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     myCbFinal.setText(RefactoringBundle.message("declare.final"));
     final Boolean createFinals = JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS;
     myCbFinalState = createFinals == null ?
-                     CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_LOCALS :
+                     CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS :
                      createFinals.booleanValue();
 
     gbConstraints.insets = JBUI.emptyInsets();

@@ -46,7 +46,7 @@ abstract public class TestDataPathTestCase extends JavaCodeInsightFixtureTestCas
   }
 
   @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.addContentRoot(myFixture.getTempDirPath());
   }
 }

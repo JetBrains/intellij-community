@@ -93,7 +93,8 @@ public class TestUtils {
     }
     final String methodName = method.getName();
     @NonNls final String test = "test";
-    if (!methodName.startsWith(test)) {
+    if (!methodName.startsWith(test) || 
+        !method.hasModifierProperty(PsiModifier.PUBLIC) && method.getParameterList().getParametersCount() > 0) {
       return false;
     }
     final PsiClass containingClass = method.getContainingClass();

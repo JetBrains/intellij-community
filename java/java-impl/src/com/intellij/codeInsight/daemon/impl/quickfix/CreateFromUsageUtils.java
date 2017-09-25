@@ -98,7 +98,7 @@ public class CreateFromUsageUtils {
     return true;
   }
 
-  static boolean isValidMethodReference(PsiReference reference, PsiMethodCallExpression call) {
+  public static boolean isValidMethodReference(PsiReference reference, PsiMethodCallExpression call) {
     if (!(reference instanceof PsiJavaReference)) return false;
     try {
       JavaResolveResult candidate = ((PsiJavaReference) reference).advancedResolve(true);
@@ -247,15 +247,18 @@ public class CreateFromUsageUtils {
   static void setupMethodParameters(final PsiMethod method, final TemplateBuilder builder, final PsiElement contextElement,
                                     final PsiSubstitutor substitutor, final List<Pair<PsiExpression, PsiType>> arguments)
     throws IncorrectOperationException {
-    PsiManager psiManager = method.getManager();
-    JVMElementFactory factory = JVMElementFactories.getFactory(method.getLanguage(), method.getProject());
+
+    final PsiManager psiManager = method.getManager();
+    final Project project = psiManager.getProject();
+
+    JVMElementFactory factory = JVMElementFactories.getFactory(method.getLanguage(), project);
     if (factory == null) return;
 
     PsiParameterList parameterList = method.getParameterList();
 
     GlobalSearchScope resolveScope = method.getResolveScope();
 
-    GuessTypeParameters guesser = new GuessTypeParameters(JavaPsiFacade.getElementFactory(method.getProject()));
+    GuessTypeParameters guesser = new GuessTypeParameters(project, JavaPsiFacade.getElementFactory(project), builder, substitutor);
 
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(psiManager);
     final PsiClass containingClass = method.getContainingClass();
@@ -266,7 +269,7 @@ public class CreateFromUsageUtils {
       PsiExpression exp = arg.first;
 
       PsiType argType = exp == null ? arg.second : RefactoringUtil.getTypeByExpression(exp);
-      SuggestedNameInfo suggestedInfo = JavaCodeStyleManager.getInstance(psiManager.getProject()).suggestVariableName(
+      SuggestedNameInfo suggestedInfo = JavaCodeStyleManager.getInstance(project).suggestVariableName(
         VariableKind.PARAMETER, null, exp, argType);
       @NonNls String[] names = suggestedInfo.names; //TODO: callback about used name
 
@@ -295,8 +298,7 @@ public class CreateFromUsageUtils {
       ExpectedTypeInfo info = ExpectedTypesProvider.createInfo(argType, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, argType, TailType.NONE);
 
       PsiElement context = PsiTreeUtil.getParentOfType(contextElement, PsiClass.class, PsiMethod.class);
-      guesser.setupTypeElement(parameter.getTypeElement(), new ExpectedTypeInfo[]{info},
-                               substitutor, builder, context, containingClass);
+      guesser.setupTypeElement(parameter.getTypeElement(), new ExpectedTypeInfo[]{info}, context, containingClass);
 
       Expression expression = new ParameterNameExpression(names);
       builder.replaceElement(parameter.getNameIdentifier(), expression);
@@ -658,7 +660,7 @@ public class CreateFromUsageUtils {
   }
 
   @NotNull
-  static ExpectedTypeInfo[] guessExpectedTypes(@NotNull PsiExpression expression, boolean allowVoidType) {
+  public static ExpectedTypeInfo[] guessExpectedTypes(@NotNull PsiExpression expression, boolean allowVoidType) {
     PsiManager manager = expression.getManager();
     GlobalSearchScope resolveScope = expression.getResolveScope();
 
@@ -983,10 +985,10 @@ public class CreateFromUsageUtils {
                                  member.hasModifierProperty(PsiModifier.STATIC) == staticAccess).booleanValue();
   }
 
-  private static class ParameterNameExpression extends Expression {
+  public static class ParameterNameExpression extends Expression {
     private final String[] myNames;
 
-    private ParameterNameExpression(String[] names) {
+    public ParameterNameExpression(String[] names) {
       myNames = names;
     }
 

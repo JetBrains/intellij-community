@@ -33,7 +33,7 @@ public class AssertsWithoutMessagesTestNGInspectionTest extends JavaCodeInsightF
   }
 
   @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.addLibrary("testng", PathUtil.getJarPathForClass(DataProvider.class));
   }
 

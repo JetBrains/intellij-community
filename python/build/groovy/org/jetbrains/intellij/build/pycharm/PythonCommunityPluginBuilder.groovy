@@ -36,10 +36,13 @@ class PythonCommunityPluginBuilder {
     def buildContext = BuildContext.createContext(home, home, new PythonCommunityPluginProperties(), ProprietaryBuildTools.DUMMY, options)
     def buildTasks = BuildTasks.create(buildContext)
     buildTasks.buildDistributions()
+    
+    def builtPlugins = new File("$buildContext.paths.artifacts/${buildContext.productProperties.productCode}-plugins").listFiles()
+    if (builtPlugins == null || builtPlugins.length == 0) {
+      buildContext.messages.warning("No plugins were built")
+      return 
+    }
+    
     def pluginsPaths = new File("$buildContext.paths.buildOutputRoot/plugins-paths.txt")
-    pluginsPaths.text = new File("$buildContext.paths.artifacts/plugins")
-      .listFiles()
-      .collect { it.toString() }
-      .join("\n")
-  }
+    pluginsPaths.text = builtPlugins.collect { it.toString() }.join("\n") }
 }

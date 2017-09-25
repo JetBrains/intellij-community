@@ -22,7 +22,7 @@ import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
  */
 public class ReplaceCastWithVariableTest extends LightIntentionActionTestCase {
 
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {

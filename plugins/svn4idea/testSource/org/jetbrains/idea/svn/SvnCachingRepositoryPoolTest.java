@@ -131,7 +131,7 @@ public class SvnCachingRepositoryPoolTest extends FileBasedTest {
     Assert.assertEquals(0, group.getInactiveSize());
   }
 
-  private void testBigFlow(final SvnIdeaRepositoryPoolManager poolManager, boolean disposeAfter) throws SVNException, InterruptedException {
+  private void testBigFlow(final SvnIdeaRepositoryPoolManager poolManager, boolean disposeAfter) throws SVNException {
     poolManager.setCreator(svnurl -> new MockSvnRepository(svnurl, ISVNSession.DEFAULT));
     final SVNURL url = SVNURL.parseURIEncoded("http://a.b.c");
     final Random random = new Random(System.currentTimeMillis() & 0x00ff);

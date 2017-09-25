@@ -22,8 +22,8 @@ import com.intellij.codeInspection.*
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmModifiersOwner
-import com.intellij.lang.jvm.actions.JvmElementActionsFactory
 import com.intellij.lang.jvm.actions.MemberRequest
+import com.intellij.lang.jvm.actions.createModifierActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -61,13 +61,11 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
 
     val smartPointerManager = SmartPointerManager.getInstance(aClass.project)
 
-    val actionsFactory = JvmElementActionsFactory.forLanguage(aClass.language)
-
     for ((method, description) in methodsToOverride) {
       if (method.isFinal || method.isStatic || method.hasModifierProperty(PsiModifier.PRIVATE)) {
         methodsToAttachToClassFix?.add(smartPointerManager.createSmartPsiElementPointer(method, method.containingFile))
 
-        val methodFixes = createFixesIfApplicable(actionsFactory, method, method.name)
+        val methodFixes = createFixesIfApplicable(method, method.name)
         problemTargets(method, methodHighlightableModifiersSet).forEach {
           problems.add(manager.createProblemDescriptor(
             it, description, isOnTheFly,
@@ -84,7 +82,7 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
           problems.add(manager.createProblemDescriptor(
             it, classReasonToBeSubclassed ?: InspectionsBundle.message("inspection.implicit.subclass.display.forClass", aClass.name),
             isOnTheFly,
-            createFixesIfApplicable(actionsFactory, aClass, aClass.name ?: "class", methodsToAttachToClassFix ?: emptyList()),
+            createFixesIfApplicable(aClass, aClass.name ?: "class", methodsToAttachToClassFix ?: emptyList()),
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
           )
         }
@@ -94,12 +92,10 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
     return problems.toTypedArray()
   }
 
-  private fun createFixesIfApplicable(actionsFactory: JvmElementActionsFactory?,
-                                      aClass: UDeclaration,
+  private fun createFixesIfApplicable(aClass: UDeclaration,
                                       hintTargetName: String,
                                       methodsToAttachToClassFix: List<SmartPsiElementPointer<UDeclaration>> = emptyList()): Array<LocalQuickFix> {
-    if (actionsFactory == null) return emptyArray()
-    val fix = MakeExtendableFix(aClass, hintTargetName, actionsFactory, methodsToAttachToClassFix)
+    val fix = MakeExtendableFix(aClass, hintTargetName, methodsToAttachToClassFix)
     if (!fix.hasActionsToPerform) return emptyArray()
     return arrayOf(fix)
   }
@@ -123,7 +119,6 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
 
   private class MakeExtendableFix(uDeclaration: UDeclaration,
                                   hintTargetName: String,
-                                  val actionsFactory: JvmElementActionsFactory,
                                   val siblings: List<SmartPsiElementPointer<UDeclaration>> = emptyList())
     : LocalQuickFixOnPsiElement(uDeclaration) {
 
@@ -133,8 +128,7 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
 
     private val actionsToPerform = SmartList<IntentionAction>()
 
-    val hasActionsToPerform: Boolean
-      get() = actionsToPerform.isNotEmpty()
+    val hasActionsToPerform: Boolean get() = actionsToPerform.isNotEmpty()
 
     init {
       collectMakeExtendable(uDeclaration, actionsToPerform)
@@ -187,12 +181,9 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
                                 modifier: JvmModifier,
                                 shouldPresent: Boolean,
                                 actionsList: SmartList<IntentionAction>) {
-      if (declaration.hasModifier(modifier) != shouldPresent) {
-        actionsFactory.createChangeModifierActions(declaration, MemberRequest.Modifier(modifier,
-                                                                                       shouldPresent)).let {
-          actionsList.addAll(it)
-        }
-      }
+      if (declaration.hasModifier(modifier) == shouldPresent) return
+      val request = MemberRequest.Modifier(modifier, shouldPresent)
+      actionsList += createModifierActions(declaration, request)
     }
 
     private val MAX_MESSAGES_TO_COMBINE = 3

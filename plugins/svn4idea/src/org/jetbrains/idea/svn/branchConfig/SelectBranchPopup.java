@@ -71,7 +71,7 @@ public class SelectBranchPopup {
     SVNURL svnurl = urlMapping.getUrlForFile(virtualToIoFile(file));
 
     if (svnurl != null) {
-      RootUrlInfo rootUrlInfo = urlMapping.getWcRootForUrl(svnurl.toString());
+      RootUrlInfo rootUrlInfo = urlMapping.getWcRootForUrl(svnurl);
 
       if (rootUrlInfo != null) {
         // not vcs root but wc root is ok
@@ -176,9 +176,8 @@ public class SelectBranchPopup {
         return doFinalStep(() -> myCallback.branchSelected(myProject, myConfiguration, selectedValue, -1));
       }
       else {
-        showBranchPopup(selectedValue);
+        return doFinalStep(() -> showBranchPopup(selectedValue));
       }
-      return FINAL_CHOICE;
     }
 
     private void loadBranches(@NotNull String selectedBranchesHolder, @NotNull Runnable runnable) {

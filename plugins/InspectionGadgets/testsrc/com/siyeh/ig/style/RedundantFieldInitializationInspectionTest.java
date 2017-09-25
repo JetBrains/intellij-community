@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class RedundantFieldInitializationInspectionTest extends LightInspectionTestCase {
 
-  public void testRedundantFieldInitialization() throws Exception {
+  public void testRedundantFieldInitialization() {
     doTest();
   }
 

@@ -22,15 +22,11 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.QualifiedName;
 import com.intellij.testFramework.PsiTestUtil;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -372,52 +368,35 @@ public class PythonCompletionTest extends PyTestCase {
   }
 
   public void testEpydocParamTag() {
-    final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(myFixture.getModule());
-    settings.setFormat(DocStringFormat.EPYTEXT);
-    try {
-      doTest();
-    }
-    finally {
-      settings.setFormat(DocStringFormat.PLAIN);
-    }
+    runWithDocStringFormat(DocStringFormat.EPYTEXT, this::doTest);
   }
 
   public void testEpydocTags() {
-    final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(myFixture.getModule());
-    settings.setFormat(DocStringFormat.EPYTEXT);
-    try {
+    runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> {
       myFixture.configureByFile("epydocTags.py");
       myFixture.completeBasic();
       final List<String> lookupElementStrings = myFixture.getLookupElementStrings();
       assertNotNull(lookupElementStrings);
       assertTrue(lookupElementStrings.contains("@param"));
-    }
-    finally {
-      settings.setFormat(DocStringFormat.PLAIN);
-    }
+    });
   }
 
   public void testEpydocTagsMiddle() {
-    final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(myFixture.getModule());
-    settings.setFormat(DocStringFormat.EPYTEXT);
-    try {
+    runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> {
       myFixture.configureByFile("epydocTagsMiddle.py");
       myFixture.completeBasic();
       myFixture.checkResultByFile("epydocTagsMiddle.after.py");
-    }
-    finally {
-      settings.setFormat(DocStringFormat.PLAIN);
-    }
+    });
   }
 
   public void testIdentifiersInPlainDocstring() {
-    final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(myFixture.getModule());
-    settings.setFormat(DocStringFormat.PLAIN);
-    myFixture.configureByFile("identifiersInPlainDocstring.py");
-    final LookupElement[] elements = myFixture.completeBasic();
-    assertNotNull(elements);
-    assertContainsElements(Lists.newArrayList(elements),
-                           LookupElementBuilder.create("bar").withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE));
+    runWithDocStringFormat(DocStringFormat.PLAIN, () -> {
+      myFixture.configureByFile("identifiersInPlainDocstring.py");
+      final LookupElement[] elements = myFixture.completeBasic();
+      assertNotNull(elements);
+      assertContainsElements(Lists.newArrayList(elements),
+                             LookupElementBuilder.create("bar").withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE));
+    });
   }
 
   // PY-16877
@@ -446,7 +425,7 @@ public class PythonCompletionTest extends PyTestCase {
   }
 
   // PY-16877
-  public void testTwoWordsSectionNameInGoogleDocstring() throws Exception {
+  public void testTwoWordsSectionNameInGoogleDocstring() {
     runWithDocStringFormat(DocStringFormat.GOOGLE, this::doTest);
   }
 
@@ -1142,8 +1121,6 @@ public class PythonCompletionTest extends PyTestCase {
 
   // PY-18246
   public void testTypingNamedTupleCreatedViaCallInstance() {
-    myFixture.copyDirectoryToProject("../typing", "");
-
     final List<String> suggested = doTestByText(
       "from typing import NamedTuple\n" +
       "EmployeeRecord = NamedTuple('EmployeeRecord', [\n" +
@@ -1161,8 +1138,6 @@ public class PythonCompletionTest extends PyTestCase {
 
   // PY-18246
   public void testTypingNamedTupleCreatedViaKwargsCallInstance() {
-    myFixture.copyDirectoryToProject("../typing", "");
-
     final List<String> suggested = doTestByText(
       "from typing import NamedTuple\n" +
       "EmployeeRecord = NamedTuple('EmployeeRecord', name=str, age=int, title=str, department=str)\n" +
@@ -1178,8 +1153,6 @@ public class PythonCompletionTest extends PyTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON36,
       () -> {
-        myFixture.copyDirectoryToProject("../typing", "");
-
         final List<String> suggested = doTestByText(
           "from typing import NamedTuple\n" +
           "class EmployeeRecord(NamedTuple):\n" +
@@ -1198,7 +1171,6 @@ public class PythonCompletionTest extends PyTestCase {
 
   // PY-21519
   public void testTypeComment() {
-    myFixture.copyDirectoryToProject("../typing", "");
     final List<String> variants = doTestByFile();
     assertContainsElements(variants, "List", "Union", "Optional");
   }
@@ -1207,6 +1179,21 @@ public class PythonCompletionTest extends PyTestCase {
     final List<String> variants = doTestByFile();
     assertContainsElements(variants, "upper", "split", "__len__");
     assertDoesntContain(variants, "illegal");
+  }
+
+  // PY-8132
+  public void testOuterCompletionVariantDoesNotOverwriteClosestOne() {
+    doTest();
+  }
+
+  // PY-15365
+  public void testModulesAndPackagesInDunderAll() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.completeBasic();
+    final List<String> suggested = myFixture.getLookupElementStrings();
+    assertNotNull(suggested);
+    assertSameElements(suggested, "m1", "m2", "m3", "m4");
   }
 
   @Override

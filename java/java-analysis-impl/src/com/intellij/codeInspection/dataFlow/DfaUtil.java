@@ -17,24 +17,26 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 
 /**
  * @author Gregory.Shrago
@@ -191,6 +193,124 @@ public class DfaUtil {
     return Nullness.UNKNOWN;
   }
 
+  static DfaValue getPossiblyNonInitializedValue(@NotNull DfaValueFactory factory, @NotNull PsiField target, @NotNull PsiElement context) {
+    if (target.getType() instanceof PsiPrimitiveType) return null;
+    PsiMethod placeMethod = PsiTreeUtil.getParentOfType(context, PsiMethod.class, false, PsiClass.class, PsiLambdaExpression.class);
+    if (placeMethod == null) return null;
+
+    PsiClass placeClass = placeMethod.getContainingClass();
+    if (placeClass == null || placeClass != target.getContainingClass()) return null;
+    if (!placeMethod.hasModifier(JvmModifier.STATIC) && target.hasModifier(JvmModifier.STATIC)) return null;
+    if (getAccessOffset(placeMethod) >= getWriteOffset(target)) return null;
+
+    return factory.createTypeValue(target.getType(), Nullness.NULLABLE);
+  }
+
+  private static int getWriteOffset(PsiField target) {
+    // Final field: written either in field initializer or in class initializer block which directly writes this field
+    // Non-final field: written either in field initializer, in class initializer which directly writes this field or calls any method,
+    //    or in other field initializer which directly writes this field or calls any method
+    boolean isFinal = target.hasModifier(JvmModifier.FINAL);
+    int offset = Integer.MAX_VALUE;
+    if (target.getInitializer() != null) {
+      offset = target.getInitializer().getTextRange().getStartOffset();
+      if (isFinal) return offset;
+    }
+    PsiClass aClass = Objects.requireNonNull(target.getContainingClass());
+    PsiClassInitializer[] initializers = aClass.getInitializers();
+    Predicate<PsiElement> writesToTarget = element ->
+      !PsiTreeUtil.processElements(element, e -> !(e instanceof PsiExpression) ||
+                                                 !PsiUtil.isAccessedForWriting((PsiExpression)e) ||
+                                                 !ExpressionUtils.isReferenceTo((PsiExpression)e, target));
+    Predicate<PsiElement> hasSideEffectCall = element -> !PsiTreeUtil.findChildrenOfType(element, PsiMethodCallExpression.class).stream()
+      .map(PsiMethodCallExpression::resolveMethod).allMatch(method -> method != null && ControlFlowAnalyzer.isPure(method));
+    for (PsiClassInitializer initializer : initializers) {
+      if (initializer.hasModifier(JvmModifier.STATIC) != target.hasModifier(JvmModifier.STATIC)) continue;
+      if (!isFinal && hasSideEffectCall.test(initializer)) {
+        // non-final field could be written indirectly (via method call), so assume it's written in the first applicable initializer
+        offset = Math.min(offset, initializer.getTextRange().getStartOffset());
+        break;
+      }
+      if (writesToTarget.test(initializer)) {
+        offset = Math.min(offset, initializer.getTextRange().getStartOffset());
+        if (isFinal) return offset;
+        break;
+      }
+    }
+    if (!isFinal) {
+      for (PsiField field : aClass.getFields()) {
+        if (field.hasModifier(JvmModifier.STATIC) != target.hasModifier(JvmModifier.STATIC)) continue;
+        if (hasSideEffectCall.test(field.getInitializer()) || writesToTarget.test(field)) {
+          offset = Math.min(offset, field.getTextRange().getStartOffset());
+          break;
+        }
+      }
+    }
+    return offset;
+  }
+
+  private static int getAccessOffset(PsiMethod referrer) {
+    PsiClass aClass = Objects.requireNonNull(referrer.getContainingClass());
+    boolean isStatic = referrer.hasModifier(JvmModifier.STATIC);
+    for (PsiField field : aClass.getFields()) {
+      if (field.hasModifier(JvmModifier.STATIC) != isStatic) continue;
+      PsiExpression initializer = field.getInitializer();
+      Predicate<PsiExpression> callToMethod = (PsiExpression e) -> {
+        if (!(e instanceof PsiMethodCallExpression)) return false;
+        PsiMethodCallExpression call = (PsiMethodCallExpression)e;
+        return call.getMethodExpression().isReferenceTo(referrer) &&
+               (isStatic || DfaValueFactory.isEffectivelyUnqualified(call.getMethodExpression()));
+      };
+      if (ExpressionUtils.isMatchingChildAlwaysExecuted(initializer, callToMethod)) {
+        // current method is definitely called from some field initialization
+        return field.getTextRange().getStartOffset();
+      }
+    }
+    return Integer.MAX_VALUE; // accessed after initialization or at unknown moment
+  }
+
+  public static boolean hasInitializationHacks(@NotNull PsiField field) {
+    PsiClass containingClass = field.getContainingClass();
+    return containingClass != null && System.class.getName().equals(containingClass.getQualifiedName());
+  }
+
+  static boolean isInsideConstructorOrInitializer(PsiElement element) {
+    while (element != null) {
+      if (element instanceof PsiClass) return true;
+      element = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClassInitializer.class);
+      if (element instanceof PsiClassInitializer) return true;
+      if (element instanceof PsiMethod) {
+        if (((PsiMethod)element).isConstructor()) return true;
+
+        final PsiClass containingClass = ((PsiMethod)element).getContainingClass();
+        return !InheritanceUtil.processSupers(containingClass, true,
+                                              psiClass -> !canCallMethodsInConstructors(psiClass, psiClass != containingClass));
+
+      }
+    }
+    return false;
+  }
+
+  private static boolean canCallMethodsInConstructors(PsiClass aClass, boolean virtual) {
+    for (PsiMethod constructor : aClass.getConstructors()) {
+      if (!constructor.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return true;
+
+      PsiCodeBlock body = constructor.getBody();
+      if (body == null) continue;
+
+      for (PsiMethodCallExpression call : SyntaxTraverser.psiTraverser().withRoot(body).filter(PsiMethodCallExpression.class)) {
+        PsiReferenceExpression methodExpression = call.getMethodExpression();
+        if (methodExpression.textMatches(PsiKeyword.THIS) || methodExpression.textMatches(PsiKeyword.SUPER)) continue;
+        if (!virtual) return true;
+
+        PsiMethod target = call.resolveMethod();
+        if (target != null && PsiUtil.canBeOverridden(target)) return true;
+      }
+    }
+
+    return false;
+  }
+
   private static class ValuableInstructionVisitor extends StandardInstructionVisitor {
     final Map<PsiElement, PlaceResult> myResults = ContainerUtil.newHashMap();
 
@@ -254,7 +374,7 @@ public class DfaUtil {
         final ValuableDataFlowRunner.ValuableDfaVariableState curState = (ValuableDataFlowRunner.ValuableDfaVariableState)memState.getVariableState(var);
         final FList<PsiExpression> curValue = curState.myConcatenation;
         final FList<PsiExpression> nextValue;
-        if (type == JavaTokenType.PLUSEQ && !prevValue.isEmpty() && rightValue != null) {
+        if (type == JavaTokenType.PLUSEQ && !prevValue.isEmpty()) {
           nextValue = prevValue.prepend(rightValue);
         }
         else {

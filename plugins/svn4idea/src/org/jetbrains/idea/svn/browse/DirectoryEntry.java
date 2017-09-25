@@ -24,12 +24,15 @@ import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNURL;
 
+import java.util.Comparator;
 import java.util.Date;
 
-/**
- * @author Konstantin Kolosovsky.
- */
+import static java.util.Comparator.comparing;
+
 public class DirectoryEntry extends BaseNodeDescription implements Comparable<DirectoryEntry> {
+
+  public static final Comparator<DirectoryEntry> CASE_INSENSITIVE_ORDER =
+    comparing(DirectoryEntry::getKind).thenComparing(entry -> entry.getUrl().toDecodedString(), String.CASE_INSENSITIVE_ORDER);
 
   private final String myName;
   @NotNull private final CommitInfo myCommitInfo;
@@ -95,6 +98,6 @@ public class DirectoryEntry extends BaseNodeDescription implements Comparable<Di
   public int compareTo(@NotNull DirectoryEntry o) {
     int result = getKind().compareTo(o.getKind());
 
-    return result != 0 ? result : myUrl.toString().compareToIgnoreCase(o.getUrl().toString());
+    return result != 0 ? result : myUrl.toString().compareTo(o.getUrl().toString());
   }
 }

@@ -17,25 +17,23 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNURL;
 
 import javax.swing.*;
 
-/**
- * @author yole
- */
 public class RelocateDialog extends DialogWrapper {
   private JPanel myMainPanel;
   private JTextField myFromURLTextField;
   private JTextField myToURLTextField;
 
-  public RelocateDialog(Project project, final SVNURL url) {
+  public RelocateDialog(@NotNull Project project, @NotNull SVNURL url) {
     super(project, false);
     init();
     setTitle("Relocate Working Copy");
-    myFromURLTextField.setText(url.toString());
-    myToURLTextField.setText(url.toString());
+    myFromURLTextField.setText(url.toDecodedString());
+    myToURLTextField.setText(url.toDecodedString());
   }
 
   @Nullable
@@ -43,10 +41,12 @@ public class RelocateDialog extends DialogWrapper {
     return myMainPanel;
   }
 
+  @NotNull
   public String getBeforeURL() {
     return myFromURLTextField.getText();
   }
 
+  @NotNull
   public String getAfterURL() {
     return myToURLTextField.getText();
   }

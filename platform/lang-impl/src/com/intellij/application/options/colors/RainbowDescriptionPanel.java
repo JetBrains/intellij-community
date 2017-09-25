@@ -31,7 +31,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ActionListener;
 
@@ -41,7 +40,6 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
 
   protected JPanel myPanel;
 
-  private JTextPane myGradientLabel;
   private JBLabel myLStop1;
   private JBLabel myLStop2;
   private JBLabel myLStop3;
@@ -60,10 +58,6 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
   private JTextPane myInheritanceLabel;
   private JBCheckBox myInheritAttributesBox;
 
-  private final String myInheritedMessage;
-  private final String myOverrideMessage;
-  private final String myInheritedMessageTooltip;
-
   public RainbowDescriptionPanel() {
     super(new BorderLayout());
     add(myPanel, BorderLayout.CENTER);
@@ -80,30 +74,17 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
 
     String languageDefaultPageID = OptionsBundle.message("options.language.defaults.display.name");
     String rainbowOptionsID = ApplicationBundle.message("rainbow.option.panel.display.name");
-    myInheritedMessage = ApplicationBundle.message("label.inherited.gradient",
-                                                   rainbowOptionsID,
-                                                   languageDefaultPageID);
 
-    myInheritedMessageTooltip = checkRightArrow(ApplicationBundle.message("label.inherited.gradient.tooltip",
-                                                                          rainbowOptionsID,
-                                                                          languageDefaultPageID));
+    // copied from ColorAndFontDescriptionPanel:
+    String style = "<div style=\"text-align:right\" vertical-align=\"top\">";
+    String inheritanceTooltip = "Editor | Color Scheme | " + languageDefaultPageID + "<br>" + rainbowOptionsID;
+    String inheritanceText = style + "<a href=\"" + languageDefaultPageID + "\">" + rainbowOptionsID + "</a><br>" +
+                             "(" + languageDefaultPageID + ")";
 
-    myOverrideMessage = ApplicationBundle.message("label.override.gradient");
-    HyperlinkListener listener = e -> myDispatcher.getMulticaster().onHyperLinkClicked(e);
-
-    Messages.configureMessagePaneUi(myGradientLabel, myOverrideMessage, null);
-    myGradientLabel.addHyperlinkListener(listener);
-
-    Messages.configureMessagePaneUi(myInheritanceLabel,
-                                    checkRightArrow(ApplicationBundle.message("label.rainbow.inheritance",
-                                                                              rainbowOptionsID,
-                                                                              rainbowOptionsID,
-                                                                              languageDefaultPageID)),
-                                    null);
-    myInheritanceLabel.setToolTipText(checkRightArrow(ApplicationBundle.message("label.rainbow.inheritance.tooltip",
-                                                                                rainbowOptionsID,
-                                                                                languageDefaultPageID)));
-    myInheritanceLabel.addHyperlinkListener(listener);
+    Messages.configureMessagePaneUi(myInheritanceLabel, "<html>", null);
+    myInheritanceLabel.setText(checkRightArrow(inheritanceText));
+    myInheritanceLabel.setToolTipText(checkRightArrow(inheritanceTooltip));
+    myInheritanceLabel.addHyperlinkListener(e -> myDispatcher.getMulticaster().onHyperLinkClicked(e));
     myInheritanceLabel.setBorder(JBUI.Borders.empty(4, 0, 4, 4));
   }
 
@@ -151,8 +132,6 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
     myInheritAttributesBox.setEnabled(isEnable);
     myInheritAttributesBox.setSelected(isInherited);
     myInheritAttributesBox.setVisible(!isDefaultLanguage);
-    myGradientLabel.setText(isDefaultLanguage ? myOverrideMessage : myInheritedMessage);
-    myGradientLabel.setToolTipText(isDefaultLanguage ? null : myInheritedMessageTooltip);
   }
 
   @Override

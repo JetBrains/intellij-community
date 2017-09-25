@@ -16,7 +16,7 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.*
-import com.intellij.psi.util.PsiTypesUtil
+import com.intellij.psi.util.*
 import org.jetbrains.uast.*
 import org.jetbrains.uast.psi.UElementWithLocation
 
@@ -52,9 +52,8 @@ class JavaUCallExpression(
 
     override fun resolve() = psi.resolveMethod()
 
-    override fun getStartOffset(): Int {
-        return psi.methodExpression.referenceNameElement?.textOffset ?: psi.methodExpression.textOffset
-    }
+    override fun getStartOffset(): Int =
+            psi.methodExpression.referenceNameElement?.textOffset ?: psi.methodExpression.textOffset
 
     override fun getEndOffset() = psi.textRange.endOffset
 
@@ -72,10 +71,27 @@ class JavaUCallExpression(
             if (qualifierType != null) {
                 return qualifierType
             }
-            
+
             val method = resolve() ?: return null
             if (method.hasModifierProperty(PsiModifier.STATIC)) return null
-            return method.containingClass?.let { PsiTypesUtil.getClassType(it) }
+
+            val psiManager = psi.manager
+            val containingClassForMethod = method.containingClass ?: return null
+
+            val containingClass = PsiTreeUtil.getParentOfType(psi, PsiClass::class.java)
+            val containingClassSequence = generateSequence(containingClass) {
+                if (it.hasModifierProperty(PsiModifier.STATIC))
+                    null
+                else
+                    PsiTreeUtil.getParentOfType(it, PsiClass::class.java)
+            }
+
+            val receiverClass = containingClassSequence.find { containingClassForExpression ->
+                psiManager.areElementsEquivalent(containingClassForMethod, containingClassForExpression) ||
+                containingClassForExpression.isInheritor(containingClassForMethod, true)
+            }
+
+            return receiverClass?.let { PsiTypesUtil.getClassType(it) }
         }
 }
 
@@ -109,25 +125,19 @@ class JavaConstructorUCallExpression(
     override val valueArgumentCount: Int
         get() {
             val initializer = psi.arrayInitializer
-            return if (initializer != null) {
-                initializer.initializers.size
-            } else if (psi.arrayDimensions.isNotEmpty()) {
-                psi.arrayDimensions.size
-            } else {
-                psi.argumentList?.expressions?.size ?: 0
+            return when {
+                initializer != null -> initializer.initializers.size
+                psi.arrayDimensions.isNotEmpty() -> psi.arrayDimensions.size
+                else -> psi.argumentList?.expressions?.size ?: 0
             }
         }
 
     override val valueArguments by lz {
         val initializer = psi.arrayInitializer
-        if (initializer != null) {
-            initializer.initializers.map { JavaConverter.convertOrEmpty(it, this) }
-        }
-        else if (psi.arrayDimensions.isNotEmpty()) {
-            psi.arrayDimensions.map { JavaConverter.convertOrEmpty(it, this) }
-        }
-        else {
-            psi.argumentList?.expressions?.map { JavaConverter.convertOrEmpty(it, this) } ?: emptyList()
+        when {
+            initializer != null -> initializer.initializers.map { JavaConverter.convertOrEmpty(it, this) }
+            psi.arrayDimensions.isNotEmpty() -> psi.arrayDimensions.map { JavaConverter.convertOrEmpty(it, this) }
+            else -> psi.argumentList?.expressions?.map { JavaConverter.convertOrEmpty(it, this) } ?: emptyList()
         }
     }
 

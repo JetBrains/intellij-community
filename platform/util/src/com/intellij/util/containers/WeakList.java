@@ -22,7 +22,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Implementation of the {@link List} interface which:
+ * Implementation of the {@link Collection} interface which:
  * <ul>
  *   <li>Stores elements using weak semantics (see {@link java.lang.ref.WeakReference})</li>
  *   <li>Automatically reclaims storage for garbage collected elements</li>
@@ -30,8 +30,17 @@ import java.util.List;
  *   <li>Is NOT RandomAccess, because garbage collector can remove element at any time</li>
  *   <li>Does NOT support null elements</li>
  * </ul>
+ * Please note that since weak references can be collected at any time, index-based methods (like get(index))
+ * or size-based methods (like size()) are dangerous, misleading, error-inducing and are not supported.
+ * Instead, please use add(element) and iterator().
  */
 public class WeakList<T> extends UnsafeWeakList<T> {
+  public WeakList() {
+  }
+  public WeakList(int initialCapacity) {
+    super(initialCapacity);
+  }
+
   @Override
   public boolean add(@NotNull T element) {
     synchronized (myList) {

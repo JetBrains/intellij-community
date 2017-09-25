@@ -19,6 +19,7 @@ import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parents
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
@@ -34,7 +35,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
-import org.jetbrains.plugins.groovy.lang.psi.util.getParents
 import org.jetbrains.plugins.groovy.lang.psi.util.treeWalkUp
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessorBuilder
@@ -199,7 +199,7 @@ private fun GrReferenceExpression.doResolvePackageOrClass(): PsiElement? {
     resolveClass()?.let { return it }
   }
 
-  for ((parent, ignored) in getParents().drop(1)) {
+  for (parent in parents().drop(1)) {
     if (parent !is GrReferenceExpression) return null
     if (parent.resolveClass() == null) continue
     val qname = getQualifiedReferenceName()!!

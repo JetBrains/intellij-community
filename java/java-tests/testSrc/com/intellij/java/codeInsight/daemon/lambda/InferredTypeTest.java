@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 public class InferredTypeTest extends LightCodeInsightFixtureTestCase {
-  public void testNestedCallReturnType() throws Exception {
+  public void testNestedCallReturnType() {
     myFixture.configureByText("a.java", "import java.util.List;\n" +
                                         "abstract class Test {\n" +
                                         "    abstract <R, K> R foo(K k1, K k2);\n" +
@@ -42,7 +42,7 @@ public class InferredTypeTest extends LightCodeInsightFixtureTestCase {
     Assert.assertTrue(type.getCanonicalText(), type.equalsToText("java.util.List<java.lang.String>"));
   }
 
-  public void testCashedTypes() throws Exception {
+  public void testCashedTypes() {
     myFixture.configureByText("a.java", "import java.util.*;\n" +
                                         "abstract class Main {\n" +
                                         "    void test(List<Integer> li) {\n" +
@@ -75,7 +75,7 @@ public class InferredTypeTest extends LightCodeInsightFixtureTestCase {
     assertTrue(ensureNotCached.getCanonicalText(), ensureNotCached.equalsToText("java.util.List<java.lang.Integer>"));
   }
 
-  public void testAnnotatedVoidReturnType() throws Exception {
+  public void testAnnotatedVoidReturnType() {
     myFixture.addClass("@java.lang.annotation.Target(value={java.lang.annotation.ElementType.TYPE_USE}) @interface D {}");
     final PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("R.java", "public interface R {@D void run();}");
     final PsiClass psiClass = file.getClasses()[0];

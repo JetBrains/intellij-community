@@ -12,8 +12,8 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -50,13 +50,13 @@ public class HgProjectConfigurable implements SearchableConfigurable {
     return myPanel.isModified();
   }
 
-  public void apply() throws ConfigurationException {
+  public void apply() {
     myPanel.saveSettings();
     if (myPanel.getProjectSettings().isCheckIncomingOutgoing()) {
-      myProject.getMessageBus().syncPublisher(HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).show();
+      BackgroundTaskUtil.syncPublisher(myProject, HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).show();
     }
     else {
-      myProject.getMessageBus().syncPublisher(HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).hide();
+      BackgroundTaskUtil.syncPublisher(myProject, HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).hide();
     }
   }
 

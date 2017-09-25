@@ -24,6 +24,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -422,6 +423,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           }
         }
       }
+    }
+    catch (ProcessCanceledException ignore) {
     }
     catch (Exception | AssertionError ex) {
       LOG.error(ex);
@@ -1539,36 +1542,33 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
 
     @Override
-    public void modify(final BaseRevision was, final BaseRevision become) {
+    public void modify(BaseRevision was, BaseRevision become) {
+      doModify(was, become);
+    }
+
+    @Override
+    public void plus(final BaseRevision baseRevision) {
+      doModify(baseRevision, baseRevision);
+    }
+
+    @Override
+    public void minus(final BaseRevision baseRevision) {
+       myScheduler.submit(() -> {
+         AbstractVcs vcs = getVcs(baseRevision);
+         if (vcs != null) {
+           myRevisionsCache.minus(Pair.create(baseRevision.getPath(), vcs));
+         }
+         BackgroundTaskUtil.syncPublisher(myProject, VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision.getPath());
+       });
+     }
+
+    private void doModify(BaseRevision was, BaseRevision become) {
       myScheduler.submit(() -> {
         final AbstractVcs vcs = getVcs(was);
         if (vcs != null) {
           myRevisionsCache.plus(Pair.create(was.getPath(), vcs));
         }
-        // maybe define modify method?
-        myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(become);
-      });
-    }
-
-    @Override
-    public void plus(final BaseRevision baseRevision) {
-      myScheduler.submit(() -> {
-        final AbstractVcs vcs = getVcs(baseRevision);
-        if (vcs != null) {
-          myRevisionsCache.plus(Pair.create(baseRevision.getPath(), vcs));
-        }
-        myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision);
-      });
-    }
-
-    @Override
-    public void minus(final BaseRevision baseRevision) {
-      myScheduler.submit(() -> {
-        final AbstractVcs vcs = getVcs(baseRevision);
-        if (vcs != null) {
-          myRevisionsCache.minus(Pair.create(baseRevision.getPath(), vcs));
-        }
-        myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision.getPath());
+        BackgroundTaskUtil.syncPublisher(myProject, VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(become);
       });
     }
 

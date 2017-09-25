@@ -30,7 +30,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,11 +42,12 @@ import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ThrowableRunnable;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.ui.UIUtil;
 import jetCheck.DataStructure;
 import jetCheck.Generator;
 import jetCheck.IntDistribution;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -64,6 +64,7 @@ public class MadTestingUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.propertyBased.MadTestingUtil");
   
   public static void restrictChangesToDocument(Document document, Runnable r) {
+    letSaveAllDocumentsPassIfAny();
     watchDocumentChanges(r::run, event -> {
       Document changed = event.getDocument();
       if (changed != document) {
@@ -75,7 +76,13 @@ public class MadTestingUtil {
     });
   }
 
+  //for possible com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl.saveAllDocumentsLater
+  private static void letSaveAllDocumentsPassIfAny() {
+    UIUtil.dispatchAllInvocationEvents();
+  }
+
   public static void prohibitDocumentChanges(Runnable r) {
+    letSaveAllDocumentsPassIfAny();
     watchDocumentChanges(r::run, event -> {
       Document changed = event.getDocument();
       VirtualFile file = FileDocumentManager.getInstance().getFile(changed);
@@ -204,6 +211,7 @@ public class MadTestingUtil {
       PsiDocumentManager.getInstance(fixture.getProject()).commitAllDocuments();
       PsiFile file = PsiManager.getInstance(fixture.getProject()).findFile(vFile);
       if (file instanceof PsiBinaryFile || file instanceof PsiPlainTextFile) {
+        System.err.println("Can't check " + vFile + " due to incorrect file type: " + file + " of " + file.getClass());
         // no operations, but the just created file needs to be deleted (in FileWithActions#runActions)
         // todo a side-effect-free generator
         return Generator.constant(new FileWithActions(file, Collections.emptyList()));
@@ -231,9 +239,9 @@ public class MadTestingUtil {
   @NotNull
   private static VirtualFile copyFileToProject(File ioFile, CodeInsightTestFixture fixture, String rootPath) {
     try {
-      String path = FileUtil.getRelativePath(FileUtil.toCanonicalPath(rootPath), ioFile.getPath(), '/');
+      String path = FileUtil.getRelativePath(FileUtil.toCanonicalPath(rootPath),  FileUtil.toSystemIndependentName(ioFile.getPath()), '/');
       assert path != null;
-      VirtualFile existing = fixture.findFileInTempDir(path);
+      VirtualFile existing = fixture.getTempDirFixture().getFile(path);
       if (existing != null) {
         WriteAction.run(() -> existing.delete(fixture));
       }
@@ -256,12 +264,11 @@ public class MadTestingUtil {
                            InsertString.asciiInsertions(file));
   }
 
-  static boolean isAfterError(PsiFile file, int offset) {
+  public static boolean isAfterError(PsiFile file, int offset) {
     PsiElement leaf = file.findElementAt(offset);
     Set<Integer> errorOffsets = SyntaxTraverser.psiTraverser(file)
       .filter(PsiErrorElement.class)
-      .map(PsiTreeUtil::nextVisibleLeaf)
-      .filter(Condition.NOT_NULL)
+      .filterMap(PsiTreeUtil::nextVisibleLeaf)
       .map(e -> e.getTextRange().getStartOffset())
       .toSet();
     return !errorOffsets.isEmpty() &&

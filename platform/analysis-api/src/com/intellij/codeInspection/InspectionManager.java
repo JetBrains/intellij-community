@@ -17,6 +17,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
@@ -42,6 +43,10 @@ public abstract class InspectionManager {
   @NotNull
   @Contract(pure = true)
   public abstract CommonProblemDescriptor createProblemDescriptor(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate, QuickFix... fixes);
+
+  @NotNull
+  @Contract(pure = true)
+  public abstract ModuleProblemDescriptor createProblemDescriptor(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate, Module module, QuickFix... fixes);
 
   /**
    * Factory method for ProblemDescriptor. Should be called from LocalInspectionTool.checkXXX() methods.

@@ -19,7 +19,7 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 import com.intellij.pom.java.LanguageLevel;
 
 public class ModifierTest extends LightQuickFixParameterizedTestCase {
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {

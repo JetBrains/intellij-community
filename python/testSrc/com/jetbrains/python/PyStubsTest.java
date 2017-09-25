@@ -204,7 +204,7 @@ public class PyStubsTest extends PyTestCase {
 
     new WriteCommandAction(myFixture.getProject(), fileImpl) {
       @Override
-      protected void run(@NotNull final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) {
         pyClass.setName("RenamedClass");
         assertEquals("RenamedClass", pyClass.getName());
       }
@@ -215,7 +215,7 @@ public class PyStubsTest extends PyTestCase {
 
     new WriteCommandAction(myFixture.getProject(), fileImpl) {
       @Override
-      protected void run(@NotNull Result result) throws Throwable {
+      protected void run(@NotNull Result result) {
         ((SingleRootFileViewProvider)fileImpl.getViewProvider()).onContentReload();
       }
     }.execute();
@@ -869,6 +869,16 @@ public class PyStubsTest extends PyTestCase {
       final PyTargetExpression instance = originFile.findTopLevelAttribute("expr");
       assertType("Tuple[int, None, str]", instance, TypeEvalContext.codeAnalysis(myFixture.getProject(), originFile));
       assertNotParsed(libFile);
+    });
+  }
+
+  // PY-24969
+  public void testFunctionStubDoesNotContainLocalVariableAnnotation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
+      final PyFile file = getTestFile();
+      final PyFunction func = file.findTopLevelFunction("func");
+      final PyFunctionStub funcStub = func.getStub();
+      assertNull(funcStub.findChildStubByType(PyElementTypes.ANNOTATION));
     });
   }
 }

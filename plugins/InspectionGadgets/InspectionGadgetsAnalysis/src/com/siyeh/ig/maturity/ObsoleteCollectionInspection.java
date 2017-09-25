@@ -19,8 +19,10 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.util.Query;
+import com.intellij.util.text.StringSearcher;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -32,9 +34,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class ObsoleteCollectionInspection extends BaseInspection {
+  private static final int MAX_OCCURRENCES = 20;
 
   @SuppressWarnings({"PublicField"})
-  public boolean ignoreRequiredObsoleteCollectionTypes = false;
+  public boolean ignoreRequiredObsoleteCollectionTypes = true;
 
   @Override
   @NotNull
@@ -86,8 +89,7 @@ public class ObsoleteCollectionInspection extends BaseInspection {
       if (typeElement == null) {
         return;
       }
-      if (ignoreRequiredObsoleteCollectionTypes &&
-          isUsedAsParameterForLibraryMethod(variable)) {
+      if (ignoreRequiredObsoleteCollectionTypes && checkReferences(variable)) {
         return;
       }
       registerError(typeElement);
@@ -107,8 +109,7 @@ public class ObsoleteCollectionInspection extends BaseInspection {
       if (typeElement == null) {
         return;
       }
-      if (ignoreRequiredObsoleteCollectionTypes &&
-          isUsedAsParameterForLibraryMethod(method)) {
+      if (ignoreRequiredObsoleteCollectionTypes && checkReferences(method)) {
         return;
       }
       registerError(typeElement);
@@ -151,19 +152,18 @@ public class ObsoleteCollectionInspection extends BaseInspection {
              "java.util.Hashtable".equals(name);
     }
 
-    private boolean isUsedAsParameterForLibraryMethod(
-      PsiNamedElement namedElement) {
+    private boolean checkReferences(PsiNamedElement namedElement) {
       final PsiFile containingFile = namedElement.getContainingFile();
-      final Query<PsiReference> query =
-        ReferencesSearch.search(namedElement,
-                                GlobalSearchScope.fileScope(containingFile));
-      for (PsiReference reference : query) {
-        final PsiElement element = reference.getElement();
-        if (isRequiredObsoleteCollectionElement(element)) {
+      if (!isOnTheFly() || isCheapToSearchInFile(namedElement)) {
+        return !ReferencesSearch.search(namedElement, GlobalSearchScope.fileScope(containingFile)).forEach(ref -> {
+          final PsiElement element = ref.getElement();
+          if (isRequiredObsoleteCollectionElement(element)) {
+            return false;
+          }
           return true;
-        }
+        });
       }
-      return false;
+      return true;
     }
 
     private boolean isRequiredObsoleteCollectionElement(PsiElement element) {
@@ -189,6 +189,9 @@ public class ObsoleteCollectionInspection extends BaseInspection {
         if (isObsoleteCollectionType(lhsType)) {
           return true;
         }
+      }
+      else if (parent instanceof PsiMethodCallExpression) {
+        return isRequiredObsoleteCollectionElement(parent);
       }
       if (!(parent instanceof PsiExpressionList)) {
         return false;
@@ -240,5 +243,15 @@ public class ObsoleteCollectionInspection extends BaseInspection {
       }
       return index;
     }
+  }
+
+  private static boolean isCheapToSearchInFile(@NotNull PsiNamedElement element) {
+    String name = element.getName();
+    if (name == null) return false;
+    return CachedValuesManager.getCachedValue(element, () -> {
+      PsiFile file = element.getContainingFile();
+      int[] occurrences = new StringSearcher(name, true, true).findAllOccurrences(file.getViewProvider().getContents());
+      return CachedValueProvider.Result.create(occurrences.length <= MAX_OCCURRENCES, file);
+    });
   }
 }

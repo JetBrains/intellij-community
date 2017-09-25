@@ -43,14 +43,10 @@ import static javax.swing.tree.TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION;
 public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
   private boolean myCanExpand;
 
-  private static final Convertor<TreePath, String> TO_STRING = object -> {
-    DefaultMutableTreeNode node = (DefaultMutableTreeNode)object.getLastPathComponent();
-    return node.toString();
-  };
+  private static final Convertor<TreePath, String> TO_STRING = path -> path.getLastPathComponent().toString();
   private final Convertor<TreePath, String> myToStringConvertor;
   public static final Convertor<TreePath, String> NODE_DESCRIPTOR_TOSTRING = path -> {
-    final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-    final Object userObject = node.getUserObject();
+    Object userObject = TreeUtil.getUserObject(path.getLastPathComponent());
     if (userObject instanceof NodeDescriptor) {
       NodeDescriptor descr = (NodeDescriptor)userObject;
       return descr.toString();

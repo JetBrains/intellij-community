@@ -33,7 +33,6 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.refactoring.util.occurrences.BaseOccurrenceManager;
-import com.intellij.refactoring.util.occurrences.OccurrenceFilter;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.usageView.UsageInfo;
@@ -55,25 +54,25 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.stream.Stream;
 
 public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
-  @SuppressWarnings({"WeakerAccess"}) public int MIN_STRING_LENGTH = 5;
-  @SuppressWarnings({"WeakerAccess"}) public boolean IGNORE_PROPERTY_KEYS;
+  @SuppressWarnings("WeakerAccess") public int MIN_STRING_LENGTH = 5;
+  @SuppressWarnings("WeakerAccess") public boolean IGNORE_PROPERTY_KEYS;
   @NonNls private static final String BR = "<br>";
 
   @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
-      @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
+      @Override
+      public void visitReferenceExpression(final PsiReferenceExpression expression) {
         visitExpression(expression);
       }
 
-      @Override public void visitLiteralExpression(PsiLiteralExpression expression) {
+      @Override
+      public void visitLiteralExpression(PsiLiteralExpression expression) {
         checkStringLiteralExpression(expression, holder, isOnTheFly);
       }
     };
@@ -98,7 +97,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   }
 
   @NotNull
-  private Set<PsiFile> getCandidateFiles(String stringToFind, Project project) {
+  private Set<PsiFile> getCandidateFiles(@NotNull String stringToFind, @NotNull Project project) {
     final GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
     final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(project);
     final List<String> words = StringUtil.getWordsInStringLongestFirst(stringToFind);
@@ -125,7 +124,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   }
 
   @NotNull
-  private List<PsiLiteralExpression> findDuplicateLiterals(String stringToFind, Project project) {
+  private List<PsiLiteralExpression> findDuplicateLiterals(@NotNull String stringToFind, @NotNull Project project) {
     Set<PsiFile> resultFiles = getCandidateFiles(stringToFind, project);
     if (resultFiles.isEmpty()) return Collections.emptyList();
     List<PsiLiteralExpression> foundExpr = new ArrayList<>();
@@ -154,7 +153,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   private void checkStringLiteralExpression(@NotNull final PsiLiteralExpression originalExpression,
                                             @NotNull ProblemsHolder holder,
                                             final boolean isOnTheFly) {
-    List<PsiLiteralExpression> foundExpr = getDuplicateLiterals(originalExpression);
+    List<PsiLiteralExpression> foundExpr = getDuplicateLiterals(holder.getProject(), originalExpression);
     if (foundExpr.isEmpty()) return;
     Set<PsiClass> classes = new THashSet<>();
     for (PsiElement aClass : foundExpr) {
@@ -204,13 +203,12 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   }
 
   @NotNull
-  private List<PsiLiteralExpression> getDuplicateLiterals(PsiLiteralExpression place) {
+  private List<PsiLiteralExpression> getDuplicateLiterals(@NotNull Project project, @NotNull PsiLiteralExpression place) {
     Object value = place.getValue();
     if (!(value instanceof String)) return Collections.emptyList();
     if (!shouldCheck(place)) return Collections.emptyList();
     String stringToFind = (String)value;
-    if (stringToFind.length() == 0) return Collections.emptyList();
-    Project project = place.getProject();
+    if (stringToFind.isEmpty()) return Collections.emptyList();
     Map<String, List<PsiLiteralExpression>> map = CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       Map<String, List<PsiLiteralExpression>> duplicates = ConcurrentFactoryMap.createMap(
         s -> Collections.unmodifiableList(findDuplicateLiterals(s, project)));
@@ -224,8 +222,8 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     return !SuppressManager.isSuppressedInspectionName(expression);
   }
 
-  private static void createReplaceFixes(final List<PsiLiteralExpression> foundExpr, final PsiLiteralExpression originalExpression,
-                                         final Collection<LocalQuickFix> fixes) {
+  private static void createReplaceFixes(@NotNull List<PsiLiteralExpression> foundExpr, @NotNull PsiLiteralExpression originalExpression,
+                                         @NotNull Collection<LocalQuickFix> fixes) {
     Set<PsiField> constants = new THashSet<>();
     for (Iterator<PsiLiteralExpression> iterator = foundExpr.iterator(); iterator.hasNext();) {
       PsiExpression expression1 = iterator.next();
@@ -251,7 +249,8 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     }
   }
 
-  private static LocalQuickFix createIntroduceConstFix(List<PsiLiteralExpression> foundExpr, PsiLiteralExpression originalExpression) {
+  @NotNull
+  private static LocalQuickFix createIntroduceConstFix(@NotNull List<PsiLiteralExpression> foundExpr, @NotNull PsiLiteralExpression originalExpression) {
     final PsiLiteralExpression[] expressions = foundExpr.toArray(new PsiLiteralExpression[foundExpr.size() + 1]);
     expressions[foundExpr.size()] = originalExpression;
 
@@ -259,7 +258,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   }
 
   @Nullable
-  private static PsiReferenceExpression createReferenceTo(final PsiField constant) throws IncorrectOperationException {
+  private static PsiReferenceExpression createReferenceTo(@NotNull PsiField constant) throws IncorrectOperationException {
     PsiElementFactory factory = JavaPsiFacade.getInstance(constant.getProject()).getElementFactory();
     PsiReferenceExpression reference = (PsiReferenceExpression)factory.createExpressionFromText("XXX." + constant.getName(), null);
     final PsiReferenceExpression classQualifier = (PsiReferenceExpression)reference.getQualifierExpression();
@@ -279,12 +278,8 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   @Override
   public JComponent createOptionsPanel() {
     final OptionsPanel optionsPanel = new OptionsPanel();
-    optionsPanel.myIgnorePropertyKeyExpressions.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(final ActionEvent e) {
-        IGNORE_PROPERTY_KEYS = optionsPanel.myIgnorePropertyKeyExpressions.isSelected();
-      }
-    });
+    optionsPanel.myIgnorePropertyKeyExpressions.addActionListener(
+      e -> IGNORE_PROPERTY_KEYS = optionsPanel.myIgnorePropertyKeyExpressions.isSelected());
     optionsPanel.myMinStringLengthField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(final DocumentEvent e) {
@@ -309,7 +304,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   private static class IntroduceLiteralConstantFix implements LocalQuickFix {
     private final SmartPsiElementPointer[] myExpressions;
 
-    public IntroduceLiteralConstantFix(final PsiLiteralExpression[] expressions) {
+    IntroduceLiteralConstantFix(final PsiLiteralExpression[] expressions) {
       myExpressions = new SmartPsiElementPointer[expressions.length];
       for(int i=0; i<expressions.length; i++) {
         PsiExpression expression = expressions[i];
@@ -345,13 +340,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
       final IntroduceConstantHandler handler = new IntroduceConstantHandler() {
         @Override
         protected OccurrenceManager createOccurrenceManager(PsiExpression selectedExpr, PsiClass parentClass) {
-          final OccurrenceFilter filter = new OccurrenceFilter() {
-            @Override
-            public boolean isOK(PsiExpression occurrence) {
-              return true;
-            }
-          };
-          return new BaseOccurrenceManager(filter) {
+          return new BaseOccurrenceManager(occurrence -> true) {
             @Override
             protected PsiExpression[] defaultOccurrences() {
               return expressionArray;
@@ -372,7 +361,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     private final String myText;
     private final SmartPsiElementPointer<PsiField> myConst;
 
-    public ReplaceFix(PsiField constant, PsiLiteralExpression originalExpression) {
+    private ReplaceFix(PsiField constant, PsiLiteralExpression originalExpression) {
       super(originalExpression);
       myText = InspectionsBundle.message("inspection.duplicates.replace.quickfix", PsiFormatUtil
         .formatVariable(constant, PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
@@ -438,7 +427,8 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
       if (!(startElement instanceof PsiLiteralExpression)) return;
 
       PsiLiteralExpression literal = (PsiLiteralExpression)startElement;
-      PsiLiteralExpression[] literalExpressions = Stream.concat(getDuplicateLiterals(literal).stream(), Stream.of(literal)).toArray(PsiLiteralExpression[]::new);
+      List<PsiLiteralExpression> duplicates = getDuplicateLiterals(file.getProject(), literal);
+      PsiLiteralExpression[] literalExpressions = Stream.concat(duplicates.stream(), Stream.of(literal)).toArray(PsiLiteralExpression[]::new);
       Usage[] usages = Stream.of(literalExpressions)
         .map(UsageInfo::new)
         .map(UsageInfo2UsageAdapter::new)

@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public class LayeredLexerTest extends TestCase {
-  public void testInTheMiddle() throws Exception {
+  public void testInTheMiddle() {
     Lexer lexer = setupLexer("s=\"abc\\ndef\";");
 
     assertEquals("s", nextToken(lexer));
@@ -44,7 +44,7 @@ public class LayeredLexerTest extends TestCase {
     assertEquals(null, lexer.getTokenType());
   }
 
-  public void testModification() throws Exception {
+  public void testModification() {
     Lexer lexer = setupLexer("s=\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\";");
     assertEquals("s", nextToken(lexer));
     assertEquals("=", nextToken(lexer));
@@ -59,7 +59,7 @@ public class LayeredLexerTest extends TestCase {
   }
 
 
-  public void testInTheAtStartup() throws Exception {
+  public void testInTheAtStartup() {
     Lexer lexer = setupLexer("s=\"\\ndef\";");
 
     assertEquals("s", nextToken(lexer));
@@ -71,7 +71,7 @@ public class LayeredLexerTest extends TestCase {
     assertEquals(null, lexer.getTokenType());
   }
 
-  public void testInTheAtEnd() throws Exception {
+  public void testInTheAtEnd() {
     Lexer lexer = setupLexer("s=\"abc\\n\";");
 
     assertEquals("s", nextToken(lexer));
@@ -83,7 +83,7 @@ public class LayeredLexerTest extends TestCase {
     assertEquals(null, lexer.getTokenType());
   }
 
-  public void testNonTerminated() throws Exception {
+  public void testNonTerminated() {
     Lexer lexer = setupLexer("s=\"abc\\n");
 
     assertEquals("s", nextToken(lexer));
@@ -93,7 +93,7 @@ public class LayeredLexerTest extends TestCase {
     assertEquals(null, lexer.getTokenType());
   }
 
-  public void testNonTerminated2() throws Exception {
+  public void testNonTerminated2() {
     Lexer lexer = setupLexer("s=\"abc\\");
 
     assertEquals("s", nextToken(lexer));
@@ -103,7 +103,7 @@ public class LayeredLexerTest extends TestCase {
     assertEquals(null, lexer.getTokenType());
   }
 
-  public void testUnicode() throws Exception {
+  public void testUnicode() {
     Lexer lexer = setupLexer("s=\"\\uFFFF\";");
     assertEquals("s", nextToken(lexer));
     assertEquals("=", nextToken(lexer));
@@ -114,7 +114,7 @@ public class LayeredLexerTest extends TestCase {
     assertEquals(null, lexer.getTokenType());
   }
 
-  public void testDelegatesWithBigStates() throws Exception {
+  public void testDelegatesWithBigStates() {
     final LayeredLexer lexer = new LayeredLexer(new SimpleStateSteppingLexer());
     lexer.registerSelfStoppingLayer(new SimpleStateSteppingLexer(),
                                     new IElementType[]{TokenType.CODE_FRAGMENT},

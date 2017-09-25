@@ -1,7 +1,6 @@
 package com.intellij.json.highlighting;
 
 import com.google.common.collect.ImmutableMap;
-import com.intellij.application.options.colors.InspectionColorSettingsPage;
 import com.intellij.icons.AllIcons;
 import com.intellij.json.JsonLanguage;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -23,7 +22,7 @@ import static com.intellij.json.highlighting.JsonSyntaxHighlighterFactory.*;
 /**
  * @author Mikhail Golubev
  */
-public class JsonColorsPage implements ColorSettingsPage, InspectionColorSettingsPage, DisplayPrioritySortable {
+public class JsonColorsPage implements ColorSettingsPage, DisplayPrioritySortable {
   private static final Map<String, TextAttributesKey> ourAdditionalHighlighting = ImmutableMap.of("propertyKey", JSON_PROPERTY_KEY);
 
   private static final AttributesDescriptor[] ourAttributeDescriptors = new AttributesDescriptor[]{

@@ -83,7 +83,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   @NonNls public static final String HISTORY_DATE_FORMAT = "yyyy.MM.dd 'at' HH'h' mm'm' ss's'";
   @NonNls private static final String DEFAULT_SM_RUNNER_SPLITTER_PROPERTY = "SMTestRunner.Splitter.Proportion";
 
-  public static final Color DARK_YELLOW = JBColor.YELLOW.darker();
   private static final Logger LOG = Logger.getInstance(SMTestRunnerResultsForm.class);
 
   private SMTRunnerTestTreeView myTreeView;
@@ -160,7 +159,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myTreeView.setTestResultsViewer(this);
     final SMTRunnerTreeStructure structure = new SMTRunnerTreeStructure(myProject, myTestsRootNode);
     myTreeBuilder = new SMTRunnerTreeBuilder(myTreeView, structure);
-    myTreeBuilder.setTestsComparator(myProperties);
+    myTreeBuilder.setTestsComparator(this);
     Disposer.register(this, myTreeBuilder);
 
     myAnimator = new TestsProgressAnimator(myTreeBuilder);
@@ -222,7 +221,20 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
    * @return
    */
   public void onTestingStarted(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
+    myTotalTestCount = 0;
+    myStartedTestCount = 0;
+    myFinishedTestCount = 0;
+    myFailedTestCount = 0;
+    myIgnoredTestCount = 0;
+    myTestsRunning = true;
+    myLastFailed = null;
+    myLastSelected = null;
+    myMentionedCategories.clear();
+
     myAnimator.setCurrentTestCase(myTestsRootNode);
+    if (!myTestsRootNode.getChildren().isEmpty()) {
+      myTestsRootNode.getChildren().clear();
+    }
     myTreeBuilder.updateFromRoot();
 
     // Status line
@@ -240,9 +252,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       myTestsRootNode.addSystemOutput("Testing started at " + DateFormatUtil.formatTime(myStartTime) + " ...\n");
     }
 
+    // update status text
     updateStatusLabel(false);
-
-    // TODO : show info - "Loading..." msg
 
     fireOnTestingStarted();
   }
@@ -268,7 +279,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       myTestsRunning = false;
       final boolean sortByDuration = TestConsoleProperties.SORT_BY_DURATION.value(myProperties);
       if (sortByDuration) {
-        myTreeBuilder.setTestsComparator(myProperties);
+        myTreeBuilder.setTestsComparator(this);
       }
     };
     if (myLastSelected == null) {
@@ -516,11 +527,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     return myStartedTestCount;
   }
 
-  protected int getFinishedTestCount() {
+  public int getFinishedTestCount() {
     return myFinishedTestCount;
   }
 
-  protected int getFailedTestCount() {
+  public int getFailedTestCount() {
     return myFailedTestCount;
   }
 
@@ -528,7 +539,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     return myIgnoredTestCount;
   }
 
-  protected Color getTestsStatusColor() {
+  public Color getTestsStatusColor() {
     return myStatusLine.getStatusColor();
   }
 

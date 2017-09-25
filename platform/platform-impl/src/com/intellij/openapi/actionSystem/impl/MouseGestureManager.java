@@ -49,7 +49,7 @@ public class MouseGestureManager {
         myListeners.put(frame, listener);
       }
       catch (Throwable e) {
-        LOG.debug(e);
+        LOG.error("Can't initialize MacGestureAdapter", e);
       }
     }
   }

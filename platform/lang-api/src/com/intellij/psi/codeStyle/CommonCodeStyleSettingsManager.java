@@ -234,6 +234,7 @@ public class CommonCodeStyleSettingsManager {
         CommonCodeStyleSettings.copyPublicFields(sourceIndentOptions, targetIndentOptions);
       }
     }
+    target.setSoftMargins(source.getSoftMargins());
   }
 
   @Override

@@ -22,11 +22,14 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
@@ -233,6 +236,29 @@ public abstract class UsefulTestCase extends TestCase {
     componentKeyStrokeMap.clear();
     Map containerMap = ReflectionUtil.getField(manager.getClass(), manager, Hashtable.class, "containerMap");
     containerMap.clear();
+  }
+
+  public static void checkForJdkTableLeaks(@NotNull Sdk[] oldSdks) {
+    ProjectJdkTable table = ProjectJdkTable.getInstance();
+    if (table != null) {
+      Sdk[] jdks = table.getAllJdks();
+      if (jdks.length != 0) {
+        Set<Sdk> leaked = new THashSet<>(Arrays.asList(jdks));
+        Set<Sdk> old = new THashSet<>(Arrays.asList(oldSdks));
+        leaked.removeAll(old);
+
+        try {
+          if (!leaked.isEmpty()) {
+            fail("Leaked SDKs: " + leaked);
+          }
+        }
+        finally {
+          for (Sdk jdk : leaked) {
+            WriteAction.run(()-> table.removeJdk(jdk));
+          }
+        }
+      }
+    }
   }
 
   protected void checkForSettingsDamage() {

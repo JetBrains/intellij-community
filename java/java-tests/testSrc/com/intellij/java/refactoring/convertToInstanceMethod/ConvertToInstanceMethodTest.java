@@ -37,27 +37,27 @@ public class ConvertToInstanceMethodTest extends LightRefactoringTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testSimple() throws Exception { doTest(0); }
+  public void testSimple() { doTest(0); }
 
-  public void testInterface() throws Exception { doTest(1); }
+  public void testInterface() { doTest(1); }
 
-  public void testInterfacePrivate() throws Exception { doTest(1); }
+  public void testInterfacePrivate() { doTest(1); }
 
-  public void testInterface2() throws Exception { doTest(0); }
+  public void testInterface2() { doTest(0); }
 
-  public void testInterface3() throws Exception { doTest(0); }
+  public void testInterface3() { doTest(0); }
 
-  public void testTypeParameter() throws Exception { doTest(0); }
+  public void testTypeParameter() { doTest(0); }
 
-  public void testInterfaceTypeParameter() throws Exception { doTest(0); }
+  public void testInterfaceTypeParameter() { doTest(0); }
 
-  public void testJavadocParameter() throws Exception { doTest(0); }
+  public void testJavadocParameter() { doTest(0); }
 
-  public void testConflictingParameterName() throws Exception {
+  public void testConflictingParameterName() {
     doTest(0);
   }
 
-  public void testVisibilityConflict() throws Exception {
+  public void testVisibilityConflict() {
     try {
       doTest(0, PsiModifier.PRIVATE);
       fail("Conflict was not detected");
@@ -67,11 +67,11 @@ public class ConvertToInstanceMethodTest extends LightRefactoringTestCase {
     }
   }
 
-  protected void doTest(final int targetParameter) throws Exception {
+  protected void doTest(final int targetParameter) {
     doTest(targetParameter, VisibilityUtil.ESCALATE_VISIBILITY);
   }
 
-  private void doTest(final int targetParameter, final String visibility) throws Exception {
+  private void doTest(final int targetParameter, final String visibility) {
     final String filePath = getBasePath() + getTestName(false) + ".java";
     configureByFile(filePath);
     final PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);

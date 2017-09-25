@@ -172,6 +172,7 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
     super.setBinaryContent(content, newModificationStamp, newTimeStamp);
   }
 
+  @Nullable
   @Override
   public String getDetectedLineSeparator() {
     if (getFlagInt(SYSTEM_LINE_SEPARATOR_DETECTED)) {

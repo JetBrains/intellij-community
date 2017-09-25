@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,7 +39,7 @@ public abstract class PatchingTestCase extends IntegrationTestCase {
     patchFilePath = new File(dir, "patch").getPath();
   }
 
-  protected void clearRoot() throws IOException {
+  protected void clearRoot() {
     for (VirtualFile f : myRoot.getChildren()) {
       delete(f);
     }
@@ -54,7 +53,7 @@ public abstract class PatchingTestCase extends IntegrationTestCase {
     new PatchApplier<BinaryFilePatch>(myProject, myRoot, patches, null, null, null).execute();
   }
 
-  protected static void createChildDataWithContent(@NotNull VirtualFile dir, @NotNull String name) throws IOException {
+  protected static void createChildDataWithContent(@NotNull VirtualFile dir, @NotNull String name) {
     createChildData(dir, name);
     VirtualFile file = dir.findChild(name);
     setFileText(file, "some content");

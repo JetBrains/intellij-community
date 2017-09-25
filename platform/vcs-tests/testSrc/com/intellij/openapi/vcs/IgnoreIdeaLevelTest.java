@@ -72,7 +72,7 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
     Disposer.register(getTestRootDisposable(), dialog.getDisposable());
   }
 
-  private void createOutsideModule() throws IOException {
+  private void createOutsideModule() {
     final VirtualFile baseDir = myProject.getBaseDir();
     assertNotNull(baseDir);
     final VirtualFile baseParent = baseDir.getParent();
@@ -129,10 +129,10 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
     private VirtualFile myF3Outside;
     private VirtualFile myF4Outside;
 
-    private FileStructure(final VirtualFile baseDir, final VirtualFile outsideDir) throws Throwable {
+    private FileStructure(final VirtualFile baseDir, final VirtualFile outsideDir) {
       new WriteAction() {
         @Override
-        protected void run(@NotNull Result result) throws Throwable {
+        protected void run(@NotNull Result result) {
           try {
             myABase = baseDir.createChildDirectory(this, "a");
             myBBase = myABase.createChildDirectory(this, "b");
@@ -158,7 +158,7 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
     }
   }
 
-  public void testRoots() throws Exception {
+  public void testRoots() {
     assertEquals(2, myVcsManager.getAllVcsRoots().length);
   }
 
@@ -204,7 +204,7 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
   }
 
   @Test
-  public void testSimple() throws Throwable {
+  public void testSimple() {
     final FileStructure fs = new FileStructure(myProject.getBaseDir(), myModuleRoot);
 
     final IgnoredFileBean bean1 = IgnoredBeanFactory.ignoreFile(fs.myF1Base.getPath(), myProject);
@@ -223,7 +223,7 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
   }
 
   @Test
-  public void testSimpleStrasse() throws Throwable {
+  public void testSimpleStrasse() {
     final VirtualFile file = createFileInCommand(myProject.getBaseDir(), "Straße", "123");
     final VirtualFile file2 = createFileInCommand(myProject.getBaseDir(), "Strasse", "123");
 
@@ -239,7 +239,7 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
   }
 
   @Test
-  public void testPatterns() throws Throwable {
+  public void testPatterns() {
     final FileStructure fs = new FileStructure(myProject.getBaseDir(), myModuleRoot);
 
     final IgnoredFileBean bean1 = IgnoredBeanFactory.withMask("*1.txt");
@@ -254,7 +254,7 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
   }
 
   @Test
-  public void testDirs() throws Throwable {
+  public void testDirs() {
     final FileStructure fs = new FileStructure(myProject.getBaseDir(), myModuleRoot);
 
     final IgnoredFileBean bean1 = IgnoredBeanFactory.ignoreUnderDirectory(fs.myBBase.getPath(), myProject);
@@ -279,7 +279,7 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
   }
 
   @Test
-  public void testTypedAbsolute() throws Throwable {
+  public void testTypedAbsolute() {
     final FileStructure fs = new FileStructure(myProject.getBaseDir(), myModuleRoot);
 
     String baseUnder = myProject.getBaseDir().getPath();
@@ -302,7 +302,7 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
   }
 
   @Test
-  public void testTypedAbsoluteSeparator() throws Throwable {
+  public void testTypedAbsoluteSeparator() {
     final FileStructure fs = new FileStructure(myProject.getBaseDir(), myModuleRoot);
 
     String baseUnder = myProject.getBaseDir().getPath();
@@ -326,7 +326,7 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
   }
 
   @Test
-  public void testTypedRelativeInsideSeparator() throws Throwable {
+  public void testTypedRelativeInsideSeparator() {
     final FileStructure fs = new FileStructure(myProject.getBaseDir(), myModuleRoot);
 
     final IgnoredFileBean bean1 = IgnoredBeanFactory.ignoreUnderDirectory("a" + File.separator + "b", myProject);
@@ -344,7 +344,7 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
   }
 
   @Test
-  public void testTypedRelativeInside() throws Throwable {
+  public void testTypedRelativeInside() {
     final FileStructure fs = new FileStructure(myProject.getBaseDir(), myModuleRoot);
 
     final IgnoredFileBean bean1 = IgnoredBeanFactory.ignoreUnderDirectory("a/b", myProject);
@@ -362,7 +362,7 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
   }
 
   @Test
-  public void testTypedRelativeOutsideSeparator() throws Throwable {
+  public void testTypedRelativeOutsideSeparator() {
     final FileStructure fs = new FileStructure(myProject.getBaseDir(), myModuleRoot);
 
     String baseUnder = myModuleRoot.getPath();
@@ -386,7 +386,7 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
   }
 
   @Test
-  public void testTypedRelativeOutside() throws Throwable {
+  public void testTypedRelativeOutside() {
     final FileStructure fs = new FileStructure(myProject.getBaseDir(), myModuleRoot);
 
     String baseUnder = myModuleRoot.getPath();
@@ -409,7 +409,7 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
   }
 
   @Test
-  public void testDoNotAddAlreadyIgnoredDirectory() throws Throwable {
+  public void testDoNotAddAlreadyIgnoredDirectory() {
     final FileStructure fs = new FileStructure(myProject.getBaseDir(), myModuleRoot);
     myClManager.addDirectoryToIgnoreImplicitly(fs.myABase.getPath());
     myClManager.addDirectoryToIgnoreImplicitly(fs.myBBase.getPath());
@@ -418,7 +418,7 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
   }
 
   @Test
-  public void testRemoveChildIgnoredDirectoryWhenParentIsAdded() throws Throwable {
+  public void testRemoveChildIgnoredDirectoryWhenParentIsAdded() {
     final FileStructure fs = new FileStructure(myProject.getBaseDir(), myModuleRoot);
     myClManager.addDirectoryToIgnoreImplicitly(fs.myBBase.getPath());
     myClManager.addDirectoryToIgnoreImplicitly(fs.myCBase.getPath());
@@ -427,7 +427,7 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
   }
 
   @Test
-  public void testManuallyRemovedFromIgnored() throws Throwable {
+  public void testManuallyRemovedFromIgnored() {
     final FileStructure fs = new FileStructure(myProject.getBaseDir(), myModuleRoot);
     myClManager.getIgnoredFilesComponent().setDirectoriesManuallyRemovedFromIgnored(Collections.singleton(fs.myBBase.getPath()));
     myClManager.addDirectoryToIgnoreImplicitly(fs.myBBase.getPath());
@@ -436,7 +436,7 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
   }
 
   @Test
-  public void testRemovingFromImplicitlyIgnored() throws Throwable {
+  public void testRemovingFromImplicitlyIgnored() {
     final FileStructure fs = new FileStructure(myProject.getBaseDir(), myModuleRoot);
     myClManager.addDirectoryToIgnoreImplicitly(fs.myBBase.getPath());
     myClManager.addDirectoryToIgnoreImplicitly(fs.myCBase.getPath());

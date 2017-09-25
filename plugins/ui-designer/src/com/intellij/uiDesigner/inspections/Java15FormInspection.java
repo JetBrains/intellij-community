@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.actions.ResetValueAction;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
@@ -57,7 +58,7 @@ public class Java15FormInspection extends BaseFormInspection {
     }
 
     for(final IProperty prop: component.getModifiedProperties()) {
-      final PsiMethod getter = PropertyUtil.findPropertyGetter(aClass, prop.getName(), false, true);
+      final PsiMethod getter = PropertyUtilBase.findPropertyGetter(aClass, prop.getName(), false, true);
       if (getter == null) continue;
       final LanguageLevel languageLevel = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
       if (Java15APIUsageInspectionBase.getLastIncompatibleLanguageLevel(getter, languageLevel) != null) {

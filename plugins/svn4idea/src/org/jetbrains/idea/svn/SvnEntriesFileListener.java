@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -38,6 +39,7 @@ public class SvnEntriesFileListener implements VirtualFileListener {
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
   }
 
+  @Override
   public void fileCreated(@NotNull VirtualFileEvent event) {
     if (! event.isFromRefresh()) {
       return;
@@ -54,9 +56,10 @@ public class SvnEntriesFileListener implements VirtualFileListener {
   }
 
   private void refreshAnnotationsUnder(VirtualFile parent) {
-    myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirtyUnder(parent);
+    BackgroundTaskUtil.syncPublisher(myProject, VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirtyUnder(parent);
   }
 
+  @Override
   public void contentsChanged(@NotNull VirtualFileEvent event) {
     if (! event.isFromRefresh()) {
       return;
@@ -86,6 +89,7 @@ public class SvnEntriesFileListener implements VirtualFileListener {
     }
   }
 
+  @Override
   public void fileDeleted(@NotNull VirtualFileEvent event) {
     if (!event.isFromRefresh()) {
       return;

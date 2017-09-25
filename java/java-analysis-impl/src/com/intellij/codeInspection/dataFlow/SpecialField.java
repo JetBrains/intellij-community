@@ -54,7 +54,7 @@ public enum SpecialField {
   STRING_LENGTH(CommonClassNames.JAVA_LANG_STRING, "length", true, LongRangeSet.indexRange()) {
     @Override
     public DfaValue createFromConstant(DfaValueFactory factory, @NotNull Object obj) {
-      return obj instanceof String ? factory.getConstFactory().createFromValue(((String)obj).length(), PsiType.INT, null) : null;
+      return obj instanceof String ? factory.getInt(((String)obj).length()) : null;
     }
   },
   COLLECTION_SIZE(CommonClassNames.JAVA_UTIL_COLLECTION, "size", false, LongRangeSet.indexRange()),

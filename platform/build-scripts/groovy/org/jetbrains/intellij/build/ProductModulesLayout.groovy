@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,6 +110,17 @@ class ProductModulesLayout {
   boolean prepareCustomPluginRepositoryForPublishedPlugins = false
 
   /**
+   * If {@code true} then all plugins that compatible with an IDE will be built.
+   * Otherwise only plugins from {@link #pluginModulesToPublish} will be considered.
+   */
+  boolean buildAllCompatiblePlugins = false
+
+  /**
+   * List of plugin names which should not be built even if they are compatible and {@link #buildAllCompatiblePlugins} is true
+   */
+  List<String> compatiblePluginsToIgnore = []
+
+  /**
    * Names of the main modules of plugins from {@link #pluginModulesToPublish} list where since-build/until-build range should be restricted.
    * These plugins will be compatible with builds which number differ from the build which produces these plugins only in the last component,
    * i.e. plugins produced in 163.1111.22 build will be compatible with 163.1111.* builds. The plugins not included into this list
@@ -126,8 +137,7 @@ class ProductModulesLayout {
   /**
    * @return list of all modules which output is included into the plugin's JARs
    */
-  List<String> getIncludedPluginModules() {
-    Set<String> enabledPluginModules = getEnabledPluginModules()
+  List<String> getIncludedPluginModules(Set<String> enabledPluginModules) {
     def modulesFromNonTrivialPlugins = allNonTrivialPlugins.findAll { enabledPluginModules.contains(it.mainModule) }.
       collectMany { it.getActualModules(enabledPluginModules).values() }
     (enabledPluginModules + modulesFromNonTrivialPlugins) as List<String>
@@ -135,9 +145,5 @@ class ProductModulesLayout {
 
   List<String> getIncludedPlatformModules() {
     platformApiModules + platformImplementationModules + additionalPlatformJars.values()
-  }
-
-  Set<String> getEnabledPluginModules() {
-    (bundledPluginModules + pluginModulesToPublish) as Set<String>
   }
 }

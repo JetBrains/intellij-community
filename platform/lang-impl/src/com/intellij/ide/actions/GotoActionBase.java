@@ -28,6 +28,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -193,7 +194,18 @@ public abstract class GotoActionBase extends AnAction {
                                          boolean useSelectionFromEditor,
                                          final boolean allowMultipleSelection) {
     showNavigationPopup(e, model, callback, findUsagesTitle, useSelectionFromEditor, allowMultipleSelection,
-                        new DefaultChooseByNameItemProvider(getPsiContext(e)));
+                        ChooseByNameModelEx.getItemProvider(model, getPsiContext(e)));
+  }
+
+  @Deprecated
+  protected <T> void showNavigationPopup(AnActionEvent e,
+                                         ChooseByNameModel model,
+                                         final GotoActionCallback<T> callback,
+                                         @Nullable final String findUsagesTitle,
+                                         boolean useSelectionFromEditor,
+                                         final boolean allowMultipleSelection,
+                                         final DefaultChooseByNameItemProvider itemProvider) {
+    showNavigationPopup(e, model, callback, findUsagesTitle, useSelectionFromEditor, allowMultipleSelection, (ChooseByNameItemProvider)itemProvider);
   }
 
   protected <T> void showNavigationPopup(AnActionEvent e,
@@ -202,7 +214,7 @@ public abstract class GotoActionBase extends AnAction {
                                          @Nullable final String findUsagesTitle,
                                          boolean useSelectionFromEditor,
                                          final boolean allowMultipleSelection,
-                                         final DefaultChooseByNameItemProvider itemProvider) {
+                                         final ChooseByNameItemProvider itemProvider) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     boolean mayRequestOpenInCurrentWindow = model.willOpenEditor() && FileEditorManagerEx.getInstanceEx(project).hasSplitOrUndockedWindows();
     Pair<String, Integer> start = getInitialText(useSelectionFromEditor, e);
@@ -317,6 +329,10 @@ public abstract class GotoActionBase extends AnAction {
         myHistoryIndex = myHistoryIndex <= 0 ? strings.size() - 1 : myHistoryIndex - 1;
       }
     }.registerCustomShortcutSet(SearchTextField.SHOW_HISTORY_SHORTCUT, editor);
+
+    ActionCallback typeAhead = new ActionCallback();
+    IdeFocusManager.getGlobalInstance().typeAheadUntil(typeAhead, "GotoPopup");
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> typeAhead.setDone());
   }
 
   private static boolean historyEnabled() {

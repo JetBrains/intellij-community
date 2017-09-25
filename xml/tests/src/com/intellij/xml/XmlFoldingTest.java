@@ -22,18 +22,18 @@ import java.io.File;
 
 public class XmlFoldingTest extends LightPlatformCodeInsightFixtureTestCase {
 
-  public void testTagFolding() throws Throwable { doTest(); }
+  public void testTagFolding() { doTest(); }
 
-  public void testStyleAttributeFolding() throws Throwable { doTest(); }
-  public void testStyleAttributeFolding2() throws Throwable { doTest(".xml"); }
+  public void testStyleAttributeFolding() { doTest(); }
+  public void testStyleAttributeFolding2() { doTest(".xml"); }
 
-  public void testEntities() throws Throwable { doTest(); }
+  public void testEntities() { doTest(); }
 
-  public void testDataUri() throws Throwable { doTest(); }
+  public void testDataUri() { doTest(); }
 
-  public void testCustomRegions() throws Throwable { doTest(); }
+  public void testCustomRegions() { doTest(); }
 
-  private void doTest() throws Throwable {
+  private void doTest() {
     doTest(".html");
   }
 

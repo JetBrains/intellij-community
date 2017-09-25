@@ -17,15 +17,14 @@ package org.zmlx.hg4idea.test;
 
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.vcs.AbstractVcsTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
+import com.intellij.testFramework.vcs.AbstractVcsTestCase;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 /**
@@ -101,7 +100,7 @@ public class HgTestRepository {
    * @param filename relative path to the file.
    * @return The created file.
    */
-  public VirtualFile createFile(String filename) throws FileNotFoundException {
+  public VirtualFile createFile(String filename) {
     return createFile(filename, "initial content");
   }
 
@@ -111,7 +110,7 @@ public class HgTestRepository {
    * @param content  initial content for the file.
    * @return The created file.
    */
-  public VirtualFile createFile(String filename, String content) throws FileNotFoundException {
+  public VirtualFile createFile(String filename, String content) {
     return myTest.createFileInCommand(filename, content);
   }
 

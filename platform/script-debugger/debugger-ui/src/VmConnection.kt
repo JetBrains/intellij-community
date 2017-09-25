@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,8 @@ abstract class VmConnection<T : Vm> : Disposable {
 
   private val stateRef = AtomicReference(ConnectionState(ConnectionStatus.NOT_CONNECTED))
 
-  open protected val dispatcher: EventDispatcher<DebugEventListener> = EventDispatcher.create(DebugEventListener::class.java)
+  open protected val dispatcher: EventDispatcher<DebugEventListener> = EventDispatcher.create(
+    DebugEventListener::class.java)
   private val connectionDispatcher = ContainerUtil.createLockFreeCopyOnWriteList<(ConnectionState) -> Unit>()
 
   @Volatile var vm: T? = null

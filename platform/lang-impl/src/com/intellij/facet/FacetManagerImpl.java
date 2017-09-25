@@ -62,7 +62,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
 
   private final Module myModule;
   private final FacetManagerModel myModel = new FacetManagerModel();
-  private boolean myInsideCommit = false;
+  private boolean myInsideCommit;
   private final MessageBus myMessageBus;
   private boolean myModuleAdded;
 
@@ -513,7 +513,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
 
   private static class FacetManagerModel extends FacetModelBase {
     private Facet[] myAllFacets = Facet.EMPTY_ARRAY;
-    private Set<ProjectModelExternalSource> myExternalSources = new LinkedHashSet<>();
+    private final Set<ProjectModelExternalSource> myExternalSources = new LinkedHashSet<>();
 
     @Override
     @NotNull
@@ -521,7 +521,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
       return myAllFacets;
     }
 
-    public void setAllFacets(final Facet[] allFacets) {
+    void setAllFacets(final Facet[] allFacets) {
       myExternalSources.clear();
       for (Facet facet : allFacets) {
         ContainerUtil.addIfNotNull(myExternalSources, facet.getExternalSource());
@@ -536,7 +536,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
     private final String myOldName;
     private final String myNewName;
 
-    public FacetRenameInfo(final Facet facet, final String oldName, final String newName) {
+    FacetRenameInfo(final Facet facet, final String oldName, final String newName) {
       myFacet = facet;
       myOldName = oldName;
       myNewName = newName;

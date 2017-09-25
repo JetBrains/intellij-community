@@ -96,7 +96,7 @@ public abstract class ElementWithBranchComparer {
   protected void beforeCompare() {
   }
 
-  protected abstract void compare() throws SVNException, VcsException;
+  protected abstract void compare() throws VcsException;
 
   protected abstract void showResult();
 
@@ -114,18 +114,17 @@ public abstract class ElementWithBranchComparer {
       return null;
     }
 
-    final String fileUrlString = fileUrl.toString();
-    final RootUrlInfo rootMixed = urlMapping.getWcRootForUrl(fileUrlString);
+    final RootUrlInfo rootMixed = urlMapping.getWcRootForUrl(fileUrl);
     if (rootMixed == null) {
       return null;
     }
 
-    final SVNURL thisBranchForUrl = SvnUtil.getBranchForUrl(myVcs, rootMixed.getVirtualFile(), fileUrlString);
+    final SVNURL thisBranchForUrl = SvnUtil.getBranchForUrl(myVcs, rootMixed.getVirtualFile(), fileUrl);
     if (thisBranchForUrl == null) {
       return null;
     }
 
-    final String relativePath = SVNPathUtil.getRelativePath(thisBranchForUrl.toString(), fileUrlString);
+    final String relativePath = SVNPathUtil.getRelativePath(thisBranchForUrl.toString(), fileUrl.toString());
     return SVNURL.parseURIEncoded(SVNPathUtil.append(myBranchUrl, relativePath));
   }
 

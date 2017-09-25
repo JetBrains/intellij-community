@@ -26,15 +26,14 @@ import com.intellij.ide.structureView.newStructureView.StructureViewComponent
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
-import com.intellij.openapi.vfs.StandardFileSystems
-import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileVisitor
+import com.intellij.openapi.vfs.*
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.compiled.ClsFileImpl
@@ -46,6 +45,14 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
     myFixture.testDataPath = "${PluginPathManager.getPluginHomePath("java-decompiler")}/plugin/testData"
+  }
+
+  override fun tearDown() {
+    FileEditorManagerEx.getInstanceEx(project).closeAllFiles()
+    for (file in EditorHistoryManager.getInstance(project).files) {
+      EditorHistoryManager.getInstance(project).removeFile(file)
+    }
+    super.tearDown()
   }
 
   fun testSimple() {
@@ -159,7 +166,7 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
     return fs.refreshAndFindFileByPath(path)!!
   }
 
-  private fun RegistryValue.withValue(testValue: Boolean, block: () -> Unit): Unit {
+  private fun RegistryValue.withValue(testValue: Boolean, block: () -> Unit) {
     val currentValue = asBoolean()
     try {
       setValue(testValue)
@@ -191,7 +198,7 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
         }
       }
       else if (ArchiveFileType.INSTANCE == file.fileType) {
-        val jarFile = StandardFileSystems.getJarRootForLocalFile(file)
+        val jarFile = JarFileSystem.getInstance().getRootByLocal(file)
         if (jarFile != null) {
           VfsUtilCore.visitChildrenRecursively(jarFile, this)
         }

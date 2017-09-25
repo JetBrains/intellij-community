@@ -29,7 +29,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
-import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.ui.JBUI.ScaleContext;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.Language;
@@ -381,6 +381,13 @@ public class UIUtil {
     return isJreHiDPI(comp != null ? comp.getGraphicsConfiguration() : null);
   }
 
+  /**
+   * Returns whether the JRE-managed HiDPI mode is enabled and the provided system scale context is HiDPI.
+   */
+  public static boolean isJreHiDPI(@Nullable ScaleContext ctx) {
+    return isJreHiDPIEnabled() && JBUI.isHiDPI(JBUI.sysScale(ctx));
+  }
+
   private static Boolean jreHiDPI;
   private static boolean jreHiDPI_earlierVersion;
 
@@ -432,7 +439,7 @@ public class UIUtil {
    */
   static final class DetectRetinaKit {
 
-    private static final WeakHashMap<GraphicsDevice, Boolean> devicesToRetinaSupportCacheMap = new WeakHashMap<GraphicsDevice, Boolean>();
+    private static final Map<GraphicsDevice, Boolean> devicesToRetinaSupportCacheMap = ContainerUtil.createWeakMap();
 
     /**
      * The best way to understand whether we are on a retina device is [NSScreen backingScaleFactor]
@@ -711,6 +718,9 @@ public class UIUtil {
   public static boolean isReallyTypedEvent(KeyEvent e) {
     char c = e.getKeyChar();
     if (c < 0x20 || c == 0x7F) return false;
+
+    // Allow input of special characters on Windows in Persian keyboard layout using Ctrl+Shift+1..4 
+    if (SystemInfo.isWindows && c >= 0x200C && c <= 0x200F) return true;
 
     if (SystemInfo.isMac) {
       return !e.isMetaDown() && !e.isControlDown();
@@ -3246,6 +3256,8 @@ public class UIUtil {
     private boolean myDrawShadow;
     private Color myShadowColor;
     private float myLineSpacing;
+    private Font myFont;
+    private Color myColor;
 
     public TextPainter() {
       myDrawShadow = /*isUnderAquaLookAndFeel() ||*/ isUnderDarcula();
@@ -3253,31 +3265,41 @@ public class UIUtil {
       myLineSpacing = 1.0f;
     }
 
-    public TextPainter withShadow(final boolean drawShadow) {
+    public TextPainter withShadow(boolean drawShadow) {
       myDrawShadow = drawShadow;
       return this;
     }
 
-    public TextPainter withShadow(final boolean drawShadow, final Color shadowColor) {
+    public TextPainter withShadow(boolean drawShadow, Color shadowColor) {
       myDrawShadow = drawShadow;
       myShadowColor = shadowColor;
       return this;
     }
 
-    public TextPainter withLineSpacing(final float lineSpacing) {
+    public TextPainter withLineSpacing(float lineSpacing) {
       myLineSpacing = lineSpacing;
       return this;
     }
 
-    public TextPainter appendLine(final String text) {
+    public TextPainter withColor(Color color) {
+      myColor = color;
+      return this;
+    }
+
+    public TextPainter withFont(Font font) {
+      myFont = font;
+      return this;
+    }
+
+    public TextPainter appendLine(String text) {
       if (text == null || text.isEmpty()) return this;
       myLines.add(Pair.create(text, new LineInfo()));
       return this;
     }
 
-    public TextPainter underlined(@Nullable final Color color) {
+    public TextPainter underlined(@Nullable Color color) {
       if (!myLines.isEmpty()) {
-        final LineInfo info = myLines.get(myLines.size() - 1).getSecond();
+        LineInfo info = myLines.get(myLines.size() - 1).getSecond();
         info.underlined = true;
         info.underlineColor = color;
       }
@@ -3285,9 +3307,9 @@ public class UIUtil {
       return this;
     }
 
-    public TextPainter withBullet(final char c) {
+    public TextPainter withBullet(char c) {
       if (!myLines.isEmpty()) {
-        final LineInfo info = myLines.get(myLines.size() - 1).getSecond();
+        LineInfo info = myLines.get(myLines.size() - 1).getSecond();
         info.withBullet = true;
         info.bulletChar = c;
       }
@@ -3327,119 +3349,134 @@ public class UIUtil {
       final int[] maxWidth = {0};
       final int[] height = {0};
       final int[] maxBulletWidth = {0};
-      ContainerUtil.process(myLines, new Processor<Pair<String, LineInfo>>() {
-        @Override
-        public boolean process(final Pair<String, LineInfo> pair) {
-          final LineInfo info = pair.getSecond();
-          Font old = null;
-          if (info.smaller) {
-            old = g.getFont();
-            g.setFont(old.deriveFont(old.getSize() * 0.70f));
-          }
-
-          final FontMetrics fm = g.getFontMetrics();
-
-          final int bulletWidth = info.withBullet ? fm.stringWidth(" " + info.bulletChar) : 0;
-          maxBulletWidth[0] = Math.max(maxBulletWidth[0], bulletWidth);
-
-          maxWidth[0] = Math.max(fm.stringWidth(pair.getFirst().replace("<shortcut>", "").replace("</shortcut>", "") + bulletWidth), maxWidth[0]);
-          height[0] += (fm.getHeight() + fm.getLeading()) * myLineSpacing;
-
-          if (old != null) {
-            g.setFont(old);
-          }
-
-          return true;
-        }
-      });
-
-      final Couple<Integer> position = _position.fun(maxWidth[0] + 20, height[0]);
-      assert position != null;
-
-      final int[] yOffset = {position.getSecond()};
-      ContainerUtil.process(myLines, new Processor<Pair<String, LineInfo>>() {
-        @Override
-        public boolean process(final Pair<String, LineInfo> pair) {
-          final LineInfo info = pair.getSecond();
-          String text = pair.first;
-          String shortcut = "";
-          if (pair.first.contains("<shortcut>")) {
-            shortcut = text.substring(text.indexOf("<shortcut>") + "<shortcut>".length(), text.indexOf("</shortcut>"));
-            text = text.substring(0, text.indexOf("<shortcut>"));
-          }
-
-          Font old = null;
-          if (info.smaller) {
-            old = g.getFont();
-            g.setFont(old.deriveFont(old.getSize() * 0.70f));
-          }
-
-          final int x = position.getFirst() + maxBulletWidth[0] + 10;
-
-          final FontMetrics fm = g.getFontMetrics();
-          int xOffset = x;
-          if (info.center) {
-            xOffset = x + (maxWidth[0] - fm.stringWidth(text)) / 2;
-          }
-
-          if (myDrawShadow) {
-            int xOff = isUnderDarcula() ? 1 : 0;
-            int yOff = 1;
-            Color oldColor = g.getColor();
-            g.setColor(myShadowColor);
-
-            if (info.withBullet) {
-              g.drawString(info.bulletChar + " ", x - fm.stringWidth(" " + info.bulletChar) + xOff, yOffset[0] + yOff);
+      Font oldFont = null;
+      Color oldColor = null;
+      if (myFont != null) {
+        oldFont = g.getFont();
+        g.setFont(myFont);
+      }
+      if (myColor != null) {
+        oldColor = g.getColor();
+        g.setColor(myColor);
+      }
+      try {
+        ContainerUtil.process(myLines, new Processor<Pair<String, LineInfo>>() {
+          @Override
+          public boolean process(final Pair<String, LineInfo> pair) {
+            final LineInfo info = pair.getSecond();
+            Font old = null;
+            if (info.smaller) {
+              old = g.getFont();
+              g.setFont(old.deriveFont(old.getSize() * 0.70f));
             }
 
-            g.drawString(text, xOffset + xOff, yOffset[0] + yOff);
-            g.setColor(oldColor);
-          }
+            final FontMetrics fm = g.getFontMetrics();
 
-          if (info.withBullet) {
-            g.drawString(info.bulletChar + " ", x - fm.stringWidth(" " + info.bulletChar), yOffset[0]);
-          }
+            final int bulletWidth = info.withBullet ? fm.stringWidth(" " + info.bulletChar) : 0;
+            maxBulletWidth[0] = Math.max(maxBulletWidth[0], bulletWidth);
 
-          g.drawString(text, xOffset, yOffset[0]);
-          if (!StringUtil.isEmpty(shortcut)) {
-            Color oldColor = g.getColor();
-            g.setColor(new JBColor(new Color(82, 99, 155),
-                                   new Color(88, 157, 246)));
-            g.drawString(shortcut, xOffset + fm.stringWidth(text + (isUnderDarcula() ? " " : "")), yOffset[0]);
-            g.setColor(oldColor);
-          }
+            maxWidth[0] = Math.max(fm.stringWidth(pair.getFirst().replace("<shortcut>", "").replace("</shortcut>", "") + bulletWidth), maxWidth[0]);
+            height[0] += (fm.getHeight() + fm.getLeading()) * myLineSpacing;
 
-          if (info.underlined) {
-            Color c = null;
-            if (info.underlineColor != null) {
-              c = g.getColor();
-              g.setColor(info.underlineColor);
+            if (old != null) {
+              g.setFont(old);
             }
 
-            g.drawLine(x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent(), x + maxWidth[0] + 10, yOffset[0] + fm.getDescent());
-            if (c != null) {
-              g.setColor(c);
+            return true;
+          }
+        });
 
+        final Couple<Integer> position = _position.fun(maxWidth[0] + 20, height[0]);
+        assert position != null;
+
+        final int[] yOffset = {position.getSecond()};
+        ContainerUtil.process(myLines, new Processor<Pair<String, LineInfo>>() {
+          @Override
+          public boolean process(final Pair<String, LineInfo> pair) {
+            final LineInfo info = pair.getSecond();
+            String text = pair.first;
+            String shortcut = "";
+            if (pair.first.contains("<shortcut>")) {
+              shortcut = text.substring(text.indexOf("<shortcut>") + "<shortcut>".length(), text.indexOf("</shortcut>"));
+              text = text.substring(0, text.indexOf("<shortcut>"));
+            }
+
+            Font old = null;
+            if (info.smaller) {
+              old = g.getFont();
+              g.setFont(old.deriveFont(old.getSize() * 0.70f));
+            }
+
+            final int x = position.getFirst() + maxBulletWidth[0] + 10;
+
+            final FontMetrics fm = g.getFontMetrics();
+            int xOffset = x;
+            if (info.center) {
+              xOffset = x + (maxWidth[0] - fm.stringWidth(text)) / 2;
             }
 
             if (myDrawShadow) {
-              c = g.getColor();
+              int xOff = isUnderDarcula() ? 1 : 0;
+              int yOff = 1;
+              Color oldColor = g.getColor();
               g.setColor(myShadowColor);
-              g.drawLine(x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent() + 1, x + maxWidth[0] + 10,
-                         yOffset[0] + fm.getDescent() + 1);
-              g.setColor(c);
+
+              if (info.withBullet) {
+                g.drawString(info.bulletChar + " ", x - fm.stringWidth(" " + info.bulletChar) + xOff, yOffset[0] + yOff);
+              }
+
+              g.drawString(text, xOffset + xOff, yOffset[0] + yOff);
+              g.setColor(oldColor);
             }
+
+            if (info.withBullet) {
+              g.drawString(info.bulletChar + " ", x - fm.stringWidth(" " + info.bulletChar), yOffset[0]);
+            }
+
+            g.drawString(text, xOffset, yOffset[0]);
+            if (!StringUtil.isEmpty(shortcut)) {
+              Color oldColor = g.getColor();
+              g.setColor(new JBColor(new Color(82, 99, 155),
+                                     new Color(88, 157, 246)));
+              g.drawString(shortcut, xOffset + fm.stringWidth(text + (isUnderDarcula() ? " " : "")), yOffset[0]);
+              g.setColor(oldColor);
+            }
+
+            if (info.underlined) {
+              Color c = null;
+              if (info.underlineColor != null) {
+                c = g.getColor();
+                g.setColor(info.underlineColor);
+              }
+
+              g.drawLine(x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent(), x + maxWidth[0] + 10, yOffset[0] + fm.getDescent());
+              if (c != null) {
+                g.setColor(c);
+              }
+
+              if (myDrawShadow) {
+                c = g.getColor();
+                g.setColor(myShadowColor);
+                g.drawLine(x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent() + 1, x + maxWidth[0] + 10,
+                           yOffset[0] + fm.getDescent() + 1);
+                g.setColor(c);
+              }
+            }
+
+            yOffset[0] += (fm.getHeight() + fm.getLeading()) * myLineSpacing;
+
+            if (old != null) {
+              g.setFont(old);
+            }
+
+            return true;
           }
-
-          yOffset[0] += (fm.getHeight() + fm.getLeading()) * myLineSpacing;
-
-          if (old != null) {
-            g.setFont(old);
-          }
-
-          return true;
-        }
-      });
+        });
+      }
+      finally {
+        if (oldFont != null) g.setFont(oldFont);
+        if (oldColor != null) g.setColor(oldColor);
+      }
     }
 
     private static class LineInfo {

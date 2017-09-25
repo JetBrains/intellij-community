@@ -46,11 +46,11 @@ public class PlainTextUsagesTest extends PsiTestCase {
     PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
   }
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     doTest("com.Foo", null, new String[]{"Test.txt"}, new int[]{4}, new int[]{11});
   }
 
-  public void testXmlOutOfScope() throws Exception {
+  public void testXmlOutOfScope() {
     final VirtualFile resourcesDir = ModuleRootManager.getInstance(myModule).getSourceRoots()[0].findChild("resources");
     assertNotNull(resourcesDir);
     new WriteAction() {
@@ -73,7 +73,7 @@ public class PlainTextUsagesTest extends PsiTestCase {
                       final PsiElement originalElement,
                       String[] fileNames,
                       int[] starts,
-                      int[] ends) throws Exception {
+                      int[] ends) {
     PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(myProject);
     final List<PsiFile> filesList = new ArrayList<>();
     final IntArrayList startsList = new IntArrayList();

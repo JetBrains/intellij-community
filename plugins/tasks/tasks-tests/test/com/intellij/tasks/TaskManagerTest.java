@@ -39,7 +39,7 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class TaskManagerTest extends TaskManagerTestCase {
-  public void testTaskSwitch() throws Exception {
+  public void testTaskSwitch() {
 
     final Ref<Integer> count = Ref.create(0);
     TaskListener listener = new TaskListenerAdapter() {
@@ -58,7 +58,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
     assertEquals(2, count.get().intValue());
   }
 
-  public void testNotifications() throws Exception {
+  public void testNotifications() {
 
     final Ref<Notification> notificationRef = new Ref<>();
     getProject().getMessageBus().connect(myFixture.getTestRootDisposable()).subscribe(Notifications.TOPIC, new NotificationsAdapter() {
@@ -85,7 +85,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
     assertNotNull(notificationRef.get());
   }
 
-  public void testSharedServers() throws Exception {
+  public void testSharedServers() {
     TaskRepository repository = new YouTrackRepository(new YouTrackRepositoryType());
     repository.setShared(true);
     myTaskManager.setRepositories(Collections.singletonList(repository));
@@ -109,7 +109,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
     assertTrue(repositories[0].isShared());
   }
 
-  public void testIssuesCacheSurvival() throws Exception {
+  public void testIssuesCacheSurvival() {
     final Ref<Boolean> stopper = new Ref<>(Boolean.FALSE);
     TestRepository repository = new TestRepository(new LocalTaskImpl("foo", "bar")) {
       @Override
@@ -128,7 +128,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
     assertEquals(1, issues.size());
   }
 
-  public void testTaskHistoryLength() throws Exception {
+  public void testTaskHistoryLength() {
     TestRepository repository = new TestRepository();
     int historyLength = myTaskManager.getState().taskHistoryLength;
     for (int i = 0; i < historyLength + 100; i++) {
@@ -138,7 +138,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
     assertEquals(Integer.toString(historyLength + 100 - 1), myTaskManager.getLocalTasks().get(historyLength - 1).getId());
   }
 
-  public void testBranchNameSuggestion() throws Exception {
+  public void testBranchNameSuggestion() {
     TaskTestUtil.TaskBuilder task = new TaskTestUtil.TaskBuilder("IDEA-666", "Bad news", null);
     TaskManagerImpl taskManager = myTaskManager;
     assertEquals("IDEA-666", taskManager.suggestBranchName(task));

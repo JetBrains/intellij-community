@@ -51,7 +51,7 @@ public class ObjectUtils {
 
   @Contract("null,null->null")
   public static <T> T coalesce(@Nullable T t1, @Nullable T t2) {
-    return t1 != null ? t1 : t2;
+    return chooseNotNull(t1, t2);
   }
 
   @Contract("null,null,null->null")
@@ -80,6 +80,7 @@ public class ObjectUtils {
   }
 
   @Contract("null, _ -> null")
+  @Nullable
   public static <T> T tryCast(@Nullable Object obj, @NotNull Class<T> clazz) {
     if (clazz.isInstance(obj)) {
       return clazz.cast(obj);

@@ -33,7 +33,7 @@ import java.io.FileNotFoundException
 
 abstract class XmlElementStorage protected constructor(val fileSpec: String,
                                                        protected val rootElementName: String?,
-                                                       protected val pathMacroSubstitutor: TrackingPathMacroSubstitutor? = null,
+                                                       private val pathMacroSubstitutor: TrackingPathMacroSubstitutor? = null,
                                                        roamingType: RoamingType? = RoamingType.DEFAULT,
                                                        private val provider: StreamProvider? = null) : StorageBaseEx<StateMap>() {
   val roamingType = roamingType ?: RoamingType.DEFAULT
@@ -53,12 +53,12 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
   private fun loadElement(useStreamProvider: Boolean = true): Element? {
     var element: Element? = null
     try {
-      if (!useStreamProvider || !(provider?.read(fileSpec, roamingType) {
+      if (!useStreamProvider || provider?.read(fileSpec, roamingType) {
         it?.let {
           element = loadElement(it)
           providerDataStateChanged(element, DataStateChanged.LOADED)
         }
-      } ?: false)) {
+      } != true) {
         element = loadLocalData()
       }
     }

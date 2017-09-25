@@ -49,11 +49,15 @@ import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
+import com.intellij.rt.debugger.agent.CaptureStorage;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
+import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -70,6 +74,7 @@ import java.util.stream.Stream;
 @State(name = "DebuggerManager", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class DebuggerManagerImpl extends DebuggerManagerEx implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerManagerImpl");
+  public static final String LOCALHOST_ADDRESS_FALLBACK = "127.0.0.1";
 
   private final Project myProject;
   private final HashMap<ProcessHandler, DebuggerSession> mySessions = new HashMap<>();
@@ -230,7 +235,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       // so we shouldn't add the listener to avoid calling stop() twice
       processHandler.addProcessListener(new ProcessAdapter() {
         @Override
-        public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
+        public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
           ProcessHandler processHandler = event.getProcessHandler();
           final DebugProcessImpl debugProcess = getDebugProcess(processHandler);
           if (debugProcess != null) {
@@ -295,7 +300,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     else {
       processHandler.addProcessListener(new ProcessAdapter() {
         @Override
-        public void startNotified(ProcessEvent event) {
+        public void startNotified(@NotNull ProcessEvent event) {
           DebugProcessImpl debugProcess = getDebugProcess(processHandler);
           if (debugProcess != null) {
             debugProcess.addDebugProcessListener(listener);
@@ -315,7 +320,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     else {
       processHandler.addProcessListener(new ProcessAdapter() {
         @Override
-        public void startNotified(ProcessEvent event) {
+        public void startNotified(@NotNull ProcessEvent event) {
           DebugProcessImpl debugProcess = getDebugProcess(processHandler);
           if (debugProcess != null) {
             debugProcess.removeDebugProcessListener(listener);
@@ -449,7 +454,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     }
 
     final TransportServiceWrapper transportService = TransportServiceWrapper.getTransportService(useSockets);
-    final String debugAddress = debuggerInServerMode && useSockets ? "127.0.0.1:" + address : address;
+    final String debugAddress = debuggerInServerMode && useSockets ? LOCALHOST_ADDRESS_FALLBACK + ":" + address : address;
     String debuggeeRunProperties = "transport=" + transportService.transportId() + ",address=" + debugAddress;
     if (debuggerInServerMode) {
       debuggeeRunProperties += ",suspend=y,server=n";
@@ -465,6 +470,16 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
 
     ApplicationManager.getApplication().runReadAction(() -> {
       JavaSdkUtil.addRtJar(parameters.getClassPath());
+      if (Registry.is("debugger.capture.points.agent")) {
+        String path = PathUtil.getJarPathForClass(CaptureStorage.class);
+        //TODO: for now works only in debug mode
+        String agent = "-javaagent:" +
+                       FileUtil.toSystemDependentName(PathUtil.getParentPath(PathUtil.getParentPath(path))) +
+                       "/artifacts/debugger_agent/debugger-agent.jar";
+        if (!parameters.getVMParametersList().hasParameter(agent)) {
+          parameters.getVMParametersList().add(agent);
+        }
+      }
 
       final Sdk jdk = parameters.getJdk();
       final boolean forceClassicVM = shouldForceClassicVM(jdk);
@@ -498,7 +513,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       parameters.getVMParametersList().replaceOrPrepend("-classic", forceClassicVM ? "-classic" : "");
     });
 
-    return new RemoteConnection(useSockets, "127.0.0.1", address, debuggerInServerMode);
+    return new RemoteConnection(useSockets, LOCALHOST_ADDRESS_FALLBACK, address, debuggerInServerMode);
   }
 
   private static boolean shouldForceNoJIT(Sdk jdk) {

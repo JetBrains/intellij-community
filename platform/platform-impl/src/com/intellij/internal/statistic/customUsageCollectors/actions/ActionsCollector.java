@@ -19,16 +19,7 @@ import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -47,21 +38,10 @@ import java.util.Set;
   storages = @Storage(value = "statistics.actions.xml", roamingType = RoamingType.DISABLED)
 )
 public class ActionsCollector implements PersistentStateComponent<ActionsCollector.State> {
-  public ActionsCollector(ActionManager manager) {
-    manager.addAnActionListener(new AnActionListener() {
-      @Override
-      public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-        String id = manager.getId(action);
-        if (id != null) {
-          record(id);
-        }
-      }
-    });
-  }
+  public void record(String actionId) {
+    if (actionId == null) return;
 
-  public void record(@NotNull String actionId) {
     State state = getState();
-
     if (state == null) return;
 
     String key = ConvertUsagesUtil.escapeDescriptorName(actionId);
@@ -83,7 +63,7 @@ public class ActionsCollector implements PersistentStateComponent<ActionsCollect
   }
 
   public static ActionsCollector getInstance() {
-    return ApplicationManager.getApplication().getComponent(ActionsCollector.class);
+    return ServiceManager.getService(ActionsCollector.class);
   }
 
   final static class State {

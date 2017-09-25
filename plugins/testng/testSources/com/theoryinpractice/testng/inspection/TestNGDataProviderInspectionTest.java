@@ -20,12 +20,12 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public class TestNGDataProviderInspectionTest extends LightCodeInsightFixtureTestCase {
-  public void testMissedDataProvider() throws Exception {
+  public void testMissedDataProvider() {
 
     myFixture.testHighlighting(true, false, false, "MissedDataProvider.java");
   }
 
-  public void testInstanceDataProviderFromForeignClass() throws Exception {
+  public void testInstanceDataProviderFromForeignClass() {
     myFixture.testHighlighting(true, false, false, "InstanceDataProviderFromForeignClass.java");
   }
 

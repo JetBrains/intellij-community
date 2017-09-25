@@ -39,7 +39,7 @@ import java.util.List;
 public class PatchAutoInitTest extends PlatformTestCase {
   private static final String BINARY_FILENAME = "binary.png";
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     final VirtualFile root = myProject.getBaseDir();
     final VirtualFile dir = createChildDirectory(root, "dir");
     createChildData(dir, "somefile.txt");
@@ -77,7 +77,7 @@ public class PatchAutoInitTest extends PlatformTestCase {
   }
 
   // 1. several files with different bases; one can be matched to 2 bases
-  public void testDiffBases() throws Exception {
+  public void testDiffBases() {
     final VirtualFile root = myProject.getBaseDir();
 
     PsiTestUtil.addContentRoot(myModule, root);
@@ -115,7 +115,7 @@ public class PatchAutoInitTest extends PlatformTestCase {
     checkPath(result, "c/" + BINARY_FILENAME, Arrays.asList(b, f), 0);
   }
 
-  public void testBestBinaryVariant() throws Exception {
+  public void testBestBinaryVariant() {
     final VirtualFile root = myProject.getBaseDir();
 
     PsiTestUtil.addContentRoot(myModule, root);
@@ -145,19 +145,19 @@ public class PatchAutoInitTest extends PlatformTestCase {
   }
 
   // inspired by IDEA-109608
-  public void testFileAdditionGoesIntoCorrectFolder() throws Exception {
+  public void testFileAdditionGoesIntoCorrectFolder() {
     String path = "platform/util/src/com/intellij/util/io/SomeNewFile.java";
     TextFilePatch patch = createFileAddition(path);
     checkSingleFileOperationAmongSimilarFolders(path, patch);
   }
 
-  public void testFileDeletionFromCorrectFolder() throws Exception {
+  public void testFileDeletionFromCorrectFolder() {
     String path = "platform/util/src/com/intellij/util/io/G.java";
     TextFilePatch patch = createFileDeletion(path);
     checkSingleFileOperationAmongSimilarFolders(path, patch);
   }
 
-  public void testFileModificationFromCorrectFolder() throws Exception {
+  public void testFileModificationFromCorrectFolder() {
     String path = "platform/platform-impl/src/io/B.java";
     TextFilePatch patch = create(path);
     checkSingleFileOperationAmongSimilarFolders(path, patch);
@@ -183,7 +183,7 @@ public class PatchAutoInitTest extends PlatformTestCase {
   }
 
   // inspired by IDEA-118644
-  public void testFileAdditionToNonexistentSubfolder() throws Exception {
+  public void testFileAdditionToNonexistentSubfolder() {
     final VirtualFile root = myProject.getBaseDir();
     PsiTestUtil.addContentRoot(myModule, root);
     VfsTestUtil.createDir(root, "platform/editor-ui-ex/src/com/intellij/openapi/editor/colors");
@@ -200,7 +200,7 @@ public class PatchAutoInitTest extends PlatformTestCase {
     checkPath(result, path, Collections.singletonList(root), 0);
   }
 
-  public void testFileAdditionGeneratedFromSuperRoot() throws Exception {
+  public void testFileAdditionGeneratedFromSuperRoot() {
     final VirtualFile root = myProject.getBaseDir();
     PsiTestUtil.addContentRoot(myModule, root);
     VfsTestUtil.createDir(root, "editor-ui-ex/src/com/intellij/openapi/editor/colors");
@@ -236,7 +236,7 @@ public class PatchAutoInitTest extends PlatformTestCase {
   }
 
   // 2. files can be for 1 dir and 1 strip distance
-  public void testOneBaseAndStrip() throws Exception {
+  public void testOneBaseAndStrip() {
     final VirtualFile root = myProject.getBaseDir();
 
     PsiTestUtil.addContentRoot(myModule, root);
@@ -267,7 +267,7 @@ public class PatchAutoInitTest extends PlatformTestCase {
   }
 
   // 3. files can be with 2 base dirs and 1-one distance, 2-different distances
-  public void testOneBaseAndDifferentStrips() throws Exception {
+  public void testOneBaseAndDifferentStrips() {
     final VirtualFile root = myProject.getBaseDir();
 
     PsiTestUtil.addContentRoot(myModule, root);
@@ -303,7 +303,7 @@ public class PatchAutoInitTest extends PlatformTestCase {
     checkPath(result, "h1/c/f2.txt", Collections.singletonList(e), 0);
   }
 
-  public void testPreviousFirstVariantAlsoMatches() throws Exception {
+  public void testPreviousFirstVariantAlsoMatches() {
     final VirtualFile root = myProject.getBaseDir();
 
     PsiTestUtil.addContentRoot(myModule, root);
@@ -328,7 +328,7 @@ public class PatchAutoInitTest extends PlatformTestCase {
     checkPath(result, "c/" + BINARY_FILENAME, Collections.singletonList(b), 2);
   }
 
-  public void testDefaultStrategyWorks() throws Exception {
+  public void testDefaultStrategyWorks() {
     final VirtualFile root = myProject.getBaseDir();
 
     PsiTestUtil.addContentRoot(myModule, root);
@@ -356,7 +356,7 @@ public class PatchAutoInitTest extends PlatformTestCase {
     checkPath(result, "h1/c/f10.txt", Collections.singletonList(root), 0);
   }
 
-  public void testExactWins() throws Exception {
+  public void testExactWins() {
     final VirtualFile root = myProject.getBaseDir();
 
     PsiTestUtil.addContentRoot(myModule, root);

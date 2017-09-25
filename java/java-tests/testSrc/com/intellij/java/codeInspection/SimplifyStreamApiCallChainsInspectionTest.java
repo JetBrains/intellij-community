@@ -33,7 +33,7 @@ public class SimplifyStreamApiCallChainsInspectionTest extends LightQuickFixPara
     return new LocalInspectionTool[]{new SimplifyStreamApiCallChainsInspection()};
   }
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 

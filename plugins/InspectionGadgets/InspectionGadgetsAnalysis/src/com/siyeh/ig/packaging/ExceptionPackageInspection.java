@@ -23,7 +23,6 @@ import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefPackage;
 import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
@@ -60,9 +59,12 @@ public class ExceptionPackageInspection extends BaseGlobalInspection {
       if (!(child instanceof RefClass)) {
         continue;
       }
+      final RefClass refClass = (RefClass)child;
+      if (refClass.isTestCase()) {
+        continue;
+      }
       classSeen = true;
-      final PsiClass aClass = ((RefClass)child).getElement();
-      if (!InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_THROWABLE)) {
+      if (!InheritanceUtil.isInheritor(refClass.getElement(), CommonClassNames.JAVA_LANG_THROWABLE)) {
         return null;
       }
     }

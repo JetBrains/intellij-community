@@ -166,4 +166,9 @@ public class TestPrimitives {
     res = (c > 255);
     return res;
   }
+
+  void testAutoBoxingCallRequired(boolean value) {
+    Boolean.valueOf(value).hashCode();
+  }
+
 }

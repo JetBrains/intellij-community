@@ -19,15 +19,15 @@ package com.siyeh.ig.junit;
 import com.siyeh.ig.IGInspectionTestCase;
 
 public class ParameterizedParametersStaticCollectionInspectionTest extends IGInspectionTestCase {
-  public void testCreatemethod() throws Exception {
+  public void testCreatemethod() {
     doTest();
   }
 
-  public void testWrongsignature() throws Exception {
+  public void testWrongsignature() {
     doTest();
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest(getRelativeTestPath() + getTestName(true), new ParameterizedParametersStaticCollectionInspection());
   }
 

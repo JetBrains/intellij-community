@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -145,7 +146,7 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
         }
         else {
           myUnusedMethods.remove(method);
-          final PsiField field = PropertyUtil.findPropertyFieldByMember(method);
+          final PsiField field = PropertyUtilBase.findPropertyFieldByMember(method);
           myUnusedFields.remove(field);
         }
       }

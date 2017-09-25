@@ -24,6 +24,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
@@ -208,7 +209,8 @@ public class IntroduceParameterDialog extends RefactoringDialog {
 
     final Boolean settingsFinals = settings.INTRODUCE_PARAMETER_CREATE_FINALS;
     myCbDeclareFinal.setSelected(settingsFinals == null ?
-                                 CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS :
+                                 CodeStyleSettingsManager.getSettings(myProject)
+                                   .getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS :
                                  settingsFinals.booleanValue());
     panel.add(myCbDeclareFinal, gbConstraints);
     if (myMustBeFinal) {

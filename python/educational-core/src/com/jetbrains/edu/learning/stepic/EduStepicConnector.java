@@ -19,6 +19,7 @@ import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.courseFormat.tasks.PyCharmTask;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
+import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
@@ -468,6 +469,7 @@ public class EduStepicConnector {
   }
 
   public static void doAuthorize(@NotNull Runnable externalRedirectUrlHandler) {
+    EduUsagesCollector.stepikAuthorization();
     String redirectUrl = getOAuthRedirectUrl();
     String link = createOAuthLink(redirectUrl);
     BrowserUtil.browse(link);

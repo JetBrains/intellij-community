@@ -16,8 +16,8 @@
 package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 
 /**
  * @author Danila Ponomarenko
@@ -28,7 +28,7 @@ public class BindFieldsFromParametersTest extends LightIntentionActionTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
     settings.FIELD_NAME_PREFIX = "my";
     myPreferLongNames = settings.PREFER_LONGER_NAMES;
     if (getTestName(false).contains("SameParam")) {
@@ -38,13 +38,13 @@ public class BindFieldsFromParametersTest extends LightIntentionActionTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
     settings.FIELD_NAME_PREFIX = "";
     settings.PREFER_LONGER_NAMES = myPreferLongNames;
     super.tearDown();
   }
 
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {

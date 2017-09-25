@@ -18,6 +18,7 @@ package com.siyeh.ig;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -81,12 +82,12 @@ public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
   }
 
   @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return null;
   }
 
   @NotNull
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected LocalQuickFix[] buildFixes(Object... infos) {
     return InspectionGadgetsFix.EMPTY_ARRAY;
   }
 

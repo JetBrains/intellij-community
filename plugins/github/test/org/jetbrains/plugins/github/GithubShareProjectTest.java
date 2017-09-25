@@ -35,7 +35,7 @@ public class GithubShareProjectTest extends GithubShareProjectTestBase {
     checkLastCommitPushed();
   }
 
-  public void testGithubAlreadyExists() throws Throwable {
+  public void testGithubAlreadyExists() {
     final boolean[] dialogShown = new boolean[1];
     TestDialog oldTestDialog = Messages.setTestDialog(new TestDialog() {
       @Override

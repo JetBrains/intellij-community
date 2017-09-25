@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
@@ -62,7 +61,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertEquals(defaultTask.getChangeLists().get(0), new ChangeListInfo(myChangeListManager.getChangeListsCopy().get(0)));
   }
 
-  public void testSwitchingTasks() throws Exception {
+  public void testSwitchingTasks() {
     final LocalTask defaultTask = myTaskManager.getLocalTasks().get(0);
 
     Task task = myRepository.findTask("TEST-001");
@@ -120,7 +119,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertEquals("TEST-001 Summary", anotherChangeList.getName());
   }
 
-  public void testAddChangeListViaCreateChangeListAction() throws Exception {
+  public void testAddChangeListViaCreateChangeListAction() {
     Task task = myRepository.findTask("TEST-001");
     assertNotNull(task);
     activateAndCreateChangelist(task);
@@ -159,7 +158,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertEquals("TEST-001 Summary", anotherChangeList.getName());
   }
 
-  public void testRemoveChangelistViaVcsAction() throws Exception {
+  public void testRemoveChangelistViaVcsAction() {
     Task task = myRepository.findTask("TEST-001");
     assertNotNull(task);
     activateAndCreateChangelist(task);
@@ -195,7 +194,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     }
   }
 
-  public void testAddChangeListViaVcsAction() throws Exception {
+  public void testAddChangeListViaVcsAction() {
     Task task = myRepository.findTask("TEST-001");
     assertNotNull(task);
     activateAndCreateChangelist(task);
@@ -249,7 +248,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     myTaskManager.getState().trackContextForNewChangelist = false;
   }
 
-  public void testCreateComment() throws Exception {
+  public void testCreateComment() {
     myRepository.setShouldFormatCommitMessage(true);
     myRepository.setCommitMessageFormat("{id} {summary} {number} {project}");
     Task task = myRepository.findTask("TEST-001");
@@ -264,7 +263,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertEquals("TEST-001 Summary 001 TEST", lists.get(0).comment);
   }
 
-  public void testSaveContextOnCommitForExistingTask() throws Exception {
+  public void testSaveContextOnCommitForExistingTask() {
     myTaskManager.getState().saveContextOnCommit = true;
 
     assertEquals(1, myTaskManager.getLocalTasks().size());
@@ -293,7 +292,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertEquals(localTask, myTaskManager.getAssociatedTask(changeList)); // association should survive
   }
 
-  public void testSaveContextOnCommit() throws Exception {
+  public void testSaveContextOnCommit() {
     myTaskManager.getState().saveContextOnCommit = true;
 
     assertEquals(1, myTaskManager.getLocalTasks().size());
@@ -343,7 +342,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     return changes;
   }
 
-  public void testProjectWithDash() throws Exception {
+  public void testProjectWithDash() {
     LocalTaskImpl task = new LocalTaskImpl("foo-bar-001", "summary") {
       @Override
       public TaskRepository getRepository() {
@@ -361,7 +360,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertEquals("foo-bar-001 summary", name);
   }
 
-  public void testIds() throws Exception {
+  public void testIds() {
     LocalTaskImpl task = new LocalTaskImpl("", "");
     assertEquals("", task.getNumber());
     assertEquals(null, task.getProject());
@@ -379,7 +378,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertEquals(null, task.getProject());
   }
 
-  public void testRestoreChangelist() throws Exception {
+  public void testRestoreChangelist() {
     final LocalTaskImpl task = new LocalTaskImpl("foo", "bar");
     activateAndCreateChangelist(task);
     activateAndCreateChangelist(new LocalTaskImpl("next", ""));
@@ -394,7 +393,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     }, InvokeAfterUpdateMode.SYNCHRONOUS_NOT_CANCELLABLE, "foo", ModalityState.NON_MODAL);
   }
 
-  public void testSuggestBranchName() throws Exception {
+  public void testSuggestBranchName() {
     Task task = myRepository.findTask("TEST-001");
     assertNotNull(task);
     assertTrue(task.isIssue());
@@ -523,7 +522,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     public void getChanges(@NotNull VcsDirtyScope dirtyScope,
                            @NotNull final ChangelistBuilder builder,
                            @NotNull ProgressIndicator progress,
-                           @NotNull ChangeListManagerGate addGate) throws VcsException {
+                           @NotNull ChangeListManagerGate addGate) {
       for (Change change : myChanges) {
         builder.processChange(change, MockAbstractVcs.getKey());
       }

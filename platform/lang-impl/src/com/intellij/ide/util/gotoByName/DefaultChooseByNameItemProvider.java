@@ -113,9 +113,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
     Comparator<Object> weightComparator = new Comparator<Object>() {
       @SuppressWarnings("unchecked")
-      Comparator<Object> modelComparator = model instanceof Comparator
-                                           ? (Comparator<Object>)model
-                                           : new PathProximityComparator(myContext == null ? null :myContext.getElement());
+      Comparator<Object> modelComparator = model instanceof Comparator ? (Comparator<Object>)model : getPathProximityComparator();
 
       @Override
       public int compare(Object o1, Object o2) {
@@ -171,6 +169,11 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       }
     }
     return ContainerUtil.process(qualifierMiddleMatched, consumer);
+  }
+
+  @NotNull
+  protected PathProximityComparator getPathProximityComparator() {
+    return new PathProximityComparator(myContext == null ? null : myContext.getElement());
   }
 
   private static void sortNamesList(@NotNull String namePattern, @NotNull List<MatchResult> namesList, boolean preferStartMatches) {
@@ -345,7 +348,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   @Nullable
-  private static MatchResult matches(@NotNull ChooseByNameBase base,
+  protected static MatchResult matches(@NotNull ChooseByNameBase base,
                                      @NotNull String pattern,
                                      @NotNull MinusculeMatcher matcher,
                                      @Nullable String name) {
@@ -370,7 +373,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     return NameUtil.buildMatcher(pattern, caseSensitivity);
   }
 
-  private static class PathProximityComparator implements Comparator<Object> {
+  protected static class PathProximityComparator implements Comparator<Object> {
     @NotNull private final PsiProximityComparator myProximityComparator;
 
     private PathProximityComparator(@Nullable final PsiElement context) {

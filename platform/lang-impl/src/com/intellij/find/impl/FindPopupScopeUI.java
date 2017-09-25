@@ -36,6 +36,9 @@ public interface FindPopupScopeUI {
     return null;
   }
 
+  /**
+   * @return true if something was hidden
+   */
   boolean hideAllPopups();
 
   class ScopeType {

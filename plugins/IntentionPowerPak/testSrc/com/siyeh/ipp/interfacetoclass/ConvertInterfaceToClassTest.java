@@ -25,7 +25,7 @@ public class ConvertInterfaceToClassTest extends IPPTestCase {
     }
   }
 
-  public void testFunctionalInterface() throws Exception {
+  public void testFunctionalInterface() {
     assertIntentionNotAvailable();
   }
 

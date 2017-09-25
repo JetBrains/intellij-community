@@ -10,7 +10,7 @@ import com.jetbrains.python.fixtures.PyTestCase;
  * @author Mikhail Golubev
  */
 public class PythonReparseTest extends PyTestCase {
-  private void doTest(final String typedText) throws InterruptedException {
+  private void doTest(final String typedText) {
     final String testName = getTestName(false);
     myFixture.configureByFile("reparse/" + testName + ".py");
     myFixture.type(typedText);
@@ -22,7 +22,7 @@ public class PythonReparseTest extends PyTestCase {
   }
 
   // PY-15605
-  public void testSimilarDecorators() throws InterruptedException {
+  public void testSimilarDecorators() {
     doTest("f");
   }
 }

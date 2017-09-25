@@ -41,7 +41,7 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
     myPropertyToAdd = (Property)PropertiesElementFactory.createProperty(getProject(), "kkk", "vvv", null);
   }
 
-  public void testAddPropertyAfterComment() throws Exception {
+  public void testAddPropertyAfterComment() {
     final PropertiesFile propertiesFile =
       PropertiesImplUtil.getPropertiesFile(myFixture.configureByText(PropertiesFileType.INSTANCE, "#xxxxx"));
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
@@ -54,7 +54,7 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
     assertPropertyEquals(added, myPropertyToAdd.getName(), myPropertyToAdd.getValue());
   }
 
-  public void testAddPropertyAfterComment2() throws Exception {
+  public void testAddPropertyAfterComment2() {
     final PropertiesFile propertiesFile =
       PropertiesImplUtil.getPropertiesFile(myFixture.configureByText(PropertiesFileType.INSTANCE, "#xxxxx\n"));
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
@@ -72,7 +72,7 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
     assertEquals(value, property.getValue());
   }
 
-  public void testAddPropertyAfterProperty() throws Exception {
+  public void testAddPropertyAfterProperty() {
     final PropertiesFile propertiesFile =
       PropertiesImplUtil.getPropertiesFile(myFixture.configureByText(PropertiesFileType.INSTANCE, "xxx=yyy"));
     WriteCommandAction.runWriteCommandAction(null, () -> {
@@ -85,7 +85,7 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
     assertPropertyEquals(properties.get(1), "xxx", "yyy");
     assertPropertyEquals(properties.get(0), myPropertyToAdd.getName(), myPropertyToAdd.getValue());
   }
-  public void testDeleteProperty() throws Exception {
+  public void testDeleteProperty() {
     PropertiesFile propertiesFile =
       PropertiesImplUtil.getPropertiesFile(myFixture.configureByText(PropertiesFileType.INSTANCE, "xxx=yyy\n#s\nzzz=ttt\n\n"));
 
@@ -101,7 +101,7 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
     assertPropertyEquals(propertiesAfter.get(0), "xxx", "yyy");
   }
 
-  public void testDeletePropertyWhitespaceAround() throws Exception {
+  public void testDeletePropertyWhitespaceAround() {
     PropertiesFile propertiesFile =
       PropertiesImplUtil.getPropertiesFile(myFixture.configureByText(PropertiesFileType.INSTANCE, "xxx=yyy\nxxx2=tyrt\nxxx3=ttt\n\n"));
 
@@ -111,7 +111,7 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
 
     assertEquals("xxx=yyy\nxxx3=ttt\n\n", propertiesFile.getContainingFile().getText());
   }
-  public void testDeletePropertyWhitespaceAhead() throws Exception {
+  public void testDeletePropertyWhitespaceAhead() {
     PropertiesFile propertiesFile =
       PropertiesImplUtil.getPropertiesFile(myFixture.configureByText(PropertiesFileType.INSTANCE, "xxx=yyy\nxxx2=tyrt\nxxx3=ttt\n\n"));
 

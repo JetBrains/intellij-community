@@ -82,7 +82,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
       @NotNull
       public Map<Key, List<FileIncludeInfoImpl>> map(@NotNull FileContent inputData) {
 
-        Map<Key, List<FileIncludeInfoImpl>> map = FactoryMap.createMap(key -> new ArrayList<>());
+        Map<Key, List<FileIncludeInfoImpl>> map = FactoryMap.create(key -> new ArrayList<>());
 
         for (FileIncludeProvider provider : Holder.myProviders) {
           if (!provider.acceptFile(inputData.getFile())) continue;

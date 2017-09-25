@@ -133,8 +133,8 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
       }
     }
 
-    final byte flags = PsiClassStubImpl.packFlags(isDeprecatedByComment, isInterface, isEnum, isEnumConst, isAnonymous, isAnnotation,
-                                                  isInQualifiedNew, hasDeprecatedAnnotation);
+    final short flags = PsiClassStubImpl.packFlags(isDeprecatedByComment, isInterface, isEnum, isEnumConst, isAnonymous, isAnnotation,
+                                                  isInQualifiedNew, hasDeprecatedAnnotation, false, false);
     final JavaClassElementType type = typeForClass(isAnonymous, isEnumConst);
     return new PsiClassStubImpl(type, parentStub, qualifiedName, name, baseRef, flags);
   }
@@ -147,7 +147,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
 
   @Override
   public void serialize(@NotNull PsiClassStub stub, @NotNull StubOutputStream dataStream) throws IOException {
-    dataStream.writeByte(((PsiClassStubImpl)stub).getFlags());
+    dataStream.writeShort(((PsiClassStubImpl)stub).getFlags());
     if (!stub.isAnonymous()) {
       dataStream.writeName(stub.getName());
       dataStream.writeName(stub.getQualifiedName());
@@ -161,7 +161,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
   @NotNull
   @Override
   public PsiClassStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
-    byte flags = dataStream.readByte();
+    short flags = dataStream.readShort();
     boolean isAnonymous = PsiClassStubImpl.isAnonymous(flags);
     boolean isEnumConst = PsiClassStubImpl.isEnumConstInitializer(flags);
     JavaClassElementType type = typeForClass(isAnonymous, isEnumConst);
@@ -191,7 +191,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     }
     else {
       final String shortName = stub.getName();
-      if (shortName != null) {
+      if (shortName != null && (!(stub instanceof PsiClassStubImpl) || !((PsiClassStubImpl)stub).isAnonymousInner())) {
         sink.occurrence(JavaStubIndexKeys.CLASS_SHORT_NAMES, shortName);
       }
 

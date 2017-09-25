@@ -182,7 +182,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
 
   @Nullable
   private static String createTestFilter(@NotNull PsiClass aClass, @NotNull PsiMethod psiMethod) {
-    return createTestFilter(aClass.getQualifiedName(), psiMethod.getName());
+    return createTestFilter(TestClassGradleConfigurationProducer.getRuntimeQualifiedName(aClass), psiMethod.getName());
   }
 
   @Nullable

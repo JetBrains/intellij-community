@@ -27,51 +27,51 @@ import org.jetbrains.annotations.NotNull;
 
 @TestDataPath("$CONTENT_ROOT/testData")
 public class IntroduceFunctionalParameterTest extends LightRefactoringTestCase  {
-  public void testSampleRunnable() throws Exception {
+  public void testSampleRunnable() {
     doTest();
   }
 
-  public void testIntConsumer() throws Exception {
+  public void testIntConsumer() {
     doTest();
   }
 
-  public void testFunction() throws Exception {
+  public void testFunction() {
     doTest();
   }
 
-  public void testIntConsumerFromIfStatement() throws Exception {
+  public void testIntConsumerFromIfStatement() {
     doTest();
   }
 
-  public void testIntPredicateConditionalExit() throws Exception {
+  public void testIntPredicateConditionalExit() {
     doTest();
   }
 
-  public void testExceptionPreventFromCompatibility() throws Exception {
+  public void testExceptionPreventFromCompatibility() {
     doTest();
   }
   
-  public void testThrownExceptionsAgree() throws Exception {
+  public void testThrownExceptionsAgree() {
     doTest();
   }
 
-  public void testEnsureNotFolded() throws Exception {
+  public void testEnsureNotFolded() {
     doTest();
   }
 
-  public void testInsideForLoop() throws Exception {
+  public void testInsideForLoop() {
     doTest();
   }
 
-  public void testInsideAnonymous() throws Exception {
+  public void testInsideAnonymous() {
     doTest();
   }
 
-  public void testPartialString() throws Exception {
+  public void testPartialString() {
     doTest();
   }
 
-  public void testUsedParametersOutsideSelectedFragment() throws Exception {
+  public void testUsedParametersOutsideSelectedFragment() {
     doTest();
   }
 

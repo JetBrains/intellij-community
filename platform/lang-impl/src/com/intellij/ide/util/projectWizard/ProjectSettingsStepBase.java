@@ -297,11 +297,11 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   }
 
   public final String getProjectLocation() {
-    return myLocationField.getText();
+    return FileUtil.expandUserHome(FileUtil.toSystemIndependentName(myLocationField.getText()));
   }
 
   public final void setLocation(@NotNull final String location) {
-    myLocationField.setText(location);
+    myLocationField.setText(FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(location)));
   }
 
   protected final LabeledComponent<TextFieldWithBrowseButton> createLocationComponent() {

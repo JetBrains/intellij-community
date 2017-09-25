@@ -18,7 +18,7 @@ public class JsonSmartEnterTest extends JsonTestCase {
     final List<SmartEnterProcessor> processors = SmartEnterProcessors.INSTANCE.forKey(JsonLanguage.INSTANCE);
     new WriteCommandAction(myFixture.getProject()) {
       @Override
-      protected void run(@NotNull Result result) throws Throwable {
+      protected void run(@NotNull Result result) {
         final Editor editor = myFixture.getEditor();
         for (SmartEnterProcessor processor : processors) {
           processor.process(myFixture.getProject(), editor, myFixture.getFile());

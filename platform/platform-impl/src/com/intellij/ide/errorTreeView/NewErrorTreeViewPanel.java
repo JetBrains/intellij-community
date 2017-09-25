@@ -22,6 +22,7 @@ import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
 import com.intellij.ide.errorTreeView.impl.ErrorViewTextExporter;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -252,7 +253,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     if (firstError != null) {
       selectElement(firstError, () -> {
         if (shouldShowFirstErrorInEditor()) {
-          navigateToSource(false);
+          TransactionGuard.submitTransaction(myBuilder, () -> navigateToSource(false));
         }
       });
     }

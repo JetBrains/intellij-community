@@ -48,7 +48,7 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
                                  "KISSING FACE WITH SMILING EYES"), strings);
     }
 
-    public void testBackSlashVariants() throws Throwable {
+    public void testBackSlashVariants() {
         List<String> nameList =
           new ArrayList<>(Arrays.asList("d", "D", "s", "S", "w", "W", "b", "B", "A", "G", "Z", "z", "Q", "E",
                                         "t", "n", "r", "f", "a", "e", "h", "H", "v", "V", "R", "X", "b{g}"));
@@ -58,7 +58,7 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
         myFixture.testCompletionVariants(getInputDataFileName(getTestName(true)), ArrayUtil.toStringArray(nameList));
     }
 
-    public void testPropertyVariants() throws Throwable {
+    public void testPropertyVariants() {
         List<String> nameList = new ArrayList<>();
         for (String[] stringArray : DefaultRegExpPropertiesProvider.getInstance().getAllKnownProperties()) {
             nameList.add("{" + stringArray[0] + "}");
@@ -66,13 +66,13 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
         myFixture.testCompletionVariants(getInputDataFileName(getTestName(true)), ArrayUtil.toStringArray(nameList));
     }
 
-    public void testPropertyAlpha() throws Throwable {
+    public void testPropertyAlpha() {
       myFixture.configureByText(RegExpFileType.INSTANCE, "\\P{Alp<caret>}");
       myFixture.completeBasic();
       myFixture.checkResult("\\P{Alpha<caret>}");
     }
 
-    public void doTest() throws Throwable {
+    public void doTest() {
         String inputDataFileName = getInputDataFileName(getTestName(true));
         String expectedResultFileName = getExpectedResultFileName(getTestName(true));
         myFixture.testCompletion(inputDataFileName, expectedResultFileName);

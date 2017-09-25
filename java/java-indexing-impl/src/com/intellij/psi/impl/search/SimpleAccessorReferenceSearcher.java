@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +48,7 @@ public class SimpleAccessorReferenceSearcher extends QueryExecutorBase<PsiRefere
   }
 
   static void addPropertyAccessUsages(@NotNull PsiMethod method, @NotNull SearchScope scope, @NotNull SearchRequestCollector collector) {
-    final String propertyName = PropertyUtil.getPropertyName(method);
+    final String propertyName = PropertyUtilBase.getPropertyName(method);
     if (StringUtil.isNotEmpty(propertyName)) {
       SearchScope additional = GlobalSearchScope.EMPTY_SCOPE;
       for (CustomPropertyScopeProvider provider : Extensions.getExtensions(CustomPropertyScopeProvider.EP_NAME)) {

@@ -27,7 +27,7 @@ public class JavaFXUnusedImportInspectionTest extends AbstractJavaFXTestCase {
   }
 
 
-  public void testUnusedUnrelatedImports() throws Exception {
+  public void testUnusedUnrelatedImports() {
     myFixture.configureByFile(getTestName(true) + ".fxml");
     myFixture.checkHighlighting();
   }

@@ -12,19 +12,19 @@ public class TypeMigrationByThreadLocalRuleTest extends TypeMigrationTestBase{
   }
 
 
-  public void testDirectInt() throws Exception {
+  public void testDirectInt() {
     doTestFieldType("i", myJavaFacade.getElementFactory().createTypeFromText("java.lang.ThreadLocal<java.lang.Integer>", null));
   }
   
-  public void testDirectByte() throws Exception {
+  public void testDirectByte() {
     doTestFieldType("i", myJavaFacade.getElementFactory().createTypeFromText("java.lang.ThreadLocal<java.lang.Byte>", null));
   }
 
-  public void testDirectString() throws Exception {
+  public void testDirectString() {
     doTestFieldType("myS", myJavaFacade.getElementFactory().createTypeFromText("java.lang.ThreadLocal<java.lang.String>", null));
   }
 
-  public void testLanguageLevel() throws Exception {
+  public void testLanguageLevel() {
     final LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(getProject());
     final LanguageLevel languageLevel = extension.getLanguageLevel();
     try {

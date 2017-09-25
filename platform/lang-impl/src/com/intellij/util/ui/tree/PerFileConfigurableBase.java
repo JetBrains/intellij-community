@@ -79,6 +79,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   protected static final Key<String> CLEAR_TEXT = KeyWithDefaultValue.create("CLEAR_TEXT", "<Clear>");
   protected static final Key<String> NULL_TEXT = KeyWithDefaultValue.create("NULL_TEXT", "<None>");
   protected static final Key<Boolean> ADD_PROJECT_MAPPING = KeyWithDefaultValue.create("ADD_PROJECT_MAPPING", Boolean.TRUE);
+  protected static final Key<Boolean> ONLY_DIRECTORIES = KeyWithDefaultValue.create("ONLY_DIRECTORIES", Boolean.FALSE);
 
   protected final Project myProject;
   protected final PerFileMappings<T> myMappings;
@@ -244,7 +245,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     Object selectedTarget = row >= 0 ? myModel.data.get(myTable.convertRowIndexToModel(row)).first : null;
     VirtualFile toSelect = myFileToSelect != null ? myFileToSelect :
                            ObjectUtils.tryCast(selectedTarget, VirtualFile.class);
-    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, true, true, true);
+    FileChooserDescriptor descriptor = new FileChooserDescriptor(!param(ONLY_DIRECTORIES), true, true, true, true, true);
     FileChooser.chooseFiles(descriptor, myProject, myTable, toSelect, this::doAddFiles);
   }
 

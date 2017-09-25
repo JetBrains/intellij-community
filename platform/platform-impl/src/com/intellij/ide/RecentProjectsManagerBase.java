@@ -56,7 +56,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.lang.management.ManagementFactory;
 import java.net.MalformedURLException;
 import java.util.*;
 import java.util.List;
@@ -83,12 +82,6 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     public List<ProjectGroup> groups = new SmartList<>();
     public String lastPath;
     public String pid;
-
-    private static String getPid() {
-        String processName = ManagementFactory.getRuntimeMXBean().getName();
-        return processName.split("@")[0];
-    }
-
     public Map<String, RecentProjectMetaInfo> additionalInfo = ContainerUtil.newLinkedHashMap();
 
     public String lastProjectLocation;
@@ -189,13 +182,18 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   public State getState() {
     synchronized (myStateLock) {
       if (myState.pid == null) {
-        myState.pid = State.getPid();
+        myState.pid = ApplicationManager.getApplicationPid();
       }
       updateLastProjectPath();
       myState.validateRecentProjects();
       myState.updateOpenProjectsTimestamps(this);
       return myState;
     }
+  }
+
+  @NotNull
+  protected State getStateInner() {
+    return myState;
   }
 
   @Override

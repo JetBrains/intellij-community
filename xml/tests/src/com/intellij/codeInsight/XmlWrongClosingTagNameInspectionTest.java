@@ -10,7 +10,7 @@ import java.io.File;
  * @author spleaner
  */
 public class XmlWrongClosingTagNameInspectionTest extends LightQuickFixParameterizedTestCase {
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {

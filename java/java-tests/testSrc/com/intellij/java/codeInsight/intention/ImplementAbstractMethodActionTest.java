@@ -23,7 +23,7 @@ public class ImplementAbstractMethodActionTest extends LightIntentionActionTestC
     return "/codeInsight/daemonCodeAnalyzer/quickFix/implementAbstractMethod";
   }
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 

@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.testFramework.TestFileType;
 
 import java.awt.*;
-import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -32,11 +31,11 @@ public abstract class AbstractRtlTest extends AbstractEditorTest {
   private static final char RTL_CHAR = '\u05d0'; // Hebrew 'aleph' letter
   private static final char BIDI_BOUNDARY_MARKER = '|';
 
-  protected void prepareText(String text) throws IOException {
+  protected void prepareText(String text) {
     prepare(text, TestFileType.TEXT);
   }
   
-  protected void prepare(String text, TestFileType fileType) throws IOException {
+  protected void prepare(String text, TestFileType fileType) {
     init(text.replace(RTL_CHAR_REPRESENTATION, RTL_CHAR), fileType);
   }
   

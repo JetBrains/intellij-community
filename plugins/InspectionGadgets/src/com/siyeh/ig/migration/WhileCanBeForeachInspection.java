@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -111,7 +112,7 @@ public class WhileCanBeForeachInspection extends WhileCanBeForeachInspectionBase
       }
       @NonNls final StringBuilder out = new StringBuilder();
       out.append("for(");
-      if (CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_PARAMETERS) {
+      if (CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS) {
         out.append("final ");
       }
       out.append(iteratorContentType.getCanonicalText()).append(' ').append(contentVariableName).append(": ");

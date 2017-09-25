@@ -43,7 +43,7 @@ public abstract class FixMethodJavadocTest extends FileSetTestCase {
   }
 
   @Override
-  public String transform(String testName, String[] data) throws Exception {
+  public String transform(String testName, String[] data) {
     final PsiManager manager = PsiManager.getInstance(myProject);
     final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     final PsiMethod method = factory.createMethodFromText(data[0], null);

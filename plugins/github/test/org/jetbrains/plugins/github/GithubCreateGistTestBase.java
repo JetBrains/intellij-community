@@ -42,7 +42,7 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
   protected String GIST_DESCRIPTION;
 
   @Override
-  protected void beforeTest() throws Exception {
+  protected void beforeTest() {
     long time = Clock.getTime();
     GIST_DESCRIPTION = getTestName(false) + "_" + DateFormatUtil.formatDate(time);
   }

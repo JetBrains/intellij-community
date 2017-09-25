@@ -65,7 +65,7 @@ public class FoldingTest extends AbstractEditorTest {
     assertSize(1, myModel.getAllFoldRegions());
   }
 
-  public void testIntersects () throws Exception {
+  public void testIntersects () {
     myModel.runBatchFoldingOperation(() -> {
       FoldRegion region = myModel.addFoldRegion(5, 10, ".");
       assertNotNull(region);
@@ -335,5 +335,32 @@ public class FoldingTest extends AbstractEditorTest {
     FoldRegion[] regions = myEditor.getFoldingModel().getAllFoldRegions();
     assertSize(3, regions);
     assertEquals(21, ((FoldingModelImpl)myEditor.getFoldingModel()).getTotalNumberOfFoldedLines());
+  }
+
+  public void testInnerRegionAtTheEndOfOuterRegion() {
+    addFoldRegion(10, 20, "outer");
+    FoldRegion inner = addFoldRegion(15, 20, "inner");
+    myModel.runBatchFoldingOperation(() -> inner.setExpanded(false));
+    Assert.assertArrayEquals(new FoldRegion[]{inner}, myModel.fetchTopLevel());
+  }
+
+  public void testNestedRegions() {
+    addFoldRegion(10, 20, "outer");
+    FoldRegion inner = addCollapsedFoldRegion(10, 15, "inner");
+    addCollapsedFoldRegion(11, 12, "innermost");
+    Assert.assertArrayEquals(new FoldRegion[]{inner}, myModel.fetchTopLevel());
+  }
+
+  public void testIdenticalRegionsOtherCase() {
+    FoldRegion inner = addCollapsedFoldRegion(10, 15, "inner");
+    addFoldRegion(10, 20, "outer");
+    WriteCommandAction.runWriteCommandAction(ourProject, () -> myEditor.getDocument().deleteString(15, 20));
+    Assert.assertArrayEquals(new FoldRegion[]{inner}, myModel.fetchTopLevel());
+  }
+  
+  public void testClearingInvalidatesFoldRegions() {
+    FoldRegion region = addCollapsedFoldRegion(5, 10, "...");
+    myModel.runBatchFoldingOperation(() -> myModel.clearFoldRegions());
+    assertFalse(region.isValid());
   }
 }

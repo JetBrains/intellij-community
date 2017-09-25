@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.reference.RefUtil;
 import com.intellij.codeInspection.ui.*;
+import com.intellij.codeInspection.ui.util.SynchronizedBidiMultiMap;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 public class InspectionRVContentProviderImpl extends InspectionRVContentProvider {
   public InspectionRVContentProviderImpl(final Project project) {
@@ -49,7 +51,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     final SearchScope searchScope = context.getCurrentScope().toSearchScope();
     if (searchScope instanceof LocalSearchScope) {
       final Map<String, Set<RefEntity>> contents = presentation.getContent();
-      final Map<RefEntity, CommonProblemDescriptor[]> problemElements = presentation.getProblemElements();
+      final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> problemElements = presentation.getProblemElements();
       for (Set<RefEntity> entities : contents.values()) {
         for (Iterator<RefEntity> iterator = entities.iterator(); iterator.hasNext(); ) {
           RefEntity entity = iterator.next();
@@ -87,7 +89,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
                                                   final boolean showStructure,
                                                   boolean groupBySeverity,
                                                   @NotNull final Map<String, Set<RefEntity>> contents,
-                                                  @NotNull final Map<RefEntity, CommonProblemDescriptor[]> problems) {
+                                                  @NotNull final Function<RefEntity, CommonProblemDescriptor[]> problems) {
     final InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
     InspectionNode mergedToolNode = (InspectionNode)merge(toolNode, parentNode, !groupBySeverity);
 
@@ -105,7 +107,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
               contents,
               false,
               toolWrapper,
-              refElement -> new RefEntityContainer<>(refElement, problems.get(refElement)),
+              refElement -> new RefEntityContainer<>(refElement, problems.apply(refElement)),
               showStructure,
               node -> merge(node, mergedToolNode, true));
     return mergedToolNode;

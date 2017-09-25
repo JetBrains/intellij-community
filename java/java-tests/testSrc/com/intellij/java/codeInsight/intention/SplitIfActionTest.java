@@ -24,57 +24,57 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
  * @author mike
  */
 public class SplitIfActionTest extends LightCodeInsightTestCase {
-  public void test1() throws Exception {
+  public void test1() {
     CodeStyleSettingsManager.getSettings(getProject()).ELSE_ON_NEW_LINE= true;
     doTest();
   }
 
-  public void test2() throws Exception {
+  public void test2() {
     doTest();
   }
 
-  public void test3() throws Exception {
+  public void test3() {
     doTest();
   }
 
-  public void test4() throws Exception {
+  public void test4() {
     doTest();
   }
 
-  public void test5() throws Exception {
+  public void test5() {
     doTest();
   }
 
-  public void testParenthesis() throws Exception {
+  public void testParenthesis() {
     doTest();
   }
 
-  public void testOrParenthesis() throws Exception {
+  public void testOrParenthesis() {
     doTest();
   }
 
-  public void testComment() throws Exception {
+  public void testComment() {
     doTest();
   }
 
-  public void testWithoutSpaces() throws Exception {
+  public void testWithoutSpaces() {
     doTest();
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     configureByFile("/codeInsight/splitIfAction/before" + getTestName(false)+ ".java");
     perform();
     checkResultByFile("/codeInsight/splitIfAction/after" + getTestName(false) + ".java");
   }
 
-   public void test8() throws Exception {
+   public void test8() {
     configureByFile("/codeInsight/splitIfAction/beforeOrAndMixed.java");
     SplitIfAction action = new SplitIfAction();
     assertFalse(action.isAvailable(getProject(), getEditor(), getFile()));
   }
 
 
-  private void perform() throws Exception {
+  private void perform() {
     SplitIfAction action = new SplitIfAction();
     assertTrue(action.isAvailable(getProject(), getEditor(), getFile()));
     ApplicationManager.getApplication().runWriteAction(() -> action.invoke(getProject(), getEditor(), getFile()));

@@ -166,7 +166,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
     for (PsiParameter parameter : parameters) {
       types.putValue(parameter.getType(), parameter);
     }
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+    final JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class);
     final boolean preferLongerNames = settings.PREFER_LONGER_NAMES;
     for (PsiParameter selected : parameters) {
       try {

@@ -4,7 +4,7 @@ import com.siyeh.ig.IGInspectionTestCase;
 
 public class ThrowsRuntimeExceptionInspectionTest extends IGInspectionTestCase {
 
-  public void test() throws Exception {
+  public void test() {
     doTest("com/siyeh/igtest/errorhandling/throws_runtime_exception", new ThrowsRuntimeExceptionInspection());
   }
 }

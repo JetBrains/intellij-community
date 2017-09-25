@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -380,7 +380,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
     }
 
     public void actionPerformed(@NotNull AnActionEvent e) {
-      ProgramRunnerUtil.executeConfiguration(getProject(e), myConfigurationSettings, DefaultRunExecutor.getRunExecutorInstance());
+      ProgramRunnerUtil.executeConfiguration(myConfigurationSettings, DefaultRunExecutor.getRunExecutorInstance());
     }
 
     public String toString() {

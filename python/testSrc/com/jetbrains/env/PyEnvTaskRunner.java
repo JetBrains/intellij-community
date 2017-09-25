@@ -2,6 +2,7 @@ package com.jetbrains.env;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -9,8 +10,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdkTools.PyTestSdkTools;
-import com.jetbrains.python.sdkTools.SdkCreationType;
+import com.jetbrains.python.tools.sdkTools.PySdkTools;
+import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,12 +104,14 @@ public class PyEnvTaskRunner {
           e);
       }
       finally {
-        try {
-          testTask.tearDown();
-        }
-        catch (Exception e) {
-          throw new RuntimeException("Couldn't tear down task", e);
-        }
+        TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+          try {
+            testTask.tearDown();
+          }
+          catch (Exception e) {
+            throw new RuntimeException("Couldn't tear down task", e);
+          }
+        });
       }
     }
 
@@ -146,7 +149,7 @@ public class PyEnvTaskRunner {
     if (url == null) {
       return null;
     }
-    return PyTestSdkTools.createTempSdk(url, SdkCreationType.EMPTY_SDK, null);
+    return PySdkTools.createTempSdk(url, SdkCreationType.EMPTY_SDK, null);
   }
 
   protected boolean shouldRun(String root, PyTestTask task) {

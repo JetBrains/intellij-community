@@ -17,10 +17,8 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
-import java.io.IOException;
-
 public class IndentingBackspaceHandlerUncommittedDocumentTest extends LightPlatformCodeInsightTestCase {
-  public void testSequentialBackspaceInvocation() throws IOException {
+  public void testSequentialBackspaceInvocation() {
     configureFromFileText(getTestName(false) + ".java",
                           "class Foo {\n" +
                           "\n" +
@@ -32,7 +30,7 @@ public class IndentingBackspaceHandlerUncommittedDocumentTest extends LightPlatf
                       "<caret>}");
   }
 
-  public void testMulticaretSequentialBackspaceInvocation() throws IOException {
+  public void testMulticaretSequentialBackspaceInvocation() {
     configureFromFileText(getTestName(false) + ".java",
                           "class Foo {\n" +
                           "    void m1() {\n" +

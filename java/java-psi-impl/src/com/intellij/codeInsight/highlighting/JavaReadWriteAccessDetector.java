@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,7 +61,7 @@ public class JavaReadWriteAccessDetector extends ReadWriteAccessDetector {
     if (!writeAccess && expr instanceof PsiReferenceExpression) {
       //when searching usages of fields, should show all found setters as a "only write usage"
       PsiElement actualReferee = ((PsiReferenceExpression) expr).resolve();
-      if (actualReferee instanceof PsiMethod && PropertyUtil.isSimplePropertySetter((PsiMethod)actualReferee)) {
+      if (actualReferee instanceof PsiMethod && PropertyUtilBase.isSimplePropertySetter((PsiMethod)actualReferee)) {
         writeAccess = true;
         readAccess = false;
       }

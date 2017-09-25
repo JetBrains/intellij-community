@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -290,6 +290,21 @@ for(i in []) {
   else {
     continue
     print 4
+  }
+}
+
+for (i in []) {
+  if (cond) {
+    continue
+  }
+  return
+}
+
+for (i in []) {
+  if (cond) {
+    <warning descr="continue is unnecessary as the last statement in a loop">continue</warning>
+  } else {
+    return
   }
 }
 ''', GroovyUnnecessaryContinueInspection)

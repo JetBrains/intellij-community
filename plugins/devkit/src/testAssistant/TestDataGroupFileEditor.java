@@ -27,6 +27,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupVirtualFile;
 
 import javax.swing.*;
 import java.awt.*;

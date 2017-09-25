@@ -95,34 +95,34 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
     }
   }
 
-  public void testCommentAsFirstSurroundStatement() throws Exception {
+  public void testCommentAsFirstSurroundStatement() {
     String template = "CommentAsFirst%sSurroundStatement";
     for (SurroundType type : SurroundType.values()) {
       doTest(String.format(template, StringUtil.capitalize(type.toFileName())), type.getSurrounder());
     }
   }
 
-  public void testSurroundWithStatementWithoutSelection() throws Exception {
+  public void testSurroundWithStatementWithoutSelection() {
     doTest(new JavaWithIfSurrounder());
   }
 
-  public void testSurroundNonExpressionWithParenthesis() throws Exception {
+  public void testSurroundNonExpressionWithParenthesis() {
     doTest(new JavaWithParenthesesSurrounder());
   }
 
-  public void testSurroundNonExpressionWithCast() throws Exception {
+  public void testSurroundNonExpressionWithCast() {
     doTest(new JavaWithCastSurrounder());
   }
 
-  public void testSurroundExpressionWithCastEmptyLineAfter() throws Exception {
+  public void testSurroundExpressionWithCastEmptyLineAfter() {
     doTestWithTemplateFinish(getTestName(false), new JavaWithCastSurrounder(), "var");
   }
 
-  public void testSurroundExpressionWithCastEmptyLineAfter_2() throws Exception {
+  public void testSurroundExpressionWithCastEmptyLineAfter_2() {
     doTestWithTemplateFinish(getTestName(false), new JavaWithCastSurrounder(), null);
   }
 
-  public void testSurroundNonExpressionWithNot() throws Exception {
+  public void testSurroundNonExpressionWithNot() {
     doTest(new JavaWithNotSurrounder());
   }
 

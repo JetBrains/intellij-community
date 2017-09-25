@@ -17,8 +17,6 @@ package com.intellij.cvsSupport2.errorHandling;
 
 import com.intellij.openapi.vcs.VcsException;
 
-import java.util.Collection;
-
 /**
  * author: lesya
  */
@@ -36,11 +34,6 @@ public class CvsException extends VcsException{
 
   public CvsException(final String message, final Throwable cause, final String cvsRoot) {
     super(message, cause);
-    myCvsRoot = cvsRoot;
-  }
-
-  public CvsException(Collection<String> messages, String cvsRoot) {
-    super(messages);
     myCvsRoot = cvsRoot;
   }
 

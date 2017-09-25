@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.project.DumbAware;
@@ -167,7 +166,6 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       }
     });
 
-    final EditorGutterComponentEx editorGutter = (EditorGutterComponentEx)editor.getGutter();
     final List<AnnotationFieldGutter> gutters = new ArrayList<>();
     final AnnotationSourceSwitcher switcher = fileAnnotation.getAnnotationSourceSwitcher();
 
@@ -189,7 +187,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       final MergeSourceAvailableMarkerGutter mergeSourceGutter =
         new MergeSourceAvailableMarkerGutter(fileAnnotation, presentation, bgColorMap);
 
-      SwitchAnnotationSourceAction switchAction = new SwitchAnnotationSourceAction(switcher, editorGutter);
+      SwitchAnnotationSourceAction switchAction = new SwitchAnnotationSourceAction(switcher);
       presentation.addAction(switchAction);
       switchAction.addSourceSwitchListener(currentRevisionGutter);
       switchAction.addSourceSwitchListener(mergeSourceGutter);
@@ -211,7 +209,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       gutters.add(new HistoryIdColumn(fileAnnotation, presentation, bgColorMap, historyIds));
     }
     gutters.add(new HighlightedAdditionalColumn(fileAnnotation, presentation, bgColorMap));
-    final AnnotateActionGroup actionGroup = new AnnotateActionGroup(gutters, editorGutter, bgColorMap);
+    final AnnotateActionGroup actionGroup = new AnnotateActionGroup(gutters, bgColorMap);
     presentation.addAction(actionGroup, 1);
     gutters.add(new ExtraFieldGutter(fileAnnotation, presentation, bgColorMap, actionGroup));
 

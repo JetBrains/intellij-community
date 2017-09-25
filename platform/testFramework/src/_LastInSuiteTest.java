@@ -23,6 +23,7 @@ import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -56,7 +57,7 @@ public class _LastInSuiteTest extends TestCase {
     return buildConf == null ? name : name + "[" + buildConf + "]";
   }
 
-  public void testProjectLeak() throws Exception {
+  public void testProjectLeak() {
     if (Boolean.getBoolean("idea.test.guimode")) {
       Application application = ApplicationManager.getApplication();
       TransactionGuard.getInstance().submitTransactionAndWait(() -> {
@@ -67,7 +68,7 @@ public class _LastInSuiteTest extends TestCase {
       return;
     }
 
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    EdtTestUtil.runInEdtAndWait(() -> {
       try {
         LightPlatformTestCase.initApplication(); // in case nobody cared to init. LightPlatformTestCase.disposeApplication() would not work otherwise.
       }
@@ -109,7 +110,7 @@ public class _LastInSuiteTest extends TestCase {
     }
   }
 
-  public void testStatistics() throws Exception {
+  public void testStatistics() {
     long started = _FirstInSuiteTest.getSuiteStartTime();
     if (started != 0) {
       long testSuiteDuration = System.nanoTime() - started;

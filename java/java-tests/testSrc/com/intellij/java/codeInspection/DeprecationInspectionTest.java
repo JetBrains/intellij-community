@@ -29,47 +29,47 @@ public class DeprecationInspectionTest extends InspectionTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection";
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest("deprecation/" + getTestName(true), new DeprecationInspection());
   }
 
-  public void testDeprecatedMethod() throws Exception{
+  public void testDeprecatedMethod() {
     doTest();
   }
 
-  public void testDeprecatedInImport() throws Exception{
+  public void testDeprecatedInImport() {
     doTest();
   }
 
-  public void testDeprecatedInStaticImport() throws Exception{
+  public void testDeprecatedInStaticImport() {
     doTest();
   }
 
-  public void testDeprecatedInner() throws Exception {
+  public void testDeprecatedInner() {
     doTest();
   }
 
-  public void testDeprecatedField() throws Exception{
+  public void testDeprecatedField() {
     doTest();
   }
 
-  public void testDeprecatedDefaultConstructorInSuper() throws Exception {
+  public void testDeprecatedDefaultConstructorInSuper() {
     doTest();
   }
 
-  public void testDeprecatedDefaultConstructorInSuperNotCalled() throws Exception {
+  public void testDeprecatedDefaultConstructorInSuperNotCalled() {
     doTest();
   }
 
-  public void testDeprecatedDefaultConstructorTypeParameter() throws Exception {
+  public void testDeprecatedDefaultConstructorTypeParameter() {
     doTest();
   }
 
-  public void testDeprecationOnVariableWithAnonymousClass() throws Exception {
+  public void testDeprecationOnVariableWithAnonymousClass() {
     doTest();
   }
 
-  public void testMethodsOfDeprecatedClass() throws Exception {
+  public void testMethodsOfDeprecatedClass() {
     final DeprecationInspection tool = new DeprecationInspection();
     tool.IGNORE_METHODS_OF_DEPRECATED = false;
     doTest("deprecation/" + getTestName(true), tool);

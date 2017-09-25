@@ -316,6 +316,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
       }
       final boolean doEnable = (Boolean) aValue;
       final InspectionProfileImpl profile = mySettings.getInspectionProfile();
+      if (profile == null) return;
       for (final InspectionConfigTreeNode aNode : InspectionsAggregationUtil.getInspectionsNodes((InspectionConfigTreeNode)node)) {
         setToolEnabled(doEnable, profile, aNode.getKey().toString(), mySettings.getProject());
         aNode.dropCache();
@@ -350,6 +351,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
       final boolean newState = !Boolean.TRUE.equals(state);
 
       final InspectionProfileImpl profile = mySettings.getInspectionProfile();
+      if (profile == null) return;
       for (HighlightDisplayKey tool : tools) {
         setToolEnabled(newState, profile, tool.toString(), mySettings.getProject());
       }

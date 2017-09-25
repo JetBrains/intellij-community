@@ -54,17 +54,12 @@ public class WCInfo {
 
   @NotNull
   public SVNURL getUrl() {
-    return myRootInfo.getAbsoluteUrlAsUrl();
+    return myRootInfo.getUrl();
   }
 
   @NotNull
-  public String getRootUrl() {
-    return getUrl().toString();
-  }
-
-  @NotNull
-  public String getRepoUrl() {
-    return getRepositoryRoot();
+  public SVNURL getRepoUrl() {
+    return myRootInfo.getRepositoryUrl();
   }
 
   @NotNull
@@ -87,11 +82,6 @@ public class WCInfo {
   @NotNull
   public WorkingCopyFormat getFormat() {
     return myRootInfo.getFormat();
-  }
-
-  @NotNull
-  public String getRepositoryRoot() {
-    return myRootInfo.getRepositoryUrl();
   }
 
   public boolean isIsWcRoot() {

@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -362,6 +363,19 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     return advancedResolve(false).getElement();
   }
 
+  @NotNull
+  public static TextRange calcRangeInElement(CompositePsiElement refElement) {
+    TreeElement nameChild = (TreeElement)refElement.findChildByRole(ChildRole.REFERENCE_NAME);
+    if (nameChild == null) {
+      TreeElement dot = (TreeElement)refElement.findChildByRole(ChildRole.DOT);
+      if (dot == null) {
+        throw new IllegalStateException(refElement.toString());
+      }
+      return TextRange.from(dot.getStartOffsetInParent() + dot.getTextLength(), 0);
+    }
+    return TextRange.from(nameChild.getStartOffsetInParent(), nameChild.getTextLength());
+  }
+
   private static final class OurGenericsResolver implements ResolveCache.PolyVariantContextResolver<PsiJavaReference> {
     private static final OurGenericsResolver INSTANCE = new OurGenericsResolver();
 
@@ -378,6 +392,16 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         result = processor.getResult();
         if (result.length == 0 && kind == CLASS_NAME_KIND) {
           result = referenceElement.resolve(PACKAGE_NAME_KIND, containingFile);
+        }
+      }
+      
+      if (result.length == 0 && (kind == CLASS_OR_PACKAGE_NAME_KIND || kind == CLASS_NAME_KIND)) {
+        String qualifiedName = referenceElement.getQualifiedName();
+        PsiClass aClass = qualifiedName != null && !StringUtil.isEmptyOrSpaces(StringUtil.getPackageName(qualifiedName))
+                          ? JavaPsiFacade.getInstance(referenceElement.getProject()).findClass(qualifiedName, referenceElement.getResolveScope()) 
+                          : null;
+        if (aClass != null) {
+          result = new JavaResolveResult[] {new CandidateInfo(aClass, PsiSubstitutor.EMPTY, referenceElement, false)};
         }
       }
 
@@ -410,6 +434,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
   @NotNull
   private JavaResolveResult[] resolve(final int kind, @NotNull PsiFile containingFile) {
+    ProgressManager.checkCanceled();
     switch (kind) {
       case CLASS_FQ_NAME_KIND: {
         String text = getNormalizedText();
@@ -973,10 +998,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
   @Override
   public final TextRange getRangeInElement() {
-    final TreeElement nameChild = (TreeElement)getReferenceNameNode();
-    if (nameChild == null) return new TextRange(0, getTextLength());
-    final int startOffset = nameChild.getStartOffsetInParent();
-    return new TextRange(startOffset, startOffset + nameChild.getTextLength());
+    return calcRangeInElement(this);
   }
 
   @Override

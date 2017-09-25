@@ -148,6 +148,7 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
                           vmParametersString.toString() +
                           (StringUtil.isNotEmpty(workingDir) ?
                            "          workingDir = '" + workingDir + "'\n" : "") +
+                          "           standardInput = System.in\n" +
                           "         }\n" +
                           "      }\n" +
                           "    }\n" +

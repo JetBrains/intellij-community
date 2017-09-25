@@ -24,16 +24,15 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
-public class 
-  ImportTestsGroup extends ActionGroup {
+public class ImportTestsGroup extends ActionGroup {
   private SMTRunnerConsoleProperties myProperties;
   public ImportTestsGroup() {
     super("Import Test Results", "Import Test Results", AllIcons.Vcs.History);
@@ -53,8 +52,11 @@ public class
     if (project == null) return EMPTY_ARRAY;
     final Collection<String> filePaths = TestHistoryConfiguration.getInstance(project).getFiles();
     final File testHistoryRoot = TestStateStorage.getTestHistoryRoot(project);
-    final List<File> fileNames = ContainerUtil.map(filePaths, fileName -> new File(testHistoryRoot, fileName));
-    Collections.sort(fileNames, (f1, f2) -> f1.lastModified() > f2.lastModified() ? -1 : 1);
+    final List<File> fileNames = filePaths.stream()
+      .map(fileName -> new File(testHistoryRoot, fileName))
+      .filter(file -> file.exists())
+      .sorted((f1, f2) -> Long.compare(f2.lastModified(), f1.lastModified()))
+      .collect(Collectors.toList());
     final int historySize = fileNames.size();
     final AnAction[] actions = new AnAction[historySize + 2];
     for (int i = 0; i < historySize; i++) {

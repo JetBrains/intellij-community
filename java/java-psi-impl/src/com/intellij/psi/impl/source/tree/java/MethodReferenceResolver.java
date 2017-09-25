@@ -69,7 +69,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
             final PsiClassType returnType = composeReturnType(containingClass, substitutor);
             final InferenceSession session = new InferenceSession(containingClass.getTypeParameters(), substitutor, reference.getManager(), null);
             if (!(session.isProperType(session.substituteWithInferenceVariables(returnType)) && session.isProperType(interfaceMethodReturnType))) {
-              session.registerReturnTypeConstraints(returnType, interfaceMethodReturnType);
+              session.registerReturnTypeConstraints(returnType, interfaceMethodReturnType, reference);
               substitutor = session.infer();
             }
           }
@@ -95,7 +95,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
             protected MethodCandidateInfo createCandidateInfo(@NotNull final PsiMethod method,
                                                               @NotNull final PsiSubstitutor substitutor,
                                                               final boolean staticProblem,
-                                                              final boolean accessible, 
+                                                              final boolean accessible,
                                                               final boolean varargs) {
               final PsiExpressionList argumentList = getArgumentList();
               final PsiType[] typeParameters = reference.getTypeParameters();
@@ -131,7 +131,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                     PsiSubstitutor subst = PsiMethodReferenceCompatibilityConstraint.getSubstitutor(signature, qualifierResolveResult, method, containingClass, reference);
                     final PsiType returnType = method.isConstructor() ? composeReturnType(containingClass, subst) : subst.substitute(method.getReturnType());
                     if (returnType != null) {
-                      session.registerReturnTypeConstraints(returnType, interfaceMethodReturnType);
+                      session.registerReturnTypeConstraints(returnType, interfaceMethodReturnType, reference);
                     }
                   }
                   return session.infer(method.getParameterList().getParameters(), null, null);

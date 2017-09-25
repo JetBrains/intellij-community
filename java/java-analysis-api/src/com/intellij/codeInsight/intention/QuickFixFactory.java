@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -190,6 +191,11 @@ public abstract class QuickFixFactory {
                                                   boolean changeAllUsages,
                                                   int minUsagesNumberToShowDialog);
 
+  @NotNull
+  public List<IntentionAction> createCreateMethodFromUsageFixes(@NotNull PsiMethodCallExpression call) {
+    return Collections.emptyList();
+  }
+
   @NotNull public abstract IntentionAction createCreateMethodFromUsageFix(@NotNull PsiMethodCallExpression call);
   @NotNull public abstract IntentionAction createCreateMethodFromUsageFix(PsiMethodReferenceExpression methodReferenceExpression);
 
@@ -283,9 +289,6 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction addMethodQualifierFix(@NotNull PsiMethodCallExpression methodCall);
 
   @NotNull
-  public abstract IntentionAction createWrapLongWithMathToIntExactFix(@Nullable PsiType type, @NotNull PsiExpression expression);
-
-  @NotNull
   public abstract IntentionAction createWrapWithOptionalFix(@Nullable PsiType type, @NotNull PsiExpression expression);
 
   @Nullable
@@ -295,7 +298,9 @@ public abstract class QuickFixFactory {
   public abstract List<IntentionAction> createAddAnnotationAttributeNameFixes(@NotNull PsiNameValuePair pair);
 
   @NotNull
-  public abstract IntentionAction createCollectionToArrayFix(@NotNull PsiExpression collectionExpression, @NotNull PsiArrayType arrayType);
+  public abstract IntentionAction createCollectionToArrayFix(@NotNull PsiExpression collectionExpression,
+                                                             @NotNull PsiExpression expressionToReplace,
+                                                             @NotNull PsiArrayType arrayType);
 
   @NotNull
   public abstract IntentionAction createInsertMethodCallFix(@NotNull PsiMethodCallExpression call, PsiMethod method);
@@ -304,5 +309,5 @@ public abstract class QuickFixFactory {
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createAccessStaticViaInstanceFix(PsiReferenceExpression methodRef, JavaResolveResult result);
 
   @NotNull
-  public abstract IntentionAction createWrapStringWithFileFix(@Nullable PsiType type, @NotNull PsiExpression expression);
+  public abstract IntentionAction createWrapWithAdapterFix(@Nullable PsiType type, @NotNull PsiExpression expression);
 }

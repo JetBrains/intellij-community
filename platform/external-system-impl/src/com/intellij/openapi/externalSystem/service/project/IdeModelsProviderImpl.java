@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.openapi.externalSystem.model.project.*;
+import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -93,7 +94,8 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
     if (modulePath.getParentFile() != null) {
       prefix = modulePath.getParentFile().getName();
     }
-    char delimiter = ModuleGrouperKt.isQualifiedModuleNamesEnabled() ? '.' : '-';
+    ExternalProjectSettings settings = getSettings(myProject, module.getOwner()).getLinkedProjectSettings(module.getLinkedExternalProjectPath());
+    char delimiter = settings != null && settings.isUseQualifiedModuleNames() ? '.' : '-';
 
     if (prefix == null || StringUtil.startsWith(module.getInternalName(), prefix)) {
       return new String[]{

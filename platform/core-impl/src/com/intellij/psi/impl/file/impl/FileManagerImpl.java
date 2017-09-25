@@ -38,7 +38,6 @@ import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
-import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -92,20 +91,7 @@ public class FileManagerImpl implements FileManager {
   }
 
   public static void clearPsiCaches(@NotNull FileViewProvider provider) {
-    if (provider instanceof SingleRootFileViewProvider) {
-      for (PsiFile root : ((SingleRootFileViewProvider)provider).getCachedPsiFiles()) {
-        if (root instanceof PsiFileImpl) {
-          ((PsiFileImpl)root).clearCaches();
-        }
-      }
-    } else {
-      for (Language language : provider.getLanguages()) {
-        final PsiFile psi = provider.getPsi(language);
-        if (psi instanceof PsiFileImpl) {
-          ((PsiFileImpl)psi).clearCaches();
-        }
-      }
-    }
+    ((AbstractFileViewProvider)provider).getCachedPsiFiles().forEach(PsiFile::clearCaches);
   }
 
   public void forceReload(@NotNull VirtualFile vFile) {
@@ -116,27 +102,35 @@ public class FileManagerImpl implements FileManager {
     }
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    setViewProvider(vFile, null);
-
     VirtualFile dir = vFile.getParent();
     PsiDirectory parentDir = dir == null ? null : getCachedDirectory(dir);
     PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
-    if (parentDir != null) {
+    if (parentDir == null) {
+      setUpPropertyChangedForUnloadedPsi(event, vFile);
+
+      myManager.beforePropertyChange(event);
+      setViewProvider(vFile, null);
+      myManager.propertyChanged(event);
+    } else {
       event.setParent(parentDir);
+
+      myManager.beforeChildrenChange(event);
+      setViewProvider(vFile, null);
       myManager.childrenChanged(event);
-    }
-    else {
-      firePropertyChangedForUnloadedPsi(event, vFile);
     }
   }
 
   void firePropertyChangedForUnloadedPsi(@NotNull PsiTreeChangeEventImpl event, @NotNull VirtualFile vFile) {
-    event.setPropertyName(PsiTreeChangeEvent.PROP_UNLOADED_PSI);
-    event.setOldValue(vFile);
-    event.setNewValue(vFile);
+    setUpPropertyChangedForUnloadedPsi(event, vFile);
 
     myManager.beforePropertyChange(event);
     myManager.propertyChanged(event);
+  }
+
+  private static void setUpPropertyChangedForUnloadedPsi(@NotNull PsiTreeChangeEventImpl event, @NotNull VirtualFile vFile) {
+    event.setPropertyName(PsiTreeChangeEvent.PROP_UNLOADED_PSI);
+    event.setOldValue(vFile);
+    event.setNewValue(vFile);
   }
 
   @Override
@@ -442,9 +436,7 @@ public class FileManagerImpl implements FileManager {
   }
 
   private void markInvalidated(@NotNull FileViewProvider viewProvider) {
-    if (viewProvider instanceof SingleRootFileViewProvider) {
-      ((SingleRootFileViewProvider)viewProvider).markInvalidated();
-    }
+    ((AbstractFileViewProvider)viewProvider).markInvalidated();
     VirtualFile virtualFile = viewProvider.getVirtualFile();
     Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
     if (document != null) {
@@ -457,8 +449,7 @@ public class FileManagerImpl implements FileManager {
   PsiFile getCachedPsiFileInner(@NotNull VirtualFile file) {
     FileViewProvider fileViewProvider = myVFileToViewProviderMap.get(file);
     if (fileViewProvider == null) fileViewProvider = file.getUserData(myPsiHardRefKey);
-    return fileViewProvider instanceof SingleRootFileViewProvider
-           ? ((SingleRootFileViewProvider)fileViewProvider).getCachedPsi(fileViewProvider.getBaseLanguage()) : null;
+    return fileViewProvider != null ? ((AbstractFileViewProvider)fileViewProvider).getCachedPsi(fileViewProvider.getBaseLanguage()) : null;
   }
 
   @NotNull
@@ -466,9 +457,7 @@ public class FileManagerImpl implements FileManager {
   public List<PsiFile> getAllCachedFiles() {
     List<PsiFile> files = new ArrayList<>();
     for (FileViewProvider provider : myVFileToViewProviderMap.values()) {
-      if (provider instanceof SingleRootFileViewProvider) {
-        ContainerUtil.addIfNotNull(files, ((SingleRootFileViewProvider)provider).getCachedPsi(provider.getBaseLanguage()));
-      }
+      ContainerUtil.addIfNotNull(files, ((AbstractFileViewProvider)provider).getCachedPsi(provider.getBaseLanguage()));
     }
     return files;
   }
@@ -569,10 +558,6 @@ public class FileManagerImpl implements FileManager {
 
   @Override
   public void reloadFromDisk(@NotNull PsiFile file) {
-    reloadFromDisk(file, false);
-  }
-
-  void reloadFromDisk(@NotNull PsiFile file, boolean ignoreDocument) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     VirtualFile vFile = file.getVirtualFile();
     assert vFile != null;
@@ -580,23 +565,22 @@ public class FileManagerImpl implements FileManager {
     if (file instanceof PsiBinaryFile) return;
     FileDocumentManager fileDocumentManager = myFileDocumentManager;
     Document document = fileDocumentManager.getCachedDocument(vFile);
-    if (document != null && !ignoreDocument){
+    if (document != null) {
       fileDocumentManager.reloadFromDisk(document);
     }
     else {
-      FileViewProvider latestProvider = createFileViewProvider(vFile, false);
-      PsiFile psi = latestProvider.getPsi(latestProvider.getBaseLanguage());
-      if (psi instanceof PsiLargeFile || psi instanceof PsiBinaryFile) {
-        forceReload(vFile);
-        return;
-      }
-
-      FileViewProvider viewProvider = file.getViewProvider();
-      if (viewProvider instanceof SingleRootFileViewProvider) {
-        ((SingleRootFileViewProvider)viewProvider).onContentReload();
-      } else {
-        LOG.error("Invalid view provider: " + viewProvider + " of " + viewProvider.getClass());
-      }
+      reloadPsiAfterTextChange(file, vFile);
     }
+  }
+
+  void reloadPsiAfterTextChange(@NotNull PsiFile file, @NotNull VirtualFile vFile) {
+    FileViewProvider latestProvider = createFileViewProvider(vFile, false);
+    PsiFile psi = latestProvider.getPsi(latestProvider.getBaseLanguage());
+    if (psi instanceof PsiLargeFile || psi instanceof PsiBinaryFile) {
+      forceReload(vFile);
+      return;
+    }
+
+    ((AbstractFileViewProvider)file.getViewProvider()).onContentReload();
   }
 }

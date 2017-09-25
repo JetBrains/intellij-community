@@ -11,12 +11,9 @@ public class YAMLWordsScanner extends DefaultWordsScanner {
   public YAMLWordsScanner() {
     super(
       new YAMLFlexLexer(),
-      TokenSet.create(
-        YAMLElementTypes.SCALAR_TEXT_VALUE,
-        YAMLElementTypes.SCALAR_PLAIN_VALUE,
-        YAMLElementTypes.SCALAR_QUOTED_STRING),
+      TokenSet.create(YAMLTokenTypes.SCALAR_KEY),
       TokenSet.create(YAMLTokenTypes.COMMENT),
-      TokenSet.EMPTY);
+      YAMLElementTypes.SCALAR_VALUES);
     setMayHaveFileRefsInLiterals(true);
   }
 }

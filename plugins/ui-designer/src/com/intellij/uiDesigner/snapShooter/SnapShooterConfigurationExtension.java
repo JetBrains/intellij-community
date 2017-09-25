@@ -108,7 +108,7 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
         settings.setNotifyRunnable(null);
         handler.addProcessListener(new ProcessAdapter() {
           @Override
-          public void startNotified(final ProcessEvent event) {
+          public void startNotified(@NotNull final ProcessEvent event) {
             runnable.run();
           }
         });

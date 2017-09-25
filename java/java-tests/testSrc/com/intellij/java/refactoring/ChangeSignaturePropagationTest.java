@@ -39,15 +39,15 @@ import java.util.Set;
  * @author ven
  */
 public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
-  public void testParamSimple() throws Exception {
+  public void testParamSimple() {
     parameterPropagationTest();
   }
 
-  public void testParamWithOverriding() throws Exception {
+  public void testParamWithOverriding() {
     parameterPropagationTest();
   }
 
-  public void testParamTypeSubst() throws Exception {
+  public void testParamTypeSubst() {
     final PsiMethod method = getPrimaryMethod();
     final HashSet<PsiMethod> methods = new HashSet<>();
     for (PsiReference reference : ReferencesSearch.search(method)) {
@@ -59,20 +59,20 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
     parameterPropagationTest(method, methods, JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName("T"));
   }
 
-  public void testExceptionSimple() throws Exception {
+  public void testExceptionSimple() {
     exceptionPropagationTest();
   }
 
-  public void testExceptionWithOverriding() throws Exception {
+  public void testExceptionWithOverriding() {
     exceptionPropagationTest();
   }
 
-  public void testParamWithNoConstructor() throws Exception {
+  public void testParamWithNoConstructor() {
     final PsiMethod method = getPrimaryMethod();
     parameterPropagationTest(method, collectNonPhysicalMethodsToPropagate(method), JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName("java.lang.Class", GlobalSearchScope.allScope(getProject())));
   }
 
-   public void testExceptionWithNoConstructor() throws Exception {
+   public void testExceptionWithNoConstructor() {
     final PsiMethod method = getPrimaryMethod();
      exceptionPropagationTest(method, collectNonPhysicalMethodsToPropagate(method));
   }
@@ -90,17 +90,17 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
     return methodsToPropagate;
   }
 
-  public void testParamWithImplicitConstructor() throws Exception {
+  public void testParamWithImplicitConstructor() {
     final PsiMethod method = getPrimaryMethod();
     parameterPropagationTest(method, collectDefaultConstructorsToPropagate(method), JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName("java.lang.Class", GlobalSearchScope.allScope(getProject())));
   }
 
-  public void testParamWithImplicitConstructors() throws Exception {
+  public void testParamWithImplicitConstructors() {
     final PsiMethod method = getPrimaryMethod();
     parameterPropagationTest(method, collectDefaultConstructorsToPropagate(method), JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName("java.lang.Class", GlobalSearchScope.allScope(getProject())));
   }
 
-  public void testExceptionWithImplicitConstructor() throws Exception {
+  public void testExceptionWithImplicitConstructor() {
     final PsiMethod method = getPrimaryMethod();
     exceptionPropagationTest(method, collectDefaultConstructorsToPropagate(method));
   }
@@ -113,28 +113,28 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
     return methodsToPropagate;
   }
 
-  private void parameterPropagationTest() throws Exception {
+  private void parameterPropagationTest() {
     parameterPropagationTest(JavaPsiFacade.getElementFactory(getProject())
                                .createTypeByFQClassName("java.lang.Class", GlobalSearchScope.allScope(getProject())));
   }
 
-  private void parameterPropagationTest(final PsiClassType paramType) throws Exception {
+  private void parameterPropagationTest(final PsiClassType paramType) {
     final PsiMethod method = getPrimaryMethod();
     parameterPropagationTest(method, new HashSet<>(Arrays.asList(method.getContainingClass().getMethods())),
                              paramType);
   }
 
-  private void parameterPropagationTest(final PsiMethod method, final HashSet<PsiMethod> psiMethods, final PsiType paramType) throws Exception {
+  private void parameterPropagationTest(final PsiMethod method, final HashSet<PsiMethod> psiMethods, final PsiType paramType) {
     final ParameterInfoImpl[] newParameters = new ParameterInfoImpl[]{new ParameterInfoImpl(-1, "clazz", paramType, "null")};
     doTest(newParameters, new ThrownExceptionInfo[0], psiMethods, null, method);
   }
 
-  private void exceptionPropagationTest() throws Exception {
+  private void exceptionPropagationTest() {
     final PsiMethod method = getPrimaryMethod();
     exceptionPropagationTest(method, new HashSet<>(Arrays.asList(method.getContainingClass().getMethods())));
   }
 
-  private void exceptionPropagationTest(final PsiMethod method, final Set<PsiMethod> methodsToPropagateExceptions) throws Exception {
+  private void exceptionPropagationTest(final PsiMethod method, final Set<PsiMethod> methodsToPropagateExceptions) {
     PsiClassType newExceptionType = JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName("java.lang.Exception", GlobalSearchScope.allScope(getProject()));
     final ThrownExceptionInfo[] newExceptions = new ThrownExceptionInfo[]{new JavaThrownExceptionInfo(-1, newExceptionType)};
     doTest(new ParameterInfoImpl[0], newExceptions, null, methodsToPropagateExceptions, method);
@@ -144,7 +144,7 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
                       final ThrownExceptionInfo[] newExceptions,
                       Set<PsiMethod> methodsToPropagateParameterChanges,
                       Set<PsiMethod> methodsToPropagateExceptionChanges,
-                      PsiMethod primaryMethod) throws Exception {
+                      PsiMethod primaryMethod) {
     final String filePath = getBasePath() + getTestName(false) + ".java";
     final PsiType returnType = primaryMethod.getReturnType();
     final CanonicalTypes.Type type = returnType == null ? null : CanonicalTypes.createTypeWrapper(returnType);
@@ -158,7 +158,7 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
     checkResultByFile(filePath + ".after");
   }
 
-  private PsiMethod getPrimaryMethod() throws Exception {
+  private PsiMethod getPrimaryMethod() {
     final String filePath = getBasePath() + getTestName(false) + ".java";
     configureByFile(filePath);
     final PsiElement targetElement = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);

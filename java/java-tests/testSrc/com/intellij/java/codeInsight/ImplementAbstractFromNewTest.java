@@ -18,7 +18,7 @@ package com.intellij.java.codeInsight;
 import com.intellij.java.codeInsight.daemon.quickFix.LightQuickFixAvailabilityTestCase;
 
 public class ImplementAbstractFromNewTest extends LightQuickFixAvailabilityTestCase {
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 

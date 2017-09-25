@@ -29,7 +29,7 @@ public class SuspiciousCollectionMethodCallsTest extends LightCodeInsightFixture
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/suspiciousCalls";
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     myFixture.enableInspections(myTool);
     myFixture.testHighlighting(getTestName(false) + ".java");
   }
@@ -40,27 +40,27 @@ public class SuspiciousCollectionMethodCallsTest extends LightCodeInsightFixture
     super.tearDown();
   }
 
-  public void testConcurrentHashMap() throws Exception { doTest(); }
-  public void testRemoveAllCall() throws Exception { doTest(); }
-  public void testSetList() throws Exception { doTest(); }
-  public void testUseDfa() throws Exception { doTest(); }
-  public void testWildcard() throws Exception { doTest(); }
-  public void testPolyConditionalExpressionPassedToMapGetCall() throws Exception { doTest(); }
-  public void testNewExpressionPassedToMapContains() throws Exception { doTest(); }
-  public void testIgnoreConvertible() throws Exception {
+  public void testConcurrentHashMap() { doTest(); }
+  public void testRemoveAllCall() { doTest(); }
+  public void testSetList() { doTest(); }
+  public void testUseDfa() { doTest(); }
+  public void testWildcard() { doTest(); }
+  public void testPolyConditionalExpressionPassedToMapGetCall() { doTest(); }
+  public void testNewExpressionPassedToMapContains() { doTest(); }
+  public void testIgnoreConvertible() {
     myTool.REPORT_CONVERTIBLE_METHOD_CALLS = false;
     doTest();
   }
 
-  public void testNewMapMethods() throws Exception {
+  public void testNewMapMethods() {
     doTest();
   }
 
-  public void testMethodReferenceWithCollectionCalls() throws Exception {
+  public void testMethodReferenceWithCollectionCalls() {
     doTest();
   }
 
-  public void testNonClassArgTypes() throws Exception {
+  public void testNonClassArgTypes() {
     doTest();
   }
 

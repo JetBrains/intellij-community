@@ -24,7 +24,7 @@ import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +37,7 @@ import java.util.Map;
  */
 public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListenersRegistry {
   private final Map<FacetTypeId, EventDispatcher<ProjectWideFacetListener>> myDispatchers = new HashMap<>();
-  private final Map<FacetTypeId, WeakHashMap<Facet, Boolean>> myFacetsByType = new HashMap<>();
+  private final Map<FacetTypeId, Map<Facet, Boolean>> myFacetsByType = new HashMap<>();
   private final Map<Module, MessageBusConnection> myModule2Connection = new HashMap<>();
   private final FacetManagerAdapter myFacetListener;
   private final EventDispatcher<ProjectWideFacetListener> myAllFacetsListener = EventDispatcher.create(ProjectWideFacetListener.class);
@@ -91,7 +91,7 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
 
   private void onFacetRemoved(final Facet facet, final boolean before) {
     final FacetTypeId typeId = facet.getTypeId();
-    WeakHashMap<Facet, Boolean> facets = myFacetsByType.get(typeId);
+    Map<Facet, Boolean> facets = myFacetsByType.get(typeId);
     boolean lastFacet;
     if (facets != null) {
       facets.remove(facet);
@@ -137,9 +137,9 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
   private void onFacetAdded(final Facet facet) {
     boolean firstFacet = myFacetsByType.isEmpty();
     final FacetTypeId typeId = facet.getTypeId();
-    WeakHashMap<Facet, Boolean> facets = myFacetsByType.get(typeId);
+    Map<Facet, Boolean> facets = myFacetsByType.get(typeId);
     if (facets == null) {
-      facets = new WeakHashMap<>();
+      facets = ContainerUtil.createWeakMap();
       myFacetsByType.put(typeId, facets);
     }
     boolean firstFacetOfType = facets.isEmpty();

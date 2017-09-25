@@ -18,7 +18,7 @@ package com.intellij.execution.configurations;
 import junit.framework.TestCase;
 
 public class CommandLineTokenizerTest extends TestCase {
-  public void testBasic() throws Exception {
+  public void testBasic() {
     assertTokens("a b", "a", "b");
     assertTokens("\"a b\"", "a b");
     assertTokens("a\" b\"", "a b");
@@ -30,7 +30,7 @@ public class CommandLineTokenizerTest extends TestCase {
     assertTokens("\"-Dquote=\\\\\"", "-Dquote=\\\\");
   }
 
-  public void testEscape() throws Exception {
+  public void testEscape() {
     assertTokens("a\\ b", true, "a b");
     assertTokens("a\\ b", false, "a\\", "b");
 

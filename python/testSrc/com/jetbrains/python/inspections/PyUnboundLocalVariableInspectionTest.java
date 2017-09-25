@@ -15,15 +15,14 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author vlan
  */
-public class PyUnboundLocalVariableInspectionTest extends PyTestCase {
-  private static final String TEST_DIRECTORY = "inspections/PyUnboundLocalVariableInspection/";
-
+public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
   public void testSimple() {
     doTest();
   }
@@ -192,9 +191,14 @@ public class PyUnboundLocalVariableInspectionTest extends PyTestCase {
     doTest();
   }
 
-  private void doTest() {
-    myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
-    myFixture.enableInspections(PyUnboundLocalVariableInspection.class);
-    myFixture.checkHighlighting(true, false, false);
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyUnboundLocalVariableInspection.class;
+  }
+
+  @Override
+  protected boolean isLowerCaseTestFile() {
+    return false;
   }
 }

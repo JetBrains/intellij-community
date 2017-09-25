@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.io.IOException;
 import java.util.List;
 
 public class ActionsTest extends IntegrationTestCase {
@@ -79,7 +78,7 @@ public class ActionsTest extends IntegrationTestCase {
 
     CommandProcessor.getInstance().executeCommand(myProject, new RunnableAdapter() {
       @Override
-      public void doRun() throws IOException {
+      public void doRun() {
         setContent(f, "file");
         setDocumentTextFor(f, "doc1");
 

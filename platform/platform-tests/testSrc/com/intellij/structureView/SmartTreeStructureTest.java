@@ -43,7 +43,7 @@ public class SmartTreeStructureTest extends LightPlatformCodeInsightFixtureTestC
     root.addChild("xxx").addChild("aaa").addChild("bbb");
   }
 
-  public void testGrouping() throws Exception {
+  public void testGrouping() {
     assertStructureEqual("root\n" +
                          ".Group:a\n" +
                          "..Group:d\n" +
@@ -74,7 +74,7 @@ public class SmartTreeStructureTest extends LightPlatformCodeInsightFixtureTestC
                          ".....bbb\n", PlatformTestUtil.createComparator(myPrintInfo));
   }
 
-  public void testFiltering() throws Exception {
+  public void testFiltering() {
     myModel.addFlter(new Filter() {
       @Override
       @NotNull
@@ -115,7 +115,7 @@ public class SmartTreeStructureTest extends LightPlatformCodeInsightFixtureTestC
                          ".xxx\n", PlatformTestUtil.createComparator(myPrintInfo));
   }
 
-  public void testSorting() throws Exception {
+  public void testSorting() {
     myModel.addSorter(new Sorter() {
       @NotNull
       @Override

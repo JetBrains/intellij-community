@@ -23,12 +23,10 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TempFiles;
 
-import java.io.IOException;
-
 public class MergeDataTest extends BaseDiffTestCase {
   private TempFiles myTempFiles;
 
-  public void testWorkingDocument() throws IOException {
+  public void testWorkingDocument() {
     VirtualFile file = myTempFiles.createVFile("merge", ".txt");
     assertNotNull(file);
     assertEquals("txt", file.getExtension());

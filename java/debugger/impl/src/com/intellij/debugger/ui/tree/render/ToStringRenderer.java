@@ -213,4 +213,9 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
   public void setOnDemand(boolean value) {
     ON_DEMAND = value;
   }
+
+  @Override
+  public boolean hasOverhead() {
+    return true;
+  }
 }

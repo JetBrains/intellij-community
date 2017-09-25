@@ -523,7 +523,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   }
 
   public void dispose() {
-
+    myContent.removeAll();
   }
 
   boolean isCurrent(ContentLayout layout) {

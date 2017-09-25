@@ -237,6 +237,14 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     final Editor editor = getEditor();
     if (editor == null) return;
 
+    // do not cancel editing if we click or scroll in editor popup
+    final List<JBPopup> popups = JBPopupFactory.getInstance().getChildPopups(myInplaceEditorComponent);
+    for (JBPopup popup : popups) {
+      if (SwingUtilities.isDescendingFrom(sourceComponent, UIUtil.getWindow(popup.getContent()))) {
+        return;
+      }
+    }
+
     Project project = editor.getProject();
     LookupImpl activeLookup = project != null ? (LookupImpl)LookupManager.getInstance(project).getActiveLookup() : null;
     if (activeLookup != null){
@@ -245,14 +253,6 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
         return; //mouse click inside lookup
       } else {
         activeLookup.hide(); //hide popup on mouse position changed
-      }
-    }
-
-    // do not cancel editing if we click in editor popup
-    final List<JBPopup> popups = JBPopupFactory.getInstance().getChildPopups(myInplaceEditorComponent);
-    for (JBPopup popup : popups) {
-      if (SwingUtilities.isDescendingFrom(sourceComponent, UIUtil.getWindow(popup.getContent()))) {
-        return;
       }
     }
 

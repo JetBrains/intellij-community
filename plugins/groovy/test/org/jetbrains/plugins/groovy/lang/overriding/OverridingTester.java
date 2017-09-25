@@ -15,7 +15,7 @@ public abstract class OverridingTester extends LightCodeInsightFixtureTestCase {
     return TestUtils.getTestDataPath() + "overriding/";
   }
 
-  public void doTest() throws Throwable {
+  public void doTest() {
     final String testFile = getTestName(true) + ".test";
     final List<String> strings = TestUtils.readInput(getTestDataPath() + "/" + testFile);
     GroovyFileBase psiFile = (GroovyFileBase) myFixture.addFileToProject("foo.groovy", strings.get(0));

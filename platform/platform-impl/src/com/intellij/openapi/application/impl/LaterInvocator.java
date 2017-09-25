@@ -33,7 +33,6 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.ui.UIUtil;
 import io.netty.util.internal.SystemPropertyUtil;
 import org.jetbrains.annotations.*;
@@ -82,8 +81,8 @@ public class LaterInvocator {
   private static final List<Object> ourModalEntities = ContainerUtil.createLockFreeCopyOnWriteList();
 
   // Per-project modal entities
-  private static final Map<Project, List<Dialog>> projectToModalEntities = new WeakHashMap<>();
-  private static final Map<Project, Stack<ModalityState>> projectToModalEntitiesStack = new WeakHashMap<>();
+  private static final Map<Project, List<Dialog>> projectToModalEntities = ContainerUtil.createWeakMap();
+  private static final Map<Project, Stack<ModalityState>> projectToModalEntitiesStack = ContainerUtil.createWeakMap();
 
   private static final Stack<ModalityState> ourModalityStack = new Stack<>(ModalityState.NON_MODAL);
   private static final List<RunnableInfo> ourQueue = new ArrayList<>(); //protected by LOCK

@@ -31,7 +31,7 @@ public class SimplifyCollectorInspectionTest extends LightQuickFixParameterizedT
     return new LocalInspectionTool[]{new SimplifyCollectorInspection()};
   }
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 

@@ -21,7 +21,7 @@ import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
  * @author ven
  */
 public class MoveInitializerToSetUpMethodActionTest extends LightIntentionActionTestCase {
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
 
 

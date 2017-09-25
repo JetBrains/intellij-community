@@ -43,95 +43,95 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
     return "/refactoring/inheritanceToDelegation/";
   }
 
-  public void testSimpleInsertion() throws Exception {
+  public void testSimpleInsertion() {
     doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[]{0, 1}, ArrayUtil.EMPTY_STRING_ARRAY, true, false));
   }
 
-  public void testSimpleGenerics() throws Exception {
+  public void testSimpleGenerics() {
     doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[]{0, 1}, ArrayUtil.EMPTY_STRING_ARRAY, true, false));
   }
 
-  public void testSuperCalls() throws Exception {
+  public void testSuperCalls() {
     doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[0], ArrayUtil.EMPTY_STRING_ARRAY, true, false));
   }
 
-  public void testGetter() throws Exception {
+  public void testGetter() {
     doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[]{0, 1}, ArrayUtil.EMPTY_STRING_ARRAY, true, true));
   }
 
-  public void testSubClass() throws Exception {
+  public void testSubClass() {
     doTest(
       createPerformAction("A", "myDelegate", "MyDelegatedBase", "DelegatedBase", new int[]{0}, ArrayUtil.EMPTY_STRING_ARRAY, true,
           true));
   }
 
-  public void testSubClassNoMethods() throws Exception {
+  public void testSubClassNoMethods() {
     doTest(
       createPerformAction("A", "myDelegate", "MyDelegatedBase", "DelegatedBase", new int[0], ArrayUtil.EMPTY_STRING_ARRAY, true, true));
   }
 
-  public void testInterfaces() throws Exception {
+  public void testInterfaces() {
     doTest(createPerformAction("A", "myDelegate", "MyBase", "Base", new int[]{0}, new String[]{"I"}, true, true));
   }
 
-  public void testInnerClass() throws Exception {
+  public void testInnerClass() {
     doTest(createPerformAction("A", "myDelegate", "MyBase", "Base", new int[0], ArrayUtil.EMPTY_STRING_ARRAY, true, false));
   }
 
-  public void testAbstractBase() throws Exception {
+  public void testAbstractBase() {
     doTest(createPerformAction("A", "myDelegate", "MyBase", "Base", new int[0], ArrayUtil.EMPTY_STRING_ARRAY, true, false));
   }
 
-  public void testAbstractBase1() throws Exception {
+  public void testAbstractBase1() {
     doTest(createPerformAction("A", "myDelegate", "MyBase", "Base", new int[0], ArrayUtil.EMPTY_STRING_ARRAY, false, false));
   }
 
-  public void testHierarchy() throws Exception {
+  public void testHierarchy() {
     doTest(createPerformAction("X", "myDelegate", "MyBase", "Base", new int[0], ArrayUtil.EMPTY_STRING_ARRAY, false, false));
   }
 
-  public void testOverridenMethods() throws Exception {
+  public void testOverridenMethods() {
     doTest(createPerformAction("A", "myDelegate", "MyBase", "Base", new int[]{0}, ArrayUtil.EMPTY_STRING_ARRAY, false, false));
   }
 
-  public void testAnnotations() throws Exception {
+  public void testAnnotations() {
     doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[]{0}, ArrayUtil.EMPTY_STRING_ARRAY, true, false));
   }
 
-  public void testInnerClassForInterface() throws Exception {
+  public void testInnerClassForInterface() {
     doTest(createPerformAction("A", "myBaseInterface", "MyBaseInterface", "BaseInterface",
         new int[]{0}, ArrayUtil.EMPTY_STRING_ARRAY, false, false));
   }
 
-  public void testInnerClassForInterfaceAbstract() throws Exception {
+  public void testInnerClassForInterfaceAbstract() {
     doTest(createPerformAction("A", "myBaseInterface", "MyBaseInterface", "BaseInterface",
         new int[]{0}, ArrayUtil.EMPTY_STRING_ARRAY, false, false));
   }
 
-  public void testSubinterface() throws Exception {
+  public void testSubinterface() {
     doTest(createPerformAction("A", "myDelegate", "MyJ", "J", new int[0], ArrayUtil.EMPTY_STRING_ARRAY, true, true));
   }
 
-  public void testInterfaceDelegation() throws Exception {
+  public void testInterfaceDelegation() {
     doTest(createPerformAction("A", "myDelegate", "MyIntf", "Intf", new int[]{0}, ArrayUtil.EMPTY_STRING_ARRAY, true, true));
   }
 
   // IDEADEV-19675
-  public void testInterfaceImplicitImplementation() throws Exception {
+  public void testInterfaceImplicitImplementation() {
     doTest(createPerformAction("A", "myDelegate", "MyIntf", "Intf", new int[]{}, ArrayUtil.EMPTY_STRING_ARRAY, true, true));
   }
 
   // IDEADEV-19699
-  public void testMultipleInterfaceDelegation() throws Exception {
+  public void testMultipleInterfaceDelegation() {
     doTest(createPerformAction("A", "myDelegate", "MyIntf", "Intf2", new int[]{}, ArrayUtil.EMPTY_STRING_ARRAY, true, false));
   }
 
-  public void testScr20557() throws Exception {
+  public void testScr20557() {
     doTest(createPerformAction2("xxx.SCR20557", "myResultSet", "MyResultSet", "java.sql.ResultSet",
         new String[]{"getDate"}, ArrayUtil.EMPTY_STRING_ARRAY, false, false));
   }
 
-  public void testTypeParametersSubstitution() throws Exception {
+  public void testTypeParametersSubstitution() {
      doTest(createPerformAction("A", "myDelegate", "MyIntf", "Intf", new int[]{}, ArrayUtil.EMPTY_STRING_ARRAY, true, false));
   }
 

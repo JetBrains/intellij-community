@@ -25,6 +25,7 @@ import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PythonCommandLineState;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -104,7 +105,7 @@ public class PyCCCommandLineState extends PythonCommandLineState {
     ProcessHandler handler = super.doCreateProcess(commandLine);
     handler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void processTerminated(ProcessEvent event) {
+      public void processTerminated(@NotNull ProcessEvent event) {
         ApplicationManager.getApplication().invokeLater(() -> EduUtils.deleteWindowDescriptions(myTask, myTaskDir));
       }
     });

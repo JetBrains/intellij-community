@@ -220,7 +220,7 @@ public class ContentRevisionCache {
   private static VcsRevisionNumber putIntoCurrentCache(final ContentRevisionCache cache,
                                                                      FilePath path,
                                                                      @NotNull VcsKey vcsKey,
-                                                                     final CurrentRevisionProvider loader) throws VcsException, IOException {
+                                                                     final CurrentRevisionProvider loader) throws VcsException {
     VcsRevisionNumber loadedRevisionNumber;
     Pair<VcsRevisionNumber, Long> currentRevision;
 

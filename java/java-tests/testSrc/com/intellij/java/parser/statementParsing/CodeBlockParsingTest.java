@@ -23,5 +23,5 @@ public class CodeBlockParsingTest extends JavaParsingTestCase {
   }
 
   public void testSimple() { doTest(true); }
-  public void testAnonymousInSmartCompletion() throws Throwable { doTest(true); }
+  public void testAnonymousInSmartCompletion() { doTest(true); }
 }

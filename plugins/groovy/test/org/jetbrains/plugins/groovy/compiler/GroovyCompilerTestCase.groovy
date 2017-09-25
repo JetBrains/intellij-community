@@ -212,7 +212,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
     final StringBuffer sb = new StringBuffer()
     ProcessHandler process = runProcess(className, module, DefaultRunExecutor.class, new ProcessAdapter() {
       @Override
-      void onTextAvailable(ProcessEvent event, Key outputType) {
+      void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         if (ProcessOutputTypes.SYSTEM != outputType) {
           sb.append(event.getText())
         }

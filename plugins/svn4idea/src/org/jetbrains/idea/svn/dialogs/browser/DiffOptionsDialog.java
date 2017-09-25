@@ -63,7 +63,7 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
     myRootURL = rootURL;
     myProject = project;
     setTitle(SvnBundle.message("diff.options.title"));
-    mySourceUrlLabel.setText(myURL.toString());
+    mySourceUrlLabel.setText(myURL.toDecodedString());
     myBrowser.setRepositoryURL(myRootURL, false);
     myBrowser.addChangeListener(e -> update());
     myUIDiffButton.addActionListener(this);

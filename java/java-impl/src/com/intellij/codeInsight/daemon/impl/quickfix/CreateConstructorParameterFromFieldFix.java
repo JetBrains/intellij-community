@@ -246,7 +246,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       types.putValue(param.getType(), param);
     }
 
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+    final JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class);
     final boolean preferLongerNames = settings.PREFER_LONGER_NAMES;
     for (PsiVariable param : params) {
       final PsiType paramType = param.getType();
@@ -296,7 +296,9 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       if (isUnique(parameters, newName, usedNames)) {
         break;
       }
-      newName = n < nameInfo.names.length && !CodeStyleSettingsManager.getSettings(variable.getProject()).PREFER_LONGER_NAMES 
+      newName = n < nameInfo.names.length &&
+                !CodeStyleSettingsManager.getSettings(
+                  variable.getProject()).getCustomSettings(JavaCodeStyleSettings.class).PREFER_LONGER_NAMES
                 ? nameInfo.names[n++] : nameInfo.names[0] + n++;
     }
     return newName;

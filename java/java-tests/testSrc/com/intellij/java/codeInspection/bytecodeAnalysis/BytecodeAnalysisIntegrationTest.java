@@ -302,7 +302,7 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
       if (tags.length == 0) return;
       new WriteCommandAction(getProject()) {
         @Override
-        protected void run(@NotNull Result result) throws Throwable {
+        protected void run(@NotNull Result result) {
           XmlFile xml = ExternalAnnotationsManagerImpl.createAnnotationsXml(root, aPackage.getQualifiedName(), aPackage.getManager());
           if (xml == null) {
             throw new IllegalStateException("Unable to get XML for package " + aPackage.getQualifiedName() + "; root = " + root);

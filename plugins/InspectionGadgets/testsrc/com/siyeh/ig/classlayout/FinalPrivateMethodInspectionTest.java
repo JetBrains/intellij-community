@@ -21,7 +21,7 @@ import com.siyeh.ig.IGInspectionTestCase;
  * @author Bas Leijdekkers
  */
 public class FinalPrivateMethodInspectionTest extends IGInspectionTestCase {
-  public void test() throws Exception {
+  public void test() {
     doTest("com/siyeh/igtest/classlayout/final_private_method", new FinalPrivateMethodInspection());
   }
 }

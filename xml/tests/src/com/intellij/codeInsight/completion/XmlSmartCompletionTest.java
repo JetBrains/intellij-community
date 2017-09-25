@@ -31,23 +31,23 @@ import java.util.List;
  */
 public class XmlSmartCompletionTest extends LightPlatformCodeInsightFixtureTestCase {
 
-  public void testCompletion() throws Exception {
+  public void testCompletion() {
     doTest(new String[]{"testCompletion.xml", "test.xsd"}, "b");
   }
 
-  public void testCompletionNext() throws Exception {
+  public void testCompletionNext() {
     doTest(new String[]{"testCompletionNext.xml", "test.xsd"}, "c");
   }
 
-  public void testCompletion3() throws Exception {
+  public void testCompletion3() {
     doTest(new String[]{"testCompletion3.xml", "test.xsd"}, "c", "d");
   }
 
-  public void testServlet() throws Exception {
+  public void testServlet() {
     doTest(new String[]{"Servlet.xml"}, "icon", "servlet-name");
   }
 
-  public void testServletName() throws Exception {
+  public void testServletName() {
 
     doForText("<!DOCTYPE web-app\n" +
               "        PUBLIC \"-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN\"\n" +
@@ -70,7 +70,7 @@ public class XmlSmartCompletionTest extends LightPlatformCodeInsightFixtureTestC
               "</web-app>");
   }
 
-  public void testPrefix() throws Exception {
+  public void testPrefix() {
     doForText("<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n" +
               "    <ann<caret>\n" +
               "</xs:schema>",

@@ -43,7 +43,7 @@ public class PullUpMultifileTest extends MultiFileTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  private void doTest(final String... conflicts) throws Exception {
+  private void doTest(final String... conflicts) {
     final MultiMap<PsiElement, String> conflictsMap = new MultiMap<>();
     doTest((rootDir, rootAfter) -> {
       final PsiClass srcClass = myJavaFacade.findClass("a.A", GlobalSearchScope.allScope(myProject));
@@ -83,20 +83,20 @@ public class PullUpMultifileTest extends MultiFileTestCase {
   }
 
 
-  public void testInaccessible() throws Exception {
+  public void testInaccessible() {
     doTest("Method <b><code>A.foo()</code></b> is package-private and will not be accessible from method <b><code>method2Move()</code></b>.",
            "Method <b><code>method2Move()</code></b> uses method <b><code>A.foo()</code></b>, which is not moved to the superclass");
   }
 
-  public void testAccessibleViaInheritanceInsideAnonymousClass() throws Exception {
+  public void testAccessibleViaInheritanceInsideAnonymousClass() {
     doTest("Method <b><code>method2Move()</code></b> uses method <b><code>A.bar()</code></b>, which is not accessible from the superclass");
   }
 
-  public void testReuseSuperMethod() throws Exception {
+  public void testReuseSuperMethod() {
     doTest();
   }
 
-   public void testReuseSuperSuperMethod() throws Exception {
+   public void testReuseSuperSuperMethod() {
     doTest();
   }
 }

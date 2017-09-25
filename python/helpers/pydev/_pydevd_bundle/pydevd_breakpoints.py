@@ -3,6 +3,7 @@ from _pydevd_bundle import pydevd_tracing
 import sys
 from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_import_class
+from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame
 
 _original_excepthook = None
 _handle_exceptions = None
@@ -19,6 +20,8 @@ class ExceptionBreakpoint:
     def __init__(
         self,
         qname,
+        condition,
+        expression,
         notify_always,
         notify_on_terminate,
         notify_on_first_raise_only,
@@ -31,6 +34,8 @@ class ExceptionBreakpoint:
         else:
             self.name = None
 
+        self.condition = condition
+        self.expression = expression
         self.notify_on_terminate = notify_on_terminate
         self.notify_always = notify_always
         self.notify_on_first_raise_only = notify_on_first_raise_only
@@ -93,6 +98,7 @@ def _set_additional_info_if_needed(thread):
 # _excepthook
 #=======================================================================================================================
 def _excepthook(exctype, value, tb):
+    from _pydevd_bundle.pydevd_frame import handle_breakpoint_condition, handle_breakpoint_expression
     global _handle_exceptions
     if _handle_exceptions:
         exception_breakpoint = get_exception_breakpoint(exctype, _handle_exceptions)
@@ -130,6 +136,17 @@ def _excepthook(exctype, value, tb):
         frame = frames[-1]
     exception = (exctype, value, tb)
     _set_additional_info_if_needed(thread)
+
+    info = thread.additional_info
+    add_exception_to_frame(frame, exception)
+    if exception_breakpoint.condition is not None:
+        eval_result = handle_breakpoint_condition(debugger, info, exception_breakpoint, frame)
+        if not eval_result:
+            return
+
+    if exception_breakpoint.expression is not None:
+        handle_breakpoint_expression(exception_breakpoint, info, frame)
+
     try:
         thread.additional_info.pydev_message = exception_breakpoint.qname
     except:

@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -215,25 +216,6 @@ public class VfsUtil extends VfsUtilCore {
     return virtualFile;
   }
 
-  public static VirtualFile copyFileRelative(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull String relativePath) throws IOException {
-    StringTokenizer tokenizer = new StringTokenizer(relativePath,"/");
-    VirtualFile curDir = toDir;
-
-    while (true) {
-      String token = tokenizer.nextToken();
-      if (tokenizer.hasMoreTokens()) {
-        VirtualFile childDir = curDir.findChild(token);
-        if (childDir == null) {
-          childDir = curDir.createChildDirectory(requestor, token);
-        }
-        curDir = childDir;
-      }
-      else {
-        return copyFile(requestor, file, curDir, token);
-      }
-    }
-  }
-
   /**
    * @return correct URL, must be used only for external communication
    */
@@ -390,6 +372,7 @@ public class VfsUtil extends VfsUtilCore {
     return name == null || name.isEmpty() || "/".equals(name) || "\\".equals(name);
   }
 
+  @SuppressWarnings("RedundantThrows")
   public static VirtualFile createDirectories(@NotNull final String directoryPath) throws IOException {
     return new WriteAction<VirtualFile>() {
       @Override
@@ -577,6 +560,20 @@ public class VfsUtil extends VfsUtilCore {
     return file;
   }
 
+  @NotNull
+  public static VirtualFile getLocalFile(@NotNull VirtualFile file) {
+    if (file.isValid()) {
+      VirtualFileSystem fileSystem = file.getFileSystem();
+      if (fileSystem instanceof ArchiveFileSystem) {
+        VirtualFile localFile = ((ArchiveFileSystem)fileSystem).getLocalByEntry(file);
+        if (localFile != null) {
+          return localFile;
+        }
+      }
+    }
+    return file;
+  }
+
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated to be removed in IDEA 2018 */
   public static void copyFromResource(@NotNull VirtualFile file, @NonNls @NotNull String resourceUrl) throws IOException {
@@ -619,6 +616,26 @@ public class VfsUtil extends VfsUtilCore {
       }
     }
     return null;
+  }
+
+  /** @deprecated to be removed in IDEA 2018 */
+  public static VirtualFile copyFileRelative(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull String relativePath) throws IOException {
+    StringTokenizer tokenizer = new StringTokenizer(relativePath,"/");
+    VirtualFile curDir = toDir;
+
+    while (true) {
+      String token = tokenizer.nextToken();
+      if (tokenizer.hasMoreTokens()) {
+        VirtualFile childDir = curDir.findChild(token);
+        if (childDir == null) {
+          childDir = curDir.createChildDirectory(requestor, token);
+        }
+        curDir = childDir;
+      }
+      else {
+        return copyFile(requestor, file, curDir, token);
+      }
+    }
   }
   //</editor-fold>
 }

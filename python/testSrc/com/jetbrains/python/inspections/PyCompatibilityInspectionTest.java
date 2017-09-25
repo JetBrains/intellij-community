@@ -15,14 +15,14 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User : catherine
  */
-public class PyCompatibilityInspectionTest extends PyTestCase {
+public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
 
   public void testDictCompExpression() {
     setLanguageLevel(LanguageLevel.PYTHON27);
@@ -237,9 +237,9 @@ public class PyCompatibilityInspectionTest extends PyTestCase {
     runWithLanguageLevel(level, this::doTest);
   }
 
-  private void doTest() {
-    myFixture.configureByFile("inspections/PyCompatibilityInspection/" + getTestName(true) + ".py");
-    myFixture.enableInspections(PyCompatibilityInspection.class);
-    myFixture.checkHighlighting(true, false, false);
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyCompatibilityInspection.class;
   }
 }

@@ -67,4 +67,8 @@ public abstract class EncodingManager extends EncodingRegistry {
 
   @Nullable
   public abstract Charset getCachedCharsetFromContent(@NotNull Document document);
+
+  public boolean shouldAddBOMForNewUtf8File() {
+    return false;
+  }
 }

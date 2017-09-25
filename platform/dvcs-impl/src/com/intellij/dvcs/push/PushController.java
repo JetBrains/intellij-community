@@ -141,9 +141,11 @@ public class PushController implements Disposable {
     RepositoryNode nodeForCurrentEditor = findNodeByRepo(myCurrentlyOpenedRepository);
     if (nodeForCurrentEditor != null) {
       MyRepoModel<?, ?, ?> currentRepoModel = myView2Model.get(nodeForCurrentEditor);
-      if (isPreChecked(currentRepoModel)) {
+      //for ASYNC with no preselected -> check current repo 
+      if (isPreChecked(currentRepoModel) || myPreselectedRepositories.isEmpty()) {
         // put current editor repo to be loaded at first
         priorityLoading.put(nodeForCurrentEditor, currentRepoModel);
+        currentRepoModel.setChecked(true);
       }
     }
 

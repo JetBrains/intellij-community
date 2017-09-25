@@ -28,41 +28,41 @@ public class FieldCanBeLocalTest extends InspectionTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection";
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest("fieldCanBeLocal/" + getTestName(true), new FieldCanBeLocalInspection());
   }
 
-  public void testSimple () throws Exception { doTest(); }
+  public void testSimple () { doTest(); }
 
-  public void testTwoMethods () throws Exception { doTest(); }
-  public void testTwoMethodsNotIgnoreMultipleMethods () throws Exception {
+  public void testTwoMethods () { doTest(); }
+  public void testTwoMethodsNotIgnoreMultipleMethods () {
     final FieldCanBeLocalInspection inspection = new FieldCanBeLocalInspection();
     inspection.IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS = false;
     doTestConfigured(inspection); 
   }
 
-  public void testConstructor () throws Exception { doTest(); }
-  public void testConstructorThisRef() throws Exception { doTest(); }
-  public void testStaticFinal() throws Exception { doTest(); }
-  public void testStaticAccess() throws Exception { doTest(); }
-  public void testInnerClassConstructor() throws Exception { doTest(); }
-  public void testLocalVar2InnerClass() throws Exception { doTest(); }
-  public void testStateField() throws Exception { doTest(); }
-  public void testLocalStateVar2InnerClass() throws Exception { doTest(); }
-  public void testNotConstantInitializer() throws Exception {doTest();}
-  public void testInnerClassFieldInitializer() throws Exception {doTest();}
-  public void testFieldUsedInConstantInitialization() throws Exception {doTest();}
-  public void testFieldWithImmutableType() throws Exception {doTest();}
-  public void testFieldUsedForWritingInLambda() throws Exception {doTest();}
-  public void testStaticQualifiedFieldAccessForWriting() throws Exception {doTest();}
-  public void testFieldReferencedFromAnotherObject() throws Exception {doTest();}
-  public void testDontSimplifyRuntimeConstants() throws Exception {doTest();}
-  public void testIgnoreAnnotated() throws Exception {
+  public void testConstructor () { doTest(); }
+  public void testConstructorThisRef() { doTest(); }
+  public void testStaticFinal() { doTest(); }
+  public void testStaticAccess() { doTest(); }
+  public void testInnerClassConstructor() { doTest(); }
+  public void testLocalVar2InnerClass() { doTest(); }
+  public void testStateField() { doTest(); }
+  public void testLocalStateVar2InnerClass() { doTest(); }
+  public void testNotConstantInitializer() {doTest();}
+  public void testInnerClassFieldInitializer() {doTest();}
+  public void testFieldUsedInConstantInitialization() {doTest();}
+  public void testFieldWithImmutableType() {doTest();}
+  public void testFieldUsedForWritingInLambda() {doTest();}
+  public void testStaticQualifiedFieldAccessForWriting() {doTest();}
+  public void testFieldReferencedFromAnotherObject() {doTest();}
+  public void testDontSimplifyRuntimeConstants() {doTest();}
+  public void testIgnoreAnnotated() {
     final FieldCanBeLocalInspection inspection = new FieldCanBeLocalInspection();
     doTestConfigured(inspection);
   }
 
-  public void testFieldUsedInAnotherMethodAsQualifier() throws Exception {
+  public void testFieldUsedInAnotherMethodAsQualifier() {
     doTest();
   }
 

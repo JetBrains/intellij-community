@@ -19,12 +19,12 @@ import com.intellij.ide.IdeView;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
+import java.util.List;
 
 /**
 * @author Konstantin Bulenkov
@@ -52,36 +52,31 @@ public final class NavBarIdeView implements IdeView {
   @NotNull
   @Override
   public PsiDirectory[] getDirectories() {
-    final PsiDirectory dir = myPanel.getSelectedElement(PsiDirectory.class);
-    if (dir != null && dir.isValid()) {
-      return new PsiDirectory[]{dir};
-    }
-    final PsiElement element = myPanel.getSelectedElement(PsiElement.class);
-    if (element != null && element.isValid()) {
-      final PsiFile file = element.getContainingFile();
-      if (file != null) {
-        final PsiDirectory psiDirectory = file.getContainingDirectory();
-        return psiDirectory != null ? new PsiDirectory[]{psiDirectory} : PsiDirectory.EMPTY_ARRAY;
-      }
-    }
-    final PsiDirectoryContainer directoryContainer = myPanel.getSelectedElement(PsiDirectoryContainer.class);
-    if (directoryContainer != null) {
-      return directoryContainer.getDirectories();
-    }
-    final Module module = myPanel.getSelectedElement(Module.class);
-    if (module != null && !module.isDisposed()) {
-      ArrayList<PsiDirectory> dirs = new ArrayList<>();
-      final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
-      final PsiManager psiManager = PsiManager.getInstance(myPanel.getProject());
-      for (VirtualFile virtualFile : sourceRoots) {
-        final PsiDirectory directory = psiManager.findDirectory(virtualFile);
-        if (directory != null && directory.isValid()) {
-          dirs.add(directory);
+    NavBarPopup nodePopup = myPanel.getNodePopup();
+    JBIterable<?> selection =
+      nodePopup != null && nodePopup.isVisible() ? JBIterable.from(nodePopup.getList().getSelectedValuesList()) :
+      myPanel.getSelection();
+    List<PsiDirectory> dirs = selection.flatMap(
+      o -> {
+        if (o instanceof PsiElement && !((PsiElement)o).isValid()) return JBIterable.empty();
+        if (o instanceof PsiDirectory) return JBIterable.of((PsiDirectory)o);
+        if (o instanceof PsiDirectoryContainer) {
+          return JBIterable.of(((PsiDirectoryContainer)o).getDirectories());
         }
-      }
-      return dirs.toArray(new PsiDirectory[dirs.size()]);
-    }
-    return PsiDirectory.EMPTY_ARRAY;
+        if (o instanceof PsiElement) {
+          PsiFile file = ((PsiElement)o).getContainingFile();
+          return JBIterable.of(file != null ? file.getContainingDirectory() : null);
+        }
+        if (o instanceof Module && !((Module)o).isDisposed()) {
+          PsiManager psiManager = PsiManager.getInstance(myPanel.getProject());
+          return JBIterable.of(ModuleRootManager.getInstance((Module)o).getSourceRoots())
+            .filterMap(file -> psiManager.findDirectory(file));
+        }
+        return JBIterable.empty();
+      })
+      .filter(o -> o.isValid())
+      .toList();
+    return dirs.isEmpty() ? PsiDirectory.EMPTY_ARRAY : dirs.toArray(new PsiDirectory[dirs.size()]);
   }
 
   @Override

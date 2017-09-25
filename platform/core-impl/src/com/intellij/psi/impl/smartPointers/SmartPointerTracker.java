@@ -185,12 +185,23 @@ class SmartPointerTracker {
     });
   }
 
-  // after reparse and its complex tree diff, the element might have "moved" to other range
-  // but if an element of the same type can still be found at the old range, let's point there
   private static <E extends PsiElement> void updatePointerTarget(@NotNull SmartPsiElementPointerImpl<E> pointer, @Nullable Segment pointerRange) {
     E cachedElement = pointer.getCachedElement();
-    if (cachedElement == null || cachedElement.isValid() && pointerRange != null && pointerRange.equals(cachedElement.getTextRange())) {
+    if (cachedElement == null) {
       return;
+    }
+
+    if (cachedElement.isValid()) {
+      if (pointerRange == null) {
+        // document change could be damaging, but if PSI survived after reparse, let's point to it
+        ((SelfElementInfo)pointer.getElementInfo()).switchToAnchor(cachedElement);
+        return;
+      }
+      // after reparse and its complex tree diff, the element might have "moved" to other range
+      // but if an element of the same type can still be found at the old range, let's point there
+      if (pointerRange.equals(cachedElement.getTextRange())) {
+        return;
+      }
     }
 
     pointer.cacheElement(pointer.doRestoreElement());

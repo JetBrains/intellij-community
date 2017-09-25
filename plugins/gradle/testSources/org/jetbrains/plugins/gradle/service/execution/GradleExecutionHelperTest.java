@@ -25,7 +25,7 @@ import static org.junit.Assert.assertEquals;
 public class GradleExecutionHelperTest {
 
   @Test
-  public void testPasswordObfuscation() throws Exception {
+  public void testPasswordObfuscation() {
     List<String> originalArgs = ImmutableList.of(
       "--configure-on-demand",
       "-Pandroid.injected.invoked.from.ide=true",

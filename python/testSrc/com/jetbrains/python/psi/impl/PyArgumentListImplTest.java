@@ -31,7 +31,7 @@ public class PyArgumentListImplTest extends PyClassRefactoringTest {
   /**
    * Ensures new keyword argument is set into appropriate place
    */
-  public void testAddKeyArgument() throws Exception {
+  public void testAddKeyArgument() {
     final PyKeywordArgument classKeyword = myGenerator.createKeywordArgument(myLanguagelevel, "metaclass", "ABCMeta");
     final PyKeywordArgument functionKeyword = myGenerator.createKeywordArgument(myLanguagelevel, "new_param", "spam");
 
@@ -42,7 +42,7 @@ public class PyArgumentListImplTest extends PyClassRefactoringTest {
   /**
    * Ensures new param (NOT keyword argument) is set into appropriate place
    */
-  public void testAddParam() throws Exception {
+  public void testAddParam() {
     final PyExpression classParameter = myGenerator.createParameter("SuperClass");
     final PyExpression functionParameter = myGenerator.createParameter("new_param");
 

@@ -27,4 +27,6 @@ public interface Filter {
   boolean isApplicableToProject(Project project);
 
   void setFilter(ThumbnailView view);
+  
+  default void clearFilter(ThumbnailView view) {}
 }

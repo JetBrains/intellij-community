@@ -33,7 +33,7 @@ public class BaseProjectImportErrorHandlerTest {
   private String myProjectPath;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     myErrorHandler = new BaseProjectImportErrorHandler();
     myProjectPath = "basic";
   }

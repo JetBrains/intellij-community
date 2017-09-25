@@ -195,14 +195,14 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
         final StringBuilder errorOutput = new StringBuilder();
         handler.addProcessListener(new ProcessAdapter() {
           @Override
-          public void onTextAvailable(ProcessEvent event, Key outputType) {
+          public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
             if (outputType == ProcessOutputTypes.STDERR) {
               errorOutput.append(event.getText());
             }
           }
 
           @Override
-          public void processTerminated(ProcessEvent event) {
+          public void processTerminated(@NotNull ProcessEvent event) {
             int exitCode = event.getExitCode();
             if (exitCode != 0) {
               context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, errorOutput.toString()));

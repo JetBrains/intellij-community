@@ -253,9 +253,9 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
   // Parameters
   //
 
-  private static final ColorKey BACKGROUND = ColorKey.createColorKey("DIFF_SEPARATORS_BACKGROUND");
-  private static final ColorKey TOP_BORDER = ColorKey.createColorKey("DIFF_SEPARATORS_TOP_BORDER");
-  private static final ColorKey BOTTOM_BORDER = ColorKey.createColorKey("DIFF_SEPARATORS_BOTTOM_BORDER");
+  public static final ColorKey BACKGROUND = ColorKey.createColorKey("DIFF_SEPARATORS_BACKGROUND");
+  public static final ColorKey TOP_BORDER = ColorKey.createColorKey("DIFF_SEPARATORS_TOP_BORDER");
+  public static final ColorKey BOTTOM_BORDER = ColorKey.createColorKey("DIFF_SEPARATORS_BOTTOM_BORDER");
 
   private static int getStepSize(int lineHeight) {
     return Math.max(lineHeight / 3, 1);

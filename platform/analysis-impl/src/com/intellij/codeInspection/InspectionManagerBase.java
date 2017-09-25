@@ -15,11 +15,13 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,6 +43,12 @@ public abstract class InspectionManagerBase extends InspectionManager {
   @NotNull
   public CommonProblemDescriptor createProblemDescriptor(@NotNull String descriptionTemplate, QuickFix... fixes) {
     return new CommonProblemDescriptorImpl(fixes, descriptionTemplate);
+  }
+
+  @NotNull
+  @Override
+  public ModuleProblemDescriptor createProblemDescriptor(@Nls @NotNull String descriptionTemplate, Module module, QuickFix... fixes) {
+    return new ModuleProblemDescriptorImpl(fixes, descriptionTemplate, module);
   }
 
   @Override

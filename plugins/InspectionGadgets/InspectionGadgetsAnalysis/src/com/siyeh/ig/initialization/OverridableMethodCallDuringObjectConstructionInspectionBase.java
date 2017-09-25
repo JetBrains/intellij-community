@@ -52,17 +52,15 @@ public class OverridableMethodCallDuringObjectConstructionInspectionBase extends
       }
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier != null) {
-        if (!(qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression)) {
-          return;
-        }
+      if (qualifier != null && !(qualifier instanceof PsiThisExpression)) {
+        return;
       }
       final PsiClass containingClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
       if (containingClass == null || containingClass.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
       final PsiMethod calledMethod = expression.resolveMethod();
-      if (calledMethod == null || !PsiUtil.canBeOverriden(calledMethod) || calledMethod.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
+      if (calledMethod == null || !PsiUtil.canBeOverridden(calledMethod) || calledMethod.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
         return;
       }
       registerMethodCallError(expression, expression);

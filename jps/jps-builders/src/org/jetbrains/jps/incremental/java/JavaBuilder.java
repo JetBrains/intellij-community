@@ -75,10 +75,7 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
@@ -661,7 +658,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
     });
   }
 
-  private static synchronized ExternalJavacManager ensureJavacServerStarted(@NotNull CompileContext context) throws Exception {
+  @NotNull
+  private static synchronized ExternalJavacManager ensureJavacServerStarted(@NotNull CompileContext context) {
     ExternalJavacManager server = ExternalJavacManager.KEY.get(context);
     if (server != null) {
       return server;

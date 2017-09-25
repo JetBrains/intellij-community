@@ -25,101 +25,101 @@ public class RncHighlightingTest extends HighlightingTestBase {
     return "highlighting/rnc";
   }
 
-  public void testRef3() throws Throwable {
+  public void testRef3() {
     doHighlightingTest("ref-3.rnc");
   }
 
-  public void testUndefinedRef() throws Throwable {
+  public void testUndefinedRef() {
     doHighlightingTest("undefined-ref.rnc");
   }
 
-  public void testCreateDefintion1() throws Throwable {
+  public void testCreateDefintion1() {
     doTestQuickFix("create-definition-1", "rnc");
   }
 
-  public void testCreateDefintion2() throws Throwable {
+  public void testCreateDefintion2() {
     doTestQuickFix("create-definition-2", "rnc");
   }
 
-  public void testNsPrefix() throws Throwable {
+  public void testNsPrefix() {
     doHighlightingTest("ns-prefix.rnc");
   }
 
-  public void testNsPrefixKeyword() throws Throwable {
+  public void testNsPrefixKeyword() {
     doHighlightingTest("ns-prefix-keyword.rnc");
   }
 
-  public void testUnresolvedNsPrefix1() throws Throwable {
+  public void testUnresolvedNsPrefix1() {
     doHighlightingTest("unresolved-ns-prefix-1.rnc");
   }
 
-  public void testUnresolvedNsPrefix2() throws Throwable {
+  public void testUnresolvedNsPrefix2() {
     doHighlightingTest("unresolved-ns-prefix-2.rnc");
   }
 
-  public void testUnresolvedNsPrefix3() throws Throwable {
+  public void testUnresolvedNsPrefix3() {
     doHighlightingTest("unresolved-ns-prefix-3.rnc");
   }
 
-  public void testCreateNsPrefix() throws Throwable {
+  public void testCreateNsPrefix() {
     doTestQuickFix("create-ns-prefix-1", "rnc");
   }
 
-  public void testDatatypePrefix() throws Throwable {
+  public void testDatatypePrefix() {
     doHighlightingTest("datatype-prefix.rnc");
   }
 
-  public void testUnresolvedDatatypePrefix1() throws Throwable {
+  public void testUnresolvedDatatypePrefix1() {
     doHighlightingTest("unresolved-datatype-prefix-1.rnc");
   }
 
-  public void testUnresolvedDatatypePrefix2() throws Throwable {
+  public void testUnresolvedDatatypePrefix2() {
     doHighlightingTest("unresolved-datatype-prefix-2.rnc");
   }
 
-  public void testCreateDatatypesPrefix() throws Throwable {
+  public void testCreateDatatypesPrefix() {
     doTestQuickFix("create-datatypes-prefix-1", "rnc");
   }
 
-  public void testUnresolvedInclude() throws Throwable {
+  public void testUnresolvedInclude() {
     doHighlightingTest("unresolved-include.rnc");
   }
 
-  public void testUnresolvedExternal() throws Throwable {
+  public void testUnresolvedExternal() {
     doHighlightingTest("unresolved-external.rnc");
   }
 
-  public void testParentRef() throws Throwable {
+  public void testParentRef() {
     doHighlightingTest("parent-ref.rnc");
   }
 
-  public void testBadParentRef1() throws Throwable {
+  public void testBadParentRef1() {
     doHighlightingTest("bad-parent-ref-1.rnc");
   }
 
-  public void testAnnotation() throws Throwable {
+  public void testAnnotation() {
     doHighlightingTest("annotation.rnc");
   }
 
   @CopyFile("fo/*.rnc")
-  public void testFoMain() throws Throwable {
+  public void testFoMain() {
     doHighlightingTest("fo/main.rnc");
   }
 
   @CopyFile("fo/*.rnc")
-  public void testFoElements() throws Throwable {
+  public void testFoElements() {
     doHighlightingTest("fo/elements.rnc");
   }
 
-  public void testFoDatatype() throws Throwable {
+  public void testFoDatatype() {
     doHighlightingTest("fo/datatype.rnc");
   }
 
-  public void testRngSchema() throws Throwable {
+  public void testRngSchema() {
     doHighlightingTest("rng-schema.rnc");
   }
 
-  public void testDocbook() throws Throwable {
+  public void testDocbook() {
     doHighlightingTest("docbook.rnc");
   }
 }

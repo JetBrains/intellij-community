@@ -28,7 +28,7 @@ public class UnusedReturnValueTest extends InspectionTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection";
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest("unusedReturnValue/" + getTestName(true), myTool);
   }
 
@@ -39,23 +39,23 @@ public class UnusedReturnValueTest extends InspectionTestCase {
     super.tearDown();
   }
 
-  public void testNonLiteral() throws Exception {
+  public void testNonLiteral() {
     doTest();
   }
 
-  public void testNative() throws Exception {
+  public void testNative() {
     doTest();
   }
 
-  public void testHierarchy() throws Exception {
+  public void testHierarchy() {
     doTest();
   }
 
-  public void testMethodReference() throws Exception {
+  public void testMethodReference() {
     doTest();
   }
 
-  public void testSimpleSetter() throws Exception {
+  public void testSimpleSetter() {
     try {
       myTool.IGNORE_BUILDER_PATTERN = true;
       doTest();

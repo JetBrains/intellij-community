@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.storage.ClassPathStorageUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -159,7 +160,12 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
 
   protected boolean use15Suppressions(@NotNull PsiJavaDocumentedElement container) {
     return JavaSuppressionUtil.canHave15Suppressions(container) &&
-           !JavaSuppressionUtil.alreadyHas14Suppressions(container);
+           !JavaSuppressionUtil.alreadyHas14Suppressions(container) &&
+           !isInjectedToStringLiteral(container); // quotes will be imbalanced when insert annotation value in quotes into literal expression
+  }
+
+  private static boolean isInjectedToStringLiteral(@NotNull PsiJavaDocumentedElement container) {
+    return JavaResolveUtil.findParentContextOfClass(container, PsiLiteralExpression.class, true) != null;
   }
 
   private String getID(@NotNull PsiElement place) {

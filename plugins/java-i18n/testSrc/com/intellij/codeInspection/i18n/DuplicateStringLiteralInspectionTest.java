@@ -38,7 +38,7 @@ public class DuplicateStringLiteralInspectionTest extends JavaCodeInsightFixture
     super.tearDown();
   }
 
-  public void testPropertyKey() throws Exception {
+  public void testPropertyKey() {
     myInspection.IGNORE_PROPERTY_KEYS = true;
     try {
       myFixture.testHighlighting("PropertyKey.java");

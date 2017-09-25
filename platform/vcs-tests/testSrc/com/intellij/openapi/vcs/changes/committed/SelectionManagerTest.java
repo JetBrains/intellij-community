@@ -55,7 +55,7 @@ public class SelectionManagerTest extends PlatformTestCase {
     myCm = new SelectionManager(2, 10, MyConvertor.getInstance());
   }
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     assertClear();
     myCm.toggleSelection(myFs.getNode(myFs.myMiddle1));
     afterMiddle1();
@@ -63,7 +63,7 @@ public class SelectionManagerTest extends PlatformTestCase {
     assertClear();
   }
 
-  public void testSimpleRemove() throws Exception {
+  public void testSimpleRemove() {
     assertClear();
     myCm.toggleSelection(myFs.getNode(myFs.myMiddle1));
     afterMiddle1();
@@ -71,7 +71,7 @@ public class SelectionManagerTest extends PlatformTestCase {
     assertClear();
   }
 
-  public void testCannotChangeChild() throws Exception {
+  public void testCannotChangeChild() {
     assertClear();
     myCm.toggleSelection(myFs.getNode(myFs.myMiddle1));
     afterMiddle1();
@@ -111,7 +111,7 @@ public class SelectionManagerTest extends PlatformTestCase {
     assertNodeState(myFs.myLeaf2, TreeNodeState.HAVE_SELECTED_ABOVE, false);
   }
 
-  public void testLimit() throws Exception {
+  public void testLimit() {
     assertClear();
 
     myCm.toggleSelection(myFs.getNode(myFs.myInner11));
@@ -143,7 +143,7 @@ public class SelectionManagerTest extends PlatformTestCase {
     assertClear();
   }
 
-  public void testCanExpand() throws Exception {
+  public void testCanExpand() {
     assertClear();
     myCm.toggleSelection(myFs.getNode(myFs.myInner11));
     afterInner11();
@@ -153,7 +153,7 @@ public class SelectionManagerTest extends PlatformTestCase {
     assertClear();
   }
 
-  public void testTwoTrees() throws Exception {
+  public void testTwoTrees() {
     final Map<VirtualFile, DefaultMutableTreeNode> middle1map = myFs.createNodeMap(myFs.myMiddle1);
     assertClear();
     myCm.toggleSelection(middle1map.get(myFs.myInner11));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getAllFiles;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getFiles;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
 import static com.intellij.util.containers.UtilKt.getIfSingle;
 import static com.intellij.util.containers.UtilKt.stream;
@@ -304,7 +304,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   @NotNull
   protected Stream<VirtualFile> getSelectedFiles() {
     return Stream.concat(
-      getAllFiles(getSelectedChanges()),
+      getFiles(getSelectedChanges()),
       getSelectedVirtualFiles(null)
     ).distinct();
   }

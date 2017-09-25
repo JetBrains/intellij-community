@@ -19,7 +19,6 @@ package com.intellij.util.indexing;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.AppTopics;
 import com.intellij.history.LocalHistory;
-import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.notification.NotificationDisplayType;
@@ -28,6 +27,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -105,10 +105,12 @@ import java.util.concurrent.Phaser;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
@@ -287,6 +289,20 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     }
   }
 
+  long getChangedFilesSize() {
+    Set<VirtualFile> changed = new THashSet<>();
+    AtomicLong changedFilesSize = new AtomicLong();
+
+    Consumer<VirtualFile> consumer = file -> {
+      if (file.isValid() && !file.isDirectory() && changed.add(file)) {
+        changedFilesSize.addAndGet(file.getLength());
+      }
+    };
+    myChangedFilesCollector.myVfsEventsMerger.getChangedFiles().forEach(consumer);
+    myChangedFilesCollector.myFilesToUpdate.values().forEach(consumer);
+    return changedFilesSize.get();
+  }
+
   public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file, @Nullable FileType fileType) {
     return ProjectCoreUtil.isProjectOrWorkspaceFile(file, fileType);
   }
@@ -383,6 +399,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
           ContentHashesSupport.initContentHashesEnumerator();
           contentHashesEnumeratorOk = true;
         }
+        
         storage = new VfsAwareMapIndexStorage<>(
           IndexInfrastructure.getStorageFile(name),
           extension.getKeyDescriptor(),
@@ -1935,20 +1952,29 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
     void ensureUpToDateAsync() {
       if (myVfsEventsMerger.getApproximateChangesCount() >= 20 &&
-          myScheduledVfsEventsWorkers.get() == 0 &&
-          !PowerSaveMode.isEnabled()) {
+          myScheduledVfsEventsWorkers.get() == 0) {
         myScheduledVfsEventsWorkers.incrementAndGet();
         myVfsEventsExecutor.submit(this::processFilesInReadActionWithYieldingToWriteAction);
 
-        if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {  // avoid synchronous ensureUpToDate to prevent deadlock
-          for(Project project:ProjectManager.getInstance().getOpenProjects()) {
+        Runnable startDumbMode = () -> {
+          for (Project project : ProjectManager.getInstance().getOpenProjects()) {
             DumbServiceImpl dumbService = DumbServiceImpl.getInstance(project);
             DumbModeTask task = FileBasedIndexProjectHandler.createChangedFilesIndexingTask(project);
-  
+
             if (task != null) {
               dumbService.queueTask(task);
             }
           }
+        };
+        
+        Application app = ApplicationManager.getApplication();
+        if (!app.isHeadlessEnvironment()  /*avoid synchronous ensureUpToDate to prevent deadlock*/ && 
+            app.isDispatchThread() && 
+            !LaterInvocator.isInModalContext()) {
+          startDumbMode.run();
+        }
+        else {
+          app.invokeLater(startDumbMode, ModalityState.NON_MODAL);
         }
       }
     }
@@ -2022,7 +2048,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     private final List<VirtualFile> myFiles = new ArrayList<>();
     @Nullable
     private final ProgressIndicator myProgressIndicator;
-    private final boolean myDoTraceForFilesToBeIndexed = LOG.isDebugEnabled();
+    private final boolean myDoTraceForFilesToBeIndexed = LOG.isTraceEnabled();
 
     private UnindexedFilesFinder(@Nullable ProgressIndicator indicator) {
       myProgressIndicator = indicator;
@@ -2080,7 +2106,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
               try {
                 if (needsFileContentLoading(indexId) && shouldIndexFile(file, indexId)) {
                   if (myDoTraceForFilesToBeIndexed) {
-                    LOG.info("Scheduling indexing of " + file + " by request of index " + indexId);
+                    LOG.trace("Scheduling indexing of " + file + " by request of index " + indexId);
                   }
                   synchronized (myFiles) {
                     myFiles.add(file);

@@ -45,38 +45,38 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
   }
 
   // Checks if class explicitly extends object we shall move it even in Py3K (PY-19137)
-  public void testPy3ParentHasObject() throws Exception {
+  public void testPy3ParentHasObject() {
     setLanguageLevel(LanguageLevel.PYTHON30);
     doSimpleTest("Child", "Parent", null, true, false, ".spam");
   }
 
   // Ensures refactoring works even if memeberInfo has null element (no npe: PY-19136)
-  public void testFieldsNpe() throws Exception {
+  public void testFieldsNpe() {
     doSimpleTest("Basic", "Ancestor", null, true, false, ".__init__", "#a", "#b", ".func1");
   }
 
   // Checks that moving methods between files moves imports as well
-  public void testImportMultiFile() throws Throwable {
+  public void testImportMultiFile() {
     multiFileTestHelper(".do_useful_stuff", false);
   }
 
   // Checks that moving methods between files moves superclass expressions as well
-  public void testMoveExtends() throws Throwable {
+  public void testMoveExtends() {
     multiFileTestHelper("TheParentOfItAll", false);
   }
 
   // Checks that moving methods between files moves superclass expressions regardless import style (q.name or name)
-  public void testMoveExtendsCheckReference() throws Throwable {
+  public void testMoveExtendsCheckReference() {
     multiFileTestHelper("TheParentOfItAll", false);
   }
 
   // Extracts method as abstract
-  public void testMoveAndMakeAbstract() throws Throwable {
+  public void testMoveAndMakeAbstract() {
     multiFileTestHelper(".foo_method", true);
   }
 
   // Extracts method as abstract and ensures that newly created class imports ABC in Py3
-  public void testMoveAndMakeAbstractImportExistsPy3() throws Throwable {
+  public void testMoveAndMakeAbstractImportExistsPy3() {
     setLanguageLevel(LanguageLevel.PYTHON30);
     configureMultiFile("abc");
     multiFileTestHelper(".foo_method", true);
@@ -98,56 +98,56 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     final String destUrl = myFixture.getFile().getVirtualFile().getParent().findChild("dest_module.py").getUrl();
     new WriteCommandAction.Simple(myFixture.getProject()) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         PyExtractSuperclassHelper.extractSuperclass(findClass(sourceClass), Collections.singleton(member), "NewParent", destUrl);
       }
     }.execute();
     checkMultiFile(modules);
   }
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     doSimpleTest("Foo", "Suppa", null, true, false, ".foo");
   }
 
-  public void testInstanceNotDeclaredInInit() throws Exception {
+  public void testInstanceNotDeclaredInInit() {
     doSimpleTest("Child", "Parent", null, true, false, "#eggs");
   }
 
-  public void testWithSuper() throws Exception {
+  public void testWithSuper() {
     doSimpleTest("Foo", "Suppa", null, true, false, ".foo");
   }
 
-  public void testWithImport() throws Exception {
+  public void testWithImport() {
     doSimpleTest("A", "Suppa", null, false, false, ".foo");
   }
 
   // PY-12175
-  public void testImportNotBroken() throws Exception {
+  public void testImportNotBroken() {
     myFixture.copyFileToProject("/refactoring/extractsuperclass/shared.py", "shared.py");
     doSimpleTest("Source", "DestClass", null, true, false, "SharedClass");
   }
 
   // PY-12175 but between several files
-  public void testImportNotBrokenManyFiles() throws Exception {
+  public void testImportNotBrokenManyFiles() {
     multiFileTestHelper("SharedClass", false);
   }
 
-  public void testMoveFields() throws Exception {
+  public void testMoveFields() {
     doSimpleTest("FromClass", "ToClass", null, true, false, "#instance_field", "#CLASS_FIELD");
   }
 
 
-  public void testProperties() throws Exception {
+  public void testProperties() {
     doSimpleTest("FromClass", "ToClass", null, true, false, "#C", "#a", "._get", ".foo");
   }
 
   // PY-16747
-  public void testAbstractMethodDocStringIndentationPreserved() throws Exception {
+  public void testAbstractMethodDocStringIndentationPreserved() {
     doSimpleTest("B", "A", null, true, true, ".m");
   }
 
   // PY-16770
-  public void testAbstractMethodDocStringPrefixPreserved() throws Exception {
+  public void testAbstractMethodDocStringPrefixPreserved() {
     doSimpleTest("B", "A", null, true, true, ".m");
   }
 
@@ -155,7 +155,7 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
                             final String superclassName,
                             final String expectedError,
                             final boolean sameFile,
-                            boolean asAbstract, final String... membersName) throws Exception {
+                            boolean asAbstract, final String... membersName) {
     try {
       String baseName = "/refactoring/extractsuperclass/" + getTestName(true);
       myFixture.configureByFile(baseName + ".before.py");
@@ -170,7 +170,7 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
 
       new WriteCommandAction.Simple(myFixture.getProject()) {
         @Override
-        protected void run() throws Throwable {
+        protected void run() {
           //noinspection ConstantConditions
           final String url = sameFile ? myFixture.getFile().getVirtualFile().getUrl() :
                              myFixture.getFile().getVirtualFile().getParent().getUrl();
@@ -199,7 +199,7 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
 
     new WriteCommandAction.Simple(myFixture.getProject()) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         //noinspection ConstantConditions
         final String path = base_dir.getPath() + "/a/b";
         PyExtractSuperclassHelper.extractSuperclass(clazz, members, superclassName, path);
@@ -242,7 +242,7 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
 
     new WriteCommandAction.Simple(myFixture.getProject()) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         //TODO: Test via presenter
         //noinspection ConstantConditions
         final String path = base_dir.getPath() + "/a/b";

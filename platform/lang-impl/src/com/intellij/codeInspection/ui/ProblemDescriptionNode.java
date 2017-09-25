@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,8 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.TObjectIntHashMap;
@@ -71,6 +69,11 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     myLineNumber = myDescriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)myDescriptor).getLineNumber() : (lineNumberCounter == null ? -1 : lineNumberCounter.getAsInt());
   }
 
+  @Override
+  public final boolean isAlreadySuppressedFromView() {
+    return myDescriptor != null && getPresentation().isSuppressed(myDescriptor);
+  }
+
   public int getLineNumber() {
     return myLineNumber;
   }
@@ -96,13 +99,24 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   }
 
   @Override
-  public int getProblemCount(boolean allowSuppressed) {
-    return getPresentation().isProblemResolved(getElement(), myDescriptor) && !(allowSuppressed && isAlreadySuppressedFromView() && isValid())? 0 : 1;
+  public void excludeElement() {
+    CommonProblemDescriptor descriptor = getDescriptor();
+    if (descriptor != null) {
+      getPresentation().exclude(descriptor);
+    }
   }
 
   @Override
-  public void visitProblemSeverities(TObjectIntHashMap<HighlightDisplayLevel> counter) {
-    if (!getPresentation().isProblemResolved(getElement(), myDescriptor)) {
+  public void amnestyElement() {
+    CommonProblemDescriptor descriptor = getDescriptor();
+    if (descriptor != null) {
+      getPresentation().amnesty(descriptor);
+    }
+  }
+
+  @Override
+  protected void visitProblemSeverities(TObjectIntHashMap<HighlightDisplayLevel> counter) {
+    if (isValid() && !isExcluded() && !isQuickFixAppliedFromView() && !isAlreadySuppressedFromView()) {
       counter.put(myLevel, counter.get(myLevel) + 1);
     }
   }
@@ -119,34 +133,15 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   }
 
   @Override
-  public void excludeElement(ExcludedInspectionTreeNodesManager manager) {
-    InspectionToolPresentation presentation = getPresentation();
-    presentation.ignoreCurrentElementProblem(getElement(), getDescriptor());
-    super.excludeElement(manager);
-  }
-
-  @Override
-  public void amnestyElement(ExcludedInspectionTreeNodesManager manager) {
-    if (!isAlreadySuppressedFromView()) {
-      InspectionToolPresentation presentation = getPresentation();
-      presentation.amnesty(getElement(), getDescriptor());
-    }
-    super.amnestyElement(manager);
-  }
-
-  @Override
-  public FileStatus getNodeStatus() {
-    if (myElement instanceof RefElement) {
-      return getPresentation().getProblemStatus(myDescriptor);
-    }
-    return FileStatus.NOT_CHANGED;
-  }
-
-  @Override
   protected void dropCache(Project project) {
     if (!isQuickFixAppliedFromView()) {
       super.dropCache(project);
     }
+  }
+
+  @Override
+  public boolean isExcluded() {
+    return getPresentation().isExcluded(getDescriptor());
   }
 
   @NotNull
@@ -161,7 +156,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
 
   @Override
   public boolean isQuickFixAppliedFromView() {
-    return (myDescriptor != null && getPresentation().isProblemResolved(getElement(), myDescriptor)) && !isAlreadySuppressedFromView();
+    return (myDescriptor != null && getPresentation().isProblemResolved(myDescriptor)) && !isAlreadySuppressedFromView();
   }
 
   @Nullable

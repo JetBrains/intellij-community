@@ -18,6 +18,9 @@
 
     <applicationService serviceImplementation="com.intellij.configurationStore.DefaultProjectExportableAndSaveTrigger"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.wm.impl.FrameTitleBuilder"
+                        serviceImplementation="com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder"/>
+
     <applicationService serviceImplementation="com.intellij.ide.GeneralSettings"/>
     <applicationService serviceInterface="com.intellij.ide.util.PropertiesComponent"
                         serviceImplementation="com.intellij.ide.util.AppPropertiesComponentImpl"/>
@@ -26,7 +29,7 @@
 
     <applicationService serviceInterface="com.intellij.openapi.actionSystem.JBAwtEventQueue"
                         serviceImplementation="com.intellij.openapi.actionSystem.impl.JBAwtEventQueueImpl"/>
-    
+
     <applicationService serviceInterface="com.intellij.openapi.options.ShowSettingsUtil"
                         serviceImplementation="com.intellij.ide.actions.ShowSettingsUtilImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.help.HelpManager"
@@ -35,6 +38,8 @@
                         serviceImplementation="com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.progress.ProgressManager"
                         serviceImplementation="com.intellij.openapi.progress.impl.ProgressManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.application.PermanentInstallationID"
+                        serviceImplementation="com.intellij.openapi.application.PermanentInstallationIDImpl"/>
 
     <applicationService serviceImplementation="com.intellij.ide.ui.customization.CustomActionsSchema"/>
 
@@ -198,9 +203,7 @@
     <applicationService serviceImplementation="com.intellij.internal.statistic.customUsageCollectors.ui.ToolbarClicksCollector"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.customUsageCollectors.ui.ShortcutsCollector"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollector"/>
-
-    <applicationService serviceInterface="com.intellij.openapi.application.PathMacros"
-                        serviceImplementation="com.intellij.application.options.PathMacrosImpl"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.customUsageCollectors.actions.MainMenuCollector"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.util.DimensionService"/>
     <applicationService serviceInterface="com.intellij.openapi.util.WindowStateService"
@@ -353,14 +356,13 @@
                         serviceImplementation="com.intellij.ide.RemoteDesktopDetector"/>
 
     <projectService serviceInterface="com.intellij.execution.RunManager" serviceImplementation="com.intellij.execution.impl.RunManagerImpl"/>
-    <projectService serviceImplementation="com.intellij.execution.impl.ProjectRunConfigurationManager"/>
 
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.http.HttpFileEditorProvider"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.hint.EscapeHandler" id="hide-hints"/>
 
-    <editorActionHandler action="EditorDelete" implementationClass="com.intellij.openapi.editor.actions.DeleteSelectionHandler" 
+    <editorActionHandler action="EditorDelete" implementationClass="com.intellij.openapi.editor.actions.DeleteSelectionHandler"
                          id="delete.for.selection"/>
-    <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.openapi.editor.actions.DeleteSelectionHandler" 
+    <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.openapi.editor.actions.DeleteSelectionHandler"
                          id="backspace.for.selection" order="after backspace.lookup"/>
 
     <projectConfigurable groupId="language" groupWeight="110" instance="com.intellij.javaee.ExternalResourceConfigurable" key="display.name.edit.external.resource"
@@ -370,7 +372,6 @@
     </projectConfigurable>
 
     <bundledKeymapProvider implementation="com.intellij.openapi.keymap.impl.DefaultBundledKeymaps"/>
-    <!-- <checkinHandlerFactory implementation="com.intellij.openapi.vcs.CheckRemoteStatusCheckinHandlerFactory"/> -->
 
     <keymapExtension implementation="com.intellij.ide.actions.ToolWindowKeymapExtension"/>
 
@@ -383,6 +384,7 @@
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ui.ToolbarClicksCollector$ToolbarClicksUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ui.ShortcutsCollector$ShortcutUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollector$ActionUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.actions.MainMenuCollector$MainMenuUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ui.LaFUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.os.OsNameUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.os.OsVersionUsageCollector"/>
@@ -509,5 +511,7 @@
     <tasks.contextProvider implementation="com.intellij.tasks.context.XDebuggerWatchesProvider"/>
 
     <actionPromoter implementation="com.intellij.execution.testframework.TestTreeViewActionsPromoter"/>
+    <smartSelectProvider implementation="com.intellij.ui.tree.TreeSmartSelectProvider"/>
+    <postStartupActivity implementation="com.intellij.tasks.context.BranchContextTracker$TrackerStartupActivity"/>
   </extensions>
 </idea-plugin>

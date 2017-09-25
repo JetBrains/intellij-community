@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -82,15 +83,12 @@ public class SelectInAction extends AnAction implements DumbAware {
   }
 
   private static class SelectInActionsStep extends BaseListPopupStep<SelectInTarget> {
-    @NotNull private final SelectInContext mySelectInContext;
+    private final SelectInContext mySelectInContext;
     private final List<SelectInTarget> myVisibleTargets;
 
     public SelectInActionsStep(@NotNull final Collection<SelectInTarget> targetVector, @NotNull SelectInContext selectInContext) {
       mySelectInContext = selectInContext;
-      myVisibleTargets = new ArrayList<>();
-      for (SelectInTarget target : targetVector) {
-        myVisibleTargets.add(target);
-      }
+      myVisibleTargets = ContainerUtil.newArrayList(targetVector);
       init(IdeBundle.message("title.popup.select.target"), myVisibleTargets, null);
     }
 

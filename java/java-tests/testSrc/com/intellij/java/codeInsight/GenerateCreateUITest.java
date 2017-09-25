@@ -24,7 +24,7 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
  * @author anna
  */
 public class GenerateCreateUITest extends LightCodeInsightTestCase {
-  public void testSOE() throws Exception { 
+  public void testSOE() {
     configureByFile("/codeInsight/generate/generateCreateUI/beforeSOE.java");
     final PsiClass targetClass = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiClass.class);
     assertNotNull(targetClass);

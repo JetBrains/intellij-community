@@ -98,11 +98,9 @@ class LocalCompiler {
     val currentTest = myPluginClassLoader.loadClass(TEST_CLASS_NAME) ?: throw Exception(
       "Unable to load by pluginClassLoader $TEST_CLASS_NAME.class file")
     val testCase = currentTest.newInstance()
-    val setUpMethod = currentTest.getMethod("setUp")
     val testMethod = currentTest.getMethod(ScriptWrapper.TEST_METHOD_NAME)
     GuiRecorderComponent.setState(GuiRecorderComponent.States.RUNNING)
     try {
-      setUpMethod.invoke(testCase)
       testMethod.invoke(testCase)
       Notifier.updateStatus("Script stopped")
       GuiRecorderComponent.setState(GuiRecorderComponent.States.IDLE)

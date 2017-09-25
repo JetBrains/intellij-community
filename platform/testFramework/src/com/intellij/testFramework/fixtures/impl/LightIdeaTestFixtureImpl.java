@@ -21,6 +21,8 @@ import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -36,6 +38,7 @@ import com.intellij.testFramework.fixtures.LightIdeaTestFixture;
 public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixture {
   private final LightProjectDescriptor myProjectDescriptor;
   private CodeStyleSettings myOldCodeStyleSettings;
+  private Sdk[] myOldSdks;
 
   public LightIdeaTestFixtureImpl(LightProjectDescriptor projectDescriptor) {
     myProjectDescriptor = projectDescriptor;
@@ -53,6 +56,7 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
     myOldCodeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
 
     application.setDataProvider(new TestDataProvider(getProject()));
+    myOldSdks = ProjectJdkTable.getInstance().getAllJdks();
   }
 
   @Override
@@ -65,8 +69,9 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
     new RunAll()
       .append(() -> UsefulTestCase.doCheckForSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings()))
       .append(() -> LightPlatformTestCase.doTearDown(project, LightPlatformTestCase.getApplication()))
-      .append(() -> LightPlatformTestCase.checkEditorsReleased())
       .append(super::tearDown)
+      .append(() -> LightPlatformTestCase.checkEditorsReleased())
+      .append(() -> UsefulTestCase.checkForJdkTableLeaks(myOldSdks))
       .append(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project))
       .append(() -> PersistentFS.getInstance().clearIdCache())
       .append(() -> PlatformTestCase.cleanupApplicationCaches(project))

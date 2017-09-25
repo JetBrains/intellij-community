@@ -81,6 +81,7 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
   public synchronized NotificationSettings[] getAllSettings() {
     Collection<NotificationSettings> settings = new THashSet<>(myIdToSettingsMap.values());
     for (NotificationGroup group : NotificationGroup.getAllRegisteredGroups()) {
+      if (group.getDisplayId().startsWith(LIGHTWEIGHT_PREFIX)) continue;
       settings.add(getSettings(group.getDisplayId()));
     }
     NotificationSettings[] result = settings.toArray(new NotificationSettings[settings.size()]);

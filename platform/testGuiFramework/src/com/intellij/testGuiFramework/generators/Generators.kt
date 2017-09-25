@@ -22,6 +22,7 @@ import com.intellij.ide.projectView.impl.ProjectViewTree
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.Ref
@@ -33,9 +34,8 @@ import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
 import com.intellij.testGuiFramework.cellReader.ExtendedJTableCellReader
-import com.intellij.testGuiFramework.fixtures.MessageDialogFixture
-import com.intellij.testGuiFramework.fixtures.MessagesFixture
-import com.intellij.testGuiFramework.fixtures.SettingsTreeFixture
+import com.intellij.testGuiFramework.driver.CheckboxTreeDriver
+import com.intellij.testGuiFramework.fixtures.*
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.generators.Utils.clicks
@@ -43,12 +43,14 @@ import com.intellij.testGuiFramework.generators.Utils.convertSimpleTreeItemToPat
 import com.intellij.testGuiFramework.generators.Utils.findBoundedText
 import com.intellij.testGuiFramework.generators.Utils.getCellText
 import com.intellij.testGuiFramework.generators.Utils.getJTreePath
+import com.intellij.testGuiFramework.generators.Utils.getJTreePathArray
 import com.intellij.testGuiFramework.generators.Utils.getJTreePathItemsString
 import com.intellij.testGuiFramework.generators.Utils.withRobot
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.getComponentText
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.isTextComponent
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.onHeightCenter
 import com.intellij.ui.CheckboxTree
+import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBList
@@ -66,6 +68,7 @@ import org.fest.swing.exception.ComponentLookupException
 import java.awt.Component
 import java.awt.Container
 import java.awt.Point
+import java.awt.Rectangle
 import java.awt.event.MouseEvent
 import java.io.File
 import java.net.URI
@@ -94,7 +97,7 @@ class JButtonGenerator : ComponentCodeGenerator<JButton> {
   override fun generate(cmp: JButton, me: MouseEvent, cp: Point) = "button(\"${cmp.text}\").click()"
 }
 
-class ComponentWithBrowseButtonGenerator : ComponentCodeGenerator<FixedSizeButton>{
+class ComponentWithBrowseButtonGenerator : ComponentCodeGenerator<FixedSizeButton> {
   override fun accept(cmp: Component): Boolean {
     return cmp.parent.parent is ComponentWithBrowseButton<*>
   }
@@ -154,8 +157,26 @@ class BasicComboPopupGenerator : ComponentCodeGenerator<JList<*>> {
 
 class CheckboxTreeGenerator : ComponentCodeGenerator<CheckboxTree> {
   override fun accept(cmp: Component) = cmp is CheckboxTree
-  override fun generate(cmp: CheckboxTree, me: MouseEvent, cp: Point) = "selectFramework(\"${cmp.getClosestPathForLocation(cp.x,
-                                                                                                                           cp.y).lastPathComponent}\")"
+  private fun JTree.getPath(cp: Point): TreePath = this.getClosestPathForLocation(cp.x, cp.y)
+  private fun wasClickOnCheckBox(cmp: CheckboxTree, cp: Point): Boolean {
+    val checkboxTree = cmp
+    val treePath = cmp.getPath(cp)
+    val pathArray: List<String> = getJTreePathArray(checkboxTree, treePath)
+    return withRobot {
+      val checkboxComponent = CheckboxTreeDriver(it).getCheckboxComponent(checkboxTree, pathArray) ?: throw Exception("Checkbox component from cell renderer is null")
+      val pathBounds = checkboxTree.getPathBounds(treePath)
+      val checkboxTreeBounds = Rectangle(pathBounds.x + checkboxComponent.x, pathBounds.y + checkboxComponent.y, checkboxComponent.width, checkboxComponent.height)
+      checkboxTreeBounds.contains(cp)
+    }
+  }
+
+  override fun generate(cmp: CheckboxTree, me: MouseEvent, cp: Point): String {
+    val path = getJTreePath(cmp, cmp.getPath(cp))
+    return if (wasClickOnCheckBox(cmp, cp))
+      "checkboxTree($path).clickCheckbox($path)"
+    else
+      "checkboxTree($path).clickPath($path)"
+  }
 }
 
 class SimpleTreeGenerator : ComponentCodeGenerator<SimpleTree> {
@@ -168,13 +189,13 @@ class SimpleTreeGenerator : ComponentCodeGenerator<SimpleTree> {
   }
 }
 
-class JTableGenerator: ComponentCodeGenerator<JTable> {
+class JTableGenerator : ComponentCodeGenerator<JTable> {
   override fun accept(cmp: Component) = cmp is JTable
 
   override fun generate(cmp: JTable, me: MouseEvent, cp: Point): String {
     val row = cmp.rowAtPoint(cp)
     val col = cmp.columnAtPoint(cp)
-    val cellText =  ExtendedJTableCellReader().valueAt(cmp, row, col)
+    val cellText = ExtendedJTableCellReader().valueAt(cmp, row, col)
     return "table(\"$cellText\").cell(\"$cellText\")".addClick(me)
   }
 }
@@ -219,6 +240,16 @@ class HyperlinkLabelGenerator : ComponentCodeGenerator<HyperlinkLabel> {
     //we assume, that hyperlink label has only one highlighted region
     val linkText = cmp.hightlightedRegionsBoundsMap.keys.toList().firstOrNull() ?: "null"
     return "hyperlinkLabel(\"${cmp.text}\").clickLink(\"$linkText\")"
+  }
+}
+
+class HyperlinkLabelInNotificationPanelGenerator : ComponentCodeGenerator<HyperlinkLabel> {
+  override fun accept(cmp: Component) = cmp is HyperlinkLabel && cmp.hasInParents(EditorNotificationPanel::class.java)
+  override fun priority(): Int = 1
+  override fun generate(cmp: HyperlinkLabel, me: MouseEvent, cp: Point): String {
+    //we assume, that hyperlink label has only one highlighted region
+    val linkText = cmp.hightlightedRegionsBoundsMap.keys.toList().firstOrNull() ?: "null"
+    return "editor { notificationPanel().clickLink(\"$linkText\") }"
   }
 }
 
@@ -343,7 +374,14 @@ class WelcomeFrameGenerator : GlobalContextCodeGenerator<FlatWelcomeFrame>() {
 }
 
 class JDialogGenerator : GlobalContextCodeGenerator<JDialog>() {
-  override fun accept(cmp: Component) = (cmp as JComponent).rootPane.parent is JDialog
+  override fun accept(cmp: Component): Boolean {
+    if (cmp !is JComponent || cmp.rootPane == null || cmp.rootPane.parent == null || cmp.rootPane.parent !is JDialog) return false
+    val dialog = cmp.rootPane.parent as JDialog
+    if (dialog.title == "This should not be shown") return false //do not add context for a SheetMessages on Mac
+    return true
+
+  }
+
   override fun generate(cmp: JDialog) = "dialog(\"${cmp.title}\") {"
 }
 
@@ -505,6 +543,24 @@ class EditorGenerator : LocalContextCodeGenerator<EditorComponentImpl>() {
 
 }
 
+class MainToolbarGenerator : LocalContextCodeGenerator<ActionToolbarImpl>() {
+  override fun acceptor(): (Component) -> Boolean = { component ->
+    component is ActionToolbarImpl
+    && MainToolbarFixture.isMainToolbar(component)
+  }
+
+  override fun generate(cmp: ActionToolbarImpl): String = "toolbar {"
+}
+
+class NavigationBarGenerator : LocalContextCodeGenerator<JPanel>() {
+  override fun acceptor(): (Component) -> Boolean = { component ->
+    component is JPanel
+    && NavigationBarFixture.isNavBar(component)
+  }
+
+  override fun generate(cmp: JPanel): String = "navigationBar {"
+}
+
 
 //class JBPopupMenuGenerator: LocalContextCodeGenerator<JBPopupMenu>() {
 //
@@ -645,7 +701,8 @@ object Utils {
     //let's try to find bounded label firstly
     try {
       return getBoundedLabel(hierarchyLevel, target).text
-    } catch (e: ComponentLookupException) {
+    }
+    catch (e: ComponentLookupException) {
       //do nothing
     }
 
@@ -664,7 +721,7 @@ object Utils {
   fun findBoundedText(target: Component, container: Component): String? {
     val textComponents = withRobot { robot ->
       robot.finder().findAll(container as Container,
-                             ComponentMatcher { component -> component!!.isTextComponent() && target.onHeightCenter(component, true) })
+                             ComponentMatcher { component -> component!!.isShowing && component.isTextComponent() && target.onHeightCenter(component, true) })
     }
     if (textComponents.isEmpty()) return null
     //if  more than one component is found let's take the righter one
@@ -682,7 +739,7 @@ object Utils {
       .reduceRight({ s, s1 -> "$s, $s1" })
   }
 
-  private fun getJTreePathArray(tree: JTree, path: TreePath): List<String>
+  internal fun getJTreePathArray(tree: JTree, path: TreePath): List<String>
     = withRobot { robot -> ExtendedTreeFixture(robot, tree).getPath(path) }
 
   fun <ReturnType> withRobot(robotFunction: (Robot) -> ReturnType): ReturnType {
@@ -699,5 +756,14 @@ private fun String.addClick(me: MouseEvent): String {
     me.isRightButton() -> "$this.rightClick()"
     else -> "$this.click()"
   }
+}
+
+private fun Component.hasInParents(componentType: Class<out Component>): Boolean {
+  var component = this
+  while(component.parent != null) {
+    if (componentType.isInstance(component)) return true
+    component = component.parent
+  }
+  return false
 }
 

@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
@@ -162,8 +163,9 @@ public class IntroducePropertyDialog extends DialogWrapper {
     }
 
     result = new ArrayList<>(result);
-    Collections.sort((List)result, CodeStyleSettingsManager.getSettings(myProject).PREFER_LONGER_NAMES ?
-                                   StringLenComparator.getDescendingInstance() : StringLenComparator.getInstance());
+    Collections.sort((List)result,
+                     CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).PREFER_LONGER_NAMES ?
+                     StringLenComparator.getDescendingInstance() : StringLenComparator.getInstance());
     return ArrayUtil.toStringArray(result);
   }
 

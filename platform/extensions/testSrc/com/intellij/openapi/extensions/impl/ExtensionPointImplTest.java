@@ -37,7 +37,7 @@ public class ExtensionPointImplTest {
   private static final TestLogProvider ourTestLog = new TestLogProvider();
 
   @After
-  public void tearDown() throws Exception {
+  public void tearDown() {
     ourTestLog.errors();
   }
 

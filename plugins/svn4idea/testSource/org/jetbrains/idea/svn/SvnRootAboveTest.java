@@ -35,7 +35,7 @@ public class SvnRootAboveTest extends Svn17TestCase {
   private File myModuleRoot;
 
   @Override
-  public void setUp() throws Exception {
+  public void setUp() {
     /*final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
     myTempDirFixture = fixtureFactory.createTempDirTestFixture();
     myTempDirFixture.setUp();
@@ -87,7 +87,7 @@ public class SvnRootAboveTest extends Svn17TestCase {
   }
 
   @Override
-  public void tearDown() throws Exception {
+  public void tearDown() {
     // no setup - no tear down
   }
 
@@ -99,7 +99,7 @@ public class SvnRootAboveTest extends Svn17TestCase {
     private VirtualFile myNonVersionedUpper;
     private final VirtualFile myMappingTarget;
 
-    private SubTree(final VirtualFile base, final VirtualFile projectRoot) throws Throwable {
+    private SubTree(final VirtualFile base, final VirtualFile projectRoot) {
       // todo +-
       myMappingTarget = projectRoot.getParent();
       myOuterDir = createDirInCommand(myMappingTarget, "outer" + System.currentTimeMillis());
@@ -132,7 +132,7 @@ public class SvnRootAboveTest extends Svn17TestCase {
   }
   
   @Test
-  public void testSvnVcsRootAbove() throws Throwable {
+  public void testSvnVcsRootAbove() {
     /*enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
 
@@ -152,7 +152,7 @@ public class SvnRootAboveTest extends Svn17TestCase {
   }
 
   @Test
-  public void testFakeScopeDontBreakTheView() throws Throwable {
+  public void testFakeScopeDontBreakTheView() {
     /*enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
 

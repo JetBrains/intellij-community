@@ -28,6 +28,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.velocity.VelocityContext;
@@ -206,12 +207,13 @@ public class GenerationUtil {
         // information to keep as it is to avoid breaking compatibility with prior releases
         vc.put("classname", useFullyQualifiedName ? ce.getQualifiedName() : ce.getName());
         vc.put("FQClassname", ce.getQualifiedName());
+        vc.put("classSignature", ce.getName() + (clazz.hasTypeParameters() ? "<" + StringUtil.join(clazz.getTypeParameters(), param -> param.getName(),", ") + ">": ""));
       }
 
       if (member != null) {
         vc.put("java_version", PsiAdapter.getJavaVersion(member));
         final Project project = member.getProject();
-        vc.put("settings", CodeStyleSettingsManager.getSettings(project));
+        vc.put("settings", CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class));
         vc.put("project", project);
       }
 

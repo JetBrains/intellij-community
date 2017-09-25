@@ -120,8 +120,6 @@ public final class LanguageUtil {
     if (LanguageParserDefinitions.INSTANCE.forLanguage(language) == null) return false;
     LanguageFileType type = language.getAssociatedFileType();
     if (type == null || StringUtil.isEmpty(type.getDefaultExtension())) return false;
-    String name = language.getDisplayName();
-    if (StringUtil.isEmpty(name) || name.startsWith("<") || name.startsWith("[")) return false;
     return StringUtil.isNotEmpty(type.getDefaultExtension());
   }
 

@@ -38,67 +38,67 @@ public class ReplaceConstructorWithBuilderTest extends MultiFileTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testVarargs() throws Exception {
+  public void testVarargs() {
     doTest(true);
   }
 
-  public void testExistingEmptyBuilder() throws Exception {
+  public void testExistingEmptyBuilder() {
     doTest(false);
   }
 
-  public void testMultipleParams() throws Exception {
+  public void testMultipleParams() {
     doTest(true);
   }
 
-  public void testExistingHalfEmptyBuilder() throws Exception {
+  public void testExistingHalfEmptyBuilder() {
     doTest(false);
   }
 
-  public void testExistingVoidSettersBuilder() throws Exception {
+  public void testExistingVoidSettersBuilder() {
     doTest(false);
   }
 
-  public void testConstructorChain() throws Exception {
+  public void testConstructorChain() {
     final HashMap<String, String> defaults = new HashMap<>();
     defaults.put("i", "2");
     doTest(true, defaults);
   }
 
-  public void testConstructorChainWithoutDefaults() throws Exception {
+  public void testConstructorChainWithoutDefaults() {
     final HashMap<String, String> defaults = new HashMap<>();
     defaults.put("i", "2");
     defaults.put("j", null);
     doTest(true, defaults);
   }
 
-  public void testConstructorTree() throws Exception {
+  public void testConstructorTree() {
     doTest(true, null, "Found constructors are not reducible to simple chain");
   }
 
-  public void testGenerics() throws Exception {
+  public void testGenerics() {
     doTest(true);
   }
 
-  public void testImports() throws Exception {
+  public void testImports() {
     doTest(true, null, null, "foo");
   }
 
-  private void doTest(final boolean createNewBuilderClass) throws Exception {
+  private void doTest(final boolean createNewBuilderClass) {
     doTest(createNewBuilderClass, null);
   }
 
-  private void doTest(final boolean createNewBuilderClass, final Map<String, String> expectedDefaults) throws Exception {
+  private void doTest(final boolean createNewBuilderClass, final Map<String, String> expectedDefaults) {
     doTest(createNewBuilderClass, expectedDefaults, null);
   }
 
-  private void doTest(final boolean createNewBuilderClass, final Map<String, String> expectedDefaults, final String conflicts) throws Exception {
+  private void doTest(final boolean createNewBuilderClass, final Map<String, String> expectedDefaults, final String conflicts) {
     doTest(createNewBuilderClass, expectedDefaults, conflicts, "");
   }
 
   private void doTest(final boolean createNewBuilderClass,
                       final Map<String, String> expectedDefaults,
                       final String conflicts,
-                      final String packageName) throws Exception {
+                      final String packageName) {
     doTest((rootDir, rootAfter) -> {
       final PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(getProject()));
       assertNotNull("Class Test not found", aClass);

@@ -607,17 +607,9 @@ public class HighlightControlFlowUtil {
       }
       readBeforeWrite = assignmentExpression.getOperationTokenType() != JavaTokenType.EQ;
     }
-    else if (expression instanceof PsiPostfixExpression) {
-      final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(((PsiPostfixExpression)expression).getOperand());
-      final IElementType sign = ((PsiPostfixExpression)expression).getOperationTokenType();
-      if (operand instanceof PsiReferenceExpression && (sign == JavaTokenType.PLUSPLUS || sign == JavaTokenType.MINUSMINUS)) {
-        reference = (PsiReferenceExpression)operand;
-      }
-      readBeforeWrite = true;
-    }
-    else if (expression instanceof PsiPrefixExpression) {
-      final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(((PsiPrefixExpression)expression).getOperand());
-      final IElementType sign = ((PsiPrefixExpression)expression).getOperationTokenType();
+    else if (expression instanceof PsiUnaryExpression) {
+      final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(((PsiUnaryExpression)expression).getOperand());
+      final IElementType sign = ((PsiUnaryExpression)expression).getOperationTokenType();
       if (operand instanceof PsiReferenceExpression && (sign == JavaTokenType.PLUSPLUS || sign == JavaTokenType.MINUSMINUS)) {
         reference = (PsiReferenceExpression)operand;
       }
@@ -721,7 +713,7 @@ public class HighlightControlFlowUtil {
         String text = JavaErrorMessages.message("lambda.variable.must.be.final");
         HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(text).create();
         QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, lambdaExpression));
-        return highlightInfo;
+        return ErrorFixExtensionPoint.registerFixes(highlightInfo, context, "lambda.variable.must.be.final");
       }
     }
     return null;
@@ -753,6 +745,15 @@ public class HighlightControlFlowUtil {
           }
         }
         effectivelyFinal = notAccessedForWriting(variable, new LocalSearchScope(scope));
+        if (effectivelyFinal) {
+          return ReferencesSearch.search(variable).forEach(ref -> {
+            PsiElement element = ref.getElement();
+            if (element instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression)element)) {
+              return !ControlFlowUtil.isVariableAssignedInLoop((PsiReferenceExpression)element, variable);
+            }
+            return true;
+          });
+        }
       }
     }
     return effectivelyFinal;

@@ -18,6 +18,7 @@ package com.intellij.debugger.actions;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JavaValue;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
@@ -61,7 +62,8 @@ public class CreateRendererAction extends AnAction {
     final Project project = event.getProject();
 
     process.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
-      public void threadAction() {
+      @Override
+      public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         Type type = javaValue.getDescriptor().getType();
         final String name = type != null ? type.name() :null;
         DebuggerUIUtil.invokeLater(() -> {

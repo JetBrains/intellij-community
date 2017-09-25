@@ -47,7 +47,7 @@ import java.io.IOException;
 
 public class VcsHistoryUtil {
   @Deprecated
-  public static Key<Pair<FilePath, VcsRevisionNumber>> REVISION_INFO_KEY = DiffUserDataKeysEx.REVISION_INFO;
+  public static final Key<Pair<FilePath, VcsRevisionNumber>> REVISION_INFO_KEY = DiffUserDataKeysEx.REVISION_INFO;
 
   private static final Logger LOG = Logger.getInstance(VcsHistoryUtil.class);
 

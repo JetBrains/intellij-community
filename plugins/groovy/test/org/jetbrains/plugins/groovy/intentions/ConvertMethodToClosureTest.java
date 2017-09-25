@@ -59,10 +59,6 @@ public class ConvertMethodToClosureTest extends GrIntentionTestCase {
     doMethodToClosureTest();
   }
 
-  public void testClosureFromReference() {
-    doClosureToMethodTest();
-  }
-
   public void testConstructorToClosure() { doMethodToClosureTest(false); }
 
   public void testInvalidMethodName() {doMethodToClosureTest(false);}

@@ -21,6 +21,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Disposer;
@@ -373,7 +374,7 @@ public final class ActionMenu extends JBMenu {
         if (myEventToRedispatch != null) {
           IdeEventQueue.getInstance().dispatchEvent(myEventToRedispatch);
         }
-      }, 50, this);
+      }, 50, ModalityState.any(), this);
       myCheckAlarm = new SingleAlarm(() -> {
         if (myLastEventTime > 0 && System.currentTimeMillis() - myLastEventTime > 1500) {
           if (!myInBounds && myCallbackAlarm != null && !myCallbackAlarm.isDisposed()) {
@@ -381,7 +382,7 @@ public final class ActionMenu extends JBMenu {
           }
         }
         myCheckAlarm.request();
-      }, 100, this);
+      }, 100, ModalityState.any(), this);
       myComponent = component;
       PointerInfo info = MouseInfo.getPointerInfo();
       myLastMousePoint = info != null ? info.getLocation() : null;

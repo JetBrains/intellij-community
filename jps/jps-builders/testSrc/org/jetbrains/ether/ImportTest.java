@@ -23,7 +23,7 @@ package org.jetbrains.ether;
  * To change this template use File | Settings | File Templates.
  */
 public class ImportTest { //extends IncrementalTestCase {
-  public ImportTest() throws Exception {
+  public ImportTest() {
     //super("imports");
   }
 

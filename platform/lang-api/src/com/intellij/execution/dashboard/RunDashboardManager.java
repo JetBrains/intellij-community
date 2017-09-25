@@ -31,14 +31,15 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author konstantin.aleev
  */
 @ApiStatus.Experimental
 public interface RunDashboardManager {
-  Topic<DashboardListener> DASHBOARD_TOPIC =
-    Topic.create("run dashboard", DashboardListener.class, Topic.BroadcastDirection.TO_PARENT);
+  Topic<RunDashboardListener> DASHBOARD_TOPIC =
+    Topic.create("run dashboard", RunDashboardListener.class, Topic.BroadcastDirection.TO_PARENT);
 
   static RunDashboardManager getInstance(Project project) {
     return ServiceManager.getService(project, RunDashboardManager.class);
@@ -60,10 +61,17 @@ public interface RunDashboardManager {
 
   void setShowConfigurations(boolean value);
 
+  float getContentProportion();
+
   @Nullable
   RunDashboardAnimator getAnimator();
 
   boolean isShowInDashboard(@NotNull RunConfiguration runConfiguration);
+
+  @NotNull
+  Set<String> getTypes();
+
+  void setTypes(Set<String> types);
 
   @Nullable
   RunDashboardContributor getContributor(@NotNull ConfigurationType type);

@@ -20,12 +20,12 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtil;
@@ -53,8 +53,8 @@ public class CommentFormatter {
     myProject = project;
   }
 
-  public CodeStyleSettings getSettings() {
-    return mySettings;
+  public JavaCodeStyleSettings getSettings() {
+    return mySettings.getCustomSettings(JavaCodeStyleSettings.class);
   }
 
   public JDParser getParser() {

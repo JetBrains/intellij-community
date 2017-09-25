@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -223,7 +224,7 @@ public class Merger implements IMerger {
         ? ContainerUtil.newArrayList(myMergeChunk.chunkAndBeforeLists())
         : ContainerUtil.emptyList();
 
-      myProject.getMessageBus().syncPublisher(COMMITTED_CHANGES_MERGED_STATE).event(processed);
+      BackgroundTaskUtil.syncPublisher(myProject, COMMITTED_CHANGES_MERGED_STATE).event(processed);
     }
   }
 

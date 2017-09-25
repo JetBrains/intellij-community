@@ -437,6 +437,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     assertEquals("Find expressions mistaken for declarations by parser in block mode 4", 2,
                  findMatchesCount(s10, "'_a < '_b"));
+
+    String s11 = "import java.io.*;" +
+                 "class X {" +
+                 "  void m() throws IOException {" +
+                 "    try (InputStream in = null) {}" +
+                 "  }" +
+                 "}";
+    assertEquals("Find expression inside try-with-resources", 1, findMatchesCount(s11, "null"));
   }
 
   public void testLiteral() {
@@ -1527,7 +1535,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  findMatchesCount(s9, "java.lang.String.'_method ( '_params* )"));
   }
 
-  public void testAnnotations() throws Exception {
+  public void testAnnotations() {
     String s1 = "@MyBean(\"\")\n" +
                 "@MyBean2(\"\")\n" +
                 "public class TestBean {}\n" +
@@ -2040,7 +2048,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals(7,findMatchesCount(s3, s4));
   }
 
-  public void testMultiStatementPatternWithTypedVariable() throws Exception {
+  public void testMultiStatementPatternWithTypedVariable() {
     String s = "class X {{ Integer i; i.valueOf(); }}";
     assertEquals(1, findMatchesCount(s, "Integer '_i;\n'_i.valueOf();"));
 
@@ -2052,21 +2060,21 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals(1, findMatchesCount(s, pattern));
   }
 
-  public void testFindAnnotationDeclarations() throws Exception {
+  public void testFindAnnotationDeclarations() {
     String s = "interface Foo {} interface Bar {} @interface X {}";
     String s2 = "@interface 'x {}";
 
     assertEquals(1, findMatchesCount(s,s2));
   }
 
-  public void testFindEnums() throws Exception {
+  public void testFindEnums() {
     String s = "class Foo {} class Bar {} enum X {}";
     String s2 = "enum 'x {}";
 
     assertEquals(1, findMatchesCount(s,s2));
   }
 
-  public void testFindDeclaration() throws Exception {
+  public void testFindDeclaration() {
     String s = "public class F {\n" +
                "  static Category cat = Category.getInstance(F.class.getName());\n" +
                "  Category cat2 = Category.getInstance(F.class.getName());\n" +
@@ -2302,6 +2310,22 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "}";
     String pattern = "/*$Text$*/";
     assertEquals("should find comments in all the right places", 12, findMatchesCount(source, pattern));
+
+    String source2 = "package /*test*/ xxx;" +
+                     "import /*test*/ java.util.*;" +
+                     "public class XXX {}";
+    String pattern2 = "/*test*/";
+    assertEquals("find comments in package and import statements", 2, findMatchesCount(source2, pattern2));
+
+    String source3 = "class X {" +
+                     "  void m() {" +
+                     "    System.out.println();" +
+                     "    // tokamak" +
+                     "  }" +
+                     "}";
+    String pattern3 = "'_st;" +
+                      "// tokamak";
+    assertEquals("find statement followed by comment", 1, findMatchesCount(source3, pattern3));
   }
 
   public void testCaseInsensitive() {
@@ -2556,5 +2580,91 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "  }" +
                      "}";
     assertEquals(2, findMatchesCount(source3, "t$.'_t"));
+  }
+
+  public void testSearchTypes() {
+    String source1 = "import java.util.*;" +
+                     "class X {" +
+                     "  void x() {" +
+                     "    ArrayList<String> fooList = new ArrayList<>();\n" +
+                     "    ArrayList<Integer> barList = new ArrayList<>();\n" +
+                     "    someStuff(fooList); // find this!\n" +
+                     "    someStuff(barList); // don't find this one\n" +
+                     "    someStuff(Collections.singletonList(1)); // also match this one\n" +
+                     "  }" +
+                     "  void someStuff(Iterable<?> param) {}" +
+                     "}";
+    assertEquals(3, findMatchesCount(source1, "'_Instance?.'_MethodCall:[regex( someStuff )]('_Parameter:[exprtype( *List )])"));
+    assertEquals(3, findMatchesCount(source1, "'_Instance?.'_MethodCall:[regex( someStuff )]('_Parameter:[exprtype( *java\\.util\\.List )])"));
+    assertEquals(1, findMatchesCount(source1, "'_Instance?.'_MethodCall:[regex( someStuff )]('_Parameter:[exprtype( *List<String> )])"));
+    assertEquals(1, findMatchesCount(source1, "'_Instance?.'_MethodCall:[regex( someStuff )]('_Parameter:[exprtype( *java\\.util\\.List<java\\.lang\\.String> )])"));
+    assertEquals(2, findMatchesCount(source1, "'_Instance?.'_MethodCall:[regex( someStuff )]('_Parameter:[exprtype( *List<Integer> )])"));
+    assertEquals(2, findMatchesCount(source1, "'_Instance?.'_MethodCall:[regex( someStuff )]('_Parameter:[exprtype( *java\\.util\\.List<java\\.lang\\.Integer> )])"));
+
+    String source2 = "class X {" +
+                     "  String sss[][];" +
+                     "  String ss[];" +
+                     "  void x() {" +
+                     "    System.out.println(sss);" +
+                     "  }" +
+                     "}";
+    assertEquals(1, findMatchesCount(source2, "'_x:[exprtype( String\\[\\]\\[\\] )]"));
+    assertEquals(1, findMatchesCount(source2, "'_x:[exprtype( java\\.lang\\.String\\[\\]\\[\\] )]"));
+
+    String source3 = "import java.util.*;" +
+                     "class X {" +
+                     "  void x(Map.Entry<String, Integer> map) {" +
+                     "    System.out.println(map);" +
+                     "  }" +
+                     "}";
+    assertEquals(1, findMatchesCount(source3, "'_x:[exprtype( Map\\.Entry<String,Integer> )]"));
+    assertEquals(1, findMatchesCount(source3, "'_x:[exprtype( Entry<String,Integer> )]"));
+    assertEquals(1, findMatchesCount(source3, "'_x:[exprtype( Map\\.Entry )]"));
+    assertEquals(1, findMatchesCount(source3, "'_x:[exprtype( Entry )]"));
+    assertEquals(1, findMatchesCount(source3, "'_x:[exprtype( java\\.util\\.Map\\.Entry )]"));
+    assertEquals(1, findMatchesCount(source3, "'_x:[exprtype( java\\.util\\.Map\\.Entry<java\\.lang\\.String,java\\.lang\\.Integer> )]"));
+
+    String source4 = "import java.util.*;" +
+                     "class X {" +
+                     "  void x() {" +
+                     "    new AbstractList<String>() {" +
+                     "      @Override" +
+                     "      public int size() {" +
+                     "        return 0;" +
+                     "      }" +
+                     "      @Override" +
+                     "      public String get(int index) {" +
+                     "        return null;" +
+                     "      }\n" +
+                     "    };" +
+                     "  }" +
+                     "}";
+    assertEquals(1, findMatchesCount(source4, "'x:[exprtype( *List )]"));
+    assertEquals(1, findMatchesCount(source4, "'x:[exprtype( *List<String> )]"));
+    assertEquals(1, findMatchesCount(source4, "'x:[exprtype( AbstractList )]"));
+    assertEquals(1, findMatchesCount(source4, "'x:[exprtype( AbstractList<String> )]"));
+    assertEquals(0, findMatchesCount(source4, "'x:[exprtype( AbstractList<Integer> )]"));
+
+    String source5 = "class X {" +
+                     "  void x() {" +
+                     "    new UnknownStranger<Johnny5>() {};" +
+                     "  }" +
+                     "}";
+    assertEquals(1, findMatchesCount(source5, "'x:[exprtype( UnknownStranger )]"));
+    assertEquals(1, findMatchesCount(source5, "'x:[exprtype( UnknownStranger<Johnny5> )]"));
+
+    String source6 = "class X {" +
+                     "  List<List<String>> list;" +
+                     "  List<Garbage> list2;" +
+                     "  List<Garbage> list3;" +
+                     "  void x() {" +
+                     "    System.out.println(list);" +
+                     "    System.out.println(list2);" +
+                     "    System.out.println(list3);" +
+                     "  }" +
+                     "}";
+    assertEquals(3, findMatchesCount(source6, "'x:[exprtype( List )]"));
+    assertEquals(1, findMatchesCount(source6, "'x:[exprtype( List<List<String>> )]"));
+    assertEquals(2, findMatchesCount(source6, "'x:[exprtype( List<Garbage> )]"));
   }
 }

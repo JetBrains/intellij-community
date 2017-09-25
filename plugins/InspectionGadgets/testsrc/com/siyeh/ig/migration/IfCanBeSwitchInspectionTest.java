@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class IfCanBeSwitchInspectionTest extends LightInspectionTestCase {
 
-  public void testIfCanBeSwitch() throws Exception {
+  public void testIfCanBeSwitch() {
     doTest();
   }
 

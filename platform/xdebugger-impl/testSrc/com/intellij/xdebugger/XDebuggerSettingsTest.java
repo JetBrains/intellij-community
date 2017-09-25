@@ -38,7 +38,7 @@ public class XDebuggerSettingsTest extends PlatformLiteFixture {
     getApplication().registerService(XDebuggerSettingsManager.class, XDebuggerSettingManagerImpl.class);
   }
 
-  public void testSerialize() throws Exception {
+  public void testSerialize() {
     XDebuggerSettingManagerImpl settingsManager = XDebuggerSettingManagerImpl.getInstanceImpl();
 
     MyDebuggerSettings settings = MyDebuggerSettings.getInstance();

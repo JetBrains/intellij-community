@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,7 +142,7 @@ abstract class ProductProperties {
   abstract LinuxDistributionCustomizer createLinuxCustomizer(String projectHome)
 
   /**
-   * @return instance of the class containing properties specific for Mac OS distribution or {@code null} if the product doesn't have Mac OS distribution
+   * @return instance of the class containing properties specific for macOS distribution or {@code null} if the product doesn't have macOS distribution
    */
   abstract MacDistributionCustomizer createMacCustomizer(String projectHome)
 
@@ -155,7 +155,7 @@ abstract class ProductProperties {
 
   /**
    * Path to a directory containing yjpagent*.dll, libyjpagent-linux*.so and libyjpagent.jnilib files, which will be copied to 'bin'
-   * directories of Windows, Linux and Mac OS distributions. If {@code null} no agent files will be bundled.
+   * directories of Windows, Linux and macOS distributions. If {@code null} no agent files will be bundled.
    */
   String yourkitAgentBinariesDirectoryPath = null
 

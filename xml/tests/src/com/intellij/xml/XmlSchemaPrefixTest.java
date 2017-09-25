@@ -24,18 +24,18 @@ import com.intellij.xml.refactoring.SchemaPrefixRenameHandler;
  */
 public class XmlSchemaPrefixTest extends LightCodeInsightFixtureTestCase {
 
-  public void testPrefixUsages() throws Exception {
+  public void testPrefixUsages() {
     doFindUsages("usages.xml", 16);
     doFindUsages("usages1.xml", 16);
   }
 
-  public void testRename() throws Exception {doRename();}
-  public void testRename1() throws Exception {doRename();}
+  public void testRename() {doRename();}
+  public void testRename1() {doRename();}
 
-  public void testRename2() throws Exception {doRename();}
-  public void testRenameFromClosingTag() throws Exception {doRename();}
+  public void testRename2() {doRename();}
+  public void testRenameFromClosingTag() {doRename();}
 
-  private void doRename() throws Exception {
+  private void doRename() {
     doRename("xsd");
   }
 

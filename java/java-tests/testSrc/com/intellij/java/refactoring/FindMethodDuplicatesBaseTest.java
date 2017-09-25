@@ -33,11 +33,11 @@ public abstract class FindMethodDuplicatesBaseTest extends LightCodeInsightTestC
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  protected void doTest() throws Exception {
+  protected void doTest() {
     doTest(true);
   }
 
-  protected void doTest(final boolean shouldSucceed) throws Exception {
+  protected void doTest(final boolean shouldSucceed) {
     final String filePath = getTestFilePath();
     configureByFile(filePath);
     final PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);

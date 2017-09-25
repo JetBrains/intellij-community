@@ -25,7 +25,7 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
     return "structureView";
   }
 
-  public void testJavaClassStructure() throws Exception {
+  public void testJavaClassStructure() {
     dotest(new CheckAction() {
       @Override
       public void testClassStructure(StructureViewComponent structureViewComponent) {
@@ -77,7 +77,7 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
     });
   }
 
-  public void testShowClassMembers() throws Exception {
+  public void testShowClassMembers() {
     dotest(new CheckAction() {
       @Override
       public void testClassStructure(StructureViewComponent structureViewComponent) {
@@ -120,7 +120,7 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
     });
   }
 
-  public void testVisibilitySorter() throws Exception {
+  public void testVisibilitySorter() {
     dotest(new CheckAction() {
       @Override
       public void testClassStructure(StructureViewComponent structureViewComponent) {
@@ -143,7 +143,7 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
     });
   }
 
-  public void testMembersOrder() throws Exception {
+  public void testMembersOrder() {
     dotest(new CheckAction() {
       @Override
       public void testClassStructure(StructureViewComponent structureViewComponent) {
@@ -163,7 +163,7 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
   interface CheckAction {
     void testClassStructure(StructureViewComponent structureViewComponent);
   }
-  private void dotest(CheckAction checkAction) throws Exception {
+  private void dotest(CheckAction checkAction) {
     final PsiClass psiClass = JavaDirectoryService.getInstance().getClasses(getPackageDirectory("com/package1"))[0];
     final VirtualFile virtualFile = psiClass.getContainingFile().getVirtualFile();
     final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);

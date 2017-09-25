@@ -3,7 +3,6 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.committed.ChangesBunch;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
@@ -40,7 +39,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
     LogEntry entry =
       new LogEntry.Builder().setRevision(revision).setAuthor(AUTHOR).setDate(new Date(System.currentTimeMillis())).setMessage("").build();
 
-    return new SvnChangeList(null, myLocation, entry, ROOT.toDecodedString());
+    return new SvnChangeList(null, myLocation, entry, ROOT);
   }
 
   private class MockSvnLogLoader implements SvnLogLoader {
@@ -52,8 +51,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
 
     @Override
     public List<CommittedChangeList> loadInterval(final SVNRevision fromIncluding, final SVNRevision toIncluding, final int maxCount,
-                                                  final boolean includingYoungest, final boolean includeOldest)
-      throws VcsException {
+                                                  final boolean includingYoungest, final boolean includeOldest) {
       long young = fromIncluding.getNumber();
       young = (young == -1) ? myRevisions.get(myRevisions.size() - 1) : young;
       final long old = toIncluding.getNumber();

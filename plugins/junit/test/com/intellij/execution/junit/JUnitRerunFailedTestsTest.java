@@ -44,7 +44,7 @@ public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  
     myFixture.addClass("package junit.framework; public class TestCase {}");
   }
 
-  public void testIncludeMethodsToRerunFromChildClass() throws Exception {
+  public void testIncludeMethodsToRerunFromChildClass() {
     myFixture.addClass("abstract class ATest extends junit.framework.TestCase {" +
                        "  public void testMe() {}\n" +
                        "}");
@@ -73,7 +73,7 @@ public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  
     assertEquals("ChildTest,testMe", presentation);
   }
 
-  public void testParameterizedTestNavigation() throws Exception {
+  public void testParameterizedTestNavigation() {
     myFixture.addClass("package org.junit.runner;\n" +
                        "public @interface RunWith {\n" +
                        "    Class<? extends Runner> value();\n" +
@@ -121,7 +121,7 @@ public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  
     assertEquals("MyTest,testName1[0.java]", TestMethods.getTestPresentation(parameterizedTestProxy, project, searchScope));
   }
 
-  public void testIgnoreRenamedMethodInRerunFailed() throws Exception {
+  public void testIgnoreRenamedMethodInRerunFailed() {
     final PsiClass baseClass = myFixture.addClass("abstract class ATest extends junit.framework.TestCase {" +
                                                  "  public void testMe() {}\n" +
                                                  "}");
@@ -139,7 +139,7 @@ public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  
     assertNull(TestMethods.getTestPresentation(testProxy, project, searchScope));
   }
 
-  public void testInnerClass() throws Exception {
+  public void testInnerClass() {
     myFixture.addClass("public class TestClass {\n" +
                        "    public static class Tests extends junit.framework.TestCase {\n" +
                        "        public void testFoo() throws Exception {}\n" +
@@ -158,7 +158,7 @@ public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  
     assertEquals("testFoo", name);
   }
 
-  public void testLocatorForIgnoredClass() throws Exception {
+  public void testLocatorForIgnoredClass() {
     PsiClass aClass = myFixture.addClass("@org.junit.Ignore" +
                                          "public class TestClass {\n" +
                                          "    @org.junit.Test" +
@@ -174,7 +174,7 @@ public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  
     assertEquals(aClass, element);
   }
 
-  public void testPresentationForJunit5MethodsWithParameters() throws Exception {
+  public void testPresentationForJunit5MethodsWithParameters() {
     myFixture.addClass("class A {}" +
                        "public class TestClass {\n" +
                        "    @org.junit.platform.commons.annotation.Testable" +
@@ -186,7 +186,7 @@ public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  
     assertEquals("TestClass,testFoo(A)", presentation);
   }
 
-  public void testMultipleClassesInOneFile() throws Exception {
+  public void testMultipleClassesInOneFile() {
     myFixture.configureByText("a.java", "public class Test1 {<caret>} public class Test2 {}");
 
     final IdeaTestApplication testApplication = IdeaTestApplication.getInstance();

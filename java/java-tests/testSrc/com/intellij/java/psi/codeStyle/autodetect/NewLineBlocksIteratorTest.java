@@ -22,10 +22,8 @@ import com.intellij.formatting.engine.TestData;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.psi.formatter.common.NewLineBlocksIterator;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.Iterator;
 
 public class NewLineBlocksIteratorTest extends AbstractNewLineBlocksIteratorTest {
@@ -57,7 +55,7 @@ public class NewLineBlocksIteratorTest extends AbstractNewLineBlocksIteratorTest
     checkStartOffsets(newLineBlocksStartOffsets);
   }
   
-  public void testFirstBlockOnNewLineNotStartsIt() throws IOException, JDOMException {
+  public void testFirstBlockOnNewLineNotStartsIt() {
     String text = "[]varx []=r'''\n" +
                   "'''";
 

@@ -15,11 +15,12 @@
  */
 package com.intellij.codeInspection.unneededThrows;
 
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.reference.RefMethodImpl;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.JavaOverridingMethodUtil;
@@ -69,13 +70,18 @@ public class RedundantThrowsDeclarationLocalInspection extends BaseJavaBatchLoca
   }
 
   @Nullable
-  private static ProblemDescriptor[] checkExceptionsNeverThrown(PsiMethod method,
-                                                                InspectionManager inspectionManager) {
+  private ProblemDescriptor[] checkExceptionsNeverThrown(PsiMethod method,
+                                                         InspectionManager inspectionManager) {
+    if (method instanceof SyntheticElement) return null;
     PsiClass containingClass = method.getContainingClass();
     if (containingClass == null || JavaHighlightUtil.isSerializationRelatedMethod(method, containingClass)) return null;
 
     PsiCodeBlock body = method.getBody();
     if (body == null) return null;
+
+    if (myGlobalTool.IGNORE_ENTRY_POINTS && UnusedDeclarationInspectionBase.findUnusedDeclarationInspection(method).isEntryPoint(method)) {
+      return null;
+    }
 
     ReferenceAndType[] thrownExceptions = getThrownCheckedExceptions(method);
     if (thrownExceptions.length == 0) return null;
@@ -87,7 +93,7 @@ public class RedundantThrowsDeclarationLocalInspection extends BaseJavaBatchLoca
                                             method.isConstructor() ||
                                             containingClass instanceof PsiAnonymousClass ||
                                             containingClass.hasModifierProperty(PsiModifier.FINAL));
-    Collection<PsiClassType> unhandled = RefMethodImpl.getUnhandledExceptions(body, method, containingClass);
+    Collection<PsiClassType> unhandled = RedundantThrowsGraphAnnotator.getUnhandledExceptions(body, method, containingClass);
     List<ReferenceAndType> candidates = Arrays.stream(thrownExceptions)
       .filter(refAndType -> unhandled.stream().noneMatch(unhandledException -> unhandledException.isAssignableFrom(refAndType.type) || refAndType.type.isAssignableFrom(unhandledException)))
       .collect(Collectors.toList());
@@ -129,7 +135,7 @@ public class RedundantThrowsDeclarationLocalInspection extends BaseJavaBatchLoca
       .of(method.getThrowsList().getReferenceElements())
       .map(ref -> {
         PsiElement resolved = ref.resolve();
-        return resolved instanceof PsiClass ? new ReferenceAndType(ref) : null;
+        return resolved instanceof PsiClass && !ExceptionUtil.isUncheckedException((PsiClass)resolved) ? new ReferenceAndType(ref) : null;
       })
       .filter(Objects::nonNull)
       .toArray(ReferenceAndType[]::new);

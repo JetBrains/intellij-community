@@ -37,11 +37,11 @@ public class ModifyAnnotationsTest extends PsiTestCase {
     super.setUp();
 
     String root = JavaTestUtil.getJavaTestDataPath() + "/psi/repositoryUse/modifyAnnotations";
-    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17("mock 1.5"));
+    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
     PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
   }
 
-  public void testReplaceAnnotation() throws Exception {
+  public void testReplaceAnnotation() {
     //be sure not to load tree
     PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, getTestRootDisposable());
     PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.allScope(myProject));

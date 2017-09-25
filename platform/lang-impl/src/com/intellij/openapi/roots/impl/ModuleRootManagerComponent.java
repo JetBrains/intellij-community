@@ -60,7 +60,7 @@ public class ModuleRootManagerComponent extends ModuleRootManagerImpl implements
       // IDEA-133480 Eclipse integration: .iml content is not reduced on setting Dependencies Storage Format = Eclipse
       // We clear any storage except eclipse (because we must not clear shared files).
       // Currently there is only one known non-default storage - ExternalProjectStorage.
-      return isEffectiveStorage ? Resolution.DO : (isClasspathStorage ? Resolution.SKIP : Resolution.CLEAR);
+      return isEffectiveStorage ? Resolution.DO : isClasspathStorage ? Resolution.SKIP : Resolution.CLEAR;
     }
   }
 

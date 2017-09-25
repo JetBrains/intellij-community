@@ -25,7 +25,6 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -37,6 +36,7 @@ import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import gnu.trove.THashSet;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
@@ -51,6 +51,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
     super.setUp();
     if ("RandomEditingForUnused".equals(getTestName(false))) {
       enableInspectionTool(new UnusedDeclarationInspection());
+      enableInspectionTool(new UnusedImportInspection());
     }
   }
 
@@ -58,7 +59,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     if ("RandomEditingForUnused".equals(getTestName(false))) {
-      return new LocalInspectionTool[]{new UnusedImportLocalInspection(),};
+      return LocalInspectionTool.EMPTY_ARRAY;
     }
     List<InspectionToolWrapper> all = InspectionToolRegistrar.getInstance().createTools();
     List<LocalInspectionTool> locals = new ArrayList<>();
@@ -95,7 +96,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
                                              "new java . util . HashMap ( 1 ) ; l77 . toString ( ) ; \n"
   + " } } ";
 
-  public void testAllTheseConcurrentThreadsDoNotCrashAnything() throws Exception {
+  public void testAllTheseConcurrentThreadsDoNotCrashAnything() {
     long time = System.currentTimeMillis();
     for (int i = 0; i < 20/*00000*/; i++) {
       //System.out.println("i = " + i);
@@ -110,7 +111,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
     LOG.debug(System.currentTimeMillis() - time+"ms");
   }
 
-  public void _testHugeFile() throws Exception {
+  public void _testHugeFile() {
     @NonNls String filePath =  "/psi/resolve/Thinlet.java";
     configureByFile(filePath);
     doHighlighting();
@@ -141,7 +142,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
     //System.out.println("Lengths: "+JobLauncher.lengths);
   }
 
-  public void testRandomEditingPerformance() throws Exception {
+  public void testRandomEditingPerformance() {
     configureFromFileText("Stress.java", text);
     List<HighlightInfo> oldWarnings = new ArrayList<>(doHighlighting());
     Comparator<HighlightInfo> infoComparator = (o1, o2) -> {
@@ -214,7 +215,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
     return info.getText() + info.getDescription();
   }
 
-  public void testRandomEditingForUnused() throws Exception {
+  public void testRandomEditingForUnused() {
     configureFromFileText("Stress.java", "class X {<caret>}");
 
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(getProject());

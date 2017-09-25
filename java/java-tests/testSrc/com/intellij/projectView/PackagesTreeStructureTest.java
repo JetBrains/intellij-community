@@ -33,7 +33,7 @@ import javax.swing.*;
 import java.io.IOException;
 
 public class PackagesTreeStructureTest extends TestSourceBasedTestCase {
-  public void testPackageView() throws IOException, InterruptedException {
+  public void testPackageView() {
     ModuleManagerImpl.getInstanceImpl(myProject).setModuleGroupPath(myModule, new String[]{"Group"});
     final VirtualFile srcFile = getSrcDirectory().getVirtualFile();
     if (srcFile.findChild("empty") == null){
@@ -197,13 +197,11 @@ public class PackagesTreeStructureTest extends TestSourceBasedTestCase {
                      "  Class1.java\n", 3);
   }
 
-  private void doTest(final boolean showModules, final boolean showLibraryContents, @NonNls final String expected, final int levels)
-    throws InterruptedException {
+  private void doTest(final boolean showModules, final boolean showLibraryContents, @NonNls final String expected, final int levels) {
     doTest(showModules, showLibraryContents, false, false, expected, levels);
   }
 
-  private void doTest(final boolean showModules, final boolean showLibraryContents, boolean flattenPackages, boolean abbreviatePackageNames, @NonNls final String expected, final int levels)
-    throws InterruptedException {
+  private void doTest(final boolean showModules, final boolean showLibraryContents, boolean flattenPackages, boolean abbreviatePackageNames, @NonNls final String expected, final int levels) {
     final ProjectViewImpl projectView = (ProjectViewImpl)ProjectView.getInstance(myProject);
 
     projectView.setShowModules(showModules, PackageViewPane.ID);

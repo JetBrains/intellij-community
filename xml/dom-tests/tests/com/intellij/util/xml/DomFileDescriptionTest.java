@@ -78,7 +78,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
     }
   }
 
-  public void testNoInitialDomnessInB() throws Throwable {
+  public void testNoInitialDomnessInB() {
     assertFalse(getDomManager().isDomFile(myBarElementFile));
     assertNull(getDomManager().getFileElement(myBarElementFile));
   }
@@ -99,7 +99,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
 
     new WriteCommandAction(getProject()) {
       @Override
-      protected void run(@NotNull Result result) throws Throwable {
+      protected void run(@NotNull Result result) {
         file.getDocument().getRootTag().getValue().setText("239");
       }
     }.execute();
@@ -112,7 +112,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
 
     new WriteCommandAction(getProject()) {
       @Override
-      protected void run(@NotNull Result result) throws Throwable {
+      protected void run(@NotNull Result result) {
         file.getDocument().getRootTag().getValue().setText("57121");
       }
     }.execute();
@@ -168,7 +168,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
 
     new WriteCommandAction(getProject()) {
       @Override
-      protected void run(@NotNull Result result) throws Throwable {
+      protected void run(@NotNull Result result) {
         ((XmlFile)file).getDocument().getRootTag().setAttribute("xmlns", "bar");
       }
     }.execute();
@@ -190,7 +190,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
 
     new WriteCommandAction(getProject()) {
       @Override
-      protected void run(@NotNull Result result) throws Throwable {
+      protected void run(@NotNull Result result) {
         final Document document = getDocument(file);
         document.insertString(0, "<!DOCTYPE xxx PUBLIC \"bar\" \"http://java.sun.com/dtd/ejb-jar_2_0.dtd\">\n");
         commitDocument(document);
@@ -211,7 +211,7 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
     final MyElement boy = getDomManager().getFileElement(file, MyElement.class).getRootElement().getBoys().get(0);
     new WriteCommandAction(getProject()) {
       @Override
-      protected void run(@NotNull Result result) throws Throwable {
+      protected void run(@NotNull Result result) {
         file.getDocument().getRootTag().setAttribute("zzz", "bar");
       }
     }.execute();

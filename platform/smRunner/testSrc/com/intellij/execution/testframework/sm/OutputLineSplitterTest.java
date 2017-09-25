@@ -66,7 +66,7 @@ public class OutputLineSplitterTest extends PlatformTestCase {
   /**
    * When tc message is in the middle of line it should reported as separate line like if it has \n before it
    */
-  public void testMessageInTheMiddleOfLine() throws Exception {
+  public void testMessageInTheMiddleOfLine() {
     for(String prefix: new String[]{"...", "", "... ", "##", " ##", "##team##teamcity["}) {
       final String testStarted = ServiceMessageBuilder.testStarted("myTest").toString() + "\n";
       final String testEnded = ServiceMessageBuilder.testFinished("myTest").toString() + "\n";
@@ -204,7 +204,7 @@ public class OutputLineSplitterTest extends PlatformTestCase {
     }
   }
 
-  public void testPerformanceWithLotsOfFragments() throws Exception {
+  public void testPerformanceWithLotsOfFragments() {
     PlatformTestUtil.startPerformanceTest("Flushing lot's of fragments", 5, mySplitter::flush)
       .setup(() -> {
         for (int i = 0; i < 10_000; i++) {

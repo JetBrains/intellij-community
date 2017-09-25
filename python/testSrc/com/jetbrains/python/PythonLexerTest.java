@@ -155,7 +155,7 @@ public class PythonLexerTest extends PyLexerTestCase {
   }
 
 
-  public void _testWithKeyword() throws Exception {
+  public void _testWithKeyword() {
     // processing of 'from __future__ import' is now done on parser level, so a pure lexer test won't handle
     // this correctly
     doTest("from __future__ import with_statement\nwith x as y", new String[] { "Py:FROM_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE", "Py:IMPORT_KEYWORD", "Py:SPACE", "Py:IDENTIFIER",

@@ -38,8 +38,8 @@ class UndoRedoStacksHolder {
   // strongly reference local files for which we can undo file removal
   // document without files and nonlocal files are stored without strong reference
   private final THashMap<DocumentReference, LinkedList<UndoableGroup>> myDocumentStacks = new THashMap<>();
-  private final List<Document> myDocumentsWithStacks = new WeakList<>();
-  private final List<VirtualFile> myNonlocalVirtualFilesWithStacks = new WeakList<>();
+  private final Collection<Document> myDocumentsWithStacks = new WeakList<>();
+  private final Collection<VirtualFile> myNonlocalVirtualFilesWithStacks = new WeakList<>();
 
   public UndoRedoStacksHolder(boolean isUndo) {
     myUndo = isUndo;
@@ -79,7 +79,7 @@ class UndoRedoStacksHolder {
   }
 
   @NotNull
-  private <T extends UserDataHolder> LinkedList<UndoableGroup> addWeaklyTrackedEmptyStack(@NotNull T holder, @NotNull List<T> allHolders) {
+  private <T extends UserDataHolder> LinkedList<UndoableGroup> addWeaklyTrackedEmptyStack(@NotNull T holder, @NotNull Collection<T> allHolders) {
     LinkedList<UndoableGroup> result = holder.getUserData(STACK_IN_DOCUMENT_KEY);
     if (result == null) {
       holder.putUserData(STACK_IN_DOCUMENT_KEY, result = new LinkedList<>());
@@ -177,7 +177,7 @@ class UndoRedoStacksHolder {
     cleanWeaklyTrackedEmptyStacks(myNonlocalVirtualFilesWithStacks);
   }
 
-  private <T extends UserDataHolder> void cleanWeaklyTrackedEmptyStacks(@NotNull List<T> stackHolders) {
+  private <T extends UserDataHolder> void cleanWeaklyTrackedEmptyStacks(@NotNull Collection<T> stackHolders) {
     Set<T> holdersToDrop = new THashSet<>();
     for (T holder : stackHolders) {
       List<UndoableGroup> stack = holder.getUserData(STACK_IN_DOCUMENT_KEY);

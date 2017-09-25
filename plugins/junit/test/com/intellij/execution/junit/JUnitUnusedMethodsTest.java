@@ -29,7 +29,7 @@ public class JUnitUnusedMethodsTest extends LightCodeInsightFixtureTestCase {
     myFixture.enableInspections(new UnusedDeclarationInspection(true));
   }
 
-  public void testRecognizeTestMethodInParameterizedClass() throws Exception {
+  public void testRecognizeTestMethodInParameterizedClass() {
     myFixture.configureByText("A.java", "import org.junit.Test;\n" +
                                         "import org.junit.runner.RunWith;\n" +
                                         "import org.junit.runners.Parameterized;\n" +

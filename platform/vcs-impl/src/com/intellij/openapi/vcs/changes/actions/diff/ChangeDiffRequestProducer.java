@@ -62,7 +62,7 @@ import java.util.Map;
 public class ChangeDiffRequestProducer implements DiffRequestProducer {
   private static final Logger LOG = Logger.getInstance(ChangeDiffRequestProducer.class);
 
-  public static Key<Change> CHANGE_KEY = Key.create("DiffRequestPresentable.Change");
+  public static final Key<Change> CHANGE_KEY = Key.create("DiffRequestPresentable.Change");
 
   @Nullable private final Project myProject;
   @NotNull private final Change myChange;

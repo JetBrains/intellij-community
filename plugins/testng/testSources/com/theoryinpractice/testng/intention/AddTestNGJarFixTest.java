@@ -41,7 +41,7 @@ public class AddTestNGJarFixTest {
   private LanguageLevel myLanguageLevel;
 
   @BeforeMethod
-  public void setUp() throws Exception {
+  public void setUp() {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -70,7 +70,7 @@ public class AddTestNGJarFixTest {
 
 
   @AfterMethod
-  public void tearDown() throws Exception {
+  public void tearDown() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         LanguageLevelProjectExtension.getInstance(myFixture.getProject()).setLanguageLevel(myLanguageLevel);
@@ -90,7 +90,7 @@ public class AddTestNGJarFixTest {
   }
 
   @Test(dataProvider = "data")
-  public void doTest(final String testName) throws Throwable {
+  public void doTest(final String testName) {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         IntentionAction resultAction = null;

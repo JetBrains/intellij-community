@@ -169,7 +169,7 @@ public class JsonBySchemaHeavyCompletionTest extends JsonSchemaHeavyAbstractTest
       }
 
       @Override
-      public void configureFiles() throws Exception {
+      public void configureFiles() {
         configureByFiles(null, "/" + folder + "/" + testFile + ".json", "/" + folder + "/Schema.json");
       }
 

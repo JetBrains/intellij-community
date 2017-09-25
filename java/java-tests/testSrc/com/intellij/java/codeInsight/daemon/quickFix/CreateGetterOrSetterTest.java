@@ -28,7 +28,7 @@ public class CreateGetterOrSetterTest extends LightQuickFixParameterizedTestCase
     enableInspectionTool(new UnusedDeclarationInspection());
   }
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 

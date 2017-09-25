@@ -46,8 +46,9 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
 
   private final GrClosableBlock myClosure;
 
-  public ClosureSyntheticParameter(GrClosableBlock closure) {
+  public ClosureSyntheticParameter(GrClosableBlock closure, boolean isOptional) {
     super(GrClosableBlock.IT_PARAMETER_NAME, TypesUtil.getJavaLangObject(closure), closure);
+    setOptional(isOptional);
     myClosure = closure;
   }
 

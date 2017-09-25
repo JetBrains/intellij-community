@@ -15,10 +15,10 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -127,7 +127,7 @@ public class SvnFormatWorker extends Task.Backgroundable {
         SvnVcs.getInstance(myProject).processChangeLists(myBeforeChangeLists);
       }
 
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(SvnVcs.WC_CONVERTED).run();
+      BackgroundTaskUtil.syncPublisher(SvnVcs.WC_CONVERTED).run();
     }
   }
 
@@ -160,7 +160,7 @@ public class SvnFormatWorker extends Task.Backgroundable {
                                                        @NotNull final String upgradeMessage) {
     return new ProgressTracker() {
       @Override
-      public void consume(ProgressEvent event) throws SVNException {
+      public void consume(ProgressEvent event) {
         if (event.getFile() != null) {
           if (EventAction.UPGRADED_PATH.equals(event.getAction())) {
             indicator.setText2("Upgraded path " + VcsUtil.getPathForProgressPresentation(event.getFile()));
@@ -177,7 +177,7 @@ public class SvnFormatWorker extends Task.Backgroundable {
       }
 
       @Override
-      public void checkCancelled() throws SVNCancelException {
+      public void checkCancelled() {
         indicator.checkCanceled();
       }
     };

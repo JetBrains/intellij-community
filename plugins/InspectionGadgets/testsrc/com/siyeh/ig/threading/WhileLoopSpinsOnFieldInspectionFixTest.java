@@ -46,7 +46,7 @@ public class WhileLoopSpinsOnFieldInspectionFixTest extends LightQuickFixParamet
     return IdeaTestUtil.getMockJdk9();
   }
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 

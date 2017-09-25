@@ -38,6 +38,7 @@ import org.junit.runners.Suite;
   StreamApiMigrationInspectionTest.FindFirstTest.class,
   StreamApiMigrationInspectionTest.FlatMapFirstTest.class,
   StreamApiMigrationInspectionTest.ForeachFirstTest.class,
+  StreamApiMigrationInspectionTest.JoiningTest.class,
   StreamApiMigrationInspectionTest.LimitTest.class,
   StreamApiMigrationInspectionTest.MinMaxTest.class,
   StreamApiMigrationInspectionTest.NoneMatchTest.class,
@@ -63,7 +64,7 @@ public class StreamApiMigrationInspectionTest {
       return LanguageLevel.JDK_1_8;
     }
 
-    public void test() throws Exception { doAllTests(); }
+    public void test() { doAllTests(); }
 
     abstract String getFolder();
 
@@ -154,6 +155,14 @@ public class StreamApiMigrationInspectionTest {
     @Override
     String getFolder() {
       return "foreach";
+    }
+  }
+
+
+  public static class JoiningTest extends StreamApiMigrationInspectionBaseTest {
+    @Override
+    String getFolder() {
+      return "joining";
     }
   }
 

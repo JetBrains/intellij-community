@@ -33,7 +33,9 @@ class NormalCompletionDfaTest extends LightFixtureCompletionTestCase {
   void _testCastIncompleteInstanceofedQualifier() { doTest() }
 
   void testCastTooComplexInstanceofedQualifier() { doAntiTest() }
-  
+
+  void testCastInstanceofedThisQualifier() { doTest() }
+
   void testDontCastInstanceofedQualifier() { doTest() }
   void testDontCastPartiallyInstanceofedQualifier() { doAntiTest() }
   void testQualifierCastingWithUnknownAssignments() { doTest() }

@@ -19,17 +19,17 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 
 public abstract class AbstractMoveElementLeftRightTest extends AbstractEditorTest {
-  protected void doTestFromLeftToRight(String leftMostPosition, String... rightPositions) throws Exception {
+  protected void doTestFromLeftToRight(String leftMostPosition, String... rightPositions) {
     doTest(true, leftMostPosition);
     doTest(false, leftMostPosition, rightPositions);
   }
 
-  protected void doTestFromRightToLeft(String rightMostPosition, String... leftPositions) throws Exception {
+  protected void doTestFromRightToLeft(String rightMostPosition, String... leftPositions) {
     doTest(false, rightMostPosition);
     doTest(true, rightMostPosition, leftPositions);
   }
 
-  private void doTest(boolean moveLeft, String before, String... after) throws Exception {
+  private void doTest(boolean moveLeft, String before, String... after) {
     String current = before;
     for (String next : after) {
       doTestSingle(moveLeft, current, next);
@@ -45,11 +45,11 @@ public abstract class AbstractMoveElementLeftRightTest extends AbstractEditorTes
     doTestSingle(!moveLeft, current, before);
   }
   
-  private void doTestSingle(boolean moveLeft, String before, String after) throws Exception {
+  private void doTestSingle(boolean moveLeft, String before, String after) {
     configureEditor(before);
     executeAction(moveLeft ? IdeActions.MOVE_ELEMENT_LEFT : IdeActions.MOVE_ELEMENT_RIGHT);
     checkResultByText(after);
   }
   
-  protected abstract void configureEditor(String contents) throws Exception;
+  protected abstract void configureEditor(String contents);
 }

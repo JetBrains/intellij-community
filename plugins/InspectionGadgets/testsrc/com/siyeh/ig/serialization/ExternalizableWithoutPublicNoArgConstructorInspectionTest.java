@@ -4,7 +4,7 @@ import com.siyeh.ig.IGInspectionTestCase;
 
 public class ExternalizableWithoutPublicNoArgConstructorInspectionTest extends IGInspectionTestCase {
 
-  public void test() throws Exception {
+  public void test() {
     doTest("com/siyeh/igtest/serialization/externalizable_without_public_no_arg_constructor",
            new ExternalizableWithoutPublicNoArgConstructorInspection());
   }

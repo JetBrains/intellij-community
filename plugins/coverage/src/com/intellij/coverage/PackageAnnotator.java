@@ -23,15 +23,13 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.rt.coverage.data.ClassData;
@@ -39,16 +37,15 @@ import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.SmartHashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author ven
@@ -62,12 +59,17 @@ public class PackageAnnotator {
   private final Project myProject;
   private final PsiManager myManager;
   private final CoverageDataManager myCoverageManager;
+  private final boolean myIgnoreEmptyPrivateConstructors;
+  private final boolean myIgnoreImplicitConstructor;
 
   public PackageAnnotator(final PsiPackage aPackage) {
     myPackage = aPackage;
     myProject = myPackage.getProject();
     myManager = PsiManager.getInstance(myProject);
     myCoverageManager = CoverageDataManager.getInstance(myProject);
+    JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(myProject);
+    myIgnoreEmptyPrivateConstructors = optionsProvider.ignoreEmptyPrivateConstructors();
+    myIgnoreImplicitConstructor = optionsProvider.ignoreImplicitConstructors();
   }
 
   public interface Annotator {
@@ -161,28 +163,46 @@ public class PackageAnnotator {
     for (final Module module : modules) {
       if (!scope.isSearchInModuleContent(module)) continue;
       final String rootPackageVMName = qualifiedName.replaceAll("\\.", "/");
-      final VirtualFile output = myCoverageManager.doInReadActionIfProjectOpen(
-        () -> CompilerModuleExtension.getInstance(module).getCompilerOutputPath());
+      final VirtualFile[] productionRoots = myCoverageManager.doInReadActionIfProjectOpen(
+        () -> OrderEnumerator.orderEntries(module)
+          .withoutSdk()
+          .withoutLibraries()
+          .withoutDepModules()
+          .productionOnly()
+          .classes()
+          .getRoots());
+      final Set<VirtualFile> productionRootsSet = new SmartHashSet<>();
 
-
-      if (output != null) {
-        File outputRoot = findRelativeFile(rootPackageVMName, output);
-        if (outputRoot.exists()) {
-          collectCoverageInformation(outputRoot, packageCoverageMap, flattenPackageCoverageMap, data, rootPackageVMName, annotator, module,
-                                     suite, false);
+      if (productionRoots != null) {
+        for (VirtualFile output : productionRoots) {
+          productionRootsSet.add(output);
+          File outputRoot = findRelativeFile(rootPackageVMName, output);
+          if (outputRoot.exists()) {
+            collectCoverageInformation(outputRoot, packageCoverageMap, flattenPackageCoverageMap, data, rootPackageVMName, annotator,
+                                       module,
+                                       suite, false);
+          }
         }
-
       }
 
       if (suite.isTrackTestFolders()) {
-        final VirtualFile testPackageRoot = myCoverageManager.doInReadActionIfProjectOpen(
-          () -> CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests());
+        final VirtualFile[] allRoots = myCoverageManager.doInReadActionIfProjectOpen(
+          () -> OrderEnumerator.orderEntries(module)
+            .withoutSdk()
+            .withoutLibraries()
+            .withoutDepModules()
+            .classes()
+            .getRoots());
 
-        if (testPackageRoot != null) {
-          final File outputRoot = findRelativeFile(rootPackageVMName, testPackageRoot);
-          if (outputRoot.exists()) {
-            collectCoverageInformation(outputRoot, packageCoverageMap, flattenPackageCoverageMap, data, rootPackageVMName, annotator, module,
+        if (allRoots != null) {
+          for (VirtualFile root : allRoots) {
+            if (productionRootsSet.contains(root)) continue;
+            final File outputRoot = findRelativeFile(rootPackageVMName, root);
+            if (outputRoot.exists()) {
+              collectCoverageInformation(outputRoot, packageCoverageMap, flattenPackageCoverageMap, data, rootPackageVMName, annotator,
+                                         module,
                                          suite, true);
+            }
           }
         }
       }
@@ -430,6 +450,10 @@ public class PackageAnnotator {
           else if (lineData.getStatus() == LineCoverage.PARTIAL) {
             toplevelClassCoverageInfo.partiallyCoveredLineCount++;
           }
+          else if ((myIgnoreEmptyPrivateConstructors || myIgnoreImplicitConstructor) && 
+                   isGeneratedDefaultConstructor(psiClass, lineData.getMethodSignature(), myIgnoreImplicitConstructor, myIgnoreEmptyPrivateConstructors)) {
+            continue;
+          }
           toplevelClassCoverageInfo.totalLineCount++;
           packageCoverageInfo.totalLineCount++;
         }
@@ -442,7 +466,8 @@ public class PackageAnnotator {
           touchedClass = true;
         }
 
-        if (isGeneratedDefaultConstructor(psiClass, (String)nameAndSig)) {
+        if ((myIgnoreEmptyPrivateConstructors || myIgnoreImplicitConstructor) &&
+            isGeneratedDefaultConstructor(psiClass, (String)nameAndSig, myIgnoreImplicitConstructor, myIgnoreEmptyPrivateConstructors)) {
           continue;
         }
 
@@ -491,18 +516,27 @@ public class PackageAnnotator {
    * Checks if the method is a default constructor generated by the compiler. Such constructors are not marked as synthetic
    * in the bytecode, so we need to look at the PSI to see if the class defines such a constructor.
    */
-  public static boolean isGeneratedDefaultConstructor(@Nullable final PsiClass aClass, String nameAndSig) {
+  public static boolean isGeneratedDefaultConstructor(@Nullable final PsiClass aClass, String nameAndSig,
+                                                      boolean implicitConstructor, boolean privateEmpty) {
+    if (aClass == null || !implicitConstructor && !privateEmpty) return false;
     if (DEFAULT_CONSTRUCTOR_NAME_SIGNATURE.equals(nameAndSig)) {
-      return hasGeneratedConstructor(aClass);
+      return hasGeneratedOrEmptyPrivateConstructor(aClass, implicitConstructor, privateEmpty);
     }
     return false;
   }
 
-  private static boolean hasGeneratedConstructor(@Nullable final PsiClass aClass) {
-    if (aClass == null) {
-      return false;
-    }
-    return ReadAction.compute(() -> aClass.getConstructors().length == 0);
+  private static boolean hasGeneratedOrEmptyPrivateConstructor(@NotNull final PsiClass aClass,
+                                                               boolean implicitConstructor,
+                                                               boolean privateEmpty) {
+    return ReadAction.compute(() -> {
+      PsiMethod[] constructors = aClass.getConstructors();
+      if (privateEmpty && constructors.length == 1 && constructors[0].hasModifierProperty(PsiModifier.PRIVATE)) {
+        PsiCodeBlock body = constructors[0].getBody();
+        return body != null && body.getStatements().length == 0 &&
+               Arrays.stream(aClass.getMethods()).allMatch(method -> method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC));
+      }
+      return implicitConstructor && constructors.length == 0;
+    });
   }
 
   private static ClassCoverageInfo getOrCreateClassCoverageInfo(final Map<String, ClassCoverageInfo> toplevelClassCoverage,
@@ -543,6 +577,7 @@ public class PackageAnnotator {
     if (coverageSuite == null) return false;
     return SourceLineCounterUtil
       .collectNonCoveredClassInfo(classCoverageInfo, packageCoverageInfo, content, coverageSuite.isTracingEnabled(),
-                                  psiClass);
+                                  myIgnoreEmptyPrivateConstructors || myIgnoreImplicitConstructor 
+                                  ? description -> !isGeneratedDefaultConstructor(psiClass, description, myIgnoreImplicitConstructor, myIgnoreEmptyPrivateConstructors) : Condition.TRUE);
   }
 }

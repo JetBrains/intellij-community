@@ -40,10 +40,12 @@ public class TestNGSearchScope extends GlobalSearchScope {
     return 0;
   }
 
+  @Override
   public boolean isSearchInModuleContent(@NotNull Module aModule) {
     return true;
   }
 
+  @Override
   public boolean isSearchInLibraries() {
     return false;
   }

@@ -235,7 +235,7 @@ public class PullUpConflictsUtil {
         PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, member.getContainingClass(), PsiSubstitutor.EMPTY);
         MethodSignature signature = ((PsiMethod) member).getSignature(superSubstitutor);
         final PsiMethod superClassMethod = MethodSignatureUtil.findMethodBySignature(superClass, signature, false);
-        isConflict = superClassMethod != null;
+        isConflict = superClassMethod != null && !superClassMethod.hasModifierProperty(PsiModifier.ABSTRACT);
       }
 
       if (isConflict) {

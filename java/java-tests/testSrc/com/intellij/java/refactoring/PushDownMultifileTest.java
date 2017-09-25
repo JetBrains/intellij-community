@@ -43,15 +43,15 @@ public class PushDownMultifileTest extends MultiFileTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest(false);
   }
 
-  private void doTest(final boolean fail) throws Exception {
+  private void doTest(final boolean fail) {
     doTest(fail, "a.A", "b.B");
   }
 
-  private void doTest(final boolean fail, final String sourceClassName, final String targetClassName) throws Exception {
+  private void doTest(final boolean fail, final String sourceClassName, final String targetClassName) {
     try {
       doTest((rootDir, rootAfter) -> {
         final PsiClass srcClass = myJavaFacade.findClass(sourceClassName, GlobalSearchScope.allScope(myProject));
@@ -85,23 +85,23 @@ public class PushDownMultifileTest extends MultiFileTestCase {
   }
 
 
-  public void testStaticImportsInsidePushedMethod() throws Exception {
+  public void testStaticImportsInsidePushedMethod() {
     doTest();
   }
 
-  public void testStaticImportOfPushedMethod() throws Exception {
+  public void testStaticImportOfPushedMethod() {
     doTest();
   }
 
-  public void testReuseOverrideMethod() throws Exception {
+  public void testReuseOverrideMethod() {
     doTest();
   }
 
-  public void testFromInterface() throws Exception {
+  public void testFromInterface() {
     doTest(false, "a.I", "a.I1");
   }
 
-  public void testUsagesInXml() throws Exception {
+  public void testUsagesInXml() {
     try {
       doTest((rootDir, rootAfter) -> {
         final PsiClass srcClass = myJavaFacade.findClass("a.A", GlobalSearchScope.allScope(myProject));

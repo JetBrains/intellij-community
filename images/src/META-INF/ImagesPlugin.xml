@@ -139,11 +139,18 @@
               id="Images.Thumbnails.FilterByTheme"
               text="Filter by Theme"
               description="Filter images by theme"/>
-      <action class="org.intellij.images.thumbnail.actions.FilterByTagComboBoxAction"
+      <action class="org.intellij.images.thumbnail.actions.FilterByTagActionGroup"
               internal="true"
+              popup="true"
               id="Images.Thumbnails.FilterByTag"
               text="Filter by Tag"
               description="Filter images by tag"/>
+      <action class="org.intellij.images.thumbnail.actions.ToggleTagsPanelAction"
+              id="Images.Thumbnails.ToggleTagsPanelName"
+              text="Preview Tags"
+              description="Toggle whether to show the tags management panel"
+              icon="AllIcons.Actions.Preview">
+      </action>
 
       <action class="org.intellij.images.thumbnail.actions.HideThumbnailsAction"
               id="Images.Thumbnails.Hide"
@@ -158,8 +165,6 @@
               id="Images.Thumbnails.EnterAction">
         <keyboard-shortcut first-keystroke="ENTER" keymap="$default"/>
       </action>
-      <action class="org.intellij.images.thumbnail.actions.AddTagGroup" id="Images.Thumbnails.AddTagGroup" text="Add Tag"/>
-      <action class="org.intellij.images.thumbnail.actions.RemoveTagGroup" id="Images.Thumbnails.RemoveTagGroup" text="Remove Tag"/>
       <separator/>
       <reference id="Images.ThumbnailsToolbar"/>
       <separator/>

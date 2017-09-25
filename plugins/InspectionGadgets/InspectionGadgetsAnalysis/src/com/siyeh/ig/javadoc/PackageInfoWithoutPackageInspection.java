@@ -77,13 +77,7 @@ public class PackageInfoWithoutPackageInspection extends BaseInspection {
         return;
       }
       final PsiJavaFile file = (PsiJavaFile)element;
-      // can't use file.setPackageName(myPackageName) here because it will put the package in the wrong place and screw up formatting.
-      PsiElement anchor = file.getFirstChild();
-      while (anchor instanceof PsiWhiteSpace || anchor instanceof PsiComment) {
-        anchor = anchor.getNextSibling();
-      }
-      final PsiPackageStatement packageStatement = JavaPsiFacade.getElementFactory(project).createPackageStatement(myPackageName);
-      file.addBefore(packageStatement, anchor);
+      file.setPackageName(myPackageName);
     }
   }
 

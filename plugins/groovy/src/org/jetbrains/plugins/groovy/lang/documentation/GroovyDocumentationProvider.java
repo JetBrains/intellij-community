@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -215,9 +215,8 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     }
   }
 
-  private static void generateModifiers(StringBuilder buffer, PsiElement element) {
+  private static void generateModifiers(StringBuilder buffer, PsiModifierListOwner element) {
     String modifiers = PsiFormatUtil.formatModifiers(element, PsiFormatUtilBase.JAVADOC_MODIFIERS_ONLY);
-
     if (!modifiers.isEmpty()) {
       buffer.append(modifiers);
       buffer.append(" ");
@@ -500,13 +499,13 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
 
       final PsiType returnType = method.getInferredReturnType();
       if ((returnType != null || method.getModifierList().hasModifierProperty(GrModifier.DEF)) && !PsiType.VOID.equals(returnType)) {
-        builder.append(CodeDocumentationUtil.createDocCommentLine(RETURN_TAG, project, commenter));
+        builder.append(CodeDocumentationUtil.createDocCommentLine(RETURN_TAG, contextComment.getContainingFile(), commenter));
         builder.append(LINE_SEPARATOR);
       }
 
       final PsiClassType[] references = method.getThrowsList().getReferencedTypes();
       for (PsiClassType reference : references) {
-        builder.append(CodeDocumentationUtil.createDocCommentLine(THROWS_TAG, project, commenter));
+        builder.append(CodeDocumentationUtil.createDocCommentLine(THROWS_TAG, contextComment.getContainingFile(), commenter));
         builder.append(reference.getClassName());
         builder.append(LINE_SEPARATOR);
       }

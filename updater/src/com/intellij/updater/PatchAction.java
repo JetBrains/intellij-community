@@ -88,7 +88,7 @@ public abstract class PatchAction {
     if (optional) myFlags |= OPTIONAL; else myFlags &= ~OPTIONAL;
   }
 
-  protected static FileType getFileType(File file) throws IOException {
+  protected static FileType getFileType(File file) {
     if (Utils.isLink(file)) return FileType.SYMLINK;
     if (Utils.isExecutable(file)) return FileType.EXECUTABLE_FILE;
     return FileType.REGULAR_FILE;
@@ -150,7 +150,7 @@ public abstract class PatchAction {
       return lock != null;
     }
     catch (OverlappingFileLockException | IOException e) {
-      Runner.printStackTrace(e);
+      Runner.logger().warn(toFile, e);
       return false;
     }
   }

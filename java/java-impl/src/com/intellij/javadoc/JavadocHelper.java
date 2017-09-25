@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiDocToken;
@@ -108,7 +109,7 @@ public class JavadocHelper {
 
     final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getInstance(psiFile.getProject()).getCurrentSettings();
     int column;
-    if (codeStyleSettings.JD_ALIGN_PARAM_COMMENTS) {
+    if (codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).JD_ALIGN_PARAM_COMMENTS) {
       column = Math.max(descriptionStartColumn, parameterNameEndColumn);
       if (column <= parameterNameEndColumn) {
         column = parameterNameEndColumn + 1;

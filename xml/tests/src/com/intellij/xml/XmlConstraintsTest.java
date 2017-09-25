@@ -50,7 +50,7 @@ import java.util.Vector;
 @SuppressWarnings({"UseOfObsoleteCollectionType"})
 public class XmlConstraintsTest extends LightCodeInsightFixtureTestCase {
 
-  public void testXercesGrammar() throws Exception {
+  public void testXercesGrammar() {
     XSModel xsModel = getXSModel("test.xml", "test.xsd");
     XSElementDeclaration elementDeclaration = xsModel.getElementDeclaration("a", "");
     XSComplexTypeDefinition typeDefinition = (XSComplexTypeDefinition)elementDeclaration.getTypeDefinition();
@@ -62,7 +62,7 @@ public class XmlConstraintsTest extends LightCodeInsightFixtureTestCase {
     assertEquals("b", o.getName());
   }
 
-  public void testXercesIncomplete() throws Exception {
+  public void testXercesIncomplete() {
     XSModel xsModel = getXSModel("testIncomplete.xml", "test.xsd");
     XSElementDeclaration elementDeclaration = xsModel.getElementDeclaration("a", "");
     XSComplexTypeDefinition typeDefinition = (XSComplexTypeDefinition)elementDeclaration.getTypeDefinition();
@@ -74,7 +74,7 @@ public class XmlConstraintsTest extends LightCodeInsightFixtureTestCase {
     assertEquals("b", o.getName());
   }
 
-  public void testXercesForCompletion() throws Exception {
+  public void testXercesForCompletion() {
     XSModel xsModel = getXSModel("testCompletion.xml", "test.xsd");
     PsiElement element = myFixture.getFile().findElementAt(getEditor().getCaretModel().getOffset());
     XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
@@ -111,13 +111,13 @@ public class XmlConstraintsTest extends LightCodeInsightFixtureTestCase {
     return grammar.toXSModel();
   }
 
-  public void testXsdConstraints() throws Exception {
+  public void testXsdConstraints() {
     Map<String, XmlElementDescriptor> map = configure("test.xml", "test.xsd");
     XmlElementDescriptor a = map.get("a");
     XmlElementsGroup topGroup = a.getTopGroup();
   }
 
-  public void testDtdConstraints() throws Exception {
+  public void testDtdConstraints() {
 
     Map<String, XmlElementDescriptor> map = configure("testDtd.xml");
     XmlElementDescriptor a = map.get("a");

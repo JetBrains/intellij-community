@@ -58,7 +58,7 @@ public class HyperlinkLabel extends HighlightableComponent {
   private final List<HyperlinkListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myUseIconAsLink;
   private final TextAttributes myAnchorAttributes;
-  private HyperlinkListener myHyperlinkListener = null;
+  private HyperlinkListener myHyperlinkListener;
 
   private boolean myMouseHover;
   private boolean myMousePressed;
@@ -86,6 +86,7 @@ public class HyperlinkLabel extends HighlightableComponent {
     setOpaque(false);
   }
 
+  @Override
   public void addNotify() {
     super.addNotify();
     adjustSize();
@@ -100,7 +101,7 @@ public class HyperlinkLabel extends HighlightableComponent {
   }
 
   public void setHyperlinkText(String beforeLinkText, String linkText, String afterLinkText) {
-    myUseIconAsLink = beforeLinkText.length() == 0;
+    myUseIconAsLink = beforeLinkText.isEmpty();
     prepareText(beforeLinkText, linkText, afterLinkText);
   }
 
@@ -109,8 +110,8 @@ public class HyperlinkLabel extends HighlightableComponent {
   }
 
   protected void adjustSize() {
-    final Dimension preferredSize = this.getPreferredSize();
-    this.setMinimumSize(preferredSize);
+    final Dimension preferredSize = getPreferredSize();
+    setMinimumSize(preferredSize);
   }
 
   @Override
@@ -121,6 +122,7 @@ public class HyperlinkLabel extends HighlightableComponent {
     }
   }
 
+  @Override
   protected void processMouseEvent(MouseEvent e) {
     if (e.getID() == MouseEvent.MOUSE_ENTERED && isOnLink(e.getX())) {
       myMouseHover = true;
@@ -187,12 +189,7 @@ public class HyperlinkLabel extends HighlightableComponent {
       removeHyperlinkListener(myHyperlinkListener);
     }
     if (url != null) {
-      myHyperlinkListener = new HyperlinkListener() {
-        @Override
-        public void hyperlinkUpdate(HyperlinkEvent e) {
-          BrowserUtil.browse(url);
-        }
-      };
+      myHyperlinkListener = e -> BrowserUtil.browse(url);
       addHyperlinkListener(myHyperlinkListener);
     }
   }
@@ -225,7 +222,7 @@ public class HyperlinkLabel extends HighlightableComponent {
     final HighlightedText highlightedText = new HighlightedText();
     try {
       parse.parse(new StringReader(text), new HTMLEditorKit.ParserCallback() {
-        private TextAttributes currentAttributes = null;
+        private TextAttributes currentAttributes;
 
         @Override
         public void handleText(char[] data, int pos) {
@@ -314,9 +311,7 @@ public class HyperlinkLabel extends HighlightableComponent {
       if (i == 0) {
         return UIManager.getString("AbstractButton.clickText");
       }
-      else {
-        return null;
-      }
+      return null;
     }
 
     @Override

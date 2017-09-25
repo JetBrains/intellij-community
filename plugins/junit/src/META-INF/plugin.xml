@@ -42,6 +42,7 @@
     <testFramework implementation="com.intellij.execution.junit.JUnit4Framework" id="junit4"/>
     <configurationType implementation="com.intellij.execution.junit.JUnitConfigurationType"/>
     <library.dependencyScopeSuggester implementation="com.intellij.execution.junit.JUnitDependencyScopeSuggester"/>
+    <runConfigurationHandlerExtension implementation="com.intellij.execution.junit.JUnitRunConfigHandler"/>
 
     <stacktrace.fold substring="at org.junit.internal.runners."/>
     <stacktrace.fold substring="at org.junit.runners."/>

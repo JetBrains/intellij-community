@@ -28,7 +28,7 @@ public class ReplaceWithTrivialLambdaFixTest extends LightQuickFixParameterizedT
     return new LocalInspectionTool[]{new DataFlowInspection()};
   }
 
-  public void test() throws Exception {
+  public void test() {
      doAllTests();
    }
 

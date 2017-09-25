@@ -59,7 +59,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     return myEditor.selectTabAndGetEditor(editorClass);
   }
 
-  public ConfigurationSettingsEditorWrapper(final RunnerAndConfigurationSettings settings) {
+  public ConfigurationSettingsEditorWrapper(@NotNull RunnerAndConfigurationSettings settings) {
     myEditor = new ConfigurationSettingsEditor(settings);
     Disposer.register(this, myEditor);
     myBeforeRunStepsPanel = new BeforeRunStepsPanel(this);

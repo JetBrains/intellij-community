@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,22 +28,21 @@ class ConvertIntegerToDecimalPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiLiteralExpression expression = (PsiLiteralExpression)element;
+    if (expression.getValue() == null) {
+      return false;
+    }
     final PsiType type = expression.getType();
+    @NonNls final String text = expression.getText();
+    if (text.length() < 2) {
+      return false;
+    }
     if (PsiType.INT.equals(type) || PsiType.LONG.equals(type)) {
-      @NonNls final String text = expression.getText();
-      if (text == null || text.length() < 2) {
-        return false;
-      }
-      if ("0".equals(text) || "0L".equals(text) || "0l".equals(text)) {
+      if ("0L".equals(text) || "0l".equals(text)) {
         return false;
       }
       return text.charAt(0) == '0';
     }
     if (PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type)) {
-      @NonNls final String text = expression.getText();
-      if (text == null || text.length() < 2) {
-        return false;
-      }
       return text.startsWith("0x") || text.startsWith("0X");
     }
     return false;

@@ -22,21 +22,21 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 public class PsiPolyExpressionUtilTest extends LightCodeInsightFixtureTestCase {
-  public void testPrefixExpression() throws Exception {
+  public void testPrefixExpression() {
     final PsiExpression psiExpression = findExpression("     int j = i<caret>++;");
     assertInstanceOf(psiExpression, PsiPostfixExpression.class);
     assertTrue(PsiPolyExpressionUtil.hasStandaloneForm(psiExpression));
     assertFalse(PsiPolyExpressionUtil.isPolyExpression(psiExpression));
   }
 
-  public void testNumericConditionExpression() throws Exception {
+  public void testNumericConditionExpression() {
     final PsiExpression psiExpression = findExpression("     int j = i == 0 <caret>? i + 1 : i - 1;");
     assertInstanceOf(psiExpression, PsiConditionalExpression.class);
     assertFalse(PsiPolyExpressionUtil.hasStandaloneForm(psiExpression));
     assertFalse(PsiPolyExpressionUtil.isPolyExpression(psiExpression));
   }
 
-  public void testPolyConditionExpression() throws Exception {
+  public void testPolyConditionExpression() {
     myFixture.configureByText("Foo.java", "import java.util.*;" +
                                           "class Foo {" +
                                           "  String foo(int i) {" +
@@ -52,21 +52,21 @@ public class PsiPolyExpressionUtilTest extends LightCodeInsightFixtureTestCase {
     assertTrue(PsiPolyExpressionUtil.isPolyExpression(psiExpression));
   }
 
-  public void testNewExpressionDiamond() throws Exception {
+  public void testNewExpressionDiamond() {
     final PsiExpression psiExpression = findExpression("     List<String> l = new Arr<caret>ayList<>();");
     assertInstanceOf(psiExpression, PsiNewExpression.class);
     assertFalse(PsiPolyExpressionUtil.hasStandaloneForm(psiExpression));
     assertTrue(PsiPolyExpressionUtil.isPolyExpression(psiExpression));
   }
 
-  public void testNewExpression() throws Exception {
+  public void testNewExpression() {
     final PsiExpression psiExpression = findExpression("     List<String> l = new Arr<caret>ayList<String>();");
     assertInstanceOf(psiExpression, PsiNewExpression.class);
     assertFalse(PsiPolyExpressionUtil.hasStandaloneForm(psiExpression));
     assertFalse(PsiPolyExpressionUtil.isPolyExpression(psiExpression));
   }
 
-  public void testMethodCallInsideArrayCreation() throws Exception {
+  public void testMethodCallInsideArrayCreation() {
     myFixture.configureByText("Foo.java", "import java.util.*;" +
                                           "class Foo {" +
                                           "  <T> T bar() {return null;}" +
@@ -81,7 +81,7 @@ public class PsiPolyExpressionUtilTest extends LightCodeInsightFixtureTestCase {
     assertTrue(PsiPolyExpressionUtil.isPolyExpression(psiExpression));
   }
 
-  public void testConditional() throws Exception {
+  public void testConditional() {
     myFixture.configureByText("Foo.java", "import java.util.function.Supplier;" +
                                           "class Foo {" +
                                           "    private static <R> void map(Supplier<R> fn) {}\n" +
@@ -97,7 +97,7 @@ public class PsiPolyExpressionUtilTest extends LightCodeInsightFixtureTestCase {
     assertTrue(PsiPolyExpressionUtil.isPolyExpression(psiExpression));
   }
 
-  public void testConditionalInAssignment() throws Exception {
+  public void testConditionalInAssignment() {
     myFixture.configureByText("Foo.java", "class Foo {" +
                                           "    public static void main(String[] args) {\n" +
                                           "        Object obj = new Object();\n" +
@@ -126,26 +126,26 @@ public class PsiPolyExpressionUtilTest extends LightCodeInsightFixtureTestCase {
     return PsiTreeUtil.getParentOfType(elementAtCaret, PsiExpression.class);
   }
 
-  public void testPertinentLambdaExpression() throws Exception {
+  public void testPertinentLambdaExpression() {
     assertFalse(doTestLambdaPertinent("  void bar(List<Runnable> l) {" +
                                       "   foo(() <caret>-> {}, l);" +
                                       "  }"));
   }
 
-  public void testPertinentImplicitLambdaExpression() throws Exception {
+  public void testPertinentImplicitLambdaExpression() {
     assertFalse(doTestLambdaPertinent("  void bar(List<Comparable<String>> l) {" +
                                       "   foo((String s) <caret>-> 1, l);" +
                                       "  }"));
   }
 
-  public void testPertinentNestedLambdaExpression() throws Exception {
+  public void testPertinentNestedLambdaExpression() {
     assertFalse(doTestLambdaPertinent("  interface Fun<I, O> { O inOut(I i);}\n" +
                                       "  void bar(List<Fun<String, Fun<String, String>>> l) {" +
                                       "   foo((sIn, sOut) -> (sInInner, sOutInner) <caret>-> sOutInner, l);" +
                                       "  }"));
   }
 
-  public void testPertinentNestedLambdaExpressionWhenTargetIsTypeParameterOfMethod() throws Exception {
+  public void testPertinentNestedLambdaExpressionWhenTargetIsTypeParameterOfMethod() {
     myFixture.configureByText("Foo.java", "interface Supplier<T> { T get();}" +
                                           "class Foo {" +
                                           "      { Supplier<Runnable> x = foo ((<caret>) -> () -> {});}\n" +
@@ -164,7 +164,7 @@ public class PsiPolyExpressionUtilTest extends LightCodeInsightFixtureTestCase {
     assertFalse(InferenceSession.isPertinentToApplicability(psiExpression, meths[0]));
   }
 
-  public void testNotExactMethodReferenceOnRawClassType() throws Exception {
+  public void testNotExactMethodReferenceOnRawClassType() {
     myFixture.configureByText("Foo.java", "class Foo {" +
                                           "    class Test<A>{ Test(){}}" +
                                           "    {Runnable r = Test:<caret>:new;}" +  
@@ -176,7 +176,7 @@ public class PsiPolyExpressionUtilTest extends LightCodeInsightFixtureTestCase {
     assertFalse(((PsiMethodReferenceExpression)psiExpression).isExact());
   }
 
-  public void testExactMethodReferenceOnGenericClassType() throws Exception {
+  public void testExactMethodReferenceOnGenericClassType() {
     myFixture.configureByText("Foo.java", "class Foo {" +
                                           "    class Test<A>{ Test(){}}" +
                                           "    {Runnable r = Test<String>:<caret>:new;}" +  

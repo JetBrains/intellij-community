@@ -15,28 +15,23 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
-public class PyRedundantParenthesesInspectionTest extends PyTestCase {
-  public void doTest() {
-    myFixture.configureByFile("inspections/PyRedundantParenthesesInspection/" + getTestName(false) + ".py");
-    myFixture.enableInspections(PyRedundantParenthesesInspection.class);
-    myFixture.checkHighlighting(true, false, true);
+public class PyRedundantParenthesesInspectionTest extends PyInspectionTestCase {
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyRedundantParenthesesInspection.class;
   }
 
-  public void doTest(LanguageLevel languageLevel) {
-    try {
-      setLanguageLevel(languageLevel);
-      myFixture.configureByFile("inspections/PyRedundantParenthesesInspection/" + getTestName(false) + ".py");
-      myFixture.enableInspections(PyRedundantParenthesesInspection.class);
-      myFixture.checkHighlighting(true, false, true);
-    } finally {
-      setLanguageLevel(null);
-    }
+  @Override
+  protected boolean isLowerCaseTestFile() {
+    return false;
   }
 
   public void testBooleanMultiline() {
@@ -72,11 +67,11 @@ public class PyRedundantParenthesesInspectionTest extends PyTestCase {
   }
 
   public void testYieldFrom() {       //PY-7410
-    doTest(LanguageLevel.PYTHON33);
+    runWithLanguageLevel(LanguageLevel.PYTHON33, this::doTest);
   }
 
   public void testYield() {       //PY-10420
-    doTest(LanguageLevel.PYTHON27);
+    doTest();
   }
 
   public void testBinaryInBinary() {       //PY-10420

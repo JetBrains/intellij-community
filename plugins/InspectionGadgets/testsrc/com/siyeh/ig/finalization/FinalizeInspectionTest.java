@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class FinalizeInspectionTest extends LightInspectionTestCase {
 
-  public void testFinalize() throws Exception {
+  public void testFinalize() {
     doTest();
   }
 

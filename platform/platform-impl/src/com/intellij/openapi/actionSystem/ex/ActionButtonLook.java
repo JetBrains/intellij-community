@@ -25,10 +25,27 @@ import javax.swing.*;
 import java.awt.*;
 
 public abstract class ActionButtonLook {
-  @SuppressWarnings("StaticInitializerReferencesSubClass")
-  public static final ActionButtonLook DEFAULT_LOOK = UIUtil.isUnderWin10LookAndFeel() ?
-                                                       new Win10ActionButtonLook() :
-                                                       new IdeaActionButtonLook();
+  public static final ActionButtonLook SYSTEM_LOOK = new ActionButtonLook() {
+    private ActionButtonLook delegate;
+
+    { updateUI(); }
+
+    @Override public void updateUI() {
+      delegate = UIUtil.isUnderWin10LookAndFeel() ? new Win10ActionButtonLook() : new IdeaActionButtonLook();
+    }
+
+    @Override public void paintBackground(Graphics g, JComponent component, int state) {
+      delegate.paintBackground(g, component, state);
+    }
+
+    @Override public void paintBorder(Graphics g, JComponent component, int state) {
+      delegate.paintBorder(g, component, state);
+    }
+
+    @Override public Insets getInsets() {
+      return delegate.getInsets();
+    }
+  };
 
   public static final ActionButtonLook INPLACE_LOOK = new ActionButtonLook() {
     @Override public void paintBackground(Graphics g, JComponent component, int state) {}
@@ -47,6 +64,8 @@ public abstract class ActionButtonLook {
 
   public abstract void paintBorder(Graphics g, JComponent component, @ActionButtonComponent.ButtonState int state);
 
+  public void updateUI() {}
+
   @SuppressWarnings("MethodMayBeStatic")
   @ActionButtonComponent.ButtonState
   protected int getState(ActionButtonComponent button) {
@@ -59,10 +78,10 @@ public abstract class ActionButtonLook {
     int height = icon.getIconHeight();
     int x = (actionButton.getWidth() - width) / 2;
     int y = (actionButton.getHeight() - height) / 2;
-    paintIconAt(g, actionButton, icon, x, y);
+    paintIconAt(g, icon, x, y);
   }
 
-  public void paintIconAt(Graphics g, ActionButtonComponent button, Icon icon, int x, int y) {
+  public void paintIconAt(Graphics g, Icon icon, int x, int y) {
     icon.paintIcon(null, g, x, y);
   }
 

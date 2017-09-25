@@ -19,9 +19,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsGlobal;
 import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * @author nik
@@ -32,8 +34,10 @@ public abstract class JpsSerializationManager {
   }
 
   @NotNull
-  public abstract JpsModel loadModel(@NotNull String projectPath, @Nullable String optionsPath)
-    throws IOException;
+  public abstract JpsModel loadModel(@NotNull String projectPath, @Nullable String optionsPath) throws IOException;
+
+  @NotNull
+  public abstract JpsProject loadProject(@NotNull String projectPath, @NotNull Map<String, String> pathVariables) throws IOException;
 
   public abstract void saveGlobalSettings(@NotNull JpsGlobal global, @NotNull String optionsPath) throws IOException;
 }

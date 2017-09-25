@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class BlockingSetTest {
   @Test
-  public void testSingleThreadLock() throws Exception {
+  public void testSingleThreadLock() {
     BlockingSet<String> lock = new BlockingSet<>();
     lock.put("eins");
     lock.put("zwei");
@@ -24,7 +24,7 @@ public class BlockingSetTest {
   }
 
   @Test(expected = IllegalStateException.class)
-  public void testReleaseNotAcquired() throws Exception {
+  public void testReleaseNotAcquired() {
     BlockingSet<String> lock = new BlockingSet<>();
     lock.put("eins");
     lock.put("zwei");

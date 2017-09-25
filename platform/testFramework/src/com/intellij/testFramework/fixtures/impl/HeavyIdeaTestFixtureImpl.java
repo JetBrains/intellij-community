@@ -34,13 +34,17 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.testFramework.*;
@@ -59,12 +63,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -80,6 +79,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
   private EditorListenerTracker myEditorListenerTracker;
   private ThreadTracker myThreadTracker;
   private final String myName;
+  private Sdk[] myOldSdks;
 
   HeavyIdeaTestFixtureImpl(@NotNull String name) {
     myName = name;
@@ -100,6 +100,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     myEditorListenerTracker = new EditorListenerTracker();
     myThreadTracker = new ThreadTracker();
     InjectedLanguageManagerImpl.pushInjectors(getProject());
+    myOldSdks = ProjectJdkTable.getInstance().getAllJdks();
   }
 
   @Override
@@ -115,6 +116,8 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       .append(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(getProject()))
       .append(() -> myProject = null);
 
+    ((JarFileSystemImpl)JarFileSystem.getInstance()).cleanupForNextTest();
+    
     for (File fileToDelete : myFilesToDelete) {
       runAll = runAll.append(() -> {
         List<Throwable> errors = Files.walk(fileToDelete.toPath())
@@ -140,6 +143,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       .append(() -> myEditorListenerTracker.checkListenersLeak())
       .append(() -> myThreadTracker.checkLeak())
       .append(LightPlatformTestCase::checkEditorsReleased)
+      .append(() -> UsefulTestCase.checkForJdkTableLeaks(myOldSdks))
       .append(() -> PlatformTestCase.cleanupApplicationCaches(null))  // project is disposed by now, no point in passing it
       .run();
   }

@@ -22,6 +22,7 @@ import com.intellij.codeInsight.hint.api.impls.AnnotationParameterInfoHandler;
 import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
 import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
 import com.intellij.openapi.util.Disposer;
@@ -35,8 +36,6 @@ import com.intellij.testFramework.utils.parameterInfo.MockCreateParameterInfoCon
 import com.intellij.testFramework.utils.parameterInfo.MockParameterInfoUIContext;
 import com.intellij.testFramework.utils.parameterInfo.MockUpdateParameterInfoContext;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.IOException;
 
 public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
   @Override
@@ -63,7 +62,7 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
     assertEquals(paramsList, joined);
   }
 
-  public void testParameterInfoDoesNotShowInternalJetbrainsAnnotations() throws IOException {
+  public void testParameterInfoDoesNotShowInternalJetbrainsAnnotations() {
     myFixture.configureByText("x.java", "class X { void f(@org.intellij.lang.annotations.Flow int i) { f(<caret>0); }}");
 
     CreateParameterInfoContext context = new MockCreateParameterInfoContext(getEditor(), getFile());
@@ -96,7 +95,7 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
     doTest2CandidatesWithPreselection();
   }
 
-  public void testSuperConstructorCalls() throws Exception {
+  public void testSuperConstructorCalls() {
     myFixture.configureByText("x.java",
                               "class A {\n" +
                               "       public A(String s, int... p) {}\n" +
@@ -296,6 +295,11 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
     assertEquals("<html>int a</html>", parameterPresentation(2, -1));
 
     checkHighlighted(0);
+  }
+
+  public void testNoStrikeoutForSingleDeprecatedMethod() {
+    myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { System.runFinalizersOnExit(true<caret>); } }");
+    assertEquals("<html>boolean value</html>", parameterPresentation(-1));
   }
 
   private void checkHighlighted(int lineIndex) {

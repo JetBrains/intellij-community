@@ -26,7 +26,7 @@ import org.junit.Assert;
 import java.util.*;
 
 public class GenericApplyPatchTest extends PlatformTestCase {
-  public void testSeveralSteps() throws Exception {
+  public void testSeveralSteps() {
     final PatchHunk patchHunk = new PatchHunk(1, 8, 1, 8);
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "1"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "2"));
@@ -49,7 +49,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     Assert.assertEquals("0\nmmm\n2\n5\n6\n9\n10\n11\naaa", after);
   }
 
-  public void testExchangedParts() throws Exception {
+  public void testExchangedParts() {
     final PatchHunk patchHunk = new PatchHunk(1, 8, 1, 8);
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "1"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.REMOVE, "2"));
@@ -74,7 +74,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     Assert.assertEquals("5\n6a\n7a\n8\n1\n2a\n3a\n4\n9\nextra line", after);
   }
 
-  public void testDeleteAlmostOk() throws Exception {
+  public void testDeleteAlmostOk() {
     final PatchHunk patchHunk = new PatchHunk(1, 8, 1, 8);
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "1"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "2"));
@@ -96,7 +96,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n9\n8\n11\naaa", after);
   }
 
-  public void testInsertAlmostOk() throws Exception {
+  public void testInsertAlmostOk() {
     final PatchHunk patchHunk = new PatchHunk(1, 8, 1, 8);
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "1"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "2"));
@@ -118,7 +118,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n3\n4\n5\n9\n8\n11\naaa", after);
   }
 
-  public void testInsertAlmostOkAlreadyApplied() throws Exception {
+  public void testInsertAlmostOkAlreadyApplied() {
     final PatchHunk patchHunk = new PatchHunk(1, 8, 1, 8);
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "1"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "2"));
@@ -140,7 +140,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n3\n4\n5\n9\n8\n11\naaa", after);
   }
 
-  public void testChangeAlmostOk() throws Exception {
+  public void testChangeAlmostOk() {
     final PatchHunk patchHunk = new PatchHunk(1, 8, 1, 8);
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "1"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "2"));
@@ -164,7 +164,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\na\nb\n9\n8\n11\naaa", after);
   }
 
-  public void testChangeAlmostOkAlreadyApplied() throws Exception {
+  public void testChangeAlmostOkAlreadyApplied() {
     final PatchHunk patchHunk = new PatchHunk(1, 8, 1, 8);
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "1"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "2"));
@@ -189,7 +189,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\na\nb\nc\n9\n8\n11\naaa", after);
   }
 
-  public void testChangeAlmostOkManySteps() throws Exception {
+  public void testChangeAlmostOkManySteps() {
     final PatchHunk patchHunk = new PatchHunk(1, 8, 1, 8);
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "1"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "2"));
@@ -224,7 +224,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n-1\n4\n9\n8\n11\naaa\n2\n-1a\n-2a\n-3a\n-3b\n-4a\n-4b\n", after);
   }
 
-  public void testFirstNewLine() throws Exception {
+  public void testFirstNewLine() {
     final PatchHunk patchHunk = new PatchHunk(1, 2, 1, 3);
     patchHunk.addLine(new PatchLine(PatchLine.Type.ADD, ""));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "1"));
@@ -239,7 +239,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     Assert.assertEquals("\n1\n2\n", after);
   }
 
-    public void testNewEmptyLine() throws Exception {
+    public void testNewEmptyLine() {
     final PatchHunk patchHunk = new PatchHunk(1, 3, 1, 4);
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "0"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.ADD, ""));
@@ -255,7 +255,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     Assert.assertEquals("0\n\n1\n2\n", after);
   }
 
-  public void testInsertionsIntoTransformationsCoinsidence() throws Exception {
+  public void testInsertionsIntoTransformationsCoinsidence() {
     final StringBuilder sb = new StringBuilder();
     for (int i = 0; i < 20; i++) {
       sb.append(String.valueOf(i + 1)).append('\n');
@@ -269,7 +269,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     Assert.assertEquals(ApplyPatchStatus.ALREADY_APPLIED, gap.getStatus());
   }
 
-  public void testInsertionsIntoTransformationsInsert() throws Exception {
+  public void testInsertionsIntoTransformationsInsert() {
     final StringBuilder sb = new StringBuilder();
     for (int i = 0; i < 20; i++) {
       sb.append(String.valueOf(i + 1)).append('\n');
@@ -291,7 +291,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     Assert.assertTrue("ins".equals(list.get(1)));
   }
 
-  public void testInsertionsIntoTransformationsInsert0() throws Exception {
+  public void testInsertionsIntoTransformationsInsert0() {
     final StringBuilder sb = new StringBuilder();
     for (int i = 0; i < 20; i++) {
       sb.append(String.valueOf(i + 1)).append('\n');
@@ -313,7 +313,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     Assert.assertTrue("5".equals(list.get(1)));
   }
 
-  public void testInsertionsIntoTransformationsInsert1() throws Exception {
+  public void testInsertionsIntoTransformationsInsert1() {
     final StringBuilder sb = new StringBuilder();
     for (int i = 0; i < 20; i++) {
       sb.append(String.valueOf(i + 1)).append('\n');
@@ -335,7 +335,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     Assert.assertTrue("ins".equals(list.get(1)));
   }
 
-  public void testInsertionsIntoTransformationsDeletion() throws Exception {
+  public void testInsertionsIntoTransformationsDeletion() {
     final StringBuilder sb = new StringBuilder();
     for (int i = 0; i < 20; i++) {
       sb.append(String.valueOf(i + 1)).append('\n');
@@ -355,7 +355,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     Assert.assertTrue(list.size() == 0);
   }
 
-  public void testInsertionsIntoTransformationsDeletion1() throws Exception {
+  public void testInsertionsIntoTransformationsDeletion1() {
     final StringBuilder sb = new StringBuilder();
     for (int i = 0; i < 20; i++) {
       sb.append(String.valueOf(i + 1)).append('\n');
@@ -375,7 +375,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     Assert.assertTrue(list.size() == 0);
   }
 
-  public void testInsertionsIntoTransformationsDeletion0() throws Exception {
+  public void testInsertionsIntoTransformationsDeletion0() {
     final StringBuilder sb = new StringBuilder();
     for (int i = 0; i < 20; i++) {
       sb.append(String.valueOf(i + 1)).append('\n');
@@ -395,7 +395,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     Assert.assertTrue(list.size() == 0);
   }
 
-  public void testBetterContextMatch() throws Exception {
+  public void testBetterContextMatch() {
     final PatchHunk patchHunk = new PatchHunk(1, 8, 1, 8);
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "1"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "2"));
@@ -417,7 +417,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     Assert.assertEquals("0\n0\n0\n3\n4\n5\n\n\n5454\n5345\n2\na\nb\n543543", after);
   }
 
-  public void testBetterContextMatch1() throws Exception {
+  public void testBetterContextMatch1() {
     final PatchHunk patchHunk = new PatchHunk(1, 8, 1, 8);
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "1"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "2"));
@@ -439,7 +439,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     Assert.assertEquals("0\n0\n0\n3\n4\n5\n\n\n5454\n5345\na\nb\n11\n543543", after);
   }
 
-  public void testBetterContextMatch2() throws Exception {
+  public void testBetterContextMatch2() {
     final PatchHunk patchHunk = new PatchHunk(1, 8, 1, 8);
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "1"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "2"));
@@ -461,7 +461,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     Assert.assertEquals("0\n0\n0\n2\n3\n4\n5\n\n\n5454\n5345\n2\na\nb\n11\n543543", after);
   }
 
-  public void testFromSecondLineManySteps() throws Exception {
+  public void testFromSecondLineManySteps() {
     final PatchHunk patchHunk = new PatchHunk(1, 8, 1, 8);
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "1"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "2"));
@@ -496,7 +496,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n-1\n4\n9\n8\n11\naaa\n2\n-1a\n-2a\n-3a\n-3b\n-4a\n-4b\n", after);
   }
 
-  public void testFromSecondLineManySteps0() throws Exception {
+  public void testFromSecondLineManySteps0() {
     final PatchHunk patchHunk = new PatchHunk(1, 8, 1, 8);
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "1"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "2"));
@@ -534,7 +534,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n-1\n-1*\n4\n9\n8\n11\naaa\n2\n-1a\n-1a*\n-2a\n-3a\n-3b\n-4a\n-4b\n", after);
   }
 
-  public void testMoreInsertParts() throws Exception {
+  public void testMoreInsertParts() {
     final PatchHunk patchHunk = new PatchHunk(1, 8, 1, 8);
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "1c"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "2c"));
@@ -556,7 +556,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     Assert.assertEquals("sdsad\nsdsad\n1c\n2c\n3c\n2r\n3a\n3c\n2r\n8\n9\n10\n", after);
   }
 
-  public void testMoreDeletionParts() throws Exception {
+  public void testMoreDeletionParts() {
     final PatchHunk patchHunk = new PatchHunk(1, 8, 1, 8);
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "1c"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "2c"));
@@ -578,7 +578,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     Assert.assertEquals("sdsad\nsdsad\n1c\n2c\n3c\n2r\n8\n9\n10\n", after);
   }
 
-  public void testDoesNotMatchInTheEnd() throws Exception {
+  public void testDoesNotMatchInTheEnd() {
     final PatchHunk patchHunk = new PatchHunk(1, 8, 1, 8);
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "1"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "2"));
@@ -606,7 +606,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
 
   // actually didn't catch the previous version
   // nevertheless, should also pass
-  public void testDoesNotMatchAtStart() throws Exception {
+  public void testDoesNotMatchAtStart() {
     final PatchHunk patchHunk = new PatchHunk(1, 8, 1, 8);
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "1"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "2"));
@@ -632,7 +632,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     Assert.assertEquals("5\n6\n0\nmmm\n2\n4\n7\n8\n11\naaa", after);
   }
 
-  public void testOneLineInsertion() throws Exception {
+  public void testOneLineInsertion() {
     final PatchHunk patchHunk = new PatchHunk(1, 8, 1, 8);
     final PatchLine line = new PatchLine(PatchLine.Type.ADD, "5");
     line.setSuppressNewLine(true);
@@ -648,7 +648,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     Assert.assertEquals("5\n", after);
   }
 
-  public void testOneLineBadInsertion() throws Exception {
+  public void testOneLineBadInsertion() {
     final PatchHunk patchHunk = new PatchHunk(1, 8, 1, 8);
     final PatchLine line = new PatchLine(PatchLine.Type.ADD, "5");
     line.setSuppressNewLine(true);
@@ -665,7 +665,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     Assert.assertEquals("5\n7\n8\n5\n", after);
   }
 
-  public void testConflict1() throws Exception {
+  public void testConflict1() {
     final PatchHunk patchHunk = new PatchHunk(1, 8, 1, 8);
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "1"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "2"));
@@ -686,7 +686,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     Assert.assertEquals("1\n2\n5\n3=*7\n11\n12", after);
   }
 
-  public void testAddAsFirst() throws Exception {
+  public void testAddAsFirst() {
     int[] beforeOfsetExpected = {1, 1};
     int[] afterOfsetExpected = {1, 2};
     final PatchHunk patchHunk = new PatchHunk(1, 4, 1, 5);
@@ -705,7 +705,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     }
   }
 
-  public void testOffsets() throws Exception {
+  public void testOffsets() {
     final PatchHunk patchHunk1 = new PatchHunk(1, 2, 1, 1);
     patchHunk1.addLine(new PatchLine(PatchLine.Type.CONTEXT, "1"));
     patchHunk1.addLine(new PatchLine(PatchLine.Type.REMOVE, "2"));
@@ -744,7 +744,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
   }
 
 
-  public void testAlreadyApplied() throws Exception {
+  public void testAlreadyApplied() {
     int[] beforeAppliedExpected = {2, 5, 6, 8};
     int[] endAppliedExpected = {4, 5, 7, 10};
 
@@ -781,7 +781,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     checkAppliedPositions(beforeAppliedExpected2, endAppliedExpected2, HunkStatus.ALREADY_APPLIED, appliedInfo);
   }
 
-  public void testExactlyApplied() throws Exception {
+  public void testExactlyApplied() {
     int[] beforeAppliedExpected = {5, 8, 10, 12};
     int[] afterAppliedExpected = {7, 9, 11, 12};
     final PatchHunk patchHunk = new PatchHunk(2, 12, 2, 12);
@@ -807,7 +807,7 @@ public class GenericApplyPatchTest extends PlatformTestCase {
     checkAppliedPositions(beforeAppliedExpected, afterAppliedExpected, HunkStatus.EXACTLY_APPLIED, gap.getAppliedInfo());
   }
 
-  public void testMatchBeforeStartOffset() throws Exception {
+  public void testMatchBeforeStartOffset() {
     final PatchHunk patchHunk = new PatchHunk(2, 9, 2, 12);
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "c2"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "c2"));

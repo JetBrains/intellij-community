@@ -30,7 +30,7 @@ public final class PyIronPythonTest extends PyEnvTestCase {
    * Tests skeleton generation
    */
   @Test
-  public void testSkeletons() throws Exception {
+  public void testSkeletons() {
     runPythonTest(new SkeletonTestTask(
       "dotNet/expected.skeleton.java.py",
       "com.just.like.java",
@@ -43,7 +43,7 @@ public final class PyIronPythonTest extends PyEnvTestCase {
    * Tests skeleton generation with "from" statements
    */
   @Test
-  public void testClassFromModule() throws Exception {
+  public void testClassFromModule() {
     runPythonTest(new SkeletonTestTask(
       "dotNet/expected.skeleton.java.py",
       "com.just.like.java",
@@ -56,7 +56,7 @@ public final class PyIronPythonTest extends PyEnvTestCase {
    * Tests skeleton generation when imported as alias
    */
   @Test
-  public void testClassFromModuleAlias() throws Exception {
+  public void testClassFromModuleAlias() {
     runPythonTest(new SkeletonTestTask(
       "dotNet/expected.skeleton.java.py",
       "com.just.like.java",
@@ -69,7 +69,7 @@ public final class PyIronPythonTest extends PyEnvTestCase {
    * Tests skeleton generation when module is imported
    */
   @Test
-  public void testModuleFromPackage() throws Exception {
+  public void testModuleFromPackage() {
     runPythonTest(new SkeletonTestTask(
       "dotNet/expected.skeleton.java.py",
       "com.just.like.java",
@@ -82,7 +82,7 @@ public final class PyIronPythonTest extends PyEnvTestCase {
    * Tests skeleton generation when several classes are imported
    */
   @Test
-  public void testSeveralClasses() throws Exception {
+  public void testSeveralClasses() {
     runPythonTest(new SkeletonTestTask(
       "dotNet/expected.skeleton.java.py",
       "com.just.like.java",
@@ -96,7 +96,7 @@ public final class PyIronPythonTest extends PyEnvTestCase {
    * but we are sure there should be class System.Web.AspNetHostingPermissionLevel which is part of public API
    */
   @Test
-  public void testImportBuiltInSystem() throws Exception {
+  public void testImportBuiltInSystem() {
     final SkeletonTestTask task = new SkeletonTestTask(
       null,
       "System.Web",
@@ -121,7 +121,7 @@ public final class PyIronPythonTest extends PyEnvTestCase {
    * Test importing of inner classes
    */
   @Test
-  public void testImportInnerClass() throws Exception {
+  public void testImportInnerClass() {
     runPythonTest(new SkeletonTestTask(
       "dotNet/expected.skeleton.Deep.py",
       "SingleNameSpace.Some.Deep",
@@ -134,7 +134,7 @@ public final class PyIronPythonTest extends PyEnvTestCase {
    * Test importing of the whole namespace
    */
   @Test
-  public void testWholeNameSpace() throws Exception {
+  public void testWholeNameSpace() {
     runPythonTest(new SkeletonTestTask(
       "dotNet/expected.skeleton.SingleNameSpace.py",
       "SingleNameSpace",
@@ -147,7 +147,7 @@ public final class PyIronPythonTest extends PyEnvTestCase {
    * Test importing of single class
    */
   @Test
-  public void testSingleClass() throws Exception {
+  public void testSingleClass() {
     runPythonTest(new SkeletonTestTask(
       "dotNet/expected.skeleton.SingleNameSpace.py",
       "SingleNameSpace",

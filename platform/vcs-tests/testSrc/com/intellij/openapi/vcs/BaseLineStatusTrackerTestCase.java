@@ -116,7 +116,7 @@ public abstract class BaseLineStatusTrackerTestCase extends LightPlatformTestCas
     }
   }
 
-  protected void checkCantTrim() throws Throwable {
+  protected void checkCantTrim() {
     List<Range> ranges = myTracker.getRanges();
     for (Range range : ranges) {
       if (range.getType() != Range.MODIFIED) continue;
@@ -135,14 +135,14 @@ public abstract class BaseLineStatusTrackerTestCase extends LightPlatformTestCas
     }
   }
 
-  protected void checkCantMerge() throws Throwable {
+  protected void checkCantMerge() {
     List<Range> ranges = myTracker.getRanges();
     for (int i = 0; i < ranges.size() - 1; i++) {
       assertFalse(ranges.get(i).getLine2() == ranges.get(i + 1).getLine1());
     }
   }
 
-  protected void checkInnerRanges() throws Throwable {
+  protected void checkInnerRanges() {
     List<Range> ranges = myTracker.getRangesInner();
 
     for (Range range : ranges) {

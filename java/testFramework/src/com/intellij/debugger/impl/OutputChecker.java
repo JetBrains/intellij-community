@@ -21,6 +21,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
@@ -32,8 +33,10 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.File;
@@ -102,6 +105,22 @@ public class OutputChecker {
     checkValid(jdk, false);
   }
 
+  @NotNull
+  File getOutFile(File outs, Sdk jdk, @Nullable File current, String prefix) {
+    String name = myTestName + prefix;
+    File res = new File(outs, name + ".out");
+    if (current == null || res.exists()) {
+      current = res;
+    }
+    if (JavaSdkUtil.isJdkAtLeast(jdk, JavaSdkVersion.JDK_1_9)) {
+      File outFile = new File(outs, name + ".jdk9.out");
+      if (outFile.exists()) {
+        current = outFile;
+      }
+    }
+    return current;
+  }
+
   public void checkValid(Sdk jdk, boolean sortClassPath) throws Exception {
     if (IdeaLogger.ourErrorsOccurred != null) {
       throw IdeaLogger.ourErrorsOccurred;
@@ -112,19 +131,13 @@ public class OutputChecker {
     File outs = new File(myAppPath + File.separator + "outs");
     assert outs.exists() || outs.mkdirs() : outs;
 
-    File outFile = new File(outs, myTestName + ".out");
+    File outFile = getOutFile(outs, jdk, null, "");
     if (!outFile.exists()) {
       if (SystemInfo.isWindows) {
-        final File winOut = new File(outs, myTestName + ".win.out");
-        if (winOut.exists()) {
-          outFile = winOut;
-        }
+        outFile = getOutFile(outs, jdk, outFile, ".win");
       }
       else if (SystemInfo.isUnix) {
-        final File unixOut = new File(outs, myTestName + ".unx.out");
-        if (unixOut.exists()) {
-          outFile = unixOut;
-        }
+        outFile = getOutFile(outs, jdk, outFile, ".unx");
       }
     }
 
@@ -195,7 +208,8 @@ public class OutputChecker {
         result = StringUtil.replace(result, FileUtil.toSystemIndependentName(myOutputPath), "!OUTPUT_PATH!", shouldIgnoreCase);
         result = StringUtil.replace(result, FileUtil.toSystemIndependentName(myAppPath), "!APP_PATH!", shouldIgnoreCase);
         result = StringUtil.replace(result, JavaSdkUtil.getIdeaRtJarPath(), "!RT_JAR!", shouldIgnoreCase);
-        result = StringUtil.replace(result, JavaSdkUtil.getJunit4JarPath(), "!JUNIT4_JAR!", shouldIgnoreCase);
+        String junit4JarPaths = StringUtil.join(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit4"), File.pathSeparator);
+        result = StringUtil.replace(result, junit4JarPaths, "!JUNIT4_JARS!", shouldIgnoreCase);
         result = StringUtil.replace(result, InetAddress.getLocalHost().getCanonicalHostName(), "!HOST_NAME!", shouldIgnoreCase);
         result = StringUtil.replace(result, InetAddress.getLocalHost().getHostName(), "!HOST_NAME!", shouldIgnoreCase);
         result = StringUtil.replace(result, "127.0.0.1", "!HOST_NAME!", shouldIgnoreCase);

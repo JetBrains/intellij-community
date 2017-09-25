@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NonNls;
 
 public class TreeIsCorrectAfterDiffReparseTest extends LightCodeInsightTestCase {
 
-  public void testIDEADEV41862() throws Exception {
+  public void testIDEADEV41862() {
     @NonNls String part1 = "package com.test;\n" +
                    "\n" +
                    "\n" +

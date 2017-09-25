@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -73,26 +74,35 @@ public class ChangesViewContentEP implements PluginAware {
     this.predicateClassName = predicateClassName;
   }
 
-  public ChangesViewContentProvider getInstance(Project project) {
+  public ChangesViewContentProvider getInstance(@NotNull Project project) {
     if (myInstance == null) {
-      myInstance = (ChangesViewContentProvider) newClassInstance(project, className); 
+      myInstance = (ChangesViewContentProvider)newClassInstance(project, className);
     }
     return myInstance;
   }
 
   @Nullable
-  public NotNullFunction<Project, Boolean> newPredicateInstance(Project project) {
-    //noinspection unchecked
-    return predicateClassName != null ? (NotNullFunction<Project, Boolean>)newClassInstance(project, predicateClassName) : null;
+  public ChangesViewContentProvider getCachedInstance() {
+    return myInstance;
   }
 
-  private Object newClassInstance(final Project project, final String className) {
+  @Nullable
+  public NotNullFunction<Project, Boolean> newPredicateInstance(@NotNull Project project) {
+    if (predicateClassName == null) {
+      return null;
+    }
+    //noinspection unchecked
+    return (NotNullFunction<Project, Boolean>)newClassInstance(project, predicateClassName);
+  }
+
+  @Nullable
+  private Object newClassInstance(@NotNull Project project, @NotNull String className) {
     try {
-      final Class<?> aClass = Class.forName(className, true,
-                                            myPluginDescriptor == null ? getClass().getClassLoader()  : myPluginDescriptor.getPluginClassLoader());
+      Class<?> aClass = Class.forName(className, true,
+                                      myPluginDescriptor == null ? getClass().getClassLoader() : myPluginDescriptor.getPluginClassLoader());
       return new CachingConstructorInjectionComponentAdapter(className, aClass).getComponentInstance(project.getPicoContainer());
     }
-    catch(Exception e) {
+    catch (Exception e) {
       LOG.error(e);
       return null;
     }

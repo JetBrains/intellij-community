@@ -22,11 +22,15 @@ import com.intellij.find.impl.livePreview.LivePreviewController;
 import com.intellij.find.impl.livePreview.SearchResults;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
@@ -57,6 +61,12 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
     super.tearDown();
   }
 
+  @Override
+  // disabling execution of tests in command/write action
+  protected void runTest() throws Throwable {
+    doRunTest();
+  }
+
   private void initFind() {
     SearchResults searchResults = new SearchResults(getEditor(), getProject());
     myLivePreviewController = new LivePreviewController(searchResults, null, getTestRootDisposable());
@@ -64,7 +74,7 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
     myLivePreviewController.on();
   }
 
-  public void testBasicFind() throws Exception {
+  public void testBasicFind() {
     configureFromText("ab");
     initFind();
     myFindModel.setStringToFind("a");
@@ -73,7 +83,7 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
     assertTrue(!myEditor.getSelectionModel().hasSelection());
   }
 
-  public void testEmacsLikeFallback() throws Exception {
+  public void testEmacsLikeFallback() {
     configureFromText("a\nab");
     initFind();
     myFindModel.setStringToFind("a");
@@ -82,7 +92,7 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
     checkResults();
   }
 
-  public void testReplacementWithEmptyString() throws Exception {
+  public void testReplacementWithEmptyString() {
     configureFromText("a");
     initFind();
 
@@ -95,7 +105,7 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
     checkResults();
   }
   
-  public void testSecondFind() throws Exception {
+  public void testSecondFind() {
     configureFromText("<selection>a<caret></selection> b b a");
     invokeFind();
     new EditorMouseFixture((EditorImpl)myEditor).doubleClickAt(0, 3);
@@ -103,7 +113,7 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
     checkResultByText("a <selection>b<caret></selection> b a");
   }
 
-  public void testSecondRegexReplaceShowsPopup() throws Exception {
+  public void testSecondRegexReplaceShowsPopup() {
     configureFromText("<caret> aba");
     initFind();
     myFindModel.setRegularExpressions(true);
@@ -112,6 +122,34 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
     myFindModel.setReplaceState(true);
     myLivePreviewController.performReplace();
     checkResults();
+  }
+
+  public void testUndoingReplaceBringsChangePlaceIntoView() {
+    configureFromText("abc\n\n\n\n\nabc\n");
+    EditorTestUtil.setEditorVisibleSize(myEditor, 100, 3);
+    executeAction(IdeActions.ACTION_EDITOR_TEXT_END_WITH_SELECTION);
+    
+    EditorTestUtil.testUndoInEditor(myEditor, () -> {
+      initFind();
+      myFindModel.setReplaceState(true);
+      myFindModel.setGlobal(false);
+      myFindModel.setStringToFind("abc");
+      myFindModel.setStringToReplace("def");
+
+      myLivePreviewController.performReplace();
+      myLivePreviewController.performReplace();
+
+      executeAction(IdeActions.ACTION_UNDO);
+      executeAction(IdeActions.ACTION_UNDO);
+
+      checkResultByText("abc\n\n\n\n\nabc\n");
+      checkOffsetIsVisible(myEditor, 0);
+    });
+  }
+
+  private static void checkOffsetIsVisible(@NotNull Editor editor, int offset) {
+    Point point = editor.offsetToXY(offset);
+    assertTrue(editor.getScrollingModel().getVisibleAreaOnScrollingFinished().contains(point));
   }
 
   private static void invokeFind() {

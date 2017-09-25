@@ -29,10 +29,7 @@ import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.IdeTooltipManager;
-import com.intellij.ide.SearchTopHitProvider;
+import com.intellij.ide.*;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
@@ -297,8 +294,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         if (i != -1) {
           mySkipFocusGain = true;
           getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(getField(), true));
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(() -> {
+          ApplicationManager.getApplication().invokeLater(() -> {
             myList.setSelectedIndex(i);
             doNavigate(i);
           });
@@ -689,7 +685,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       title.setFont(title.getFont().deriveFont(Font.BOLD));
     }
     topPanel.add(title, BorderLayout.WEST);
-    final JPanel controls = new JPanel(new BorderLayout());
+    JPanel controls = new JPanel(new BorderLayout());
     controls.setOpaque(false);
 
     JLabel settings = new JLabel(AllIcons.General.SearchEverywhereGear);
@@ -704,21 +700,26 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     settings.setBorder(UIUtil.isUnderWin10LookAndFeel() ? JBUI.Borders.emptyLeft(6) : JBUI.Borders.empty());
 
     controls.add(settings, BorderLayout.EAST);
-    myNonProjectCheckBox.setForeground(foregroundColor);
-
-    Color shortcutColor = UIUtil.isUnderWin10LookAndFeel() ?
-                               UIManager.getColor("SearchEverywhere.shortcutForeground") : foregroundColor;
-
-    StringBuilder cbText = new StringBuilder("<html>Include non-project items ");
-    if (!UIUtil.isUnderWin10LookAndFeel()) cbText.append("<b>");
-    cbText.append("<font color=#").append(ColorUtil.toHex(shortcutColor)).append(">").append(getShortcut()).append("</font>");
-    if (!UIUtil.isUnderWin10LookAndFeel()) cbText.append("</b>");
-    cbText.append("</html>");
-
-    myNonProjectCheckBox.setText(cbText.toString());
     if (!NonProjectScopeDisablerEP.isSearchInNonProjectDisabled()) {
+      myNonProjectCheckBox.setForeground(foregroundColor);
+
+      Color shortcutColor = UIUtil.isUnderWin10LookAndFeel() ?
+                            UIManager.getColor("SearchEverywhere.shortcutForeground") : foregroundColor;
+
+      StringBuilder cbText = new StringBuilder("<html>");
+      cbText.append(IdeBundle.message("checkbox.include.non.project.items"));
+      cbText.append(" ");
+      if (!UIUtil.isUnderWin10LookAndFeel()) cbText.append("<b>");
+      cbText.append("<font color=#").append(ColorUtil.toHex(shortcutColor)).append(">").append(getShortcut()).append("</font>");
+      if (!UIUtil.isUnderWin10LookAndFeel()) cbText.append("</b>");
+      cbText.append("</html>");
+
+      myNonProjectCheckBox.setText(cbText.toString());
       controls.add(myNonProjectCheckBox, BorderLayout.WEST);
     }
+
+    controls.setBorder(UIUtil.isUnderWin10LookAndFeel() ? JBUI.Borders.emptyTop(1) : JBUI.Borders.empty());
+
     topPanel.add(controls, BorderLayout.EAST);
     panel.add(myPopupField, BorderLayout.CENTER);
     panel.add(topPanel, BorderLayout.NORTH);
@@ -1678,12 +1679,19 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
     }
 
+    @NotNull
+    private GlobalSearchScope getProjectScope(@NotNull Project project) {
+      final GlobalSearchScope scope = SearchEverywhereClassifier.EP_Manager.getProjectScope(project);
+      if (scope != null) return scope;
+      return GlobalSearchScope.projectScope(project);
+    }
+
     private SearchResult getSymbols(String pattern, final int max, final boolean includeLibs, ChooseByNamePopup chooseByNamePopup) {
       final SearchResult symbols = new SearchResult();
       if (!Registry.is("search.everywhere.symbols") || shouldSkipPattern(pattern)) {
         return symbols;
       }
-      final GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
+      final GlobalSearchScope scope = getProjectScope(project);
       if (chooseByNamePopup == null) return symbols;
       final ChooseByNameItemProvider provider = chooseByNamePopup.getProvider();
       provider.filterElements(chooseByNamePopup, pattern, includeLibs,
@@ -1761,7 +1769,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       if (chooseByNamePopup == null || !Registry.is("search.everywhere.files")) {
         return files;
       }
-      final GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
+      final GlobalSearchScope scope = getProjectScope(project);
       chooseByNamePopup.getProvider().filterElements(chooseByNamePopup, pattern, true,
                                                      myProgressIndicator, o -> {
                                                        VirtualFile file = null;

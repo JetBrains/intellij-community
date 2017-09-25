@@ -120,7 +120,7 @@ public class HgHistoryTest extends HgPlatformTest {
     }
   }
 
-  public void testUncommittedRenamedFileHistory() throws HgCommandException {
+  public void testUncommittedRenamedFileHistory() {
     cd(myRepository);
     VirtualFile subDir = myRepository.findFileByRelativePath(subDirName);
     assert subDir != null;

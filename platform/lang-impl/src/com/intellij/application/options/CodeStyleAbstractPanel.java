@@ -21,6 +21,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -164,6 +165,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     editorSettings.setAdditionalColumnsCount(0);
     editorSettings.setAdditionalLinesCount(1);
     editorSettings.setUseSoftWraps(false);
+    editorSettings.setSoftMargins(Collections.emptyList());
   }
 
   protected void updatePreview(boolean useDefaultSample) {
@@ -177,21 +179,27 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
       return;
     }
 
-    if (myLastDocumentModificationStamp != myEditor.getDocument().getModificationStamp()) {
-      myTextToReformat = myEditor.getDocument().getText();
-    }
-    else if (useDefaultSample || myTextToReformat == null) {
-      myTextToReformat = getPreviewText();
-    }
+    Project project = ProjectUtil.guessCurrentProject(getPanel());
+    TransactionGuard.submitTransaction(project, () -> {
+      if (myLastDocumentModificationStamp != myEditor.getDocument().getModificationStamp()) {
+        myTextToReformat = myEditor.getDocument().getText();
+      }
+      else if (useDefaultSample || myTextToReformat == null) {
+        myTextToReformat = getPreviewText();
+      }
 
-    int currOffs = myEditor.getScrollingModel().getVerticalScrollOffset();
+      int currOffs = myEditor.getScrollingModel().getVerticalScrollOffset();
+      CommandProcessor.getInstance().executeCommand(project, () -> replaceText(project), null, null);
 
-    final Project finalProject = ProjectUtil.guessCurrentProject(getPanel());
-    CommandProcessor.getInstance().executeCommand(finalProject, () -> replaceText(finalProject), null, null);
+      myEditor.getSettings().setRightMargin(getAdjustedRightMargin());
+      myEditor.getSettings().setSoftMargins(getCurrentSoftMargins());
+      myLastDocumentModificationStamp = myEditor.getDocument().getModificationStamp();
+      myEditor.getScrollingModel().scrollVertically(currOffs);
+    });
+  }
 
-    myEditor.getSettings().setRightMargin(getAdjustedRightMargin());
-    myLastDocumentModificationStamp = myEditor.getDocument().getModificationStamp();
-    myEditor.getScrollingModel().scrollVertically(currOffs);
+  private List<Integer> getCurrentSoftMargins() {
+    return getSettings().getSoftMargins(getDefaultLanguage());
   }
 
   private int getAdjustedRightMargin() {

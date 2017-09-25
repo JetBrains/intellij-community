@@ -39,7 +39,7 @@ public class ConstantEvaluatorTest extends LightCodeInsightFixtureTestCase {
     assertEquals(MyEnum.Foo, result);
   }
 
-  public void testPrefixExpressionEvaluation() throws Exception {
+  public void testPrefixExpressionEvaluation() {
     PsiJavaFile file = (PsiJavaFile)myFixture.configureByText("A.java", "class A {public static final  int VALUE =  ~0 >>> 1;}");
     PsiClass aClass = file.getClasses()[0];
     PsiField vField = aClass.getFields()[0];

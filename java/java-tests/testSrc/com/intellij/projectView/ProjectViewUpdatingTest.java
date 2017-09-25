@@ -43,7 +43,7 @@ import java.util.List;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
-  public void testStandardProviders() throws Exception{
+  public void testStandardProviders() {
     PsiFile element = JavaDirectoryService.getInstance().getClasses(getPackageDirectory())[0].getContainingFile();
     final AbstractProjectViewPSIPane pane = myStructure.createPane();
     getProjectTreeStructure().setProviders();
@@ -85,7 +85,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
 
   }
 
-  public void testUpdateProjectView() throws Exception {
+  public void testUpdateProjectView() {
     getProjectTreeStructure().setProviders(new ClassesTreeStructureProvider(myProject), new FormMergerTreeStructureProvider(myProject));
 
     final AbstractProjectViewPSIPane pane = myStructure.createPane();
@@ -159,7 +159,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
                                                      " +External Libraries\n", true);
   }
 
-  public void testShowClassMembers() throws Exception{
+  public void testShowClassMembers() {
 
     getProjectTreeStructure().setProviders(new ClassesTreeStructureProvider(myProject), new FormMergerTreeStructureProvider(myProject));
 
@@ -263,7 +263,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
                                                      " +External Libraries\n", true);
   }
 
-  public void testAnnoyingScrolling() throws Exception{
+  public void testAnnoyingScrolling() {
                                   
     getProjectTreeStructure().setProviders(new ClassesTreeStructureProvider(myProject));
 
@@ -316,7 +316,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     }
   }
 
-  public void testUpdatingAfterRename() throws Exception{
+  public void testUpdatingAfterRename() {
 
     final NodeWrapper rootWrapper = new NodeWrapper(myProject, "1");
 

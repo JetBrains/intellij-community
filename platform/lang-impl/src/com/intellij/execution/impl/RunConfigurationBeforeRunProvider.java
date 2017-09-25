@@ -125,7 +125,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
   }
 
   @Override
-  public boolean configureTask(RunConfiguration runConfiguration, RunConfigurableBeforeRunTask task) {
+  public boolean configureTask(@NotNull RunConfiguration runConfiguration, @NotNull RunConfigurableBeforeRunTask task) {
     SelectionDialog dialog =
       new SelectionDialog(task.getSettings(), getAvailableConfigurations(runConfiguration));
     dialog.show();
@@ -159,8 +159,8 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
   }
 
   @Override
-  public boolean canExecuteTask(RunConfiguration configuration,
-                                RunConfigurableBeforeRunTask task) {
+  public boolean canExecuteTask(@NotNull RunConfiguration configuration,
+                                @NotNull RunConfigurableBeforeRunTask task) {
     RunnerAndConfigurationSettings settings = task.getSettings();
     if (settings == null) {
       return false;
@@ -172,9 +172,9 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
 
   @Override
   public boolean executeTask(final DataContext dataContext,
-                             RunConfiguration configuration,
-                             final ExecutionEnvironment env,
-                             RunConfigurableBeforeRunTask task) {
+                             @NotNull RunConfiguration configuration,
+                             @NotNull final ExecutionEnvironment env,
+                             @NotNull RunConfigurableBeforeRunTask task) {
     RunnerAndConfigurationSettings settings = task.getSettings();
     if (settings == null) {
       return true; // ignore missing configurations: IDEA-155476 Run/debug silently fails when 'Run another configuration' step is broken
@@ -291,7 +291,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     }
 
     @Override
-    public void writeExternal(Element element) {
+    public void writeExternal(@NotNull Element element) {
       super.writeExternal(element);
       if (myConfigurationName != null && myConfigurationType != null) {
         element.setAttribute("run_configuration_name", myConfigurationName);
@@ -304,7 +304,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     }
 
     @Override
-    public void readExternal(Element element) {
+    public void readExternal(@NotNull Element element) {
       super.readExternal(element);
 
       myConfigurationName = element.getAttributeValue("run_configuration_name");

@@ -21,37 +21,37 @@ import java.util.BitSet;
 import java.util.Random;
 
 public class ReindexerNewTest extends TestCase {
-  public void testAllUnique() throws FilesTooBigForDiffException {
+  public void testAllUnique() {
     checkCase(new int[]{1, 2, 3}, new int[]{4, 5});
     checkCase(new int[]{}, new int[]{4, 5});
     checkCase(new int[]{1, 2, 3}, new int[]{});
   }
 
-  public void testUniqueBeginning() throws FilesTooBigForDiffException {
+  public void testUniqueBeginning() {
     checkCase(new int[]{13, 15, 1, 2, 3}, new int[]{17, 1, 3});
   }
 
-  public void testUniqueEnd() throws FilesTooBigForDiffException {
+  public void testUniqueEnd() {
     checkCase(new int[]{1, 2, 3, 13, 15}, new int[]{1, 3, 17});
   }
 
-  public void testSingleUniqueMoved() throws FilesTooBigForDiffException {
+  public void testSingleUniqueMoved() {
     checkCase(new int[]{1, 1, 2, 2, 10}, new int[]{10, 1, 1, 2, 2});
   }
 
-  public void testSingleFunctionMoved() throws FilesTooBigForDiffException {
+  public void testSingleFunctionMoved() {
     checkCase(new int[]{1, 2, 3, 4, 5, 6, 7, 8, 7, 9, 10, 2, 11, 12, 5, 13, 7, 8, 7},
               new int[]{10, 2, 11, 12, 5, 13, 7, 8, 7, 9, 1, 2, 3, 4, 5, 6, 7, 8, 7});
   }
 
-  public void testInnerChunks() throws FilesTooBigForDiffException {
+  public void testInnerChunks() {
     checkCase(new int[]{0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0}, new int[]{1, 2, 1, 3, 1, 4, 1, 5, 1, 6, 1, 7, 1});
     checkCase(new int[]{0, 2, 3, 0, 4, 5, 0}, new int[]{1, 2, 1, 3, 4, 5, 1});
     checkCase(new int[]{15, 1, 2, 3, 1, 4, 5, 1, 15}, new int[]{13, 1, 2, 1, 3, 4, 5, 1, 13});
     checkCase(new int[]{15, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0, 15}, new int[]{13, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0, 13});
   }
 
-  public void testRandomExample() throws FilesTooBigForDiffException {
+  public void testRandomExample() {
     int[] ints1 = new int[100];
     int[] ints2 = new int[100];
     Random rng = new Random();
@@ -76,11 +76,11 @@ public class ReindexerNewTest extends TestCase {
     }
   }
 
-  public static void checkCase(int[] ints1, int[] ints2) throws FilesTooBigForDiffException {
+  public static void checkCase(int[] ints1, int[] ints2) {
     checkCase(ints1, ints2, "");
   }
 
-  public static void checkCase(int[] ints1, int[] ints2, String message) throws FilesTooBigForDiffException {
+  public static void checkCase(int[] ints1, int[] ints2, String message) {
     final BitSet[] reindexChanges = new BitSet[]{new BitSet(), new BitSet()};
     LCSBuilder builder = new LCSBuilder() {
       private int myIndex1 = 0;

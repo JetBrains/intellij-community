@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package com.intellij.java.codeInsight.completion
+
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings
@@ -31,8 +32,10 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.util.ui.UIUtil
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
@@ -171,7 +174,7 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
     LookupManager.getInstance(getProject()).hideActiveLookup()
 
-    CodeStyleSettingsManager.getSettings(getProject()).PREFER_LONGER_NAMES = false
+    CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class).PREFER_LONGER_NAMES = false
     try{
       configureByFile("PreferLongerNamesOption.java")
 
@@ -181,7 +184,7 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
       assertEquals("abcdEfghIjk", myItems[2].getLookupString())
     }
     finally{
-      CodeStyleSettingsManager.getSettings(getProject()).PREFER_LONGER_NAMES = true
+      CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class).PREFER_LONGER_NAMES = true
     }
   }
 
@@ -1253,6 +1256,8 @@ public class ListUtils {
   void testInstanceMagicMethod() throws Exception { doTest() }
 
   void testNoDotOverwrite() throws Exception { doTest('.') }
+  
+  void testNoModifierListOverwrite() { doTest('\t') }
 
   void testStaticInnerExtendingOuter() throws Exception { doTest() }
 
@@ -1803,6 +1808,38 @@ class Bar {
   void testTypeArgumentInCast() {
     configure()
     myFixture.assertPreferredCompletionItems 0, 'String'
+  }
+
+  void testNoCallsInPackageStatement() { doAntiTest() }
+
+  void testTypeParameterShadowingClass() {
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'Tttt', 'Tttt'
+    assert myFixture.lookupElements[0].object instanceof PsiTypeParameter
+    assert !(myFixture.lookupElements[1].object instanceof PsiTypeParameter)
+    selectItem(myFixture.lookupElements[1])
+    checkResult()
+  }
+
+  void testLowercaseDoesNotMatchUnderscore() {
+    configure()
+    assert myFixture.lookupElementStrings == ['web']
+  }
+
+  void testLocalClassPresentation() {
+    def cls = myFixture.addFileToProject('foo/Bar.java', """package foo; 
+class Bar {{
+    class Local {}
+    Lo<caret>x
+}}""")
+    myFixture.configureFromExistingVirtualFile(cls.containingFile.virtualFile)
+    def item = myFixture.completeBasic()[0]
+    assert LookupElementPresentation.renderElement(item).tailText.contains('local class')
+  }
+
+  void testNoDuplicateInCast() {
+    configure()
+    assert myFixture.lookupElementStrings == null
   }
 
 }

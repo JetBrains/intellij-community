@@ -585,13 +585,13 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @Override
-    protected List<AbstractFilePatchInProgress.PatchChange> getSelectedObjects(ChangesBrowserNode<AbstractFilePatchInProgress.PatchChange> node) {
+    protected List<AbstractFilePatchInProgress.PatchChange> getSelectedObjects(ChangesBrowserNode<?> node) {
       final List<Change> under = node.getAllChangesUnder();
       return map(under, AbstractFilePatchInProgress.PatchChange.class::cast);
     }
 
     @Override
-    protected AbstractFilePatchInProgress.PatchChange getLeadSelectedObject(ChangesBrowserNode node) {
+    protected AbstractFilePatchInProgress.PatchChange getLeadSelectedObject(ChangesBrowserNode<?> node) {
       final Object o = node.getUserObject();
       if (o instanceof AbstractFilePatchInProgress.PatchChange) {
         return (AbstractFilePatchInProgress.PatchChange)o;
@@ -600,7 +600,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @Override
-    protected boolean isNodeEnabled(ChangesBrowserNode node) {
+    protected boolean isNodeEnabled(ChangesBrowserNode<?> node) {
       boolean enabled = super.isNodeEnabled(node);
       Object value = node.getUserObject();
       if (value instanceof AbstractFilePatchInProgress.PatchChange) {

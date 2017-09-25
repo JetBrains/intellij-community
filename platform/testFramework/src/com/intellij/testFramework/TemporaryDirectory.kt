@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,13 @@
  */
 package com.intellij.testFramework
 
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.refreshVfs
 import com.intellij.util.SmartList
-import com.intellij.util.io.createDirectories
-import com.intellij.util.io.delete
-import com.intellij.util.io.exists
-import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.io.*
 import com.intellij.util.lang.CompoundRuntimeException
 import org.junit.rules.ExternalResource
 import org.junit.runner.Description
@@ -41,7 +37,7 @@ class TemporaryDirectory : ExternalResource() {
   private var sanitizedName: String by Delegates.notNull()
 
   override fun apply(base: Statement, description: Description): Statement {
-    sanitizedName = FileUtil.sanitizeFileName(description.methodName, false)
+    sanitizedName = sanitizeFileName(description.methodName)
     return super.apply(base, description)
   }
 

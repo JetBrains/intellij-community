@@ -49,6 +49,7 @@ public class ViewUpdateInfoNotification extends NotificationAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
     focusUpdateInfoTree(myProject, myTree);
+    notification.expire();
   }
 
   public static void focusUpdateInfoTree(@NotNull Project project, @NotNull UpdateInfoTree updateInfoTree) {

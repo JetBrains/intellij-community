@@ -56,7 +56,7 @@ public class ColoredProcessHandler extends KillableProcessHandler implements Ans
   }
 
   @Override
-  public final void notifyTextAvailable(final String text, final Key outputType) {
+  public final void notifyTextAvailable(@NotNull final String text, @NotNull final Key outputType) {
     myAnsiEscapeDecoder.escapeText(text, outputType, this);
   }
 

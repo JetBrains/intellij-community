@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class FindUIHelper implements Disposable {
+class FindUIHelper implements Disposable {
   @NotNull private final Project myProject;
   @NotNull private  FindModel myModel;
    FindModel myPreviousModel;
@@ -39,7 +39,7 @@ public class FindUIHelper implements Disposable {
 
   FindUI myUI;
 
-  public FindUIHelper(@NotNull Project project, @NotNull FindModel model, @NotNull Runnable okHandler) {
+  FindUIHelper(@NotNull Project project, @NotNull FindModel model, @NotNull Runnable okHandler) {
     myProject = project;
     myModel = model;
     myOkHandler = okHandler;
@@ -47,10 +47,10 @@ public class FindUIHelper implements Disposable {
     myUI.initByModel();
   }
 
-  protected FindUI getOrCreateUI() {
-    boolean newInstanceRequired = (myUI instanceof FindPopupPanel && !Registry.is("ide.find.as.popup")) ||
-                                  (myUI instanceof FindDialog && Registry.is("ide.find.as.popup")) ||
-                                  (myUI == null);
+  private FindUI getOrCreateUI() {
+    boolean newInstanceRequired = myUI instanceof FindPopupPanel && !Registry.is("ide.find.as.popup") ||
+                                  myUI instanceof FindDialog && Registry.is("ide.find.as.popup") ||
+                                  myUI == null;
     if (newInstanceRequired) {
       if (Registry.is("ide.find.as.popup")) {
         myUI = new FindPopupPanel(this);
@@ -68,7 +68,7 @@ public class FindUIHelper implements Disposable {
 
   private void registerAction(String actionName, boolean replace, FindDialog findDialog) {
     AnAction action = ActionManager.getInstance().getAction(actionName);
-    JRootPane findDialogRootComponent = ((JDialog)(findDialog.getWindow())).getRootPane();
+    JRootPane findDialogRootComponent = ((JDialog)findDialog.getWindow()).getRootPane();
     new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -193,21 +193,13 @@ public class FindUIHelper implements Disposable {
 
   String getTitle() {
     if (myModel.isReplaceState()){
-      if (myModel.isMultipleFiles()){
-        return FindBundle.message("find.replace.in.project.dialog.title");
-      }
-      else{
-        return FindBundle.message("find.replace.text.dialog.title");
-      }
+      return myModel.isMultipleFiles()
+             ? FindBundle.message("find.replace.in.project.dialog.title")
+             : FindBundle.message("find.replace.text.dialog.title");
     }
-    else{
-      if (myModel.isMultipleFiles()){
-        return FindBundle.message("find.in.path.dialog.title");
-      }
-      else{
-        return FindBundle.message("find.text.dialog.title");
-      }
-    }
+    return myModel.isMultipleFiles() ?
+           FindBundle.message("find.in.path.dialog.title") :
+           FindBundle.message("find.text.dialog.title");
   }
 
   public boolean isReplaceState() {

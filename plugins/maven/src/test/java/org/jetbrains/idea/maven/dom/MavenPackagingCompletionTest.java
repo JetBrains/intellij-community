@@ -16,7 +16,7 @@
 package org.jetbrains.idea.maven.dom;
 
 public class MavenPackagingCompletionTest extends MavenDomTestCase {
-  public void testVariants() throws Exception {
+  public void testVariants() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -30,7 +30,7 @@ public class MavenPackagingCompletionTest extends MavenDomTestCase {
     assertCompletionVariants(myProjectPom, "jar", "pom", "war", "ejb", "ejb-client", "ear", "bundle", "maven-plugin");
   }
 
-  public void testDoNotHighlightUnknownPackagingTypes() throws Throwable {
+  public void testDoNotHighlightUnknownPackagingTypes() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +

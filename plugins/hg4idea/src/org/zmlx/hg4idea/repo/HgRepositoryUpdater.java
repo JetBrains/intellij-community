@@ -17,6 +17,7 @@ package org.zmlx.hg4idea.repo;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -170,7 +171,7 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
       myDirtyScopeManager.dirDirtyRecursively(root);
       if (dirstateFileChanged) {
         //update async incoming/outgoing model
-        myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject, root);
+        BackgroundTaskUtil.syncPublisher(myProject, HgVcs.REMOTE_TOPIC).update(myProject, root);
       }
     }
   }

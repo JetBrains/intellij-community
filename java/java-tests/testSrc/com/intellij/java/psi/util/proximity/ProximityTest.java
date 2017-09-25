@@ -40,7 +40,7 @@ public class ProximityTest extends JavaCodeInsightFixtureTestCase {
     try {
       new WriteCommandAction(getProject()) {
         @Override
-        protected void run(@NotNull Result result) throws Throwable {
+        protected void run(@NotNull Result result) {
           PsiTestUtil.addSourceContentToRoots(myModule, root1.getFile(""));
           PsiTestUtil.addSourceContentToRoots(myModule, root2.getFile(""));
         }

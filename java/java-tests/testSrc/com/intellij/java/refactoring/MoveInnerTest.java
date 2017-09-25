@@ -45,27 +45,27 @@ public class MoveInnerTest extends MultiFileTestCase {
     return "/refactoring/moveInner/";
   }
 
-  public void testScr13730() throws Exception {
+  public void testScr13730() {
     doTest(createAction("pack1.TopLevel.StaticInner", "StaticInner", false, null, false, false, null));
   }
 
-  public void testScr15142() throws Exception {
+  public void testScr15142() {
     doTest(createAction("xxx.Outer.Inner", "Inner", false, null, false, false, null));
   }
 
-  public void testNonJavaFiles() throws Exception {
+  public void testNonJavaFiles() {
     doTest(createAction("pack1.Outer.Inner", "Inner", false, null, true, true, null));
   }
 
-  public void testXmlReferences() throws Exception {
+  public void testXmlReferences() {
     doTest(createAction("pack1.Outer.Inner", "Inner", false, null, true, true, null));
   }
 
-  public void testScr22592() throws Exception {
+  public void testScr22592() {
     doTest(createAction("xxx.Outer.Inner", "Inner", true, "outer", false, false, null));
   }
 
-  public void testInnerClassInheritance() throws Exception {
+  public void testInnerClassInheritance() {
     try {
       doTest(createAction("p.A.B", "B", false, null, false, false, null));
       fail("Conflict was not detected");
@@ -75,47 +75,47 @@ public class MoveInnerTest extends MultiFileTestCase {
     }
   }
 
-  public void testInnerClassSelfRef() throws Exception {
+  public void testInnerClassSelfRef() {
     doTest(createAction("p.A.B", "B", false, null, false, false, null));
   }
 
-  public void testScr30106() throws Exception {
+  public void testScr30106() {
     doTest(createAction("p.A.B", "B", true, "outer", false, false, null));
   }
 
-  public void testConstructorVisibility() throws Exception {  // IDEADEV-19561
+  public void testConstructorVisibility() {  // IDEADEV-19561
     doTest(createAction("p.A.B", "B", false, null, false, false, null));
   }
 
-  public void testConstructorProtectedVisibility() throws Exception {  // IDEADEV-19561
+  public void testConstructorProtectedVisibility() {  // IDEADEV-19561
     doTest(createAction("p.b.A.B", "B", false, null, false, false, "p"));
   }
 
-  public void testConstructorUtilClassVisibility() throws Exception {
+  public void testConstructorUtilClassVisibility() {
     doTest(createAction("p.A.B", "B", false, null, false, false, null));
   }
 
-  public void testFieldAccessInSuper() throws Exception {
+  public void testFieldAccessInSuper() {
     doTest(createAction("p.A.B", "B", true, "a", false, false, null));
   }
 
-  public void testToOtherPackage() throws Exception {
+  public void testToOtherPackage() {
     doTest(createAction("package1.OuterClass.InnerClass", "InnerClass", false, null, false, false, "package2"));
   }
 
-  public void testImportStaticOfEnum() throws Exception { // IDEADEV-28619
+  public void testImportStaticOfEnum() { // IDEADEV-28619
     doTest(createAction("p.A.E", "E", false, null, false, false, null));
   }
 
-  public void testInnerInnerClassUsedInTypeParams() throws Exception {
+  public void testInnerInnerClassUsedInTypeParams() {
     doTest(createAction("p.Main.A", "A", false, null, false, false, null));
   }
 
-  public void testEnumConstructorVisibility() throws Exception { // IDEADEV-28619
+  public void testEnumConstructorVisibility() { // IDEADEV-28619
     doTest(createAction("p.A.E", "E", false, null, false, false, "p2"));
   }
 
-  public void testQualifyThisHierarchy() throws Exception {
+  public void testQualifyThisHierarchy() {
     final String innerClassName = "pack1.DImpl.MyRunnable";
     doTest(new MyPerformAction(innerClassName, "MyRunnable", false, "d",
                                false, false, null) {
@@ -162,7 +162,7 @@ public class MoveInnerTest extends MultiFileTestCase {
     }
 
     @Override
-    public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
+    public void performAction(VirtualFile rootDir, VirtualFile rootAfter) {
       final JavaPsiFacade manager = getJavaFacade();
       final PsiClass aClass = manager.findClass(myInnerClassName, GlobalSearchScope.moduleScope(myModule));
       final MoveInnerProcessor moveInnerProcessor = new MoveInnerProcessor(myProject, null);

@@ -114,7 +114,7 @@ public abstract class LightMarkedTestCase extends PyTestCase {
     return result;
   }
 
-  protected Map<String, PsiElement> loadTest() throws Exception {
+  protected Map<String, PsiElement> loadTest() {
     String fname = getTestName(false) + ".py";
     return configureByFile(fname);
   }

@@ -28,7 +28,7 @@ import com.intellij.ui.components.JBLabel;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.PyCondaPackageManagerImpl;
 import com.jetbrains.python.packaging.PyCondaPackageService;
-import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
+import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor;
 import com.jetbrains.python.validation.UnsupportedFeaturesUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,7 +66,7 @@ public class CreateCondaEnvDialog extends AbstractCreateVirtualEnvDialog {
 
   @Override
   protected void setInitialDestination() {
-    final List<VirtualFile> locations = VirtualEnvSdkFlavor.getCondaDefaultLocations();
+    final List<VirtualFile> locations = CondaEnvSdkFlavor.getCondaDefaultLocations();
     if (!locations.isEmpty()) {
       myInitialPath = locations.get(0).getPath();
       return;

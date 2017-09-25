@@ -67,12 +67,10 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -122,9 +120,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private final ExclusionHandler<InspectionTreeNode> myExclusionHandler;
   private EditorEx myPreviewEditor;
   private InspectionTreeLoadingProgressAware myLoadingProgressPreview;
-  private final ExcludedInspectionTreeNodesManager myExcludedInspectionTreeNodesManager;
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private final Map<String, Set<Object>> mySuppressedNodes = FactoryMap.createMap(key -> new THashSet<>());
   private final InspectionViewSuppressActionHolder mySuppressActionHolder = new InspectionViewSuppressActionHolder();
 
   private final Object myTreeStructureUpdateLock = new Object();
@@ -137,9 +133,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     myScope = globalInspectionContext.getCurrentScope();
     myGlobalInspectionContext = globalInspectionContext;
     myProvider = provider;
-    myExcludedInspectionTreeNodesManager = new ExcludedInspectionTreeNodesManager(provider instanceof OfflineInspectionRVContentProvider,
-                                                                                  isSingleInspectionRun());
-
     myTree = new InspectionTree(globalInspectionContext, this);
     initTreeListeners();
 
@@ -163,17 +156,17 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
       @Override
       public boolean isNodeExcluded(@NotNull InspectionTreeNode node) {
-        return node.isExcluded(myExcludedInspectionTreeNodesManager);
+        return node.isExcluded();
       }
 
       @Override
       public void excludeNode(@NotNull InspectionTreeNode node) {
-        node.excludeElement(myExcludedInspectionTreeNodesManager);
+        node.excludeElement();
       }
 
       @Override
       public void includeNode(@NotNull InspectionTreeNode node) {
-        node.amnestyElement(myExcludedInspectionTreeNodesManager);
+        node.amnestyElement();
       }
 
       @Override
@@ -300,7 +293,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       @Override
       @Nullable
       protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
-        if (node instanceof InspectionTreeNode && ((InspectionTreeNode)node).isExcluded(myExcludedInspectionTreeNodesManager)) {
+        if (node instanceof InspectionTreeNode && ((InspectionTreeNode)node).isExcluded()) {
           return null;
         }
         if (node instanceof RefElementNode) {
@@ -664,15 +657,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     return mySuppressActionHolder;
   }
 
-  public Set<Object> getSuppressedNodes(String toolId) {
-    return mySuppressedNodes.get(toolId);
-  }
-
-  @NotNull
-  public ExcludedInspectionTreeNodesManager getExcludedManager() {
-    return myExcludedInspectionTreeNodesManager;
-  }
-
   @Nullable
   public String getCurrentProfileName() {
     return myInspectionProfile == null ? null : myInspectionProfile.getDisplayName();
@@ -697,7 +681,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
           }
           final InspectionNode toolNode = presentation.getToolNode();
           LOG.assertTrue(toolNode != null);
-          final Map<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<>();
+          final Map<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<>(1);
           problems.put(refElement, descriptors);
           final Map<String, Set<RefEntity>> contents = new HashMap<>();
           final String groupName = refElement.getRefManager().getGroupName((RefElement)refElement);
@@ -710,7 +694,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
                                               uiOptions.SHOW_STRUCTURE,
                                               true,
                                               contents,
-                                              problems);
+                                              problems::get);
         }
       }
     }));
@@ -785,10 +769,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       boolean singleInspectionRun = isSingleInspectionRun();
       for (Tools currentTools : tools) {
         InspectionToolWrapper defaultToolWrapper = currentTools.getDefaultState().getTool();
-        if (myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS &&
-            myExcludedInspectionTreeNodesManager.containsInspectionNode(defaultToolWrapper)) {
-          continue;
-        }
         final HighlightDisplayKey key = HighlightDisplayKey.find(defaultToolWrapper.getShortName());
         for (ScopeToolState state : myProvider.getTools(currentTools)) {
           InspectionToolWrapper toolWrapper = state.getTool();

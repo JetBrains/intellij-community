@@ -22,7 +22,7 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
  */
 public class ConvertCollectionToArrayFixTest extends LightQuickFixParameterizedTestCase {
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 

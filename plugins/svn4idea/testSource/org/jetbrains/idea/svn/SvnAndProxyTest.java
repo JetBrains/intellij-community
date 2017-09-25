@@ -19,7 +19,7 @@ import com.intellij.util.net.HttpConfigurable;
 
 public class SvnAndProxyTest extends Svn17TestCase {
   @Test
-  public void testDirectWhenIdeaHaveProxy() throws Exception {
+  public void testDirectWhenIdeaHaveProxy() {
 
 
   }

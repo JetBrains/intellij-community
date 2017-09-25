@@ -67,12 +67,7 @@ public class SelectWordUtil {
     return SELECTIONERS;
   }
 
-  public static final CharCondition JAVA_IDENTIFIER_PART_CONDITION = new CharCondition() {
-    @Override
-    public boolean value(char ch) {
-      return Character.isJavaIdentifierPart(ch);
-    }
-  };
+  public static final CharCondition JAVA_IDENTIFIER_PART_CONDITION = ch -> Character.isJavaIdentifierPart(ch);
 
   public static void addWordSelection(boolean camel, CharSequence editorText, int cursorOffset, @NotNull List<TextRange> ranges) {
     addWordSelection(camel, editorText, cursorOffset, ranges, JAVA_IDENTIFIER_PART_CONDITION);
@@ -315,6 +310,7 @@ public class SelectWordUtil {
       lexer.advance();
     }
   }
-  
+
+  @FunctionalInterface
   public interface CharCondition { boolean value(char ch); }
 }

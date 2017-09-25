@@ -26,6 +26,7 @@ import com.jetbrains.python.sdk.PyDetectedSdk;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
 import org.jetbrains.annotations.NotNull;
@@ -79,8 +80,9 @@ public class PyConfigurableInterpreterList {
   private void addDetectedSdks(@NotNull final List<Sdk> result) {
     final List<String> sdkHomes = new ArrayList<>();
     sdkHomes.addAll(VirtualEnvSdkFlavor.INSTANCE.suggestHomePaths());
+    sdkHomes.addAll(CondaEnvSdkFlavor.INSTANCE.suggestHomePaths());
     for (PythonSdkFlavor flavor : PythonSdkFlavor.getApplicableFlavors()) {
-      if (flavor instanceof VirtualEnvSdkFlavor) continue;
+      if (flavor instanceof VirtualEnvSdkFlavor || flavor instanceof CondaEnvSdkFlavor) continue;
       sdkHomes.addAll(flavor.suggestHomePaths());
     }
     Collections.sort(sdkHomes);

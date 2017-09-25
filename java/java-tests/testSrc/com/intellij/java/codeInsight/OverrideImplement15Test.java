@@ -27,6 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -79,7 +80,7 @@ public class OverrideImplement15Test extends LightCodeInsightTestCase {
       CommonCodeStyleSettings javaSettings = codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE);
       javaSettings.RIGHT_MARGIN = 80;
       javaSettings.KEEP_LINE_BREAKS = true;
-      codeStyleSettings.GENERATE_FINAL_PARAMETERS = true;
+      codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS = true;
       javaSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
       CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(codeStyleSettings);
       doTest(false);
@@ -89,10 +90,10 @@ public class OverrideImplement15Test extends LightCodeInsightTestCase {
     }
   }
 
-  public void testOverridingLibraryFunctionWithConfiguredParameterPrefix() throws Exception {
+  public void testOverridingLibraryFunctionWithConfiguredParameterPrefix() {
     CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject()).clone();
     try {
-      codeStyleSettings.PARAMETER_NAME_PREFIX = "in";
+      codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).PARAMETER_NAME_PREFIX = "in";
       CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(codeStyleSettings);
       doTest(false);
     }
@@ -107,7 +108,7 @@ public class OverrideImplement15Test extends LightCodeInsightTestCase {
       CommonCodeStyleSettings javaSettings = codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE);
       javaSettings.RIGHT_MARGIN = 80;
       javaSettings.KEEP_LINE_BREAKS = false;
-      codeStyleSettings.GENERATE_FINAL_PARAMETERS = false;
+      codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS = false;
       javaSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
       CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(codeStyleSettings);
       doTest(false);

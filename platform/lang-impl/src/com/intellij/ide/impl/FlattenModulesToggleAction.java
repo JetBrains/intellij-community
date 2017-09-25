@@ -19,7 +19,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.module.ModuleGrouperKt;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -48,7 +47,7 @@ public class FlattenModulesToggleAction extends ToggleAction implements DumbAwar
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabledAndVisible(ModuleGrouperKt.isQualifiedModuleNamesEnabled() && !ModuleManager.getInstance(myProject).hasModuleGroups());
+    e.getPresentation().setEnabledAndVisible(ModuleGrouperKt.isQualifiedModuleNamesEnabled(myProject));
     if (!myIsEnabled.getAsBoolean()) {
       e.getPresentation().setEnabled(false);
     }

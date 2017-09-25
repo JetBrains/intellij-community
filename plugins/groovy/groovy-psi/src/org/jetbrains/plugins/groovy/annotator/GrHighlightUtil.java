@@ -124,9 +124,6 @@ public class GrHighlightUtil {
       return isStatic ? GroovySyntaxHighlighter.STATIC_PROPERTY_REFERENCE : GroovySyntaxHighlighter.INSTANCE_PROPERTY_REFERENCE;
     }
     else if (resolved instanceof PsiMethod) {
-
-      if (isMethodWithLiteralName((PsiMethod)resolved)) return null; //don't highlight method with literal name
-
       if (((PsiMethod)resolved).isConstructor()) {
         if (refElement != null) {
           if (refElement.getNode().getElementType() == GroovyTokenTypes.kTHIS || //don't highlight this() or super()
@@ -152,6 +149,7 @@ public class GrHighlightUtil {
           }
         }
         else {
+          if (isMethodWithLiteralName((PsiMethod)resolved)) return null; //don't highlight method with literal name
           return GroovySyntaxHighlighter.METHOD_DECLARATION;
         }
       }

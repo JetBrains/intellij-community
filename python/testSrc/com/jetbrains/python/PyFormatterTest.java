@@ -603,6 +603,12 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-22272
+  public void testAlightDictLiteralOnValueSubscriptionsAndSlices() {
+    getPythonCodeStyleSettings().DICT_ALIGNMENT = PyCodeStyleSettings.DICT_ALIGNMENT_ON_VALUE;
+    doTest();
+  }
+
   // PY-14962
   public void testAlignDictLiteralOnColon() {
     getPythonCodeStyleSettings().DICT_ALIGNMENT = PyCodeStyleSettings.DICT_ALIGNMENT_ON_COLON;
@@ -661,7 +667,7 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
-  public void testDoNotDestroyAlignment_OnPostponedFormatting() throws Exception {
+  public void testDoNotDestroyAlignment_OnPostponedFormatting() {
     getPythonCodeStyleSettings().DICT_ALIGNMENT = PyCodeStyleSettings.DICT_ALIGNMENT_ON_COLON;
     doTest();
   }
@@ -837,6 +843,7 @@ public class PyFormatterTest extends PyTestCase {
 
   // PY-19705
   public void testBlankLinesAroundFirstMethod() {
+    getPythonCodeStyleSettings().BLANK_LINES_BEFORE_FIRST_METHOD = 1;
     doTest();
   }
 

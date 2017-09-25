@@ -28,86 +28,86 @@ public class RedundantCastTest extends InspectionTestCase {
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_3);
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest("redundantCast/" + getTestName(false), new RedundantCastInspection());
   }
 
-  public void testAmbigousParm1() throws Exception { doTest(); }
+  public void testAmbigousParm1() { doTest(); }
 
-  public void testAmbigousParm2() throws Exception { doTest(); }
+  public void testAmbigousParm2() { doTest(); }
 
-  public void testAmbigousParm3() throws Exception { doTest(); }
+  public void testAmbigousParm3() { doTest(); }
 
-  public void testAmbigousParm4() throws Exception { doTest(); }
+  public void testAmbigousParm4() { doTest(); }
 
-  public void testAmbigousParm5() throws Exception { doTest(); }
+  public void testAmbigousParm5() { doTest(); }
 
-  public void testOneOfTwo() throws Exception { doTest(); }
+  public void testOneOfTwo() { doTest(); }
 
-  public void testAnyOfTwo() throws Exception { doTest(); }
+  public void testAnyOfTwo() { doTest(); }
 
-  public void testNew1() throws Exception { doTest(); }
+  public void testNew1() { doTest(); }
 
-  public void testAssignment1() throws Exception { doTest(); }
+  public void testAssignment1() { doTest(); }
 
-  public void testInitializer1() throws Exception { doTest(); }
+  public void testInitializer1() { doTest(); }
 
-  public void testShortToShort() throws Exception { doTest(); }
+  public void testShortToShort() { doTest(); }
 
-  public void testVirtualMethod1() throws Exception { doTest(); }
+  public void testVirtualMethod1() { doTest(); }
 
-  public void testVirtualMethod2() throws Exception { doTest(); }
+  public void testVirtualMethod2() { doTest(); }
 
-  public void testVirtualMethod3() throws Exception { doTest(); }
+  public void testVirtualMethod3() { doTest(); }
 
-  public void testDoubleCast1() throws Exception { doTest(); }
+  public void testDoubleCast1() { doTest(); }
 
-  public void testDoubleCast2() throws Exception { doTest(); }
+  public void testDoubleCast2() { doTest(); }
 
-  public void testDoubleCast3() throws Exception { doTest(); }
+  public void testDoubleCast3() { doTest(); }
 
-  public void testDoubleCast4() throws Exception { doTest(); }
+  public void testDoubleCast4() { doTest(); }
 
-  public void testDoubleCast5() throws Exception { doTest(); }
+  public void testDoubleCast5() { doTest(); }
 
-  public void testShortVsInt() throws Exception { doTest(); }
+  public void testShortVsInt() { doTest(); }
 
-  public void testTruncation() throws Exception { doTest(); }
+  public void testTruncation() { doTest(); }
 
-  public void testIntToDouble() throws Exception { doTest(); }
+  public void testIntToDouble() { doTest(); }
 
-  public void testSCR6907() throws Exception { doTest(); }
+  public void testSCR6907() { doTest(); }
 
-  public void testSCR11555() throws Exception { doTest(); }
+  public void testSCR11555() { doTest(); }
 
-  public void testSCR13397() throws Exception { doTest(); }
+  public void testSCR13397() { doTest(); }
 
-  public void testSCR14502() throws Exception { doTest(); }
+  public void testSCR14502() { doTest(); }
 
-  public void testSCR14559() throws Exception { doTest(); }
+  public void testSCR14559() { doTest(); }
 
-  public void testSCR15236() throws Exception { doTest(); }
+  public void testSCR15236() { doTest(); }
 
-  public void testComparingToNull() throws Exception { doTest(); }
+  public void testComparingToNull() { doTest(); }
 
-  public void testInaccessible() throws Exception { doTest(); }
+  public void testInaccessible() { doTest(); }
 
-  public void testInConditional() throws Exception { doTest(); }
+  public void testInConditional() { doTest(); }
 
-  public void testDifferentFields() throws Exception { doTest(); }
+  public void testDifferentFields() { doTest(); }
 
-  public void testNestedThings() throws Exception { doTest(); }
+  public void testNestedThings() { doTest(); }
 
-  public void testIDEADEV6818() throws Exception { doTest(); }
+  public void testIDEADEV6818() { doTest(); }
 
-  public void testIDEADEV15170() throws Exception { doTest(); }
+  public void testIDEADEV15170() { doTest(); }
 
-  public void testIDEADEV25675() throws Exception { doTest(); }
-  public void testFieldAccessOnTheLeftOfAssignment() throws Exception { doTest(); }
+  public void testIDEADEV25675() { doTest(); }
+  public void testFieldAccessOnTheLeftOfAssignment() { doTest(); }
   
-  public void testNestedCast() throws Exception { doTest(); }
-  public void testPrimitiveInsideSynchronized() throws Exception { doTest(); }
+  public void testNestedCast() { doTest(); }
+  public void testPrimitiveInsideSynchronized() { doTest(); }
 
-  public void testInConditionalPreserveResolve() throws Exception { doTest();}
-  public void testArrayAccess() throws Exception { doTest();}
+  public void testInConditionalPreserveResolve() { doTest();}
+  public void testArrayAccess() { doTest();}
 }

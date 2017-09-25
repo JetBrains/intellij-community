@@ -47,6 +47,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
+
 public class SvnNativeClientAuthTest extends Svn17TestCase {
   private SvnVcs myVcs;
   private int myCertificateAnswer = ISVNAuthenticationProvider.ACCEPTED_TEMPORARY;
@@ -57,8 +59,8 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
   private String outHttpUser = "test";
   private String outHttpPassword = "test";
 
-  private final static String ourHTTP_URL = "http://svnsrvtest/stuff/autoTest";
-  private final static String ourHTTPS_URL = "https://svnsrvtest:443/TestSSL/autoTest";
+  private final static SVNURL ourHTTP_URL = parseUrl("http://svnsrvtest/stuff/autoTest", false);
+  private final static SVNURL ourHTTPS_URL = parseUrl("https://svnsrvtest:443/TestSSL/autoTest", false);
 
   private int myCertificateAskedInteractivelyCount = 0;
   private int myCredentialsAskedInteractivelyCount = 0;
@@ -529,7 +531,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     return file;
   }
 
-  private File testCheckoutImpl(final String url) throws IOException {
+  private File testCheckoutImpl(@NotNull SVNURL url) throws IOException {
     final File root = FileUtil.createTempDirectory("checkoutRoot", "");
     root.deleteOnExit();
     Assert.assertTrue(root.exists());
@@ -550,7 +552,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
       return ! (cnt[0] > 1);
     });
     Assert.assertTrue(cnt[0] > 1);
-    myIsSecure = url.contains("https:");
+    myIsSecure = "https".equals(url.getProtocol());
     if (myIsSecure) {
       ++ myExpectedCreds;
       ++ myExpectedCert;

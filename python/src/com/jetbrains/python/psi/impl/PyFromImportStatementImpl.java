@@ -64,10 +64,6 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   }
 
   public boolean isStarImport() {
-    final PyFromImportStatementStub stub = getStub();
-    if (stub != null) {
-      return stub.isStarImport();
-    }
     return getStarImportElement() != null;
   }
 

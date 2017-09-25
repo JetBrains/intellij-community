@@ -20,8 +20,8 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.refactoring.extractMethodObject.ExtractMethodObjectHandler;
 import com.intellij.refactoring.extractMethodObject.ExtractMethodObjectProcessor;
 import org.jetbrains.annotations.NotNull;
@@ -165,7 +165,7 @@ public class ExtractMethodObjectWithMultipleExitPointsTest extends LightRefactor
   }
 
   private void doTestWithIdeaCodeStyleSettings() throws Exception {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    final JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
     String oldPrefix = settings.FIELD_NAME_PREFIX;
     settings.FIELD_NAME_PREFIX = "my";
     boolean oldPrefer = settings.PREFER_LONGER_NAMES;

@@ -36,6 +36,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.rt.execution.junit.JUnitStarter;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -73,7 +74,7 @@ public class TestPackage extends TestObject {
         myClasses.clear();
         final SourceScope sourceScope = getSourceScope();
         final Module module = getConfiguration().getConfigurationModule().getModule();
-        if (sourceScope != null && !ReadAction.compute(() -> isJUnit5(module, sourceScope, myProject))) {
+        if (sourceScope != null && !JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {
           DumbService instance = DumbService.getInstance(myProject);
           try {
             instance.setAlternativeResolveEnabled(true);
@@ -139,7 +140,7 @@ public class TestPackage extends TestObject {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final Project project = getConfiguration().getProject();
     final SourceScope sourceScope = data.getScope().getSourceScope(getConfiguration());
-    if (sourceScope == null || !isJUnit5(getConfiguration().getConfigurationModule().getModule(), sourceScope, project)) { //check for junit 5
+    if (sourceScope == null || !JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) { //check for junit 5
       JUnitUtil.checkTestCase(sourceScope, project);
     }
     createTempFiles(javaParameters);
@@ -233,41 +234,44 @@ public class TestPackage extends TestObject {
 
   private static Predicate<Class<?>> createPredicate(ClassLoader classLoader) {
 
-    try {
-      Class<?> testCaseClass = Class.forName("junit.framework.TestCase", true, classLoader);
+    Class<?> testCaseClass = loadClass(classLoader,"junit.framework.TestCase");
 
-      @SuppressWarnings("unchecked")
-      Class<? extends Annotation> runWithClass = (Class<? extends Annotation>)Class.forName("org.junit.runner.RunWith", true, classLoader);
+    @SuppressWarnings("unchecked")
+    Class<? extends Annotation> runWithAnnotationClass = (Class<? extends Annotation>)loadClass(classLoader, "org.junit.runner.RunWith");
 
-      @SuppressWarnings("unchecked")
-      Class<? extends Annotation> testClass = (Class<? extends Annotation>)Class.forName("org.junit.Test", true, classLoader);
+    @SuppressWarnings("unchecked")
+    Class<? extends Annotation> testAnnotationClass = (Class<? extends Annotation>)loadClass(classLoader, "org.junit.Test");
 
-      return aClass -> {
-        //junit 3
-        if (testCaseClass.isAssignableFrom(aClass)) {
-          return hasSingleConstructor(aClass);
-        }
-        else {
-          //annotation
-          if (aClass.isAnnotationPresent(runWithClass)) {
+    return aClass -> {
+      //annotation
+      if (runWithAnnotationClass != null && aClass.isAnnotationPresent(runWithAnnotationClass)) {
+        return true;
+      }
+      //junit 3
+      if (testCaseClass != null && testCaseClass.isAssignableFrom(aClass)) {
+        return hasSingleConstructor(aClass);
+      }
+      else {
+        //junit 4 & suite
+        for (Method method : aClass.getMethods()) {
+          if (Modifier.isStatic(method.getModifiers()) && "suite".equals(method.getName())) {
             return true;
           }
-          else {
-            //junit 4 & suite
-            for (Method method : aClass.getMethods()) {
-              if (Modifier.isStatic(method.getModifiers()) && "suite".equals(method.getName()) ||
-                  method.isAnnotationPresent(testClass)) {
-                return hasSingleConstructor(aClass);
-              }
-            }
+          if (testAnnotationClass != null && method.isAnnotationPresent(testAnnotationClass)) {
+            return hasSingleConstructor(aClass);
           }
         }
-        return false;
-      };
+      }
+      return false;
+    };
+  }
+
+  private static Class<?> loadClass(ClassLoader classLoader, String className) {
+    try {
+      return Class.forName(className, true, classLoader);
     }
     catch (ClassNotFoundException e) {
-      LOG.error(e);
-      return aClass -> false;
+      return null;
     }
   }
 

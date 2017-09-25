@@ -62,7 +62,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   private static final JavaParserUtil.ParserWrapper PARAMETER = new JavaParserUtil.ParserWrapper() {
     @Override
     public void parse(final PsiBuilder builder) {
-      JavaParser.INSTANCE.getDeclarationParser().parseParameter(builder, true, false);
+      JavaParser.INSTANCE.getDeclarationParser().parseParameter(builder, true, false, false);
     }
   };
 
@@ -76,8 +76,8 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   private static final JavaParserUtil.ParserWrapper TYPE = new JavaParserUtil.ParserWrapper() {
     @Override
     public void parse(final PsiBuilder builder) {
-      JavaParser.INSTANCE.getReferenceParser().parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.ELLIPSIS |
-                                                                  ReferenceParser.WILDCARD | ReferenceParser.DISJUNCTIONS);
+      int flags = ReferenceParser.EAT_LAST_DOT | ReferenceParser.ELLIPSIS | ReferenceParser.WILDCARD | ReferenceParser.DISJUNCTIONS | ReferenceParser.VAR_TYPE;
+      JavaParser.INSTANCE.getReferenceParser().parseType(builder, flags);
     }
   };
 

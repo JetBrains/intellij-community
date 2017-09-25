@@ -23,8 +23,8 @@ import org.junit.runners.Parameterized;
 
 import java.util.Collection;
 
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * The test for {@link GitRefNameValidator}.
@@ -134,13 +134,13 @@ public class GitRefNameValidatorTest {
   }
   
   private static void assertValid(String branchName) {
-    assertTrue(GitRefNameValidator.getInstance().checkInput(branchName), "Should be valid");
-    assertTrue(GitRefNameValidator.getInstance().canClose(branchName), "Should be valid");
+    assertTrue("Should be valid", GitRefNameValidator.getInstance().checkInput(branchName));
+    assertTrue("Should be valid", GitRefNameValidator.getInstance().canClose(branchName));
   }
 
   private static void assertInvalid(String branchName) {
-    assertFalse(GitRefNameValidator.getInstance().checkInput(branchName), "Should be invalid");
-    assertFalse(GitRefNameValidator.getInstance().canClose(branchName), "Should be invalid");
+    assertFalse("Should be invalid", GitRefNameValidator.getInstance().checkInput(branchName));
+    assertFalse("Should be invalid", GitRefNameValidator.getInstance().canClose(branchName));
   }
 
 }

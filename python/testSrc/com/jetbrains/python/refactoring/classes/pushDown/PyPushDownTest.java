@@ -46,33 +46,33 @@ public class PyPushDownTest extends PyClassRefactoringTest {
     checkMultiFile(modules);
   }
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     doProcessorTest("Foo", null, ".foo");
   }
 
-  public void testSuperclass() throws Exception {
+  public void testSuperclass() {
     doProcessorTest("Zope", null, "Foo");
   }
 
-  public void testFull() throws Exception {
+  public void testFull() {
     doProcessorTest("Parent", null, "#CLASS_VAR_1", "#inst_var", ".method_1", "Dummny");
   }
 
-  public void testMultiple() throws Exception {
+  public void testMultiple() {
     doProcessorTest("Foo", null, ".foo");
   }
 
-  public void testPy346() throws Exception {
+  public void testPy346() {
     doProcessorTest("A", null, ".meth_a1", ".meth_a2");
   }
 
-  public void testExistingmethod() throws Exception {
+  public void testExistingmethod() {
     doProcessorTest("Foo",
                     "method <b><code>foo</code></b> is already overridden in class <b><code>Boo</code></b>. Method will not be pushed down to that class.",
                     ".foo");
   }
 
-  private void doProcessorTest(final String className, final String expectedError, final String... memberNames) throws Exception {
+  private void doProcessorTest(final String className, final String expectedError, final String... memberNames) {
     try {
       String baseName = "/refactoring/pushdown/" + getTestName(true);
       myFixture.configureByFile(baseName + ".before.py");

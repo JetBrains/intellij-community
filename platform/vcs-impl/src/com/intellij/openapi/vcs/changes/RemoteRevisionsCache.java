@@ -19,6 +19,7 @@ import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
@@ -80,11 +81,7 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
         boolean somethingChanged = myRemoteRevisionsNumbersCache.updateStep();
         somethingChanged |= myRemoteRevisionsStateCache.updateStep();
         if (somethingChanged) {
-          ApplicationManager.getApplication().runReadAction(() -> {
-            if (!myProject.isDisposed()) {
-              myProject.getMessageBus().syncPublisher(REMOTE_VERSION_CHANGED).run();
-            }
-          });
+          BackgroundTaskUtil.syncPublisher(myProject, REMOTE_VERSION_CHANGED).run();
         }
       }
       return shouldBeDone;

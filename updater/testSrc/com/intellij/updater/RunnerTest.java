@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class RunnerTest {
   @Test
-  public void testExtractingFiles() throws Exception {
+  public void testExtractingFiles() {
     String[] args = {"bar", "ignored=xxx;yyy;zzz/zzz", "critical=", "ignored=aaa", "baz", "critical=ccc"};
     assertThat(Runner.extractArguments(args, "ignored")).containsExactly("xxx", "yyy", "zzz/zzz", "aaa");
     assertThat(Runner.extractArguments(args, "critical")).containsExactly("ccc");

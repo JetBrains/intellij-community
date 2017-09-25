@@ -42,7 +42,7 @@ public class DynamicTest extends JavaCodeInsightFixtureTestCase {
     return TestUtils.getTestDataPath() + "dynamic/";
   }
 
-  public void testMethod() throws Throwable {
+  public void testMethod() {
     final GrReferenceExpression referenceExpression = doDynamicFix();
 
     final PsiType[] psiTypes = PsiUtil.getArgumentTypes(referenceExpression, false);
@@ -60,12 +60,12 @@ public class DynamicTest extends JavaCodeInsightFixtureTestCase {
     return classElement;
   }
 
-  public void testProperty() throws Throwable {
+  public void testProperty() {
     final String name = doDynamicFix().getReferenceName();
     assert getDClassElement().getPropertyByName(name) != null;
   }
 
-  private GrReferenceExpression doDynamicFix() throws Throwable {
+  private GrReferenceExpression doDynamicFix() {
     myFixture.enableInspections(new GrUnresolvedAccessInspection());
 
     final List<IntentionAction> actions = myFixture.getAvailableIntentions(getTestName(false) + ".groovy");

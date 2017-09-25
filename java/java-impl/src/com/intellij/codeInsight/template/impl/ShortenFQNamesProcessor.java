@@ -36,8 +36,10 @@ public class ShortenFQNamesProcessor implements TemplateOptionalProcessor, DumbA
     if (!template.isToShortenLongNames()) return;
 
     PsiDocumentManager.getInstance(project).commitDocument(document);
-    final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
-    assert file != null;
+    PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
+    if (file == null) {
+      throw new IllegalStateException(editor + " " + editor.getDocument());
+    }
     DumbService.getInstance(project).withAlternativeResolveEnabled(
       () -> JavaCodeStyleManager.getInstance(project).shortenClassReferences(file, templateRange.getStartOffset(), templateRange.getEndOffset()));
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);

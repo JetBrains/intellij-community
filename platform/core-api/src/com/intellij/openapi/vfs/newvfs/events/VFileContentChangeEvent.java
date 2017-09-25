@@ -61,7 +61,7 @@ public class VFileContentChangeEvent extends VFileEvent {
 
   @NotNull
   @Override
-  public String getPath() {
+  protected String computePath() {
     return myFile.getPath();
   }
 

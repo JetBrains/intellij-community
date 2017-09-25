@@ -74,7 +74,13 @@ public class DfaPsiUtil {
   }
 
   @NotNull
-  static Nullness getElementNullability(@Nullable PsiType resultType,
+  public static Nullness getElementNullabilityIgnoringParameterInference(@Nullable PsiType resultType,
+                                                                         @Nullable PsiModifierListOwner owner) {
+    return getElementNullability(resultType, owner, true);
+  }
+
+  @NotNull
+  private static Nullness getElementNullability(@Nullable PsiType resultType,
                                         @Nullable PsiModifierListOwner owner,
                                         boolean ignoreParameterNullabilityInference) {
     if (owner == null) return getTypeNullability(resultType);
@@ -104,6 +110,13 @@ public class DfaPsiUtil {
       return inferParameterNullability((PsiParameter)owner);
     }
 
+    if (owner instanceof PsiMethod) {
+      PsiField field = PropertyUtil.getFieldOfGetter((PsiMethod)owner);
+      if (field != null && getElementNullability(resultType, field) == Nullness.NULLABLE) {
+        return Nullness.NULLABLE;
+      }
+    }
+
     return Nullness.UNKNOWN;
   }
 
@@ -128,14 +141,14 @@ public class DfaPsiUtil {
 
     Ref<Nullness> result = Ref.create(Nullness.UNKNOWN);
     InheritanceUtil.processSuperTypes(type, true, eachType -> {
-      result.set(getTypeOwnNullability(result, eachType));
+      result.set(getTypeOwnNullability(eachType));
       return result.get() == Nullness.UNKNOWN;
     });
     return result.get();
   }
 
   @NotNull
-  private static Nullness getTypeOwnNullability(Ref<Nullness> result, PsiType eachType) {
+  private static Nullness getTypeOwnNullability(PsiType eachType) {
     for (PsiAnnotation annotation : eachType.getAnnotations()) {
       String qualifiedName = annotation.getQualifiedName();
       NullableNotNullManager nnn = NullableNotNullManager.getInstance(annotation.getProject());

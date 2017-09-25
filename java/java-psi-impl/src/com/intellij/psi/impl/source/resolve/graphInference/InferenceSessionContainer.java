@@ -277,6 +277,7 @@ public class InferenceSessionContainer {
       if (variable.isThrownBound()) {
         newVariable.setThrownBound();
       }
+      newVariable.putUserData(InferenceSession.ORIGINAL_CAPTURE, variable.getUserData(InferenceSession.ORIGINAL_CAPTURE));
     }
 
     for (int i = 0; i < targetVars.size(); i++) {

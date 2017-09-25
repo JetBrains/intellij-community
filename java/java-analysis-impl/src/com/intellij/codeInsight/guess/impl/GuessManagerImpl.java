@@ -398,8 +398,13 @@ public class GuessManagerImpl extends GuessManager {
     private Map<PsiExpression, PsiType> myResult;
     private final PsiElement myForPlace;
 
-    private ExpressionTypeInstructionVisitor(PsiElement forPlace) {
-      myForPlace = forPlace;
+    private ExpressionTypeInstructionVisitor(@NotNull PsiElement forPlace) {
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(forPlace.getParent());
+      if (forPlace instanceof PsiThisExpression && parent instanceof PsiReferenceExpression) {
+        myForPlace = parent.getParent() instanceof PsiMethodCallExpression ? parent.getParent() : parent;
+      } else {
+        myForPlace = forPlace;
+      }
     }
 
     public Map<PsiExpression, PsiType> getResult() {

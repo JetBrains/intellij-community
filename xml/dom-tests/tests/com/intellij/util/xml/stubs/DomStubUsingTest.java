@@ -150,7 +150,7 @@ public class DomStubUsingTest extends DomStubTest {
 
     new WriteCommandAction.Simple(null) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         domElement.undefine();
       }
     }.execute().throwException();

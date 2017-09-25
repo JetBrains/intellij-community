@@ -41,7 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SingleConfigurableEditor extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.ex.SingleConfigurableEditor");
+  private static final Logger LOG = Logger.getInstance(SingleConfigurableEditor.class);
   private Project myProject;
   private Configurable myConfigurable;
   private JComponent myCenterPanel;

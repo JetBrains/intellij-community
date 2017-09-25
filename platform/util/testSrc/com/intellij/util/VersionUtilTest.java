@@ -55,13 +55,13 @@ public class VersionUtilTest extends TestCase {
     {"java version \"9-ea\"",                                                           new Version(9, 0, 0), 0},
   };
 
-  public void testParseVersion() throws Exception {
+  public void testParseVersion() {
     for (Object[] aTestData : testDataVersion) {
       String versionString = (String)aTestData[0];
       assertEquals("For \"" + versionString + "\"", aTestData[1], VersionUtil.parseVersion(versionString, VERSION_PATTERNS));
     }
   }
-  public void testParseVersionAndUpdate() throws Exception {
+  public void testParseVersionAndUpdate() {
     for (Object[] aTestData : testDataVersionUpdate) {
       String versionString = (String)aTestData[0];
       Pair<Version, Integer> versionAndUpdate = VersionUtil.parseNewVersionAndUpdate(versionString, LINE_TO_VERSION_PATTERNS);

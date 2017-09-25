@@ -20,6 +20,7 @@ import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
@@ -81,11 +82,11 @@ public class GppReferenceContributor extends PsiReferenceContributor {
 
           final String memberName = getValue();
           if (value == null || applicable.isEmpty()) {
-            final PsiMethod setter = PropertyUtil.findPropertySetter(psiClass, memberName, false, true);
+            final PsiMethod setter = PropertyUtilBase.findPropertySetter(psiClass, memberName, false, true);
             if (setter != null) {
               applicable.add(new PsiElementResolveResult(setter));
             } else {
-              final PsiField field = PropertyUtil.findPropertyField(psiClass, memberName, false);
+              final PsiField field = PropertyUtilBase.findPropertyField(psiClass, memberName, false);
               if (field != null) {
                 applicable.add(new PsiElementResolveResult(field));
               }

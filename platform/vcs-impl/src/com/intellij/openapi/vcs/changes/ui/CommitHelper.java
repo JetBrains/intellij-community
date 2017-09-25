@@ -21,6 +21,7 @@ import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -156,6 +157,7 @@ public class CommitHelper {
 
   private void delegateCommitToVcsThread() {
     ProgressIndicator indicator = new DelegatingProgressIndicator();
+    TransactionGuard.getInstance().assertWriteSafeContext(indicator.getModalityState());
     Semaphore endSemaphore = new Semaphore();
 
     endSemaphore.down();

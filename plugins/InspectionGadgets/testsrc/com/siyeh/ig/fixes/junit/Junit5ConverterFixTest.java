@@ -33,7 +33,7 @@ public class Junit5ConverterFixTest extends IGQuickFixesTestCase {
     builder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
   }
 
-  public void testExpectedOnTestAnnotation() throws Exception {
+  public void testExpectedOnTestAnnotation() {
     assertQuickfixNotAvailable();
   }
 

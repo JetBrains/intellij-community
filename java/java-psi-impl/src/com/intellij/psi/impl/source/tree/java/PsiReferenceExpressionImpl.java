@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -29,6 +30,7 @@ import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.*;
@@ -277,6 +279,16 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       }
       else if (result.length == 0) {
         result = resolveToPackage(containingFile);
+      }
+      
+      if (result.length == 0 && variable == null) {
+        String qualifiedName = getQualifiedName();
+        PsiClass aClass = qualifiedName != null && !StringUtil.isEmptyOrSpaces(StringUtil.getPackageName(qualifiedName))
+                          ? JavaPsiFacade.getInstance(getProject()).findClass(qualifiedName, getResolveScope()) 
+                          : null;
+        if (aClass != null) {
+          result = new JavaResolveResult[] {new CandidateInfo(aClass, PsiSubstitutor.EMPTY, this, false)};
+        }
       }
 
       return result.length == 0 && variable != null ? variable : result;
@@ -788,6 +800,8 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
 
   @Override
   public PsiReference getReference() {
+    if (getReferenceNameElement() == null) return null;
+    
     return this;
   }
 
@@ -808,15 +822,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
 
   @Override
   public TextRange getRangeInElement() {
-    TreeElement nameChild = (TreeElement)findChildByRole(ChildRole.REFERENCE_NAME);
-    if (nameChild == null) {
-      final TreeElement dot = (TreeElement)findChildByRole(ChildRole.DOT);
-      if (dot == null) {
-        LOG.error(toString());
-      }
-      return new TextRange(dot.getStartOffsetInParent() + dot.getTextLength(), getTextLength());
-    }
-    return new TextRange(nameChild.getStartOffsetInParent(), getTextLength());
+    return PsiJavaCodeReferenceElementImpl.calcRangeInElement(this);
   }
 
   @Override

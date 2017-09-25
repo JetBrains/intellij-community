@@ -117,6 +117,10 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     doTest();
   }
 
+  public void testNullArgumentIfMethodExecutionFailsAnyway() {
+    doTest();
+  }
+
   public void testNullableArrayComponent() {
     setupCustomAnnotations();
     DataFlowInspection inspection = new DataFlowInspection();
@@ -136,6 +140,10 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
     DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
     doTest();
+  }
+
+  public void testReturningNullFromTypeAnnotatedNullableMethod() {
+    doTestWithCustomAnnotations();
   }
 
   private void doTestWithCustomAnnotations() {
@@ -172,8 +180,12 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testIgnoreNullabilityOnPrimitiveCast() { doTestWithCustomAnnotations();}
 
   public void testArrayComponentAndMethodAnnotationConflict() {
-    setupCustomAnnotations("withTypeUse", "{ElementType.METHOD, ElementType.TYPE_USE}", myFixture);
+    setupAmbiguousAnnotations("withTypeUse", myFixture);
     doTest();
+  }
+
+  static void setupAmbiguousAnnotations(String pkg, JavaCodeInsightTestFixture fixture) {
+    setupCustomAnnotations(pkg, "{ElementType.METHOD, ElementType.TYPE_USE}", fixture);
   }
 
   public void testLambdaInlining() { doTest(); }
@@ -183,9 +195,11 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     doTest();
   }
   public void testStreamInlining() { doTest(); }
+  public void testStreamComparatorInlining() { doTest(); }
+  public void testStreamKnownSource() { doTest(); }
 
   public void testMethodVsExpressionTypeAnnotationConflict() {
-    setupCustomAnnotations("withTypeUse", "{ElementType.METHOD, ElementType.TYPE_USE}", myFixture);
+    setupAmbiguousAnnotations("withTypeUse", myFixture);
     doTest();
   }
 

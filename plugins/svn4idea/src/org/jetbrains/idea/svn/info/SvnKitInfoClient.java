@@ -56,7 +56,7 @@ public class SvnKitInfoClient extends BaseSvnClient implements InfoClient {
   }
 
   @Override
-  public void doInfo(@NotNull Collection<File> paths, @Nullable InfoConsumer handler) throws SvnBindException {
+  public void doInfo(@NotNull Collection<File> paths, @Nullable InfoConsumer handler) {
     throw new UnsupportedOperationException();
   }
 }

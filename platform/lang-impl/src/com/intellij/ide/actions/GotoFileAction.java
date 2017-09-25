@@ -17,10 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.util.gotoByName.ChooseByNameFilter;
-import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
-import com.intellij.ide.util.gotoByName.GotoFileConfiguration;
-import com.intellij.ide.util.gotoByName.GotoFileModel;
+import com.intellij.ide.util.gotoByName.*;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -83,8 +80,7 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
         }
       }
     };
-    GotoFileItemProvider provider = new GotoFileItemProvider(project, getPsiContext(e), gotoFileModel);
-    showNavigationPopup(e, gotoFileModel, callback, IdeBundle.message("go.to.file.toolwindow.title"), true, true, provider);
+    showNavigationPopup(e, gotoFileModel, callback, IdeBundle.message("go.to.file.toolwindow.title"), true, true);
   }
 
   protected static class GotoFileFilter extends ChooseByNameFilter<FileType> {

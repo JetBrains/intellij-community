@@ -140,6 +140,10 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     catch (Exception e) {
       return true;
     }
+    if (loadedBytes.length == 0 && bytesToSave.length == 0) {
+      // hold on, file was just created, no content was written yet
+      return true;
+    }
     byte[] bom = virtualFile.getBOM();
     if (bom != null && !ArrayUtil.startsWith(bytesToSave, bom)) {
       bytesToSave = ArrayUtil.mergeArrays(bom, bytesToSave); // for 2-byte encodings String.getBytes(Charset) adds BOM automatically

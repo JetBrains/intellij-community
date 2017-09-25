@@ -37,7 +37,7 @@ public class DuplicateConditionInspection extends BaseInspection {
   /**
    * @noinspection PublicField
    */
-  public boolean ignoreMethodCalls = true;
+  public boolean ignoreSideEffectConditions = true;
 
   // This is a dirty fix of 'squared' algorithm performance issue.
   private static final int LIMIT_DEPTH = 20;
@@ -58,7 +58,7 @@ public class DuplicateConditionInspection extends BaseInspection {
   @Nullable
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("duplicate.condition.ignore.method.calls.option"),
-                                          this, "ignoreMethodCalls");
+                                          this, "ignoreSideEffectConditions");
   }
 
   @Override
@@ -82,7 +82,7 @@ public class DuplicateConditionInspection extends BaseInspection {
         return;
       }
       final List<PsiExpression> conditionList = new ArrayList<>(conditions);
-      if (ignoreMethodCalls) {
+      if (ignoreSideEffectConditions) {
         conditionList.replaceAll(cond -> SideEffectChecker.mayHaveSideEffects(cond) ? null : cond);
         // Every condition having side-effect separates non-side-effect conditions into independent groups
         // like:

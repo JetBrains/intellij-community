@@ -60,7 +60,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.AbstractDebuggerSession;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.sun.jdi.ObjectCollectedException;
@@ -485,7 +485,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
         if (thread != null) {
           List<Pair<Breakpoint, com.sun.jdi.event.Event>> descriptors = DebuggerUtilsEx.getEventDescriptors(suspendContext);
           if (!descriptors.isEmpty()) {
-            XDebugSessionImpl.NOTIFICATION_GROUP.createNotification(
+            XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification(
               DebuggerBundle.message("status.breakpoint.reached.in.thread", thread.name()),
               DebuggerBundle.message("status.breakpoint.reached.in.thread.switch"),
               NotificationType.INFORMATION, new NotificationListener() {

@@ -25,39 +25,39 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     return BASE_PATH;
   }
 
-  public void testSCR6138() throws Exception { doTest(); }
-  public void testSCR18364() throws Exception { doTest(); }
-  public void testStaticImports1() throws Exception { doTest(); }
-  public void testStaticImportsToOptimize() throws Exception { doTest(); }
-  public void testStaticImportsToOptimizeMixed() throws Exception { doTest(); }
-  public void testStaticImportsToOptimize2() throws Exception { doTest(); }
-  public void testEmptyImportList() throws Exception { doTest(); }
-  public void testIDEADEV10716() throws Exception { doTest(); }
-  public void testUnresolvedImports() throws Exception { doTest(); }
-  public void testUnresolvedImports2() throws Exception { doTest(); }
-  public void testNewImportListIsEmptyAndCommentPreserved() throws Exception { doTest(); }
-  public void testNewImportListIsEmptyAndJavaDocWithInvalidCodePreserved() throws Exception { doTest(); }
+  public void testSCR6138() { doTest(); }
+  public void testSCR18364() { doTest(); }
+  public void testStaticImports1() { doTest(); }
+  public void testStaticImportsToOptimize() { doTest(); }
+  public void testStaticImportsToOptimizeMixed() { doTest(); }
+  public void testStaticImportsToOptimize2() { doTest(); }
+  public void testEmptyImportList() { doTest(); }
+  public void testIDEADEV10716() { doTest(); }
+  public void testUnresolvedImports() { doTest(); }
+  public void testUnresolvedImports2() { doTest(); }
+  public void testNewImportListIsEmptyAndCommentPreserved() { doTest(); }
+  public void testNewImportListIsEmptyAndJavaDocWithInvalidCodePreserved() { doTest(); }
 
-  public void testDontCollapseToOnDemandImport() throws Exception { doTest(); }
-  public void testIgnoreInaccessible() throws Exception{ doTest();}
+  public void testDontCollapseToOnDemandImport() { doTest(); }
+  public void testIgnoreInaccessible() { doTest();}
 
-  public void testEnsureConflictingImportsNotCollapsed() throws Exception {
+  public void testEnsureConflictingImportsNotCollapsed() {
     doTest();
   }
 
-  public void testSameNamedImportedClasses() throws Exception {
+  public void testSameNamedImportedClasses() {
     doTest();
   }
 
-  public void testConflictingWithJavaLang() throws Exception {
+  public void testConflictingWithJavaLang() {
     doTest();
   }
 
-  public void testExcludeNonStaticElementsFromStaticConflictingMembers() throws Exception {
+  public void testExcludeNonStaticElementsFromStaticConflictingMembers() {
     doTest();
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest(".java");
   }
 }

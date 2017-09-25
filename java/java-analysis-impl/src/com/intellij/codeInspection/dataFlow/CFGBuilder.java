@@ -21,7 +21,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.light.LightVariableBuilder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
@@ -449,12 +448,10 @@ public class CFGBuilder {
         PsiVariable qualifierBinding = createTempVariable(qualifier.getType());
         pushVariable(qualifierBinding)
           .pushExpression(qualifier)
-          .dup();
-        myAnalyzer.addInstruction(new FieldReferenceInstruction(qualifier, ControlFlowAnalyzer.METHOD_REFERENCE_QUALIFIER_SYNTHETIC_FIELD));
-        assign().pop();
+          .checkNotNull(qualifier, NullabilityProblem.fieldAccessNPE)
+          .assign()
+          .pop();
         myMethodRefQualifiers.put(methodRef, qualifierBinding);
-      } else {
-        pushExpression(methodRef).pop();
       }
       return this;
     }
@@ -570,8 +567,33 @@ public class CFGBuilder {
     }
   }
 
+  /**
+   * Inlines given lambda. Lambda parameters are assumed to be assigned already (if necessary).
+   * <p>
+   * Stack before: ...
+   * <p>
+   * Stack after: ... lambdaResult
+   *
+   * @param lambda lambda to inline
+   * @param resultNullness a required return value nullness
+   * @return this builder
+   */
   public CFGBuilder inlineLambda(PsiLambdaExpression lambda, Nullness resultNullness) {
-    myAnalyzer.inlineLambda(lambda, resultNullness);
+    PsiElement body = lambda.getBody();
+    PsiExpression expression = LambdaUtil.extractSingleExpressionFromBody(body);
+    if (expression != null) {
+      pushExpression(expression);
+      boxUnbox(expression, LambdaUtil.getFunctionalInterfaceReturnType(lambda));
+      if(resultNullness == Nullness.NOT_NULL) {
+        checkNotNull(expression, NullabilityProblem.nullableFunctionReturn);
+      }
+    } else if(body instanceof PsiCodeBlock) {
+      PsiVariable variable = createTempVariable(LambdaUtil.getFunctionalInterfaceReturnType(lambda));
+      myAnalyzer.inlineBlock((PsiCodeBlock)body, resultNullness, variable);
+      push(getFactory().getVarFactory().createVariableValue(variable, false));
+    } else {
+      pushUnknown();
+    }
     return this;
   }
 
@@ -583,10 +605,7 @@ public class CFGBuilder {
    */
   @NotNull
   public PsiVariable createTempVariable(@Nullable PsiType type) {
-    if(type == null) {
-      type = PsiType.VOID;
-    }
-    return new LightVariableBuilder<>("tmp$" + myAnalyzer.getInstructionCount(), type, myAnalyzer.getContext());
+    return myAnalyzer.createTempVariable(type);
   }
 
   /**

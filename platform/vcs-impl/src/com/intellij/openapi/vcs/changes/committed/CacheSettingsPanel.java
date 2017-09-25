@@ -49,7 +49,7 @@ public class CacheSettingsPanel implements Configurable {
     myCache = CommittedChangesCache.getInstance(project);
   }
 
-  public void apply() throws ConfigurationException {
+  public void apply() {
     final CommittedChangesCache.State state = new CommittedChangesCache.State();
     state.setInitialCount(((SpinnerNumberModel)myCountSpinner.getModel()).getNumber().intValue());
     state.setInitialDays(((SpinnerNumberModel)myDaysSpinner.getModel()).getNumber().intValue());

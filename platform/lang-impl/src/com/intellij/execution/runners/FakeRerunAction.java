@@ -18,6 +18,7 @@ package com.intellij.execution.runners;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutorRegistry;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -27,8 +28,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,13 +85,16 @@ public class FakeRerunAction extends AnAction  {
     RunContentDescriptor descriptor = getDescriptor(event);
     ProcessHandler processHandler = descriptor == null ? null : descriptor.getProcessHandler();
     ExecutionEnvironment environment = getEnvironment(event);
-    return environment != null &&
+    Project project = getEventProject(event);
+    if (environment == null || project == null) return false;
+    RunnerAndConfigurationSettings settings = environment.getRunnerAndConfigurationSettings();
+    return (!DumbService.isDumb(project) || settings == null || settings.getType().isDumbAware()) &&
            !ExecutorRegistry.getInstance().isStarting(environment) &&
            !(processHandler != null && processHandler.isProcessTerminating());
   }
 
   @Override
   public boolean isDumbAware() {
-    return Registry.is("dumb.aware.run.configurations");
+    return true;
   }
 }

@@ -48,6 +48,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -218,7 +219,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
     final ChooseByNameContributor[] nameContributors = ChooseByNameContributor.FILE_EP_NAME.getExtensions();
     for (final ChooseByNameContributor contributor : nameContributors) {
       try {
-        names.addAll(Arrays.asList(contributor.getNames(project, false)));
+        ContainerUtil.addAll(names, contributor.getNames(project, false));
       }
       catch (ProcessCanceledException ex) {
         // index corruption detected, ignore

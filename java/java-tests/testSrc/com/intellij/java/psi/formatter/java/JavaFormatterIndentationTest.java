@@ -27,7 +27,7 @@ import com.intellij.util.IncorrectOperationException;
  */
 public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
 
-  public void testClassInitializationBlockIndentation() throws Exception {
+  public void testClassInitializationBlockIndentation() {
     // Checking that initialization block body is correctly indented.
     doMethodTest(
       "checking(new Expectations() {{\n" +
@@ -57,7 +57,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testNestedMethodsIndentation() throws Exception {
+  public void testNestedMethodsIndentation() {
     // Inspired by IDEA-43962
 
     getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 4;
@@ -86,7 +86,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testShiftedChainedIfElse() throws Exception {
+  public void testShiftedChainedIfElse() {
     getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED2;
     getSettings().ELSE_ON_NEW_LINE = true;
     getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 4;
@@ -273,7 +273,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     );
   }
   
-  public void testBracesShiftedOnNextLineOnMethodWithJavadoc() throws Exception {
+  public void testBracesShiftedOnNextLineOnMethodWithJavadoc() {
     // Inspired by IDEA-62997
     getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
     
@@ -307,7 +307,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     doClassTest(precededByMultiLineComment, precededByMultiLineComment);
   }
   
-  public void testAnonymousClassInstancesAsMethodCallArguments() throws Exception {
+  public void testAnonymousClassInstancesAsMethodCallArguments() {
     // Inspired by IDEA-65987
     
     doMethodTest(
@@ -370,7 +370,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testAnonymousClassInstancesAsAlignedMethodCallArguments() throws Exception {
+  public void testAnonymousClassInstancesAsAlignedMethodCallArguments() {
     getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
 
     doMethodTest(
@@ -433,7 +433,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testAnonymousClassesOnSameLineAtMethodCallExpression() throws Exception {
+  public void testAnonymousClassesOnSameLineAtMethodCallExpression() {
     doMethodTest(
       "foo(new Runnable() {\n" +
       "        public void run() {\n" +
@@ -452,7 +452,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testAlignMultipleAnonymousClasses_PassedAsMethodParameters() throws Exception {
+  public void testAlignMultipleAnonymousClasses_PassedAsMethodParameters() {
     String text = "test(new Runnable() {\n" +
                   "    @Override\n" +
                   "    public void run() {\n" +
@@ -467,7 +467,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     doMethodTest(text, text);
   }
 
-  public void testAlignmentAdditionalParamsWithMultipleAnonymousClasses_PassedAsMethodParameters() throws Exception {
+  public void testAlignmentAdditionalParamsWithMultipleAnonymousClasses_PassedAsMethodParameters() {
     String text = "foo(1221, new Runnable() {\n" +
                   "    @Override\n" +
                   "    public void run() {\n" +
@@ -482,7 +482,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     doMethodTest(text, text);
   }
 
-  public void testAlignmentMultipleParamsWithAnonymousClass_PassedAsMethodParams() throws Exception {
+  public void testAlignmentMultipleParamsWithAnonymousClass_PassedAsMethodParams() {
     getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     String text = "test(1000,\n" +
                   "     new Runnable() {\n" +
@@ -495,7 +495,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     doMethodTest(text, text);
   }
 
-  public void testAlignmentMultipleAnonymousClassesOnNewLines() throws Exception {
+  public void testAlignmentMultipleAnonymousClassesOnNewLines() {
     getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     String text = "test(1000,\n" +
                   "     new Runnable() {\n" +
@@ -514,7 +514,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     doMethodTest(text, text);
   }
 
-  public void testEnforceChildrenIndent_OfAnonymousClasses_IfAnyOfParamsIsLocatedOnNewLine() throws Exception {
+  public void testEnforceChildrenIndent_OfAnonymousClasses_IfAnyOfParamsIsLocatedOnNewLine() {
     getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     String text = "test(\"Suuuuuuuuuuuuuuuuuper loooooooooooong string\",\n" +
                   "     \"Next loooooooooooooooooooooong striiiiiiiiiiing\", new Runnable() {\n" +
@@ -544,7 +544,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     doTextTest(text, text);
   }
 
-  public void testIncompleteMethodCall() throws Exception {
+  public void testIncompleteMethodCall() {
     // Inspired by IDEA-79836.
 
     doMethodTest(
@@ -565,7 +565,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     );
   }
 
-  public void testCStyleCommentIsNotMoved() throws Exception {
+  public void testCStyleCommentIsNotMoved() {
     // IDEA-87087
     doClassTest(
       "                /*\n" +
@@ -612,7 +612,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     doTextTest(initial, expected);
   }
 
-  public void testLambdaIndentation() throws Exception {
+  public void testLambdaIndentation() {
     String before = "Runnable r = () ->\n" +
                     "{\n" +
                     "    System.out.println(\"olo\");\n" +

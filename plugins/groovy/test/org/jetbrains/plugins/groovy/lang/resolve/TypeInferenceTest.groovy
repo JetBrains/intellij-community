@@ -100,7 +100,7 @@ class TypeInferenceTest extends TypeInferenceTestBase {
 
   void testClosure2() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("closure2/A.groovy").element
-    assertTrue(ref.type.equalsToText("java.lang.Integer"))
+    assertTrue(ref.type.equalsToText("int"))
   }
 
   void testGrvy1209() {
@@ -140,7 +140,7 @@ class TypeInferenceTest extends TypeInferenceTestBase {
 
   void testParameterWithBuiltinType() {
     GrReferenceExpression refExpr = (GrReferenceExpression)configureByFile("parameterWithBuiltinType/A.groovy")
-    assertEquals("java.lang.Integer", refExpr.type.canonicalText)
+    assertEquals("int", refExpr.type.canonicalText)
   }
 
   void testRawTypeInReturnExpression() {
@@ -709,6 +709,24 @@ def foo(List list) {
 ''', 'java.util.List<java.util.List>')
   }
 
+  void testReturnNullWithGeneric() {
+    doTest('''
+     import groovy.transform.CompileStatic
+
+    @CompileStatic
+    class SomeClass {
+      protected List foo(String text) {
+        return null
+      }
+
+      def bar() {
+        fo<caret>o("")
+      }
+    }
+  }
+''', 'java.util.List')
+  }
+
 
   void testClassExpressions() {
     doExprTest 'String[]', 'java.lang.Class<java.lang.String[]>'
@@ -770,5 +788,16 @@ def foo(List list) {
     doExprTest '[foo: 2, bar: 4]*.key', 'java.util.ArrayList<java.lang.String>'
     doExprTest '[foo: 2, bar: 4]*.value', 'java.util.ArrayList<java.lang.Integer>'
     doExprTest '[foo: 2, bar: 4]*.undefined', 'java.util.List'
+  }
+
+  void 'test instanceof does not interfere with outer if'() {
+    doTest '''\
+def bar(CharSequence xx) {
+  if (xx instanceof String) {
+    1 instanceof Object
+    <caret>xx
+  }  
+}
+''', 'java.lang.String'
   }
 }

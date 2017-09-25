@@ -26,6 +26,7 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunContentWithExecutorListener;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.Document;
@@ -36,6 +37,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
@@ -68,7 +70,11 @@ import java.util.concurrent.atomic.AtomicReference;
 @State(name = XDebuggerManagerImpl.COMPONENT_NAME, storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class XDebuggerManagerImpl extends XDebuggerManager
   implements NamedComponent, PersistentStateComponent<XDebuggerManagerImpl.XDebuggerState> {
+
   @NonNls public static final String COMPONENT_NAME = "XDebuggerManager";
+  public static final NotificationGroup NOTIFICATION_GROUP =
+    NotificationGroup.toolWindowGroup("Debugger messages", ToolWindowId.DEBUG, false);
+
   private final Project myProject;
   private final XBreakpointManagerImpl myBreakpointManager;
   private final XDebuggerWatchesManager myWatchesManager;
@@ -329,7 +335,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
   }
 
   @Override
-  public void loadState(final XDebuggerState state) {
+  public void loadState(@NotNull XDebuggerState state) {
     myBreakpointManager.loadState(state.myBreakpointManagerState);
     myWatchesManager.loadState(state.myWatchesManagerState);
   }
@@ -340,32 +346,37 @@ public class XDebuggerManagerImpl extends XDebuggerManager
 
   @SuppressWarnings("UnusedDeclaration")
   public static class XDebuggerState {
+    @NotNull
     private XBreakpointManagerImpl.BreakpointManagerState myBreakpointManagerState;
+    @NotNull
     private XDebuggerWatchesManager.WatchesManagerState myWatchesManagerState;
 
     public XDebuggerState() {
+      this(new XBreakpointManagerImpl.BreakpointManagerState(), new XDebuggerWatchesManager.WatchesManagerState());
     }
 
-    public XDebuggerState(final XBreakpointManagerImpl.BreakpointManagerState breakpointManagerState, XDebuggerWatchesManager.WatchesManagerState watchesManagerState) {
+    public XDebuggerState(@NotNull XBreakpointManagerImpl.BreakpointManagerState breakpointManagerState, @NotNull XDebuggerWatchesManager.WatchesManagerState watchesManagerState) {
       myBreakpointManagerState = breakpointManagerState;
       myWatchesManagerState = watchesManagerState;
     }
 
+    @NotNull
     @Property(surroundWithTag = false)
     public XBreakpointManagerImpl.BreakpointManagerState getBreakpointManagerState() {
       return myBreakpointManagerState;
     }
 
-    public void setBreakpointManagerState(final XBreakpointManagerImpl.BreakpointManagerState breakpointManagerState) {
+    public void setBreakpointManagerState(@NotNull final XBreakpointManagerImpl.BreakpointManagerState breakpointManagerState) {
       myBreakpointManagerState = breakpointManagerState;
     }
 
+    @NotNull
     @Property(surroundWithTag = false)
     public XDebuggerWatchesManager.WatchesManagerState getWatchesManagerState() {
       return myWatchesManagerState;
     }
 
-    public void setWatchesManagerState(XDebuggerWatchesManager.WatchesManagerState watchesManagerState) {
+    public void setWatchesManagerState(@NotNull XDebuggerWatchesManager.WatchesManagerState watchesManagerState) {
       myWatchesManagerState = watchesManagerState;
     }
   }

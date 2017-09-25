@@ -132,12 +132,12 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
     }
   }
 
-  protected void doHighlightingTest(String s) throws Throwable {
+  protected void doHighlightingTest(String s) {
     doCustomHighlighting(s, true, false);
 //    myTestFixture.testHighlighting(true, false, true, s);
   }
 
-  protected void doExternalToolHighlighting(String name) throws Throwable {
+  protected void doExternalToolHighlighting(String name) {
     doCustomHighlighting(name, true, true);
   }
 
@@ -183,7 +183,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
     myTestFixture.testCompletionVariants(before, variants);
   }
 
-  protected void doTestCompletion(String before) throws Throwable {
+  protected void doTestCompletion(String before) {
     doTestCompletion(before, "xml");
   }
 
@@ -209,7 +209,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
                                                                                                                true);
     new WriteCommandAction.Simple(project, myTestFixture.getFile()) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         fixes[0].applyFix(project, problemDescriptor);
       }
     }.execute();

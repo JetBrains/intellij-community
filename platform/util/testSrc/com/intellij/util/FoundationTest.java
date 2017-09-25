@@ -32,12 +32,12 @@ public class FoundationTest {
   }
 
   @Test
-  public void testStrings() throws Exception {
+  public void testStrings() {
     assertThat(Foundation.toStringViaUTF8(Foundation.nsString("Test")), equalTo("Test"));
   }
 
   @Test
-  public void testEncodings() throws Exception {
+  public void testEncodings() {
     assertThat(Foundation.getEncodingName(4), equalTo("utf-8"));
     assertThat(Foundation.getEncodingName(0), nullValue());
     assertThat(Foundation.getEncodingName(-1), nullValue());
@@ -60,7 +60,7 @@ public class FoundationTest {
   }
 
   @Test
-  public void testFindingAppBundle() throws Exception {
+  public void testFindingAppBundle() {
     String path;
     
     path = NSWorkspace.absolutePathForAppBundleWithIdentifier("com.apple.Finder");

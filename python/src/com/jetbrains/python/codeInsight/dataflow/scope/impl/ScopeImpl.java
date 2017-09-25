@@ -33,6 +33,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -239,7 +240,18 @@ public class ScopeImpl implements Scope {
             defaultValue.accept(this);
           }
         }
+        visitDecorators(node.getDecoratorList());
         super.visitPyFunction(node);
+      }
+
+      @Override
+      public void visitPyClass(PyClass node) {
+        visitDecorators(node.getDecoratorList());
+        super.visitPyClass(node);
+      }
+
+      @Override
+      public void visitPyDecoratorList(PyDecoratorList node) {
       }
 
       @Override
@@ -260,6 +272,14 @@ public class ScopeImpl implements Scope {
         }
         else {
           super.visitPyElement(node);
+        }
+      }
+
+      private void visitDecorators(@Nullable PyDecoratorList list) {
+        if (list != null) {
+          for (PyDecorator decorator : list.getDecorators()) {
+            decorator.accept(this);
+          }
         }
       }
     });

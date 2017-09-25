@@ -52,7 +52,7 @@ public class AnonymousInnerClassMayBeStatic {
   class CC {}
   static class BB<T>  {
     void m() {
-      new <warning descr="Anonymous class 'BB<CC>' may be a named 'static' inner class">BB<CC></warning>() {
+      new BB<T>() {
         class Z {}
       };
     }

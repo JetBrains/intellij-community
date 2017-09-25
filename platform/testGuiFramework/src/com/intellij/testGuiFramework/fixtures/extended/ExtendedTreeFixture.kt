@@ -29,7 +29,7 @@ import java.util.*
 import javax.swing.JTree
 import javax.swing.tree.TreePath
 
-class ExtendedTreeFixture(val robot: Robot, val tree: JTree) : JTreeFixture(robot, tree) {
+open class ExtendedTreeFixture(val robot: Robot, val tree: JTree) : JTreeFixture(robot, tree) {
 
   val myDriver = ExtendedJTreeDriver(robot)
   val myCellReader: JTreeCellReader
@@ -80,25 +80,37 @@ class ExtendedTreeFixture(val robot: Robot, val tree: JTree) : JTreeFixture(robo
 
   fun doubleClickPath(vararg pathStrings: String) = myDriver.doubleClickPath(tree, pathStrings.toList())
 
+  fun doubleClickXPath(vararg pathStrings: String) = myDriver.doubleClickXPath(tree, pathStrings.toList())
+
   fun rightClickPath(pathStrings: List<String>) = myDriver.rightClickPath(tree, pathStrings)
 
   fun rightClickPath(vararg pathStrings: String) = myDriver.rightClickPath(tree, pathStrings.toList())
+
+  fun rightClickXPath(vararg pathStrings: String) = myDriver.rightClickXPath(tree, pathStrings.toList())
 
   fun expandPath(pathStrings: List<String>) = myDriver.expandPath(tree, pathStrings)
 
   fun expandPath(vararg pathStrings: String) = myDriver.expandPath(tree, pathStrings.toList())
 
+  fun expandXPath(vararg pathStrings: String) = myDriver.expandXPath(tree, pathStrings.toList())
+
   fun collapsePath(pathStrings: List<String>) = myDriver.collapsePath(tree, pathStrings)
 
   fun collapsePath(vararg pathStrings: String) = myDriver.collapsePath(tree, pathStrings.toList())
+
+  fun collapseXPath(vararg pathStrings: String) = myDriver.collapseXPath(tree, pathStrings.toList())
 
   fun selectPath(pathStrings: List<String>) = myDriver.selectPath(tree, pathStrings)
 
   fun selectPath(vararg pathStrings: String) = myDriver.selectPath(tree, pathStrings.toList())
 
+  fun selectXPath(vararg pathStrings: String) = myDriver.selectXPath(tree, pathStrings.toList())
+
   fun scrollToPath(pathStrings: List<String>) = myDriver.scrollToPath(tree, pathStrings)
 
   fun scrollToPath(vararg pathStrings: String) = myDriver.scrollToPath(tree, pathStrings.toList())
+
+  fun scrollToXPath(vararg pathStrings: String) = myDriver.scrollToXPath(tree, pathStrings.toList())
 
   fun showPopupMenu(pathStrings: List<String>) = myDriver.showPopupMenu(tree, pathStrings)
 

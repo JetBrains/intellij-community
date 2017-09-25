@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.removemiddleman.usageInfo.DeleteMethod;
 import com.intellij.refactoring.removemiddleman.usageInfo.InlineDelegatingCall;
@@ -48,9 +49,9 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
     super(field.getProject());
     this.field = field;
     containingClass = field.getContainingClass();
-    final String propertyName = PropertyUtil.suggestPropertyName(field);
+    final String propertyName = PropertyUtilBase.suggestPropertyName(field);
     final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
-    getter = PropertyUtil.findPropertyGetter(containingClass, propertyName, isStatic, false);
+    getter = PropertyUtilBase.findPropertyGetter(containingClass, propertyName, isStatic, false);
     myDelegateMethodInfos = memberInfos;
   }
 

@@ -32,7 +32,7 @@ public class DefaultProjectFormatterTest extends JavaFormatterTestCase {
     return "/psi/formatter/wrapping";
   }
 
-  public void testFormatting() throws Exception {
+  public void testFormatting() {
     Project currProject = ourProject;
     ourProject = ProjectManager.getInstance().getDefaultProject();
     try {

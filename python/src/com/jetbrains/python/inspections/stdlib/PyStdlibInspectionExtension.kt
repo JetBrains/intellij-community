@@ -16,12 +16,25 @@
 package com.jetbrains.python.inspections.stdlib
 
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType
 import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.types.PyClassLikeType
+import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.TypeEvalContext
 
-class PyStdlibInspectionExtension: PyInspectionExtension() {
+class PyStdlibInspectionExtension : PyInspectionExtension() {
 
   override fun ignoreInitNewSignatures(original: PyFunction, complementary: PyFunction): Boolean {
     return PyNames.TYPE_ENUM == complementary.containingClass?.qualifiedName
+  }
+
+  override fun ignoreUnresolvedMember(type: PyType, name: String, context: TypeEvalContext): Boolean {
+    if (type is PyClassLikeType) {
+      return type is PyNamedTupleType && type.fields.containsKey(name) ||
+             type.getAncestorTypes(context).filterIsInstance<PyNamedTupleType>().any { it.fields.containsKey(name) }
+    }
+
+    return false
   }
 }

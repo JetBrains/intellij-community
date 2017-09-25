@@ -112,7 +112,7 @@ class Foo<T> {
 }
 '''
     myFixture.completeBasic()
-    myFixture.assertPreferredCompletionItems 0, 'finalize', 'fooT'
+    myFixture.assertPreferredCompletionItems 0, 'fooT', 'finalize'
   }
 
   void testDelegateToThrowable() throws Throwable {

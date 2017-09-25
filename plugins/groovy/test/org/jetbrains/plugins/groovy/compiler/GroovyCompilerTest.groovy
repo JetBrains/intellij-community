@@ -40,14 +40,13 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
+import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestLoggerFactory
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.groovy.config.GroovyFacetUtil
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
-
 /**
  * @author peter
  */
@@ -884,7 +883,7 @@ class AppTest {
     final Ref<Boolean> exceptionFound = Ref.create(Boolean.FALSE)
     ProcessHandler process = runProcess("Bar", myModule, DefaultRunExecutor.class, new ProcessAdapter() {
       @Override
-       void onTextAvailable(ProcessEvent event, Key outputType) {
+       void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         println "stdout: " + event.text
         if (ProcessOutputTypes.SYSTEM != outputType) {
           if (!exceptionFound.get()) {
@@ -902,7 +901,7 @@ class AppTest {
     def anotherModule = addModule("another", true)
     addGroovyLibrary(anotherModule)
 
-    PsiTestUtil.addLibrary(myModule, "junit", GroovyFacetUtil.libDirectory, "junit.jar")
+    PsiTestUtil.addProjectLibrary(myModule, "junit", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit3"))
 
     def cliPath = FileUtil.toCanonicalPath(PluginPathManager.getPluginHomePath("groovy") + "/../../build/lib")
     PsiTestUtil.addLibrary(myModule, "cli", cliPath, "commons-cli-1.2.jar")

@@ -64,7 +64,7 @@ public class JDComment {
 
   @NotNull
   protected String continuationIndent() {
-    CodeStyleSettings settings = myFormatter.getSettings();
+    CodeStyleSettings settings = myFormatter.getSettings().getContainer();
     CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(JavaFileType.INSTANCE);
     return new IndentInfo(0, indentOptions.CONTINUATION_INDENT_SIZE, 0).generateNewWhiteSpace(indentOptions);
   }

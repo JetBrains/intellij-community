@@ -18,11 +18,11 @@ package org.jetbrains.plugins.groovy.ext.newify
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightMethodBuilder
 import com.intellij.psi.scope.PsiScopeProcessor
+import com.intellij.psi.util.parents
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil.getClassArrayValue
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
-import org.jetbrains.plugins.groovy.lang.psi.util.getParents
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 
@@ -59,8 +59,8 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
     }
   }
 
-  private fun PsiElement.listNewifyAnnotations() = getParents().flatMap {
-    val owner = it.second as? PsiModifierListOwner
+  private fun PsiElement.listNewifyAnnotations() = parents().flatMap {
+    val owner = it as? PsiModifierListOwner
     val seq = owner?.modifierList?.annotations?.asSequence()?.filter { it.qualifiedName == newifyAnnotationFqn }
     return@flatMap seq ?: emptySequence()
   }.toList()

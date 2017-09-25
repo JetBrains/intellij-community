@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -32,8 +33,11 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTextContainer;
+import com.intellij.ui.EnumComboBoxModel;
+import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Producer;
 import com.intellij.util.ui.tree.PerFileConfigurableBase;
 import org.jetbrains.annotations.NotNull;
@@ -48,18 +52,44 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.openapi.vfs.encoding.ChooseFileEncodingAction.NO_ENCODING;
-
-public class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
+class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
   private JPanel myPanel;
   private JCheckBox myTransparentNativeToAsciiCheckBox;
   private JPanel myPropertiesFilesEncodingCombo;
   private JPanel myTablePanel;
+  private ComboBox<EncodingProjectManagerImpl.BOMForNewUTF8Files> myBOMForUTF8Combo;
+  private HyperlinkLabel myExplanationLabel;
 
   private Charset myPropsCharset;
 
-  public FileEncodingConfigurable(@NotNull Project project) {
+  FileEncodingConfigurable(@NotNull Project project) {
     super(project, createMappings(project));
+    myBOMForUTF8Combo.setModel(new EnumComboBoxModel<>(EncodingProjectManagerImpl.BOMForNewUTF8Files.class));
+    myBOMForUTF8Combo.setRenderer((list, value, index, isSelected, cellHasFocus) -> new JLabel(value.toString()));
+    myBOMForUTF8Combo.addItemListener(e -> updateExplanationLabelText());
+    myExplanationLabel.setHyperlinkTarget("https://en.wikipedia.org/wiki/Byte_order_mark#UTF-8");
+  }
+
+  private void updateExplanationLabelText() {
+    EncodingProjectManagerImpl.BOMForNewUTF8Files item = (EncodingProjectManagerImpl.BOMForNewUTF8Files)myBOMForUTF8Combo.getSelectedItem();
+    String I = ApplicationNamesInfo.getInstance().getProductName();
+    if (item != null) {
+      switch (item) {
+        case ALWAYS:
+          myExplanationLabel.setHtmlText(
+            "<html>" + I + " will add <a>UTF-8 BOM</a> to every created file in UTF-8 encoding</html>");
+          break;
+        case NEVER:
+          myExplanationLabel.setHtmlText(
+            "<html>" + I + " will NOT add <a>UTF-8 BOM</a> to every created file in UTF-8 encoding</html>");
+          break;
+        case WINDOWS_ONLY:
+          myExplanationLabel.setHtmlText("<html>" +
+                                         I +
+                                         " will add <a>UTF-8 BOM</a> to every created UTF-8 file only when it's running under Windows.</html>");
+          break;
+      }
+    }
   }
 
   @Override
@@ -179,21 +209,23 @@ public class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
                      () -> app.getDefaultCharsetName().isEmpty() ? null : app.getDefaultCharset(),
                      o -> app.setDefaultCharsetName(getCharsetName(o))),
       Trinity.create("Project Encoding",
-                     () -> prj.getConfiguredDefaultCharset(),
+                     prj::getConfiguredDefaultCharset,
                      o -> prj.setDefaultCharsetName(getCharsetName(o))));
   }
 
   @Override
   protected Charset adjustChosenValue(@Nullable Object target, Charset chosen) {
-    return chosen == NO_ENCODING ? null : chosen;
+    return chosen == ChooseFileEncodingAction.NO_ENCODING ? null : chosen;
   }
 
   @Override
   public boolean isModified() {
     if (super.isModified()) return true;
-    EncodingProjectManagerImpl prjManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
-    boolean same = Comparing.equal(prjManager.getDefaultCharsetForPropertiesFiles(null), myPropsCharset)
-                   && prjManager.isNative2AsciiForPropertiesFiles() == myTransparentNativeToAsciiCheckBox.isSelected();
+    EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
+    boolean same = Comparing.equal(encodingManager.getDefaultCharsetForPropertiesFiles(null), myPropsCharset)
+                   && encodingManager.isNative2AsciiForPropertiesFiles() == myTransparentNativeToAsciiCheckBox.isSelected()
+                   && encodingManager.getBOMForNewUTF8Files() == myBOMForUTF8Combo.getSelectedItem()
+      ;
     return !same;
   }
 
@@ -205,23 +237,26 @@ public class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
   @Override
   public void apply() throws ConfigurationException {
     super.apply();
-    EncodingProjectManagerImpl prjManager = ((EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject));
-    prjManager.setDefaultCharsetForPropertiesFiles(null, myPropsCharset);
-    prjManager.setNative2AsciiForPropertiesFiles(null, myTransparentNativeToAsciiCheckBox.isSelected());
+    EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
+    encodingManager.setDefaultCharsetForPropertiesFiles(null, myPropsCharset);
+    encodingManager.setNative2AsciiForPropertiesFiles(null, myTransparentNativeToAsciiCheckBox.isSelected());
+    EncodingProjectManagerImpl.BOMForNewUTF8Files option = ObjectUtils.notNull((EncodingProjectManagerImpl.BOMForNewUTF8Files)myBOMForUTF8Combo.getSelectedItem(), EncodingProjectManagerImpl.BOMForNewUTF8Files.NEVER);
+    encodingManager.setBOMForNewUtf8Files(option);
   }
 
   @Override
   public void reset() {
-    EncodingProjectManager prjManager = EncodingProjectManager.getInstance(myProject);
-    myTransparentNativeToAsciiCheckBox.setSelected(prjManager.isNative2AsciiForPropertiesFiles());
-    myPropsCharset = prjManager.getDefaultCharsetForPropertiesFiles(null);
+    EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
+    myTransparentNativeToAsciiCheckBox.setSelected(encodingManager.isNative2AsciiForPropertiesFiles());
+    myPropsCharset = encodingManager.getDefaultCharsetForPropertiesFiles(null);
+    myBOMForUTF8Combo.setSelectedItem(encodingManager.getBOMForNewUTF8Files());
     super.reset();
   }
 
   @Override
   protected boolean canEditTarget(@Nullable Object target, Charset value) {
     return target == null || target instanceof VirtualFile && (
-      ((VirtualFile)target).isDirectory() || EncodingUtil.checkSomeActionEnabled(((VirtualFile)target)) == null);
+      ((VirtualFile)target).isDirectory() || EncodingUtil.checkSomeActionEnabled((VirtualFile)target) == null);
   }
 
   @NotNull

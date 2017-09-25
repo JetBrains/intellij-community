@@ -33,6 +33,7 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.newproject.EduCourseProjectGenerator;
+import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.jetbrains.annotations.NotNull;
@@ -158,6 +159,7 @@ public class EduCoursesPanel extends JPanel {
                                  if (course != null) {
                                    myCourses.add(course);
                                    updateModel(myCourses, course.getName());
+                                   EduUsagesCollector.localCourseAdded();
                                  } else {
                                    Messages.showErrorDialog("Selected archive doesn't contain a valid course", "Failed to Add Local Course");
                                  }

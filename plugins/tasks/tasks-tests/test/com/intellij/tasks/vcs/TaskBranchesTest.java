@@ -18,7 +18,6 @@ package com.intellij.tasks.vcs;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsTaskHandler;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
@@ -33,7 +32,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -56,7 +54,7 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
     }
   }
 
-  public void testVcsTaskHandler() throws Exception {
+  public void testVcsTaskHandler() {
 
     List<Repository> repositories = initRepositories("community", "idea");
     Repository repository = repositories.get(0);
@@ -96,7 +94,7 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
     assertEquals(2, getNumberOfBranches(repository));
   }
 
-  public void testTaskManager() throws Exception {
+  public void testTaskManager() {
     List<Repository> repositories = initRepositories("community", "idea");
     LocalTask defaultTask = myTaskManager.getActiveTask();
     assertNotNull(defaultTask);
@@ -131,7 +129,7 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
     myTaskManager.activateTask(foo, false);
   }
 
-  public void testCommit() throws Exception {
+  public void testCommit() {
     Repository repository = initRepository("foo");
     LocalTask defaultTask = myTaskManager.getActiveTask();
     LocalTaskImpl foo = myTaskManager.createLocalTask("foo");
@@ -144,7 +142,7 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
     assertEquals(1, getNumberOfBranches(repository));
   }
 
-  public void testOpenTaskDialog() throws Exception {
+  public void testOpenTaskDialog() {
     initRepository("foo");
     String defaultBranchName = getDefaultBranchName();
     LocalTaskImpl task = myTaskManager.createLocalTask("foo");
@@ -166,7 +164,7 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
     UIUtil.dispatchAllInvocationEvents();
   }
 
-  public void testBranchBloating() throws Exception {
+  public void testBranchBloating() {
     Repository repository = initRepository("foo");
     LocalTask defaultTask = myTaskManager.getActiveTask();
     assertNotNull(defaultTask);
@@ -186,7 +184,7 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
     assertEquals(1, defaultTask.getBranches().size());
   }
 
-  public void testCleanupRemovedBranch() throws InterruptedException {
+  public void testCleanupRemovedBranch() {
     Repository repository = initRepository("foo");
     LocalTask defaultTask = myTaskManager.getActiveTask();
     assertNotNull(defaultTask);
@@ -222,7 +220,7 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
     assertTrue(handler.isBranchNameValid(cleanUpBranchName));
   }
 
-  public void _testCurrentTasks() throws Exception {
+  public void _testCurrentTasks() {
     initRepositories("foo", "bar");
     VcsTaskHandler handler = VcsTaskHandler.getAllHandlers(getProject())[0];
     VcsTaskHandler.TaskInfo[] tasks = handler.getAllExistingTasks();
@@ -258,5 +256,5 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
 
   protected abstract int getNumberOfBranches(@NotNull Repository repository);
 
-  protected abstract void createAndCommitChanges(@NotNull Repository repository) throws IOException, VcsException;
+  protected abstract void createAndCommitChanges(@NotNull Repository repository);
 }

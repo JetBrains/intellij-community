@@ -45,7 +45,7 @@ import static com.intellij.testFramework.assertions.Assertions.assertThat;
  *  @author dsl
  */
 public class LibraryTest extends ModuleRootManagerTestCase {
-  public void testModification() throws Exception {
+  public void testModification() {
     final LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
     final Library library = WriteAction.compute(() -> libraryTable.createLibrary("NewLibrary"));
     final boolean[] listenerNotifiedOnChange = new boolean[1];
@@ -194,7 +194,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     LibraryTable table = getLibraryTable();
     Library library = new WriteAction<Library>() {
       @Override
-      protected void run(@NotNull Result<Library> result) throws Throwable {
+      protected void run(@NotNull Result<Library> result) {
         Library res = table.createLibrary("native");
         result.setResult(res);
       }

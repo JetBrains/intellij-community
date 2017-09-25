@@ -41,7 +41,7 @@ public class WebConfigurationBuilderImplTest extends AbstractModelBuilderTest {
   }
 
   @Test
-  public void testDefaultWarModel() throws Exception {
+  public void testDefaultWarModel() {
     DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getIdeaProject().getModules();
 
     List<WebConfiguration> ideaModule = ContainerUtil.mapNotNull(ideaModules,

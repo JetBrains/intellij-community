@@ -44,7 +44,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.sun.jdi.*;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
@@ -150,7 +150,7 @@ public class SourceCodeChecker {
                                                                                 DebuggerBundle.message("warning.source.code.not.match")));
           }
           else {
-            XDebugSessionImpl.NOTIFICATION_GROUP
+            XDebuggerManagerImpl.NOTIFICATION_GROUP
               .createNotification(DebuggerBundle.message("warning.source.code.not.match"), NotificationType.WARNING)
               .notify(project);
           }

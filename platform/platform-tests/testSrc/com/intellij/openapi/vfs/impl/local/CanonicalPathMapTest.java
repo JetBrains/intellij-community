@@ -139,7 +139,7 @@ public class CanonicalPathMapTest {
   }
 
   @Test
-  public void remappedSymLinkReportsOriginalWatchedPath() throws IOException, InterruptedException {
+  public void remappedSymLinkReportsOriginalWatchedPath() throws IOException {
     // Tests the situation where the watch root is a symlink AND REMAPPED by the native file watcher.
     File realDir = myTempDir.newFolder("real");
     File symLink = IoTestUtil.createSymLink(realDir.getPath(), myTempDir.getRoot() + "/link");

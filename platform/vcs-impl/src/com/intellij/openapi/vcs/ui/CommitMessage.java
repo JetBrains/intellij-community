@@ -57,6 +57,7 @@ import java.util.Set;
 import static com.intellij.openapi.util.text.StringUtil.convertLineSeparators;
 import static com.intellij.openapi.util.text.StringUtil.trimTrailing;
 import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static com.intellij.vcs.commit.CommitMessageInspectionProfile.getBodyRightMargin;
@@ -162,7 +163,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
       features.add(new InspectionCustomization(project));
     }
     else {
-      features.add(SpellCheckingEditorCustomizationProvider.getInstance().getEnabledCustomization());
+      addIfNotNull(features, SpellCheckingEditorCustomizationProvider.getInstance().getEnabledCustomization());
     }
 
     EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);

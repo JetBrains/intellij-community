@@ -20,6 +20,8 @@ import com.intellij.execution.RunManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -77,10 +79,22 @@ public abstract class ConfigurationFactory {
   }
 
   /**
+   * Returns the id of the run configuration that is used for serialization.
+   * For compatibility reason the default implementation calls
+   * the method <code>getName</code> instead of <code>myType.getId()</code>.
+   * New implementations need to call <code>myType.getId()</code> by default.
+   */
+  @NonNls
+  public String getId() {
+    return getName();
+  }
+
+  /**
    * Returns the name of the run configuration variant created by this factory.
    *
    * @return the name of the run configuration variant created by this factory
    */
+  @Nls
   public String getName() {
     return myType.getDisplayName();
   }

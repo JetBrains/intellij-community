@@ -32,99 +32,99 @@ import org.jetbrains.annotations.NotNull;
  */
 public class MoveInstanceMethodTest extends LightRefactoringTestCase {
 
-  public void testSimple() throws Exception { doTest(true, 0); }
+  public void testSimple() { doTest(true, 0); }
 
-  public void testSimpleWithTargetField() throws Exception { doTest(false, 1); }
+  public void testSimpleWithTargetField() { doTest(false, 1); }
 
-  public void testInterface() throws Exception { doTest(true, 0); }
+  public void testInterface() { doTest(true, 0); }
 
-  public void testWithInner() throws Exception { doTest(true, 0); }
+  public void testWithInner() { doTest(true, 0); }
 
-  public void testJavadoc() throws Exception { doTest(true, 0); }
+  public void testJavadoc() { doTest(true, 0); }
 
-  public void testRecursive() throws Exception { doTest(true, 0); }
+  public void testRecursive() { doTest(true, 0); }
 
-  public void testRecursive1() throws Exception { doTest(true, 0); }
+  public void testRecursive1() { doTest(true, 0); }
 
-  public void testQualifiedThis() throws Exception { doTest(true, 0); }
+  public void testQualifiedThis() { doTest(true, 0); }
 
-  public void testQualifyThisHierarchy() throws Exception {doTest(true, 0);}
+  public void testQualifyThisHierarchy() {doTest(true, 0);}
 
-  public void testQualifyField() throws Exception {doTest(false, 0);}
+  public void testQualifyField() {doTest(false, 0);}
 
-  public void testAnonymousHierarchy() throws Exception {doTest(true, 0);}
+  public void testAnonymousHierarchy() {doTest(true, 0);}
 
-  public void testTwoParams() throws Exception { doTest(true, 0); }
+  public void testTwoParams() { doTest(true, 0); }
 
-  public void testNoThisParam() throws Exception { doTest(false, 0); }
+  public void testNoThisParam() { doTest(false, 0); }
 
-  public void testNoGenerics() throws Exception { doTest(false, 0); }
+  public void testNoGenerics() { doTest(false, 0); }
 
-  public void testQualifierToArg1() throws Exception { doTest(true, 0); }
+  public void testQualifierToArg1() { doTest(true, 0); }
 
-  public void testQualifierToArg2() throws Exception { doTest(true, 0); }
+  public void testQualifierToArg2() { doTest(true, 0); }
 
-  public void testQualifierToArg3() throws Exception { doTest(true, 0); }
+  public void testQualifierToArg3() { doTest(true, 0); }
 
-  public void testIDEADEV11257() throws Exception { doTest(true, 0); }
+  public void testIDEADEV11257() { doTest(true, 0); }
 
-  public void testThisInAnonymous() throws Exception { doTest(true, 0); }
+  public void testThisInAnonymous() { doTest(true, 0); }
 
-  public void testOverloadingMethods() throws Exception { doTest(true, 0); }
-  public void testOverloadingMethods1() throws Exception { doTest(true, 0); }
+  public void testOverloadingMethods() { doTest(true, 0); }
+  public void testOverloadingMethods1() { doTest(true, 0); }
 
-  public void testPolyadicExpr() throws Exception { doTest(true, 0); }
+  public void testPolyadicExpr() { doTest(true, 0); }
   
-  public void testIOOBE_MovingInvalidCode() throws Exception { doTest(true, 0); }
+  public void testIOOBE_MovingInvalidCode() { doTest(true, 0); }
 
-  public void testEscalateVisibility() throws Exception {
+  public void testEscalateVisibility() {
     doTest(true, 0, VisibilityUtil.ESCALATE_VISIBILITY);
   }
 
-  public void testSameNames() throws Exception {
+  public void testSameNames() {
     doTest(true, 0);
   }
-  public void testCorrectThisRefs() throws Exception {
+  public void testCorrectThisRefs() {
     doTest(true, 0);
   }
    
-  public void testSameNamesRecursion() throws Exception {
+  public void testSameNamesRecursion() {
     doTest(true, 0);
   }
 
-  public void testQualifyFieldAccess() throws Exception {
+  public void testQualifyFieldAccess() {
     doTest(false, 0);
   }
 
-  public void testStripFieldQualifier() throws Exception {
+  public void testStripFieldQualifier() {
     doTest(false, 0);
   }
 
-  public void testUsageInAnonymousClass() throws Exception {
+  public void testUsageInAnonymousClass() {
     doTest(true, 0);
   }
 
-  public void testConflictingLocalVariableAndTargetClassField() throws Exception {
+  public void testConflictingLocalVariableAndTargetClassField() {
     doTest(true, 0);
   }
 
-  public void testMethodReference() throws Exception {
+  public void testMethodReference() {
     BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest(true, 0));
   }
 
-  public void testThisMethodReferenceWithTargetField() throws Exception {
+  public void testThisMethodReferenceWithTargetField() {
     doTest(false, 0);
   }
 
-  public void testMethodReferenceToExpandToLambda() throws Exception {
+  public void testMethodReferenceToExpandToLambda() {
     BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest(true, 1));
   }
 
-  public void testForeignMethodReferenceWithTargetField() throws Exception {
+  public void testForeignMethodReferenceWithTargetField() {
     doTest(false, 0);
   }
 
-  public void testParameterMethodReference() throws Exception {
+  public void testParameterMethodReference() {
     try {
       BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
       doTest(true, 0);
@@ -134,11 +134,11 @@ public class MoveInstanceMethodTest extends LightRefactoringTestCase {
     }
   }
 
-  private void doTest(boolean isTargetParameter, final int targetIndex) throws Exception {
+  private void doTest(boolean isTargetParameter, final int targetIndex) {
     doTest(isTargetParameter, targetIndex, null);
   }
 
-  private void doTest(boolean isTargetParameter, final int targetIndex, final String newVisibility) throws Exception {
+  private void doTest(boolean isTargetParameter, final int targetIndex, final String newVisibility) {
     final String filePath = "/refactoring/moveInstanceMethod/" + getTestName(false) + ".java";
     configureByFile(filePath);
     final PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);

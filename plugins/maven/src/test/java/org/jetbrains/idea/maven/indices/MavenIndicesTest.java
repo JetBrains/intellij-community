@@ -61,7 +61,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     }
   }
 
-  private void initIndices() throws Exception {
+  private void initIndices() {
     initIndices("indices");
   }
 
@@ -84,7 +84,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     });
   }
 
-  private void shutdownIndices() throws Exception {
+  private void shutdownIndices() {
     myIndices.close();
     myIndexer.releaseInTests();
   }
@@ -154,7 +154,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     assertUnorderedElementsAreEqual(i.getGroupIds(), "jmock");
   }
 
-  public void testClearingUpdateDirAfterUpdate() throws Exception {
+  public void testClearingUpdateDirAfterUpdate() {
     ignore();
     //MavenIndex i = myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     //

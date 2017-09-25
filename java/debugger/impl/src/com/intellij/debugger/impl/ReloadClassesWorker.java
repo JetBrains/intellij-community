@@ -17,23 +17,27 @@ package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.actions.ThreadDumpAction;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.JavaExecutionStack;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
+import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.unscramble.ThreadState;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.sun.jdi.ReferenceType;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -112,8 +116,13 @@ class ReloadClassesWorker {
     final Project project = debugProcess.getProject();
     final BreakpointManager breakpointManager = (DebuggerManagerEx.getInstanceEx(project)).getBreakpointManager();
     breakpointManager.disableBreakpoints(debugProcess);
+    StackCapturingLineBreakpoint.deleteAll(debugProcess);
 
     //virtualMachineProxy.suspend();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Threads before hotswap:\n",
+                StreamEx.of(ThreadDumpAction.buildThreadStates(virtualMachineProxy)).map(ThreadState::getStackTrace).joining("\n"));
+    }
 
     if (Registry.is("debugger.resume.yourkit.threads")) {
       virtualMachineProxy.allThreads().stream()
@@ -220,6 +229,7 @@ class ReloadClassesWorker {
     if (!project.isDisposed()) {
       try {
         breakpointManager.enableBreakpoints(debugProcess);
+        StackCapturingLineBreakpoint.createAll(debugProcess);
       }
       catch (Exception e) {
         processException(e);

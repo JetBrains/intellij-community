@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ReturnOfCollectionFieldInspectionTest extends LightInspectionTestCase {
 
-  public void testReturnInsideLambdaExpression() throws Exception {
+  public void testReturnInsideLambdaExpression() {
     doTest();
   }
 

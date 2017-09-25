@@ -15,6 +15,8 @@
  */
 package com.intellij.refactoring.ui;
 
+import com.intellij.ide.HelpTooltip;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
@@ -23,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import org.jetbrains.annotations.NotNull;
@@ -113,6 +116,14 @@ public abstract class RefactoringDialog extends DialogWrapper {
 
   protected void canRun() throws ConfigurationException{
     if (!areButtonsValid()) throw new ConfigurationException(null);
+  }
+
+  @Override protected void setHelpTooltip(JButton helpButton) {
+    if (Registry.is("ide.helptooltip.enabled")) {
+      new HelpTooltip().setDescription(ActionsBundle.actionDescription("HelpTopics")).installOn(helpButton);
+    } else {
+      super.setHelpTooltip(helpButton);
+    }
   }
 
   protected void validateButtons() {

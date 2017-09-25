@@ -59,11 +59,6 @@ public class MockCommittedChangesProvider implements CachingCommittedChangesProv
     return new DefaultRepositoryLocation(root.getPath());
   }
 
-  @Override
-  public RepositoryLocation getLocationFor(final FilePath root, final String repositoryPath) {
-    return getLocationFor(root);
-  }
-
   @Nullable
   @Override
   public VcsCommittedListsZipper getZipper() {
@@ -71,7 +66,7 @@ public class MockCommittedChangesProvider implements CachingCommittedChangesProv
   }
 
   @Override
-  public List<CommittedChangeListImpl> getCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, final int maxCount) throws VcsException {
+  public List<CommittedChangeListImpl> getCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, final int maxCount) {
     myRefreshCount++;
     return myChangeLists;
   }
@@ -80,8 +75,7 @@ public class MockCommittedChangesProvider implements CachingCommittedChangesProv
   public void loadCommittedChanges(ChangeBrowserSettings settings,
                                    RepositoryLocation location,
                                    int maxCount,
-                                   AsynchConsumer<CommittedChangeList> consumer)
-    throws VcsException {
+                                   AsynchConsumer<CommittedChangeList> consumer) {
     ++ myRefreshCount;
     for (CommittedChangeListImpl changeList : myChangeLists) {
       consumer.consume(changeList);
@@ -90,7 +84,7 @@ public class MockCommittedChangesProvider implements CachingCommittedChangesProv
   }
 
   @Override
-  public Pair<CommittedChangeListImpl, FilePath> getOneList(VirtualFile file, VcsRevisionNumber number) throws VcsException {
+  public Pair<CommittedChangeListImpl, FilePath> getOneList(VirtualFile file, VcsRevisionNumber number) {
     ++ myRefreshCount;
     return new Pair<>(myChangeLists.get(0), VcsUtil.getFilePath(file));
   }

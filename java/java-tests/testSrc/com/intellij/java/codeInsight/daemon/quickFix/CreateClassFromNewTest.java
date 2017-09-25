@@ -28,7 +28,7 @@ public class CreateClassFromNewTest extends LightQuickFixParameterizedTestCase {
     CodeStyleSettingsManager.getSettings(getProject()).SPACE_BEFORE_CLASS_LBRACE = true;
   }
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 

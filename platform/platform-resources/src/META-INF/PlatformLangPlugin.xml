@@ -57,12 +57,10 @@
                     serviceImplementation="com.intellij.refactoring.openapi.impl.RefactoringFactoryImpl"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.VcsPathPresenter"
                     serviceImplementation="com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter"/>
-    <applicationService serviceInterface="com.intellij.openapi.wm.impl.FrameTitleBuilder"
-                        serviceImplementation="com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder"/>
     <projectService serviceInterface="com.intellij.platform.ProjectBaseDirectory"
                         serviceImplementation="com.intellij.platform.ProjectBaseDirectory"/>
     <projectService serviceImplementation="com.intellij.ide.bookmarks.BookmarkManager"/>
-    
+
     <moduleRendererFactory implementation="com.intellij.ide.util.PlatformModuleRendererFactory" order="last"/>
     <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"
                     serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl"/>

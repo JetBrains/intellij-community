@@ -32,7 +32,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
@@ -58,6 +57,7 @@ public class SMTestProxy extends AbstractTestProxy {
   private final String myName;
   private boolean myIsSuite;
   private final String myLocationUrl;
+  private final String myMetainfo;
   private final boolean myPreservePresentableName;
 
   private List<SMTestProxy> myChildren;
@@ -86,9 +86,14 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   public SMTestProxy(String testName, boolean isSuite, @Nullable String locationUrl, boolean preservePresentableName) {
+    this(testName, isSuite, locationUrl, null, preservePresentableName);
+  }
+
+  public SMTestProxy(String testName, boolean isSuite, @Nullable String locationUrl, @Nullable String metainfo, boolean preservePresentableName) {
     myName = testName;
     myIsSuite = isSuite;
     myLocationUrl = locationUrl;
+    myMetainfo = metainfo;
     myPreservePresentableName = preservePresentableName;
   }
 
@@ -250,17 +255,11 @@ public class SMTestProxy extends AbstractTestProxy {
       String protocolId = VirtualFileManager.extractProtocol(locationUrl);
       if (protocolId != null) {
         String path = VirtualFileManager.extractPath(locationUrl);
-        if (!DumbService.isDumb(project) || DumbService.isDumbAware(myLocator) || Registry.is("dumb.aware.run.configurations")) {
-          try {
-            DumbService.getInstance(project).setAlternativeResolveEnabled(true);
-            List<Location> locations = myLocator.getLocation(protocolId, path, project, searchScope);
-            if (!locations.isEmpty()) {
-              return locations.get(0);
-            }
-          }
-          finally {
-            DumbService.getInstance(project).setAlternativeResolveEnabled(false);
-          }
+        if (!DumbService.isDumb(project) || DumbService.isDumbAware(myLocator)) {
+          return DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> {
+            List<Location> locations = myLocator.getLocation(protocolId, path, myMetainfo, project, searchScope);
+            return !locations.isEmpty() ? locations.get(0) : null;
+          });
         }
       }
     }
@@ -723,6 +722,11 @@ public class SMTestProxy extends AbstractTestProxy {
   @Nullable
   public String getLocationUrl() {
     return myLocationUrl;
+  }
+
+  @Nullable
+  public String getMetainfo() {
+    return myMetainfo;
   }
 
   /**

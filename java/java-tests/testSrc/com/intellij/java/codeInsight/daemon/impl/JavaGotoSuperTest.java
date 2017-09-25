@@ -46,7 +46,7 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     return "/codeInsight/gotosuper/";
   }
 
-  public void testLambda() throws Throwable {
+  public void testLambda() {
     doTest();
   }
 
@@ -57,7 +57,7 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     checkResultByFile(getBasePath() + getTestName(false) + ".after.java");
   }
 
-  public void testLambdaMarker() throws Exception {
+  public void testLambdaMarker() {
     configureByFile(getBasePath() + getTestName(false) + ".java");
 
     doHighlighting();
@@ -74,11 +74,11 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     }
   }
 
-  public void testSiblingInheritance() throws Throwable {
+  public void testSiblingInheritance() {
     doTest();
   }
 
-  public void testSiblingInheritanceLineMarkers() throws Throwable {
+  public void testSiblingInheritanceLineMarkers() {
     configureByFile(getBasePath() + "SiblingInheritance.java");
     PsiJavaFile file = (PsiJavaFile)getFile();
     PsiClass i = JavaPsiFacade.getInstance(getProject()).findClass("z.I", GlobalSearchScope.fileScope(file));
@@ -104,7 +104,7 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     return marker;
   }
 
-  public void testSiblingInheritanceGoDown() throws Throwable {
+  public void testSiblingInheritanceGoDown() {
     configureByFile(getBasePath() + "SiblingInheritance.after.java");
     AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_GOTO_IMPLEMENTATION);
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", DataManager.getInstance().getDataContextFromFocus().getResultSync());
@@ -114,7 +114,7 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     checkResultByFile(getBasePath() + "SiblingInheritance.java");
   }
 
-  public void testSiblingInheritanceAndGenerics() throws Throwable {
+  public void testSiblingInheritanceAndGenerics() {
     configureByFile(getBasePath() + "SiblingInheritanceAndGenerics.java");
     AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_GOTO_SUPER);
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", DataManager.getInstance().getDataContextFromFocus().getResultSync());
@@ -124,7 +124,7 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     checkResultByFile(getBasePath() + "SiblingInheritanceAndGenerics.after.java");
   }
 
-  public void testDoNotShowSiblingInheritanceLineMarkerIfSubclassImplementsTheSameInterfaceAsTheCurrentClass() throws Throwable {
+  public void testDoNotShowSiblingInheritanceLineMarkerIfSubclassImplementsTheSameInterfaceAsTheCurrentClass() {
     configureByFile(getBasePath() + "DeceivingSiblingInheritance.java");
     PsiJavaFile file = (PsiJavaFile)getFile();
     PsiClass OCBaseLanguageFileType = JavaPsiFacade.getInstance(getProject()).findClass("z.OCBaseLanguageFileType", GlobalSearchScope.fileScope(file));

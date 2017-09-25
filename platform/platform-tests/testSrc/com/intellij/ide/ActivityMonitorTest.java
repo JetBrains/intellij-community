@@ -91,7 +91,7 @@ public class ActivityMonitorTest extends LightPlatformTestCase {
     assertReady(project2);
   }
 
-  public void testReadyWithWatchActivities() throws Exception {
+  public void testReadyWithWatchActivities() {
     final UiActivity root = new UiActivity("root");
 
     final UiActivity op1 = new UiActivity("root", "operation1");
@@ -161,7 +161,7 @@ public class ActivityMonitorTest extends LightPlatformTestCase {
     }
   }
 
-  public void testUiActivity() throws Exception {
+  public void testUiActivity() {
     assertTrue(new UiActivity("root", "folder1").isSameOrGeneralFor(new UiActivity("root", "folder1")));
     assertTrue(new UiActivity("root", "folder1").isSameOrGeneralFor(new UiActivity("root", "folder1", "folder2")));
     assertFalse(new UiActivity("root", "folder2").isSameOrGeneralFor(new UiActivity("root", "folder1", "folder2")));

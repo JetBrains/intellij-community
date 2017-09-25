@@ -513,7 +513,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     });
   }
 
-  public void testReplaceAll() throws FindManager.MalformedReplacementStringException {
+  public void testReplaceAll() {
     final FindModel findModel = new FindModel();
     String toFind = "xxx";
     @SuppressWarnings("SpellCheckingInspection") String toReplace = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
@@ -608,7 +608,28 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
       fixture.tearDown();
     }
   }
+  
+  public void testFindInCommentsInJsInsideHtml() {
+    FindModel findModel = FindManagerTestUtils.configureFindModel("@param t done");
 
+    String text = "<script>\n" +
+                  "/**\n" +
+                  " * @param t done\n" +
+                  " * @param t done\n" +
+                  " * @param t done\n" +
+                  "*/</script>";
+    findModel.setSearchContext(FindModel.SearchContext.IN_COMMENTS);
+    FindManager findManager = FindManager.getInstance(myProject);
+    FindManagerTestUtils.runFindForwardAndBackward(findManager, findModel, text, "html");
+
+    findModel.setRegularExpressions(true);
+    FindManagerTestUtils.runFindForwardAndBackward(findManager, findModel, text, "html");
+
+    FindManagerTestUtils.runFindForwardAndBackward(findManager, findModel, text, "php");
+    findModel.setRegularExpressions(false);
+    FindManagerTestUtils.runFindForwardAndBackward(findManager, findModel, text, "php");
+  }
+  
   public void testFindInCommentsAndLiterals() {
     FindModel findModel = FindManagerTestUtils.configureFindModel("done");
 
@@ -918,7 +939,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertTrue(condition.value("makefile"));
   }
 
-  public void testRegExpSOEWhenMatch() throws InterruptedException {
+  public void testRegExpSOEWhenMatch() {
     String text = "package com.intellij.demo;\n" +
                   "\n";
     for(int i = 0; i < 10; ++i) text += text;
@@ -930,7 +951,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertTrue(!findResult.isStringFound());
   }
 
-  public void testRegExpSOEWhenMatch2() throws InterruptedException {
+  public void testRegExpSOEWhenMatch2() {
     String text = "package com.intellij.demo;\n" +
                   "\n";
     for(int i = 0; i < 10; ++i) text += text;
@@ -968,7 +989,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertTrue(usages.get(0).isValid());
   }
 
-  public void testRegExpMatchReplacement() throws InterruptedException, FindManager.MalformedReplacementStringException {
+  public void testRegExpMatchReplacement() throws FindManager.MalformedReplacementStringException {
     String text = "final override val\n" +
                   "      d1PrimitiveType by lazyThreadSafeIdempotentGenerator { D1PrimitiveType( typeManager = this ) }";
     String pattern = "final override val\n" +
@@ -1002,7 +1023,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertSize(2, findUsages(findModel));
   }
 
-  public void testProperHandlingOfEmptyLinesWhenReplacingWithRegExp() throws Exception {
+  public void testProperHandlingOfEmptyLinesWhenReplacingWithRegExp() {
     doTestRegexpReplace(
       "foo\n\n\n",
       "^",

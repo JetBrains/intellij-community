@@ -102,7 +102,7 @@ public class JShellHandler {
 
     handler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void onTextAvailable(ProcessEvent event, Key outputType) {
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         if (outputType == ProcessOutputTypes.STDOUT) {
           try {
             readerSink.write(event.getText());
@@ -118,7 +118,7 @@ public class JShellHandler {
       }
 
       @Override
-      public void processTerminated(ProcessEvent event) {
+      public void processTerminated(@NotNull ProcessEvent event) {
         if (getAssociatedHandler(contentFile) == JShellHandler.this) {
           // process terminated either by closing file or by close action
           contentFile.putUserData(MARKER_KEY, null);

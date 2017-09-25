@@ -37,7 +37,7 @@ public class ConvertToAtomicIntentionTest extends LightQuickFixParameterizedTest
     super.tearDown();
   }
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 }

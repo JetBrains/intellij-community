@@ -14,14 +14,14 @@ import java.io.IOException;
  */
 public class JavaFxFieldToPropertyNoArtifactTest extends JavaFxFieldToPropertyTest {
 
-  public void testArtifactPresenceFieldToProperty() throws Exception {
+  public void testArtifactPresenceFieldToProperty() {
     configureByFiles(null, getTestName(false) + ".java");
     final IntentionAction intentionAction = getIntentionAction();
     // no artifact, no fxml, no javafx.* imports: the intention shouldn't be available
     assertNull(intentionAction);
   }
 
-  public void testAddRemoveFxmlFile() throws Exception {
+  public void testAddRemoveFxmlFile() {
     final VirtualFile sourceRootDir = configureByFiles(null, getTestName(false) + ".java");
     IntentionAction intentionAction = getIntentionAction();
     assertNull(intentionAction);

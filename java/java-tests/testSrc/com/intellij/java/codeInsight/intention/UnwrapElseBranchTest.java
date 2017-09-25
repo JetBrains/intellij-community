@@ -27,7 +27,7 @@ public class UnwrapElseBranchTest extends LightIntentionActionTestCase {
     return "/codeInsight/unwrapElseBranch/";
   }
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 }

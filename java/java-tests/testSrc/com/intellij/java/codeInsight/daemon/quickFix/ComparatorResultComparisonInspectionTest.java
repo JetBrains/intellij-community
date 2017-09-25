@@ -48,7 +48,7 @@ public class ComparatorResultComparisonInspectionTest extends LightInspectionTes
       return new LocalInspectionTool[]{new ComparatorResultComparisonInspection()};
     }
 
-    public void test() throws Exception {
+    public void test() {
       doAllTests();
     }
 

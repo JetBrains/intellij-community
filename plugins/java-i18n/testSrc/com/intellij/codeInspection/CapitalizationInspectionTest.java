@@ -76,7 +76,7 @@ public class CapitalizationInspectionTest extends LightCodeInsightFixtureTestCas
     final IntentionAction action = myFixture.filterAvailableIntentions("Properly capitalize").get(0);
     new WriteCommandAction.Simple(getProject()) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         action.invoke(getProject(), myFixture.getEditor(), getFile());
       }
     }.execute();

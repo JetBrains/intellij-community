@@ -345,6 +345,10 @@ public class ParametersFolder {
     return myArgs.containsKey(data.variable) ? myArgs.get(data.variable) : data.variable.getName();
   }
 
+  void putCallArgument(@NotNull PsiVariable argument, @NotNull PsiExpression value) {
+    myArgs.put(argument, value.getText());
+  }
+
   public boolean annotateWithParameter(@NotNull VariableData data, @NotNull PsiElement element) {
     final PsiExpression psiExpression = myExpressions.get(data.variable);
     if (psiExpression != null) {

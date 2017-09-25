@@ -700,7 +700,7 @@ public class EnterHandler extends BaseEnterHandler {
           }
           else {
             removeTrailingSpaces(myDocument, myOffset);
-            String toInsert = previousLineIndentUsed ? "*" : CodeDocumentationUtil.createDocCommentLine("", getProject(), commenter);
+            String toInsert = previousLineIndentUsed ? "*" : CodeDocumentationUtil.createDocCommentLine("", myFile, commenter);
             myDocument.insertString(myOffset, toInsert);
             PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
           }

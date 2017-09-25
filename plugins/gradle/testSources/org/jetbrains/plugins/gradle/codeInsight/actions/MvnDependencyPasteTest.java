@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class MvnDependencyPasteTest extends LightCodeInsightTestCase {
 
-  public void testPastedGradleDependency() throws Exception {
+  public void testPastedGradleDependency() {
     configureFromFileText("pom.xml", getDependency("group", "artifact", "1.0", "runtime", null));
     selectWholeFile();
     performCut();
@@ -38,7 +38,7 @@ public class MvnDependencyPasteTest extends LightCodeInsightTestCase {
                       "}");
   }
 
-  public void testDependencyWithClassifier() throws Exception {
+  public void testDependencyWithClassifier() {
     configureFromFileText("pom.xml", getDependency("group", "artifact", "1.0", "runtime", "jdk14"));
     selectWholeFile();
     performCut();
@@ -50,7 +50,7 @@ public class MvnDependencyPasteTest extends LightCodeInsightTestCase {
                       "}");
   }
   
-  public void test_DoNotConvertIfCoordinatesNotClear() throws Exception {
+  public void test_DoNotConvertIfCoordinatesNotClear() {
     String noArtifact = getDependency("group", null, "1.0", "runtime", null);
     configureFromFileText("pom.xml", noArtifact);
 

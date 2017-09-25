@@ -210,7 +210,7 @@ public class XsltCommandLineState extends CommandLineState {
   private class MyProcessAdapter extends ProcessAdapter {
 
         @Override
-        public void processTerminated(final ProcessEvent event) {
+        public void processTerminated(@NotNull final ProcessEvent event) {
 
             if (myXsltRunConfiguration.isSaveToFile()) {
                 Runnable runnable = () -> {

@@ -179,7 +179,7 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
     @Nullable private Info myInfo;
 
     @Override
-    public void consume(Info info) throws SVNException {
+    public void consume(Info info) {
       myInfo = info;
     }
 

@@ -60,7 +60,7 @@ public class GlobalSearchScopeTest extends PlatformTestCase {
     assertSame(s.uniteWith(s), s);
   }
 
-  public void testNotScope() throws Exception {
+  public void testNotScope() {
     VirtualFile moduleRoot = new TempFiles(myFilesToDelete).createTempVDir();
     ModuleRootModificationUtil.addContentRoot(getModule(), moduleRoot.getPath());
 

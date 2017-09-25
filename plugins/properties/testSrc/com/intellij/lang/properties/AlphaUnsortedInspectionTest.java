@@ -29,15 +29,15 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
  * @author Dmitry Batkovich
  */
 public class AlphaUnsortedInspectionTest extends LightPlatformCodeInsightFixtureTestCase {
-  public void testUnsorted() throws Exception {
+  public void testUnsorted() {
     doTest();
   }
 
-  public void testSorted() throws Exception {
+  public void testSorted() {
     doTest();
   }
 
-  public void testUnsortedSuppressed() throws Exception {
+  public void testUnsortedSuppressed() {
     final ExtensionPoint<AlphaUnsortedPropertiesFileInspectionSuppressor> ep =
       Extensions.getRootArea().getExtensionPoint(AlphaUnsortedPropertiesFileInspectionSuppressor.EP_NAME);
     final AlphaUnsortedPropertiesFileInspectionSuppressor suppressor = new AlphaUnsortedPropertiesFileInspectionSuppressor() {
@@ -90,7 +90,7 @@ public class AlphaUnsortedInspectionTest extends LightPlatformCodeInsightFixture
                           "e=e");
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     myFixture.testInspection(getTestName(true), new LocalInspectionToolWrapper(new AlphaUnsortedPropertiesFileInspection()));
   }
 

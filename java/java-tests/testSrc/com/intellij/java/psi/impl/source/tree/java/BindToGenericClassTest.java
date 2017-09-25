@@ -19,6 +19,7 @@ import com.intellij.java.psi.GenericsTestCase;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 
 /**
@@ -33,18 +34,18 @@ public class BindToGenericClassTest extends GenericsTestCase {
     setupGenericSampleClasses();
     final CodeStyleSettings currentSettings = CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings();
 
-    myOldFQNamesSetting = currentSettings.USE_FQ_CLASS_NAMES;
-    currentSettings.USE_FQ_CLASS_NAMES = true;
+    myOldFQNamesSetting = currentSettings.getCustomSettings(JavaCodeStyleSettings.class).USE_FQ_CLASS_NAMES;
+    currentSettings.getCustomSettings(JavaCodeStyleSettings.class).USE_FQ_CLASS_NAMES = true;
   }
 
   @Override
   protected void tearDown() throws Exception {
     final CodeStyleSettings currentSettings = CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings();
-    currentSettings.USE_FQ_CLASS_NAMES = myOldFQNamesSetting;
+    currentSettings.getCustomSettings(JavaCodeStyleSettings.class).USE_FQ_CLASS_NAMES = myOldFQNamesSetting;
     super.tearDown();
   }
 
-  public void testReferenceElement() throws Exception {
+  public void testReferenceElement() {
     final JavaPsiFacade manager = getJavaFacade();
     final PsiClass classA = manager.getElementFactory().createClassFromText("class A extends List<String>{}", null).getInnerClasses()[0];
     final PsiClass classTestList = manager.findClass("test.List", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule));
@@ -53,7 +54,7 @@ public class BindToGenericClassTest extends GenericsTestCase {
     assertEquals("class A extends test.List<String>{}", classA.getText());
   }
 
-  public void testReference() throws Exception {
+  public void testReference() {
     final JavaPsiFacade manager = getJavaFacade();
     final PsiExpression psiExpression = manager.getElementFactory().createExpressionFromText("List", null);
     final PsiClass classTestList = manager.findClass("test.List", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule));

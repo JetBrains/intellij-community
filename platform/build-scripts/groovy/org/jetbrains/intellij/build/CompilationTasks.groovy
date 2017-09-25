@@ -27,6 +27,8 @@ abstract class CompilationTasks {
 
   abstract void compileModules(List<String> moduleNames, List<String> includingTestsInModules = [])
 
+  abstract void resolveProjectDependencies()
+
   static CompilationTasks create(CompilationContext context) {
     return new CompilationTasksImpl(context)
   }

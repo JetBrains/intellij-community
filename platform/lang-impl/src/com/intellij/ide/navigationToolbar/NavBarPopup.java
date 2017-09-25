@@ -22,18 +22,18 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
-import com.intellij.ui.ListenerUtil;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.speedSearch.ListWithFilter;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,10 +47,10 @@ import java.util.Map;
  */
 public class NavBarPopup extends LightweightHint implements Disposable{
   private static final String JBLIST_KEY = "OriginalList";
-  private static final String NAV_BAR_POPUP = "NAV_BAR_POPUP";
+  private static final String DISPOSED_OBJECTS = "DISPOSED_OBJECTS";
+
   private final NavBarPanel myPanel;
   private final int myIndex;
-  private static final String DISPOSED_OBJECTS = "DISPOSED_OBJECTS";
 
   public NavBarPopup(final NavBarPanel panel, Object[] siblings, final int selectedIndex) {
     super(createPopupContent(panel, siblings));
@@ -58,7 +58,8 @@ public class NavBarPopup extends LightweightHint implements Disposable{
     myIndex = selectedIndex;
     setFocusRequestor(getComponent());
     setForceShowAsPopup(true);
-    ListenerUtil.addMouseListener(getComponent(), new MouseAdapter() {
+    panel.installPopupHandler(getList(), selectedIndex);
+    getList().addMouseListener(new MouseAdapter() {
       @Override
       public void mouseReleased(final MouseEvent e) {
         if (SystemInfo.isWindows) {
@@ -74,17 +75,12 @@ public class NavBarPopup extends LightweightHint implements Disposable{
       }
 
       private void click(final MouseEvent e) {
-        if (e.getComponent() != getList()) return;
-        if (!e.isConsumed() && e.isPopupTrigger()) {
-          myPanel.getModel().setSelectedIndex(selectedIndex);
-          IdeFocusManager.getInstance(myPanel.getProject()).requestFocus(myPanel, true);
-          myPanel.rightClick(selectedIndex);
-          e.consume();
-        } else {
-          final Object value = getList().getSelectedValue();
-          if (value != null) {
-            myPanel.navigateInsideBar(value);
-          }
+        if (e.isConsumed()) return;
+        myPanel.getModel().setSelectedIndex(selectedIndex);
+        if (e.isPopupTrigger()) return;
+        Object value = getList().getSelectedValue();
+        if (value != null) {
+          myPanel.navigateInsideBar(value);
         }
       }
     });
@@ -150,33 +146,41 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   public void dispose() {
   }
 
-  private static JComponent createPopupContent(final NavBarPanel panel, Object[] siblings) {
-    final JBList list = new NavbarPopupList(panel, siblings);
-    list.setDataProvider(new DataProvider() {
+  private static JComponent createPopupContent(NavBarPanel panel, Object[] siblings) {
+    class MyList<E> extends JBList<E> implements DataProvider, Queryable {
       @Override
-      public Object getData(@NonNls String dataId) {
-        return panel.getData(dataId);
+      public void putInfo(@NotNull Map<String, String> info) {
+        panel.putInfo(info);
       }
-    });
-    final List<Disposable> disposables = new ArrayList<>();
+
+      @Nullable
+      @Override
+      public Object getData(String dataId) {
+        return panel.getDataImpl(dataId, () -> JBIterable.of(getSelectedValuesList()));
+      }
+    }
+    JBList<Object> list = new MyList<>();
+    list.setModel(new CollectionListModel<>(siblings));
+    HintUpdateSupply.installSimpleHintUpdateSupply(list);
+    List<Disposable> disposables = new ArrayList<>();
     list.putClientProperty(DISPOSED_OBJECTS, disposables);
     list.installCellRenderer(obj -> {
       final NavBarItem navBarItem = new NavBarItem(panel, obj, null);
       disposables.add(navBarItem);
       return navBarItem;
     });
-    list.setBorder(JBUI.Borders.empty(5, 5, 5, 5));
+    list.setBorder(JBUI.Borders.empty(5));
     installMoveAction(list, panel, -1, KeyEvent.VK_LEFT);
     installMoveAction(list, panel, 1, KeyEvent.VK_RIGHT);
     installEnterAction(list, panel, KeyEvent.VK_ENTER);
     installEscapeAction(list, panel, KeyEvent.VK_ESCAPE);
-    final JComponent component = ListWithFilter.wrap(list, new NavBarListWrapper(list), o -> panel.getPresentation().getPresentableText(o));
+    JComponent component = ListWithFilter.wrap(list, new NavBarListWrapper(list), o -> panel.getPresentation().getPresentableText(o));
     component.putClientProperty(JBLIST_KEY, list);
     return component;
   }
 
-  private static void installEnterAction(final JBList list, final NavBarPanel panel, int keyCode) {
-    final AbstractAction action = new AbstractAction() {
+  private static void installEnterAction(JBList list, NavBarPanel panel, int keyCode) {
+    AbstractAction action = new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         panel.navigateInsideBar(list.getSelectedValue());
@@ -185,8 +189,8 @@ public class NavBarPopup extends LightweightHint implements Disposable{
     list.registerKeyboardAction(action, KeyStroke.getKeyStroke(keyCode, 0), JComponent.WHEN_FOCUSED);
   }
 
-  private static void installEscapeAction(final JBList list, final NavBarPanel panel, int keyCode) {
-    final AbstractAction action = new AbstractAction() {
+  private static void installEscapeAction(JBList list, NavBarPanel panel, int keyCode) {
+    AbstractAction action = new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         panel.cancelPopup();
@@ -195,20 +199,13 @@ public class NavBarPopup extends LightweightHint implements Disposable{
     list.registerKeyboardAction(action, KeyStroke.getKeyStroke(keyCode, 0), JComponent.WHEN_FOCUSED);
   }
 
-  public Object getSelectedValue() {
-    return getList().getSelectedValue();
-  }
-
-  public Object[] getSelectedValues() {
-    return getList().getSelectedValues();
-  }
-
-  public JBList getList() {
+  @NotNull
+  public JBList<?> getList() {
     return ((JBList)getComponent().getClientProperty(JBLIST_KEY));
   }
 
-  private static void installMoveAction(JBList list, final NavBarPanel panel, final int direction, final int keyCode) {
-    final AbstractAction action = new AbstractAction() {
+  private static void installMoveAction(JBList list, NavBarPanel panel, int direction, int keyCode) {
+    AbstractAction action = new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         panel.cancelPopup();
@@ -217,20 +214,5 @@ public class NavBarPopup extends LightweightHint implements Disposable{
       }
     };
     list.registerKeyboardAction(action, KeyStroke.getKeyStroke(keyCode, 0), JComponent.WHEN_FOCUSED);
-  }
-
-  private static class NavbarPopupList extends JBList implements Queryable {
-    private final NavBarPanel myPanel;
-
-    public NavbarPopupList(NavBarPanel panel, Object[] siblings) {
-      super(siblings);
-      myPanel= panel;
-      HintUpdateSupply.installSimpleHintUpdateSupply(this);
-    }
-
-    @Override
-    public void putInfo(@NotNull Map<String, String> info) {
-      myPanel.putInfo(info);
-    }
   }
 }

@@ -17,6 +17,7 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.GotoFileItemProvider;
 import com.intellij.ide.actions.NonProjectScopeDisablerEP;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.PsiElementListCellRenderer;
@@ -27,28 +28,44 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
+import java.util.Comparator;
 
 /**
  * Model for "Go to | File" action
  */
-public class GotoFileModel extends FilteringGotoByModel<FileType> implements DumbAware {
+public class GotoFileModel extends FilteringGotoByModel<FileType> implements DumbAware, Comparator<Object> {
   private final int myMaxSize;
 
   public GotoFileModel(@NotNull Project project) {
     super(project, Extensions.getExtensions(ChooseByNameContributor.FILE_EP_NAME));
     myMaxSize = ApplicationManager.getApplication().isUnitTestMode() ? Integer.MAX_VALUE : WindowManagerEx.getInstanceEx().getFrame(project).getSize().width;
+  }
+
+  @NotNull
+  @Override
+  public ChooseByNameItemProvider getItemProvider(@Nullable PsiElement context) {
+    for (GotoFileCustomizer customizer : Extensions.getExtensions(GotoFileCustomizer.EP_NAME)) {
+      GotoFileItemProvider provider = customizer.createItemProvider(myProject, context, this);
+      if (provider != null) return provider;
+    }
+    return new GotoFileItemProvider(myProject, context, this);
   }
 
   @Override
@@ -122,7 +139,29 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> implements Dum
 
   @Override
   public PsiElementListCellRenderer getListCellRenderer() {
-    return new GotoFileCellRenderer(myMaxSize);
+    return new GotoFileCellRenderer(myMaxSize) {
+      @NotNull
+      @Override
+      protected ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {
+        ItemMatchers defaultMatchers = super.getItemMatchers(list, value);
+        if (!(value instanceof PsiFileSystemItem)) return defaultMatchers;
+
+        String shortName = getElementName(value);
+        String fullName = getFullName(value);
+        if (shortName != null && fullName != null && defaultMatchers.nameMatcher instanceof MinusculeMatcher) {
+          String sanitized = GotoFileItemProvider.getSanitizedPattern(((MinusculeMatcher)defaultMatchers.nameMatcher).getPattern(), GotoFileModel.this);
+          for (int i = sanitized.lastIndexOf('/') + 1; i < sanitized.length() - 1; i++) {
+            MinusculeMatcher nameMatcher = NameUtil.buildMatcher("*" + sanitized.substring(i), NameUtil.MatchingCaseSensitivity.NONE);
+            if (nameMatcher.matches(shortName)) {
+              String locationPattern = FileUtil.toSystemDependentName(StringUtil.trimEnd(sanitized.substring(0, i), "/"));
+              return new ItemMatchers(nameMatcher, GotoFileItemProvider.getQualifiedNameMatcher(locationPattern));
+            }
+          }
+        }
+
+        return defaultMatchers;
+      }
+    };
   }
 
   @Override
@@ -148,7 +187,7 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> implements Dum
   }
 
   private VirtualFile getContentRoot(@Nullable VirtualFile file) {
-    return file == null ? null : ProjectFileIndex.SERVICE.getInstance(myProject).getContentRootForFile(file);
+    return file == null ? null : GotoFileCellRenderer.getAnyRoot(file, myProject);
   }
 
   @Override
@@ -174,5 +213,11 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> implements Dum
       return pattern.substring(0, pattern.length() - 1);
     }
     return pattern;
+  }
+
+  /** Just to remove smartness from {@link ChooseByNameBase#calcSelectedIndex} */
+  @Override
+  public int compare(Object o1, Object o2) {
+    return 0;
   }
 }

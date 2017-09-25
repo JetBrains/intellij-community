@@ -100,16 +100,11 @@ public class HgVFSListener extends VcsVFSListener {
           VirtualFile repo = e.getKey();
           final Collection<VirtualFile> files = e.getValue();
           pi.setText(repo.getPresentableUrl());
-          try {
-            Collection<VirtualFile> untrackedForRepo = new HgStatusCommand.Builder(false).unknown(true).removed(true).build(myProject)
-              .getFiles(repo, new ArrayList<>(files));
-            untrackedFiles.addAll(untrackedForRepo);
-            List<VirtualFile> ignoredForRepo = files.stream().filter(file -> !untrackedForRepo.contains(file)).collect(Collectors.toList());
-            getIgnoreRepoHolder(repo).addFiles(ignoredForRepo);
-          }
-          catch (final VcsException ex) {
-            UIUtil.invokeLaterIfNeeded(() -> ((HgVcs)myVcs).showMessageInConsole(ex.getMessage(), ConsoleViewContentType.ERROR_OUTPUT));
-          }
+          Collection<VirtualFile> untrackedForRepo = new HgStatusCommand.Builder(false).unknown(true).removed(true).build(myProject)
+            .getFiles(repo, new ArrayList<>(files));
+          untrackedFiles.addAll(untrackedForRepo);
+          List<VirtualFile> ignoredForRepo = files.stream().filter(file -> !untrackedForRepo.contains(file)).collect(Collectors.toList());
+          getIgnoreRepoHolder(repo).addFiles(ignoredForRepo);
         }
         addedFiles.retainAll(untrackedFiles);
         // select files to add if there is something to select
@@ -316,7 +311,7 @@ public class HgVFSListener extends VcsVFSListener {
                                         HgVcsMessages.message("hg4idea.move.progress"),
                                         VcsConfiguration.getInstance(myProject).getAddRemoveOption(),
                                         movedFiles) {
-      protected void process(final MovedFileInfo file) throws VcsException {
+      protected void process(final MovedFileInfo file) {
         final FilePath source = VcsUtil.getFilePath(file.myOldPath);
         final FilePath target = VcsUtil.getFilePath(file.myNewPath);
         VirtualFile sourceRoot = VcsUtil.getVcsRootFor(myProject, source);

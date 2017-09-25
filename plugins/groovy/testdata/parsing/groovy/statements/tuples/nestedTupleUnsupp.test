@@ -8,16 +8,17 @@ Groovy script
   PsiWhiteSpace(' ')
   Parenthesized expression
     PsiElement(()('(')
-    Tuple Assignment Expression
-      PsiElement(()('(')
-      Reference expression
-        PsiElement(identifier)('a')
-      PsiElement(,)(',')
-      Reference expression
-        PsiElement(identifier)('b')
-      PsiElement())(')')
-    PsiErrorElement:'=' expected
-      <empty list>
+    Tuple assignment
+      Tuple Assignment Expression
+        PsiElement(()('(')
+        Reference expression
+          PsiElement(identifier)('a')
+        PsiElement(,)(',')
+        Reference expression
+          PsiElement(identifier)('b')
+        PsiElement())(')')
+      PsiErrorElement:'=' expected
+        <empty list>
   PsiErrorElement:Unexpected symbol
     PsiElement(,)(',')
   PsiErrorElement:';' or new line expected

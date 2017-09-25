@@ -1,6 +1,6 @@
 package com.siyeh.igtest.inheritance.abstract_method_overrides_abstract_method;
 
-
+import java.util.*;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractMethodOverridesAbstractMethod {
@@ -27,7 +27,7 @@ abstract class Child extends AbstractMethodOverridesAbstractMethod
    */
   abstract void two();
 
-  public abstract void three();
+  public abstract void <warning descr="Abstract method 'three()' overrides abstract method">three</warning>();
 }
 
 class MethodTypeParams {
@@ -57,7 +57,7 @@ class SuperclassSubst {
     abstract class Bottom implements Top<String>
     {
         @Override
-        public abstract String getList();
+        public abstract String <warning descr="Abstract method 'getList()' overrides abstract method">getList</warning>();
     }
 }
 

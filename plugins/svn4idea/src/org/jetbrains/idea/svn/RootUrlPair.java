@@ -17,11 +17,12 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNURL;
 
 public interface RootUrlPair {
   @NotNull
   VirtualFile getVirtualFile();
 
   @NotNull
-  String getUrl();
+  SVNURL getUrl();
 }

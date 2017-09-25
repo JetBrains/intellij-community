@@ -26,7 +26,7 @@ import static com.intellij.openapi.vcs.actions.ShortNameType.LASTNAME;
  * @author Konstantin Bulenkov
  */
 public class AnnotationShortNameTest extends TestCase {
-  public void testShortNames() throws Exception {
+  public void testShortNames() {
     doTest(FIRSTNAME, "Vasya Pavlovich Pupkin <asdasd@localhost>", "Vasya");
     doTest(LASTNAME, "Vasya Pavlovich Pupkin <asdasd@localhost>", "Pupkin");
     doTest(FIRSTNAME, "Vasya Pavlovich Pupkin", "Vasya");

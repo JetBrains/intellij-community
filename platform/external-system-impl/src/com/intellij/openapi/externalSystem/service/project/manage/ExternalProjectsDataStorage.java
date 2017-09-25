@@ -40,6 +40,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
@@ -74,7 +75,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
   private final Alarm myAlarm;
   @NotNull
   private final Map<Pair<ProjectSystemId, File>, InternalExternalProjectInfo> myExternalRootProjects =
-    ContainerUtil.newConcurrentMap(ExternalSystemUtil.HASHING_STRATEGY);
+    ConcurrentCollectionFactory.createMap(ExternalSystemUtil.HASHING_STRATEGY);
 
   private final AtomicBoolean changed = new AtomicBoolean();
   private State myState = new State();

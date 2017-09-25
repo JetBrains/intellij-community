@@ -85,7 +85,7 @@ public class JUnit5TestRunnerUtil {
     else {
       boolean disableDisabledCondition = isDisabledConditionDisabled(suiteClassNames[0]);
       if (disableDisabledCondition) {
-        builder = builder.configurationParameter("junit.conditions.deactivate", "org.junit.*DisabledCondition");
+        builder = builder.configurationParameter("junit.jupiter.conditions.deactivate", "org.junit.*DisabledCondition");
       }
 
       return builder.selectors(createSelector(suiteClassNames[0])).build();

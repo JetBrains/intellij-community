@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonProcessRunner;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -78,7 +79,7 @@ public abstract class RestCommandLineState extends PythonCommandLineState {
     ProcessHandler processHandler = PythonProcessRunner.createProcess(commandLine, false);
     if (afterTask != null) {
       processHandler.addProcessListener(new ProcessAdapter() {
-                                            public void processTerminated(ProcessEvent event) {
+                                            public void processTerminated(@NotNull ProcessEvent event) {
                                               TransactionGuard.getInstance().submitTransactionLater(ApplicationManager.getApplication(), afterTask);
                                             }});
     }

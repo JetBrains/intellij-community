@@ -33,46 +33,46 @@ public class RenameFieldTest extends LightRefactoringTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  protected void doTest(@NonNls String newName, @NonNls String ext) throws Exception {
+  protected void doTest(@NonNls String newName, @NonNls String ext) {
     String suffix = getTestName(false);
     configureByFile("/refactoring/renameField/before" + suffix + "." + ext);
     perform(newName);
     checkResultByFile("/refactoring/renameField/after" + suffix + "." + ext);
   }
 
-  public void testSimpleFieldRenaming() throws Exception {
+  public void testSimpleFieldRenaming() {
     doTest("myNewField", "java");
   }
 
-  public void testCollisionsInMethod() throws Exception {
+  public void testCollisionsInMethod() {
     doTest("newFieldName", "java");
   }
 
-  public void testCollisionsInMethodOfSubClass() throws Exception {
+  public void testCollisionsInMethodOfSubClass() {
     doTest("newFieldName", "java");
   }
 
-  public void testCollisionsRenamingFieldWithSetter() throws Exception {
+  public void testCollisionsRenamingFieldWithSetter() {
     doTest("utm", "java");
   }
 
-  public void testOverridingSetterParameterRenamed() throws Exception {
+  public void testOverridingSetterParameterRenamed() {
     doTest("bar", "java");
   }
 
-  public void testHidesOuter() throws Exception {
+  public void testHidesOuter() {
     doTest("x", "java");
   }
 
-  public void testEnumConstantWithConstructor() throws Exception {
+  public void testEnumConstantWithConstructor() {
     doTest("newName", "java");
   }
 
-  public void testEnumConstantWithInitializer() throws Exception {  // IDEADEV-28840
+  public void testEnumConstantWithInitializer() {  // IDEADEV-28840
     doTest("AAA", "java");
   }
 
-  public void testNonNormalizedFields() throws Exception { // IDEADEV-34344
+  public void testNonNormalizedFields() { // IDEADEV-34344
     doTest("newField", "java");
   }
 
@@ -82,7 +82,7 @@ public class RenameFieldTest extends LightRefactoringTestCase {
     assertFalse(RenameWrongRefHandler.isAvailable(getProject(), getEditor(), getFile()));
   }
 
-  public void testFieldInColumns() throws Exception {
+  public void testFieldInColumns() {
     // Assuming that test infrastructure setups temp settings (CodeStyleSettingsManager.setTemporarySettings()) and we don't
     // need to perform explicit clean-up at the test level.
     CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).ALIGN_GROUP_FIELD_DECLARATIONS = true;

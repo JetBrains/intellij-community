@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -46,10 +47,10 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.psi.*;
 import com.intellij.psi.search.*;
 import com.intellij.ui.content.Content;
@@ -67,7 +68,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -130,41 +130,41 @@ public class FindInProjectUtil {
     model.setProjectScope(directoryName == null && module == null && !model.isCustomScope());
   }
 
-  /**
-   * @deprecated to remove in IDEA 16
-   */
+  /** @deprecated to remove in IDEA 2018 */
   @Nullable
-  public static PsiDirectory getPsiDirectory(@NotNull final FindModel findModel, @NotNull Project project) {
+  public static PsiDirectory getPsiDirectory(@NotNull FindModel findModel, @NotNull Project project) {
     VirtualFile directory = getDirectory(findModel);
     return directory == null ? null : PsiManager.getInstance(project).findDirectory(directory);
   }
 
   @Nullable
-  public static VirtualFile getDirectory(@NotNull final FindModel findModel) {
+  public static VirtualFile getDirectory(@NotNull FindModel findModel) {
     String directoryName = findModel.getDirectoryName();
-    if (findModel.isProjectScope() || StringUtil.isEmpty(directoryName)) {
+    if (findModel.isProjectScope() || StringUtil.isEmptyOrSpaces(directoryName)) {
       return null;
     }
 
-    String path = directoryName.replace(File.separatorChar, '/');
+    String path = FileUtil.toSystemIndependentName(directoryName);
     VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
     if (virtualFile == null || !virtualFile.isDirectory()) {
       virtualFile = null;
-      for (LocalFileProvider provider : ((VirtualFileManagerEx)VirtualFileManager.getInstance()).getLocalFileProviders()) {
-        VirtualFile file = provider.findLocalVirtualFileByPath(path);
-        if (file != null && file.isDirectory()) {
-          if (file.getChildren().length > 0) {
-            virtualFile = file;
-            break;
-          }
-          if(virtualFile == null){
-            virtualFile = file;
+      @SuppressWarnings("deprecation") VirtualFileSystem[] fileSystems = ApplicationManager.getApplication().getComponents(VirtualFileSystem.class);
+      for (VirtualFileSystem fs : fileSystems) {
+        if (fs instanceof LocalFileProvider) {
+          @SuppressWarnings("deprecation") VirtualFile file = ((LocalFileProvider)fs).findLocalVirtualFileByPath(path);
+          if (file != null && file.isDirectory()) {
+            if (file.getChildren().length > 0) {
+              virtualFile = file;
+              break;
+            }
+            if (virtualFile == null) {
+              virtualFile = file;
+            }
           }
         }
       }
     }
     return virtualFile;
-
   }
 
   /* filter can have form "*.js, !*_min.js", latter means except matched by *_min.js */

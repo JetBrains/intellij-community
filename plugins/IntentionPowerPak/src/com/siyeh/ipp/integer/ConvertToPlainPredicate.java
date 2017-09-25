@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,12 +30,14 @@ class ConvertToPlainPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiLiteralExpression expression = (PsiLiteralExpression)element;
+    if (expression.getValue() == null) {
+      return false;
+    }
     final PsiType type = expression.getType();
-
     if (!PsiType.DOUBLE.equals(type) && !PsiType.FLOAT.equals(type)) {
       return false;
     }
     final String text = expression.getText();
-    return text != null && (text.contains("e") || text.contains("E"));
+    return text.contains("e") || text.contains("E");
   }
 }

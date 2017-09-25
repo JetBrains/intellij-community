@@ -39,7 +39,7 @@ import java.util.List;
 
 public class JavaReparseTest extends AbstractReparseTestCase {
 
-  public void testInsertLBrace() throws Exception {
+  public void testInsertLBrace() {
     setFileType(StdFileTypes.JAVA);
     final String text2 = "}}}";
     final String text1 = "class Foo{ void method(){{";
@@ -47,7 +47,7 @@ public class JavaReparseTest extends AbstractReparseTestCase {
     insert("{");
   }
 
-  public void testJavaDoc() throws Exception {
+  public void testJavaDoc() {
     setFileType(StdFileTypes.JAVA);
     String text2 = "void method() {}}";
     final String text1 = "class Foo { /** ";
@@ -55,7 +55,7 @@ public class JavaReparseTest extends AbstractReparseTestCase {
     insert("*/");
   }
 
-  public void testSCR5665() throws Exception {
+  public void testSCR5665() {
     setFileType(StdFileTypes.JAVA);
     final String text2 = " \"and then insert it again\"}\n" +
                          "  };\n" +
@@ -81,13 +81,13 @@ public class JavaReparseTest extends AbstractReparseTestCase {
     return super.createDummyFile(fileName, text);
   }
 
-  public void testCodeFragment() throws Exception {
+  public void testCodeFragment() {
     setFileType(StdFileTypes.JAVA);
     prepareFile("a", "a");
     insert("xxx xxx xxx xxx xxx xxx xxx");
   }
 
-  public void testReparseAfterReformatReplacesWhitespaceNodesOnly() throws Exception {
+  public void testReparseAfterReformatReplacesWhitespaceNodesOnly() {
     @NonNls final String text =
       "class  RedTest   {   \n\n\n\n\n\n\n\n   " +
       "String  [  ]  [  ]   test    =    {       { \n\n\n\n\n {    \"\"}  \n\n\n\n\n };   " +
@@ -151,7 +151,7 @@ public class JavaReparseTest extends AbstractReparseTestCase {
     assertTrue(0 != replacedWhite[0]);
   }
 
-  public void testInsertXMLSubTagProducesAddEvents() throws Exception {
+  public void testInsertXMLSubTagProducesAddEvents() {
     @NonNls @Language("XML")
     final String text = "<preface>\n" +
                         "     <para>\n" +

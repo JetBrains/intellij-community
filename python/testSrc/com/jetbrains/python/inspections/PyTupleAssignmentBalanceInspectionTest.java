@@ -15,10 +15,11 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
-public class PyTupleAssignmentBalanceInspectionTest extends PyTestCase {
+public class PyTupleAssignmentBalanceInspectionTest extends PyInspectionTestCase {
 
   public void testPy2() {
     doTest();
@@ -58,11 +59,9 @@ public class PyTupleAssignmentBalanceInspectionTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
   }
 
-  private void doTest() {
-    final String path = "inspections/PyTupleAssignmentBalanceInspection/" + getTestName(true) + ".py";
-
-    myFixture.configureByFile(path);
-    myFixture.enableInspections(PyTupleAssignmentBalanceInspection.class);
-    myFixture.checkHighlighting(true, false, false);
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyTupleAssignmentBalanceInspection.class;
   }
 }

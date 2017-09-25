@@ -79,6 +79,8 @@ public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends Xml
   }
 
   private boolean processEnumeration(XmlElement context, PairProcessor<PsiElement, String> processor, boolean forCompletion) {
+    if (getDeclaration() == null) return false;
+
     XmlTag contextTag = context != null ? PsiTreeUtil.getContextOfType(context, XmlTag.class, false) : null;
     final XmlElementDescriptorImpl elementDescriptor = (XmlElementDescriptorImpl)XmlUtil.findXmlDescriptorByType(getDeclaration(), contextTag);
 

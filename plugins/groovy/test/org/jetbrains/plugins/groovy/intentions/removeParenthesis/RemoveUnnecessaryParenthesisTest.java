@@ -26,7 +26,7 @@ public class RemoveUnnecessaryParenthesisTest extends LightCodeInsightFixtureTes
     return TestUtils.getTestDataPath() + "intentions/removeParenth/";
   }
 
-  public void testRemoveUnnecessaryParenthesis() throws Throwable {
+  public void testRemoveUnnecessaryParenthesis() {
     doTest();
   }
 
@@ -37,7 +37,7 @@ public class RemoveUnnecessaryParenthesisTest extends LightCodeInsightFixtureTes
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
-  public void testNothingInsideClosure() throws Throwable {
+  public void testNothingInsideClosure() {
     myFixture.configureByFile(getTestName(false) + ".groovy");
     assertEmpty(myFixture.filterAvailableIntentions("Remove Unnecessary Parentheses"));
   }

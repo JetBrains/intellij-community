@@ -70,7 +70,7 @@ public class DisposerTest extends TestCase {
     }
   }
 
-  public void testDisposalAndAbsenceOfReferences() throws Exception {
+  public void testDisposalAndAbsenceOfReferences() {
     Disposer.register(myRoot, myFolder1);
     Disposer.register(myRoot, myFolder2);
     Disposer.register(myFolder1, myLeaf1);
@@ -88,7 +88,7 @@ public class DisposerTest extends TestCase {
     Disposer.dispose(myLeaf1);
   }
 
-  public void testDisposalOrder() throws Exception {
+  public void testDisposalOrder() {
     Disposer.register(myRoot, myFolder1);
     Disposer.register(myFolder1, myLeaf1);
     Disposer.register(myRoot, myFolder2);
@@ -104,7 +104,7 @@ public class DisposerTest extends TestCase {
     assertEquals(expected, myDisposedObjects);
   }
 
-  public void testDirectCallOfDisposable() throws Exception {
+  public void testDirectCallOfDisposable() {
     SelDisposable selfDisposable = new SelDisposable("root");
     Disposer.register(myRoot, selfDisposable);
     Disposer.register(selfDisposable, myFolder1);
@@ -120,13 +120,13 @@ public class DisposerTest extends TestCase {
     assertEquals(0, Disposer.getTree().getNodesInExecution().size());
   }
 
-  public void testDirectCallOfUnregisteredSelfDisposable() throws Exception {
+  public void testDirectCallOfUnregisteredSelfDisposable() {
     SelDisposable selfDisposable = new SelDisposable("root");
     //noinspection SSBasedInspection
     selfDisposable.dispose();
   }
 
-  public void testDisposeAndReplace() throws Exception {
+  public void testDisposeAndReplace() {
     Disposer.register(myRoot, myFolder1);
 
     Disposer.disposeChildAndReplace(myFolder1, myFolder2);
@@ -137,7 +137,7 @@ public class DisposerTest extends TestCase {
     assertDisposed(myFolder2);
   }
 
-  public void testPostponedParentRegistration() throws Exception {
+  public void testPostponedParentRegistration() {
     Disposer.register(myFolder1, myLeaf1);
     Disposer.register(myLeaf1, myLeaf2);
     Disposer.register(myRoot, myFolder1);
@@ -151,7 +151,7 @@ public class DisposerTest extends TestCase {
     assertDisposed(myLeaf2);
   }
 
-  public void testDisposalOfParentless() throws Throwable {
+  public void testDisposalOfParentless() {
     Disposer.register(myFolder1, myLeaf1);
     Disposer.register(myFolder1, myFolder2);
     Disposer.register(myFolder2, myLeaf2);
@@ -164,7 +164,7 @@ public class DisposerTest extends TestCase {
     assertDisposed(myLeaf2);
   }
 
-  public void testDisposalOfParentess2() throws Throwable {
+  public void testDisposalOfParentess2() {
     Disposer.register(myFolder1, myLeaf1);
     Disposer.register(myFolder2, myLeaf2);
     Disposer.register(myFolder1, myFolder2);
@@ -177,7 +177,7 @@ public class DisposerTest extends TestCase {
     assertDisposed(myLeaf2);
   }
 
-  public void testOverrideParentDisposable() throws Exception {
+  public void testOverrideParentDisposable() {
     Disposer.register(myFolder1, myLeaf1);
     Disposer.register(myFolder2, myFolder1);
     Disposer.register(myRoot, myFolder1);
@@ -193,7 +193,7 @@ public class DisposerTest extends TestCase {
     assertDisposed(myLeaf1);
   }
 
-  public void testDisposableParentNotify() throws Exception {
+  public void testDisposableParentNotify() {
     MyParentDisposable root = new MyParentDisposable("root");
     Disposer.register(root, myFolder1);
 

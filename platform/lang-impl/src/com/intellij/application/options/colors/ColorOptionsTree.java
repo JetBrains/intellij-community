@@ -21,8 +21,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.FontUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.UIUtil;
 import org.jdesktop.swingx.treetable.DefaultMutableTreeTableNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -121,7 +123,8 @@ public class ColorOptionsTree extends Tree {
     }));
   }
 
-  public void selectOptionByName(@NotNull final String optionName) {
+  public void selectOptionByName(@NotNull String name) {
+    String optionName = name.replace(FontUtil.rightArrow(UIUtil.getLabelFont()), NAME_SEPARATOR);
     selectPath(findOption(myTreeModel.getRoot(), new DescriptorMatcher() {
       @Override
       public boolean matches(@NotNull Object data) {

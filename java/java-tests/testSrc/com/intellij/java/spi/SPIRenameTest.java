@@ -24,22 +24,22 @@ import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import org.jetbrains.annotations.NotNull;
 
 public class SPIRenameTest extends MultiFileTestCase {
-  public void testRenameProviderImplementation() throws Exception {
+  public void testRenameProviderImplementation() {
     doRenameTest("Test1", "foo/Test.java");
   }
   
-  public void testRenameProviderImplementationContainingClass() throws Exception {
+  public void testRenameProviderImplementationContainingClass() {
     doRenameTest("Test1", "foo/Test.java");
   }
 
-  public void testRenamePackageWithImplementation() throws Exception {
+  public void testRenamePackageWithImplementation() {
     doRenameTest("foo1", "bar/foo/FooRunnable.java");
   }
 
-  private void doRenameTest(final String newName, final String relPath) throws Exception {
+  private void doRenameTest(final String newName, final String relPath) {
     doTest(new PerformAction() {
       @Override
-      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
+      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) {
         final VirtualFile file = rootDir.findFileByRelativePath(relPath);
         assert file != null;
         configureByExistingFile(file);

@@ -19,10 +19,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 
-import java.io.IOException;
-
 public class FindLeafElementAtTest extends LightCodeInsightTestCase {
-  public void testFindLeafElementAtEof() throws IOException {
+  public void testFindLeafElementAtEof() {
     configureFromFileText("test.java", "class Foo {}");
     PsiFile file = getFile();
     ASTNode node = file.getNode().findLeafElementAt(file.getTextLength());

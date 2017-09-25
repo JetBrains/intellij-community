@@ -4,6 +4,6 @@ import <error descr="Cannot resolve symbol 'fooooooooooooooooooooooooooooooooooo
 
 class Test {
   void m() {
-    String varrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr<warning descr="Line is longer than allowed by code style (> 120 columns)">rrrrrrrrrrrrrrrrrr = "foo";</warning>
+    String varrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr<warning descr="Line is longer than allowed by code style (> 120 columns)">rrrrrrrrrrrrrrrrrr</warning> = "foo";
   }
 }

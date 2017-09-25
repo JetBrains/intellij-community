@@ -42,6 +42,7 @@ public class PythonIcons {
       public static final Icon Buildout = load("/icons/com/jetbrains/python/buildout/buildout.png"); // 16x16
 
     }
+    public static final Icon Condaenv = load("/icons/com/jetbrains/python/condaenv.png"); // 16x16
     public static final Icon DataView = load("/icons/com/jetbrains/python/DataView.png"); // 13x13
     
     public static class Debug {

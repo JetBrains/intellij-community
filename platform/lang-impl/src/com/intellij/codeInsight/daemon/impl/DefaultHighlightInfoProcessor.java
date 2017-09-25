@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -52,6 +53,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
     final long modificationStamp = document.getModificationStamp();
     final TextRange priorityIntersection = priorityRange.intersection(restrictRange);
 
+    ShowAutoImportPassFactory autoImportPassFactory = project.getComponent(ShowAutoImportPassFactory.class);
     ((HighlightingSessionImpl)session).applyInEDT(() -> {
       if (modificationStamp != document.getModificationStamp()) return;
       if (priorityIntersection != null) {
@@ -64,7 +66,9 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
       if (editor != null && !editor.isDisposed()) {
         // usability: show auto import popup as soon as possible
         if (!DumbService.isDumb(project)) {
-          new ShowAutoImportPass(project, psiFile, editor).doApplyInformationToEditor();
+          TextEditorHighlightingPass highlightingPass = autoImportPassFactory.createHighlightingPass(psiFile, editor);
+          if (highlightingPass != null)
+            highlightingPass.doApplyInformationToEditor();
         }
 
         DaemonListeners.repaintErrorStripeRenderer(editor, project);

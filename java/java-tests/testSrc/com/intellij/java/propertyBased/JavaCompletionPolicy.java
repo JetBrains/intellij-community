@@ -15,11 +15,14 @@
  */
 package com.intellij.java.propertyBased;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.propertyBased.CompletionPolicy;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -28,6 +31,12 @@ import java.util.Arrays;
  * @author peter
  */
 class JavaCompletionPolicy extends CompletionPolicy {
+
+  @Override
+  protected boolean isAfterError(@NotNull PsiFile file, @NotNull PsiElement leaf) {
+    return super.isAfterError(file, leaf) || isAdoptedOrphanPsiAfterClassEnd(leaf);
+  }
+
   @Override
   protected boolean shouldSuggestReferenceText(@NotNull PsiReference ref, @NotNull PsiElement target) {
     PsiElement refElement = ref.getElement();
@@ -35,28 +44,62 @@ class JavaCompletionPolicy extends CompletionPolicy {
         !shouldSuggestJavaTarget((PsiJavaCodeReferenceElement)refElement, target)) {
       return false;
     }
+    if (ref instanceof FileReference) {
+      if (target instanceof PsiFile) {
+        return false; // IDEA-177167
+      }
+      if (target instanceof PsiDirectory && ((PsiDirectory)target).getName().endsWith(".jar") && ((PsiDirectory)target).getParentDirectory() == null) {
+        return false; // IDEA-178629
+      }
+    }
     return true;
+  }
+
+  private static boolean isAdoptedOrphanPsiAfterClassEnd(PsiElement element) {
+    PsiClass topmostClass = PsiTreeUtil.getTopmostParentOfType(element, PsiClass.class);
+    if (topmostClass != null) {
+      ASTNode rBrace = topmostClass.getNode().findChildByType(JavaTokenType.RBRACE); 
+      // not PsiClass#getRBrace, because we need the first one, and invalid classes can contain several '}'
+      if (rBrace != null && rBrace.getTextRange().getStartOffset() < element.getTextRange().getStartOffset()) return true;
+    }
+    return false;
   }
 
   private static boolean shouldSuggestJavaTarget(PsiJavaCodeReferenceElement ref, @NotNull PsiElement target) {
     if (PsiTreeUtil.getParentOfType(ref, PsiPackageStatement.class) != null) return false;
 
     if (!ref.isQualified() && target instanceof PsiPackage) return false;
-    if (target instanceof PsiClass && PsiTreeUtil.isAncestor(target, ref, true)) {
-      PsiElement lBrace = ((PsiClass)target).getLBrace();
-      if (lBrace == null || ref.getTextRange().getStartOffset() < lBrace.getTextRange().getStartOffset()) {
-        return false;
+    if (target instanceof PsiClass) {
+      if (isCyclicInheritance(ref, target)) return false;
+      if (ref.getParent() instanceof PsiAnnotation && !((PsiClass)target).isAnnotationType()) {
+        return false; // red code
       }
+    }
+    if (target instanceof PsiVariable && PsiTreeUtil.isAncestor(target, ref, false)) {
+      return false; // non-initialized variable
     }
     if (target instanceof PsiField &&
         SyntaxTraverser.psiApi().parents(ref).find(e -> e instanceof PsiMethod && ((PsiMethod)e).isConstructor()) != null) {
       // https://youtrack.jetbrains.com/issue/IDEA-174744 on red code
       return false;
     }
+    if (PsiTreeUtil.getParentOfType(ref, PsiAnnotation.class) != null) {
+      if (target instanceof PsiMethod || target instanceof PsiField && !ExpressionUtils.isConstant((PsiField)target)) {
+        return false; // red code;
+      }
+    }
     if (isStaticWithInstanceQualifier(ref, target)) {
       return false;
     }
     return target != null;
+  }
+
+  private static boolean isCyclicInheritance(PsiJavaCodeReferenceElement ref, @NotNull PsiElement target) {
+    if (PsiTreeUtil.isAncestor(target, ref, true)) {
+      PsiElement lBrace = ((PsiClass)target).getLBrace();
+      return lBrace == null || ref.getTextRange().getStartOffset() < lBrace.getTextRange().getStartOffset();
+    }
+    return false;
   }
 
   private static boolean isStaticWithInstanceQualifier(PsiJavaCodeReferenceElement ref, @NotNull PsiElement target) {
@@ -81,6 +124,12 @@ class JavaCompletionPolicy extends CompletionPolicy {
     }
     if (leaf.textMatches(PsiKeyword.TRUE) || leaf.textMatches(PsiKeyword.FALSE)) {
       return false; // boolean literal presence depends on expected types, which can be missing in red files
+    }
+    if (leaf.getParent() instanceof PsiNewExpression && ((PsiNewExpression)leaf.getParent()).getQualifier() != null) {
+      PsiJavaCodeReferenceElement reference = ((PsiNewExpression)leaf.getParent()).getClassOrAnonymousClassReference();
+      if (reference == null || reference.resolve() == null) {
+        return false; // this.new Foo isn't completed when there's no "Foo"
+      }
     }
     return true;
   }

@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * A type of the fact which restricts some value.
@@ -88,8 +89,8 @@ public abstract class DfaFactType<T> extends Key<T> {
    */
   public static final DfaFactType<LongRangeSet> RANGE = new DfaFactType<LongRangeSet>("Range") {
     @Override
-    boolean isSuper(@NotNull LongRangeSet superFact, @NotNull LongRangeSet subFact) {
-      return superFact.contains(subFact);
+    boolean isSuper(@Nullable LongRangeSet superFact, @Nullable LongRangeSet subFact) {
+      return superFact == null || subFact != null && superFact.contains(subFact);
     }
 
     @Nullable
@@ -116,6 +117,12 @@ public abstract class DfaFactType<T> extends Key<T> {
 
     @Nullable
     @Override
+    LongRangeSet unionFacts(@NotNull LongRangeSet left, @NotNull LongRangeSet right) {
+      return left.union(right);
+    }
+
+    @Nullable
+    @Override
     LongRangeSet intersectFacts(@NotNull LongRangeSet left, @NotNull LongRangeSet right) {
       LongRangeSet intersection = left.intersect(right);
       return intersection.isEmpty() ? null : intersection;
@@ -124,6 +131,48 @@ public abstract class DfaFactType<T> extends Key<T> {
     @Override
     String toString(LongRangeSet fact) {
       return fact.toString();
+    }
+  };
+  /**
+   * This fact represents a set of possible types of this value
+   * {@link TypeConstraint#EMPTY} value is equivalent to absent fact (not constrained)
+   */
+  public static final DfaFactType<TypeConstraint> TYPE_CONSTRAINT = new DfaFactType<TypeConstraint>("Type") {
+    @Nullable
+    @Override
+    TypeConstraint fromDfaValue(DfaValue value) {
+      if(value instanceof DfaTypeValue) {
+        TypeConstraint constraint = TypeConstraint.EMPTY.withInstanceofValue((DfaTypeValue)value);
+        return constraint == null || constraint.isEmpty() ? null : constraint;
+      }
+      return null;
+    }
+
+    @Override
+    boolean isSuper(@Nullable TypeConstraint superFact, @Nullable TypeConstraint subFact) {
+      return superFact == null || (subFact != null && superFact.isSuperStateOf(subFact));
+    }
+
+    @Nullable
+    @Override
+    TypeConstraint intersectFacts(@NotNull TypeConstraint left, @NotNull TypeConstraint right) {
+      for (DfaPsiType type : right.getInstanceofValues()) {
+        left = left.withInstanceofValue(type);
+        if (left == null) return null;
+      }
+      for (DfaPsiType type : right.getNotInstanceofValues()) {
+        left = left.withNotInstanceofValue(type);
+        if (left == null) return null;
+      }
+      return left;
+    }
+
+    @Nullable
+    @Override
+    TypeConstraint unionFacts(@NotNull TypeConstraint left, @NotNull TypeConstraint right) {
+      if(left.isSuperStateOf(right)) return left;
+      if(right.isSuperStateOf(left)) return right;
+      return null;
     }
   };
 
@@ -144,8 +193,8 @@ public abstract class DfaFactType<T> extends Key<T> {
     return null;
   }
 
-  boolean isSuper(@NotNull T superFact, @NotNull T subFact) {
-    return false;
+  boolean isSuper(@Nullable T superFact, @Nullable T subFact) {
+    return Objects.equals(superFact, subFact);
   }
 
   /**
@@ -157,6 +206,18 @@ public abstract class DfaFactType<T> extends Key<T> {
    */
   @Nullable
   T intersectFacts(@NotNull T left, @NotNull T right) {
+    return left.equals(right) ? left : null;
+  }
+
+  /**
+   * Unites two facts of this type.
+   *
+   * @param left left fact
+   * @param right right fact
+   * @return union fact (null means that the fact can have any value)
+   */
+  @Nullable
+  T unionFacts(@NotNull T left, @NotNull T right) {
     return left.equals(right) ? left : null;
   }
 

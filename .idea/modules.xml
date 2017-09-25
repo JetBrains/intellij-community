@@ -20,7 +20,6 @@
       <module fileurl="file://$PROJECT_DIR$/android/android/android.iml" filepath="$PROJECT_DIR$/android/android/android.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/annotations/android-annotations.iml" filepath="$PROJECT_DIR$/android/tools-base/annotations/android-annotations.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/android/common/android-common.iml" filepath="$PROJECT_DIR$/android/common/android-common.iml" group="android" />
-      <module fileurl="file://$PROJECT_DIR$/android/android-gradle-jps/android-gradle-jps.iml" filepath="$PROJECT_DIR$/android/android-gradle-jps/android-gradle-jps.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/android/jps-plugin/android-jps-plugin.iml" filepath="$PROJECT_DIR$/android/jps-plugin/android-jps-plugin.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/android/android-plugin/android-plugin.iml" filepath="$PROJECT_DIR$/android/android-plugin/android-plugin.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/android/rt/android-rt.iml" filepath="$PROJECT_DIR$/android/rt/android-rt.iml" group="android" />
@@ -54,6 +53,7 @@
       <module fileurl="file://$PROJECT_DIR$/community-resources/community-resources.iml" filepath="$PROJECT_DIR$/community-resources/community-resources.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/compiler/impl/compiler-impl.iml" filepath="$PROJECT_DIR$/java/compiler/impl/compiler-impl.iml" group="java/compiler" />
       <module fileurl="file://$PROJECT_DIR$/java/compiler/openapi/compiler-openapi.iml" filepath="$PROJECT_DIR$/java/compiler/openapi/compiler-openapi.iml" group="java/compiler" />
+      <module fileurl="file://$PROJECT_DIR$/java/compiler/compiler-tests.iml" filepath="$PROJECT_DIR$/java/compiler/compiler-tests.iml" group="java/compiler"/>
       <module fileurl="file://$PROJECT_DIR$/platform/configuration-store-impl/configuration-store-impl.iml" filepath="$PROJECT_DIR$/platform/configuration-store-impl/configuration-store-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/copyright/copyright.iml" filepath="$PROJECT_DIR$/plugins/copyright/copyright.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/platform/core-api/core-api.iml" filepath="$PROJECT_DIR$/platform/core-api/core-api.iml" group="platform" />
@@ -67,6 +67,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/cvs/cvs-core/cvs-core.iml" filepath="$PROJECT_DIR$/plugins/cvs/cvs-core/cvs-core.iml" group="plugins/VCS/cvs" />
       <module fileurl="file://$PROJECT_DIR$/plugins/cvs/cvs-plugin/cvs-plugin.iml" filepath="$PROJECT_DIR$/plugins/cvs/cvs-plugin/cvs-plugin.iml" group="plugins/VCS/cvs" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/ddmlib/ddmlib.iml" filepath="$PROJECT_DIR$/android/tools-base/ddmlib/ddmlib.iml" group="android/sdktools" />
+      <module fileurl="file://$PROJECT_DIR$/java/debugger/debugger-agent/debugger-agent.iml" filepath="$PROJECT_DIR$/java/debugger/debugger-agent/debugger-agent.iml" group="java" />
+      <module fileurl="file://$PROJECT_DIR$/java/debugger/debugger-agent-storage/debugger-agent-storage.iml" filepath="$PROJECT_DIR$/java/debugger/debugger-agent-storage/debugger-agent-storage.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/debugger/impl/debugger-impl.iml" filepath="$PROJECT_DIR$/java/debugger/impl/debugger-impl.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/debugger/openapi/debugger-openapi.iml" filepath="$PROJECT_DIR$/java/debugger/openapi/debugger-openapi.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/build/dependencies/dependencies.iml" filepath="$PROJECT_DIR$/build/dependencies/dependencies.iml" />
@@ -120,6 +122,7 @@
       <module fileurl="file://$PROJECT_DIR$/java/idea-ui/idea-ui-tests.iml" filepath="$PROJECT_DIR$/java/idea-ui/idea-ui-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/images/images.iml" filepath="$PROJECT_DIR$/images/images.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/build-scripts/icons/images-build-scripts.iml" filepath="$PROJECT_DIR$/platform/build-scripts/icons/images-build-scripts.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/tools/index-tools/index-tools.iml" filepath="$PROJECT_DIR$/tools/index-tools/index-tools.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/indexing-api/indexing-api.iml" filepath="$PROJECT_DIR$/platform/indexing-api/indexing-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/indexing-impl/indexing-impl.iml" filepath="$PROJECT_DIR$/platform/indexing-impl/indexing-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/instant-run/instant-run-annotations/instant-run-annotations.iml" filepath="$PROJECT_DIR$/android/tools-base/instant-run/instant-run-annotations/instant-run-annotations.iml" group="android/sdktools/instant-run" />
@@ -232,6 +235,7 @@
       <module fileurl="file://$PROJECT_DIR$/python/pluginMinor/python-community-plugin-minor.iml" filepath="$PROJECT_DIR$/python/pluginMinor/python-community-plugin-minor.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/python/python-community-plugin-resources.iml" filepath="$PROJECT_DIR$/python/python-community-plugin-resources.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/python/testSrc/python-community-tests.iml" filepath="$PROJECT_DIR$/python/testSrc/python-community-tests.iml" group="python" />
+      <module fileurl="file://$PROJECT_DIR$/python/tools/python-community-tools.iml" filepath="$PROJECT_DIR$/python/tools/python-community-tools.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/python/educational-python/build/python-edu-build.iml" filepath="$PROJECT_DIR$/python/educational-python/build/python-edu-build.iml" group="python/educational" />
       <module fileurl="file://$PROJECT_DIR$/python/python-helpers.iml" filepath="$PROJECT_DIR$/python/python-helpers.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/python/openapi/python-openapi.iml" filepath="$PROJECT_DIR$/python/openapi/python-openapi.iml" group="python" />

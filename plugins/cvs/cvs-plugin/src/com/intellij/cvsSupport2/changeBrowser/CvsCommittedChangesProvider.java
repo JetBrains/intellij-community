@@ -130,10 +130,6 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     return new CvsRepositoryLocation(root.getVirtualFile(), connectionSettings, module);
   }
 
-  public RepositoryLocation getLocationFor(final FilePath root, final String repositoryPath) {
-    return getLocationFor(root);
-  }
-
   public ChangeListColumn[] getColumns() {
     return new ChangeListColumn[] { ChangeListColumn.DATE, ChangeListColumn.NAME, ChangeListColumn.DESCRIPTION, BRANCH_COLUMN };
   }

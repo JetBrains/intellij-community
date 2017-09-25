@@ -25,19 +25,19 @@ public class ConvertToInstance8MethodTest extends ConvertToInstanceMethodTest {
     return "/refactoring/convertToInstance8Method/";
   }
 
-  public void testThisInsteadOfNoQualifier() throws Exception {
+  public void testThisInsteadOfNoQualifier() {
     doTest(0);
   }
 
-  public void testMethodReferenceAcceptableBySecondSearch() throws Exception {
+  public void testMethodReferenceAcceptableBySecondSearch() {
     doTest(0);
   }
 
-  public void testConvertToInstanceMethodOfTheSameClass() throws Exception {
+  public void testConvertToInstanceMethodOfTheSameClass() {
     doTest(-1);
   }
 
-  public void testConvertToInstanceMethodOfTheSameClassWithTypeParams() throws Exception {
+  public void testConvertToInstanceMethodOfTheSameClassWithTypeParams() {
     try {
       doTest(-1);
     }
@@ -46,7 +46,7 @@ public class ConvertToInstance8MethodTest extends ConvertToInstanceMethodTest {
     }
   }
 
-  public void testMethodReferenceToLambda() throws Exception {
+  public void testMethodReferenceToLambda() {
     BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest(1));
   }
 

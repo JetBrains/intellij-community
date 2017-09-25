@@ -19,3 +19,8 @@ class Two extends One {
     <warning descr="Call to overridable method 'a()' during object construction">a</warning>();
   }
 }
+class A implements Cloneable {
+  protected A clone() throws CloneNotSupportedException {
+    return (A) super.clone();
+  }
+}

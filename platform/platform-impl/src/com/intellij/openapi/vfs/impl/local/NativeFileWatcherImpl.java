@@ -324,7 +324,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
 
     @Override
-    public void notifyTextAvailable(String line, Key outputType) {
+    public void notifyTextAvailable(@NotNull String line, @NotNull Key outputType) {
       if (outputType == ProcessOutputTypes.STDERR) {
         LOG.warn(line);
       }

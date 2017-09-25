@@ -15,19 +15,14 @@
  */
 package com.intellij.testGuiFramework.remote.server
 
-/**
- * @author Sergey Karashevich
- */
 object JUnitServerHolder {
 
-  private var myServer: JUnitServer? = null
+  private val myServer: JUnitServer by lazy {
+    JUnitServerImpl()
+  }
 
   fun getServer(): JUnitServer {
-    if (myServer == null) {
-      myServer = JUnitServerImpl()
-      (myServer as JUnitServerImpl).start()
-    }
-    return myServer!!
+    return myServer
   }
 
 }

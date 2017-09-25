@@ -22,7 +22,7 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
  */
 public class BringVariableIntoScopeTest extends LightQuickFixParameterizedTestCase {
 
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {

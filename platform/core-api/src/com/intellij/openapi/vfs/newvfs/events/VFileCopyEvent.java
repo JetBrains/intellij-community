@@ -59,7 +59,7 @@ public class VFileCopyEvent extends VFileEvent {
 
   @NotNull
   @Override
-  public String getPath() {
+  protected String computePath() {
     return myNewParent.getPath() + "/" + myNewChildName;
   }
 

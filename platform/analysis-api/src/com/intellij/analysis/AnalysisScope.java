@@ -391,6 +391,11 @@ public class AnalysisScope {
         return myModule == module;
       case MODULES:
         return myModules.contains(module);
+      case CUSTOM:
+        for (VirtualFile file : ModuleRootManager.getInstance(module).getSourceRoots()) {
+          if (myScope.contains(file)) return true;
+        }
+        return false;
       default:
         return false;
     }

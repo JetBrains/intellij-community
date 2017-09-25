@@ -44,7 +44,7 @@ public class JsonSchemaSelfHighligthingTest extends JsonSchemaHeavyAbstractTest 
       }
 
       @Override
-      public void configureFiles() throws Exception {
+      public void configureFiles() {
         configureByFiles(null, "/patternSchema.json");
       }
 

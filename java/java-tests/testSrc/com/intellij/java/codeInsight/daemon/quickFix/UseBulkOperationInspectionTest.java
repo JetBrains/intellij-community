@@ -53,7 +53,7 @@ public class UseBulkOperationInspectionTest extends LightQuickFixParameterizedTe
     PlatformTestUtil.registerExtension(Extensions.getRootArea(), BulkMethodInfoProvider.KEY, TEST_PROVIDER, getTestRootDisposable());
   }
 
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {

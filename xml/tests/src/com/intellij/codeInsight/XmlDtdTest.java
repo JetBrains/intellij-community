@@ -31,7 +31,7 @@ import com.intellij.xml.impl.dtd.XmlNSDescriptorImpl;
  * @author Mike
  */
 public class XmlDtdTest extends LightPlatformTestCase {
-  public void testDocumentDescriptor1() throws Exception {
+  public void testDocumentDescriptor1() {
     XmlNSDescriptor NSDescriptor = createDescriptor("<!ELEMENT principals (#PCDATA)><!ELEMENT data-sources (#PCDATA)>");
 
     XmlElementDescriptor elementDescriptor = NSDescriptor.getElementDescriptor(tag("principals"));
@@ -44,7 +44,7 @@ public class XmlDtdTest extends LightPlatformTestCase {
     assertNull(elementDescriptor);
   }
 
-  public void testElementDescriptor1() throws Exception {
+  public void testElementDescriptor1() {
     XmlNSDescriptor NSDescriptor = createDescriptor("<!ELEMENT principals (#PCDATA)><!ELEMENT data-sources (#PCDATA)>");
 
     XmlElementDescriptor elementDescriptor = NSDescriptor.getElementDescriptor(tag("principals"));
@@ -54,7 +54,7 @@ public class XmlDtdTest extends LightPlatformTestCase {
     assertEquals("data-sources", elementDescriptor.getName());
   }
 
-  public void testElementDescriptor2() throws Exception {
+  public void testElementDescriptor2() {
     XmlNSDescriptor NSDescriptor = createDescriptor(
         "<!ELEMENT principals (#PCDATA)><!ELEMENT data-sources ANY>" +
         "<!ELEMENT read-access (namespace-resource)><!ELEMENT group EMPTY>");
@@ -72,7 +72,7 @@ public class XmlDtdTest extends LightPlatformTestCase {
     assertEquals(elementDescriptor.getContentType(), XmlElementDescriptor.CONTENT_TYPE_EMPTY);
   }
 
-  public void testElementDescriptor3() throws Exception {
+  public void testElementDescriptor3() {
     XmlNSDescriptor NSDescriptor = createDescriptor(
         "<!ELEMENT principals ANY><!ATTLIST principals path CDATA #IMPLIED smtp-host CDATA #REQUIRED>" +
         "<!ATTLIST principals address CDATA #IMPLIED>");
@@ -99,7 +99,7 @@ public class XmlDtdTest extends LightPlatformTestCase {
     assertEquals(3, descriptors.length);
   }
 
-  public void testElementDescriptor4() throws Exception {
+  public void testElementDescriptor4() {
     XmlNSDescriptor NSDescriptor = createDescriptor(
         "<!ELEMENT orion-application (ejb-module*, persistence?, namespace-access)>" +
         "<!ELEMENT ejb-module ANY>" +
@@ -124,7 +124,7 @@ public class XmlDtdTest extends LightPlatformTestCase {
     assertEquals("namespace-access", elements[3].getName());
   }
 
-  public void testAttributeDescriptor1() throws Exception {
+  public void testAttributeDescriptor1() {
     XmlNSDescriptor NSDescriptor = createDescriptor(
         "<!ELEMENT principals ANY><!ATTLIST principals path CDATA #IMPLIED>");
 
@@ -139,7 +139,7 @@ public class XmlDtdTest extends LightPlatformTestCase {
     assertNull(attributeDescriptor.getDefaultValue());
   }
 
-  public void testAttributeDescriptor2() throws Exception {
+  public void testAttributeDescriptor2() {
     XmlNSDescriptor NSDescriptor = createDescriptor(
         "<!ELEMENT principals ANY><!ATTLIST principals path CDATA #IMPLIED>");
 
@@ -153,7 +153,7 @@ public class XmlDtdTest extends LightPlatformTestCase {
     assertNull(attributeDescriptor.getDefaultValue());
   }
 
-  public void testAttributeDescriptor3() throws Exception {
+  public void testAttributeDescriptor3() {
     XmlNSDescriptor NSDescriptor = createDescriptor(
         "<!ELEMENT toc ANY> <!ATTLIST toc version CDATA #FIXED \"1.0\">");
 
@@ -167,7 +167,7 @@ public class XmlDtdTest extends LightPlatformTestCase {
     assertEquals("1.0", attributeDescriptor.getDefaultValue());
   }
 
-  public void testAttributeDescriptor4() throws Exception {
+  public void testAttributeDescriptor4() {
     XmlNSDescriptor NSDescriptor = createDescriptor(
         "<!ELEMENT toc ANY> <!ATTLIST toc remote (true|false) \"false\">");
 
@@ -186,7 +186,7 @@ public class XmlDtdTest extends LightPlatformTestCase {
     assertEquals("false", values[1]);
   }
 
-  public void testAttributeDescriptor5() throws Exception {
+  public void testAttributeDescriptor5() {
     XmlNSDescriptor NSDescriptor = createDescriptor(
         "<!ELEMENT toc ANY> <!ATTLIST toc remote (0|1|2) #REQUIRED>");
 
@@ -206,7 +206,7 @@ public class XmlDtdTest extends LightPlatformTestCase {
     assertEquals("2", values[2]);
   }
 
-  public void testEntityDeclElement1() throws Exception {
+  public void testEntityDeclElement1() {
     final XmlNSDescriptor NSDescriptor = createDescriptor(
       "<!ENTITY % types \"fileset | patternset \"> <!ELEMENT project (target | taskdef | %types; | property )*> " +
       "<!ELEMENT target><!ELEMENT taskdef><!ELEMENT fileset><!ELEMENT patternset><!ELEMENT property>");
@@ -219,7 +219,7 @@ public class XmlDtdTest extends LightPlatformTestCase {
     assertEquals(5, elements.length);
   }
 
-  public void testEntityDecl1() throws Exception {
+  public void testEntityDecl1() {
     XmlNSDescriptor NSDescriptor = createDescriptor(
         "<!ENTITY % boolean \"(true|false|on|off|yes|no)\"> <!ELEMENT toc ANY> <!ATTLIST toc remote %boolean; \"false\"");
 
@@ -242,7 +242,7 @@ public class XmlDtdTest extends LightPlatformTestCase {
     assertEquals("no", values[5]);
   }
 
-  public void testEntityDecl2() throws Exception {
+  public void testEntityDecl2() {
     XmlNSDescriptor NSDescriptor = createDescriptor(
         "<!ENTITY % coreattrs \"id D #IMPLIED\"> <!ELEMENT a ANY> <!ATTLIST a %coreattrs; version CDATA #FIXED \"1.0\"");
 
@@ -255,7 +255,7 @@ public class XmlDtdTest extends LightPlatformTestCase {
     assertEquals("version", attributes[1].getName());
   }
 
-  public void testEntityDecl3() throws Exception {
+  public void testEntityDecl3() {
     XmlNSDescriptor NSDescriptor = createDescriptor(
         "<!ENTITY % att1 \"id1 D #IMPLIED\"> <!ENTITY % att2 \"id2 D #IMPLIED\"> <!ELEMENT a ANY> <!ATTLIST a %att1; %att2; ");
 
@@ -268,7 +268,7 @@ public class XmlDtdTest extends LightPlatformTestCase {
     assertEquals("id2", attributes[1].getName());
   }
 
-  public void testEntityDecl4() throws Exception {
+  public void testEntityDecl4() {
     XmlNSDescriptor NSDescriptor = createDescriptor(
         "<!ENTITY % boolean \'(true|false|on|off|yes|no)\'> <!ENTITY % bool \"%boolean;\">  <!ELEMENT toc ANY> <!ATTLIST toc remote %bool; \"false\"");
 
@@ -291,7 +291,7 @@ public class XmlDtdTest extends LightPlatformTestCase {
     assertEquals("no", values[5]);
   }
 
-  public void testEntityDecl5() throws Exception {
+  public void testEntityDecl5() {
     XmlNSDescriptor NSDescriptor = createDescriptor(
         "<!ENTITY % boolean \"true | false\" > <!ELEMENT foo EMPTY> <!ATTLIST foo someBoolean (%boolean;) \"true\" someString CDATA #IMPLIED >");
 
@@ -309,7 +309,7 @@ public class XmlDtdTest extends LightPlatformTestCase {
     assertEquals("false", attributes[0].getEnumeratedValues()[1]);
   }
 
-  public void testEmbeddedDtd1() throws Exception {
+  public void testEmbeddedDtd1() {
     XmlFile xmlFile = (XmlFile)createFile("test.xml",
       "<!DOCTYPE tv [ <!ELEMENT tv (date)*> <!ELEMENT date (#PCDATA)> ]> <tv></tv>");
 

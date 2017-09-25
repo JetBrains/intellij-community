@@ -30,7 +30,7 @@ import com.intellij.psi.PsiJavaFile;
  */
 public class GotoClassTest extends HeavyFileEditorManagerTestCase {
 
-  public void testGotoClass() throws Exception {
+  public void testGotoClass() {
 
     PsiJavaFile file = (PsiJavaFile)myFixture.configureByText("Foo.java", "public class Foo {\n" +
                                                          "}\n" +

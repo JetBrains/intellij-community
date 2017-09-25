@@ -36,22 +36,22 @@ public abstract class MavenPerformanceTest extends MavenImportingTestCase {
     myProjectsManager.resetManagedFilesAndProfilesInTests(Collections.singletonList(file), MavenExplicitProfiles.NONE);
   }
 
-  public void testReading() throws Exception {
+  public void testReading() {
     measure(4000, () -> waitForReadingCompletion());
   }
 
-  public void testImporting() throws Exception {
+  public void testImporting() {
     waitForReadingCompletion();
     measure(8, () -> myProjectsManager.importProjects());
   }
 
-  public void testReImporting() throws Exception {
+  public void testReImporting() {
     waitForReadingCompletion();
     myProjectsManager.importProjects();
     measure(2, () -> myProjectsManager.importProjects());
   }
 
-  public void testResolving() throws Exception {
+  public void testResolving() {
     waitForReadingCompletion();
     List<MavenProject> mavenProjects = myProjectsManager.getProjects();
     Collections.sort(mavenProjects, (o1, o2) -> o1.getPath().compareToIgnoreCase(o2.getPath()));

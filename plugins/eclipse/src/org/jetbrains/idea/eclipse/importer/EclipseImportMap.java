@@ -16,10 +16,13 @@
 package org.jetbrains.idea.eclipse.importer;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.util.Properties;
 
 /**
@@ -74,10 +77,12 @@ public class EclipseImportMap {
     private String myLanguage;
     private String myFieldName;
     private boolean myIndentOptions;
+    private boolean myIsCustomField;
 
     public ImportDescriptor(String language, String fieldName, boolean indentOptions) {
       myLanguage = language;
       myFieldName = fieldName;
+      myIsCustomField = isCustomField(fieldName);
       myIndentOptions = indentOptions;
     }
     
@@ -103,6 +108,23 @@ public class EclipseImportMap {
     
     public boolean isLanguageSpecific() {
       return myLanguage != null;
+    }
+
+    public boolean isCustomField() {
+      return myIsCustomField;
+    }
+
+    private static boolean isCustomField(@NotNull String fieldName) {
+      if (EclipseCodeStyleImportWorker.PROGRAMMATIC_IMPORT_KEY.equals(fieldName)) {
+        return false;
+      }
+      for (Field field : CommonCodeStyleSettings.class.getFields()) {
+        if (fieldName.equals(field.getName())) return false;
+      }
+      for (Field field : CommonCodeStyleSettings.IndentOptions.class.getFields()) {
+        if (fieldName.equals(field.getName())) return false;
+      }
+      return true;
     }
   }
 }

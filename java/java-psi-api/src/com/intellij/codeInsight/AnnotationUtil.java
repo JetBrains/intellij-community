@@ -276,11 +276,11 @@ public class AnnotationUtil {
   }
 
   private static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
-                                    @NotNull String annotationFQN,
-                                    boolean checkHierarchy,
-                                    boolean skipExternal,
-                                    boolean skipInferred,
-                                    @Nullable Set<PsiMember> processed) {
+                                     @NotNull String annotationFQN,
+                                     boolean checkHierarchy,
+                                     boolean skipExternal,
+                                     boolean skipInferred,
+                                     @Nullable Set<PsiMember> processed) {
     if (!listOwner.isValid()) return false;
 
     PsiModifierList modifierList = listOwner.getModifierList();
@@ -296,16 +296,19 @@ public class AnnotationUtil {
     else if (listOwner instanceof PsiVariable) {
       type = ((PsiVariable)listOwner).getType();
     }
-    if (type != null && type.findAnnotation(annotationFQN) != null) return true;
+    if (type != null && type.findAnnotation(annotationFQN) != null) {
+      return true;
+    }
 
     if (!skipExternal) {
-      final Project project = listOwner.getProject();
+      Project project = listOwner.getProject();
       if (ExternalAnnotationsManager.getInstance(project).findExternalAnnotation(listOwner, annotationFQN) != null) {
         return true;
       }
     }
+
     if (!skipInferred) {
-      final Project project = listOwner.getProject();
+      Project project = listOwner.getProject();
       if (InferredAnnotationsManager.getInstance(project).findInferredAnnotation(listOwner, annotationFQN) != null) {
         return true;
       }
@@ -316,18 +319,20 @@ public class AnnotationUtil {
         PsiMethod method = (PsiMethod)listOwner;
         if (processed == null) processed = new THashSet<>();
         if (!processed.add(method)) return false;
-        final PsiMethod[] superMethods = method.findSuperMethods();
-        for (PsiMethod superMethod : superMethods) {
-          if (isAnnotated(superMethod, annotationFQN, true, skipExternal, skipInferred, processed)) return true;
+        for (PsiMethod superMethod : method.findSuperMethods()) {
+          if (isAnnotated(superMethod, annotationFQN, true, skipExternal, skipInferred, processed)) {
+            return true;
+          }
         }
       }
       else if (listOwner instanceof PsiClass) {
-        final PsiClass clazz = (PsiClass)listOwner;
+        PsiClass clazz = (PsiClass)listOwner;
         if (processed == null) processed = new THashSet<>();
         if (!processed.add(clazz)) return false;
-        final PsiClass[] superClasses = clazz.getSupers();
-        for (PsiClass superClass : superClasses) {
-          if (isAnnotated(superClass, annotationFQN, true, skipExternal, skipInferred, processed)) return true;
+        for (PsiClass superClass : clazz.getSupers()) {
+          if (isAnnotated(superClass, annotationFQN, true, skipExternal, skipInferred, processed)) {
+            return true;
+          }
         }
       }
     }
@@ -614,6 +619,9 @@ public class AnnotationUtil {
     return false;
   }
 
+  /**
+   * Ignores Override and SuppressWarnings annotations.
+   */
   public static boolean equal(PsiAnnotation[] annotations1, PsiAnnotation[] annotations2) {
     final Map<String, PsiAnnotation> map1 = buildAnnotationMap(annotations1);
     final Map<String, PsiAnnotation> map2 = buildAnnotationMap(annotations2);
@@ -634,6 +642,7 @@ public class AnnotationUtil {
       map.put(annotation.getQualifiedName(), annotation);
     }
     map.remove(CommonClassNames.JAVA_LANG_OVERRIDE);
+    map.remove("java.lang.SuppressWarnings");
     return map;
   }
 

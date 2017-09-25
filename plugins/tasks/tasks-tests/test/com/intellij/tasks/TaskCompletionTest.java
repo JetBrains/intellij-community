@@ -9,7 +9,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.tasks.actions.TaskAutoCompletionListProvider;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
-import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.ui.TextFieldWithAutoCompletion;
 
@@ -25,19 +24,19 @@ public class TaskCompletionTest extends LightCodeInsightFixtureTestCase {
     //    super(UsefulTestCase.IDEA_MARKER_CLASS, "PlatformLangXml");
   }
 
-  public void testTaskCompletion() throws Exception {
+  public void testTaskCompletion() {
     doTest("<caret>", "TEST-001 Test task<caret>");
   }
 
-  public void testPrefix() throws Exception {
+  public void testPrefix() {
     doTest("TEST-<caret>", "TEST-001 Test task<caret>");
   }
 
-  public void testSecondWord() throws Exception {
+  public void testSecondWord() {
     doTest("my TEST-<caret>", "my TEST-001 Test task<caret>");
   }
 
-  public void testNumberCompletion() throws Exception {
+  public void testNumberCompletion() {
     configureFile("TEST-0<caret>");
     configureRepository(new LocalTaskImpl("TEST-001", "Test task"), new LocalTaskImpl("TEST-002", "Test task 2"));
     LookupElement[] elements = myFixture.complete(CompletionType.BASIC);
@@ -45,7 +44,7 @@ public class TaskCompletionTest extends LightCodeInsightFixtureTestCase {
     assertEquals(2, elements.length);
   }
 
-  public void testKeepOrder() throws Exception {
+  public void testKeepOrder() {
     configureFile("<caret>");
     configureRepository(new LocalTaskImpl("TEST-002", "Test task 2"),
                         new LocalTaskImpl("TEST-003", "Test task 1"),
@@ -61,7 +60,7 @@ public class TaskCompletionTest extends LightCodeInsightFixtureTestCase {
     assertEquals(Arrays.asList("TEST-002", "TEST-003", "TEST-001", "TEST-004"), myFixture.getLookupElementStrings());
   }
 
-  public void testSIOOBE() throws Exception {
+  public void testSIOOBE() {
     doTest("  <caret>    my", "  TEST-001 Test task    my");
   }
 

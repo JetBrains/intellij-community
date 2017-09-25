@@ -76,7 +76,7 @@ public class AddExplicitTypeArgumentsIntentionTest extends JavaCodeInsightFixtur
            "}");
   }
 
-  public void testNotAvailableWhenRawTypeInferred() throws Exception {
+  public void testNotAvailableWhenRawTypeInferred() {
     myFixture.configureByText("a.java", "import java.util.List;\n" +
                                         "class Foo {\n" +
                                         "    <T> List<T> getList() {return null;}\n" +

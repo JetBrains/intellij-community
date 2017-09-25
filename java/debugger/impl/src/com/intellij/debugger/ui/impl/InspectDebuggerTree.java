@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.actions.DebuggerActions;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
@@ -27,6 +28,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.PopupHandler;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -70,8 +72,8 @@ public class InspectDebuggerTree extends DebuggerTree{
 
   private void updateNode(final DebuggerContextImpl context) {
     context.getDebugProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(context) {
-      public void threadAction() {
-        final DebuggerTreeNodeImpl node = getNodeFactory().createNode(myInspectDescriptor, context.createEvaluationContext());
+      public void threadAction(@NotNull SuspendContextImpl suspendContext) {
+        DebuggerTreeNodeImpl node = getNodeFactory().createNode(myInspectDescriptor, context.createEvaluationContext());
 
         DebuggerInvocationUtil.swingInvokeLater(getProject(), () -> {
           DebuggerTreeNodeImpl root = (DebuggerTreeNodeImpl) getModel().getRoot();

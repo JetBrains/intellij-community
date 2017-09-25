@@ -34,7 +34,7 @@ public class UndeclaredTestsInspectionTest extends InspectionTestCase {
   }
 
   @BeforeMethod
-  protected void setUp() throws Exception {
+  protected void setUp() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         UndeclaredTestsInspectionTest.super.setUp();
@@ -46,7 +46,7 @@ public class UndeclaredTestsInspectionTest extends InspectionTestCase {
   }
 
   @AfterMethod
-  protected void tearDown() throws Exception {
+  protected void tearDown() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         UndeclaredTestsInspectionTest.super.tearDown();
@@ -68,7 +68,7 @@ public class UndeclaredTestsInspectionTest extends InspectionTestCase {
   }
 
   @Test(dataProvider = "data")
-  public void doTest(final String name) throws Exception {
+  public void doTest(final String name) {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         TestNGUtil.hasDocTagsSupport = true;

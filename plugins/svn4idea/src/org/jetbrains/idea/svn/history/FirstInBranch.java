@@ -185,7 +185,7 @@ public class FirstInBranch {
 
     @NotNull
     private String relativePath() {
-      return ensureStartSlash(getRelativeUrl(myRepositoryRoot.toDecodedString(), myTarget.getURL().toDecodedString()));
+      return ensureStartSlash(getRelativeUrl(myRepositoryRoot, myTarget.getURL()));
     }
 
     private long revision() throws VcsException {

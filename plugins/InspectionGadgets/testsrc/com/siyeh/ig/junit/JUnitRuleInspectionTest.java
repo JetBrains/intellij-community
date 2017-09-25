@@ -21,7 +21,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public class JUnitRuleInspectionTest extends LightCodeInsightFixtureTestCase {
-  public void testWrongsignature() throws Exception {
+  public void testWrongsignature() {
     myFixture.addClass("package org.junit.rules;\n" +
                        "public interface TestRule {}");
     myFixture.addClass("package org.junit.rules;\n" +

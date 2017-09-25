@@ -31,7 +31,6 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationLocalInspection;
-import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageAnnotators;
@@ -60,7 +59,9 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -86,6 +87,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     super.setUp();
     myUnusedDeclarationInspection = new UnusedDeclarationInspection(isUnusedInspectionRequired());
     enableInspectionTool(myUnusedDeclarationInspection);
+    enableInspectionTool(new UnusedImportInspection());
     setLanguageLevel(LanguageLevel.JDK_1_4);
   }
 
@@ -101,7 +103,6 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
       new AccessStaticViaInstance(),
       new DeprecationInspection(),
       new RedundantThrowsDeclarationLocalInspection(),
-      new UnusedImportLocalInspection(),
       new UncheckedWarningLocalInspection()
     };
   }
@@ -196,10 +197,10 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     }
     finally {
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      VirtualFile file = FileDocumentManager.getInstance().getFile(e.getDocument());
+      VirtualFile file = ObjectUtils.notNull(FileDocumentManager.getInstance().getFile(e.getDocument()));
       FileEditorManager.getInstance(getProject()).closeFile(file);
       VfsTestUtil.deleteFile(file);
-      VirtualFile file2 = FileDocumentManager.getInstance().getFile(e2.getDocument());
+      VirtualFile file2 = ObjectUtils.notNull(FileDocumentManager.getInstance().getFile(e2.getDocument()));
       FileEditorManager.getInstance(getProject()).closeFile(file2);
       VfsTestUtil.deleteFile(file2);
     }
@@ -375,7 +376,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     assertFalse(list.toString(), list.contains(annotator));
   }
 
-  public void testSOEForTypeOfHugeBinaryExpression() throws IOException {
+  public void testSOEForTypeOfHugeBinaryExpression() {
     configureFromFileText("a.java", "class A { String s = \"\"; }");
     assertEmpty(highlightErrors());
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
@@ -398,7 +399,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     assertEquals("PsiType:String", type.toString());
   }
 
-  public void testSOEForCyclicInheritance() throws IOException {
+  public void testSOEForCyclicInheritance() {
     configureFromFileText("a.java", "class A extends B { String s = \"\"; void f() {}} class B extends A { void f() {} } ");
     doHighlighting();
   }
@@ -424,15 +425,15 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
   }
 
-  public void testNestedLocalClasses() throws Exception {
+  public void testNestedLocalClasses() {
     doTest(false);
   }
 
-  public void testAmbiguousConstants() throws Exception {
+  public void testAmbiguousConstants() {
     doTest(false);
   }
 
-  public void testInsane() throws IOException {
+  public void testInsane() {
     configureFromFileText("x.java", "class X { \nx_x_x_x\n }");
     List<HighlightInfo> infos = highlightErrors();
     assertTrue(!infos.isEmpty());

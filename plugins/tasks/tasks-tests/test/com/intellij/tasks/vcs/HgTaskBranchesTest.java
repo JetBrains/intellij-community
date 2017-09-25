@@ -18,7 +18,6 @@ package com.intellij.tasks.vcs;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,7 +30,6 @@ import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
-import java.io.IOException;
 
 import static com.intellij.openapi.vcs.Executor.cd;
 import static com.intellij.openapi.vcs.Executor.touch;
@@ -69,7 +67,7 @@ public class HgTaskBranchesTest extends TaskBranchesTest {
   }
 
   @Override
-  protected void createAndCommitChanges(@NotNull Repository repository) throws IOException, VcsException {
+  protected void createAndCommitChanges(@NotNull Repository repository) {
     cd(repository.getRoot());
     touch("foo.txt");
     hg("add foo.txt");

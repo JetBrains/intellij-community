@@ -94,7 +94,7 @@ public class VcsCurrentRevisionProxy implements ByteBackedContentRevision {
                                                             }
 
                                                             @Override
-                                                            public Pair<VcsRevisionNumber, byte[]> get() throws VcsException, IOException {
+                                                            public Pair<VcsRevisionNumber, byte[]> get() throws VcsException {
                                                               return loadContent();
                                                             }
                                                           });

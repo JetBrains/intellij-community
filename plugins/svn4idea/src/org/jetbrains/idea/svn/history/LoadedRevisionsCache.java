@@ -25,7 +25,7 @@ import com.intellij.openapi.vcs.changes.committed.ChangesBunch;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesAdapter;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.util.containers.SoftHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +47,7 @@ public class LoadedRevisionsCache implements Disposable {
 
   private LoadedRevisionsCache(final Project project) {
     myProject = project;
-    myMap = (ApplicationManager.getApplication().isUnitTestMode()) ? new HashMap<>() : new SoftHashMap<>();
+    myMap = (ApplicationManager.getApplication().isUnitTestMode()) ? new HashMap<>() : ContainerUtil.createSoftMap();
 
     myConnection = project.getMessageBus().connect();
     myConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesAdapter() {

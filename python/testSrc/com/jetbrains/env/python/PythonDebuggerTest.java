@@ -8,6 +8,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.jetbrains.TestEnv;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
@@ -25,7 +26,7 @@ import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.debugger.settings.PySteppingFilter;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import com.jetbrains.python.sdkTools.SdkCreationType;
+import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
@@ -48,7 +49,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     }
 
     @Override
-    public void before() throws Exception {
+    public void before() {
       toggleBreakpoint(getFilePath(getScriptName()), 3);
       setWaitForTermination(false);
     }
@@ -74,7 +75,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testBreakpointStopAndEval() throws Exception {
+  public void testBreakpointStopAndEval() {
     runPythonTest(new BreakpointStopAndEvalTask("test1.py"));
   }
 
@@ -109,7 +110,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
       @NotNull
       @Override
-      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+      protected PyUnitTestProcessRunner createProcessRunner() {
         return new PyUnitTestProcessRunner(script, 0);
       }
 
@@ -144,10 +145,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testConditionalBreakpoint() throws Exception {
+  public void testConditionalBreakpoint() {
     runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getFilePath(getScriptName()), 3);
         XDebuggerTestUtil.setBreakpointCondition(getProject(), 3, "i == 1 or i == 11 or i == 111");
         setWaitForTermination(false);
@@ -175,10 +176,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testDebugConsole() throws Exception {
+  public void testDebugConsole() {
     runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getFilePath(getScriptName()), 3);
         setWaitForTermination(false);
       }
@@ -224,10 +225,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testDebugCompletion() throws Exception {
+  public void testDebugCompletion() {
     runPythonTest(new PyDebuggerTask("/debug", "test4.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getScriptName(), 3);
       }
 
@@ -242,10 +243,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testBreakpointLogExpression() throws Exception {
+  public void testBreakpointLogExpression() {
     runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getFilePath(getScriptName()), 3);
         XDebuggerTestUtil.setBreakpointLogExpression(getProject(), 3, "'i = %d'%i");
         setWaitForTermination(false);
@@ -261,10 +262,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testStepOver() throws Exception {
+  public void testStepOver() {
     runPythonTest(new PyDebuggerTask("/debug", "test2.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getFilePath(getScriptName()), 5);
       }
 
@@ -281,10 +282,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testStepInto() throws Exception {
+  public void testStepInto() {
     runPythonTest(new PyDebuggerTask("/debug", "test2.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getFilePath(getScriptName()), 5);
       }
 
@@ -305,11 +306,11 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testStepIntoMyCode() throws Exception {
+  public void testStepIntoMyCode() {
     runPythonTest(new PyDebuggerTask("/debug", "test_my_code.py") {
 
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getFilePath(getScriptName()), 5);
         toggleBreakpoint(getFilePath(getScriptName()), 7);
       }
@@ -331,10 +332,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testSmartStepInto() throws Exception {
+  public void testSmartStepInto() {
     runPythonTest(new PyDebuggerTask("/debug", "test3.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getFilePath(getScriptName()), 14);
       }
 
@@ -351,10 +352,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testSmartStepInto2() throws Exception {
+  public void testSmartStepInto2() {
     runPythonTest(new PyDebuggerTask("/debug", "test3.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getFilePath(getScriptName()), 18);
         toggleBreakpoint(getFilePath(getScriptName()), 25);
       }
@@ -371,10 +372,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testInput() throws Exception {
+  public void testInput() {
     runPythonTest(new PyDebuggerTask("/debug", "test_input.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         setWaitForTermination(false);
       }
 
@@ -394,10 +395,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testRunToLine() throws Exception {
+  public void testRunToLine() {
     runPythonTest(new PyDebuggerTask("/debug", "test_runtoline.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getFilePath(getScriptName()), 7);
         toggleBreakpoint(getFilePath(getScriptName()), 14);
         setWaitForTermination(false);
@@ -419,15 +420,15 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-  private static void addExceptionBreakpoint(IdeaProjectTestFixture fixture, PyExceptionBreakpointProperties properties) {
-    XDebuggerTestUtil.addBreakpoint(fixture.getProject(), PyExceptionBreakpointType.class, properties);
+  private static XBreakpoint addExceptionBreakpoint(IdeaProjectTestFixture fixture, PyExceptionBreakpointProperties properties) {
+    return XDebuggerTestUtil.addBreakpoint(fixture.getProject(), PyExceptionBreakpointType.class, properties);
   }
 
   @Test
-  public void testExceptionBreakpointOnTerminate() throws Exception {
+  public void testExceptionBreakpointOnTerminate() {
     runPythonTest(new PyDebuggerTask("/debug", "test_exceptbreak.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         createExceptionBreakZeroDivisionError(myFixture, true, false, false);
       }
 
@@ -467,19 +468,18 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testExceptionBreakpointOnFirstRaise() throws Exception {
+  public void testExceptionBreakpointOnFirstRaise() {
     runPythonTest(new PyDebuggerTask("/debug", "test_exceptbreak.py") {
       @Override
-      public void before() throws Exception {
-        createExceptionBreakZeroDivisionError(myFixture, false, true, false);
+      public void before() {
+        createExceptionBreak(myFixture, false, true, true);
       }
 
       @Override
       public void testing() throws Exception {
         waitForPause();
-        eval("__exception__[0].__name__").hasValue("'ZeroDivisionError'");
+        eval("__exception__[0].__name__").hasValue("'IndexError'");
         resume();
-        waitForTerminate();
       }
 
       @NotNull
@@ -493,7 +493,9 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   public static void createExceptionBreak(IdeaProjectTestFixture fixture,
                                           boolean notifyOnTerminate,
                                           boolean notifyOnFirst,
-                                          boolean ignoreLibraries) {
+                                          boolean ignoreLibraries,
+                                          @Nullable String condition,
+                                          @Nullable String logExpression) {
     XDebuggerTestUtil.removeAllBreakpoints(fixture.getProject());
     XDebuggerTestUtil.setDefaultBreakpointEnabled(fixture.getProject(), PyExceptionBreakpointType.class, false);
 
@@ -501,15 +503,28 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     properties.setNotifyOnTerminate(notifyOnTerminate);
     properties.setNotifyOnlyOnFirst(notifyOnFirst);
     properties.setIgnoreLibraries(ignoreLibraries);
-    addExceptionBreakpoint(fixture, properties);
+    XBreakpoint exceptionBreakpoint = addExceptionBreakpoint(fixture, properties);
+    if (condition != null) {
+      exceptionBreakpoint.setCondition(condition);
+    }
+    if (logExpression != null) {
+      exceptionBreakpoint.setLogExpression(logExpression);
+    }
+  }
+
+  public static void createExceptionBreak(IdeaProjectTestFixture fixture,
+                                          boolean notifyOnTerminate,
+                                          boolean notifyOnFirst,
+                                          boolean ignoreLibraries) {
+    createExceptionBreak(fixture, notifyOnTerminate, notifyOnFirst, ignoreLibraries, null, null);
   }
 
   @Test
-  public void testExceptionBreakpointIgnoreLibrariesOnRaise() throws Exception {
+  public void testExceptionBreakpointIgnoreLibrariesOnRaise() {
     runPythonTest(new PyDebuggerTask("/debug", "test_ignore_lib.py") {
 
       @Override
-      public void before() throws Exception {
+      public void before() {
         createExceptionBreak(myFixture, false, true, true);
       }
 
@@ -530,11 +545,11 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testExceptionBreakpointIgnoreLibrariesOnTerminate() throws Exception {
+  public void testExceptionBreakpointIgnoreLibrariesOnTerminate() {
     runPythonTest(new PyDebuggerTask("/debug", "test_ignore_lib.py") {
 
       @Override
-      public void before() throws Exception {
+      public void before() {
         createExceptionBreak(myFixture, true, false, true);
       }
 
@@ -555,10 +570,61 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testMultithreading() throws Exception {
+  public void testExceptionBreakpointConditionOnRaise() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_exceptbreak.py") {
+
+      @Override
+      public void before() {
+        createExceptionBreak(myFixture, false, true, true, "__exception__[0] == ZeroDivisionError", null);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("__exception__[0].__name__").hasValue("'ZeroDivisionError'");
+        resume();
+        waitForTerminate();
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-jython");
+      }
+    });
+  }
+
+
+  @Test
+  public void testExceptionBreakpointConditionOnTerminate() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_exceptbreak.py") {
+
+      @Override
+      public void before() {
+        createExceptionBreak(myFixture, true, false, false, "__exception__[0] == ZeroDivisionError", null);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("__exception__[0].__name__").hasValue("'ZeroDivisionError'");
+        resume();
+        waitForTerminate();
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-jython");
+      }
+    });
+  }
+
+  @Test
+  public void testMultithreading() {
     runPythonTest(new PyDebuggerTask("/debug", "test_multithread.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getFilePath(getScriptName()), 10);
         toggleBreakpoint(getFilePath(getScriptName()), 16);
         setWaitForTermination(false);
@@ -584,10 +650,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   @StagingOn(os = TestEnv.WINDOWS)
-  public void testEggDebug() throws Exception {
+  public void testEggDebug() {
     runPythonTest(new PyDebuggerTask("/debug", "test_egg.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         String egg = getFilePath("Adder-0.1.egg");
         toggleBreakpointInEgg(egg, "adder/adder.py", 2);
         PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(getRunConfiguration().getSdkHome());
@@ -616,13 +682,13 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
 
   @Test
-  public void testWinEggDebug() throws Exception {
+  public void testWinEggDebug() {
     if (UsefulTestCase.IS_UNDER_TEAMCITY && !SystemInfo.isWindows) {
       return; // Only needs to run on windows
     }
     runPythonTest(new PyDebuggerTask("/debug", "test_winegg.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         String egg = getFilePath("wintestegg-0.1.egg");
         toggleBreakpointInEgg(egg, "eggxample/lower_case.py", 2);
         toggleBreakpointInEgg(egg, "eggxample/MIXED_case.py", 2);
@@ -656,13 +722,13 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testWinLongName() throws Exception {
+  public void testWinLongName() {
     if (!SystemInfo.isWindows) {
       return; // Only needs to run on windows
     }
     runPythonTest(new PyDebuggerTask("/debug", "long_n~1.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         String longName = "long_name_win_test.py";
         toggleBreakpoint(longName, 2);
       }
@@ -684,10 +750,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
 
   @Test
-  public void testStepOverConditionalBreakpoint() throws Exception {
+  public void testStepOverConditionalBreakpoint() {
     runPythonTest(new PyDebuggerTask("/debug", "test_stepOverCondition.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getScriptName(), 1);
         toggleBreakpoint(getScriptName(), 2);
         XDebuggerTestUtil.setBreakpointCondition(getProject(), 2, "y == 3");
@@ -704,7 +770,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testMultiprocess() throws Exception {
+  public void testMultiprocess() {
     runPythonTest(new PyDebuggerTask("/debug", "test_multiprocess.py") {
       @Override
       protected void init() {
@@ -712,7 +778,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       }
 
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getScriptName(), 9);
       }
 
@@ -736,7 +802,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testMultiprocessingSubprocess() throws Exception {
+  public void testMultiprocessingSubprocess() {
     runPythonTest(new PyDebuggerTask("/debug", "test_multiprocess_args.py") {
       @Override
       protected void init() {
@@ -744,7 +810,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       }
 
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getFilePath("test_remote.py"), 2);
         setWaitForTermination(false);
       }
@@ -767,7 +833,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testPyQtQThreadInheritor() throws Exception {
+  public void testPyQtQThreadInheritor() {
     if (UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
       return; //Don't run under Windows
     }
@@ -779,7 +845,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       }
 
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getScriptName(), 8);
       }
 
@@ -808,7 +874,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testPyQtMoveToThread() throws Exception {
+  public void testPyQtMoveToThread() {
     if (UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
       return; //Don't run under Windows
     }
@@ -820,7 +886,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       }
 
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getScriptName(), 10);
       }
 
@@ -850,7 +916,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
 
   @Test
-  public void testPyQtQRunnableInheritor() throws Exception {
+  public void testPyQtQRunnableInheritor() {
     if (UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
       return; //Don't run under Windows
     }
@@ -862,7 +928,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       }
 
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getScriptName(), 9);
       }
 
@@ -892,7 +958,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
 
   @Test
-  public void testStepOverYieldFrom() throws Exception {
+  public void testStepOverYieldFrom() {
     runPythonTest(new PyDebuggerTask("/debug", "test_step_over_yield.py") {
       @Override
       protected void init() {
@@ -900,7 +966,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       }
 
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getScriptName(), 6);
       }
 
@@ -939,11 +1005,11 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testSteppingFilter() throws Exception {
+  public void testSteppingFilter() {
     runPythonTest(new PyDebuggerTask("/debug", "test_stepping_filter.py") {
 
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getScriptName(), 4);
         List<PySteppingFilter> filters = new ArrayList<>();
         filters.add(new PySteppingFilter(true, "*/test_m?_code.py"));
@@ -974,10 +1040,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testReturnValues() throws Exception {
+  public void testReturnValues() {
     runPythonTest(new PyDebuggerTask("/debug", "test_return_values.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getScriptName(), 2);
         final PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
         debuggerSettings.setWatchReturnValues(true);
@@ -1013,7 +1079,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   @Staging
-  public void testSuspendAllThreadsPolicy() throws Exception {
+  public void testSuspendAllThreadsPolicy() {
     runPythonTest(new PyDebuggerTask("/debug", "test_two_threads.py") {
       @Override
       protected void init() {
@@ -1021,7 +1087,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       }
 
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getFilePath(getScriptName()), 17);
         setBreakpointSuspendPolicy(getProject(), 17, SuspendPolicy.ALL);
         setWaitForTermination(false);
@@ -1045,10 +1111,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   @Staging
-  public void testSuspendAllThreadsResume() throws Exception {
+  public void testSuspendAllThreadsResume() {
     runPythonTest(new PyDebuggerTask("/debug", "test_two_threads_resume.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getFilePath(getScriptName()), 10);
         setBreakpointSuspendPolicy(getProject(), 10, SuspendPolicy.ALL);
         setWaitForTermination(false);
@@ -1073,10 +1139,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testSuspendOneThreadPolicy() throws Exception {
+  public void testSuspendOneThreadPolicy() {
     runPythonTest(new PyDebuggerTask("/debug", "test_two_threads.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getFilePath(getScriptName()), 17);
         setBreakpointSuspendPolicy(getProject(), 17, SuspendPolicy.THREAD);
         setWaitForTermination(false);
@@ -1094,10 +1160,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   @Staging
-  public void testShowReferringObjects() throws Exception {
+  public void testShowReferringObjects() {
     runPythonTest(new PyDebuggerTask("/debug", "test_ref.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getFilePath(getScriptName()), 3);
       }
 
@@ -1117,10 +1183,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testResume() throws Exception {
+  public void testResume() {
     runPythonTest(new PyDebuggerTask("/debug", "test_resume.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getScriptName(), 1);
       }
 
@@ -1137,12 +1203,12 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testResumeAfterStepping() throws Exception {
+  public void testResumeAfterStepping() {
     // This test case is important for frame evaluation debugging, because we reuse old tracing function for stepping and there were
     // some problems with switching between frame evaluation and tracing
     runPythonTest(new PyDebuggerTask("/debug", "test_resume_after_step.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getScriptName(), 2);
         toggleBreakpoint(getScriptName(), 5);
         toggleBreakpoint(getScriptName(), 12);
@@ -1169,10 +1235,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testAddBreakWhileRunning() throws Exception {
+  public void testAddBreakWhileRunning() {
     runPythonTest(new PyDebuggerTask("/debug", "test_resume_after_step.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getScriptName(), 2);
         toggleBreakpoint(getScriptName(), 3);
       }
@@ -1194,10 +1260,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testAddBreakAfterRemove() throws Exception {
+  public void testAddBreakAfterRemove() {
     runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getScriptName(), 2);
       }
 
@@ -1229,10 +1295,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Staging
   @Test
-  public void testBreakOnContinuationLine() throws Exception {
+  public void testBreakOnContinuationLine() {
     runPythonTest(new PyDebuggerTask("/debug", "test_continuation.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getScriptName(), 11);
         setWaitForTermination(false);
       }
@@ -1261,10 +1327,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Staging
   @Test
-  public void testModuleInterpreterOption() throws Exception {
+  public void testModuleInterpreterOption() {
     runPythonTest(new BreakpointStopAndEvalTask("test1") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(getFilePath("test1.py"), 3);
         setScriptName("test1");
         setWaitForTermination(false);

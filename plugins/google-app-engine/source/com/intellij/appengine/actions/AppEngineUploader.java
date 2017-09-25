@@ -215,7 +215,7 @@ public class AppEngineUploader {
     }
 
     @Override
-    public void onTextAvailable(ProcessEvent event, Key outputType) {
+    public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
       if (!myAuthData.isOAuth2() && !myPasswordEntered && !outputType.equals(ProcessOutputTypes.SYSTEM) && event.getText().contains(myAuthData.getEmail())) {
         myPasswordEntered = true;
         final OutputStream processInput = myProcessHandler.getProcessInput();
@@ -236,7 +236,7 @@ public class AppEngineUploader {
     }
 
     @Override
-    public void processTerminated(ProcessEvent event) {
+    public void processTerminated(@NotNull ProcessEvent event) {
       int exitCode = event.getExitCode();
       if (exitCode == 0) {
         myCallback.succeeded(new DeploymentRuntime() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,23 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.event.EditorEventMulticaster;
+import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -35,7 +41,6 @@ import java.beans.PropertyChangeListener;
  */
 public class InsertOverwritePanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget, PropertyChangeListener {
   private final TextPanel myTextPanel = new TextPanel();
-  private EditorEx myOldEditor;
 
   public InsertOverwritePanel(Project project) {
     super(project);
@@ -63,8 +68,21 @@ public class InsertOverwritePanel extends EditorBasedWidget implements StatusBar
     return myTextPanel;
   }
 
+  @Override
+  public void install(@NotNull StatusBar statusBar) {
+    super.install(statusBar);
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(SWING_FOCUS_OWNER_PROPERTY, this);
+    Disposer.register(this, 
+                      () -> KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(SWING_FOCUS_OWNER_PROPERTY, 
+                                                                                                               this));
+    EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
+    if (multicaster instanceof EditorEventMulticasterEx) {
+      ((EditorEventMulticasterEx)multicaster).addPropertyChangeListener(this, this);
+    }
+  }
+
   private void updateStatus() {
-    final Editor editor = getEditor();
+    final Editor editor = getFocusedEditor();
     if (editor == null || !editor.isColumnMode()) {
       myTextPanel.setBorder(null);
       myTextPanel.setVisible(false);
@@ -79,18 +97,19 @@ public class InsertOverwritePanel extends EditorBasedWidget implements StatusBar
   @Override
   public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
     updateStatus();
-    switchEditor();
   }
 
   @Override
   public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
     updateStatus();
-    switchEditor();
   }
 
   @Override
   public void propertyChange(@NotNull PropertyChangeEvent evt) {
-    if (EditorEx.PROP_INSERT_MODE.equals(evt.getPropertyName()) || EditorEx.PROP_COLUMN_MODE.equals(evt.getPropertyName())) {
+    String propertyName = evt.getPropertyName();
+    if (EditorEx.PROP_INSERT_MODE.equals(propertyName) || 
+        EditorEx.PROP_COLUMN_MODE.equals(propertyName) || 
+        SWING_FOCUS_OWNER_PROPERTY.equals(propertyName)) {
       updateStatus();
     }
   }
@@ -98,18 +117,5 @@ public class InsertOverwritePanel extends EditorBasedWidget implements StatusBar
   @Override
   public void selectionChanged(@NotNull FileEditorManagerEvent event) {
     updateStatus();
-    switchEditor();
-  }
-
-  private void switchEditor() {
-    if (myOldEditor != null) {
-      myOldEditor.removePropertyChangeListener(this);
-      myOldEditor = null;
-    }
-    EditorEx editor = (EditorEx)getEditor();
-    if (editor != null) {
-      editor.addPropertyChangeListener(this);
-      myOldEditor = editor;
-    }
   }
 }

@@ -324,7 +324,7 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
   }
 
   @Test
-  public void testFilteredChanges() throws Exception {
+  public void testFilteredChanges() {
     ChangeSet cs1 = addChangeSet(facade, createDirectory(r, "dir"));
     ChangeSet cs2 = addChangeSet(facade, createFile(r, "dir/FooBar"));
     ChangeSet cs3 = addChangeSet(facade, createFile(r, "dir/BarBaz"));
@@ -338,7 +338,7 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
   }
 
   @Test
-  public void testFilteredChangesDoesnTIncludeChanges() throws Exception {
+  public void testFilteredChangesDoesnTIncludeChanges() {
     ChangeSet cs1 = addChangeSet(facade, createDirectory(r, "dir"));
     ChangeSet cs2 = addChangeSet(facade, createFile(r, "dir/FooBar"));
     ChangeSet cs3 = addChangeSet(facade, createFile(r, "dir/BarBaz"));

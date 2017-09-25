@@ -83,7 +83,7 @@ public abstract class FileAttributesReadingTest {
   }
 
   @After
-  public void tearDown() throws Exception {
+  public void tearDown() {
     if (myTempDirectory != null) {
       FileUtil.delete(myTempDirectory);
     }
@@ -154,7 +154,7 @@ public abstract class FileAttributesReadingTest {
   }
 
   @Test
-  public void root() throws Exception {
+  public void root() {
     final File file = new File(SystemInfo.isWindows ? "C:\\" : "/");
 
     final FileAttributes attributes = getAttributes(file);
@@ -183,7 +183,7 @@ public abstract class FileAttributesReadingTest {
   }
 
   @Test
-  public void special() throws Exception {
+  public void special() {
     assumeTrue(SystemInfo.isUnix);
     final File file = new File("/dev/null");
 
@@ -325,7 +325,7 @@ public abstract class FileAttributesReadingTest {
   }
 
   @Test
-  public void hiddenDir() throws Exception {
+  public void hiddenDir() {
     assumeTrue(SystemInfo.isWindows);
     File dir = IoTestUtil.createTestDir(myTempDirectory, "dir");
     FileAttributes attributes = getAttributes(dir);
@@ -336,7 +336,7 @@ public abstract class FileAttributesReadingTest {
   }
 
   @Test
-  public void hiddenFile() throws Exception {
+  public void hiddenFile() {
     assumeTrue(SystemInfo.isWindows);
     File file = IoTestUtil.createTestFile(myTempDirectory, "file");
     FileAttributes attributes = getAttributes(file);
@@ -347,7 +347,7 @@ public abstract class FileAttributesReadingTest {
   }
 
   @Test
-  public void notSoHiddenRoot() throws Exception {
+  public void notSoHiddenRoot() {
     if (SystemInfo.isWindows) {
       File absRoot = new File("C:\\");
       FileAttributes absAttributes = getAttributes(absRoot);
@@ -365,7 +365,7 @@ public abstract class FileAttributesReadingTest {
   }
 
   @Test
-  public void wellHiddenFile() throws Exception {
+  public void wellHiddenFile() {
     assumeTrue(SystemInfo.isWindows);
     final File file = new File("C:\\Documents and Settings\\desktop.ini");
     assumeTrue(file.exists());
@@ -507,7 +507,7 @@ public abstract class FileAttributesReadingTest {
   }
 
   @Test
-  public void notOwned() throws Exception {
+  public void notOwned() {
     assumeTrue(SystemInfo.isUnix);
     File userHome = new File(SystemProperties.getUserHome());
 
@@ -521,7 +521,7 @@ public abstract class FileAttributesReadingTest {
   }
 
   @Test
-  public void permissionsCloning() throws Exception {
+  public void permissionsCloning() {
     assumeTrue(SystemInfo.isUnix);
 
     File donor = IoTestUtil.createTestFile(myTempDirectory, "donor");

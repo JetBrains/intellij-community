@@ -1,5 +1,15 @@
 <html>
 <body>
-Inspection reports usages of <b>Collection.addAll()</b> and <b>Map.putAll()</b> methods after instantiation of object using parameter-less constructor.
+Reports <b>Collection.addAll()</b> and <b>Map.putAll()</b> calls after instantiation of a collection using a constructor call without arguments.
+Such constructs can be replaced with a single call to a parametrized constructor.
+For example:
+<pre><code>
+  Set&lt;String&gt; set = new HashSet&lt;&gt;();
+  set.addAll(Arrays.asList("alpha", "beta", "gamma"));
+</code></pre>
+can be replaced with:
+<pre><code>
+  Set&lt;String&gt; set = new HashSet&lt;&gt;(Arrays.asList("alpha", "beta", "gamma"));
+</code></pre>
 </body>
 </html>

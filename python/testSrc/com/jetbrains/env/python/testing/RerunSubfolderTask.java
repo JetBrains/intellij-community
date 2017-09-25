@@ -17,7 +17,7 @@ package com.jetbrains.env.python.testing;
 
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.ut.PyScriptTestProcessRunner;
-import com.jetbrains.python.sdkTools.SdkCreationType;
+import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 
 import static org.junit.Assert.assertEquals;

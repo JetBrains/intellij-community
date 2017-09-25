@@ -61,13 +61,8 @@ public class ProgressIndicatorUtils {
     return progress;
   }
 
-  @NotNull
-  public static CompletableFuture<?> submitWithWriteActionPriority(@NotNull ReadTask task) {
-    return scheduleWithWriteActionPriority(new ProgressIndicatorBase(), task);
-  }
-
   public static void scheduleWithWriteActionPriority(@NotNull ReadTask task) {
-    submitWithWriteActionPriority(task);
+    scheduleWithWriteActionPriority(new ProgressIndicatorBase(), task);
   }
 
   @NotNull
@@ -229,7 +224,7 @@ public class ProgressIndicatorUtils {
           }
         });
       }
-      catch (RuntimeException | Error e) {
+      catch (Throwable e) {
         future.completeExceptionally(e);
         throw e;
       }

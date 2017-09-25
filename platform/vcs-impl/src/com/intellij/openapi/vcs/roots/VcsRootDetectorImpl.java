@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.roots;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -102,7 +103,7 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
       return roots;
     }
 
-    if (myProject.isDisposed() || !dir.isDirectory() || myProjectManager.getFileIndex().isExcluded(dir)) {
+    if (ReadAction.compute(() -> myProject.isDisposed() || !dir.isDirectory() || myProjectManager.getFileIndex().isExcluded(dir))) {
       return roots;
     }
     List<AbstractVcs> vcsList = getVcsListFor(dir);

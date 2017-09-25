@@ -11,20 +11,20 @@ import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 @SuppressWarnings({"deprecation"})
 public class XmlSerializerWithDefaultJDOMExternalizerCompatibilityTest extends TestCase {
-  public void testCompatibility() throws Exception {
+  public void testCompatibility() {
     assertCompatibleSerialization(new MyBean());
   }
 
-  private static void assertCompatibleSerialization(final Object data) throws Exception {
+  private static void assertCompatibleSerialization(final Object data) {
     assertThat(serializeWithJDom(data)).isEqualTo(serializeWithXmlSerializer(data));
   }
 
-  private static String serializeWithXmlSerializer(final Object data) throws Exception {
+  private static String serializeWithXmlSerializer(final Object data) {
     Element element = serialize(data);
     return StringUtil.trimStart(JDOMUtil.writeElement(element), "<?xml version=\"1.0\" encoding=\"UTF-8\"?>").trim();
   }
 
-  private static String serializeWithJDom(final Object data) throws Exception {
+  private static String serializeWithJDom(final Object data) {
     final Element jDomRoot = new Element("MyBean");
 
     if (data instanceof com.intellij.openapi.util.JDOMExternalizable) {

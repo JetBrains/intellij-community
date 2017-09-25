@@ -15,7 +15,6 @@
  */
 package com.jetbrains.env;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -58,8 +57,7 @@ public class CommandBasedProcessRunner extends ProcessWithConsoleRunner {
   void runProcess(@NotNull final String sdkPath,
                   @NotNull final Project project,
                   @NotNull final ProcessListener processListener,
-                  @NotNull final String tempWorkingPath)
-    throws ExecutionException {
+                  @NotNull final String tempWorkingPath) {
     myConsole = new SimpleProcessRunnerConsole(project, processListener);
     myCommand.execute(myCommand.getName(), myModule, myParameters, myConsole);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.SearchTextField;
-import com.intellij.ui.components.ExtendableTextField;
-import com.intellij.ui.components.ExtendableTextField.Extension;
+import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.ui.components.fields.ExtendableTextField.Extension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,10 +36,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicTextFieldUI;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
-import javax.swing.text.JTextComponent;
-import javax.swing.text.Position;
+import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
@@ -155,7 +152,15 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         bounds.width -= holder.bounds.width + gap;
         holder.bounds.x = bounds.x + bounds.width + gap;
       }
-      holder.bounds.y = bounds.y + (bounds.height - holder.bounds.height) / 2;
+      JTextComponent component = getComponent();
+      boolean multiline = component != null && !Boolean.TRUE.equals(component.getDocument().getProperty("filterNewlines"));
+      holder.bounds.y = bounds.y;
+      if (!multiline) {
+        holder.bounds.y += (bounds.height - holder.bounds.height) / 2;
+      }
+      else {
+        holder.bounds.y += gap;
+      }
     }
   }
 
@@ -199,6 +204,11 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     throws BadLocationException {
     int position = DarculaUIUtil.getPatchedNextVisualPositionFrom(t, pos, direction);
     return position != -1 ? position : super.getNextVisualPositionFrom(t, pos, b, direction, biasRet);
+  }
+
+  @Override
+  protected Caret createCaret() {
+    return Registry.is("ide.text.mouse.selection.new") ? new MyCaret(getComponent()) : super.createCaret();
   }
 
   @Override
@@ -630,6 +640,26 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     @Override
     public String toString() {
       return "clear";
+    }
+  }
+
+  static class MyCaret extends BasicCaret {
+    private final JTextComponent myComponent;
+
+    public MyCaret(JTextComponent component) {
+      myComponent = component;
+    }
+
+    @Override
+    public void mouseDragged(MouseEvent e) {
+      if (e.getID() == MouseEvent.MOUSE_DRAGGED && !myComponent.getText().contains("\n")) {
+        boolean consumed = e.isConsumed();
+        e = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers() | e.getModifiersEx(), e.getX(),
+                           myComponent.getHeight() / 2,
+                           e.getClickCount(), e.isPopupTrigger(), e.getButton());
+        if (consumed) e.consume();
+      }
+      super.mouseDragged(e);
     }
   }
 }

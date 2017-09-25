@@ -22,319 +22,319 @@ public class FindMethodDuplicatesTest extends FindMethodDuplicatesBaseTest{
     return "/refactoring/methodDuplicates/" + getTestName(false) + ".java";
   }
 
-  public void testGenmethExtends() throws Exception {
+  public void testGenmethExtends() {
     doTest();
   }
 
-  public void testGenmethExtendsGenericExact() throws Exception {
+  public void testGenmethExtendsGenericExact() {
     doTest();
   }
 
-  public void testGenmethExtendsGenericWildcard() throws Exception {
+  public void testGenmethExtendsGenericWildcard() {
     doTest();
   }
 
-  public void testGenmethGeneral() throws Exception {
+  public void testGenmethGeneral() {
     doTest();
   }
 
-  public void testGenmethSeveral() throws Exception {
+  public void testGenmethSeveral() {
     doTest();
   }
 
-  public void testIdentityComplete() throws Exception {
+  public void testIdentityComplete() {
     doTest();
   }
 
-  public void testIdentityComment() throws Exception {
+  public void testIdentityComment() {
     doTest();
   }
 
-  public void testIdentityName() throws Exception {
+  public void testIdentityName() {
     doTest();
   }
 
-  public void testIdentityWhitespace() throws Exception {
+  public void testIdentityWhitespace() {
     doTest();
   }
 
-  public void testLocationQuantity() throws Exception {
+  public void testLocationQuantity() {
     doTest();
   }
 
-  public void testSkipNonRelatedCalls() throws Exception {
+  public void testSkipNonRelatedCalls() {
     doTest(false);
   }
 
-  public void testMappingAny2ParameterPrimitiveLvalue() throws Exception {
+  public void testMappingAny2ParameterPrimitiveLvalue() {
     doTest(false);
   }
 
-  public void testMappingExpression2Field() throws Exception {
+  public void testMappingExpression2Field() {
     doTest(false);
   }
 
-  public void testMappingExpression2LocalVar() throws Exception {
+  public void testMappingExpression2LocalVar() {
     doTest(false);
   }
 
-  public void testMappingExpression2ParameterLiterals() throws Exception {
+  public void testMappingExpression2ParameterLiterals() {
     doTest();
   }
 
-  public void testMappingExpression2ParameterLValues() throws Exception {
+  public void testMappingExpression2ParameterLValues() {
     doTest();
   }
 
-  public void testMappingExpression2ParameterMultiple() throws Exception {
+  public void testMappingExpression2ParameterMultiple() {
     doTest();
   }
 
-  public void testMappingExpression2This() throws Exception {
+  public void testMappingExpression2This() {
     doTest(false);
   }
 
-  public void testMappingField2Field() throws Exception {
+  public void testMappingField2Field() {
     doTest();
   }
 
-  public void testMappingField2LocalVar() throws Exception {
+  public void testMappingField2LocalVar() {
     doTest(false);
   }
 
-  public void testMappingField2Parameter() throws Exception {
+  public void testMappingField2Parameter() {
     doTest();
   }
 
-  public void testMappingField2This() throws Exception {
+  public void testMappingField2This() {
     doTest(false);
   }
 
-  public void testMappingLocalVar2Expression() throws Exception {
+  public void testMappingLocalVar2Expression() {
     doTest(false);
   }
 
-  public void testMappingLocalVar2Field() throws Exception {
+  public void testMappingLocalVar2Field() {
     doTest(false);
   }
 
-  public void testMappingLocalVar2LocalVar() throws Exception {
+  public void testMappingLocalVar2LocalVar() {
     doTest();
   }
 
-  public void testMappingLocalVar2Parameter() throws Exception {
+  public void testMappingLocalVar2Parameter() {
     doTest();
   }
 
-  public void testMappingLocalVar2This() throws Exception {
+  public void testMappingLocalVar2This() {
     doTest(false);
   }
 
-  public void testMappingMember2MemberDifferent() throws Exception {
+  public void testMappingMember2MemberDifferent() {
     doTest();
   }
 
-  public void testMappingParameter2Field() throws Exception {
+  public void testMappingParameter2Field() {
     doTest(false);
   }
 
-  public void testMappingParameter2LocalVar() throws Exception {
+  public void testMappingParameter2LocalVar() {
     doTest(false);
   }
 
-  public void testMappingParameter2Parameter() throws Exception {
+  public void testMappingParameter2Parameter() {
     doTest();
   }
 
-  public void testMappingParameter2This() throws Exception {
+  public void testMappingParameter2This() {
     doTest(false);
   }
 
-  public void testMappingThis2Field() throws Exception {
+  public void testMappingThis2Field() {
     doTest(false);
   }
 
-  public void testMappingThis2LocalVar() throws Exception {
+  public void testMappingThis2LocalVar() {
     doTest(false);
   }
 
-  public void testMappingThis2Parameter() throws Exception {
+  public void testMappingThis2Parameter() {
     doTest();
   }
 
-  public void testMappingThis2ThisDifferent() throws Exception {
+  public void testMappingThis2ThisDifferent() {
     doTest();
   }
 
-  public void testMappingThis2ThisQualified() throws Exception {
+  public void testMappingThis2ThisQualified() {
     doTest();
   }
 
-  public void testPostFragmentUsage() throws Exception {
+  public void testPostFragmentUsage() {
     doTest();
   }
 
-  public void testReturnExpression() throws Exception {
+  public void testReturnExpression() {
     doTest();
   }
 
-  public void testReturnField() throws Exception {
+  public void testReturnField() {
     doTest();
   }
 
-  public void testReturnLocalVar() throws Exception {
+  public void testReturnLocalVar() {
     doTest();
   }
 
-  public void testReturnParameter() throws Exception {
+  public void testReturnParameter() {
     doTest();
   }
 
-  public void testReturnThis() throws Exception {
+  public void testReturnThis() {
     doTest();
   }
 
-  public void testTypesExtends() throws Exception {
+  public void testTypesExtends() {
     doTest();
   }
 
-  public void testTypesExtendsReturn() throws Exception {
+  public void testTypesExtendsReturn() {
     doTest();
   }
 
-  public void testTypesExtendsReturnDifferentArray() throws Exception {
+  public void testTypesExtendsReturnDifferentArray() {
     doTest();
   }
 
-  public void testTypesExtendsReturnDifferentGeneric() throws Exception {
+  public void testTypesExtendsReturnDifferentGeneric() {
     doTest();
   }
 
-  public void testTypesExtendsReturnDifferentPrimitive() throws Exception {
+  public void testTypesExtendsReturnDifferentPrimitive() {
     doTest();
   }
 
-  public void testTypesExtendsReturnDifferentReference() throws Exception {
+  public void testTypesExtendsReturnDifferentReference() {
     doTest();
   }
 
-  public void testTypesGenericsConcrete2Concrete() throws Exception {
+  public void testTypesGenericsConcrete2Concrete() {
     doTest();
   }
 
-  public void testTypesGenericsConcrete2ConcreteDifferent() throws Exception {
+  public void testTypesGenericsConcrete2ConcreteDifferent() {
     doTest(false);
   }
 
-  public void testTypesGenericsConcrete2Extends() throws Exception {
+  public void testTypesGenericsConcrete2Extends() {
     doTest();
   }
 
-  public void testTypesGenericsConcrete2ExtendsDifferent() throws Exception {
+  public void testTypesGenericsConcrete2ExtendsDifferent() {
     doTest(false);
   }
 
-  public void testTypesGenericsConcrete2Super() throws Exception {
+  public void testTypesGenericsConcrete2Super() {
     doTest();
   }
 
-  public void testTypesGenericsConcrete2SuperDifferent() throws Exception {
+  public void testTypesGenericsConcrete2SuperDifferent() {
     doTest(false);
   }
 
-  public void testTypesGenericsConcrete2Raw() throws Exception {
+  public void testTypesGenericsConcrete2Raw() {
     doTest();
   }
 
-  public void testTypesGenericsRaw2Concrete() throws Exception {
+  public void testTypesGenericsRaw2Concrete() {
     doTest();
   }
 
-  public void testTypesGenericsRaw2Raw() throws Exception {
+  public void testTypesGenericsRaw2Raw() {
     doTest();
   }
 
-  public void testTypesImplements() throws Exception {
+  public void testTypesImplements() {
     doTest();
   }
 
-  public void testTypesNoRelationship() throws Exception {
+  public void testTypesNoRelationship() {
     doTest(false);
   }
 
-  public void testAnonymousTest() throws Exception {
+  public void testAnonymousTest() {
     doTest();
   }
 
-  public void testAnonymousTest1() throws Exception {
+  public void testAnonymousTest1() {
     doTest();
   }
 
-  public void testAnonymousTest2() throws Exception {
+  public void testAnonymousTest2() {
     doTest(false);
   }
 
-  public void testReturnVoidTest() throws Exception {
+  public void testReturnVoidTest() {
     doTest();
   }
 
-  public void testThisReferenceTest() throws Exception {
+  public void testThisReferenceTest() {
     doTest();
   }
 
-  public void testAddStaticTest() throws Exception {
+  public void testAddStaticTest() {
     doTest();
   }
 
-  public void testStaticMethodReplacement() throws Exception {
+  public void testStaticMethodReplacement() {
     doTest();
   }
 
-  public void testRefReplacement() throws Exception {
+  public void testRefReplacement() {
     doTest();
   }
 
-  public void testRefReplacement1() throws Exception {
+  public void testRefReplacement1() {
     doTest();
   }
 
-  public void testReturnVariable() throws Exception {
+  public void testReturnVariable() {
     doTest();
   }
 
-  public void testReturnExpressionDifferent() throws Exception {
+  public void testReturnExpressionDifferent() {
     doTest(false);
   }
 
-  public void testTypeInheritance() throws Exception {
+  public void testTypeInheritance() {
     doTest();
   }
 
-  public void testTypeInheritance1() throws Exception {
+  public void testTypeInheritance1() {
     doTest(false);
   }
 
-  public void testUnusedParameter() throws Exception {
+  public void testUnusedParameter() {
     doTest();
   }
 
-  public void testUnusedParameter1() throws Exception {
+  public void testUnusedParameter1() {
     doTest();
   }
 
-  public void testInheritance() throws Exception {
+  public void testInheritance() {
     doTest();
   }
 
-  public void testVarargs() throws Exception {
+  public void testVarargs() {
     doTest();
   }
 
-  public void testDeclarationUsage() throws Exception {
+  public void testDeclarationUsage() {
     doTest(false);
   }
 
-  public void testChangingReturnType() throws Exception {
+  public void testChangingReturnType() {
     doTest();
   }
 }

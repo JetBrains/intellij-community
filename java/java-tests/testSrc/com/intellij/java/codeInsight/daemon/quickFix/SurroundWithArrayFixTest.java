@@ -20,7 +20,7 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 import com.intellij.pom.java.LanguageLevel;
 
 public class SurroundWithArrayFixTest extends LightQuickFixParameterizedTestCase {
-   public void test() throws Exception {
+   public void test() {
      doAllTests();
    }
 

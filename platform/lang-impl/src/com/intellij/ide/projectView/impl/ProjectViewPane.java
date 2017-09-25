@@ -20,6 +20,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.impl.ProjectPaneSelectInTarget;
+import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewSettings;
 import com.intellij.ide.projectView.ViewSettings;
@@ -259,5 +260,10 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
         updateFromRoot(true);
       }
     }
+  }
+
+  @Override
+  protected BaseProjectTreeBuilder createBuilder(DefaultTreeModel model) {
+    return Registry.is("project.view.async.tree.model") ? null : super.createBuilder(model);
   }
 }

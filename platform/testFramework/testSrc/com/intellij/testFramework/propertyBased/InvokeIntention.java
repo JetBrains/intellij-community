@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -31,9 +32,9 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.containers.ContainerUtil;
+import jetCheck.Generator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import jetCheck.Generator;
 
 import java.util.List;
 
@@ -43,7 +44,7 @@ public class InvokeIntention extends ActionOnRange {
   private final IntentionPolicy myPolicy;
   private String myInvocationLog = "not invoked";
 
-  InvokeIntention(PsiFile file, int offset, int intentionIndex, IntentionPolicy policy) {
+  public InvokeIntention(PsiFile file, int offset, int intentionIndex, IntentionPolicy policy) {
     super(file, offset, offset);
     myIntentionIndex = intentionIndex;
     myPolicy = policy;
@@ -57,7 +58,12 @@ public class InvokeIntention extends ActionOnRange {
 
   @Override
   public String toString() {
-    return "InvokeIntention{" + getVirtualFile().getPath() + ", " + myInvocationLog + ", raw=(" + myInitialStart + "," + myIntentionIndex + ")}";
+    return "InvokeIntention{" + getVirtualFile().getPath() + ", " + myInvocationLog + "}";
+  }
+
+  @Override
+  public String getConstructorArguments() {
+    return "file, " + myInitialStart + "," + myIntentionIndex + ", intentionPolicy";
   }
 
   public void performAction() {
@@ -67,9 +73,8 @@ public class InvokeIntention extends ActionOnRange {
 
     Project project = getProject();
     Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, getVirtualFile(), offset), true);
-    
-    List<HighlightInfo> infos = RehighlightAllEditors.highlightEditor(editor, project);
-    boolean hasErrors = infos.stream().anyMatch(i -> i.getSeverity() == HighlightSeverity.ERROR);
+
+    boolean hasErrors = !highlightErrors(project, editor).isEmpty();
 
     PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, getProject());
     IntentionAction intention = getRandomIntention(editor, file);
@@ -80,6 +85,7 @@ public class InvokeIntention extends ActionOnRange {
     myInvocationLog += ", invoked '" + intention.getText() + "'";
     String intentionString = intention.toString();
 
+    boolean mayBreakCode = myPolicy.mayBreakCode(intention, editor, file);
     Document changedDocument = getDocumentToBeChanged(intention);
     String textBefore = changedDocument == null ? null : changedDocument.getText();
 
@@ -105,11 +111,35 @@ public class InvokeIntention extends ActionOnRange {
       }
 
       PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
+
+      if (!mayBreakCode && !hasErrors) {
+        checkNoNewErrors(project, editor, intentionString);
+      }
     }
     catch (Throwable error) {
       LOG.debug("Error occurred in " + this + ", text before:\n" + textBefore);
       throw error;
     }
+  }
+
+  private static void checkNoNewErrors(Project project, Editor editor, String intentionString) {
+    List<HighlightInfo> errors = highlightErrors(project, editor);
+    if (!errors.isEmpty()) {
+      throw new AssertionError("New highlighting errors introduced after invoking " + intentionString +
+                               "\nIf this is correct, add it to IntentionPolicy#mayBreakCode." +
+                               "\nErrors found: " + StringUtil.join(errors, i -> shortInfoText(i), ","));
+    }
+  }
+
+  @NotNull
+  private static String shortInfoText(HighlightInfo info) {
+    return "'" + info.getDescription() + "'(" + info.startOffset + "," + info.endOffset + ")";
+  }
+
+  @NotNull
+  private static List<HighlightInfo> highlightErrors(Project project, Editor editor) {
+    List<HighlightInfo> infos = RehighlightAllEditors.highlightEditor(editor, project);
+    return ContainerUtil.filter(infos, i -> i.getSeverity() == HighlightSeverity.ERROR);
   }
 
   @Nullable

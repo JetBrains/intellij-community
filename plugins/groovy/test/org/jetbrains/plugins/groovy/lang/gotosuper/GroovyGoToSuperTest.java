@@ -34,11 +34,11 @@ public class GroovyGoToSuperTest extends LightCodeInsightFixtureTestCase {
     return TestUtils.getTestDataPath() + "groovy/gotoSuper/";
   }
 
-  public void testGts1() throws Throwable { doTest(); }
-  public void testGts2() throws Throwable { doTest(); }
-  public void testGts3() throws Throwable { doTest(); }
+  public void testGts1() { doTest(); }
+  public void testGts2() { doTest(); }
+  public void testGts3() { doTest(); }
 
-  private void doTest() throws Throwable {
+  private void doTest() {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, data.get(0));
     final CodeInsightActionHandler handler = CodeInsightActions.GOTO_SUPER.forLanguage(GroovyLanguage.INSTANCE);

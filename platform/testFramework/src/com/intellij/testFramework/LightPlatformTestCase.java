@@ -59,6 +59,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
@@ -70,10 +71,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
-import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
+import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -130,12 +130,15 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private static TestCase ourTestCase;
   public static Thread ourTestThread;
   private static LightProjectDescriptor ourProjectDescriptor;
+  private static Sdk[] myOldSdks;
 
   private ThreadTracker myThreadTracker;
 
   static {
     PlatformTestUtil.registerProjectCleanup(LightPlatformTestCase::closeAndDeleteProject);
   }
+
+  private VirtualFilePointerTracker myVirtualFilePointerTracker;
 
   /**
    * @return Project to be used in tests for example for project components retrieval.
@@ -249,9 +252,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         ourSourceRoot = sourceRoot;
       }
     });
-
-    // project creation may make a lot of pointers, do not regard them as leak
-    ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).storePointers();
   }
 
   /**
@@ -280,8 +280,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
       myThreadTracker = new ThreadTracker();
       ModuleRootManager.getInstance(ourModule).orderEntries().getAllLibrariesAndSdkClassesRoots();
-      VirtualFilePointerManagerImpl filePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
-      filePointerManager.storePointers();
+      myVirtualFilePointerTracker = new VirtualFilePointerTracker();
     });
   }
 
@@ -296,6 +295,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.", ourTestCase);
     IdeaLogger.ourErrorsOccurred = null;
     ApplicationManager.getApplication().assertIsDispatchThread();
+
+    myOldSdks = ProjectJdkTable.getInstance().getAllJdks();
+
     boolean reusedProject = true;
     if (ourProject == null || ourProjectDescriptor == null || !ourProjectDescriptor.equals(descriptor)) {
       initProject(descriptor);
@@ -381,14 +383,15 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       this::checkForSettingsDamage,
       () -> doTearDown(project, ourApplication),
       () -> checkEditorsReleased(),
+      () -> checkForJdkTableLeaks(myOldSdks),
       super::tearDown,
       () -> myThreadTracker.checkLeak(),
       () -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project),
-      () -> ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).assertPointersAreDisposed()
+      () -> myVirtualFilePointerTracker.assertPointersAreDisposed()
     ).run();
   }
 
-  public static void doTearDown(@NotNull Project project, @NotNull IdeaTestApplication application) throws Exception {
+  public static void doTearDown(@NotNull Project project, @NotNull IdeaTestApplication application) {
     new RunAll().
       append(() -> ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue()).
       append(() -> CodeStyleSettingsManager.getInstance(project).dropTemporarySettings()).

@@ -16,68 +16,68 @@
 package org.intellij.lang.xpath;
 
 public class XPath2HighlightingTest extends XPath2HighlightingTestBase {
-  public void testIfInsideArgumentList() throws Throwable {
+  public void testIfInsideArgumentList() {
     doXPathHighlighting();
   }
 
-  public void testConsecutiveComparison() throws Throwable {
+  public void testConsecutiveComparison() {
     doXPathHighlighting();
   }
 
-  public void testNumberFollowedByToken() throws Throwable {
+  public void testNumberFollowedByToken() {
     doXPathHighlighting();
   }
 
-  public void testNumberFollowedByToken2() throws Throwable {
+  public void testNumberFollowedByToken2() {
     doXPathHighlighting();
   }
 
-  public void testMalformedStringLiteral() throws Throwable {
+  public void testMalformedStringLiteral() {
     doXPathHighlighting();
   }
 
-  public void testQuotedStringLiteral() throws Throwable {
+  public void testQuotedStringLiteral() {
     doXPathHighlighting();
   }
 
-  public void testEmptyStringLiteral() throws Throwable {
+  public void testEmptyStringLiteral() {
     doXPathHighlighting();
   }
 
-  public void testNodeKindTest() throws Throwable {
+  public void testNodeKindTest() {
     doXPathHighlighting();
   }
 
-  public void testIncorrectNodeKindTests() throws Throwable {
+  public void testIncorrectNodeKindTests() {
     doXPathHighlighting();
   }
 
-  public void testValidOperations() throws Throwable {
+  public void testValidOperations() {
     doXPathHighlighting();
   }
 
-  public void testValidOperations2() throws Throwable {
+  public void testValidOperations2() {
     TestNamespaceContext.install(myFixture.getTestRootDisposable());
     doXPathHighlighting();
   }
 
-  public void testPlusOperatorNotApplicable() throws Throwable {
+  public void testPlusOperatorNotApplicable() {
     doXPathHighlighting();
   }
 
-  public void testToOperatorNotApplicable() throws Throwable {
+  public void testToOperatorNotApplicable() {
     doXPathHighlighting();
   }
 
-  public void testIntersectOperatorNotApplicable() throws Throwable {
+  public void testIntersectOperatorNotApplicable() {
     doXPathHighlighting();
   }
 
-  public void testUnionOperatorNotApplicable() throws Throwable {
+  public void testUnionOperatorNotApplicable() {
     doXPathHighlighting();
   }
 
-  public void testInvalidNodeTypePredicate() throws Throwable {
+  public void testInvalidNodeTypePredicate() {
     doXPathHighlighting();
   }
 

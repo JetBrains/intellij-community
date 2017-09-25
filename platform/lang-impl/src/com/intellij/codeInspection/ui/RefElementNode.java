@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.reference.RefDirectory;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.lang.annotation.HighlightSeverity;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +43,11 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
     init(presentation.getContext().getProject());
     final RefEntity refEntity = getElement();
     myIcon = refEntity == null ? null : refEntity.getIcon(false);
+  }
+
+  @Override
+  public final boolean isAlreadySuppressedFromView() {
+    return getElement() != null && getPresentation().isSuppressed(getElement());
   }
 
   public boolean hasDescriptorsUnder() {
@@ -76,18 +81,32 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
   }
 
   @Override
-  public void excludeElement(ExcludedInspectionTreeNodesManager excludedManager) {
-    super.excludeElement(excludedManager);
+  public boolean isExcluded() {
+    RefEntity element = getElement();
+    if (isLeaf() && element != null) {
+      return getPresentation().isExcluded(element);
+    }
+    return super.isExcluded();
   }
 
   @Override
-  public void amnestyElement(ExcludedInspectionTreeNodesManager excludedManager) {
-    super.amnestyElement(excludedManager);
+  public void excludeElement() {
+    RefEntity element = getElement();
+    if (isLeaf() && element != null) {
+      getPresentation().exclude(element);
+      return;
+    }
+    super.excludeElement();
   }
 
   @Override
-  public FileStatus getNodeStatus() {
-    return getPresentation().getElementStatus(getElement());
+  public void amnestyElement() {
+    RefEntity element = getElement();
+    if (isLeaf() && element != null) {
+      getPresentation().amnesty(element);
+      return;
+    }
+    super.amnestyElement();
   }
 
   @Override
@@ -121,14 +140,13 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
   }
 
   @Override
-  public int getProblemCount(boolean allowSuppressed) {
-    return isLeaf() ? getPresentation().getIgnoredRefElements().contains(getElement()) && !(allowSuppressed && isAlreadySuppressedFromView() && isValid()) ? 0 : 1 : super.getProblemCount(allowSuppressed);
-  }
-
-  @Override
-  public void visitProblemSeverities(TObjectIntHashMap<HighlightDisplayLevel> counter) {
-    if (isLeaf() && !getPresentation().isElementIgnored(getElement())) {
-      counter.put(HighlightDisplayLevel.WARNING, counter.get(HighlightDisplayLevel.WARNING) + 1);
+  protected void visitProblemSeverities(TObjectIntHashMap<HighlightDisplayLevel> counter) {
+    if (!isExcluded() && isLeaf() && !getPresentation().isProblemResolved(getElement()) && !getPresentation().isSuppressed(getElement())) {
+      HighlightSeverity severity = InspectionToolPresentation.getSeverity(getElement(), null, getPresentation());
+      HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
+      if (!counter.adjustValue(level, 1)) {
+        counter.put(level, 1);
+      }
       return;
     }
     super.visitProblemSeverities(counter);
@@ -136,7 +154,7 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
 
   @Override
   public boolean isQuickFixAppliedFromView() {
-    return false;
+    return isLeaf() && getPresentation().isProblemResolved(getElement());
   }
 
   @Nullable

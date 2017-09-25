@@ -22,16 +22,16 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public class FieldAccessedNotGuardedInspectionTest extends LightCodeInsightFixtureTestCase {
-  public void testItself() throws Exception {
+  public void testItself() {
     myFixture.addClass("package net.jcip.annotations;\n" + getGuardedByAnnotationText());
     doTest();
   }
 
-  public void testJavax_itself() throws Exception {
+  public void testJavax_itself() {
     doTest();
   }
 
-  public void testSyncOnFieldQualifier() throws Exception {
+  public void testSyncOnFieldQualifier() {
     doTest();
   }
 

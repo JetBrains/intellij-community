@@ -168,7 +168,7 @@ public class PyTokenTypes {
   
   public static final TokenSet NUMERIC_LITERALS = TokenSet.create(FLOAT_LITERAL, INTEGER_LITERAL, IMAGINARY_LITERAL);
   public static final TokenSet BOOL_LITERALS = TokenSet.create(TRUE_KEYWORD, FALSE_KEYWORD);
-  public static final TokenSet SCALAR_LITERALS = TokenSet.orSet(STRING_NODES, BOOL_LITERALS, NUMERIC_LITERALS, TokenSet.create(NONE_KEYWORD));
+  public static final TokenSet SCALAR_LITERALS = TokenSet.orSet(BOOL_LITERALS, NUMERIC_LITERALS, TokenSet.create(NONE_KEYWORD));
 
   public static final TokenSet AUG_ASSIGN_OPERATIONS = TokenSet.create(PLUSEQ, MINUSEQ, MULTEQ, ATEQ, DIVEQ,
       PERCEQ, EXPEQ, GTGTEQ, LTLTEQ, ANDEQ, OREQ, XOREQ, FLOORDIVEQ);

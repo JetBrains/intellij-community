@@ -38,6 +38,7 @@ public class GrGenericTypeConverter extends GrTypeConverter {
   public boolean isApplicableTo(@NotNull ApplicableTo position) {
     switch (position) {
       case METHOD_PARAMETER:
+      case GENERIC_PARAMETER:
       case ASSIGNMENT:
       case RETURN_VALUE:
         return true;
@@ -55,7 +56,7 @@ public class GrGenericTypeConverter extends GrTypeConverter {
     if (!(ltype instanceof PsiClassType && rtype instanceof PsiClassType)) {
       return null;
     }
-    if (isCompileStatic(context) && position == ApplicableTo.RETURN_VALUE) return null;
+    if (isCompileStatic(context) ) return null;
     PsiClass lclass = ((PsiClassType)ltype).resolve();
     PsiClass rclass = ((PsiClassType)rtype).resolve();
 

@@ -35,7 +35,7 @@ public class QuickChangeCodeStyleSchemeAction extends QuickSwitchSchemeAction {
   @Override
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
     final CodeStyleSettingsManager manager = CodeStyleSettingsManager.getInstance(project);
-    if (manager.PER_PROJECT_SETTINGS != null) {
+    if (manager.getMainProjectCodeStyle() != null) {
       //noinspection HardCodedStringLiteral
       group.add(new AnAction("<project>", "",
                              manager.USE_PER_PROJECT_SETTINGS ? ourCurrentAction : ourNotCurrentAction) {

@@ -18,6 +18,7 @@ package com.intellij.project.model.impl.module.dependencies;
 import com.intellij.openapi.roots.ModuleJdkOrderEntry;
 import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.project.model.impl.module.JpsRootModel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsSdkDependency;
 
@@ -30,7 +31,7 @@ public class JpsModuleSdkOrderEntry extends JpsSdkOrderEntryBase implements Modu
   }
 
   @Override
-  public <R> R accept(RootPolicy<R> policy, @Nullable R initialValue) {
+  public <R> R accept(@NotNull RootPolicy<R> policy, @Nullable R initialValue) {
     return policy.visitModuleJdkOrderEntry(this, initialValue);
   }
 }

@@ -16,7 +16,6 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.DefaultExecutionResult;
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.LocatableConfigurationBase;
@@ -54,14 +53,14 @@ public class FakeRunConfiguration extends LocatableConfigurationBase {
 
   @Nullable
   @Override
-  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {
+  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) {
     return new FakeRunProfileState();
   }
 
   public class FakeRunProfileState implements RunProfileState {
     @Nullable
     @Override
-    public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
+    public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) {
       return new DefaultExecutionResult(null, new FakeProcessHandler(mySurviveSoftKill));
     }
   }

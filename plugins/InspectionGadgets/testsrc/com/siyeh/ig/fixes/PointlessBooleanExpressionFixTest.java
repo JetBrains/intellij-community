@@ -35,4 +35,7 @@ public class PointlessBooleanExpressionFixTest extends IGQuickFixesTestCase {
   public void testSideEffects() {
     doTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix.sideEffect"));
   }
+  public void testSideEffectsField() {
+    doTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix.sideEffect"));
+  }
 }

@@ -61,6 +61,7 @@ public class RepositoryLibraryPropertiesEditor {
   private JBCheckBox downloadSourcesCheckBox;
   private JBCheckBox downloadJavaDocsCheckBox;
   private JBLabel mavenCoordinates;
+  private JBCheckBox myIncludeTransitiveDepsCheckBox;
 
   @NotNull private ModelChangeListener onChangeListener;
 
@@ -71,7 +72,7 @@ public class RepositoryLibraryPropertiesEditor {
   public RepositoryLibraryPropertiesEditor(@Nullable Project project,
                                            RepositoryLibraryPropertiesModel model,
                                            RepositoryLibraryDescription description) {
-    this(project, model, description, new ModelChangeListener() {
+    this(project, model, description, true, new ModelChangeListener() {
       @Override
       public void onChange(RepositoryLibraryPropertiesEditor editor) {
 
@@ -83,12 +84,14 @@ public class RepositoryLibraryPropertiesEditor {
   public RepositoryLibraryPropertiesEditor(@Nullable Project project,
                                            final RepositoryLibraryPropertiesModel model,
                                            RepositoryLibraryDescription description,
+                                           boolean allowExcludingTransitiveDependencies,
                                            @NotNull final ModelChangeListener onChangeListener) {
     this.initialModel = model.clone();
     this.model = model;
     this.project = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
     repositoryLibraryDescription = description;
     mavenCoordinates.setCopyable(true);
+    myIncludeTransitiveDepsCheckBox.setVisible(allowExcludingTransitiveDependencies);
     myReloadButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -240,6 +243,14 @@ public class RepositoryLibraryPropertiesEditor {
       @Override
       public void stateChanged(ChangeEvent e) {
         model.setDownloadJavaDocs(downloadJavaDocsCheckBox.isSelected());
+        onChangeListener.onChange(RepositoryLibraryPropertiesEditor.this);
+      }
+    });
+    myIncludeTransitiveDepsCheckBox.setSelected(model.isIncludeTransitiveDependencies());
+    myIncludeTransitiveDepsCheckBox.addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        model.setIncludeTransitiveDependencies(myIncludeTransitiveDepsCheckBox.isSelected());
         onChangeListener.onChange(RepositoryLibraryPropertiesEditor.this);
       }
     });

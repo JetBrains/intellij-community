@@ -106,17 +106,17 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
   }
 
   @NotNull
-  protected VirtualFile createDirectory(String name) throws IOException {
+  protected VirtualFile createDirectory(String name) {
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(createDirectoryExternally(name));
     assertNotNull(name, file);
     return file;
   }
 
-  protected void setContent(VirtualFile f, String content) throws IOException {
+  protected void setContent(VirtualFile f, String content) {
     setContent(f, content, f.getTimeStamp() + TIMESTAMP_INCREMENT);
   }
 
-  protected void setContent(VirtualFile f, String content, long timestamp) throws IOException {
+  protected void setContent(VirtualFile f, String content, long timestamp) {
     setBinaryContent(f, content.getBytes(CharsetToolkit.UTF8_CHARSET), -1, timestamp,this);
   }
 
@@ -132,7 +132,7 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
     return FileUtil.toSystemIndependentName(f.getPath());
   }
 
-  protected String createDirectoryExternally(String name) throws IOException {
+  protected String createDirectoryExternally(String name) {
     File f = new File(myRoot.getPath(), name);
     assertTrue(f.getPath(), f.mkdirs() || f.isDirectory());
     return FileUtil.toSystemIndependentName(f.getPath());
@@ -187,7 +187,7 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
     });
   }
 
-  protected static void addFileListenerDuring(VirtualFileListener l, Runnable r) throws Exception {
+  protected static void addFileListenerDuring(VirtualFileListener l, Runnable r) {
     VirtualFileManager.getInstance().addVirtualFileListener(l);
     try {
       r.run();

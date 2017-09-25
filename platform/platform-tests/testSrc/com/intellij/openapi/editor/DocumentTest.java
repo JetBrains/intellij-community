@@ -25,10 +25,10 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.IncorrectOperationException;
 
 public class DocumentTest extends LightPlatformTestCase {
-  public void testCorrectlyAddingAndRemovingListeners() throws Exception {
+  public void testCorrectlyAddingAndRemovingListeners() {
     new WriteCommandAction.Simple(getProject()) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         final Document doc = new DocumentImpl("");
         final StringBuilder b = new StringBuilder();
         doc.addDocumentListener(new DocumentListener() {

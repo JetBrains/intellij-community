@@ -4,7 +4,7 @@ import com.siyeh.ig.IGInspectionTestCase;
 
 public class DivideByZeroInspectionTest extends IGInspectionTestCase {
 
-  public void test() throws Exception {
+  public void test() {
     doTest("com/siyeh/igtest/numeric/divide_by_zero", new DivideByZeroInspection());
   }
 }

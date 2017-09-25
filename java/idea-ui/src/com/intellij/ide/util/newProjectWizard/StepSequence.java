@@ -22,6 +22,7 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
@@ -31,14 +32,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class StepSequence {
-  private final List<ModuleWizardStep> myCommonSteps = new ArrayList<>();
+  private final List<ModuleWizardStep> myCommonSteps;
   private final List<Pair<ModuleWizardStep, Set<String>>> myCommonFinishingSteps = new ArrayList<>();
   private final MultiMap<String, ModuleWizardStep> mySpecificSteps = new MultiMap<>();
   @NonNls private List<String> myTypes = new ArrayList<>();
   private List<ModuleWizardStep> mySelectedSteps;
 
   public StepSequence(ModuleWizardStep... commonSteps) {
-    myCommonSteps.addAll(Arrays.asList(commonSteps));
+    myCommonSteps = new SmartList<>(commonSteps);
   }
 
   public void addCommonStep(@NotNull ModuleWizardStep step){

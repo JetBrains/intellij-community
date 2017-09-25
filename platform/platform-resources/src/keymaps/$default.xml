@@ -77,9 +77,6 @@
   <action id="EditorLookupUp"><keyboard-shortcut first-keystroke="control UP"/></action>
   <action id="EditorLookupDown"><keyboard-shortcut first-keystroke="control DOWN"/></action>
 
-  <action id="MethodOverloadSwitchUp"><keyboard-shortcut first-keystroke="control UP"/></action>
-  <action id="MethodOverloadSwitchDown"><keyboard-shortcut first-keystroke="control DOWN"/></action>
-
   <action id="ReformatCode">
     <keyboard-shortcut first-keystroke="control alt L"/>
   </action>
@@ -215,6 +212,7 @@
     <keyboard-shortcut first-keystroke="control EQUALS"/>
   </action>
   <action id="ExpandExpandableComponent">
+    <keyboard-shortcut first-keystroke="shift ENTER"/>
     <keyboard-shortcut first-keystroke="control ADD"/>
     <keyboard-shortcut first-keystroke="control EQUALS"/>
   </action>
@@ -447,6 +445,7 @@
     <keyboard-shortcut first-keystroke="control MINUS"/>
   </action>
   <action id="CollapseExpandableComponent">
+    <keyboard-shortcut first-keystroke="shift ENTER"/>
     <keyboard-shortcut first-keystroke="control SUBTRACT"/>
     <keyboard-shortcut first-keystroke="control MINUS"/>
   </action>
@@ -1060,5 +1059,12 @@
   <action id="Git.Reword.Commit">
     <keyboard-shortcut first-keystroke="F2" />
     <keyboard-shortcut first-keystroke="Shift F6"/>
+  </action>
+
+  <action id="DirDiffMenu.SynchronizeDiff">
+    <keyboard-shortcut first-keystroke="ENTER"/>
+  </action>
+  <action id="DirDiffMenu.SynchronizeDiff.All">
+    <keyboard-shortcut first-keystroke="control ENTER"/>
   </action>
 </keymap>

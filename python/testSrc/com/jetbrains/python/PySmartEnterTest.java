@@ -44,7 +44,7 @@ public class PySmartEnterTest extends PyTestCase {
     final List<SmartEnterProcessor> processors = getSmartProcessors(PythonLanguage.getInstance());
     new WriteCommandAction(myFixture.getProject()) {
       @Override
-      protected void run(@NotNull Result result) throws Throwable {
+      protected void run(@NotNull Result result) {
         final Editor editor = myFixture.getEditor();
         for (SmartEnterProcessor processor : processors) {
           processor.process(myFixture.getProject(), editor, myFixture.getFile());

@@ -16,12 +16,8 @@
 package com.intellij.lang.jvm.actions
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.lang.Language
-import com.intellij.lang.LanguageExtension
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmModifiersOwner
-import com.intellij.openapi.components.ServiceManager
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Extension Point provides language-abstracted code modifications for JVM-based languages.
@@ -33,7 +29,6 @@ import org.jetbrains.annotations.ApiStatus
  *
  * @since 2017.3
  */
-@ApiStatus.Experimental
 abstract class JvmElementActionsFactory {
 
   open fun createChangeModifierActions(target: JvmModifiersOwner, request: MemberRequest.Modifier): List<IntentionAction> = emptyList()
@@ -44,15 +39,7 @@ abstract class JvmElementActionsFactory {
 
   open fun createAddPropertyActions(targetClass: JvmClass, request: MemberRequest.Property): List<IntentionAction> = emptyList()
 
-  companion object : LanguageExtension<JvmElementActionsFactory>(
-    "com.intellij.lang.jvm.actions.jvmElementActionsFactory") {
+  open fun createAddFieldActions(targetClass: JvmClass, request: CreateFieldRequest): List<IntentionAction> = emptyList()
 
-    @JvmStatic
-    override fun forLanguage(l: Language): JvmElementActionsFactory? =
-      super.forLanguage(l)
-      ?: ServiceManager.getService(JvmElementActionsFactoryFallback::class.java).forLanguage(l)
-  }
-
+  open fun createAddMethodActions(targetClass: JvmClass, request: CreateMethodRequest): List<IntentionAction> = emptyList()
 }
-
-

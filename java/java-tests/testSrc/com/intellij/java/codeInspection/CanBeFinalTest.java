@@ -31,7 +31,7 @@ public class CanBeFinalTest extends InspectionTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection";
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     final CanBeFinalInspection tool = new CanBeFinalInspection();
     tool.REPORT_CLASSES = true;
     tool.REPORT_FIELDS = true;
@@ -39,75 +39,75 @@ public class CanBeFinalTest extends InspectionTestCase {
     doTest(tool);
   }
 
-  private void doTest(final CanBeFinalInspection tool) throws Exception {
+  private void doTest(final CanBeFinalInspection tool) {
     doTest("canBeFinal/" + getTestName(false), tool);
   }
 
-  public void testsimpleClassInheritanceField() throws Exception {
+  public void testsimpleClassInheritanceField() {
     doTest();
   }
 
-  public void testsimpleClassInheritance() throws Exception {
+  public void testsimpleClassInheritance() {
     doTest();
   }
 
-  public void testsimpleClassInheritance1() throws Exception {
+  public void testsimpleClassInheritance1() {
     doTest();
   }
 
-  public void testanonymous() throws Exception {
+  public void testanonymous() {
     doTest();
   }
 
-  public void testmethodInheritance() throws Exception {
+  public void testmethodInheritance() {
     doTest();
   }
 
-  public void testprivateInners() throws Exception {
+  public void testprivateInners() {
     doTest();
   }
 
-  public void testfieldAndTryBlock() throws Exception {
+  public void testfieldAndTryBlock() {
     doTest();
   }
 
-  public void testfields() throws Exception {
+  public void testfields() {
     doTest();
   }
 
-  public void testfieldsReading() throws Exception {
+  public void testfieldsReading() {
     doTest();
   }
 
-  public void testSCR6073() throws Exception {
+  public void testSCR6073() {
     doTest();
   }
 
-  public void testSCR6781() throws Exception {
+  public void testSCR6781() {
     doTest();
   }
 
-  public void testSCR6845() throws Exception {
+  public void testSCR6845() {
     doTest();
   }
 
-  public void testSCR6861() throws Exception {
+  public void testSCR6861() {
     doTest();
   }
 
-  public void testfieldAssignmentssInInitializer() throws Exception {
+  public void testfieldAssignmentssInInitializer() {
     doTest();
   }
 
-  public void teststaticFields() throws Exception {
+  public void teststaticFields() {
     doTest();
   }
 
-  public void teststaticClassInitializer() throws Exception {
+  public void teststaticClassInitializer() {
     doTest();
   }
 
-  public void testSCR7737() throws Exception {
+  public void testSCR7737() {
     CanBeFinalInspection tool = new CanBeFinalInspection();
     tool.REPORT_CLASSES = false;
     tool.REPORT_FIELDS = false;
@@ -116,7 +116,7 @@ public class CanBeFinalTest extends InspectionTestCase {
     doTest(tool);
   }
 
-  public void testfieldNonInitializedUsedInClassInitializer() throws Exception {
+  public void testfieldNonInitializedUsedInClassInitializer() {
     CanBeFinalInspection tool = new CanBeFinalInspection();
     tool.REPORT_CLASSES = false;
     tool.REPORT_FIELDS = true;
@@ -125,7 +125,7 @@ public class CanBeFinalTest extends InspectionTestCase {
   }
 
 
-  public void testInterfaceMethodInHierarchy() throws Exception {
+  public void testInterfaceMethodInHierarchy() {
     CanBeFinalInspection tool = new CanBeFinalInspection();
     tool.REPORT_CLASSES = false;
     tool.REPORT_FIELDS = false;
@@ -134,7 +134,7 @@ public class CanBeFinalTest extends InspectionTestCase {
     doTest(tool);
   }
 
-  public void testfieldImplicitWrite() throws Exception {
+  public void testfieldImplicitWrite() {
     PlatformTestUtil.registerExtension(ImplicitUsageProvider.EP_NAME, new ImplicitUsageProvider() {
       @Override
       public boolean isImplicitUsage(PsiElement element) {
@@ -155,7 +155,7 @@ public class CanBeFinalTest extends InspectionTestCase {
     doTest();
   }
 
-  public void testfieldInitializedInClassInitializer() throws Exception {
+  public void testfieldInitializedInClassInitializer() {
     doTest();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,7 +66,7 @@ public class InterruptThreadAction extends DebuggerAction{
             }
             if (unsupported) {
               final Project project = debugProcess.getProject();
-              XDebugSessionImpl.NOTIFICATION_GROUP
+              XDebuggerManagerImpl.NOTIFICATION_GROUP
                 .createNotification("Thread operation 'interrupt' is not supported by VM", MessageType.INFO).notify(project);
             }
           }

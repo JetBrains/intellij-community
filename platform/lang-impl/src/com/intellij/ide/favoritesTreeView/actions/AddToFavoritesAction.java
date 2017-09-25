@@ -77,8 +77,9 @@ public class AddToFavoritesAction extends AnAction implements DumbAware {
 
     Collection<AbstractTreeNode> nodesToAdd = null;
     for (FavoriteNodeProvider provider : Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, project)) {
-      nodesToAdd = provider.getFavoriteNodes(dataContext, ViewSettings.DEFAULT);
-      if (nodesToAdd != null) {
+      Collection<AbstractTreeNode> nodes = provider.getFavoriteNodes(dataContext, ViewSettings.DEFAULT);
+      if (nodes != null && !nodes.isEmpty()) {
+        nodesToAdd = nodes;
         break;
       }
     }

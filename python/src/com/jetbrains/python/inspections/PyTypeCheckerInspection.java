@@ -19,8 +19,8 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -37,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.*;
 
 /**
@@ -111,23 +110,8 @@ public class PyTypeCheckerInspection extends PyInspection {
     private PyType getExpectedReturnType(@NotNull PyFunction function) {
       final PyType returnType = myTypeEvalContext.getReturnType(function);
 
-      final PyCollectionType genericType = as(returnType, PyCollectionType.class);
-      final PyClassType classType = as(returnType, PyClassType.class);
-
-      if (function.isAsync()) {
-        if (genericType != null && classType != null && PyTypingTypeProvider.COROUTINE.equals(classType.getClassQName())) {
-          return ContainerUtil.getOrElse(genericType.getElementTypes(myTypeEvalContext), 2, null);
-        }
-        // Async generators are not allowed to return anything anyway
-        return null;
-      }
-      else if (function.isGenerator()) {
-        if (genericType != null && classType != null && PyTypingTypeProvider.GENERATOR.equals(classType.getClassQName())) {
-          // Generator's type is parametrized as [YieldType, SendType, ReturnType]
-          return ContainerUtil.getOrElse(genericType.getElementTypes(myTypeEvalContext), 2, null);
-        }
-        // Assume that any other return type annotation for a generator cannot contain its return type
-        return null;
+      if (function.isAsync() || function.isGenerator()) {
+        return Ref.deref(PyTypingTypeProvider.coroutineOrGeneratorElementType(returnType, myTypeEvalContext));
       }
 
       return returnType;

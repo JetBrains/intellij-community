@@ -18,10 +18,8 @@ package com.intellij.openapi.editor.impl.view;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.editor.impl.EditorImpl;
 
-import java.io.IOException;
-
 public class VisualLinesIteratorTest extends AbstractEditorTest {
-  public void testWrapAfterFolding() throws IOException {
+  public void testWrapAfterFolding() {
     initText("abcdefghij");
     addCollapsedFoldRegion(1, 8, "...");
     configureSoftWraps(4);
@@ -38,7 +36,7 @@ public class VisualLinesIteratorTest extends AbstractEditorTest {
     assertEquals(1, it.getStartFoldingIndex());
   }
   
-  public void testWrapAtFoldedLineBreak() throws IOException {
+  public void testWrapAtFoldedLineBreak() {
     initText("abc\ndef");
     addCollapsedFoldRegion(3, 4, "...");
     configureSoftWraps(6);

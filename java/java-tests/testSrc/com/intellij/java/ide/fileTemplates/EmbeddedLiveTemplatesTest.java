@@ -31,13 +31,13 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
  */
 public class EmbeddedLiveTemplatesTest extends LightPlatformCodeInsightFixtureTestCase {
 
-  public void testCreateFromTemplateAction() throws Exception {
+  public void testCreateFromTemplateAction() {
 
     doTest("Put caret here: #[[$END$]]# end of template",
            "Put caret here: <caret> end of template");
   }
 
-  public void testSupportVariables() throws Exception {
+  public void testSupportVariables() {
 
     doTest("First: #[[$Var$]]# Second: #[[$Var$]]#",
            "First: Var Second: Var");

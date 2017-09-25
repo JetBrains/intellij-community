@@ -125,7 +125,7 @@ public class JobUtilTest extends PlatformTestCase {
     }
   }
 
-  public void testJobUtilRecursiveStress() throws Exception {
+  public void testJobUtilRecursiveStress() {
     final List<String> list = Collections.nCopies(100, null);
     for (int i=0; i<10; i++) {
       COUNT.set(0);
@@ -187,7 +187,7 @@ public class JobUtilTest extends PlatformTestCase {
   }
 
   private static class MyException extends RuntimeException {}
-  public void testExceptionalCompletion() throws Throwable {
+  public void testExceptionalCompletion() {
     COUNT.set(0);
     try {
       final List<Object> objects = Collections.nCopies(100000000, null);
@@ -204,7 +204,7 @@ public class JobUtilTest extends PlatformTestCase {
       // caught OK
     }
   }
-  public void testNotNormalCompletion() throws Throwable {
+  public void testNotNormalCompletion() {
     COUNT.set(0);
     final List<Object> objects = Collections.nCopies(100000000, null);
     boolean success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(objects, null, true, o -> {
@@ -217,7 +217,7 @@ public class JobUtilTest extends PlatformTestCase {
     assertFalse(success);
   }
 
-  public void testJobUtilCompletesEvenIfCannotGrabReadAction() throws Throwable {
+  public void testJobUtilCompletesEvenIfCannotGrabReadAction() {
     COUNT.set(0);
     final List<Object> objects = Collections.nCopies(1000000, null);
     ApplicationManager.getApplication().runWriteAction(() -> {
@@ -230,7 +230,7 @@ public class JobUtilTest extends PlatformTestCase {
     });
   }
 
-  public void testJobUtilRecursiveCancel() throws Exception {
+  public void testJobUtilRecursiveCancel() {
     final List<String> list = Collections.nCopies(100, "");
     final List<Integer> ilist = Collections.nCopies(100, 0);
     for (int i=0; i<10; i++) {
@@ -325,7 +325,7 @@ public class JobUtilTest extends PlatformTestCase {
     }
   }
 
-  public void testAfterCancelInTheMiddleOfTheExecutionTaskIsDoneReturnsFalseUntilFinished() throws ExecutionException, InterruptedException {
+  public void testAfterCancelInTheMiddleOfTheExecutionTaskIsDoneReturnsFalseUntilFinished() {
     Random random = new Random();
     for (int i=0; i<100; i++) {
       final AtomicBoolean finished = new AtomicBoolean();

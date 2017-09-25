@@ -27,7 +27,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.SystemProperties;
@@ -179,17 +178,14 @@ public class FrequentlyUsedInheritorInspection extends BaseJavaLocalInspectionTo
       .filter(Objects::nonNull)
       .map(defAndCount -> {
         String name = compilerRefService.getName(defAndCount.myDef.getName());
-        PsiClass inheritor =
-          JavaFullClassNameIndex.getInstance().get(name.hashCode(), project, searchScope).stream()
-            .filter(cls -> name.equals(cls.getQualifiedName()))
-            .collect(MoreCollectors.onlyOne())
-            .orElse(null);
-
-        if (inheritor == null || !inheritor.isInheritor(aClass, false)) {
-          return null;
+        PsiClass[] inheritors = JavaPsiFacade.getInstance(project).findClasses(name, searchScope);
+        if (inheritors.length == 1) {
+          PsiClass inheritor = inheritors[0];
+          if (inheritor.isInheritor(aClass, false)) {
+            return new ClassAndInheritorCount(inheritor, defAndCount.myDef, defAndCount.inheritorCount);
+          }
         }
-
-        return new ClassAndInheritorCount(inheritor, defAndCount.myDef, defAndCount.inheritorCount);
+        return null;
       })
       .filter(Objects::nonNull)
       .collect(Collectors.toList());

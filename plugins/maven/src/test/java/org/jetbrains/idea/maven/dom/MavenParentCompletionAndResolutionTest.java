@@ -22,7 +22,7 @@ import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 
 public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
-  public void testVariants() throws Exception {
+  public void testVariants() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -181,7 +181,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertResolved(myProjectPom, findPsiFile(parent));
   }
 
-  public void testDoNotHighlightResolvedParentByRelativePathWhenOutsideOfTheProject() throws Throwable {
+  public void testDoNotHighlightResolvedParentByRelativePathWhenOutsideOfTheProject() {
     createPomFile(myProjectRoot.getParent(),
                   "<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -204,7 +204,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting(myProjectPom);
   }
 
-  public void testRelativePathCompletion() throws Throwable {
+  public void testRelativePathCompletion() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -233,7 +233,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom, "dir", "two", "pom.xml");
   }
 
-  public void testRelativePathCompletion_2() throws Throwable {
+  public void testRelativePathCompletion_2() {
     importProject("<groupId>test</groupId>" + "<artifactId>project</artifactId>" + "<version>1</version>");
 
     createProjectPom("<groupId>test</groupId>" + "<artifactId>project</artifactId>" + "<version>1</version>" +
@@ -253,7 +253,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom, "one", "two", "pom.xml");
   }
 
-  public void testHighlightingUnknownValues() throws Throwable {
+  public void testHighlightingUnknownValues() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -271,7 +271,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
-  public void testHighlightingAbsentGroupId() throws Throwable {
+  public void testHighlightingAbsentGroupId() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -283,7 +283,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
-  public void testHighlightingAbsentArtifactId() throws Throwable {
+  public void testHighlightingAbsentArtifactId() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -295,7 +295,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
-  public void testHighlightingAbsentVersion() throws Throwable {
+  public void testHighlightingAbsentVersion() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -307,7 +307,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
-  public void testHighlightingInvalidRelativePath() throws Throwable {
+  public void testHighlightingInvalidRelativePath() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -326,7 +326,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
-  public void testPathQuickFixForInvalidValue() throws Throwable {
+  public void testPathQuickFixForInvalidValue() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>");
@@ -358,7 +358,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertEquals("bar/pom.xml", ElementManipulators.getValueText(el));
   }
 
-  public void testDoNotShowPathQuickFixForValidPath() throws Throwable {
+  public void testDoNotShowPathQuickFixForValidPath() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>");

@@ -17,6 +17,7 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
@@ -36,6 +37,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
   private final Project myProject;
   private final int myOffset;
   private final int myParameterListStart;
+  private final boolean mySingleParameterInfo;
   private PsiElement myHighlightedElement;
   private Object[] myItems;
   private boolean myRequestFocus;
@@ -48,12 +50,19 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
   public ShowParameterInfoContext(final Editor editor, final Project project,
                                   final PsiFile file, int offset, int parameterListStart,
                                   boolean requestFocus) {
+    this(editor, project, file, offset, parameterListStart, requestFocus, false);
+  }
+
+  public ShowParameterInfoContext(final Editor editor, final Project project,
+                                  final PsiFile file, int offset, int parameterListStart,
+                                  boolean requestFocus, boolean singleParameterInfo) {
     myEditor = editor;
     myProject = project;
     myFile = file;
     myParameterListStart = parameterListStart;
     myOffset = offset;
     myRequestFocus = requestFocus;
+    mySingleParameterInfo = singleParameterInfo;
   }
 
   @Override
@@ -106,7 +115,8 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
   public void showHint(PsiElement element, int offset, ParameterInfoHandler handler) {
     final Object[] itemsToShow = getItemsToShow();
     if (itemsToShow == null || itemsToShow.length == 0) return;
-    showMethodInfo(getProject(), getEditor(), element, getHighlightedElement(), itemsToShow, offset, handler, myRequestFocus);
+    showParameterHint(element, getEditor(), itemsToShow, getProject(), itemsToShow.length > 1 ? getHighlightedElement() : null, offset,
+                      handler, myRequestFocus, mySingleParameterInfo);
   }
 
   private static void showParameterHint(final PsiElement element,
@@ -116,13 +126,16 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
                                         @Nullable PsiElement highlighted,
                                         final int elementStart,
                                         final ParameterInfoHandler handler,
-                                        final boolean requestFocus) {
-    if (ParameterInfoController.isAlreadyShown(editor, elementStart)) return;
+                                        final boolean requestFocus,
+                                        boolean singleParameterInfo) {
+    ParameterInfoController pic = ParameterInfoController.findControllerAtOffset(editor, elementStart);
+    if (pic != null && pic.isHintShown(singleParameterInfo)) return;
 
     if (editor.isDisposed() || !editor.getComponent().isVisible()) return;
 
     PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(() -> {
-      if (editor.isDisposed() || DumbService.isDumb(project) || !editor.getComponent().isShowing()) return;
+      if (editor.isDisposed() || DumbService.isDumb(project) || 
+          (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getComponent().isShowing())) return;
 
       final Document document = editor.getDocument();
       if (document.getTextLength() < elementStart) return;
@@ -132,20 +145,9 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
         new ParameterInfoController(project, editor, elementStart, descriptors, highlighted, element, handler, true, requestFocus);
       }
       else {
-        controller.showHint(requestFocus);
+        controller.showHint(requestFocus, singleParameterInfo);
       }
     });
-  }
-
-  private static void showMethodInfo(final Project project, final Editor editor,
-                                     final PsiElement list,
-                                     PsiElement highlighted,
-                                     Object[] candidates,
-                                     int offset,
-                                     ParameterInfoHandler handler,
-                                     boolean requestFocus
-                                     ) {
-    showParameterHint(list, editor, candidates, project, candidates.length > 1 ? highlighted : null, offset, handler, requestFocus);
   }
 
   public void setRequestFocus(boolean requestFocus) {

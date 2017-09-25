@@ -55,7 +55,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   final AtomicInteger myCurrentUnsafeProgressCount = new AtomicInteger(0);
   private final AtomicInteger myCurrentModalProgressCount = new AtomicInteger(0);
 
-  private static final boolean ENABLED = !"disabled".equals(System.getProperty("idea.ProcessCanceledException"));
+  public static final boolean ENABLED = !"disabled".equals(System.getProperty("idea.ProcessCanceledException"));
   private static CheckCanceledHook ourCheckCanceledHook;
   private ScheduledFuture<?> myCheckCancelledFuture; // guarded by threadsUnderIndicator
 
@@ -741,4 +741,12 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     boolean runHook(@Nullable ProgressIndicator indicator);
   }
 
+  public static void assertUnderProgress(@NotNull ProgressIndicator indicator) {
+    synchronized (threadsUnderIndicator) {
+      Set<Thread> threads = threadsUnderIndicator.get(indicator);
+      if (threads == null || !threads.contains(Thread.currentThread())) {
+        throw new IllegalStateException("Must be executed under progress indicator: "+indicator+". Please see e.g. ProgressManager.runProcess()");
+      }
+    }
+  }
 }

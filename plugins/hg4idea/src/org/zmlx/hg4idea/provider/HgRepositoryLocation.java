@@ -44,7 +44,7 @@ public class HgRepositoryLocation implements RepositoryLocation {
   }
 
   @Override
-  public void onBeforeBatch() throws VcsException {
+  public void onBeforeBatch() {
   }
 
   @Override

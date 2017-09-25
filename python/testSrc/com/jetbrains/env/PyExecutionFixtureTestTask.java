@@ -3,10 +3,12 @@ package com.jetbrains.env;
 import com.google.common.collect.Lists;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.util.projectWizard.EmptyModuleBuilder;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -25,14 +27,14 @@ import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdkTools.PyTestSdkTools;
-import com.jetbrains.python.sdkTools.SdkCreationType;
+import com.jetbrains.python.tools.sdkTools.PySdkTools;
+import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
+import javax.swing.*;
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -170,7 +172,11 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
   }
 
   public void tearDown() throws Exception {
+    assert SwingUtilities.isEventDispatchThread();
     if (myFixture != null) {
+      for (Sdk sdk : ProjectJdkTable.getInstance().getSdksOfType(PythonSdkType.getInstance())) {
+        WriteAction.run(() -> ProjectJdkTable.getInstance().removeJdk(sdk));
+      }
       myFixture.tearDown();
       myFixture = null;
     }
@@ -181,14 +187,14 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
     return null;
   }
 
-  protected void disposeProcess(ProcessHandler h) throws InterruptedException {
+  protected void disposeProcess(ProcessHandler h) {
     h.destroyProcess();
     if (!waitFor(h)) {
       new Throwable("Can't stop process").printStackTrace();
     }
   }
 
-  protected boolean waitFor(ProcessHandler p) throws InterruptedException {
+  protected boolean waitFor(ProcessHandler p) {
     return p.waitFor(myTimeout);
   }
 
@@ -235,15 +241,15 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
    * Creates SDK by its path
    *
    * @param sdkHome         path to sdk (probably obtained by {@link #runTestOn(String)})
-   * @param sdkCreationType SDK creation strategy (see {@link com.jetbrains.python.sdkTools.SdkCreationType} doc)
+   * @param sdkCreationType SDK creation strategy (see {@link sdkTools.SdkCreationType} doc)
    * @return sdk
    */
   @NotNull
   protected Sdk createTempSdk(@NotNull final String sdkHome, @NotNull final SdkCreationType sdkCreationType)
-    throws InvalidSdkException, IOException {
+    throws InvalidSdkException {
     final VirtualFile sdkHomeFile = LocalFileSystem.getInstance().findFileByPath(sdkHome);
     Assert.assertNotNull("Interpreter file not found: " + sdkHome, sdkHomeFile);
-    final Sdk sdk = PyTestSdkTools.createTempSdk(sdkHomeFile, sdkCreationType, myFixture.getModule());
+    final Sdk sdk = PySdkTools.createTempSdk(sdkHomeFile, sdkCreationType, myFixture.getModule());
     // We use gradle script to create environment. This script utilizes Conda.
     // Conda supports 2 types of package installation: conda native and pip. We use pip.
     // PyCharm Conda support ignores packages installed via pip ("conda list -e" does it, see PyCondaPackageManagerImpl)

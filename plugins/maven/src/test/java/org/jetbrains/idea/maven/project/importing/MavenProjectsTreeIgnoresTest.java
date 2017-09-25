@@ -44,7 +44,7 @@ public class MavenProjectsTreeIgnoresTest extends MavenProjectsTreeTestCase {
     myRoots = myTree.getRootProjects();
   }
 
-  public void testSendingNotifications() throws Exception {
+  public void testSendingNotifications() {
     myTree.setIgnoredState(Collections.singletonList(myRoots.get(0)), true);
 
     assertEquals("ignored: m1 ", myLog);
@@ -66,7 +66,7 @@ public class MavenProjectsTreeIgnoresTest extends MavenProjectsTreeTestCase {
     myLog = "";
   }
 
-  public void testDoNotSendNotificationsIfNothingChanged() throws Exception {
+  public void testDoNotSendNotificationsIfNothingChanged() {
     myTree.setIgnoredState(Collections.singletonList(myRoots.get(0)), true);
 
     assertEquals("ignored: m1 ", myLog);

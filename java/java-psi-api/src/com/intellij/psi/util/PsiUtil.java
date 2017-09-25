@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -332,15 +332,9 @@ public final class PsiUtil extends PsiUtilCore {
 
   @Contract("null -> false")
   public static boolean isIncrementDecrementOperation(@Nullable PsiElement element) {
-    if (element instanceof PsiPostfixExpression) {
-      final IElementType sign = ((PsiPostfixExpression)element).getOperationTokenType();
-      if (sign == JavaTokenType.PLUSPLUS || sign == JavaTokenType.MINUSMINUS)
-        return true;
-    }
-    else if (element instanceof PsiPrefixExpression) {
-      final IElementType sign = ((PsiPrefixExpression)element).getOperationTokenType();
-      if (sign == JavaTokenType.PLUSPLUS || sign == JavaTokenType.MINUSMINUS)
-        return true;
+    if (element instanceof PsiUnaryExpression) {
+      final IElementType sign = ((PsiUnaryExpression)element).getOperationTokenType();
+      return sign == JavaTokenType.PLUSPLUS || sign == JavaTokenType.MINUSMINUS;
     }
     return false;
   }
@@ -924,7 +918,7 @@ public final class PsiUtil extends PsiUtilCore {
     return result;
   }
 
-  public static boolean canBeOverriden(@NotNull PsiMethod method) {
+  public static boolean canBeOverridden(@NotNull PsiMethod method) {
     PsiClass parentClass = method.getContainingClass();
     return parentClass != null &&
            !method.isConstructor() &&
@@ -933,6 +927,13 @@ public final class PsiUtil extends PsiUtilCore {
            !method.hasModifierProperty(PsiModifier.PRIVATE) &&
            !(parentClass instanceof PsiAnonymousClass) &&
            !parentClass.hasModifierProperty(PsiModifier.FINAL);
+  }
+
+  /**
+   * @deprecated Use {@link #canBeOverridden(PsiMethod)} instead
+   */
+  public static boolean canBeOverriden(@NotNull PsiMethod method) {
+    return canBeOverridden(method);
   }
 
   @NotNull

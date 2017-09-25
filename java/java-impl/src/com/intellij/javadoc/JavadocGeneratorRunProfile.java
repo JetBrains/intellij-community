@@ -294,7 +294,7 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
       final OSProcessHandler handler = JavaCommandLineStateUtil.startProcess(createCommandLine());
       ProcessTerminatedListener.attach(handler, myProject, JavadocBundle.message("javadoc.generate.exited"));
       handler.addProcessListener(new ProcessAdapter() {
-        public void processTerminated(ProcessEvent event) {
+        public void processTerminated(@NotNull ProcessEvent event) {
           if (myConfiguration.OPEN_IN_BROWSER) {
             File url = new File(myConfiguration.OUTPUT_DIRECTORY, INDEX_HTML);
             if (url.exists() && event.getExitCode() == 0) {

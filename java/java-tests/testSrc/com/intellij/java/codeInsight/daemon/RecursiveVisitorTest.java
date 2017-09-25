@@ -39,7 +39,7 @@ public class RecursiveVisitorTest extends LightDaemonAnalyzerTestCase {
     final int[] n = {0};
     PlatformTestUtil.startPerformanceTest(getTestName(false), 100, new ThrowableRunnable() {
       @Override
-      public void run() throws Exception {
+      public void run() {
         n[0] = 0;
         expression.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
@@ -66,7 +66,7 @@ public class RecursiveVisitorTest extends LightDaemonAnalyzerTestCase {
     final int[] n = {0};
     PlatformTestUtil.startPerformanceTest(getTestName(false), 200, new ThrowableRunnable() {
       @Override
-      public void run() throws Exception {
+      public void run() {
         n[0] = 0;
         expression.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override

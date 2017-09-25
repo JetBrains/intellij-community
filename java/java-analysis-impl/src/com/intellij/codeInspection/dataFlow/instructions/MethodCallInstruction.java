@@ -20,6 +20,7 @@ import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,6 @@ import java.util.List;
 public class MethodCallInstruction extends Instruction {
   private static final Nullness[] EMPTY_NULLNESS_ARRAY = new Nullness[0];
 
-  @Nullable private final PsiCall myCall;
   @Nullable private final PsiType myType;
   private final int myArgCount;
   private final boolean myShouldFlushFields;
@@ -40,11 +40,8 @@ public class MethodCallInstruction extends Instruction {
   private final List<MethodContract> myContracts;
   private final MethodType myMethodType;
   @Nullable private final DfaValue myPrecalculatedReturnValue;
-  private final boolean myOfNullable;
   private final boolean myVarArgCall;
   private final Nullness[] myArgRequiredNullability;
-  private boolean myOnlyNullArgs = true;
-  private boolean myOnlyNotNullArgs = true;
   private final Nullness myReturnNullability;
 
   public enum MethodType {
@@ -55,14 +52,12 @@ public class MethodCallInstruction extends Instruction {
     myContext = context;
     myContracts = Collections.emptyList();
     myMethodType = methodType;
-    myCall = null;
     myArgCount = 0;
     myType = resultType;
     myShouldFlushFields = false;
     myPrecalculatedReturnValue = null;
     myTargetMethod = null;
     myVarArgCall = false;
-    myOfNullable = false;
     myArgRequiredNullability = EMPTY_NULLNESS_ARRAY;
     myReturnNullability = Nullness.UNKNOWN;
   }
@@ -72,7 +67,6 @@ public class MethodCallInstruction extends Instruction {
     myMethodType = MethodType.METHOD_REFERENCE_CALL;
     JavaResolveResult resolveResult = reference.advancedResolve(false);
     myTargetMethod = ObjectUtils.tryCast(resolveResult.getElement(), PsiMethod.class);
-    myCall = null;
     myContracts = Collections.unmodifiableList(contracts);
     myArgCount = myTargetMethod == null ? 0 : myTargetMethod.getParameterList().getParametersCount();
     if (myTargetMethod == null) {
@@ -93,7 +87,6 @@ public class MethodCallInstruction extends Instruction {
     }
     myVarArgCall = false; // vararg method reference calls are not supported now
     myPrecalculatedReturnValue = null;
-    myOfNullable = DfaOptionalSupport.OPTIONAL_OF_NULLABLE.methodReferenceMatches(reference);
     myArgRequiredNullability = myTargetMethod == null
                                ? EMPTY_NULLNESS_ARRAY
                                : calcArgRequiredNullability(resolveResult.getSubstitutor(),
@@ -105,11 +98,10 @@ public class MethodCallInstruction extends Instruction {
     myContext = call;
     myContracts = Collections.unmodifiableList(contracts);
     myMethodType = MethodType.REGULAR_METHOD_CALL;
-    myCall = call;
     final PsiExpressionList argList = call.getArgumentList();
     PsiExpression[] args = argList != null ? argList.getExpressions() : PsiExpression.EMPTY_ARRAY;
     myArgCount = args.length;
-    myType = myCall instanceof PsiCallExpression ? ((PsiCallExpression)myCall).getType() : null;
+    myType = call instanceof PsiCallExpression ? ((PsiCallExpression)call).getType() : null;
 
     JavaResolveResult result = call.resolveMethodGenerics();
     myTargetMethod = (PsiMethod)result.getElement();
@@ -126,8 +118,18 @@ public class MethodCallInstruction extends Instruction {
 
     myShouldFlushFields = !(call instanceof PsiNewExpression && myType != null && myType.getArrayDimensions() > 0) && !isPureCall();
     myPrecalculatedReturnValue = precalculatedReturnValue;
-    myOfNullable = call instanceof PsiMethodCallExpression && DfaOptionalSupport.OPTIONAL_OF_NULLABLE.test((PsiMethodCallExpression)call);
     myReturnNullability = call instanceof PsiNewExpression ? Nullness.NOT_NULL : DfaPsiUtil.getElementNullability(myType, myTargetMethod);
+  }
+
+  public boolean matches(CallMatcher matcher) {
+    switch (myMethodType) {
+      case REGULAR_METHOD_CALL:
+        return myContext instanceof PsiMethodCallExpression && matcher.test((PsiMethodCallExpression)myContext);
+      case METHOD_REFERENCE_CALL:
+        return matcher.methodReferenceMatches((PsiMethodReferenceExpression)myContext);
+      default:
+        return false;
+    }
   }
 
   /**
@@ -137,13 +139,13 @@ public class MethodCallInstruction extends Instruction {
    * @return a PsiElement. Either argument expression or method reference if call is described by method reference
    */
   public PsiElement getArgumentAnchor(int index) {
-    if (myCall != null) {
-      PsiExpressionList argumentList = myCall.getArgumentList();
+    if (myMethodType == MethodType.REGULAR_METHOD_CALL && myContext instanceof PsiCall) {
+      PsiExpressionList argumentList = ((PsiCall)myContext).getArgumentList();
       if (argumentList != null) {
         return argumentList.getExpressions()[index];
       }
     }
-    if (myContext instanceof PsiMethodReferenceExpression) {
+    if (myMethodType == MethodType.METHOD_REFERENCE_CALL && myContext instanceof PsiMethodReferenceExpression) {
       return ((PsiMethodReferenceExpression)myContext).getReferenceNameElement();
     }
     return myContext;
@@ -243,7 +245,7 @@ public class MethodCallInstruction extends Instruction {
 
   @Nullable
   public PsiCall getCallExpression() {
-    return myCall;
+    return myMethodType == MethodType.REGULAR_METHOD_CALL && myContext instanceof PsiCall ? (PsiCall)myContext : null;
   }
 
   @NotNull
@@ -272,30 +274,9 @@ public class MethodCallInstruction extends Instruction {
       case METHOD_REFERENCE_CALL:
         return "CALL_METHOD_REFERENCE: " + myContext.getText();
       case REGULAR_METHOD_CALL:
-        return "CALL_METHOD: " + (myCall == null ? "null" : myCall.getText());
+        return "CALL_METHOD: " + myContext.getText();
       default:
         throw new IllegalStateException("Unexpected method type: " + myMethodType);
     }
   }
-
-  public boolean updateOfNullable(DfaMemoryState memState, DfaValue arg) {
-    if (!myOfNullable) return false;
-    
-    if (!memState.isNotNull(arg)) {
-      myOnlyNotNullArgs = false;
-    } 
-    if (!memState.isNull(arg)) {
-      myOnlyNullArgs = false;
-    }
-    return true;
-  }
-
-  public boolean isOptionalAlwaysNullProblem() {
-    return myOfNullable && myOnlyNullArgs;
-  }
-
-  public boolean isOptionalAlwaysNotNullProblem() {
-    return myOfNullable && myOnlyNotNullArgs;
-  }
-
 }

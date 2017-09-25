@@ -26,11 +26,15 @@ import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.Disposable;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Konstantin Bulenkov
@@ -102,7 +106,7 @@ public class StructureViewCompositeModel extends StructureViewModelBase implemen
     final HashSet<Filter> filters = new HashSet<>();
     for (StructureViewComposite.StructureViewDescriptor view : myViews) {
       final StructureViewModel model = view.structureView.getTreeModel();
-      filters.addAll(Arrays.asList(model.getFilters()));
+      ContainerUtil.addAll(filters, model.getFilters());
     }
     return filters.toArray(new Filter[filters.size()]);
   }

@@ -73,7 +73,6 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
     myColorManager = manager;
 
     Disposer.register(this, myRefresher);
-    Disposer.register(logData, this);
 
     myLog = new VcsLogImpl(logData, this);
     myVisiblePack = VisiblePack.EMPTY;

@@ -39,6 +39,7 @@
                         serviceImplementation="com.intellij.ide.PsiCopyPasteManager"/>
 
     <applicationService serviceImplementation="com.intellij.usages.UsageViewSettings"/>
+    <applicationService serviceImplementation="com.intellij.usages.ShowUsagesSettings"/>
     <applicationService serviceImplementation="com.intellij.refactoring.RefactoringSettings"/>
     <applicationService serviceInterface="com.intellij.refactoring.RefactoringActionHandlerFactory"
                         serviceImplementation="com.intellij.refactoring.openapi.impl.RefactoringActionHandlerFactoryImpl"/>
@@ -198,6 +199,9 @@
 
     <applicationService serviceInterface="com.intellij.psi.util.PsiEditorUtil"
                         serviceImplementation="com.intellij.psi.util.PsiUtilBase"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.application.PathMacros"
+                        serviceImplementation="com.intellij.ide.macro.IdePathMacros"/>
 
     <rearranger.ui implementation="com.intellij.application.options.codeStyle.arrangement.component.DefaultArrangementUiComponentFactory"/>
 
@@ -999,6 +1003,8 @@
     <codeInsight.lineMarkerProvider language="" implementationClass="com.intellij.execution.lineMarker.RunLineMarkerProvider"/>
     <projectService serviceImplementation="com.intellij.execution.TestStateStorage"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.refactoring.changeSignature.inplace.EscapeHandler" id="changeSignatureEscape" order="before hide-search"/>
+
+    <customizableActionGroupProvider implementation="com.intellij.openapi.vcs.ui.VcsCustomizableActionGroupProvider"/>
 
     <schemeExporter
       name="Intellij IDEA code style XML"

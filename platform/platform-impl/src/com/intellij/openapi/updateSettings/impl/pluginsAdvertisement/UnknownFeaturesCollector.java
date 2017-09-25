@@ -36,8 +36,8 @@ public class UnknownFeaturesCollector implements PersistentStateComponent<Elemen
     return ServiceManager.getService(project, UnknownFeaturesCollector.class);
   }
 
-  public void registerUnknownRunConfiguration(String configurationName) {
-    registerUnknownFeature("com.intellij.configurationType", configurationName, "Run Configuration");
+  public void registerUnknownRunConfiguration(String configurationId) {
+    registerUnknownFeature("com.intellij.configurationType", configurationId, "Run Configuration");
   }
   
   public void registerUnknownFeature(String featureType, String implementationName, String featureDisplayName) {

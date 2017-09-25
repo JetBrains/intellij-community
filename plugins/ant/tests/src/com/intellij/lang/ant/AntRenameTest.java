@@ -29,75 +29,75 @@ import org.jetbrains.annotations.NotNull;
 
 public class AntRenameTest extends LightCodeInsightTestCase {
 
-  public void testSimpleProperty() throws Exception {
+  public void testSimpleProperty() {
     doTest();
   }
 
-  public void testSimplePropertyReference() throws Exception {
+  public void testSimplePropertyReference() {
     doTest();
   }
 
-  public void testParam() throws Exception {
+  public void testParam() {
     doTest();
   }
 
-  public void testParamReference() throws Exception {
+  public void testParamReference() {
     doTest();
   }
 
-  public void testRefid() throws Exception {
+  public void testRefid() {
     doTest();
   }
 
-  public void testRefidReference() throws Exception {
+  public void testRefidReference() {
     doTest();
   }
 
-  public void testRefidReferenceInDependieTarget() throws Exception {
+  public void testRefidReferenceInDependieTarget() {
     doTest();
   }
 
-  public void testSingleTarget() throws Exception {
+  public void testSingleTarget() {
     doTest();
   }
 
-  public void testSingleTargetReference() throws Exception {
+  public void testSingleTargetReference() {
     doTest();
   }
 
-  public void testAntCall() throws Exception {
+  public void testAntCall() {
     doTest();
   }
 
-  public void testAntCallReference() throws Exception {
+  public void testAntCallReference() {
     doTest();
   }
 
-  public void testDependsTarget1() throws Exception {
+  public void testDependsTarget1() {
     doTest();
   }
 
-  public void testDependsTarget2() throws Exception {
+  public void testDependsTarget2() {
     doTest();
   }
 
-  public void testDependsTargetReference1() throws Exception {
+  public void testDependsTargetReference1() {
     doTest();
   }
 
-  public void testDependsTargetReference2() throws Exception {
+  public void testDependsTargetReference2() {
     doTest();
   }
 
-  public void testTargetProperties() throws Exception {
+  public void testTargetProperties() {
     doTest();
   }
 
-  public void testTstampProperty() throws Exception {
+  public void testTstampProperty() {
     doTest();
   }
 
-  public void testTstampProperty1() throws Exception {
+  public void testTstampProperty1() {
     doTest();
   }
 
@@ -113,19 +113,19 @@ public class AntRenameTest extends LightCodeInsightTestCase {
   }
   */
 
-  public void testInputProperty() throws Exception {
+  public void testInputProperty() {
     doTest();
   }
 
-  public void testInputProperty1() throws Exception {
+  public void testInputProperty1() {
     doTest();
   }
 
-  public void testRenameByRef() throws Exception {
+  public void testRenameByRef() {
     doTest();
   }
 
-  public void testRenameByDeclaration() throws Exception {
+  public void testRenameByDeclaration() {
     doTest();
   }
 
@@ -135,7 +135,7 @@ public class AntRenameTest extends LightCodeInsightTestCase {
     return PluginPathManager.getPluginHomePath("ant").replace('\\', '/') + "/tests/data/psi/rename/";
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     final String filename = getTestName(true) + ".xml";
     VirtualFile vfile = VirtualFileManager.getInstance().findFileByUrl("file://" + getTestDataPath() + filename);
     String text = FileDocumentManager.getInstance().getDocument(vfile).getText();

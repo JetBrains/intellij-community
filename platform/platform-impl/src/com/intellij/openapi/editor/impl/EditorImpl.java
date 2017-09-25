@@ -135,6 +135,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient, Queryable, Dumpable {
+  public static final int TEXT_ALIGNMENT_LEFT = 0;
+  public static final int TEXT_ALIGNMENT_RIGHT = 1;
+
   private static final int MIN_FONT_SIZE = 8;
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorImpl");
   private static final Key DND_COMMAND_KEY = Key.create("DndCommand");
@@ -227,6 +230,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @MouseSelectionState
   private int myMouseSelectionState;
   @Nullable private FoldRegion myMouseSelectedRegion;
+
+  private int myHorizontalTextAlignment = TEXT_ALIGNMENT_LEFT;
 
   @MagicConstant(intValues = {MOUSE_SELECTION_STATE_NONE, MOUSE_SELECTION_STATE_LINE_SELECTED, MOUSE_SELECTION_STATE_WORD_SELECTED})
   private @interface MouseSelectionState {}
@@ -453,7 +458,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       @Override
       public void caretPositionChanged(CaretEvent e) {
         if (myStickySelection) {
-          int selectionStart = Math.min(myStickySelectionStart, getDocument().getTextLength() - 1);
+          int selectionStart = Math.min(myStickySelectionStart, getDocument().getTextLength());
           mySelectionModel.setSelection(selectionStart, myCaretModel.getVisualPosition(), myCaretModel.getOffset());
         }
 
@@ -819,7 +824,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       caret.moveToOffset(caret.getOffset());
     }
 
-    if (myVirtualFile != null && myProject != null) EditorNotifications.getInstance(myProject).updateNotifications(myVirtualFile);
+    if (myVirtualFile != null && myProject != null) {
+      final EditorNotifications editorNotifications = EditorNotifications.getInstance(myProject);
+      if (editorNotifications != null) {
+        editorNotifications.updateNotifications(myVirtualFile);
+      }
+    }
   }
 
   /**
@@ -1024,6 +1034,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       public void componentResized(@NotNull ComponentEvent e) {
         myMarkupModel.recalcEditorDimensions();
         myMarkupModel.repaint(-1, -1);
+        if (!isRightAligned()) return;
+        updateCaretCursor();
+        myCaretCursor.repaint();
       }
     });
   }
@@ -1622,6 +1635,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     else {
       mySelectionModel.removeSelection();
     }
+  }
+
+  public void setHorizontalTextAlignment(@MagicConstant(intValues = {TEXT_ALIGNMENT_LEFT, TEXT_ALIGNMENT_RIGHT}) int alignment) {
+    myHorizontalTextAlignment = alignment;
+  }
+
+  public boolean isRightAligned() {
+    return myHorizontalTextAlignment == TEXT_ALIGNMENT_RIGHT;
   }
 
   @Override
@@ -3236,7 +3257,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public Rectangle getTextLocation(TextHitInfo offset) {
       Point caret = logicalPositionToXY(getCaretModel().getLogicalPosition());
       Rectangle r = new Rectangle(caret, new Dimension(1, getLineHeight()));
-      Point p = getContentComponent().getLocationOnScreen();
+      Point p = getLocationOnScreen(getContentComponent());
       r.translate(p.x, p.y);
 
       return r;
@@ -3246,7 +3267,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Nullable
     public TextHitInfo getLocationOffset(int x, int y) {
       if (composedText != null) {
-        Point p = getContentComponent().getLocationOnScreen();
+        Point p = getLocationOnScreen(getContentComponent());
         p.x = x - p.x;
         p.y = y - p.y;
         int pos = logicalPositionToOffset(xyToLogicalPosition(p));
@@ -3255,6 +3276,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
       }
       return null;
+    }
+
+    private Point getLocationOnScreen(Component component) {
+      Point location = new Point();
+      SwingUtilities.convertPointToScreen(location, component);
+      if (LOG.isDebugEnabled() && !component.isShowing()) {
+        Class<?> type = component.getClass();
+        Component parent = component.getParent();
+        while (parent != null && !parent.isShowing()) {
+          type = parent.getClass();
+          parent = parent.getParent();
+        }
+        String message = type.getName() + " is not showing";
+        if (parent != null) message += " on visible  " + parent.getClass().getName();
+        LOG.debug(message);
+      }
+      return location;
     }
 
     @Override

@@ -119,7 +119,7 @@ fun resolveModuleAt(name: QualifiedName, directory: PsiDirectory?, context: PyQu
     if (component == null) empty
     else seekers.flatMap {
       val children = ResolveImportUtil.resolveChildren(it, component, context.footholdFile, !context.withMembers,
-                                                       !context.withPlainDirectories, context.withoutStubs)
+                                                       !context.withPlainDirectories, context.withoutStubs, context.withoutForeign)
       PyUtil.filterTopPriorityResults(children.toTypedArray())
     }
   }
@@ -184,7 +184,7 @@ private fun relativeResultsFromSkeletons(name: QualifiedName, context: PyQualifi
         val sdk = PythonSdkType.findPythonSdk(footholdFile) ?: return emptyList()
         val skeletonsVirtualFile = PySdkUtil.findSkeletonsDir(sdk) ?: return emptyList()
         val skeletonsDir = context.psiManager.findDirectory(skeletonsVirtualFile)
-        return resolveModuleAt(absoluteName, skeletonsDir, context)
+        return resolveModuleAt(absoluteName, skeletonsDir, context.copyWithoutForeign())
       }
     }
   }

@@ -67,7 +67,7 @@ public abstract class DirectoryInfo {
 
   /**
    * @return {@code true} if {@code file} located under this directory is located in library sources.
-   * @deprecated use {@link #isInLibrarySource(VirtualFile)} instead, this method doesn't take {@link SyntheticLibrary#getExcludeCondition()} into account
+   * @deprecated use {@link #isInLibrarySource(VirtualFile)} instead, this method doesn't take {@link SyntheticLibrary#getExcludeFileCondition()} into account
    */
   public abstract boolean isInLibrarySource();
 

@@ -19,7 +19,7 @@ package com.intellij.java.codeInsight.daemon.quickFix;import com.intellij.codeIn
  * @author ven
  */
 public class CreateLocalVarFromInstanceofTest extends LightIntentionActionTestCase {
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {

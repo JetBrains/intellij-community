@@ -43,5 +43,7 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.refactoring.typeMigration.inspections.MigrateAssertToMatcherAssertInspection"
                      displayName="Assertion expression can be replaced with 'assertThat' method call"/>
+
+    <java.error.fix errorCode="lambda.variable.must.be.final" implementationClass="com.intellij.refactoring.typeMigration.intentions.ConvertFieldToAtomicIntention$ConvertNonFinalLocalToAtomicFix"/>
   </extensions>
 </idea-plugin>

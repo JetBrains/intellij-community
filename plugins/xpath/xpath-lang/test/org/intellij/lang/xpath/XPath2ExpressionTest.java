@@ -29,99 +29,99 @@ public class XPath2ExpressionTest extends TestBase {
     TestNamespaceContext.install(myFixture.getTestRootDisposable());
   }
 
-  public void testIntegerPlusInteger() throws Throwable {
+  public void testIntegerPlusInteger() {
    assertEquals(INTEGER, doTest(true));
   }
 
-  public void testIntegerPlusDecimal() throws Throwable {
+  public void testIntegerPlusDecimal() {
     assertEquals(DECIMAL, doTest(true));
   }
 
-  public void testIntegerPlusDouble() throws Throwable {
+  public void testIntegerPlusDouble() {
     assertEquals(DOUBLE, doTest(true));
   }
 
-  public void testIntegerIdivInteger() throws Throwable {
+  public void testIntegerIdivInteger() {
     assertEquals(INTEGER, doTest(true));
   }
 
-  public void testIntegerDivInteger() throws Throwable {
+  public void testIntegerDivInteger() {
     assertEquals(DECIMAL, doTest(true));
   }
 
-  public void testDoubleDivInteger() throws Throwable {
+  public void testDoubleDivInteger() {
     assertEquals(DOUBLE, doTest(true));
   }
 
-  public void testDatePlusYmd() throws Throwable {
+  public void testDatePlusYmd() {
     assertEquals(DATE, doTest(true));
   }
 
-  public void testDatePlusDtd() throws Throwable {
+  public void testDatePlusDtd() {
     assertEquals(DATE, doTest(true));
   }
 
-  public void testTimePlusDtd() throws Throwable {
+  public void testTimePlusDtd() {
     assertEquals(TIME, doTest(true));
   }
 
-  public void testDateTimePlusYmd() throws Throwable {
+  public void testDateTimePlusYmd() {
     assertEquals(DATETIME, doTest(true));
   }
 
-  public void testDateTimePlusDtd() throws Throwable {
+  public void testDateTimePlusDtd() {
     assertEquals(DATETIME, doTest(true));
   }
 
-  public void testYmdPlusYmd() throws Throwable {
+  public void testYmdPlusYmd() {
     assertEquals(YEARMONTHDURATION, doTest(true));
   }
 
-  public void testDtdPlusDtd() throws Throwable {
+  public void testDtdPlusDtd() {
     assertEquals(DAYTIMEDURATION, doTest(true));
   }
 
-  public void testDoubleMinusInteger() throws Throwable {
+  public void testDoubleMinusInteger() {
     assertEquals(DOUBLE, doTest(true));
   }
 
-  public void testDateMinusDate() throws Throwable {
+  public void testDateMinusDate() {
     assertEquals(DAYTIMEDURATION, doTest(true));
   }
 
-  public void testDateMinusYmd() throws Throwable {
+  public void testDateMinusYmd() {
     assertEquals(DATE, doTest(false));
   }
 
-  public void testDateMinusDtd() throws Throwable {
+  public void testDateMinusDtd() {
     assertEquals(DATE, doTest(false));
   }
 
-  public void testTimeMinusTime() throws Throwable {
+  public void testTimeMinusTime() {
     assertEquals(DAYTIMEDURATION, doTest(true));
   }
 
-  public void testTimeMinusDtd() throws Throwable {
+  public void testTimeMinusDtd() {
     assertEquals(TIME, doTest(false));
   }
 
-  public void testYmdMinusYmd() throws Throwable {
+  public void testYmdMinusYmd() {
     assertEquals(YEARMONTHDURATION, doTest(true));
   }
 
-  public void testDoubleMultInteger() throws Throwable {
+  public void testDoubleMultInteger() {
     assertEquals(DOUBLE, doTest(true));
   }
 
-  public void testYmdMultInteger() throws Throwable {
+  public void testYmdMultInteger() {
     assertEquals(YEARMONTHDURATION, doTest(true));
   }
 
-  public void testYmdMultDecimal() throws Throwable {
+  public void testYmdMultDecimal() {
     assertEquals(YEARMONTHDURATION, doTest(true));
   }
 
-  protected XPathType doTest(boolean symmetric) throws Throwable {
+  protected XPathType doTest(boolean symmetric) {
     myFixture.configureByFile(getTestFileName() + ".xpath2");
 
     final XPathExpression expression = getExpression();
@@ -148,7 +148,7 @@ public class XPath2ExpressionTest extends TestBase {
     return type;
   }
 
-  private XPathExpression getExpression() throws NoSuchMethodException {
+  private XPathExpression getExpression() {
     final XPathFile file = (XPathFile)myFixture.getFile();
     final XPathExpression expression = file.getExpression();
     assertNotNull(expression);

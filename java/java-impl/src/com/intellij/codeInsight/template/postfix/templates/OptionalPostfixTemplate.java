@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
+import com.intellij.codeInspection.dataFlow.Nullness;
+import com.intellij.codeInspection.dataFlow.NullnessUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiPrimitiveType;
@@ -35,23 +37,21 @@ public class OptionalPostfixTemplate extends StringBasedPostfixTemplate {
   @Override
   public String getTemplateString(@NotNull PsiElement element) {
     String className = "Optional";
-    String methodName = "ofNullable";
-    
-    if (element instanceof PsiExpression) {
-      PsiType type = ((PsiExpression)element).getType();
-      if (type instanceof PsiPrimitiveType) {
-        if (PsiType.INT.equals(type)) {
-          className = "OptionalInt";
-        }
-        else if (PsiType.DOUBLE.equals(type)) {
-          className = "OptionalDouble";
-        }
-        else if (PsiType.LONG.equals(type)) {
-          className = "OptionalLong";
-        }
-        methodName = "of";
+
+    PsiType type = ((PsiExpression)element).getType();
+    if (type instanceof PsiPrimitiveType) {
+      if (PsiType.INT.equals(type)) {
+        className = "OptionalInt";
+      }
+      else if (PsiType.DOUBLE.equals(type)) {
+        className = "OptionalDouble";
+      }
+      else if (PsiType.LONG.equals(type)) {
+        className = "OptionalLong";
       }
     }
+
+    String methodName = Nullness.NOT_NULL.equals(NullnessUtil.getExpressionNullness((PsiExpression)element)) ? "of" : "ofNullable";
     return "java.util." + className + "." + methodName + "($expr$)";
   }
 }

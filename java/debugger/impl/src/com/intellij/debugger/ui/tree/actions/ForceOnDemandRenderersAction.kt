@@ -40,6 +40,7 @@ class ForceOnDemandRenderersAction : ToggleAction(), DumbAware {
   }
 
   override fun update(e: AnActionEvent) {
+    super.update(e)
     e.presentation.isEnabledAndVisible = DebuggerUtilsEx.isInJavaSession(e)
   }
 

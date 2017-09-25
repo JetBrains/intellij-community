@@ -76,7 +76,7 @@ public class ConfigurationsTest {
   }
 
   @AfterMethod
-  public void tearDown() throws Exception {
+  public void tearDown() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         myProjectFixture.tearDown();
@@ -101,7 +101,7 @@ public class ConfigurationsTest {
     renameClass.setSearchInComments(false);
     renameClass.setSearchInNonJavaFiles(false);
     new WriteCommandAction(project) {
-      protected void run(@NotNull final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) {
         renameClass.run();
       }
     }.execute();
@@ -113,7 +113,7 @@ public class ConfigurationsTest {
     renameNotATestMethod.setSearchInComments(false);
     renameNotATestMethod.setSearchInNonJavaFiles(false);
     new WriteCommandAction(project) {
-      protected void run(@NotNull final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) {
         renameNotATestMethod.run();
       }
     }.execute();
@@ -137,7 +137,7 @@ public class ConfigurationsTest {
     renameMethod.setSearchInComments(false);
     renameMethod.setSearchInNonJavaFiles(false);
     new WriteCommandAction(project) {
-      protected void run(@NotNull final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) {
         renameMethod.run();
       }
     }.execute();
@@ -150,7 +150,7 @@ public class ConfigurationsTest {
     renameNotATestMethod1.setSearchInComments(false);
     renameNotATestMethod1.setSearchInNonJavaFiles(false);
     new WriteCommandAction(project) {
-      protected void run(@NotNull final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) {
         renameNotATestMethod1.run();
       }
     }.execute();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,15 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Collection;
+import java.util.List;
 
 public class DuplicateBooleanBranchInspection extends BaseInspection {
 
@@ -65,7 +65,7 @@ public class DuplicateBooleanBranchInspection extends BaseInspection {
           return;
         }
       }
-      final Set<PsiExpression> conditions = new HashSet<>();
+      final List<PsiExpression> conditions = new SmartList<>();
       collectConditions(expression, conditions, tokenType);
       final int numConditions = conditions.size();
       if (numConditions < 2) {
@@ -73,7 +73,6 @@ public class DuplicateBooleanBranchInspection extends BaseInspection {
       }
       final PsiExpression[] conditionArray = conditions.toArray(new PsiExpression[numConditions]);
       final boolean[] matched = new boolean[conditionArray.length];
-      Arrays.fill(matched, false);
       for (int i = 0; i < conditionArray.length; i++) {
         if (matched[i]) {
           continue;
@@ -97,7 +96,7 @@ public class DuplicateBooleanBranchInspection extends BaseInspection {
       }
     }
 
-    private static void collectConditions(PsiExpression condition, Set<PsiExpression> conditions, IElementType tokenType) {
+    private static void collectConditions(PsiExpression condition, Collection<PsiExpression> conditions, IElementType tokenType) {
       if (condition == null) {
         return;
       }

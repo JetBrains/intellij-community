@@ -24,7 +24,6 @@ import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * @author max
@@ -49,14 +48,14 @@ public class SourceRootAddedAsLibraryRootTest extends PsiTestCase {
     ModuleRootModificationUtil.addModuleLibrary(myModule, myDir.getUrl());
   }
 
-  public void testBug() throws Exception {
+  public void testBug() {
     touchFileSync();
     PsiFile psiFile = myPsiManager.findFile(myVFile);
     psiFile.getText();
     changeRoots();
   }
 
-  private void touchFileSync() throws IOException {
+  private void touchFileSync() {
     myVFile = createChildData(myDir, "A.java");
     setFileText(myVFile, "package p; public class A{ public void foo(); }");
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();

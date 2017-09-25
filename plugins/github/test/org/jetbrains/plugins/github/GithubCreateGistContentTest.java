@@ -32,14 +32,14 @@ public class GithubCreateGistContentTest extends GithubCreateGistContentTestBase
   protected Editor myEditor;
 
   @Override
-  protected void afterTest() throws Exception {
+  protected void afterTest() {
     if (myEditor != null) {
       EditorFactory.getInstance().releaseEditor(myEditor);
       myEditor = null;
     }
   }
 
-  public void testCreateFromFile() throws Throwable {
+  public void testCreateFromFile() {
     List<FileContent> expected = new ArrayList<>();
     expected.add(new FileContent("file.txt", "file.txt content"));
 
@@ -51,7 +51,7 @@ public class GithubCreateGistContentTest extends GithubCreateGistContentTestBase
     checkEquals(expected, actual);
   }
 
-  public void testCreateFromDirectory() throws Throwable {
+  public void testCreateFromDirectory() {
     List<FileContent> expected = new ArrayList<>();
     expected.add(new FileContent("folder_file1", "file1 content"));
     expected.add(new FileContent("folder_file2", "file2 content"));
@@ -65,7 +65,7 @@ public class GithubCreateGistContentTest extends GithubCreateGistContentTestBase
     checkEquals(expected, actual);
   }
 
-  public void testCreateFromEmptyDirectory() throws Throwable {
+  public void testCreateFromEmptyDirectory() {
     List<FileContent> expected = new ArrayList<>();
 
     VirtualFile file = myProjectRoot.findFileByRelativePath("folder/empty_folder");
@@ -76,7 +76,7 @@ public class GithubCreateGistContentTest extends GithubCreateGistContentTestBase
     checkEquals(expected, actual);
   }
 
-  public void testCreateFromEmptyFile() throws Throwable {
+  public void testCreateFromEmptyFile() {
     List<FileContent> expected = new ArrayList<>();
 
     VirtualFile file = myProjectRoot.findFileByRelativePath("folder/empty_file");
@@ -87,7 +87,7 @@ public class GithubCreateGistContentTest extends GithubCreateGistContentTestBase
     checkEquals(expected, actual);
   }
 
-  public void testCreateFromFiles() throws Throwable {
+  public void testCreateFromFiles() {
     List<FileContent> expected = new ArrayList<>();
     expected.add(new FileContent("file.txt", "file.txt content"));
     expected.add(new FileContent("file2", "file2 content"));
@@ -106,7 +106,7 @@ public class GithubCreateGistContentTest extends GithubCreateGistContentTestBase
     checkEquals(expected, actual);
   }
 
-  public void testCreateFromEmptyFiles() throws Throwable {
+  public void testCreateFromEmptyFiles() {
     List<FileContent> expected = new ArrayList<>();
 
     VirtualFile[] files = VirtualFile.EMPTY_ARRAY;
@@ -116,7 +116,7 @@ public class GithubCreateGistContentTest extends GithubCreateGistContentTestBase
     checkEquals(expected, actual);
   }
 
-  public void testCreateFromEditor() throws Throwable {
+  public void testCreateFromEditor() {
     VirtualFile file = myProjectRoot.findFileByRelativePath("file.txt");
     assertNotNull(file);
 
@@ -134,7 +134,7 @@ public class GithubCreateGistContentTest extends GithubCreateGistContentTestBase
     checkEquals(expected, actual);
   }
 
-  public void testCreateFromEditorWithoutFile() throws Throwable {
+  public void testCreateFromEditorWithoutFile() {
     VirtualFile file = myProjectRoot.findFileByRelativePath("file.txt");
     assertNotNull(file);
 

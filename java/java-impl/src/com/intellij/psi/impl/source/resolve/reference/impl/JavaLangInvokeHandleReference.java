@@ -63,27 +63,27 @@ public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralEx
       final String type = getMemberType(myElement);
 
       if (type != null) {
-        final PsiClass psiClass = getReflectiveClass(myContext);
-        if (psiClass != null) {
+        final ReflectiveClass ownerClass = getReflectiveClass(myContext);
+        if (ownerClass != null) {
           switch (type) {
             case FIND_GETTER:
             case FIND_SETTER:
-              return resolveField(name, psiClass, JavaLangInvokeHandleReference::isNonStaticField);
+              return resolveField(name, ownerClass, JavaLangInvokeHandleReference::isNonStaticField);
 
             case FIND_STATIC_GETTER:
             case FIND_STATIC_SETTER:
-              return resolveField(name, psiClass, JavaLangInvokeHandleReference::isStaticField);
+              return resolveField(name, ownerClass, JavaLangInvokeHandleReference::isStaticField);
 
             case FIND_VIRTUAL:
-              return resolveMethod(name, psiClass, JavaLangInvokeHandleReference::isNonStaticMethod);
+              return resolveMethod(name, ownerClass, JavaLangInvokeHandleReference::isNonStaticMethod);
             case FIND_STATIC:
-              return resolveMethod(name, psiClass, JavaLangInvokeHandleReference::isStaticMethod);
+              return resolveMethod(name, ownerClass, JavaLangInvokeHandleReference::isStaticMethod);
 
             case FIND_VAR_HANDLE:
-              return resolveField(name, psiClass, JavaLangInvokeHandleReference::isNonStaticField);
+              return resolveField(name, ownerClass, JavaLangInvokeHandleReference::isNonStaticField);
 
             case FIND_STATIC_VAR_HANDLE:
-              return resolveField(name, psiClass, JavaLangInvokeHandleReference::isStaticField);
+              return resolveField(name, ownerClass, JavaLangInvokeHandleReference::isStaticField);
           }
         }
       }
@@ -91,13 +91,13 @@ public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralEx
     return null;
   }
 
-  private static PsiElement resolveField(@NotNull String name, @NotNull PsiClass psiClass, Condition<? super PsiField> filter) {
-    final PsiField field = psiClass.findFieldByName(name, true);
+  private static PsiElement resolveField(@NotNull String name, @NotNull ReflectiveClass ownerClass, Condition<? super PsiField> filter) {
+    final PsiField field = ownerClass.getPsiClass().findFieldByName(name, true);
     return field != null && filter.value(field) ? field : null;
   }
 
-  private PsiElement resolveMethod(@NotNull String name, @NotNull PsiClass psiClass, Condition<? super PsiMethod> filter) {
-    PsiMethod[] methods = psiClass.findMethodsByName(name, true);
+  private PsiElement resolveMethod(@NotNull String name, @NotNull ReflectiveClass ownerClass, Condition<? super PsiMethod> filter) {
+    PsiMethod[] methods = ownerClass.getPsiClass().findMethodsByName(name, true);
     if (methods.length != 0) {
       methods = ContainerUtil.filter(methods, filter).toArray(PsiMethod.EMPTY_ARRAY);
       if (methods.length > 1) {
@@ -125,25 +125,25 @@ public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralEx
       final String type = getMemberType(myElement);
 
       if (type != null) {
-        final PsiClass psiClass = getReflectiveClass(myContext);
-        if (psiClass != null) {
+        final ReflectiveClass ownerClass = getReflectiveClass(myContext);
+        if (ownerClass != null) {
           switch (type) {
             case FIND_GETTER:
             case FIND_SETTER:
-              return lookupFields(psiClass, JavaLangInvokeHandleReference::isNonStaticField);
+              return lookupFields(ownerClass, JavaLangInvokeHandleReference::isNonStaticField);
             case FIND_STATIC_GETTER:
             case FIND_STATIC_SETTER:
-              return lookupFields(psiClass, JavaLangInvokeHandleReference::isStaticField);
+              return lookupFields(ownerClass, JavaLangInvokeHandleReference::isStaticField);
 
             case FIND_VIRTUAL:
-              return lookupMethods(psiClass, JavaLangInvokeHandleReference::isNonStaticMethod);
+              return lookupMethods(ownerClass, JavaLangInvokeHandleReference::isNonStaticMethod);
             case FIND_STATIC:
-              return lookupMethods(psiClass, JavaLangInvokeHandleReference::isStaticMethod);
+              return lookupMethods(ownerClass, JavaLangInvokeHandleReference::isStaticMethod);
 
             case FIND_VAR_HANDLE:
-              return lookupFields(psiClass, JavaLangInvokeHandleReference::isNonStaticField);
+              return lookupFields(ownerClass, JavaLangInvokeHandleReference::isNonStaticField);
             case FIND_STATIC_VAR_HANDLE:
-              return lookupFields(psiClass, JavaLangInvokeHandleReference::isStaticField);
+              return lookupFields(ownerClass, JavaLangInvokeHandleReference::isStaticField);
           }
         }
       }
@@ -151,8 +151,8 @@ public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralEx
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
-  private Object[] lookupMethods(@NotNull PsiClass psiClass, Predicate<? super PsiMethod> filter) {
-    return psiClass.getVisibleSignatures()
+  private Object[] lookupMethods(@NotNull ReflectiveClass ownerClass, Predicate<? super PsiMethod> filter) {
+    return ownerClass.getPsiClass().getVisibleSignatures()
       .stream()
       .map(MethodSignatureBackedByPsiMethod::getMethod)
       .filter(filter)
@@ -163,11 +163,11 @@ public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralEx
       .toArray();
   }
 
-  private Object[] lookupFields(@NotNull PsiClass psiClass, Predicate<? super PsiField> filter) {
+  private Object[] lookupFields(@NotNull ReflectiveClass ownerClass, Predicate<? super PsiField> filter) {
     final Set<String> uniqueNames = new THashSet<>();
-    return Arrays.stream(psiClass.getAllFields())
+    return Arrays.stream(ownerClass.getPsiClass().getAllFields())
       .filter(field -> field != null &&
-                       (field.getContainingClass() == psiClass || !field.hasModifierProperty(PsiModifier.PRIVATE)) &&
+                       (field.getContainingClass() == ownerClass.getPsiClass() || !field.hasModifierProperty(PsiModifier.PRIVATE)) &&
                        field.getName() != null && uniqueNames.add(field.getName()))
       .filter(filter)
       .sorted(Comparator.comparing((PsiField field) -> isPublic(field) ? 0 : 1).thenComparing(PsiField::getName))

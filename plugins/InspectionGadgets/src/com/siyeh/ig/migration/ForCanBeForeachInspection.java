@@ -304,7 +304,7 @@ public class ForCanBeForeachInspection extends ForCanBeForeachInspectionBase {
         final Project project = forStatement.getProject();
         final CodeStyleSettings codeStyleSettings =
           CodeStyleSettingsManager.getSettings(project);
-        if (codeStyleSettings.GENERATE_FINAL_LOCALS) {
+        if (codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
           finalString = "final ";
         }
         else {
@@ -409,7 +409,7 @@ public class ForCanBeForeachInspection extends ForCanBeForeachInspectionBase {
           contentVariableName = createNewVariableName(forStatement, componentType, collectionName);
           final Project project = forStatement.getProject();
           final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
-          if (codeStyleSettings.GENERATE_FINAL_LOCALS) {
+          if (codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
             finalString = "final ";
           }
           else {
@@ -433,7 +433,7 @@ public class ForCanBeForeachInspection extends ForCanBeForeachInspectionBase {
         contentVariableName = createNewVariableName(forStatement, componentType, collectionName);
         final Project project = forStatement.getProject();
         final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
-        if (codeStyleSettings.GENERATE_FINAL_LOCALS) {
+        if (codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
           finalString = "final ";
         }
         else {

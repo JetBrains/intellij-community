@@ -171,6 +171,7 @@ public class XmlUtil {
     XHTML4_SCHEMA_LOCATION = VfsUtilCore.urlToPath(VfsUtilCore.toIdeaUrl(FileUtil.unquote(xhtml4SchemaLocationUrl.toExternalForm()), false));
   }
 
+  @NotNull
   public static String getSchemaLocation(XmlTag tag, final String namespace) {
     while (tag != null) {
       String schemaLocation = tag.getAttributeValue(SCHEMA_LOCATION_ATT, XML_SCHEMA_INSTANCE_URI);
@@ -813,7 +814,7 @@ public class XmlUtil {
       }
     }
     else {
-      final XmlAttribute[] attributes = tag.getAttributes();
+      final XmlAttribute[] attributes = tag.getAttributes().clone();
       ContainerUtil.sort(list);
       Arrays.sort(attributes, Comparator.comparing(XmlAttribute::getName));
 

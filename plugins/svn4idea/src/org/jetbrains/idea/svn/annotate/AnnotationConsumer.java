@@ -25,5 +25,5 @@ import org.tmatesoft.svn.core.SVNException;
  */
 public interface AnnotationConsumer {
 
-  void consume(int lineNumber, @NotNull CommitInfo info, @Nullable CommitInfo mergeInfo) throws SVNException;
+  void consume(int lineNumber, @NotNull CommitInfo info, @Nullable CommitInfo mergeInfo);
 }

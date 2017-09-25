@@ -16,7 +16,6 @@
 package com.intellij.execution.dashboard;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.StopAction;
 import com.intellij.execution.dashboard.tree.*;
 import com.intellij.execution.runners.FakeRerunAction;
@@ -44,7 +43,6 @@ import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.EditableModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +51,6 @@ import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
@@ -75,6 +72,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   private static final String MESSAGE_CARD = "message";
   private static final String CONTENT_CARD = "content";
 
+  private final Splitter mySplitter;
   private final JPanel myTreePanel;
   private final Tree myTree;
   private final CardLayout myDetailsPanelLayout;
@@ -82,12 +80,12 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   private final JBPanelWithEmptyText myMessagePanel;
   private final JComponent myToolbar;
 
-  private final DefaultTreeModel myTreeModel;
+  private final RunDashboardTreeModel myTreeModel;
   private AbstractTreeBuilder myBuilder;
   private RunDashboardAnimator myAnimator;
   private AbstractTreeNode<?> myLastSelection;
   private final Set<Object> myCollapsedTreeNodeValues = new HashSet<>();
-  private final List<DashboardGrouper> myGroupers;
+  private final List<RunDashboardGrouper> myGroupers;
 
   @NotNull private final ContentManager myContentManager;
   @NotNull private final ContentManagerListener myContentManagerListener;
@@ -98,7 +96,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   private final DefaultActionGroup myDashboardContentActions = new DefaultActionGroup();
   private final Map<Content, List<AnAction>> myContentActions = new WeakHashMap<>();
 
-  public RunDashboardContent(@NotNull Project project, @NotNull ContentManager contentManager, @NotNull List<DashboardGrouper> groupers) {
+  public RunDashboardContent(@NotNull Project project, @NotNull ContentManager contentManager, @NotNull List<RunDashboardGrouper> groupers) {
     super(new BorderLayout());
     myProject = project;
     myGroupers = groupers;
@@ -109,24 +107,28 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     myTree.setRootVisible(false);
 
     myTree.setShowsRootHandles(true);
-    myTree.setCellRenderer(new NodeRenderer());
     myTree.setLineStyleAngled();
 
-    RowsDnDSupport.install(myTree, (EditableModel)myTreeModel);
+    myTree.setCellRenderer(new RunDashboardTreeCellRenderer());
+    RunDashboardTreeMouseListener mouseListener = new RunDashboardTreeMouseListener(myTree);
+    mouseListener.installOn(myTree);
+    RowsDnDSupport.install(myTree, myTreeModel);
 
     myToolbar = createToolbar();
     add(myToolbar, BorderLayout.WEST);
 
-    Splitter splitter = new OnePixelSplitter(false, 0.3f);
+    final RunDashboardManager dashboardManager = RunDashboardManager.getInstance(myProject);
+
+    mySplitter = new OnePixelSplitter(false, dashboardManager.getContentProportion());
     myTreePanel = new JPanel(new BorderLayout());
     myTreePanel.add(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT), BorderLayout.CENTER);
-    splitter.setFirstComponent(myTreePanel);
+    mySplitter.setFirstComponent(myTreePanel);
     myDetailsPanelLayout = new CardLayout();
     myDetailsPanel = new JPanel(myDetailsPanelLayout);
     myMessagePanel = new JBPanelWithEmptyText().withEmptyText(ExecutionBundle.message("run.dashboard.empty.selection.message"));
     myDetailsPanel.add(MESSAGE_CARD, myMessagePanel);
-    splitter.setSecondComponent(myDetailsPanel);
-    add(splitter, BorderLayout.CENTER);
+    mySplitter.setSecondComponent(myDetailsPanel);
+    add(mySplitter, BorderLayout.CENTER);
 
     myContentManager = contentManager;
     myContentManagerListener = new ContentManagerAdapter() {
@@ -162,9 +164,9 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
           return;
         }
         contentAdded(event);
-        myBuilder.queueUpdate().doWhenDone(() -> myBuilder.accept(DashboardNode.class, new TreeVisitor<DashboardNode>() {
+        myBuilder.queueUpdate().doWhenDone(() -> myBuilder.accept(RunDashboardNode.class, new TreeVisitor<RunDashboardNode>() {
           @Override
-          public boolean visit(@NotNull DashboardNode node) {
+          public boolean visit(@NotNull RunDashboardNode node) {
             if (node.getContent() == event.getContent()) {
               myBuilder.select(node);
             }
@@ -229,12 +231,11 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent event) {
-        if (myLastSelection instanceof DashboardRunConfigurationNode && myLastSelection.getChildren().isEmpty()) {
-          DashboardRunConfigurationNode node = (DashboardRunConfigurationNode)myLastSelection;
-          RunnerAndConfigurationSettings settings = node.getConfigurationSettings();
-          RunDashboardContributor contributor = RunDashboardManager.getInstance(myProject).getContributor(settings.getType());
+        if (myLastSelection instanceof RunDashboardRunConfigurationNode && myLastSelection.getChildren().isEmpty()) {
+          RunDashboardRunConfigurationNode node = (RunDashboardRunConfigurationNode)myLastSelection;
+          RunDashboardContributor contributor = node.getContributor();
           if (contributor != null) {
-            return contributor.handleDoubleClick(settings.getConfiguration());
+            return contributor.handleDoubleClick(node.getConfigurationSettings().getConfiguration());
           }
         }
         return false;
@@ -250,7 +251,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
 
     new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true);
 
-    setTreeVisible(RunDashboardManager.getInstance(myProject).isShowConfigurations());
+    setTreeVisible(dashboardManager.isShowConfigurations());
   }
 
   private void setTreeVisible(boolean visible) {
@@ -291,8 +292,8 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     }
 
     myLastSelection = node;
-    if (node instanceof DashboardNode) {
-      Content content = ((DashboardNode)node).getContent();
+    if (node instanceof RunDashboardNode) {
+      Content content = ((RunDashboardNode)node).getContent();
       if (content != null && content.getManager() != myContentManager) {
         content = null;
       }
@@ -306,7 +307,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
         showContentPanel();
         return;
       }
-      if (node instanceof DashboardRunConfigurationNode) {
+      if (node instanceof RunDashboardRunConfigurationNode) {
         showMessagePanel(ExecutionBundle.message("run.dashboard.not.started.configuration.message"));
         return;
       }
@@ -427,10 +428,14 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     return myAnimator;
   }
 
-  private class GroupAction extends ToggleAction implements DumbAware {
-    private final DashboardGrouper myGrouper;
+  public float getContentProportion() {
+    return mySplitter.getProportion();
+  }
 
-    GroupAction(DashboardGrouper grouper) {
+  private class GroupAction extends ToggleAction implements DumbAware {
+    private final RunDashboardGrouper myGrouper;
+
+    GroupAction(RunDashboardGrouper grouper) {
       super();
       myGrouper = grouper;
     }
@@ -470,8 +475,8 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
       super.update(e);
       boolean enabled = true;
       if (isSelected(e)) {
-        if (myLastSelection instanceof DashboardNode) {
-          Content content = ((DashboardNode)myLastSelection).getContent();
+        if (myLastSelection instanceof RunDashboardNode) {
+          Content content = ((RunDashboardNode)myLastSelection).getContent();
           enabled = content != null && content.getManager() == myContentManager;
         }
         else {

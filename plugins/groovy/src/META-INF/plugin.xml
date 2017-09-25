@@ -170,6 +170,8 @@
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall"
                     implementationClass="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrDescriptorReturnTypeCalculator"/>
 
+    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression"
+                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultNewExpressionTypeCalculator" order="last"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap" order="last"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultListOrMapTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty" order="last"
@@ -228,11 +230,14 @@
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrBooleanTypeConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrPrimitiveCastConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrGenericTypeConverter"/>
+    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrClosureTypeConverter"/>
+    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrListToArrayTypeConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrClassConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrNullVoidConverter"/>
 
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrCharConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrNumberConverter"/>
+    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrBigDecimalConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrStringConverter"/>
 
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrEnumConverter"/>
@@ -337,8 +342,6 @@
     <codeInsight.parameterNameHints
         language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GroovyInlayParameterHintsProvider"
     />
-    <lang.jvm.actions.jvmElementActionsFactory language="Groovy"
-                                               implementationClass="com.intellij.codeInsight.intention.impl.JavaElementActionsFactoryImpl"/>
 
     <fileTypeFactory implementation="org.jetbrains.plugins.groovy.GroovyFileTypeLoader"/>
     <fileTypeFactory implementation="org.jetbrains.plugins.groovy.dgm.DGMFileTypeFactory"/>
@@ -1710,6 +1713,14 @@
             class="org.jetbrains.plugins.groovy.actions.ConvertToJavaAction"
             text="Convert to Java"
             description="Convert Groovy files to Java">
+      <add-to-group group-id="RefactoringMenu"/>
+    </action>
+
+    <action id="ConvertToCompileStatic"
+            class="org.jetbrains.plugins.groovy.actions.ConvertToStaticAction"
+            text="Convert to @CompileStatic"
+            description="Convert Groovy files to @CompileStatic"
+            internal="true">
       <add-to-group group-id="RefactoringMenu"/>
     </action>
 

@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
@@ -132,7 +133,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   }
 
   @Override
-  public void apply(CodeStyleSettings settings) {
+  public void apply(CodeStyleSettings settings) throws ConfigurationException {
     settings.HTML_KEEP_BLANK_LINES = getIntValue(myKeepBlankLines);
     settings.HTML_ATTRIBUTE_WRAP = ourWrappings[myWrapAttributes.getSelectedIndex()];
     settings.HTML_TEXT_WRAP = myWrapText.isSelected() ? CommonCodeStyleSettings.WRAP_AS_NEEDED : CommonCodeStyleSettings.DO_NOT_WRAP;

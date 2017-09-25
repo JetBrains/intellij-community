@@ -22,12 +22,16 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.*;
@@ -36,16 +40,14 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.UriUtil;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntHashSet;
+import gnu.trove.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +63,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class PersistentFSImpl extends PersistentFS implements ApplicationComponent, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.PersistentFS");
 
-  private final Map<String, VirtualFileSystemEntry> myRoots = ContainerUtil.newConcurrentMap(10, 0.4f, JobSchedulerImpl.CORES_COUNT, FileUtil.PATH_HASHING_STRATEGY);
+  private final Map<String, VirtualFileSystemEntry> myRoots =
+    ConcurrentCollectionFactory.createMap(10, 0.4f, JobSchedulerImpl.CORES_COUNT, FileUtil.PATH_HASHING_STRATEGY);
   private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myRootsById = ContainerUtil.createConcurrentIntObjectMap(10, 0.4f, JobSchedulerImpl.CORES_COUNT);
 
   // FS roots must be in this map too. findFileById() relies on this.
@@ -440,6 +443,13 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     final VirtualFile child = parent.findChild(file);
     if (child == null) {
       throw new IOException("Cannot create child file '" + file + "' at " + parent.getPath());
+    }
+    if (child.getCharset().equals(CharsetToolkit.UTF8_CHARSET)) {
+      Project project = ProjectLocator.getInstance().guessProjectForFile(child);
+      EncodingManager encodingManager = project == null ? EncodingManager.getInstance() : EncodingProjectManager.getInstance(project);
+      if (encodingManager.shouldAddBOMForNewUtf8File()) {
+        child.setBOM(CharsetToolkit.UTF8_BOM);
+      }
     }
     return child;
   }
@@ -855,12 +865,11 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
     int startIndex = 0;
     List<Runnable> applyEvents = new ArrayList<>(events.size());
-    List<VFileEvent> validated = new ArrayList<>(events.size());
     Set<String> files = new THashSet<>(events.size());
     Set<String> middleDirs = new THashSet<>(events.size());
     while (startIndex != events.size()) {
       applyEvents.clear();
-      validated.clear();
+      List<VFileEvent> validated = new ArrayList<>(events.size() - startIndex);
       files.clear();
       middleDirs.clear();
       startIndex = groupAndValidate(events, startIndex, applyEvents, validated, files, middleDirs);
@@ -936,7 +945,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       }
       parent.createAndAddChildren(childrenAdded);
       if (ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest()) {
-        long count = Arrays.stream(parentChildrenIds.toArray()).mapToObj(this::findFileById).map(VirtualFile::getName).distinct().count();
+        long count = Arrays.stream(parentChildrenIds.toArray()).mapToObj(this::findFileById).filter(Objects::nonNull).map(VirtualFile::getName).distinct().count();
         assert count == parentChildrenIds.size();
       }
       FSRecords.updateList(parentId, parentChildrenIds.toArray());

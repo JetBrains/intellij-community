@@ -42,7 +42,6 @@ public class Main {
   @Test
   fun testProjectCreate() {
 
-
     welcomeFrame {
       actionLink("Create New Project").click()
       dialog("New Project") {
@@ -56,10 +55,8 @@ public class Main {
       }
     }
     ideFrame {
-      toolwindow(id = "Project") {
-        projectView {
-          path(project.name, "src", "com.company", "Main").doubleClick()
-        }
+      projectView {
+        path(project.name, "src", "com.company", "Main").doubleClick()
       }
       editor {
         //wait until current file has appeared in current editor and set focus to editor

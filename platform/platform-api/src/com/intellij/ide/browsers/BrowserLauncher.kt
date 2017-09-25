@@ -45,9 +45,18 @@ abstract class BrowserLauncher {
 
   abstract fun browse(url: String, browser: WebBrowser? = null, project: Project? = null)
 
+  fun browseUsingPath(url: String?,
+                      browserPath: String? = null,
+                      browser: WebBrowser? = null,
+                      project: Project? = null,
+                      additionalParameters: Array<String> = ArrayUtil.EMPTY_STRING_ARRAY): Boolean {
+    return browseUsingPath(url, browserPath, browser, project, false, additionalParameters)
+  }
+
   abstract fun browseUsingPath(url: String?,
                                browserPath: String? = null,
                                browser: WebBrowser? = null,
                                project: Project? = null,
+                               openInNewWindow: Boolean = false,
                                additionalParameters: Array<String> = ArrayUtil.EMPTY_STRING_ARRAY): Boolean
 }

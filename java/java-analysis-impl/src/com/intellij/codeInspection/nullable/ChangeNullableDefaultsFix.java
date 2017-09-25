@@ -27,7 +27,7 @@ class ChangeNullableDefaultsFix implements LocalQuickFix {
   private final String myNotNullName;
   private final String myNullableName;
 
-  public ChangeNullableDefaultsFix(PsiAnnotation notNull, PsiAnnotation nullable, NullableNotNullManager manager) {
+  ChangeNullableDefaultsFix(PsiAnnotation notNull, PsiAnnotation nullable, NullableNotNullManager manager) {
     myNotNullName = notNull != null ? notNull.getQualifiedName() : null;
     myNullableName = nullable != null ? nullable.getQualifiedName() : null;
     myManager = manager;

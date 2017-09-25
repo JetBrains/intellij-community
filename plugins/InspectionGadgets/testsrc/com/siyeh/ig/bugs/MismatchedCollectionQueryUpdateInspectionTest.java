@@ -50,7 +50,7 @@ public class MismatchedCollectionQueryUpdateInspectionTest extends LightInspecti
     PlatformTestUtil.registerExtension(Extensions.getRootArea(), ImplicitUsageProvider.EP_NAME, TEST_PROVIDER, myFixture.getTestRootDisposable());
   }
 
-  public void testMismatchedCollectionQueryUpdate() throws Exception {
+  public void testMismatchedCollectionQueryUpdate() {
     doTest();
   }
 

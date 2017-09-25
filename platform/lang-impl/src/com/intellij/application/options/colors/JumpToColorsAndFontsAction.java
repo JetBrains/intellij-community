@@ -36,7 +36,7 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
-import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider;
 import com.intellij.openapi.options.colors.ColorSettingsPages;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -85,12 +85,13 @@ public class JumpToColorsAndFontsAction extends DumbAwareAction {
     Project project = e.getData(CommonDataKeys.PROJECT);
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (project == null || editor == null) return;
-    Map<TextAttributesKey, Pair<ColorSettingsPage, AttributesDescriptor>> keyMap = ContainerUtil.newHashMap();
+    Map<TextAttributesKey, Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor>> keyMap = ContainerUtil.newHashMap();
     Processor<RangeHighlighterEx> processor = r -> {
       Object tt = r.getErrorStripeTooltip();
       TextAttributesKey key = tt instanceof HighlightInfo ? ObjectUtils.chooseNotNull(
         ((HighlightInfo)tt).forcedTextAttributesKey, ((HighlightInfo)tt).type.getAttributesKey()) : null;
-      Pair<ColorSettingsPage, AttributesDescriptor> p = key == null ? null : ColorSettingsPages.getInstance().getAttributeDescriptor(key);
+      Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor> p =
+        key == null ? null : ColorSettingsPages.getInstance().getAttributeDescriptor(key);
       if (p != null) keyMap.put(key, p);
       return true;
     };
@@ -108,7 +109,8 @@ public class JumpToColorsAndFontsAction extends DumbAwareAction {
         HighlighterIterator iterator = highlighter.createIterator(selection.getStartOffset());
         while (!iterator.atEnd()) {
           for (TextAttributesKey key : syntaxHighlighter.getTokenHighlights(iterator.getTokenType())) {
-            Pair<ColorSettingsPage, AttributesDescriptor> p = key == null ? null : ColorSettingsPages.getInstance().getAttributeDescriptor(key);
+            Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor> p =
+              key == null ? null : ColorSettingsPages.getInstance().getAttributeDescriptor(key);
             if (p != null) keyMap.put(key, p);
           }
           if (iterator.getEnd() >= selection.getEndOffset()) break;
@@ -121,22 +123,22 @@ public class JumpToColorsAndFontsAction extends DumbAwareAction {
       HintManager.getInstance().showErrorHint(editor, "No text attributes found");
     }
     else if (keyMap.size() == 1) {
-      Pair<ColorSettingsPage, AttributesDescriptor> p = keyMap.values().iterator().next();
+      Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor> p = keyMap.values().iterator().next();
       if (!openSettingsAndSelectKey(project, p.first, p.second)) {
         HintManager.getInstance().showErrorHint(editor, "No appropriate settings page found");
       }
     }
     else {
-      ArrayList<Pair<ColorSettingsPage, AttributesDescriptor>> attrs = ContainerUtil.newArrayList(keyMap.values());
+      ArrayList<Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor>> attrs = ContainerUtil.newArrayList(keyMap.values());
       Collections.sort(attrs, (o1, o2) -> StringUtil.naturalCompare(
         o1.first.getDisplayName() + o1.second.getDisplayName(), o2.first.getDisplayName() + o2.second.getDisplayName()));
 
       EditorColorsScheme colorsScheme = editor.getColorsScheme();
-      JBList<Pair<ColorSettingsPage, AttributesDescriptor>> list = new JBList<>(attrs);
-      list.setCellRenderer(new ColoredListCellRenderer<Pair<ColorSettingsPage, AttributesDescriptor>>() {
+      JBList<Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor>> list = new JBList<>(attrs);
+      list.setCellRenderer(new ColoredListCellRenderer<Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor>>() {
         @Override
-        protected void customizeCellRenderer(@NotNull JList<? extends Pair<ColorSettingsPage, AttributesDescriptor>> list,
-                                             Pair<ColorSettingsPage, AttributesDescriptor> value,
+        protected void customizeCellRenderer(@NotNull JList<? extends Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor>> list,
+                                             Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor> value,
                                              int index,
                                              boolean selected,
                                              boolean hasFocus) {
@@ -173,7 +175,7 @@ public class JumpToColorsAndFontsAction extends DumbAwareAction {
         .setResizable(false)
         .setRequestFocus(true)
         .setItemChoosenCallback(() -> {
-          Pair<ColorSettingsPage, AttributesDescriptor> p = list.getSelectedValue();
+          Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor> p = list.getSelectedValue();
           if (p != null && !openSettingsAndSelectKey(project, p.first, p.second)) {
             HintManager.getInstance().showErrorHint(editor, "No appropriate settings page found");
           }
@@ -182,7 +184,7 @@ public class JumpToColorsAndFontsAction extends DumbAwareAction {
     }
   }
 
-  private static boolean openSettingsAndSelectKey(@NotNull Project project, @NotNull ColorSettingsPage page, @NotNull AttributesDescriptor descriptor) {
+  private static boolean openSettingsAndSelectKey(@NotNull Project project, @NotNull ColorAndFontDescriptorsProvider page, @NotNull AttributesDescriptor descriptor) {
     return selectOrEditColor(id -> CommonDataKeys.PROJECT.is(id) ? project : null, descriptor.getDisplayName(), page.getDisplayName());
   }
 }

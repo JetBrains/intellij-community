@@ -34,6 +34,8 @@ import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.compiler.CompilerMessage;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.Configurable;
@@ -85,7 +87,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     assignJdk(getModule1());
   }
 
-  public void testCreateConfiguration() throws IOException, ExecutionException {
+  public void testCreateConfiguration() throws ExecutionException {
     Module module1 = getModule1();
     PsiClass psiClass = findTestA(module1);
     JUnitConfiguration configuration = createConfiguration(psiClass);
@@ -226,6 +228,19 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     CHECK.containsAll(tests, new Object[]{ancestorTest, childTest1, childTest2});
   }
 
+  public void testConstructors() throws IOException, ExecutionException {
+    addModule("module6", true);
+    PsiPackage psiPackage = JavaPsiFacade.getInstance(myProject).findPackage("test1");
+    JUnitConfiguration configuration = createJUnitConfiguration(psiPackage, AllInPackageConfigurationProducer.class, new MapDataContext());
+    configuration.getPersistentData().setScope(TestSearchScope.SINGLE_MODULE);
+    configuration.setModule(getModule(3));
+    assertNotNull(configuration);
+    checkPackage(psiPackage.getQualifiedName(), configuration);
+    JavaParameters parameters = checkCanRun(configuration);
+    List<String> tests = extractAllInPackageTests(parameters, psiPackage);
+    CHECK.containsAll(tests, new Object[]{"test1.TestCaseInheritor"});
+  }
+
   public void testClasspathConfiguration() throws CantRunException {
     JavaParameters parameters = new JavaParameters();
     RunConfigurationModule module = new JavaRunConfigurationModule(myProject, false);
@@ -273,7 +288,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     checkClassName(oldRc.getPersistentData().getMainClassName(), newRc);
   }
 
-  public void testTestClassPathWhenRunningConfigurations() throws IOException, ExecutionException {
+  public void testTestClassPathWhenRunningConfigurations() throws ExecutionException {
     addModule("module4", false);
     Module module4 = getModule4();
     assignJdk(module4);
@@ -301,7 +316,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     checkContains(classPath, output);
   }
 
-  public void testSameTestAndCommonOutput() throws IOException, ExecutionException {
+  public void testSameTestAndCommonOutput() throws ExecutionException {
     addModule("module4", false);
     Module module = getModule4();
     assignJdk(module);
@@ -388,7 +403,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     checkCanRun(configuration);
   }
 
-  public void testAllInPackageForProject() throws IOException, ExecutionException {
+  public void testAllInPackageForProject() throws ExecutionException {
     // module1 -> module2 -> module3
     // module5
     addModule("module5");
@@ -414,7 +429,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     }
   }
 
-  public void testOriginalModule() throws Exception {
+  public void testOriginalModule() {
     ModuleRootModificationUtil.addDependency(getModule1(), getModule2(), DependencyScope.TEST, true);
     ModuleRootModificationUtil.addDependency(getModule2(), getModule3(), DependencyScope.TEST, false);
     assertTrue(ModuleBasedConfiguration.canRestoreOriginalModule(getModule1(), new Module[] {getModule2()}));
@@ -482,7 +497,8 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
       try {
         CompilerTester tester = new CompilerTester(project, Arrays.asList(ModuleManager.getInstance(project).getModules()));
         try {
-          tester.make();
+          List<CompilerMessage> messages = tester.make();
+          assertFalse(messages.stream().anyMatch(message -> message.getCategory() == CompilerMessageCategory.ERROR));
           task.startSearch();
         }
         finally {

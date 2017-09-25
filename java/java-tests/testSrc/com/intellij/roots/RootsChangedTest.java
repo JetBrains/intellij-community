@@ -60,7 +60,7 @@ public class RootsChangedTest extends ModuleTestCase {
     super.tearDown();
   }
 
-  public void testEventsAfterFileModifications() throws Exception {
+  public void testEventsAfterFileModifications() {
     File root = new File(FileUtil.getTempDirectory());
 
     File dir1 = new File(root, "dir1");
@@ -106,22 +106,22 @@ public class RootsChangedTest extends ModuleTestCase {
     assertSameElements(ModuleRootManager.getInstance(moduleA).getContentRoots(), vDir2);
   }
 
-  public void testProjectLibraryChangeEvent() throws Exception {
+  public void testProjectLibraryChangeEvent() {
     final LibraryTable projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
     verifyLibraryTableEditing(projectLibraryTable);
   }
 
-  public void testGlobalLibraryChangeEvent() throws Exception {
+  public void testGlobalLibraryChangeEvent() {
     final LibraryTable globalLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
     verifyLibraryTableEditing(globalLibraryTable);
   }
 
-  public void testProjectLibraryEventsInUncommittedModel() throws Exception {
+  public void testProjectLibraryEventsInUncommittedModel() {
     final LibraryTable projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
     verifyLibraryTableEditingInUncommittedModel(projectLibraryTable);
   }
 
-  public void testGlobalLibraryEventsInUncommittedModel() throws Exception {
+  public void testGlobalLibraryEventsInUncommittedModel() {
     final LibraryTable globalLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
     verifyLibraryTableEditingInUncommittedModel(globalLibraryTable);
   }
@@ -181,9 +181,6 @@ public class RootsChangedTest extends ModuleTestCase {
       final SdkModificator sdkModificator = jdk.getSdkModificator();
       sdkModificator.addRoot(getVirtualFile(tempDirectory), OrderRootType.CLASSES);
       sdkModificator.commitChanges();
-      assertEventsCount(1);
-
-      ProjectJdkTable.getInstance().removeJdk(jdk);
       assertEventsCount(1);
     });
   }
@@ -251,7 +248,7 @@ public class RootsChangedTest extends ModuleTestCase {
       rootModelB.addLibraryEntry(libraryA);
       rootModelA.addInvalidLibrary("Q", libraryTable.getTableLevel());
       rootModelB.addInvalidLibrary("Q", libraryTable.getTableLevel());
-      ModifiableRootModel[] rootModels = new ModifiableRootModel[]{rootModelA, rootModelB};
+      ModifiableRootModel[] rootModels = {rootModelA, rootModelB};
       if (rootModels.length > 0) {
         ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
       }
@@ -320,7 +317,7 @@ public class RootsChangedTest extends ModuleTestCase {
       final Library libraryQ = libraryTable.createLibrary("Q");
       assertEventsCount(0);
 
-      ModifiableRootModel[] rootModels = new ModifiableRootModel[]{rootModelA, rootModelB};
+      ModifiableRootModel[] rootModels = {rootModelA, rootModelB};
       if (rootModels.length > 0) {
         ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
       }
@@ -340,8 +337,8 @@ public class RootsChangedTest extends ModuleTestCase {
   }
 
   private static class MyModuleRootListener implements ModuleRootListener {
-    private int beforeCount = 0;
-    private int afterCount = 0;
+    private int beforeCount;
+    private int afterCount;
 
     @Override
     public void beforeRootsChange(ModuleRootEvent event) {
