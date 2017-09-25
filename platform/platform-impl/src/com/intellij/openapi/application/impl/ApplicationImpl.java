@@ -691,7 +691,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   @NotNull
   public ModalityState getModalityStateForComponent(@NotNull Component c) {
-    if (!isDispatchThread()) LOG.warn("please, use application dispatch thread to get a modality state");
+    if (!isDispatchThread()) LOG.debug("please, use application dispatch thread to get a modality state");
     Window window = UIUtil.getWindow(c);
     if (window == null) return getNoneModalityState(); //?
     return LaterInvocator.modalityStateForWindow(window);
