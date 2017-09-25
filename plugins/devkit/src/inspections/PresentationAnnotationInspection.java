@@ -43,7 +43,7 @@ public class PresentationAnnotationInspection extends DevKitUastInspectionBase {
           return;
         }
 
-        UExpression iconExpression = annotation.findAttributeValue("icon");
+        UExpression iconExpression = annotation.findDeclaredAttributeValue("icon");
         if (iconExpression == null) {
           return;
         }
@@ -51,9 +51,6 @@ public class PresentationAnnotationInspection extends DevKitUastInspectionBase {
         PsiElement iconExpressionPsi = iconExpression.getPsi();
         if (iconExpressionPsi == null) {
           LOG.error("Unexpected null value of @Presentation#icon expression PSI: " + element);
-          return;
-        }
-        if (!iconExpressionPsi.isPhysical()) {
           return;
         }
 
