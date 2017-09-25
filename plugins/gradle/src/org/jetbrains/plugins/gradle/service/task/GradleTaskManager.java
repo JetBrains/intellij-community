@@ -172,18 +172,17 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   @Override
   public boolean cancelTask(@NotNull ExternalSystemTaskId id, @NotNull ExternalSystemTaskNotificationListener listener)
     throws ExternalSystemException {
-
+    final CancellationTokenSource cancellationTokenSource = myCancellationMap.get(id);
+    if (cancellationTokenSource != null) {
+      cancellationTokenSource.cancel();
+      return true;
+    }
     // extension points are available only in IDE process
     if (ExternalSystemApiUtil.isInProcessMode(GradleConstants.SYSTEM_ID)) {
       for (GradleTaskManagerExtension gradleTaskManagerExtension : GradleTaskManagerExtension.EP_NAME.getExtensions()) {
         if (gradleTaskManagerExtension.cancelTask(id, listener)) return true;
       }
     }
-
-    final CancellationTokenSource cancellationTokenSource = myCancellationMap.get(id);
-    if (cancellationTokenSource != null) {
-      cancellationTokenSource.cancel();
-    }
-    return true;
+    return false;
   }
 }

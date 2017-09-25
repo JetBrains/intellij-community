@@ -19,16 +19,22 @@ package com.intellij.application.options;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.ui.components.fields.IntegerField;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+
+import static com.intellij.psi.codeStyle.CodeStyleConstraints.MAX_INDENT_SIZE;
+import static com.intellij.psi.codeStyle.CodeStyleConstraints.MIN_INDENT_SIZE;
+import static com.intellij.psi.codeStyle.CodeStyleDefaults.DEFAULT_CONTINUATION_INDENT_SIZE;
 
 /**
  * @author yole
  */
 public class SmartIndentOptionsEditor extends IndentOptionsEditor {
+  public static final String CONTINUATION_INDENT_LABEL = ApplicationBundle.message("editbox.indent.continuation.indent");
   private JCheckBox myCbSmartTabs;
-  private JTextField myContinuationIndentField;
+  private IntegerField myContinuationIndentField;
   private JLabel myContinuationIndentLabel;
   private JCheckBox myCbKeepIndentsOnEmptyLines;
 
@@ -44,8 +50,9 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
   protected void addComponents() {
     super.addComponents();
 
-    myContinuationIndentField = createIndentTextField();
-    myContinuationIndentLabel = new JLabel(ApplicationBundle.message("editbox.indent.continuation.indent"));
+    myContinuationIndentField =
+      createIndentTextField(CONTINUATION_INDENT_LABEL, MIN_INDENT_SIZE, MAX_INDENT_SIZE, DEFAULT_CONTINUATION_INDENT_SIZE);
+    myContinuationIndentLabel = new JLabel(CONTINUATION_INDENT_LABEL);
     add(myContinuationIndentLabel, myContinuationIndentField);
 
     myCbKeepIndentsOnEmptyLines = new JCheckBox(ApplicationBundle.message("checkbox.indent.keep.indents.on.empty.lines"));
@@ -64,7 +71,7 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
   @Override
   public void apply(final CodeStyleSettings settings, final CommonCodeStyleSettings.IndentOptions options) {
     super.apply(settings, options);
-    options.CONTINUATION_INDENT_SIZE = getFieldValue(myContinuationIndentField, 0, options.CONTINUATION_INDENT_SIZE);
+    options.CONTINUATION_INDENT_SIZE = myContinuationIndentField.getValue();
     options.SMART_TABS = isSmartTabValid(options.INDENT_SIZE, options.TAB_SIZE) && myCbSmartTabs.isSelected();
     options.KEEP_INDENTS_ON_EMPTY_LINES = myCbKeepIndentsOnEmptyLines.isSelected();
   }
@@ -72,7 +79,7 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
   @Override
   public void reset(@NotNull final CodeStyleSettings settings, @NotNull final CommonCodeStyleSettings.IndentOptions options) {
     super.reset(settings, options);
-    myContinuationIndentField.setText(String.valueOf(options.CONTINUATION_INDENT_SIZE));
+    myContinuationIndentField.setValue(options.CONTINUATION_INDENT_SIZE);
     myCbSmartTabs.setSelected(options.SMART_TABS);
     myCbKeepIndentsOnEmptyLines.setSelected(options.KEEP_INDENTS_ON_EMPTY_LINES);
   }

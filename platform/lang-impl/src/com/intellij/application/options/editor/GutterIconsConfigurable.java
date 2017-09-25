@@ -18,6 +18,7 @@ package com.intellij.application.options.editor;
 import com.intellij.codeInsight.daemon.*;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.lang.LanguageExtensionPoint;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
@@ -25,6 +26,8 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
@@ -238,4 +241,15 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
 
   @TestOnly
   public List<GutterIconDescriptor> getDescriptors() { return myDescriptors; }
+
+  public static class ShowSettingsAction extends DumbAwareAction {
+
+    public ShowSettingsAction() {
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      ShowSettingsUtil.getInstance().showSettingsDialog(null, GutterIconsConfigurable.class);
+    }
+  }
 }

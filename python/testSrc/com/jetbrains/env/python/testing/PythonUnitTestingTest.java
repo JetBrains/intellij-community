@@ -666,9 +666,13 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                                                         PyUnitTestConfiguration.class) {
         @Override
         protected boolean configurationShouldBeProducedForElement(@NotNull final PsiElement element) {
-          // test_functions.py does not conttain any TestCase and can't be launched with unittest
+          // test_functions.py and test_foo do not contain any TestCase and can't be launched with unittest
           final PsiFile file = element.getContainingFile();
-          return file == null || !file.getName().endsWith("test_functions.py");
+          if (file == null) {
+            return true;
+          }
+          final String name = file.getName();
+          return !(name.endsWith("test_functions.py") || name.endsWith("test_foo.py"));
         }
       });
   }

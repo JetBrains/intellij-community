@@ -19,18 +19,20 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.ui.highlighters.MergeCommitsHighlighter;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import git4idea.GitBranch;
 import git4idea.commands.GitCommand;
@@ -126,8 +128,9 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
   @Override
   public VcsLogHighlighter.VcsCommitStyle getStyle(@NotNull VcsShortCommitDetails commitDetails, boolean isSelected) {
     if (myNonPickedCommits == null) return VcsCommitStyle.DEFAULT;
-    boolean inNonPicked = myNonPickedCommits.contains(new CommitId(commitDetails.getId(), commitDetails.getRoot()));
-    return VcsCommitStyleFactory.foreground(inNonPicked ? null : EditorColorsUtil.getGlobalOrDefaultColor(VcsLogColors.MERGED_COMMIT));
+    return VcsCommitStyleFactory.foreground(!myNonPickedCommits.contains(new CommitId(commitDetails.getId(), commitDetails.getRoot()))
+                                            ? MergeCommitsHighlighter.MERGE_COMMIT_FOREGROUND
+                                            : null);
   }
 
   @Override
@@ -196,6 +199,7 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
     @NotNull private final String myComparedBranch;
 
     @NotNull private final Set<CommitId> myCollectedNonPickedCommits = ContainerUtil.newHashSet();
+    @Nullable private VcsException myException;
     private boolean myCancelled;
 
     public MyTask(@NotNull Project project,
@@ -211,11 +215,17 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
-      for (Map.Entry<GitRepository, GitBranch> entry : myRepositoriesWithCurrentBranches.entrySet()) {
-        GitRepository repo = entry.getKey();
-        GitBranch currentBranch = entry.getValue();
-        myCollectedNonPickedCommits
-          .addAll(getNonPickedCommitsFromGit(myProject, repo.getRoot(), currentBranch.getName(), myComparedBranch));
+      try {
+        for (Map.Entry<GitRepository, GitBranch> entry : myRepositoriesWithCurrentBranches.entrySet()) {
+          GitRepository repo = entry.getKey();
+          GitBranch currentBranch = entry.getValue();
+          myCollectedNonPickedCommits
+            .addAll(getNonPickedCommitsFromGit(myProject, repo.getRoot(), currentBranch.getName(), myComparedBranch));
+        }
+      }
+      catch (VcsException e) {
+        LOG.warn(e);
+        myException = e;
       }
     }
 
@@ -227,6 +237,10 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
 
       removeHighlighting();
 
+      if (myException != null) {
+        VcsNotifier.getInstance(myProject).notifyError("Couldn't compare with branch " + myComparedBranch, myException.getMessage());
+        return;
+      }
       myNonPickedCommits = myCollectedNonPickedCommits;
     }
 
@@ -236,9 +250,9 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
 
     @NotNull
     private Set<CommitId> getNonPickedCommitsFromGit(@NotNull Project project,
-                                                     @NotNull VirtualFile root,
+                                                     @NotNull final VirtualFile root,
                                                      @NotNull String currentBranch,
-                                                     @NotNull String comparedBranch) {
+                                                     @NotNull String comparedBranch) throws VcsException {
       GitLineHandler handler = new GitLineHandler(project, root, GitCommand.CHERRY);
       handler.addParameters(currentBranch, comparedBranch); // upstream - current branch; head - compared branch
 

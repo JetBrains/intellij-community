@@ -348,7 +348,11 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
       if (psiClass != null && CommonClassNames.JAVA_UTIL_OPTIONAL.equals(psiClass.getQualifiedName()) && ((PsiClassType)type).getParameterCount() == 1) {
         PsiType optionalContent = ((PsiClassType)type).getParameters()[0];
-        Collections.addAll(suggestions, suggestVariableNameByType(optionalContent, variableKind, correctKeywords, false));
+        String[] contentSuggestions = suggestVariableNameByType(optionalContent, variableKind, correctKeywords, false);
+        Collections.addAll(suggestions, contentSuggestions);
+        for (String s : contentSuggestions) {
+          Collections.addAll(suggestions, getSuggestionsByName("optional" + StringUtil.capitalize(s), variableKind, false, correctKeywords));
+        }
       }
 
       suggestNamesFromGenericParameters(type, variableKind, suggestions, correctKeywords);

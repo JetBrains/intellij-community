@@ -20,7 +20,6 @@
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="lvcs-api" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="TestNG" level="project" />
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="lang-impl" />
@@ -45,5 +44,6 @@
     <orderEntry type="module" module-name="testGuiFramework" scope="TEST" />
     <orderEntry type="library" name="ini4j" level="project" />
     <orderEntry type="module" module-name="tasks-platform-impl" />
+    <orderEntry type="module" module-name="tasks-platform-api" scope="TEST" />
   </component>
 </module>

@@ -189,7 +189,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     return result;
   }
 
-  protected abstract void configureRTClasspath(JavaParameters javaParameters);
+  protected abstract void configureRTClasspath(JavaParameters javaParameters) throws CantRunException;
 
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {

@@ -18,7 +18,6 @@ package com.intellij.openapi.vcs.changes.shelf;
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
-import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
@@ -28,7 +27,10 @@ import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.requests.UnknownFileTypeDiffRequest;
 import com.intellij.diff.tools.util.SoftHardCacheMap;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
@@ -38,7 +40,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -48,12 +49,11 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.FilePathsHelper;
-import com.intellij.openapi.vcs.changes.actions.diff.ChangeGoToChangePopupAction;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
 import com.intellij.openapi.vcs.changes.patch.tool.PatchDiffRequest;
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.CalledInBackground;
@@ -138,7 +138,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
       }
     }
 
-    MyDiffRequestChain chain = new MyDiffRequestChain(diffRequestProducers, index);
+    DiffRequestChain chain = new ChangeDiffRequestChain(diffRequestProducers, index);
     DiffManager.getInstance().showDiff(project, chain, DiffDialogHints.FRAME);
   }
 
@@ -366,52 +366,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
     }
   }
 
-  private static class MyDiffRequestChain extends UserDataHolderBase implements DiffRequestChain, GoToChangePopupBuilder.Chain {
-    @NotNull private final List<MyDiffRequestProducer> myProducers;
-    private int myIndex = 0;
-
-    public MyDiffRequestChain(@NotNull List<MyDiffRequestProducer> producers, int index) {
-      myProducers = producers;
-      myIndex = index;
-    }
-
-    @NotNull
-    @Override
-    public List<? extends DiffRequestProducer> getRequests() {
-      return myProducers;
-    }
-
-    @Override
-    public int getIndex() {
-      return myIndex;
-    }
-
-    @Override
-    public void setIndex(int index) {
-      assert index >= 0 && index < myProducers.size();
-      myIndex = index;
-    }
-
-    @NotNull
-    @Override
-    public AnAction createGoToChangeAction(@NotNull Consumer<Integer> onSelected) {
-      return new ChangeGoToChangePopupAction.Fake<MyDiffRequestChain>(this, myIndex, onSelected) {
-        @NotNull
-        @Override
-        protected FilePath getFilePath(int index) {
-          return myProducers.get(index).getFilePath();
-        }
-
-        @NotNull
-        @Override
-        protected FileStatus getFileStatus(int index) {
-          return myProducers.get(index).getFileStatus();
-        }
-      };
-    }
-  }
-
-  private static abstract class MyDiffRequestProducer implements DiffRequestProducer {
+  private static abstract class MyDiffRequestProducer implements ChangeDiffRequestChain.Producer {
     @Nullable private final ShelvedChange myTextChange;
     @Nullable private final ShelvedBinaryFile myBinaryChange;
     @NotNull private final FilePath myFilePath;
@@ -445,7 +400,8 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
     }
 
     @NotNull
-    protected FileStatus getFileStatus() {
+    @Override
+    public FileStatus getFileStatus() {
       if (myTextChange != null) {
         return myTextChange.getFileStatus();
       }
@@ -456,6 +412,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
     }
 
     @NotNull
+    @Override
     public FilePath getFilePath() {
       return myFilePath;
     }

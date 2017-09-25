@@ -32,7 +32,6 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
-import com.intellij.psi.impl.jvm2psi.JvmPsiConversionHelper;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.JavaDummyHolderFactory;
@@ -73,7 +72,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     myFileManager = javaFileManager;
     myConstantEvaluationHelper = new PsiConstantEvaluationHelperImpl();
     myJvmFacade = AtomicNotNullLazyValue.createValue(() -> (JvmFacadeImpl)JvmFacade.getInstance(project));
-    myConversionHelper = new JvmPsiConversionHelper(psiManager);
+    myConversionHelper = JvmPsiConversionHelper.getInstance(myProject);
 
     final PsiModificationTracker modificationTracker = psiManager.getModificationTracker();
 
@@ -185,7 +184,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
     final List<JvmClass> jvmClasses = myJvmFacade.getValue().findClassesWithoutJavaFacade(qualifiedName, scope);
     if (!jvmClasses.isEmpty()) {
-      final List<PsiClass> jvmPsiClasses = ContainerUtil.map(jvmClasses, it -> myConversionHelper.toPsiClass(it));
+      final List<PsiClass> jvmPsiClasses = ContainerUtil.map(jvmClasses, it -> myConversionHelper.convertTypeDeclaration(it));
       if (result == null) {
         result = new ArrayList<>(jvmPsiClasses);
       }

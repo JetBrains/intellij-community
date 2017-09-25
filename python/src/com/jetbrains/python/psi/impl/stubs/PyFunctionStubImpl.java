@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ public class PyFunctionStubImpl extends StubBase<PyFunction> implements PyFuncti
   private final String myDocString;
   private final String myDeprecationMessage;
   private final boolean myAsync;
+  private final boolean myOnlyRaisesNotImplementedError;
   private final String myTypeComment;
   private final String myAnnotation;
 
@@ -35,6 +36,7 @@ public class PyFunctionStubImpl extends StubBase<PyFunction> implements PyFuncti
                             @Nullable String docString,
                             @Nullable String deprecationMessage,
                             boolean isAsync,
+                            boolean onlyRaisesNotImplementedError,
                             @Nullable String typeCommentContent,
                             @Nullable String annotation, 
                             final StubElement parent,
@@ -44,6 +46,7 @@ public class PyFunctionStubImpl extends StubBase<PyFunction> implements PyFuncti
     myDocString = docString;
     myDeprecationMessage = deprecationMessage;
     myAsync = isAsync;
+    myOnlyRaisesNotImplementedError = onlyRaisesNotImplementedError;
     myTypeComment = typeCommentContent;
     myAnnotation = annotation;
   }
@@ -81,6 +84,11 @@ public class PyFunctionStubImpl extends StubBase<PyFunction> implements PyFuncti
   @Override
   public boolean isAsync() {
     return myAsync;
+  }
+
+  @Override
+  public boolean onlyRaisesNotImplementedError() {
+    return myOnlyRaisesNotImplementedError;
   }
 
   @Override

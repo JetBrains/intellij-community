@@ -207,6 +207,7 @@ public class GenerationUtil {
         // information to keep as it is to avoid breaking compatibility with prior releases
         vc.put("classname", useFullyQualifiedName ? ce.getQualifiedName() : ce.getName());
         vc.put("FQClassname", ce.getQualifiedName());
+        vc.put("classSignature", ce.getName() + (clazz.hasTypeParameters() ? "<" + StringUtil.join(clazz.getTypeParameters(), param -> param.getName(),", ") + ">": ""));
       }
 
       if (member != null) {

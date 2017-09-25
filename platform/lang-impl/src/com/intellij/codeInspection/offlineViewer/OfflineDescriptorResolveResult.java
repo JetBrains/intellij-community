@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,8 +55,9 @@ import java.util.stream.Collectors;
  */
 class OfflineDescriptorResolveResult {
   private static final Logger LOG = Logger.getInstance(OfflineDescriptorResolveResult.class);
-  private RefEntity myResolvedEntity;
-  private CommonProblemDescriptor myResolvedDescriptor;
+  private final RefEntity myResolvedEntity;
+  private final CommonProblemDescriptor myResolvedDescriptor;
+  private volatile boolean myExcluded;
 
   public OfflineDescriptorResolveResult(RefEntity resolvedEntity, CommonProblemDescriptor resolvedDescriptor) {
     myResolvedEntity = resolvedEntity;
@@ -71,6 +72,14 @@ class OfflineDescriptorResolveResult {
   @Nullable
   public CommonProblemDescriptor getResolvedDescriptor() {
     return myResolvedDescriptor;
+  }
+
+  public boolean isExcluded() {
+    return myExcluded;
+  }
+
+  public void setExcluded(boolean excluded) {
+    myExcluded = excluded;
   }
 
   @NotNull
@@ -221,6 +230,11 @@ class OfflineDescriptorResolveResult {
           psiFile = PsiManager.getInstance(project).findFile(file);
         }
         RunInspectionAction.runInspection(project, wrapper.getShortName(), file, null, psiFile);
+      }
+
+      @Override
+      public boolean startInWriteAction() {
+        return false;
       }
     };
     List<String> hints = offlineDescriptor.getHints();

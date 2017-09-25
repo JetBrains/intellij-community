@@ -84,11 +84,11 @@ public class SingleCommittedListProvider {
     if (rootUrlInfo != null) {
       changeList = new SvnChangeList[1];
       revisionBefore = ((SvnRevisionNumber)number).getRevision();
-      repositoryUrl = rootUrlInfo.getRepositoryUrlUrl();
-      svnRootUrl = rootUrlInfo.getAbsoluteUrlAsUrl();
-      svnRootLocation = new SvnRepositoryLocation(rootUrlInfo.getAbsoluteUrl());
+      repositoryUrl = rootUrlInfo.getRepositoryUrl();
+      svnRootUrl = rootUrlInfo.getUrl();
+      svnRootLocation = new SvnRepositoryLocation(rootUrlInfo.getUrl().toString());
       repositoryRelativeUrl = SvnUtil.ensureStartSlash(SvnUtil.join(
-        SvnUtil.getRelativeUrl(repositoryUrl.toDecodedString(), svnRootUrl.toDecodedString()),
+        SvnUtil.getRelativeUrl(repositoryUrl, svnRootUrl),
         SvnUtil.getRelativePath(rootUrlInfo.getPath(), file.getPath())));
 
       filePath = VcsUtil.getFilePath(file);
@@ -125,7 +125,7 @@ public class SingleCommittedListProvider {
 
   // return changed path, if any
   private FilePath searchFromHead(@NotNull SVNURL url) throws VcsException {
-    final SvnCopyPathTracker pathTracker = new SvnCopyPathTracker(repositoryUrl.toDecodedString(), repositoryRelativeUrl);
+    SvnCopyPathTracker pathTracker = new SvnCopyPathTracker(repositoryUrl, repositoryRelativeUrl);
     SvnTarget target = SvnTarget.fromURL(url);
 
     myVcs.getFactory(target).createHistoryClient()
@@ -147,7 +147,7 @@ public class SingleCommittedListProvider {
 
   @NotNull
   private SvnChangeList createChangeList(@NotNull LogEntry logEntry) {
-    return new SvnChangeList(myVcs, svnRootLocation, logEntry, repositoryUrl.toDecodedString());
+    return new SvnChangeList(myVcs, svnRootLocation, logEntry, repositoryUrl);
   }
 
   private void checkDisposed() {

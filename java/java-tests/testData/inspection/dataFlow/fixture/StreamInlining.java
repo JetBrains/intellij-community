@@ -36,7 +36,7 @@ public class StreamInlining {
     list.stream().filter(x -> x == null).distinct().limit(10).skip(1).filter(x -> <warning descr="Condition 'x != null' is always 'false'">x != null</warning>).forEach(System.out::println);
   }
 
-  class Holder {
+  static class Holder {
     Object obj;
   }
 

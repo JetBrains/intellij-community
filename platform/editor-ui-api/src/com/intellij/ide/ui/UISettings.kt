@@ -123,6 +123,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @get:OptionTag("SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY") var sortLookupElementsLexicographically by storedProperty(false)
   @get:OptionTag("MERGE_EQUAL_STACKTRACES") var mergeEqualStackTraces by storedProperty(true)
   @get:OptionTag("SORT_BOOKMARKS") var sortBookmarks by storedProperty(false)
+  @get:OptionTag("PIN_FIND_IN_PATH_POPUP") var pinFindInPath by storedProperty(false)
 
   private val myTreeDispatcher = ComponentTreeEventDispatcher.create(UISettingsListener::class.java)
 

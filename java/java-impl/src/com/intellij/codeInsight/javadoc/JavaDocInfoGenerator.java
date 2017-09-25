@@ -943,6 +943,31 @@ public class JavaDocInfoGenerator {
     if (generatePrologueAndEpilogue) generateEpilogue(buffer);
   }
 
+  public String generateMethodParameterJavaDoc() {
+    if (!(myElement instanceof PsiParameter)) return null;
+    PsiParameter parameter = (PsiParameter)myElement;
+    PsiMethod method = PsiTreeUtil.getParentOfType(parameter, PsiMethod.class);
+    if (method == null) return null;
+    PsiParameterList parameterList = method.getParameterList();
+    if (parameter.getParent() != parameterList) return null;
+    final PsiDocComment docComment = getDocComment(method);
+    final PsiDocTag[] localTags = docComment != null ? docComment.getTags() : PsiDocTag.EMPTY_ARRAY;
+    int parameterIndex = parameterList.getParameterIndex(parameter);
+    final ParamInfo tagInfoProvider = findDocTag(localTags, parameter.getName(), method, parameterLocator(parameterIndex));
+    if (tagInfoProvider == null) return null;
+    StringBuilder buffer = new StringBuilder();
+    PsiElement[] elements = tagInfoProvider.docTag.getDataElements();
+    if (elements.length == 0) return null;
+    String text = elements[0].getText();
+    int spaceIndex = text.indexOf(' ');
+    if (spaceIndex < 0) {
+      spaceIndex = text.length();
+    }
+    buffer.append(text.substring(spaceIndex));
+    generateValue(buffer, elements, 1, mapProvider(tagInfoProvider.inheritDocTagProvider, true));
+    return buffer.toString();
+  }
+
   private void generateMethodJavaDoc(StringBuilder buffer, PsiMethod method, boolean generatePrologueAndEpilogue) {
     if (generatePrologueAndEpilogue) generatePrologue(buffer);
 

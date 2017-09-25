@@ -843,7 +843,34 @@ public class PyUtil {
     });
   }
 
-  public static <T, P> T getParameterizedCachedValue(@NotNull PsiElement element, @Nullable P param, @NotNull NullableFunction<P, T> f) {
+  /**
+   * Calculates and caches value based on param. Think about it as about map with param as key which flushes on each psi modification.
+   *
+   * For nullable function see {@link #getNullableParameterizedCachedValue(PsiElement, Object, NullableFunction)}.
+   *
+   * This function is used instead of {@link CachedValuesManager#createParameterizedCachedValue(ParameterizedCachedValueProvider, boolean)}
+   * because parameter is not used as key there but used only for first calculation. Hence this should have functional dependency on element.
+   *
+   * @param element place to store cache
+   * @param param   param to be used as key
+   * @param f       function to produce value for key
+   * @param <T>     value type
+   * @param <P>     key type
+   */
+  @NotNull
+  public static <T, P> T getParameterizedCachedValue(@NotNull PsiElement element, @Nullable P param, @NotNull NotNullFunction<P, T> f) {
+    final T result = getNullableParameterizedCachedValue(element, param, f);
+    assert result != null;
+    return result;
+  }
+
+  /**
+   * Same as {@link #getParameterizedCachedValue(PsiElement, Object, NotNullFunction)} but allows nulls.
+   */
+  @Nullable
+  public static <T, P> T getNullableParameterizedCachedValue(@NotNull PsiElement element,
+                                                             @Nullable P param,
+                                                             @NotNull NullableFunction<P, T> f) {
     final CachedValuesManager manager = CachedValuesManager.getManager(element.getProject());
     final Map<Optional<P>, Optional<T>> cache = CachedValuesManager.getCachedValue(element, manager.getKeyForClass(f.getClass()), () -> {
       // concurrent hash map is a null-hostile collection
@@ -899,7 +926,7 @@ public class PyUtil {
 
   /**
    * Returns the line comment that immediately precedes statement list of the given compound statement. Python parser ensures
-   * that it follows the statement header, i.e. it's directly after the colon, not on its own line. 
+   * that it follows the statement header, i.e. it's directly after the colon, not on its own line.
    */
   @Nullable
   public static PsiComment getCommentOnHeaderLine(@NotNull PyStatementListContainer container) {
@@ -1863,7 +1890,7 @@ public class PyUtil {
     return false;
   }
 
-  private static boolean isStringLiteral(PyStatement stmt) {
+  public static boolean isStringLiteral(@Nullable PyStatement stmt) {
     if (stmt instanceof PyExpressionStatement) {
       final PyExpression expr = ((PyExpressionStatement)stmt).getExpression();
       if (expr instanceof PyStringLiteralExpression) {

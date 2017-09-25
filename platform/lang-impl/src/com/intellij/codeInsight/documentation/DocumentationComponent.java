@@ -104,7 +104,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private SmartPsiElementPointer myElement;
   private long myModificationCount;
 
-  private static final String QUICK_DOC_FONT_SIZE_PROPERTY = "quick.doc.font.size";
+  public static final String QUICK_DOC_FONT_SIZE_PROPERTY = "quick.doc.font.size";
 
   private final Stack<Context> myBackStack = new Stack<>();
   private final Stack<Context> myForwardStack = new Stack<>();
@@ -250,6 +250,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       @Override
       public void setDocument(Document doc) {
         super.setDocument(doc);
+        doc.putProperty("IgnoreCharsetDirective", Boolean.TRUE);
         if (doc instanceof StyledDocument) {
           doc.putProperty("imageCache", myImageProvider);
         }

@@ -51,7 +51,7 @@ public class DirectoryWithBranchComparer extends ElementWithBranchComparer {
   }
 
   @Override
-  protected void compare() throws SVNException, VcsException {
+  protected void compare() throws VcsException {
     titleBuilder.append(SvnBundle.message("repository.browser.compare.title", myElementUrl,
                                           FileUtil.toSystemDependentName(myVirtualFile.getPresentableUrl())));
 

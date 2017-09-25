@@ -87,7 +87,6 @@ public class RedundantCast15Test extends InspectionTestCase {
 
   public void testIgnore() {
     final RedundantCastInspection castInspection = new RedundantCastInspection();
-    castInspection.IGNORE_ANNOTATED_METHODS = true;
     castInspection.IGNORE_SUSPICIOUS_METHOD_CALLS = true;
     final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(castInspection);
     doTest("redundantCast/generics/" + getTestName(false), tool, "java 1.5");

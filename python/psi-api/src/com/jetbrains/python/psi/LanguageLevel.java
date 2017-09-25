@@ -23,6 +23,8 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author yole
@@ -40,7 +42,10 @@ public enum LanguageLevel {
   PYTHON35(35, true, false, true, true),
   PYTHON36(36, true, false, true, true);
 
-  public static List<LanguageLevel> ALL_LEVELS = ImmutableList.copyOf(values());
+  public static final List<LanguageLevel> ALL_LEVELS = ImmutableList.copyOf(values());
+
+  public static final List<LanguageLevel> SUPPORTED_LEVELS = ImmutableList.copyOf(Stream.of(values()).filter(v -> v.myVersion >= 26).collect(
+    Collectors.toList())); // Python versions 2.4 and 2.5 aren't supported anymore
 
   private static final LanguageLevel DEFAULT2 = PYTHON27;
   private static final LanguageLevel DEFAULT3 = PYTHON36;

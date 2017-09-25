@@ -871,7 +871,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                           final boolean doAlign)
   {
     Indent externalIndent = Indent.getNoneIndent();
-    Indent internalIndent = Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS);
+    Indent internalIndent = Indent.getContinuationWithoutFirstIndent(false);
 
     if (isInsideMethodCallParenthesis(child)) {
       internalIndent = Indent.getSmartIndent(Indent.Type.CONTINUATION);

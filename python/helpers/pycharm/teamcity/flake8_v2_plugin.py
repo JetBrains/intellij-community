@@ -54,7 +54,7 @@ class TeamcityReport(pep8.StandardReport):
             }
 
             error_message = '%s %s' % (code, text)
-            test_name = 'pep8: %s: %s' % (position, error_message)
+            test_name = 'pep8: %s: %s' % (normalized_filename, error_message)
 
             messages.testStarted(test_name)
 
@@ -64,6 +64,7 @@ class TeamcityReport(pep8.StandardReport):
                 line = self.lines[line_number - 1]
 
             details = [
+                position,
                 line.rstrip(),
                 re.sub(r'\S', ' ', line[:offset]) + '^',
             ]

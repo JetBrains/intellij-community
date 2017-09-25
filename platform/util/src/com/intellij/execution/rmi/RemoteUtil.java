@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.rmi;
 
+import com.intellij.openapi.util.ClassLoaderUtil;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.Function;
@@ -226,17 +227,8 @@ public class RemoteUtil {
     return false;
   }
 
-  public static <T> T executeWithClassLoader(final ThrowableComputable<T, Exception> action, final ClassLoader classLoader)
-    throws Exception {
-    final Thread thread = Thread.currentThread();
-    final ClassLoader prev = thread.getContextClassLoader();
-    try {
-      thread.setContextClassLoader(classLoader);
-      return action.compute();
-    }
-    finally {
-      thread.setContextClassLoader(prev);
-    }
+  public static <T> T executeWithClassLoader(ThrowableComputable<T, Exception> action, ClassLoader classLoader) throws Exception {
+    return ClassLoaderUtil.runWithClassLoader(classLoader, action);
   }
 
   /**

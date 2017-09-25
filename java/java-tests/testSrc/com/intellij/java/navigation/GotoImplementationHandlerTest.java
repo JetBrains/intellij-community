@@ -19,10 +19,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.navigation.GotoTargetHandler;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
@@ -31,6 +28,8 @@ import com.intellij.util.containers.ContainerUtil;
 
 import java.util.Arrays;
 import java.util.List;
+
+import static org.junit.Assert.assertNotEquals;
 
 public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCase {
   public void testMultipleImplsFromAbstractCall() {
@@ -53,6 +52,29 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
 
     final PsiElement[] impls = getTargets(file);
     assertEquals(2, impls.length);
+  }
+
+  public void testUnderInstanceOf() {
+    PsiFile file = myFixture.addFileToProject("Foo.java", "abstract class Hello {\n" +
+                                                          "    abstract void foo();\n" +
+                                                          "\n" +
+                                                          "    void test(Hello h) {\n" +
+                                                          "      if(h instanceof Hello1) h.fo<caret>o();\n" +
+                                                          "    }\n" +
+                                                          "    \n" +
+                                                          "    class Hello1 extends Hello {\n" +
+                                                          "        void foo() {}\n" +
+                                                          "    }\n" +
+                                                          "    class Hello2 extends Hello {\n" +
+                                                          "        void foo() {}\n" +
+                                                          "    }\n" +
+                                                          "}");
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+
+    final PsiElement[] impls = getTargets(file);
+    assertEquals(1, impls.length);
+    assertTrue(impls[0] instanceof PsiMethod);
+    assertEquals("Hello.Hello1", ((PsiMethod)impls[0]).getContainingClass().getQualifiedName());
   }
 
   public void testFromIncompleteCode() {
@@ -334,6 +356,17 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     assertSize(5, targets);
 
     List<String> names = ContainerUtil.map(targets, element -> ((PsiClass)element).getName());
+
+    for(PsiElement element:targets) {
+      PsiClass psiClass = (PsiClass)element;
+      String name = psiClass.getName();
+      if ("1".equals(name) || "2".equals(name)) {
+        assertEquals(null, psiClass.getModifierList());
+        assertTrue(psiClass.hasModifierProperty(PsiModifier.FINAL));
+      } else if (!"MyInterfaceImplementation".equals(name)) {
+        assertNotEquals(null, psiClass.getModifierList());
+      }
+    }
 
     assertContainsElements(names, "1");
     assertContainsElements(names, "2");

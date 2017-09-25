@@ -865,18 +865,17 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
     int startIndex = 0;
     List<Runnable> applyEvents = new ArrayList<>(events.size());
-    List<VFileEvent> validated = new ArrayList<>(events.size());
     Set<String> files = new THashSet<>(events.size());
     Set<String> middleDirs = new THashSet<>(events.size());
     while (startIndex != events.size()) {
       applyEvents.clear();
-      validated.clear();
+      List<VFileEvent> validated = new ArrayList<>(events.size() - startIndex);
       files.clear();
       middleDirs.clear();
       startIndex = groupAndValidate(events, startIndex, applyEvents, validated, files, middleDirs);
 
       if (!validated.isEmpty()) {
-        List<VFileEvent> toSend = Collections.unmodifiableList(new ArrayList<>(validated));
+        List<VFileEvent> toSend = Collections.unmodifiableList(validated);
         myPublisher.before(toSend);
 
         applyEvents.forEach(Runnable::run);
@@ -946,7 +945,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       }
       parent.createAndAddChildren(childrenAdded);
       if (ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest()) {
-        long count = Arrays.stream(parentChildrenIds.toArray()).mapToObj(this::findFileById).map(VirtualFile::getName).distinct().count();
+        long count = Arrays.stream(parentChildrenIds.toArray()).mapToObj(this::findFileById).filter(Objects::nonNull).map(VirtualFile::getName).distinct().count();
         assert count == parentChildrenIds.size();
       }
       FSRecords.updateList(parentId, parentChildrenIds.toArray());

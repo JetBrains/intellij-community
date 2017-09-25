@@ -51,7 +51,7 @@ public interface GraphColorManager<CommitId> {
    * <li>Zero is returned if the given commits are equal.
    * </ul>
    *
-   * @see VcsLogRefManager#getBranchLayoutComparator()
+   * @see VcsLogRe#getBranchLayoutComparator()
    */
   int compareHeads(CommitId head1, CommitId head2);
 }

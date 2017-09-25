@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,39 +24,39 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
-import java.util.List;
-
 public class InaccessibleElementVisitor extends GroovyRecursiveElementVisitor {
   private final GrAccessibilityChecker myReferenceChecker;
-  private final List<HighlightInfo> myInfos;
+  private final VisitorCallback myCallback;
+  private int myTriggerCounter = 0;
 
-  public InaccessibleElementVisitor(GroovyFileBase file, Project project, List<HighlightInfo> collector) {
+  public InaccessibleElementVisitor(GroovyFileBase file, Project project, VisitorCallback callback) {
+    myCallback = callback;
     myReferenceChecker = new GrAccessibilityChecker(file, project);
-    myInfos = collector;
   }
 
   @Override
   public void visitReferenceExpression(@NotNull GrReferenceExpression referenceExpression) {
-    final int size = myInfos.size();
+    final int oldValue = myTriggerCounter;
     super.visitReferenceExpression(referenceExpression);
-    if (size == myInfos.size()) {
+    if (oldValue == myTriggerCounter) {
       HighlightInfo info = myReferenceChecker.checkReferenceExpression(referenceExpression);
       if (info != null) {
-        myInfos.add(info);
+        myCallback.trigger(referenceExpression, info);
+        myTriggerCounter++;
       }
     }
   }
 
   @Override
   public void visitCodeReferenceElement(@NotNull GrCodeReferenceElement refElement) {
-    final int size = myInfos.size();
+    final int oldValue = myTriggerCounter;
     super.visitCodeReferenceElement(refElement);
-    if (size == myInfos.size()) {
+    if (oldValue == myTriggerCounter) {
       HighlightInfo info = myReferenceChecker.checkCodeReferenceElement(refElement);
       if (info != null) {
-        myInfos.add(info);
+        myCallback.trigger(refElement, info);
+        myTriggerCounter++;
       }
     }
   }
-
 }

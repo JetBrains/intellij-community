@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.*;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -297,7 +297,7 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
     if (IGNORE_DEPRECATED && isDeprecated(psiMethod)) {
       return null;
     }
-    if (myIgnoreSimpleAccessors && PropertyUtil.isSimplePropertyAccessor(psiMethod)) {
+    if (myIgnoreSimpleAccessors && PropertyUtilBase.isSimplePropertyAccessor(psiMethod)) {
       return null;
     }
 

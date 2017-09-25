@@ -16,11 +16,9 @@
 package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.lang.Language;
 import com.intellij.navigation.ChooseByNameRegistry;
-import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
@@ -45,7 +43,7 @@ public class GotoSymbolAction extends GotoActionBase {
 
       @Override
       public void elementChosen(ChooseByNamePopup popup, Object element) {
-        EditSourceUtil.navigate((NavigationItem)element, true, popup.isOpenInCurrentWindowRequested());
+        GotoClassAction.handleSubMemberNavigation(popup, element);
       }
     }, "Symbols matching patterns", true);
   }

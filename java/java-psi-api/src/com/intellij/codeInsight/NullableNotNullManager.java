@@ -46,7 +46,6 @@ public abstract class NullableNotNullManager {
 
   static final String[] DEFAULT_NULLABLES = {AnnotationUtil.NULLABLE, 
     JAVAX_ANNOTATION_NULLABLE, "javax.annotation.CheckForNull",
-    "org.springframework.lang.Nullable", // remove after https://youtrack.jetbrains.com/issue/IDEA-173544 is fixed
     "edu.umd.cs.findbugs.annotations.Nullable", "android.support.annotation.Nullable"
   };
 

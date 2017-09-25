@@ -128,7 +128,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
       moduleName = getName();
     }
     else {
-      moduleName = ModuleGrouperKt.isQualifiedModuleNamesEnabled() && StringUtil.isNotEmpty(myProjectId.getGroupId())
+      moduleName = getExternalProjectSettings().isUseQualifiedModuleNames() && StringUtil.isNotEmpty(myProjectId.getGroupId())
                    ? (myProjectId.getGroupId() + '.' + myProjectId.getArtifactId())
                    : myProjectId.getArtifactId();
     }

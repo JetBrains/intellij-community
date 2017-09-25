@@ -166,6 +166,7 @@ public class JavaKeywordCompletion {
   private final JavaCompletionSession mySession;
   private final PsiElement myPosition;
   private final String myPrefix;
+  private final PrefixMatcher myKeywordMatcher;
   private final List<LookupElement> myResults = new ArrayList<>();
   private final PsiElement myPrevLeaf;
 
@@ -173,6 +174,7 @@ public class JavaKeywordCompletion {
     myParameters = parameters;
     mySession = session;
     myPrefix = session.getMatcher().getPrefix();
+    myKeywordMatcher = new FixingLayoutPlainMatcher(myPrefix);
     myPosition = parameters.getPosition();
     myPrevLeaf = prevSignificantLeaf(myPosition);
 
@@ -185,7 +187,7 @@ public class JavaKeywordCompletion {
   }
 
   private void addKeyword(LookupElement element) {
-    if (element.getLookupString().startsWith(myPrefix)) {
+    if (myKeywordMatcher.isStartMatch(element.getLookupString())) {
       myResults.add(element);
     }
   }
@@ -313,10 +315,10 @@ public class JavaKeywordCompletion {
     addExtendsImplements();
   }
 
-  static boolean addWildcardExtendsSuper(CompletionResultSet result, PsiElement position) {
+  boolean addWildcardExtendsSuper(CompletionResultSet result, PsiElement position) {
     if (JavaMemberNameCompletionContributor.INSIDE_TYPE_PARAMS_PATTERN.accepts(position)) {
       for (String keyword : ContainerUtil.ar(PsiKeyword.EXTENDS, PsiKeyword.SUPER)) {
-        if (keyword.startsWith(result.getPrefixMatcher().getPrefix())) {
+        if (myKeywordMatcher.isStartMatch(keyword)) {
           LookupElement item = BasicExpressionCompletionContributor.createKeywordLookupItem(position, keyword);
           result.addElement(new OverridableSpace(item, TailType.HUMBLE_SPACE_BEFORE_WORD));
         }
@@ -394,7 +396,7 @@ public class JavaKeywordCompletion {
       }
     }
 
-    if ((isInsideParameterList(myPosition) || isAtResourceVariableStart(myPosition) || isAtCatchVariableStart(myPosition)) &&
+    if ((isInsideParameterList(myPosition) || isAtCatchOrResourceVariableStart(myPosition)) &&
         !psiElement().afterLeaf(PsiKeyword.FINAL).accepts(myPosition) &&
         !AFTER_DOT.accepts(myPosition)) {
       addKeyword(TailTypeDecorator.withTail(createKeyword(PsiKeyword.FINAL), TailType.HUMBLE_SPACE_BEFORE_WORD));
@@ -730,12 +732,14 @@ public class JavaKeywordCompletion {
                               info -> InheritanceUtil.isInheritor(info.getType(), CommonClassNames.JAVA_LANG_CLASS)) != null;
   }
 
-  private static boolean isAtResourceVariableStart(PsiElement position) {
-    return psiElement().insideStarting(psiElement(PsiTypeElement.class).withParent(PsiResourceList.class)).accepts(position);
-  }
-
-  private static boolean isAtCatchVariableStart(PsiElement position) {
-    return psiElement().insideStarting(psiElement(PsiTypeElement.class).withParent(PsiCatchSection.class)).accepts(position);
+  private static boolean isAtCatchOrResourceVariableStart(PsiElement position) {
+    PsiElement type = PsiTreeUtil.getParentOfType(position, PsiTypeElement.class);
+    if (type != null && type.getTextRange().getStartOffset() == position.getTextRange().getStartOffset()) {
+      PsiElement parent = type.getParent();
+      if (parent instanceof PsiVariable) parent = parent.getParent();
+      return parent instanceof PsiCatchSection || parent instanceof PsiResourceList;
+    }
+    return false;
   }
 
   private void addBreakContinue() {

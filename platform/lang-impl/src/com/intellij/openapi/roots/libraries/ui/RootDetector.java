@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots.libraries.ui;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,7 +27,7 @@ import java.util.Collection;
  * {@link LibraryRootsComponentDescriptor#getRootDetectors} method
  *
  * @see RootFilter
- * @see FileTypeBasedRootFilter
+ * @see DescendentBasedRootFilter
  * @author nik
 */
 public abstract class RootDetector {

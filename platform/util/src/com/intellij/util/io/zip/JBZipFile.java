@@ -187,7 +187,7 @@ public class JBZipFile {
       }
       
       myOutputStream.finish();
-      archive.setLength(myOutputStream.written);
+      archive.setLength(myOutputStream.getWritten());
     }
     archive.close();
   }
@@ -453,5 +453,9 @@ public class JBZipFile {
       myOutputStream = new JBZipOutputStream(this, currentcfdfoffset);
     }
     return myOutputStream;
+  }
+
+  void ensureFlushed(long end) throws IOException {
+    if (myOutputStream != null) myOutputStream.ensureFlushed(end);
   }
 }

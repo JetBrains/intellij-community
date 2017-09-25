@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.impl.VcsPathPresenter;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFilePathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +57,7 @@ public class Change {
   protected boolean myRenameOrMoveCached = false;
   private boolean myIsReplaced;
   private Type myType;
-  private final Map<String, Change> myOtherLayers;
+  private Map<String, Change> myOtherLayers;
 
   public Change(@Nullable final ContentRevision beforeRevision, @Nullable final ContentRevision afterRevision) {
     this(beforeRevision, afterRevision, convertStatus(beforeRevision, afterRevision));
@@ -68,7 +69,7 @@ public class Change {
     myAfterRevision = afterRevision;
     myFileStatus = fileStatus == null ? convertStatus(beforeRevision, afterRevision) : fileStatus;
     myHash = -1;
-    myOtherLayers = new HashMap<>(0);
+    myOtherLayers = null;
   }
 
   private static FileStatus convertStatus(@Nullable ContentRevision beforeRevision, @Nullable ContentRevision afterRevision) {
@@ -78,11 +79,13 @@ public class Change {
   }
 
   public void addAdditionalLayerElement(final String name, final Change change) {
+    if (myOtherLayers == null) myOtherLayers = new HashMap<>(1);
     myOtherLayers.put(name, change);
   }
 
+  @NotNull
   public Map<String, Change> getOtherLayers() {
-    return myOtherLayers;
+    return ContainerUtil.notNullize(myOtherLayers);
   }
 
   public Type getType() {

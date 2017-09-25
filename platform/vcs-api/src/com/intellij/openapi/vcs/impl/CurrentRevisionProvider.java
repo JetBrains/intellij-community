@@ -28,5 +28,5 @@ import java.io.IOException;
  */
 public interface CurrentRevisionProvider {
   VcsRevisionNumber getCurrentRevision() throws VcsException;
-  Pair<VcsRevisionNumber, byte[]> get() throws VcsException, IOException;
+  Pair<VcsRevisionNumber, byte[]> get() throws VcsException;
 }

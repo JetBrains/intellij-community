@@ -81,6 +81,7 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
       if (unThrown == null) return null;
 
       PsiMethod psiMethod = (PsiMethod)refMethod.getElement();
+      if (psiMethod == null) return null;
       PsiClassType[] throwsList = psiMethod.getThrowsList().getReferencedTypes();
       PsiJavaCodeReferenceElement[] throwsRefs = psiMethod.getThrowsList().getReferenceElements();
       List<ProblemDescriptor> problems = null;
@@ -169,6 +170,12 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
   @Nullable
   public String getHint(@NotNull final QuickFix fix) {
     return fix instanceof MyQuickFix ? ((MyQuickFix)fix).myHint : null;
+  }
+
+  @Nullable
+  @Override
+  public RefGraphAnnotator getAnnotator(@NotNull RefManager refManager) {
+    return new RedundantThrowsGraphAnnotator(refManager);
   }
 
   private static class MyQuickFix implements LocalQuickFix {

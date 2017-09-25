@@ -193,6 +193,7 @@ public class GradleManager
       result.setIdeProjectPath(ideProjectPath);
       if (projectLevelSettings != null) {
         result.setResolveModulePerSourceSet(projectLevelSettings.isResolveModulePerSourceSet());
+        result.setUseQualifiedModuleNames(projectLevelSettings.isUseQualifiedModuleNames());
       }
 
       configureExecutionWorkspace(projectLevelSettings, settings, result, project, pair.second);

@@ -162,6 +162,8 @@ public class ProblemDescriptorUtil {
         return severityRegistrar.getHighlightInfoTypeBySeverity(severity);
       case LIKE_DEPRECATED:
         return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.DEPRECATED.getAttributesKey());
+      case LIKE_MARKED_FOR_REMOVAL:
+        return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.MARKED_FOR_REMOVAL.getAttributesKey());
       case LIKE_UNKNOWN_SYMBOL:
         if (severity == HighlightSeverity.ERROR) {
           return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.WRONG_REF.getAttributesKey());

@@ -24,7 +24,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.containers.EmptyIterable;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
@@ -180,19 +179,15 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
     };
   }
 
+  @Override
+  public String getName() {
+    return getVisibleName();
+  }
+
   @NotNull
   public Iterable<PyElement> iterateNames() {
-    PyElement ret = getAsNameElement();
-    if (ret == null) {
-      final PyReferenceExpression importReference = getImportReferenceExpression();
-      if (importReference != null) {
-        ret = PyPsiUtils.getFirstQualifier(importReference);
-      }
-    }
-    if (ret == null) {
-      return EmptyIterable.getInstance();
-    }
-    return Collections.singleton(ret);
+    final String visibleName = getVisibleName();
+    return visibleName != null ? Collections.singletonList(this) : Collections.emptyList();
   }
 
   @NotNull

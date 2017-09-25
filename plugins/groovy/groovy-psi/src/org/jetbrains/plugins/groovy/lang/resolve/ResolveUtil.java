@@ -80,6 +80,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 import java.util.*;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtilKt.hasAnnotation;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.getDefaultConstructor;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.initialState;
 
 /**
@@ -663,9 +664,17 @@ public class ResolveUtil {
                                                               @Nullable PsiType[] argTypes,
                                                               @NotNull PsiElement place) {
     final MethodResolverProcessor processor = new MethodResolverProcessor(psiClass.getName(), place, true, null, argTypes, PsiType.EMPTY_ARRAY);
-    ResolveState state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor);
-    for (PsiMethod constructor : psiClass.getConstructors()) {
-      processor.execute(constructor, state);
+    final ResolveState state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor);
+
+    final PsiMethod[] constructors = psiClass.getConstructors();
+    if (constructors.length == 0) {
+      PsiMethod defaultConstructor = getDefaultConstructor(psiClass);
+      processor.execute(defaultConstructor, state);
+    }
+    else {
+      for (PsiMethod constructor : constructors) {
+        processor.execute(constructor, state);
+      }
     }
 
     final PsiClassType qualifierType = JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass);

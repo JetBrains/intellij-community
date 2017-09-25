@@ -80,7 +80,7 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
     return true;
   }
 
-  public boolean configureTask(RunConfiguration runConfiguration, T task) {
+  public boolean configureTask(@NotNull RunConfiguration runConfiguration, @NotNull T task) {
     final Artifact[] artifacts = ArtifactManager.getInstance(myProject).getArtifacts();
     Set<ArtifactPointer> pointers = new THashSet<>();
     for (Artifact artifact : artifacts) {
@@ -111,7 +111,7 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
   }
 
   @Override
-  public boolean canExecuteTask(RunConfiguration configuration, T task) {
+  public boolean canExecuteTask(@NotNull RunConfiguration configuration, @NotNull T task) {
     for (ArtifactPointer pointer : (List<ArtifactPointer>)task.getArtifactPointers()) {
       if (pointer.getArtifact() != null) {
         return true;
@@ -121,9 +121,9 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
   }
 
   public boolean executeTask(DataContext context,
-                             RunConfiguration configuration,
-                             final ExecutionEnvironment env,
-                             final T task) {
+                             @NotNull RunConfiguration configuration,
+                             @NotNull final ExecutionEnvironment env,
+                             @NotNull final T task) {
     final Ref<Boolean> result = Ref.create(false);
     final Semaphore finished = new Semaphore();
 

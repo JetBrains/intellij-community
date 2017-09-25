@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Trinity
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance
@@ -96,6 +97,7 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
   private var toolbarDecorator: ToolbarDecorator? = null
   private var isFolderCreating: Boolean = false
   private val toolbarAddAction = MyToolbarAddAction()
+  private val runDashboardTypesPanel = RunDashboardTypesPanel(myProject)
 
   companion object {
     fun collectNodesRecursively(parentNode: DefaultMutableTreeNode,
@@ -458,22 +460,24 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
   }
 
   private fun drawPressAddButtonMessage(configurationType: ConfigurationType?) {
-    val panel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0))
-    panel.border = EmptyBorder(30, 0, 0, 0)
-    panel.add(JLabel("Press the"))
+    val messagePanel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0))
+    messagePanel.border = EmptyBorder(30, 0, 0, 0)
+    messagePanel.add(JLabel("Press the"))
 
     val addIcon = ActionLink("", IconUtil.getAddIcon(), toolbarAddAction)
     addIcon.border = EmptyBorder(0, 0, 0, 5)
-    panel.add(addIcon)
+    messagePanel.add(addIcon)
 
     val configurationTypeDescription = if (configurationType != null)
       configurationType.configurationTypeDescription
     else
       ExecutionBundle.message("run.configuration.default.type.description")
-    panel.add(JLabel(ExecutionBundle.message("empty.run.configuration.panel.text.label3", configurationTypeDescription)))
-    val scrollPane = ScrollPaneFactory.createScrollPane(panel, true)
+    messagePanel.add(JLabel(ExecutionBundle.message("empty.run.configuration.panel.text.label3", configurationTypeDescription)))
 
     rightPanel.removeAll()
+    val panel = JPanel(BorderLayout())
+    panel.add(messagePanel, BorderLayout.CENTER)
+    val scrollPane = ScrollPaneFactory.createScrollPane(panel, true)
     rightPanel.add(scrollPane, BorderLayout.CENTER)
     if (configurationType == null) {
       val settingsPanel = JPanel(GridBagLayout())
@@ -484,11 +488,22 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
       }
       settingsPanel.add(createSettingsPanel(), grid.nextLine().next())
 
-      val wrapper = JPanel(BorderLayout())
-      wrapper.add(settingsPanel, BorderLayout.WEST)
-      wrapper.add(Box.createGlue(), BorderLayout.CENTER)
+      val settingsWrapper = JPanel(BorderLayout())
+      settingsWrapper.add(settingsPanel, BorderLayout.WEST)
+      settingsWrapper.add(Box.createGlue(), BorderLayout.CENTER)
 
-      rightPanel.add(wrapper, BorderLayout.SOUTH)
+      if (Registry.`is`("ide.run.dashboard.types.configuration") || ApplicationManager.getApplication().isInternal) {
+        val wrapper = JPanel(BorderLayout())
+        wrapper.add(runDashboardTypesPanel, BorderLayout.CENTER)
+        runDashboardTypesPanel.addChangeListener(this::defaultsSettingsChanged)
+        runDashboardTypesPanel.border = JBUI.Borders.empty(0, 0, 20, 0)
+        wrapper.add(settingsWrapper, BorderLayout.SOUTH)
+
+        panel.add(wrapper, BorderLayout.SOUTH)
+      }
+      else {
+        panel.add(settingsWrapper, BorderLayout.SOUTH)
+      }
     }
     rightPanel.revalidate()
     rightPanel.repaint()
@@ -525,6 +540,12 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
     return toolbarDecorator!!.createPanel()
   }
 
+  private fun defaultsSettingsChanged() {
+    isModified = !Comparing.equal(recentsLimit.text, recentsLimit.getClientProperty(INITIAL_VALUE_KEY)) ||
+                 !Comparing.equal(confirmation.isSelected, confirmation.getClientProperty(INITIAL_VALUE_KEY)) ||
+                 runDashboardTypesPanel.isModified()
+  }
+
   private fun createSettingsPanel(): JPanel {
     val bottomPanel = JPanel(GridBagLayout())
     val g = GridBag()
@@ -535,11 +556,11 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
 
     recentsLimit.document.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
-        isModified = !Comparing.equal(recentsLimit.text, recentsLimit.getClientProperty(INITIAL_VALUE_KEY))
+        defaultsSettingsChanged()
       }
     })
     confirmation.addChangeListener {
-      isModified = !Comparing.equal(confirmation.isSelected, confirmation.getClientProperty(INITIAL_VALUE_KEY))
+      defaultsSettingsChanged()
     }
     return bottomPanel
   }
@@ -587,6 +608,8 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
     confirmation.isSelected = config.isRestartRequiresConfirmation
     confirmation.putClientProperty(INITIAL_VALUE_KEY, confirmation.isSelected)
 
+    runDashboardTypesPanel.reset()
+
     for (each in additionalSettings) {
       each.first.reset()
     }
@@ -620,7 +643,12 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
         manager.config.recentsLimit = recentLimit
         manager.checkRecentsLimit()
       }
+      recentsLimit.text = "" + recentLimit
+      recentsLimit.putClientProperty(INITIAL_VALUE_KEY, recentsLimit.text)
       manager.config.isRestartRequiresConfirmation = confirmation.isSelected
+      confirmation.putClientProperty(INITIAL_VALUE_KEY, confirmation.isSelected)
+
+      runDashboardTypesPanel.apply()
 
       for (configurable in storedComponents.values) {
         if (configurable.isModified) {
@@ -758,10 +786,12 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
 
       val configurationNodes = ArrayList<DefaultMutableTreeNode>()
       collectNodesRecursively(typeNode, configurationNodes, CONFIGURATION, TEMPORARY_CONFIGURATION)
-      if (countSettingsOfType(allSettings, `object`) != configurationNodes.size) {
+      val allTypeSettings = allSettings.filter { it.type == `object` }
+      if (allTypeSettings.size != configurationNodes.size) {
         return true
       }
 
+      var currentTypeSettingsCount = 0
       for (configurationNode in configurationNodes) {
         val userObject = configurationNode.userObject
         val settings: RunnerAndConfigurationSettings
@@ -778,9 +808,12 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
           continue
         }
 
-        val index = currentSettingCount++
+        currentSettingCount++
+        val index = currentTypeSettingsCount++
         // we compare by instance, equals is not implemented and in any case object modification is checked by other logic
-        if (allSettings.size <= index || allSettings[index] !== settings) {
+        // we compare by index among current types settings because indexes among all configurations may differ
+        // since temporary configurations are stored in the end
+        if (allTypeSettings.size <= index || allTypeSettings[index] !== settings) {
           return true
         }
       }
@@ -993,7 +1026,9 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
         configurationTypes.add(null)
       }
 
-      val popup = NewRunConfigurationPopup.createAddPopup(configurationTypes, "$hiddenCount items more (irrelevant)...",
+      val popup = NewRunConfigurationPopup.createAddPopup(configurationTypes,
+                                                          ExecutionBundle.message("show.irrelevant.configurations.action.name",
+                                                                                  hiddenCount),
                                                           { factory -> createNewConfiguration(factory) }, selectedConfigurationType,
                                                           { showAddPopup(false) }, true)
       //new TreeSpeedSearch(myTree);

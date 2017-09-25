@@ -91,4 +91,24 @@ class Test {
 
     assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("System.out.println"))?.placeholderText == '{...}'
   }
+  
+  void "test parameter annotations"() {
+    configure """\
+class Some {
+    void m(@Anno("hello " +
+                 "world") int a,
+           @Anno("goodbye " +
+                 "world") int b) {}
+}
+
+@interface Anno { 
+    String value();
+}
+"""
+    assert myFixture.editor.foldingModel.allFoldRegions.toString() == 
+           '[FoldRegion -(11:141), placeholder=\'{...}\', ' +
+           'FoldRegion -(24:66), placeholder=\'@{...}\', ' +
+           'FoldRegion -(85:129), placeholder=\'@{...}\', ' +
+           'FoldRegion -(159:183), placeholder=\'{...}\']'
+  }
 }

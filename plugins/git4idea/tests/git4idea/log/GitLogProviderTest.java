@@ -111,7 +111,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     assertOrderedEquals(expectedLog, collector);
   }
 
-  public void test_get_current_user() throws Exception {
+  public void test_get_current_user() {
     VcsUser user = myLogProvider.getCurrentUser(myProjectRoot);
     assertNotNull("User is not defined", user);
     VcsUser expected = getDefaultUser();

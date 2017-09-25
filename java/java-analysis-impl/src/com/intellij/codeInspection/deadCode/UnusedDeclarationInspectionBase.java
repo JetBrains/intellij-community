@@ -400,7 +400,9 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       if (isAddServletEnabled() && servlet != null && aClass.isInheritor(servlet, true)) {
         return true;
       }
-      if (isAddMainsEnabled() && PsiMethodUtil.hasMainMethod(aClass)) return true;
+      if (isAddMainsEnabled()) {
+        if (hasMainMethodDeep(aClass)) return true;
+      }
     }
     if (element instanceof PsiModifierListOwner) {
       final EntryPointsManager entryPointsManager = EntryPointsManager.getInstance(project);
@@ -412,6 +414,16 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       }
     }
     return RefUtil.isImplicitUsage(element);
+  }
+
+  private static boolean hasMainMethodDeep(PsiClass aClass) {
+    if (PsiMethodUtil.hasMainMethod(aClass)) return true;
+    for (PsiClass innerClass : aClass.getInnerClasses()) {
+      if (innerClass.hasModifierProperty(PsiModifier.STATIC) && PsiMethodUtil.hasMainMethod(innerClass)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public boolean isGlobalEnabledInEditor() {

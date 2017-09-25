@@ -1,5 +1,5 @@
-print(slice(<warning descr="Parameter(s) unfilledPossible callees:slice(self: slice, stop: Optional[int])slice(self: slice, start: Optional[int], stop: Optional[int], step: Optional[int])">)</warning>)
+print(slice(<warning descr="Parameter(s) unfilledPossible callees:slice(self: slice, stop: Optional[int])slice(self: slice, start: Optional[int], stop: Optional[int], step: Optional[int]=None)">)</warning>)
 print(slice(1))
 print(slice(1, 2))
 print(slice(1, 2, 3))
-print(slice<warning descr="Unexpected argument(s)Possible callees:slice(self: slice, stop: Optional[int])slice(self: slice, start: Optional[int], stop: Optional[int], step: Optional[int])">(1, 2, 3, 4)</warning>)
+print(slice<warning descr="Unexpected argument(s)Possible callees:slice(self: slice, stop: Optional[int])slice(self: slice, start: Optional[int], stop: Optional[int], step: Optional[int]=None)">(1, 2, 3, 4)</warning>)

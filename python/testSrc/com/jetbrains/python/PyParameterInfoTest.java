@@ -446,7 +446,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
       LanguageLevel.PYTHON35,
       () -> {
         final int offset = loadTest(1).get("<arg1>").getTextOffset();
-        final String expectedInfo = "a1: str, a2: Optional[str], a3: Union[str, int, None], a4: int, *args: int, **kwargs: int";
+        final String expectedInfo = "a1: str, a2: Optional[str]=None, a3: Union[str, int, None]=None, a4: int, *args: int, **kwargs: int";
 
         feignCtrlP(offset).check(expectedInfo, new String[]{"a1: str, "});
       }
@@ -784,6 +784,11 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     }
 
     @Override
+    public void setupRawUIComponentPresentation(String htmlText) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
     public boolean isUIComponentEnabled() {
       return true;
     }
@@ -817,6 +822,11 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     @Nullable
     public PsiElement getParameterOwner() {
       return myParameterOwner;
+    }
+
+    @Override
+    public boolean isSingleOverload() {
+      return myItemsToShow.length == 1;
     }
 
     @Override

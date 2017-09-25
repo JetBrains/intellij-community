@@ -392,13 +392,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     final GridImpl grid = getGridFor(content, false);
     if (grid == null) return;
 
-    final GridCellImpl cell = grid.findCell(content);
-    if (cell == null) return;
-
-
     final TabInfo tab = myTabs.findInfo(grid);
     if (tab == null) return;
-
 
     if (getSelectedGrid() != grid) {
       tab.setAlertIcon(content.getAlertIcon());

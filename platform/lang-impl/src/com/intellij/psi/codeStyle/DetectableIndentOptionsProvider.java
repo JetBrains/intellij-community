@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
@@ -52,8 +53,8 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
   private static final ExecutorService BOUNDED_EXECUTOR = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("DetectableIndentOptionsProvider pool");
   
   private boolean myIsEnabledInTest;
-  private final List<VirtualFile> myAcceptedFiles = new WeakList<>();
-  private final List<VirtualFile> myDisabledFiles = new WeakList<>();
+  private final Collection<VirtualFile> myAcceptedFiles = new WeakList<>();
+  private final Collection<VirtualFile> myDisabledFiles = new WeakList<>();
 
   @Nullable
   @Override

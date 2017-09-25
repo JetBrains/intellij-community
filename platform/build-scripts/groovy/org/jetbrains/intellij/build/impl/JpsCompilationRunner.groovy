@@ -34,6 +34,7 @@ import com.intellij.openapi.diagnostic.CompositeLogger
 import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.containers.MultiMap
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
@@ -146,7 +147,10 @@ class JpsCompilationRunner {
         context.messages.error("Compilation failed unexpectedly", e)
       }
     }
-    if (messageHandler.compilationFailed) {
+    if (!messageHandler.errorMessagesByCompiler.isEmpty()) {
+      for (Map.Entry<String, Collection<String>> entry : messageHandler.errorMessagesByCompiler.entrySet()) {
+        context.messages.compilationErrors(entry.key, (List<String>)entry.value)
+      }
       context.messages.error("Compilation failed")
     }
     else if (!compilationData.statisticsReported) {
@@ -156,7 +160,7 @@ class JpsCompilationRunner {
   }
 
   private class AntMessageHandler implements MessageHandler {
-    private boolean compilationFailed
+    private MultiMap<String, String> errorMessagesByCompiler = MultiMap.createLinked()
     private float progress = -1.0
 
     @Override
@@ -181,8 +185,7 @@ class JpsCompilationRunner {
             compilerName = ""
             messageText = text
           }
-          compilationFailed = true
-          context.messages.compilationError(compilerName, messageText)
+          errorMessagesByCompiler.putValue(compilerName, messageText)
           break
         case BuildMessage.Kind.WARNING:
           context.messages.warning(text)

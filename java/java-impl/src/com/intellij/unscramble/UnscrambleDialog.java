@@ -23,7 +23,6 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.help.HelpManager;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -378,13 +377,7 @@ public class UnscrambleDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     if (myConfigurable != null && myConfigurable.isModified()) {
-      try {
-        myConfigurable.apply();
-      }
-      catch (ConfigurationException e) {
-        setText(e.getMessage());
-        return;
-      }
+      myConfigurable.apply();
     }
     DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> {
       if (performUnscramble()) {

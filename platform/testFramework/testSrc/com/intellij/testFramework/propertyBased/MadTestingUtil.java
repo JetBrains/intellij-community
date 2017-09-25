@@ -30,7 +30,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -212,6 +211,7 @@ public class MadTestingUtil {
       PsiDocumentManager.getInstance(fixture.getProject()).commitAllDocuments();
       PsiFile file = PsiManager.getInstance(fixture.getProject()).findFile(vFile);
       if (file instanceof PsiBinaryFile || file instanceof PsiPlainTextFile) {
+        System.err.println("Can't check " + vFile + " due to incorrect file type: " + file + " of " + file.getClass());
         // no operations, but the just created file needs to be deleted (in FileWithActions#runActions)
         // todo a side-effect-free generator
         return Generator.constant(new FileWithActions(file, Collections.emptyList()));
@@ -268,8 +268,7 @@ public class MadTestingUtil {
     PsiElement leaf = file.findElementAt(offset);
     Set<Integer> errorOffsets = SyntaxTraverser.psiTraverser(file)
       .filter(PsiErrorElement.class)
-      .map(PsiTreeUtil::nextVisibleLeaf)
-      .filter(Condition.NOT_NULL)
+      .filterMap(PsiTreeUtil::nextVisibleLeaf)
       .map(e -> e.getTextRange().getStartOffset())
       .toSet();
     return !errorOffsets.isEmpty() &&

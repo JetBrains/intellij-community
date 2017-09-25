@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -195,15 +196,15 @@ final class BindToExistingBeanStep extends StepAdapter{
       model.addElement(null/*<not defined>*/);
 
       // Fill combobox with available bean's properties
-      final String[] rProps = PropertyUtil.getReadableProperties(myData.myBeanClass, true);
-      final String[] wProps = PropertyUtil.getWritableProperties(myData.myBeanClass, true);
+      final String[] rProps = PropertyUtilBase.getReadableProperties(myData.myBeanClass, true);
+      final String[] wProps = PropertyUtilBase.getWritableProperties(myData.myBeanClass, true);
       final ArrayList<BeanProperty> rwProps = new ArrayList<>();
 
       outer: for(int i = rProps.length - 1; i >= 0; i--){
         final String propName = rProps[i];
         if(ArrayUtil.find(wProps, propName) != -1){
           LOG.assertTrue(!rwProps.contains(propName));
-          final PsiMethod getter = PropertyUtil.findPropertyGetter(myData.myBeanClass, propName, false, true);
+          final PsiMethod getter = PropertyUtilBase.findPropertyGetter(myData.myBeanClass, propName, false, true);
           if (getter == null) {
             // possible if the getter is static: getReadableProperties() does not filter out static methods, and
             // findPropertyGetter() checks for static/non-static

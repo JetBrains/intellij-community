@@ -8,5 +8,6 @@ public class QuickfixSpecific {
     TableView<Pair<Integer, String>> table;
 
     public void onSort(SortEvent<TableView<Pair<Integer, String>>> tableViewSortEvent) {
+
     }
 }

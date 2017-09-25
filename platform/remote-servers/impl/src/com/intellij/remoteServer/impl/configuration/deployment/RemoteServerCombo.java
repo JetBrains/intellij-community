@@ -128,6 +128,9 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
     if (item != null) {
       item.onBrowseAction();
     }
+    else {
+      editServer(RemoteServerListConfigurable.createConfigurable(myServerType, null));
+    }
   }
 
   private void onItemChosen(ActionEvent e) {
@@ -171,8 +174,7 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
   }
 
   protected final void refillModel(@Nullable RemoteServer<?> newSelection) {
-    String nameToSelect = newSelection != null ? newSelection.getName() :
-                          (getSelectedItem() != null ? getSelectedItem().getServerName() : null);
+    String nameToSelect = newSelection != null ? newSelection.getName() : null;
 
     myServerListModel.removeAll();
     ServerItem itemToSelect = null;
@@ -198,7 +200,7 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
       myServerListModel.add(nextAction);
     }
 
-    myServerListModel.setSelectedItem(itemToSelect);
+    getComboBox().setSelectedItem(itemToSelect);
   }
 
   @NotNull

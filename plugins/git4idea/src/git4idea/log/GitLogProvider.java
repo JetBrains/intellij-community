@@ -514,7 +514,7 @@ public class GitLogProvider implements VcsLogProvider {
 
   @Nullable
   @Override
-  public VcsUser getCurrentUser(@NotNull VirtualFile root) throws VcsException {
+  public VcsUser getCurrentUser(@NotNull VirtualFile root) {
     return myUserRegistry.getOrReadUser(root);
   }
 

@@ -17,9 +17,9 @@ package com.intellij.execution.dashboard.tree;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.dashboard.DashboardGroup;
-import com.intellij.execution.dashboard.DashboardGroupingRule;
-import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
+import com.intellij.execution.dashboard.RunDashboardGroup;
+import com.intellij.execution.dashboard.RunDashboardGroupingRule;
+import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
@@ -33,7 +33,7 @@ import javax.swing.*;
 /**
  * @author konstantin.aleev
  */
-public class FolderDashboardGroupingRule implements DashboardGroupingRule {
+public class FolderDashboardGroupingRule implements RunDashboardGroupingRule {
   @NonNls private static final String NAME = "FolderDashboardGroupingRule";
 
   @Override
@@ -67,9 +67,9 @@ public class FolderDashboardGroupingRule implements DashboardGroupingRule {
 
   @Nullable
   @Override
-  public DashboardGroup getGroup(AbstractTreeNode<?> node) {
-    if (node instanceof DashboardRunConfigurationNode) {
-      RunnerAndConfigurationSettings configurationSettings = ((DashboardRunConfigurationNode)node).getConfigurationSettings();
+  public RunDashboardGroup getGroup(AbstractTreeNode<?> node) {
+    if (node instanceof RunDashboardRunConfigurationNode) {
+      RunnerAndConfigurationSettings configurationSettings = ((RunDashboardRunConfigurationNode)node).getConfigurationSettings();
       String folderName = configurationSettings.getFolderName();
       if (folderName != null) {
         return new FolderDashboardGroup(folderName, folderName, AllIcons.Nodes.Folder);
@@ -78,7 +78,7 @@ public class FolderDashboardGroupingRule implements DashboardGroupingRule {
     return null;
   }
 
-  public static class FolderDashboardGroup extends DashboardGroupImpl<String> {
+  public static class FolderDashboardGroup extends RunDashboardGroupImpl<String> {
     public FolderDashboardGroup(String value, String name, Icon icon) {
       super(value, name, icon);
     }

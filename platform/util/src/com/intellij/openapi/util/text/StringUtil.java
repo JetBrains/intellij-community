@@ -259,6 +259,17 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
+  public static int lastIndexOfIgnoreCase(@NotNull String where, char what, int fromIndex) {
+    for (int i = Math.min(fromIndex, where.length() - 1); i >= 0; i--) {
+      if (charsEqualIgnoreCase(where.charAt(i), what)) {
+        return i;
+      }
+    }
+
+    return -1;
+  }
+
+  @Contract(pure = true)
   public static boolean containsIgnoreCase(@NotNull String where, @NotNull String what) {
     return indexOfIgnoreCase(where, what, 0) >= 0;
   }
@@ -1968,6 +1979,14 @@ public class StringUtil extends StringUtilRt {
     return text.substring(0, i);
   }
 
+  @NotNull
+  @Contract(pure = true)
+  public static String substringBeforeLast(@NotNull String text, @NotNull String subString) {
+    int i = text.lastIndexOf(subString);
+    if (i == -1) return text;
+    return text.substring(0, i);
+  }
+
   @Nullable
   @Contract(pure = true)
   public static String substringAfter(@NotNull String text, @NotNull String subString) {
@@ -3133,7 +3152,6 @@ public class StringUtil extends StringUtilRt {
         }
         return false;
     }
-
 
   private static final Pattern UNICODE_CHAR = Pattern.compile("\\\\u[0-9a-eA-E]{4}");
 

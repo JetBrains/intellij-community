@@ -50,6 +50,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
   private final Map<String, Lexer> scriptLexers = new HashMap<>();
   private final Map<String, Lexer> styleLexers = new HashMap<>();
   private boolean hasNoEmbeddments;
+  private final boolean hasNoLayers;
 
   public HtmlHighlightingLexer() {
     this(null);
@@ -61,6 +62,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
 
   protected HtmlHighlightingLexer(Lexer lexer, boolean caseInsensitive, FileType styleFileType) {
     super(lexer, caseInsensitive);
+    hasNoLayers = Boolean.TRUE.equals(LayeredLexer.ourDisableLayersFlag.get());
     ourStyleFileType = styleFileType;
 
     XmlEmbeddmentHandler value = new XmlEmbeddmentHandler();
@@ -87,66 +89,71 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
   }
 
   private void setEmbeddedLexer() {
-    Lexer newLexer = null;
-    if (hasSeenStyle()) {
-      Lexer styleLexer = styleLexers.get(styleType);
-      if (styleLexer == null) {
-        if (hasSeenTag()) {
-          IElementType currentStylesheetElementType = getCurrentStylesheetElementType();
-          if (currentStylesheetElementType != null) {
-            Language language = currentStylesheetElementType.getLanguage();
-            styleLexer = SyntaxHighlighterFactory.getSyntaxHighlighter(language, null, null).getHighlightingLexer();
+    if (hasNoLayers) LayeredLexer.ourDisableLayersFlag.set(Boolean.TRUE);
+    try {
+      Lexer newLexer = null;
+      if (hasSeenStyle()) {
+        Lexer styleLexer = styleLexers.get(styleType);
+        if (styleLexer == null) {
+          if (hasSeenTag()) {
+            IElementType currentStylesheetElementType = getCurrentStylesheetElementType();
+            if (currentStylesheetElementType != null) {
+              Language language = currentStylesheetElementType.getLanguage();
+              styleLexer = SyntaxHighlighterFactory.getSyntaxHighlighter(language, null, null).getHighlightingLexer();
+            }
+            else if (ourStyleFileType != null) {
+              SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(ourStyleFileType, null, null);
+              LOG.assertTrue(highlighter != null, ourStyleFileType);
+              styleLexer = highlighter.getHighlightingLexer();
+            }
+            else {
+              styleLexer = null;
+            }
+            styleLexers.put(styleType, styleLexer);
           }
-          else if (ourStyleFileType != null) {
-            SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(ourStyleFileType, null, null);
-            LOG.assertTrue(highlighter != null, ourStyleFileType);
-            styleLexer = highlighter.getHighlightingLexer();
+          else if (hasSeenAttribute()) {
+            if (ourStyleFileType == null) {
+              styleLexer = null;
+            }
+            else {
+              SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(ourStyleFileType, null, null);
+              LOG.assertTrue(highlighter != null, ourStyleFileType);
+              styleLexer = highlighter.getHighlightingLexer();
+            }
           }
-          else {
-            styleLexer = null;
-          }
-          styleLexers.put(styleType, styleLexer);
         }
-        else if (hasSeenAttribute()) {
-          if (ourStyleFileType == null) {
-            styleLexer = null;
-          }
-          else {
-            SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(ourStyleFileType, null, null);
-            LOG.assertTrue(highlighter != null, ourStyleFileType);
-            styleLexer = highlighter.getHighlightingLexer();
-          }
-        }
+        newLexer = styleLexer;
       }
-      newLexer = styleLexer;
-    }
-    else if (hasSeenScript()) {
-      Lexer scriptLexer = scriptLexers.get(scriptType);
-      if (scriptLexer == null) {
-        if (hasSeenTag()) {
-          HtmlScriptContentProvider provider = findScriptContentProvider(scriptType);
-          if (provider != null) {
-            scriptLexer = provider.getHighlightingLexer();
+      else if (hasSeenScript()) {
+        Lexer scriptLexer = scriptLexers.get(scriptType);
+        if (scriptLexer == null) {
+          if (hasSeenTag()) {
+            HtmlScriptContentProvider provider = findScriptContentProvider(scriptType);
+            if (provider != null) {
+              scriptLexer = provider.getHighlightingLexer();
+            }
+            else {
+              scriptLexer = SyntaxHighlighterFactory.getSyntaxHighlighter(PlainTextLanguage.INSTANCE, null, null).getHighlightingLexer();
+            }
           }
-          else {
-            scriptLexer = SyntaxHighlighterFactory.getSyntaxHighlighter(PlainTextLanguage.INSTANCE, null, null).getHighlightingLexer();
+          else if (hasSeenAttribute()) {
+            SyntaxHighlighter syntaxHighlighter =
+              ourInlineScriptFileType != null ? SyntaxHighlighterFactory.getSyntaxHighlighter(ourInlineScriptFileType, null, null) : null;
+            scriptLexer = syntaxHighlighter != null ? syntaxHighlighter.getHighlightingLexer() : null;
           }
+          scriptLexers.put(scriptType, scriptLexer);
         }
-        else if (hasSeenAttribute()) {
-          SyntaxHighlighter syntaxHighlighter =
-            ourInlineScriptFileType != null ? SyntaxHighlighterFactory.getSyntaxHighlighter(ourInlineScriptFileType, null, null) : null;
-          scriptLexer = syntaxHighlighter != null ? syntaxHighlighter.getHighlightingLexer() : null;
-        }
-        scriptLexers.put(scriptType, scriptLexer);
+        newLexer = scriptLexer;
       }
-      newLexer = scriptLexer;
-    }
-    else {
-      newLexer = createELLexer(newLexer);
-    }
+      else {
+        newLexer = createELLexer(newLexer);
+      }
 
-    if (newLexer != null) {
-      embeddedLexer = newLexer;
+      if (newLexer != null) {
+        embeddedLexer = newLexer;
+      }
+    } finally {
+      if (hasNoLayers) LayeredLexer.ourDisableLayersFlag.set(null);
     }
   }
 

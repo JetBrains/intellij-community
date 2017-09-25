@@ -123,8 +123,9 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
   }
 
   public void testCaching() {
+    VirtualFile jdkRoot = getRtJarJdk17();
     final VirtualFile[] roots = orderEntries(myModule).classes().usingCache().getRoots();
-    assertOrderedEquals(roots, getRtJarJdk17());
+    assertOrderedEquals(roots, jdkRoot);
     assertEquals(roots, orderEntries(myModule).classes().usingCache().getRoots());
     final VirtualFile[] rootsWithoutSdk = orderEntries(myModule).withoutSdk().classes().usingCache().getRoots();
     assertEmpty(rootsWithoutSdk);
@@ -133,13 +134,14 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
 
     ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary());
 
-    assertRoots(orderEntries(myModule).classes().usingCache().getPathsList(), getRtJarJdk17(), getJDomJar());
+    assertRoots(orderEntries(myModule).classes().usingCache().getPathsList(), jdkRoot, getJDomJar());
     assertRoots(orderEntries(myModule).withoutSdk().classes().usingCache().getPathsList(), getJDomJar());
   }
 
   public void testCachingUrls() {
+    String jdkUrl = getRtJarJdk17().getUrl();
     final String[] urls = orderEntries(myModule).classes().usingCache().getUrls();
-    assertOrderedEquals(urls, getRtJarJdk17().getUrl());
+    assertOrderedEquals(urls, jdkUrl);
     assertSame(urls, orderEntries(myModule).classes().usingCache().getUrls());
 
     final String[] sourceUrls = orderEntries(myModule).sources().usingCache().getUrls();
@@ -148,7 +150,7 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
     assertSame(sourceUrls, orderEntries(myModule).sources().usingCache().getUrls());
 
     ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary());
-    assertOrderedEquals(orderEntries(myModule).classes().usingCache().getUrls(), getRtJarJdk17().getUrl(), getJDomJar().getUrl());
+    assertOrderedEquals(orderEntries(myModule).classes().usingCache().getUrls(), jdkUrl, getJDomJar().getUrl());
     assertOrderedEquals(orderEntries(myModule).sources().usingCache().getUrls(), getJDomSources().getUrl());
   }
 

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -105,15 +106,9 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
         registerError(argument, castArrayType.getComponentType());
       }
       else {
-        if (!collectionType.hasParameters()) {
-          return;
-        }
-        final PsiType[] parameters = collectionType.getParameters();
-        if (parameters.length != 1) {
-          return;
-        }
-        final PsiType parameter = parameters[0];
-        if (componentType.isAssignableFrom(parameter)) {
+        final PsiType parameter = GenericsUtil
+          .getVariableTypeByExpressionType(JavaGenericsUtil.getCollectionItemType(collectionType, expression.getResolveScope()));
+        if (parameter == null || componentType.isAssignableFrom(parameter)) {
           return;
         }
         if (parameter instanceof PsiClassType) {

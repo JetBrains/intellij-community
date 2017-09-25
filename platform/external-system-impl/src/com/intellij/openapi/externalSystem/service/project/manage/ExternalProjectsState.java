@@ -30,7 +30,7 @@ import java.util.Map;
  * @since 10/23/2014
  */
 public class ExternalProjectsState {
-  private final Map<String, State> myExternalSystemsState = FactoryMap.createMap(key-> new State());
+  private final Map<String, State> myExternalSystemsState = FactoryMap.create(key -> new State());
 
   @Property(surroundWithTag = false)
   @MapAnnotation(surroundWithTag = false, surroundValueWithTag = false, surroundKeyWithTag = false,

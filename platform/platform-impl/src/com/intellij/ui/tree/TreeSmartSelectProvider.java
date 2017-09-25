@@ -45,7 +45,7 @@ public class TreeSmartSelectProvider implements SmartSelectProvider<JTree> {
 
     boolean madeSelection = false;
 
-    for (int i = 0; i < tree.getRowCount(); i++) {
+    for (int i = 0; i < getNumberOfNodes(tree); i++) {
       TreePath row = tree.getPathForRow(i);
       if (parentPath.isDescendant(row) && !row.equals(parentPath)) {
         if (!tree.isRowSelected(i)) {
@@ -62,6 +62,19 @@ public class TreeSmartSelectProvider implements SmartSelectProvider<JTree> {
         addSelection(tree, parentPath);
       }
     }
+  }
+
+  public static int getNumberOfNodes(JTree tree) {
+    return getNumberOfNodes(tree, tree.getModel().getRoot());
+  }
+
+  private static int getNumberOfNodes(JTree tree, Object node) {
+    int count = 1;
+    int nChildren = tree.getModel().getChildCount(node);
+    for (int i = 0; i < nChildren; i++) {
+      count += getNumberOfNodes(tree, tree.getModel().getChild(node, i));
+    }
+    return count;
   }
 
   private static void addSelection(JTree tree, TreePath path) {

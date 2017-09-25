@@ -74,10 +74,10 @@ public class RunTargetAction extends AnAction {
     Pair<AntBuildFileBase, AntDomTarget> antTarget = findAntTarget(e);
     if (antTarget == null) {
       presentation.setEnabled(false);
-      presentation.setText(AntActionsBundle.message("action.RunTargetAction.text", ""));
+      presentation.setText(AntActionsBundle.message("action.RunTargetAction.text.template", ""));
     } else {
       presentation.setEnabled(true);
-      presentation.setText(AntActionsBundle.message("action.RunTargetAction.text", "'" + antTarget.second.getName().getValue() + "'"));
+      presentation.setText(AntActionsBundle.message("action.RunTargetAction.text.template", "'" + antTarget.second.getName().getValue() + "'"));
     }
   }
 

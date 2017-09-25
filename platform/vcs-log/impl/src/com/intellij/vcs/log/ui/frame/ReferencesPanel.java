@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.ui.frame;
 
-import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ObjectUtils;
@@ -119,7 +118,7 @@ public class ReferencesPanel extends JPanel {
                             @NotNull Collection<VcsRef> refs,
                             int refIndex, int height) {
     if (refIndex == 0) {
-      Color color = EditorColorsUtil.getGlobalOrDefaultColor(type.getBgColorKey());
+      Color color = type.getBackgroundColor();
       return new LabelIcon(height, getBackground(),
                            refs.size() > 1 ? new Color[]{color, color} : new Color[]{color});
     }

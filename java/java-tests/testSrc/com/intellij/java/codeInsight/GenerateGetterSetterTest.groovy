@@ -18,6 +18,7 @@ package com.intellij.java.codeInsight
 import com.intellij.codeInsight.generation.ClassMember
 import com.intellij.codeInsight.generation.GenerateGetterHandler
 import com.intellij.codeInsight.generation.GenerateSetterHandler
+import com.intellij.codeInsight.generation.SetterTemplatesManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
@@ -96,6 +97,33 @@ class Foo {
     }
 }
 '''
+  }
+
+  void "test builder setter template"() {
+    myFixture.configureByText 'a.java', '''
+class X<T extends String> {
+   T field;
+   
+   <caret>
+}
+'''
+    try {
+      SetterTemplatesManager.instance.state.defaultTempalteName = "Builder"
+      generateSetter()
+      myFixture.checkResult '''
+class X<T extends String> {
+   T field;
+
+    public X<T> setField(T field) {
+        this.field = field;
+        return this;
+    }
+}
+'''
+    }
+    finally {
+      SetterTemplatesManager.instance.state.defaultTempalteName = null
+    }
   }
 
   void "test strip field prefix"() {

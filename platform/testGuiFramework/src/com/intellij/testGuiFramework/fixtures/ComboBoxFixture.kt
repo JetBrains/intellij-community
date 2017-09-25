@@ -15,8 +15,10 @@
  */
 package com.intellij.testGuiFramework.fixtures
 
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
+import org.fest.swing.exception.LocationUnavailableException
 import org.fest.swing.fixture.JComboBoxFixture
 import javax.swing.JButton
 import javax.swing.JComboBox
@@ -24,9 +26,39 @@ import javax.swing.JComboBox
 class ComboBoxFixture(robot: Robot, comboBox: JComboBox<*>) : JComboBoxFixture(robot, comboBox) {
 
   fun expand(): ComboBoxFixture {
-    val arrowButton = target().components.filter { it is JButton }.firstOrNull() ?: throw ComponentLookupException("Unable to find bounded arrow button for a combobox")
+    val arrowButton = target().components.filter { it is JButton }.firstOrNull() ?: throw ComponentLookupException(
+      "Unable to find bounded arrow button for a combobox")
     robot().click(arrowButton)
     return this
   }
 
+  //We are waiting for a item to be shown in dropdown list. It is necessary for a async comboboxes
+  fun selectItem(itemName: String, timeoutInSeconds: Int = 30): ComboBoxFixture  {
+    waitUntil("item '$itemName' will be appeared in dropdown list", timeoutInSeconds) { doSelectItem({ super.selectItem(itemName) }) }
+    return this
+  }
+
+  //We are waiting for a item to be shown in dropdown list. It is necessary for a async comboboxes
+  fun selectItem(itemIndex: Int, timeoutInSeconds: Int = 30): ComboBoxFixture {
+    waitUntil("item with index $itemIndex will be appeared in dropdown list", timeoutInSeconds) { doSelectItem({ super.selectItem(itemIndex) }) }
+    return this
+  }
+
+  override fun selectItem(index: Int): ComboBoxFixture {
+    return selectItem(index, 30)
+  }
+
+  private fun doSelectItem(selectItemFunction: () -> Unit): Boolean {
+    return try {
+      selectItemFunction()
+      true
+    }
+    catch (e: Exception) {
+      when (e) {
+        is LocationUnavailableException -> false
+        is IndexOutOfBoundsException -> false
+        else -> throw e
+      }
+    }
+  }
 }

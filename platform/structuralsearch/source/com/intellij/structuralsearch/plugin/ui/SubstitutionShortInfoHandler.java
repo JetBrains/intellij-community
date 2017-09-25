@@ -56,16 +56,16 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
 
   private void handleInputFocusMovement(LogicalPosition position) {
     checkModelValidity();
-    String text = "";
     final int offset = editor.logicalPositionToOffset(position);
     final int length = editor.getDocument().getTextLength();
     final CharSequence elements = editor.getDocument().getCharsSequence();
 
     int start = offset-1;
-    int end = -1;
     while(start >=0 && Character.isJavaIdentifierPart(elements.charAt(start)) && elements.charAt(start)!='$') start--;
 
-    if (start >=0 && elements.charAt(start)=='$') {
+    String text = "";
+    int end = -1;
+    if (start >= 0 && elements.charAt(start) == '$') {
       end = offset;
 
       while(end < length && Character.isJavaIdentifierPart(elements.charAt(end)) && elements.charAt(end)!='$') end++;
@@ -188,7 +188,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     if (buf.length() == 0) {
       return SSRBundle.message("no.constraints.specified.tooltip.message");
     }
-    return buf.toString();
+    return StringUtil.escapeXml(buf.toString());
   }
 
   private static void append(final StringBuilder buf, final String str) {

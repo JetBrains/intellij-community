@@ -197,7 +197,9 @@ public class AutoPopupController implements Disposable {
           int lbraceOffset = editor.getCaretModel().getOffset() - 1;
           try {
             PsiFile file1 = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-            ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod, false, true);
+            if (file1 != null) {
+              ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod, false, true);
+            }
           }
           catch (IndexNotReadyException ignored) { //anything can happen on alarm
           }

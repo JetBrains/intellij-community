@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import java.util.List;
  */
 public class IdeaProjectModelModifier extends JavaProjectModelModifier {
   private static final Logger LOG = Logger.getInstance(IdeaProjectModelModifier.class);
+
   private final Project myProject;
 
   public IdeaProjectModelModifier(Project project) {
@@ -51,8 +52,14 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
   }
 
   @Override
-  public Promise<Void> addModuleDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope) {
-    ModuleRootModificationUtil.addDependency(from, to, scope, false);
+  public Promise<Void> addModuleDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope, boolean exported) {
+    ModuleRootModificationUtil.addDependency(from, to, scope, exported);
+    return Promises.resolvedPromise(null);
+  }
+
+  @Override
+  public Promise<Void> addLibraryDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope, boolean exported) {
+    OrderEntryUtil.addLibraryToRoots(from, library, scope, exported);
     return Promises.resolvedPromise(null);
   }
 
@@ -88,12 +95,6 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
         }.execute();
       }
     }
-    return Promises.resolvedPromise(null);
-  }
-
-  @Override
-  public Promise<Void> addLibraryDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope) {
-    OrderEntryUtil.addLibraryToRoots(from, library);
     return Promises.resolvedPromise(null);
   }
 

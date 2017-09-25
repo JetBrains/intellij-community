@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -41,10 +42,10 @@ public class CreateGetterSetterPropertyFromUsageFix extends CreatePropertyFromUs
 
   @Override
   protected boolean checkTargetClasses(List<PsiClass> classes, String methodName) {
-    String propertyName = PropertyUtil.getPropertyName(methodName);
+    String propertyName = PropertyUtilBase.getPropertyName(methodName);
     if (propertyName == null) return false;
-    String getterName = PropertyUtil.suggestGetterName(propertyName, null);
-    String setterName = PropertyUtil.suggestSetterName(propertyName);
+    String getterName = PropertyUtilBase.suggestGetterName(propertyName, null);
+    String setterName = PropertyUtilBase.suggestSetterName(propertyName);
     for (PsiClass aClass : classes) {
       if (aClass.findMethodsByName(getterName, false).length > 0 || aClass.findMethodsByName(setterName, false).length > 0) return false;
     }

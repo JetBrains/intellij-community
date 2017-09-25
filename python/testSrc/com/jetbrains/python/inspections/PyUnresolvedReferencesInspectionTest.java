@@ -424,8 +424,8 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   }
 
   protected VirtualFile prepareFile() {
-    myFixture.copyDirectoryToProject(getTestDirectory(false), "");
-    return myFixture.configureByFile(getTestDirectory(false) + "/" + getTestName(true) + ".py").getVirtualFile();
+    myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
+    return myFixture.configureByFile(getTestDirectoryPath() + "/" + getTestName(true) + ".py").getVirtualFile();
   }
 
   protected void doEvaluateExpressionTest(@NotNull VirtualFile mainFile, @NotNull String expression, int lineNumber) {
@@ -616,6 +616,35 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   // PY-25118
   public void testInnerClassAsNamedTupleDefinitionMember() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-5500
+  public void testUnknownElementInDunderAll() {
+    doTest();
+  }
+
+  // PY-15071
+  public void testImportedPrivateNameListedInDunderAll() {
+    doMultiFileTest();
+  }
+
+  // PY-25695
+  public void testDynamicDunderAll() {
+    doMultiFileTest();
+  }
+
+  public void testDunderAll() {
+    doMultiFileTest();
+  }
+
+  // PY-25794
+  public void testStubOnlyReExportedModule() {
+    doMultiFileTest();
+  }
+
+  // PY-24637
+  public void testPy2TrueInDocTest() {
+    doTest();
   }
 
   @NotNull

@@ -26,9 +26,9 @@ import java.util.*;
  */
 
 public class ConvertUsagesUtil {
-  private static final char GROUP_SEPARATOR = ':';
-  private static final char GROUPS_SEPARATOR = ';';
-  private static final char GROUP_VALUE_SEPARATOR = ',';
+  static final char GROUP_SEPARATOR = ':';
+  static final char GROUPS_SEPARATOR = ';';
+  static final char GROUP_VALUE_SEPARATOR = ',';
 
   private ConvertUsagesUtil() {
   }
@@ -165,7 +165,7 @@ public class ConvertUsagesUtil {
    */
   @NotNull
   public static String escapeDescriptorName(@NotNull final String name) {
-    return name.replace(" ", "_").
+    return name.
       replace(GROUP_SEPARATOR, '_').
       replace(GROUPS_SEPARATOR, '_').
       replace(GROUP_VALUE_SEPARATOR, '_')

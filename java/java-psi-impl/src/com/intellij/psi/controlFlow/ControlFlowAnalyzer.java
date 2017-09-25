@@ -885,7 +885,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
           if (((PsiSwitchLabelStatement)aStatement).isDefaultCase()) {
             defaultLabel = (PsiSwitchLabelStatement)aStatement;
           }
-          Instruction instruction = new ConditionalGoToInstruction(0, statement.getExpression());
+          Instruction instruction = new ConditionalGoToInstruction(0, expr);
           myCurrentFlow.addInstruction(instruction);
           addElementOffsetLater(aStatement, true);
         }
@@ -1377,7 +1377,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(expression);
   }
 
-  private static enum Shortcut {
+  private enum Shortcut {
     NO_SHORTCUT, // a || b
     SKIP_CURRENT_OPERAND, // false || a
     STOP_EXPRESSION         // true || a

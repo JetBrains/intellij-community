@@ -740,6 +740,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
         try {
           listeners[i].beforeDocumentChange(event);
         }
+        catch (ProcessCanceledException e) {
+          throw e;  // the case of some wise inspection modifying non-physical document during highlighting to be interrupted
+        }
         catch (Throwable e) {
           LOG.error(e);
         }

@@ -17,12 +17,14 @@ package git4idea.tests;
 
 import com.intellij.openapi.util.SystemInfo;
 import git4idea.config.GitVersion;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
 
 import static git4idea.config.GitVersion.Type;
-import static org.testng.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 /**
  * @author Kirill Likhodedov
@@ -78,19 +80,19 @@ public class GitVersionTest {
     GitVersion v4 = GitVersion.parse("git version 1.7.3.msysgit.0");
     assertFalse(v1.equals(v2));
     assertFalse(v1.equals(v3));
-    assertTrue(v2.equals(v3));
+    Assert.assertTrue(v2.equals(v3));
     if (SystemInfo.isWindows) {
       assertFalse(v1.equals(v4));
       assertFalse(v2.equals(v4));
       assertFalse(v3.equals(v4));
     }
 
-    assertEquals(v1.compareTo(v2), -1);
-    assertEquals(v1.compareTo(v3), -1);
-    assertEquals(v1.compareTo(v4), -1);
-    assertEquals(v2.compareTo(v3), 0);
-    assertEquals(v2.compareTo(v4), 0);
-    assertEquals(v3.compareTo(v4), 0);
+    assertEquals(-1, v1.compareTo(v2));
+    assertEquals(-1, v1.compareTo(v3));
+    assertEquals(-1, v1.compareTo(v4));
+    assertEquals(0, v2.compareTo(v3));
+    assertEquals(0, v2.compareTo(v4));
+    assertEquals(0, v3.compareTo(v4));
   }
 
   // Compares the parsed output and what we've expected.
@@ -112,11 +114,11 @@ public class GitVersionTest {
     field.setAccessible(true);
     final Type type = (Type) field.get(actual);
 
-    assertEquals(major, expected.major);
-    assertEquals(minor, expected.minor);
-    assertEquals(rev, expected.rev);
-    assertEquals(patch, expected.patch);
-    assertEquals(type, expectedType);
+    assertEquals(expected.major, major);
+    assertEquals(expected.minor, minor);
+    assertEquals(expected.rev, rev);
+    assertEquals(expected.patch, patch);
+    assertEquals(expectedType, type);
   }
 
   private static class TestGitVersion {

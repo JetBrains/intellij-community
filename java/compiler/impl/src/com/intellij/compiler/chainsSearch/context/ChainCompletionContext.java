@@ -26,10 +26,7 @@ import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
@@ -95,8 +92,8 @@ public class ChainCompletionContext {
     myResolveScope = context.getResolveScope();
     myProject = context.getProject();
     myResolveHelper = PsiResolveHelper.SERVICE.getInstance(myProject);
-    myQualifierClassResolver = FactoryMap.createMap(sign -> sign.resolveQualifier(myProject, myResolveScope, accessValidator()));
-    myResolver = FactoryMap.createMap(sign -> sign.resolve(myProject, myResolveScope, accessValidator()));
+    myQualifierClassResolver = FactoryMap.create(sign1 -> sign1.resolveQualifier(myProject, myResolveScope, accessValidator()));
+    myResolver = FactoryMap.create(sign -> sign.resolve(myProject, myResolveScope, accessValidator()));
   }
 
   @NotNull
@@ -235,7 +232,7 @@ public class ChainCompletionContext {
 
     @Override
     public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-      if ((!(element instanceof PsiMethod) || PropertyUtil.isSimplePropertyAccessor((PsiMethod)element)) &&
+      if ((!(element instanceof PsiMethod) || PropertyUtilBase.isSimplePropertyAccessor((PsiMethod)element)) &&
           (!(element instanceof PsiVariable) || !myExcludedVariables.contains(element)) &&
           (!(element instanceof PsiMember) || myResolveHelper.isAccessible((PsiMember)element, myPlace, null))) {
         PsiType type = getType(element);

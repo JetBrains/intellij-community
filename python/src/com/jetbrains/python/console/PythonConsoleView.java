@@ -95,6 +95,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   private XStandaloneVariablesView mySplitView;
   private ActionCallback myInitialized = new ActionCallback();
+  private boolean isShowVars = true;
 
   public PythonConsoleView(final Project project, final String title, final Sdk sdk) {
     super(project, title, PythonLanguage.getInstance());
@@ -115,6 +116,10 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   public void setConsoleCommunication(final ConsoleCommunication communication) {
     getFile().putCopyableUserData(PydevConsoleRunner.CONSOLE_KEY, communication);
+
+    if (isShowVars && communication instanceof PydevConsoleCommunication) {
+      showVariables((PydevConsoleCommunication)communication);
+    }
   }
 
   private PyConsoleStartFolding createConsoleFolding() {
@@ -490,5 +495,13 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   public void initialized() {
     myInitialized.setDone();
+  }
+
+  public void setShowVars(boolean showVars) {
+    isShowVars = showVars;
+  }
+
+  public boolean isShowVars() {
+    return isShowVars;
   }
 }

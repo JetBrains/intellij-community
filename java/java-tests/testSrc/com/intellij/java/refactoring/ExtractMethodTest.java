@@ -679,6 +679,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testTypeParamsListWithRecursiveDependencies() throws Exception {
+    doTest();
+  }
+
   public void testFromLambdaBody() throws Exception {
     doTest();
   }
@@ -1044,6 +1048,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testCallOnFieldArrayElement() throws Exception {
+    doTest();
+  }
+
+  public void testExtractedVariableReused() throws Exception {
     doTest();
   }
 

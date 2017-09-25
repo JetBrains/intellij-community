@@ -13,7 +13,8 @@ public class JpsIntelliLangExtensionServiceImpl extends JpsIntelliLangExtensionS
   @NotNull
   @Override
   public JpsIntelliLangConfiguration getConfiguration(@NotNull JpsGlobal global) {
-    return global.getContainer().getChild(JpsIntelliLangConfigurationImpl.ROLE);
+    JpsIntelliLangConfiguration configuration = global.getContainer().getChild(JpsIntelliLangConfigurationImpl.ROLE);
+    return configuration != null ? configuration : new JpsIntelliLangConfigurationImpl();
   }
 
   @Override

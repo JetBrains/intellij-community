@@ -466,6 +466,10 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
       return ownerName == null ? "type parameter" : "type parameter of " + ownerName;
     }
 
+    if (PsiUtil.isLocalClass(psiClass)) {
+      return "local class";
+    }
+
     String packageName = psiClass.getQualifiedName();
     packageName = packageName == null || packageName.lastIndexOf('.') <= 0 ? "" : packageName.substring(0, packageName.lastIndexOf('.'));
     if (packageName.isEmpty()) {

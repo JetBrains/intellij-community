@@ -42,6 +42,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.Equality;
@@ -68,6 +69,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   protected final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myProblemElements = createBidiMap();
   protected final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> mySuppressedElements = createBidiMap();
   private final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myResolvedElements = createBidiMap();
+  private final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myExcludedElements = createBidiMap();
 
   protected final Map<String, Set<RefEntity>> myContents = Collections.synchronizedMap(new HashMap<String, Set<RefEntity>>(1)); // keys can be null
   private final Set<RefModule> myModulesProblems = Collections.synchronizedSet(ContainerUtil.newIdentityTroveSet());
@@ -78,13 +80,6 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   public DefaultInspectionToolPresentation(@NotNull InspectionToolWrapper toolWrapper, @NotNull GlobalInspectionContextImpl context) {
     myToolWrapper = toolWrapper;
     myContext = context;
-  }
-
-  public void resolveElement(@NotNull RefEntity entity) {
-    CommonProblemDescriptor[] removed = myProblemElements.remove(entity);
-    if (removed != null) {
-      myResolvedElements.put(entity, removed);
-    }
   }
 
   public void resolveProblem(@NotNull CommonProblemDescriptor descriptor) {
@@ -133,7 +128,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   @Nullable
   @Override
   public HighlightSeverity getSeverity(@NotNull RefElement element) {
-    final PsiElement psiElement = element.getPointer().getContainingFile();
+    final PsiElement psiElement = ((RefElement)element.getRefManager().getRefinedElement(element)).getPointer().getContainingFile();
     if (psiElement != null) {
       final GlobalInspectionContextImpl context = getContext();
       final String shortName = getSeverityDelegateName();
@@ -152,6 +147,37 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
       return level.getSeverity();
     }
     return null;
+  }
+
+  @Override
+  public boolean isExcluded(@NotNull CommonProblemDescriptor descriptor) {
+    return myExcludedElements.containsValue(descriptor);
+  }
+
+  @Override
+  public boolean isExcluded(@NotNull RefEntity entity) {
+    return Comparing.equal(myExcludedElements.get(entity), myProblemElements.get(entity));
+  }
+
+  @Override
+  public void amnesty(@NotNull RefEntity element) {
+    myExcludedElements.remove(element);
+  }
+
+  @Override
+  public void exclude(@NotNull RefEntity element) {
+    myExcludedElements.put(element, myProblemElements.getOrDefault(element, CommonProblemDescriptor.EMPTY_ARRAY));
+  }
+
+  @Override
+  public void amnesty(@NotNull CommonProblemDescriptor descriptor) {
+    myExcludedElements.removeValue(descriptor);
+  }
+
+  @Override
+  public void exclude(@NotNull CommonProblemDescriptor descriptor) {
+    RefEntity entity = ObjectUtils.notNull(myProblemElements.getKeyFor(descriptor), myResolvedElements.getKeyFor(descriptor));
+    myExcludedElements.put(entity, descriptor);
   }
 
   protected String getSeverityDelegateName() {
@@ -381,16 +407,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
       @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
       problemClassElement.addContent(myToolWrapper.getDisplayName());
 
-      final HighlightSeverity severity;
-      if (refEntity instanceof RefElement){
-        final RefElement refElement = (RefElement)refEntity;
-        severity = getSeverity(refElement);
-      }
-      else {
-        final InspectionProfile profile = InspectionProjectProfileManager.getInstance(getContext().getProject()).getCurrentProfile();
-        final HighlightDisplayLevel level = profile.getErrorLevel(HighlightDisplayKey.find(myToolWrapper.getShortName()), psiElement);
-        severity = level.getSeverity();
-      }
+      final HighlightSeverity severity = InspectionToolPresentation.getSeverity(refEntity, psiElement, this);
 
       if (severity != null) {
         ProblemHighlightType problemHighlightType = descriptor instanceof ProblemDescriptor
@@ -431,12 +448,12 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   }
 
   @Override
-  public boolean hasReportedProblems() {
-    return !myProblemElements.isEmpty();
+  public synchronized boolean hasReportedProblems() {
+    return !myContents.isEmpty() || !myModulesProblems.isEmpty();
   }
 
   @Override
-  public void updateContent() {
+  public synchronized void updateContent() {
     myContents.clear();
     myModulesProblems.clear();
     updateProblemElements();
@@ -445,7 +462,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   protected void updateProblemElements() {
     final Collection<RefEntity> elements = getProblemElements().keys();
     for (RefEntity element : elements) {
-      if (getContext().getUIOptions().FILTER_RESOLVED_ITEMS && (isProblemResolved(element) || isSuppressed(element))) continue;
+      if (getContext().getUIOptions().FILTER_RESOLVED_ITEMS && (isProblemResolved(element) || isSuppressed(element) || isExcluded(element))) continue;
       if (element instanceof RefModule) {
         myModulesProblems.add((RefModule)element);
       }
@@ -511,8 +528,9 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
                 isFound = true;
                 final LocalQuickFixWrapper quickFixAction = result.get(fix.getFamilyName());
                 LOG.assertTrue(getFixClass(fix).equals(getFixClass(quickFixAction.getFix())),
-                               "QuickFix-es with the same getFamilyName() should be the same class instances. " +
-                               "Please assign reported exception for the fix \"" + fix.getClass().getName() + "\" developer");
+                               "QuickFix-es with the same family name (" + fix.getFamilyName() + ") should be the same class instances. " +
+                               "Please assign reported exception for the inspection \"" + myToolWrapper.getTool().getClass() + "\" (\"" +
+                               myToolWrapper.getShortName() + "\") developer");
                 try {
                   quickFixAction.setText(StringUtil.escapeMnemonics(fix.getFamilyName()));
                 }

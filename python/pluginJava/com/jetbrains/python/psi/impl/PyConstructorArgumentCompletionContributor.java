@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.*;
@@ -62,8 +62,8 @@ public class PyConstructorArgumentCompletionContributor extends CompletionContri
     // see PyJavaType.init() in Jython source code for matching logic
     for (PsiMethod method : containingClass.getAllMethods()) {
       final Project project = containingClass.getProject();
-      if (PropertyUtil.isSimplePropertySetter(method)) {
-        final String propName = PropertyUtil.getPropertyName(method);
+      if (PropertyUtilBase.isSimplePropertySetter(method)) {
+        final String propName = PropertyUtilBase.getPropertyName(method);
         result.addElement(PyUtil.createNamedParameterLookup(propName, project));
       }
       else if (method.getName().startsWith("add") && method.getName().endsWith("Listener") && PsiType.VOID.equals(method.getReturnType())) {

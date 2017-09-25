@@ -47,12 +47,9 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
     final Integer problemType = (Integer)infos[1];
     final PsiNamedElement namedElement = (PsiNamedElement)infos[0];
     final String name = namedElement.getName();
-    if (problemType.intValue() == 1) {
-      return InspectionGadgetsBundle.message("type.parameter.extends.final.class.problem.descriptor1", name);
-    }
-    else {
-      return InspectionGadgetsBundle.message("type.parameter.extends.final.class.problem.descriptor2", name);
-    }
+    return problemType.intValue() == 1
+           ? InspectionGadgetsBundle.message("type.parameter.extends.final.class.problem.descriptor1", name)
+           : InspectionGadgetsBundle.message("type.parameter.extends.final.class.problem.descriptor2", name);
   }
 
   @Override
@@ -160,13 +157,13 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
           }
         }
       }
-      if (!shouldReport(typeElement)) {
+      if (isWildcardRequired(typeElement)) {
         return;
       }
       registerError(typeElement.getFirstChild(), aClass, Integer.valueOf(2));
     }
 
-    private static boolean shouldReport(PsiTypeElement typeElement) {
+    private static boolean isWildcardRequired(PsiTypeElement typeElement) {
       final PsiElement ancestor = PsiTreeUtil.skipParentsOfType(
         typeElement, PsiTypeElement.class, PsiJavaCodeReferenceElement.class, PsiReferenceParameterList.class);
       if (ancestor instanceof PsiParameter) {
@@ -175,48 +172,39 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
         if (scope instanceof PsiMethod) {
           final PsiMethod method = (PsiMethod)scope;
           if (MethodUtils.hasSuper(method)) {
-            return false;
+            return true;
           }
         }
         else if (scope instanceof PsiForeachStatement) {
           final PsiForeachStatement foreachStatement = (PsiForeachStatement)scope;
-          final PsiParameter iterationParameter = foreachStatement.getIterationParameter();
-          final PsiType iterationType = iterationParameter.getType();
           final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
           if (iteratedValue == null) {
-            return false; // incomplete code
+            return true; // incomplete code
           }
-          final PsiType type = JavaGenericsUtil.getCollectionItemType(iteratedValue);
-          if (type == null || !TypeConversionUtil.isAssignable(iterationType, type)) { // sanity check
-            return false;
-          }
-          if (type.equals(iterationType)) {
-            return false;
-          }
-          if (!(type instanceof PsiCapturedWildcardType)) {
-            return true;
-          }
-          final PsiCapturedWildcardType capturedWildcardType = (PsiCapturedWildcardType)type;
-          final PsiType upperBound = capturedWildcardType.getUpperBound(false);
-          if (iterationType.equals(upperBound)) {
-            return false;
-          }
+          final PsiParameter iterationParameter = foreachStatement.getIterationParameter();
+          return isWildcardRequired(typeElement, iterationParameter.getTypeElement(), JavaGenericsUtil.getCollectionItemType(iteratedValue));
         }
       }
       else if (ancestor instanceof PsiLocalVariable) {
         final PsiLocalVariable localVariable = (PsiLocalVariable)ancestor;
         final PsiExpression initializer = localVariable.getInitializer();
-        if (initializer == null) {
-          return true;
-        }
-        final PsiType type = initializer.getType();
-        final PsiType expectedType = GenericsUtil.getVariableTypeByExpressionType(type);
-        final PsiType variableType = localVariable.getType();
-        if (variableType.equals(expectedType)) {
-          return false;
-        }
+        return initializer != null && isWildcardRequired(typeElement, localVariable.getTypeElement(), initializer.getType());
       }
-      return true;
+      return false;
+    }
+
+    private static boolean isWildcardRequired(PsiTypeElement innerTypeElement, PsiTypeElement completeTypeElement, PsiType rhsType) {
+      final PsiType lhsType = completeTypeElement.getType();
+      if (lhsType.equals(rhsType) || rhsType == null || !TypeConversionUtil.isAssignable(lhsType, rhsType)) {
+        return true;
+      }
+      final Object marker = new Object();
+      PsiTreeUtil.mark(innerTypeElement, marker);
+      final PsiTypeElement copy = (PsiTypeElement)completeTypeElement.copy();
+      final PsiElement markedElement = PsiTreeUtil.releaseMark(copy, marker);
+      assert markedElement != null;
+      markedElement.replace(markedElement.getLastChild());
+      return !TypeConversionUtil.isAssignable(copy.getType(), rhsType);
     }
   }
 }

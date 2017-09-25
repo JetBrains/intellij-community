@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
@@ -37,8 +38,13 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
+import java.util.Map;
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
+import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
+import static com.intellij.openapi.util.text.StringUtil.trimEnd;
+import static com.intellij.openapi.util.text.StringUtil.trimStart;
 
 /**
  * @author nik
@@ -144,34 +150,85 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
   private static class MavenClassesCopyingHandler extends MavenWebArtifactCopyingHandler {
 
     private final File myTargetDir;
+    private final List<ResourceRootConfiguration> myWebResources;
 
     public MavenClassesCopyingHandler(@NotNull File targetDir,
                                       @NotNull MavenWebArtifactConfiguration artifactConfig,
                                       @NotNull MavenModuleResourceConfiguration moduleResourceConfig) {
-      this(targetDir, getWarRootConfig(artifactConfig, moduleResourceConfig), moduleResourceConfig);
+      this(targetDir, getWarRootConfig(artifactConfig, moduleResourceConfig),
+           getWebResources(targetDir, artifactConfig), moduleResourceConfig);
     }
 
     protected MavenClassesCopyingHandler(@NotNull File targetDir,
                                          @NotNull ResourceRootConfiguration warRootConfig,
+                                         @NotNull List<ResourceRootConfiguration> webResources,
                                          @NotNull MavenModuleResourceConfiguration moduleResourceConfig) {
-      super(new ClassesFilter(targetDir, warRootConfig), warRootConfig, moduleResourceConfig);
+      super(new ClassesFilter(targetDir, warRootConfig, webResources), warRootConfig, moduleResourceConfig);
       myTargetDir = targetDir;
+      myWebResources = webResources;
+    }
+
+    /**
+     * Returns list of resource root configurations that are targeted on {@code targetDir}/WEB-INF/classes and have filtering enabled
+     */
+    @NotNull
+    private static List<ResourceRootConfiguration> getWebResources(@NotNull File targetDir,
+                                                                   @NotNull MavenWebArtifactConfiguration artifactConfig) {
+      String webInfClassesPath = toSystemIndependentName(new File(targetDir, "WEB-INF" + File.separator + "classes").getPath());
+      List<ResourceRootConfiguration> result = ContainerUtil.newSmartList();
+      for (ResourceRootConfiguration webResource : artifactConfig.webResources) {
+        if (!webResource.isFiltered) continue;
+
+        String targetPath = webResource.targetPath;
+        if (StringUtil.isEmptyOrSpaces(targetPath)) continue;
+
+        if (webInfClassesPath.equals(targetPath) || "WEB-INF/classes".equals(trimEnd(trimStart(targetPath, "/"), '/'))) {
+          result.add(webResource);
+        }
+      }
+      return result;
     }
 
     protected int configurationHash() {
-      return FileUtil.fileHashCode(myTargetDir) + super.configurationHash() * 31;
+      int hash = super.configurationHash();
+      hash = 31 * hash + FileUtil.fileHashCode(myTargetDir);
+      for (ResourceRootConfiguration webResource : myWebResources) {
+        hash = 31 * hash + webResource.includes.hashCode();
+        hash = 31 * hash + webResource.excludes.hashCode();
+        hash = 31 * hash + webResource.computeConfigurationHash();
+      }
+      return hash;
     }
 
     private static class ClassesFilter extends MavenResourceFileFilter {
       private final File myTargetDir;
+      private final Map<ResourceRootConfiguration, FileFilter> myWebResourcesMap = ContainerUtil.newHashMap();
 
-      public ClassesFilter(@NotNull File targetDir, @NotNull ResourceRootConfiguration warRootConfig) {
+      public ClassesFilter(@NotNull File targetDir,
+                           @NotNull ResourceRootConfiguration warRootConfig,
+                           @NotNull List<ResourceRootConfiguration> webResources) {
         super(targetDir, warRootConfig);
         myTargetDir = targetDir;
+        for (ResourceRootConfiguration webResource : webResources) {
+          MavenResourceFileFilter filter = new MavenResourceFileFilter(new File(toSystemDependentName(webResource.directory)), webResource);
+          myWebResourcesMap.put(webResource, filter);
+        }
       }
 
       @Override
       public boolean accept(@NotNull File file) {
+        for (Map.Entry<ResourceRootConfiguration, FileFilter> entry : myWebResourcesMap.entrySet()) {
+          String relPath = FileUtil.getRelativePath(new File(myTargetDir, "classes"), file);
+          if (relPath == null) {
+            LOG.debug("File " + file.getPath() + " is not under classes directory of " + myTargetDir.getPath());
+            continue;
+          }
+
+          // do not accept files that will be copied and filtered by another copyingHandlerProvider
+          File webResourceFile = new File(toSystemDependentName(entry.getKey().directory), relPath);
+          if (webResourceFile.exists() && entry.getValue().accept(webResourceFile)) return false;
+        }
+
         String relPath = FileUtil.getRelativePath(myTargetDir, file);
         return relPath != null && super.accept(new File(myTargetDir, "WEB-INF" + File.separator + relPath));
       }
@@ -195,7 +252,7 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
       myFileFilter = new MavenResourceFileFilter(root, myRootConfiguration);
 
       //for additional resource directory 'exclude' means 'exclude from copying' but for the default webapp resource it mean 'exclude from filtering'
-      myMainWebAppRoot = artifactConfiguration.warSourceDirectory.equals(StringUtil.trimEnd(rootConfiguration.directory, "/"));
+      myMainWebAppRoot = artifactConfiguration.warSourceDirectory.equals(trimEnd(rootConfiguration.directory, "/"));
     }
 
     @Override

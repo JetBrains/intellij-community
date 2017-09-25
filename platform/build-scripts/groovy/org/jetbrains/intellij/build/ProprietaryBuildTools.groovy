@@ -25,7 +25,7 @@ import groovy.transform.CompileStatic
 @CompileStatic
 @Canonical
 class ProprietaryBuildTools {
-  public static final ProprietaryBuildTools DUMMY = new ProprietaryBuildTools(null, null, null)
+  public static final ProprietaryBuildTools DUMMY = new ProprietaryBuildTools(null, null, null, null)
 
   /**
    * This tool is required to sign *.exe files in Windows distribution. If it is {@code null} the files won't be signed and Windows may show
@@ -43,4 +43,9 @@ class ProprietaryBuildTools {
    * archive will be built.
    */
   MacHostProperties macHostProperties
+
+  /**
+   * Describes a server that can be used to download built artifacts
+   */
+  ArtifactsServer artifactsServer
 }

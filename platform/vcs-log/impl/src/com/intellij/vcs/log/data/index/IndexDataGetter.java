@@ -22,6 +22,9 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TIntObjectHashMap;
@@ -40,15 +43,18 @@ public class IndexDataGetter {
   @NotNull private final Project myProject;
   @NotNull private final Set<VirtualFile> myRoots;
   @NotNull private final VcsLogPersistentIndex.IndexStorage myIndexStorage;
+  @NotNull private final VcsLogStorage myLogStorage;
   @NotNull private final FatalErrorHandler myFatalErrorsConsumer;
 
   public IndexDataGetter(@NotNull Project project,
                          @NotNull Set<VirtualFile> roots,
-                         @NotNull VcsLogPersistentIndex.IndexStorage storage,
+                         @NotNull VcsLogPersistentIndex.IndexStorage indexStorage,
+                         @NotNull VcsLogStorage logStorage,
                          @NotNull FatalErrorHandler fatalErrorsConsumer) {
     myProject = project;
     myRoots = roots;
-    myIndexStorage = storage;
+    myIndexStorage = indexStorage;
+    myLogStorage = logStorage;
     myFatalErrorsConsumer = fatalErrorsConsumer;
   }
 
@@ -106,6 +112,25 @@ public class IndexDataGetter {
       }
     }
     return null;
+  }
+
+  @NotNull
+  public List<Hash> getParents(int index) {
+    try {
+      List<Integer> parentsIndexes = myIndexStorage.parents.get(index);
+      if (parentsIndexes == null) return Collections.emptyList();
+      List<Hash> result = ContainerUtil.newArrayList();
+      for (int parentIndex : parentsIndexes) {
+        CommitId id = myLogStorage.getCommitId(parentIndex);
+        if (id == null) return Collections.emptyList();
+        result.add(id.getHash());
+      }
+      return result;
+    }
+    catch (IOException e) {
+      myFatalErrorsConsumer.consume(this, e);
+    }
+    return Collections.emptyList();
   }
 
   public class FileNamesData {

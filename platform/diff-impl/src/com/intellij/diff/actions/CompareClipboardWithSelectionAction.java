@@ -44,16 +44,12 @@ import org.jetbrains.annotations.Nullable;
 public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
   @Nullable
   private static Editor getEditor(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    if (project == null) return null;
-
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor != null) return editor;
 
-    editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-    if (editor != null) return editor;
-
-    return null;
+    Project project = e.getProject();
+    if (project == null) return null;
+    return FileEditorManager.getInstance(project).getSelectedTextEditor();
   }
 
   @Nullable
@@ -81,7 +77,7 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
   @Nullable
   @Override
   protected DiffRequest getDiffRequest(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = e.getProject();
     Editor editor = getEditor(e);
     FileType editorFileType = getEditorFileType(e);
     assert editor != null;
@@ -103,7 +99,7 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
   }
 
   @NotNull
-  private static DocumentContent createContent(@NotNull Project project, @NotNull Editor editor, @Nullable FileType type) {
+  private static DocumentContent createContent(@Nullable Project project, @NotNull Editor editor, @Nullable FileType type) {
     DocumentContent content = DiffContentFactory.getInstance().create(project, editor.getDocument(), type);
 
     SelectionModel selectionModel = editor.getSelectionModel();

@@ -9,6 +9,7 @@ alignas
 alloc
 anyschema
 aopalliance
+apothem
 appender
 archivelog
 argc
@@ -93,6 +94,7 @@ closeable
 cloudfoundry
 cmake
 cmdline
+cname
 codebase
 codeinsight
 codesign
@@ -225,6 +227,7 @@ gruntfile
 gruntfiles
 gulpfile
 gulpfiles
+guid
 gzip
 gzipped
 hadoop
@@ -346,6 +349,7 @@ lucene
 lvalue
 lvalues
 macrodef
+mailto
 makefile
 makefiles
 malloc
@@ -547,6 +551,7 @@ refactor
 refactored
 refactoring
 refactorings
+referer
 regex
 regexp
 reifiable
@@ -702,6 +707,7 @@ systimestamp
 tablespace
 taglib
 teamcity
+templatemode
 temptable
 thiscall
 throwable

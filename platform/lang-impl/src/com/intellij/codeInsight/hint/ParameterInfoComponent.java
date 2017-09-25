@@ -17,14 +17,17 @@
 package com.intellij.codeInsight.hint;
 
 import com.google.common.collect.ImmutableMap;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.util.Function;
+import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -48,6 +51,7 @@ public class ParameterInfoComponent extends JPanel {
   @NotNull private final ParameterInfoHandler myHandler;
 
   private final OneElementComponent[] myPanels;
+  private final JLabel myShortcutLabel;
 
   private final Font NORMAL_FONT;
   private final Font BOLD_FONT;
@@ -123,6 +127,13 @@ public class ParameterInfoComponent extends JPanel {
     pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     add(pane, BorderLayout.CENTER);
 
+    myShortcutLabel = new JLabel(CodeInsightBundle.message("parameter.info.switch.overload.shortcuts"));
+    myShortcutLabel.setForeground(new JBColor(0x787878, 0x787878));
+    Font labelFont = UIUtil.getLabelFont();
+    myShortcutLabel.setFont(labelFont.deriveFont(labelFont.getSize2D() - (SystemInfo.isWindows ? 1 : 2)));
+    myShortcutLabel.setBorder(new JBEmptyBorder(3, 0, 0, 0));
+    add(myShortcutLabel, BorderLayout.SOUTH);
+
     myCurrentParameterIndex = -1;
   }
 
@@ -175,6 +186,12 @@ public class ParameterInfoComponent extends JPanel {
     }
 
     @Override
+    public void setupRawUIComponentPresentation(String htmlText) {
+      myPanels[i].setup(htmlText, getDefaultParameterColor());
+      myPanels[i].setBorder(isLastParameterOwner() ? LAST_ITEM_BORDER : BOTTOM_BORDER);
+    }
+
+    @Override
     public String setupUIComponentPresentation(final String[] texts, final EnumSet<Flag>[] flags, final Color background) {
       final String resultedText = myPanels[i].setup(texts, myEscapeFunction, flags, background);
       myPanels[i].setBorder(isLastParameterOwner() ? LAST_ITEM_BORDER : BOTTOM_BORDER);
@@ -211,6 +228,11 @@ public class ParameterInfoComponent extends JPanel {
     }
 
     @Override
+    public boolean isSingleOverload() {
+      return myPanels.length == 1;
+    }
+
+    @Override
     public boolean isSingleParameterInfo() {
       return mySingleParameterInfo;
     }
@@ -243,6 +265,8 @@ public class ParameterInfoComponent extends JPanel {
         myHandler.updateUI(o, context);
       }
     }
+
+    myShortcutLabel.setVisible(!singleParameterInfo && myObjects.length > 1 && myHandler.supportsOverloadSwitching());
 
     invalidate();
     validate();
@@ -296,6 +320,16 @@ public class ParameterInfoComponent extends JPanel {
     @Override
     public String toString() {
       return Stream.of(myOneLineComponents).filter(Objects::nonNull).map(Object::toString).collect(Collectors.joining());
+    }
+
+    private void setup(String htmlText, Color background) {
+      removeAll();
+      myOneLineComponents = new OneLineComponent[1];
+      myOneLineComponents[0] = new OneLineComponent();
+      myOneLineComponents[0].doSetup(htmlText, background);
+      add(myOneLineComponents[0], new GridBagConstraints(0,0,1,1,1,0,
+                                                         GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                                         new Insets(0,0,0,0),0,0));
     }
 
     private String setup(String text,
@@ -442,18 +476,22 @@ public class ParameterInfoComponent extends JPanel {
     }
 
     private String setup(@NotNull String text, @NotNull Map<TextRange, ParameterInfoUIContextEx.Flag> flagsMap, @NotNull Color background) {
+      if (flagsMap.isEmpty()) {
+        return doSetup(text, background);
+      }
+      else {
+        String labelText = buildLabelText(text, flagsMap);
+        return doSetup(labelText, background);
+      }
+    }
+
+    private String doSetup(@NotNull String text, @NotNull Color background) {
       myLabel.setBackground(background);
       setBackground(background);
 
       myLabel.setForeground(JBColor.foreground());
 
-      if (flagsMap.isEmpty()) {
-        myLabel.setText(XmlStringUtil.wrapInHtml(text));
-      }
-      else {
-        String labelText = buildLabelText(text, flagsMap);
-        myLabel.setText(labelText);
-      }
+      myLabel.setText(XmlStringUtil.wrapInHtml(text));
 
       //IDEA-95904 Darcula parameter info pop-up colors hard to read
       if (UIUtil.isUnderDarcula()) {
@@ -461,6 +499,7 @@ public class ParameterInfoComponent extends JPanel {
       }
       return myLabel.getText();
     }
+
     private String buildLabelText(@NotNull final String text, @NotNull final Map<TextRange, ParameterInfoUIContextEx.Flag> flagsMap) {
       final StringBuilder labelText = new StringBuilder(text);
       final String disabledTag = FLAG_TO_TAG.get(ParameterInfoUIContextEx.Flag.DISABLE);
@@ -505,7 +544,7 @@ public class ParameterInfoComponent extends JPanel {
         faultMap.put(highlightRange.getEndOffset(), endTag.length());
 
       }
-      return XmlStringUtil.wrapInHtml(labelText);
+      return labelText.toString();
     }
 
     private String getTag(@NotNull final String tagValue) {

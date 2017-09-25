@@ -559,10 +559,7 @@ public class LambdaUtil {
   @Contract("null -> false")
   public static boolean isExpressionStatementExpression(PsiElement body) {
     return body instanceof PsiAssignmentExpression ||
-           body instanceof PsiPrefixExpression &&
-           (((PsiPrefixExpression)body).getOperationTokenType() == JavaTokenType.PLUSPLUS ||
-            ((PsiPrefixExpression)body).getOperationTokenType() == JavaTokenType.MINUSMINUS) ||
-           body instanceof PsiPostfixExpression ||
+           PsiUtil.isIncrementDecrementOperation(body) ||
            body instanceof PsiCallExpression ||
            body instanceof PsiReferenceExpression && !body.isPhysical();
   }

@@ -83,7 +83,9 @@ class ExecutionManagerKtImpl(project: Project) : ExecutionManagerImpl(project) {
               val trinity = Trinity.create(descriptor, environment.runnerAndConfigurationSettings, executor)
               myRunningConfigurations.add(trinity)
               Disposer.register(descriptor, Disposable { myRunningConfigurations.remove(trinity) })
-              contentManager.showRunContent(executor, descriptor, environment.contentToReuse)
+              if(!descriptor.isHiddenContent) {
+                contentManager.showRunContent(executor, descriptor, environment.contentToReuse)
+              }
               val processHandler = descriptor.processHandler
               if (processHandler != null) {
                 if (!processHandler.isStartNotified) {

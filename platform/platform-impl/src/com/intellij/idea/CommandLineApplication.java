@@ -28,7 +28,7 @@ import java.awt.*;
 public class CommandLineApplication {
   private static final Logger LOG = Logger.getInstance("#com.intellij.idea.CommandLineApplication");
 
-  protected static CommandLineApplication ourInstance = null;
+  protected static CommandLineApplication ourInstance;
 
   static {
     System.setProperty("idea.filewatcher.disabled", "true");

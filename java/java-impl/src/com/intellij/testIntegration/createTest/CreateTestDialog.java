@@ -59,6 +59,7 @@ import com.intellij.testIntegration.TestFramework;
 import com.intellij.testIntegration.TestIntegrationUtils;
 import com.intellij.ui.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -355,8 +356,7 @@ public class CreateTestDialog extends DialogWrapper {
 
     final DefaultComboBoxModel model = (DefaultComboBoxModel)myLibrariesCombo.getModel();
 
-    final List<TestFramework> descriptors = new ArrayList<>();
-    descriptors.addAll(Arrays.asList(Extensions.getExtensions(TestFramework.EXTENSION_NAME)));
+    final List<TestFramework> descriptors = new SmartList<>(Extensions.getExtensions(TestFramework.EXTENSION_NAME));
     descriptors.sort((d1, d2) -> Comparing.compare(d1.getName(), d2.getName()));
 
     for (final TestFramework descriptor : descriptors) {

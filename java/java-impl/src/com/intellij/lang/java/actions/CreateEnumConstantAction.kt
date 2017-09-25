@@ -22,8 +22,8 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.posi
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.startTemplate
 import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression
 import com.intellij.codeInsight.template.TemplateBuilderImpl
-import com.intellij.lang.java.actions.Workaround.extractExpectedTypes
 import com.intellij.lang.jvm.actions.CreateFieldRequest
+import com.intellij.lang.jvm.actions.ExpectedTypes
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
@@ -36,8 +36,8 @@ class CreateEnumConstantAction(targetClass: PsiClass, request: CreateFieldReques
   private val myData: EnumConstantData?
     get() {
       val targetClass = myTargetClass.element
-      if (targetClass == null || !request.isValid) return null
-      return extractRenderData(targetClass, request)
+      if (targetClass == null || !myRequest.isValid) return null
+      return extractRenderData(targetClass, myRequest)
     }
 
   override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
@@ -91,8 +91,9 @@ private fun extractRenderData(targetClass: PsiClass, request: CreateFieldRequest
   return EnumConstantData(targetClass, request.fieldName)
 }
 
-private fun checkExpectedTypes(types: Any?, targetClass: PsiClass, project: Project): Boolean {
-  val typeInfos = extractExpectedTypes(types) ?: return true
+private fun checkExpectedTypes(types: ExpectedTypes, targetClass: PsiClass, project: Project): Boolean {
+  val typeInfos = extractExpectedTypes(project, types)
+  if (typeInfos.isEmpty()) return true
   val enumType = JavaPsiFacade.getElementFactory(project).createType(targetClass)
   return typeInfos.any {
     ExpectedTypeUtil.matches(enumType, it)

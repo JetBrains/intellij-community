@@ -608,7 +608,28 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
       fixture.tearDown();
     }
   }
+  
+  public void testFindInCommentsInJsInsideHtml() {
+    FindModel findModel = FindManagerTestUtils.configureFindModel("@param t done");
 
+    String text = "<script>\n" +
+                  "/**\n" +
+                  " * @param t done\n" +
+                  " * @param t done\n" +
+                  " * @param t done\n" +
+                  "*/</script>";
+    findModel.setSearchContext(FindModel.SearchContext.IN_COMMENTS);
+    FindManager findManager = FindManager.getInstance(myProject);
+    FindManagerTestUtils.runFindForwardAndBackward(findManager, findModel, text, "html");
+
+    findModel.setRegularExpressions(true);
+    FindManagerTestUtils.runFindForwardAndBackward(findManager, findModel, text, "html");
+
+    FindManagerTestUtils.runFindForwardAndBackward(findManager, findModel, text, "php");
+    findModel.setRegularExpressions(false);
+    FindManagerTestUtils.runFindForwardAndBackward(findManager, findModel, text, "php");
+  }
+  
   public void testFindInCommentsAndLiterals() {
     FindModel findModel = FindManagerTestUtils.configureFindModel("done");
 

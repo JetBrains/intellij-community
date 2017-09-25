@@ -21,12 +21,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 public class GrNumberConverter extends GrTypeConverter {
 
   @Override
   public boolean isApplicableTo(@NotNull ApplicableTo position) {
-    return position == ApplicableTo.ASSIGNMENT || position == ApplicableTo.RETURN_VALUE;
+    return position != ApplicableTo.METHOD_PARAMETER;
   }
 
   @Nullable
@@ -35,6 +36,7 @@ public class GrNumberConverter extends GrTypeConverter {
                                           @NotNull PsiType actualType,
                                           @NotNull GroovyPsiElement context,
                                           @NotNull ApplicableTo currentPosition) {
+    if (PsiUtil.isCompileStatic(context)) return null;
     if (TypesUtil.isNumericType(targetType) && TypesUtil.isNumericType(actualType)) {
       return ConversionResult.OK;
     }

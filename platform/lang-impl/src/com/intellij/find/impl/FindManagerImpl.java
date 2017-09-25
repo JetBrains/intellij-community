@@ -28,6 +28,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lexer.LayeredLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.notification.NotificationDisplayType;
@@ -604,11 +605,19 @@ public class FindManagerImpl extends FindManager {
 
         Matcher matcher = model.isRegularExpressions() ? compileRegExp(model, "") : null;
         StringSearcher searcher = matcher != null ? null : new StringSearcher(model.getStringToFind(), model.isCaseSensitive(), true);
-        SyntaxHighlighterOverEditorHighlighter highlighterAdapter =
-          new SyntaxHighlighterOverEditorHighlighter(highlighter, file, myProject);
-        data =
-          new CommentsLiteralsSearchData(file, relevantLanguages, highlighterAdapter, tokensOfInterest, searcher, matcher, model.clone());
-        data.highlighter.restart(text);
+        LayeredLexer.ourDisableLayersFlag.set(Boolean.TRUE);
+
+        try {
+          SyntaxHighlighterOverEditorHighlighter highlighterAdapter =
+            new SyntaxHighlighterOverEditorHighlighter(highlighter, file, myProject);
+          data =
+            new CommentsLiteralsSearchData(file, relevantLanguages, highlighterAdapter, tokensOfInterest, searcher, matcher, model.clone());
+          data.highlighter.restart(text);
+        }
+        finally {
+          LayeredLexer.ourDisableLayersFlag.set(null);
+        }
+        
         model.putUserData(ourCommentsLiteralsSearchDataKey, data);
       }
 

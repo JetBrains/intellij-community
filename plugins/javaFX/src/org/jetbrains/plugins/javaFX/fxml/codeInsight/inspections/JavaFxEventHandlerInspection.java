@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightFixUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
@@ -156,7 +156,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
       final PsiType eventTypeArgument = eventSubstitutor.substitute(typeParameter);
       final PsiClassType rawEventArgument = eventTypeArgument instanceof PsiClassType ? ((PsiClassType)eventTypeArgument).rawType() : null;
       if (rawFieldType.equals(rawEventArgument)) {
-        final List<IntentionAction> fixes = HighlightUtil.getChangeVariableTypeFixes(tagField, eventTypeArgument);
+        final List<IntentionAction> fixes = HighlightFixUtil.getChangeVariableTypeFixes(tagField, eventTypeArgument);
         for (IntentionAction action : fixes) {
           if (action instanceof LocalQuickFix) {
             quickFixes.add((LocalQuickFix)action);

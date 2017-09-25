@@ -22,8 +22,10 @@ import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.PopupMenuListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -34,6 +36,7 @@ import java.util.Arrays;
  * @author Eugene Belyaev
  */
 public abstract class PopupHandler extends MouseAdapter {
+
   public abstract void invokePopup(Component comp, int x, int y);
 
   public void mouseClicked(MouseEvent e) {
@@ -64,24 +67,39 @@ public abstract class PopupHandler extends MouseAdapter {
   }
 
   @NotNull
-  public static MouseListener installPopupHandler(JComponent component, @NotNull final ActionGroup group, final String place, final ActionManager actionManager) {
+  public static MouseListener installPopupHandler(JComponent component, @NotNull ActionGroup group, String place, ActionManager actionManager) {
+    return installPopupHandler(component, group, place, actionManager, null);
+  }
+
+  @NotNull
+  public static MouseListener installPopupHandler(@NotNull JComponent component,
+                                                  @NotNull ActionGroup group,
+                                                  String place,
+                                                  @NotNull ActionManager actionManager,
+                                                  @Nullable PopupMenuListener menuListener) {
     if (ApplicationManager.getApplication() == null) return new MouseAdapter(){};
     PopupHandler popupHandler = new PopupHandler() {
       public void invokePopup(Component comp, int x, int y) {
-        final ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(place, group);
-        popupMenu.getComponent().show(comp, x, y);
+        ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(place, group);
+        popupMenu.setTargetComponent(component);
+        JPopupMenu menu = popupMenu.getComponent();
+        if (menuListener != null) menu.addPopupMenuListener(menuListener);
+        menu.show(comp, x, y);
       }
     };
     component.addMouseListener(popupHandler);
     return popupHandler;
   }
 
-  public static MouseListener installFollowingSelectionTreePopup(final JTree tree, @NotNull final ActionGroup group, final String place, final ActionManager actionManager){
+  public static MouseListener installFollowingSelectionTreePopup(@NotNull JTree tree,
+                                                                 @NotNull ActionGroup group,
+                                                                 String place,
+                                                                 @NotNull ActionManager actionManager){
     if (ApplicationManager.getApplication() == null) return new MouseAdapter(){};
     PopupHandler handler = new PopupHandler() {
       public void invokePopup(Component comp, int x, int y) {
         if (tree.getPathForLocation(x, y) != null && Arrays.binarySearch(tree.getSelectionRows(), tree.getRowForLocation(x, y)) > -1) { //do not show popup menu on rows other than selection
-          final ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(place, group);
+          ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(place, group);
           popupMenu.getComponent().show(comp, x, y);
         }
       }

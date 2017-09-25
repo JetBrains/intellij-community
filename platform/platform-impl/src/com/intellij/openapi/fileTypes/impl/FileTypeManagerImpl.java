@@ -1483,11 +1483,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
 
   @NotNull
-  public static String getFileTypeComponentName() {
-    return PlatformUtils.isIdeaCommunity() ? "CommunityFileTypes" : "FileTypeManager";
-  }
-
-  @NotNull
   FileTypeAssocTable getExtensionMap() {
     return myPatternsTable;
   }

@@ -28,7 +28,10 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.stubs.ObjectStubSerializer;
 import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.tree.IElementType;
@@ -124,7 +127,7 @@ public class DebugUtil {
 
     @Override
     protected void visitNode(TreeElement root) {
-      if (skipWhiteSpaces && root.getElementType() == TokenType.WHITE_SPACE) {
+      if (shouldSkipNode(root)) {
         indent += 2;
         return;
       }
@@ -162,6 +165,10 @@ public class DebugUtil {
       }
 
       super.visitNode(root);
+    }
+
+    protected boolean shouldSkipNode(TreeElement node) {
+      return skipWhiteSpaces && node.getElementType() == TokenType.WHITE_SPACE;
     }
 
     @Override
@@ -397,6 +404,19 @@ public class DebugUtil {
     return buffer.toString();
   }
 
+  @NotNull
+  public static String psiToStringIgnoringNonCode(@NotNull PsiElement element) {
+    StringBuilder buffer = new StringBuilder();
+    ((TreeElement)element.getNode()).acceptTree(
+      new TreeToBuffer(buffer, 0, true, false, false, true, null) {
+        @Override
+        protected boolean shouldSkipNode(TreeElement node) {
+          return super.shouldSkipNode(node) || node instanceof PsiErrorElement || node instanceof PsiComment;
+        }
+      });
+    return buffer.toString();
+  }
+
   private static void psiToBuffer(final Appendable buffer,
                                   final PsiElement root,
                                   final boolean skipWhiteSpaces,
@@ -485,7 +505,7 @@ public class DebugUtil {
 
   /**
    * Marks a start of PSI modification action. Any PSI/AST elements invalidated inside such an action will contain a debug trace
-   * identifying this transaction, and so will {@link com.intellij.psi.PsiInvalidElementAccessException} thrown when accessing such invalid 
+   * identifying this transaction, and so will {@link PsiInvalidElementAccessException} thrown when accessing such invalid 
    * elements. This should help finding out why a specific PSI element has become invalid.
    * 
    * @param trace The debug trace that the invalidated elements should be identified by. May be null, then current stack trace is used.

@@ -120,16 +120,21 @@ public abstract class BaseUpdateAction extends PatchAction {
   }
 
   protected void replaceUpdated(File from, File dest) throws IOException {
-    // on OS X code signing caches seem to be associated with specific file ids, so we need to remove the original file.
+    // on macOS, code signing caches seem to be associated with specific file ids, so we need to remove the original file
     Utils.delete(dest);
     Utils.copy(from, dest);
   }
 
   @Override
   protected void doRevert(File toFile, File backupFile) throws IOException {
-    Utils.delete(toFile);
     if (myInPlace) {
-      Utils.copy(backupFile, toFile);
+      if (!toFile.exists() || isModified(toFile)) {
+        Utils.delete(toFile);
+        Utils.copy(backupFile, toFile);
+      }
+    }
+    else {
+      Utils.delete(toFile);
     }
   }
 

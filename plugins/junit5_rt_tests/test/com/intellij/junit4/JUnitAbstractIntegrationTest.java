@@ -128,7 +128,8 @@ public abstract class JUnitAbstractIntegrationTest extends BaseConfigurationTest
                          JpsMavenRepositoryLibraryDescriptor descriptor,
                          ArtifactRepositoryManager repoManager) throws Exception {
     
-    Collection<File> files = repoManager.resolveDependency(descriptor.getGroupId(), descriptor.getArtifactId(), descriptor.getVersion());
+    Collection<File> files = repoManager.resolveDependency(descriptor.getGroupId(), descriptor.getArtifactId(), descriptor.getVersion(),
+                                                           descriptor.isIncludeTransitiveDependencies());
     for (File artifact : files) {
       VirtualFile libJarLocal = LocalFileSystem.getInstance().findFileByIoFile(artifact);
       assertNotNull(libJarLocal);

@@ -49,6 +49,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ClickListener;
+import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
@@ -170,6 +171,10 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     }
   }
 
+  protected boolean startInWriteAction() {
+    return false;
+  }
+  
   protected void performFixesInBatch(@NotNull Project project,
                                      @NotNull CommonProblemDescriptor[] descriptors,
                                      @NotNull GlobalInspectionContextImpl context,
@@ -178,9 +183,19 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     assert templatePresentationText != null;
     CommandProcessor.getInstance().executeCommand(project, () -> {
       CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
+      boolean startInWriteAction = startInWriteAction();
       PerformFixesTask performFixesTask = new PerformFixesTask(project, descriptors, ignoredElements, context);
-      ((ApplicationImpl)ApplicationManager.getApplication())
-        .runWriteActionWithProgressInDispatchThread(templatePresentationText, project, null, null, performFixesTask::doRun);
+      if (startInWriteAction) {
+        ((ApplicationImpl)ApplicationManager.getApplication())
+          .runWriteActionWithProgressInDispatchThread(templatePresentationText, project, null, null, performFixesTask::doRun);
+      }
+      else {
+        final SequentialModalProgressTask progressTask =
+          new SequentialModalProgressTask(project, templatePresentationText, true);
+        progressTask.setMinIterationTime(200);
+        progressTask.setTask(performFixesTask);
+        ProgressManager.getInstance().run(progressTask);
+      }
     }, templatePresentationText, null);
   }
 

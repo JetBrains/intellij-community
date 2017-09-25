@@ -65,6 +65,9 @@ public class JoinLinesHandler extends EditorActionHandler {
   @Override
   public void doExecute(@NotNull final Editor editor, @Nullable Caret caret, final DataContext dataContext) {
     assert caret != null;
+
+    if (editor.isViewer() || !EditorModificationUtil.requestWriting(editor)) return;
+
     if (!(editor.getDocument() instanceof DocumentEx)) {
       myOriginalHandler.execute(editor, caret, dataContext);
       return;

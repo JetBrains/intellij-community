@@ -18,14 +18,18 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.FlushVariableInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiVariable;
 import gnu.trove.TObjectIntHashMap;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class ControlFlow {
   private final List<Instruction> myInstructions = new ArrayList<>();
@@ -71,6 +75,16 @@ public class ControlFlow {
   public void removeVariable(@Nullable PsiVariable variable) {
     if (variable == null) return;
     addInstruction(new FlushVariableInstruction(myFactory.getVarFactory().createVariableValue(variable, false)));
+  }
+
+  /**
+   * @return stream of all accessed variables within this flow
+   */
+  public Stream<DfaVariableValue> accessedVariables() {
+    return StreamEx.of(myInstructions).select(PushInstruction.class)
+      .remove(PushInstruction::isReferenceWrite)
+      .map(PushInstruction::getValue)
+      .select(DfaVariableValue.class).distinct();
   }
 
   public ControlFlowOffset getStartOffset(final PsiElement element) {

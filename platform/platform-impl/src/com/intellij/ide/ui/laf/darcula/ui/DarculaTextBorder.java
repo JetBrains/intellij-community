@@ -17,7 +17,6 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.ErrorBorderCapable;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorPanel;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
@@ -65,8 +64,7 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
     try {
       g2.translate(x, y);
 
-      Object eop = ((JComponent)c).getClientProperty("JComponent.error.outline");
-      if (Registry.is("ide.inplace.errors.outline") && Boolean.parseBoolean(String.valueOf(eop))) {
+      if (((JComponent)c).getClientProperty("JComponent.error.outline") == Boolean.TRUE) {
         DarculaUIUtil.paintErrorBorder(g2, width, height, JBUI.scale(5), true, c.hasFocus());
       } else if (c.hasFocus()) {
         DarculaUIUtil.paintFocusRing(g2, new Rectangle(JBUI.scale(1), JBUI.scale(1), width - JBUI.scale(2), height - JBUI.scale(2)));

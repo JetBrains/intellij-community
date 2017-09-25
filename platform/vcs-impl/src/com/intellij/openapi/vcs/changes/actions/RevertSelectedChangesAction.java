@@ -17,28 +17,13 @@ package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
 public class RevertSelectedChangesAction extends RevertCommittedStuffAbstractAction {
-  private static Icon ourIcon;
-  private static String ourText;
-
-  @Override
-  public void update(AnActionEvent e) {
-    final Presentation presentation = e.getPresentation();
-    initPresentation();
-    presentation.setIcon(ourIcon);
-    presentation.setText(ourText);
-    super.update(e);
-  }
-
   @Override
   protected boolean isEnabled(@NotNull AnActionEvent e) {
     return super.isEnabled(e) && allSelectedChangeListsAreRevertable(e);
@@ -59,18 +44,14 @@ public class RevertSelectedChangesAction extends RevertCommittedStuffAbstractAct
     return true;
   }
 
-  private static void initPresentation() {
-    if (ourIcon == null) {
-      ourIcon = AllIcons.Actions.Rollback;
-      ourText = VcsBundle.message("action.revert.selected.changes.text");
-    }
-  }
-
   public RevertSelectedChangesAction() {
     super(e -> e.getData(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS), e -> {
       // to ensure directory flags for SVN are initialized
       e.getData(VcsDataKeys.CHANGES_WITH_MOVED_CHILDREN);
       return e.getData(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS);
     });
+
+    getTemplatePresentation().setText(VcsBundle.message("action.revert.selected.changes.text"));
+    getTemplatePresentation().setIcon(AllIcons.Actions.Rollback);
   }
 }

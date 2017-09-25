@@ -344,9 +344,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
         return true;
     }
     else if (PsiUtil.isIncrementDecrementOperation(element)) {
-      PsiElement operand = element instanceof PsiPostfixExpression ?
-                           ((PsiPostfixExpression) element).getOperand() :
-                           ((PsiPrefixExpression) element).getOperand();
+      PsiElement operand = ((PsiUnaryExpression) element).getOperand();
       if (operand instanceof PsiReferenceExpression
           && ((PsiReferenceExpression) operand).resolve() == variable)
         return true;

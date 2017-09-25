@@ -34,17 +34,21 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
@@ -193,7 +197,19 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     CommandProcessor.getInstance().executeCommand(project, () ->
       TransactionGuard.getInstance().submitTransactionAndWait(
         () -> invokeIntention(action, pair.second, pair.first)), text, null);
+
+    checkPsiTextConsistency(hostFile);
+
     return true;
+  }
+
+  private static void checkPsiTextConsistency(@NotNull PsiFile hostFile) {
+    if (Registry.is("ide.check.psi.text.consistency") ||
+        ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest()) {
+      if (hostFile.isValid()) {
+        StubTextInconsistencyException.checkStubTextConsistency(hostFile);
+      }
+    }
   }
 
   private static void invokeIntention(@NotNull IntentionAction action, @Nullable Editor editor, @NotNull PsiFile file) {

@@ -62,7 +62,7 @@ public class OverriddenMethodCallDuringObjectConstructionInspection extends Base
         return;
       }
       final PsiMethod calledMethod = expression.resolveMethod();
-      if (calledMethod == null || !PsiUtil.canBeOverriden(calledMethod)) {
+      if (calledMethod == null || !PsiUtil.canBeOverridden(calledMethod)) {
         return;
       }
       if (!MethodUtils.isOverriddenInHierarchy(calledMethod, containingClass)) {

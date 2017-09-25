@@ -141,7 +141,8 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
       private void checkElement(final PsiElement owner) {
         String idsString = JavaSuppressionUtil.getSuppressedInspectionIdsIn(owner);
         if (idsString != null && !idsString.isEmpty()) {
-          List<String> ids = StringUtil.split(idsString, ",");
+          List<String> ids = new ArrayList<>();
+          StringUtil.tokenize(idsString, "[, ]").forEach(ids::add);
           if (IGNORE_ALL && (ids.contains(SuppressionUtil.ALL) || ids.contains(SuppressionUtil.ALL.toLowerCase()))) return;
           Collection<String> suppressed = suppressedScopes.get(owner);
           if (suppressed == null) {

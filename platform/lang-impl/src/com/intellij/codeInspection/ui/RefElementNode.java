@@ -22,6 +22,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.reference.RefDirectory;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.lang.annotation.HighlightSeverity;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,6 +81,35 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
   }
 
   @Override
+  public boolean isExcluded() {
+    RefEntity element = getElement();
+    if (isLeaf() && element != null) {
+      return getPresentation().isExcluded(element);
+    }
+    return super.isExcluded();
+  }
+
+  @Override
+  public void excludeElement() {
+    RefEntity element = getElement();
+    if (isLeaf() && element != null) {
+      getPresentation().exclude(element);
+      return;
+    }
+    super.excludeElement();
+  }
+
+  @Override
+  public void amnestyElement() {
+    RefEntity element = getElement();
+    if (isLeaf() && element != null) {
+      getPresentation().amnesty(element);
+      return;
+    }
+    super.amnestyElement();
+  }
+
+  @Override
   public void add(MutableTreeNode newChild) {
     checkHasDescriptorUnder(newChild);
     super.add(newChild);
@@ -112,7 +142,11 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
   @Override
   protected void visitProblemSeverities(TObjectIntHashMap<HighlightDisplayLevel> counter) {
     if (!isExcluded() && isLeaf() && !getPresentation().isProblemResolved(getElement()) && !getPresentation().isSuppressed(getElement())) {
-      counter.put(HighlightDisplayLevel.WARNING, counter.get(HighlightDisplayLevel.WARNING) + 1);
+      HighlightSeverity severity = InspectionToolPresentation.getSeverity(getElement(), null, getPresentation());
+      HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
+      if (!counter.adjustValue(level, 1)) {
+        counter.put(level, 1);
+      }
       return;
     }
     super.visitProblemSeverities(counter);

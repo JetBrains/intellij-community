@@ -16,23 +16,23 @@
 
 package com.intellij.codeInspection.offlineViewer;
 
-import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
-import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
-  private OfflineProblemDescriptorNode(RefEntity refEntity,
-                               CommonProblemDescriptor descriptor,
-                               @NotNull InspectionToolPresentation presentation,
-                               @NotNull OfflineProblemDescriptor offlineDescriptor) {
-    super(refEntity, descriptor, presentation, false, offlineDescriptor::getLine);
-    if (descriptor == null) {
+  private final OfflineDescriptorResolveResult myDescriptorResolveResult;
+
+  private OfflineProblemDescriptorNode(OfflineDescriptorResolveResult descriptorResolveResult,
+                                       @NotNull InspectionToolPresentation presentation,
+                                       @NotNull OfflineProblemDescriptor offlineDescriptor) {
+    super(descriptorResolveResult.getResolvedEntity(), descriptorResolveResult.getResolvedDescriptor(), presentation, false, offlineDescriptor::getLine);
+    myDescriptorResolveResult = descriptorResolveResult;
+    if (descriptorResolveResult.getResolvedDescriptor() == null) {
       setUserObject(offlineDescriptor);
     }
     init(presentation.getContext().getProject());
@@ -41,8 +41,7 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
   static OfflineProblemDescriptorNode create(@NotNull OfflineProblemDescriptor offlineDescriptor,
                                              @NotNull OfflineDescriptorResolveResult resolveResult,
                                              @NotNull InspectionToolPresentation presentation) {
-    return new OfflineProblemDescriptorNode(resolveResult.getResolvedEntity(),
-                                            resolveResult.getResolvedDescriptor(),
+    return new OfflineProblemDescriptorNode(resolveResult,
                                             presentation,
                                             offlineDescriptor);
   }
@@ -65,5 +64,20 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
       }
     }
     return isValid;
+  }
+
+  @Override
+  public void excludeElement() {
+    myDescriptorResolveResult.setExcluded(true);
+  }
+
+  @Override
+  public void amnestyElement() {
+    myDescriptorResolveResult.setExcluded(false);
+  }
+
+  @Override
+  public boolean isExcluded() {
+    return myDescriptorResolveResult.isExcluded();
   }
 }

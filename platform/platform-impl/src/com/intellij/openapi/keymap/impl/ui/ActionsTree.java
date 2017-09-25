@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -363,8 +364,12 @@ public class ActionsTree {
 
   public void selectAction(String actionId) {
     String path = myMainGroup.getActionQualifiedPath(actionId);
-    if (path == null) {
-      return;
+    String boundId = path == null ? KeymapManagerEx.getInstanceEx().getActionBinding(actionId) : null;
+    if (path == null && boundId != null) {
+      path = myMainGroup.getActionQualifiedPath(boundId);
+      if (path == null) {
+        return;
+      }
     }
 
     final DefaultMutableTreeNode node = getNodeForPath(path);

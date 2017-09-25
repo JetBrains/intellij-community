@@ -1,6 +1,7 @@
 package com.jetbrains.python.fixtures;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.psi.PsiFile;
 import com.jetbrains.python.inspections.PyInspection;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,28 +38,43 @@ public abstract class PyInspectionTestCase extends PyTestCase {
    * Launches test. To be called by test author
    */
   protected void doTest() {
-    myFixture.configureByFile(getTestDirectory(true) + ".py");
+    final PsiFile currentFile = myFixture.configureByFile(getTestFilePath());
     configureInspection();
+    assertSdkRootsNotParsed(currentFile);
   }
 
   protected void doMultiFileTest() {
     doMultiFileTest("a.py");
   }
+
   protected void doMultiFileTest(@NotNull String filename) {
-    myFixture.copyDirectoryToProject(getTestDirectory(false), "");
-    myFixture.configureFromTempProjectFile(filename);
+    myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
+    final PsiFile currentFile = myFixture.configureFromTempProjectFile(filename);
     configureInspection();
+    assertProjectFilesNotParsed(currentFile);
+    assertSdkRootsNotParsed(currentFile);
   }
 
-  private void configureInspection() {
+  protected void configureInspection() {
     myFixture.enableInspections(getInspectionClass());
     myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
   }
 
-  protected String getTestDirectory(boolean lowercaseFirstLetter) {
-    return "inspections/" + getInspectionClass().getSimpleName() + "/" + getTestName(lowercaseFirstLetter);
+  protected String getTestFilePath() {
+    return getTestCaseDirectory() + getTestName(isLowerCaseTestFile()) + ".py";
   }
 
+  protected String getTestDirectoryPath() {
+    return getTestCaseDirectory() + getTestName(false);
+  }
+
+  protected String getTestCaseDirectory() {
+    return "inspections/" + getInspectionClass().getSimpleName() + "/";
+  }
+
+  protected boolean isLowerCaseTestFile() {
+    return true;
+  }
 
   protected boolean isWeakWarning() {
     return true;

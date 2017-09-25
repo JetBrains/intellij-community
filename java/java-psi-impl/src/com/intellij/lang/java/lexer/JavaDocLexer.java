@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,7 @@ public class JavaDocLexer extends MergingLexerAdapter {
   }
 
   private JavaDocLexer(DocCommentTokenTypes tokenTypes, boolean isJdk15Enabled) {
-    super(new AsteriskStripperLexer(new _JavaDocLexer(isJdk15Enabled, tokenTypes), tokenTypes),
-          tokenTypes.spaceCommentsTokenSet());
+    super(new AsteriskStripperLexer(new _JavaDocLexer(isJdk15Enabled, tokenTypes), tokenTypes), tokenTypes.spaceCommentsTokenSet());
   }
 
   private static class AsteriskStripperLexer extends LexerBase {
@@ -56,7 +55,7 @@ public class JavaDocLexer extends MergingLexerAdapter {
     @Override
     public final void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
       myBuffer = buffer;
-      myBufferIndex =  startOffset;
+      myBufferIndex = startOffset;
       myBufferEndOffset = endOffset;
       myTokenType = null;
       myTokenEndOffset = startOffset;
@@ -96,7 +95,6 @@ public class JavaDocLexer extends MergingLexerAdapter {
       locateToken();
       return myTokenEndOffset;
     }
-
 
     @Override
     public final void advance() {
@@ -154,18 +152,20 @@ public class JavaDocLexer extends MergingLexerAdapter {
         }
 
         if (myBufferIndex < myTokenEndOffset) {
-          myTokenType = lf || state == _JavaDocLexer.PARAM_TAG_SPACE || state == _JavaDocLexer.TAG_DOC_SPACE || state == _JavaDocLexer.INLINE_TAG_NAME || state == _JavaDocLexer.DOC_TAG_VALUE_IN_PAREN
-                        ? myTokenTypes.space()
-                        : myTokenTypes.commentData();
-          
+          myTokenType = lf ||
+                        state == _JavaDocLexer.PARAM_TAG_SPACE || state == _JavaDocLexer.TAG_DOC_SPACE ||
+                        state == _JavaDocLexer.INLINE_TAG_NAME || state == _JavaDocLexer.DOC_TAG_VALUE_IN_PAREN
+                        ? myTokenTypes.space() : myTokenTypes.commentData();
+
           return;
         }
       }
-      
+
       flexLocateToken();
     }
 
     private void flexLocateToken() {
+      //noinspection Duplicates
       try {
         myState = myFlex.yystate();
         myFlex.goTo(myBufferIndex);

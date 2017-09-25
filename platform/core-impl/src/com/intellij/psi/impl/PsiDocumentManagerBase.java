@@ -323,7 +323,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   private boolean isEventSystemEnabled(Document document) {
     FileViewProvider viewProvider = getCachedViewProvider(document);
-    return viewProvider != null && viewProvider.isEventSystemEnabled() && !SingleRootFileViewProvider.isFreeThreaded(viewProvider);
+    return viewProvider != null && viewProvider.isEventSystemEnabled() && !AbstractFileViewProvider.isFreeThreaded(viewProvider);
   }
 
   // public for Upsource
@@ -427,8 +427,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   void forceReload(VirtualFile virtualFile, @Nullable FileViewProvider viewProvider) {
-    if (viewProvider instanceof SingleRootFileViewProvider) {
-      ((SingleRootFileViewProvider)viewProvider).markInvalidated();
+    if (viewProvider != null) {
+      ((AbstractFileViewProvider)viewProvider).markInvalidated();
     }
     if (virtualFile != null) {
       ((FileManagerImpl)((PsiManagerEx)myPsiManager).getFileManager()).forceReload(virtualFile);
@@ -472,7 +472,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       assert !isInUncommittedSet(document) : "Document :" + document;
     };
 
-    if (SingleRootFileViewProvider.isFreeThreaded(psiFile.getViewProvider())) {
+    if (AbstractFileViewProvider.isFreeThreaded(psiFile.getViewProvider())) {
       runnable.run();
     }
     else {
@@ -820,7 +820,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       beforeDocumentChangeOnUnlockedDocument(viewProvider);
     }
 
-    ((SingleRootFileViewProvider)viewProvider).beforeDocumentChanged(psiCause);
+    ((AbstractFileViewProvider)viewProvider).beforeDocumentChanged(psiCause);
   }
 
   protected void beforeDocumentChangeOnUnlockedDocument(@NotNull final FileViewProvider viewProvider) {
@@ -900,12 +900,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     ApplicationManager.getApplication().runWriteAction(new ExternalChangeAction() {
       @Override
       public void run() {
-        FileViewProvider viewProvider = psiFile.getViewProvider();
-        if (viewProvider instanceof SingleRootFileViewProvider) {
-          ((SingleRootFileViewProvider)viewProvider).onContentReload();
-        } else {
-          LOG.error("Invalid view provider: " + viewProvider + " of " + viewProvider.getClass());
-        }
+        ((AbstractFileViewProvider)psiFile.getViewProvider()).onContentReload();
       }
     });
   }

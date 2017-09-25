@@ -363,17 +363,17 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       paintCurrentValueBackground(g2, r, hasFocus);
       paintCurrentValue(g2, r, false);
 
-      Object eop = ((JComponent)c).getClientProperty("JComponent.error.outline");
+      boolean hasError = ((JComponent)c).getClientProperty("JComponent.error.outline") == Boolean.TRUE;
       if (hasFocus) {
         g2.setClip(clip);
-        if (Registry.is("ide.inplace.errors.outline") && Boolean.parseBoolean(String.valueOf(eop))) {
+        if (hasError) {
           DarculaUIUtil.paintErrorBorder(g2, width, height, 0, true, true);
         } else {
           DarculaUIUtil.paintFocusRing(g2, new Rectangle(JBUI.scale(2), JBUI.scale(2), width - JBUI.scale(4), height - JBUI.scale(4)));
         }
       }
       else {
-        if (Registry.is("ide.inplace.errors.outline") && Boolean.parseBoolean(String.valueOf(eop))) {
+        if (hasError) {
           DarculaUIUtil.paintErrorBorder(g2, width, height, 0, true, false);
         } else {
           g2.setColor(borderColor);

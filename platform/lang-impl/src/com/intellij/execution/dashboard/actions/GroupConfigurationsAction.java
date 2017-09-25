@@ -16,7 +16,7 @@
 package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
+import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.dashboard.RunDashboardContent;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.icons.AllIcons;
@@ -42,11 +42,11 @@ public class GroupConfigurationsAction extends RunConfigurationTreeAction {
   }
 
   @Override
-  protected void doActionPerformed(@NotNull RunDashboardContent content, AnActionEvent e, List<DashboardRunConfigurationNode> nodes) {
+  protected void doActionPerformed(@NotNull RunDashboardContent content, AnActionEvent e, List<RunDashboardRunConfigurationNode> nodes) {
     Project project = e.getProject();
     if (project == null) return;
 
-    DashboardRunConfigurationNode firstNode = ContainerUtil.getFirstItem(nodes);
+    RunDashboardRunConfigurationNode firstNode = ContainerUtil.getFirstItem(nodes);
     String initialValue = firstNode != null ? firstNode.getConfigurationSettings().getFolderName() : null;
     String value = Messages.showInputDialog(project, ExecutionBundle.message("run.dashboard.group.configurations.label"),
                                             ExecutionBundle.message("run.dashboard.group.configurations.title"), null, initialValue, null);

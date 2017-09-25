@@ -150,7 +150,7 @@ public class ObjectEqualityInspection extends BaseInspection {
 
     private boolean implementersHaveOnlyPrivateConstructors(final PsiClass aClass) {
       final GlobalSearchScope scope = GlobalSearchScope.allScope(aClass.getProject());
-      final PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit(6);
+      final PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit<>(6);
       final ProgressManager progressManager = ProgressManager.getInstance();
       progressManager.runProcess(
         (Runnable)() -> ClassInheritorsSearch.search(aClass, scope, true).forEach(new PsiElementProcessorAdapter<>(processor)), null);

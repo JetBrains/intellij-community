@@ -134,6 +134,14 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
   }
 
   private ExecutionTarget getDefaultTarget(List<ExecutionTarget> suitable){
+    // The following cases are possible when we enter this method:
+    // a) mySavedActiveTargetId == null. It means that we open / import project for the first time and there is no target selected
+    // In this case we are trying to find the first ExecutionTarget that is ready, because we do not have any other conditions.
+    // b) mySavedActiveTargetId != null. It means that some target was saved, but we weren't able to find it. Right now it can happen
+    // when and only when there was a device connected, it was saved as a target, next the device was disconnected and other device was
+    // connected / no devices left connected. In this case we should not select the target that is ready, cause most probably user still
+    // needs some device to be selected (or at least the device placeholder). As all the devices and device placeholders are always shown
+    // at the beginning of the list, selecting the first item works in this case.
     ExecutionTarget result = mySavedActiveTargetId == null ? ContainerUtil.find(suitable, ExecutionTarget::isReady) : ContainerUtil.getFirstItem(suitable);
     return  result != null ? result : DefaultExecutionTarget.INSTANCE;
   }

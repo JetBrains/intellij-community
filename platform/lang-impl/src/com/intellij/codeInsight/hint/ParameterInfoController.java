@@ -309,6 +309,14 @@ public class ParameterInfoController implements Disposable {
 
     if (elementForUpdating != null) {
       myHandler.updateParameterInfo(elementForUpdating, context);
+      if (mySingleParameterInfo) {
+        if (myComponent.getCurrentParameterIndex() == -1 && myHint.isVisible()) {
+          myHint.hide();
+        }
+        else if (myComponent.getCurrentParameterIndex() != -1 && !myHint.isVisible()) {
+          AutoPopupController.getInstance(myProject).autoPopupParameterInfo(myEditor, null);
+        }
+      }
       if (!myDisposed && myHint.isVisible() && !myEditor.isDisposed() &&
           (myEditor.getComponent().getRootPane() != null || ApplicationManager.getApplication().isUnitTestMode())) {
         myComponent.update(mySingleParameterInfo);

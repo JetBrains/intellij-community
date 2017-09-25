@@ -161,10 +161,6 @@ public class HgCommandExecutor {
       processError(e);
       return false;
     }
-    catch (InterruptedException e) { // this may happen during project closing, no need to notify the user.
-      LOG.info(e.getMessage(), e);
-      return false;
-    }
   }
 
   private void processError(@NotNull ShellCommandException e) {

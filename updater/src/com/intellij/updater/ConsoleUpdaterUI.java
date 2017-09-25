@@ -21,12 +21,14 @@ import java.util.Map;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public class ConsoleUpdaterUI implements UpdaterUI {
-  private String myStatus;
+  @Override
+  public void setDescription(String oldBuildDesc, String newBuildDesc) {
+    System.out.println("From " + oldBuildDesc + " to " + newBuildDesc);
+  }
 
   @Override
   public void startProcess(String title) {
     System.out.println(title);
-    Runner.logger().info("title: " + title);
   }
 
   @Override
@@ -36,28 +38,17 @@ public class ConsoleUpdaterUI implements UpdaterUI {
   public void setProgressIndeterminate() { }
 
   @Override
-  public void setStatus(String status) {
-    System.out.println(myStatus = status);
-    Runner.logger().info("status: " + status);
-  }
-
-  @Override
-  public void showError(Throwable e) {
-    e.printStackTrace();
-  }
-
-  @Override
   public void checkCancelled() throws OperationCancelledException { }
 
   @Override
-  public void setDescription(String oldBuildDesc, String newBuildDesc) {
-    System.out.println("From " + oldBuildDesc + " to " + newBuildDesc);
+  public void showError(String message) {
+    System.err.println("Error: " + message);
   }
 
   @Override
-  public boolean showWarning(String message) {
+  public void askUser(String message) throws OperationCancelledException {
     System.out.println("Warning: " + message);
-    return false;
+    throw new OperationCancelledException();
   }
 
   @Override
@@ -82,10 +73,5 @@ public class ConsoleUpdaterUI implements UpdaterUI {
     }
 
     return Collections.emptyMap();
-  }
-
-  @Override
-  public String toString() {
-    return String.format("Status: '%s'", myStatus);
   }
 }

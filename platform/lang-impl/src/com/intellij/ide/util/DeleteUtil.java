@@ -40,7 +40,7 @@ public class DeleteUtil {
       return MessageFormat.format(messageTemplate, type + (StringUtil.isEmptyOrSpaces(name) ? "" : " \"" + name + "\""));
     }
 
-    Map<String, Integer> countMap = FactoryMap.createMap(key -> 0);
+    Map<String, Integer> countMap = FactoryMap.create(key -> 0);
     Map<String, String> pluralToSingular = new HashMap<>();
     int directoryCount = 0;
     String containerType = null;

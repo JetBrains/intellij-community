@@ -18,6 +18,8 @@ package com.siyeh.ig.asserttoif;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -61,7 +63,9 @@ public class AssertionCanBeIfInspection extends BaseInspection {
       if (assertStatement.getAssertCondition() == null) {
         return;
       }
-      if (assertStatement.getLastChild() instanceof PsiErrorElement) {
+      final PsiElement lastLeaf = PsiTreeUtil.getDeepestLast(assertStatement);
+      if (lastLeaf instanceof PsiErrorElement ||
+          PsiUtil.isJavaToken(lastLeaf, JavaTokenType.SEMICOLON) && PsiTreeUtil.prevLeaf(lastLeaf) instanceof PsiErrorElement) {
         return;
       }
       if (isVisibleHighlight(assertStatement)) {

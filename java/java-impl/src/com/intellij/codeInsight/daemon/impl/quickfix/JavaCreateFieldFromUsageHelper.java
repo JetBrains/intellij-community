@@ -22,6 +22,7 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler;
@@ -40,7 +41,7 @@ public class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
                                     Editor editor,
                                     PsiElement context,
                                     boolean createConstantField,
-                                    PsiSubstitutor substitutor) {
+                                    @NotNull PsiSubstitutor substitutor) {
     Project project = field.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
 
@@ -49,26 +50,36 @@ public class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
     if (!(expectedTypes instanceof ExpectedTypeInfo[])) {
       expectedTypes = ExpectedTypeInfo.EMPTY_ARRAY;
     }
-    new GuessTypeParameters(factory).setupTypeElement(field.getTypeElement(), (ExpectedTypeInfo[])expectedTypes, substitutor, builder,
-                                                      context, targetClass);
+    new GuessTypeParameters(project, factory, builder, substitutor).setupTypeElement(
+      field.getTypeElement(), (ExpectedTypeInfo[])expectedTypes, context, targetClass
+    );
 
     if (createConstantField) {
       field.setInitializer(factory.createExpressionFromText("0", null));
       builder.replaceElement(field.getInitializer(), new EmptyExpression());
       PsiIdentifier identifier = field.getNameIdentifier();
       builder.setEndVariableAfter(identifier);
-      field = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(field);
     }
+
+    field = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(field);
+
     editor.getCaretModel().moveToOffset(field.getTextRange().getStartOffset());
     Template template = builder.buildInlineTemplate();
-    if (ExpectedTypesProvider.processExpectedTypes((ExpectedTypeInfo[])expectedTypes, new PsiTypeVisitor<PsiType>() {
+    if (disableShortenLongNames(project, ((ExpectedTypeInfo[])expectedTypes))) {
+      template.setToShortenLongNames(false);
+    }
+    return template;
+  }
+
+  private static boolean disableShortenLongNames(Project project, ExpectedTypeInfo[] expectedTypes) {
+    if (Registry.is("ide.create.field.enable.shortening")) return false;
+    return ExpectedTypesProvider.processExpectedTypes(expectedTypes, new PsiTypeVisitor<PsiType>() {
       @Nullable
       @Override
       public PsiType visitType(PsiType type) {
         return type;
       }
-    }, project).length > 1) template.setToShortenLongNames(false);
-    return template;
+    }, project).length > 1;
   }
 
   @Override

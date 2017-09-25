@@ -265,11 +265,9 @@ class NewTeamcityServiceMessages(_old_service_messages):
             self.do_command(commands[0], commands[1])
             self.testStarted(testName, captureStandardOutput)
 
-    def testFailed(self, testName, message='', details='', flowId=None):
+    def testFailed(self, testName, message='', details='', flowId=None, comparison_failure=None):
         testName = ".".join(self._test_to_list(testName))
-        args = {"name": testName, "message": str(message),
-                "details": details}
-        self.message("testFailed", **args)
+        _old_service_messages.testFailed(self, testName, message, details, comparison_failure=comparison_failure)
 
     def testFinished(self, testName, testDuration=None, flowId=None, is_suite=False):
         testName = ".".join(self._test_to_list(testName))

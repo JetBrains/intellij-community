@@ -13,8 +13,6 @@ class Editor {
 }
 
 class Main {
-
-
   void stats() {
     Editor e = <caret>
   }

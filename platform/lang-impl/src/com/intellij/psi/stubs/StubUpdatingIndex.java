@@ -25,6 +25,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -209,7 +210,20 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         };
 
         ApplicationManager.getApplication().runReadAction(() -> {
-          final Stub rootStub = StubTreeBuilder.buildStubTree(inputData);
+          Stub rootStub = null;
+
+          if (Registry.is("use.prebuilt.stubs")) {
+            final PrebuiltStubsProvider prebuiltStubsProvider =
+              PrebuiltStubsProviders.INSTANCE.forFileType(inputData.getFileType());
+            if (prebuiltStubsProvider != null) {
+              rootStub = prebuiltStubsProvider.findStub(inputData);
+            }
+          }
+
+          if (rootStub == null) {
+            rootStub = StubTreeBuilder.buildStubTree(inputData);
+          }
+
           if (rootStub == null) return;
 
           VirtualFile file = inputData.getFile();

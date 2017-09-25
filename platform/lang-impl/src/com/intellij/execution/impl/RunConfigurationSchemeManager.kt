@@ -18,10 +18,13 @@ package com.intellij.execution.impl
 import com.intellij.configurationStore.LazySchemeProcessor
 import com.intellij.configurationStore.SchemeContentChangedHandler
 import com.intellij.configurationStore.SchemeDataHolder
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.util.attribute
 import org.jdom.Element
 import java.util.function.Function
+
+private val LOG = logger<RunConfigurationSchemeManager>()
 
 internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl, private val isShared: Boolean) :
   LazySchemeProcessor<RunnerAndConfigurationSettingsImpl, RunnerAndConfigurationSettingsImpl>(), SchemeContentChangedHandler<RunnerAndConfigurationSettingsImpl> {
@@ -34,8 +37,6 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
 
   private fun readData(settings: RunnerAndConfigurationSettingsImpl, dataHolder: SchemeDataHolder<RunnerAndConfigurationSettingsImpl>): Element {
     var element = dataHolder.read()
-    // very important to not write file with only changed line separators.
-    dataHolder.updateDigest(element)
 
     if (isShared && element.name == "component") {
       element = element.getChild("configuration")
@@ -47,6 +48,18 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
     catch (e: InvalidDataException) {
       RunManagerImpl.LOG.error(e)
     }
+
+    var elementAfterStateLoaded = element
+    try {
+      elementAfterStateLoaded = writeScheme(settings)
+    }
+    catch (e: Throwable) {
+      LOG.error("Cannot compute digest for RC using state after load", e)
+    }
+
+    // very important to not write file with only changed line separators
+    dataHolder.updateDigest(elementAfterStateLoaded)
+
     return element
   }
 

@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.reference;
 
-import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Comparing;
@@ -232,7 +231,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   private void initializeSuperMethods(PsiMethod method) {
-    if (getRefManager().isOfflineView()) return;
+    if (getRefManager().isOfflineView() || !getRefManager().isDeclarationsFound()) return;
     for (PsiMethod psiSuperMethod : method.findSuperMethods()) {
       if (getRefManager().belongsToScope(psiSuperMethod)) {
         RefMethodImpl refSuperMethod = (RefMethodImpl)getRefManager().getReference(psiSuperMethod);
@@ -320,31 +319,6 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
         myUnThrownExceptions = unThrownExceptions;
       }
     }
-
-    final PsiCodeBlock body = method.getBody();
-    if (body == null) return;
-
-    final Collection<PsiClassType> exceptionTypes = getUnhandledExceptions(body, method, method.getContainingClass());
-    for (final PsiClassType exceptionType : exceptionTypes) {
-      updateThrowsList(exceptionType);
-    }
-  }
-
-  public static Set<PsiClassType> getUnhandledExceptions(PsiCodeBlock body, PsiMethod method, PsiClass containingClass) {
-    Collection<PsiClassType> types = ExceptionUtil.collectUnhandledExceptions(body, method, false);
-    Set<PsiClassType> unhandled = new HashSet<>(types);
-    if (method.isConstructor()) {
-      // there may be field initializer throwing exception
-      // that exception must be caught in the constructor
-      PsiField[] fields = containingClass.getFields();
-      for (final PsiField field : fields) {
-        if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
-        PsiExpression initializer = field.getInitializer();
-        if (initializer == null) continue;
-        unhandled.addAll(ExceptionUtil.collectUnhandledExceptions(initializer, field));
-      }
-    }
-    return unhandled;
   }
 
   public synchronized void removeUnThrownExceptions(PsiClass unThrownException) {

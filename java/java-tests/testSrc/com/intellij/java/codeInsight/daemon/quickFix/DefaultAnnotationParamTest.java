@@ -27,6 +27,7 @@ public class DefaultAnnotationParamTest extends LightQuickFixParameterizedTestCa
 
   public void test() { doAllTests(); }
 
+  @Override
   @NotNull
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[] { new DefaultAnnotationParamInspection()};

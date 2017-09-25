@@ -37,23 +37,32 @@ import java.util.NoSuchElementException;
  */
 class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterator.Fragment> {
 
-  static Iterable<Fragment> create(final EditorView view, final int offset, final boolean beforeSoftWrap) {
-    return () -> new VisualLineFragmentsIterator(view, offset, beforeSoftWrap, null);
+  @NotNull
+  static Iterable<Fragment> create(@NotNull EditorView view, int offset, boolean beforeSoftWrap) {
+    return create(view, offset, beforeSoftWrap, false);
   }
-  
+
+  @NotNull
+  static Iterable<Fragment> create(@NotNull EditorView view, int offset, boolean beforeSoftWrap, boolean align) {
+    return () -> new VisualLineFragmentsIterator(view, offset, beforeSoftWrap, align);
+  }
+
   /**
    * If {@code quickEvaluationListener} is provided, quick approximate iteration mode becomes enabled, listener will be invoked
    * if approximation will in fact be used during width calculation.
    */
-  static Iterable<Fragment> create(final EditorView view, @NotNull final VisualLinesIterator visualLinesIterator, 
-                                   @Nullable final Runnable quickEvaluationListener) {
-    return () -> new VisualLineFragmentsIterator(view, visualLinesIterator, quickEvaluationListener);
+  @NotNull
+  static Iterable<Fragment> create(@NotNull EditorView view,
+                                   @NotNull VisualLinesIterator visualLinesIterator,
+                                   @Nullable Runnable quickEvaluationListener,
+                                   boolean align) {
+    return () -> new VisualLineFragmentsIterator(view, visualLinesIterator, quickEvaluationListener, align);
   }
-  
+
   private EditorView myView;
   private Document myDocument;
   private FoldRegion[] myRegions;
-  private final Fragment myFragment = new Fragment();
+  private Fragment myFragment = new Fragment();
   private int myVisualLineStartOffset;
   private Runnable myQuickEvaluationListener;
   
@@ -71,7 +80,7 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
   private int myCurrentEndLogicalLine;
   private int myNextWrapOffset;
 
-  private VisualLineFragmentsIterator(EditorView view, int offset, boolean beforeSoftWrap, @Nullable Runnable quickEvaluationListener) {
+  private VisualLineFragmentsIterator(EditorView view, int offset, boolean beforeSoftWrap, boolean align) {
     EditorImpl editor = view.getEditor();
     int visualLineStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, offset);
     
@@ -91,31 +100,38 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
     }
     
     int nextFoldingIndex = editor.getFoldingModel().getLastCollapsedRegionBefore(visualLineStartOffset) + 1;
-    
-    init(view, 
-         visualLineStartOffset, 
-         editor.getDocument().getLineNumber(visualLineStartOffset), 
-         currentOrPrevWrapIndex, 
-         nextFoldingIndex, 
-         quickEvaluationListener);
+
+    init(view,
+         align ? editor.offsetToVisualPosition(offset).line : -1,
+         visualLineStartOffset,
+         editor.getDocument().getLineNumber(visualLineStartOffset),
+         currentOrPrevWrapIndex,
+         nextFoldingIndex,
+         null,
+         align);
   }
 
   private VisualLineFragmentsIterator(@NotNull EditorView view, @NotNull VisualLinesIterator visualLinesIterator,
-                                      @Nullable Runnable quickEvaluationListener) {
+                                      @Nullable Runnable quickEvaluationListener, boolean align) {
     assert !visualLinesIterator.atEnd();
-    init(view, 
-         visualLinesIterator.getVisualLineStartOffset(), 
-         visualLinesIterator.getStartLogicalLine(), 
-         visualLinesIterator.getStartOrPrevWrapIndex(), 
+    init(view,
+         visualLinesIterator.getVisualLine(),
+         visualLinesIterator.getVisualLineStartOffset(),
+         visualLinesIterator.getStartLogicalLine(),
+         visualLinesIterator.getStartOrPrevWrapIndex(),
          visualLinesIterator.getStartFoldingIndex(),
-         quickEvaluationListener);
+         quickEvaluationListener,
+         align);
   }
 
-  private void init(EditorView view, int startOffset, int startLogicalLine, int currentOrPrevWrapIndex, int nextFoldingIndex,
-                    @Nullable Runnable quickEvaluationListener) {
+  private void init(EditorView view, int visualLine, int startOffset, int startLogicalLine, int currentOrPrevWrapIndex, int nextFoldingIndex,
+                    @Nullable Runnable quickEvaluationListener, boolean align) {
     myQuickEvaluationListener = quickEvaluationListener;
     myView = view;
     EditorImpl editor = view.getEditor();
+    if (align && visualLine != -1 && editor.isRightAligned()) {
+      myFragment = new RightAlignedFragment(view.getRightAlignmentLineStartX(visualLine) - myView.getInsets().left);
+    }
     myDocument = editor.getDocument();
     FoldingModelEx foldingModel = editor.getFoldingModel();
     FoldRegion[] regions = foldingModel.fetchTopLevel();
@@ -267,11 +283,11 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
     throw new UnsupportedOperationException();
   }
 
-  class Fragment {    
+  class Fragment {
     int getVisualLineStartOffset() {
       return myVisualLineStartOffset;
     }
-    
+
     boolean isCollapsedFoldRegion() {
       return myFoldRegion != null;
     }
@@ -426,6 +442,44 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
           }
         }
       }
+    }
+  }
+
+  class RightAlignedFragment extends Fragment {
+    private final float xOffset;
+
+    RightAlignedFragment(float offset) {
+      xOffset = offset;
+    }
+
+    @Override
+    float offsetToX(int offset) {
+      return super.offsetToX(offset) + xOffset;
+    }
+
+    @Override
+    float offsetToX(float startX, int startOffset, int offset) {
+      return super.offsetToX(startX - xOffset, startOffset, offset) + xOffset;
+    }
+
+    @Override
+    float getEndX() {
+      return super.getEndX() + xOffset;
+    }
+
+    @Override
+    float getStartX() {
+      return super.getStartX() + xOffset;
+    }
+
+    @Override
+    float visualColumnToX(int column) {
+      return super.visualColumnToX(column) + xOffset;
+    }
+
+    @Override
+    int[] xToVisualColumn(float x) {
+      return super.xToVisualColumn(x - xOffset);
     }
   }
 }

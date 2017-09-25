@@ -15,8 +15,8 @@
  */
 package com.intellij.execution.dashboard.tree;
 
-import com.intellij.execution.dashboard.DashboardGroup;
-import com.intellij.execution.dashboard.DashboardGroupingRule;
+import com.intellij.execution.dashboard.RunDashboardGroup;
+import com.intellij.execution.dashboard.RunDashboardGroupingRule;
 import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.TreeStructureProvider;
@@ -34,10 +34,10 @@ import java.util.stream.Collectors;
  */
 public class RunDashboardTreeStructure extends AbstractTreeStructureBase {
   private final Project myProject;
-  private final List<DashboardGrouper> myGroupers;
+  private final List<RunDashboardGrouper> myGroupers;
   private final RunConfigurationsTreeRootNode myRootElement;
 
-  public RunDashboardTreeStructure(@NotNull Project project, @NotNull List<DashboardGrouper> groupers) {
+  public RunDashboardTreeStructure(@NotNull Project project, @NotNull List<RunDashboardGrouper> groupers) {
     super(project);
     myProject = project;
     myGroupers = groupers;
@@ -79,7 +79,7 @@ public class RunDashboardTreeStructure extends AbstractTreeStructureBase {
 
       return group(myProject,
                    this,
-                   myGroupers.stream().filter(DashboardGrouper::isEnabled).map(DashboardGrouper::getRule).collect(Collectors.toList()),
+                   myGroupers.stream().filter(RunDashboardGrouper::isEnabled).map(RunDashboardGrouper::getRule).collect(Collectors.toList()),
                    nodes);
     }
 
@@ -89,13 +89,13 @@ public class RunDashboardTreeStructure extends AbstractTreeStructureBase {
   }
 
   private static Collection<? extends AbstractTreeNode> group(final Project project, final AbstractTreeNode parent,
-                                                              List<DashboardGroupingRule> rules, List<RunConfigurationNode> nodes) {
+                                                              List<RunDashboardGroupingRule> rules, List<RunConfigurationNode> nodes) {
     if (rules.isEmpty()) {
       return nodes;
     }
-    final List<DashboardGroupingRule> remaining = new ArrayList<>(rules);
-    DashboardGroupingRule rule = remaining.remove(0);
-    Map<Optional<DashboardGroup>, List<RunConfigurationNode>> groups = nodes.stream().collect(
+    final List<RunDashboardGroupingRule> remaining = new ArrayList<>(rules);
+    RunDashboardGroupingRule rule = remaining.remove(0);
+    Map<Optional<RunDashboardGroup>, List<RunConfigurationNode>> groups = nodes.stream().collect(
       Collectors.groupingBy(node -> Optional.ofNullable(rule.getGroup(node))));
     final List<AbstractTreeNode> result = new ArrayList<>();
     final List<AbstractTreeNode> ungroupedNodes = new ArrayList<>();

@@ -57,6 +57,7 @@ import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPane
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -407,15 +408,17 @@ public class DebuggerUIUtil {
   }
 
   public static String getSelectionShortcutsAdText(String... actionNames) {
-    StringBuilder res = new StringBuilder();
-    for (String name : actionNames) {
-      KeyStroke stroke = KeymapUtil.getKeyStroke(ActionManager.getInstance().getAction(name).getShortcutSet());
-      if (stroke != null) {
-        if (res.length() > 0) res.append(", ");
-        res.append(KeymapUtil.getKeystrokeText(stroke));
-      }
+    return XDebuggerBundle.message("ad.extra.selection.shortcut",
+                                   StreamEx.of(actionNames).map(DebuggerUIUtil::getActionShortcutText).nonNull().joining(", "));
+  }
+
+  @Nullable
+  public static String getActionShortcutText(String actionName) {
+    KeyStroke stroke = KeymapUtil.getKeyStroke(ActionManager.getInstance().getAction(actionName).getShortcutSet());
+    if (stroke != null) {
+      return KeymapUtil.getKeystrokeText(stroke);
     }
-    return XDebuggerBundle.message("ad.extra.selection.shortcut", res.toString());
+    return null;
   }
 
   public static boolean isObsolete(Object object) {

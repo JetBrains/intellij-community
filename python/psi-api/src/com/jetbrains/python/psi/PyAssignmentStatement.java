@@ -29,6 +29,7 @@ public interface PyAssignmentStatement extends PyStatement, PyNamedElementContai
   /**
    * @return the left-hand side of the statement; each item may consist of many elements.
    */
+  @NotNull
   PyExpression[] getTargets();
 
   /**

@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.lang.reflect.Array;
 import java.util.*;
 import java.util.HashMap;
@@ -2638,8 +2637,13 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> Set<T> notNullize(@Nullable Set<T> set) {
-    //noinspection unchecked
     return set == null ? Collections.<T>emptySet() : set;
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static <K, V> Map<K, V> notNullize(@Nullable Map<K, V> set) {
+    return set == null ? Collections.<K, V>emptyMap() : set;
   }
 
   @Contract(pure = true)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 package com.intellij.ide.macro;
 
-import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.macro.Macro.ExecutionCancelledException;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -30,17 +30,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ConvertingIterator;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 public final class MacroManager {
-  private final HashMap<String, Macro> myMacrosMap = new HashMap<>();
+  private final Map<String, Macro> myMacrosMap = new LinkedHashMap<>();
 
   public static MacroManager getInstance() {
     return ServiceManager.getService(MacroManager.class);
@@ -106,13 +104,16 @@ public final class MacroManager {
   }
 
   private void registerMacro(Macro macro) {
-    assert PathMacrosImpl.getToolMacroNames().contains(macro.getName()) : "Macro '" + macro.getName() + "' should be registered in PathMacros!";
-
     myMacrosMap.put(macro.getName(), macro);
   }
 
   public Collection<Macro> getMacros() {
     return myMacrosMap.values();
+  }
+  
+  @NotNull
+  public Set<String> getMacroNames() {
+    return myMacrosMap.keySet();
   }
 
   public void cacheMacrosPreview(DataContext dataContext) {
@@ -143,14 +144,12 @@ public final class MacroManager {
    * Expands all macros that are found in the {@code str}.
    */
   @Nullable
-  public String expandMacrosInString(String str, boolean firstQueueExpand, DataContext dataContext) throws Macro.ExecutionCancelledException {
+  public String expandMacrosInString(@Nullable String str, boolean firstQueueExpand, DataContext dataContext) throws ExecutionCancelledException {
     return expandMacroSet(str, firstQueueExpand, dataContext, getMacros().iterator());
   }
 
   @Nullable
-  private String expandMacroSet(String str,
-                                boolean firstQueueExpand, DataContext dataContext, Iterator<Macro> macros
-                                ) throws Macro.ExecutionCancelledException {
+  private static String expandMacroSet(@Nullable String str, boolean firstQueueExpand, DataContext dataContext, Iterator<Macro> macros) throws ExecutionCancelledException {
     if (str == null) return null;
     while (macros.hasNext()) {
       Macro macro = macros.next();
@@ -198,16 +197,8 @@ public final class MacroManager {
     return str;
   }
 
-  public String expandSilentMarcos(String str, boolean firstQueueExpand, DataContext dataContext) throws Macro.ExecutionCancelledException {
-    final Convertor<Macro, Macro> convertor = macro -> {
-      if (macro instanceof PromptingMacro) {
-        return new Macro.Silent(macro, "");
-      }
-      return macro;
-    };
-    return expandMacroSet(
-      str, firstQueueExpand, dataContext, ConvertingIterator.create(getMacros().iterator(), convertor)
-    );
+  public String expandSilentMarcos(@Nullable String str, boolean firstQueueExpand, DataContext dataContext) throws ExecutionCancelledException {
+    Convertor<Macro, Macro> convertor = macro -> macro instanceof PromptingMacro ? new Macro.Silent(macro, "") : macro;
+    return expandMacroSet(str, firstQueueExpand, dataContext, ConvertingIterator.create(getMacros().iterator(), convertor));
   }
-
 }

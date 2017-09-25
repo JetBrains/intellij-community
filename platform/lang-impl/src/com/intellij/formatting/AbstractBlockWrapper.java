@@ -85,6 +85,7 @@ public abstract class AbstractBlockWrapper {
    *
    * @return the whitespace preceding the block
    */
+  @Nullable
   public WhiteSpace getWhiteSpace() {
     return myWhiteSpaceBefore;
   }

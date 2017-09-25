@@ -202,7 +202,7 @@ public class SvnBranchConfigurationNew {
     // url path to file path
     private final Map<String, String> myBranchesUnder;
 
-    private BranchRootSearcher(final SvnVcs vcs, final VirtualFile root) throws SVNException {
+    private BranchRootSearcher(final SvnVcs vcs, final VirtualFile root) {
       myRoot = root;
       myBranchesUnder = new HashMap<>();
       final Info info = vcs.getInfo(myRoot.getPath());

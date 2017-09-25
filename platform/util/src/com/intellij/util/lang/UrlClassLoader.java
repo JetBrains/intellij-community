@@ -277,18 +277,13 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   @Override
-  @Nullable  // Accessed from PluginClassLoader via reflection // TODO do we need it?
-  public URL findResource(final String name) {
-    return findResourceImpl(name);
-  }
-
-  protected URL findResourceImpl(final String name) {
-    Resource res = _getResource(name);
+  public URL findResource(String name) {
+    Resource res = findResourceImpl(name);
     return res != null ? res.getURL() : null;
   }
 
   @Nullable
-  private Resource _getResource(final String name) {
+  private Resource findResourceImpl(String name) {
     String n = FileUtil.toCanonicalUriPath(name);
     Resource resource = getClassPath().getResource(n, true);
     if (resource == null && n.startsWith("/")) { // compatibility with existing code, non-standard classloader behavior
@@ -299,19 +294,19 @@ public class UrlClassLoader extends ClassLoader {
 
   @Nullable
   @Override
-  public InputStream getResourceAsStream(final String name) {
-    if (myAllowBootstrapResources) return super.getResourceAsStream(name);
+  public InputStream getResourceAsStream(String name) {
+    if (myAllowBootstrapResources) {
+      return super.getResourceAsStream(name);
+    }
     try {
-      Resource res = _getResource(name);
-      if (res == null) return null;
-      return res.getInputStream();
+      Resource res = findResourceImpl(name);
+      return res != null ? res.getInputStream() : null;
     }
     catch (IOException e) {
       return null;
     }
   }
 
-  // Accessed from PluginClassLoader via reflection // TODO do we need it?
   @Override
   protected Enumeration<URL> findResources(String name) throws IOException {
     return getClassPath().getResources(name, true);

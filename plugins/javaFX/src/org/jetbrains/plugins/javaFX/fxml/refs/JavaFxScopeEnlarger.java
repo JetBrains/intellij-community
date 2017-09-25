@@ -24,6 +24,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UseScopeEnlarger;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
@@ -43,7 +44,7 @@ public class JavaFxScopeEnlarger extends UseScopeEnlarger {
     }
     else if (element instanceof PsiParameter) {
       final PsiElement declarationScope = ((PsiParameter)element).getDeclarationScope();
-      if (declarationScope instanceof PsiMethod && PropertyUtil.isSimplePropertySetter((PsiMethod)declarationScope)) {
+      if (declarationScope instanceof PsiMethod && PropertyUtilBase.isSimplePropertySetter((PsiMethod)declarationScope)) {
         containingClass = ((PsiMethod)declarationScope).getContainingClass();
       }
     }

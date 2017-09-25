@@ -24,6 +24,10 @@ public interface MadTestingAction {
   
   void performAction();
 
+  default String getConstructorArguments() {
+    return "file";
+  }
+
   static void runActions(List<? extends MadTestingAction> list) {
     for (int i = 0; i < list.size(); i++) {
       MadTestingAction action = list.get(i);

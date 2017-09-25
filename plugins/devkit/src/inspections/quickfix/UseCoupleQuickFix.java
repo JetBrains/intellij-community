@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ public class UseCoupleQuickFix extends LocalQuickFixBase {
   private static final String COUPLE_FQN = "com.intellij.openapi.util.Couple";
 
   public UseCoupleQuickFix(String text) {
-    super(text);
+    super(text, "Replace 'Pair' with 'Couple'");
   }
 
   @Override
@@ -38,14 +38,24 @@ public class UseCoupleQuickFix extends LocalQuickFixBase {
     final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
     final PsiElement newElement;
     if (element instanceof PsiTypeElement) {
-      final String canonicalText = ((PsiTypeElement)element).getType().getCanonicalText();
-      final String type = canonicalText.substring(canonicalText.indexOf('<') + 1, canonicalText.indexOf(','));
-      final PsiTypeElement newType = factory.createTypeElementFromText(COUPLE_FQN + "<" + type + ">", element.getContext());
+      final PsiTypeElement typeElement = (PsiTypeElement)element;
+      final PsiClassType type1 = (PsiClassType)typeElement.getType();
+      final PsiType[] parameters = type1.getParameters();
+      if (parameters.length != 2) {
+        return;
+      }
+      final PsiTypeElement newType = factory.createTypeElementFromText(COUPLE_FQN + "<" + parameters[0].getCanonicalText() + ">", element.getContext());
       newElement = element.replace(newType);
-    } else {
-      final String text = COUPLE_FQN + ".of" + element.getText().substring("Pair.create".length());
+    }
+    else {
+      final PsiElement parent = element.getParent().getParent();
+      if (!(parent instanceof PsiMethodCallExpression)) {
+        return;
+      }
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)parent;
+      final String text = COUPLE_FQN + ".of" + methodCallExpression.getArgumentList().getText();
       final PsiExpression expression = factory.createExpressionFromText(text, element.getContext());
-      newElement = element.replace(expression);
+      newElement = parent.replace(expression);
     }
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(newElement);
   }

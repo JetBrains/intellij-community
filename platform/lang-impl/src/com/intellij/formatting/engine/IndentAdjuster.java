@@ -16,7 +16,7 @@
 package com.intellij.formatting.engine;
 
 import com.intellij.formatting.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleConstraints;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -150,7 +150,7 @@ public class IndentAdjuster {
       }
 
       block = block.getPreviousBlock();
-      if (alignWhitespace.alignSpaces > CodeStyleSettings.MAX_RIGHT_MARGIN || block == null) return alignWhitespace;
+      if (alignWhitespace.alignSpaces > CodeStyleConstraints.MAX_RIGHT_MARGIN || block == null) return alignWhitespace;
       alignWhitespace.alignSpaces += block.getSymbolsAtTheLastLine();
       if (block.containsLineFeeds()) return alignWhitespace;
     }

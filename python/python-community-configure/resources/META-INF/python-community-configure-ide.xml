@@ -16,5 +16,7 @@
                          id="com.jetbrains.python.configuration.PyDependenciesConfigurable"
                          displayName="Project Dependencies"
                          provider="com.jetbrains.python.configuration.PyDependenciesConfigurableProvider"/>
+
+    <filetype.prebuiltStubsProvider filetype="Python" implementationClass="com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider"/>
   </extensions>
 </idea-plugin>

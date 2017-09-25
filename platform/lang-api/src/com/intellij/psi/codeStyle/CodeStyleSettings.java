@@ -1,18 +1,3 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.intellij.psi.codeStyle;
 
 import com.intellij.configurationStore.UnknownElementCollector;
@@ -50,11 +35,10 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-public class CodeStyleSettings extends CommonCodeStyleSettings implements Cloneable, JDOMExternalizable, ImportsLayoutSettings {
+public class CodeStyleSettings extends CommonCodeStyleSettings
+  implements Cloneable, JDOMExternalizable, ImportsLayoutSettings, CodeStyleConstraints {
   public static final int CURR_VERSION = 173;
 
-  public static final int MAX_RIGHT_MARGIN = 1000;
-  
   private static final Logger LOG = Logger.getInstance(CodeStyleSettings.class);
   public static final String VERSION_ATTR = "version";
 
@@ -183,6 +167,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public void copyFrom(CodeStyleSettings from) {
     copyPublicFields(from, this);
     copyPublicFields(from.OTHER_INDENT_OPTIONS, OTHER_INDENT_OPTIONS);
+    mySoftMargins.setValues(from.getSoftMargins());
     copyCustomSettingsFrom(from);
   }
 
@@ -760,6 +745,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
       IGNORE_SAME_INDENTS_FOR_LANGUAGES = true;
     }
 
+    mySoftMargins.deserializeFrom(element);
+
     migrateLegacySettings();
   }
 
@@ -768,6 +755,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     setVersion(element, myVersion);
     CodeStyleSettings parentSettings = new CodeStyleSettings();
     DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<>(this, parentSettings));
+    mySoftMargins.serializeInto(element);
 
     myUnknownElementWriter.write(element, getCustomSettingsValues(), CustomCodeStyleSettings::getTagName, settings -> {
       CustomCodeStyleSettings parentCustomSettings = parentSettings.getCustomSettings(settings.getClass());
@@ -1301,5 +1289,50 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   public int getVersion() {
     return myVersion;
+  }
+
+  /**
+   * Returns soft margins (visual indent guides positions) for the language. If language settings do not exists or language soft margins are
+   * empty, default (root) soft margins are returned.
+   * @param language The language to retrieve soft margins for or {@code null} for default soft margins.
+   * @return Language or default soft margins.
+   * @see #getDefaultSoftMargins()
+   */
+  @NotNull
+  public List<Integer> getSoftMargins(@Nullable Language language) {
+    if (language != null) {
+      CommonCodeStyleSettings languageSettings = getCommonSettings(language);
+      if (languageSettings != null && !languageSettings.getSoftMargins().isEmpty()) {
+        return languageSettings.getSoftMargins();
+      }
+    }
+    return getDefaultSoftMargins();
+  }
+
+  /**
+   * Set soft margins (visual indent guides) for the language. Note: language code style settings must exist.
+   * @param language The language to set soft margins for.
+   * @param softMargins The soft margins to set.
+   */
+  public void setSoftMargins(@NotNull Language language, List<Integer> softMargins) {
+    CommonCodeStyleSettings languageSettings = getCommonSettings(language);
+    assert languageSettings != null : "Settings for language " + language.getDisplayName() + " do not exist";
+    languageSettings.setSoftMargins(softMargins);
+  }
+
+  /**
+   * @return Default (root) soft margins used for languages not defining them explicitly.
+   */
+  @NotNull
+  public List<Integer> getDefaultSoftMargins() {
+    return getSoftMargins();
+  }
+
+  /**
+   * Sets the default soft margins used for languages not defining them explicitly.
+   * @param softMargins The default soft margins.
+   */
+  public void setDefaultSoftMargins(List<Integer> softMargins) {
+    setSoftMargins(softMargins);
   }
 }

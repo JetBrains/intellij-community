@@ -14,6 +14,7 @@ import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.editor.StudyEditor;
+import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 
 public class StudyFillPlaceholdersAction extends AnAction {
   @Override
@@ -34,6 +35,7 @@ public class StudyFillPlaceholdersAction extends AnAction {
         }
         EduUtils.replaceAnswerPlaceholder(document, placeholder, placeholder.getRealLength(), answer);
       }
+      EduUsagesCollector.placeholdersFilled();
     }
   }
 

@@ -45,6 +45,7 @@ public class LightAdvHighlightingJdk8Test extends LightDaemonAnalyzerTestCase {
   public void testLambdaExpressions() { doTest(false, true); }
   public void testUnsupportedFeatures() { doTest(false, false); }
   public void testModulesNotSupported() { doTest(false, false); }
+  public void testVarClassesWarning() { doTest(true, false); }
 
   public void testTooManyVarargsPolyArguments() {
     doTest(true, false);

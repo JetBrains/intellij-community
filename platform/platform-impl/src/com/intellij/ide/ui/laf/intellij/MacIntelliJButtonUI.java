@@ -117,9 +117,9 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
       Icon icon = MacIntelliJIconCache.getIcon("helpButton", false, false);
       return new Dimension(icon.getIconWidth(), icon.getIconHeight());
     } else if (c.getBorder() instanceof MacIntelliJButtonBorder || isComboButton(c)) {
-      return new Dimension(size.width + (isComboButton(c) ? 10 : 18), 27);
+      return JBUI.size(size.width + (isComboButton(c) ? 10 : 18), 27);
     }
-    return size;
+    return JBUI.size(size);
   }
 
   @Override

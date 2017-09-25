@@ -17,13 +17,16 @@ package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.navigationToolbar.ui.NavBarUI;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,7 +34,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class NavBarItem extends SimpleColoredComponent implements Disposable {
+public class NavBarItem extends SimpleColoredComponent implements DataProvider, Disposable {
   private final String myText;
   private final SimpleTextAttributes myAttributes;
   private final int myIndex;
@@ -172,7 +175,7 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
 
   public boolean isFocused() {
     final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    return focusOwner == myPanel && !myPanel.isNodePopupShowing();
+    return focusOwner == myPanel && !myPanel.isNodePopupActive();
   }
 
   public boolean isSelected() {
@@ -200,5 +203,11 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
 
   public boolean isNextSelected() {
     return myIndex == myPanel.getModel().getSelectedIndex() - 1;
+  }
+
+  @Nullable
+  @Override
+  public Object getData(String dataId) {
+    return myPanel.getDataImpl(dataId, () -> JBIterable.of(myObject));
   }
 }

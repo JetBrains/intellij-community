@@ -327,6 +327,12 @@ public class JavaDocLocalInspection extends JavaDocLocalInspectionBase {
       myName = name;
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return InspectionsBundle.message("inspection.javadoc.problem.add.param.tag.family");
+    }
+
     @Override
     @Nullable
     protected PsiElement getAnchor(ProblemDescriptor descriptor) {

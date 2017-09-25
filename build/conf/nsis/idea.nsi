@@ -360,6 +360,7 @@ Function ConfirmDesktopShortcut
   ${EndIf}
 customPreActions:
   Call customPreInstallActions
+  SetRegView 32
   StrCmp "${ASSOCIATION}" "NoAssociation" skip_association
   StrCpy $R0 ${INSTALL_OPTION_ELEMENTS}
   push "${ASSOCIATION}"
@@ -458,6 +459,7 @@ LicenseLangString myLicenseData ${LANG_JAPANESE} "${LICENSE_FILE}.txt"
 !endif
 
 Function .onInit
+  SetRegView 32
   StrCpy $baseRegKey "HKCU"
   IfSilent UAC_Done
 UAC_Elevate:
@@ -823,6 +825,7 @@ next_association:
 
 done:
   Call customInstallActions
+  SetRegView 32
 
 ; registration application to be presented in Open With list
   call ProductRegistration
@@ -873,6 +876,7 @@ skip_ipr:
   File "${PRODUCT_VM_OPTIONS_FILE}"
 
   Call customPostInstallActions
+  SetRegView 32
   StrCpy $0 $baseRegKey
   StrCpy $1 "Software\${MANUFACTURER}\${PRODUCT_REG_VER}"
   StrCpy $2 ""
@@ -964,6 +968,7 @@ FunctionEnd
 
 
 Function un.onInit
+  SetRegView 32
   Call un.getRegKey
   StrCmp $baseRegKey "HKLM" requred_admin_perm UAC_Done
 
@@ -1145,6 +1150,7 @@ FunctionEnd
 
 Section "Uninstall"
   Call un.customUninstallActions
+  SetRegView 32
   StrCpy $0 $baseRegKey
   StrCpy $1 "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}"
   StrCpy $2 "InstallLocation"

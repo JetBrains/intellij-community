@@ -99,10 +99,15 @@ public abstract class ElementCreator implements WriteActionAware {
 
   private void handleException(Exception t) {
     LOG.info(t);
+    String errorMessage = getErrorMessage(t);
+    Messages.showMessageDialog(myProject, errorMessage, myErrorTitle, Messages.getErrorIcon());
+  }
+
+  public static String getErrorMessage(Throwable t) {
     String errorMessage = CreateElementActionBase.filterMessage(t.getMessage());
     if (errorMessage == null || errorMessage.length() == 0) {
       errorMessage = t.toString();
     }
-    Messages.showMessageDialog(myProject, errorMessage, myErrorTitle, Messages.getErrorIcon());
+    return errorMessage;
   }
 }

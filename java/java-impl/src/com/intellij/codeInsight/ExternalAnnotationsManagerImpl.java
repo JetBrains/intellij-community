@@ -162,7 +162,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
         DumbService.getInstance(project).setAlternativeResolveEnabled(true);
         try {
           if (!setupRootAndAnnotateExternally(entry, project, listOwner, annotationFQName, fromFile, packageName, value)) {
-            throw CanceledConfigurationException.INSTANCE;
+            throw new CanceledConfigurationException();
           }
         }
         finally {

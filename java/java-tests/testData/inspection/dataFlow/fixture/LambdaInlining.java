@@ -27,4 +27,20 @@ public class LambdaInlining {
       System.out.println("oops");
     }
   }
+
+  void testLambdaTryFinally() {
+    int x = ((IntSupplier)() -> {
+      try {
+        return 10;
+      } finally {
+        return 20;
+      }
+    }).getAsInt();
+    if(<warning descr="Condition 'x == 30' is always 'false'">x == 30</warning>) {
+      System.out.println("oops");
+    }
+    if(<warning descr="Condition 'x < 30' is always 'true'">x < 30</warning>) {
+      System.out.println("always");
+    }
+  }
 }

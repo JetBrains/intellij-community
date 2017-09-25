@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 Bas Leijdekkers
+ * Copyright 2006-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -47,7 +45,9 @@ public class UnqualifiedFieldAccessInspection extends BaseInspection implements 
 
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
-    return new AddThisQualifierFix();
+    final PsiReferenceExpression expressionToQualify = (PsiReferenceExpression)infos[0];
+    final PsiField fieldAccessed = (PsiField)infos[1];
+    return AddThisQualifierFix.buildFix(expressionToQualify, fieldAccessed);
   }
 
   private static class UnqualifiedFieldAccessVisitor extends BaseInspectionVisitor {
@@ -71,18 +71,7 @@ public class UnqualifiedFieldAccessInspection extends BaseInspection implements 
       if (field.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
-      final PsiClass fieldClass = field.getContainingClass();
-      if (fieldClass == null) {
-        return;
-      }
-      if (PsiUtil.isLocalOrAnonymousClass(fieldClass)) {
-        final PsiClass expressionClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
-        if (expressionClass != null && !expressionClass.equals(fieldClass)) {
-          // qualified this expression not possible for anonymous or local class
-          return;
-        }
-      }
-      registerError(expression);
+      registerError(expression, expression, field);
     }
   }
 }

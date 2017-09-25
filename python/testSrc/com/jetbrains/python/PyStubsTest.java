@@ -871,4 +871,14 @@ public class PyStubsTest extends PyTestCase {
       assertNotParsed(libFile);
     });
   }
+
+  // PY-24969
+  public void testFunctionStubDoesNotContainLocalVariableAnnotation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
+      final PyFile file = getTestFile();
+      final PyFunction func = file.findTopLevelFunction("func");
+      final PyFunctionStub funcStub = func.getStub();
+      assertNull(funcStub.findChildStubByType(PyElementTypes.ANNOTATION));
+    });
+  }
 }

@@ -18,6 +18,7 @@ package org.jetbrains.java.generate.element;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import org.jetbrains.java.generate.psi.PsiAdapter;
 
 /**
@@ -71,7 +72,7 @@ public class ElementFactory {
   public static FieldElement newFieldElement(PsiField field, boolean useAccessor) {
     FieldElement fe = new FieldElement();
     fe.setName(field.getName());
-    final PsiMethod getterForField = useAccessor ? PropertyUtil.findGetterForField(field) : null;
+    final PsiMethod getterForField = useAccessor ? PropertyUtilBase.findGetterForField(field) : null;
     fe.setAccessor(getterForField != null ? getterForField.getName() + "()" : field.getName());
 
     if (PsiAdapter.isConstantField(field)) fe.setConstant(true);

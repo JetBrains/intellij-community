@@ -29,7 +29,6 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -47,8 +46,7 @@ public class EmmetPreviewUtil {
   public static String calculateTemplateText(@NotNull Editor editor, @NotNull PsiFile file, boolean expandPrimitiveAbbreviations) {
     PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
     CollectCustomTemplateCallback callback = new CollectCustomTemplateCallback(editor, file);
-    PsiElement context = callback.getContext();
-    ZenCodingGenerator generator = ZenCodingTemplate.findApplicableDefaultGenerator(context, false);
+    ZenCodingGenerator generator = ZenCodingTemplate.findApplicableDefaultGenerator(callback, false);
     if (generator != null && generator instanceof XmlZenCodingGenerator) {
       final String templatePrefix = new ZenCodingTemplate().computeTemplateKeyWithoutContextChecking(callback);
       if (templatePrefix != null) {

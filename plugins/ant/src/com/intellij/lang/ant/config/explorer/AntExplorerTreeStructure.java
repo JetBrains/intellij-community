@@ -54,6 +54,11 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
+  public boolean isAlwaysLeaf(Object element) {
+    return element != myRoot && !(element instanceof AntBuildFile);
+  }
+
+  @Override
   @NotNull
   public AntNodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
     if (element == myRoot) {

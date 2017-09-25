@@ -59,7 +59,7 @@ public class RepositoryAttachHandler {
                                                            List<MavenRepositoryInfo> repositories) {
     final ArrayList<RemoteRepositoryDescription> repos =
       repositories.stream().map(info -> toRemoteRepositoryDescription(info)).collect(Collectors.toCollection(ArrayList::new));
-    return JarRepositoryManager.resolveAndDownload(project, coord, attachSources, attachJavaDoc, copyTo, repos);
+    return JarRepositoryManager.resolveAndDownload(project, coord, attachSources, attachJavaDoc, true, copyTo, repos);
   }
 
   @NotNull
@@ -73,7 +73,7 @@ public class RepositoryAttachHandler {
     final ArrayList<RemoteRepositoryDescription> repos =
       repositories.stream().map(info -> toRemoteRepositoryDescription(info)).collect(Collectors.toCollection(ArrayList::new));
     return new ArrayList<>(JarRepositoryManager.loadDependencies(
-      project, new RepositoryLibraryProperties(coord), attachSources, attachJavaDoc, copyTo, repos
+      project, new RepositoryLibraryProperties(coord, true), attachSources, attachJavaDoc, copyTo, repos
     ));
   }
 

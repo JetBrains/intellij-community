@@ -16,13 +16,14 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author vlan
  */
-public class Py3TypeCheckerInspectionTest extends PyTestCase {
+public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public static final String TEST_DIRECTORY = "inspections/PyTypeCheckerInspection/";
 
   @Override
@@ -30,21 +31,30 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
     return ourPy3Descriptor;
   }
 
-  private void doTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
-      myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
-      myFixture.enableInspections(PyTypeCheckerInspection.class);
-      myFixture.checkHighlighting(true, false, true);
-    });
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyTypeCheckerInspection.class;
   }
 
-  private void doMultiFileTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
-      myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
-      myFixture.configureFromTempProjectFile("a.py");
-      myFixture.enableInspections(PyTypeCheckerInspection.class);
-      myFixture.checkHighlighting(true, false, true);
-    });
+  @Override
+  protected boolean isLowerCaseTestFile() {
+    return false;
+  }
+
+  @Override
+  protected String getTestCaseDirectory() {
+    return TEST_DIRECTORY;
+  }
+
+  @Override
+  protected void doTest() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> super.doTest());
+  }
+
+  @Override
+  protected void doMultiFileTest() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> super.doMultiFileTest());
   }
 
   // PY-9289

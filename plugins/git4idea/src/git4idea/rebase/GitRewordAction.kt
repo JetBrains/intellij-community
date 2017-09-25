@@ -45,7 +45,7 @@ class GitRewordAction : GitCommitEditingAction() {
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    prohibitRebaseDuringRebase(e, "reword")
+    prohibitRebaseDuringRebase(e, "reword", true)
   }
 
   override fun actionPerformed(e: AnActionEvent) {

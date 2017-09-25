@@ -22,6 +22,7 @@
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="jps-builders" />
+    <orderEntry type="module" module-name="debugger-agent-storage" />
   </component>
   <component name="copyright">
     <Base>

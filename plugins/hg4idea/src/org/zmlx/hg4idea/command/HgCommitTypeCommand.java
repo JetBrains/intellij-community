@@ -91,5 +91,5 @@ public abstract class HgCommitTypeCommand {
     BackgroundTaskUtil.syncPublisher(myProject, HgVcs.REMOTE_TOPIC).update(myProject, null);
   }
 
-  protected abstract void executeChunked(@NotNull List<List<String>> chunkedCommits) throws HgCommandException, VcsException;
+  protected abstract void executeChunked(@NotNull List<List<String>> chunkedCommits) throws VcsException;
 }

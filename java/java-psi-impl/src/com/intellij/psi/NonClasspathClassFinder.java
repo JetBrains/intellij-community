@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.PackageDirectoryCache;
@@ -47,6 +48,7 @@ import java.util.Set;
  * @author peter
  */
 public abstract class NonClasspathClassFinder extends PsiElementFinder {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.NonClasspathClassFinder");
   private static final EverythingGlobalScope ALL_SCOPE = new EverythingGlobalScope();
   protected final Project myProject;
   private volatile PackageDirectoryCache myCache;
@@ -71,7 +73,13 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   protected PackageDirectoryCache getCache(@Nullable GlobalSearchScope scope) {
     PackageDirectoryCache cache = myCache;
     if (cache == null) {
-      myCache = cache = createCache(calcClassRoots());
+      List<VirtualFile> roots = calcClassRoots();
+      List<VirtualFile> invalidRoots = ContainerUtil.filter(roots, f -> !f.isValid());
+      if (!invalidRoots.isEmpty()) {
+        roots.removeAll(invalidRoots);
+        LOG.error("Invalid roots returned by " + getClass() + ": " + invalidRoots);
+      }
+      myCache = cache = createCache(roots);
     }
     return cache;
   }

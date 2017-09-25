@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="commons-imaging" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.apache.commons:commons-imaging:1.0-SNAPSHOT" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-imaging/1.0-SNAPSHOT/commons-imaging-1.0-SNAPSHOT.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

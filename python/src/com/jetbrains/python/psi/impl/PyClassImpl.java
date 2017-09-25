@@ -30,6 +30,7 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
@@ -76,67 +77,13 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   public static final PyClass[] EMPTY_ARRAY = new PyClassImpl[0];
 
-  /**
-   * Ancestors cache is lazy because provider ({@link PyClassImpl.CachedAncestorsProvider}) needs
-   * {@link #getProject()} which is not available during constructor time.
-   */
-  private TypeEvalContextBasedCache<List<PyClassLikeType>> myAncestorsCache;
-
-  /**
-   * Lock to create {@link #myAncestorsCache} in lazy way.
-   */
-  @NotNull
-  private final Object myAncestorsCacheLock = new Object();
-
-  /**
-   * Engine to create list of ancestors based on context
-   */
-  private class CachedAncestorsProvider implements Function<TypeEvalContext, List<PyClassLikeType>> {
-    @Nullable
-    @Override
-    public List<PyClassLikeType> fun(@NotNull TypeEvalContext context) {
-      List<PyClassLikeType> ancestorTypes;
-      if (isNewStyleClass(context)) {
-        try {
-          ancestorTypes = getMROAncestorTypes(context);
-        }
-        catch (MROException e) {
-          ancestorTypes = getOldStyleAncestorTypes(context);
-          boolean hasUnresolvedAncestorTypes = false;
-          for (PyClassLikeType type : ancestorTypes) {
-            if (type == null) {
-              hasUnresolvedAncestorTypes = true;
-              break;
-            }
-          }
-          if (!hasUnresolvedAncestorTypes) {
-            ancestorTypes = Collections.singletonList(null);
-          }
-        }
-      }
-      else {
-        ancestorTypes = getOldStyleAncestorTypes(context);
-      }
-      return ancestorTypes;
-    }
-  }
-
-  private List<PyTargetExpression> myInstanceAttributes;
+  private volatile List<PyTargetExpression> myInstanceAttributes;
 
   private volatile Map<String, Property> myPropertyCache;
 
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return new PyClassTypeImpl(this, true);
-  }
-
-  private class NewStyleCachedValueProvider implements ParameterizedCachedValueProvider<Boolean, TypeEvalContext> {
-
-    @Nullable
-    @Override
-    public CachedValueProvider.Result<Boolean> compute(TypeEvalContext param) {
-      return new CachedValueProvider.Result<>(calculateNewStyleClass(param), PsiModificationTracker.MODIFICATION_COUNT);
-    }
   }
 
   public PyClassImpl(@NotNull ASTNode astNode) {
@@ -151,24 +98,6 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     super(stub, nodeType);
   }
 
-  /**
-   * @return ancestors cache. It is created lazily if needed.
-   */
-  @NotNull
-  private TypeEvalContextBasedCache<List<PyClassLikeType>> getAncestorsCache() {
-    if (myAncestorsCache != null) {
-      return myAncestorsCache;
-    }
-    synchronized (myAncestorsCacheLock) {
-      if (myAncestorsCache == null) {
-        myAncestorsCache = new TypeEvalContextBasedCache<>(
-          CachedValuesManager.getManager(getProject()),
-          new CachedAncestorsProvider()
-        );
-      }
-      return myAncestorsCache;
-    }
-  }
 
   @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
@@ -272,7 +201,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return Collections.singletonList(expression);
   }
 
-  private static boolean isSixWithMetaclassCall(@NotNull PyExpression expression) {
+  public static boolean isSixWithMetaclassCall(@NotNull PyExpression expression) {
     if (expression instanceof PyCallExpression){
       final PyCallExpression call = (PyCallExpression)expression;
       final PyExpression callee = call.getCallee();
@@ -1269,7 +1198,9 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       @NotNull
       @Override
       protected ParameterizedCachedValue<Boolean, TypeEvalContext> compute() {
-        return CachedValuesManager.getManager(getProject()).createParameterizedCachedValue(new NewStyleCachedValueProvider(), false);
+        return CachedValuesManager.getManager(getProject())
+          .createParameterizedCachedValue(
+            param -> new Result<>(calculateNewStyleClass(param), PsiModificationTracker.MODIFICATION_COUNT), false);
       }
     }.getValue().getValue(context);
   }
@@ -1501,8 +1432,32 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @NotNull
   @Override
-  public List<PyClassLikeType> getAncestorTypes(@NotNull TypeEvalContext context) {
-    return getAncestorsCache().getValue(context);
+  public List<PyClassLikeType> getAncestorTypes(@NotNull final TypeEvalContext context) {
+    return PyUtil.getParameterizedCachedValue(this, context, contextArgument -> {
+      List<PyClassLikeType> ancestorTypes;
+      if (isNewStyleClass(contextArgument)) {
+        try {
+          ancestorTypes = getMROAncestorTypes(contextArgument);
+        }
+        catch (final MROException ignored) {
+          ancestorTypes = getOldStyleAncestorTypes(contextArgument);
+          boolean hasUnresolvedAncestorTypes = false;
+          for (PyClassLikeType type : ancestorTypes) {
+            if (type == null) {
+              hasUnresolvedAncestorTypes = true;
+              break;
+            }
+          }
+          if (!hasUnresolvedAncestorTypes) {
+            ancestorTypes = Collections.singletonList(null);
+          }
+        }
+      }
+      else {
+        ancestorTypes = getOldStyleAncestorTypes(contextArgument);
+      }
+      return ancestorTypes;
+    });
   }
 
   @Nullable

@@ -44,15 +44,18 @@ import java.awt.*;
  */
 public final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivationListener {
 
+  private final Application myApp;
   private final MyMenu myMenu;
   private final ActionManagerImpl myManager;
+
+  private Getter<DataContext> myDataContextProvider;
   private MessageBusConnection myConnection;
 
-  private final Application myApp;
   private IdeFrame myFrame;
-  @Nullable private Getter<DataContext> myDataContextProvider;
 
-  public ActionPopupMenuImpl(String place, @NotNull ActionGroup group, ActionManagerImpl actionManager, @Nullable PresentationFactory factory) {
+  public ActionPopupMenuImpl(String place, @NotNull ActionGroup group,
+                             ActionManagerImpl actionManager,
+                             @Nullable PresentationFactory factory) {
     myManager = actionManager;
     myMenu = new MyMenu(place, group, factory);
     myApp = ApplicationManager.getApplication();
@@ -65,6 +68,12 @@ public final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationAc
 
   public void setDataContextProvider(@Nullable Getter<DataContext> dataContextProvider) {
     myDataContextProvider = dataContextProvider;
+  }
+
+  @Override
+  public void setTargetComponent(@Nullable JComponent component) {
+    myDataContextProvider = component == null ? null :
+                            () -> DataManager.getInstance().getDataContext(component);
   }
 
   private class MyMenu extends JBPopupMenu {

@@ -535,8 +535,12 @@ public abstract class DialogWrapper {
     helpButton.putClientProperty("JButton.buttonType", "help");
     helpButton.setText("");
     helpButton.setMargin(insets);
-    helpButton.setToolTipText(ActionsBundle.actionDescription("HelpTopics"));
+    setHelpTooltip(helpButton);
     return helpButton;
+  }
+
+  protected void setHelpTooltip(JButton helpButton) {
+    helpButton.setToolTipText(ActionsBundle.actionDescription("HelpTopics"));
   }
 
   @NotNull

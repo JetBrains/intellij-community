@@ -34,7 +34,6 @@ import git4idea.GitRevisionNumber;
 import git4idea.history.browser.SHAHash;
 import git4idea.test.GitSingleRepoTest;
 import org.jetbrains.annotations.NotNull;
-import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -159,7 +158,6 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
   }
 
   // Inspired by IDEA-89347
-  @Test
   public void testCyclicRename() throws Exception {
     List<TestCommit> commits = new ArrayList<>();
 
@@ -281,21 +279,18 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     return max;
   }
 
-  @Test
   public void testGetCurrentRevision() throws Exception {
     GitRevisionNumber revisionNumber = (GitRevisionNumber)GitHistoryUtils.getCurrentRevision(myProject, toFilePath(bfile), null);
     assertEquals(revisionNumber.getRev(), myRevisions.get(0).myHash);
     assertEquals(revisionNumber.getTimestamp(), myRevisions.get(0).myDate);
   }
 
-  @Test
   public void testGetCurrentRevisionInMasterBranch() throws Exception {
     GitRevisionNumber revisionNumber = (GitRevisionNumber)GitHistoryUtils.getCurrentRevision(myProject, toFilePath(bfile), "master");
     assertEquals(revisionNumber.getRev(), myRevisions.get(0).myHash);
     assertEquals(revisionNumber.getTimestamp(), myRevisions.get(0).myDate);
   }
 
-  @Test
   public void testGetCurrentRevisionInOtherBranch() throws Exception {
     checkout("-b feature");
     overwrite(bfile, "new content");
@@ -312,7 +307,6 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     return VcsUtil.getFilePath(file);
   }
 
-  @Test(enabled = false)
   public void testGetLastRevisionForExistingFile() throws Exception {
     final ItemLatestState state = GitHistoryUtils.getLastRevision(myProject, toFilePath(bfile));
     assertTrue(state.isItemExists());
@@ -344,13 +338,11 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     assertEquals(revisionNumber.getTimestamp(), GitTestRevision.gitTimeStampToDate(hashAndDate[1]));
   }
 
-  @Test
   public void testHistory() throws Exception {
     List<VcsFileRevision> revisions = GitFileHistory.collectHistory(myProject, toFilePath(bfile));
     assertHistory(revisions);
   }
 
-  @Test
   public void testAppendableHistory() throws Exception {
     final List<GitFileRevision> revisions = new ArrayList<>(3);
     Consumer<GitFileRevision> consumer = gitFileRevision -> revisions.add(gitFileRevision);
@@ -359,7 +351,6 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     assertHistory(revisions);
   }
 
-  @Test
   public void testOnlyHashesHistory() throws Exception {
     final List<Pair<SHAHash, Date>> history = GitHistoryUtils.onlyHashesHistory(myProject, toFilePath(bfile), myProjectRoot);
     assertEquals(history.size(), myRevisionsAfterRename.size());
@@ -371,7 +362,6 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     }
   }
 
-  @Test
   public void testLoadingDetailsWithU0001Character() throws Exception {
     List<VcsFullCommitDetails> details = ContainerUtil.newArrayList();
 
@@ -386,7 +376,6 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     assertEquals(message, lastCommit.getFullMessage());
   }
 
-  @Test
   public void testLoadingDetailsWithoutChanges() throws Exception {
     List<String> expected = ContainerUtil.newArrayList();
 

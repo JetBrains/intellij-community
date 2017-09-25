@@ -19,6 +19,7 @@ import com.intellij.find.*;
 import com.intellij.find.impl.FindResultImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
@@ -171,6 +172,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
     Project project = mySearchResults.getProject();
     if (myReplaceDenied || !ReadonlyStatusHandler.ensureDocumentWritable(project, editor.getDocument())) return null;
     FindModel findModel = mySearchResults.getFindModel();
+    CommandProcessor.getInstance().runUndoTransparentAction(() -> getEditor().getCaretModel().moveToOffset(occurrence.getEndOffset()));
     TextRange result = FindUtil.doReplace(project,
                                           editor.getDocument(),
                                           findModel,

@@ -206,6 +206,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
     try {
       boolean wasUnderDarcula = UIUtil.isUnderDarcula();
       UIManager.setLookAndFeel(info.getClassName());
+      LafManagerImpl.updateForDarcula(UIUtil.isUnderDarcula());
       String className = info.getClassName();
       if (!myInitial) {
         WelcomeWizardUtil.setWizardLAF(className);

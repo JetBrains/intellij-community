@@ -22,8 +22,13 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBRadioButton;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * Templates class for managing single external project settings (single ide project might contain multiple bindings to external
@@ -44,6 +49,8 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
   private JBCheckBox myUseAutoImportBox;
   @Nullable
   private JBCheckBox myCreateEmptyContentRootDirectoriesBox;
+  private JBRadioButton myUseQualifiedModuleNamesRadioButton;
+  private JBRadioButton myUseModuleGroupsRadioButton;
   @NotNull
   private ExternalSystemSettingsControlCustomizer myCustomizer;
 
@@ -75,6 +82,16 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
         new JBCheckBox(ExternalSystemBundle.message("settings.label.create.empty.content.root.directories"));
       canvas.add(myCreateEmptyContentRootDirectoriesBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
     }
+    JPanel organizeModuleNamesPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    organizeModuleNamesPanel.add(new JBLabel(ExternalSystemBundle.message("settings.label.group.modules")));
+    myUseModuleGroupsRadioButton = new JBRadioButton(ExternalSystemBundle.message("settings.radio.button.use.module.groups"), true);
+    organizeModuleNamesPanel.add(myUseModuleGroupsRadioButton);
+    myUseQualifiedModuleNamesRadioButton = new JBRadioButton(ExternalSystemBundle.message("settings.radio.button.use.qualified.name"));
+    organizeModuleNamesPanel.add(myUseQualifiedModuleNamesRadioButton);
+    ButtonGroup group = new ButtonGroup();
+    group.add(myUseModuleGroupsRadioButton);
+    group.add(myUseQualifiedModuleNamesRadioButton);
+    canvas.add(organizeModuleNamesPanel, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
     fillExtraControls(canvas, indentLevel); 
   }
   
@@ -89,6 +106,7 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
     if (!myCustomizer.isCreateEmptyContentRootDirectoriesBoxHidden() && myCreateEmptyContentRootDirectoriesBox != null) {
       result = result || myCreateEmptyContentRootDirectoriesBox.isSelected() != getInitialSettings().isCreateEmptyContentRootDirectories();
     }
+    result |= myUseQualifiedModuleNamesRadioButton.isSelected() != getInitialSettings().isUseQualifiedModuleNames();
     return result || isExtraSettingModified();
   }
 
@@ -112,6 +130,7 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
     if (!isDefaultModuleCreation && !myCustomizer.isCreateEmptyContentRootDirectoriesBoxHidden() && myCreateEmptyContentRootDirectoriesBox != null) {
       myCreateEmptyContentRootDirectoriesBox.setSelected(getInitialSettings().isCreateEmptyContentRootDirectories());
     }
+    myUseModuleGroupsRadioButton.setSelected(getInitialSettings().isUseQualifiedModuleNames());
     resetExtraSettings(isDefaultModuleCreation);
   }
 
@@ -130,6 +149,7 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
     if (myInitialSettings.getExternalProjectPath() != null) {
       settings.setExternalProjectPath(myInitialSettings.getExternalProjectPath());
     }
+    settings.setUseQualifiedModuleNames(myUseQualifiedModuleNamesRadioButton.isSelected());
     applyExtraSettings(settings);
   }
 
@@ -153,6 +173,7 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
     if (!myCustomizer.isCreateEmptyContentRootDirectoriesBoxHidden() && myCreateEmptyContentRootDirectoriesBox != null) {
       myInitialSettings.setCreateEmptyContentRootDirectories(myCreateEmptyContentRootDirectoriesBox.isSelected());
     }
+    myInitialSettings.setUseQualifiedModuleNames(myUseQualifiedModuleNamesRadioButton.isSelected());
     updateInitialExtraSettings();
   }
 

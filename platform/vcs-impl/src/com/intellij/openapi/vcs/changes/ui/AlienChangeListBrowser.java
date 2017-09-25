@@ -18,7 +18,6 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.util.containers.ContainerUtil;
@@ -26,18 +25,15 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 public class AlienChangeListBrowser extends ChangesBrowser {
   private final List<Change> myChanges;
-  private final AbstractVcs myVcs;
 
   public AlienChangeListBrowser(final Project project, final List<? extends ChangeList> changeLists, final List<Change> changes,
                                 final ChangeList initialListSelection, final boolean capableOfExcludingChanges,
-                                final boolean highlightProblems, final AbstractVcs vcs) {
+                                final boolean highlightProblems) {
     super(project, changeLists, changes, initialListSelection, capableOfExcludingChanges, highlightProblems, null, MyUseCase.LOCAL_CHANGES, null);
     myChanges = changes;
-    myVcs = vcs;
     rebuildList();
   }
 
@@ -58,12 +54,6 @@ public class AlienChangeListBrowser extends ChangesBrowser {
     super.buildToolBar(toolBarGroup);
 
     toolBarGroup.add(ActionManager.getInstance().getAction("AlienCommitChangesDialog.AdditionalActions"));
-  }
-
-  @Override
-  @NotNull
-  public Set<AbstractVcs> getAffectedVcses() {
-    return ContainerUtil.immutableSet(myVcs);
   }
 
   @Override

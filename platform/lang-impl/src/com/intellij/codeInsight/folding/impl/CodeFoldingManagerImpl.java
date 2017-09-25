@@ -46,12 +46,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.Collection;
 import java.util.List;
 
 public class CodeFoldingManagerImpl extends CodeFoldingManager implements ProjectComponent, Disposable {
   private final Project myProject;
 
-  private final List<Document> myDocumentsWithFoldingInfo = new WeakList<>();
+  private final Collection<Document> myDocumentsWithFoldingInfo = new WeakList<>();
 
   private final Key<DocumentFoldingInfo> myFoldingInfoInDocumentKey = Key.create("FOLDING_INFO_IN_DOCUMENT_KEY");
   private static final Key<Boolean> FOLDING_STATE_KEY = Key.create("FOLDING_STATE_KEY");

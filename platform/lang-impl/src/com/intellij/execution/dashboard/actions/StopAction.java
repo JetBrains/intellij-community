@@ -16,7 +16,7 @@
 package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
+import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.ui.RunContentManagerImpl;
@@ -31,7 +31,7 @@ import java.util.List;
 /**
  * @author konstantin.aleev
  */
-public class StopAction extends RunDashboardTreeLeafAction<DashboardRunConfigurationNode> {
+public class StopAction extends RunDashboardTreeLeafAction<RunDashboardRunConfigurationNode> {
   public StopAction() {
     super(ExecutionBundle.message("run.dashboard.stop.action.name"),
           ExecutionBundle.message("run.dashboard.stop.action.description"),
@@ -42,7 +42,7 @@ public class StopAction extends RunDashboardTreeLeafAction<DashboardRunConfigura
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null || RunDashboardManager.getInstance(project).isShowConfigurations()) {
-      List<DashboardRunConfigurationNode> targetNodes = getTargetNodes(e);
+      List<RunDashboardRunConfigurationNode> targetNodes = getTargetNodes(e);
       e.getPresentation().setEnabled(targetNodes.stream().anyMatch(node -> {
         Content content = node.getContent();
         return content != null && !RunContentManagerImpl.isTerminated(content);
@@ -69,12 +69,12 @@ public class StopAction extends RunDashboardTreeLeafAction<DashboardRunConfigura
   }
 
   @Override
-  protected void doActionPerformed(DashboardRunConfigurationNode node) {
+  protected void doActionPerformed(RunDashboardRunConfigurationNode node) {
     ExecutionManagerImpl.stopProcess(node.getDescriptor());
   }
 
   @Override
-  protected Class<DashboardRunConfigurationNode> getTargetNodeClass() {
-    return DashboardRunConfigurationNode.class;
+  protected Class<RunDashboardRunConfigurationNode> getTargetNodeClass() {
+    return RunDashboardRunConfigurationNode.class;
   }
 }

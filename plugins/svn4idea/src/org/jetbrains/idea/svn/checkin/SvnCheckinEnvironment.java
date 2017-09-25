@@ -242,7 +242,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
     ProgressTracker eventHandler = new SvnProgressCanceller() {
       @Override
-      public void consume(ProgressEvent event) throws SVNException {
+      public void consume(ProgressEvent event) {
         // TODO: indicator is null here when invoking "Add" action
         ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         File file = event.getFile();

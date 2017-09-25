@@ -29,6 +29,7 @@ import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -46,10 +47,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
@@ -285,7 +283,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
       private void checkCollectionNullityOnAssignment(@NotNull PsiElement errorElement,
                                                       @Nullable PsiType expectedType,
                                                       @Nullable PsiType assignedType) {
-        if (isNullableNotNullCollectionConflict(errorElement, expectedType, assignedType)) {
+        if (isNullableNotNullCollectionConflict(errorElement, expectedType, assignedType, new HashSet<>())) {
           holder.registerProblem(errorElement,
                                  "Assigning a collection of nullable elements into a collection of non-null elements",
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
@@ -295,7 +293,9 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
 
       private boolean isNullableNotNullCollectionConflict(PsiElement place,
                                                           @Nullable PsiType expectedType,
-                                                          @Nullable PsiType assignedType) {
+                                                          @Nullable PsiType assignedType,
+                                                          @NotNull Set<Couple<PsiType>> visited) {
+        if (!visited.add(Couple.of(expectedType, assignedType))) return false;
 
         if (isNullityConflict(JavaGenericsUtil.getCollectionItemType(expectedType, place.getResolveScope()),
                               JavaGenericsUtil.getCollectionItemType(assignedType, place.getResolveScope()))) {
@@ -306,7 +306,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
           PsiType expectedArg = PsiUtil.substituteTypeParameter(expectedType, CommonClassNames.JAVA_UTIL_MAP, i, false);
           PsiType assignedArg = PsiUtil.substituteTypeParameter(assignedType, CommonClassNames.JAVA_UTIL_MAP, i, false);
           if (isNullityConflict(expectedArg, assignedArg) ||
-              expectedArg != null && assignedArg != null && isNullableNotNullCollectionConflict(place, expectedArg, assignedArg)) {
+              expectedArg != null && assignedArg != null && isNullableNotNullCollectionConflict(place, expectedArg, assignedArg, visited)) {
             return true;
           }
         }
@@ -384,7 +384,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
                               NullableNotNullManager manager, final String anno, final List<String> annoToRemove, @NotNull ProblemsHolder holder) {
     String propName = JavaCodeStyleManager.getInstance(project).variableNameToPropertyName(field.getName(), VariableKind.FIELD);
     final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
-    final PsiMethod getter = PropertyUtil.findPropertyGetter(field.getContainingClass(), propName, isStatic, false);
+    final PsiMethod getter = PropertyUtilBase.findPropertyGetter(field.getContainingClass(), propName, isStatic, false);
     final PsiIdentifier nameIdentifier = getter == null ? null : getter.getNameIdentifier();
     if (nameIdentifier != null && nameIdentifier.isPhysical()) {
       if (PropertyUtil.isSimpleGetter(getter)) {
@@ -406,8 +406,8 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
     }
 
     final PsiClass containingClass = field.getContainingClass();
-    final PsiMethod setter = PropertyUtil.findPropertySetter(containingClass, propName, isStatic, false);
-    if (setter != null && setter.isPhysical()) {
+    final PsiMethod setter = PropertyUtilBase.findPropertySetter(containingClass, propName, isStatic, false);
+    if (setter != null && setter.isPhysical() && PropertyUtil.isSimpleSetter(setter)) {
       final PsiParameter[] parameters = setter.getParameterList().getParameters();
       assert parameters.length == 1 : setter.getText();
       final PsiParameter parameter = parameters[0];

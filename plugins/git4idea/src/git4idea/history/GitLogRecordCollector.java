@@ -130,7 +130,7 @@ abstract class GitLogRecordCollector implements Consumer<GitLogRecord> {
 
     for (GitLogRecord r : records) {
       hashes.add(r.getHash());
-      hashes.addAll(Arrays.asList(r.getParentsHashes()));
+      ContainerUtil.addAll(hashes, r.getParentsHashes());
     }
 
     GitSimpleHandler handler = new GitSimpleHandler(myProject, myRoot, GitCommand.LOG);

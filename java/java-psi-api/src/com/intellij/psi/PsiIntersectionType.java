@@ -60,7 +60,7 @@ public class PsiIntersectionType extends PsiType.Stub {
   @NotNull
   private static PsiType[] flattenAndRemoveDuplicates(@NotNull PsiType[] conjuncts) {
     try {
-      final Set<PsiType> flattenConjuncts = PsiCapturedWildcardType.guard.doPreventingRecursion(conjuncts, true, () -> flatten(conjuncts, ContainerUtil.newLinkedHashSet()));
+      final Set<PsiType> flattenConjuncts = flatten(conjuncts, ContainerUtil.newLinkedHashSet());
       if (flattenConjuncts == null) {
         return conjuncts;
       }

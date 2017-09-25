@@ -114,8 +114,15 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     return true;
   }
 
-  public boolean isExcluded(ExcludedInspectionTreeNodesManager excludedManager) {
-    return excludedManager.isExcluded(this);
+  public boolean isExcluded() {
+    Enumeration enumeration = children();
+    while (enumeration.hasMoreElements()) {
+      InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
+      if (!child.isExcluded()) {
+        return false;
+      }
+    }
+    return getChildCount() != 0;
   }
 
   public boolean appearsBold() {
@@ -127,21 +134,19 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     return null;
   }
 
-  public void excludeElement(ExcludedInspectionTreeNodesManager excludedManager) {
-    excludedManager.exclude(this);
+  public void excludeElement() {
     Enumeration enumeration = children();
     while (enumeration.hasMoreElements()) {
       InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
-      child.excludeElement(excludedManager);
+      child.excludeElement();
     }
   }
 
-  public void amnestyElement(ExcludedInspectionTreeNodesManager excludedManager) {
-    excludedManager.amnesty(this);
+  public void amnestyElement() {
     Enumeration enumeration = children();
     while (enumeration.hasMoreElements()) {
       InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
-      child.amnestyElement(excludedManager);
+      child.amnestyElement();
     }
   }
 

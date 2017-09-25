@@ -266,8 +266,8 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
 
     if (entry.getName().lastIndexOf('.') > 0 && !manager.getFileTypeByFileName(name).isBinary()) {
       SVNURL url = node.getURL();
-      final SvnFileRevision revision = new SvnFileRevision(myVCS, SVNRevision.UNDEFINED, SVNRevision.HEAD, url.toString(),
-                                                           entry.getAuthor(), entry.getDate(), null, null);
+      SvnFileRevision revision =
+        new SvnFileRevision(myVCS, SVNRevision.UNDEFINED, SVNRevision.HEAD, url, entry.getAuthor(), entry.getDate(), null, null);
 
       return new VcsVirtualFile(node.getSVNDirEntry().getName(), revision, VcsFileSystem.getInstance());
     }

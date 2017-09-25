@@ -66,15 +66,22 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     RemoteServer.setupRMI();
   }
 
-  public RemoteProcessSupport(Class<EntryPoint> valueClass) {
+  public RemoteProcessSupport(@NotNull Class<EntryPoint> valueClass) {
     myValueClass = valueClass;
   }
 
   protected abstract void fireModificationCountChanged();
 
-  protected abstract String getName(Target target);
+  protected abstract String getName(@NotNull Target target);
 
-  protected void logText(Parameters configuration, ProcessEvent event, Key outputType, Object info) {
+  protected void logText(@NotNull Parameters configuration, @NotNull ProcessEvent event, @NotNull Key outputType) {
+    String text = StringUtil.notNullize(event.getText());
+    if (outputType == ProcessOutputTypes.STDERR) {
+      LOG.warn(text.trim());
+    }
+    else {
+      LOG.debug(text.trim());
+    }
   }
 
   public void stopAll() {
@@ -189,7 +196,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     }
   }
 
-  private void startProcess(Target target, Parameters configuration, @NotNull Pair<Target, Parameters> key) {
+  private void startProcess(@NotNull Target target, @NotNull Parameters configuration, @NotNull Pair<Target, Parameters> key) {
     ProgramRunner runner = new DefaultProgramRunner() {
       @Override
       @NotNull
@@ -218,7 +225,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     processHandler.startNotify();
   }
 
-  protected abstract RunProfileState getRunProfileState(Target target, Parameters configuration, Executor executor)
+  protected abstract RunProfileState getRunProfileState(@NotNull Target target, @NotNull Parameters configuration, @NotNull Executor executor)
     throws ExecutionException;
 
   private boolean getExistingInfo(@NotNull Ref<RunningInfo> ref, @NotNull Pair<Target, Parameters> key) {
@@ -308,18 +315,11 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         String text = StringUtil.notNullize(event.getText());
-        if (outputType == ProcessOutputTypes.STDERR) {
-          LOG.warn(text.trim());
-        }
-        else {
-          LOG.debug(text.trim());
-        }
-
+        logText(key.second, event, outputType);
         RunningInfo result = null;
         PendingInfo info;
         synchronized (myProcMap) {
           Info o = myProcMap.get(key);
-          logText(key.second, event, outputType, o);
           if (o instanceof PendingInfo) {
             info = (PendingInfo)o;
             if (outputType == ProcessOutputTypes.STDOUT) {

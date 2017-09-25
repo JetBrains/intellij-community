@@ -17,6 +17,8 @@ package com.intellij.util.concurrency;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.containers.TransferToEDTQueue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Obsolescent;
@@ -103,10 +105,25 @@ public abstract class Invoker implements Disposable {
 
   final void invokeSafely(Runnable task) {
     try {
-      if (canInvoke(task)) task.run();
+      if (canInvoke(task)) {
+        ProgressManager manager = isDispatchThread() ? null : getProgressManager();
+        if (manager != null) {
+          manager.runInReadActionWithWriteActionPriority(task, null);
+        }
+        else {
+          task.run();
+        }
+      }
+    }
+    catch (ProcessCanceledException exception) {
+      invokeLater(task);
     }
     catch (Exception exception) {
       LOG.warn(exception);
+    }
+    catch (Throwable throwable) {
+      LOG.warn(throwable);
+      throw throwable;
     }
     finally {
       count.decrementAndGet();
@@ -126,6 +143,16 @@ public abstract class Invoker implements Disposable {
       }
     }
     return true;
+  }
+
+  private static ProgressManager getProgressManager() {
+    try {
+      return ProgressManager.getInstance();
+    }
+    catch (NullPointerException exception) {
+      LOG.debug("progress manager is not available");
+      return null; // in tests without application
+    }
   }
 
   /**

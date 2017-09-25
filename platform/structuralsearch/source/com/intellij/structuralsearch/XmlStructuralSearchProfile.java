@@ -53,7 +53,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
 
   @Override
   public void compile(PsiElement[] elements, @NotNull GlobalCompilingVisitor globalVisitor) {
-    elements[0].getParent().accept(new XmlCompilingVisitor(globalVisitor));
+    new XmlCompilingVisitor(globalVisitor).compile(elements);
   }
 
   @Override

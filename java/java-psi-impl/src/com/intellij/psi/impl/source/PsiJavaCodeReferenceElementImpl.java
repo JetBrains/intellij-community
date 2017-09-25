@@ -394,6 +394,16 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
           result = referenceElement.resolve(PACKAGE_NAME_KIND, containingFile);
         }
       }
+      
+      if (result.length == 0 && (kind == CLASS_OR_PACKAGE_NAME_KIND || kind == CLASS_NAME_KIND)) {
+        String qualifiedName = referenceElement.getQualifiedName();
+        PsiClass aClass = qualifiedName != null && !StringUtil.isEmptyOrSpaces(StringUtil.getPackageName(qualifiedName))
+                          ? JavaPsiFacade.getInstance(referenceElement.getProject()).findClass(qualifiedName, referenceElement.getResolveScope()) 
+                          : null;
+        if (aClass != null) {
+          result = new JavaResolveResult[] {new CandidateInfo(aClass, PsiSubstitutor.EMPTY, referenceElement, false)};
+        }
+      }
 
       JavaResolveUtil.substituteResults(referenceElement, result);
 

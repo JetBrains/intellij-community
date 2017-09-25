@@ -175,8 +175,13 @@ public abstract class StubProcessingHelperBase {
   }
 
   private void inconsistencyDetected(@NotNull ObjectStubTree stubTree, @NotNull PsiFileWithStubSupport psiFile) {
-    LOG.error(StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch("PSI and index do not match.", stubTree, psiFile));
-    onInternalError(psiFile.getVirtualFile());
+    try {
+      StubTextInconsistencyException.checkStubTextConsistency(psiFile);
+      LOG.error(StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch("PSI and index do not match.", stubTree, psiFile));
+    }
+    finally {
+      onInternalError(psiFile.getVirtualFile());
+    }
   }
 
   protected abstract void onInternalError(VirtualFile file);

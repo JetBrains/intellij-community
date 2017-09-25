@@ -38,6 +38,7 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Iconable;
@@ -101,7 +102,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
   @Nullable
   @Override
   public RootType getRootType(@Nullable VirtualFile file) {
-    if (file == null) return null;
+    if (file == null || !file.isInLocalFileSystem()) return null;
     VirtualFile directory = file.isDirectory() ? file : file.getParent();
     RootType result = myIndex.getInfoForFile(directory);
     return result == NULL_TYPE ? null : result;
@@ -220,7 +221,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     }
   }
 
-  public static class FilePresentation implements FileIconProvider, EditorTabTitleProvider {
+  public static class FilePresentation implements FileIconProvider, EditorTabTitleProvider, DumbAware {
 
     @Nullable
     @Override

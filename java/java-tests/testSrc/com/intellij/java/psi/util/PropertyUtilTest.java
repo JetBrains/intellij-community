@@ -17,56 +17,57 @@ package com.intellij.java.psi.util;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
 public class PropertyUtilTest extends LightCodeInsightTestCase {
   public void testSuggestGetterName() {
-    assertEquals("isValid", PropertyUtil.suggestGetterName("valid", getType("boolean")));
-    assertEquals("getValid", PropertyUtil.suggestGetterName("valid", getType("Object")));
-    assertEquals("isValid", PropertyUtil.suggestGetterName(createField("valid", "boolean")));
-    assertEquals("getValid", PropertyUtil.suggestGetterName(createField("valid", "Object")));
+    assertEquals("isValid", PropertyUtilBase.suggestGetterName("valid", getType("boolean")));
+    assertEquals("getValid", PropertyUtilBase.suggestGetterName("valid", getType("Object")));
+    assertEquals("isValid", PropertyUtilBase.suggestGetterName(createField("valid", "boolean")));
+    assertEquals("getValid", PropertyUtilBase.suggestGetterName(createField("valid", "Object")));
 
-    assertEquals("getURL", PropertyUtil.suggestGetterName("URL", getType("Object")));
-    assertEquals("getURL", PropertyUtil.suggestGetterName(createField("URL", "Object")));
+    assertEquals("getURL", PropertyUtilBase.suggestGetterName("URL", getType("Object")));
+    assertEquals("getURL", PropertyUtilBase.suggestGetterName(createField("URL", "Object")));
 
-    assertEquals("isaURL", PropertyUtil.suggestGetterName(createField("aURL", "boolean")));
-    assertEquals("getaURL", PropertyUtil.suggestGetterName(createField("aURL", "Object")));
-    assertEquals("getBool", PropertyUtil.suggestGetterName(createField("bool", "java.lang.Boolean")));
+    assertEquals("isaURL", PropertyUtilBase.suggestGetterName(createField("aURL", "boolean")));
+    assertEquals("getaURL", PropertyUtilBase.suggestGetterName(createField("aURL", "Object")));
+    assertEquals("getBool", PropertyUtilBase.suggestGetterName(createField("bool", "java.lang.Boolean")));
   }
 
   public void testSuggestSetterName() {
-    assertEquals("setValid", PropertyUtil.suggestSetterName("valid"));
-    assertEquals("setValid", PropertyUtil.suggestSetterName(createField("valid", "Object")));
+    assertEquals("setValid", PropertyUtilBase.suggestSetterName("valid"));
+    assertEquals("setValid", PropertyUtilBase.suggestSetterName(createField("valid", "Object")));
 
-    assertEquals("setURL", PropertyUtil.suggestSetterName("URL"));
-    assertEquals("setURL", PropertyUtil.suggestSetterName(createField("URL", "Object")));
+    assertEquals("setURL", PropertyUtilBase.suggestSetterName("URL"));
+    assertEquals("setURL", PropertyUtilBase.suggestSetterName(createField("URL", "Object")));
 
-    assertEquals("setaURL", PropertyUtil.suggestSetterName("aURL"));
-    assertEquals("setaURL", PropertyUtil.suggestSetterName(createField("aURL", "Object")));
-    assertEquals("setBool", PropertyUtil.suggestSetterName(createField("bool", "java.lang.Boolean")));
+    assertEquals("setaURL", PropertyUtilBase.suggestSetterName("aURL"));
+    assertEquals("setaURL", PropertyUtilBase.suggestSetterName(createField("aURL", "Object")));
+    assertEquals("setBool", PropertyUtilBase.suggestSetterName(createField("bool", "java.lang.Boolean")));
   }
 
   public void testSuggestPropertyName() {
-    assertEquals("valid", PropertyUtil.getPropertyName("isValid"));
-    assertEquals("valid", PropertyUtil.getPropertyName("getValid"));
-    assertEquals("valid", PropertyUtil.getPropertyName("setValid"));
+    assertEquals("valid", PropertyUtilBase.getPropertyName("isValid"));
+    assertEquals("valid", PropertyUtilBase.getPropertyName("getValid"));
+    assertEquals("valid", PropertyUtilBase.getPropertyName("setValid"));
 
-    assertEquals("URL", PropertyUtil.getPropertyName("isURL"));
-    assertEquals("URL", PropertyUtil.getPropertyName("getURL"));
-    assertEquals("URL", PropertyUtil.getPropertyName("setURL"));
+    assertEquals("URL", PropertyUtilBase.getPropertyName("isURL"));
+    assertEquals("URL", PropertyUtilBase.getPropertyName("getURL"));
+    assertEquals("URL", PropertyUtilBase.getPropertyName("setURL"));
 
-    assertEquals("aURL", PropertyUtil.getPropertyName("isaURL"));
-    assertEquals("aURL", PropertyUtil.getPropertyName("getaURL"));
-    assertEquals("aURL", PropertyUtil.getPropertyName("setaURL"));
+    assertEquals("aURL", PropertyUtilBase.getPropertyName("isaURL"));
+    assertEquals("aURL", PropertyUtilBase.getPropertyName("getaURL"));
+    assertEquals("aURL", PropertyUtilBase.getPropertyName("setaURL"));
   }
 
   public void testBooleanPropertyGetters() {
-    assertTrue(PropertyUtil.hasGetterName(createMethod("isOk", "boolean")));
-    assertFalse(PropertyUtil.hasGetterName(createMethod("isOk", CommonClassNames.JAVA_LANG_BOOLEAN)));
-    assertTrue(PropertyUtil.hasGetterName(createMethod("getOk", CommonClassNames.JAVA_LANG_BOOLEAN)));
-    assertFalse(PropertyUtil.hasGetterName(createMethod("isOk", "int")));
+    assertTrue(PropertyUtilBase.hasGetterName(createMethod("isOk", "boolean")));
+    assertFalse(PropertyUtilBase.hasGetterName(createMethod("isOk", CommonClassNames.JAVA_LANG_BOOLEAN)));
+    assertTrue(PropertyUtilBase.hasGetterName(createMethod("getOk", CommonClassNames.JAVA_LANG_BOOLEAN)));
+    assertFalse(PropertyUtilBase.hasGetterName(createMethod("isOk", "int")));
   }
 
   private static PsiType getType(@NonNls String type) throws IncorrectOperationException {

@@ -23,7 +23,6 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.CommonProcessors;
@@ -120,7 +119,7 @@ public class SliceTestUtil {
 
     int size = offsets.length;
     assertEquals(message(startOffset, usage), size, children.size());
-    Collections.sort(children, (o1, o2) -> o1.compareTo(o2));
+    children.sort(Comparator.naturalOrder());
 
     for (int i = 0; i < children.size(); i++) {
       SliceUsage child = children.get(i);
@@ -133,7 +132,6 @@ public class SliceTestUtil {
 
   private static String message(int startOffset, SliceUsage usage) {
     PsiFile file = usage.getElement().getContainingFile();
-    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
     Editor editor = FileEditorManager.getInstance(file.getProject()).getSelectedTextEditor();
     LogicalPosition position = editor.offsetToLogicalPosition(startOffset);
     return position + ": '" + StringUtil.first(file.getText().substring(startOffset), 100, true) + "'";

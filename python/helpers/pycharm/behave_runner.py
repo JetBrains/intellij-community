@@ -159,7 +159,7 @@ class _BehaveRunner(_bdd_utils.BddRunner):
                 error_message = element.error_message
                 fetch_log = not error_message  # If no error_message provided, need to fetch log manually
                 trace = ""
-                if isinstance(element.exception, AssertionError):
+                if isinstance(element.exception, AssertionError) or not error_message:
                     trace = self._collect_trace(element, utils)
 
                 # May be empty https://github.com/behave/behave/issues/468 for some exceptions

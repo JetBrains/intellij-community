@@ -162,9 +162,12 @@ public abstract class TypeIntention extends PyBaseIntentionAction {
       PsiReference reference = problemElement.getReference();
       final PsiElement resolved = reference != null? reference.resolve() : null;
       if (resolved instanceof PyTargetExpression) {
-        final PyExpression assignedValue = ((PyTargetExpression)resolved).findAssignedValue();
-        if (assignedValue instanceof PyCallExpression) {
-          return (PyCallExpression)assignedValue;
+        final PyResolveContext context = getResolveContext(elementAt);
+        if (context.getTypeEvalContext().maySwitchToAST(resolved)) {
+          final PyExpression assignedValue = ((PyTargetExpression)resolved).findAssignedValue();
+          if (assignedValue instanceof PyCallExpression) {
+            return (PyCallExpression)assignedValue;
+          }
         }
       }
     }

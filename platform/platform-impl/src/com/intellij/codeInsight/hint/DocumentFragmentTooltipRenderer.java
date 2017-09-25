@@ -15,7 +15,10 @@
  */
 package com.intellij.codeInsight.hint;
 
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.DocumentFragment;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.util.TextRange;
@@ -39,8 +42,6 @@ public class DocumentFragmentTooltipRenderer implements TooltipRenderer {
 
   @Override
   public LightweightHint show(@NotNull final Editor editor, @NotNull Point p, boolean alignToRight, @NotNull TooltipGroup group, @NotNull HintHint intInfo) {
-    LightweightHint hint;
-
     final JComponent editorComponent = editor.getComponent();
 
     TextRange range = myDocumentFragment.getTextRange();
@@ -77,8 +78,11 @@ public class DocumentFragmentTooltipRenderer implements TooltipRenderer {
     FoldingModelEx foldingModel = (FoldingModelEx)editor.getFoldingModel();
     foldingModel.setFoldingEnabled(false);
     TextRange textRange = new TextRange(startOffset, endOffset);
-    hint = EditorFragmentComponent.showEditorFragmentHintAt(editor, textRange, p.y, false, false, true, true, true);
-    foldingModel.setFoldingEnabled(true);
-    return hint;
+    try {
+      return EditorFragmentComponent.showEditorFragmentHintAt(editor, textRange, p.y, false, false, true, true, true);
+    }
+    finally {
+      foldingModel.setFoldingEnabled(true);
+    }
   }
 }

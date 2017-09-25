@@ -2,12 +2,9 @@ package org.jetbrains.yaml;
 
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 /**
  * @author oleg
@@ -42,18 +39,11 @@ public class YAMLLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
     @Override
     protected void addComponents() {
-      addTabOptions();
+      super.addComponents();
       // Tabs in YAML are not allowed
       myCbUseTab.setEnabled(false);
-
-      myTabSizeField = createIndentTextField();
-      myTabSizeLabel = new JLabel(ApplicationBundle.message("editbox.indent.tab.size"));
-      // Do not add
-      //add(myTabSizeLabel, myTabSizeField);
-
-      myIndentField = createIndentTextField();
-      myIndentLabel = new JLabel(ApplicationBundle.message("editbox.indent.indent"));
-      add(myIndentLabel, myIndentField);
+      myTabSizeField.setVisible(false);
+      myTabSizeLabel.setVisible(false);
     }
 
     public void setEnabled(boolean enabled) {

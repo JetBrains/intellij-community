@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -49,7 +50,7 @@ public class ExternalBuilderStrategySupport extends BuilderAnnotationContributor
         context.addMethod(DefaultBuilderStrategySupport.createFieldSetter(context.getCodeClass(), field, annotation));
       }
     } else {
-      Collection<PsiMethod> properties = PropertyUtil.getAllProperties(constructedClass, true, false, includeSuper).values();
+      Collection<PsiMethod> properties = PropertyUtilBase.getAllProperties(constructedClass, true, false, includeSuper).values();
       for (PsiMethod setter : properties) {
         final PsiMethod builderSetter = createFieldSetter(context.getCodeClass(), setter, annotation);
         if (builderSetter != null) context.addMethod(builderSetter);
@@ -62,8 +63,8 @@ public class ExternalBuilderStrategySupport extends BuilderAnnotationContributor
   public static LightMethodBuilder createFieldSetter(@NotNull PsiClass builderClass,
                                                      @NotNull PsiMethod setter,
                                                      @NotNull PsiAnnotation annotation) {
-    final String name = PropertyUtil.getPropertyNameBySetter(setter);
-    final PsiType type = PropertyUtil.getPropertyType(setter);
+    final String name = PropertyUtilBase.getPropertyNameBySetter(setter);
+    final PsiType type = PropertyUtilBase.getPropertyType(setter);
     if (type == null) return null;
     return DefaultBuilderStrategySupport.createFieldSetter(builderClass, name, type, annotation, setter);
   }

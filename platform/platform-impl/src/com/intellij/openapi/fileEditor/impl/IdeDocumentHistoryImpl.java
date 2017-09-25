@@ -464,6 +464,8 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   }
 
   private PlaceInfo createPlaceInfo(@NotNull final FileEditor fileEditor, final FileEditorProvider fileProvider) {
+    if (!fileEditor.isValid()) return null;
+
     final VirtualFile file = myEditorManager.getFile(fileEditor);
     LOG.assertTrue(file != null);
 

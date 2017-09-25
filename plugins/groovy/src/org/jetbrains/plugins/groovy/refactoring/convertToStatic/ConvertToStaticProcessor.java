@@ -15,28 +15,35 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.convertToStatic;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.annotator.InaccessibleElementVisitor;
+import org.jetbrains.plugins.groovy.annotator.ResolveHighlightingVisitor;
+import org.jetbrains.plugins.groovy.annotator.VisitorCallback;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
+import org.jetbrains.plugins.groovy.refactoring.convertToStatic.fixes.BaseFix;
+import org.jetbrains.plugins.groovy.refactoring.convertToStatic.fixes.EmptyFieldTypeFix;
+import org.jetbrains.plugins.groovy.refactoring.convertToStatic.fixes.EmptyReturnTypeFix;
 
-import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.Queue;
+import java.util.HashSet;
+import java.util.Set;
 
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_COMPILE_DYNAMIC;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_COMPILE_STATIC;
 
 public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
@@ -44,6 +51,8 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(ConvertToStaticProcessor.class);
 
   private final GroovyFile[] myFiles;
+
+  private BaseFix[] myFixes = {new EmptyFieldTypeFix(), new EmptyReturnTypeFix()};
 
   protected ConvertToStaticProcessor(Project project, GroovyFile... files) {
     super(project);
@@ -75,48 +84,98 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
-    Queue<GroovyFile> files = new ArrayDeque<>(Arrays.asList(myFiles));
-    int currentIteration = 0;
-    while (files.peek() != null) {
-      GroovyFile file = files.peek();
-      TypeChecker checker = new TypeChecker();
-      final Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
-      PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(file.getProject());
-      LOG.assertTrue(document != null);
-      psiDocumentManager.commitDocument(document);
-      LOG.assertTrue(file.isValid());
+    int counter = 0;
+    final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+    LOG.assertTrue(progressIndicator != null);
+    progressIndicator.setIndeterminate(false);
+    for( GroovyFile file: myFiles) {
+      counter++;
+      commitFile(file);
       if (file.isScript()) continue;
-      PsiClass[] classes = file.getClasses();
-
-      for (PsiClass psiClass : classes) {
-        if (PsiImplUtil.getAnnotation(psiClass, GROOVY_TRANSFORM_COMPILE_STATIC) == null) {
-          addAnnotation(psiClass);
-        }
-        checkErrors((GrTypeDefinition)psiClass, checker);
+      progressIndicator.setText2(file.getName());
+      progressIndicator.setFraction(counter / (double) myFiles.length);
+      try {
+        applyFixes(file);
+        putCompileAnnotations(file);
+        applyErrorFixes(file);
+        commitFile(file);
+      } catch (Exception e) {
+        LOG.error("Error in converting file: " + file.getName(), e);
       }
-
-      if (checker.applyFixes() == 0 || currentIteration == maxIterations) {
-        files.poll();
-        currentIteration = 0;
-      } else {
-        currentIteration++;
-      }
-
-
-      PsiDocumentManager.getInstance(myProject).commitDocument(document);
-      doPostProcessing(file);
     }
   }
 
-  private static void checkErrors(@NotNull GrTypeDefinition psiClass, @NotNull TypeChecker checker) {
-    psiClass.accept(new PsiRecursiveElementVisitor() {
+  private void commitFile(@NotNull GroovyFile file) {
+    final Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
+    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(file.getProject());
+    LOG.assertTrue(document != null);
+    psiDocumentManager.commitDocument(document);
+    LOG.assertTrue(file.isValid());
+  }
+
+  private void applyFixes(GroovyFile file) {
+    file.accept(new PsiRecursiveElementVisitor() {
       @Override
       public void visitElement(PsiElement element) {
-        element.accept(new GroovyPsiElementVisitor(checker));
-
+        for (BaseFix fix : myFixes) element.accept(new GroovyPsiElementVisitor(fix));
         super.visitElement(element);
       }
     });
+  }
+
+  private void putCompileAnnotations(@NotNull GroovyFile file) {
+    GrTypeDefinition[] classes = file.getTypeDefinitions();
+
+    for (GrTypeDefinition typeDef : classes) {
+      addAnnotation(typeDef, true);
+    }
+
+    Set<GrTypeDefinition> classesWithUnresolvedRef = new HashSet<>();
+    Set<GrMethod> methodsWithUnresolvedRef = new HashSet<>();
+
+    VisitorCallback callback = (element, info) -> {
+      GrMethod containingMethod = PsiTreeUtil.getParentOfType(element, GrMethod.class);
+      if (containingMethod != null) {
+        methodsWithUnresolvedRef.add(containingMethod);
+        return;
+      }
+      GrTypeDefinition containingClass = PsiTreeUtil.getParentOfType(element, GrTypeDefinition.class);
+      if (containingClass != null) classesWithUnresolvedRef.add(containingClass);
+    };
+    file.accept(new ResolveHighlightingVisitor(file, myProject, callback));
+    file.accept(new InaccessibleElementVisitor(file, myProject, callback));
+
+    for (GrTypeDefinition typeDef : classes) { //remove if found not compilable code in class def
+      boolean isStaticClass = true;
+      if (classesWithUnresolvedRef.contains(typeDef)) {
+        isStaticClass = false;
+        removeAnnotation(typeDef);
+      }
+
+      for (GrMethod method : typeDef.getCodeMethods()) {
+        if (methodsWithUnresolvedRef.contains(method) == isStaticClass) {
+          addAnnotation(method, !isStaticClass);
+        }
+      }
+    }
+  }
+
+  private static void applyErrorFixes(@NotNull GroovyFile file) {
+    for (int iteration = 0; iteration < maxIterations; iteration++) {
+      TypeChecker checker = new TypeChecker();
+      file.accept(new PsiRecursiveElementVisitor() {
+        @Override
+        public void visitElement(PsiElement element) {
+          if (PsiUtil.isCompileStatic(element)) {
+            element.accept(new GroovyPsiElementVisitor(checker));
+          }
+          super.visitElement(element);
+        }
+      });
+      if (checker.applyFixes() == 0) {
+        return;
+      }
+    }
   }
 
   @NotNull
@@ -125,17 +184,19 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
     return GroovyRefactoringBundle.message("converting.files.to.static");
   }
 
-  void addAnnotation(@NotNull PsiClass psiClass) {
-    PsiModifierList modifierList = psiClass.getModifierList();
-    if (modifierList != null) {
-      modifierList.addAnnotation(GROOVY_TRANSFORM_COMPILE_STATIC);
+  void addAnnotation(@NotNull PsiModifierListOwner owner, boolean isStatic) {
+    PsiModifierList modifierList = owner.getModifierList();
+    String annotation = isStatic ? GROOVY_TRANSFORM_COMPILE_STATIC : GROOVY_TRANSFORM_COMPILE_DYNAMIC;
+    if (modifierList != null && modifierList.findAnnotation(annotation) == null) {
+      modifierList.addAnnotation(annotation);
     }
   }
 
-  private void doPostProcessing(PsiElement newFile) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-
-    newFile = JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(newFile);
-    CodeStyleManager.getInstance(myProject).reformat(newFile);
+  void removeAnnotation(@NotNull PsiModifierListOwner owner) {
+    PsiModifierList modifierList = owner.getModifierList();
+    if (modifierList != null) {
+      PsiAnnotation psiAnnotation = modifierList.findAnnotation(GROOVY_TRANSFORM_COMPILE_STATIC);
+      if (psiAnnotation != null) psiAnnotation.delete();
+    }
   }
 }

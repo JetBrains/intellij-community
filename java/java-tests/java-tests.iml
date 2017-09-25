@@ -23,7 +23,6 @@
     <orderEntry type="module" module-name="community-resources" scope="RUNTIME" />
     <orderEntry type="module" module-name="execution-impl" />
     <orderEntry type="module" module-name="platform-api" />
-    <orderEntry type="library" name="Velocity" level="project" />
     <orderEntry type="module" module-name="java-i18n" exported="" />
     <orderEntry type="module" module-name="compiler-impl" />
     <orderEntry type="library" name="ASM" level="project" />

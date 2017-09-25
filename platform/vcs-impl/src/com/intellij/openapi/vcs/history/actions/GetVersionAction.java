@@ -204,7 +204,7 @@ public class GetVersionAction extends AnAction implements DumbAware {
 
           new WriteCommandAction.Simple(myProject) {
             @Override
-            protected void run() throws Throwable {
+            protected void run() {
               try {
                 write(myFilePath, revisionContent, myProject);
               }

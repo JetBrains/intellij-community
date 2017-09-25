@@ -16,11 +16,13 @@
 package com.intellij.execution.dashboard.tree;
 
 import com.intellij.execution.dashboard.hyperlink.RunDashboardHyperlinkComponent;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -57,9 +59,22 @@ public abstract class RunDashboardLinkMouseListenerBase extends LinkMouseListene
       }
     }
 
+    if (component instanceof JComponent) {
+      Object oldValue = UIUtil.getClientProperty(component, RunDashboardHyperlinkComponent.AIMED_OBJECT);
+      Object newValue = getAimedObject(e);
+      if (!Comparing.equal(oldValue, newValue)) {
+        shouldRepaint = true;
+        UIUtil.putClientProperty((JComponent)component, RunDashboardHyperlinkComponent.AIMED_OBJECT, newValue);
+      }
+    }
+
     if (shouldRepaint) {
       repaintComponent(e);
     }
+  }
+
+  protected Object getAimedObject(MouseEvent e) {
+    return null;
   }
 
   protected abstract void repaintComponent(MouseEvent e);

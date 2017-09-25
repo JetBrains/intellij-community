@@ -127,6 +127,14 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     return myLogicalPositionCache;
   }
 
+  float getRightAlignmentLineStartX(int visualLine) {
+    return myMapper.getRightAlignmentLineStartX(visualLine);
+  }
+
+  int getRightAlignmentMarginX() {
+    return myMapper.getRightAlignmentMarginX();
+  }
+
   @Override
   public void dispose() {
     myEditor.getScrollingModel().removeVisibleAreaListener(this);
@@ -303,19 +311,21 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
 
   public int getMaxWidthInRange(int startOffset, int endOffset) {
     assertIsDispatchThread();
-    return getMaxWidthInLineRange(offsetToVisualLine(startOffset, false), offsetToVisualLine(endOffset, true));
+    int startVisualLine = offsetToVisualLine(startOffset, false);
+    int endVisualLine = offsetToVisualLine(endOffset, true);
+    return getMaxTextWidthInLineRange(startVisualLine, endVisualLine) + getInsets().left;
   }
 
   /**
    * If {@code quickEvaluationListener} is provided, quick approximate size evaluation becomes enabled, listener will be invoked
    * if approximation will in fact be used during width calculation.
    */
-  int getMaxWidthInLineRange(int startVisualLine, int endVisualLine) {
+  int getMaxTextWidthInLineRange(int startVisualLine, int endVisualLine) {
     myEditor.getSoftWrapModel().prepareToMapping();
     int maxWidth = 0;
     VisualLinesIterator iterator = new VisualLinesIterator(myEditor, startVisualLine);
     while (!iterator.atEnd() && iterator.getVisualLine() <= endVisualLine) {
-      int width = mySizeManager.getVisualLineWidth(iterator, null);
+      int width = mySizeManager.getVisualLineWidth(iterator, false);
       maxWidth = Math.max(maxWidth, width);
       iterator.advance();
     }
@@ -517,17 +527,27 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     }
   }
 
-  private void setFontRenderContext(FontRenderContext context) {
-    myFontRenderContext = context == null ? FontInfo.getFontRenderContext(myEditor.getContentComponent()) : context;
+  private boolean setFontRenderContext(FontRenderContext context) {
+    FontRenderContext contextToSet = context == null ? FontInfo.getFontRenderContext(myEditor.getContentComponent()) : context;
+    if (areEqualContexts(myFontRenderContext, contextToSet)) return false;
+    myFontRenderContext = contextToSet;
+    return true;
   }
 
   private void checkFontRenderContext(FontRenderContext context) {
-    FontRenderContext oldContext = myFontRenderContext;
-    setFontRenderContext(context);
-    if (!myFontRenderContext.equals(oldContext)) {
+    if (setFontRenderContext(context)) {
       myTextLayoutCache.resetToDocumentSize(false);
       invalidateFoldRegionLayouts();
     }
+  }
+
+  private static boolean areEqualContexts(FontRenderContext c1, FontRenderContext c2) {
+    if (c1 == c2) return true;
+    if (c1 == null || c2 == null) return false;
+    // We ignore fractional metrics aspect of contexts, because we assume it's not changing during editor's lifecycle.
+    // And it has different values for component graphics (OFF) and component's font metrics (DEFAULT), causing
+    // unnecessary layout cache resets.
+    return c1.getTransform().equals(c2.getTransform()) && c1.getAntiAliasingHint().equals(c2.getAntiAliasingHint());
   }
 
   LineLayout getFoldRegionLayout(FoldRegion foldRegion) {

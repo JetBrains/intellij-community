@@ -156,7 +156,7 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
     final PsiElement parentParent = parent.getParent();
     if (!(parentParent instanceof PsiTypeParameterListOwner)) {
       // Might be an error element;
-      return PsiTreeUtil.getParentOfType(this, PsiTypeParameterListOwner.class);
+      return null;
     }
 
     return (PsiTypeParameterListOwner)parentParent;

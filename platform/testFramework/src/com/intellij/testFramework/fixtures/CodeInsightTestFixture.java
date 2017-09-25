@@ -28,6 +28,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
@@ -389,12 +390,12 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   void testCompletion(@TestDataFile @NotNull String fileBefore,
                       @NotNull @TestDataFile String fileAfter,
-                      @NotNull String... additionalFiles);
+                      @TestDataFile @NotNull String... additionalFiles);
 
   void testCompletionTyping(@NotNull @TestDataFile String fileBefore,
                             @NotNull String toType,
                             @NotNull @TestDataFile String fileAfter,
-                            @NotNull String... additionalFiles);
+                            @TestDataFile @NotNull String... additionalFiles);
 
   /**
    * Runs basic completion in caret position in fileBefore.
@@ -415,7 +416,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   void testRename(@NotNull @TestDataFile String fileBefore,
                   @NotNull @TestDataFile String fileAfter,
                   @NotNull String newName,
-                  @NotNull String... additionalFiles);
+                  @TestDataFile @NotNull String... additionalFiles);
 
   void testRename(@NotNull @TestDataFile String fileAfter, @NotNull String newName);
 
@@ -428,7 +429,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @NotNull
   RangeHighlighter[] testHighlightUsages(@NotNull @TestDataFile String... files);
 
-  void moveFile(@NotNull @TestDataFile String filePath, @NotNull String to, @NotNull String... additionalFiles);
+  void moveFile(@NotNull @TestDataFile String filePath, @NotNull String to, @TestDataFile @NotNull String... additionalFiles);
 
   /**
    * Returns gutter renderer at the caret position.
@@ -601,4 +602,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   List<Crumb> getBreadcrumbsAtCaret();
 
   void saveText(@NotNull VirtualFile file, @NotNull String text);
+
+  @NotNull
+  default Disposable getProjectDisposable() {
+    return getProject();
+  }
 }

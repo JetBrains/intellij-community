@@ -232,7 +232,7 @@ public class JUnit5ConverterInspection extends BaseInspection {
           }
         }
         super.performRefactoring(migrateUsages.toArray(new UsageInfo[migrateUsages.size()]));
-        CleanupInspectionIntention.applyFixes(myProject, "Convert Assertions", descriptions, JUnit5AssertionsConverterInspection.ReplaceObsoleteAssertsFix.class);
+        CleanupInspectionIntention.applyFixes(myProject, "Convert Assertions", descriptions, JUnit5AssertionsConverterInspection.ReplaceObsoleteAssertsFix.class, false);
       }
     }
   }

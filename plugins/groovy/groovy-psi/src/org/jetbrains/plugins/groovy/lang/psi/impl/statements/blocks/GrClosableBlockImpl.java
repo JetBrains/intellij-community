@@ -284,7 +284,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
     GrParameter[] res = mySyntheticItParameter;
     if (res == null) {
-      res = new GrParameter[]{new ClosureSyntheticParameter(this)};
+      res = new GrParameter[]{new ClosureSyntheticParameter(this, true)};
       synchronized (this) {
         if (mySyntheticItParameter == null) {
           mySyntheticItParameter = res;

@@ -16,6 +16,8 @@
   <resource-bundle>org.jetbrains.idea.devkit.DevKitBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
+    <virtualFileSystem key="testdata" implementationClass="org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupFileSystem" />
+    <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorTabTitleProvider" />
 
     <runLineMarkerContributor language="JAVA" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider"/>
     <fileEditorProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorProvider"/>
@@ -228,13 +230,12 @@
            class="com.intellij.ide.actions.NonTrivialActionGroup">
       <action class="org.jetbrains.idea.devkit.actions.NewActionAction" text="Action" id="NewAction"/>
       <separator/>
-      <action text="Application Component" id="NewApplicationComponent"
-              class="org.jetbrains.idea.devkit.actions.NewApplicationComponentAction"/>
-      <action text="Project Component" id="NewProjectComponent"
-              class="org.jetbrains.idea.devkit.actions.NewProjectComponentAction"/>
-      <action text="Module Component" id="NewModuleComponent"
-              class="org.jetbrains.idea.devkit.actions.NewModuleComponentAction"/>
-
+      <action text="Application Service" id="NewApplicationService"
+              class="org.jetbrains.idea.devkit.actions.service.NewApplicationServiceAction"/>
+      <action text="Project Service" id="NewProjectService"
+              class="org.jetbrains.idea.devkit.actions.service.NewProjectServiceAction"/>
+      <action text="Module Service" id="NewModuleService"
+              class="org.jetbrains.idea.devkit.actions.service.NewModuleServiceAction"/>
       <add-to-group group-id="NewGroup" anchor="last"/>
     </group>
 

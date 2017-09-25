@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 import static com.intellij.codeInspection.streamToLoop.FunctionHelper.replaceVarReference;
@@ -105,6 +106,14 @@ abstract class SourceOperation extends Operation {
     if (name.equals("stream") && args.length == 1 &&
         CommonClassNames.JAVA_UTIL_ARRAYS.equals(className)) {
       return new ForEachSource(args[0]);
+    }
+    if (name.equals("stream") &&
+        args.length == 3 &&
+        CommonClassNames.JAVA_UTIL_ARRAYS.equals(className) &&
+        args[0].getType() != null &&
+        PsiType.INT.equals(args[1].getType()) &&
+        PsiType.INT.equals(args[2].getType())) {
+      return new ArraySliceSource(args[0], args[1], args[2]);
     }
     if (supportUnknownSources) {
       PsiType type = StreamApiUtil.getStreamElementType(call.getType(), false);
@@ -316,6 +325,54 @@ abstract class SourceOperation extends Operation {
              loopVar + (myInclusive ? "<=" : "<") + bound + ";" +
              loopVar + "++) {\n" +
              reassign +
+             code + "}\n";
+    }
+  }
+
+  static class ArraySliceSource extends SourceOperation {
+    private @NotNull PsiExpression myArray;
+    private @NotNull PsiExpression myOrigin;
+    private @NotNull PsiExpression myBound;
+    private @NotNull PsiType myArrayType;
+
+    ArraySliceSource(@NotNull PsiExpression array, @NotNull PsiExpression origin, @NotNull PsiExpression bound) {
+      myOrigin = origin;
+      myBound = bound;
+      myArray = array;
+      myArrayType = Objects.requireNonNull(myArray.getType());
+    }
+
+    @Override
+    void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
+      myOrigin = replaceVarReference(myOrigin, oldName, newName, context);
+      myBound = replaceVarReference(myBound, oldName, newName, context);
+      myArray = replaceVarReference(myArray, oldName, newName, context);
+    }
+
+    @Override
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      consumer.accept(myOrigin);
+      consumer.accept(myBound);
+      consumer.accept(myArray);
+    }
+
+    @Override
+    String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
+      String bound = myBound.getText();
+      String array = myArray.getText();
+      if (!ExpressionUtils.isSimpleExpression(context.createExpression(array))) {
+        array = context.declare("array", myArrayType.getCanonicalText(), array);
+      }
+      if (!ExpressionUtils.isSimpleExpression(context.createExpression(bound))) {
+        bound = context.declare("bound", "int", bound);
+      }
+      String loopVar = context.registerVarName(Arrays.asList("i", "j", "idx"));
+      String element = outVar.getDeclaration(array + "[" + loopVar + "]");
+      return context.getLoopLabel() +
+             "for(" + "int " + loopVar + " = " + myOrigin.getText() + ";" +
+             loopVar + "<" + bound + ";" +
+             loopVar + "++) {\n" +
+             element +
              code + "}\n";
     }
   }

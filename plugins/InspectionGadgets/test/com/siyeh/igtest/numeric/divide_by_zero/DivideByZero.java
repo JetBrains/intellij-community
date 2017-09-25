@@ -15,4 +15,24 @@ public class DivideByZero {
     d %= 0;
     i /= d;
   }
+
+  // IDEABKL-7552 Report inspection with the highest severity
+  void test(int size) {
+    if (size == 0) {
+      int x = 42 / size;
+    }
+  }
+
+  void test2(int size) {
+    if (size > 0) {
+      System.out.println(43 / size);
+      return;
+    }
+    if (size < 0) {
+      System.out.println(41 / size);
+      return;
+    }
+    System.out.println(42 / size);
+  }
+
 }

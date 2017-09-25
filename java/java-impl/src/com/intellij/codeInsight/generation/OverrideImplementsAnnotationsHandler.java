@@ -36,24 +36,23 @@ public interface OverrideImplementsAnnotationsHandler {
   ExtensionPointName<OverrideImplementsAnnotationsHandler> EP_NAME = ExtensionPointName.create("com.intellij.overrideImplementsAnnotationsHandler");
 
   /**
-   * By default no annotations from source method return type and parameters are repeated.
-   *
-   * Return annotations which should be copied from the source to the implementation.
+   * Returns annotations which should be copied from a source to an implementation (by default, no annotations are copied).
    */
   String[] getAnnotations(Project project);
 
   @Deprecated
   @NotNull
   @SuppressWarnings("unused")
-  default String [] annotationsToRemove(Project project, @NotNull String fqName) {
+  default String[] annotationsToRemove(Project project, @NotNull String fqName) {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   static void repeatAnnotationsFromSource(PsiModifierListOwner source, @Nullable PsiElement targetClass, PsiModifierListOwner target) {
-    final Module module = ModuleUtilCore.findModuleForPsiElement(targetClass != null ? targetClass : target);
-    final GlobalSearchScope moduleScope = module != null ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module) : null;
-    final Project project = target.getProject();
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    Module module = ModuleUtilCore.findModuleForPsiElement(targetClass != null ? targetClass : target);
+    GlobalSearchScope moduleScope = module != null ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module) : null;
+    Project project = target.getProject();
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+
     for (OverrideImplementsAnnotationsHandler each : Extensions.getExtensions(EP_NAME)) {
       for (String annotation : each.getAnnotations(project)) {
         if (moduleScope != null && facade.findClass(annotation, moduleScope) == null) continue;
@@ -65,7 +64,9 @@ public interface OverrideImplementsAnnotationsHandler {
             continue;
           }
 
-          AddAnnotationPsiFix.addPhysicalAnnotation(annotation, PsiNameValuePair.EMPTY_ARRAY, target.getModifierList());
+          PsiModifierList modifierList = target.getModifierList();
+          assert modifierList != null : target;
+          AddAnnotationPsiFix.addPhysicalAnnotation(annotation, PsiNameValuePair.EMPTY_ARRAY, modifierList);
         }
       }
     }

@@ -35,6 +35,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class ExpressionUtils {
@@ -820,8 +822,7 @@ public class ExpressionUtils {
       }
     }
     final PsiType expressionType = expression.getType();
-    if (PsiPrimitiveType.getUnboxedType(expressionType) != null &&
-        (parent instanceof PsiPrefixExpression || parent instanceof PsiPostfixExpression)) {
+    if (PsiPrimitiveType.getUnboxedType(expressionType) != null && parent instanceof PsiUnaryExpression) {
       return true;
     }
     if (expressionType == null || expressionType.equals(PsiType.VOID) || !TypeConversionUtil.isPrimitiveAndNotNull(expressionType)) {
@@ -1027,5 +1028,63 @@ public class ExpressionUtils {
     }
     final char c1 = text.charAt(1);
     return c1 == '_' || (c1 >= '0' && c1 <= '7');
+  }
+
+  @Contract("null, _ -> false")
+  public static boolean isMatchingChildAlwaysExecuted(@Nullable PsiExpression root, @NotNull Predicate<PsiExpression> matcher) {
+    if (root == null) return false;
+    AtomicBoolean result = new AtomicBoolean(false);
+    root.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitExpression(PsiExpression expression) {
+        super.visitExpression(expression);
+        if (matcher.test(expression)) {
+          result.set(true);
+          stopWalking();
+        }
+      }
+
+      @Override
+      public void visitConditionalExpression(PsiConditionalExpression expression) {
+        if (isMatchingChildAlwaysExecuted(expression.getCondition(), matcher) ||
+            (isMatchingChildAlwaysExecuted(expression.getThenExpression(), matcher) &&
+             isMatchingChildAlwaysExecuted(expression.getElseExpression(), matcher))) {
+          result.set(true);
+          stopWalking();
+        }
+      }
+
+      @Override
+      public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+        IElementType type = expression.getOperationTokenType();
+        if (type.equals(JavaTokenType.OROR) || type.equals(JavaTokenType.ANDAND)) {
+          PsiExpression firstOperand = ArrayUtil.getFirstElement(expression.getOperands());
+          if (isMatchingChildAlwaysExecuted(firstOperand, matcher)) {
+            result.set(true);
+            stopWalking();
+          }
+        }
+        else {
+          super.visitPolyadicExpression(expression);
+        }
+      }
+
+      @Override
+      public void visitClass(PsiClass aClass) {}
+
+      @Override
+      public void visitLambdaExpression(PsiLambdaExpression expression) {}
+    });
+    return result.get();
+  }
+
+  /**
+   * @param expression expression to test
+   * @return true if the expression return value is a new object which is guaranteed to be distinct from any other object created
+   * in the program.
+   */
+  @Contract("null -> false")
+  public static boolean isNewObject(@Nullable PsiExpression expression) {
+    return expression != null && nonStructuralChildren(expression).allMatch(PsiNewExpression.class::isInstance);
   }
 }

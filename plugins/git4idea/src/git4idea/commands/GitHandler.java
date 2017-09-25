@@ -813,8 +813,8 @@ public abstract class GitHandler {
   public static Map<String, String> getCommonEnvironment() {
     Map<String,String> commonEnv = new HashMap<>();
     commonEnv.put("GIT_TRACE","0");
-    commonEnv.put("GIT_TRACE_PACK_ACCESS","0");
-    commonEnv.put("GIT_TRACE_PACKET","0");
+    commonEnv.put("GIT_TRACE_PACK_ACCESS","");
+    commonEnv.put("GIT_TRACE_PACKET","");
     commonEnv.put("GIT_TRACE_PERFORMANCE","0");
     commonEnv.put("GIT_TRACE_SETUP","0");
     return commonEnv;

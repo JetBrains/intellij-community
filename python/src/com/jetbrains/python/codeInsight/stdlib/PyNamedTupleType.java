@@ -20,13 +20,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyCallSiteExpression;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.impl.PyElementImpl;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,24 +56,6 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
     myFields = Collections.unmodifiableMap(fields);
     myName = name;
     myDefinitionLevel = definitionLevel;
-  }
-
-  @Nullable
-  @Override
-  public List<? extends RatedResolveResult> resolveMember(@NotNull String name,
-                                                          @Nullable PyExpression location,
-                                                          @NotNull AccessDirection direction,
-                                                          @NotNull PyResolveContext resolveContext,
-                                                          boolean inherited) {
-    final List<? extends RatedResolveResult> classMembers = super.resolveMember(name, location, direction, resolveContext, inherited);
-    if (classMembers != null && !classMembers.isEmpty()) {
-      return classMembers;
-    }
-    if (myFields.containsKey(name)) {
-      // It's important to make a copy of declaration otherwise members will have the same type as their class
-      return Collections.singletonList(new RatedResolveResult(RatedResolveResult.RATE_HIGH, new PyElementImpl(myDeclaration.getNode())));
-    }
-    return null;
   }
 
   @Override

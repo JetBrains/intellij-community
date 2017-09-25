@@ -3,7 +3,7 @@ public ##
 #if($field.modifierStatic)
 static void ##
 #else
-  $classname ##
+  $classSignature ##
 #end
 set$StringUtil.capitalizeWithJavaBeanConvention($StringUtil.sanitizeJavaIdentifier($helper.getPropertyName($field, $project)))($field.type $paramName) {
 #if ($field.name == $paramName)

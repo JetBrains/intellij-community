@@ -156,13 +156,12 @@ public class SelectLocationDialog extends DialogWrapper {
 
   protected void init() {
     super.init();
-    final String urlString = myURL.toString();
     if (myAllowActions) {
       // initialize repo browser this way - to make actions work correctly
-      myRepositoryBrowser.setRepositoryURLs(new SVNURL[]{myURL}, myIsShowFiles, new UrlOpeningExpander.Factory(urlString, urlString), true);
+      myRepositoryBrowser.setRepositoryURLs(new SVNURL[]{myURL}, myIsShowFiles, new UrlOpeningExpander.Factory(myURL), true);
     }
     else {
-      myRepositoryBrowser.setRepositoryURL(myURL, myIsShowFiles, new UrlOpeningExpander.Factory(urlString, urlString));
+      myRepositoryBrowser.setRepositoryURL(myURL, myIsShowFiles, new UrlOpeningExpander.Factory(myURL));
     }
     myRepositoryBrowser.addChangeListener(e -> getOKAction().setEnabled(isOKActionEnabled()));
   }

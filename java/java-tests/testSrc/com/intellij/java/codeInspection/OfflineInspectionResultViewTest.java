@@ -242,9 +242,9 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                          );
     TreeUtil.selectNode(tree, tree.getRoot());
     final InspectionTreeNode root = tree.getRoot();
-    root.excludeElement(myView.getExcludedManager());
+    root.excludeElement();
     TreeUtil.traverse(root, node -> {
-      assertTrue(((InspectionTreeNode)node).isExcluded(myView.getExcludedManager()));
+      assertTrue(((InspectionTreeNode)node).isExcluded());
       return true;
     });
     myView.getGlobalInspectionContext().getUIOptions().FILTER_RESOLVED_ITEMS = true;

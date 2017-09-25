@@ -107,6 +107,7 @@ public final class GuiTestUtil {
   public static final Timeout MINUTE_TIMEOUT = timeout(1, MINUTES);
   public static final Timeout SHORT_TIMEOUT = timeout(2, MINUTES);
   public static final Timeout LONG_TIMEOUT = timeout(5, MINUTES);
+  public static final Timeout TEN_MIN_TIMEOUT = timeout(10, MINUTES);
 
   public static final String GUI_TESTS_RUNNING_IN_SUITE_PROPERTY = "gui.tests.running.in.suite";
 
@@ -713,16 +714,32 @@ public final class GuiTestUtil {
    * Waits until no components match the given criteria under the given root
    */
   public static <T extends Component> void waitUntilGone(@NotNull final Robot robot,
-                                                         @NotNull final Container root,
+                                                         @Nullable final Container root,
                                                          @NotNull final GenericTypeMatcher<T> matcher) {
     Pause.pause(new Condition("Find component using " + matcher.toString()) {
       @Override
       public boolean test() {
-        Collection<T> allFound = robot.finder().findAll(root, matcher);
+        Collection<T> allFound = (root == null) ? robot.finder().findAll(matcher) : robot.finder().findAll(root, matcher);
         return allFound.isEmpty();
       }
     }, SHORT_TIMEOUT);
   }
+
+  /**
+   * Waits until no components match the given criteria under the given root
+   */
+  public static <T extends Component> void waitUntilGone(@NotNull final Robot robot,
+                                                         @Nullable final Container root, int timeoutInSeconds,
+                                                         @NotNull final GenericTypeMatcher<T> matcher) {
+    Pause.pause(new Condition("Find component using " + matcher.toString()) {
+      @Override
+      public boolean test() {
+        Collection<T> allFound = (root == null) ? robot.finder().findAll(matcher) : robot.finder().findAll(root, matcher);
+        return allFound.isEmpty();
+      }
+    }, timeout(timeoutInSeconds, SECONDS));
+  }
+
 
   @Nullable
   public static String getSystemPropertyOrEnvironmentVariable(@NotNull String name) {

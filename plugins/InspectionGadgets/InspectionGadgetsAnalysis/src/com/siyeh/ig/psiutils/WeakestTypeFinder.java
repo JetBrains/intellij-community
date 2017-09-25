@@ -214,13 +214,8 @@ public class WeakestTypeFinder {
         // only enums and primitives can be a switch expression
         return Collections.emptyList();
       }
-      else if (referenceParent instanceof PsiPrefixExpression) {
-        // only primitives and boxed types are the target of a prefix
-        // expression
-        return Collections.emptyList();
-      }
-      else if (referenceParent instanceof PsiPostfixExpression) {
-        // only primitives and boxed types are the target of a postfix
+      else if (referenceParent instanceof PsiUnaryExpression) {
+        // only primitives and boxed types are the target of an unary
         // expression
         return Collections.emptyList();
       }

@@ -2153,6 +2153,17 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     );
   }
 
+  public void testMultipleImports() throws Exception {
+    doTest(
+      new VirtualFile[] {
+        getVirtualFile(BASE_PATH + "MultipleImports/agg.xsd"),
+        getVirtualFile(BASE_PATH + "MultipleImports/toimport1.xsd"),
+        getVirtualFile(BASE_PATH + "MultipleImports/toimport2.xsd"),
+      },
+      true, false
+    );
+  }
+
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{

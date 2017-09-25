@@ -34,10 +34,9 @@ task downloadJdk18 {
   outputs.file(outputFile)
   doLast {
     logger.info("Downloading up JDK 1.8 to compile (using $jdkRepo repo)")
-    download {
+    downloadWrapper {
       src "$jdkRepo/intellij-jdk/${artifactName}"
       dest outputFile
-      onlyIfNewer true
     }
   }
 }

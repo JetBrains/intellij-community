@@ -47,9 +47,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.HgCatCommand;
-import org.zmlx.hg4idea.command.HgRemoveCommand;
 import org.zmlx.hg4idea.command.HgStatusCommand;
-import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.ShellCommand;
 import org.zmlx.hg4idea.execution.ShellCommandException;
@@ -106,8 +104,7 @@ public abstract class HgUtil {
     return tempFile;
   }
 
-  public static void markDirectoryDirty(final Project project, final VirtualFile file)
-    throws InvocationTargetException, InterruptedException {
+  public static void markDirectoryDirty(final Project project, final VirtualFile file) {
     VfsUtil.markDirtyAndRefresh(true, true, false, file);
     VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(file);
   }
@@ -156,22 +153,6 @@ public abstract class HgUtil {
       return file;
     } catch (IOException e) {
       return null;
-    }
-  }
-
-  /**
-   * Calls 'hg remove' to remove given files from the VCS.
-   * @param project
-   * @param files files to be removed from the VCS.
-   */
-  public static void removeFilesFromVcs(Project project, List<FilePath> files) {
-    final HgRemoveCommand command = new HgRemoveCommand(project);
-    for (FilePath filePath : files) {
-      final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, filePath);
-      if (vcsRoot == null) {
-        continue;
-      }
-      command.executeInCurrentThread(new HgFile(vcsRoot, filePath));
     }
   }
 
@@ -273,17 +254,6 @@ public abstract class HgUtil {
                                     new HgBranchReferenceValidator(repository));
   }
 
-  /**
-   * Checks is a merge operation is in progress on the given repository.
-   * Actually gets the number of parents of the current revision. If there are 2 parents, then a merge is going on. Otherwise there is
-   * only one parent.
-   * @param project    project to work on.
-   * @param repository repository which is checked on merge.
-   * @return True if merge operation is in progress, false if there is no merge operation.
-   */
-  public static boolean isMergeInProgress(@NotNull Project project, VirtualFile repository) {
-    return new HgWorkingCopyRevisionsCommand(project).parents(repository).size() > 1;
-  }
   /**
    * Groups the given files by their Mercurial repositories and returns the map of relative paths to files for each repository.
    * @param hgFiles files to be grouped.
@@ -524,11 +494,6 @@ public abstract class HgUtil {
   }
 
   @Nullable
-  public static String getRepositoryDefaultPushPath(@NotNull HgRepository repository) {
-    return repository.getRepositoryConfig().getDefaultPushPath();
-  }
-
-  @Nullable
   public static String getConfig(@NotNull Project project,
                                  @NotNull VirtualFile root,
                                  @NotNull String section,
@@ -561,7 +526,7 @@ public abstract class HgUtil {
   }
 
   @NotNull
-  public static HgCommandResult getVersionOutput(@NotNull String executable) throws ShellCommandException, InterruptedException {
+  public static HgCommandResult getVersionOutput(@NotNull String executable) throws ShellCommandException {
     String hgExecutable = executable.trim();
     List<String> cmdArgs = new ArrayList<>();
     cmdArgs.add(hgExecutable);

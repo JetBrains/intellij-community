@@ -258,4 +258,8 @@ public void testConvertToObjectStream() {
   public void testNewHashMapTypeArguments() { doTest(false); }
   public void testNewMapTypeArguments() { doTest(false); }
 
+  public void testPreferLambdaOverGenericGetter() {
+    configureByTestName();
+    myFixture.assertPreferredCompletionItems(0, "isEmpty", "s -> ", "getSomeGenericValue");
+  }
 }

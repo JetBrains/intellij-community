@@ -34,6 +34,8 @@ import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.compiler.CompilerMessage;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.Configurable;
@@ -224,6 +226,19 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     String childTest2 = findClass(child2, "test1.Test5").getQualifiedName();
     String ancestorTest = findClass(ancestor, "test1.TestA").getQualifiedName();
     CHECK.containsAll(tests, new Object[]{ancestorTest, childTest1, childTest2});
+  }
+
+  public void testConstructors() throws IOException, ExecutionException {
+    addModule("module6", true);
+    PsiPackage psiPackage = JavaPsiFacade.getInstance(myProject).findPackage("test1");
+    JUnitConfiguration configuration = createJUnitConfiguration(psiPackage, AllInPackageConfigurationProducer.class, new MapDataContext());
+    configuration.getPersistentData().setScope(TestSearchScope.SINGLE_MODULE);
+    configuration.setModule(getModule(3));
+    assertNotNull(configuration);
+    checkPackage(psiPackage.getQualifiedName(), configuration);
+    JavaParameters parameters = checkCanRun(configuration);
+    List<String> tests = extractAllInPackageTests(parameters, psiPackage);
+    CHECK.containsAll(tests, new Object[]{"test1.TestCaseInheritor"});
   }
 
   public void testClasspathConfiguration() throws CantRunException {
@@ -482,7 +497,8 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
       try {
         CompilerTester tester = new CompilerTester(project, Arrays.asList(ModuleManager.getInstance(project).getModules()));
         try {
-          tester.make();
+          List<CompilerMessage> messages = tester.make();
+          assertFalse(messages.stream().anyMatch(message -> message.getCategory() == CompilerMessageCategory.ERROR));
           task.startSearch();
         }
         finally {

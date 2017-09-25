@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
@@ -32,12 +33,21 @@ import java.util.*;
  * @author peter
  */
 public class PackageDirectoryCache {
-  private final MultiMap<String, VirtualFile> myRootsByPackagePrefix;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.PackageDirectoryCache");
+  private final MultiMap<String, VirtualFile> myRootsByPackagePrefix = MultiMap.create();
   private final Map<String, PackageInfo> myDirectoriesByPackageNameCache = ContainerUtil.newConcurrentMap();
   private final Set<String> myNonExistentPackages = ContainerUtil.newConcurrentSet();
 
   public PackageDirectoryCache(@NotNull MultiMap<String, VirtualFile> rootsByPackagePrefix) {
-    myRootsByPackagePrefix = rootsByPackagePrefix;
+    for (String prefix : rootsByPackagePrefix.keySet()) {
+      for (VirtualFile file : rootsByPackagePrefix.get(prefix)) {
+        if (!file.isValid()) {
+          LOG.error("Invalid root: " + file);
+        } else {
+          myRootsByPackagePrefix.putValue(prefix, file);
+        }
+      }
+    }
   }
 
   public void onLowMemory() {

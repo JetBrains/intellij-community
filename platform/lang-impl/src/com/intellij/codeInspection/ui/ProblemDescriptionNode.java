@@ -99,6 +99,22 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   }
 
   @Override
+  public void excludeElement() {
+    CommonProblemDescriptor descriptor = getDescriptor();
+    if (descriptor != null) {
+      getPresentation().exclude(descriptor);
+    }
+  }
+
+  @Override
+  public void amnestyElement() {
+    CommonProblemDescriptor descriptor = getDescriptor();
+    if (descriptor != null) {
+      getPresentation().amnesty(descriptor);
+    }
+  }
+
+  @Override
   protected void visitProblemSeverities(TObjectIntHashMap<HighlightDisplayLevel> counter) {
     if (isValid() && !isExcluded() && !isQuickFixAppliedFromView() && !isAlreadySuppressedFromView()) {
       counter.put(myLevel, counter.get(myLevel) + 1);
@@ -121,6 +137,11 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     if (!isQuickFixAppliedFromView()) {
       super.dropCache(project);
     }
+  }
+
+  @Override
+  public boolean isExcluded() {
+    return getPresentation().isExcluded(getDescriptor());
   }
 
   @NotNull

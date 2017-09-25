@@ -783,5 +783,11 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     LookupElement[] elements = myFixture.completeBasic();
     assertEquals(0, elements.length);
   }
+
+  public void testMultipleImports() {
+    List<String> variants =
+      myFixture.getCompletionVariants("MultipleImports/agg.xsd", "MultipleImports/toimport1.xsd", "MultipleImports/toimport2.xsd");
+    assertSameElements(variants, "int", "integer", "invisibleType");
+  }
 }
 

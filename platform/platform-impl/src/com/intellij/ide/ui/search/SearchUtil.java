@@ -187,11 +187,11 @@ public class SearchUtil {
   }
 
   private static void processUILabel(String title, Set<OptionDescription> configurableOptions, String path) {
-    if (title.startsWith("<html>")) title = StringUtil.stripHtml(title, false);
+    title = HTML_PATTERN.matcher(title).replaceAll(" ");
     final Set<String> words = SearchableOptionsRegistrar.getInstance().getProcessedWordsWithoutStemming(title);
     final String regex = "[\\W&&[^\\p{Punct}\\p{Blank}]]";
     for (String option : words) {
-      configurableOptions.add(new OptionDescription(option, HTML_PATTERN.matcher(title).replaceAll(" ").replaceAll(regex, " "), path));
+      configurableOptions.add(new OptionDescription(option, title.replaceAll(regex, " "), path));
     }
   }
 

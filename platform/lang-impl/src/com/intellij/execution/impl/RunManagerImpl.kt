@@ -16,9 +16,7 @@
 package com.intellij.execution.impl
 
 import com.intellij.ProjectTopics
-import com.intellij.configurationStore.OLD_NAME_CONVERTER
-import com.intellij.configurationStore.SchemeManagerIprProvider
-import com.intellij.configurationStore.save
+import com.intellij.configurationStore.*
 import com.intellij.execution.*
 import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.configurations.*
@@ -46,6 +44,7 @@ import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.util.IconUtil
 import com.intellij.util.SmartList
 import com.intellij.util.containers.*
+import com.intellij.util.text.UniqueNameGenerator
 import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.*
@@ -58,6 +57,7 @@ import kotlin.concurrent.write
 private val SELECTED_ATTR = "selected"
 internal val METHOD = "method"
 private val OPTION = "option"
+private val RECENT = "recent_temporary"
 
 // open for Upsource (UpsourceRunManager overrides to disable loadState (empty impl))
 @State(name = "RunManager", defaultStateAsResource = true, storages = arrayOf(Storage(StoragePathMacros.WORKSPACE_FILE)))
@@ -65,7 +65,6 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   companion object {
     @JvmField
     val CONFIGURATION = "configuration"
-    private val RECENT = "recent_temporary"
     @JvmField
     val NAME_ATTR = "name"
 
@@ -607,7 +606,15 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     for (task in tasks) {
       val child = Element(OPTION)
       child.setAttribute(NAME_ATTR, task.providerId.toString())
-      task.writeExternal(child)
+      if (task is PersistentStateComponent<*>) {
+        if (!task.isEnabled) {
+          child.setAttribute("enabled", "false")
+        }
+        task.serializeStateInto(child)
+      }
+      else {
+        task.writeExternal(child)
+      }
       methodElement.addContent(child)
     }
     return methodElement
@@ -630,8 +637,9 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       clear(false)
     }
 
+    val nameGenerator = UniqueNameGenerator()
     workspaceSchemeManagerProvider.load(parentNode) {
-      var name = it.getAttributeValue("name")
+      var name: String? = it.getAttributeValue("name")
       if (name == "<template>" || name == null) {
         // scheme name must be unique
         it.getAttributeValue("type")?.let {
@@ -641,7 +649,15 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
           name += " of type ${it}"
         }
       }
-      name
+
+      // in case if broken configuration, do not fail, just generate name
+      if (name == null) {
+        name = nameGenerator.generateUniqueName("Unnamed")
+      }
+      else {
+        nameGenerator.addExistingName(name!!)
+      }
+      name!!
     }
 
     workspaceSchemeManager.reload()
@@ -800,7 +816,14 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       val key = methodElement.getAttributeValue(NAME_ATTR)
       val provider = stringIdToBeforeRunProvider.getOrPut(key) { UnknownBeforeRunTaskProvider(key) }
       val beforeRunTask = (if (provider is RunConfigurationBeforeRunProvider) provider.createTask(settings.configuration, this) else provider.createTask(settings.configuration)) ?: continue
-      beforeRunTask.readExternal(methodElement)
+      if (beforeRunTask is PersistentStateComponent<*>) {
+        // for PersistentStateComponent we don't write default value for enabled, so, set it to true explicitly
+        beforeRunTask.isEnabled = true
+        beforeRunTask.deserializeAndLoadState(methodElement)
+      }
+      else {
+        beforeRunTask.readExternal(methodElement)
+      }
       if (result == null) {
         result = SmartList()
       }
@@ -996,8 +1019,8 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   private fun getHardcodedBeforeRunTasks(configuration: RunConfiguration): List<BeforeRunTask<*>> {
     var result: MutableList<BeforeRunTask<*>>? = null
     for (provider in Extensions.getExtensions(BeforeRunTaskProvider.EXTENSION_POINT_NAME, project)) {
-      val task = provider.createTask(configuration)
-      if (task != null && task.isEnabled) {
+      val task = provider.createTask(configuration) ?: continue
+      if (task.isEnabled) {
         configuration.factory.configureBeforeRunTaskDefaults(provider.id, task)
         if (task.isEnabled) {
           if (result == null) {

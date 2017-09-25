@@ -15,10 +15,12 @@
  */
 package org.jetbrains.idea.svn.dialogs.browser;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.dialogs.RepositoryBrowserComponent;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
 import org.jetbrains.idea.svn.dialogs.browserCache.Expander;
 import org.jetbrains.idea.svn.dialogs.browserCache.KeepingExpandedExpander;
+import org.tmatesoft.svn.core.SVNURL;
 
 import javax.swing.tree.TreeNode;
 import java.util.Enumeration;
@@ -26,9 +28,9 @@ import java.util.Enumeration;
 public abstract class AbstractOpeningExpander implements Expander {
   private final RepositoryBrowserComponent myBrowser;
   private final KeepingExpandedExpander myKeepingExpander;
-  private final String mySelectionPath;
+  @NotNull private final SVNURL mySelectionPath;
 
-  protected AbstractOpeningExpander(final RepositoryBrowserComponent browser, final String selectionPath) {
+  protected AbstractOpeningExpander(final RepositoryBrowserComponent browser, @NotNull SVNURL selectionPath) {
     myBrowser = browser;
     myKeepingExpander = new KeepingExpandedExpander(browser);
     mySelectionPath = selectionPath;
@@ -44,8 +46,9 @@ public abstract class AbstractOpeningExpander implements Expander {
     EXPAND_CONTINUE
   }
 
-  protected abstract ExpandVariants expandNode(final String url);
-  protected abstract boolean checkChild(final String childUrl);
+  protected abstract ExpandVariants expandNode(@NotNull SVNURL url);
+
+  protected abstract boolean checkChild(@NotNull SVNURL childUrl);
 
   public void onAfterRefresh(final RepositoryTreeNode node) {
     myKeepingExpander.onAfterRefresh(node);
@@ -54,8 +57,7 @@ public abstract class AbstractOpeningExpander implements Expander {
       return;
     }
 
-    final String myUrl = node.getURL().toString();
-    final ExpandVariants expandVariant = expandNode(myUrl);
+    final ExpandVariants expandVariant = expandNode(node.getURL());
 
     if (ExpandVariants.DO_NOTHING.equals(expandVariant)) {
       return;
@@ -72,9 +74,9 @@ public abstract class AbstractOpeningExpander implements Expander {
         final TreeNode treeNode = (TreeNode) children.nextElement();
         if (treeNode instanceof RepositoryTreeNode) {
           final RepositoryTreeNode repositoryTreeNode = (RepositoryTreeNode) treeNode;
-          final String childUrl = repositoryTreeNode.getURL().toString();
+          SVNURL childUrl = repositoryTreeNode.getURL();
           if (checkChild(childUrl)) {
-            if ((mySelectionPath != null) && (mySelectionPath.equals(childUrl))) {
+            if (mySelectionPath.equals(childUrl)) {
               myBrowser.setSelectedNode(repositoryTreeNode);
             }
               repositoryTreeNode.reload(this, false);

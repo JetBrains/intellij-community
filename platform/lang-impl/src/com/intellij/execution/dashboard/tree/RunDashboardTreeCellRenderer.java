@@ -15,7 +15,7 @@
  */
 package com.intellij.execution.dashboard.tree;
 
-import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
+import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.dashboard.RunDashboardContributor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -50,8 +50,8 @@ public class RunDashboardTreeCellRenderer extends JPanel implements TreeCellRend
                                                 boolean hasFocus) {
     myNodeRender.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
     Object userObject = TreeUtil.getUserObject(value);
-    if (userObject instanceof DashboardRunConfigurationNode) {
-      DashboardRunConfigurationNode node = (DashboardRunConfigurationNode)userObject;
+    if (userObject instanceof RunDashboardRunConfigurationNode) {
+      RunDashboardRunConfigurationNode node = (RunDashboardRunConfigurationNode)userObject;
       RunDashboardContributor contributor = node.getContributor();
       if (contributor != null) {
         if (contributor.customizeCellRenderer(myNodeRender, myLabel, node, selected, expanded, leaf, row, hasFocus)) {

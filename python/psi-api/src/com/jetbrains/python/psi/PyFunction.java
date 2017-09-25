@@ -78,6 +78,8 @@ public interface PyFunction extends PsiNamedElement, StubBasedPsiElement<PyFunct
 
   boolean isAsyncAllowed();
 
+  boolean onlyRaisesNotImplementedError();
+
   /**
    * Flags that mark common alterations of a function: decoration by and wrapping in classmethod() and staticmethod().
    */
@@ -99,9 +101,6 @@ public interface PyFunction extends PsiNamedElement, StubBasedPsiElement<PyFunct
    */
   @Nullable
   Property getProperty();
-
-  @Nullable
-  PyAnnotation getAnnotation();
 
   /**
    * Searches for function attributes.

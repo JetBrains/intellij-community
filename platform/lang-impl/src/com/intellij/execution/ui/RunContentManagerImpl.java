@@ -272,7 +272,10 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     }
 
     final ContentManager contentManager = getContentManagerForRunner(executor, descriptor);
-    RunContentDescriptor oldDescriptor = chooseReuseContentForDescriptor(contentManager, descriptor, executionId, descriptor.getDisplayName());
+    String toolWindowId = getToolWindowIdForRunner(executor, descriptor);
+    boolean chooseByPreferredName = RunDashboardManager.getInstance(myProject).getToolWindowId().equals(toolWindowId);
+    RunContentDescriptor oldDescriptor =
+      chooseReuseContentForDescriptor(contentManager, descriptor, executionId, descriptor.getDisplayName(), chooseByPreferredName);
     final Content content;
     if (oldDescriptor == null) {
       content = createNewContent(descriptor, executor);
@@ -292,7 +295,6 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     content.setDisplayName(descriptor.getDisplayName());
     descriptor.setAttachedContent(content);
 
-    String toolWindowId = getToolWindowIdForRunner(executor, descriptor);
     final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(toolWindowId);
     final ProcessHandler processHandler = descriptor.getProcessHandler();
     if (processHandler != null) {
@@ -372,13 +374,13 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       return contentToReuse;
     }
 
-    // TODO [konstantin.aleev] Should content be reused in case of dashboard?
     String toolWindowId = getContentDescriptorToolWindowId(executionEnvironment.getRunnerAndConfigurationSettings());
     final ContentManager contentManager = toolWindowId == null ?
                                           getContentManagerForRunner(executionEnvironment.getExecutor(), null) :
                                           myToolwindowIdToContentManagerMap.get(toolWindowId);
+    boolean chooseByPreferredName = RunDashboardManager.getInstance(myProject).getToolWindowId().equals(toolWindowId);
     return chooseReuseContentForDescriptor(contentManager, null, executionEnvironment.getExecutionId(),
-                                           executionEnvironment.toString());
+                                           executionEnvironment.toString(), chooseByPreferredName);
   }
 
   @Override
@@ -409,7 +411,8 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   private static RunContentDescriptor chooseReuseContentForDescriptor(@NotNull ContentManager contentManager,
                                                                       @Nullable RunContentDescriptor descriptor,
                                                                       long executionId,
-                                                                      @Nullable String preferredName) {
+                                                                      @Nullable String preferredName,
+                                                                      boolean chooseByPreferredName) {
     Content content = null;
     if (descriptor != null) {
       //Stage one: some specific descriptors (like AnalyzeStacktrace) cannot be reused at all
@@ -424,6 +427,8 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
           && contentManager.getIndexOfContent(attachedContent) != -1
           && (Comparing.equal(descriptor.getDisplayName(), attachedContent.getDisplayName()) || !attachedContent.isPinned())) {
         content = attachedContent;
+        // Content from descriptor itself should be applicable for reuse even if display names are different.
+        chooseByPreferredName = false;
       }
     }
     //Stage three: choose the content with name we prefer
@@ -432,6 +437,9 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     }
     if (content == null || !isTerminated(content) || (content.getExecutionId() == executionId && executionId != 0)) {
       return null;
+    }
+    if (chooseByPreferredName && (preferredName == null || !preferredName.equals(content.getDisplayName()))) {
+        return null;
     }
     final RunContentDescriptor oldDescriptor = getRunContentDescriptorByContent(content);
     if (oldDescriptor != null && !oldDescriptor.isContentReuseProhibited() ) {

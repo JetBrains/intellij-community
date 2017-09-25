@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,18 +33,17 @@ import com.jetbrains.python.inspections.quickfix.PyAddPropertyForFieldQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyMakePublicQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyRenameElementQuickFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.testing.PyTestsSharedKt;
-import org.jetbrains.annotations.Nls;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * User: ktisha
@@ -56,13 +55,6 @@ import java.util.List;
 public class PyProtectedMemberInspection extends PyInspection {
   public boolean ignoreTestFunctions = true;
   public boolean ignoreAnnotations = false;
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.protected.member.access");
-  }
 
   @NotNull
   @Override
@@ -121,16 +113,22 @@ public class PyProtectedMemberInspection extends PyInspection {
         }
         final PsiElement resolvedExpression = reference.resolve();
         final PyClass resolvedClass = getClassOwner(resolvedExpression);
+
         if (resolvedExpression instanceof PyTargetExpression) {
+
           final String newName = StringUtil.trimLeading(name, '_');
           if (resolvedClass != null) {
+
             final String qFixName = resolvedClass.getProperties().containsKey(newName) ?
                               PyBundle.message("QFIX.use.property") : PyBundle.message("QFIX.add.property");
             quickFixes.add(new PyAddPropertyForFieldQuickFix(qFixName));
 
-            final Collection<String> usedNames = PyRefactoringUtil.collectUsedNames(resolvedClass);
-            if (!usedNames.contains(newName)) {
-              quickFixes.add(new PyMakePublicQuickFix());
+            final PyClassType classType = PyUtil.as(myTypeEvalContext.getType(resolvedClass), PyClassType.class);
+            if (classType != null) {
+              final Set<String> usedNames = classType.getMemberNames(true, myTypeEvalContext);
+              if (!usedNames.contains(newName)) {
+                quickFixes.add(new PyMakePublicQuickFix());
+              }
             }
           }
         }
@@ -172,6 +170,47 @@ public class PyProtectedMemberInspection extends PyInspection {
         }
       }
       return null;
+    }
+
+    @Override
+    public void visitPyFromImportStatement(PyFromImportStatement node) {
+      final PyReferenceExpression source = node.getImportSource();
+      if (source == null) return;
+
+      final Set<String> dunderAlls = collectDunderAlls(source);
+      if (dunderAlls == null) return;
+
+      StreamEx
+        .of(node.getImportElements())
+        .map(PyImportElement::getImportReferenceExpression)
+        .nonNull()
+        .filter(referenceExpression -> !dunderAlls.contains(referenceExpression.getName()))
+        .forEach(
+          referenceExpression -> {
+            final String message = "'" + referenceExpression.getName() + "' is not declared in __all__";
+            registerProblem(referenceExpression, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+          }
+        );
+    }
+
+    @Nullable
+    private Set<String> collectDunderAlls(@NotNull PyReferenceExpression source) {
+      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
+
+      final List<List<String>> resolvedDunderAlls = StreamEx
+        .of(source.getReference(resolveContext).multiResolve(false))
+        .map(ResolveResult::getElement)
+        .select(PyFile.class)
+        .map(PyFile::getDunderAll)
+        .toList();
+      if (resolvedDunderAlls.isEmpty()) return null;
+
+      final Set<String> result = new HashSet<>();
+      for (List<String> dunderAll : resolvedDunderAlls) {
+        if (dunderAll == null) return null;
+        result.addAll(dunderAll);
+      }
+      return result;
     }
   }
 

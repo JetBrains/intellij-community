@@ -47,6 +47,7 @@ class DistributionJARsBuilder {
   private final Set<String> usedModules = new LinkedHashSet<>()
   private final PlatformLayout platform
   private final File patchedApplicationInfo
+  private final List<PluginLayout> pluginsToPublish = []
 
   DistributionJARsBuilder(BuildContext buildContext, File patchedApplicationInfo) {
     this.patchedApplicationInfo = patchedApplicationInfo
@@ -80,8 +81,9 @@ class DistributionJARsBuilder {
 
     def productLayout = buildContext.productProperties.productLayout
 
-    List<JpsLibrary> projectLibrariesUsedByPlugins = getPluginsByModules(productLayout.enabledPluginModules).collectMany { plugin ->
-      plugin.getActualModules(productLayout.enabledPluginModules).values().collectMany {
+    def enabledPluginModules = getEnabledPluginModules()
+    List<JpsLibrary> projectLibrariesUsedByPlugins = getPluginsByModules(enabledPluginModules).collectMany { plugin ->
+      plugin.getActualModules(enabledPluginModules).values().collectMany {
         def module = buildContext.findRequiredModule(it)
         JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll {
           !(it.createReference().parentReference instanceof JpsModuleReference) && !plugin.includedProjectLibraries.contains(it.name)
@@ -89,7 +91,7 @@ class DistributionJARsBuilder {
       }
     }
 
-    Set<String> allProductDependencies = (productLayout.includedPluginModules + productLayout.includedPlatformModules).collectMany(new LinkedHashSet<String>()) {
+    Set<String> allProductDependencies = (productLayout.getIncludedPluginModules(enabledPluginModules) + productLayout.includedPlatformModules).collectMany(new LinkedHashSet<String>()) {
       JpsJavaExtensionService.dependencies(buildContext.findRequiredModule(it)).productionOnly().getModules().collect {it.name}
     }
 
@@ -135,6 +137,10 @@ class DistributionJARsBuilder {
       }
       withProjectLibrariesFromIncludedModules(buildContext)
     }
+  }
+
+  private Set<String> getEnabledPluginModules() {
+    buildContext.productProperties.productLayout.bundledPluginModules + pluginsToPublish.collect { it.mainModule } as Set<String>
   }
 
   List<String> getPlatformModules() {
@@ -216,9 +222,6 @@ class DistributionJARsBuilder {
       layoutBuilder.patchModuleOutput(productLayout.searchableOptionsModule, FileUtil.toSystemIndependentName(searchableOptionsDir.absolutePath))
     }
 
-    String providedModulesFile = "${buildContext.paths.artifacts}/${buildContext.productProperties.productCode}-builtinModules.json"
-    buildTasks.buildProvidedModulesList(providedModulesFile, productLayout.mainModules, productLayout.licenseFilesToBuildSearchableOptions)
-
     def applicationInfoFile = FileUtil.toSystemIndependentName(patchedApplicationInfo.absolutePath)
     def applicationInfoDir = "$buildContext.paths.temp/applicationInfo"
     ant.copy(file: applicationInfoFile, todir: "$applicationInfoDir/idea")
@@ -243,6 +246,10 @@ class DistributionJARsBuilder {
     usedModules.addAll(layoutBuilder.usedModules)
   }
 
+  List<PluginLayout> getPluginsToPublish() {
+    return pluginsToPublish
+  }
+
   private void buildBundledPlugins() {
     def productLayout = buildContext.productProperties.productLayout
     def layoutBuilder = createLayoutBuilder()
@@ -251,11 +258,10 @@ class DistributionJARsBuilder {
   }
 
   void buildNonBundledPlugins() {
-    def ant = buildContext.ant
     def productLayout = buildContext.productProperties.productLayout
+    def ant = buildContext.ant
     def layoutBuilder = createLayoutBuilder()
     buildContext.executeStep("Build non-bundled plugins", BuildOptions.NON_BUNDLED_PLUGINS_STEP) {
-      def pluginsToPublish = getPluginsByModules(productLayout.pluginModulesToPublish)
       if (buildContext.productProperties.setPluginAndIDEVersionInPluginXml) {
         pluginsToPublish.each { plugin ->
           def moduleOutput = buildContext.getModuleOutputPath(buildContext.findRequiredModule(plugin.mainModule))
@@ -273,18 +279,22 @@ class DistributionJARsBuilder {
         }
       }
 
-      def pluginsToPublishDir = "$buildContext.paths.temp/plugins-to-publish"
+      def pluginsToPublishDir = "$buildContext.paths.temp/${buildContext.productProperties.productCode}-plugins-to-publish"
+      def pluginsDirectoryName = "${buildContext.productProperties.productCode}-plugins"
       buildPlugins(layoutBuilder, pluginsToPublish, pluginsToPublishDir)
-      def nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/plugins"
+      def nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/$pluginsDirectoryName"
       pluginsToPublish.each { plugin ->
         def directory = plugin.directoryName
         String suffix = productLayout.prepareCustomPluginRepositoryForPublishedPlugins ? "" : "-${getPluginVersion(plugin)}"
-        ant.zip(destfile: "$nonBundledPluginsArtifacts/$directory${suffix}.zip") {
+        def destFile = "$nonBundledPluginsArtifacts/$directory${suffix}.zip"
+        ant.zip(destfile: destFile) {
           zipfileset(dir: "$pluginsToPublishDir/$directory", prefix: directory)
         }
+        buildContext.notifyArtifactBuilt(destFile)
       }
       if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
         new PluginRepositoryXmlGenerator(buildContext).generate(pluginsToPublish, nonBundledPluginsArtifacts)
+        buildContext.notifyArtifactBuilt("$nonBundledPluginsArtifacts/plugins.xml")
       }
     }
   }
@@ -293,7 +303,7 @@ class DistributionJARsBuilder {
     return plugin.versionEvaluator.apply(buildContext)
   }
 
-  private List<PluginLayout> getPluginsByModules(Collection<String> modules) {
+  List<PluginLayout> getPluginsByModules(Collection<String> modules) {
     def allNonTrivialPlugins = buildContext.productProperties.productLayout.allNonTrivialPlugins
     def allOptionalModules = allNonTrivialPlugins.collectMany {it.optionalModules}
     def nonTrivialPlugins = allNonTrivialPlugins.groupBy { it.mainModule }
@@ -301,7 +311,7 @@ class DistributionJARsBuilder {
   }
 
   private void buildPlugins(LayoutBuilder layoutBuilder, List<PluginLayout> pluginsToInclude, String targetDirectory) {
-    def enabledModulesSet = buildContext.productProperties.productLayout.enabledPluginModules
+    def enabledModulesSet = enabledPluginModules
     pluginsToInclude.each { plugin ->
       def actualModuleJars = plugin.getActualModules(enabledModulesSet)
       checkOutputOfPluginModules(plugin.mainModule, actualModuleJars.values(), plugin.moduleExcludes)
@@ -477,7 +487,6 @@ class DistributionJARsBuilder {
   static String basePath(BuildContext buildContext, String moduleName) {
     JpsPathUtil.urlToPath(buildContext.findRequiredModule(moduleName).contentRootsList.urls.first())
   }
-
 
   private LayoutBuilder createLayoutBuilder() {
     new LayoutBuilder(buildContext.ant, buildContext.project, COMPRESS_JARS)

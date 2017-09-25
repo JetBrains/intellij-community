@@ -17,6 +17,7 @@ package com.siyeh.ipp.whileloop;
 
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.siyeh.ig.psiutils.BlockUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -53,13 +54,8 @@ public class ExtractWhileLoopConditionToIfStatementIntention extends Intention {
       newElement = codeBlock.addBefore(ifStatement, bodyElement);
     }
     else if (body != null) {
-      final PsiBlockStatement blockStatement = (PsiBlockStatement)factory.createStatementFromText("{}", whileStatement);
-      final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
-      codeBlock.add(ifStatement);
-      if (!(body instanceof PsiEmptyStatement)) {
-        codeBlock.add(body);
-      }
-      newElement = body.replace(blockStatement);
+      final PsiBlockStatement newBody = BlockUtils.expandSingleStatementToBlockStatement(body);
+      newElement = newBody.getFirstChild().addBefore(ifStatement, null);
     }
     else {
       return;

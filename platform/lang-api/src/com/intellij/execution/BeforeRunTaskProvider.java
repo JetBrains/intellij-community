@@ -41,15 +41,18 @@ public abstract class BeforeRunTaskProvider<T extends BeforeRunTask> {
     return null;
   }
 
-  public abstract String getDescription(T task);
-
+  public String getDescription(T task) {
+    return getName();
+  }
 
   @Nullable
   public Icon getTaskIcon(T task) {
     return null;
   }
 
-  public abstract boolean isConfigurable();
+  public boolean isConfigurable() {
+    return false;
+  }
 
   /**
    * @return 'before run' task for the configuration or null, if the task from this provider is not applicable to the specified configuration 
@@ -60,11 +63,15 @@ public abstract class BeforeRunTaskProvider<T extends BeforeRunTask> {
   /**
    * @return {@code true} if task configuration is changed
    */
-  public abstract boolean configureTask(final RunConfiguration runConfiguration, T task);
+  public boolean configureTask(@NotNull RunConfiguration runConfiguration, @NotNull T task) {
+    return false;
+  }
 
-  public abstract boolean canExecuteTask(RunConfiguration configuration, T task);
+  public boolean canExecuteTask(@NotNull RunConfiguration configuration, @NotNull T task) {
+    return true;
+  }
 
-  public abstract boolean executeTask(DataContext context, RunConfiguration configuration, ExecutionEnvironment env, T task);
+  public abstract boolean executeTask(DataContext context, @NotNull RunConfiguration configuration, @NotNull ExecutionEnvironment env, @NotNull T task);
 
   /**
    *

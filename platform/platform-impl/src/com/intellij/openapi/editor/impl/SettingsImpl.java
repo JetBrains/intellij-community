@@ -37,6 +37,10 @@ import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
 public class SettingsImpl implements EditorSettings {
   private static final Logger LOG = Logger.getInstance(SettingsImpl.class);
 
@@ -90,6 +94,8 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myRenamePreselect                       = null;
   private Boolean myWrapWhenTypingReachesRightMargin      = null;
   private Boolean myShowIntentionBulb                     = null;
+
+  private List<Integer> mySoftMargins = null;
   
   public SettingsImpl() {
     this(null, null, null);
@@ -252,6 +258,20 @@ public class SettingsImpl implements EditorSettings {
     final Integer newValue = Integer.valueOf(rightMargin);
     if (newValue.equals(myRightMargin)) return;
     myRightMargin = newValue;
+    fireEditorRefresh();
+  }
+
+  @NotNull
+  @Override
+  public List<Integer> getSoftMargins() {
+    if (mySoftMargins != null) return mySoftMargins;
+    return CodeStyleSettingsManager.getSettings(myEditor == null ? null : myEditor.getProject()).getSoftMargins(myLanguage);
+  }
+
+  @Override
+  public void setSoftMargins(@Nullable List<Integer> softMargins) {
+    if (Objects.equals(mySoftMargins, softMargins)) return;
+    mySoftMargins = softMargins != null ? new ArrayList<>(softMargins) : null;
     fireEditorRefresh();
   }
 

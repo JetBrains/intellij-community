@@ -944,6 +944,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         String varName = myOutputVariable != null ? myOutputVariable.getName() : "x";
         varName = declareVariableAtMethodCallLocation(varName, myReturnType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)myReturnType).getBoxedType(myCodeFragmentMember) : myReturnType);
         addToMethodCallLocation(myElementFactory.createStatementFromText("if (" + varName + " != null) return " + varName + ";", null));
+        declareVariableReusedAfterCall(myOutputVariable);
       }
       else if (myGenerateConditionalExit) {
         PsiIfStatement ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (a) b;", null);
@@ -1512,25 +1513,17 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   @Nullable
-  private static PsiElement getSurroundingMethodOrLambdaBody(@NotNull PsiVariable variable) {
-    if (variable instanceof PsiLocalVariable || variable instanceof PsiParameter) {
-      final PsiElement methodOrLambda = PsiTreeUtil.getParentOfType(variable, PsiMethod.class, PsiLambdaExpression.class);
-      if (methodOrLambda instanceof PsiMethod) {
-        return ((PsiMethod)methodOrLambda).getBody();
-      }
-      else if (methodOrLambda instanceof PsiLambdaExpression) {
-        return ((PsiLambdaExpression)methodOrLambda).getBody();
-      }
-    }
-    return null;
-  }
-
-  @Nullable
   private static Boolean isNotNullAt(@NotNull PsiVariable variable, PsiElement startElement) {
     String variableName = variable.getName();
     if (variableName == null) return null;
 
-    final PsiElement methodOrLambdaBody = getSurroundingMethodOrLambdaBody(variable);
+    PsiElement methodOrLambdaBody = null;
+    if (variable instanceof PsiLocalVariable || variable instanceof PsiParameter) {
+      final PsiParameterListOwner methodOrLambda = PsiTreeUtil.getParentOfType(variable, PsiMethod.class, PsiLambdaExpression.class);
+      if (methodOrLambda != null) {
+        methodOrLambdaBody = methodOrLambda.getBody();
+      }
+    }
     if (methodOrLambdaBody instanceof PsiCodeBlock) {
       PsiElement topmostLambdaOrAnonymousClass = null;
       for (PsiElement element = startElement; element != null && element != methodOrLambdaBody; element = element.getParent()) {
@@ -1558,8 +1551,9 @@ public class ExtractMethodProcessor implements MatchProvider {
         try {
           PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
           startStatementCopy = wrapWithBlockStatementIfNeeded(startStatementCopy, factory);
+          String dummyName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName("_Dummy_", startElement.getParent(), true);
           PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)factory.createStatementFromText(
-            CommonClassNames.JAVA_LANG_OBJECT + " _Dummy_ = " + variableName + ";", startStatementCopy);
+            CommonClassNames.JAVA_LANG_OBJECT + " " + dummyName + " = " + variableName + ";", startStatementCopy);
 
           PsiElement parent = startStatementCopy.getParent();
           declarationStatement = (PsiDeclarationStatement)parent.addBefore(declarationStatement, startStatementCopy);
@@ -1569,8 +1563,7 @@ public class ExtractMethodProcessor implements MatchProvider {
           Nullness nullness = DfaUtil.checkNullness(variableCopy, initializer, bodyCopy);
           return nullness == Nullness.NOT_NULL;
         }
-        catch (IncorrectOperationException e) {
-          LOG.debug(e);
+        catch (IncorrectOperationException ignore) {
           return null;
         }
       }
@@ -1879,6 +1872,19 @@ public class ExtractMethodProcessor implements MatchProvider {
     myAnchor = myCodeFragmentMember;
     while (!myAnchor.getParent().equals(myTargetClass)) {
       myAnchor = myAnchor.getParent();
+    }
+  }
+
+  private void declareVariableReusedAfterCall(PsiVariable variable) {
+    if (variable != null &&
+        variable.getName() != null &&
+        isDeclaredInside(variable) &&
+        myControlFlowWrapper.getUsedVariables().contains(variable) &&
+        !myControlFlowWrapper.needVariableValueAfterEnd(variable)) {
+
+      PsiDeclarationStatement declaration =
+        myElementFactory.createVariableDeclarationStatement(variable.getName(), variable.getType(), null);
+      addToMethodCallLocation(declaration);
     }
   }
 

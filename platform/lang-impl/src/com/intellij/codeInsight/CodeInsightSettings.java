@@ -23,8 +23,10 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -36,6 +38,8 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.lang.reflect.Field;
 
 @State(
   name = "CodeInsightSettings",
@@ -167,12 +171,32 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
 
   @Override
   public void loadState(final Element state) {
+    // 'Write' save only diff from default. Before load do reset to default values.
+    setDefaults();
+
     try {
       XmlSerializer.deserializeInto(this, state);
     }
     catch (XmlSerializationException e) {
       LOG.info(e);
     }
+  }
+
+  private void setDefaults() {
+    try {
+      ReflectionUtil.copyFields(CodeInsightSettings.class.getDeclaredFields(), new CodeInsightSettings(), this,
+                                new DifferenceFilter<Object>(null, null) {
+                                  @Override
+                                  public boolean isAccept(@NotNull Field field) {
+                                    return !field.getName().equals("EXCLUDED_PACKAGES");
+                                  }
+                                });
+    }
+    catch (Throwable e) {
+      LOG.info(e);
+    }
+
+    EXCLUDED_PACKAGES = ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   @Override

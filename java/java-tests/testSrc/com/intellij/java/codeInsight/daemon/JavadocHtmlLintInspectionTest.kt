@@ -16,6 +16,9 @@
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.codeInspection.javaDoc.JavadocHtmlLintInspection
+import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.PathUtil
@@ -27,6 +30,9 @@ class JavadocHtmlLintInspectionTest : LightCodeInsightFixtureTestCase() {
     val javaHome = System.getProperty("java.home")
     val jdkHome = if (javaHome.endsWith("jre")) PathUtil.getParentPath(javaHome) else javaHome
     VfsRootAccess.allowRootAccess(myFixture.testRootDisposable, jdkHome)
+
+    val jdk = (JavaSdk.getInstance() as JavaSdkImpl).createMockJdk("java version \"1.8.0\"", System.getProperty("java.home"), true)
+    ModuleRootModificationUtil.setModuleSdk(myModule, jdk);
   }
 
   fun testNoComment() = doTest("class C { }")

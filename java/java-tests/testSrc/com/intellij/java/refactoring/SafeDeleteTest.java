@@ -249,6 +249,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doSingleFileTest();
   }
 
+  public void testTypeParameterWithoutOwner() throws Exception {
+    doSingleFileTest();
+  }
+
   public void testLocalVariableSideEffect() {
     try {
       doTest("Super");

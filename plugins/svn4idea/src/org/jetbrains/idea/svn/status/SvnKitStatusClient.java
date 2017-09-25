@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,13 @@ import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.commandLine.SvnExceptionWrapper;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusClient;
 
 import java.io.File;
-import java.util.Collection;
 
 public class SvnKitStatusClient extends BaseSvnClient implements StatusClient {
 
@@ -52,14 +52,27 @@ public class SvnKitStatusClient extends BaseSvnClient implements StatusClient {
                        boolean reportAll,
                        boolean includeIgnored,
                        boolean collectParentExternals,
-                       @NotNull final StatusConsumer handler,
-                       @Nullable Collection changeLists) throws SvnBindException {
+                       @NotNull final StatusConsumer handler) throws SvnBindException {
     try {
       return getStatusClient().doStatus(path, revision, toDepth(depth), remote, reportAll, includeIgnored, collectParentExternals,
-                                        status -> handler.consume(Status.create(status)), changeLists);
+                                        status -> {
+                                          try {
+                                            handler.consume(Status.create(status));
+                                          }
+                                          catch (SvnBindException e) {
+                                            throw new SvnExceptionWrapper(e);
+                                          }
+                                        }, null);
     }
     catch (SVNException e) {
       throw new SvnBindException(e);
+    }
+    catch (SvnExceptionWrapper e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof SvnBindException) {
+        throw ((SvnBindException)cause);
+      }
+      throw new SvnBindException(cause);
     }
   }
 

@@ -25,7 +25,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleGrouperKt;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.Pair;
@@ -103,7 +102,7 @@ public class GradleProjectResolverUtil {
 
     ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
     if (externalProject != null) {
-      moduleData.setInternalName(getInternalModuleName(gradleModule, externalProject));
+      moduleData.setInternalName(getInternalModuleName(gradleModule, externalProject, resolverCtx));
       moduleData.setGroup(externalProject.getGroup());
       moduleData.setVersion(externalProject.getVersion());
       moduleData.setDescription(externalProject.getDescription());
@@ -119,17 +118,19 @@ public class GradleProjectResolverUtil {
   }
 
   @NotNull
-  static String getInternalModuleName(@NotNull IdeaModule gradleModule, @NotNull ExternalProject externalProject) {
-    return getInternalModuleName(gradleModule, externalProject, null);
+  static String getInternalModuleName(@NotNull IdeaModule gradleModule, @NotNull ExternalProject externalProject,
+                                      @NotNull ProjectResolverContext resolverCtx) {
+    return getInternalModuleName(gradleModule, externalProject, null, resolverCtx);
   }
 
   @NotNull
   static String getInternalModuleName(@NotNull IdeaModule gradleModule,
                                       @NotNull ExternalProject externalProject,
-                                      @Nullable String sourceSetName) {
+                                      @Nullable String sourceSetName,
+                                      @NotNull ProjectResolverContext resolverCtx) {
     String delimiter;
     StringBuilder moduleName = new StringBuilder();
-    if (ModuleGrouperKt.isQualifiedModuleNamesEnabled()) {
+    if (resolverCtx.isUseQualifiedModuleNames()) {
       delimiter = ".";
       if (StringUtil.isNotEmpty(externalProject.getGroup())) {
         moduleName.append(externalProject.getGroup()).append(delimiter);

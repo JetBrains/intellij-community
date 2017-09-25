@@ -44,7 +44,7 @@ public class InvokeIntention extends ActionOnRange {
   private final IntentionPolicy myPolicy;
   private String myInvocationLog = "not invoked";
 
-  InvokeIntention(PsiFile file, int offset, int intentionIndex, IntentionPolicy policy) {
+  public InvokeIntention(PsiFile file, int offset, int intentionIndex, IntentionPolicy policy) {
     super(file, offset, offset);
     myIntentionIndex = intentionIndex;
     myPolicy = policy;
@@ -58,7 +58,12 @@ public class InvokeIntention extends ActionOnRange {
 
   @Override
   public String toString() {
-    return "InvokeIntention{" + getVirtualFile().getPath() + ", " + myInvocationLog + ", raw=(" + myInitialStart + "," + myIntentionIndex + ")}";
+    return "InvokeIntention{" + getVirtualFile().getPath() + ", " + myInvocationLog + "}";
+  }
+
+  @Override
+  public String getConstructorArguments() {
+    return "file, " + myInitialStart + "," + myIntentionIndex + ", intentionPolicy";
   }
 
   public void performAction() {

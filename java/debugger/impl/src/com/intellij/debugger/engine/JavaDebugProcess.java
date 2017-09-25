@@ -402,30 +402,16 @@ public class JavaDebugProcess extends XDebugProcess {
       private void registerOverheadMonitor(@NotNull RunnerLayoutUi ui) {
         if (!Registry.is("debugger.enable.overhead.monitor")) return;
 
-        OverheadView monitor = new OverheadView(myJavaSession.getProcess());
+        DebugProcessImpl process = myJavaSession.getProcess();
+        OverheadView monitor = new OverheadView(process);
         Content overheadContent = ui.createContent("OverheadMonitor", monitor, "Overhead", AllIcons.Debugger.Db_obsolete, null);
+
+        monitor.setBouncer(() -> ui.setBouncing(overheadContent, true));
 
         overheadContent.setCloseable(false);
         overheadContent.setShouldDisposeContent(true);
 
-        //session.addSessionListener(new XDebugSessionListener() {
-        //  @Override
-        //  public void sessionStopped() {
-        //    session.removeSessionListener(this);
-        //    data.getTrackedStacks().clear();
-        //  }
-        //});
-
         ui.addContent(overheadContent, 0, PlaceInGrid.right, true);
-        //final DebuggerManagerThreadImpl managerThread = process.getManagerThread();
-        //ui.addListener(new ContentManagerAdapter() {
-        //  @Override
-        //  public void selectionChanged(ContentManagerEvent event) {
-        //    if (event != null && event.getContent() == overheadContent) {
-        //      classesFilteredView.setActive(overheadContent.isSelected(), managerThread);
-        //    }
-        //  }
-        //}, overheadContent);
       }
     };
   }

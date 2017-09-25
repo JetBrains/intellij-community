@@ -67,7 +67,8 @@ class CompilationContextImpl implements CompilationContext {
       messages.error("communityHome ($communityHome) doesn't point to a directory containing IntelliJ Community sources")
     }
 
-    GradleRunner gradle = new GradleRunner(new File(communityHome, 'build/dependencies'), messages)
+    def dependenciesProjectDir = new File(communityHome, 'build/dependencies')
+    GradleRunner gradle = new GradleRunner(dependenciesProjectDir, messages, SystemProperties.getJavaHome())
     if (!options.isInDevelopmentMode) {
       setupCompilationDependencies(gradle)
     }
@@ -78,6 +79,7 @@ class CompilationContextImpl implements CompilationContext {
     projectHome = toCanonicalPath(projectHome)
     def jdk8Home = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", "$projectHome/build/jdk/1.8", "JDK_18_x64"))
     def kotlinHome = toCanonicalPath("$communityHome/build/dependencies/build/kotlin/Kotlin")
+    gradle = new GradleRunner(dependenciesProjectDir, messages, jdk8Home)
 
     def model = loadProject(projectHome, jdk8Home, kotlinHome, messages, ant)
     def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, jdk8Home, kotlinHome, messages,
@@ -146,7 +148,7 @@ class CompilationContextImpl implements CompilationContext {
     }
     else {
       messages.error(
-        "Could not find Kotlin JARs at $kotlinPluginLibPath: run `./gradlew setupKotlin` in dependencies module to download Kotlin JARs")
+        "Could not find Kotlin JARs at $kotlinPluginLibPath: run `./gradlew setupKotlinPlugin` in dependencies module to download Kotlin JARs")
     }
   }
 
@@ -165,7 +167,9 @@ class CompilationContextImpl implements CompilationContext {
       unpackCompiledClasses(messages, ant, classesOutput, options)
       outputDirectoriesToKeep.add(classesDirName)
     }
+    messages.info("Incremental compilation: " + options.incrementalCompilation)
     if (options.incrementalCompilation) {
+      System.setProperty("kotlin.incremental.compilation", "true")
       outputDirectoriesToKeep.add(dataDirName)
       outputDirectoriesToKeep.add(classesDirName)
     }
@@ -211,6 +215,7 @@ class CompilationContextImpl implements CompilationContext {
           messages.info("Skipped cleaning for $file.absolutePath")
         }
         else {
+          messages.info("Deleting $file.absolutePath")
           FileUtil.delete(file)
         }
       }
@@ -285,18 +290,27 @@ class CompilationContextImpl implements CompilationContext {
     return enumerator.classes().roots.collect { it.absolutePath }
   }
 
-
   @Override
   void notifyArtifactBuilt(String artifactPath) {
     def file = new File(artifactPath)
     def baseDir = new File(paths.projectHome)
+    def artifactsDir = new File(paths.artifacts)
     if (!FileUtil.isAncestor(baseDir, file, true)) {
       messages.warning("Artifact '$artifactPath' is not under '$paths.projectHome', it won't be reported")
       return
     }
     def relativePath = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(baseDir, file))
+
+    def targetDirectoryPath = ""
+    if (FileUtil.isAncestor(artifactsDir, file.parentFile, true)) {
+      targetDirectoryPath = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(artifactsDir, file.parentFile) ?: "")
+    }
+
     if (file.isDirectory()) {
-      relativePath += "=>" + file.name
+      targetDirectoryPath = (targetDirectoryPath ? targetDirectoryPath + "/"  : "") + file.name
+    }
+    if (targetDirectoryPath) {
+      relativePath += "=>" + targetDirectoryPath
     }
     messages.artifactBuilt(relativePath)
   }

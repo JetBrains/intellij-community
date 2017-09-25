@@ -17,6 +17,7 @@ package com.intellij.java.propertyBased;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.propertyBased.IntentionPolicy;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +38,12 @@ class JavaIntentionPolicy extends IntentionPolicy {
 
   @Override
   public boolean mayBreakCode(@NotNull IntentionAction action, @NotNull Editor editor, @NotNull PsiFile file) {
-    return mayBreakCompilation(action.getText());
+    return mayBreakCompilation(action.getText()) || requiresRealJdk(action, file);
+  }
+
+  private static boolean requiresRealJdk(@NotNull IntentionAction action, @NotNull PsiFile file) {
+    return action.getText().contains("java.text.MessageFormat") && 
+           JavaPsiFacade.getInstance(file.getProject()).findClass("java.text.MessageFormat", file.getResolveScope()) == null;
   }
 
   protected static boolean mayBreakCompilation(String actionText) {

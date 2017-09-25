@@ -35,7 +35,7 @@ public final class IdeInitialConfigUsageCollectors {
 
     @NotNull
     @Override
-    public Set<UsageDescriptor> doGetUsages() throws CollectUsagesException {
+    public Set<UsageDescriptor> doGetUsages() {
       return Collections.singleton(StatisticsUtilKt.getEnumUsage("import", getConfigImport()));
     }
 
@@ -50,14 +50,14 @@ public final class IdeInitialConfigUsageCollectors {
 
     @NotNull
     @Override
-    public Set<UsageDescriptor> doGetUsages() throws CollectUsagesException {
+    public Set<UsageDescriptor> doGetUsages() {
       return Collections.singleton(new UsageDescriptor(getSkipRemainingPressedScreen(), 1));
     }
 
     @NotNull
     @Override
     public GroupDescriptor getGroupId() {
-      return GroupDescriptor.create("Wizard:Skip remaining pressed");
+      return GroupDescriptor.create("Wizard_Skip remaining pressed");
     }
   }
 
@@ -65,7 +65,7 @@ public final class IdeInitialConfigUsageCollectors {
 
     @NotNull
     @Override
-    public Set<UsageDescriptor> doGetUsages() throws CollectUsagesException {
+    public Set<UsageDescriptor> doGetUsages() {
       return getPredefinedDisabledPlugins().stream()
         .map(pluginDescriptor -> new UsageDescriptor(pluginDescriptor, 1))
         .collect(Collectors.toSet());
@@ -74,7 +74,7 @@ public final class IdeInitialConfigUsageCollectors {
     @NotNull
     @Override
     public GroupDescriptor getGroupId() {
-      return GroupDescriptor.create("Wizard:Disabled plugins");
+      return GroupDescriptor.create("Wizard_Disabled plugins");
     }
   }
 
@@ -82,7 +82,7 @@ public final class IdeInitialConfigUsageCollectors {
 
     @NotNull
     @Override
-    public Set<UsageDescriptor> doGetUsages() throws CollectUsagesException {
+    public Set<UsageDescriptor> doGetUsages() {
       return getDownloadedPlugins().stream()
         .map(pluginId -> new UsageDescriptor(pluginId, 1))
         .collect(Collectors.toSet());
@@ -91,14 +91,14 @@ public final class IdeInitialConfigUsageCollectors {
     @NotNull
     @Override
     public GroupDescriptor getGroupId() {
-      return GroupDescriptor.create("Wizard:Downloaded plugins");
+      return GroupDescriptor.create("Wizard_Downloaded plugins");
     }
   }
 
   public static class SelectedKeymap extends Base {
 
     @Override
-    protected Set<UsageDescriptor> doGetUsages() throws CollectUsagesException {
+    protected Set<UsageDescriptor> doGetUsages() {
       final String keymapName = WelcomeWizardUtil.getWizardMacKeymap();
       if (StringUtil.isEmpty(keymapName)) {
         return Collections.emptySet();
@@ -111,14 +111,14 @@ public final class IdeInitialConfigUsageCollectors {
     @NotNull
     @Override
     public GroupDescriptor getGroupId() {
-      return GroupDescriptor.create("Wizard:Selected keymap");
+      return GroupDescriptor.create("Wizard_Selected keymap");
     }
   }
 
   public static class SelectedLAF extends Base {
 
     @Override
-    protected Set<UsageDescriptor> doGetUsages() throws CollectUsagesException {
+    protected Set<UsageDescriptor> doGetUsages() {
       final String laf = WelcomeWizardUtil.getWizardLAF();
       if (StringUtil.isEmpty(laf)) {
         return Collections.emptySet();
@@ -131,7 +131,7 @@ public final class IdeInitialConfigUsageCollectors {
     @NotNull
     @Override
     public GroupDescriptor getGroupId() {
-      return GroupDescriptor.create("Wizard:Selected LAF");
+      return GroupDescriptor.create("Wizard_Selected LAF");
     }
   }
 

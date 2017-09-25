@@ -313,8 +313,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       myPassword = null;
       myIsMemoryOnly = ThreeState.UNSURE;
       // clear in any case from PasswordSafe otherwise we get loop askPassword -> from password safe -> forgetPassword -> askPassword -> from password safe
-      CredentialAttributes attributes =
-        credentialAttributes(makeKey(url, myPasswordKey == null ? makeKey(url, getUsername(url)) : myPasswordKey));
+      String key = myPasswordKey == null ? makeKey(url, getUsername(url)) : myPasswordKey;
+      CredentialAttributes attributes = credentialAttributes(key);
       LOG.debug("forgetPassword. key=" + attributes.getUserName());
       PasswordSafe.getInstance().set(attributes, null);
     }

@@ -16,29 +16,44 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a separator.
  */
 public final class Separator extends AnAction implements DumbAware {
+
   private static final Separator ourInstance = new Separator();
 
-  private String myText;
-
-  public Separator() {
+  @NotNull
+  public static Separator getInstance() {
+    return ourInstance;
   }
 
-  public Separator(@Nullable final String text) {
+  @NotNull
+  public static Separator create() {
+    return create(null);
+  }
+
+  @NotNull
+  public static Separator create(@Nullable String text) {
+    return StringUtil.isEmptyOrSpaces(text)? ourInstance : new Separator(text);
+  }
+
+  private final String myText;
+
+  public Separator() {
+    myText = null;
+  }
+
+  public Separator(@Nullable String text) {
     myText = text;
   }
 
   public String getText() {
     return myText;
-  }
-
-  public static Separator getInstance() {
-    return ourInstance;
   }
 
   @Override

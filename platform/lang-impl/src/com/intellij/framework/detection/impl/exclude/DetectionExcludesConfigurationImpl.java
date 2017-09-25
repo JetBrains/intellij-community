@@ -51,7 +51,7 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
     myProject = project;
     myPointerManager = pointerManager;
     myExcludedFrameworks = new HashSet<>();
-    myExcludedFiles = FactoryMap.createMap(key -> myPointerManager.createContainer(DetectionExcludesConfigurationImpl.this));
+    myExcludedFiles = FactoryMap.create(key -> myPointerManager.createContainer(this));
   }
 
   @Override

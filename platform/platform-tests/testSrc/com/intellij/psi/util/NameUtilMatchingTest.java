@@ -536,6 +536,8 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertPreference("cL", "class", "coreLoader");
     assertPreference("cL", "class", "classLoader");
     assertPreference("inse", "InstrumentationError", "intSet", NameUtil.MatchingCaseSensitivity.NONE);
+    assertPreference("String", "STRING", "String", NameUtil.MatchingCaseSensitivity.NONE);
+    assertPreference("*String", "STRING", "String", NameUtil.MatchingCaseSensitivity.NONE);
   }
 
   public void testPreferAdjacentWords() {

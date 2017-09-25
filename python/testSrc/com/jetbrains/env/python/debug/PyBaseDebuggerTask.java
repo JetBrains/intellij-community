@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.junit.Assert;
 
+import javax.swing.*;
 import java.io.PrintWriter;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
@@ -313,16 +314,12 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
 
   @Override
   public void tearDown() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-      try {
-        finishSession();
-
-        PyBaseDebuggerTask.super.tearDown();
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    });
+    assert SwingUtilities.isEventDispatchThread();
+    try {
+      finishSession();
+    }finally {
+      PyBaseDebuggerTask.super.tearDown();
+    }
   }
 
   protected void finishSession() {

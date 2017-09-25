@@ -23,6 +23,9 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.impl.CurrentEditorProvider;
+import com.intellij.openapi.command.impl.UndoManagerImpl;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
@@ -36,7 +39,10 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -466,6 +472,21 @@ public class EditorTestUtil {
     while (!AsyncEditorLoader.isEditorLoaded(editor)) {
       LockSupport.parkNanos(100_000_000);
       UIUtil.dispatchAllInvocationEvents();
+    }
+  }
+
+  public static void testUndoInEditor(@NotNull Editor editor, @NotNull Runnable runnable) {
+    FileEditor fileEditor = TextEditorProvider.getInstance().getTextEditor(editor);
+    Project project = editor.getProject();
+    assertNotNull(project);
+    UndoManagerImpl undoManager = (UndoManagerImpl)UndoManager.getInstance(project);
+    CurrentEditorProvider savedProvider = undoManager.getEditorProvider();
+    undoManager.setEditorProvider(() -> fileEditor); // making undo work in test
+    try {
+      runnable.run();
+    }
+    finally {
+      undoManager.setEditorProvider(savedProvider);
     }
   }
 

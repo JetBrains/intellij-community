@@ -81,10 +81,20 @@ public class PsiMethodReferenceUtil {
    * Returns actual return type of method reference (not the expected one)
    *
    * @param expression a method reference to get the return type of
+   * @return an actual method reference return type
+   */
+  public static PsiType getMethodReferenceReturnType(PsiMethodReferenceExpression expression) {
+    return getMethodReferenceReturnType(expression, expression.advancedResolve(false));
+  }
+
+  /**
+   * Returns actual return type of method reference (not the expected one)
+   *
+   * @param expression a method reference to get the return type of
    * @param result the result of method reference resolution
    * @return an actual method reference return type
    */
-  public static PsiType getMethodReferenceReturnType(PsiMethodReferenceExpression expression, JavaResolveResult result) {
+  private static PsiType getMethodReferenceReturnType(PsiMethodReferenceExpression expression, JavaResolveResult result) {
     PsiSubstitutor subst = result.getSubstitutor();
 
     PsiType methodReturnType = null;

@@ -17,8 +17,8 @@
 
 package com.pme.launcher;
 
-import org.apache.sanselan.ImageFormat;
-import org.apache.sanselan.Sanselan;
+import org.apache.commons.imaging.ImageFormats;
+import org.apache.commons.imaging.Imaging;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
@@ -80,8 +80,8 @@ public class LauncherGeneratorMain {
 
     ByteArrayOutputStream splashBmpStream = new ByteArrayOutputStream();
     try {
-      BufferedImage bufferedImage = Sanselan.getBufferedImage(splashStream);
-      Sanselan.writeImage(bufferedImage, splashBmpStream, ImageFormat.IMAGE_FORMAT_BMP, new HashMap());
+      BufferedImage bufferedImage = Imaging.getBufferedImage(splashStream);
+      Imaging.writeImage(bufferedImage, splashBmpStream, ImageFormats.BMP, new HashMap());
     }
     catch (Exception e) {
       System.err.println("Error converting splash screen to BMP: " + e.getMessage());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,13 +42,15 @@ public class DontUseNewPairInspection extends DevKitInspectionBase {
         if (type instanceof PsiClassType
             && ((PsiClassType)type).rawType().equalsToText(PAIR_FQN)
             && params != null
-            && expression.getArgumentList() != null
             && !PsiUtil.getLanguageLevel(expression).isAtLeast(LanguageLevel.JDK_1_7) //diamonds
         ) {
           final PsiType[] types = ((PsiClassType)type).getParameters();
           if (Arrays.equals(types, params.getExpressionTypes())) {
-            holder.registerProblem(expression, "Replace to Pair.create()", ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                   new ChangeToPairCreateQuickFix());
+            final PsiJavaCodeReferenceElement reference = expression.getClassReference();
+            if (reference != null) {
+              holder.registerProblem(reference, "Replace with 'Pair.create()'", ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                     new ChangeToPairCreateQuickFix());
+            }
           }
         }
         super.visitNewExpression(expression);

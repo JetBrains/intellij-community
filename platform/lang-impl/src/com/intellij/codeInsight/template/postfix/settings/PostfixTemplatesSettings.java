@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,21 +44,6 @@ public class PostfixTemplatesSettings implements PersistentStateComponent<Elemen
   private boolean postfixTemplatesEnabled = true;
   private boolean templatesCompletionEnabled = true;
   private int myShortcut = TemplateSettings.TAB_CHAR;
-
-  @Deprecated
-  @NotNull
-  private Map<String, Boolean> myTemplatesState = ContainerUtil.newHashMap();
-
-  @Deprecated
-  @NotNull
-  public Map<String, Boolean> getTemplatesState() {
-    return myTemplatesState;
-  }
-
-  @Deprecated
-  public void setTemplatesState(@NotNull Map<String, Boolean> templatesState) {
-    myTemplatesState = templatesState;
-  }
 
   public boolean isTemplateEnabled(@NotNull PostfixTemplate template, @NotNull PostfixTemplateProvider provider) {
     String langForProvider = PostfixTemplatesUtils.getLangForProvider(provider);
@@ -128,13 +113,5 @@ public class PostfixTemplatesSettings implements PersistentStateComponent<Elemen
   @Override
   public void loadState(Element settings) {
     XmlSerializer.deserializeInto(this, settings);
-
-    //Backward compatibility for java
-    //old settings were stored in "templatesState" field without language
-    //todo remove. for backward compatibility
-    if (!myTemplatesState.isEmpty()) {
-      myLangToDisabledTemplates.put("JAVA", ContainerUtil.newHashSet(myTemplatesState.keySet()));
-      myTemplatesState.clear();
-    }
   }
 }

@@ -1042,4 +1042,14 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
 
   }
 
+  public void testSurviveOnDocumentChangeAround() throws Exception {
+    PsiFile file = createFile("a.java", "class Foo {}");
+    SmartPointerEx<PsiClass> pointer = createPointer(((PsiJavaFile)file).getClasses()[0]);
+    WriteCommandAction.runWriteCommandAction(myProject, () -> {
+      file.getViewProvider().getDocument().setText(" class Foo {} ");
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    });
+    assertNotNull(pointer.getElement());
+  }
+
 }

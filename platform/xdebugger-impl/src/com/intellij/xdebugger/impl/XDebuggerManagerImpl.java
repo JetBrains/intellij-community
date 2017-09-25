@@ -335,7 +335,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
   }
 
   @Override
-  public void loadState(final XDebuggerState state) {
+  public void loadState(@NotNull XDebuggerState state) {
     myBreakpointManager.loadState(state.myBreakpointManagerState);
     myWatchesManager.loadState(state.myWatchesManagerState);
   }
@@ -346,32 +346,37 @@ public class XDebuggerManagerImpl extends XDebuggerManager
 
   @SuppressWarnings("UnusedDeclaration")
   public static class XDebuggerState {
+    @NotNull
     private XBreakpointManagerImpl.BreakpointManagerState myBreakpointManagerState;
+    @NotNull
     private XDebuggerWatchesManager.WatchesManagerState myWatchesManagerState;
 
     public XDebuggerState() {
+      this(new XBreakpointManagerImpl.BreakpointManagerState(), new XDebuggerWatchesManager.WatchesManagerState());
     }
 
-    public XDebuggerState(final XBreakpointManagerImpl.BreakpointManagerState breakpointManagerState, XDebuggerWatchesManager.WatchesManagerState watchesManagerState) {
+    public XDebuggerState(@NotNull XBreakpointManagerImpl.BreakpointManagerState breakpointManagerState, @NotNull XDebuggerWatchesManager.WatchesManagerState watchesManagerState) {
       myBreakpointManagerState = breakpointManagerState;
       myWatchesManagerState = watchesManagerState;
     }
 
+    @NotNull
     @Property(surroundWithTag = false)
     public XBreakpointManagerImpl.BreakpointManagerState getBreakpointManagerState() {
       return myBreakpointManagerState;
     }
 
-    public void setBreakpointManagerState(final XBreakpointManagerImpl.BreakpointManagerState breakpointManagerState) {
+    public void setBreakpointManagerState(@NotNull final XBreakpointManagerImpl.BreakpointManagerState breakpointManagerState) {
       myBreakpointManagerState = breakpointManagerState;
     }
 
+    @NotNull
     @Property(surroundWithTag = false)
     public XDebuggerWatchesManager.WatchesManagerState getWatchesManagerState() {
       return myWatchesManagerState;
     }
 
-    public void setWatchesManagerState(XDebuggerWatchesManager.WatchesManagerState watchesManagerState) {
+    public void setWatchesManagerState(@NotNull XDebuggerWatchesManager.WatchesManagerState watchesManagerState) {
       myWatchesManagerState = watchesManagerState;
     }
   }

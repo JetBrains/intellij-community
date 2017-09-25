@@ -7,7 +7,6 @@ import java.util.List;
 
 public class NumpyUfuncs {
   private static final List<String> UFUNC_LIST = new ArrayList<>();
-  public static final List<String> UFUNC_METHODS = new ArrayList<>();
 
   public static boolean isUFunc(@Nullable final String name) {
     return UFUNC_LIST.contains(name);
@@ -104,16 +103,5 @@ public class NumpyUfuncs {
     UFUNC_LIST.add("trunc");
 
     UFUNC_LIST.add("fabs");
-
-    UFUNC_METHODS.add("nin");
-    UFUNC_METHODS.add("nout");
-    UFUNC_METHODS.add("nargs");
-    UFUNC_METHODS.add("identity");
-    UFUNC_METHODS.add("ntypes");
-    UFUNC_METHODS.add("accumulate");
-    UFUNC_METHODS.add("reduce");
-    UFUNC_METHODS.add("reduceat");
-    UFUNC_METHODS.add("outer");
-    UFUNC_METHODS.add("at");
   }
 }

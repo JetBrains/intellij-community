@@ -16,10 +16,7 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.codeInsight.daemon.impl.FileStatusMap;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.TransactionId;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -58,11 +55,11 @@ public class RefreshSessionImpl extends RefreshSession {
   private volatile boolean myCancelled;
   private final TransactionId myTransaction;
 
-  RefreshSessionImpl(boolean async, boolean recursive, @Nullable Runnable finishRunnable, @Nullable TransactionId context) {
+  RefreshSessionImpl(boolean async, boolean recursive, @Nullable Runnable finishRunnable, @NotNull ModalityState context) {
     myIsAsync = async;
     myIsRecursive = recursive;
     myFinishRunnable = finishRunnable;
-    myTransaction = context;
+    myTransaction = ((TransactionGuardImpl)TransactionGuard.getInstance()).getModalityTransaction(context);
     LOG.assertTrue(context == ModalityState.NON_MODAL || context != ModalityState.any(), "Refresh session should have a specific modality");
     myStartTrace = rememberStartTrace();
   }
@@ -76,7 +73,7 @@ public class RefreshSessionImpl extends RefreshSession {
   }
 
   RefreshSessionImpl(@NotNull List<VFileEvent> events) {
-    this(false, false, null, null);
+    this(false, false, null, ModalityState.defaultModalityState());
     myEvents.addAll(events);
   }
 

@@ -2,13 +2,15 @@
 import sys
 import time
 
+
+
+
 if sys.version_info < (3, ):
     # Python 2
     text_type = unicode  # flake8: noqa
 else:
     # Python 3
     text_type = str
-
 
 # Capture some time functions to allow monkeypatching them in tests
 _time = time.time
@@ -141,8 +143,18 @@ class TeamcityServiceMessages(object):
     def testIgnored(self, testName, message='', flowId=None):
         self.message('testIgnored', name=testName, message=message, flowId=flowId)
 
-    def testFailed(self, testName, message='', details='', flowId=None):
-        self.message('testFailed', name=testName, message=message, details=details, flowId=flowId)
+    def testFailed(self, testName, message='', details='', flowId=None, comparison_failure=None):
+        if not comparison_failure:
+            self.message('testFailed', name=testName, message=message, details=details, flowId=flowId)
+        else:
+            self.message('testFailed',
+                         name=testName,
+                         message=message,
+                         details=details,
+                         flowId=flowId,
+                         type="comparisonFailure",
+                         actual=comparison_failure.actual,
+                         expected=comparison_failure.expected)
 
     def testStdOut(self, testName, out, flowId=None):
         self.message('testStdOut', name=testName, out=out, flowId=flowId)

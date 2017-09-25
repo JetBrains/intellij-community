@@ -19,45 +19,44 @@ import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.dialogs.RepositoryBrowserComponent;
 import org.jetbrains.idea.svn.dialogs.browserCache.Expander;
+import org.tmatesoft.svn.core.SVNURL;
+
+import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
 
 public class UrlOpeningExpander extends AbstractOpeningExpander {
-  private final String myUrl;
+  @NotNull private final SVNURL myUrl;
 
-  UrlOpeningExpander(@NotNull final RepositoryBrowserComponent browser, final String selectionPath, @NotNull final String url) {
+  UrlOpeningExpander(@NotNull RepositoryBrowserComponent browser, @NotNull SVNURL selectionPath, @NotNull SVNURL url) {
     super(browser, selectionPath);
-    myUrl = (url.endsWith("/")) ? url.substring(0, url.length() - 1) : url;
+    myUrl = url;
   }
 
-  protected ExpandVariants expandNode(final String url) {
+  @Override
+  protected ExpandVariants expandNode(@NotNull SVNURL url) {
     if (myUrl.equals(url)) {
       return ExpandVariants.EXPAND_AND_EXIT;
     }
-    if (myUrl.startsWith(url.endsWith("/") ? url : (url + '/'))) {
-/*      if ((myUrl.length() == url.length()) || ((myUrl.length() - 1) == url.length())) {
-        // do not expand myUrl - the last node just must be visible
-        return ExpandVariants.DO_NOTHING;
-      }*/
+    if (isAncestor(url, myUrl)) {
       return ExpandVariants.EXPAND_CONTINUE;
     }
     return ExpandVariants.DO_NOTHING;
   }
 
-  protected boolean checkChild(final String childUrl) {
-    return myUrl.startsWith(childUrl);
+  @Override
+  protected boolean checkChild(@NotNull SVNURL childUrl) {
+    return isAncestor(childUrl, myUrl);
   }
 
   public static class Factory implements NotNullFunction<RepositoryBrowserComponent, Expander> {
-    private final String myUrl;
-    private final String mySelectionUrl;
+    @NotNull private final SVNURL myUrl;
 
-    public Factory(final String url, final String selectionUrl) {
+    public Factory(@NotNull SVNURL url) {
       myUrl = url;
-      mySelectionUrl = selectionUrl;
     }
 
     @NotNull
     public Expander fun(final RepositoryBrowserComponent repositoryBrowserComponent) {
-      return new UrlOpeningExpander(repositoryBrowserComponent, mySelectionUrl, myUrl);
+      return new UrlOpeningExpander(repositoryBrowserComponent, myUrl, myUrl);
     }
   }
 }

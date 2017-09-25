@@ -15,16 +15,22 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.DfaFactType;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
 public class DivideByZeroInspection extends BaseInspection {
+  private static final LongRangeSet ZERO_RANGE = LongRangeSet.point(0);
 
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
@@ -83,11 +89,12 @@ public class DivideByZeroInspection extends BaseInspection {
 
     private static boolean isZero(PsiExpression expression) {
       final Object value = ConstantExpressionUtil.computeCastTo(expression, PsiType.DOUBLE);
-      if (!(value instanceof Double)) {
-        return false;
+      if (value instanceof Double) {
+        final double constantValue = ((Double)value).doubleValue();
+        if (constantValue == 0.0) return true;
       }
-      final double constantValue = ((Double)value).doubleValue();
-      return constantValue == 0.0 || constantValue == -0.0;
+      LongRangeSet range = CommonDataflow.getExpressionFact(expression, DfaFactType.RANGE);
+      return ZERO_RANGE.equals(range);
     }
   }
 }

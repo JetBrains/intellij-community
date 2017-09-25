@@ -22,6 +22,7 @@ import com.intellij.codeInsight.hint.api.impls.AnnotationParameterInfoHandler;
 import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
 import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
 import com.intellij.openapi.util.Disposer;
@@ -294,6 +295,11 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
     assertEquals("<html>int a</html>", parameterPresentation(2, -1));
 
     checkHighlighted(0);
+  }
+
+  public void testNoStrikeoutForSingleDeprecatedMethod() {
+    myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { System.runFinalizersOnExit(true<caret>); } }");
+    assertEquals("<html>boolean value</html>", parameterPresentation(-1));
   }
 
   private void checkHighlighted(int lineIndex) {

@@ -188,11 +188,7 @@ public abstract class PyEnvTestCase {
   }
 
   public void runTest(@NotNull PyTestTask testTask, @NotNull String testName) {
-    if (notEnvConfiguration()) {
-      Assert.fail("Running under teamcity but not by Env configuration. Skipping.");
-      return;
-    }
-
+    Assume.assumeFalse("Running under teamcity but not by Env configuration. Skipping.", notEnvConfiguration());
     if (UsefulTestCase.IS_UNDER_TEAMCITY && IS_ENV_CONFIGURATION) {
       checkStaging();
     }

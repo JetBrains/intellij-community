@@ -35,7 +35,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Set;
+
+import static com.intellij.psi.codeStyle.CodeStyleDefaults.*;
 
 /**
  * Common code style settings can be used by several programming languages. Each language may have its own
@@ -58,6 +61,8 @@ public class CommonCodeStyleSettings {
   private IndentOptions       myIndentOptions;
   private final FileType myFileType;
   private boolean             myForceArrangeMenuAvailable;
+
+  protected SoftMargins mySoftMargins = new SoftMargins();
 
   @NonNls private static final String INDENT_OPTIONS_TAG = "indentOptions";
 
@@ -129,6 +134,7 @@ public class CommonCodeStyleSettings {
     if (myArrangementSettings != null) {
       commonSettings.setArrangementSettings(myArrangementSettings.clone());
     }
+    commonSettings.setSoftMargins(getSoftMargins());
     return commonSettings;
   }
 
@@ -167,6 +173,7 @@ public class CommonCodeStyleSettings {
     if (arrangementRulesContainer != null) {
       myArrangementSettings = ArrangementUtil.readExternal(arrangementRulesContainer, myLanguage);
     }
+    mySoftMargins.deserializeFrom(element);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -177,6 +184,7 @@ public class CommonCodeStyleSettings {
       supportedFields.add("FORCE_REARRANGE_MODE");
     }
     DefaultJDOMExternalizer.writeExternal(this, element, new SupportedFieldsDiffFilter(this, supportedFields, defaultSettings));
+    mySoftMargins.serializeInto(element);
     if (myIndentOptions != null) {
       IndentOptions defaultIndentOptions = defaultSettings != null ? defaultSettings.getIndentOptions() : null;
       Element indentOptionsElement = new Element(INDENT_OPTIONS_TAG);
@@ -919,9 +927,9 @@ public class CommonCodeStyleSettings {
 
   //-------------------------Indent options-------------------------------------------------
   public static class IndentOptions implements Cloneable, JDOMExternalizable {
-    public int INDENT_SIZE = 4;
-    public int CONTINUATION_INDENT_SIZE = 8;
-    public int TAB_SIZE = 4;
+    public int INDENT_SIZE = DEFAULT_INDENT_SIZE;
+    public int CONTINUATION_INDENT_SIZE = DEFAULT_CONTINUATION_INDENT_SIZE;
+    public int TAB_SIZE = DEFAULT_TAB_SIZE;
     public boolean USE_TAB_CHARACTER = false;
     public boolean SMART_TABS = false;
     public int LABEL_INDENT_SIZE = 0;
@@ -1073,5 +1081,14 @@ public class CommonCodeStyleSettings {
       }
     }
     return Comparing.equal(theseSettings, obj.getArrangementSettings());
+  }
+
+  @NotNull
+  public List<Integer> getSoftMargins() {
+    return mySoftMargins.getValues();
+  }
+
+  void setSoftMargins(List<Integer> values) {
+    mySoftMargins.setValues(values);
   }
 }

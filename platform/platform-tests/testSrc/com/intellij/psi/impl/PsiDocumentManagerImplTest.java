@@ -332,7 +332,10 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
       waitForCommit(document, i);
       WriteCommandAction.runWriteCommandAction(null, () -> document.deleteString(0, "/**/".length()));
       waitTenSecondsForCommit(document);
-      assertTrue("Still not committed: " + document, getPsiDocumentManager().isCommitted(document));
+      if (!getPsiDocumentManager().isCommitted(document)) {
+        printThreadDump();
+        fail("Still not committed: " + document);
+      }
     }
   }
 

@@ -65,7 +65,7 @@ abstract class ModuleGrouper {
     @JvmOverloads
     fun instanceFor(project: Project, moduleModel: ModifiableModuleModel? = null): ModuleGrouper {
       val hasGroups = moduleModel?.hasModuleGroups() ?: ModuleManager.getInstance(project).hasModuleGroups()
-      if (!isQualifiedModuleNamesEnabled() || hasGroups) {
+      if (!isQualifiedModuleNamesEnabled(project) || hasGroups) {
         return ExplicitModuleGrouper(project, moduleModel)
       }
       return QualifiedNameGrouper(project, moduleModel)
@@ -73,7 +73,8 @@ abstract class ModuleGrouper {
   }
 }
 
-fun isQualifiedModuleNamesEnabled() = Registry.`is`("project.qualified.module.names")
+fun isQualifiedModuleNamesEnabled(project: Project) = Registry.`is`("project.qualified.module.names") &&
+                                                      !ModuleManager.getInstance(project).hasModuleGroups()
 
 private abstract class ModuleGrouperBase(protected val project: Project, protected val model: ModifiableModuleModel?) : ModuleGrouper() {
   override fun getAllModules(): Array<Module> = model?.modules ?: ModuleManager.getInstance(project).modules

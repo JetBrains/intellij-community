@@ -21,6 +21,7 @@ import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.psi.PsiAssignmentExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +43,15 @@ public class AssignInstruction extends Instruction {
   @Nullable
   public PsiExpression getRExpression() {
     return myRExpression;
+  }
+
+  @Nullable
+  public PsiExpression getLExpression() {
+    if(myRExpression == null) return null;
+    if(myRExpression.getParent() instanceof PsiAssignmentExpression) {
+      return ((PsiAssignmentExpression)myRExpression.getParent()).getLExpression();
+    }
+    return null;
   }
 
   public boolean isVariableInitializer() {

@@ -75,7 +75,12 @@ public class MakeAnnotationExternal extends BaseIntentionAction {
 
     String qualifiedName = annotation.getQualifiedName();
     assert qualifiedName != null;
-    externalAnnotationsManager.annotateExternally(owner, qualifiedName, file, annotation.getParameterList().getAttributes());
+    try {
+      externalAnnotationsManager.annotateExternally(owner, qualifiedName, file, annotation.getParameterList().getAttributes());
+    }
+    catch (ExternalAnnotationsManager.CanceledConfigurationException e) {
+      return;
+    }
 
     WriteAction.run(() -> annotation.delete());
   }

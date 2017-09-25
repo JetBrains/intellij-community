@@ -27,6 +27,7 @@ import org.junit.Test;
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.util.Objects;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -34,9 +35,10 @@ import static com.intellij.util.ArrayUtil.EMPTY_OBJECT_ARRAY;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 public final class AsyncTreeModelTest {
-  private final static boolean PRINT = false;
+  private static final boolean PRINT = false;
 
   @Test
   public void testAggressiveUpdating() {
@@ -142,7 +144,7 @@ public final class AsyncTreeModelTest {
   public void testChildrenResolve() {
     Node node = new Node("node");
     Node root = new Node("root", new Node("upper", new Node("middle", new Node("lower", node))));
-    TreePath tp = TreeUtil.convertArrayToTreePath(node.getPath());
+    TreePath tp = TreePathUtil.convertArrayToTreePath(node.getPath());
     testAsync(() -> root, test
       -> testPathState(test.tree, "   +'root'\n      'upper'\n", ()
       -> test.resolve(tp, path
@@ -154,7 +156,7 @@ public final class AsyncTreeModelTest {
   public void testChildrenVisit() {
     Node node = new Node("node");
     Node root = new Node("root", new Node("upper", new Node("middle", new Node("lower", node))));
-    TreePath tp = TreeUtil.convertArrayToTreePath(node.getPath(), Object::toString);
+    TreePath tp = TreePathUtil.convertArrayToTreePath(node.getPath(), Object::toString);
     testAsync(() -> root, test
       -> testPathState(test.tree, "   +'root'\n      'upper'\n", ()
       -> test.visit(new TreeVisitor.PathFinder(tp, Object::toString), true, path
@@ -166,7 +168,7 @@ public final class AsyncTreeModelTest {
   public void testChildrenVisitWithoutLoading() {
     Node node = new Node("node");
     Node root = new Node("root", new Node("upper", new Node("middle", new Node("lower", node))));
-    TreePath tp = TreeUtil.convertArrayToTreePath(node.getPath(), Object::toString);
+    TreePath tp = TreePathUtil.convertArrayToTreePath(node.getPath(), Object::toString);
     testAsync(() -> root, test
       -> testPathState(test.tree, "   +'root'\n      'upper'\n", ()
       -> test.visit(new TreeVisitor.PathFinder(tp, Object::toString), false, path -> {
@@ -250,7 +252,7 @@ public final class AsyncTreeModelTest {
   }
 
   private static void testEventDispatchThread(Supplier<TreeNode> root, Consumer<ModelTest> consumer, boolean showLoadingNode, int delay) {
-    new AsyncTest(showLoadingNode, new EventDispatchThreadModel(delay, root)).start(consumer, delay + 10);
+    new AsyncTest(showLoadingNode, new EventDispatchThreadModel(delay, root)).start(consumer, getSecondsToWait(delay));
   }
 
   private static void testBackgroundThread(Supplier<TreeNode> root, Consumer<ModelTest> consumer, boolean showLoadingNode) {
@@ -260,7 +262,7 @@ public final class AsyncTreeModelTest {
   }
 
   private static void testBackgroundThread(Supplier<TreeNode> root, Consumer<ModelTest> consumer, boolean showLoadingNode, int delay) {
-    if (consumer != null) new AsyncTest(showLoadingNode, new BackgroundThreadModel(delay, root)).start(consumer, delay + 10);
+    if (consumer != null) new AsyncTest(showLoadingNode, new BackgroundThreadModel(delay, root)).start(consumer, getSecondsToWait(delay));
   }
 
   private static void testBackgroundPool(Supplier<TreeNode> root, Consumer<ModelTest> consumer, boolean showLoadingNode) {
@@ -270,7 +272,7 @@ public final class AsyncTreeModelTest {
   }
 
   private static void testBackgroundPool(Supplier<TreeNode> root, Consumer<ModelTest> consumer, boolean showLoadingNode, int delay) {
-    if (consumer != null) new AsyncTest(showLoadingNode, new BackgroundPoolModel(delay, root)).start(consumer, delay + 10);
+    if (consumer != null) new AsyncTest(showLoadingNode, new BackgroundPoolModel(delay, root)).start(consumer, getSecondsToWait(delay));
   }
 
   private static void printTime(long time, String postfix) {
@@ -292,6 +294,14 @@ public final class AsyncTreeModelTest {
         task.run();
       }
     });
+  }
+
+  /**
+   * @param delay a delay used to create a slow tree model
+   * @return a maximal time in seconds allowed for the test
+   */
+  private static int getSecondsToWait(int delay) {
+    return delay + 20;
   }
 
   private static class ModelTest {
@@ -323,10 +333,18 @@ public final class AsyncTreeModelTest {
       try {
         promise.blockingGet(seconds, SECONDS);
       }
+      catch (Exception exception) {
+        //noinspection InstanceofCatchParameter because of Kotlin
+        if (exception instanceof TimeoutException) {
+          fail(seconds + " seconds is not enough for " + toString());
+        }
+        throw exception;
+      }
       finally {
         TreeModel model = tree.getModel();
         if (model instanceof Disposable) Disposer.dispose((Disposable)model);
         printTime(time, "ms to done");
+        if (PRINT) System.out.println();
       }
     }
 
@@ -445,7 +463,7 @@ public final class AsyncTreeModelTest {
     }
 
     private void pause() {
-      if (this instanceof InvokerSupplier && .9 < Math.random()) {
+      if (this instanceof InvokerSupplier && .95 < Math.random()) {
         // sometimes throw an exception to cancel current operation
         if (PRINT) System.out.println("interrupt access to model:" + toString());
         throw new ProcessCanceledException();

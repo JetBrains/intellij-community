@@ -514,4 +514,11 @@ public class EditorImplTest extends AbstractEditorTest {
     assertFalse(inlay.isValid() && inlay.getOffset() == 1);
     assertFalse(region.isValid() && (region.getStartOffset() == 1 || region.getEndOffset() == 1));
   }
+
+  public void testStickySelectionAtDocumentEnd() {
+    initText("ab<caret>");
+    ((EditorEx)myEditor).setStickySelection(true);
+    left();
+    checkResultByText("a<selection><caret>b</selection>");
+  }
 }

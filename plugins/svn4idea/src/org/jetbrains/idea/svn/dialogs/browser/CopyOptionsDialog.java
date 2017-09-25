@@ -75,7 +75,7 @@ public class CopyOptionsDialog extends DialogWrapper {
 
     myTargetURL.setForeground(copy ? FileStatus.ADDED.getColor() : FileStatus.MODIFIED.getColor());
     setOKButtonText(copy ? "Copy" : "Move");
-    myURLLabel.setText(myURL.toString());
+    myURLLabel.setText(myURL.toDecodedString());
 
     TreeNode[] path = node.getSelfPath();
     TreeNode[] subPath = new TreeNode[path.length - 1];

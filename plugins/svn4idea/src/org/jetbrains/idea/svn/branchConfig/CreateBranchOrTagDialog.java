@@ -79,7 +79,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
   @NonNls private static final String HELP_ID = "vcs.subversion.branch";
   private SvnBranchConfigurationNew myBranchConfiguration;
   private final VirtualFile mySrcVirtualFile;
-  private final String myWcRootUrl;
+  private final SVNURL myWcRootUrl;
 
   public CreateBranchOrTagDialog(final Project project, boolean canBeParent, File file) throws VcsException {
     super(project, canBeParent);
@@ -154,7 +154,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
       }
     });
     updateToURL();
-    myProjectButton.addActionListener(e -> myRepositoryField.setText(myWcRootUrl));
+    myProjectButton.addActionListener(e -> myRepositoryField.setText(myWcRootUrl.toString()));
     myBranchTagBaseComboBox.addActionListener(e -> {
       BranchConfigurationDialog.configureBranches(project, mySrcVirtualFile);
       updateBranchTagBases();

@@ -30,7 +30,7 @@
       </condition>
       <exec executable="${gradle.executable}" dir="${project.home}/build/dependencies" failonerror="true">
         <arg value="--no-daemon"/>
-        <arg value="setupKotlin"/>
+        <arg value="setupKotlinPlugin"/>
       </exec>
       <java failonerror="true" classname="org.apache.tools.ant.Main" fork="true">
         <jvmarg line="-Xms64m -Xmx512m"/>

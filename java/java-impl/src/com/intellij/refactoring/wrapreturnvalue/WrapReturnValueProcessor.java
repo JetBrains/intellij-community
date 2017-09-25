@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.MoveDestination;
@@ -110,7 +111,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
         return unboxedType.getCanonicalText() + "Value()";
       }
 
-      final PsiMethod getter = PropertyUtil.findGetterForField(myDelegateField);
+      final PsiMethod getter = PropertyUtilBase.findGetterForField(myDelegateField);
       return getter != null ? getter.getName() : "";
     }
     return "";

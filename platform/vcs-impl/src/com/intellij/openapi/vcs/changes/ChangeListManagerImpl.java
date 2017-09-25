@@ -424,6 +424,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         }
       }
     }
+    catch (ProcessCanceledException ignore) {
+    }
     catch (Exception | AssertionError ex) {
       LOG.error(ex);
     }

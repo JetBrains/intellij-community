@@ -292,7 +292,94 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     checkHTMLOnly();
   }
 
+  public void testArgumentList() {
+    Map<String, PsiElement> marks = loadTest();
+    final PsiElement originalElement = marks.get("<the_ref>");
+
+    final PsiElement element = myProvider.getCustomDocumentationElement(myFixture.getEditor(), myFile, originalElement);
+    checkByHTML(myProvider.generateDoc(element, originalElement));
+  }
+
+  public void testDocstring() {
+    Map<String, PsiElement> marks = loadTest();
+    final PsiElement originalElement = marks.get("<the_ref>");
+
+    final PsiElement element = myProvider.getCustomDocumentationElement(myFixture.getEditor(), myFile, originalElement);
+    checkByHTML(myProvider.generateDoc(element, originalElement));
+  }
+
   public void testReferenceToMethodQualifiedWithInstance() {
     checkHTMLOnly();
+  }
+
+  public void testOneDecoratorFunction() {
+    checkHTMLOnly();
+  }
+
+  public void testHoverOverOneDecoratorFunction() {
+    checkHover();
+  }
+
+  public void testManyDecoratorsFunction() {
+    checkHTMLOnly();
+  }
+
+  public void testHoverOverManyDecoratorsFunction() {
+    checkHover();
+  }
+
+  public void testOneDecoratorClass() {
+    checkHTMLOnly();
+  }
+
+  public void testHoverOverOneDecoratorClass() {
+    checkHover();
+  }
+
+  public void testManyDecoratorsClass() {
+    checkHTMLOnly();
+  }
+
+  public void testHoverOverManyDecoratorsClass() {
+    checkHover();
+  }
+
+  public void testClassWithAllKindSuperClassExpressions() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, this::checkHTMLOnly);
+  }
+
+  public void testHoverOverClassWithAllKindSuperClassExpressions() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, this::checkHover);
+  }
+
+  // PY-23247
+  public void testOverloads() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
+  }
+
+  // PY-23247
+  public void testHoverOverOverloads() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHover);
+  }
+
+  // PY-23247
+  public void testOverloadsAndImplementation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
+  }
+
+  // PY-23247
+  public void testHoverOverOverloadsAndImplementation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHover);
+  }
+
+  // PY-23247
+  public void testDocOnImplementationWithOverloads() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> {
+        final PsiElement originalElement = loadTest().get("<the_ref>");
+        checkByHTML(myProvider.generateDoc(originalElement.getParent(), originalElement));
+      }
+    );
   }
 }

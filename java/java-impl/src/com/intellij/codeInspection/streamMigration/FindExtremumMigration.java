@@ -46,7 +46,7 @@ class FindExtremumMigration extends BaseStreamApiMigration {
   }
 
   @Override
-  PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb) {
+  PsiElement migrate(@NotNull Project project, @NotNull PsiElement body, @NotNull TerminalBlock tb) {
     ExtremumTerminal terminal = extract(tb, null);
     if (terminal == null) return null;
     return terminal.replace();
@@ -187,7 +187,7 @@ class FindExtremumMigration extends BaseStreamApiMigration {
   static private boolean mayChangeBeforeLoop(@NotNull PsiVariable variable,
                                              @NotNull TerminalBlock terminalBlock) {
     ControlFlowUtils.InitializerUsageStatus status =
-      ControlFlowUtils.getInitializerUsageStatus(variable, terminalBlock.getMainLoop());
+      ControlFlowUtils.getInitializerUsageStatus(variable, terminalBlock.getStreamSourceStatement());
     return status.equals(ControlFlowUtils.InitializerUsageStatus.UNKNOWN);
   }
 
@@ -286,7 +286,7 @@ class FindExtremumMigration extends BaseStreamApiMigration {
       if (method == null) return null;
 
       String inFilterOperation = myMax ? ">=" : "<=";
-      PsiLoopStatement loop = myTerminalBlock.getMainLoop();
+      PsiStatement loop = myTerminalBlock.getStreamSourceStatement();
       PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(loop.getProject());
       String extremumInitializer = myExtremumKeyInitializer.getText();
       PsiExpression condition =
@@ -304,7 +304,7 @@ class FindExtremumMigration extends BaseStreamApiMigration {
         comparator = comparatorName;
       }
       String stream = blockWithFilter.generate() + "." + getOperation(myMax) + "(" + comparator + ").orElse(null)";
-      return replaceWithFindExtremum(myTerminalBlock.getMainLoop(), myExtremum, stream, myExtremumKey);
+      return replaceWithFindExtremum(myTerminalBlock.getStreamSourceStatement(), myExtremum, stream, myExtremumKey);
     }
 
     @Override
@@ -473,7 +473,7 @@ class FindExtremumMigration extends BaseStreamApiMigration {
         terminalBlock = blockWithMap;
       }
       String inFilterOperation = myMax ? ">=" : "<=";
-      PsiLoopStatement loop = terminalBlock.getMainLoop();
+      PsiStatement loop = terminalBlock.getStreamSourceStatement();
       PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(loop.getProject());
       String extremumInitializer = myExtremumInitializer.getText();
       Object nonFilterableInitialValue = getNonFilterableInitialValue(type, myMax);
@@ -573,7 +573,7 @@ class FindExtremumMigration extends BaseStreamApiMigration {
         comparator = comparatorName;
       }
       String stream = myTerminalBlock.generate() + "." + getOperation(myMax) + "(" + comparator + ").orElse(null)";
-      return replaceWithFindExtremum(myTerminalBlock.getMainLoop(), myExtremum, stream, null);
+      return replaceWithFindExtremum(myTerminalBlock.getStreamSourceStatement(), myExtremum, stream, null);
     }
 
     @Override

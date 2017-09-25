@@ -92,7 +92,7 @@ public class ChunkExtractor {
         @NotNull
         @Override
         protected Map<PsiFile, ChunkExtractor> create() {
-          return FactoryMap.createMap(psiFile -> new ChunkExtractor(psiFile));
+          return FactoryMap.create(psiFile -> new ChunkExtractor(psiFile));
         }
       };
     }

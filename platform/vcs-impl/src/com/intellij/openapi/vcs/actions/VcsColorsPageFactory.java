@@ -19,7 +19,6 @@ import com.intellij.application.options.colors.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider;
@@ -27,8 +26,6 @@ import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import com.intellij.util.ArrayUtil;
-import com.intellij.vcs.VcsColorsProvider;
-import com.intellij.vcs.log.VcsLogColors;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -58,11 +55,7 @@ public class VcsColorsPageFactory implements ColorAndFontPanelFactory, ColorAndF
   @Override
   @NotNull
   public AttributesDescriptor[] getAttributeDescriptors() {
-    List<AttributesDescriptor> descriptors = new ArrayList<>();
-    for (VcsColorsProvider provider : Extensions.getExtensions(VcsColorsProvider.EP_NAME)) {
-      descriptors.addAll(provider.getAttributeDescriptors());
-    }
-    return ArrayUtil.toObjectArray(descriptors, AttributesDescriptor.class);
+    return new AttributesDescriptor[0];
   }
 
   @Override
@@ -81,17 +74,6 @@ public class VcsColorsPageFactory implements ColorAndFontPanelFactory, ColorAndF
     List<ColorKey> colorKeys = AnnotationsSettings.ANCHOR_COLOR_KEYS;
     for (int i = 0; i < colorKeys.size(); i++) {
       descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.annotations.color.n", i + 1), colorKeys.get(i), ColorDescriptor.Kind.BACKGROUND));
-    }
-
-    descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.log.merged.commit"), VcsLogColors.MERGED_COMMIT, ColorDescriptor.Kind.FOREGROUND));
-    descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.log.refs.head"), VcsLogColors.REFS_HEAD, ColorDescriptor.Kind.FOREGROUND));
-    descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.log.refs.leaf"), VcsLogColors.REFS_LEAF, ColorDescriptor.Kind.FOREGROUND));
-    descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.log.refs.branch"), VcsLogColors.REFS_BRANCH, ColorDescriptor.Kind.FOREGROUND));
-    descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.log.refs.branch.tag"), VcsLogColors.REFS_BRANCH_REF, ColorDescriptor.Kind.FOREGROUND));
-    descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.log.refs.tag"), VcsLogColors.REFS_TAG, ColorDescriptor.Kind.FOREGROUND));
-
-    for (VcsColorsProvider provider : Extensions.getExtensions(VcsColorsProvider.EP_NAME)) {
-      descriptors.addAll(provider.getColorDescriptors());
     }
 
     return ArrayUtil.toObjectArray(descriptors, ColorDescriptor.class);

@@ -47,7 +47,7 @@ public class ActionGroupUtil {
     AnAction[] actions = actionGroup.getChildren(e);
     for (AnAction action : actions) {
       if (action instanceof Separator) continue;
-      if (isActionEnabledAndVisible(e, action2presentation, action, inModalContext)) {
+      if (isActionEnabledAndVisible(action, e, inModalContext, action2presentation)) {
         if (action instanceof ActionGroup) {
           if (!isGroupEmpty((ActionGroup)action, e, action2presentation, inModalContext)) {
             return false;
@@ -79,12 +79,12 @@ public class ActionGroupUtil {
     AnAction[] actions = actionGroup.getChildren(e);
     for (AnAction action : actions) {
       if (action instanceof ActionGroup) {
-        if (isActionEnabledAndVisible(e, action2presentation, action, isInModalContext)) {
+        if (isActionEnabledAndVisible(action, e, isInModalContext, action2presentation)) {
           result.addAll(getEnabledChildren((ActionGroup)action, e, action2presentation, isInModalContext));
         }
       }
       else if (!(action instanceof Separator)) {
-        if (isActionEnabledAndVisible(e, action2presentation, action, isInModalContext)) {
+        if (isActionEnabledAndVisible(action, e, isInModalContext, action2presentation)) {
           result.add(action);
         }
       }
@@ -92,17 +92,14 @@ public class ActionGroupUtil {
     return result;
   }
 
-  private static boolean isActionEnabledAndVisible(@NotNull final AnActionEvent e,
-                                                   @NotNull final Map<AnAction, Presentation> action2presentation,
-                                                   @NotNull final AnAction action,
-                                                   boolean isInModalContext) {
+  private static boolean isActionEnabledAndVisible(@NotNull AnAction action,
+                                                   @NotNull AnActionEvent e,
+                                                   boolean isInModalContext,
+                                                   @NotNull Map<AnAction, Presentation> action2presentation) {
     Presentation presentation = getPresentation(action, action2presentation);
-    AnActionEvent event = new AnActionEvent(e.getInputEvent(),
-                                            e.getDataContext(),
-                                            ActionPlaces.UNKNOWN,
-                                            presentation,
-                                            ActionManager.getInstance(),
-                                            e.getModifiers());
+    AnActionEvent event = new AnActionEvent(
+      e.getInputEvent(), e.getDataContext(), e.getPlace(),
+      presentation, ActionManager.getInstance(), e.getModifiers());
     event.setInjectedContext(action.isInInjectedContext());
     ActionUtil.performDumbAwareUpdate(isInModalContext, action, event, false);
 

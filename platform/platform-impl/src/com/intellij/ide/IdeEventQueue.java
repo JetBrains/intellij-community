@@ -39,6 +39,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -531,10 +532,6 @@ public class IdeEventQueue extends EventQueue {
 
     if (processAppActivationEvents(e)) return;
 
-    if (!typeAheadFlushing) {
-      fixStickyFocusedComponents(e);
-    }
-
     if (!myPopupManager.isPopupActive()) {
       enterSuspendModeIfNeeded(e);
     }
@@ -657,104 +654,6 @@ public class IdeEventQueue extends EventQueue {
       }
     }
     return false;
-  }
-
-  private static void fixStickyWindow(@NotNull KeyboardFocusManager mgr, Window wnd, @NotNull String resetMethod) {
-    if (wnd != null && !wnd.isShowing()) {
-      Window showingWindow = wnd;
-      while (showingWindow != null) {
-        if (showingWindow.isShowing()) break;
-        showingWindow = (Window)showingWindow.getParent();
-      }
-
-      if (showingWindow == null) {
-        final Frame[] allFrames = Frame.getFrames();
-        for (Frame each : allFrames) {
-          if (each.isShowing()) {
-            showingWindow = each;
-            break;
-          }
-        }
-      }
-
-
-      if (showingWindow != null && showingWindow != wnd) {
-        final Method setActive = ReflectionUtil.findMethod(ReflectionUtil.getClassDeclaredMethods(KeyboardFocusManager.class, false), resetMethod, Window.class);
-        if (setActive != null) {
-          try {
-            setActive.invoke(mgr, (Window)showingWindow);
-          }
-          catch (Exception exc) {
-            LOG.info(exc);
-          }
-        }
-      }
-    }
-  }
-
-  public void fixStickyFocusedComponents(@Nullable AWTEvent e) {
-    if (e != null && !(e instanceof InputEvent)) return;
-
-    final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-
-    if (Registry.is("actionSystem.fixStickyFocusedWindows")) {
-      fixStickyWindow(mgr, mgr.getActiveWindow(), "setGlobalActiveWindow");
-      fixStickyWindow(mgr, mgr.getFocusedWindow(), "setGlobalFocusedWindow");
-    }
-
-    if (Registry.is("actionSystem.fixNullFocusedComponent")) {
-      final Component focusOwner = mgr.getFocusOwner();
-      if (focusOwner == null || !focusOwner.isShowing() || focusOwner instanceof JFrame || focusOwner instanceof JDialog) {
-
-        final Application app = ApplicationManager.getApplication();
-        if (app instanceof ApplicationEx && !((ApplicationEx) app).isLoaded()) {
-          return;
-        }
-
-        boolean mouseEventsAhead = isMouseEventAhead(e);
-        boolean focusTransferredNow = IdeFocusManager.getGlobalInstance().isFocusBeingTransferred();
-
-        boolean okToFixFocus = !mouseEventsAhead && !focusTransferredNow;
-
-        if (okToFixFocus) {
-          Window showingWindow = mgr.getActiveWindow();
-          if (showingWindow == null) {
-            Method getNativeFocusOwner = ReflectionUtil.getDeclaredMethod(KeyboardFocusManager.class, "getNativeFocusOwner");
-            if (getNativeFocusOwner != null) {
-              try {
-                Object owner = getNativeFocusOwner.invoke(mgr);
-                if (owner instanceof Component) {
-                  showingWindow = UIUtil.getWindow((Component)owner);
-                }
-              }
-              catch (Exception e1) {
-                LOG.debug(e1);
-              }
-            }
-          }
-          if (showingWindow != null) {
-            final IdeFocusManager fm = IdeFocusManager.findInstanceByComponent(showingWindow);
-            ExpirableRunnable maybeRequestDefaultFocus = new ExpirableRunnable() {
-              @Override
-              public void run() {
-                if (getPopupManager().requestDefaultFocus(false)) return;
-
-                final Application app = ApplicationManager.getApplication();
-                if (app != null && app.isActive()) {
-                  fm.requestDefaultFocus(false);
-                }
-              }
-
-              @Override
-              public boolean isExpired() {
-                return !UIUtil.isMeaninglessFocusOwner(mgr.getFocusOwner());
-              }
-            };
-            fm.revalidateFocus(maybeRequestDefaultFocus);
-          }
-        }
-      }
-    }
   }
 
   public static boolean isMouseEventAhead(@Nullable AWTEvent e) {
@@ -1153,7 +1052,12 @@ public class IdeEventQueue extends EventQueue {
       if (listener.consumePostedEvent(event)) return false;
     }
 
-    myFrequentEventDetector.eventHappened(event);
+    String message = myFrequentEventDetector.getMessageOnEvent(event);
+    if (message != null) {
+      // we can't log right here, because logging has locks inside, and postEvents can deadlock if it's blocked by anything (IDEA-161322)
+      AppExecutorUtil.getAppExecutorService().submit(() -> myFrequentEventDetector.logMessage(message));
+    }
+
     if (isKeyboardEvent(event)) {
       myKeyboardEventsPosted.incrementAndGet();
     }

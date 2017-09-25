@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.xmlb.annotations.Attribute;
 import one.util.streamex.StreamEx;
@@ -48,7 +49,13 @@ public class ErrorFixExtensionPoint extends AbstractExtensionPointBean {
     try {
       return findClass(implementationClass).asSubclass(IntentionAction.class).getConstructor(PsiElement.class).newInstance(context);
     }
-    catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | ClassNotFoundException e) {
+    catch (InvocationTargetException e) {
+      if(e.getCause() instanceof ProcessCanceledException) {
+        throw ((ProcessCanceledException)e.getCause());
+      }
+      throw new RuntimeException("Error instantiating quick-fix " + implementationClass + " (error code: " + errorCode + ")", e.getCause());
+    }
+    catch (InstantiationException | IllegalAccessException | NoSuchMethodException | ClassNotFoundException e) {
       throw new RuntimeException("Error instantiating quick-fix " + implementationClass + " (error code: " + errorCode + ")", e);
     }
   }

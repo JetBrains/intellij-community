@@ -21,6 +21,7 @@ import com.intellij.find.*;
 import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.find.editorHeaderActions.ShowMoreOptions;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
@@ -111,6 +112,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   private SearchTextArea myReplaceTextArea;
   private ActionListener myOkActionListener;
   private final AtomicBoolean myCanClose = new AtomicBoolean(true);
+  private final AtomicBoolean myIsPinned = new AtomicBoolean(false);
   private JBLabel myOKHintLabel;
   private Alarm mySearchRescheduleOnCancellationsAlarm;
   private volatile ProgressIndicatorBase myResultsPreviewSearchProgress;
@@ -126,6 +128,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   private final ArrayList<String> myFileMasks = new ArrayList<>();
   private ActionButton myFilterContextButton;
   private ActionButton myTabResultsButton;
+  private ActionButton myPinButton;
   private JButton myOKButton;
   private JTextArea mySearchComponent;
   private JTextArea myReplaceComponent;
@@ -175,8 +178,10 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         .setMayBeParent(true)
         .setCancelOnClickOutside(true)
         .setRequestFocus(true)
+        .setCancelKeyEnabled(false)
         .setCancelCallback(() -> {
           if (!myCanClose.get()) return false;
+          if (myIsPinned.get()) return false;
           if (!ApplicationManager.getApplication().isActive()) return false;
           if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() == null) return false;
           List<JBPopup> popups = JBPopupFactory.getInstance().getChildPopups(this);
@@ -230,6 +235,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       }
       myBalloon.setSize(prev != null ? prev : panelSize);
 
+      IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
       if (showPoint != null && showPoint.getComponent() != null) {
         myBalloon.show(showPoint);
       } else {
@@ -344,6 +350,20 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         }
       };
     myShowFilterPopupAction.registerCustomShortcutSet(myShowFilterPopupAction.getShortcutSet(), this);
+    ToggleAction pinAction = new ToggleAction(null, null, AllIcons.General.AutohideOff) {
+      @Override
+      public boolean isSelected(AnActionEvent e) {
+        return UISettings.getInstance().getPinFindInPath();
+      }
+
+      @Override
+      public void setSelected(AnActionEvent e, boolean state) {
+        myIsPinned.set(state);
+        UISettings.getInstance().setPinFindInPath(state);
+      }
+    };
+    myPinButton = new ActionButton(pinAction, pinAction.getTemplatePresentation(), ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+
 
     DefaultActionGroup tabResultsContextGroup = new DefaultActionGroup();
     tabResultsContextGroup.add(new ToggleAction(FindBundle.message("find.options.skip.results.tab.with.one.usage.checkbox")) {
@@ -414,6 +434,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         );
         return;
       }
+      myIsPinned.set(false);
       Disposer.dispose(myBalloon);
     };
     myOKButton.addActionListener(myOkActionListener);
@@ -608,7 +629,15 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     add(RegExHelpPopup.createRegExLink("<html><body><b>?</b></body></html>", myCbRegularExpressions, LOG), "gapright " + (16-cbGapLeft));
     add(myCbFileFilter);
     add(myFileMaskField, "gapright 16, w 80, wmax 80, wmin 80");
-    add(myFilterContextButton, "wrap");
+    if (Registry.is("ide.find.as.popup.allow.pin") || ApplicationManager.getApplication().isInternal()) {
+      myIsPinned.set(UISettings.getInstance().getPinFindInPath());
+      JPanel twoButtons = new JPanel(new GridLayout(1, 2, 4, 0));
+      twoButtons.add(myFilterContextButton);
+      twoButtons.add(myPinButton);
+      add(twoButtons, "wrap");
+    } else {
+      add(myFilterContextButton, "wrap");
+    }
     add(mySearchTextArea, "pushx, growx, sx 10, gaptop 4, wrap");
     add(myReplaceTextArea, "pushx, growx, sx 10, gaptop 4, wrap");
     add(scopesPanel, "sx 10, pushx, growx, ax left, wrap, gaptop 4, gapbottom 4");
@@ -638,6 +667,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       @Override
       public void actionPerformed(AnActionEvent e) {
         if (myBalloon != null && myBalloon.isVisible()) {
+          myIsPinned.set(false);
           myBalloon.cancel();
         }
       }

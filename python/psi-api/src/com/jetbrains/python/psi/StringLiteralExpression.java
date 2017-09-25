@@ -17,6 +17,7 @@ package com.jetbrains.python.psi;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A generic string literal interface (used both in Python code and template files).
@@ -24,6 +25,7 @@ import com.intellij.psi.PsiElement;
  * @author yole
  */
 public interface StringLiteralExpression extends PsiElement {
+  @NotNull
   String getStringValue();
   TextRange getStringValueTextRange();
 }

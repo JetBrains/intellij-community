@@ -87,7 +87,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
 
       fireOnTestingFinished(myTestsRootProxy);
     });
-    stopEventProcessing();
+    super.onFinishTesting();
   }
 
   @Override

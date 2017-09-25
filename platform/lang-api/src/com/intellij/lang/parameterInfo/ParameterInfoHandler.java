@@ -46,5 +46,6 @@ public interface ParameterInfoHandler <ParameterOwner, ParameterType> {
   @Nullable String getParameterCloseChars();
   boolean tracksParameterIndex();
 
+  default boolean supportsOverloadSwitching() { return false; }
   default void dispose() {}
 }

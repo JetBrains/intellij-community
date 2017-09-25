@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 
 public class PyCCCreateProjectFromArchive extends DumbAwareAction {
   public PyCCCreateProjectFromArchive() {
@@ -19,6 +20,7 @@ public class PyCCCreateProjectFromArchive extends DumbAwareAction {
       return;
     }
 
+    EduUsagesCollector.coursePreviewed();
     AbstractNewProjectDialog dialog = new AbstractNewProjectDialog() {
       @Override
       protected DefaultActionGroup createRootStep() {

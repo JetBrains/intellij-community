@@ -339,12 +339,15 @@ public class EnvironmentUtil {
   }
 
   public static void inlineParentOccurrences(@NotNull Map<String, String> envs) {
-    Map<String, String> parentParams = new HashMap<String, String>(System.getenv());
+    inlineParentOccurrences(envs, new HashMap<String, String>(System.getenv()));
+  }
+
+  public static void inlineParentOccurrences(@NotNull Map<String, String> envs, @NotNull Map<String, String> parentEnv) {
     for (Map.Entry<String, String> entry : envs.entrySet()) {
       String key = entry.getKey();
       String value = entry.getValue();
       if (value != null) {
-        String parentVal = parentParams.get(key);
+        String parentVal = parentEnv.get(key);
         if (parentVal != null && containsEnvKeySubstitution(key, value)) {
           envs.put(key, value.replace("$" + key + "$", parentVal));
         }

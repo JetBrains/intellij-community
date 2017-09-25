@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FixedComboBoxEditor;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,14 +37,14 @@ public class ComboboxEditorTextField extends EditorTextField {
   public static final Border EDITOR_TEXTFIELD_BORDER = new FixedComboBoxEditor.MacComboBoxEditorBorder(false) {
     @Override
     public Insets getBorderInsets(Component c) {
-      return new Insets(5, 6, 5, 3);
+      return JBUI.insets(5, 6, 5, 3);
     }
   };
 
   public static final Border EDITOR_TEXTFIELD_DISABLED_BORDER = new FixedComboBoxEditor.MacComboBoxEditorBorder(true) {
     @Override
     public Insets getBorderInsets(Component c) {
-      return new Insets(5, 6, 5, 3);
+      return JBUI.insets(5, 6, 5, 3);
     }
   };
 
@@ -60,9 +61,6 @@ public class ComboboxEditorTextField extends EditorTextField {
   public ComboboxEditorTextField(Document document, Project project, FileType fileType, boolean isViewer) {
     super(document, project, fileType, isViewer);
     setOneLineMode(true);
-    if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) { //todo[kb] make for all LaFs and color schemes ?
-      setBackground(UIUtil.getTextFieldBackground());
-    }
   }
 
   @Override

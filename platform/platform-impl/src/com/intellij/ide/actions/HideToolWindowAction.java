@@ -46,7 +46,7 @@ public class HideToolWindowAction extends AnAction implements DumbAware {
   static boolean shouldBeHiddenByShortCut(@NotNull ToolWindowManagerEx manager, @Nullable String id) {
     if (id == null) return false;
     ToolWindow window = manager.getToolWindow(id);
-    return window.isVisible() && window.getType() != ToolWindowType.WINDOWED;
+    return window.isVisible() && window.getType() != ToolWindowType.WINDOWED && window.getType() != ToolWindowType.FLOATING;
   }
 
   public void update(AnActionEvent event) {

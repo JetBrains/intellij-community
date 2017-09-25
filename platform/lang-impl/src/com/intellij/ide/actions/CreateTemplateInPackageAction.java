@@ -34,6 +34,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * @author peter
@@ -58,19 +59,24 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
 
   @Override
   protected boolean isAvailable(final DataContext dataContext) {
+    return isAvailable(dataContext, mySourceRootTypes, this::checkPackageExists);
+  }
+
+  public static boolean isAvailable(DataContext dataContext, Set<? extends JpsModuleSourceRootType<?>> sourceRootTypes,
+                                    Function<PsiDirectory, Boolean> checkPackageExists) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
     if (project == null || view == null || view.getDirectories().length == 0) {
       return false;
     }
 
-    if (mySourceRootTypes == null) {
+    if (sourceRootTypes == null) {
       return true;
     }
 
     ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     for (PsiDirectory dir : view.getDirectories()) {
-      if (projectFileIndex.isUnderSourceRootOfType(dir.getVirtualFile(), mySourceRootTypes) && checkPackageExists(dir)) {
+      if (projectFileIndex.isUnderSourceRootOfType(dir.getVirtualFile(), sourceRootTypes) && checkPackageExists.apply(dir)) {
         return true;
       }
     }

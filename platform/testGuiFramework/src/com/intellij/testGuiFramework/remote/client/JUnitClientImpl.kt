@@ -16,13 +16,14 @@
 package com.intellij.testGuiFramework.remote.client
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.testGuiFramework.remote.transport.MessageType
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.net.Socket
+import java.net.SocketException
 import java.util.*
-import java.util.concurrent.BlockingQueue
-import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.*
 
 /**
  * @author Sergey Karashevich
@@ -32,6 +33,7 @@ class JUnitClientImpl(val host: String, val port: Int, initHandlers: Array<Clien
   private val LOG = Logger.getInstance("#com.intellij.testGuiFramework.remote.client.JUnitClientImpl")
   private val RECEIVE_THREAD = "JUnit Client Receive Thread"
   private val SEND_THREAD = "JUnit Client Send Thread"
+  private val KEEP_ALIVE_THREAD = "JUnit Keep Alive Thread"
 
   private val connection: Socket
   private val clientReceiveThread: ClientReceiveThread
@@ -42,6 +44,7 @@ class JUnitClientImpl(val host: String, val port: Int, initHandlers: Array<Clien
   private val objectOutputStream: ObjectOutputStream
   private val handlers: ArrayList<ClientHandler> = ArrayList()
 
+  private val keepAliveThread: KeepAliveThread
 
   init {
     if (initHandlers != null) handlers.addAll(initHandlers)
@@ -57,6 +60,9 @@ class JUnitClientImpl(val host: String, val port: Int, initHandlers: Array<Clien
     objectInputStream = ObjectInputStream(connection.getInputStream())
     clientReceiveThread = ClientReceiveThread(connection, objectInputStream)
     clientReceiveThread.start()
+
+    keepAliveThread = KeepAliveThread(connection, objectOutputStream)
+    keepAliveThread.start()
   }
 
   override fun addHandler(handler: ClientHandler) {
@@ -80,11 +86,9 @@ class JUnitClientImpl(val host: String, val port: Int, initHandlers: Array<Clien
     LOG.info("Stopping client on port: $clientPort ...")
     poolOfMessages.clear()
     handlers.clear()
-    clientReceiveThread.objectInputStream.close()
-    clientReceiveThread.join()
-    clientSendThread.objectOutputStream.close()
-    clientSendThread.join()
     connection.close()
+    keepAliveThread.cancel()
+
     LOG.info("Stopped client on port: $clientPort")
   }
 
@@ -125,6 +129,25 @@ class JUnitClientImpl(val host: String, val port: Int, initHandlers: Array<Clien
       finally {
         objectOutputStream.close()
       }
+    }
+  }
+
+  inner class KeepAliveThread(val connection: Socket, private val objectOutputStream: ObjectOutputStream) : Thread(KEEP_ALIVE_THREAD) {
+    private val myExecutor = Executors.newSingleThreadScheduledExecutor()
+    override fun run() {
+      myExecutor.scheduleWithFixedDelay(
+        {
+          if (connection.isConnected) {
+            objectOutputStream.writeObject(TransportMessage(MessageType.KEEP_ALIVE))
+          } else{
+            throw SocketException("Connection is broken")
+          }
+        }, 0L, 5, TimeUnit.SECONDS)
+    }
+
+    fun cancel() {
+      myExecutor.shutdownNow()
+      objectOutputStream.close()
     }
   }
 

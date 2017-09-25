@@ -24,17 +24,20 @@ import org.junit.Rule;
 import java.io.File;
 
 public abstract class UpdaterTestCase {
-  protected static final UpdaterUI TEST_UI = new ConsoleUpdaterUI() {
-    @Override public void startProcess(String title) { }
-    @Override public void setStatus(String status) { }
+  protected static class TestUpdaterUI extends ConsoleUpdaterUI {
+    public boolean cancelled = false;
+
     @Override public void setDescription(String oldBuildDesc, String newBuildDesc) { }
-    @Override public boolean showWarning(String message) { return false; }
-  };
+    @Override public void startProcess(String title) { }
+    @Override public void checkCancelled() throws OperationCancelledException { if (cancelled) throw new OperationCancelledException(); }
+    @Override public void showError(String message) { }
+  }
 
   @Rule public TempDirectory tempDir = new TempDirectory();
 
-  protected CheckSums CHECKSUMS;
   protected File dataDir;
+  protected TestUpdaterUI TEST_UI;
+  protected CheckSums CHECKSUMS;
 
   @Before
   public void setUp() throws Exception {
@@ -42,6 +45,8 @@ public abstract class UpdaterTestCase {
 
     Runner.checkCaseSensitivity(dataDir.getPath());
     Runner.initTestLogger();
+
+    TEST_UI = new TestUpdaterUI();
 
     boolean windowsLineEnds = new File(dataDir, "Readme.txt").length() == 7132;
     CHECKSUMS = new CheckSums(windowsLineEnds);

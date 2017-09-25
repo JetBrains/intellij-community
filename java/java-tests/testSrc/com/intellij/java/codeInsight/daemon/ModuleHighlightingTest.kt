@@ -305,7 +305,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testMarkedForRemoval() {
     myFixture.enableInspections(DeprecationInspection(), MarkedForRemovalInspection())
     addFile("module-info.java", "@Deprecated(forRemoval=true) module M2 { }", M2)
-    highlight("""module M { requires <warning descr="'M2' is deprecated and marked for removal">M2</warning>; }""")
+    highlight("""module M { requires <error descr="'M2' is deprecated and marked for removal">M2</error>; }""")
   }
 
   fun testPackageConflicts() {

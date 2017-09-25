@@ -15,20 +15,10 @@
  */
 package com.intellij.ui.tree;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.function.Supplier;
-
-import static java.awt.EventQueue.isDispatchThread;
-
 /**
  * @author Sergey.Malenkov
  */
 final class Reference<T> {
-  private static final Logger LOG = Logger.getInstance(Reference.class);
   private volatile boolean valid;
   private volatile T value;
 
@@ -49,36 +39,5 @@ final class Reference<T> {
 
   T get() {
     return value;
-  }
-
-  static <T> Reference<T> create(@NotNull Supplier<T> supplier) {
-    Reference<T> reference = new Reference<>();
-    try {
-      Runnable process = () -> reference.set(supplier.get());
-      ProgressManager manager = getProgressManager();
-      if (manager == null || isDispatchThread()) {
-        process.run();
-      }
-      else {
-        manager.runInReadActionWithWriteActionPriority(process, null);
-      }
-    }
-    catch (ProcessCanceledException ignore) {
-    }
-    catch (Exception exception) {
-      LOG.warn(exception);
-      return null;
-    }
-    return reference;
-  }
-
-  private static ProgressManager getProgressManager() {
-    try {
-      return ProgressManager.getInstance();
-    }
-    catch (NullPointerException exception) {
-      LOG.debug("progress manager is not available");
-      return null; // in tests without application
-    }
   }
 }

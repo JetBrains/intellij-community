@@ -21,19 +21,34 @@ public class RepositoryLibraryPropertiesModel {
   private String version;
   private boolean downloadSources;
   private boolean downloadJavaDocs;
+  private boolean includeTransitiveDependencies;
 
   public RepositoryLibraryPropertiesModel(String version, boolean downloadSources, boolean downloadJavaDocs) {
+    this(version, downloadSources, downloadJavaDocs, true);
+  }
+
+  public RepositoryLibraryPropertiesModel(String version, boolean downloadSources, boolean downloadJavaDocs,
+                                          boolean includeTransitiveDependencies) {
     this.version = version;
     this.downloadSources = downloadSources;
     this.downloadJavaDocs = downloadJavaDocs;
+    this.includeTransitiveDependencies = includeTransitiveDependencies;
   }
 
   public RepositoryLibraryPropertiesModel clone() {
-    return new RepositoryLibraryPropertiesModel(version, downloadSources, downloadJavaDocs);
+    return new RepositoryLibraryPropertiesModel(version, downloadSources, downloadJavaDocs, includeTransitiveDependencies);
   }
 
   public boolean isValid() {
     return !Strings.isNullOrEmpty(version);
+  }
+
+  public boolean isIncludeTransitiveDependencies() {
+    return includeTransitiveDependencies;
+  }
+
+  public void setIncludeTransitiveDependencies(boolean includeTransitiveDependencies) {
+    this.includeTransitiveDependencies = includeTransitiveDependencies;
   }
 
   public boolean isDownloadSources() {
@@ -69,6 +84,7 @@ public class RepositoryLibraryPropertiesModel {
 
     if (downloadSources != model.downloadSources) return false;
     if (downloadJavaDocs != model.downloadJavaDocs) return false;
+    if (includeTransitiveDependencies != model.includeTransitiveDependencies) return false;
     if (version != null ? !version.equals(model.version) : model.version != null) return false;
 
     return true;
@@ -78,6 +94,7 @@ public class RepositoryLibraryPropertiesModel {
   public int hashCode() {
     int result = (downloadSources ? 1 : 0);
     result = 31 * result + (downloadJavaDocs ? 1 : 0);
+    result = 31 * result + (includeTransitiveDependencies ? 1 : 0);
     result = 31 * result + (version != null ? version.hashCode() : 0);
     return result;
   }

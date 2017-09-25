@@ -109,6 +109,7 @@ public class JavaColorSettingsPage implements RainbowColorSettingsPage, Inspecti
     ourTags.put("static", JavaHighlightingColors.STATIC_FIELD_ATTRIBUTES);
     ourTags.put("static_final", JavaHighlightingColors.STATIC_FINAL_FIELD_ATTRIBUTES);
     ourTags.put("deprecated", CodeInsightColors.DEPRECATED_ATTRIBUTES);
+    ourTags.put("for_removal", CodeInsightColors.MARKED_FOR_REMOVAL_ATTRIBUTES);
     ourTags.put("constructorCall", JavaHighlightingColors.CONSTRUCTOR_CALL_ATTRIBUTES);
     ourTags.put("constructorDeclaration", JavaHighlightingColors.CONSTRUCTOR_DECLARATION_ATTRIBUTES);
     ourTags.put("methodCall", JavaHighlightingColors.METHOD_CALL_ATTRIBUTES);
@@ -193,6 +194,7 @@ public class JavaColorSettingsPage implements RainbowColorSettingsPage, Inspecti
       "    <error>int <localVar>localVar</localVar> = \"IntelliJ\"</error>; // Error, incompatible types\n" +
       "    <class>System</class>.<static>out</static>.<methodCall>println</methodCall>(<field>anotherString</field> + <inherited_method>toString</inherited_method>() + <localVar>localVar</localVar>);\n" +
       "    long <localVar>time</localVar> = <class>Date</class>.<static_method><deprecated>parse</deprecated></static_method>(\"1.2.3\"); // Method is deprecated\n" +
+      "    new <class>Thread</class>().<for_removal>countStackFrames</for_removal>(); // Method is deprecated and marked for removal\n" +
       "    <reassignedLocalVar>reassignedValue</reassignedLocalVar> ++; \n" +
       "    <field>field</field>.<abstract_method>run</abstract_method>(); \n" +
       "    new <anonymousClass>SomeClass</anonymousClass>() {\n" +

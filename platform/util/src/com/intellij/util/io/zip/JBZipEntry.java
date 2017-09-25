@@ -23,6 +23,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
@@ -370,9 +371,14 @@ public class JBZipEntry implements Cloneable {
   }
 
   private InputStream getInputStream() throws IOException {
+    myFile.ensureFlushed(getHeaderOffset() + JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH + JBZipFile.WORD);
     long start = calcDataOffset();
-
-    BoundedInputStream bis = new BoundedInputStream(start, getCompressedSize());
+    long size = getCompressedSize();
+    myFile.ensureFlushed(start + size);
+    if (myFile.archive.length() < start + size) {
+      throw new EOFException();
+    }
+    BoundedInputStream bis = new BoundedInputStream(start, size);
     switch (getMethod()) {
       case ZipEntry.STORED:
         return bis;

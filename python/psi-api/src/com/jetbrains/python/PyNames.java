@@ -97,6 +97,7 @@ public class PyNames {
   public static final String NONE = "None";
   public static final String TRUE = "True";
   public static final String FALSE = "False";
+  public static final String ELLIPSIS = "...";
 
   public static final String TYPES_FUNCTION_TYPE = "types.FunctionType";
   public static final String TYPES_METHOD_TYPE = "types.UnboundMethodType";
@@ -210,6 +211,7 @@ public class PyNames {
   public static final String SLICE = "slice";
 
   public static final String KEYS = "keys";
+  public static final String APPEND = "append";
   public static final String EXTEND = "extend";
   public static final String UPDATE = "update";
 

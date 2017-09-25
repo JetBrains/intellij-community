@@ -261,7 +261,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
     LanguageLevelModuleExtensionImpl languageLevelModuleExtension = model.getModuleExtension(LanguageLevelModuleExtensionImpl.class);
     if (languageLevelModuleExtension.getLanguageLevel() != null) {
       //noinspection ConstantConditions
-      XmlSerializer.serializeInto(languageLevelModuleExtension.getState(), root);
+      XmlSerializer.serializeStateInto(languageLevelModuleExtension, root);
       isModified = true;
     }
 

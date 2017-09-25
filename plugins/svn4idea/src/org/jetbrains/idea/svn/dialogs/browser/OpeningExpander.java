@@ -20,27 +20,29 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.dialogs.RepositoryBrowserComponent;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
 import org.jetbrains.idea.svn.dialogs.browserCache.Expander;
+import org.tmatesoft.svn.core.SVNURL;
 
 import javax.swing.tree.TreeNode;
 import java.util.LinkedList;
 import java.util.List;
 
 public class OpeningExpander extends AbstractOpeningExpander {
-  private final List<String> pathElements;
-  private final String myLongest;
+  private final List<SVNURL> pathElements;
+  private final SVNURL myLongest;
 
   public OpeningExpander(final TreeNode[] path, final RepositoryBrowserComponent browser, final RepositoryTreeNode selectionPath) {
-    super(browser, selectionPath.getURL().toString());
+    super(browser, selectionPath.getURL());
     pathElements = new LinkedList<>();
 
     for (TreeNode aPath : path) {
       RepositoryTreeNode node = (RepositoryTreeNode)aPath;
-      pathElements.add(node.getURL().toString());
+      pathElements.add(node.getURL());
     }
     myLongest = pathElements.get(pathElements.size() - 1);
   }
 
-  protected ExpandVariants expandNode(final String url) {
+  @Override
+  protected ExpandVariants expandNode(@NotNull SVNURL url) {
     if (pathElements.contains(url)) {
       if (myLongest.equals(url)) {
         return ExpandVariants.EXPAND_AND_EXIT;
@@ -50,7 +52,8 @@ public class OpeningExpander extends AbstractOpeningExpander {
     return ExpandVariants.DO_NOTHING;
   }
 
-  protected boolean checkChild(final String childUrl) {
+  @Override
+  protected boolean checkChild(@NotNull SVNURL childUrl) {
     return pathElements.contains(childUrl);
   }
   

@@ -39,6 +39,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.rt.debugger.agent.CaptureStorage;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
@@ -48,10 +49,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -245,10 +243,12 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
   }
 
   @Nullable
-  public static List<StackFrameItem> getRelatedStack(@NotNull StackFrameProxyImpl frame, @NotNull SuspendContextImpl suspendContext) {
+  public static List<StackFrameItem> getRelatedStack(@NotNull StackFrameProxyImpl frame,
+                                                     @NotNull SuspendContextImpl suspendContext,
+                                                     boolean checkInProcessData) {
     DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
     Map<Object, List<StackFrameItem>> capturedStacks = debugProcess.getUserData(CAPTURED_STACKS);
-    if (ContainerUtil.isEmpty(capturedStacks)) {
+    if (ContainerUtil.isEmpty(capturedStacks) && !Registry.is("debugger.capture.points.agent")) {
       return null;
     }
     List<StackCapturingLineBreakpoint> captureBreakpoints = debugProcess.getUserData(CAPTURE_BREAKPOINTS);
@@ -265,10 +265,18 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
         if ((StringUtil.isEmpty(insertClassName) || StringUtil.equals(insertClassName, className)) &&
             StringUtil.equals(b.myCapturePoint.myInsertMethodName, methodName)) {
           try {
-            Value key = b.myInsertEvaluator.evaluate(new EvaluationContextImpl(suspendContext, frame));
+            EvaluationContextImpl evaluationContext = new EvaluationContextImpl(suspendContext, frame);
+            Value key = b.myInsertEvaluator.evaluate(evaluationContext);
+            List<StackFrameItem> items = null;
             if (key instanceof ObjectReference) {
-              return capturedStacks.get(getKey((ObjectReference)key));
+              if (capturedStacks != null) {
+                items = capturedStacks.get(getKey((ObjectReference)key));
+              }
+              if (items == null && checkInProcessData) {
+                items = getProcessCapturedStack(key, evaluationContext);
+              }
             }
+            return items;
           }
           catch (EvaluateException e) {
             LOG.debug(e);
@@ -281,6 +289,63 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
       LOG.debug(e);
     }
     return null;
+  }
+
+  private static List<StackFrameItem> getProcessCapturedStack(Value key, EvaluationContextImpl evaluationContext)
+    throws EvaluateException {
+    if (Registry.is("debugger.capture.points.agent")) {
+      DebugProcessImpl process = evaluationContext.getDebugProcess();
+      // TODO: cache class & method
+      ClassType captureClass = (ClassType)process.findClass(evaluationContext, CaptureStorage.class.getName(), null);
+      Method getRelatedStackMethod = captureClass.methodsByName("getRelatedStack").get(0);
+      Value resArray = process.invokeMethod(evaluationContext, captureClass, getRelatedStackMethod, Collections.singletonList(key), true);
+      if (resArray instanceof ArrayReference) {
+        List<Value> values = ((ArrayReference)resArray).getValues();
+        List<StackFrameItem> res = new ArrayList<>(values.size());
+        for (Value value : values) {
+          List<Value> values1 = ((ArrayReference)value).getValues();
+          res.add(new ProcessStackFrameItem(getStringRefValue((StringReference)values1.get(0)),
+                                            getStringRefValue((StringReference)values1.get(2)),
+                                            Integer.parseInt(((StringReference)values1.get(3)).value())));
+        }
+        return res;
+      }
+    }
+    return null;
+  }
+
+  private static String getStringRefValue(StringReference ref) {
+    return ref != null ? ref.value() : null;
+  }
+
+  private static class ProcessStackFrameItem extends StackFrameItem {
+    final String myClass;
+    final String myMethod;
+    final int myLine;
+
+    public ProcessStackFrameItem(String aClass, String method, int line) {
+      super(null, null);
+      myClass = aClass;
+      myMethod = method;
+      myLine = line;
+    }
+
+    @NotNull
+    @Override
+    public String path() {
+      return myClass;
+    }
+
+    @Override
+    public int line() {
+      return myLine;
+    }
+
+    @NotNull
+    @Override
+    public String method() {
+      return myMethod;
+    }
   }
 
   @Nullable

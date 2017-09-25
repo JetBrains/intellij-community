@@ -18,8 +18,6 @@ package com.theoryinpractice.testng.inspection;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.naming.ConventionInspection;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
@@ -56,11 +54,6 @@ public class TestNGMethodNamingConventionInspection extends ConventionInspection
   @Override
   protected int getDefaultMaxLength() {
     return 64;
-  }
-
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new RenameFix();
   }
 
   @Override

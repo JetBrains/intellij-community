@@ -18,6 +18,7 @@ package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ModuleGroup;
+import com.intellij.ide.scratch.ScratchProjectViewPane;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -25,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -83,6 +85,9 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
 
     if (getSettings().isShowLibraryContents()) {
       nodes.add(new ExternalLibrariesNode(getProject(), getSettings()));
+    }
+    if (Registry.is("ide.scratch.in.project.view")) {
+      nodes.add(ScratchProjectViewPane.createRootNode(getProject(), getSettings()));
     }
 
     return nodes;

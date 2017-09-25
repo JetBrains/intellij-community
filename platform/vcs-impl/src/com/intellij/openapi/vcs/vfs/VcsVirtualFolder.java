@@ -38,7 +38,7 @@ public class VcsVirtualFolder extends AbstractVcsVirtualFile {
   }
 
   @NotNull
-  public byte[] contentsToByteArray() throws IOException {
+  public byte[] contentsToByteArray() {
     throw new RuntimeException(VcsBundle.message("exception.text.internal.error.method.should.not.be.called"));
   }
 }

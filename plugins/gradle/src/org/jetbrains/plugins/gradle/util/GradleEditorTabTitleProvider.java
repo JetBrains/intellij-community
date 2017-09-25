@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,26 +18,30 @@ package org.jetbrains.plugins.gradle.util;
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/5/14
+ * @since 5.02.2014
  */
-public class GradleEditorTabTitleProvider implements EditorTabTitleProvider {
+public class GradleEditorTabTitleProvider implements EditorTabTitleProvider, DumbAware {
+  @Override
   public String getEditorTabTitle(Project project, VirtualFile file) {
     if (GradleConstants.EXTENSION.equals(file.getExtension()) && GradleConstants.DEFAULT_SCRIPT_NAME.equals(file.getName())) {
       for (Module module : ModuleManager.getInstance(project).getModules()) {
-        if (module.isDisposed()) return null;
-
-        final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-        for (VirtualFile virtualFile : moduleRootManager.getContentRoots()) {
-          if (virtualFile.equals(file.getParent())) return module.getName();
+        if (!module.isDisposed()) {
+          for (VirtualFile root : ModuleRootManager.getInstance(module).getContentRoots()) {
+            if (root.equals(file.getParent())) {
+              return module.getName();
+            }
+          }
         }
       }
     }
+
     return null;
   }
 }

@@ -77,12 +77,12 @@ public class WcInfoLoader {
     if (myLocation != null && !myLocation.toPresentableString().startsWith(url) && !url.startsWith(myLocation.toPresentableString())) {
       return null;
     }
-    if (!SvnUtil.checkRepositoryVersion15(myVcs, url)) {
+    if (!SvnUtil.checkRepositoryVersion15(myVcs, info.getUrl())) {
       return null;
     }
 
     // check of WC version
-    RootUrlInfo rootForUrl = myVcs.getSvnFileUrlMapping().getWcRootForUrl(url);
+    RootUrlInfo rootForUrl = myVcs.getSvnFileUrlMapping().getWcRootForUrl(info.getUrl());
     return rootForUrl != null ? createInfoWithBranches(info, rootForUrl) : null;
   }
 

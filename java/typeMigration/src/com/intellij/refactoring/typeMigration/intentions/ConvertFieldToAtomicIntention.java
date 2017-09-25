@@ -148,7 +148,6 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
           else if (var instanceof PsiField) {
             ((PsiField)var).setInitializer(newInitializer);
           }
-          JavaCodeStyleManager.getInstance(var.getProject()).shortenClassReferences(var.getInitializer());
         }
 
         modifierList.setModifierProperty(PsiModifier.FINAL, true);
@@ -219,7 +218,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
 
     @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-      return myContext.isValid();
+      return getVariable(element) != null;
     }
 
     @Override

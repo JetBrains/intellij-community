@@ -57,6 +57,12 @@ public class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitiveType {
 
   @NotNull
   @Override
+  public String getName() {
+    return myName;
+  }
+
+  @NotNull
+  @Override
   public PsiPrimitiveType annotate(@NotNull TypeAnnotationProvider provider) {
     return (PsiPrimitiveType)super.annotate(provider);
   }

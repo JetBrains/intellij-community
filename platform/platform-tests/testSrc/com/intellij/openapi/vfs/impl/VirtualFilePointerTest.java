@@ -1004,4 +1004,47 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     }
     LOG.debug("final i = " + i);
   }
+
+  public void testSeveralDirectoriesWithCommonPrefix() throws IOException {
+    File baseDir = createTempDirectory();
+    VirtualFile vDir = LocalFileSystem.getInstance().findFileByIoFile(baseDir);
+    assertNotNull(vDir);
+    vDir.getChildren();
+    vDir.refresh(false, true);
+
+    LoggingListener listener = new LoggingListener();
+    myVirtualFilePointerManager.create(vDir.getUrl() + "/d1/subdir", disposable, listener);
+    myVirtualFilePointerManager.create(vDir.getUrl() + "/d2/subdir", disposable, listener);
+
+    File dir = new File(baseDir, "d1");
+    FileUtil.createDirectory(dir);
+    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir).getChildren();
+    assertEquals("[before:false, after:false]", listener.getLog().toString());
+    listener.getLog().clear();
+
+    File subDir = new File(dir, "subdir");
+    FileUtil.createDirectory(subDir);
+    VirtualFile vSubDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(subDir);
+    assertEquals("[before:false, after:true]", listener.getLog().toString());
+  }
+
+  public void testDirectoryPointersWork() throws Exception {
+    final File dir = createTempDirectory();
+    VirtualFile vDir = LocalFileSystem.getInstance().findFileByIoFile(dir);
+    assertNotNull(vDir);
+    VirtualFile deep = createChildDirectory(vDir, "deep");
+
+    LoggingListener listener = new LoggingListener();
+    Disposable disposable = Disposer.newDisposable();
+    VirtualFilePointer ptr = myVirtualFilePointerManager.createDirectoryPointer(vDir.getUrl(), false, disposable, listener);
+
+    createChildData(vDir, "1");
+    assertEquals("[before:true, after:true]", listener.getLog().toString());
+    Disposer.dispose(disposable);
+    listener = new LoggingListener();
+    myVirtualFilePointerManager.createDirectoryPointer(vDir.getUrl(), true, this.disposable, listener);
+
+    createChildData(deep, "1");
+    assertEquals("[before:true, after:true]", listener.getLog().toString());
+  }
 }

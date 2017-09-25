@@ -230,7 +230,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
    * Don't invoke this method, it's public for implementation reasons.
    */
   public final void setNode(@NotNull ASTNode node) {
-    mySubstrateRef = SubstrateRef.createAstStrongRef(node);
+    setSubstrateRef(SubstrateRef.createAstStrongRef(node));
   }
 
   /**
@@ -533,7 +533,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   @Override
   protected Object clone() {
     final StubBasedPsiElementBase copy = (StubBasedPsiElementBase)super.clone();
-    copy.mySubstrateRef = SubstrateRef.createAstStrongRef(getNode());
+    copy.setSubstrateRef(SubstrateRef.createAstStrongRef(getNode()));
     return copy;
   }
 }
