@@ -15,7 +15,6 @@
  */
 package com.intellij.debugger.streams.wrapper.impl;
 
-import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import com.intellij.debugger.streams.wrapper.*;
 import com.intellij.psi.PsiElement;
 import one.util.streamex.StreamEx;
@@ -77,14 +76,14 @@ public class StreamChainImpl implements StreamChain {
   public String getText() {
     final Iterator<StreamCall> iterator = StreamEx.of(myIntermediateCalls).map(x -> (StreamCall)x).append(myTerminator).iterator();
     final StringBuilder builder = new StringBuilder();
-    builder.append(myQualifierExpression.getText()).append(TraceExpressionBuilderImpl.LINE_SEPARATOR).append(".");
+    builder.append(myQualifierExpression.getText()).append("\n").append(".");
 
     while (iterator.hasNext()) {
       final MethodCall call = iterator.next();
       final String args = args2Text(call.getArguments());
       builder.append(call.getName()).append(args);
       if (iterator.hasNext()) {
-        builder.append(TraceExpressionBuilderImpl.LINE_SEPARATOR).append(".");
+        builder.append("\n").append(".");
       }
     }
 
