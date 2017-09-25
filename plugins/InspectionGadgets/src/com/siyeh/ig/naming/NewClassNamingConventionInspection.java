@@ -53,6 +53,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class NewClassNamingConventionInspection extends BaseInspection {
   public static final ExtensionPointName<NamingConvention<PsiClass>> EP_NAME = ExtensionPointName.create("com.intellij.naming.convention.class");
@@ -183,20 +184,24 @@ public class NewClassNamingConventionInspection extends BaseInspection {
   @Override
   public JComponent createOptionsPanel() {
     JPanel panel = new JPanel(new BorderLayout(JBUI.scale(2), JBUI.scale(2)));
-    JPanel descriptionPanel = new JPanel(new BorderLayout());
+    CardLayout layout = new CardLayout();
+    JPanel descriptionPanel = new JPanel(layout);
     descriptionPanel.setBorder(JBUI.Borders.empty(2));
     panel.add(descriptionPanel, BorderLayout.CENTER);
     CheckBoxList<NamingConvention<PsiClass>> list = new CheckBoxList<>();
-    list.setBorder(JBUI.Borders.empty());
-    for (NamingConvention<PsiClass> convention : myNamingConventions.values()) {
-      list.addItem(convention, convention.getElementDescription(), !myDisabledShortNames.contains(convention.getShortName()));
+    list.setBorder(JBUI.Borders.empty(2));
+    List<NamingConvention<PsiClass>> values = new ArrayList<>(myNamingConventions.values());
+    Collections.reverse(values);
+    for (NamingConvention<PsiClass> convention : values) {
+      String shortName = convention.getShortName();
+      list.addItem(convention, convention.getElementDescription(), !myDisabledShortNames.contains(shortName));
+      descriptionPanel.add(myNamingConventionBeans.get(shortName).createOptionsPanel(), shortName);
     }
     list.addListSelectionListener((e) -> {
-      descriptionPanel.removeAll();
       int selectedIndex = list.getSelectedIndex();
       NamingConvention<PsiClass> item = list.getItemAt(selectedIndex);
       if (item != null) {
-        descriptionPanel.add(myNamingConventionBeans.get(item.getShortName()).createOptionsPanel(), BorderLayout.CENTER);
+        layout.show(descriptionPanel, item.getShortName());
       }
     });
     list.setCheckBoxListListener(new CheckBoxListListener() {
@@ -206,7 +211,7 @@ public class NewClassNamingConventionInspection extends BaseInspection {
         setEnabled(value, convention.getShortName());
       }
     });
-    list.setSelectedIndex(myNamingConventions.size() - 1);
+    list.setSelectedIndex(0);
     panel.add(new JBScrollPane(list), BorderLayout.WEST);
     return panel;
   }
