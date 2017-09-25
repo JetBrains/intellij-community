@@ -29,4 +29,6 @@ public interface TraceContainer {
   void select(@NotNull List<TraceElement> elements);
 
   void addSelectionListener(@NotNull ValuesSelectionListener listener);
+
+  boolean highlightedExists();
 }

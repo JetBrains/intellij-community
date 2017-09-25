@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * @author Vitaliy.Bibaev
  */
-public interface TraceController {
+public interface TraceController extends ValuesHighlightingListener {
   @NotNull
   List<Value> getValues();
 
@@ -44,6 +44,12 @@ public interface TraceController {
 
   @NotNull
   List<TraceElement> getPrevValues(@NotNull TraceElement element);
+
+  default boolean isSelectionExists() {
+    return isSelectionExists(PropagationDirection.BACKWARD) || isSelectionExists(PropagationDirection.FORWARD);
+  }
+
+  boolean isSelectionExists(@NotNull PropagationDirection direction);
 
   void register(@NotNull TraceContainer listener);
 }

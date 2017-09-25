@@ -16,15 +16,14 @@
 package com.intellij.debugger.streams.ui.impl
 
 import com.intellij.debugger.streams.ui.LinkedValuesMapping
+import com.intellij.debugger.streams.ui.TraceController
 import com.intellij.debugger.streams.ui.ValueWithPosition
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
-import java.awt.BasicStroke
-import java.awt.BorderLayout
-import java.awt.Graphics
-import java.awt.Graphics2D
+import com.intellij.util.ui.UIUtil
+import java.awt.*
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
@@ -33,17 +32,25 @@ import javax.swing.SwingConstants
  * @author Vitaliy.Bibaev
  */
 class MappingPane(name: String,
+                  fullCallExpression: String,
                   private val beforeValues: List<ValueWithPosition>,
-                  private val mapping: LinkedValuesMapping) : JPanel(BorderLayout()) {
-  companion object {
-    val SELECTED_LINK_COLOR: JBColor = JBColor.BLUE
-    val REGULAR_LINK_COLOR: JBColor = JBColor.GRAY
+                  private val mapping: LinkedValuesMapping,
+                  private val controller: TraceController) : JPanel(BorderLayout()) {
+  private companion object {
+    val DARCULA_LINE_COLOR = LineColor(regular = JBColor.GRAY,
+                                       selected = JBColor.BLUE,
+                                       inactive = JBColor({ Color(92, 92, 92) }))
+    val INTELLIJ_LINE_COLOR = LineColor(regular = JBColor.GRAY,
+                                        selected = JBColor({ Color(0, 96, 229) }),
+                                        inactive = JBColor({ Color(204, 204, 204) }))
 
     val STROKE = BasicStroke(JBUI.scale(1.toFloat()))
   }
 
   init {
-    add(JBLabel(name, SwingConstants.CENTER), BorderLayout.NORTH)
+    val label = JBLabel(name, SwingConstants.CENTER)
+    label.toolTipText = fullCallExpression
+    add(label, BorderLayout.NORTH)
     add(MyDrawPane(), BorderLayout.CENTER)
   }
 
@@ -57,20 +64,31 @@ class MappingPane(name: String,
         g.stroke = STROKE
 
         val config = GraphicsUtil.setupAAPainting(g)
-        drawLines(g, REGULAR_LINK_COLOR)
-        drawLines(g, SELECTED_LINK_COLOR)
+
+        val colors = if (UIUtil.isUnderDarcula()) DARCULA_LINE_COLOR else INTELLIJ_LINE_COLOR
+        if (isSelectedExist()) {
+          drawLines(g, colors.inactive, false)
+          drawLines(g, colors.selected, true)
+        }
+        else {
+          drawLines(g, colors.regular, false)
+        }
+
         config.restore()
       }
     }
 
-    private fun drawLines(g: Graphics2D, color: JBColor) {
+    private fun isSelectedExist(): Boolean = controller.isSelectionExists
+
+
+    private fun drawLines(g: Graphics2D, color: Color, highlighted: Boolean) {
       val x1 = x
       val x2 = x + width
       g.color = color
       for (value in beforeValues) {
         val linkedValues = mapping.getLinkedValues(value) ?: continue
         for (nextValue in linkedValues) {
-          if (needToDraw(value, nextValue) && getLineColor(value, nextValue) == color) {
+          if (needToDraw(value, nextValue) && highlighted == needToHighlight(value, nextValue)) {
             val y1 = value.position
             val y2 = nextValue.position
 
@@ -82,12 +100,8 @@ class MappingPane(name: String,
 
     private fun needToDraw(left: ValueWithPosition, right: ValueWithPosition): Boolean = left.isVisible || right.isVisible
 
-    private fun getLineColor(left: ValueWithPosition, right: ValueWithPosition): JBColor {
-      if (left.isHighlighted && right.isHighlighted) {
-        return SELECTED_LINK_COLOR
-      }
-
-      return REGULAR_LINK_COLOR
-    }
+    private fun needToHighlight(left: ValueWithPosition, right: ValueWithPosition): Boolean = left.isHighlighted && right.isHighlighted
   }
+
+  private data class LineColor(val regular: JBColor, val selected: JBColor, val inactive: JBColor)
 }

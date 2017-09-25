@@ -18,7 +18,6 @@ package com.intellij.debugger.streams.trace;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 

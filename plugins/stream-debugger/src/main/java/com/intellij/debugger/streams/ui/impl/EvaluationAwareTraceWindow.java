@@ -24,13 +24,12 @@ import com.intellij.debugger.streams.trace.ResolvedTracingResult;
 import com.intellij.debugger.streams.trace.TraceElement;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.ui.TraceController;
-import com.intellij.debugger.streams.wrapper.CallArgument;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
+import com.intellij.debugger.streams.wrapper.TraceUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.JBTabsPaneImpl;
 import com.intellij.ui.components.JBLabel;
@@ -38,7 +37,6 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import icons.StreamDebuggerIcons;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +53,6 @@ import java.util.stream.Stream;
  */
 public class EvaluationAwareTraceWindow extends DialogWrapper {
   private static final String DIALOG_TITLE = "Stream Trace";
-  private static final String THREE_DOTS = "...";
 
   private static final int DEFAULT_WIDTH = 870;
   private static final int DEFAULT_HEIGHT = 400;
@@ -88,7 +85,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       final MyPlaceholder tab = new MyPlaceholder();
       final String callName = call.getName().replace(" ", "");
       myTabsPane.insertTab(callName, StreamDebuggerIcons.STREAM_CALL_TAB_ICON, tab,
-                           callName + formatArguments(call.getArguments()), i);
+                           TraceUtil.formatWithArguments(call), i);
       myTabContents.add(tab);
     }
 
@@ -191,8 +188,8 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       final PrevAwareState after = intermediate.getStateAfter();
       final TraceControllerImpl controller = new TraceControllerImpl(after);
 
-      prevController.setNextListener(controller);
-      controller.setPreviousListener(prevController);
+      prevController.setNextController(controller);
+      controller.setPreviousController(prevController);
       prevController = controller;
 
       controllers.add(controller);
@@ -204,19 +201,12 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
 
       final TraceControllerImpl terminationController = new TraceControllerImpl(afterTerminationState);
 
-      terminationController.setPreviousListener(prevController);
-      prevController.setNextListener(terminationController);
+      terminationController.setPreviousController(prevController);
+      prevController.setNextController(terminationController);
       controllers.add(terminationController);
     }
 
     return controllers;
-  }
-
-  @NotNull
-  private static String formatArguments(@NotNull List<CallArgument> args) {
-    return StreamEx.of(args)
-      .map(x -> StringUtil.shortenTextWithEllipsis(x.getText(), 30, 5, THREE_DOTS))
-      .joining(", ", "(", ")");
   }
 
   private class MyToggleViewAction extends DialogWrapperAction {
