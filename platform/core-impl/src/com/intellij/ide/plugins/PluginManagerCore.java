@@ -1110,7 +1110,11 @@ public class PluginManagerCore {
     IdeaPluginDescriptorImpl[] pluginDescriptors = result.toArray(new IdeaPluginDescriptorImpl[result.size()]);
     final Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap = new THashMap<>();
     for (IdeaPluginDescriptorImpl descriptor : pluginDescriptors) {
-      idToDescriptorMap.put(descriptor.getPluginId(), descriptor);
+      PluginId id = descriptor.getPluginId();
+      if (id == null) {
+        LOG.error("null 'id': " + descriptor);
+      }
+      idToDescriptorMap.put(id, descriptor);
     }
 
     Arrays.sort(pluginDescriptors, getPluginDescriptorComparator(idToDescriptorMap, errors));

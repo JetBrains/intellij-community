@@ -3,7 +3,7 @@
 # Based on http://docs.python.org/3.2/library/heapq.html
 
 import sys
-from typing import TypeVar, List, Iterable, Any, Callable
+from typing import TypeVar, List, Iterable, Any, Callable, Optional
 
 _T = TypeVar('_T')
 
@@ -18,6 +18,6 @@ if sys.version_info >= (3, 5):
 else:
     def merge(*iterables: Iterable[_T]) -> Iterable[_T]: ...
 def nlargest(n: int, iterable: Iterable[_T],
-             key: Callable[[_T], Any] = ...) -> List[_T]: ...
+             key: Optional[Callable[[_T], Any]] = ...) -> List[_T]: ...
 def nsmallest(n: int, iterable: Iterable[_T],
               key: Callable[[_T], Any] = ...) -> List[_T]: ...

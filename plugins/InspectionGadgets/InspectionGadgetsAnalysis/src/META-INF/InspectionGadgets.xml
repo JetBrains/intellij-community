@@ -2806,6 +2806,10 @@
                      key="junit5.platform.runner.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.JUnit5PlatformInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="RedundantExplicitVariableType" enabledByDefault="true" level="WARNING"
+                     bundle="com.siyeh.InspectionGadgetsBundle" key="redundant.explicit.var.type.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids8"
+                     implementationClass="com.intellij.codeInspection.RedundantExplicitVariableTypeInspection"/>
   </extensions>
 
 </idea-plugin>

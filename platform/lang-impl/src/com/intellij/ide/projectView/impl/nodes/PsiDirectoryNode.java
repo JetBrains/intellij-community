@@ -136,13 +136,13 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     setupIcon(data, psiDirectory);
   }
 
-  private static boolean moduleNameMatchesDirectoryName(Module module, VirtualFile directoryFile, ProjectFileIndex fileIndex) {
+  private static boolean moduleNameMatchesDirectoryName(@NotNull Module module, @NotNull VirtualFile directoryFile, @NotNull ProjectFileIndex fileIndex) {
     String moduleName = module.getName();
     String directoryName = directoryFile.getName();
     if (moduleName.equals(directoryName)) {
       return true;
     }
-    if (ModuleGrouperKt.isQualifiedModuleNamesEnabled() && moduleName.endsWith(directoryName)) {
+    if (ModuleGrouperKt.isQualifiedModuleNamesEnabled(module.getProject()) && moduleName.endsWith(directoryName)) {
       int parentPrefixLength = moduleName.length() - directoryName.length() - 1;
       if (parentPrefixLength > 0 && moduleName.charAt(parentPrefixLength) == '.') {
         VirtualFile parentDirectory = directoryFile.getParent();

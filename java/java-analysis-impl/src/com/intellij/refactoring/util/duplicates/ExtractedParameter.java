@@ -166,18 +166,8 @@ public class ExtractedParameter {
     }
 
     @Override
-    public void visitPrefixExpression(PsiPrefixExpression expression) {
-      super.visitPrefixExpression(expression);
-
-      IElementType op = expression.getOperationTokenType();
-      if (op == JavaTokenType.PLUSPLUS || op == JavaTokenType.MINUSMINUS) {
-        visitModifiedExpression(expression.getOperand());
-      }
-    }
-
-    @Override
-    public void visitPostfixExpression(PsiPostfixExpression expression) {
-      super.visitPostfixExpression(expression);
+    public void visitUnaryExpression(PsiUnaryExpression expression) {
+      super.visitUnaryExpression(expression);
 
       IElementType op = expression.getOperationTokenType();
       if (op == JavaTokenType.PLUSPLUS || op == JavaTokenType.MINUSMINUS) {

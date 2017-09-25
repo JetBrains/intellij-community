@@ -29,6 +29,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -79,6 +80,10 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction {
     EditorUtil.reinitSettings();
     DaemonCodeAnalyzer.getInstance(project).settingsChanged();
     EditorFactory.getInstance().refreshAllEditors();
+    final JFrame projectJFrame = WindowManager.getInstance().getFrame(project);
+    if (projectJFrame != null) {
+      projectJFrame.transferFocus();
+    }
   }
 
   public static void applyAndSave(@NotNull PropertiesComponent p,

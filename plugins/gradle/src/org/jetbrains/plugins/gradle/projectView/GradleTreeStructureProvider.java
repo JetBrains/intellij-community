@@ -22,7 +22,7 @@ import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleGrouperKt;
+import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -228,9 +228,7 @@ public class GradleTreeStructureProvider implements TreeStructureProvider, DumbA
     boolean isRootModule = StringUtil.equals(getExternalProjectPath(module), getExternalRootProjectPath(module));
     if(isRootModule || moduleShortName == null) return moduleShortName;
 
-    if (ModuleGrouperKt.isQualifiedModuleNamesEnabled()) {
-      moduleShortName = StringUtil.getShortName(moduleShortName);
-    }
+    moduleShortName = ModuleGrouper.instanceFor(module.getProject()).getShortenedNameByFullModuleName(moduleShortName);
     return StringUtil.getShortName(moduleShortName, ':');
   }
 

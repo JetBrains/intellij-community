@@ -721,7 +721,7 @@ object Utils {
   fun findBoundedText(target: Component, container: Component): String? {
     val textComponents = withRobot { robot ->
       robot.finder().findAll(container as Container,
-                             ComponentMatcher { component -> component!!.isTextComponent() && target.onHeightCenter(component, true) })
+                             ComponentMatcher { component -> component!!.isShowing && component.isTextComponent() && target.onHeightCenter(component, true) })
     }
     if (textComponents.isEmpty()) return null
     //if  more than one component is found let's take the righter one

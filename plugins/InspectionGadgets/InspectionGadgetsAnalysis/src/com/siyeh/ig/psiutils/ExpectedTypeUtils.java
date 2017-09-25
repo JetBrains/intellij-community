@@ -234,18 +234,7 @@ public class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
-      final PsiType type = expression.getType();
-      if (type instanceof PsiPrimitiveType) {
-        expectedType = type;
-      }
-      else {
-        expectedType = PsiPrimitiveType.getUnboxedType(type);
-      }
-    }
-
-    @Override
-    public void visitPostfixExpression(@NotNull PsiPostfixExpression expression) {
+    public void visitUnaryExpression(@NotNull PsiUnaryExpression expression) {
       final PsiType type = expression.getType();
       if (type instanceof PsiPrimitiveType) {
         expectedType = type;

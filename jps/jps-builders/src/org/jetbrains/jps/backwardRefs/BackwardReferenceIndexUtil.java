@@ -24,25 +24,31 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.jps.backwardRefs.index.CompiledFileData;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
+import org.jetbrains.jps.javac.ast.api.JavacTypeCast;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 public class BackwardReferenceIndexUtil {
   private static final Logger LOG = Logger.getInstance(BackwardReferenceIndexUtil.class);
 
   static void registerFile(String filePath,
                            TObjectIntHashMap<? extends JavacRef> refs,
-                           List<JavacDef> defs,
+                           Collection<JavacDef> defs,
+                           Collection<JavacTypeCast> casts,
                            final BackwardReferenceIndexWriter writer) {
 
     try {
       final int fileId = writer.enumeratePath(filePath);
       int funExprId = 0;
 
-      final Map<LightRef, Void> definitions = new HashMap<>(defs.size());
-      final Map<LightRef, Collection<LightRef>> backwardHierarchyMap = new HashMap<>();
-      final Map<SignatureData, Collection<LightRef>> signatureData = new THashMap<>();
+      Map<LightRef, Void> definitions = new HashMap<>(defs.size());
+      Map<LightRef, Collection<LightRef>> backwardHierarchyMap = new HashMap<>();
+      Map<SignatureData, Collection<LightRef>> signatureData = new THashMap<>();
+      THashMap<LightRef, Collection<LightRef>> castMap = new THashMap<>();
+
 
       final AnonymousClassEnumerator anonymousClassEnumerator = new AnonymousClassEnumerator();
 
@@ -109,7 +115,16 @@ public class BackwardReferenceIndexUtil {
       if (exception[0] != null) {
         throw exception[0];
       }
-      writer.writeData(fileId, new CompiledFileData(backwardHierarchyMap, convertedRefs, definitions, signatureData));
+
+      for (JavacTypeCast cast : casts) {
+        LightRef enumeratedCastType = writer.enumerateNames(cast.getCastType(), name -> null);
+        if (enumeratedCastType == null) continue;
+        LightRef enumeratedOperandType = writer.enumerateNames(cast.getOperandType(), name -> null);
+        if (enumeratedOperandType == null) continue;
+        castMap.computeIfAbsent(enumeratedCastType, t -> new SmartList<>()).add(enumeratedOperandType);
+      }
+
+      writer.writeData(fileId, new CompiledFileData(backwardHierarchyMap, castMap, convertedRefs, definitions, signatureData));
     }
     catch (IOException e) {
       writer.setRebuildCause(e);

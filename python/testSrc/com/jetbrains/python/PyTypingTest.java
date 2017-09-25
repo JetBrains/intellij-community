@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,7 +145,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testGenericType() {
-    doTest("TypeVar('A')",
+    doTest("A",
            "from typing import TypeVar\n" +
            "\n" +
            "T = TypeVar('A')\n" +
@@ -155,7 +155,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testGenericBoundedType() {
-    doTest("TypeVar('T', int, str)",
+    doTest("T",
            "from typing import TypeVar\n" +
            "\n" +
            "T = TypeVar('T', int, str)\n" +
@@ -839,7 +839,7 @@ public class PyTypingTest extends PyTestCase {
   
   // PY-20057
   public void testConstrainedClassObjectTypeOfParam() {
-    doTest("Type[TypeVar('T', int)]",
+    doTest("Type[T]",
            "from typing import Type, TypeVar\n" +
            "\n" +
            "T = TypeVar('T', bound=int)\n" +
@@ -953,7 +953,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-24260
   public void testGenericClassParameterTakenFromGenericClassObject() {
-    doTest("MyClass[TypeVar('T')]",
+    doTest("MyClass[T]",
            "from typing import TypeVar, Generic, Type\n" +
            "\n" +
            "T = TypeVar(\"T\")\n" +

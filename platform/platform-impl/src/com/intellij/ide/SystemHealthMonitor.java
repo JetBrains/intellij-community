@@ -206,6 +206,9 @@ public class SystemHealthMonitor implements ApplicationComponent {
       public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
         app.invokeLater(() -> {
           Notification notification = new MyNotification(message);
+          if (action != null) {
+            notification.addAction(action);
+          }
           notification.addAction(new NotificationAction(IdeBundle.message("sys.health.acknowledge.action")) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
@@ -213,9 +216,6 @@ public class SystemHealthMonitor implements ApplicationComponent {
               myProperties.setValue("ignore." + key, "true");
             }
           });
-          if (action != null) {
-            notification.addAction(action);
-          }
           notification.setImportant(true);
           Notifications.Bus.notify(notification);
         });

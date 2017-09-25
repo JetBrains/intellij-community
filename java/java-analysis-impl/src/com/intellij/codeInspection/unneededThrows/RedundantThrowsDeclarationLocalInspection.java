@@ -79,7 +79,7 @@ public class RedundantThrowsDeclarationLocalInspection extends BaseJavaBatchLoca
     PsiCodeBlock body = method.getBody();
     if (body == null) return null;
 
-    if (myGlobalTool.IGNORE_ENTRY_POINTS && UnusedDeclarationInspectionBase.findUnusedDeclarationInspection(method).isEntryPoint(method)) {
+    if (myGlobalTool.IGNORE_ENTRY_POINTS && UnusedDeclarationInspectionBase.isDeclaredAsEntryPoint(method)) {
       return null;
     }
 

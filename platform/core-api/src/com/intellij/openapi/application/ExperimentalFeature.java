@@ -44,10 +44,10 @@ public class ExperimentalFeature {
     if (!app.isEAP()) return false;
     if (internalFeature && !app.isInternal()) return false;
 
-    if (percentOfUsers == 0) return false;
+    if (percentOfUsers <= 0) return false;
 
     int hash = PermanentInstallationID.get().hashCode();
     int salt = id.hashCode();
-    return ((hash + salt) % 100) <= percentOfUsers;
+    return Math.floorMod(hash + salt, 100) <= percentOfUsers;
   }
 }

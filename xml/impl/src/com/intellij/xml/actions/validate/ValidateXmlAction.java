@@ -37,11 +37,7 @@ public class ValidateXmlAction extends AnAction {
 
   private ValidateXmlActionHandler getHandler(final @NotNull PsiFile file) {
     ValidateXmlActionHandler handler = new ValidateXmlActionHandler(true);
-    handler.setErrorReporter(
-      new StdErrorReporter(handler, file.getProject(),
-                           () -> doRunAction(file)
-      )
-    );
+    handler.setErrorReporter(new StdErrorReporter(handler, file, () -> doRunAction(file)));
     return handler;
   }
 

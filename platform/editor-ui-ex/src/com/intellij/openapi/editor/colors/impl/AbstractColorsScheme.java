@@ -759,10 +759,10 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     }
 
     if (myParentScheme != null) {
-      Color parentColor = myParentScheme instanceof AbstractColorsScheme
-                          ? ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedColor(key)
-                          : myParentScheme.getColor(key);
-      if (parentColor != null && color.equals(parentColor)) {
+      Color parent = myParentScheme instanceof AbstractColorsScheme
+                     ? ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedColor(key)
+                     : myParentScheme.getColor(key);
+      if (parent != null && Comparing.equal(parent, color == NULL_COLOR_MARKER ? null : color)) {
         return;
       }
     }
@@ -905,8 +905,8 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
    */
   @Nullable
   public Color getDirectlyDefinedColor(@NotNull ColorKey key) {
-    Color attributes = myColorsMap.get(key);
-    return attributes != null ? attributes :
+    Color color = myColorsMap.get(key);
+    return color != null ? color :
            myParentScheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedColor(key) :
            null;
   }
@@ -1012,7 +1012,13 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   }
 
   protected boolean colorsEqual(AbstractColorsScheme otherScheme, @Nullable Predicate<ColorKey> colorKeyFilter) {
-    return myColorsMap.equals(otherScheme.myColorsMap);
+    if (myColorsMap.size() != otherScheme.myColorsMap.size()) return false;
+    for (ColorKey key : myColorsMap.keySet()) {
+      Color c1 = myColorsMap.get(key);
+      Color c2 = otherScheme.myColorsMap.get(key);
+      if (!Comparing.equal(c1, c2 == NULL_COLOR_MARKER ? null : c2)) return false;
+    }
+    return true;
   }
 
   @Nullable

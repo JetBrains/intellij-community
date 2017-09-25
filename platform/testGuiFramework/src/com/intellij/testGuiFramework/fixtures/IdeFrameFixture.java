@@ -533,7 +533,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
                            !progressManager.hasUnsafeProgressIndicator();
                   }
                 }
-      , GuiTestUtil.LONG_TIMEOUT);
+      , GuiTestUtil.TEN_MIN_TIMEOUT);
     robot().waitForIdle();
     return this;
   }

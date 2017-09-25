@@ -34,7 +34,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.FocusTrackback;
+import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -57,6 +57,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(FocusManagerImpl.class);
@@ -262,45 +263,15 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       setLastEffectiveForcedRequest(command);
     }
 
-    SwingUtilities.invokeLater(() -> {
-      if (checkForRejectOrByPass(command, forced, result)) return;
-
-      if (myRequestFocusCmd == command) {
-        final TimedOutCallback focusTimeout =
-          new TimedOutCallback(Registry.intValue("actionSystem.commandProcessingTimeout"),
-                                      "Focus command timed out, cmd=" + command, command.getAllocation(), true) {
-            @Override
-            protected void onTimeout() {
-              forceFinishFocusSettleDown(command, result);
-            }
-          };
-
-        if (command.invalidatesRequestors()) {
-          myCmdTimestamp++;
-        }
-        revalidateFurtherRequestors();
-        if (forced) {
-          if (command.invalidatesRequestors()) {
-            myForcedCmdTimestamp++;
-          }
-          revalidateFurtherRequestors();
-        }
-
-        command.setForced(forced);
-        command.run().doWhenDone(() -> UIUtil.invokeLaterIfNeeded(() -> {
-          resetCommand(command, false);
-          result.setDone();
-        })).doWhenRejected(() -> {
-          result.setRejected();
-          resetCommand(command, true);
-        }).doWhenProcessed(() -> {
-          if (forced) {
-            myForcedFocusRequestsAlarm.addRequest(new SetLastEffectiveRunnable(), 250);
-          }
-        }).notify(focusTimeout);
-      }
-      else {
-        rejectCommand(command, result);
+    command.run().doWhenDone(() -> UIUtil.invokeLaterIfNeeded(() -> {
+      resetCommand(command, false);
+      result.setDone();
+    })).doWhenRejected(() -> {
+      result.setRejected();
+      resetCommand(command, true);
+    }).doWhenProcessed(() -> {
+      if (forced) {
+        myForcedFocusRequestsAlarm.addRequest(new SetLastEffectiveRunnable(), 250);
       }
     });
   }
@@ -582,7 +553,6 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       if (!isFocusBeingTransferred()) {
         boolean focusOk = getFocusOwner() != null;
         if (!focusOk && !myFlushWasDelayedToFixFocus) {
-          IdeEventQueue.getInstance().fixStickyFocusedComponents(null);
           myFlushWasDelayedToFixFocus = true;
         }
         else if (!focusOk) {
@@ -1016,18 +986,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private class AppListener implements ApplicationActivationListener {
 
     @Override
-    public void applicationActivated(final IdeFrame ideFrame) {
-      final FocusCommand cmd = myFocusCommandOnAppActivation;
-      ActionCallback callback = myCallbackOnActivation;
-      myFocusCommandOnAppActivation = null;
-      myCallbackOnActivation = null;
-
-      if (cmd != null) {
-        requestFocus(cmd, true).notify(callback);
-      } else {
-        focusLastFocusedComponent(ideFrame);
-      }
-    }
+    public void applicationActivated(final IdeFrame ideFrame) {}
 
     @Override
     public void delayedApplicationDeactivated(IdeFrame ideFrame) {
@@ -1075,6 +1034,19 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     return IdeFocusTraversalPolicy.getPreferredFocusedComponent(comp);
   }
 
+  public List<JBPopup> getChildPopups(@NotNull final Component component) {
+    return AbstractPopup.all.toStrongList().stream().filter(popup -> {
+      Component owner = popup.getOwner();
+      while (owner != null) {
+        if (owner.equals(component)) {
+          return true;
+        }
+        owner = owner.getParent();
+      }
+      return false;
+    }).collect(Collectors.toList());
+  }
+
   @Override
   public Component getFocusedDescendantFor(Component comp) {
     final Component focused = getFocusOwner();
@@ -1082,7 +1054,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
     if (focused == comp || SwingUtilities.isDescendingFrom(focused, comp)) return focused;
 
-    List<JBPopup> popups = FocusTrackback.getChildPopups(comp);
+    List<JBPopup> popups = getChildPopups(comp);
     for (JBPopup each : popups) {
       if (each.isFocused()) return focused;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -737,7 +738,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
                                       @NotNull final FileASTNode oldFileNode) {
     Document document = task.getDocument();
     final CharSequence newDocumentText = document.getImmutableCharSequence();
-    final TextRange changedPsiRange = getChangedPsiRange(file, task.myLastCommittedText, newDocumentText);
+    final TextRange changedPsiRange = getChangedPsiRange(file, task.myLastCommittedText, task.reason, newDocumentText);
     if (changedPsiRange == null) {
       return null;
     }
@@ -836,18 +837,25 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
   @Nullable
   private static TextRange getChangedPsiRange(@NotNull PsiFile file,
                                               @NotNull CharSequence oldDocumentText,
-                                              @NotNull CharSequence newDocumentText) {
+                                              Object reason, @NotNull CharSequence newDocumentText) {
     int psiLength = oldDocumentText.length();
     if (!file.getViewProvider().supportsIncrementalReparse(file.getLanguage())) {
       return new TextRange(0, psiLength);
     }
 
-    int commonPrefixLength = StringUtil.commonPrefixLength(oldDocumentText, newDocumentText);
+    int commonPrefixLength;
+    commonPrefixLength = reason instanceof DocumentEvent
+                         ? ((DocumentEvent)reason).getOffset()
+                         : StringUtil.commonPrefixLength(oldDocumentText, newDocumentText);
     if (commonPrefixLength == newDocumentText.length() && newDocumentText.length() == psiLength) {
       return null;
     }
 
-    int commonSuffixLength = Math.min(StringUtil.commonSuffixLength(oldDocumentText, newDocumentText), psiLength - commonPrefixLength);
+    int commonSuffixLength;
+    commonSuffixLength = reason instanceof DocumentEvent
+                         ? newDocumentText.length() - commonPrefixLength - ((DocumentEvent)reason).getNewLength()
+                         : StringUtil.commonSuffixLength(oldDocumentText, newDocumentText);
+    commonSuffixLength = Math.min(commonSuffixLength, psiLength - commonPrefixLength);
     return new TextRange(commonPrefixLength, psiLength - commonSuffixLength);
   }
 

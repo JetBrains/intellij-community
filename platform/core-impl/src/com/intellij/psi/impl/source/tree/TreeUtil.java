@@ -25,18 +25,15 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStrongWhitespaceHolderElementType;
-import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -464,38 +461,21 @@ public class TreeUtil {
 
   @NotNull
   public static List<Pair<StubBase, TreeElement>> calcStubAstBindings(@NotNull StubTree stubTree, @NotNull FileElement tree) throws StubBindingException {
+    PsiFile file = (PsiFile)tree.getPsi();
+    List<CompositeElement> nodes = tree.getStubbedDescendants();
+    List<StubElement<?>> stubs = stubTree.getPlainList();
+    if (stubs.size() != nodes.size()) {
+      throw new StubBindingException("Stub list in " + file.getName() + " length differs from PSI");
+    }
+
     List<Pair<StubBase, TreeElement>> bindings = new ArrayList<>();
-
-    final ListIterator<StubElement<?>> stubs = stubTree.getPlainList().listIterator();
-    stubs.next();  // skip file root stub
-
-    PsiFileImpl file = (PsiFileImpl)tree.getPsi();
-    final IStubFileElementType type = file.getElementTypeForStubBuilder();
-    assert type != null;
-    final StubBuilder builder = type.getBuilder();
-    tree.acceptTree(new RecursiveTreeElementWalkingVisitor() {
-      @Override
-      protected void visitNode(TreeElement node) {
-        CompositeElement parent = node.getTreeParent();
-        if (parent != null && builder.skipChildProcessingWhenBuildingStubs(parent, node)) {
-          return;
-        }
-
-        IElementType type = node.getElementType();
-        if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(node)) {
-          final StubElement stub = stubs.hasNext() ? stubs.next() : null;
-          if (stub == null || stub.getStubType() != type) {
-            throw new StubBindingException("stub:" + stub + ", AST:" + type);
-          }
-
-          bindings.add(Pair.create((StubBase)stub, node));
-        }
-
-        super.visitNode(node);
+    for (int i = 1; i < stubs.size(); i++) { // start from 1 to skip file root stub
+      StubBase<?> stub = (StubBase<?>)stubs.get(i);
+      CompositeElement node = nodes.get(i);
+      if (stub.getStubType() != node.getElementType()) {
+        throw new StubBindingException("stub:" + stub + ", AST:" + node.getElementType());
       }
-    });
-    if (stubs.hasNext()) {
-      throw new StubBindingException("Stub list in " + file.getName() + " has more elements than PSI");
+      bindings.add(Pair.create(stub, node));
     }
     return bindings;
   }

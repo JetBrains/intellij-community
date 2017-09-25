@@ -333,28 +333,9 @@ public class IncrementDecrementUsedAsExpressionInspection
     extends BaseInspectionVisitor {
 
     @Override
-    public void visitPostfixExpression(
-      @NotNull PsiPostfixExpression expression) {
-      super.visitPostfixExpression(expression);
-      final PsiElement parent = expression.getParent();
-      if (parent instanceof PsiExpressionStatement ||
-          (parent instanceof PsiExpressionList &&
-           parent.getParent() instanceof
-             PsiExpressionListStatement)) {
-        return;
-      }
-      final IElementType tokenType = expression.getOperationTokenType();
-      if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
-          !tokenType.equals(JavaTokenType.MINUSMINUS)) {
-        return;
-      }
-      registerError(expression, expression);
-    }
-
-    @Override
-    public void visitPrefixExpression(
-      @NotNull PsiPrefixExpression expression) {
-      super.visitPrefixExpression(expression);
+    public void visitUnaryExpression(
+      @NotNull PsiUnaryExpression expression) {
+      super.visitUnaryExpression(expression);
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiExpressionStatement ||
           (parent instanceof PsiExpressionList &&

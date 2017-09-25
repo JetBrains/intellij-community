@@ -37,8 +37,7 @@ def stack_size(size: int = ...) -> int: ...
 if sys.version_info >= (3,):
     TIMEOUT_MAX = ...  # type: int
 
-if sys.version_info < (3,):
-    class ThreadError(Exception): ...
+class ThreadError(Exception): ...
 
 
 # TODO: Change to a class with __getattr__ and __setattr__

@@ -32,6 +32,7 @@ import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +62,7 @@ public class DfaExpressionFactory {
   }
 
   private final DfaValueFactory myFactory;
-  private final Map<Integer, PsiVariable> myMockIndices = ContainerUtil.newHashMap();
+  private final Map<Object, PsiVariable> myMockIndices = ContainerUtil.newHashMap();
 
   public DfaExpressionFactory(DfaValueFactory factory) {
     myFactory = factory;
@@ -128,7 +129,14 @@ public class DfaExpressionFactory {
   private DfaValue createReferenceValue(@NotNull PsiReferenceExpression refExpr) {
     PsiModifierListOwner var = getAccessedVariableOrGetter(refExpr.resolve());
     if (var == null) {
-      return null;
+      if (!(refExpr.getParent() instanceof PsiMethodCallExpression)) {
+        String name = refExpr.getReferenceName();
+        PsiType expectedType = ExpectedTypeUtils.findExpectedType(refExpr, false);
+        if (name != null && expectedType != null) {
+          var = myMockIndices.computeIfAbsent(name, n -> new LightVariableBuilder<>("$unresolved$" + n, expectedType, refExpr));
+        }
+      }
+      if (var == null) return null;
     }
 
     if (!var.hasModifierProperty(PsiModifier.VOLATILE)) {
@@ -212,8 +220,7 @@ public class DfaExpressionFactory {
   private PsiVariable getArrayIndexVariable(@Nullable PsiExpression indexExpression) {
     Object constant = JavaConstantExpressionEvaluator.computeConstantExpression(indexExpression, false);
     if (constant instanceof Integer && ((Integer)constant).intValue() >= 0) {
-      return myMockIndices
-        .computeIfAbsent((Integer)constant, k -> new LightVariableBuilder<>("$array$index$" + k, PsiType.INT, indexExpression));
+      return myMockIndices.computeIfAbsent(constant, k -> new LightVariableBuilder<>("$array$index$" + k, PsiType.INT, indexExpression));
     }
     return null;
   }

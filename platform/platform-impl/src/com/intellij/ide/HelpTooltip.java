@@ -28,12 +28,16 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.plaf.basic.BasicHTML;
+import javax.swing.text.View;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -44,6 +48,8 @@ import java.awt.font.TextLayout;
 import java.beans.PropertyChangeListener;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 
 public class HelpTooltip {
@@ -62,6 +68,7 @@ public class HelpTooltip {
   private static final int MAX_WIDTH = JBUI.scale(250);
 
   private static final String DOTS = "...";
+  private static final String PARAGRAPH_SPLITTER = "<p/?>";
 
   private String title;
   private String shortcut;
@@ -186,15 +193,11 @@ public class HelpTooltip {
     }
 
     if (StringUtil.isNotEmpty(description)) {
-      String[] pa = description.split("\n");
+      String[] pa = description.split(PARAGRAPH_SPLITTER);
       for (String p : pa) {
-        JLabel label = new JLabel();
-        label.setForeground(FONT_COLOR);
-        int width = SwingUtilities2.stringWidth(label, label.getFontMetrics(label.getFont()), p);
-        isMultiline = isMultiline || width > MAX_WIDTH;
-        width = Math.min(MAX_WIDTH, width);
-        label.setText(String.format("<html><div width=%d>%s</div></html>", width, p));
-        tipPanel.add(label, VerticalLayout.TOP);
+        if (!p.isEmpty()) {
+          tipPanel.add(new Paragraph(p), VerticalLayout.TOP);
+        }
       }
     }
 
@@ -211,7 +214,7 @@ public class HelpTooltip {
     owner = component;
     myPopupBuilder = JBPopupFactory.getInstance().
       createComponentPopupBuilder(tipPanel, null).
-      setBorderColor(BORDER_COLOR);
+      setBorderColor(BORDER_COLOR).setShowShadow(false);
 
     myMouseListener = new MouseAdapter() {
       @Override public void mouseEntered(MouseEvent e) {
@@ -312,11 +315,10 @@ public class HelpTooltip {
     }
 
     @Override public void paintComponent(Graphics g) {
-      super.paintComponent(g);
-
       Graphics2D g2 = (Graphics2D)g.create();
       try {
         g2.setColor(FONT_COLOR);
+        GraphicsUtil.setupAntialiasing(g2);
         if (lineMeasurer == null) {
           FontRenderContext frc = g2.getFontRenderContext();
           lineMeasurer = new LineBreakMeasurer(titleString.getIterator(), frc);
@@ -375,6 +377,55 @@ public class HelpTooltip {
         }
       } finally {
         g2.dispose();
+      }
+    }
+  }
+
+  private class Paragraph extends JLabel {
+    private Paragraph(String text) {
+      init(text);
+    }
+
+    private void init(String text) {
+      setForeground(FONT_COLOR);
+
+      View v = BasicHTML.createHTMLView(this, String.format("<html>%s</html>", text));
+      float width = v.getPreferredSpan(View.X_AXIS);
+      isMultiline = isMultiline || width > MAX_WIDTH;
+      setText(width > MAX_WIDTH ?
+              String.format("<html><div width=%d>%s</div></html>", MAX_WIDTH, text) :
+              String.format("<html>%s</html>", text));
+
+      if (width > MAX_WIDTH) {
+        v = (View)getClientProperty(BasicHTML.propertyKey);
+        if (v != null) {
+          width = 0.0f;
+          for(View row : getRows(v)) {
+            float rWidth = row.getPreferredSpan(View.X_AXIS);
+            if (width < rWidth) {
+              width = rWidth;
+            }
+          }
+
+          v.setSize(width, v.getPreferredSpan(View.Y_AXIS));
+        }
+      }
+    }
+
+    private Collection<View> getRows(@NotNull View root) {
+      Collection<View> rows = new ArrayList<>();
+      visit(root, rows);
+      return rows;
+    }
+
+    private void visit(@NotNull View v, Collection<View> result) {
+      String cname = v.getClass().getCanonicalName();
+      if (cname != null && cname.contains("ParagraphView.Row")) {
+        result.add(v);
+      }
+
+      for(int i = 0; i < v.getViewCount(); i++) {
+        visit(v.getView(i), result);
       }
     }
   }

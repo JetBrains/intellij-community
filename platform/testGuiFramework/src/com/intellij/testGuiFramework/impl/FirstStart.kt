@@ -28,6 +28,7 @@ import com.intellij.testGuiFramework.launcher.ide.IdeType
 import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.Robot
 import org.fest.swing.core.SmartWaitRobot
+import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.fixture.JButtonFixture
 import org.fest.swing.fixture.JCheckBoxFixture
@@ -59,7 +60,29 @@ abstract class FirstStart(val ideType: IdeType) {
   val myRobot: Robot
 
   val robotThread: Thread = thread(start = false, name = FIRST_START_ROBOT_THREAD) {
-    completeFirstStart()
+    try {
+      completeFirstStart()
+    }
+    catch (e: Exception) {
+      when (e) {
+        is ComponentLookupException -> {
+          takeScreenshot(e)
+        }
+        is WaitTimedOutError -> {
+          takeScreenshot(e)
+          throw exceptionWithHierarchy(e)
+        }
+        else -> throw e
+      }
+    }
+  }
+
+  private fun takeScreenshot(e: Throwable) {
+    ScreenshotOnFailure.takeScreenshotOnFailure(e, "FirstStartFailed")
+  }
+
+  private fun exceptionWithHierarchy(e: Throwable): Throwable {
+    return Exception("Hierarchy log: ${ScreenshotOnFailure.getHierarchy()}", e)
   }
 
   // should be initialized before IDE has been started
@@ -177,28 +200,28 @@ abstract class FirstStart(val ideType: IdeType) {
   }
 
   object Utils {
-    fun Robot.dialog(title: String? = null, timeoutSeconds: Long = DEFAULT_TIMEOUT) : JDialogFixture {
+    fun Robot.dialog(title: String? = null, timeoutSeconds: Long = DEFAULT_TIMEOUT): JDialogFixture {
       val jDialog = waitUntilFound(this, null, JDialog::class.java, timeoutSeconds) { dialog ->
         if (title != null) dialog.title == title else true
       }
       return JDialogFixture(this, jDialog)
     }
 
-    fun Robot.radioButton(text: String, timeoutSeconds: Long = DEFAULT_TIMEOUT) : JRadioButtonFixture {
+    fun Robot.radioButton(text: String, timeoutSeconds: Long = DEFAULT_TIMEOUT): JRadioButtonFixture {
       val jRadioButton = waitUntilFound(this, null, JRadioButton::class.java, timeoutSeconds) { radioButton ->
         radioButton.text == text && radioButton.isShowing && radioButton.isEnabled
       }
       return JRadioButtonFixture(this, jRadioButton)
     }
 
-    fun Robot.button(text: String, timeoutSeconds: Long = DEFAULT_TIMEOUT) : JButtonFixture {
+    fun Robot.button(text: String, timeoutSeconds: Long = DEFAULT_TIMEOUT): JButtonFixture {
       val jButton = waitUntilFound(this, null, JButton::class.java, timeoutSeconds) { button ->
         button.isShowing && button.text == text
       }
       return JButtonFixture(this, jButton)
     }
 
-    fun Robot.checkbox(text: String, timeoutSeconds: Long = DEFAULT_TIMEOUT) : JCheckBoxFixture {
+    fun Robot.checkbox(text: String, timeoutSeconds: Long = DEFAULT_TIMEOUT): JCheckBoxFixture {
       val jCheckBox = waitUntilFound(this, null, JCheckBox::class.java, timeoutSeconds) { checkBox ->
         checkBox.text == text && checkBox.isShowing && checkBox.isEnabled
       }

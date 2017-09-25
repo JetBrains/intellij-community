@@ -198,16 +198,8 @@ public class StringBufferReplaceableByStringInspectionBase extends BaseInspectio
     }
 
     @Override
-    public void visitPostfixExpression(PsiPostfixExpression expression) {
-      super.visitPostfixExpression(expression);
-      if (expression.getTextOffset() > myVariable.getTextOffset() && !myToStringFound) {
-        myPossibleSideEffect = true;
-      }
-    }
-
-    @Override
-    public void visitPrefixExpression(PsiPrefixExpression expression) {
-      super.visitPrefixExpression(expression);
+    public void visitUnaryExpression(PsiUnaryExpression expression) {
+      super.visitUnaryExpression(expression);
       if (expression.getTextOffset() > myVariable.getTextOffset() && !myToStringFound) {
         myPossibleSideEffect = true;
       }

@@ -23,7 +23,9 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.compiler.chainsSearch.ChainRelevance;
 import com.intellij.compiler.chainsSearch.completion.MethodChainCompletionContributor;
 import com.intellij.compiler.chainsSearch.completion.lookup.JavaRelevantChainLookupElement;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.SmartList;
 
@@ -44,6 +46,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     Registry.get(MethodChainCompletionContributor.REGISTRY_KEY).setValue(true, myFixture.getTestRootDisposable());
     myDefaultAutoCompleteOnCodeCompletion = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION;
     CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = false;
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
   }
 
   @Override
@@ -238,6 +241,25 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   public void testDoNotSuggestUninitializedVariable() {
     JavaRelevantChainLookupElement element = assertOneElement(doCompletion());
     assertEquals("psiElement.getProject", element.getLookupString());
+  }
+
+  public void testChainWithCastOnContextVariable() {
+    JavaRelevantChainLookupElement element = assertOneElement(doCompletion());
+    assertEquals("(EditorEx)editor.getMarkupModel", element.toString());
+  }
+
+  public void testChainWithCastOnVariableOutsideContext() {
+    assertEmpty(doCompletion());
+  }
+
+  public void testChainWithCastOnStaticMethod() {
+    JavaRelevantChainLookupElement element = assertOneElement(doCompletion());
+    assertEquals("(InspectionManagerEx)getInstance().createContext", element.toString());
+  }
+
+  public void testChainEndedWithCast() {
+    JavaRelevantChainLookupElement element = assertOneElement(doCompletion());
+    assertEquals("(InspectionManagerEx)getInstance", element.toString());
   }
 
   public void assertAdvisorLookupElementEquals(String lookupText,

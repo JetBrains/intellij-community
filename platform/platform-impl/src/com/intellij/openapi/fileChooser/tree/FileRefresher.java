@@ -23,13 +23,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
+import com.intellij.util.concurrency.EdtExecutorService;
 
 import java.util.ArrayList;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
-import static com.intellij.util.concurrency.AppExecutorUtil.createBoundedScheduledExecutorService;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
@@ -39,7 +39,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  */
 public class FileRefresher implements Disposable {
   private static final Logger LOG = Logger.getInstance(FileRefresher.class);
-  private final ScheduledExecutorService executor = createBoundedScheduledExecutorService("FileRefresher", 1);
+  private final ScheduledExecutorService executor = EdtExecutorService.getScheduledExecutorInstance();
   private final boolean recursive;
   private final long delay;
   private final Supplier<ModalityState> supplier;

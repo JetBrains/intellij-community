@@ -73,6 +73,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.AppIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManagerUtil;
 import com.intellij.ui.content.MessageView;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.AsynchConsumer;
@@ -80,7 +81,6 @@ import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ConfirmationDialog;
-import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
@@ -117,7 +117,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
         messageView.getContentManager().addContent(content);
         Disposer.register(content, errorTreeView);
         messageView.getContentManager().setSelectedContent(content);
-        removeContents(content, tabDisplayName);
+        ContentManagerUtil.cleanupContents(content, myProject, tabDisplayName);
 
         ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
       });
@@ -267,7 +267,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myProject.isDisposed()) return;
       if (isEmpty) {
-        removeContents(null, tabDisplayName);
+        ContentManagerUtil.cleanupContents(null, myProject, tabDisplayName);
         return;
       }
 
@@ -316,23 +316,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
     else {
       return MessageCategory.ERROR;
-    }
-  }
-
-  protected void removeContents(Content notToRemove, final String tabDisplayName) {
-    MessageView messageView = MessageView.SERVICE.getInstance(myProject);
-    Content[] contents = messageView.getContentManager().getContents();
-    for (Content content : contents) {
-      LOG.assertTrue(content != null);
-      if (content.isPinned()) continue;
-      if (tabDisplayName.equals(content.getDisplayName()) && content != notToRemove) {
-        ErrorTreeView listErrorView = (ErrorTreeView)content.getComponent();
-        if (listErrorView != null) {
-          if (messageView.getContentManager().removeContent(content, true)) {
-            content.release();
-          }
-        }
-      }
     }
   }
 

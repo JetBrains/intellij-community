@@ -16,11 +16,13 @@
 package com.intellij.codeInsight.daemon.impl.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInspection.IntentionWrapper.wrapToQuickFixes
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.LocalQuickFixBase
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.actions.MemberRequest
-import com.intellij.lang.jvm.actions.createMethodAction
+import com.intellij.lang.jvm.actions.createMethodActions
+import com.intellij.lang.jvm.actions.methodRequest
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
@@ -52,18 +54,15 @@ class CreateMethodFix(containingClass: @JvmCommon PsiClass, private val createMe
     is UMethod -> method.uastBody?.psi
     else -> method.toUElementOfType<UMethod>()?.uastBody?.psi
   }
-
-  companion object {
-    @JvmStatic
-    fun createVoidMethodIfFixPossible(psiClass: @JvmCommon PsiClass,
-                                      methodName: String,
-                                      modifier: JvmModifier): CreateMethodFix? {
-      if (!ModuleUtilCore.projectContainsFile(psiClass.project, psiClass.containingFile.virtualFile, false)) return null
-      val request = MemberRequest.simpleMethodRequest(methodName, modifier, PsiType.VOID, emptyList())
-      val action = createMethodAction(psiClass, request) ?: return null
-      return CreateMethodFix(psiClass, action)
-    }
-  }
-
 }
 
+fun createVoidMethodFixes(psiClass: @JvmCommon PsiClass, methodName: String, modifier: JvmModifier): Array<LocalQuickFix> {
+  if (!ModuleUtilCore.projectContainsFile(psiClass.project, psiClass.containingFile.virtualFile, false)) return LocalQuickFix.EMPTY_ARRAY
+  val request = methodRequest(psiClass.project, methodName, modifier, PsiType.VOID)
+  val actions = createMethodActions(psiClass, request)
+  if (actions.isEmpty()) return LocalQuickFix.EMPTY_ARRAY
+  return wrapToQuickFixes(
+    actions,
+    psiClass.containingFile
+  ).toTypedArray()
+}

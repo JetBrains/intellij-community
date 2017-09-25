@@ -3,24 +3,22 @@
 from typing import (
     Any, Callable, Dict, Iterable, Iterator, List, Optional, Pattern, Sequence,
     Set, FrozenSet, TextIO, Tuple, Type, TypeVar, Union, Generic,
-    overload,
+    overload, ContextManager
 )
 import logging
 import sys
 from types import ModuleType, TracebackType
-from contextlib import ContextManager
 
 
 _T = TypeVar('_T')
-_FT = TypeVar('_FT', bound=Callable[[Any], Any])
+_FT = TypeVar('_FT', bound=Callable[..., Any])
 _E = TypeVar('_E', bound=Exception)
 
 
 def expectedFailure(func: _FT) -> _FT: ...
-# TODO: Once python/mypy#1551 is fixed, the following need _FT instead of Any
-def skip(reason: str) -> Callable[[Any], Any]: ...
-def skipIf(condition: object, reason: str) -> Callable[[Any], Any]: ...
-def skipUnless(condition: object, reason: str) -> Callable[[Any], Any]: ...
+def skip(reason: str) -> Callable[[_FT], _FT]: ...
+def skipIf(condition: object, reason: str) -> Callable[[_FT], _FT]: ...
+def skipUnless(condition: object, reason: str) -> Callable[[_FT], _FT]: ...
 
 class SkipTest(Exception):
     def __init__(self, reason: str) -> None: ...

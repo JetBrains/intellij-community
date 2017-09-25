@@ -41,7 +41,7 @@ import java.beans.PropertyChangeListener;
 public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
   private static final Border ourDefaultEditorBorder = JBUI.Borders.empty(1, 0);
 
-  static final int VALUE_OFFSET = JBUI.scale(5);
+  static final float VALUE_OFFSET = JBUI.scale(5f);
   private Icon DEFAULT_ICON;
 
   private PropertyChangeListener myEditorChangeListener;
@@ -129,7 +129,7 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
 
       @Override
       public Dimension getPreferredSize() {
-        return JBUI.size(DEFAULT_ICON.getIconWidth(), DEFAULT_ICON.getIconHeight());
+        return new Dimension(DEFAULT_ICON.getIconWidth(), DEFAULT_ICON.getIconHeight());
       }
     };
     button.setBorder(BorderFactory.createEmptyBorder());
@@ -146,7 +146,7 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
     Insets i = comboBox.getInsets();
     int iconWidth = DEFAULT_ICON.getIconWidth() + i.right;
     int iconHeight = DEFAULT_ICON.getIconHeight() + i.top + i.bottom;
-    return new Dimension(Math.max(d.width + 7, iconWidth), iconHeight);
+    return new Dimension(Math.max(d.width + JBUI.scale(7), iconWidth), iconHeight);
   }
 
   @Override

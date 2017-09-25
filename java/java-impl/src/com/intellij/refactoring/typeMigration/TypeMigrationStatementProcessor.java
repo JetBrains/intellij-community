@@ -341,21 +341,11 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPostfixExpression(final PsiPostfixExpression expression) {
-    super.visitPostfixExpression(expression);
-    processUnaryExpression(expression, expression.getOperationSign());
-  }
-
-  @Override
-  public void visitPrefixExpression(final PsiPrefixExpression expression) {
-    super.visitPrefixExpression(expression);
-    processUnaryExpression(expression, expression.getOperationSign());
-  }
-
-  private void processUnaryExpression(final PsiExpression expression, PsiJavaToken sign) {
+  public void visitUnaryExpression(final PsiUnaryExpression expression) {
+    super.visitUnaryExpression(expression);
     final TypeView typeView = new TypeView(expression);
     if (typeView.isChanged()) {
-      if (!TypeConversionUtil.isUnaryOperatorApplicable(sign, typeView.getType())) {
+      if (!TypeConversionUtil.isUnaryOperatorApplicable(expression.getOperationSign(), typeView.getType())) {
         findConversionOrFail(expression, expression, typeView.getTypePair());
       }
     }

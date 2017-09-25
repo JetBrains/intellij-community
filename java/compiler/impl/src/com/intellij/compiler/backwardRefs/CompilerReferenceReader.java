@@ -178,6 +178,22 @@ class CompilerReferenceReader {
     return myIndex;
   }
 
+  @NotNull
+  OccurrenceCounter<LightRef> getTypeCastOperands(@NotNull LightRef.LightClassHierarchyElementDef castType, @Nullable TIntHashSet fileIds) throws StorageException {
+    OccurrenceCounter<LightRef> result = new OccurrenceCounter<>();
+    myIndex.get(CompilerIndices.BACK_CAST).getData(castType).forEach(new ValueContainer.ContainerAction<Collection<LightRef>>() {
+      @Override
+      public boolean perform(int id, Collection<LightRef> values) {
+        if (fileIds != null && !fileIds.contains(id)) return true;
+        for (LightRef ref : values) {
+          result.add(ref);
+        }
+        return true;
+      }
+    });
+    return result;
+  }
+
   static boolean exists(Project project) {
     File buildDir = BuildManager.getInstance().getProjectSystemDirectory(project);
     if (buildDir == null || CompilerBackwardReferenceIndex.versionDiffers(buildDir)) {

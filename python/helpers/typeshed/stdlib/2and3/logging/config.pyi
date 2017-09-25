@@ -3,9 +3,7 @@
 from typing import Any, Callable, Dict, Optional, IO, Union
 import sys
 if sys.version_info >= (3,):
-    # from configparser import RawConfigParser
-    # TODO add RawConfigParser to configparser stubs
-    RawConfigParser = Any
+    from configparser import RawConfigParser
 else:
     from ConfigParser import RawConfigParser
 
