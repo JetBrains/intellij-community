@@ -26,6 +26,7 @@ import org.jetbrains.concurrency.Obsolescent;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.util.Disposer.register;
 import static java.awt.EventQueue.isDispatchThread;
 
@@ -106,16 +107,18 @@ public abstract class Invoker implements Disposable {
   final void invokeSafely(Runnable task) {
     try {
       if (canInvoke(task)) {
-        ProgressManager manager = isDispatchThread() ? null : getProgressManager();
-        if (manager != null) {
-          manager.runInReadActionWithWriteActionPriority(task, null);
-        }
-        else {
+        if (isDispatchThread() || getApplication() == null) {
+          // do not care about ReadAction in EDT and in tests without application
           task.run();
+        }
+        else if (!ProgressManager.getInstance().runInReadActionWithWriteActionPriority(task, null)) {
+          LOG.debug("Task is cancelled");
+          throw new ProcessCanceledException();
         }
       }
     }
     catch (ProcessCanceledException exception) {
+      LOG.debug("Task must be restarted");
       invokeLater(task);
     }
     catch (Exception exception) {
@@ -143,16 +146,6 @@ public abstract class Invoker implements Disposable {
       }
     }
     return true;
-  }
-
-  private static ProgressManager getProgressManager() {
-    try {
-      return ProgressManager.getInstance();
-    }
-    catch (NullPointerException exception) {
-      LOG.debug("progress manager is not available");
-      return null; // in tests without application
-    }
   }
 
   /**
