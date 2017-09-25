@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,10 +45,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
 
 import java.io.File;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.util.ObjectUtils.notNull;
 import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
@@ -78,7 +76,7 @@ public class SvnChangeProvider implements ChangeProvider {
     final SvnScopeZipper zipper = new SvnScopeZipper(dirtyScope);
     zipper.run();
 
-    final Map<String, SvnScopeZipper.MyDirNonRecursive> nonRecursiveMap = zipper.getNonRecursiveDirs();
+    final MultiMap<FilePath, FilePath> nonRecursiveMap = zipper.getNonRecursiveDirs();
     final ISVNStatusFileProvider fileProvider = createFileProvider(nonRecursiveMap);
 
     try {
@@ -95,8 +93,8 @@ public class SvnChangeProvider implements ChangeProvider {
       }
 
       walker.setFileProvider(fileProvider);
-      for (SvnScopeZipper.MyDirNonRecursive item : nonRecursiveMap.values()) {
-        walker.go(item.getDir(), Depth.IMMEDIATES);
+      for (FilePath path : nonRecursiveMap.keySet()) {
+        walker.go(path, Depth.IMMEDIATES);
       }
 
       statusReceiver.getMulticaster().finish();
@@ -128,14 +126,14 @@ public class SvnChangeProvider implements ChangeProvider {
   }
 
   @NotNull
-  private static ISVNStatusFileProvider createFileProvider(@NotNull Map<String, SvnScopeZipper.MyDirNonRecursive> nonRecursiveMap) {
+  private static ISVNStatusFileProvider createFileProvider(@NotNull MultiMap<FilePath, FilePath> nonRecursiveMap) {
     final Map<String, Map<String, File>> result = ContainerUtil.newHashMap();
 
-    for (SvnScopeZipper.MyDirNonRecursive item : nonRecursiveMap.values()) {
-      File file = item.getDir().getIOFile();
+    for (Map.Entry<FilePath, Collection<FilePath>> entry : nonRecursiveMap.entrySet()) {
+      File file = entry.getKey().getIOFile();
 
       Map<String, File> fileMap = ContainerUtil.getOrCreate(result, file.getAbsolutePath(), NAME_TO_FILE_MAP_FACTORY);
-      for (FilePath path : item.getChildrenList()) {
+      for (FilePath path : entry.getValue()) {
         fileMap.put(path.getName(), path.getIOFile());
       }
 
