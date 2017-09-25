@@ -18,8 +18,9 @@ package com.intellij.debugger.streams.lib.impl
 import com.intellij.debugger.streams.lib.Language
 import com.intellij.debugger.streams.trace.TraceExpressionBuilder
 import com.intellij.debugger.streams.trace.dsl.StatementFactory
+import com.intellij.debugger.streams.trace.dsl.impl.DslImpl
 import com.intellij.debugger.streams.trace.dsl.impl.kotlin.KotlinStatementFactory
-import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl
+import com.intellij.debugger.streams.trace.impl.KotlinTraceExpressionBuilder
 import com.intellij.openapi.project.Project
 
 /**
@@ -28,5 +29,5 @@ import com.intellij.openapi.project.Project
 class KotlinLanguage(project: Project) : Language {
   override val name: String = "Kotlin"
   override val statementFactory: StatementFactory = KotlinStatementFactory()
-  override val expressionBuilder: TraceExpressionBuilder = TraceExpressionBuilderImpl(project)
+  override val expressionBuilder: TraceExpressionBuilder = KotlinTraceExpressionBuilder(project, DslImpl(statementFactory))
 }
