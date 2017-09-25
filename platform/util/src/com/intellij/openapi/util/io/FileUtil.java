@@ -1195,6 +1195,11 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static String sanitizeFileName(@NotNull String name, boolean strict) {
+    return sanitizeFileName(name, strict, "_");
+  }
+  
+  @NotNull
+  public static String sanitizeFileName(@NotNull String name, boolean strict, String replacement) {
     StringBuilder result = null;
 
     int last = 0;
@@ -1220,7 +1225,7 @@ public class FileUtil extends FileUtilRt {
         result.append(name, last, i);
       }
       if (appendReplacement) {
-        result.append('_');
+        result.append(replacement);
       }
       last = i + 1;
     }
