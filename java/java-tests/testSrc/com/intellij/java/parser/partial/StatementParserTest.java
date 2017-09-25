@@ -45,9 +45,12 @@ public class StatementParserTest extends JavaParsingTestCase {
 
   public void testLocalVar0() { doParserTest("List<Integer> list;"); }
   public void testLocalVar1() { doParserTest("p.@A T<P> x;"); }
-  public void testLocalVar3() { doParserTest("var x;"); }
+  public void testLocalVar3() { doParserTest("var var;"); }
   public void testLocalVar4() { doParserTest("final var x;"); }
   public void testLocalVar5() { doParserTest("@A var x;"); }
+  public void testLocalVar6() { doParserTest("@A var"); }
+
+  public void testExprStatement0() { doParserTest("var"); }
 
   public void testDoNormal() { doParserTest("do{}while(true);"); }
   public void testDoIncomplete0() { doParserTest("do"); }

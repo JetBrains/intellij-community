@@ -1,10 +1,10 @@
 PsiJavaFile:LocalVar3.java
   PsiDeclarationStatement
-    PsiLocalVariable:x
+    PsiLocalVariable:var
       PsiModifierList:
         <empty list>
       PsiTypeElement:var
         PsiKeyword:var('var')
       PsiWhiteSpace(' ')
-      PsiIdentifier:x('x')
+      PsiIdentifier:var('var')
       PsiJavaToken:SEMICOLON(';')
