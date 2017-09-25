@@ -1,5 +1,7 @@
 package org.jetbrains.idea.svn.api;
 
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -19,18 +21,17 @@ import org.jetbrains.idea.svn.copy.SvnKitCopyMoveClient;
 import org.jetbrains.idea.svn.delete.SvnKitDeleteClient;
 import org.jetbrains.idea.svn.diff.SvnKitDiffClient;
 import org.jetbrains.idea.svn.history.SvnKitHistoryClient;
+import org.jetbrains.idea.svn.info.SvnKitInfoClient;
 import org.jetbrains.idea.svn.integrate.SvnKitMergeClient;
 import org.jetbrains.idea.svn.lock.SvnKitLockClient;
-import org.jetbrains.idea.svn.status.StatusClient;
-import org.jetbrains.idea.svn.status.SvnKitStatusClient;
-import org.jetbrains.idea.svn.info.SvnKitInfoClient;
 import org.jetbrains.idea.svn.properties.SvnKitPropertyClient;
 import org.jetbrains.idea.svn.revert.SvnKitRevertClient;
+import org.jetbrains.idea.svn.status.StatusClient;
+import org.jetbrains.idea.svn.status.SvnKitStatusClient;
 import org.jetbrains.idea.svn.update.SvnKitRelocateClient;
 import org.jetbrains.idea.svn.update.SvnKitUpdateClient;
 import org.jetbrains.idea.svn.update.UpdateClient;
 import org.jetbrains.idea.svn.upgrade.SvnKitUpgradeClient;
-import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -74,8 +75,8 @@ public class SvnKitClientFactory extends ClientFactory {
 
   @NotNull
   @Override
-  public StatusClient createStatusClient(@Nullable ISVNStatusFileProvider provider, @NotNull ProgressTracker handler) {
-    return prepare(new SvnKitStatusClient(provider, handler));
+  public StatusClient createStatusClient(@Nullable MultiMap<FilePath, FilePath> scope, @NotNull ProgressTracker handler) {
+    return prepare(new SvnKitStatusClient(scope, handler));
   }
 
   @NotNull

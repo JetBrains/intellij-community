@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +40,6 @@ import org.jetbrains.idea.svn.status.StatusClient;
 import org.jetbrains.idea.svn.status.StatusConsumer;
 import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
@@ -61,7 +61,7 @@ public class SvnRecursiveStatusWalker {
   @NotNull private final StatusReceiver myReceiver;
   @NotNull private final LinkedList<MyItem> myQueue;
   @NotNull private final MyHandler myHandler;
-  @Nullable private ISVNStatusFileProvider myFileProvider;
+  @Nullable private MultiMap<FilePath, FilePath> myNonRecursiveScope;
 
   public SvnRecursiveStatusWalker(@NotNull SvnVcs vcs, @NotNull StatusReceiver receiver, @Nullable ProgressIndicator progress) {
     myVcs = vcs;
@@ -74,8 +74,8 @@ public class SvnRecursiveStatusWalker {
     myHandler = new MyHandler();
   }
 
-  public void setFileProvider(@Nullable ISVNStatusFileProvider fileProvider) {
-    myFileProvider = fileProvider;
+  public void setNonRecursiveScope(@Nullable MultiMap<FilePath, FilePath> nonRecursiveScope) {
+    myNonRecursiveScope = nonRecursiveScope;
   }
 
   public void go(@NotNull FilePath rootPath, @NotNull Depth depth) throws SvnBindException {
@@ -214,7 +214,7 @@ public class SvnRecursiveStatusWalker {
 
   @NotNull
   private MyItem createItem(@NotNull FilePath path, @NotNull Depth depth, boolean isInnerCopyRoot) {
-    StatusClient statusClient = myVcs.getFactory(path.getIOFile()).createStatusClient(myFileProvider, createEventHandler());
+    StatusClient statusClient = myVcs.getFactory(path.getIOFile()).createStatusClient(myNonRecursiveScope, createEventHandler());
 
     return new MyItem(path, depth, isInnerCopyRoot, statusClient);
   }

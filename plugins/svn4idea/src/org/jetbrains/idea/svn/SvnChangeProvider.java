@@ -22,7 +22,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.NotNullFactory;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
@@ -30,7 +29,6 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,10 +40,11 @@ import org.jetbrains.idea.svn.commandLine.SvnExceptionWrapper;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
 
 import java.io.File;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.notNull;
 import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
@@ -58,8 +57,6 @@ import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
 public class SvnChangeProvider implements ChangeProvider {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnChangeProvider");
   public static final String PROPERTY_LAYER = "Property";
-
-  private static final NotNullFactory<Map<String, File>> NAME_TO_FILE_MAP_FACTORY = () -> ContainerUtil.newHashMap();
 
   @NotNull private final SvnVcs myVcs;
   @NotNull private final VcsContextFactory myFactory;
@@ -77,7 +74,6 @@ public class SvnChangeProvider implements ChangeProvider {
     zipper.run();
 
     final MultiMap<FilePath, FilePath> nonRecursiveMap = zipper.getNonRecursiveDirs();
-    final ISVNStatusFileProvider fileProvider = createFileProvider(nonRecursiveMap);
 
     try {
       final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, progress);
@@ -92,7 +88,7 @@ public class SvnChangeProvider implements ChangeProvider {
         walker.go(path, Depth.INFINITY);
       }
 
-      walker.setFileProvider(fileProvider);
+      walker.setNonRecursiveScope(nonRecursiveMap);
       for (FilePath path : nonRecursiveMap.keySet()) {
         walker.go(path, Depth.IMMEDIATES);
       }
@@ -123,31 +119,6 @@ public class SvnChangeProvider implements ChangeProvider {
         }
       }
     }
-  }
-
-  @NotNull
-  private static ISVNStatusFileProvider createFileProvider(@NotNull MultiMap<FilePath, FilePath> nonRecursiveMap) {
-    final Map<String, Map<String, File>> result = ContainerUtil.newHashMap();
-
-    for (Map.Entry<FilePath, Collection<FilePath>> entry : nonRecursiveMap.entrySet()) {
-      File file = entry.getKey().getIOFile();
-
-      Map<String, File> fileMap = ContainerUtil.getOrCreate(result, file.getAbsolutePath(), NAME_TO_FILE_MAP_FACTORY);
-      for (FilePath path : entry.getValue()) {
-        fileMap.put(path.getName(), path.getIOFile());
-      }
-
-      // also add currently processed file to the map of its parent, as there are cases when SVNKit calls ISVNStatusFileProvider with file
-      // parent (and not file that was passed to doStatus()), gets null result and does not provide any status
-      // see http://issues.tmatesoft.com/issue/SVNKIT-567 for details
-      if (file.getParentFile() != null) {
-        Map<String, File> parentMap = ContainerUtil.getOrCreate(result, file.getParentFile().getAbsolutePath(), NAME_TO_FILE_MAP_FACTORY);
-
-        parentMap.put(file.getName(), file);
-      }
-    }
-
-    return parent -> result.get(parent.getAbsolutePath());
   }
 
   private void processCopiedAndDeleted(@NotNull SvnChangeProviderContext context, @Nullable VcsDirtyScope dirtyScope)
