@@ -16,10 +16,15 @@
 package org.jetbrains.idea.devkit.navigation.structure;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.util.ProjectIconsAccessor;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
@@ -34,11 +39,15 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UField;
+import org.jetbrains.uast.UastContextKt;
 
 import javax.swing.*;
 import java.util.List;
 
 public class PluginDescriptorStructureUtil {
+  private static final Logger LOG = Logger.getInstance(PluginDescriptorStructureUtil.class);
   private static final int LOCATION_MAX_LENGTH = 40;
 
   private PluginDescriptorStructureUtil() {
@@ -89,10 +98,8 @@ public class PluginDescriptorStructureUtil {
     if (element instanceof Action) {
       XmlAttributeValue iconAttrValue = ((Action)element).getIcon().getXmlAttributeValue();
       if (iconAttrValue != null) {
-        //TODO do it via reference resolving
-        String iconPath = iconAttrValue.getValue();
-        if (iconPath != null) {
-          Icon icon = IconLoader.findIcon(iconPath, false);
+        for (PsiReference reference : iconAttrValue.getReferences()) {
+          Icon icon = getIconFromReference(reference);
           if (icon != null) {
             return icon;
           }
@@ -384,5 +391,27 @@ public class PluginDescriptorStructureUtil {
     }
     Project project = tag.getProject();
     return DomManager.getDomManager(project).getDomElement(tag);
+  }
+
+  @Nullable
+  private static Icon getIconFromReference(@NotNull PsiReference reference) {
+    PsiElement resolved = reference.resolve();
+    if (!(resolved instanceof PsiField)) {
+      return null;
+    }
+    UField field = UastContextKt.toUElement(resolved, UField.class);
+    if (field == null) {
+      LOG.error("Cannot convert PsiField to UField: " + resolved);
+      return null;
+    }
+
+    UExpression expression = field.getUastInitializer();
+    if (expression == null) {
+      return null;
+    }
+
+    ProjectIconsAccessor iconsAccessor = ProjectIconsAccessor.getInstance(resolved.getProject());
+    VirtualFile iconFile = iconsAccessor.resolveIconFile(expression.getPsi());
+    return iconFile == null ? null : iconsAccessor.getIcon(iconFile);
   }
 }
