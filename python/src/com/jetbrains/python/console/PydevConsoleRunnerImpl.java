@@ -69,7 +69,9 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.PsiFile;
-import com.intellij.remote.*;
+import com.intellij.remote.CredentialsType;
+import com.intellij.remote.RemoteProcess;
+import com.intellij.remote.Tunnelable;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JBColor;
@@ -530,8 +532,11 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
   public static Couple<Integer> getRemotePortsFromProcess(RemoteProcess process) throws ExecutionException {
     Scanner s = new Scanner(process.getInputStream());
-
-    return Couple.of(readInt(s, process), readInt(s, process));
+    try {
+      return Couple.of(readInt(s, process), readInt(s, process));
+    } finally {
+      s.close();
+    }
   }
 
   private static int readInt(Scanner s, Process process) throws ExecutionException {
