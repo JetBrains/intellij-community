@@ -71,7 +71,6 @@ public class ChangesListView extends DnDAwareTree implements TypeSafeDataProvide
 
     setShowsRootHandles(true);
     setRootVisible(false);
-    setDragEnabled(true);
 
     myCopyProvider = new ChangesBrowserNodeCopyProvider(this);
 
