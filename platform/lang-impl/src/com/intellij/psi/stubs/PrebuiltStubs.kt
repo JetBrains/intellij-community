@@ -134,7 +134,7 @@ abstract class PrebuiltStubsProviderBase : PrebuiltStubsProvider, Disposable {
           LOG.info("Using prebuilt stubs from " + myPrebuiltStubsStorage!!.baseFile.absolutePath)
         }
         else {
-          LOG.error("Prebuilt stubs version mismatch: $versionInFile, current version is $versionInFile")
+          LOG.error("Prebuilt stubs version mismatch: $versionInFile, current version is $stubVersion")
         }
       }
     }
