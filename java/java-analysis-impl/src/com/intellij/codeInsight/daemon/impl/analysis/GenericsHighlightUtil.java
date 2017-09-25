@@ -232,15 +232,18 @@ public class GenericsHighlightUtil {
     }
     else if (parent instanceof PsiExpressionList) {
       final PsiElement pParent = parent.getParent();
-      if (pParent instanceof PsiCallExpression && parent.equals(((PsiCallExpression)pParent).getArgumentList())) {
-        final PsiMethod method = ((PsiCallExpression)pParent).resolveMethod();
-        if (method != null) {
-          final PsiExpression[] expressions = ((PsiCallExpression)pParent).getArgumentList().getExpressions();
-          final int idx = ArrayUtilRt.find(expressions, newExpression);
-          if (idx > -1) {
-            final PsiParameterList parameterList = method.getParameterList();
-            if (idx < parameterList.getParametersCount()) {
-              expectedType = parameterList.getParameters()[idx].getType();
+      if (pParent instanceof PsiCallExpression) {
+        PsiExpressionList argumentList = ((PsiCallExpression)pParent).getArgumentList();
+        if (parent.equals(argumentList)) {
+          final PsiMethod method = ((PsiCallExpression)pParent).resolveMethod();
+          if (method != null) {
+            final PsiExpression[] expressions = argumentList.getExpressions();
+            final int idx = ArrayUtilRt.find(expressions, newExpression);
+            if (idx > -1) {
+              final PsiParameterList parameterList = method.getParameterList();
+              if (idx < parameterList.getParametersCount()) {
+                expectedType = parameterList.getParameters()[idx].getType();
+              }
             }
           }
         }
@@ -1041,8 +1044,10 @@ public class GenericsHighlightUtil {
           "@SafeVarargs is not allowed on methods with fixed arity").create();
       }
       if (!isSafeVarargsNoOverridingCondition(method, languageLevel)) {
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(safeVarargsAnnotation).descriptionAndTooltip(
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(safeVarargsAnnotation).descriptionAndTooltip(
           "@SafeVarargs is not allowed on non-final instance methods").create();
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.FINAL, true, true));
+        return info;
       }
 
       final PsiParameter varParameter = method.getParameterList().getParameters()[method.getParameterList().getParametersCount() - 1];
@@ -1355,7 +1360,7 @@ public class GenericsHighlightUtil {
           final PsiElement resolve = ref.resolve();
           final PsiClass containingClass = resolve != null ? ((PsiClass)resolve).getContainingClass() : null;
           if (containingClass == null) return null;
-          PsiClass hiddenClass = null;
+          PsiClass hiddenClass;
           if (psiClass.isInheritor(containingClass, true)) {
             hiddenClass = (PsiClass)resolve;
           }
