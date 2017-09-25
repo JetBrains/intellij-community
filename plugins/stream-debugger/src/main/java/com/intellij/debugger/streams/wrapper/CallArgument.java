@@ -15,7 +15,6 @@
  */
 package com.intellij.debugger.streams.wrapper;
 
-import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 
 /**

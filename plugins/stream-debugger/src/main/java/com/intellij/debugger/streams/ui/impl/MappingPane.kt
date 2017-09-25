@@ -32,6 +32,7 @@ import javax.swing.SwingConstants
  * @author Vitaliy.Bibaev
  */
 class MappingPane(name: String,
+                  fullCallExpression: String,
                   private val beforeValues: List<ValueWithPosition>,
                   private val mapping: LinkedValuesMapping,
                   private val controller: TraceController) : JPanel(BorderLayout()) {
@@ -47,7 +48,9 @@ class MappingPane(name: String,
   }
 
   init {
-    add(JBLabel(name, SwingConstants.CENTER), BorderLayout.NORTH)
+    val label = JBLabel(name, SwingConstants.CENTER)
+    label.toolTipText = fullCallExpression
+    add(label, BorderLayout.NORTH)
     add(MyDrawPane(), BorderLayout.CENTER)
   }
 

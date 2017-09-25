@@ -22,6 +22,7 @@ import com.intellij.debugger.streams.ui.TraceController
 import com.intellij.debugger.streams.ui.ValueWithPosition
 import com.intellij.debugger.streams.ui.ValuesPositionsListener
 import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
+import com.intellij.debugger.streams.wrapper.TraceUtil
 import java.awt.Component
 import java.awt.GridLayout
 import javax.swing.JPanel
@@ -39,7 +40,8 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
     var lastValues: List<ValueWithPositionImpl>? = null
     for ((index, controller) in controllers.subList(0, controllers.size - 1).withIndex()) {
       val (valuesBefore, valuesAfter, mapping) = controller.resolve(controllers[index + 1])
-      val mappingPane = MappingPane(controller.nextCall!!.name, valuesBefore, mapping, controller)
+      val nextCall = controller.nextCall ?: error("intermediate state should know about next call")
+      val mappingPane = MappingPane(nextCall.name, TraceUtil.formatWithArguments(nextCall), valuesBefore, mapping, controller)
 
       val tree = CollectionTree(controller.values, valuesBefore.map { it.traceElement }, evaluationContext)
       val view = PositionsAwareCollectionView(" ", tree, valuesBefore)
