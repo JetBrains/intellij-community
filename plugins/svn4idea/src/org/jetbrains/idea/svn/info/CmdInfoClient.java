@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.*;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.xml.sax.SAXException;
@@ -101,7 +100,7 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
       try {
         handler.consume(info);
       }
-      catch (SVNException e) {
+      catch (SvnBindException e) {
         throw new SvnExceptionWrapper(e);
       }
     });

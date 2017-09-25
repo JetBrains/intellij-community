@@ -84,7 +84,6 @@ import org.jetbrains.idea.svn.svnkit.SvnKitManager;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
@@ -617,9 +616,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
             }
           }
         }
-      }
-      catch (SVNException e) {
-        handleInfoException(new SvnBindException(e));
       }
       catch (SvnBindException e) {
         handleInfoException(e);
