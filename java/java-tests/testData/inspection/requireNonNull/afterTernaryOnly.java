@@ -3,7 +3,11 @@
 import java.util.*;
 
 class Test {
+  void work(Object o) {
+
+  }
+
   public void test(Object o) {
-    o = Objects.requireNonNullElse(o, "");
+    work(Objects.requireNonNullElse(o, ""));
   }
 }

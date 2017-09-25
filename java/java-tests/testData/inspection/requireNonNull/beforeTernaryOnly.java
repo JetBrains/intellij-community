@@ -3,9 +3,11 @@
 import java.util.*;
 
 class Test {
+  void work(Object o) {
+
+  }
+
   public void test(Object o) {
-    if<caret>(o == null) {
-      o = "";
-    }
+    work(o <caret>== null? "" : o);
   }
 }

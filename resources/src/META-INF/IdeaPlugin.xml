@@ -969,9 +969,9 @@
                      displayName="Null value for Optional type"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RequireNonNull"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids9" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.RequireNonNullInspection"
-                     displayName="Null value for Optional type"/>
+                     displayName="Replace null checked condition with Objects static method"/>
     <localInspection groupPath="Java" language="JAVA" shortName="Java9ModuleExportsPackageToItself"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues"
                      enabledByDefault="true" level="WARNING"
