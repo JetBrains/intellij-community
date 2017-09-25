@@ -36,6 +36,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.treeWalkUp
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.canResolveToMethod
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isDefinitelyKeyOfMap
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessorBuilder
 
@@ -171,6 +173,7 @@ fun GrReferenceExpression.getCallVariants(upToArgument: GrExpression?): Array<ou
 fun GrReferenceExpression.resolveReferenceExpression(forceRValue: Boolean, incomplete: Boolean): Array<out GroovyResolveResult> {
   resolvePackageOrClass()?.let { return arrayOf(it) }
   resolveLocalVariable()?.let { return arrayOf(it) }
+  if (!canResolveToMethod(this) && isDefinitelyKeyOfMap(this)) return GroovyResolveResult.EMPTY_ARRAY
   val processor = GroovyResolverProcessorBuilder.builder()
     .setForceRValue(forceRValue)
     .setIncomplete(incomplete)
