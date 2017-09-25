@@ -906,8 +906,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   @Nullable
   public Color getDirectlyDefinedColor(@NotNull ColorKey key) {
     Color color = myColorsMap.get(key);
-    return color == NULL_COLOR_MARKER ? null :
-           color != null ? color :
+    return color != null ? color :
            myParentScheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedColor(key) :
            null;
   }
