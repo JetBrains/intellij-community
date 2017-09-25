@@ -1,0 +1,47 @@
+LineBreakpoint created at ToCollection.java:6
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! ToCollection
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+ToCollection.java:6
+Stream.of(1, 2, 3, 4, 5, 6)
+.filter(x -> x < 3)
+.toArray()
+Stream.of
+    before: nothing
+    after: 1,3,5,6,7,8
+filter
+    before: 1,3,5,6,7,8
+    after: 2,4
+toArray
+    before: 2,4
+    after: 9,10
+mappings for Stream.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 3
+    nothing <- 5
+    nothing <- 6
+    nothing <- 7
+    nothing <- 8
+mappings for filter
+  direct:
+    1 -> 2
+    3 -> 4
+    5 -> nothing
+    6 -> nothing
+    7 -> nothing
+    8 -> nothing
+  reverse:
+    1 <- 2
+    3 <- 4
+mappings for toArray
+  direct:
+    2 -> 9
+    4 -> 10
+  reverse:
+    2 <- 9
+    4 <- 10
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0

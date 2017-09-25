@@ -66,6 +66,11 @@ public class CollectionView extends JPanel implements Disposable, TraceContainer
     myInstancesTree.addSelectionListener(listener);
   }
 
+  @Override
+  public boolean highlightedExists() {
+    return myInstancesTree.highlightedExists();
+  }
+
   @NotNull
   protected CollectionTree getInstancesTree() {
     return myInstancesTree;

@@ -13,22 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.ui;
+package com.intellij.debugger.streams.trace.impl.handler
 
-import com.intellij.debugger.streams.trace.TraceElement;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
+import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 
 /**
  * @author Vitaliy.Bibaev
  */
-public interface TraceContainer {
-  void highlight(@NotNull List<TraceElement> elements);
-
-  void select(@NotNull List<TraceElement> elements);
-
-  void addSelectionListener(@NotNull ValuesSelectionListener listener);
-
-  boolean highlightedExists();
+class ToCollectionHandler(typeBefore: GenericType) : TerminatorHandler(typeBefore) {
+  override fun getResultExpression(): String {
+    return "new Object[] {" + super.getResultExpression() + ", new int[] { time.get() } }"
+  }
 }

@@ -24,9 +24,9 @@ mappings for map
     1 <- 2
 mappings for collect
   direct:
-    2 -> 3
+    2 -> 4
   reverse:
-    2 <- 3
+    2 <- 4
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

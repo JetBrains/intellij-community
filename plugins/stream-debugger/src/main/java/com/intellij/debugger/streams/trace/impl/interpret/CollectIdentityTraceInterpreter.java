@@ -19,14 +19,17 @@ import com.intellij.debugger.streams.trace.CallTraceInterpreter;
 import com.intellij.debugger.streams.trace.TraceElement;
 import com.intellij.debugger.streams.trace.TraceInfo;
 import com.intellij.debugger.streams.trace.impl.TraceElementImpl;
+import com.intellij.debugger.streams.trace.impl.interpret.ex.UnexpectedValueException;
+import com.intellij.debugger.streams.trace.impl.interpret.ex.UnexpectedValueTypeException;
 import com.intellij.debugger.streams.wrapper.StreamCall;
+import com.sun.jdi.ArrayReference;
+import com.sun.jdi.IntegerValue;
 import com.sun.jdi.Value;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.PrimitiveIterator;
 
 /**
@@ -38,14 +41,19 @@ public class CollectIdentityTraceInterpreter implements CallTraceInterpreter {
   @NotNull
   @Override
   public TraceInfo resolve(@NotNull StreamCall call, @NotNull Value value) {
-    final TraceInfo resolved = myPeekResolver.resolve(call, value);
+    if (!(value instanceof ArrayReference)) {
+      throw new UnexpectedValueTypeException("Array reference expected. But " + value.type().name() + " received");
+    }
+
+    final ArrayReference array = (ArrayReference)value;
+
+    final TraceInfo resolved = myPeekResolver.resolve(call, array.getValue(0));
     final Map<Integer, TraceElement> before = resolved.getValuesOrderBefore();
-    final Optional<Integer> maxTime = before.keySet().stream().max(Integer::compareTo);
-    if (!maxTime.isPresent()) {
+    if (before.isEmpty()) {
       return resolved;
     }
 
-    int timeAfter = maxTime.get() + 1;
+    int timeAfter = extractTime(array) + 1;
 
     final PrimitiveIterator.OfInt iterator = IntStreamEx.of(before.keySet()).sorted().iterator();
     final Map<Integer, TraceElement> after = new HashMap<>(before.size());
@@ -60,5 +68,17 @@ public class CollectIdentityTraceInterpreter implements CallTraceInterpreter {
     }
 
     return new ValuesOrderInfo(call, before, after);
+  }
+
+  private static int extractTime(@NotNull ArrayReference value) {
+    final Value timeArray = value.getValue(1);
+    if (timeArray instanceof ArrayReference) {
+      final Value time = ((ArrayReference)timeArray).getValue(0);
+      if (time instanceof IntegerValue) {
+        return ((IntegerValue)time).value();
+      }
+    }
+
+    throw new UnexpectedValueException("Could not find a maximum time value");
   }
 }
