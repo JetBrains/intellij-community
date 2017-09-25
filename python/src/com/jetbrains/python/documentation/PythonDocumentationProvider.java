@@ -639,7 +639,8 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
           }
         }
       }
-      if (PyTokenTypes.DOCSTRING == elementType) {
+      final PyExpression expression = PsiTreeUtil.getParentOfType(contextElement, PyExpression.class);
+      if (expression != null && DocStringUtil.isDocStringExpression(expression)) {
         final PyDocStringOwner docstringOwner = PsiTreeUtil.getParentOfType(contextElement, PyDocStringOwner.class);
         if (docstringOwner != null) return docstringOwner;
       }
