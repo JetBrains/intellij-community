@@ -26,7 +26,9 @@ public class CommonIfPartsInspectionTest extends LightQuickFixParameterizedTestC
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new CommonIfPartsInspection()};
+    CommonIfPartsInspection inspection = new CommonIfPartsInspection();
+    inspection.MAY_CHANGE_SEMANTICS = true;
+    return new LocalInspectionTool[]{inspection};
   }
 
   public void test() {
