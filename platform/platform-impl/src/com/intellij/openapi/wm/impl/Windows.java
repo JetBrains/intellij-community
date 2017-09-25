@@ -23,6 +23,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
@@ -87,8 +88,14 @@ public class Windows {
     public static boolean isInActiveToolWindow (Object component) {
       JComponent source = ((component != null) && (component instanceof JComponent)) ? ((JComponent)component) : null;
 
-      while (source != null && ToolWindowManager.getActiveToolWindow() != null &&  ToolWindowManager.getActiveToolWindow().getComponent() != null && source != ToolWindowManager.getActiveToolWindow().getComponent()) {
-        source = ((source.getParent() != null) && (source.getParent() instanceof JComponent)) ? ((JComponent)source.getParent()) : null;
+      ToolWindow activeToolWindow = ToolWindowManager.getActiveToolWindow();
+      if (activeToolWindow != null) {
+        JComponent activeToolWindowComponent = activeToolWindow.getComponent();
+        if (activeToolWindowComponent != null) {
+          while (source != null && source != activeToolWindowComponent) {
+            source = ((source.getParent() != null) && (source.getParent() instanceof JComponent)) ? ((JComponent)source.getParent()) : null;
+          }
+        }
       }
 
       return source != null;
@@ -114,7 +121,7 @@ public class Windows {
 
               FocusEvent focusEvent = (FocusEvent)event;
 
-              if (isInActiveToolWindow(focusEvent.getSource())) {
+              if (isInActiveToolWindow(focusEvent.getSource()) && !isInActiveToolWindow(focusEvent.getOppositeComponent())) {
                 //System.err.println("Tool window is loosing focus: " + ToolWindowManager.getActiveToolWindow().getStripeTitle());
 
                 // A toolwindow lost focus
