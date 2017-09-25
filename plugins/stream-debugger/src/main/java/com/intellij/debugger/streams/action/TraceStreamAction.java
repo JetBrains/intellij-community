@@ -20,13 +20,14 @@ import com.intellij.debugger.streams.diagnostic.ex.TraceCompilationException;
 import com.intellij.debugger.streams.diagnostic.ex.TraceEvaluationException;
 import com.intellij.debugger.streams.lib.LibraryManager;
 import com.intellij.debugger.streams.psi.DebuggerPositionResolver;
-import com.intellij.debugger.streams.psi.impl.*;
+import com.intellij.debugger.streams.psi.impl.DebuggerPositionResolverImpl;
+import com.intellij.debugger.streams.psi.impl.JavaChainTransformerImpl;
+import com.intellij.debugger.streams.psi.impl.JavaStreamChainBuilder;
+import com.intellij.debugger.streams.psi.impl.StreamChainOption;
 import com.intellij.debugger.streams.trace.*;
 import com.intellij.debugger.streams.trace.dsl.impl.DslImpl;
 import com.intellij.debugger.streams.trace.dsl.impl.java.JavaStatementFactory;
-import com.intellij.debugger.streams.trace.dsl.impl.kotlin.KotlinStatementFactory;
 import com.intellij.debugger.streams.trace.impl.JavaTraceExpressionBuilder;
-import com.intellij.debugger.streams.trace.impl.KotlinTraceExpressionBuilder;
 import com.intellij.debugger.streams.trace.impl.TraceResultInterpreterImpl;
 import com.intellij.debugger.streams.ui.impl.ElementChooserImpl;
 import com.intellij.debugger.streams.ui.impl.EvaluationAwareTraceWindow;
@@ -45,7 +46,7 @@ import com.intellij.xdebugger.XDebuggerManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -56,8 +57,8 @@ public class TraceStreamAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(TraceStreamAction.class);
 
   private final DebuggerPositionResolver myPositionResolver = new DebuggerPositionResolverImpl();
-  private final List<StreamChainBuilder> myChainBuilders = Arrays.asList(new JavaStreamChainBuilder(new JavaChainTransformerImpl()),
-                                                                         new KotlinJavaStreamChainBuilder());
+  private final List<StreamChainBuilder> myChainBuilders =
+    Collections.singletonList(new JavaStreamChainBuilder(new JavaChainTransformerImpl()));
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -112,9 +113,7 @@ public class TraceStreamAction extends AnAction {
     final EvaluationAwareTraceWindow window = new EvaluationAwareTraceWindow(session, chain);
     ApplicationManager.getApplication().invokeLater(window::show);
     final Project project = session.getProject();
-    final TraceExpressionBuilder expressionBuilder = "JAVA".equals(chain.getContext().getLanguage().getID())
-                                                     ? new JavaTraceExpressionBuilder(project, new DslImpl(new JavaStatementFactory()))
-                                                     : new KotlinTraceExpressionBuilder(project, new DslImpl(new KotlinStatementFactory()));
+    final TraceExpressionBuilder expressionBuilder = new JavaTraceExpressionBuilder(project, new DslImpl(new JavaStatementFactory()));
     final TraceResultInterpreterImpl resultInterpreter = new TraceResultInterpreterImpl(project);
     final StreamTracer tracer = new EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter);
     tracer.trace(chain, new TracingCallback() {
