@@ -19,46 +19,47 @@ import com.intellij.codeInsight.hint.HintManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
-import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.impl.DebuggerSupport
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
-import com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 import com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler
 import com.jetbrains.python.debugger.pydev.PyDebugCallback
 
 class PySetNextStatementAction : XDebuggerActionBase(true) {
-  private val LOG = Logger.getInstance("#com.jetbrains.python.debugger.PySetNextStatementAction")
-  private val mySetNextStatementActionHandler: XDebuggerSuspendedActionHandler
+  private val setNextStatementActionHandler: XDebuggerSuspendedActionHandler
 
   init {
-    mySetNextStatementActionHandler = object : XDebuggerSuspendedActionHandler() {
+    setNextStatementActionHandler = object : XDebuggerSuspendedActionHandler() {
       override fun perform(session: XDebugSession, dataContext: DataContext) {
-        val debugProcess = session.debugProcess
-        if (debugProcess is PyDebugProcess) {
-          val position = XDebuggerUtilImpl.getCaretPosition(session.project, dataContext) ?: return
-          val editor = CommonDataKeys.EDITOR.getData(dataContext) ?: FileEditorManager.getInstance(session.project).selectedTextEditor
-          debugProcess
-            .startSetNextStatement(debugProcess.getSession().suspendContext, position, object : PyDebugCallback<Pair<Boolean, String>> {
-              override fun ok(response: Pair<Boolean, String>) {
-                if (!response.first && editor != null) {
-                  UIUtil.invokeLaterIfNeeded {
+        val debugProcess = session.debugProcess as? PyDebugProcess ?: return
+        val position = XDebuggerUtilImpl.getCaretPosition(session.project, dataContext) ?: return
+        val editor = CommonDataKeys.EDITOR.getData(dataContext) ?: FileEditorManager.getInstance(session.project).selectedTextEditor
+        val suspendContext = debugProcess.session.suspendContext
+        ApplicationManager.getApplication().executeOnPooledThread(Runnable {
+          debugProcess.startSetNextStatement(suspendContext, position, object : PyDebugCallback<Pair<Boolean, String>> {
+            override fun ok(response: Pair<Boolean, String>) {
+              if (!response.first && editor != null) {
+                ApplicationManager.getApplication().invokeLater(Runnable {
+                  if (!editor.isDisposed) {
                     editor.caretModel.moveToOffset(position.offset)
                     HintManager.getInstance().showErrorHint(editor, response.second)
                   }
-                }
+                }, ModalityState.defaultModalityState())
               }
+            }
 
-              override fun error(e: PyDebuggerException) {
-                LOG.error(e)
-              }
-            })
-        }
+            override fun error(e: PyDebuggerException) {
+              LOG.error(e)
+            }
+          })
+        })
       }
 
       override fun isEnabled(project: Project, event: AnActionEvent): Boolean {
@@ -67,11 +68,13 @@ class PySetNextStatementAction : XDebuggerActionBase(true) {
     }
   }
 
-  override fun getHandler(debuggerSupport: DebuggerSupport): DebuggerActionHandler {
-    return mySetNextStatementActionHandler
-  }
+  override fun getHandler(debuggerSupport: DebuggerSupport) = setNextStatementActionHandler
 
   override fun isHidden(event: AnActionEvent): Boolean {
     return !PyDebugSupportUtils.isPythonConfigurationSelected(event.getData(CommonDataKeys.PROJECT))
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance("#com.jetbrains.python.debugger.PySetNextStatementAction")
   }
 }

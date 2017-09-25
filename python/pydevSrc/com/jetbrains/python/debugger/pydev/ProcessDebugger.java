@@ -81,10 +81,10 @@ public interface ProcessDebugger {
 
   void resumeOrStep(String threadId, ResumeOrStepCommand.Mode mode);
 
-  void setNextStatement(String threadId,
-                        XSourcePosition sourcePosition,
-                        String functionName,
-                        PyDebugCallback<Pair<Boolean, String>> callback);
+  void setNextStatement(@NotNull String threadId,
+                        @NotNull XSourcePosition sourcePosition,
+                        @Nullable String functionName,
+                        @NotNull PyDebugCallback<Pair<Boolean, String>> callback);
 
   void setTempBreakpoint(@NotNull String type, @NotNull String file, int line);
 

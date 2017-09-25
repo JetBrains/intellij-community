@@ -362,10 +362,10 @@ public class MultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
-  public void setNextStatement(String threadId,
-                               XSourcePosition sourcePosition,
-                               String functionName,
-                               PyDebugCallback<Pair<Boolean, String>> callback) {
+  public void setNextStatement(@NotNull String threadId,
+                               @NotNull XSourcePosition sourcePosition,
+                               @Nullable String functionName,
+                               @NotNull PyDebugCallback<Pair<Boolean, String>> callback) {
     debugger(threadId).setNextStatement(threadId, sourcePosition, functionName, callback);
   }
 

@@ -140,9 +140,9 @@ public class ProtocolParser {
     String[] values = payload.split("\t");
     if (values.length > 0) {
       boolean success = values[0].equals("True");
-      String errorMessage = "Error: ";
+      String errorMessage = "Error";
       if (values.length > 1) {
-        errorMessage += values[1];
+        errorMessage = errorMessage + ": " + values[1];
       }
       return new Pair<>(success, errorMessage);
     }

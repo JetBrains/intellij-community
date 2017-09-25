@@ -545,14 +545,14 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   public void startSetNextStatement(@Nullable XSuspendContext context,
-                                    XSourcePosition sourcePosition,
-                                    PyDebugCallback<Pair<Boolean, String>> callback) {
+                                    @NotNull XSourcePosition sourcePosition,
+                                    @NotNull PyDebugCallback<Pair<Boolean, String>> callback) {
     if (!checkCanPerformCommands()) return;
     dropFrameCaches();
     if (isConnected()) {
       String threadId = threadIdBeforeResumeOrStep(context);
       for (PyThreadInfo suspendedThread : mySuspendedThreads) {
-        if (threadId == null || threadId.equals(suspendedThread.getId())) {
+        if (threadId != null && threadId.equals(suspendedThread.getId())) {
           myDebugger.setNextStatement(threadId, sourcePosition, getFunctionName(sourcePosition), callback);
           break;
         }

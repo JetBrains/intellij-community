@@ -3,17 +3,19 @@ package com.jetbrains.python.debugger.pydev;
 import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.XSourcePosition;
 import com.jetbrains.python.debugger.PyDebuggerException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class SetNextStatementCommand extends AbstractThreadCommand {
   private int myLine;
-  private String myFunctionName;
-  private final PyDebugCallback<Pair<Boolean, String>> myCallback;
+  @NotNull private final PyDebugCallback<Pair<Boolean, String>> myCallback;
+  @Nullable private String myFunctionName;
 
-  protected SetNextStatementCommand(RemoteDebugger debugger,
-                                    String threadId,
-                                    XSourcePosition sourcePosition,
-                                    String functionName,
-                                    PyDebugCallback<Pair<Boolean, String>> callback) {
+  protected SetNextStatementCommand(@NotNull RemoteDebugger debugger,
+                                    @NotNull String threadId,
+                                    @NotNull XSourcePosition sourcePosition,
+                                    @Nullable String functionName,
+                                    @NotNull PyDebugCallback<Pair<Boolean, String>> callback) {
     super(debugger, SET_NEXT_STATEMENT, threadId);
     myLine = sourcePosition.getLine();
     myFunctionName = functionName;
