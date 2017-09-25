@@ -28,7 +28,6 @@ import com.intellij.util.io.URLUtil;
 import com.sun.jna.TypeMapper;
 import com.sun.jna.platform.FileUtils;
 import gnu.trove.THashSet;
-import net.jpountz.lz4.LZ4Factory;
 import org.apache.log4j.Appender;
 import org.apache.oro.text.regex.PatternMatcher;
 import org.intellij.lang.annotations.Flow;
@@ -507,7 +506,6 @@ public class PathManager {
       FileUtils.class,              // JNA (jna-platform)
       PatternMatcher.class,         // OROMatcher
       Snappy.class,                 // Snappy
-      LZ4Factory.class,                 // Snappy
     };
 
     final Set<String> classPath = new HashSet<String>();
