@@ -138,6 +138,8 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
   private static boolean isSelectable(PsiElement element) {
     if (element instanceof PsiFileSystemItem) return true;
 
+    if (element instanceof PsiJavaModule) return true;
+
     if (element instanceof PsiField || element instanceof PsiClass || element instanceof PsiMethod) {
       return !(element.getParent() instanceof PsiAnonymousClass) && !(element instanceof PsiAnonymousClass);
     }
