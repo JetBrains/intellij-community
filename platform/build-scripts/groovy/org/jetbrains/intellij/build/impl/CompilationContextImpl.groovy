@@ -16,6 +16,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.SystemProperties
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.codehaus.gant.GantBinding
@@ -65,7 +66,8 @@ class CompilationContextImpl implements CompilationContext {
       messages.error("communityHome ($communityHome) doesn't point to a directory containing IntelliJ Community sources")
     }
 
-    GradleRunner gradle = new GradleRunner(new File(communityHome, 'build/dependencies'), messages)
+    def dependenciesProjectDir = new File(communityHome, 'build/dependencies')
+    GradleRunner gradle = new GradleRunner(dependenciesProjectDir, messages, SystemProperties.getJavaHome())
     if (!options.isInDevelopmentMode) {
       setupCompilationDependencies(gradle)
     }
@@ -76,6 +78,7 @@ class CompilationContextImpl implements CompilationContext {
     projectHome = toCanonicalPath(projectHome)
     def jdk8Home = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", "$projectHome/build/jdk/1.8", "JDK_18_x64"))
     def kotlinHome = toCanonicalPath("$communityHome/build/dependencies/build/kotlin/Kotlin")
+    gradle = new GradleRunner(dependenciesProjectDir, messages, jdk8Home)
 
     if (project.modules.isEmpty()) {
       loadProject(projectHome, jdk8Home, kotlinHome, project, global, messages, ant)
