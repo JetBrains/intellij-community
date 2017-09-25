@@ -91,6 +91,11 @@ public class ImageLoader implements Serializable {
 
     @Nullable
     public Image load() throws IOException {
+      return  load(true);
+    }
+
+    @Nullable
+    public Image load(boolean useCache) throws IOException {
       String cacheKey = null;
       InputStream stream = null;
       URL url = null;
@@ -100,10 +105,11 @@ public class ImageLoader implements Serializable {
         if (stream == null) return null;
       }
       if (stream == null) {
-        cacheKey = path + (type == Type.SVG ? "_@" + scale + "x" : "");
-        Image image = ourCache.get(cacheKey);
-        if (image != null) return image;
-
+        if (useCache) {
+          cacheKey = path + (type == Type.SVG ? "_@" + scale + "x" : "");
+          Image image = ourCache.get(cacheKey);
+          if (image != null) return image;
+        }
         url = new URL(path);
         URLConnection connection = url.openConnection();
         if (connection instanceof HttpURLConnection) {
@@ -137,9 +143,14 @@ public class ImageLoader implements Serializable {
 
     @Nullable
     public Image load(@NotNull ImageConverterChain converters) {
+      return load(converters, true);
+    }
+
+    @Nullable
+    public Image load(@NotNull ImageConverterChain converters, boolean useCache) {
       for (ImageDesc desc : this) {
         try {
-          Image image = desc.load();
+          Image image = desc.load(useCache);
           if (image == null) continue;
           LOG.debug("Loaded image: " + desc);
           return converters.convert(image, desc);
@@ -277,7 +288,7 @@ public class ImageLoader implements Serializable {
 
   @Nullable
   public static Image loadFromUrl(@NotNull URL url, boolean allowFloatScaling, ImageFilter filter) {
-    return loadFromUrl(url, allowFloatScaling, new ImageFilter[] {filter}, ScaleContext.create());
+    return loadFromUrl(url, allowFloatScaling, true, new ImageFilter[] {filter}, ScaleContext.create());
   }
 
   /**
@@ -285,7 +296,7 @@ public class ImageLoader implements Serializable {
    * Then wraps the image with {@link JBHiDPIScaledImage} if necessary.
    */
   @Nullable
-  public static Image loadFromUrl(@NotNull URL url, final boolean allowFloatScaling, ImageFilter[] filters, final ScaleContext ctx) {
+  public static Image loadFromUrl(@NotNull URL url, final boolean allowFloatScaling, boolean useCache, ImageFilter[] filters, final ScaleContext ctx) {
     // We can't check all 3rd party plugins and convince the authors to add @2x icons.
     // In IDE-managed HiDPI mode with scale > 1.0 we scale images manually.
 
@@ -302,7 +313,8 @@ public class ImageLoader implements Serializable {
                 return source;
               }
         }).
-        withHiDPI(ctx));
+        withHiDPI(ctx),
+      useCache);
   }
 
   private static double adjustScaleFactor(boolean allowFloatScaling, double scale) {
