@@ -149,14 +149,11 @@ public class TarUtil {
 
   public static void extract(@NotNull File file, @NotNull File outputDir, @Nullable FilenameFilter filenameFilter, boolean overwrite)
     throws IOException {
-    FileInputStream fis = new FileInputStream(file);
-    GzipCompressorInputStream gcis = new GzipCompressorInputStream(fis);
-    TarArchiveInputStream tis = new TarArchiveInputStream(gcis);
-    try {
+
+    try (FileInputStream fis = new FileInputStream(file);
+         GzipCompressorInputStream gcis = new GzipCompressorInputStream(fis);
+         TarArchiveInputStream tis = new TarArchiveInputStream(gcis)) {
       extract(tis, outputDir, filenameFilter, overwrite);
-    }
-    finally {
-      fis.close();
     }
   }
 
@@ -219,10 +216,8 @@ public class TarUtil {
    * update an existing jar file. Adds/replace files specified in relpathToFile map
    */
   public static void update(InputStream in, OutputStream out, Map<String, File> relpathToFile) throws IOException {
-    TarArchiveInputStream tis = new TarArchiveInputStream(in);
-    TarArchiveOutputStream tos = new TarArchiveOutputStream(out);
-
-    try {
+    try (TarArchiveInputStream tis = new TarArchiveInputStream(in);
+         TarArchiveOutputStream tos = new TarArchiveOutputStream(out)) {
       // put the old entries first, replace if necessary
       TarArchiveEntry e;
       while ((e = tis.getNextTarEntry()) != null) {
@@ -255,10 +250,6 @@ public class TarUtil {
         File file = relpathToFile.get(path);
         addFileToTar(tos, file, path, null, null);
       }
-    }
-    finally {
-      tis.close();
-      tos.close();
     }
   }
 }
