@@ -104,7 +104,7 @@ abstract class PrebuiltStubsProviderBase : PrebuiltStubsProvider, Disposable {
   companion object {
     val PREBUILT_INDICES_PATH_PROPERTY = "prebuilt_indices_path"
     val SDK_STUBS_STORAGE_NAME = "sdk-stubs"
-    private val LOG = Logger.getInstance("#com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProviderBase")
+    private val LOG = Logger.getInstance("#com.intellij.psi.stubs.PrebuiltStubsProviderBase")
   }
 
   internal fun init() {
