@@ -1149,3 +1149,19 @@ filegroup(
     srcs = glob(["**/*.xml"]),
     visibility = ["//visibility:public"],
 )
+
+java_library(
+    name = "kotlin-stdlib-jre8",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    exports = [
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jre8/1.1.3-2:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jre7/1.1.3-2:jar",
+    ],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jre8/1.1.3-2:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jre7/1.1.3-2:jar",
+    ],
+)
