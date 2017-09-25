@@ -65,7 +65,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
-public abstract class ChangesTree extends Tree implements TypeSafeDataProvider {
+public abstract class ChangesTree extends Tree implements DataProvider {
   @NotNull protected final Project myProject;
   private final boolean myShowCheckboxes;
   private final int myCheckboxWidth;
@@ -599,11 +599,13 @@ public abstract class ChangesTree extends Tree implements TypeSafeDataProvider {
     myKeepTreeState = keepTreeState;
   }
 
+  @Nullable
   @Override
-  public void calcData(DataKey key, DataSink sink) {
-    if (PlatformDataKeys.COPY_PROVIDER == key) {
-      sink.put(PlatformDataKeys.COPY_PROVIDER, myTreeCopyProvider);
+  public Object getData(String dataId) {
+    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+      return myTreeCopyProvider;
     }
+    return null;
   }
 
   @Override
