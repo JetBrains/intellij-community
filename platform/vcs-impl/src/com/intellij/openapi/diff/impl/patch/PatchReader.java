@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.diff.impl.patch;
 
+import com.google.common.collect.Iterables;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -39,6 +40,7 @@ public class PatchReader {
   private final PatchReader.PatchContentParser myPatchContentParser;
   private final AdditionalInfoParser myAdditionalInfoParser;
   private List<FilePatch> myPatches;
+  private PatchFileHeaderInfo myPatchFileInfo;
 
   private enum DiffFormat { CONTEXT, UNIFIED }
 
@@ -123,6 +125,8 @@ public class PatchReader {
 
     String next;
     boolean containsAdditional = false;
+    boolean isHeaderLine = true;
+    int headerLineNum = 0;
     while (iterator.hasNext()) {
       next = iterator.next();
       final boolean containsAdditionalNow = myAdditionalInfoParser.testIsStart(next);
@@ -130,6 +134,7 @@ public class PatchReader {
         myAdditionalInfoParser.acceptError(new PatchSyntaxException(iterator.previousIndex(), "Contains additional information without patch itself"));
       }
       if (containsAdditionalNow) {
+        isHeaderLine = false;
         containsAdditional = true;
         myAdditionalInfoParser.parse(next, iterator);
         if (! iterator.hasNext()) {
@@ -140,6 +145,7 @@ public class PatchReader {
       }
 
       if (myPatchContentParser.testIsStart(next)) {
+        isHeaderLine = false;
         myPatchContentParser.parse(next, iterator);
         //iterator.previous();  // to correctly initialize next
         if (containsAdditional) {
@@ -152,8 +158,12 @@ public class PatchReader {
         }
         containsAdditional = false;
       }
+      if (isHeaderLine) {
+        headerLineNum++;
+      }
     }
     myPatches = myPatchContentParser.getResult();
+    myPatchFileInfo = PatchFileHeaderParser.parseHeader(Iterables.limit(myLines, headerLineNum).iterator());
   }
 
   @NotNull
@@ -165,6 +175,10 @@ public class PatchReader {
       };
     }
     return () -> filter(myAdditionalInfoParser.getResultMap(), path -> paths == null || paths.contains(path));
+  }
+  
+  public PatchFileHeaderInfo getPatchFileInfo() {
+    return myPatchFileInfo;
   }
 
   private static class AdditionalInfoParser implements Parser {
