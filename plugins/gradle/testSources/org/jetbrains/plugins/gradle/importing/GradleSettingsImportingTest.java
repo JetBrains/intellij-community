@@ -31,6 +31,8 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
@@ -74,34 +76,23 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
   @Test
   public void testInspectionSettingsImport() throws Exception {
     importProject(
-      "buildscript {\n" +
-      "  dependencies {\n" +
-      "     classpath files('" + getGradlePluginPath() + "')\n" +
-      "  }\n" +
-      "}\n" +
-      "apply plugin: 'org.jetbrains.gradle.plugin.idea-ext'\n" +
-      "idea {\n" +
-      "  project.settings {\n" +
-      "    inspections {\n" +
-      "    }\n" +
-      "  }\n" +
-      "}"
+      withGradleIdeaExtPlugin(
+        "idea {\n" +
+        "  project.settings {\n" +
+        "    inspections {\n" +
+        "    }\n" +
+        "  }\n" +
+        "}")
     );
 
     final InspectionProfileImpl profile = InspectionProfileManager.getInstance(myProject).getCurrentProfile();
     assertEquals("Gradle Imported", profile.getName());
   }
 
-
   @Test
   public void testCodeStyleSettingsImport() throws Exception {
     importProject(
-      "buildscript {\n" +
-      "  dependencies {\n" +
-      "     classpath files('" + getGradlePluginPath() + "')\n" +
-      "  }\n" +
-      "}\n" +
-      "apply plugin: 'org.jetbrains.gradle.plugin.idea-ext'\n" +
+      withGradleIdeaExtPlugin(
       "idea {\n" +
       "  project.settings {\n" +
       "    codeStyle {\n" +
@@ -109,7 +100,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
       "      indentSize 3\n" +
       "    }\n" +
       "  }\n" +
-      "}"
+      "}")
     );
 
     final CodeStyleScheme scheme = CodeStyleSchemes.getInstance().getCurrentScheme();
@@ -126,12 +117,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
   public void testCompilerConfigurationSettingsImport() throws Exception {
 
     importProject(
-      "buildscript {\n" +
-      "  dependencies {\n" +
-      "     classpath files('" + getGradlePluginPath() + "')\n" +
-      "  }\n" +
-      "}\n" +
-      "apply plugin: 'org.jetbrains.gradle.plugin.idea-ext'\n" +
+      withGradleIdeaExtPlugin(
       "idea {\n" +
       "  project.settings {\n" +
       "    compiler {\n" +
@@ -145,7 +131,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
       "      rebuildModuleOnDependencyChange false\n" +
       "    }\n" +
       "  }\n" +
-      "}"
+      "}")
     );
 
     final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
@@ -169,12 +155,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     Extensions.getRootArea().getExtensionPoint(RunConfigurationHandlerExtension.EP_NAME).registerExtension(testExtension);
 
     importProject(
-      "buildscript {\n" +
-      "  dependencies {\n" +
-      "     classpath files('" + getGradlePluginPath() + "')\n" +
-      "  }\n" +
-      "}\n" +
-      "apply plugin: 'org.jetbrains.gradle.plugin.idea-ext'\n" +
+      withGradleIdeaExtPlugin(
       "idea {\n" +
       "  module.settings {\n" +
       "    runConfigurations {\n" +
@@ -189,7 +170,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
       "       }\n" +
       "    }\n" +
       "  }\n" +
-      "}"
+      "}")
     );
 
     final Map<String, Map<String, Object>> configs = testExtension.getConfigs();
@@ -212,12 +193,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
 
 
     importProject(
-      "buildscript {\n" +
-      "  dependencies {\n" +
-      "     classpath files('" + getGradlePluginPath() + "')\n" +
-      "  }\n" +
-      "}\n" +
-      "apply plugin: 'org.jetbrains.gradle.plugin.idea-ext'\n" +
+      withGradleIdeaExtPlugin(
       "idea {\n" +
       "  module.settings {\n" +
       "    facets {\n" +
@@ -230,7 +206,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
       "       }\n" +
       "    }\n" +
       "  }\n" +
-      "}"
+      "}")
     );
 
     final Map<String, Map<String, Object>> facetConfigs = testExtension.getConfigs();
@@ -246,6 +222,18 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
   private String getGradlePluginPath() {
     return getClass().getResource("/testCompilerConfigurationSettingsImport/gradle-idea-ext.jar").toString();
   }
+
+  @NotNull
+  private String withGradleIdeaExtPlugin(@NonNls @Language("Groovy") String script) {
+    return "buildscript {\n" +
+           "  dependencies {\n" +
+           "     classpath files('" + getGradlePluginPath() + "')\n" +
+           "  }\n" +
+           "}\n" +
+           "apply plugin: 'org.jetbrains.gradle.plugin.idea-ext'\n" +
+           script;
+  }
+
 }
 
 
