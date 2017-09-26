@@ -100,25 +100,25 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
   protected void checkGistPublic() {
     GithubGist result = getGist();
 
-    assertTrue("Gist does not public", result.isPublic());
+    assertTrue("Gist is not public", result.isPublic());
   }
 
   protected void checkGistSecret() {
     GithubGist result = getGist();
 
-    assertFalse("Gist does not private", result.isPublic());
+    assertFalse("Gist is not private", result.isPublic());
   }
 
   protected void checkGistAnonymous() {
     GithubGist result = getGist();
 
-    assertTrue("Gist does not anonymous", result.getUser() == null);
+    assertTrue("Gist is not anonymous", result.getUser() == null);
   }
 
   protected void checkGistNotAnonymous() {
     GithubGist result = getGist();
 
-    assertFalse("Gist does not anonymous", result.getUser() == null);
+    assertFalse("Gist is not anonymous", result.getUser() == null);
   }
 
   protected void checkGistDescription(@NotNull String expected) {
