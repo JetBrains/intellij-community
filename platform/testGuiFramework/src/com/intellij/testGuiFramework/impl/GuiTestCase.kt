@@ -134,12 +134,13 @@ open class GuiTestCase {
    * methods on the receiver object (JDialogFixture instance).
    *
    * @title title of searching dialog window. If dialog should be only one title could be omitted or set to null.
+   * @needToKeepDialog is true if no need to wait when dialog is closed
    * @timeout time in seconds to find dialog in GUI hierarchy.
    */
-  fun dialog(title: String? = null, ignoreCaseTitle: Boolean = false, timeout: Long = defaultTimeout, func: JDialogFixture.() -> Unit) {
+  fun dialog(title: String? = null, ignoreCaseTitle: Boolean = false, timeout: Long = defaultTimeout, needToKeepDialog: Boolean = false, func: JDialogFixture.() -> Unit) {
     val dialog = dialog(title, ignoreCaseTitle, timeout)
     func(dialog)
-    dialog.waitTillGone()
+    if (!needToKeepDialog) dialog.waitTillGone()
   }
 
 
