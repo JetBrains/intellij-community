@@ -303,10 +303,15 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
         List<Value> values = ((ArrayReference)resArray).getValues();
         List<StackFrameItem> res = new ArrayList<>(values.size());
         for (Value value : values) {
-          List<Value> values1 = ((ArrayReference)value).getValues();
-          res.add(new ProcessStackFrameItem(getStringRefValue((StringReference)values1.get(0)),
-                                            getStringRefValue((StringReference)values1.get(2)),
-                                            Integer.parseInt(((StringReference)values1.get(3)).value())));
+          if (value == null) {
+            res.add(null);
+          }
+          else {
+            List<Value> values1 = ((ArrayReference)value).getValues();
+            res.add(new ProcessStackFrameItem(getStringRefValue((StringReference)values1.get(0)),
+                                              getStringRefValue((StringReference)values1.get(2)),
+                                              Integer.parseInt(((StringReference)values1.get(3)).value())));
+          }
         }
         return res;
       }
@@ -345,6 +350,11 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     @Override
     public String method() {
       return myMethod;
+    }
+
+    @Override
+    public String toString() {
+      return myClass + "." + myMethod + ":" + myLine;
     }
   }
 

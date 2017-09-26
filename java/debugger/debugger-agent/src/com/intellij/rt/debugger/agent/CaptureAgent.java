@@ -23,9 +23,11 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.security.ProtectionDomain;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.jar.JarFile;
 
 /**
@@ -33,10 +35,18 @@ import java.util.jar.JarFile;
  */
 public class CaptureAgent {
   private static Instrumentation ourInstrumentation;
+
   private static volatile Map<String, List<CapturePoint>> myCapturePoints = new HashMap<>();
   static {
     CapturePoint invokeLater = new CapturePoint("javax/swing/SwingUtilities", "invokeLater", 0);
     myCapturePoints.put(invokeLater.myClassName, Collections.singletonList(invokeLater));
+  }
+
+  private static volatile Map<String, List<InsertPoint>> myInsertPoints = new HashMap<>();
+
+  static {
+    InsertPoint invokeLater = new InsertPoint("java/awt/event/InvocationEvent", "dispatch", "runnable", "Ljava/lang/Runnable;");
+    myInsertPoints.put(invokeLater.myClassName, Collections.singletonList(invokeLater));
   }
 
   public static void premain(String args, Instrumentation instrumentation) throws IOException {
@@ -47,6 +57,10 @@ public class CaptureAgent {
     System.out.println("Capture agent: ready");
   }
 
+  private static <T> List<T> getNotNull(List<T> list) {
+    return list != null ? list : Collections.emptyList();
+  }
+
   private static class CaptureTransformer implements ClassFileTransformer {
     @Override
     public byte[] transform(ClassLoader loader,
@@ -54,14 +68,36 @@ public class CaptureAgent {
                             Class<?> classBeingRedefined,
                             ProtectionDomain protectionDomain,
                             byte[] classfileBuffer) {
-      List<CapturePoint> capturePoints = myCapturePoints.get(className);
-      if (!capturePoints.isEmpty()) {
+      List<CapturePoint> capturePoints = getNotNull(myCapturePoints.get(className));
+      List<InsertPoint> insertPoints = getNotNull(myInsertPoints.get(className));
+      if (!capturePoints.isEmpty() || !insertPoints.isEmpty()) {
         ClassReader reader = new ClassReader(classfileBuffer);
-        ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
+        ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES);
         for (CapturePoint point : capturePoints) {
-          reader.accept(new CaptureInstrumentor(Opcodes.ASM6, writer, point), 0);
+          try {
+            reader.accept(new CaptureInstrumentor(Opcodes.ASM6, writer, point), 0);
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
         }
-        return writer.toByteArray();
+        for (InsertPoint point : insertPoints) {
+          try {
+            reader.accept(new InsertInstrumentor(Opcodes.ASM6, writer, point), 0);
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
+        }
+        byte[] bytes = writer.toByteArray();
+
+        try {
+          Path path = new File("instrumented_" + className.replaceAll("/", "_") + ".class").toPath();
+          Files.write(path, bytes);
+        }
+        catch (IOException e) {
+          e.printStackTrace();
+        }
+
+        return bytes;
       }
       return null;
     }
@@ -79,18 +115,13 @@ public class CaptureAgent {
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
       MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
       if (capturePoint.myMethodName.equals(name)) {
-        System.out.println("Capture agent: instrumented " + capturePoint.myClassName + "." + name);
+        System.out.println("Capture agent: instrumented capture point at " + capturePoint.myClassName + "." + name);
         return new MethodVisitor(api, mv) {
           @Override
           public void visitCode() {
-            visitFieldInsn(Opcodes.GETSTATIC, CaptureStorage.class.getName().replaceAll("\\.", "/"), "STORAGE", "Ljava/util/Map;");
             visitVarInsn(Opcodes.ALOAD, capturePoint.myParamSlotId);
-            visitTypeInsn(Opcodes.NEW, "java/lang/Exception");
-            visitInsn(Opcodes.DUP);
-            visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/Exception", "<init>", "()V", false);
-            visitMethodInsn(Opcodes.INVOKEINTERFACE, "java/util/Map", "put",
-                            "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true);
-            visitInsn(Opcodes.POP);
+            visitMethodInsn(Opcodes.INVOKESTATIC, CaptureStorage.class.getName().replaceAll("\\.", "/"), "capture",
+                            "(Ljava/lang/Object;)V", false);
             super.visitCode();
           }
         };
@@ -99,15 +130,104 @@ public class CaptureAgent {
     }
   }
 
+  private static class InsertInstrumentor extends ClassVisitor {
+    private InsertPoint myInsertPoint;
+    Supplier<MethodVisitor> myVisitMethod = null;
+    String myDesc;
+
+    public InsertInstrumentor(int api, ClassVisitor cv, InsertPoint insertPoint) {
+      super(api, cv);
+      this.myInsertPoint = insertPoint;
+    }
+
+    private static String getNewName(String name) {
+      return name + "$$$capture";
+    }
+
+    @Override
+    public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+      if (myInsertPoint.myMethodName.equals(name)) {
+        MethodVisitor mv = super.visitMethod(access, getNewName(name), desc, signature, exceptions);
+        myDesc = desc;
+        myVisitMethod = () -> super.visitMethod(access, name, desc, signature, exceptions);
+        System.out.println("Capture agent: instrumented insert point at " + myInsertPoint.myClassName + "." + name);
+        return mv;
+      }
+      return super.visitMethod(access, name, desc, signature, exceptions);
+    }
+
+    @Override
+    public void visitEnd() {
+      if (myVisitMethod != null) {
+        MethodVisitor mv = myVisitMethod.get();
+
+        Label start = new Label();
+        mv.visitLabel(start);
+
+        insertEnter(mv);
+
+        mv.visitVarInsn(Opcodes.ALOAD, 0);
+        // TODO: mv.loadArgs();
+        mv.visitMethodInsn(Opcodes.INVOKESPECIAL, myInsertPoint.myClassName, getNewName(myInsertPoint.myMethodName), myDesc, false);
+
+        Label end = new Label();
+        mv.visitLabel(end);
+
+        // regular exit
+        insertExit(mv);
+        mv.visitInsn(Opcodes.RETURN);
+
+        Label catchLabel = new Label();
+        mv.visitLabel(catchLabel);
+        mv.visitTryCatchBlock(start, end, catchLabel, null);
+
+        // exception exit
+        insertExit(mv);
+        mv.visitInsn(Opcodes.ATHROW);
+
+        mv.visitMaxs(0, 0);
+        mv.visitEnd();
+      }
+    }
+
+    private void insertEnter(MethodVisitor mv) {
+      mv.visitVarInsn(Opcodes.ALOAD, 0);
+      mv.visitFieldInsn(Opcodes.GETFIELD, myInsertPoint.myClassName, myInsertPoint.myField, myInsertPoint.myFieldDesc);
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, CaptureStorage.class.getName().replaceAll("\\.", "/"), "insertEnter",
+                         "(Ljava/lang/Object;)V", false);
+    }
+
+    private void insertExit(MethodVisitor mv) {
+      mv.visitVarInsn(Opcodes.ALOAD, 0);
+      mv.visitFieldInsn(Opcodes.GETFIELD, myInsertPoint.myClassName, myInsertPoint.myField, myInsertPoint.myFieldDesc);
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, CaptureStorage.class.getName().replaceAll("\\.", "/"), "insertExit",
+                         "(Ljava/lang/Object;)V", false);
+    }
+  }
+
   static class CapturePoint {
     final String myClassName;
     final String myMethodName;
     final int myParamSlotId;
 
-    public CapturePoint(String myClassName, String myMethodName, int myParamSlotId) {
-      this.myClassName = myClassName;
-      this.myMethodName = myMethodName;
-      this.myParamSlotId = myParamSlotId;
+    public CapturePoint(String className, String methodName, int paramSlotId) {
+      this.myClassName = className;
+      this.myMethodName = methodName;
+      this.myParamSlotId = paramSlotId;
+    }
+  }
+
+  static class InsertPoint {
+    final String myClassName;
+    final String myMethodName;
+    final String myField;
+    final String myFieldDesc;
+
+    public InsertPoint(String className, String methodName, String field, String fieldDesc) {
+      this.myClassName = className;
+      this.myMethodName = methodName;
+      this.myField = field;
+      myFieldDesc = fieldDesc;
     }
   }
 
