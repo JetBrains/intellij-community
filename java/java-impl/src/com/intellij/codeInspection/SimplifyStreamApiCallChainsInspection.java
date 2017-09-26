@@ -76,8 +76,8 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     instanceCall(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, "map").parameterCount(1);
   private static final CallMatcher STREAM_ANY_MATCH =
     instanceCall(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, "anyMatch").parameterCount(1);
-  private static final CallMatcher STREAM_RANGE =
-    staticCall(CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM, "range").parameterCount(2);
+  private static final CallMatcher INT_STREAM_RANGE =
+    staticCall(CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM, "range").parameterTypes("int", "int");
   private static final CallMatcher STREAM_NONE_MATCH =
     instanceCall(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, "noneMatch").parameterCount(1);
   private static final CallMatcher STREAM_ALL_MATCH =
@@ -1081,8 +1081,6 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     private static final CallMatcher INT_STREAM_MAP =
       instanceCall(CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM, "map", "mapToLong", "mapToDouble", "mapToObj")
         .parameterCount(1);
-    private static final CallMatcher INT_STREAM_RANGE =
-      staticCall(CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM, "range").parameterTypes("int", "int");
     private static final CallMatcher MIN_INT =
       anyOf(
         staticCall(CommonClassNames.JAVA_LANG_MATH, "min").parameterTypes("int", "int"),
@@ -1478,7 +1476,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
 
     @NotNull
     static CallHandler<CallChainSimplification> handler() {
-      return CallHandler.of(STREAM_RANGE, call -> {
+      return CallHandler.of(INT_STREAM_RANGE, call -> {
         PsiExpression[] args = call.getArgumentList().getExpressions();
         PsiMethodCallExpression maybeMap = ExpressionUtils.getCallForQualifier(call);
         if (!STREAM_INT_MAP_TO_ALL.test(maybeMap)) return null;
