@@ -26,7 +26,6 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
-import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection;
 
 import java.util.stream.Stream;
 
@@ -34,12 +33,6 @@ import static org.junit.Assert.assertArrayEquals;
 
 @TestDataPath("$CONTENT_ROOT/testData/navigation/structure")
 public class PluginDescriptorStructureTest extends JavaCodeInsightFixtureTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new PluginXmlDomInspection());
-  }
-
   @Override
   protected String getBasePath() {
     return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/navigation/structure";
@@ -102,8 +95,6 @@ public class PluginDescriptorStructureTest extends JavaCodeInsightFixtureTestCas
 
       TreeElement[] epNodes = topLevelNodes[9].getChildren();
       assertSize(6, epNodes);
-
-
 
       String[] expectedEpNames = new String[] {"someExtensionPoint", "toolWindow", "projectConfigurable", "fileEditorProvider",
         "mockApplicationService", "dom.extender"};
