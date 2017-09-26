@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
+import java.util.Collection;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -67,26 +68,17 @@ public class GdkMethodHolder {
       }
       byName.putValue(m.getName(), m);
     }
-    this.myOriginalMethodByType = new VolatileNotNullLazyValue<MultiMap<String, PsiMethod>>() {
-      @NotNull
-      @Override
-      protected MultiMap<String, PsiMethod> compute() {
-        MultiMap<String, PsiMethod> map = new MultiMap<>();
-        for (PsiMethod method : byName.values()) {
-          map.putValue(getCategoryTargetType(method).getCanonicalText(), method);
-        }
-        return map;
-      }
-    };
+    myOriginalMethodByType = VolatileNotNullLazyValue.createValue(() -> groupByType(byName.values()));
+    myOriginalMethodsByNameAndType = ConcurrentFactoryMap.createMap(name -> groupByType(byName.get(name)));
+  }
 
-    myOriginalMethodsByNameAndType = ConcurrentFactoryMap.createMap(name-> {
-        MultiMap<String, PsiMethod> map = new MultiMap<>();
-        for (PsiMethod method : byName.get(name)) {
-          map.putValue(getCategoryTargetType(method).getCanonicalText(), method);
-        }
-        return map;
-      }
-    );
+  @NotNull
+  private MultiMap<String, PsiMethod> groupByType(Collection<? extends PsiMethod> methods) {
+    MultiMap<String, PsiMethod> map = new MultiMap<>();
+    for (PsiMethod method : methods) {
+      map.putValue(getCategoryTargetType(method).getCanonicalText(), method);
+    }
+    return map;
   }
 
   private PsiType getCategoryTargetType(PsiMethod method) {
