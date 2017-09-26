@@ -55,6 +55,7 @@ public class FileStatusColorsTable extends JBTable {
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     setDefaultRenderer(Color.class, new MyColorCellRenderer());
     setDefaultRenderer(String.class, new MyStatusCellRenderer());
+    setDefaultRenderer(Boolean.class, new MyDefaultStatusRenderer());
     setTableHeader(null);
     registerKeyboardAction(new ActionListener() {
         @Override
@@ -76,9 +77,9 @@ public class FileStatusColorsTable extends JBTable {
   private void initPopup() {
     mySetColorMenu = new JBPopupMenu();
     mySetColorMenu.add(new JBMenuItem(new DropColorAction()));
-    mySetColorMenu.add(new JBMenuItem(new ChooseColorAction()));
     myResetItem = new JBMenuItem(new ResetToDefaultAction());
     mySetColorMenu.add(myResetItem);
+    mySetColorMenu.add(new JBMenuItem(new ChooseColorAction()));
   }
 
   private class ChooseColorAction extends AbstractAction {
@@ -251,6 +252,27 @@ public class FileStatusColorsTable extends JBTable {
         }
       }
       return c;
+    }
+  }
+
+  private static class MyDefaultStatusRenderer extends DefaultTableCellRenderer {
+    private final JLabel myLabel = new JLabel();
+    private final Color myLabelColor;
+
+    public MyDefaultStatusRenderer() {
+      myLabel.setOpaque(true);
+      myLabelColor = ColorUtil.withAlpha(myLabel.getForeground(), 0.5);
+    }
+
+    @Override
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      if (value instanceof Boolean) {
+        myLabel.setForeground(isSelected ? UIUtil.getTableSelectionForeground() : myLabelColor);
+        myLabel.setBackground(UIUtil.getTableBackground(isSelected));
+        myLabel.setText((Boolean)value ? "(default)" : "");
+        return myLabel;
+      }
+      return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
     }
   }
 
