@@ -1716,15 +1716,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       activeWindow = ObjectUtils.notNull(lastFocusedWindow, activeWindow);
     }
 
-    final IdeFrame frame = FocusManagerImpl.getInstance().getLastFocusedFrame();
-
-    if (frame != null) {
-      FileEditorManagerEx fem = FileEditorManagerEx.getInstanceEx(frame.getProject());
-      EditorsSplitters splitters = activeWindow != null ? fem.getSplittersFor(activeWindow) : null;
-      return splitters != null ? splitters : fem.getSplitters();
-    }
-
-    return null;
+    FileEditorManagerEx fem = FileEditorManagerEx.getInstanceEx(myProject);
+    EditorsSplitters splitters = activeWindow != null ? fem.getSplittersFor(activeWindow) : null;
+    return splitters != null ? splitters : fem.getSplitters();
   }
 
   @Override
