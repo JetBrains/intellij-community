@@ -24,15 +24,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiTypeParameter;
-import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
+import com.intellij.psi.impl.source.StubbedSpine;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.stubsHierarchy.ClassHierarchy;
 import com.intellij.psi.stubsHierarchy.HierarchyService;
 import com.intellij.psi.stubsHierarchy.SmartClassAnchor;
@@ -51,7 +46,7 @@ public class TestStubHierarchyAction extends InheritanceAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously((Runnable)() -> ReadAction.run(new TestHierarchy(project)::run),
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.run(new TestHierarchy(project)::run),
                                                                         "Testing Hierarchy", true, project);
     }
   }
@@ -89,8 +84,9 @@ public class TestStubHierarchyAction extends InheritanceAction {
     }
 
     private void checkFile(MultiMap<SmartClassAnchor, SmartClassAnchor> supers, ClassHierarchy hierarchy, VirtualFile vFile) {
-      for (StubElement<?> element : getStubTree(vFile).getPlainListFromAllRoots()) {
-        Object psi = element.getPsi();
+      StubbedSpine spine = getStubTree(vFile);
+      for (int i = 0; i < spine.getStubCount(); i++) {
+        PsiElement psi = spine.getStubPsi(i);
         if (psi instanceof PsiClass && !(psi instanceof PsiTypeParameter)) {
           SmartClassAnchor anchor = hierarchy.findAnchor((PsiClass)psi);
           if (anchor == null) {
@@ -116,11 +112,10 @@ public class TestStubHierarchyAction extends InheritanceAction {
     }
 
     @NotNull
-    private StubTree getStubTree(VirtualFile vFile) {
+    private StubbedSpine getStubTree(VirtualFile vFile) {
       PsiFileWithStubSupport psiFile = (PsiFileWithStubSupport)PsiManager.getInstance(myProject).findFile(vFile);
       assert psiFile != null : "No PSI for " + vFile;
-      StubTree stubTree = psiFile.getStubTree();
-      return stubTree != null ? stubTree : ((PsiFileImpl)psiFile).calcStubTree();
+      return psiFile.getStubbedSpine();
     }
 
     private void compareSupers(final SmartClassAnchor anchor, final Collection<SmartClassAnchor> superAnchors) {

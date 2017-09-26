@@ -52,6 +52,7 @@ import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.StubbedSpine;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -559,6 +560,12 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   @Override
   public ASTNode findTreeForStub(final StubTree tree, final StubElement<?> stub) {
     return null;
+  }
+
+  @NotNull
+  @Override
+  public StubbedSpine getStubbedSpine() {
+    return getStubTree().getSpine();
   }
 
   @Override
