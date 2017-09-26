@@ -91,10 +91,11 @@ public class ParameterInfoComponent extends JPanel {
   }
 
   ParameterInfoComponent(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler) {
-    this(objects, editor, handler, false);
+    this(objects, editor, handler, false, false);
   }
 
-  ParameterInfoComponent(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler, boolean requestFocus) {
+  ParameterInfoComponent(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler, 
+                         boolean requestFocus, boolean allowSwitchLabel) {
     super(new BorderLayout());
     myRequestFocus = requestFocus;
 
@@ -131,7 +132,8 @@ public class ParameterInfoComponent extends JPanel {
 
     String upShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_METHOD_OVERLOAD_SWITCH_UP);
     String downShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_METHOD_OVERLOAD_SWITCH_DOWN);
-    if (upShortcut.isEmpty() && downShortcut.isEmpty()) {
+    if (!allowSwitchLabel || myObjects.length <= 1 || !myHandler.supportsOverloadSwitching() || 
+        upShortcut.isEmpty() && downShortcut.isEmpty()) {
       myShortcutLabel = null;
     }
     else {
@@ -277,9 +279,7 @@ public class ParameterInfoComponent extends JPanel {
       }
     }
 
-    if (myShortcutLabel != null) {
-      myShortcutLabel.setVisible(!singleParameterInfo && myObjects.length > 1 && myHandler.supportsOverloadSwitching());
-    }
+    if (myShortcutLabel != null) myShortcutLabel.setVisible(!singleParameterInfo);
 
     invalidate();
     validate();

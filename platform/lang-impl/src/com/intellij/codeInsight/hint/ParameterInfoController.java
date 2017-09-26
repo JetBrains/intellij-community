@@ -149,7 +149,7 @@ public class ParameterInfoController implements Disposable {
     myHandler = handler;
     myProvider = new MyBestLocationPointProvider(editor);
     myLbraceMarker = editor.getDocument().createRangeMarker(lbraceOffset, lbraceOffset);
-    myComponent = new ParameterInfoComponent(descriptors, editor, handler, requestFocus);
+    myComponent = new ParameterInfoComponent(descriptors, editor, handler, requestFocus, true);
     myHint = new LightweightHint(myComponent);
     myKeepOnHintHidden = !showHint;
     mySingleParameterInfo = !showHint;
