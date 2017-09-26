@@ -221,6 +221,10 @@ class CollectMigration extends BaseStreamApiMigration {
       return StreamEx.ofNullable(myLoop);
     }
 
+    StreamEx<String> fusedElements() {
+      return StreamEx.empty();
+    }
+
     public InitializerUsageStatus getStatus() { return myStatus; }
 
     void cleanUp() {}
@@ -672,6 +676,11 @@ class CollectMigration extends BaseStreamApiMigration {
       myStatement.delete();
     }
 
+    @Override
+    StreamEx<String> fusedElements() {
+      return myDownstream.fusedElements().append("'sort'");
+    }
+
     @Nullable
     public static CollectTerminal tryWrap(CollectTerminal terminal, PsiElement element) {
       PsiVariable containerVariable = terminal.getTargetVariable();
@@ -718,7 +727,7 @@ class CollectMigration extends BaseStreamApiMigration {
   }
 
   static abstract class RecreateTerminal extends CollectTerminal {
-    private final CollectTerminal myUpstream;
+    final CollectTerminal myUpstream;
     private final String myIntermediate;
     final PsiExpression myCreateExpression;
 
@@ -775,6 +784,11 @@ class CollectMigration extends BaseStreamApiMigration {
     @Override
     public String generateTerminal() {
       return ".toArray(" + mySupplier + ")";
+    }
+
+    @Override
+    StreamEx<String> fusedElements() {
+      return myUpstream.fusedElements().append("'toArray'");
     }
 
     @Contract("_, null -> null")
@@ -834,7 +848,7 @@ class CollectMigration extends BaseStreamApiMigration {
     NewListTerminal(CollectTerminal upstream,
                     PsiLocalVariable variable,
                     String intermediate,
-                    PsiExpression newListExpression,
+                    PsiNewExpression newListExpression,
                     PsiType resultType) {
       super(upstream, variable, intermediate, newListExpression);
       myResultType = resultType;
@@ -843,6 +857,12 @@ class CollectMigration extends BaseStreamApiMigration {
     @Override
     public String generateTerminal() {
       return ".collect(" + getCollectionCollector(myCreateExpression, myResultType) + ")";
+    }
+
+    @Override
+    StreamEx<String> fusedElements() {
+      PsiJavaCodeReferenceElement reference = ((PsiNewExpression)myCreateExpression).getClassReference();
+      return myUpstream.fusedElements().append(Objects.requireNonNull(reference).getReferenceName());
     }
 
     @Nullable
@@ -880,11 +900,12 @@ class CollectMigration extends BaseStreamApiMigration {
       }
       if (!(candidate instanceof PsiNewExpression)) return null;
       if (!InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_COLLECTION)) return null;
-      PsiExpressionList argumentList = ((PsiNewExpression)candidate).getArgumentList();
+      PsiNewExpression newExpression = (PsiNewExpression)candidate;
+      PsiExpressionList argumentList = newExpression.getArgumentList();
       if (argumentList == null) return null;
       PsiExpression[] args = argumentList.getExpressions();
       if (args.length != 1 || !terminal.isTargetReference(args[0])) return null;
-      return new NewListTerminal(terminal, var, intermediateSteps, candidate, type);
+      return new NewListTerminal(terminal, var, intermediateSteps, newExpression, type);
     }
   }
 }
