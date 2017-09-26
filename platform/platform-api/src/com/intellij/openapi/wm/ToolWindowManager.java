@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
-import java.util.Objects;
 
 /**
  * If you want to register a toolwindow, which will be enabled during the dumb mode, please use {@link ToolWindowManager}'s
@@ -146,23 +145,6 @@ public abstract class ToolWindowManager {
    */
   @Nullable
   public abstract String getActiveToolWindowId();
-
-  @Nullable
-  public static ToolWindow getActiveToolWindow () {
-    ToolWindowManager instance = getInstance(
-      Objects.requireNonNull(Objects.requireNonNull(IdeFocusManager.getGlobalInstance().getLastFocusedFrame()).getProject()));
-
-    return instance.getToolWindow(getActiveId());
-  }
-
-  @Nullable
-  public static String getActiveId () {
-    ToolWindowManager instance = getInstance(Objects.requireNonNull(Objects.requireNonNull(IdeFocusManager.getGlobalInstance().getLastFocusedFrame()).getProject()));
-
-    return instance.getActiveToolWindowId();
-
-  }
-
 
   /**
    * @return registered tool window with specified {@code id}. If there is no registered
