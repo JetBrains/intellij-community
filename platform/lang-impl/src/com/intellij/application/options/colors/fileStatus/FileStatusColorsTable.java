@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.ColorPicker;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBEmptyBorder;
@@ -45,16 +46,16 @@ public class FileStatusColorsTable extends JBTable {
 
   private JBPopupMenu mySetColorMenu;
   private JBMenuItem myResetItem;
-  private final Font myItalicFont;
+  private final Color myDefaultColor;
 
   public FileStatusColorsTable(@NotNull Color defaultColor) {
+    myDefaultColor = defaultColor;
     setShowGrid(false);
     getColumnModel().setColumnSelectionAllowed(false);
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    setDefaultRenderer(Color.class, new MyColorCellRenderer(defaultColor));
+    setDefaultRenderer(Color.class, new MyColorCellRenderer());
     setDefaultRenderer(String.class, new MyStatusCellRenderer());
     setTableHeader(null);
-    myItalicFont = UIUtil.getLabelFont().deriveFont(Font.ITALIC);
     registerKeyboardAction(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -203,13 +204,8 @@ public class FileStatusColorsTable extends JBTable {
     return -1;
   }
 
-  private static class MyColorCellRenderer implements TableCellRenderer {
+  private class MyColorCellRenderer implements TableCellRenderer {
     public static final int RIGHT_GAP = 10;
-    private Color myDefaultColor;
-
-    public MyColorCellRenderer(@NotNull Color defaultColor) {
-      myDefaultColor = defaultColor;
-    }
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -218,8 +214,7 @@ public class FileStatusColorsTable extends JBTable {
       colorLabel.setBorder(new JBEmptyBorder(0, RIGHT_GAP, 0, 0));
       colorLabel.setIcon(getIcon(c));
       //noinspection StringToUpperCaseOrToLowerCaseWithoutLocale
-      colorLabel.setText(value != null ? "" : ApplicationBundle.message("file.status.color.none"));
-      colorLabel.setForeground(c);
+      colorLabel.setText(value != null ? "#" + ColorUtil.toHex(c).toUpperCase() : ApplicationBundle.message("file.status.color.none"));
       if (isSelected) {
         colorLabel.setOpaque(true);
         colorLabel.setForeground(UIUtil.getTableSelectionForeground());
@@ -228,24 +223,28 @@ public class FileStatusColorsTable extends JBTable {
       return colorLabel;
     }
 
-    @NotNull
-    private Color getDisplayColor(@Nullable Object value) {
-      return value instanceof Color ? (Color)value : myDefaultColor;
-    }
-
-    private Icon getIcon(@NotNull  Color color) {
-      return color != myDefaultColor ? JBUI.scale(new MyColorIcon(color)) : null;
+    private Icon getIcon(@NotNull Color color) {
+      return JBUI.scale(new MyColorIcon(color));
     }
   }
 
+  private Color getDisplayColor(@Nullable Object value) {
+    return value instanceof Color ? (Color)value : myDefaultColor;
+  }
+
   private class MyStatusCellRenderer extends DefaultTableCellRenderer {
+
+    private final JLabel myLabel = new JLabel();
+
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       if (value instanceof String) {
         FileStatusColorDescriptor descriptor = ((FileStatusColorsTableModel)getModel()).getDescriptorByName((String)value);
-        if (descriptor != null && !descriptor.isDefault()) {
-          c.setFont(myItalicFont);
+        if (descriptor != null && !isSelected) {
+          myLabel.setText((String)value);
+          myLabel.setForeground(getDisplayColor(descriptor.getColor()));
+          return myLabel;
         }
       }
       return c;
