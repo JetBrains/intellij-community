@@ -39,7 +39,9 @@ public class CaptureStorage {
 
   @SuppressWarnings("unused")
   public static void capture(Object key) {
-    debug("capture: " + key);
+    if (DEBUG) {
+      System.out.println("capture - " + key);
+    }
     Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
     CapturedStack stack = createCapturedStack(new Throwable(), currentStacks.isEmpty() ? null : currentStacks.getLast());
     STORAGE.put(key, stack);
@@ -47,25 +49,29 @@ public class CaptureStorage {
 
   @SuppressWarnings("unused")
   public static void insertEnter(Object key) {
-    debug("insert ->: " + key);
     CapturedStack stack = STORAGE.get(key);
     Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
     if (stack != null) {
       currentStacks.add(new InsertMatch(stack, ourJavaLangAccess.getStackTraceDepth(new Throwable())));
-      debug("insert ->: stack saved (" + currentStacks.size() + ")");
+      if (DEBUG) {
+        System.out.println("insert -> " + key + ", stack saved (" + currentStacks.size() + ")");
+      }
     }
     else {
       currentStacks.add(InsertMatch.EMPTY);
-      debug("insert ->: no stack found (" + currentStacks.size() + ")");
+      if (DEBUG) {
+        System.out.println("insert -> " + key + ", no stack found (" + currentStacks.size() + ")");
+      }
     }
   }
 
   @SuppressWarnings("unused")
   public static void insertExit(Object key) {
-    debug("insert <-: " + key);
     Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
     currentStacks.removeLast();
-    debug("insert <-: stack removed (" + currentStacks.size() + ")");
+    if (DEBUG) {
+      System.out.println("insert <- " + key + ", stack removed (" + currentStacks.size() + ")");
+    }
   }
 
   private static CapturedStack createCapturedStack(Throwable exception, InsertMatch insertMatch) {
@@ -148,11 +154,5 @@ public class CaptureStorage {
 
   public static void setDebug(boolean debug) {
     DEBUG = debug;
-  }
-
-  private static void debug(String log) {
-    if (DEBUG) {
-      System.out.println(log);
-    }
   }
 }

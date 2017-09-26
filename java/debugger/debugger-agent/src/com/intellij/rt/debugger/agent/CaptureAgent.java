@@ -57,7 +57,10 @@ public class CaptureAgent {
     instrumentation.appendToSystemClassLoaderSearch(createTempJar("asm-all.jar"));
     instrumentation.addTransformer(new CaptureTransformer());
     DEBUG = "debug".equals(args);
-    debug("Capture agent: ready");
+    if (DEBUG) {
+      CaptureStorage.setDebug(true);
+      System.out.println("Capture agent: ready");
+    }
   }
 
   private static <T> List<T> getNotNull(List<T> list) {
@@ -120,7 +123,9 @@ public class CaptureAgent {
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
       MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
       if (capturePoint.myMethodName.equals(name)) {
-        debug("Capture agent: instrumented capture point at " + capturePoint.myClassName + "." + name);
+        if (DEBUG) {
+          System.out.println("Capture agent: instrumented capture point at " + capturePoint.myClassName + "." + name);
+        }
         return new MethodVisitor(api, mv) {
           @Override
           public void visitCode() {
@@ -155,7 +160,9 @@ public class CaptureAgent {
         MethodVisitor mv = super.visitMethod(access, getNewName(name), desc, signature, exceptions);
         myDesc = desc;
         myVisitMethod = () -> super.visitMethod(access, name, desc, signature, exceptions);
-        debug("Capture agent: instrumented insert point at " + myInsertPoint.myClassName + "." + name);
+        if (DEBUG) {
+          System.out.println("Capture agent: instrumented insert point at " + myInsertPoint.myClassName + "." + name);
+        }
         return mv;
       }
       return super.visitMethod(access, name, desc, signature, exceptions);
@@ -283,11 +290,5 @@ public class CaptureAgent {
       }
     }
     ourInstrumentation.retransformClasses(classes.toArray(new Class[0]));
-  }
-
-  private static void debug(String log) {
-    if (DEBUG) {
-      System.out.println(log);
-    }
   }
 }
