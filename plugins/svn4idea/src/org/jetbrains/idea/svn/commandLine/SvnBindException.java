@@ -23,6 +23,8 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
+import org.tmatesoft.sqljet.core.SqlJetErrorCode;
+import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -33,12 +35,6 @@ import java.util.regex.Pattern;
 import static com.intellij.util.ObjectUtils.*;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- *
- * Marker exception
- */
 public class SvnBindException extends VcsException {
 
   public static final int ERROR_BASE = 120000;
@@ -92,6 +88,17 @@ public class SvnBindException extends VcsException {
     int code = notNull(coalesce(getFirstItem(errors.keySet()), getFirstItem(warnings.keySet())), SVNErrorCode.UNKNOWN.getCode());
 
     return new SVNException(SVNErrorMessage.create(SVNErrorCode.getErrorCode(code), getMessage(), type), this);
+  }
+
+  public boolean isDbBusy() {
+    if (getCause() instanceof SVNException) {
+      Throwable svnExceptionCause = ((SVNException)getCause()).getErrorMessage().getCause();
+
+      return svnExceptionCause instanceof SqlJetException &&
+             SqlJetErrorCode.BUSY.equals(((SqlJetException)svnExceptionCause).getErrorCode());
+    }
+
+    return false;
   }
 
   public boolean contains(int code) {

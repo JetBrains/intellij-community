@@ -18,26 +18,17 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Processor;
 import com.intellij.util.TimeoutUtil;
-import org.tmatesoft.sqljet.core.SqlJetErrorCode;
-import org.tmatesoft.sqljet.core.SqlJetException;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNException;
 
 public abstract class RepeatSvnActionThroughBusy {
   public static final int REPEAT = 10;
 
   public static final Processor<Exception> ourBusyExceptionProcessor = e -> {
-    if (e instanceof SVNException) {
-      final SVNErrorCode errorCode = ((SVNException)e).getErrorMessage().getErrorCode();
-      if (SVNErrorCode.WC_LOCKED.equals(errorCode)) {
-        return true;
-      }
-      else if (SVNErrorCode.SQLITE_ERROR.equals(errorCode)) {
-        Throwable cause = ((SVNException)e).getErrorMessage().getCause();
-        if (cause instanceof SqlJetException) {
-          return SqlJetErrorCode.BUSY.equals(((SqlJetException)cause).getErrorCode());
-        }
-      }
+    if (e instanceof SvnBindException) {
+      SvnBindException ex = (SvnBindException)e;
+
+      return ex.contains(SVNErrorCode.WC_LOCKED) || ex.contains(SVNErrorCode.SQLITE_ERROR) && ex.isDbBusy();
     }
     return false;
   };
