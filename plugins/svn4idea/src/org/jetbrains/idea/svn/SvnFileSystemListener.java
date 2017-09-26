@@ -120,7 +120,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     CommandProcessor.getInstance().removeCommandListener(this);
   }
 
-  private void addToMoveExceptions(@NotNull final Project project, @NotNull final Exception e) {
+  private void addToMoveExceptions(@NotNull Project project, @NotNull VcsException e) {
     List<VcsException> exceptionList = myMoveExceptions.get(project);
     if (exceptionList == null) {
       exceptionList = new ArrayList<>();
@@ -129,19 +129,9 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     exceptionList.add(handleMoveException(e));
   }
 
-  private static VcsException handleMoveException(@NotNull Exception e) {
-    VcsException vcsException;
-    if (e instanceof SVNException && SVNErrorCode.ENTRY_EXISTS.equals(((SVNException)e).getErrorMessage().getErrorCode()) ||
-        e instanceof SvnBindException && ((SvnBindException)e).contains(SVNErrorCode.ENTRY_EXISTS)) {
-      vcsException = createMoveTargetExistsError(e);
-    }
-    else if (e instanceof VcsException) {
-      vcsException = (VcsException)e;
-    }
-    else {
-      vcsException = new VcsException(e);
-    }
-    return vcsException;
+  @NotNull
+  private static VcsException handleMoveException(@NotNull VcsException e) {
+    return e instanceof SvnBindException && ((SvnBindException)e).contains(SVNErrorCode.ENTRY_EXISTS) ? createMoveTargetExistsError(e) : e;
   }
 
   private static VcsException createMoveTargetExistsError(@NotNull Exception e) {
