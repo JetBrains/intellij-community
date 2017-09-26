@@ -25,7 +25,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.MultiMap;
@@ -50,15 +49,11 @@ public class GdkMethodHolder {
   private final ConcurrentMap<String, MultiMap<String, PsiMethod>> myOriginalMethodsByNameAndType;
   private final NotNullLazyValue<MultiMap<String, PsiMethod>> myOriginalMethodByType;
   private final boolean myStatic;
-  private final GlobalSearchScope myScope;
-  private final PsiManager myPsiManager;
 
-  private GdkMethodHolder(final PsiClass categoryClass, final boolean isStatic, final GlobalSearchScope scope) {
+  private GdkMethodHolder(final PsiClass categoryClass, final boolean isStatic) {
     myClassName = categoryClass.getName();
     myStatic = isStatic;
-    myScope = scope;
     final MultiMap<String, PsiMethod> byName = new MultiMap<>();
-    myPsiManager = categoryClass.getManager();
     for (PsiMethod m : categoryClass.getMethods()) {
       final PsiParameter[] params = m.getParameterList().getParameters();
       if (params.length == 0) continue;
@@ -113,11 +108,11 @@ public class GdkMethodHolder {
     return true;
   }
 
-  public static GdkMethodHolder getHolderForClass(final PsiClass categoryClass, final boolean isStatic, final GlobalSearchScope scope) {
+  public static GdkMethodHolder getHolderForClass(final PsiClass categoryClass, final boolean isStatic) {
     final Project project = categoryClass.getProject();
     Key<CachedValue<GdkMethodHolder>> key = isStatic ? CACHED_STATIC : CACHED_NON_STATIC;
     return CachedValuesManager.getManager(project).getCachedValue(categoryClass, key, () -> {
-      GdkMethodHolder result = new GdkMethodHolder(categoryClass, isStatic, scope);
+      GdkMethodHolder result = new GdkMethodHolder(categoryClass, isStatic);
 
       final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
       final VirtualFile vfile = categoryClass.getContainingFile().getVirtualFile();
