@@ -29,7 +29,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -58,7 +57,7 @@ public class PluginDescriptorXmlStructureViewModel extends XmlStructureViewTreeM
     if (DescriptorUtil.isPluginXml(file)) {
       XmlTag rootTag = file.getRootTag();
       if (rootTag != null) {
-        return new PluginDescriptorTreeElement(rootTag);
+        return new PluginDescriptorTreeElement(rootTag, true, true);
       }
     }
 
@@ -79,16 +78,15 @@ public class PluginDescriptorXmlStructureViewModel extends XmlStructureViewTreeM
   @NotNull
   @Override
   public Sorter[] getSorters() {
-    TreeElement[] topLevelNodes = getRoot().getChildren();
     return new Sorter[] {
       new Sorter() {
         @Override
         public Comparator getComparator() {
           return (o1, o2) -> {
-            if (o1 instanceof TreeElement && o2 instanceof TreeElement) {
-              TreeElement e1 = (TreeElement)o1;
-              TreeElement e2 = (TreeElement)o2;
-              if (ArrayUtil.contains(e1, topLevelNodes) && ArrayUtil.contains(e2, topLevelNodes)) {
+            if (o1 instanceof PluginDescriptorTreeElement && o2 instanceof PluginDescriptorTreeElement) {
+              PluginDescriptorTreeElement e1 = (PluginDescriptorTreeElement)o1;
+              PluginDescriptorTreeElement e2 = (PluginDescriptorTreeElement)o2;
+              if (e1.isTopLevelNode() && e2.isTopLevelNode()) {
                 return 0;
               }
             }

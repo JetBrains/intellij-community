@@ -27,16 +27,24 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class PluginDescriptorTreeElement extends PsiTreeElementBase<XmlTag> {
-  public PluginDescriptorTreeElement(@NotNull XmlTag psiElement) {
+  private final boolean myIsRoot;
+  private final boolean myIsTopLevelNode; // true for direct children of <idea>
+
+  public PluginDescriptorTreeElement(@NotNull XmlTag psiElement, boolean isRootTag, boolean isTopLevelNode) {
     super(psiElement);
+    myIsRoot = isRootTag;
+    myIsTopLevelNode = isTopLevelNode;
   }
+
 
   @NotNull
   @Override
   public Collection<StructureViewTreeElement> getChildrenBase() {
     XmlTag tag = getElement();
-    if (tag == null || !tag.isValid()) return Collections.emptyList();
-    return ContainerUtil.map2List(tag.getSubTags(), PluginDescriptorTreeElement::new);
+    if (tag == null || !tag.isValid()) {
+      return Collections.emptyList();
+    }
+    return ContainerUtil.map2List(tag.getSubTags(), psiElement -> new PluginDescriptorTreeElement(psiElement, false, myIsRoot));
   }
 
   @Nullable
@@ -58,5 +66,9 @@ public class PluginDescriptorTreeElement extends PsiTreeElementBase<XmlTag> {
   @Override
   public boolean isSearchInLocationString() {
     return true;
+  }
+
+  public boolean isTopLevelNode() {
+    return myIsTopLevelNode;
   }
 }
