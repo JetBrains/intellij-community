@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -101,13 +100,10 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
       catch (VcsException e) {
         exceptions.add(e);
       }
-      catch (SVNException e) {
-        exceptions.add(new VcsException(e));
-      }
     }
   }
 
-  private void revertFileOrDir(@NotNull FilePath filePath) throws SVNException, VcsException {
+  private void revertFileOrDir(@NotNull FilePath filePath) throws VcsException {
     File file = filePath.getIOFile();
     Info info = mySvnVcs.getInfo(file);
     if (info != null) {
@@ -119,7 +115,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
       }
       else {
         // do update to restore missing directory.
-        mySvnVcs.getSvnKitManager().createUpdateClient().doUpdate(file, SVNRevision.HEAD, true);
+        mySvnVcs.getFactory(file).createUpdateClient().doUpdate(file, SVNRevision.HEAD, Depth.INFINITY, false, false);
       }
     }
     else {
