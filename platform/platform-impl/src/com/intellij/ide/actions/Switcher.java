@@ -124,7 +124,7 @@ public class Switcher extends AnAction implements DumbAware {
         if (SWITCHER != null && event instanceof KeyEvent && !SWITCHER.isPinnedMode()) {
           final KeyEvent keyEvent = (KeyEvent)event;
           if (event.getID() == KEY_RELEASED && keyEvent.getKeyCode() == CTRL_KEY) {
-            SwingUtilities.invokeLater(CHECKER);
+            ApplicationManager.getApplication().invokeLater(CHECKER, ModalityState.current());
           }
           else if (event.getID() == KEY_PRESSED && event != INIT_EVENT
                    && (tw = SWITCHER.twShortcuts.get(String.valueOf((char)keyEvent.getKeyCode()))) != null) {
@@ -969,7 +969,7 @@ public class Switcher extends AnAction implements DumbAware {
       if (gotoFile != null && !StringUtil.isEmpty(fileName)) {
         myPopup.cancel();
         final AnAction action = gotoFile;
-        SwingUtilities.invokeLater(() -> DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)context -> {
+        ApplicationManager.getApplication().invokeLater(() -> DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)context -> {
           final DataContext dataContext = new DataContext() {
             @Nullable
             @Override
@@ -984,7 +984,7 @@ public class Switcher extends AnAction implements DumbAware {
             new AnActionEvent(e, dataContext, ActionPlaces.EDITOR_POPUP, new PresentationFactory().getPresentation(action),
                               ActionManager.getInstance(), 0);
           action.actionPerformed(event);
-        }));
+        }), ModalityState.current());
       }
     }
 
