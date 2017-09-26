@@ -99,7 +99,8 @@ abstract class TraceExpressionBuilderBase(private val myProject: Project, protec
     newIntermediateCalls.addAll(terminatorHandler.additionalCallsBefore())
     val terminatorCall = terminatorHandler.transformCall(chain.terminationCall)
 
-    return StreamChainImpl(qualifierExpression, newIntermediateCalls, terminatorCall, chain.context)
+    return StreamChainImpl(qualifierExpression, newIntermediateCalls, terminatorCall,
+                                                                      chain.context)
   }
 
   private fun createTimePeekCall(elementType: GenericType): IntermediateStreamCall {

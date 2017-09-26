@@ -42,15 +42,20 @@ class KotlinChainTransformerImpl : ChainTransformer.Kotlin {
 
     val intermediateCalls = mutableListOf<IntermediateStreamCall>()
     for (call in callChain.subList(0, callChain.size - 1)) {
-      intermediateCalls += IntermediateStreamCallImpl(call.callName(), call.valueArguments.map { it.toCallArgument() },
-                                                      KotlinTypes.ANY, KotlinTypes.ANY, call.textRange,
-                                                      call.receiverType()!!.getPackage(false))
+      intermediateCalls += IntermediateStreamCallImpl(call.callName(),
+                                                                                                 call.valueArguments.map { it.toCallArgument() },
+                                                                                                 KotlinTypes.ANY, KotlinTypes.ANY,
+                                                                                                 call.textRange,
+                                                                                                 call.receiverType()!!.getPackage(false))
     }
 
     val terminationsPsiCall = callChain.last()
     // TODO: infer true types
-    val terminationCall = TerminatorStreamCallImpl(terminationsPsiCall.callName(), emptyList(), KotlinTypes.ANY, KotlinTypes.ANY,
-                                                   terminationsPsiCall.textRange, terminationsPsiCall.receiverType()!!.getPackage(false))
+    val terminationCall = TerminatorStreamCallImpl(terminationsPsiCall.callName(), emptyList(),
+                                                                                              KotlinTypes.ANY, KotlinTypes.ANY,
+                                                                                              terminationsPsiCall.textRange,
+                                                                                              terminationsPsiCall.receiverType()!!.getPackage(
+                                                                                                false))
 
     return StreamChainImpl(qualifier, intermediateCalls, terminationCall, context)
   }

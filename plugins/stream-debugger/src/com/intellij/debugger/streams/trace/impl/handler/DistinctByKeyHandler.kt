@@ -67,13 +67,13 @@ open class DistinctByKeyHandler(callNumber: Int, call: IntermediateStreamCall) :
   override fun transformCall(call: IntermediateStreamCall): IntermediateStreamCall {
     return call.updateArguments(
       listOf(CallArgumentImpl(myKeyExtractor.type,
-                              "x -> $myVariableName.andThen(t -> {" + LINE_SEPARATOR +
-                              "  ${myBeforeTimes.name}.add(time.get());" + LINE_SEPARATOR +
-                              "  ${myBeforeValues.name}.add(x);" + LINE_SEPARATOR +
-                              "  ${myKeys.name}.add(t);" + LINE_SEPARATOR +
-                              "  return t; " + LINE_SEPARATOR +
-                              "})" + LINE_SEPARATOR +
-                              ".apply(x)")))
+                                                                         "x -> $myVariableName.andThen(t -> {" + LINE_SEPARATOR +
+                                                                         "  ${myBeforeTimes.name}.add(time.get());" + LINE_SEPARATOR +
+                                                                         "  ${myBeforeValues.name}.add(x);" + LINE_SEPARATOR +
+                                                                         "  ${myKeys.name}.add(t);" + LINE_SEPARATOR +
+                                                                         "  return t; " + LINE_SEPARATOR +
+                                                                         "})" + LINE_SEPARATOR +
+                                                                         ".apply(x)")))
   }
 
   override fun additionalCallsAfter(): MutableList<IntermediateStreamCall> {
@@ -126,7 +126,8 @@ open class DistinctByKeyHandler(callNumber: Int, call: IntermediateStreamCall) :
   }
 
   private fun IntermediateStreamCall.updateArguments(args: List<CallArgument>): IntermediateStreamCall {
-    return IntermediateStreamCallImpl("distinct", args, typeBefore, typeAfter, textRange, packageName)
+    return IntermediateStreamCallImpl("distinct", args, typeBefore, typeAfter, textRange,
+                                                                                 packageName)
   }
 }
 
@@ -135,8 +136,9 @@ open class DistinctByCustomKey(callNumber: Int, call: IntermediateStreamCall, ex
 
   companion object {
     fun IntermediateStreamCall.transform(extractorType: String, extractorExpression: String): IntermediateStreamCall {
-      return IntermediateStreamCallImpl("distinct", listOf(CallArgumentImpl(extractorType, extractorExpression)), typeBefore,
-                                        typeAfter, TextRange.EMPTY_RANGE, packageName)
+      return IntermediateStreamCallImpl("distinct", listOf(
+        CallArgumentImpl(extractorType, extractorExpression)), typeBefore,
+                                                                                   typeAfter, TextRange.EMPTY_RANGE, packageName)
     }
   }
 }

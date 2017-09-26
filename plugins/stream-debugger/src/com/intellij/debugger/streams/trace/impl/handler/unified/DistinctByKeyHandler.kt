@@ -144,8 +144,9 @@ open class DistinctByKeyHandler(callNumber: Int, private val myCall: Intermediat
 
     private companion object {
       fun IntermediateStreamCall.transform(extractorType: String, extractorExpression: String): IntermediateStreamCall {
-        return IntermediateStreamCallImpl("distinct", listOf(CallArgumentImpl(extractorType, extractorExpression)), typeBefore,
-                                          typeAfter, TextRange.EMPTY_RANGE, packageName)
+        return IntermediateStreamCallImpl("distinct", listOf(
+          CallArgumentImpl(extractorType, extractorExpression)), typeBefore,
+                                                                                     typeAfter, TextRange.EMPTY_RANGE, packageName)
       }
     }
   }
