@@ -34,7 +34,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.impl.ShadowPainter;
@@ -106,16 +105,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     setSize(size);
     setLocationRelativeTo(null);
 
-    //LayoutFocusTraversalPolicyExt layoutFocusTraversalPolicy = new LayoutFocusTraversalPolicyExt();
-    setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt() {
-      @Override
-      public Component getComponentAfter(Container focusCycleRoot, Component aComponent) {
-        // Every time a component is removed, AWT asks focus layout policy
-        // who is supposed to be the next focus owner.
-        // Looks like for IdeFrame, the selected editor of the frame is a good candidate
-        return FileEditorManagerEx.getInstanceEx(myProject).getCurrentWindow().getSelectedEditor().getPreferredFocusedComponent();
-      }
-    });
+    LayoutFocusTraversalPolicyExt layoutFocusTraversalPolicy = new LayoutFocusTraversalPolicyExt();
+    setFocusTraversalPolicy(layoutFocusTraversalPolicy);
 
     setupCloseAction();
     MnemonicHelper.init(this);
