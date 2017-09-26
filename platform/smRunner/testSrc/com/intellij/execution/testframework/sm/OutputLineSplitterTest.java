@@ -23,7 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import gnu.trove.THashMap;
-import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
+import jetbrains.buildServer.messages.serviceMessages.intellij.ServiceMessage;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 

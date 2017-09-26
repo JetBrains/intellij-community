@@ -17,7 +17,7 @@ package com.intellij.junit5;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import jetbrains.buildServer.messages.serviceMessages.MapSerializerUtil;
+import jetbrains.buildServer.messages.serviceMessages.intellij.MapSerializerUtil;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.engine.descriptor.ClassTestDescriptor;
 import org.junit.jupiter.engine.descriptor.TestFactoryTestDescriptor;

@@ -15,8 +15,8 @@
  */
 package com.intellij.execution.testframework.sm;
 
-import jetbrains.buildServer.messages.serviceMessages.MapSerializerUtil;
-import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
+import jetbrains.buildServer.messages.serviceMessages.intellij.MapSerializerUtil;
+import jetbrains.buildServer.messages.serviceMessages.intellij.ServiceMessageTypes;
 import org.jetbrains.annotations.NotNull;
 
 /**

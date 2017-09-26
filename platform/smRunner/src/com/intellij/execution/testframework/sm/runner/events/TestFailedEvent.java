@@ -17,7 +17,7 @@ package com.intellij.execution.testframework.sm.runner.events;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import jetbrains.buildServer.messages.serviceMessages.TestFailed;
+import jetbrains.buildServer.messages.serviceMessages.intellij.TestFailed;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -15,7 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner.events;
 
-import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
+import jetbrains.buildServer.messages.serviceMessages.intellij.ServiceMessage;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

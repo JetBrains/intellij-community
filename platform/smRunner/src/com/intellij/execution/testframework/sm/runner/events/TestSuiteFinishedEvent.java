@@ -15,7 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner.events;
 
-import jetbrains.buildServer.messages.serviceMessages.TestSuiteFinished;
+import jetbrains.buildServer.messages.serviceMessages.intellij.TestSuiteFinished;
 import org.jetbrains.annotations.NotNull;
 
 public class TestSuiteFinishedEvent extends TreeNodeEvent {
