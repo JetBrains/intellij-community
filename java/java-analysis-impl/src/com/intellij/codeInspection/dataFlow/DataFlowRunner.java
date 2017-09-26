@@ -148,6 +148,10 @@ public class DataFlowRunner {
       int count = 0;
       while (!queue.isEmpty()) {
         List<DfaInstructionState> states = queue.getNextInstructionStates(joinInstructions);
+        if (states.size() > MAX_STATES_PER_BRANCH) {
+          LOG.trace("Too complex because too many different possible states");
+          return RunnerResult.TOO_COMPLEX;
+        }
         for (DfaInstructionState instructionState : states) {
           if (count++ > stateLimit) {
             LOG.trace("Too complex data flow: too many instruction states processed");
@@ -171,7 +175,7 @@ public class DataFlowRunner {
             }
             if (processed.size() > MAX_STATES_PER_BRANCH) {
               LOG.trace("Too complex because too many different possible states");
-              return RunnerResult.TOO_COMPLEX; // Too complex :(
+              return RunnerResult.TOO_COMPLEX;
             }
             if (loopNumber[branching.getIndex()] != 0) {
               processedStates.putValue(branching, instructionState.getMemoryState().createCopy());
