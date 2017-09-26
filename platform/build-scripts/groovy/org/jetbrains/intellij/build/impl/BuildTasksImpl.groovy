@@ -274,18 +274,18 @@ idea.fatal.error.notification=disabled
   }
 
   private compileModulesForDistribution(DistributionJARsBuilder distributionJARsBuilder) {
-    def bundledPlugins = buildContext.productProperties.productLayout.bundledPluginModules as Set<String>
-    def moduleNames = buildContext.productProperties.productLayout.getIncludedPluginModules(bundledPlugins) +
-                      distributionJARsBuilder.platformModules +
-                      buildContext.productProperties.additionalModulesToCompile +
-                      (buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: [])
-    compileModules(moduleNames, buildContext.productProperties.modulesToCompileTests)
-
     def productLayout = buildContext.productProperties.productLayout
+    def bundledPlugins = productLayout.bundledPluginModules as Set<String>
+    def moduleNames = productLayout.getIncludedPluginModules(bundledPlugins) +
+                      distributionJARsBuilder.platformModules +
+                      buildContext.productProperties.additionalModulesToCompile
+    compileModules(moduleNames + (buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: []) +
+                   productLayout.mainModules, buildContext.productProperties.modulesToCompileTests)
+
     def pluginsToPublish = distributionJARsBuilder.getPluginsByModules(buildContext.productProperties.productLayout.pluginModulesToPublish) 
     if (buildContext.shouldBuildDistributions()) {
       def providedModulesFilePath = "${buildContext.paths.artifacts}/${buildContext.productProperties.productCode}-builtinModules.json"
-      buildProvidedModulesList(providedModulesFilePath, productLayout.mainModules, productLayout.licenseFilesToBuildSearchableOptions)
+      buildProvidedModulesList(providedModulesFilePath, moduleNames, productLayout.licenseFilesToBuildSearchableOptions)
       if (buildContext.productProperties.productLayout.buildAllCompatiblePlugins) {
         if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
           pluginsToPublish = new PluginsCollector(buildContext, providedModulesFilePath).collectCompatiblePluginsToPublish()
