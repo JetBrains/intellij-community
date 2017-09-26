@@ -54,9 +54,7 @@ import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.wc.SVNMoveClient;
 
 import java.io.File;
 import java.io.IOException;
@@ -380,30 +378,15 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
   }
 
   private boolean for16move(SvnVcs vcs, final File src, final File dst, final boolean undo) throws VcsException {
-    final SVNMoveClient mover = vcs.getSvnKitManager().createMoveClient();
     if (undo) {
       myUndoingMove = true;
       restoreFromUndoStorage(dst);
     }
     else if (doUsualMove(vcs, src)) return true;
 
-    new RepeatSvnActionThroughBusy() {
-      @Override
-      protected void executeImpl() throws VcsException {
-        try {
-          if (undo) {
-            mover.undoMove(src, dst);
-          }
-          else {
-            mover.doMove(src, dst);
-          }
-        }
-        catch (SVNException e) {
-          throw new SvnBindException(e);
-        }
-      }
-    }.execute();
-
+    // TODO: Implement svn 1.6 support for command line.
+    // TODO: Remove this and just "return true" when SVNKit is fully removed.
+    vcs.getSvnKitManager().move(src, dst, undo);
     return false;
   }
 

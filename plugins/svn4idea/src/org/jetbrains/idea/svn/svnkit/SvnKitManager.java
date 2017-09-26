@@ -22,13 +22,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.RepeatSvnActionThroughBusy;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnHttpAuthMethodsDefaultChecker;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.svnkit.lowLevel.PrimitivePool;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -47,9 +50,8 @@ import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnUpgrade;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
-/**
- * @author Konstantin Kolosovsky.
- */
+import java.io.File;
+
 public class SvnKitManager {
 
   private static final Logger LOG = SvnVcs.wrapLogger(Logger.getInstance(SvnKitManager.class));
@@ -138,6 +140,27 @@ public class SvnKitManager {
         ), myProject);
       }
     }
+  }
+
+  public void move(@NotNull File src, @NotNull File dst, boolean undo) throws VcsException {
+    SVNMoveClient mover = myVcs.getSvnKitManager().createMoveClient();
+
+    new RepeatSvnActionThroughBusy() {
+      @Override
+      protected void executeImpl() throws VcsException {
+        try {
+          if (undo) {
+            mover.undoMove(src, dst);
+          }
+          else {
+            mover.doMove(src, dst);
+          }
+        }
+        catch (SVNException e) {
+          throw new SvnBindException(e);
+        }
+      }
+    }.execute();
   }
 
   @NotNull
