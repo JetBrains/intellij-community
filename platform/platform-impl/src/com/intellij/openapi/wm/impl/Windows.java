@@ -151,22 +151,9 @@ public class Windows {
     }
   }
 
-  private static String HEAVYWEIGHT_WINDOW_CLASS_NAME = "HeavyWeightWindow";
-
   private static boolean isHeavyWeightPopup(AWTEvent event) {
-    Object source = event.getSource();
-    if (source != null) {
-      if (event.getSource().getClass().getName().contains(HEAVYWEIGHT_WINDOW_CLASS_NAME)) {
-        return true;
-      }
-      Window ancestor = SwingUtilities.getWindowAncestor((Component)source);
-      if (ancestor != null) {
-        if (ancestor.getClass().getName().contains(HEAVYWEIGHT_WINDOW_CLASS_NAME)) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return  event.getSource() != null && (event.getSource().getClass().getName().contains("HeavyWeightWindow")
+           || SwingUtilities.getWindowAncestor((Component)event.getSource()).getClass().getName().contains("HeavyWeightWindow"));
   }
 
   @NotNull
