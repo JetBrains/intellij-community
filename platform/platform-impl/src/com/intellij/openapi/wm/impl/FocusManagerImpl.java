@@ -553,6 +553,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       if (!isFocusBeingTransferred()) {
         boolean focusOk = getFocusOwner() != null;
         if (!focusOk && !myFlushWasDelayedToFixFocus) {
+          IdeEventQueue.getInstance().fixStickyFocusedComponents(null);
           myFlushWasDelayedToFixFocus = true;
         }
         else if (!focusOk) {
