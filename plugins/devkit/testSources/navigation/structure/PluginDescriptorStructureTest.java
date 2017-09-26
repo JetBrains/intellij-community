@@ -86,7 +86,7 @@ public class PluginDescriptorStructureTest extends JavaCodeInsightFixtureTestCas
         .toArray(String[]::new);
       assertArrayEquals(expectedExtensionNames, actualExtensionNames);
 
-      String[] expectedExtensionLocations = new String[] {"someToolWindow", "someConfigurable", "SomeFileEditorProvider",
+      String[] expectedExtensionLocations = new String[] {"someToolWindow", "SomeConfigurable", "SomeFileEditorProvider",
         "SomeApplicationService", "DomExtenderId"};
       String[] actualExtensionLocations = Stream.of(extensionNodes)
         .map(treeElement -> treeElement.getPresentation().getLocationString())

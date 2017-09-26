@@ -149,10 +149,10 @@ public class PluginDescriptorXmlStructureViewModel extends XmlStructureViewTreeM
           return null;
         }
 
-        @Nullable
+        @NotNull
         @Override
         public String getLocationString() {
-          return null;
+          return "Loading...";
         }
 
         @Nullable

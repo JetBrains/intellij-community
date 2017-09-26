@@ -28,7 +28,7 @@ import java.util.Collections;
 
 public class PluginDescriptorTreeElement extends PsiTreeElementBase<XmlTag> {
   private final boolean myIsRoot;
-  private final boolean myIsTopLevelNode; // true for direct children of <idea>
+  private final boolean myIsTopLevelNode; // true for direct children of <idea-plugin>
 
   public PluginDescriptorTreeElement(@NotNull XmlTag psiElement, boolean isRootTag, boolean isTopLevelNode) {
     super(psiElement);

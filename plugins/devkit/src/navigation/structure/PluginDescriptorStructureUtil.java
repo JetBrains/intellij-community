@@ -234,28 +234,31 @@ public class PluginDescriptorStructureUtil {
   @Nullable
   private static String getExtensionLocation(Extension element) {
     DomElement parent = element.getParent();
-    if (parent instanceof Extensions && Extensions.DEFAULT_PREFIX.equals(((Extensions)parent).getDefaultExtensionNs().getStringValue())) {
-      String elementName = element.getXmlElementName();
-      if (elementName.equalsIgnoreCase("application-service") || elementName.equalsIgnoreCase("project-service") ||
-          elementName.equalsIgnoreCase("module-service")) {
-        String result = element.getId().getStringValue();
-        if (StringUtil.isEmpty(result)) {
-          result = toShortName(firstNotNullAttribute(element, "serviceInterface", "serviceImplementation"));
+    if (parent instanceof Extensions) {
+      String extensionsNamespace = ((Extensions)parent).getDefaultExtensionNs().getStringValue();
+      if (Extensions.DEFAULT_PREFIX.equals(extensionsNamespace)) {
+        String elementName = element.getXmlElementName();
+        if (elementName.equalsIgnoreCase("applicationService") || elementName.equalsIgnoreCase("projectService") ||
+            elementName.equalsIgnoreCase("moduleService")) {
+          String result = element.getId().getStringValue();
+          if (StringUtil.isEmpty(result)) {
+            result = toShortName(firstNotNullAttribute(element, "serviceInterface", "serviceImplementation"));
+          }
+          return result;
         }
-        return result;
-      }
-      else if (elementName.equalsIgnoreCase("intentionAction")) {
-        return toShortName(getSubTagText(element, "className"));
-      }
-      else if (elementName.equalsIgnoreCase("dom.extender")) {
-        String result = element.getId().getStringValue();
-        if (StringUtil.isEmpty(result)) {
-          result = toShortName(firstNotNullAttribute(element, "extenderClass"));
+        else if (elementName.equalsIgnoreCase("intentionAction")) {
+          return toShortName(getSubTagText(element, "className"));
         }
-        return result;
-      }
-      else if (elementName.equalsIgnoreCase("stacktrace.fold")) {
-        return firstNotNullAttribute(element, "substring");
+        else if (elementName.equalsIgnoreCase("dom.extender")) {
+          String result = element.getId().getStringValue();
+          if (StringUtil.isEmpty(result)) {
+            result = toShortName(firstNotNullAttribute(element, "extenderClass"));
+          }
+          return result;
+        }
+        else if (elementName.equalsIgnoreCase("stacktrace.fold")) {
+          return firstNotNullAttribute(element, "substring");
+        }
       }
     }
 
@@ -294,15 +297,12 @@ public class PluginDescriptorStructureUtil {
 
   @Nullable
   private static String guessTagLocation(DomElement element) {
-    String location = null;
+    String location = toShortName(firstNotNullAttribute(
+      element, "instance", "class", "implementation", "implementationClass", "interface", "interfaceClass"));
 
     // avoid displaying location equal to display text for actions
-    if (!(element instanceof Action)) {
+    if (location == null && !(element instanceof Action)) {
       location = firstNotNullAttribute(element, "id", "name", "displayName", "shortName");
-    }
-    if (location == null) {
-      location = toShortName(firstNotNullAttribute(
-        element, "instance", "class", "implementation", "implementationClass", "interface", "interfaceClass"));
     }
     if (location == null) {
       location = firstNotNullAttribute(element, "file");
@@ -312,28 +312,39 @@ public class PluginDescriptorStructureUtil {
       return location;
     }
 
-    List<? extends DomAttributeChildDescription> descriptions = element.getGenericInfo().getAttributeChildrenDescriptions();
-    String possibleOnlyValue = null;
-    for (DomAttributeChildDescription description : descriptions) {
+    DomGenericInfo genericInfo = element.getGenericInfo();
+    List<? extends DomAttributeChildDescription> attrDescriptions = genericInfo.getAttributeChildrenDescriptions();
+    String possibleOnlyAttrValue = null;
+    for (DomAttributeChildDescription description : attrDescriptions) {
       String value = description.getDomAttributeValue(element).getStringValue();
       if (StringUtil.isEmpty(value)) {
         continue;
       }
-      if (possibleOnlyValue == null) {
-        possibleOnlyValue = value;
+      if (possibleOnlyAttrValue == null) {
+        possibleOnlyAttrValue = value;
       }
       else {
         // more than one attribute
-        possibleOnlyValue = null;
+        possibleOnlyAttrValue = null;
         break;
       }
     }
 
-    if (possibleOnlyValue != null && StringUtil.countChars(possibleOnlyValue, '.') > 2) {
-      possibleOnlyValue = toShortName(possibleOnlyValue);
+    if (possibleOnlyAttrValue != null && StringUtil.countChars(possibleOnlyAttrValue, '.') > 2) {
+      possibleOnlyAttrValue = toShortName(possibleOnlyAttrValue);
     }
 
-    return possibleOnlyValue;
+    if (possibleOnlyAttrValue != null) {
+      return possibleOnlyAttrValue;
+    }
+
+    // check if tag doesn't have attributes and subtags and use it's text content as a location in such cases
+    if (attrDescriptions.isEmpty() && genericInfo.getFixedChildrenDescriptions().isEmpty() &&
+        element instanceof ExtensionDomExtender.SimpleTagValue) {
+      return ((ExtensionDomExtender.SimpleTagValue)element).getTagValue();
+    }
+
+    return null;
   }
 
 
