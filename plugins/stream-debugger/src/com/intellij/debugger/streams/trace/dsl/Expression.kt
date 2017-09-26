@@ -25,11 +25,4 @@ interface Expression : Statement {
   fun call(callName: String, vararg args: Expression): Expression
 
   fun property(propertyName: String): Expression = TextExpression("${toCode()}.$propertyName")
-
-  object Empty : Expression {
-    // TODO: looks really strange
-    override fun call(callName: String, vararg args: Expression): Expression = this
-
-    override fun toCode(indent: Int): String = ""
-  }
 }
