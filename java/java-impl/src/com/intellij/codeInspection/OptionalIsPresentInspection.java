@@ -32,6 +32,8 @@ import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
@@ -206,10 +208,8 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
     PsiType type = optionalVariable.getType();
     JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(trueValue.getProject());
     SuggestedNameInfo info = javaCodeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, type);
-    if (info.names.length == 0) {
-      info = javaCodeStyleManager.suggestVariableName(VariableKind.PARAMETER, "value", null, type);
-    }
-    String paramName = javaCodeStyleManager.suggestUniqueVariableName(info, trueValue, true).names[0];
+    String baseName = ObjectUtils.coalesce(ArrayUtil.getFirstElement(info.names), "value");
+    String paramName = javaCodeStyleManager.suggestUniqueVariableName(baseName, trueValue, true);
     if(trueValue instanceof PsiExpressionStatement) {
       trueValue = ((PsiExpressionStatement)trueValue).getExpression();
     }
