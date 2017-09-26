@@ -16,7 +16,9 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
@@ -33,7 +35,6 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.util.Arrays;
-import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -124,8 +125,7 @@ public class Windows {
               }
             }
 
-            if (event.getID() == KeyEvent.KEY_PRESSED && !isHeavyWeightPopup(event))
-            {
+            if (event.getID() == KeyEvent.KEY_PRESSED) {
               if (Arrays.stream(findShortcuts("EditorEscape"))
                 .anyMatch(shortcut -> shortcut.equals(new KeyboardShortcut(KeyStroke.getKeyStrokeForEvent((KeyEvent)event), null))))
               {
@@ -149,11 +149,6 @@ public class Windows {
       Disposer.register(project, listenerDisposer);
 
     }
-  }
-
-  private static boolean isHeavyWeightPopup(AWTEvent event) {
-    return  event.getSource() != null && (event.getSource().getClass().getName().contains("HeavyWeightWindow")
-           || SwingUtilities.getWindowAncestor((Component)event.getSource()).getClass().getName().contains("HeavyWeightWindow"));
   }
 
   @NotNull
