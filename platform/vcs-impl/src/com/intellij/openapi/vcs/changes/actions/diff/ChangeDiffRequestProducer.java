@@ -62,6 +62,11 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
 
   public static final Key<Change> CHANGE_KEY = Key.create("DiffRequestPresentable.Change");
 
+  public static final String YOUR_VERSION = "Your version";
+  public static final String SERVER_VERSION = "Server version";
+  public static final String BASE_VERSION = "Base Version";
+  public static final String MERGED_VERSION = "Merged Version";
+
   @Nullable private final Project myProject;
   @NotNull private final Change myChange;
   @NotNull private final Map<Key, Object> myChangeContext;
@@ -291,11 +296,11 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
 
         ContentRevision bRev = change.getBeforeRevision();
         ContentRevision aRev = change.getAfterRevision();
-        String beforeRevisionTitle = getRevisionTitle(bRev, "Your version");
-        String afterRevisionTitle = getRevisionTitle(aRev, "Server version");
+        String beforeRevisionTitle = getRevisionTitle(bRev, YOUR_VERSION);
+        String afterRevisionTitle = getRevisionTitle(aRev, SERVER_VERSION);
 
         String title = DiffRequestFactory.getInstance().getTitle(file);
-        List<String> titles = ContainerUtil.list(beforeRevisionTitle, "Base Version", afterRevisionTitle);
+        List<String> titles = ContainerUtil.list(beforeRevisionTitle, BASE_VERSION, afterRevisionTitle);
 
         DiffContentFactory contentFactory = DiffContentFactory.getInstance();
         List<DiffContent> contents = ContainerUtil.list(
@@ -334,7 +339,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
       final String userLeftRevisionTitle = (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE);
       String beforeRevisionTitle = userLeftRevisionTitle != null ? userLeftRevisionTitle : getRevisionTitle(bRev, "Base version");
       final String userRightRevisionTitle = (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE);
-      String afterRevisionTitle = userRightRevisionTitle != null ? userRightRevisionTitle : getRevisionTitle(aRev, "Your version");
+      String afterRevisionTitle = userRightRevisionTitle != null ? userRightRevisionTitle : getRevisionTitle(aRev, YOUR_VERSION);
 
       SimpleDiffRequest request = new SimpleDiffRequest(title, content1, content2, beforeRevisionTitle, afterRevisionTitle);
 
