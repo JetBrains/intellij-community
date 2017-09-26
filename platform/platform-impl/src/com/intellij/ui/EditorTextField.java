@@ -719,6 +719,11 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       });
       myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
+    else {
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        requestFocus();
+      });
+    }
   }
 
   @Override
