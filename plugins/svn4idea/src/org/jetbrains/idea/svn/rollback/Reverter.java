@@ -28,11 +28,11 @@ import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.EventAction;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.properties.PropertiesMap;
 import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -71,8 +71,14 @@ public class Reverter {
       // Files passed here are split into groups by root and working copy format - thus we could determine factory based on first file
       myVcs.getFactory(target).createRevertClient().revert(files, Depth.allOrEmpty(recursive), myHandler);
     }
+    catch (SvnBindException e) {
+      // skip errors on unversioned resources.
+      if (!e.contains(SVNErrorCode.WC_NOT_DIRECTORY)) {
+        myExceptions.add(e);
+      }
+    }
     catch (VcsException e) {
-      processRevertError(e);
+      myExceptions.add(e);
     }
   }
 
@@ -174,19 +180,6 @@ public class Reverter {
       catch (VcsException e) {
         myExceptions.add(e);
       }
-    }
-  }
-
-  private void processRevertError(@NotNull VcsException e) {
-    if (e.getCause() instanceof SVNException) {
-      SVNException cause = (SVNException)e.getCause();
-
-      // skip errors on unversioned resources.
-      if (cause.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_DIRECTORY) {
-        myExceptions.add(e);
-      }
-    } else {
-      myExceptions.add(e);
     }
   }
 
