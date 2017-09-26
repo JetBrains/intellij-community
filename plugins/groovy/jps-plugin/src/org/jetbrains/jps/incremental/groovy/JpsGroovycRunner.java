@@ -146,6 +146,10 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
                                                        JpsGroovySettings settings,
                                                        Map<T, String> finalOutputs,
                                                        String compilerOutput, List<File> toCompile, boolean hasStubExcludes) throws Exception {
+    if (myForStubs) {
+      clearContinuation(context, chunk);
+    }
+    
     GroovycContinuation continuation = takeContinuation(context, chunk);
     if (continuation != null) {
       if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
