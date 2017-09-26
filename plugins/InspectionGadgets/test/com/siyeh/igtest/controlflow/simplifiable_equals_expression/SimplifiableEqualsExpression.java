@@ -50,6 +50,16 @@ public class SimplifiableEqualsExpression {
       System.out.println("...");
     }
   }
+  
+  private static final boolean DEBUG = false;
+  
+  {
+    String s1 = DEBUG ? "null" : null;
+    
+    if(<warning descr="Unnecessary 'null' check before 'equals()' call">s1 == null</warning> || !s1.equals("")) {
+      System.out.println("...");
+    }
+  }
 
   void test(List<String> list) {
     String s = list.get(0);
