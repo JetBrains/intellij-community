@@ -351,9 +351,9 @@ public class GithubApiUtil {
   public static GithubGist createGist(@NotNull GithubConnection connection,
                                       @NotNull List<GithubGistRequest.FileContent> contents,
                                       @NotNull String description,
-                                      boolean isPrivate) throws IOException {
+                                      boolean isPublic) throws IOException {
     try {
-      GithubGistRequest request = new GithubGistRequest(contents, description, !isPrivate);
+      GithubGistRequest request = new GithubGistRequest(contents, description, isPublic);
       return post(connection, "/gists", request, GithubGist.class, ACCEPT_V3_JSON);
     }
     catch (GithubConfusingException e) {

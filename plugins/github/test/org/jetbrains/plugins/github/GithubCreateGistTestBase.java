@@ -103,7 +103,7 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
     assertTrue("Gist does not public", result.isPublic());
   }
 
-  protected void checkGistPrivate() {
+  protected void checkGistSecret() {
     GithubGist result = getGist();
 
     assertFalse("Gist does not private", result.isPublic());
