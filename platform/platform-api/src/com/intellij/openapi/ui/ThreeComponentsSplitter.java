@@ -114,9 +114,11 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
     Component findChildToFocus (Component component) {
       final Window ancestor = SwingUtilities.getWindowAncestor(ThreeComponentsSplitter.this);
-      final Component mostRecentFocusOwner = ancestor.getMostRecentFocusOwner();
-      if (mostRecentFocusOwner != null && mostRecentFocusOwner.isShowing()) {
-        return mostRecentFocusOwner;
+      if (ancestor != null) {
+        final Component mostRecentFocusOwner = ancestor.getMostRecentFocusOwner();
+        if (mostRecentFocusOwner != null && mostRecentFocusOwner.isShowing()) {
+          return mostRecentFocusOwner;
+        }
       }
       if (component instanceof JPanel) {
         JPanel container = (JPanel)component;
