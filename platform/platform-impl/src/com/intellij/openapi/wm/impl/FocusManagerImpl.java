@@ -1036,7 +1036,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   public List<JBPopup> getChildPopups(@NotNull final Component component) {
-    return AbstractPopup.all.toStrongList().stream().filter(popup -> {
+    return AbstractPopup.all.stream().filter(popup -> {
       Component owner = popup.getOwner();
       while (owner != null) {
         if (owner.equals(component)) {
@@ -1046,19 +1046,6 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       }
       return false;
     }).collect(Collectors.toList());
-/*    List<JBPopup> childPopupList = Collections.emptyList();
-
-    for (JBPopup jbPopup : AbstractPopup.all) {
-      boolean itIsAChild = false;
-      Component owner = jbPopup.getOwner();
-      while (owner != null) {
-        if (owner.equals(component)) {
-          childPopupList.add(jbPopup);
-        }
-        owner = owner.getParent();
-      }
-    }
-    return childPopupList;*/
   }
 
   @Override

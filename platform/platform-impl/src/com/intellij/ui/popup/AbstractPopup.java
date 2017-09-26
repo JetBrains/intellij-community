@@ -50,7 +50,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.WeakList;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NonNls;
@@ -138,7 +137,7 @@ public class AbstractPopup implements JBPopup {
 
   protected boolean myOk;
 
-  public static WeakList<JBPopup> all = new WeakList<>();
+  public static List<JBPopup> all = new ArrayList<>();
 
   protected final SpeedSearch mySpeedSearch = new SpeedSearch() {
     boolean searchFieldShown = false;
@@ -701,6 +700,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   private void disposePopup() {
+    all.remove(this);
     if (myPopup != null) {
       resetWindow();
       myPopup.hide(true);
