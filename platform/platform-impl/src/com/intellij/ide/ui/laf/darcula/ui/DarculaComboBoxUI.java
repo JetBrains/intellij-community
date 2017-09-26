@@ -346,6 +346,10 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       int off = JBUI.scale(hasFocus ? 1 : 0);
       g2.drawLine(xxx + JBUI.scale(5), y + JBUI.scale(1) + off, xxx + JBUI.scale(5), height - JBUI.scale(2));
 
+      Rectangle r = rectangleForCurrentValue();
+      paintCurrentValueBackground(g2, r, hasFocus);
+      paintCurrentValue(g2, r, false);
+
       boolean hasError = ((JComponent)c).getClientProperty("JComponent.error.outline") == Boolean.TRUE;
       if (hasFocus) {
         g2.setClip(clip);
