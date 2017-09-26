@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.naming;
+package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.ui.ConventionOptionsPanel;
-import com.siyeh.HardcodedMethodConstants;
 
 import javax.swing.*;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,16 +30,19 @@ public class NamingConventionBean {
   public int m_minLength;
   public int m_maxLength;
 
-  public NamingConventionBean(String regex, int minLength, int maxLength) {
+  private Set<String> myPredefinedNames = new HashSet<>();
+
+  public NamingConventionBean(String regex, int minLength, int maxLength, String... predefinedNames2Ignore) {
     m_regex = regex;
     m_minLength = minLength;
     m_maxLength = maxLength;
+    myPredefinedNames.addAll(Arrays.asList(predefinedNames2Ignore));
     initPattern();
   }
 
   protected Pattern m_regexPattern;
-  
-   public boolean isValid(String name) {
+
+  public boolean isValid(String name) {
     final int length = name.length();
     if (length < m_minLength) {
       return false;
@@ -45,7 +50,7 @@ public class NamingConventionBean {
     if (m_maxLength > 0 && length > m_maxLength) {
       return false;
     }
-    if (HardcodedMethodConstants.SERIAL_VERSION_UID.equals(name)) {
+    if (myPredefinedNames.contains(name)) {
       return true;
     }
     final Matcher matcher = m_regexPattern.matcher(name);

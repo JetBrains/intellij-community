@@ -1,7 +1,7 @@
 <idea-plugin>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.naming.convention.class" interface="com.siyeh.ig.naming.NamingConvention"/>
+    <extensionPoint qualifiedName="com.intellij.naming.convention.class" interface="com.intellij.codeInspection.NamingConvention"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
 

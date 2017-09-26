@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.naming;
+package com.intellij.codeInspection;
 
-import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -36,7 +35,7 @@ public class NamingConventionWithFallbackBean extends NamingConventionBean {
   public JComponent createOptionsPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     JComponent selfOptions = super.createOptionsPanel();
-    JBCheckBox inheritCb = new JBCheckBox("Use settings of class naming conventions", inheritDefaultSettings);
+    JCheckBox inheritCb = new JCheckBox("Use settings of class naming conventions", inheritDefaultSettings);
     panel.add(inheritCb, BorderLayout.NORTH);
     inheritCb.addActionListener(e -> {
       inheritDefaultSettings = inheritCb.isSelected();

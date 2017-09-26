@@ -13,12 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.naming;
+package com.intellij.codeInspection;
 
-import com.intellij.psi.PsiMember;
-import com.siyeh.InspectionGadgetsBundle;
-
-public abstract class NamingConvention<T extends PsiMember>  {
+public abstract class NamingConvention<T> {
   
   public abstract boolean isApplicable(T member);
   public abstract String getElementDescription();
@@ -29,14 +26,14 @@ public abstract class NamingConvention<T extends PsiMember>  {
   public String createErrorMessage(String name, NamingConventionBean bean) {
     final int length = name.length();
     if (length < bean.m_minLength) {
-      return InspectionGadgetsBundle.message("naming.convention.problem.descriptor.short", getElementDescription(),
+      return InspectionsBundle.message("naming.convention.problem.descriptor.short", getElementDescription(),
                                              Integer.valueOf(length), Integer.valueOf(bean.m_minLength));
     }
     else if (bean.m_maxLength > 0 && length > bean.m_maxLength) {
-      return InspectionGadgetsBundle.message("naming.convention.problem.descriptor.long", getElementDescription(),
+      return InspectionsBundle.message("naming.convention.problem.descriptor.long", getElementDescription(),
                                              Integer.valueOf(length), Integer.valueOf(bean.m_maxLength));
     }
-    return InspectionGadgetsBundle.message("naming.convention.problem.descriptor.regex.mismatch", getElementDescription(), bean.m_regex);
+    return InspectionsBundle.message("naming.convention.problem.descriptor.regex.mismatch", getElementDescription(), bean.m_regex);
   }
 
   
