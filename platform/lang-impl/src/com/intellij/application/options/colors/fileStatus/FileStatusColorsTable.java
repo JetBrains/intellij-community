@@ -67,7 +67,7 @@ public class FileStatusColorsTable extends JBTable {
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
         Point mouseLoc = event.getPoint();
         int col = FileStatusColorsTable.this.columnAtPoint(mouseLoc);
-        return isColorColumn(col) ? editColor() : setColor(mouseLoc);
+        return isColorColumn(col) && setColor(mouseLoc);
       }
     }.installOn(this);
     initPopup();
@@ -75,8 +75,8 @@ public class FileStatusColorsTable extends JBTable {
 
   private void initPopup() {
     mySetColorMenu = new JBPopupMenu();
-    mySetColorMenu.add(new JBMenuItem(new ChooseColorAction()));
     mySetColorMenu.add(new JBMenuItem(new DropColorAction()));
+    mySetColorMenu.add(new JBMenuItem(new ChooseColorAction()));
     myResetItem = new JBMenuItem(new ResetToDefaultAction());
     mySetColorMenu.add(myResetItem);
   }
@@ -124,7 +124,7 @@ public class FileStatusColorsTable extends JBTable {
     Point location = getPopupLocation(mouseLoc);
     if (location != null) {
       mySetColorMenu.show(this, location.x, location.y);
-      myResetItem.setVisible(isResetAvailable());
+      myResetItem.setEnabled(isResetAvailable());
       mySetColorMenu.pack();
       mySetColorMenu.getSelectionModel().setSelectedIndex(0);
       return true;
@@ -147,7 +147,7 @@ public class FileStatusColorsTable extends JBTable {
     else {
       int row = getSelectedRow();
       if (row >= 0) {
-        Rectangle cellRect = getCellRect(row, getColumn(String.class), false);
+        Rectangle cellRect = getCellRect(row, getColumn(Color.class), false);
         Point p = cellRect.getLocation();
         p.translate(0, cellRect.height);
         return p;
@@ -156,7 +156,7 @@ public class FileStatusColorsTable extends JBTable {
     return null;
   }
 
-  private boolean editColor() {
+  private void editColor() {
     int row = getSelectedRow();
     if (row >= 0) {
       int colorColumn = getColumn(Color.class);
@@ -164,10 +164,8 @@ public class FileStatusColorsTable extends JBTable {
       Color color = ColorPicker.showDialog(this, ApplicationBundle.message("title.file.status.color"), currentColor, true, null, false);
       if (color != null) {
         getModel().setValueAt(color, row, colorColumn);
-        return true;
       }
     }
-    return false;
   }
 
   public void adjustColumnWidths() {
@@ -214,7 +212,7 @@ public class FileStatusColorsTable extends JBTable {
       colorLabel.setBorder(new JBEmptyBorder(0, RIGHT_GAP, 0, 0));
       colorLabel.setIcon(getIcon(c));
       //noinspection StringToUpperCaseOrToLowerCaseWithoutLocale
-      colorLabel.setText(value != null ? "#" + ColorUtil.toHex(c).toUpperCase() : ApplicationBundle.message("file.status.color.none"));
+      colorLabel.setText(value != null ? ColorUtil.toHex(c).toUpperCase() : ApplicationBundle.message("file.status.color.none"));
       if (isSelected) {
         colorLabel.setOpaque(true);
         colorLabel.setForeground(UIUtil.getTableSelectionForeground());
@@ -236,14 +234,19 @@ public class FileStatusColorsTable extends JBTable {
 
     private final JLabel myLabel = new JLabel();
 
+    public MyStatusCellRenderer() {
+      myLabel.setOpaque(true);
+    }
+
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       if (value instanceof String) {
         FileStatusColorDescriptor descriptor = ((FileStatusColorsTableModel)getModel()).getDescriptorByName((String)value);
-        if (descriptor != null && !isSelected) {
+        if (descriptor != null) {
           myLabel.setText((String)value);
-          myLabel.setForeground(getDisplayColor(descriptor.getColor()));
+          myLabel.setForeground(isSelected ? UIUtil.getTableSelectionForeground() : descriptor.getColor());
+          myLabel.setBackground(UIUtil.getTableBackground(isSelected));
           return myLabel;
         }
       }
