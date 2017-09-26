@@ -35,8 +35,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.impl.ShadowPainter;
@@ -115,22 +113,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
         // Every time a component is removed, AWT asks focus layout policy
         // who is supposed to be the next focus owner.
         // Looks like for IdeFrame, the selected editor of the frame is a good candidate
-        if (myProject != null) {
-          final FileEditorManagerEx fileEditorManagerEx = FileEditorManagerEx.getInstanceEx(myProject);
-          if (fileEditorManagerEx != null) {
-            final EditorWindow window = fileEditorManagerEx.getCurrentWindow();
-            if (window != null) {
-              final EditorWithProviderComposite editor = window.getSelectedEditor();
-              if (editor != null) {
-                final JComponent component = editor.getPreferredFocusedComponent();
-                if (component != null) {
-                  return component;
-                }
-              }
-            }
-          }
+        if (myProject == null) {
+          return super.getComponentAfter(focusCycleRoot, aComponent);
         }
-        return super.getComponentAfter(focusCycleRoot, aComponent);
+        return FileEditorManagerEx.getInstanceEx(myProject).getCurrentWindow().getSelectedEditor().getPreferredFocusedComponent();
       }
     });
 
