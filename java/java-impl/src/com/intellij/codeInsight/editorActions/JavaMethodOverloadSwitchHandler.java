@@ -20,6 +20,7 @@ import com.intellij.codeInsight.completion.CompletionMemory;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.WriteAction;
@@ -109,6 +110,8 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
       return;
     }
 
+    UsageTrigger.trigger("method.overload.switch");
+    
     Map<String, String> enteredParameters = exprList.getUserData(ENTERED_PARAMETERS);
     if (enteredParameters == null) {
       exprList.putUserData(ENTERED_PARAMETERS, enteredParameters = new HashMap<>());
