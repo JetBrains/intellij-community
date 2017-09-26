@@ -30,8 +30,8 @@ import com.intellij.psi.util.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -62,6 +62,7 @@ public class GdkMethodHolder {
     for (PsiMethod m : categoryClass.getMethods()) {
       final PsiParameter[] params = m.getParameterList().getParameters();
       if (params.length == 0) continue;
+      if (params[0].getType() instanceof PsiPrimitiveType) continue;
       if (!m.hasModifierProperty(PsiModifier.PUBLIC) || !m.hasModifierProperty(PsiModifier.STATIC)) continue;
       if (PsiImplUtil.isDeprecatedByAnnotation(m) || PsiImplUtil.isDeprecatedByDocTag(m)) {
         continue;
@@ -73,17 +74,20 @@ public class GdkMethodHolder {
   }
 
   @NotNull
-  private MultiMap<String, PsiMethod> groupByType(Collection<? extends PsiMethod> methods) {
+  private static MultiMap<String, PsiMethod> groupByType(Collection<? extends PsiMethod> methods) {
     MultiMap<String, PsiMethod> map = new MultiMap<>();
     for (PsiMethod method : methods) {
-      map.putValue(getCategoryTargetType(method).getCanonicalText(), method);
+      PsiType type = getCategoryTargetType(method);
+      if (type == null) continue;
+      map.putValue(type.getCanonicalText(), method);
     }
     return map;
   }
 
-  private PsiType getCategoryTargetType(PsiMethod method) {
+  @Nullable
+  private static PsiType getCategoryTargetType(@NotNull PsiMethod method) {
     final PsiType parameterType = method.getParameterList().getParameters()[0].getType();
-    return TypesUtil.boxPrimitiveType(TypeConversionUtil.erasure(parameterType), myPsiManager, myScope);
+    return TypeConversionUtil.erasure(parameterType);
   }
 
   public boolean processMethods(PsiScopeProcessor processor, @NotNull ResolveState state, PsiType qualifierType, Project project) {
