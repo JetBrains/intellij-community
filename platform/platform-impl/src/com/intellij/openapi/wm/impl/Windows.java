@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
@@ -49,7 +50,6 @@ public class Windows {
     private Consumer<String> floatingWindowHandler;
     private Consumer<String> windowedWindowHandler;
     private Consumer<String> deactivationShortcutHandler;
-    private ActionManager myActionManager;
 
     private ToolWindowProvider(Signal signal) {
       mySignal = signal;
@@ -77,11 +77,6 @@ public class Windows {
 
     public ToolWindowProvider handleDeactivatingShortcut(Consumer<String> deactivationShortcutHandler) {
       this.deactivationShortcutHandler = deactivationShortcutHandler;
-      return this;
-    }
-
-    public ToolWindowProvider withEscAction(ActionManager actionManager) {
-      myActionManager = actionManager;
       return this;
     }
 

@@ -207,7 +207,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     Windows.toolWindows()
       .filterBySignal(new Windows.Signal(predicate))
-      .withEscAction(actionManager)
       .handleDocked(toolWindowId -> {})
       .handleFloating(toolWindowId -> {})
       .handleFocusLostOnPinned(toolWindowId -> {
@@ -218,16 +217,13 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       .handleWindowed(toolWindowId -> {})
       .handleDeactivatingShortcut(toolWindowId -> {
         JComponent defaultFocusedComponentInEditor = null;
-        EditorsSplitters splittersToFocus = getSplittersToFocus();
-        if (splittersToFocus != null) {
-        final EditorWindow window = splittersToFocus.getCurrentWindow();
-          if (window != null) {
-            final EditorWithProviderComposite editor = window.getSelectedEditor();
-            if (editor != null) {
-              defaultFocusedComponentInEditor = editor.getPreferredFocusedComponent();
-              if (defaultFocusedComponentInEditor != null) {
-                defaultFocusedComponentInEditor.requestFocus();
-              }
+        final EditorWindow window = getSplittersToFocus().getCurrentWindow();
+        if (window != null) {
+          final EditorWithProviderComposite editor = window.getSelectedEditor();
+          if (editor != null) {
+            defaultFocusedComponentInEditor = editor.getPreferredFocusedComponent();
+            if (defaultFocusedComponentInEditor != null) {
+              defaultFocusedComponentInEditor.requestFocus();
             }
           }
         }
@@ -1722,7 +1718,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     final IdeFrame frame = FocusManagerImpl.getInstance().getLastFocusedFrame();
 
-    if (frame != null && frame instanceof IdeFrameImpl && ((IdeFrameImpl)frame).isActive()) {
+    if (frame != null) {
       FileEditorManagerEx fem = FileEditorManagerEx.getInstanceEx(frame.getProject());
       EditorsSplitters splitters = activeWindow != null ? fem.getSplittersFor(activeWindow) : null;
       return splitters != null ? splitters : fem.getSplitters();
