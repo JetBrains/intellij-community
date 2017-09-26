@@ -22,6 +22,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -95,7 +96,10 @@ public abstract class RootType {
   public Icon substituteIcon(@NotNull Project project, @NotNull VirtualFile file) {
     Language language = substituteLanguage(project, file);
     FileType fileType = LanguageUtil.getLanguageFileType(language);
-    if (fileType == null) fileType = ScratchUtil.getFileTypeFromName(file);
+    if (fileType == null) {
+      String extension = file.getExtension();
+      fileType = extension == null ? null : FileTypeManager.getInstance().getFileTypeByFileName(file.getNameSequence());
+    }
     return fileType != null ? fileType.getIcon() : null;
   }
 
