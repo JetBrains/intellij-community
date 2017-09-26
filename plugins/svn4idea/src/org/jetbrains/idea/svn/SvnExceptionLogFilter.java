@@ -16,21 +16,20 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.idea.RareLogger;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.log4j.Level;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNException;
 
 import java.util.Set;
 
-/**
- * @author Konstantin Kolosovsky.
- */
-@SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+import static com.intellij.util.ObjectUtils.tryCast;
+import static com.intellij.util.containers.ContainerUtil.exists;
+import static com.intellij.util.containers.ContainerUtil.find;
+
 public class SvnExceptionLogFilter implements RareLogger.LogFilter {
 
   private static final int ourLogUsualInterval = 20 * 1000;
@@ -42,30 +41,16 @@ public class SvnExceptionLogFilter implements RareLogger.LogFilter {
 
   @Override
   public Object getKey(@NotNull Level level, @NonNls String message, @Nullable Throwable t, @NonNls String... details) {
-    SVNException e = getSvnException(t);
-    boolean shouldFilter = e != null && ourLogRarelyCodes.contains(e.getErrorMessage().getErrorCode());
+    SvnBindException e = tryCast(t, SvnBindException.class);
 
-    return shouldFilter ? e.getErrorMessage().getErrorCode() : null;
+    return e != null ? find(ourLogRarelyCodes, e::contains) : null;
   }
 
   @Override
   @NotNull
   public Integer getAllowedLoggingInterval(Level level, String message, Throwable t, String[] details) {
-    SVNException e = getSvnException(t);
-    boolean shouldFilter = e != null && ourLogRarelyCodes.contains(e.getErrorMessage().getErrorCode());
+    SvnBindException e = tryCast(t, SvnBindException.class);
 
-    return shouldFilter ? ourLogRareInterval : ourLogUsualInterval;
-  }
-
-  @Nullable
-  private static SVNException getSvnException(@Nullable Throwable t) {
-    SVNException result = null;
-    if (t instanceof SVNException) {
-      result = (SVNException)t;
-    }
-    else if (t instanceof VcsException && t.getCause() instanceof SVNException) {
-      result = (SVNException)t.getCause();
-    }
-    return result;
+    return e != null && exists(ourLogRarelyCodes, e::contains) ? ourLogRareInterval : ourLogUsualInterval;
   }
 }
