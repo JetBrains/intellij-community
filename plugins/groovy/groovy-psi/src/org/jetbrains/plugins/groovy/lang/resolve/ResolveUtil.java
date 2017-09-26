@@ -198,7 +198,6 @@ public class ResolveUtil {
       PsiClass superClass = getLiteralSuperClass((GrClosableBlock)scope);
       if (superClass != null && !processClassDeclarations(superClass, processor, _state, null, place)) return false;
 
-      if (!GdkMethodUtil.categoryIteration((GrClosableBlock)scope, processor, _state)) return false;
       if (!processNonCodeMembers(GrClosureType.create(((GrClosableBlock)scope), false), processor, place, _state)) return false;
     }
 
@@ -466,20 +465,12 @@ public class ResolveUtil {
   public static boolean processCategoryMembers(@NotNull PsiElement place,
                                                @NotNull PsiScopeProcessor processor,
                                                @NotNull ResolveState state) {
-    boolean inCodeBlock = true;
     PsiElement run = place;
     PsiElement lastParent = null;
 
     while (run != null) {
       ProgressManager.checkCanceled();
-      if (run instanceof GrMember) {
-        inCodeBlock = false;
-      }
       if (run instanceof GrClosableBlock) {
-        if (inCodeBlock) {
-          if (!GdkMethodUtil.categoryIteration((GrClosableBlock)run, processor, state)) return false;
-        }
-
         PsiClass superClass = getLiteralSuperClass((GrClosableBlock)run);
         if (superClass != null && !GdkMethodUtil.processCategoryMethods(run, processor, state, superClass)) return false;
       }

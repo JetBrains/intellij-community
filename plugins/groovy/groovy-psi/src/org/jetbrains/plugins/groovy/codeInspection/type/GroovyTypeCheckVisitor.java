@@ -349,27 +349,6 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
           }
         });
       }
-      final PsiMethod staticMethod = ((GrGdkMethod)method).getStaticMethod();
-      PsiType qualifierType = info.getQualifierInstanceType();
-      if (method.hasModifierProperty(PsiModifier.STATIC)) {
-        qualifierType = ResolveUtil.unwrapClassType(qualifierType);
-      }
-
-      //check methods processed by @Category(ClassWhichProcessMethod) annotation
-      if (qualifierType != null &&
-          !GdkMethodUtil.isCategoryMethod(staticMethod, qualifierType, qualifier, methodResolveResult.getSubstitutor()) &&
-          !checkCategoryQualifier(invoked, qualifier, staticMethod, methodResolveResult.getSubstitutor())) {
-        registerError(
-          info.getHighlightElementForCategoryQualifier(),
-          ProblemHighlightType.GENERIC_ERROR,
-          GroovyInspectionBundle.message(
-            "category.method.0.cannot.be.applied.to.1",
-            method.getName(),
-            qualifierType.getCanonicalText()
-          )
-        );
-        return false;
-      }
     }
 
     if (info.getArgumentTypes() == null) return true;
