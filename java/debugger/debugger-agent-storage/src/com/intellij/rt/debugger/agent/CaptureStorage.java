@@ -35,9 +35,11 @@ public class CaptureStorage {
   private static final ThreadLocal<Deque<InsertMatch>> CURRENT_STACKS = ThreadLocal.withInitial(LinkedList::new);
   private static final JavaLangAccess ourJavaLangAccess = SharedSecrets.getJavaLangAccess();
 
+  private static boolean DEBUG = false;
+
   @SuppressWarnings("unused")
   public static void capture(Object key) {
-    System.out.println("capture: " + key);
+    debug("capture: " + key);
     Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
     CapturedStack stack = createCapturedStack(new Throwable(), currentStacks.isEmpty() ? null : currentStacks.getLast());
     STORAGE.put(key, stack);
@@ -45,25 +47,25 @@ public class CaptureStorage {
 
   @SuppressWarnings("unused")
   public static void insertEnter(Object key) {
-    System.out.println("insert ->: " + key);
+    debug("insert ->: " + key);
     CapturedStack stack = STORAGE.get(key);
     Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
     if (stack != null) {
       currentStacks.add(new InsertMatch(stack, ourJavaLangAccess.getStackTraceDepth(new Throwable())));
-      System.out.println("insert ->: stack saved (" + currentStacks.size() + ")");
+      debug("insert ->: stack saved (" + currentStacks.size() + ")");
     }
     else {
       currentStacks.add(InsertMatch.EMPTY);
-      System.out.println("insert ->: no stack found (" + currentStacks.size() + ")");
+      debug("insert ->: no stack found (" + currentStacks.size() + ")");
     }
   }
 
   @SuppressWarnings("unused")
   public static void insertExit(Object key) {
-    System.out.println("insert <-: " + key);
+    debug("insert <-: " + key);
     Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
     currentStacks.removeLast();
-    System.out.println("insert <-: stack removed (" + currentStacks.size() + ")");
+    debug("insert <-: stack removed (" + currentStacks.size() + ")");
   }
 
   private static CapturedStack createCapturedStack(Throwable exception, InsertMatch insertMatch) {
@@ -142,5 +144,15 @@ public class CaptureStorage {
       }
     }
     return res;
+  }
+
+  public static void setDebug(boolean debug) {
+    DEBUG = debug;
+  }
+
+  private static void debug(String log) {
+    if (DEBUG) {
+      System.out.println(log);
+    }
   }
 }

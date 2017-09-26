@@ -44,6 +44,8 @@ public class CaptureAgent {
 
   private static volatile Map<String, List<InsertPoint>> myInsertPoints = new HashMap<>();
 
+  private static boolean DEBUG = false;
+
   static {
     InsertPoint invokeLater = new InsertPoint("java/awt/event/InvocationEvent", "dispatch", "runnable", "Ljava/lang/Runnable;");
     myInsertPoints.put(invokeLater.myClassName, Collections.singletonList(invokeLater));
@@ -54,7 +56,8 @@ public class CaptureAgent {
     instrumentation.appendToBootstrapClassLoaderSearch(createTempJar("debugger-agent-storage.jar"));
     instrumentation.appendToSystemClassLoaderSearch(createTempJar("asm-all.jar"));
     instrumentation.addTransformer(new CaptureTransformer());
-    System.out.println("Capture agent: ready");
+    DEBUG = "debug".equals(args);
+    debug("Capture agent: ready");
   }
 
   private static <T> List<T> getNotNull(List<T> list) {
@@ -89,12 +92,14 @@ public class CaptureAgent {
         }
         byte[] bytes = writer.toByteArray();
 
-        try {
-          Path path = new File("instrumented_" + className.replaceAll("/", "_") + ".class").toPath();
-          Files.write(path, bytes);
-        }
-        catch (IOException e) {
-          e.printStackTrace();
+        if (DEBUG) {
+          try {
+            Path path = new File("instrumented_" + className.replaceAll("/", "_") + ".class").toPath();
+            Files.write(path, bytes);
+          }
+          catch (IOException e) {
+            e.printStackTrace();
+          }
         }
 
         return bytes;
@@ -115,7 +120,7 @@ public class CaptureAgent {
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
       MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
       if (capturePoint.myMethodName.equals(name)) {
-        System.out.println("Capture agent: instrumented capture point at " + capturePoint.myClassName + "." + name);
+        debug("Capture agent: instrumented capture point at " + capturePoint.myClassName + "." + name);
         return new MethodVisitor(api, mv) {
           @Override
           public void visitCode() {
@@ -150,7 +155,7 @@ public class CaptureAgent {
         MethodVisitor mv = super.visitMethod(access, getNewName(name), desc, signature, exceptions);
         myDesc = desc;
         myVisitMethod = () -> super.visitMethod(access, name, desc, signature, exceptions);
-        System.out.println("Capture agent: instrumented insert point at " + myInsertPoint.myClassName + "." + name);
+        debug("Capture agent: instrumented insert point at " + myInsertPoint.myClassName + "." + name);
         return mv;
       }
       return super.visitMethod(access, name, desc, signature, exceptions);
@@ -278,5 +283,11 @@ public class CaptureAgent {
       }
     }
     ourInstrumentation.retransformClasses(classes.toArray(new Class[0]));
+  }
+
+  private static void debug(String log) {
+    if (DEBUG) {
+      System.out.println(log);
+    }
   }
 }
