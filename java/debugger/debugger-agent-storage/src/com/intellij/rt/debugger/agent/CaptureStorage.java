@@ -39,14 +39,7 @@ public class CaptureStorage {
   public static void capture(Object key) {
     System.out.println("capture: " + key);
     Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
-    CapturedStack stack;
-    if (currentStacks.isEmpty()) {
-      stack = new CapturedStack(new Throwable());
-    }
-    else {
-      stack = new CapturedStack(new Throwable(), currentStacks.getLast());
-      System.out.println("capture: insertion added");
-    }
+    CapturedStack stack = createCapturedStack(new Throwable(), currentStacks.isEmpty() ? null : currentStacks.getLast());
     STORAGE.put(key, stack);
   }
 
@@ -69,32 +62,42 @@ public class CaptureStorage {
   public static void insertExit(Object key) {
     System.out.println("insert <-: " + key);
     Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
-    if (currentStacks.isEmpty()) {
-      System.out.println("insert error, empty stack: " + key);
-      return;
-    }
     currentStacks.removeLast();
     System.out.println("insert <-: stack removed (" + currentStacks.size() + ")");
   }
 
-  // TODO: may save space using a separate CapturedStack w/o replace stack when can
-  private static class CapturedStack {
-    private final Throwable myException;
-    private final InsertMatch myInsertMatch;
+  private static CapturedStack createCapturedStack(Throwable exception, InsertMatch insertMatch) {
+    if (insertMatch != null && insertMatch != InsertMatch.EMPTY) {
+      return new DeepCapturedStack(exception, insertMatch);
+    }
+    return new CapturedStack(exception);
+  }
 
-    public CapturedStack(Throwable exception) {
-      this(exception, InsertMatch.EMPTY);
+  private static class CapturedStack {
+    final Throwable myException;
+
+    private CapturedStack(Throwable exception) {
+      myException = exception;
     }
 
-    public CapturedStack(Throwable exception, InsertMatch insertMatch) {
-      myException = exception;
+    List<StackTraceElement> getStackTrace() {
+      StackTraceElement[] stackTrace = myException.getStackTrace();
+      return Arrays.asList(stackTrace).subList(1, stackTrace.length);
+    }
+  }
+
+  private static class DeepCapturedStack extends CapturedStack {
+    final InsertMatch myInsertMatch;
+
+    public DeepCapturedStack(Throwable exception, InsertMatch insertMatch) {
+      super(exception);
       myInsertMatch = insertMatch;
     }
 
     List<StackTraceElement> getStackTrace() {
       StackTraceElement[] stackTrace = myException.getStackTrace();
       if (myInsertMatch == null || myInsertMatch == InsertMatch.EMPTY) {
-        return Arrays.asList(stackTrace).subList(1, stackTrace.length);
+        return super.getStackTrace();
       }
       else {
         List<StackTraceElement> insertStack = myInsertMatch.myStack.getStackTrace();
