@@ -269,6 +269,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
           return buildView;
         });
 
+        myContent.setPreferredFocusedComponent(view::getPreferredFocusableComponent);
         if (contentDescriptor != null) {
           boolean activateToolWindow = contentDescriptor.isActivateToolWindowWhenAdded();
           buildInfo.activateToolWindowWhenAdded = activateToolWindow;
