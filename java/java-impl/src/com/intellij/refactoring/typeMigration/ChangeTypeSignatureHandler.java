@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,15 +70,13 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
     invokeOnElement(project, element);
   }
 
-  public static boolean invokeOnElement(final Project project, final PsiElement element) {
+  public static void invokeOnElement(final Project project, final PsiElement element) {
     if (element instanceof PsiVariable ||
         (element instanceof PsiMember && !(element instanceof PsiClass)) ||
         element instanceof PsiFile  ||
         isClassArgument(element)) {
       invoke(project, new PsiElement[] {element}, null, null, null);
-      return true;
     }
-    return false;
   }
 
   protected static boolean isClassArgument(PsiElement element) {
