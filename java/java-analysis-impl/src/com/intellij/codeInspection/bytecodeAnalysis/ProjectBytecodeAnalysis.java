@@ -395,7 +395,7 @@ public class ProjectBytecodeAnalysis {
     }
   }
 
-  private void collectSingleEquation(EKey curKey, Solver solver) throws EquationsLimitException {
+  private void collectSingleEquation(EKey curKey, Solver solver) {
     ProgressManager.checkCanceled();
 
     for (Equations equations : myEquationProvider.getEquations(curKey.method)) {
@@ -467,7 +467,7 @@ public class ProjectBytecodeAnalysis {
       String classFileName = className + ".class";
       for (PsiDirectory directory : aPackage.getDirectories()) {
         VirtualFile file = directory.getVirtualFile().findChild(classFileName);
-        if (file != null) {
+        if (file != null && !ClassDataIndexer.isFileExcluded(myProject, file)) {
           return file;
         }
       }

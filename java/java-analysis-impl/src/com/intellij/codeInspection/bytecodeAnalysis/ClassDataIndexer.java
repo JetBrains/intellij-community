@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -69,6 +70,9 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
   @Override
   public Map<HMethod, Equations> calcData(@NotNull Project project, @NotNull VirtualFile file) {
     HashMap<HMethod, Equations> map = new HashMap<>();
+    if (isFileExcluded(project, file)) {
+      return map;
+    }
     try {
       MessageDigest md = BytecodeAnalysisConverter.getMessageDigest();
       Map<EKey, Equations> allEquations = processClass(new ClassReader(file.contentsToByteArray(false)), file.getPresentableUrl());
@@ -85,6 +89,14 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
     }
     ourIndexSizeStatistics.consume(map);
     return map;
+  }
+
+  static boolean isFileExcluded(Project project, VirtualFile file) {
+    VirtualFile classRoot = ProjectFileIndex.getInstance(project).getClassRootForFile(file);
+    if(classRoot != null && classRoot.getName().equals("android.jar") && classRoot.findChild("AndroidManifest.xml") != null) {
+      return true;
+    }
+    return false;
   }
 
   private static Map<EKey, Equations> solvePartially(Map<EKey, Equations> map) {

@@ -40,7 +40,6 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -53,7 +52,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
   private static final ID<HMethod, Void> NAME = ID.create("bytecodeAnalysis");
   private static final HKeyDescriptor KEY_DESCRIPTOR = new HKeyDescriptor();
 
-  private static final int VERSION = 5; // change when inference algorithm changes
+  private static final int VERSION = 6; // change when inference algorithm changes
   private static final int VERSION_MODIFIER = HardCodedPurity.AGGRESSIVE_HARDCODED_PURITY ? 1 : 0;
   private static final int FINAL_VERSION = VERSION * 2 + VERSION_MODIFIER;
 
@@ -86,7 +85,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
   }
 
   @NotNull
-  private static Map<HMethod, Void> collectKeys(byte[] content) throws NoSuchAlgorithmException {
+  private static Map<HMethod, Void> collectKeys(byte[] content) {
     HashMap<HMethod, Void> map = new HashMap<>();
     MessageDigest md = BytecodeAnalysisConverter.getMessageDigest();
     new ClassReader(content).accept(new KeyedMethodVisitor() {
