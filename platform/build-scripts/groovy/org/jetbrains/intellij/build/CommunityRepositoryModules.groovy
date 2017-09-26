@@ -234,6 +234,9 @@ class CommunityRepositoryModules {
       withResource("resources/.zshrc", "")
       withResource("resources/jediterm-bash.in", "")
       withResource("resources/fish/config.fish", "fish")
+    },
+    plugin("stream-debugger") {
+      mainJarName = "stream-debugger.jar"
     }
   ]
 
