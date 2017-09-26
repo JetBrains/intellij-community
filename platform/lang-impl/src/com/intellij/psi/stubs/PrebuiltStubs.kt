@@ -111,7 +111,7 @@ abstract class PrebuiltStubsProviderBase : PrebuiltStubsProvider, Disposable {
     try {
       if (indexesRoot != null) {
         // we should copy prebuilt indexes to a writable folder
-        indexesRoot = copyPrebuiltIndexesToIndexRoot(indexesRoot)
+        indexesRoot = copyPrebuiltIndicesToIndexRoot(indexesRoot)
         // otherwise we can get access denied error, because persistent hash map opens file for read and write
 
         val versionInFile = FileUtil.loadFile(File(indexesRoot, SDK_STUBS_STORAGE_NAME + ".version"))
@@ -180,7 +180,7 @@ abstract class PrebuiltStubsProviderBase : PrebuiltStubsProvider, Disposable {
   }
 
   @Throws(IOException::class)
-  private fun copyPrebuiltIndexesToIndexRoot(prebuiltIndicesRoot: File): File {
+  private fun copyPrebuiltIndicesToIndexRoot(prebuiltIndicesRoot: File): File {
     val indexRoot = File(IndexInfrastructure.getPersistentIndexRoot(), "prebuilt/" + name)
 
     FileUtil.copyDir(prebuiltIndicesRoot, indexRoot)
