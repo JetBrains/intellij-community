@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,18 @@
  */
 package com.intellij.xdebugger.impl.ui.tree;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.Component;
+import java.awt.*;
+import java.util.Collection;
 
 /**
  * @author nik
  */
 public class ValueMarkerPresentationDialog extends ValueMarkerPresentationDialogBase {
-  public ValueMarkerPresentationDialog(@Nullable Component parent, @Nullable String defaultText) {
-    super(parent, defaultText);
+  public ValueMarkerPresentationDialog(@Nullable Component parent, @Nullable String defaultText, @NotNull Collection<ValueMarkup> markups) {
+    super(parent, defaultText, markups);
     init();
   }
 }

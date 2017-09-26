@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +57,8 @@ public class XMarkObjectActionHandler extends MarkObjectActionHandler {
       markers.unmarkValue(value);
     }
     else {
-      ValueMarkerPresentationDialog dialog = new ValueMarkerPresentationDialog(event.getData(CONTEXT_COMPONENT), node.getName());
+      ValueMarkerPresentationDialog dialog = new ValueMarkerPresentationDialog(
+        event.getData(CONTEXT_COMPONENT), node.getName(), markers.getAllMarkers().values());
       dialog.show();
       ValueMarkup markup = dialog.getConfiguredMarkup();
       if (dialog.isOK() && markup != null) {
