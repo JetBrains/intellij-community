@@ -314,7 +314,8 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
       putProcessUserData(CAPTURE_STORAGE_METHOD, methodPair, process);
     }
 
-    Value resArray = process.invokeMethod(evaluationContext, methodPair.first, methodPair.second, Collections.singletonList(key), true);
+    Value resArray = process.invokeMethod(evaluationContext, methodPair.first, methodPair.second, Collections.singletonList(key),
+                                          ObjectReference.INVOKE_SINGLE_THREADED, true);
     if (resArray instanceof ArrayReference) {
       List<Value> values = ((ArrayReference)resArray).getValues();
       List<StackFrameItem> res = new ArrayList<>(values.size());
