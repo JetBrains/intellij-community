@@ -23,12 +23,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
+import com.intellij.util.NotNullProducer;
 import com.intellij.util.concurrency.EdtExecutorService;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Supplier;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -42,7 +43,7 @@ public class FileRefresher implements Disposable {
   private final ScheduledExecutorService executor = EdtExecutorService.getScheduledExecutorInstance();
   private final boolean recursive;
   private final long delay;
-  private final Supplier<ModalityState> supplier;
+  private final NotNullProducer<ModalityState> producer;
   private final ArrayList<Object> watchers = new ArrayList<>();
   private final ArrayList<VirtualFile> files = new ArrayList<>();
   private final AtomicBoolean scheduled = new AtomicBoolean();
@@ -54,14 +55,14 @@ public class FileRefresher implements Disposable {
   /**
    * @param recursive {@code true} if files should be considered as roots
    * @param delay     an amount of seconds before refreshing files
-   * @param supplier  a provider for modality state that can be invoked on background thread
+   * @param producer  a provider for modality state that can be invoked on background thread
    * @throws IllegalArgumentException if the specified delay is not positive
    */
-  public FileRefresher(boolean recursive, long delay, Supplier<ModalityState> supplier) {
+  public FileRefresher(boolean recursive, long delay, @NotNull NotNullProducer<ModalityState> producer) {
     if (delay <= 0) throw new IllegalArgumentException("delay");
     this.recursive = recursive;
     this.delay = delay;
-    this.supplier = supplier;
+    this.producer = producer;
   }
 
   /**
@@ -152,8 +153,7 @@ public class FileRefresher implements Disposable {
     RefreshSession session;
     synchronized (files) {
       if (this.session != null || files.isEmpty()) return;
-      ModalityState state = supplier == null ? null : supplier.get();
-      if (state == null) state = ModalityState.any();
+      ModalityState state = producer.produce();
       LOG.debug("modality state ", state);
       session = RefreshQueue.getInstance().createSession(true, recursive, this::finish, state);
       session.addAllFiles(files);
