@@ -22,13 +22,11 @@ import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -43,23 +41,18 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-abstract class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
-  private static final Key<Boolean> SWITCH_DISABLED = Key.create("switch.disabled");
+class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
   private static final Key<Map<String, String>> ENTERED_PARAMETERS = Key.create("entered.parameters");
-  private final EditorActionHandler myOriginalHandler;
   private final boolean mySwitchUp;
 
-  private JavaMethodOverloadSwitchHandler(EditorActionHandler originalHandler, boolean up) {
-    myOriginalHandler = originalHandler;
+  JavaMethodOverloadSwitchHandler(boolean up) {
     mySwitchUp = up;
   }
 
   @Override
   protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
-    if (myOriginalHandler.isEnabled(editor, caret, dataContext)) return true;
-
-    if (editor.getUserData(SWITCH_DISABLED) != null ||
-        !CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION || !ParameterInfoController.existsForEditor(editor)) return false;
+    if (!CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION || 
+        !ParameterInfoController.existsForEditor(editor)) return false;
 
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
@@ -82,13 +75,9 @@ abstract class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
   @Override
   protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project != null && editor.getUserData(SWITCH_DISABLED) == null &&
-        CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION &&
+    if (project != null && CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION &&
         ParameterInfoController.existsWithVisibleHintForEditor(editor, false)) {
       doSwitch(editor, caret == null ? editor.getCaretModel().getPrimaryCaret() : caret, project);
-    }
-    else {
-      myOriginalHandler.execute(editor, caret, dataContext);
     }
   }
 
@@ -171,72 +160,5 @@ abstract class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
   private static String getParameterKey(PsiMethod method, int parameterIndex) {
     PsiParameter parameter = method.getParameterList().getParameters()[parameterIndex];
     return parameter.getName() + ":" + parameter.getType().getCanonicalText();
-  }
-
-  public static class Up extends JavaMethodOverloadSwitchHandler {
-    public Up(EditorActionHandler originalHandler) {
-      super(originalHandler, true);
-    }
-  }
-
-  public static class Down extends JavaMethodOverloadSwitchHandler {
-    public Down(EditorActionHandler originalHandler) {
-      super(originalHandler, false);
-    }
-  }
-
-  public static class UpInEditor extends UpDownInEditor {
-    public UpInEditor(EditorActionHandler originalHandler) {
-      super(originalHandler, true);
-    }
-  }
-
-  public static class DownInEditor extends UpDownInEditor {
-    public DownInEditor(EditorActionHandler originalHandler) {
-      super(originalHandler, false);
-    }
-  }
-  
-  private static abstract class UpDownInEditor extends EditorActionHandler {
-    private final EditorActionHandler myOriginalHandler;
-    private final boolean myUp;
-    
-    private UpDownInEditor(EditorActionHandler originalHandler, boolean up) {
-      myOriginalHandler = originalHandler;
-      myUp = up;
-    }
-
-    @Override
-    protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
-      return myOriginalHandler.isEnabled(editor, caret, dataContext) ||
-             isEnabled(editor);
-    }
-
-    private static boolean isEnabled(@NotNull Editor editor) {
-      return CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION &&
-             ParameterInfoController.existsWithVisibleHintForEditor(editor, false);
-    }
-
-    @Override
-    protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
-      if (isEnabled(editor)) {
-        ParameterInfoController.hideAllHints(editor);
-      }
-      // hints can be hidden asynchronously (with animation), so we disable switching explicitly here
-      editor.putUserData(SWITCH_DISABLED, Boolean.TRUE);
-      try {
-        if (myOriginalHandler.isEnabled(editor, caret, dataContext)) {
-          myOriginalHandler.execute(editor, caret, dataContext);
-        }
-        else {
-          EditorActionManager.getInstance().getActionHandler(myUp ? IdeActions.ACTION_EDITOR_MOVE_CARET_UP 
-                                                                  : IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)
-            .execute(editor, caret, dataContext);
-        }
-      }
-      finally {
-        editor.putUserData(SWITCH_DISABLED, null);
-      }
-    }
   }
 }

@@ -20,8 +20,10 @@ import com.google.common.collect.ImmutableMap;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -127,13 +129,22 @@ public class ParameterInfoComponent extends JPanel {
     pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     add(pane, BorderLayout.CENTER);
 
-    myShortcutLabel = new JLabel(CodeInsightBundle.message("parameter.info.switch.overload.shortcuts"));
-    myShortcutLabel.setForeground(new JBColor(0x787878, 0x787878));
-    Font labelFont = UIUtil.getLabelFont();
-    myShortcutLabel.setFont(labelFont.deriveFont(labelFont.getSize2D() - (SystemInfo.isWindows ? 1 : 2)));
-    myShortcutLabel.setBorder(new JBEmptyBorder(3, 0, 0, 0));
-    add(myShortcutLabel, BorderLayout.SOUTH);
-
+    String upShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_METHOD_OVERLOAD_SWITCH_UP);
+    String downShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_METHOD_OVERLOAD_SWITCH_DOWN);
+    if (upShortcut.isEmpty() && downShortcut.isEmpty()) {
+      myShortcutLabel = null;
+    }
+    else {
+      myShortcutLabel = new JLabel(
+        upShortcut.isEmpty() || downShortcut.isEmpty() 
+        ? CodeInsightBundle.message("parameter.info.switch.overload.shortcuts.single", upShortcut.isEmpty() ? downShortcut : upShortcut)
+        : CodeInsightBundle.message("parameter.info.switch.overload.shortcuts", upShortcut, downShortcut));
+      myShortcutLabel.setForeground(new JBColor(0x787878, 0x787878));
+      Font labelFont = UIUtil.getLabelFont();
+      myShortcutLabel.setFont(labelFont.deriveFont(labelFont.getSize2D() - (SystemInfo.isWindows ? 1 : 2)));
+      myShortcutLabel.setBorder(new JBEmptyBorder(3, 0, 0, 0));
+      add(myShortcutLabel, BorderLayout.SOUTH);
+    }
     myCurrentParameterIndex = -1;
   }
 
@@ -266,7 +277,9 @@ public class ParameterInfoComponent extends JPanel {
       }
     }
 
-    myShortcutLabel.setVisible(!singleParameterInfo && myObjects.length > 1 && myHandler.supportsOverloadSwitching());
+    if (myShortcutLabel != null) {
+      myShortcutLabel.setVisible(!singleParameterInfo && myObjects.length > 1 && myHandler.supportsOverloadSwitching());
+    }
 
     invalidate();
     validate();

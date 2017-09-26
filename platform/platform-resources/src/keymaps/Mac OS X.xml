@@ -389,4 +389,11 @@
   <action id="EmojiAndSymbols">
     <keyboard-shortcut first-keystroke="control meta SPACE"/>
   </action>
+
+  <action id="MethodOverloadSwitchUp">
+    <keyboard-shortcut first-keystroke="control P"/>
+  </action>
+  <action id="MethodOverloadSwitchDown">
+    <keyboard-shortcut first-keystroke="control N"/>
+  </action>
 </keymap>

@@ -1437,10 +1437,6 @@
     <editorActionHandler action="EditorLineStart" implementationClass="com.intellij.codeInsight.editorActions.JavadocLineStartHandler"/>
     <editorActionHandler action="NextParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaVarArgNextParameterHandler"/>
     <editorActionHandler action="PrevParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaVarArgPrevParameterHandler"/>
-    <editorActionHandler action="EditorUp" implementationClass="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchHandler$Up"/>
-    <editorActionHandler action="EditorDown" implementationClass="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchHandler$Down"/>
-    <editorActionHandler action="EditorLookupUp" implementationClass="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchHandler$UpInEditor"/>
-    <editorActionHandler action="EditorLookupDown" implementationClass="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchHandler$DownInEditor"/>
 
     <editorSmartKeysConfigurable instance="com.intellij.application.options.JavadocOptionsProvider"
                                  id="editor.preferences.javadocOptions"
@@ -2077,6 +2073,9 @@
             text="JShell Console..." description="Launch JShell Console">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
+
+    <action id="MethodOverloadSwitchUp" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchUpAction"/>
+    <action id="MethodOverloadSwitchDown" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchDownAction" />
   </actions>
 
 </idea-plugin>

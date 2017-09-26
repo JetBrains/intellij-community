@@ -131,12 +131,6 @@ public class ParameterInfoController implements Disposable {
     return getAllControllers(editor).stream().anyMatch(c -> c.isHintShown(anyHintType));
   }
 
-  public static void hideAllHints(@NotNull Editor editor) {
-    getAllControllers(editor).forEach(c -> { 
-      if (c.myHint.isVisible()) c.myHint.hide(); 
-    });
-  }
-
   public boolean isHintShown(boolean anyType) {
     return myHint.isVisible() && (!mySingleParameterInfo || anyType);
   }
