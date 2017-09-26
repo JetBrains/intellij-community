@@ -23,8 +23,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection;
 
 import java.util.stream.Stream;
 
@@ -33,27 +35,32 @@ import static org.junit.Assert.assertArrayEquals;
 @TestDataPath("$CONTENT_ROOT/testData/navigation/structure")
 public class PluginDescriptorStructureTest extends JavaCodeInsightFixtureTestCase {
   @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myFixture.enableInspections(new PluginXmlDomInspection());
+  }
+
+  @Override
   protected String getBasePath() {
     return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/navigation/structure";
   }
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
-    String jarPath = PathUtil.getJarPathForClass(Attribute.class);
-    moduleBuilder.addLibrary("util", jarPath);
+    moduleBuilder.addLibrary("util", PathUtil.getJarPathForClass(Attribute.class));
+    moduleBuilder.addLibrary("jblist", PathUtil.getJarPathForClass(JBList.class));
   }
 
 
   public void testPluginDescriptorStructure() {
-    myFixture.addFileToProject("a/b/MockServiceDescriptor.java",
-                               "package a.b;" +
-                               "" +
-                               "import com.intellij.util.xmlb.annotations.Attribute; " +
-                               "" +
-                               "public class MockServiceDescriptor { " +
-                               "  @Attribute(\"serviceImplementation\")" +
-                               "  public String serviceImplementation; " +
-                               "}");
+    myFixture.addClass("package a.b;" +
+                       "" +
+                       "import com.intellij.util.xmlb.annotations.Attribute; " +
+                       "" +
+                       "public class MockServiceDescriptor { " +
+                       "  @Attribute(\"serviceImplementation\")" +
+                       "  public String serviceImplementation; " +
+                       "}");
 
     VirtualFile file = myFixture.copyFileToProject("plugin.xml");
     myFixture.openFileInEditor(file);
@@ -63,15 +70,15 @@ public class PluginDescriptorStructureTest extends JavaCodeInsightFixtureTestCas
       TreeElement[] topLevelNodes = root.getValue().getChildren();
       assertSize(12, topLevelNodes);
 
-      String[] expectedTopLevelNames = new String[] {"ID", "Name", "Version", "Vendor", "Description", "Change Notes", "Depends",
-        "IDEA Version", "Extensions", "Extension Points", "Application Components", "Actions"};
+      String[] expectedTopLevelNames = new String[] {"ID", "Name", "Version", "Vendor", "Description", "Change Notes",
+        "Depends", "IDEA Version", "Extensions", "Extension Points", "Application Components", "Actions"};
       String[] actualTopLevelNames = Stream.of(topLevelNodes)
         .map(treeElement -> treeElement.getPresentation().getPresentableText())
         .toArray(String[]::new);
       assertArrayEquals(expectedTopLevelNames, actualTopLevelNames);
 
       String[] expectedTopLevelLocations = new String[] {"plugin.id", "MyPlugin", "1.0", "YourCompany", null, null,
-        "com.intellij.java-i18n", "125.5-130.0", "plugin.id", null, null, null};
+        "com.intellij.java-i18n", "125.5-130.0", "plugin.id", "plugin.id", null, null};
       String[] actualTopLevelLocations = Stream.of(topLevelNodes)
         .map(treeElement -> treeElement.getPresentation().getLocationString())
         .toArray(String[]::new);

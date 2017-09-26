@@ -18,6 +18,7 @@ package org.jetbrains.idea.devkit.navigation.structure;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -27,6 +28,7 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.ProjectIconsAccessor;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.GenericDomValue;
@@ -45,10 +47,12 @@ import org.jetbrains.uast.UastContextKt;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Set;
 
 public class PluginDescriptorStructureUtil {
   private static final Logger LOG = Logger.getInstance(PluginDescriptorStructureUtil.class);
-  private static final int LOCATION_MAX_LENGTH = 40;
+  private static final Set<String> KNOWN_TOP_LEVEL_NODE_NAMES =
+    ContainerUtil.immutableSet("id", "name", "version", "category", "resource-bundle");
 
   private PluginDescriptorStructureUtil() {
   }
@@ -73,19 +77,14 @@ public class PluginDescriptorStructureUtil {
       if (StringUtil.isNotEmpty(epName)) {
         return epName;
       }
-      String epInterface = epElement.getInterface().getStringValue();
-      if (StringUtil.isNotEmpty(epInterface)) {
+      String epQualifiedName = epElement.getQualifiedName().getStringValue();
+      if (StringUtil.isNotEmpty(epQualifiedName)) {
         //noinspection ConstantConditions
-        return toShortName(epInterface);
-      }
-      String epBeanClass = epElement.getBeanClass().getStringValue();
-      if (StringUtil.isNotEmpty(epBeanClass)) {
-        //noinspection ConstantConditions
-        return toShortName(epBeanClass);
+        return toShortName(epQualifiedName);
       }
     }
 
-    return toHumanReadableName(element.getXmlElementName()); // default
+    return toDisplayName(element.getXmlElementName()); // default
   }
 
   @Nullable
@@ -98,10 +97,23 @@ public class PluginDescriptorStructureUtil {
     if (element instanceof Action) {
       XmlAttributeValue iconAttrValue = ((Action)element).getIcon().getXmlAttributeValue();
       if (iconAttrValue != null) {
+        boolean referenceFound = false;
         for (PsiReference reference : iconAttrValue.getReferences()) {
+          referenceFound = true;
           Icon icon = getIconFromReference(reference);
           if (icon != null) {
             return icon;
+          }
+        }
+
+        // icon field initializer may not be available if there're no attached sources for containing class
+        if (referenceFound) {
+          String value = iconAttrValue.getValue();
+          if (value != null) {
+            Icon icon = IconLoader.findIcon(value, false);
+            if (icon != null) {
+              return icon;
+            }
           }
         }
       }
@@ -120,42 +132,44 @@ public class PluginDescriptorStructureUtil {
       return null;
     }
 
-    String result;
     if (element instanceof IdeaVersion) {
-      result = getIdeaVersionLocation((IdeaVersion)element);
+      return getIdeaVersionLocation((IdeaVersion)element);
     }
-    else if (element instanceof Extensions) {
-      result = getExtensionsLocation((Extensions)element);
+    if (element instanceof Extensions) {
+      return getExtensionsLocation((Extensions)element);
     }
-    else if (element instanceof ExtensionPoint) {
-      result = getExtensionPointLocation((ExtensionPoint)element);
+    if (element instanceof ExtensionPoints) {
+      return getExtensionPointsLocation((ExtensionPoints)element);
     }
-    else if (element instanceof Component) {
-      result = getComponentLocation((Component)element);
+    if (element instanceof ExtensionPoint) {
+      return getExtensionPointLocation((ExtensionPoint)element);
     }
-    else if (element instanceof Group) {
-      result = getGroupLocation((Group)element);
+    if (element instanceof With) {
+      return getWithLocation((With)element);
     }
-    else if (element instanceof AddToGroup) {
-      result = getAddToGroupLocation((AddToGroup)element);
+    if (element instanceof Component) {
+      return getComponentLocation((Component)element);
     }
-    else if (element instanceof Extension) {
-      result = getExtensionLocation(element);
+    if (element instanceof Group) {
+      return getGroupLocation((Group)element);
     }
-    else if (element.getParent() instanceof Action && "keyboard-shortcut".equalsIgnoreCase(element.getXmlElementName())) {
-      result = getKeyboardShortcutLocation(element);
+    if (element instanceof AddToGroup) {
+      return getAddToGroupLocation((AddToGroup)element);
     }
-    else if (element instanceof Vendor) {
-      result = getVendorLocation((Vendor)element);
+    if (element instanceof Extension) {
+      return getExtensionLocation((Extension)element);
     }
-    else if (element.getParent() instanceof IdeaPlugin && element instanceof GenericDomValue) {
-      result = getTopLevelNodeLocation(element);
+    if (element instanceof KeyboardShortcut) {
+      return getKeyboardShortcutLocation((KeyboardShortcut)element);
     }
-    else {
-      result = guessTagLocation(element);
+    if (element instanceof Vendor) {
+      return getVendorLocation((Vendor)element);
+    }
+    if (element.getParent() instanceof IdeaPlugin && element instanceof GenericDomValue) {
+      return getTopLevelNodeLocation((GenericDomValue)element);
     }
 
-    return shorten(result);
+    return guessTagLocation(element);
   }
 
 
@@ -175,20 +189,30 @@ public class PluginDescriptorStructureUtil {
   }
 
   @Nullable
-  private static String getExtensionPointLocation(ExtensionPoint element) {
-    String result = null;
-    String epName = element.getName().getStringValue();
-    if (StringUtil.isNotEmpty(epName)) {
-      String epInterface = element.getInterface().getStringValue();
-      if (StringUtil.isNotEmpty(epInterface)) {
-        result = toShortName(epInterface);
-      }
-      String epBeanClass = element.getBeanClass().getStringValue();
-      if (StringUtil.isNotEmpty(epBeanClass)) {
-        result = toShortName(epBeanClass);
-      }
+  private static String getExtensionPointsLocation(ExtensionPoints element) {
+    DomElement parent = element.getParent();
+    if (parent instanceof IdeaPlugin) {
+      return ((IdeaPlugin)parent).getPluginId();
     }
-    return result;
+    return null;
+  }
+
+  @Nullable
+  private static String getExtensionPointLocation(ExtensionPoint element) {
+    String epInterface = element.getInterface().getStringValue();
+    if (StringUtil.isNotEmpty(epInterface)) {
+      return toShortName(epInterface);
+    }
+    String epBeanClass = element.getBeanClass().getStringValue();
+    if (StringUtil.isNotEmpty(epBeanClass)) {
+      return toShortName(epBeanClass);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static String getWithLocation(With element) {
+    return element.getAttribute().getStringValue();
   }
 
   @Nullable
@@ -208,37 +232,39 @@ public class PluginDescriptorStructureUtil {
   }
 
   @Nullable
-  private static String getExtensionLocation(DomElement element) {
-    String elementName = element.getXmlElementName();
-    if (elementName.equalsIgnoreCase("application-service") || elementName.equalsIgnoreCase("project-service") ||
-        elementName.equalsIgnoreCase("module-service")) {
-      String result = ((Extension)element).getId().getStringValue();
-      if (StringUtil.isEmpty(result)) {
-        result = toShortName(firstNotNullAttribute(element, "serviceInterface", "serviceImplementation"));
+  private static String getExtensionLocation(Extension element) {
+    DomElement parent = element.getParent();
+    if (parent instanceof Extensions && Extensions.DEFAULT_PREFIX.equals(((Extensions)parent).getDefaultExtensionNs().getStringValue())) {
+      String elementName = element.getXmlElementName();
+      if (elementName.equalsIgnoreCase("application-service") || elementName.equalsIgnoreCase("project-service") ||
+          elementName.equalsIgnoreCase("module-service")) {
+        String result = element.getId().getStringValue();
+        if (StringUtil.isEmpty(result)) {
+          result = toShortName(firstNotNullAttribute(element, "serviceInterface", "serviceImplementation"));
+        }
+        return result;
       }
-      return result;
-    }
-    else if (elementName.equalsIgnoreCase("intentionAction")) {
-      return toShortName(getSubTagText(element, "className"));
-    }
-    else if (elementName.equalsIgnoreCase("dom.extender")) {
-      String result = ((Extension)element).getId().getStringValue();
-      if (StringUtil.isEmpty(result)) {
-        result = toShortName(firstNotNullAttribute(element, "extenderClass"));
+      else if (elementName.equalsIgnoreCase("intentionAction")) {
+        return toShortName(getSubTagText(element, "className"));
       }
-      return result;
+      else if (elementName.equalsIgnoreCase("dom.extender")) {
+        String result = element.getId().getStringValue();
+        if (StringUtil.isEmpty(result)) {
+          result = toShortName(firstNotNullAttribute(element, "extenderClass"));
+        }
+        return result;
+      }
+      else if (elementName.equalsIgnoreCase("stacktrace.fold")) {
+        return firstNotNullAttribute(element, "substring");
+      }
     }
-    else if (elementName.equalsIgnoreCase("stacktrace.fold")) {
-      return firstNotNullAttribute(element, "substring");
-    }
-    else {
-      return guessTagLocation(element);
-    }
+
+    return guessTagLocation(element);
   }
 
   @Nullable
-  private static String getKeyboardShortcutLocation(DomElement element) {
-    return firstNotNullAttribute(element, "first-keystroke");
+  private static String getKeyboardShortcutLocation(KeyboardShortcut element) {
+    return element.getFirstKeystroke().getStringValue();
   }
 
   @NotNull
@@ -247,18 +273,20 @@ public class PluginDescriptorStructureUtil {
   }
 
   @Nullable
-  private static String getTopLevelNodeLocation(DomElement element) {
-    String tagName = element.getXmlElementName();
-    if (tagName.equalsIgnoreCase("id") || tagName.equalsIgnoreCase("name") || tagName.equalsIgnoreCase("version") ||
-        tagName.equalsIgnoreCase("category") || tagName.equalsIgnoreCase("resource-bundle")) {
-      return ((GenericDomValue)element).getRawText();
-    }
-    if (tagName.equalsIgnoreCase("depends")) {
-      String result = ((GenericDomValue)element).getRawText();
-      if ("true".equalsIgnoreCase(firstNotNullAttribute(element, "optional"))) {
+  private static String getTopLevelNodeLocation(GenericDomValue element) {
+    if (element instanceof Dependency) {
+      Dependency dependency = (Dependency)element;
+      String result = dependency.getRawText();
+
+      Boolean optional = dependency.getOptional().getValue();
+      if (optional != null && optional) {
         result += " [optional]";
       }
       return result;
+    }
+
+    if (KNOWN_TOP_LEVEL_NODE_NAMES.contains(element.getXmlElementName().toLowerCase())) {
+      return element.getRawText();
     }
 
     return null;
@@ -268,8 +296,8 @@ public class PluginDescriptorStructureUtil {
   private static String guessTagLocation(DomElement element) {
     String location = null;
 
-    // avoid displaying location equal to display text for actions and EPs
-    if (!(element instanceof ExtensionPoint) && !(element instanceof Action)) {
+    // avoid displaying location equal to display text for actions
+    if (!(element instanceof Action)) {
       location = firstNotNullAttribute(element, "id", "name", "displayName", "shortName");
     }
     if (location == null) {
@@ -322,34 +350,16 @@ public class PluginDescriptorStructureUtil {
   }
 
   @NotNull
-  private static String toHumanReadableName(@NotNull String tagName) {
+  private static String toDisplayName(@NotNull String tagName) {
     String result = tagName.replaceAll("-", " ").replaceAll("\\.", " | ");
     result = StringUtil.join(NameUtil.nameToWords(result), " ");
-
-    result = StringUtil.capitalizeWords(result, true)
-      .replaceAll("Psi", "PSI")
-      .replaceAll("Dom", "DOM")
-      .replaceAll("Sdk", "SDK")
-      .replaceAll("Junit", "JUnit")
-      .replaceAll("Idea", "IDEA")
-      .replaceAll("Javaee", "JavaEE")
-      .replaceAll("Jsf", "JSF")
-      .replaceAll("Mvc", "MVC")
-      .replaceAll("El", "EL")
-      .replaceAll("Id", "ID");
+    result = StringUtil.capitalizeWords(result, true);
+    result = StringUtil.replace(
+      result,
+      new String[] {"Psi", "Dom", "Sdk", "Junit", "Idea", "Javaee", "Jsf", "Mvc", "El", "Id", "Jsp", "Xml"},
+      new String[] {"PSI", "DOM", "SDK", "JUnit", "IDEA", "JavaEE", "JSF", "MVC", "EL", "ID", "JSP", "XML"});
 
     return result;
-  }
-
-  @Nullable
-  private static String shorten(@Nullable String text) {
-    if (text == null) {
-      return null;
-    }
-    if (text.length() <= LOCATION_MAX_LENGTH) {
-      return text;
-    }
-    return StringUtil.trimMiddle(text, LOCATION_MAX_LENGTH);
   }
 
   @Nullable

@@ -120,6 +120,11 @@ public class PluginDescriptorXmlStructureViewModel extends XmlStructureViewTreeM
     };
   }
 
+  @NotNull
+  @Override
+  protected Class[] getSuitableClasses() {
+    return new Class[]{XmlTag.class};
+  }
 
   private static class DumbStructureViewTreeElement implements StructureViewTreeElement {
     @Override
