@@ -18,11 +18,13 @@ package com.siyeh.ig.naming;
 import com.intellij.codeInspection.NamingConvention;
 import com.intellij.codeInspection.NamingConventionBean;
 import com.intellij.codeInspection.NamingConventionWithFallbackBean;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.CheckBoxListListener;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.siyeh.ig.BaseInspection;
@@ -39,6 +41,8 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public abstract class AbstractNamingConventionInspection<T> extends BaseInspection {
+  private static final Logger LOG = Logger.getInstance(AbstractNamingConventionInspection.class);
+
   protected final Map<String, NamingConvention<T>> myNamingConventions = new LinkedHashMap<>();
   protected final Map<String, NamingConventionBean> myNamingConventionBeans = new LinkedHashMap<>();
   protected final Set<String> myDisabledShortNames = new HashSet<>();
@@ -46,8 +50,12 @@ public abstract class AbstractNamingConventionInspection<T> extends BaseInspecti
 
   public AbstractNamingConventionInspection(NamingConvention<T>[] extensions, final String defaultConventionShortName) {
     for (NamingConvention<T> convention : extensions) {
-      myNamingConventions.put(convention.getShortName(), convention);
-      myNamingConventionBeans.put(convention.getShortName(), convention.createDefaultBean());
+      String shortName = convention.getShortName();
+      NamingConvention<T> oldConvention = myNamingConventions.put(shortName, convention);
+      if (oldConvention != null) {
+        LOG.error("Duplicated short names: " + shortName + " first: " + oldConvention + "; second: " + convention);
+      }
+      myNamingConventionBeans.put(shortName, convention.createDefaultBean());
     }
     initDisabledState();
     myDefaultConventionShortName = defaultConventionShortName;
@@ -158,7 +166,9 @@ public abstract class AbstractNamingConventionInspection<T> extends BaseInspecti
       int selectedIndex = list.getSelectedIndex();
       NamingConvention<T> item = list.getItemAt(selectedIndex);
       if (item != null) {
-        layout.show(descriptionPanel, item.getShortName());
+        String shortName = item.getShortName();
+        layout.show(descriptionPanel, shortName);
+        UIUtil.setEnabled(descriptionPanel, list.isItemSelected(selectedIndex), true);
       }
     });
     list.setCheckBoxListListener(new CheckBoxListListener() {
@@ -166,6 +176,7 @@ public abstract class AbstractNamingConventionInspection<T> extends BaseInspecti
       public void checkBoxSelectionChanged(int index, boolean value) {
         NamingConvention<T> convention = new ArrayList<>(myNamingConventions.values()).get(index);
         setEnabled(value, convention.getShortName());
+        UIUtil.setEnabled(descriptionPanel, value, true);
       }
     });
     list.setSelectedIndex(0);

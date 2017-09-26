@@ -23,8 +23,8 @@ import java.awt.*;
 public class NamingConventionWithFallbackBean extends NamingConventionBean {
   public boolean inheritDefaultSettings = false;
 
-  public NamingConventionWithFallbackBean(String regex, int minLength, int maxLength) {
-    super(regex, minLength, maxLength);
+  public NamingConventionWithFallbackBean(String regex, int minLength, int maxLength, String... predefinedNames) {
+    super(regex, minLength, maxLength, predefinedNames);
   }
 
   public boolean isInheritDefaultSettings() {
