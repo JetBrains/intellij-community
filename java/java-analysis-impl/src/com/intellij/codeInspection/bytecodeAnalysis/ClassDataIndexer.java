@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -70,7 +69,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
   @Override
   public Map<HMethod, Equations> calcData(@NotNull Project project, @NotNull VirtualFile file) {
     HashMap<HMethod, Equations> map = new HashMap<>();
-    if (isFileExcluded(project, file)) {
+    if (isFileExcluded(file)) {
       return map;
     }
     try {
@@ -91,12 +90,25 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
     return map;
   }
 
-  static boolean isFileExcluded(Project project, VirtualFile file) {
-    VirtualFile classRoot = ProjectFileIndex.getInstance(project).getClassRootForFile(file);
-    if(classRoot != null && classRoot.getName().equals("android.jar") && classRoot.findChild("AndroidManifest.xml") != null) {
-      return true;
-    }
-    return false;
+  /**
+   * Returns true if file must be excluded from the analysis for some reason (e.g. it's known stub
+   * jar which will be replaced in runtime).
+   *
+   * @param file file to check
+   * @return true if this file must be excluded
+   */
+  static boolean isFileExcluded(VirtualFile file) {
+    return isInsideDummyAndroidJar(file);
+  }
+
+  /**
+   * Ignore inside android.jar because all class files there are dummy and contain no code at all.
+   * Rely on the fact that it's always located at .../platforms/android-.../android.jar!/
+   */
+  private static boolean isInsideDummyAndroidJar(VirtualFile file) {
+    String path = file.getPath();
+    int index = path.indexOf("/android.jar!/");
+    return index > 0 && path.lastIndexOf("platforms/android-", index) > 0;
   }
 
   private static Map<EKey, Equations> solvePartially(Map<EKey, Equations> map) {
