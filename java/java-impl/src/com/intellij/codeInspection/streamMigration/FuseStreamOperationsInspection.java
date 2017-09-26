@@ -140,7 +140,8 @@ public class FuseStreamOperationsInspection extends BaseJavaBatchLocalInspection
             String fusedSteps = newTerminal.fusedElements()
               .mapLastOrElse(s -> StreamEx.of(", ", s), s -> StreamEx.of(" and ", s))
               .flatMap(Function.identity()).skip(1).joining();
-            holder.registerProblem(nameElement, "Stream may be extended replacing " + fusedSteps,
+            holder.registerProblem(nameElement,
+                                   InspectionsBundle.message("inspection.fuse.stream.operations.message", fusedSteps),
                                    new FuseStreamOperationsFix(fusedSteps));
           }
         }
@@ -183,14 +184,14 @@ public class FuseStreamOperationsInspection extends BaseJavaBatchLocalInspection
     @NotNull
     @Override
     public String getName() {
-      return "Fuse " + myFusedSteps + " into the Stream API chain";
+      return InspectionsBundle.message("inspection.fuse.stream.operations.fix.name", myFusedSteps);
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Fuse more statements to the Stream API chain";
+      return InspectionsBundle.message("inspection.fuse.stream.operations.fix.family.name");
     }
 
     @Override
