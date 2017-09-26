@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="JavaProjectCodeInsightSettings">
+    <excluded-names>
+      <name>com.sun.istack</name>
+      <name>com.sun.media.jfxmediaimpl.MediaDisposer.Disposable</name>
+      <name>com.sun.tools.javac.util.List</name>
+      <name>com.sun.xml.internal.bind.v2.schemagen.xmlschema.List</name>
+      <name>java.awt.List</name>
+      <name>sun.reflect.generics.reflectiveObjects.NotImplementedException</name>
+    </excluded-names>
+  </component>
+</project>

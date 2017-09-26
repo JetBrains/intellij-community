@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/stream-debugger.iml" filepath="$PROJECT_DIR$/.idea/modules/stream-debugger.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/stream-debugger_main.iml" filepath="$PROJECT_DIR$/.idea/modules/stream-debugger_main.iml" group="stream-debugger" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/stream-debugger_test.iml" filepath="$PROJECT_DIR$/.idea/modules/stream-debugger_test.iml" group="stream-debugger" />
+    </modules>
+  </component>
+</project>
