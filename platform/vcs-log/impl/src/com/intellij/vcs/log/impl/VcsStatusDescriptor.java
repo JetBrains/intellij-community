@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,9 +31,9 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 public abstract class VcsStatusDescriptor<S> {
   @NotNull
-  public List<S> getMergedStatusInfo(@NotNull List<List<S>> statuses) {
+  public List<MergedStatusInfo<S>> getMergedStatusInfo(@NotNull List<List<S>> statuses) {
     List<S> firstParent = statuses.get(0);
-    if (statuses.size() == 1) return firstParent;
+    if (statuses.size() == 1) return ContainerUtil.map(firstParent, info -> new MergedStatusInfo<>(info));
 
     List<Map<String, S>> affectedMap =
       ContainerUtil.map(statuses, infos -> {
@@ -46,7 +47,7 @@ public abstract class VcsStatusDescriptor<S> {
         return map;
       });
 
-    List<S> result = ContainerUtil.newArrayList();
+    List<MergedStatusInfo<S>> result = ContainerUtil.newArrayList();
 
     outer:
     for (String path : affectedMap.get(0).keySet()) {
@@ -57,7 +58,7 @@ public abstract class VcsStatusDescriptor<S> {
         statusesList.add(status);
       }
 
-      result.add(getMergedStatusInfo(path, statusesList));
+      result.add(new MergedStatusInfo<>(getMergedStatusInfo(path, statusesList), statusesList));
     }
 
     return result;
@@ -111,4 +112,37 @@ public abstract class VcsStatusDescriptor<S> {
 
   @NotNull
   public abstract Change.Type getType(@NotNull S info);
+
+
+  public static class MergedStatusInfo<S> {
+    @NotNull private final S myStatusInfo;
+    @NotNull private final List<S> myMergedStatusInfos;
+
+    public MergedStatusInfo(@NotNull S info, @NotNull List<S> infos) {
+      myStatusInfo = info;
+      myMergedStatusInfos = new SmartList<>(infos);
+    }
+
+    public MergedStatusInfo(@NotNull S info) {
+      this(info, ContainerUtil.emptyList());
+    }
+
+    @NotNull
+    public S getStatusInfo() {
+      return myStatusInfo;
+    }
+
+    @NotNull
+    public List<S> getMergedStatusInfos() {
+      return myMergedStatusInfos;
+    }
+
+    @Override
+    public String toString() {
+      return "MergedStatusInfo{" +
+             "myStatusInfo=" + myStatusInfo +
+             ", myMergedStatusInfos=" + myMergedStatusInfos +
+             '}';
+    }
+  }
 }

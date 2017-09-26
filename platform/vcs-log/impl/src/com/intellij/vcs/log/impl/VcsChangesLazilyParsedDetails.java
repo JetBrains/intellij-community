@@ -15,6 +15,8 @@
  */
 package com.intellij.vcs.log.impl;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
@@ -26,6 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsUser;
+import com.intellij.vcs.log.impl.VcsStatusDescriptor.MergedStatusInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -113,11 +116,26 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
 
     @NotNull
     protected ParsedChanges parseChanges() throws VcsException {
-      List<Change> mergedChanges = parseStatusInfo(getMergedStatusInfo(), 0);
+      List<Change> mergedChanges = parseMergedChanges();
       List<Collection<Change>> changes = computeChanges(mergedChanges);
       ParsedChanges parsedChanges = new ParsedChanges(mergedChanges, changes);
       myChanges.compareAndSet(this, parsedChanges);
       return parsedChanges;
+    }
+
+    @NotNull
+    private List<Change> parseMergedChanges() throws VcsException {
+      List<MergedStatusInfo<S>> statuses = getMergedStatusInfo();
+      List<Change> changes = parseStatusInfo(ContainerUtil.map(statuses, MergedStatusInfo::getStatusInfo), 0);
+      LOG.assertTrue(changes.size() == statuses.size(), "Incorrectly parsed statuses " + statuses + " to changes " + changes);
+      if (getParents().size() <= 1) return changes;
+
+      // each merge change knows about all changes to parents
+      List<Change> wrappedChanges = ContainerUtil.newArrayList();
+      for (int i = 0; i < statuses.size(); i++) {
+        wrappedChanges.add(new MyMergedChange(changes.get(i), statuses.get(i)));
+      }
+      return wrappedChanges;
     }
 
     @NotNull
@@ -186,8 +204,35 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
      * If a commit is not a merge, all statuses are returned.
      */
     @NotNull
-    private List<S> getMergedStatusInfo() {
+    private List<MergedStatusInfo<S>> getMergedStatusInfo() {
       return myDescriptor.getMergedStatusInfo(myChangesOutput);
+    }
+
+    private class MyMergedChange extends MergedChange {
+      @NotNull private final MergedStatusInfo<S> myStatusInfo;
+      @NotNull private final Supplier<List<Change>> mySourceChanges;
+
+      public MyMergedChange(@NotNull Change change, @NotNull MergedStatusInfo<S> statusInfo) {
+        super(change);
+        myStatusInfo = statusInfo;
+        mySourceChanges = Suppliers.memoize(() -> {
+          List<Change> sourceChanges = ContainerUtil.newArrayList();
+          try {
+            for (int parent = 0; parent < myStatusInfo.getMergedStatusInfos().size(); parent++) {
+              sourceChanges.addAll(parseStatusInfo(Collections.singletonList(myStatusInfo.getMergedStatusInfos().get(parent)), parent));
+            }
+          }
+          catch (VcsException e) {
+            LOG.error(e);
+          }
+          return sourceChanges;
+        });
+      }
+
+      @Override
+      public List<Change> getSourceChanges() {
+        return mySourceChanges.get();
+      }
     }
   }
 
