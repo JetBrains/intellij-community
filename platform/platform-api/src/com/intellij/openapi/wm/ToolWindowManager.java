@@ -17,7 +17,6 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import org.jetbrains.annotations.NotNull;
@@ -150,8 +149,7 @@ public abstract class ToolWindowManager {
 
   @Nullable
   public static ToolWindow getActiveToolWindow () {
-    IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
-    Project project = frame == null ? ProjectManager.getInstance().getDefaultProject() : frame.getProject();
+    Project project = IdeFocusManager.getGlobalInstance().getLastFocusedFrame().getProject();
 
     if (project != null) {
       ToolWindowManager managerInstance = getInstance(project);
