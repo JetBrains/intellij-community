@@ -152,6 +152,7 @@ public class ReplaceInProjectManager {
 
       final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(findModel.isOpenInNewTab(), findModelCopy);
       final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, true, presentation);
+      processPresentation.setShowFindOptionsPrompt(findModel.isPromptOnReplace());
 
       UsageSearcherFactory factory = new UsageSearcherFactory(findModelCopy, processPresentation);
       searchAndShowUsages(manager, factory, findModelCopy, presentation, processPresentation, findManager);
@@ -214,9 +215,9 @@ public class ReplaceInProjectManager {
 
         @Override
         public void findingUsagesFinished(final UsageView usageView) {
-          if (context[0] != null && findManager.getFindInProjectModel().isPromptOnReplace()) {
+          if (context[0] != null && !processPresentation.isShowFindOptionsPrompt()) {
             TransactionGuard.submitTransaction(myProject, () -> {
-              replaceWithPrompt(context[0]);
+              replaceUsagesUnderCommand(context[0], usageView.getUsages());
               context[0].invalidateExcludedSetCache();
             });
           }
@@ -354,7 +355,27 @@ public class ReplaceInProjectManager {
   }
 
   private void addReplaceActions(final ReplaceContext replaceContext) {
-    final Runnable replaceRunnable = () -> replaceUsagesUnderCommand(replaceContext, replaceContext.getUsageView().getUsages());
+    final Runnable replaceRunnable = () -> {
+      Set<Usage> usages = replaceContext.getUsageView().getUsages();
+      Set<VirtualFile> files = new HashSet<>();
+      if (usages.isEmpty()) return;
+      for (Usage usage : usages) {
+        if (usage instanceof UsageInfo2UsageAdapter) {
+          files.add(((UsageInfo2UsageAdapter)usage).getFile());
+        }
+      }
+      if (files.size() < 2 ||
+          JOptionPane.OK_OPTION == JOptionPane.showConfirmDialog(replaceContext.getUsageView().getComponent(),
+                                                                 FindBundle.message("find.replace.all.confirmation",
+                                                                                    usages.size(),
+                                                                                    replaceContext.getFindModel().getStringToFind(),
+                                                                                    files.size(),
+                                                                                    replaceContext.getFindModel().getStringToReplace()),
+                                                                 FindBundle.message("find.replace.all.confirmation.title"),
+                                                                 JOptionPane.OK_CANCEL_OPTION)) {
+        replaceUsagesUnderCommand(replaceContext, usages);
+      }
+    };
     replaceContext.getUsageView().addButtonToLowerPane(replaceRunnable, FindBundle.message("find.replace.all.action"));
 
     final Runnable replaceSelectedRunnable =

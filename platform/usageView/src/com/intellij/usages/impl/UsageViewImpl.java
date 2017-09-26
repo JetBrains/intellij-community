@@ -1098,6 +1098,7 @@ public class UsageViewImpl implements UsageView {
 
   @Override
   public void removeUsagesBulk(@NotNull Collection<Usage> usages) {
+    int selectionRow = myTree.getMinSelectionRow();
     Set<UsageNode> nodes = usagesToNodes(usages.stream()).collect(Collectors.toSet());
     usages.forEach(u -> myUsageNodes.remove(u));
 
@@ -1106,6 +1107,10 @@ public class UsageViewImpl implements UsageView {
         if (isDisposed) return;
         DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
         ((GroupNode)treeModel.getRoot()).removeUsagesBulk(nodes, treeModel);
+        int rowToSelect = Math.min(myTree.getRowCount() - 1, selectionRow);
+        if (rowToSelect >=0) {
+          myTree.setSelectionRow(rowToSelect);
+        }
       });
     }
   }
@@ -1240,7 +1245,9 @@ public class UsageViewImpl implements UsageView {
   @Override
   public void close() {
     cancelCurrentSearch();
-    UsageViewManager.getInstance(myProject).closeContent(myContent);
+    if (myContent != null) {
+      UsageViewManager.getInstance(myProject).closeContent(myContent);
+    }
   }
 
   private void saveSplitterProportions() {

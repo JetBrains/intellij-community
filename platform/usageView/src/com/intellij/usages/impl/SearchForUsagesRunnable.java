@@ -311,7 +311,17 @@ class SearchForUsagesRunnable implements Runnable {
       usageView = new UsageViewImpl(myProject, myPresentation, mySearchFor, mySearcherFactory);
       usageView.associateProgress(indicator);
       if (myUsageViewRef.compareAndSet(null, usageView)) {
-        openView(usageView);
+        if (myProcessPresentation.isShowFindOptionsPrompt()) {
+          openView(usageView);
+        } else {
+          UsageViewImpl[] tmp = new UsageViewImpl[]{usageView};
+          SwingUtilities.invokeLater(() -> {
+            if (myProject.isDisposed()) return;
+            if (myListener != null) {
+              myListener.usageViewCreated(tmp[0]);
+            }
+          });
+        }
         final Usage firstUsage = myFirstUsage.get();
         if (firstUsage != null) {
           final UsageViewImpl finalUsageView = usageView;
