@@ -116,6 +116,7 @@ public class Windows {
 
             // FocusEvent
             // for now we are interested in focus lost events
+            String id = ToolWindowManager.getActiveId();
             if (event.getID() == FocusEvent.FOCUS_LOST) {
               // let's check that it is a toolwindow who loses the focus
 
@@ -126,17 +127,17 @@ public class Windows {
 
                 // A toolwindow lost focus
                 if (!focusEvent.isTemporary() && ToolWindowManager.getActiveToolWindow() != null && ToolWindowManager.getActiveToolWindow().isAutoHide()) {
-                  pinnedWindowFocusLostHandler.accept(ToolWindowManager.getActiveId());
+                  pinnedWindowFocusLostHandler.accept(id);
                 }
               }
             }
 
-            if (event.getID() == KeyEvent.KEY_PRESSED && !isHeavyWeightPopup(event))
+            if (event.getID() == KeyEvent.KEY_PRESSED && !isHeavyWeightPopup(event) && !("Terminal").equals(id))
             {
               if (Arrays.stream(findShortcuts("EditorEscape"))
                 .anyMatch(shortcut -> shortcut.equals(new KeyboardShortcut(KeyStroke.getKeyStrokeForEvent((KeyEvent)event), null))))
               {
-                deactivationShortcutHandler.accept(ToolWindowManager.getActiveId());
+                deactivationShortcutHandler.accept(id);
               }
             }
           }
