@@ -73,7 +73,7 @@ public class TraceResultInterpreterImpl implements TraceResultInterpreter {
     return result;
   }
 
-  private void logTime(@NotNull Value elapsedTimeArray) {
+  private static void logTime(@NotNull Value elapsedTimeArray) {
     final Value elapsedTime = ((ArrayReference)elapsedTimeArray).getValue(0);
     final long elapsedNanoseconds = ((LongValue)elapsedTime).value();
     final long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(elapsedNanoseconds);

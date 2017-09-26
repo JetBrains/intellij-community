@@ -15,7 +15,6 @@
  */
 package com.intellij.debugger.streams.lib.impl
 
-import com.intellij.debugger.streams.trace.dsl.impl.DslImpl
 import com.intellij.debugger.streams.trace.impl.handler.unified.DistinctTraceHandler
 import com.intellij.debugger.streams.trace.impl.interpret.AllMatchTraceInterpreter
 import com.intellij.debugger.streams.trace.impl.interpret.AnyMatchTraceInterpreter

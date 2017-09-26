@@ -109,7 +109,7 @@ public class TraceStreamAction extends AnAction {
     return false;
   }
 
-  private void runTrace(@NotNull StreamChain chain, @NotNull XDebugSession session) {
+  private static void runTrace(@NotNull StreamChain chain, @NotNull XDebugSession session) {
     final EvaluationAwareTraceWindow window = new EvaluationAwareTraceWindow(session, chain);
     ApplicationManager.getApplication().invokeLater(window::show);
     final Project project = session.getProject();
@@ -143,7 +143,7 @@ public class TraceStreamAction extends AnAction {
   }
 
   @Nullable
-  private XDebugSession getCurrentSession(@NotNull AnActionEvent e) {
+  private static XDebugSession getCurrentSession(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     return project == null ? null : XDebuggerManager.getInstance(project).getCurrentSession();
   }

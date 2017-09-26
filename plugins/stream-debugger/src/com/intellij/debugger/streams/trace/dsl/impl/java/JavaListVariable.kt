@@ -18,7 +18,6 @@ package com.intellij.debugger.streams.trace.dsl.impl.java
 import com.intellij.debugger.streams.trace.dsl.Expression
 import com.intellij.debugger.streams.trace.dsl.ListVariable
 import com.intellij.debugger.streams.trace.dsl.VariableDeclaration
-import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 import com.intellij.debugger.streams.trace.dsl.impl.VariableImpl
 import com.intellij.debugger.streams.trace.impl.handler.type.ListType
 

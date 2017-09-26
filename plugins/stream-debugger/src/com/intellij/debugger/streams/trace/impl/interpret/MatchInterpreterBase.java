@@ -81,12 +81,12 @@ public abstract class MatchInterpreterBase implements CallTraceInterpreter {
   }
 
   @NotNull
-  private Map<Integer, TraceElement> onlyFiltered(@NotNull Collection<TraceElement> afterFilter) {
+  private static Map<Integer, TraceElement> onlyFiltered(@NotNull Collection<TraceElement> afterFilter) {
     return makeIndexByTime(afterFilter.stream());
   }
 
   @NotNull
-  private Map<Integer, TraceElement> difference(@NotNull Collection<TraceElement> before, @NotNull Set<Integer> timesAfter) {
+  private static Map<Integer, TraceElement> difference(@NotNull Collection<TraceElement> before, @NotNull Set<Integer> timesAfter) {
     return makeIndexByTime(before.stream().filter(x -> !timesAfter.contains(x.getTime())));
   }
 

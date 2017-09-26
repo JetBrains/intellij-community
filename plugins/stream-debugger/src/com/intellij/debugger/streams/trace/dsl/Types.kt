@@ -23,6 +23,7 @@ import com.intellij.debugger.streams.trace.impl.handler.type.MapType
 /**
  * @author Vitaliy.Bibaev
  */
+@Suppress("PropertyName")
 interface Types {
   val ANY: GenericType
   val INT: GenericType

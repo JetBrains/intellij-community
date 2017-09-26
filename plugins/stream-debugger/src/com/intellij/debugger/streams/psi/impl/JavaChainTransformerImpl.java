@@ -68,7 +68,7 @@ public class JavaChainTransformerImpl implements ChainTransformer.Java {
   }
 
   @NotNull
-  private GenericType getGenericTypeOfThis(PsiExpression expression) {
+  private static GenericType getGenericTypeOfThis(PsiExpression expression) {
     final PsiClass klass = ClassUtils.getContainingClass(expression);
 
     return klass == null ? JavaTypes.INSTANCE.getANY()
@@ -76,8 +76,8 @@ public class JavaChainTransformerImpl implements ChainTransformer.Java {
   }
 
   @NotNull
-  private List<IntermediateStreamCall> createIntermediateCalls(@NotNull GenericType producerAfterType,
-                                                               @NotNull List<PsiMethodCallExpression> expressions) {
+  private static List<IntermediateStreamCall> createIntermediateCalls(@NotNull GenericType producerAfterType,
+                                                                      @NotNull List<PsiMethodCallExpression> expressions) {
     final List<IntermediateStreamCall> result = new ArrayList<>();
 
     GenericType typeBefore = producerAfterType;
@@ -94,7 +94,7 @@ public class JavaChainTransformerImpl implements ChainTransformer.Java {
   }
 
   @NotNull
-  private TerminatorStreamCall createTerminationCall(@NotNull GenericType typeBefore, @NotNull PsiMethodCallExpression expression) {
+  private static TerminatorStreamCall createTerminationCall(@NotNull GenericType typeBefore, @NotNull PsiMethodCallExpression expression) {
     final String name = resolveMethodName(expression);
     final List<CallArgument> args = resolveArguments(expression);
     final GenericType resultType = resolveTerminationCallType(expression);

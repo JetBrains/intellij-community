@@ -18,5 +18,4 @@ package com.intellij.debugger.streams.trace.dsl
 /**
  * @author Vitaliy.Bibaev
  */
-interface Statement : Convertable {
-}
+interface Statement : Convertable
