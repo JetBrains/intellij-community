@@ -170,8 +170,8 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
           injectedFile = InjectedLanguageUtil.findInjectedPsiNoCommit(file, offset);
           injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
         }
-        editorToUse = injectedEditor;
-        fileToUse = injectedFile;
+        editorToUse = injectedFile == null ? editor : injectedEditor;
+        fileToUse = injectedFile == null ? file : injectedFile;
       }
       else {
         editorToUse = editor;
