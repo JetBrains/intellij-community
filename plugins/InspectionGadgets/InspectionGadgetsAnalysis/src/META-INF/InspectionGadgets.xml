@@ -2810,6 +2810,10 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="redundant.explicit.var.type.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids8"
                      implementationClass="com.intellij.codeInspection.RedundantExplicitVariableTypeInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="VariableTypeCanBeExplicit" enabledByDefault="true" level="INFORMATION"
+                     bundle="com.siyeh.InspectionGadgetsBundle" key="variable.type.can.be.explicit.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
+                     implementationClass="com.intellij.codeInspection.VariableTypeCanBeExplicitInspection"/>
   </extensions>
 
 </idea-plugin>
