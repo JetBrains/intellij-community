@@ -149,23 +149,17 @@ public abstract class ToolWindowManager {
 
   @Nullable
   public static ToolWindow getActiveToolWindow () {
-    Project project = IdeFocusManager.getGlobalInstance().getLastFocusedFrame().getProject();
+    ToolWindowManager instance = getInstance(
+      Objects.requireNonNull(Objects.requireNonNull(IdeFocusManager.getGlobalInstance().getLastFocusedFrame()).getProject()));
 
-    if (project != null) {
-      ToolWindowManager managerInstance = getInstance(project);
-      if (managerInstance != null) {
-        return managerInstance.getToolWindow(getActiveId());
-      }
-    }
-
-    return null;
+    return instance.getToolWindow(getActiveId());
   }
 
   @Nullable
   public static String getActiveId () {
     ToolWindowManager instance = getInstance(Objects.requireNonNull(Objects.requireNonNull(IdeFocusManager.getGlobalInstance().getLastFocusedFrame()).getProject()));
 
-    return instance == null ? "" : instance.getActiveToolWindowId();
+    return instance.getActiveToolWindowId();
 
   }
 
