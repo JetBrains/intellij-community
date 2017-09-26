@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ref.GCUtil;
 import gnu.trove.TObjectHashingStrategy;
@@ -468,5 +469,32 @@ public class ConcurrentMapsTest {
       assertNull(prev);
       assertSame(newVal, map.get(key));
     }
+  }
+
+  @Test
+  public void testConcurrentHashMapTreeBinifiesItself() {
+    class Meh {
+      @Override
+      public int hashCode() {
+        return 0;
+      }
+    }
+
+    ConcurrentMap<Object, Object> map = ConcurrentCollectionFactory.createMap(new TObjectHashingStrategy<Object>() {
+      @Override
+      public int computeHashCode(Object object) {
+        return 0;
+      }
+
+      @Override
+      public boolean equals(Object o1, Object o2) {
+        return o1==o2;
+      }
+    });
+    int N = 1000;
+    for (int i = 0; i < N; i++) {
+      map.put(new Meh(), 0);
+    }
+    assertEquals(N, map.size());
   }
 }
