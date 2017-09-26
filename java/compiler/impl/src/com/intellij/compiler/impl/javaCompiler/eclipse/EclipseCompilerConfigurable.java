@@ -15,10 +15,12 @@
  */
 package com.intellij.compiler.impl.javaCompiler.eclipse;
 
+import com.intellij.compiler.impl.javaCompiler.CompilerModuleOptionsComponent;
 import com.intellij.compiler.options.ComparingUtils;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.RawCommandLineEditor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -30,17 +32,24 @@ import javax.swing.*;
  * @author cdr
  */
 public class EclipseCompilerConfigurable implements Configurable {
+  private final Project myProject;
   private JPanel myPanel;
   private JCheckBox myCbDeprecation;
   private JCheckBox myCbDebuggingInfo;
   private JCheckBox myCbGenerateNoWarnings;
   private RawCommandLineEditor myAdditionalOptionsField;
   private JCheckBox myCbProceedOnErrors;
+  private CompilerModuleOptionsComponent myOptionsOverride;
   private final EclipseCompilerOptions myCompilerSettings;
 
-  public EclipseCompilerConfigurable(EclipseCompilerOptions options) {
+  public EclipseCompilerConfigurable(Project project, EclipseCompilerOptions options) {
+    myProject = project;
     myCompilerSettings = options;
     myAdditionalOptionsField.setDialogCaption(CompilerBundle.message("java.compiler.option.additional.command.line.parameters"));
+  }
+
+  private void createUIComponents() {
+    myOptionsOverride = new CompilerModuleOptionsComponent(myProject);
   }
 
   public String getDisplayName() {
@@ -65,6 +74,8 @@ public class EclipseCompilerConfigurable implements Configurable {
     isModified |= ComparingUtils.isModified(myCbGenerateNoWarnings, myCompilerSettings.GENERATE_NO_WARNINGS);
     isModified |= ComparingUtils.isModified(myCbProceedOnErrors, myCompilerSettings.PROCEED_ON_ERROR);
     isModified |= ComparingUtils.isModified(myAdditionalOptionsField, myCompilerSettings.ADDITIONAL_OPTIONS_STRING);
+    isModified |= !myOptionsOverride.getModuleOptionsMap().equals(myCompilerSettings.ADDITIONAL_OPTIONS_OVERRIDE);
+
     return isModified;
   }
 
@@ -74,6 +85,7 @@ public class EclipseCompilerConfigurable implements Configurable {
     myCompilerSettings.GENERATE_NO_WARNINGS = myCbGenerateNoWarnings.isSelected();
     myCompilerSettings.PROCEED_ON_ERROR = myCbProceedOnErrors.isSelected();
     myCompilerSettings.ADDITIONAL_OPTIONS_STRING = myAdditionalOptionsField.getText();
+    myCompilerSettings.ADDITIONAL_OPTIONS_OVERRIDE.putAll(myOptionsOverride.getModuleOptionsMap());
   }
 
   public void reset() {
@@ -82,9 +94,11 @@ public class EclipseCompilerConfigurable implements Configurable {
     myCbGenerateNoWarnings.setSelected(myCompilerSettings.GENERATE_NO_WARNINGS);
     myCbProceedOnErrors.setSelected(myCompilerSettings.PROCEED_ON_ERROR);
     myAdditionalOptionsField.setText(myCompilerSettings.ADDITIONAL_OPTIONS_STRING);
+    myOptionsOverride.setModuleOptionsMap(myCompilerSettings.ADDITIONAL_OPTIONS_OVERRIDE);
   }
 
   public void disposeUIResources() {
 
   }
+
 }
