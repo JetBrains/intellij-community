@@ -76,7 +76,6 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
   private final AbstractViewManager myViewManager;
   private volatile Content myContent;
   private volatile DefaultActionGroup myToolbarActions;
-  //view.getPrimaryView().print("\r", ConsoleViewContentType.SYSTEM_OUTPUT);
 
   public MultipleBuildsView(Project project,
                             BuildContentManager buildContentManager,
