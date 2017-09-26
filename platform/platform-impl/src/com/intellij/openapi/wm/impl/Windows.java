@@ -15,11 +15,8 @@
  */
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
@@ -112,7 +109,7 @@ public class Windows {
                 //System.err.println("Tool window is loosing focus: " + ToolWindowManager.getActiveToolWindow().getStripeTitle());
 
                 // A toolwindow lost focus
-                if (!focusEvent.isTemporary() && ToolWindowManager.getActiveToolWindow() != null && ToolWindowManager.getActiveToolWindow().isAutoHide()) {
+                if (ToolWindowManager.getActiveToolWindow() != null && ToolWindowManager.getActiveToolWindow().isAutoHide()) {
                   pinnedWindowFocusLostHandler.accept(ToolWindowManager.getActiveId());
                 }
               }
