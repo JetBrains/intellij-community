@@ -87,6 +87,11 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
     }
   }
 
+  @Override
+  public boolean hasRenames() {
+    return true;
+  }
+
   public interface Changes {
     @NotNull
     Collection<Change> getMergedChanges() throws VcsException;
@@ -103,7 +108,7 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
 
   protected abstract class UnparsedChanges<S> implements Changes {
     @NotNull protected final Project myProject;
-    @NotNull private final List<List<S>> myChangesOutput;
+    @NotNull protected final List<List<S>> myChangesOutput;
     @NotNull private final VcsStatusDescriptor<S> myDescriptor;
 
     public UnparsedChanges(@NotNull Project project,
