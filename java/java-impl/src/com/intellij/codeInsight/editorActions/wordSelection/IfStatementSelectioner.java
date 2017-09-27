@@ -15,15 +15,15 @@
  */
 package com.intellij.codeInsight.editorActions.wordSelection;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiStatement;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.editor.Editor;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class IfStatementSelectioner extends BasicSelectioner {
   @Override
@@ -33,8 +33,7 @@ public class IfStatementSelectioner extends BasicSelectioner {
 
   @Override
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
-    List<TextRange> result = new ArrayList<>();
-    result.addAll(expandToWholeLine(editorText, e.getTextRange(), false));
+    List<TextRange> result = new ArrayList<>(expandToWholeLine(editorText, e.getTextRange(), false));
 
     PsiIfStatement statement = (PsiIfStatement)e;
 

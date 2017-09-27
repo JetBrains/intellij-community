@@ -193,4 +193,20 @@ public class ToolkitBugsProcessor {
       return false;
     }
   }
+
+  @SuppressWarnings("UnusedDeclaration")
+  private static class HeadlessGraphicsEnvironmentUnderWindows extends Handler {
+    public HeadlessGraphicsEnvironmentUnderWindows() {
+      super("HeadlessGraphicsEnvironment cannot be cast to Win32GraphicsEnvironment");
+    }
+
+    @Override
+    public boolean process(Throwable e, StackTraceElement[] stack) {
+      // http://bugs.java.com/bugdatabase/view_bug.do?bug_id=6607186
+      if (e instanceof ClassCastException && stack.length > 1) {
+        return e.getMessage().equals("sun.java2d.HeadlessGraphicsEnvironment cannot be cast to sun.awt.Win32GraphicsEnvironment");
+      }
+      return false;
+    }
+  }
 }

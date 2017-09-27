@@ -118,9 +118,8 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     final Language baseLanguage = file.getViewProvider().getBaseLanguage();
     assert element1 != null;
     final Language l = element1.getParent().getLanguage();
-    List<SurroundDescriptor> surroundDescriptors = new ArrayList<>();
 
-    surroundDescriptors.addAll(LanguageSurrounders.INSTANCE.allForLanguage(l));
+    List<SurroundDescriptor> surroundDescriptors = new ArrayList<>(LanguageSurrounders.INSTANCE.allForLanguage(l));
     if (l != baseLanguage) surroundDescriptors.addAll(LanguageSurrounders.INSTANCE.allForLanguage(baseLanguage));
     surroundDescriptors.add(CustomFoldingSurroundDescriptor.INSTANCE);
 

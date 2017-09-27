@@ -475,6 +475,9 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
         String agent = "-javaagent:" +
                        FileUtil.toSystemDependentName(PathUtil.getParentPath(PathUtil.getParentPath(path))) +
                        "/artifacts/debugger_agent/debugger-agent.jar";
+        if (Registry.is("debugger.capture.points.agent.debug")) {
+          agent += "=debug";
+        }
         if (!parameters.getVMParametersList().hasParameter(agent)) {
           parameters.getVMParametersList().add(agent);
         }

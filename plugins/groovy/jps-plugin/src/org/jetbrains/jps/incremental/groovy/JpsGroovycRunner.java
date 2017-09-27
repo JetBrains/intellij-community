@@ -394,10 +394,9 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
   }
 
   protected Collection<String> generateClasspath(CompileContext context, ModuleChunk chunk) {
-    final Set<String> cp = new LinkedHashSet<>();
     //groovy_rt.jar
     // IMPORTANT! must be the first in classpath
-    cp.addAll(GroovyBuilder.getGroovyRtRoots());
+    final Set<String> cp = new LinkedHashSet<>(GroovyBuilder.getGroovyRtRoots());
 
     for (File file : ProjectPaths.getCompilationClasspathFiles(chunk, chunk.containsTests(), false, false)) {
       cp.add(FileUtil.toCanonicalPath(file.getPath()));

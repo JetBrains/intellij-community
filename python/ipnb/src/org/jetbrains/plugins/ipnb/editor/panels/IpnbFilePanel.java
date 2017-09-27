@@ -382,9 +382,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   }
 
   private static ArrayList<String> createCellSourceFromText(@NotNull String oldCellText) {
-    final ArrayList<String> source = new ArrayList<>();
-    source.addAll(Arrays.stream(oldCellText.split("\n")).map(s -> s + "\n").collect(Collectors.toList()));
-    return source;
+    return Arrays.stream(oldCellText.split("\n")).map(s -> s + "\n").collect(Collectors.toCollection(ArrayList::new));
   }
 
   @NotNull

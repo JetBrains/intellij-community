@@ -798,31 +798,31 @@ public class ControlFlowUtils {
   }
 
   /**
-   * Returns an {@link InitializerUsageStatus} for given variable with respect to given loop
+   * Returns an {@link InitializerUsageStatus} for given variable with respect to given statement
    * @param var a variable to determine an initializer usage status for
-   * @param loop a loop where variable is used
+   * @param statement a statement where variable is used
    * @return initializer usage status for variable
    */
   @NotNull
-  public static InitializerUsageStatus getInitializerUsageStatus(PsiVariable var, PsiStatement loop) {
+  public static InitializerUsageStatus getInitializerUsageStatus(PsiVariable var, PsiStatement statement) {
     if(!(var instanceof PsiLocalVariable) || var.getInitializer() == null) return UNKNOWN;
-    if(isDeclarationJustBefore(var, loop)) return DECLARED_JUST_BEFORE;
+    if(isDeclarationJustBefore(var, statement)) return DECLARED_JUST_BEFORE;
     // Check that variable is declared in the same method or the same lambda expression
     if(PsiTreeUtil.getParentOfType(var, PsiLambdaExpression.class, PsiMethod.class) !=
-       PsiTreeUtil.getParentOfType(loop, PsiLambdaExpression.class, PsiMethod.class)) return UNKNOWN;
+       PsiTreeUtil.getParentOfType(statement, PsiLambdaExpression.class, PsiMethod.class)) return UNKNOWN;
     PsiElement block = PsiUtil.getVariableCodeBlock(var, null);
     if(block == null) return UNKNOWN;
     final ControlFlow controlFlow;
     try {
-      controlFlow = ControlFlowFactory.getInstance(loop.getProject())
+      controlFlow = ControlFlowFactory.getInstance(statement.getProject())
         .getControlFlow(block, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
     }
     catch (AnalysisCanceledException ignored) {
       return UNKNOWN;
     }
     int start = controlFlow.getEndOffset(var.getInitializer())+1;
-    int stop = controlFlow.getStartOffset(loop);
-    if(isVariableReferencedBeforeLoopEntry(controlFlow, start, loop, var)) return UNKNOWN;
+    int stop = controlFlow.getStartOffset(statement);
+    if(isVariableReferencedBeforeLoopEntry(controlFlow, start, statement, var)) return UNKNOWN;
     if (!ControlFlowUtil.isValueUsedWithoutVisitingStop(controlFlow, start, stop, var)) return AT_WANTED_PLACE_ONLY;
     return var.hasModifierProperty(PsiModifier.FINAL) ? UNKNOWN : AT_WANTED_PLACE;
   }

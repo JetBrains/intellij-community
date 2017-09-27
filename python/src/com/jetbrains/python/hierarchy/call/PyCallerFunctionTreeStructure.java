@@ -34,9 +34,7 @@ public class PyCallerFunctionTreeStructure extends PyCallHierarchyTreeStructureB
   @NotNull
   @Override
   protected List<PsiElement> getChildren(@NotNull PyElement element) {
-    final List<PsiElement> callers = new ArrayList<>();
     // TODO: Add callers from the dynamic call data manager
-    callers.addAll(PyStaticCallHierarchyUtil.getCallers(element));
-    return callers;
+    return new ArrayList<>(PyStaticCallHierarchyUtil.getCallers(element));
   }
 }

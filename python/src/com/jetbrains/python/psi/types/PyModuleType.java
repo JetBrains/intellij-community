@@ -216,8 +216,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       if (file != null && absoluteQName != null) {
         final QualifiedName prefixQName = PyUtil.isPackage(file) ? absoluteQName : absoluteQName.removeLastComponent();
         if (prefixQName.getComponentCount() > 0) {
-          final List<QualifiedName> results = new ArrayList<>();
-          results.addAll(importedQNames);
+          final List<QualifiedName> results = new ArrayList<>(importedQNames);
           for (QualifiedName qName : importedQNames) {
             final List<String> components = new ArrayList<>();
             components.addAll(prefixQName.getComponents());

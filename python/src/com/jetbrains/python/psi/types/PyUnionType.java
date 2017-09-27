@@ -17,6 +17,7 @@ package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
@@ -65,7 +66,7 @@ public class PyUnionType implements PyType {
         Collections.addAll(variants, member.getCompletionVariants(completionPrefix, location, context));
       }
     }
-    return variants.toArray(new Object[variants.size()]);
+    return ArrayUtil.toObjectArray(variants);
   }
 
   public String getName() {
@@ -192,8 +193,7 @@ public class PyUnionType implements PyType {
 
   private static PyType unit(@Nullable PyType type) {
     if (type instanceof PyUnionType) {
-      Set<PyType> members = new LinkedHashSet<>();
-      members.addAll(((PyUnionType)type).getMembers());
+      Set<PyType> members = new LinkedHashSet<>(((PyUnionType)type).getMembers());
       return new PyUnionType(members);
     }
     else {

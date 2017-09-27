@@ -70,7 +70,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class DialogWrapperPeerImpl extends DialogWrapperPeer {
+public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTrackbackProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.DialogWrapper");
 
   private final DialogWrapper myWrapper;
@@ -479,6 +479,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     myDisposeActions.add(() -> StackingPopupDispatcher.getInstance().restorePersistentPopups());
   }
 
+  @Override
+  public FocusTrackback getFocusTrackback() {
+    return myDialog.getFocusTrackback();
+  }
+
   private class AnCancelAction extends AnAction implements DumbAware {
 
     @Override
@@ -525,7 +530,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   }
 
 
-  private static class MyDialog extends JDialog implements DialogWrapperDialog, DataProvider, Queryable, AbstractDialog {
+  private static class MyDialog extends JDialog implements DialogWrapperDialog, DataProvider, FocusTrackback.Provider, Queryable, AbstractDialog {
     private final WeakReference<DialogWrapper> myDialogWrapper;
 
     /**
@@ -538,6 +543,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     private boolean myOpened = false;
     private boolean myActivated = false;
 
+    private FocusTrackback myFocusTrackback;
     private MyDialog.MyWindowListener myWindowListener;
 
     private final WeakReference<Project> myProject;
@@ -585,6 +591,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     @Override
     public void putInfo(@NotNull Map<String, String> info) {
       info.put("dialog", getTitle());
+    }
+
+    @Override
+    public FocusTrackback getFocusTrackback() {
+      return myFocusTrackback;
     }
 
     @Override
@@ -648,6 +659,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     @Override
     @SuppressWarnings("deprecation")
     public void show() {
+      myFocusTrackback = new FocusTrackback(getDialogWrapper(), getParent(), true);
 
       final DialogWrapper dialogWrapper = getDialogWrapper();
       boolean isAutoAdjustable = dialogWrapper.isAutoAdjustable();
@@ -739,10 +751,42 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
     }
 
+    private void disposeFocusTrackbackIfNoChildWindowFocused(@Nullable IdeFocusManager focusManager) {
+      if (myFocusTrackback == null) return;
+
+      final DialogWrapper wrapper = myDialogWrapper.get();
+      if (wrapper == null || !wrapper.isShowing()) {
+        myFocusTrackback.dispose();
+        return;
+      }
+
+      if (focusManager != null) {
+        final Component c = focusManager.getFocusedDescendantFor(wrapper.getContentPane());
+        if (c == null) {
+          myFocusTrackback.dispose();
+        }
+      }
+      else {
+        final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        if (owner == null || !SwingUtilities.isDescendingFrom(owner, wrapper.getContentPane())) {
+          myFocusTrackback.dispose();
+        }
+      }
+    }
+
     @Override
     @SuppressWarnings("deprecation")
     public void hide() {
       super.hide();
+      if (myFocusTrackback != null && !(myFocusTrackback.isScheduledForRestore() || myFocusTrackback.isWillBeScheduledForRestore())) {
+        myFocusTrackback.setWillBeScheduledForRestore();
+        IdeFocusManager mgr = getFocusManager();
+        Runnable r = () -> {
+          if (myFocusTrackback != null)  myFocusTrackback.restoreFocus();
+          myFocusTrackback = null;
+        };
+        mgr.doWhenFocusSettlesDown(r);
+      }
     }
 
     @Override
@@ -759,6 +803,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
       DialogWrapper.cleanupWindowListeners(this);
 
+      if (myFocusTrackback != null && !(myFocusTrackback.isScheduledForRestore() || myFocusTrackback.isWillBeScheduledForRestore())) {
+        myFocusTrackback.dispose();
+        myFocusTrackback = null;
+      }
+
+
       final BufferStrategy strategy = getBufferStrategy();
       if (strategy != null) {
         strategy.dispose();
@@ -769,6 +819,15 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       DialogWrapper.cleanupRootPane(rootPane);
       rootPane = null;
 
+      // http://bugs.sun.com/view_bug.do?bug_id=6614056
+      try {
+        synchronized (getTreeLock()) {
+          List<?> list = ReflectionUtil.getStaticFieldValue(Dialog.class, List.class, "modalDialogs");
+          list.remove(this);
+        }
+      }
+      catch (final Exception ignored) {
+      }
     }
 
     @Override
@@ -789,7 +848,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     public void paint(Graphics g) {
       if (!SystemInfo.isMac || UIUtil.isUnderAquaLookAndFeel()) {  // avoid rendering problems with non-aqua (alloy) LaFs under mac
         // actually, it's a bad idea to globally enable this for dialog graphics since renderers, for example, may not
-        // inherit graphics so rendering hints won't be applied and £trees or lists may render ugly.
+        // inherit graphics so rendering hints won't be applied and trees or lists may render ugly.
         UISettings.setupAntialiasing(g);
       }
 
@@ -857,6 +916,18 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
       @Override
       public void windowActivated(final WindowEvent e) {
+        if (myFocusTrackback != null) {
+          DialogWrapper wrapper = getDialogWrapper();
+          if (wrapper != null) {
+            myFocusTrackback.cleanParentWindow();
+            myFocusTrackback.registerFocusComponent(new FocusTrackback.ComponentQuery() {
+              @Override
+              public Component getComponent() {
+                return wrapper.getPreferredFocusedComponent();
+              }
+            });
+          }
+        }
         SwingUtilities.invokeLater(() -> {
           final DialogWrapper wrapper = getActiveWrapper();
           if (wrapper == null && !myFocusedCallback.isProcessed()) {
@@ -893,6 +964,21 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
             myTypeAheadCallback.setDone();
           }
         });
+      }
+
+      @Override
+      public void windowDeactivated(WindowEvent e) {
+        if (!isModal()) {
+          Ref<IdeFocusManager> focusManager = new Ref<>(null);
+          Project project = getProject();
+          if (project != null && !project.isDisposed()) {
+            focusManager.set(getFocusManager());
+            focusManager.get().doWhenFocusSettlesDown(() -> disposeFocusTrackbackIfNoChildWindowFocused(focusManager.get()));
+          }
+          else {
+            disposeFocusTrackbackIfNoChildWindowFocused(focusManager.get());
+          }
+        }
       }
 
       private void notifyFocused(DialogWrapper wrapper) {

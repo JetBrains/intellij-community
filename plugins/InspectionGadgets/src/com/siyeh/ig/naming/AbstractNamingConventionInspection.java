@@ -43,9 +43,9 @@ import java.util.function.Consumer;
 public abstract class AbstractNamingConventionInspection<T> extends BaseInspection {
   private static final Logger LOG = Logger.getInstance(AbstractNamingConventionInspection.class);
 
-  protected final Map<String, NamingConvention<T>> myNamingConventions = new LinkedHashMap<>();
-  protected final Map<String, NamingConventionBean> myNamingConventionBeans = new LinkedHashMap<>();
-  protected final Set<String> myDisabledShortNames = new HashSet<>();
+  private final Map<String, NamingConvention<T>> myNamingConventions = new LinkedHashMap<>();
+  private final Map<String, NamingConventionBean> myNamingConventionBeans = new LinkedHashMap<>();
+  private final Set<String> myDisabledShortNames = new HashSet<>();
   private final String myDefaultConventionShortName;
 
   public AbstractNamingConventionInspection(NamingConvention<T>[] extensions, final String defaultConventionShortName) {
@@ -68,6 +68,10 @@ public abstract class AbstractNamingConventionInspection<T> extends BaseInspecti
 
   public NamingConventionBean getNamingConventionBean(String shortName) {
     return myNamingConventionBeans.get(shortName);
+  }
+
+  public Set<String> getOldToolNames() {
+    return myNamingConventions.keySet();
   }
 
   @NotNull
@@ -174,7 +178,7 @@ public abstract class AbstractNamingConventionInspection<T> extends BaseInspecti
     list.setCheckBoxListListener(new CheckBoxListListener() {
       @Override
       public void checkBoxSelectionChanged(int index, boolean value) {
-        NamingConvention<T> convention = new ArrayList<>(myNamingConventions.values()).get(index);
+        NamingConvention<T> convention = values.get(index);
         setEnabled(value, convention.getShortName());
         UIUtil.setEnabled(descriptionPanel, value, true);
       }

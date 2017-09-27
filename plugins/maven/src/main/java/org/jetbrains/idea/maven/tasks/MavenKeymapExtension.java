@@ -184,8 +184,7 @@ public class MavenKeymapExtension implements ExternalSystemKeymapExtension.Actio
   }
 
   private static List<String> collectGoals(MavenProject project) {
-    LinkedHashSet<String> result = new LinkedHashSet<>(); // may contains similar plugins or somethig
-    result.addAll(MavenConstants.PHASES);
+    LinkedHashSet<String> result = new LinkedHashSet<>(MavenConstants.PHASES); // may contains similar plugins or something
 
     for (MavenPlugin each : project.getDeclaredPlugins()) {
       collectGoals(project.getLocalRepository(), each, result);

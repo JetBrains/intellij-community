@@ -850,8 +850,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       Wrapper eachPlaceholder = entry.getValue();
       List<Content> contentList = entry.getKey().getContents();
 
-      Set<Content> contents = new HashSet<>();
-      contents.addAll(contentList);
+      Set<Content> contents = new HashSet<>(contentList);
 
       DefaultActionGroup groupToBuild;
       JComponent contextComponent = null;
@@ -972,8 +971,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     try {
       setStateIsBeingRestored(true, this);
 
-      List<TabInfo> tabs = new ArrayList<>();
-      tabs.addAll(myTabs.getTabs());
+      List<TabInfo> tabs = new ArrayList<>(myTabs.getTabs());
 
       final ActionCallback result = new ActionCallback(tabs.size());
 

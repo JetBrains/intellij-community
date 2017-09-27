@@ -51,20 +51,35 @@ public class SimplifiableEqualsExpression {
     }
   }
   
-  private static final boolean DEBUG = false;
-  
+  private static final boolean DEBUG = true;
+  private boolean xyz;
+
   {
     String s1 = DEBUG ? "null" : null;
+    String s2 = xyz ? null : "null";
+    String s = getString();
     
-    if(<warning descr="Unnecessary 'null' check before 'equals()' call">s1 == null</warning> || !s1.equals("")) {
+    if(<warning descr="Unnecessary 'null' check before 'equals()' call">s == null</warning> || !s.equals(s1)) {
+      System.out.println("...");
+    }
+
+    if(<warning descr="Unnecessary 'null' check before 'equals()' call">s == null</warning> || !s.equals(s2)) {
       System.out.println("...");
     }
   }
+
+  private String s = getString();
+  private final String s1 = DEBUG ? "foo" : null;
+  private boolean flag = <warning descr="Unnecessary 'null' check before 'equals()' call">s != null</warning> && s.equals(s1);
 
   void test(List<String> list) {
     String s = list.get(0);
     if(s != null && s.equals(list.get(1))) {
       System.out.println("???");
     }
+  }
+
+  static String getString() {
+    return Math.random() > 0.5 ? "x" : null;
   }
 }

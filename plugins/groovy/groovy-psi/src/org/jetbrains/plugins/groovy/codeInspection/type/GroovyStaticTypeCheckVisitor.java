@@ -40,8 +40,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrSpreadArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 
 import java.util.Arrays;
 import java.util.List;
@@ -179,7 +179,7 @@ public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
   }
 
   private static LocalQuickFix[] buildSpreadArgumentFix(GrSpreadArgument spreadArgument) {
-    GrMethodCall parent = PsiTreeUtil.getParentOfType(spreadArgument, GrMethodCall.class);
+    GrCallExpression parent = PsiTreeUtil.getParentOfType(spreadArgument, GrCallExpression.class);
     if (parent == null) return LocalQuickFix.EMPTY_ARRAY;
     PsiMethod resolveMethod = parent.resolveMethod();
 

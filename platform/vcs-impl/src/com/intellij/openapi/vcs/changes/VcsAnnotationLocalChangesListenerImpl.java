@@ -72,16 +72,16 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
 
   private Runnable createUpdateStuff() {
     return () -> {
-      final Set<String> paths = new HashSet<>();
-      final Map<String, VcsRevisionNumber> changes = new HashMap<>();
-      final Set<VirtualFile> files = new HashSet<>();
+      final Set<String> paths;
+      final Map<String, VcsRevisionNumber> changes;
+      final Set<VirtualFile> files;
       Set<VcsKey> vcsToRefresh;
       synchronized (myLock) {
         vcsToRefresh = new HashSet<>(myVcsKeySet);
 
-        paths.addAll(myDirtyPaths);
-        changes.putAll(myDirtyChanges);
-        files.addAll(myDirtyFiles);
+        paths = new HashSet<>(myDirtyPaths);
+        changes = new HashMap<>(myDirtyChanges);
+        files = new HashSet<>(myDirtyFiles);
         myDirtyPaths.clear();
         myDirtyChanges.clear();
         myVcsKeySet.clear();

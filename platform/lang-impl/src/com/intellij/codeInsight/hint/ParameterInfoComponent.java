@@ -58,7 +58,7 @@ public class ParameterInfoComponent extends JPanel {
   private final Font NORMAL_FONT;
   private final Font BOLD_FONT;
 
-  private static final Border LAST_ITEM_BORDER = BorderFactory.createEmptyBorder();
+  private static final Border EMPTY_BORDER = BorderFactory.createEmptyBorder();
   private static final Border BOTTOM_BORDER = new SideBorder(new JBColor(JBColor.LIGHT_GRAY, Gray._90), SideBorder.BOTTOM);
 
   protected int myWidthLimit = 500;
@@ -164,7 +164,10 @@ public class ParameterInfoComponent extends JPanel {
 
   @Override
   public String toString() {
-    return Stream.of(myPanels).filter(Component::isVisible).map(Object::toString).collect(Collectors.joining("\n"));
+    return Stream.of(myPanels)
+      .filter(Component::isVisible)
+      .map(c -> c.toString() + (c.getBorder() == BOTTOM_BORDER ? "\n-" : ""))
+      .collect(Collectors.joining("\n"));
   }
 
   public Object getHighlighted() {
@@ -194,20 +197,20 @@ public class ParameterInfoComponent extends JPanel {
                                                Color background) {
       final String resultedText =
         myPanels[i].setup(text, myEscapeFunction, highlightStartOffset, highlightEndOffset, isDisabled, strikeout, isDisabledBeforeHighlight, background);
-      myPanels[i].setBorder(isLastParameterOwner() ? LAST_ITEM_BORDER : BOTTOM_BORDER);
+      myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
       return resultedText;
     }
 
     @Override
     public void setupRawUIComponentPresentation(String htmlText) {
       myPanels[i].setup(htmlText, getDefaultParameterColor());
-      myPanels[i].setBorder(isLastParameterOwner() ? LAST_ITEM_BORDER : BOTTOM_BORDER);
+      myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
     }
 
     @Override
     public String setupUIComponentPresentation(final String[] texts, final EnumSet<Flag>[] flags, final Color background) {
       final String resultedText = myPanels[i].setup(texts, myEscapeFunction, flags, background);
-      myPanels[i].setBorder(isLastParameterOwner() ? LAST_ITEM_BORDER : BOTTOM_BORDER);
+      myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
       return resultedText;
     }
 

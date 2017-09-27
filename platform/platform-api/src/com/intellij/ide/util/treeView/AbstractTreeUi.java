@@ -3599,8 +3599,7 @@ public class AbstractTreeUi {
       myTreeModel.nodesWereInserted(parentNode, newNodeIndices);
     }
     else {
-      List<TreeNode> before = new ArrayList<>();
-      before.addAll(all);
+      List<TreeNode> before = new ArrayList<>(all);
 
       sortChildren(parentNode, all, true, false);
       if (!before.equals(all)) {

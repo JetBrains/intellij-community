@@ -7,6 +7,6 @@ import java.util.Collection;
 
 class C {
   void m() {
-    final Collection<String> strings = new ArrayList<String>(new HashSet<String>());
+      final Collection<String> strings = new ArrayList<String>(new HashSet<String>());
   }
 }

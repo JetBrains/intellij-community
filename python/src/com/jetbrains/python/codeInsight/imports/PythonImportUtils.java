@@ -159,8 +159,7 @@ public final class PythonImportUtils {
   private static void addSymbolImportCandidates(PyElement node, String refText, @Nullable String asName, AutoImportQuickFix fix,
                                                 Set<String> seenCandidateNames, PsiFile existingImportFile) {
     Project project = node.getProject();
-    List<PsiElement> symbols = new ArrayList<>();
-    symbols.addAll(PyClassNameIndex.find(refText, project, true));
+    List<PsiElement> symbols = new ArrayList<>(PyClassNameIndex.find(refText, project, true));
     GlobalSearchScope scope = PyProjectScopeBuilder.excludeSdkTestsScope(node);
     if (!isQualifier(node)) {
       symbols.addAll(PyFunctionNameIndex.find(refText, project, scope));
