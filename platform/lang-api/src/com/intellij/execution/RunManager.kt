@@ -47,7 +47,7 @@ abstract class RunManager {
     fun suggestUniqueName(str: String, currentNames: Collection<String>): String {
       if (!currentNames.contains(str)) return str
 
-      val originalName = getBaseName(str)
+      val originalName = extractBaseName(str)
       var i = 1
       while (true) {
         val newName = String.format("%s (%d)", originalName, i)
@@ -56,9 +56,10 @@ abstract class RunManager {
       }
     }
 
+    private val UNIQUE_NAME_PATTERN = Pattern.compile("(.*?)\\s*\\(\\d+\\)")
     @JvmStatic
-    fun getBaseName(uniqueName: String): String {
-      val matcher = Pattern.compile("(.*?)\\s*\\(\\d+\\)").matcher(uniqueName)
+    fun extractBaseName(uniqueName: String): String {
+      val matcher = UNIQUE_NAME_PATTERN.matcher(uniqueName)
       return if (matcher.matches()) matcher.group(1) else uniqueName
     }
   }
