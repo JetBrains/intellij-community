@@ -61,23 +61,23 @@ public class PluginDescriptorStructureTest extends JavaCodeInsightFixtureTestCas
     myFixture.testStructureView(component -> {
       StructureViewTreeElementWrapper root = (StructureViewTreeElementWrapper)component.getTreeStructure().getRootElement();
       TreeElement[] topLevelNodes = root.getValue().getChildren();
-      assertSize(12, topLevelNodes);
+      assertSize(13, topLevelNodes);
 
       String[] expectedTopLevelNames = new String[] {"ID", "Name", "Version", "Vendor", "Description", "Change Notes",
-        "Depends", "IDEA Version", "Extensions", "Extension Points", "Application Components", "Actions"};
+        "Depends", "Depends", "IDEA Version", "Extensions", "Extension Points", "Application Components", "Actions"};
       String[] actualTopLevelNames = Stream.of(topLevelNodes)
         .map(treeElement -> treeElement.getPresentation().getPresentableText())
         .toArray(String[]::new);
       assertArrayEquals(expectedTopLevelNames, actualTopLevelNames);
 
       String[] expectedTopLevelLocations = new String[] {"plugin.id", "MyPlugin", "1.0", "YourCompany", null, null,
-        "com.intellij.java-i18n", "125.5-130.0", "plugin.id", "plugin.id", null, null};
+        "com.intellij.java-i18n", "com.intellij.javaee [optional]", "125.5 - 130.0", "plugin.id", "plugin.id", null, null};
       String[] actualTopLevelLocations = Stream.of(topLevelNodes)
         .map(treeElement -> treeElement.getPresentation().getLocationString())
         .toArray(String[]::new);
       assertArrayEquals(expectedTopLevelLocations, actualTopLevelLocations);
 
-      TreeElement[] extensionNodes = topLevelNodes[8].getChildren();
+      TreeElement[] extensionNodes = topLevelNodes[9].getChildren();
       assertSize(5, extensionNodes);
       String[] expectedExtensionNames = new String[] {"Tool Window", "Project Configurable", "File Editor Provider",
         "Mock Application Service", "DOM | Extender"};
@@ -93,7 +93,7 @@ public class PluginDescriptorStructureTest extends JavaCodeInsightFixtureTestCas
         .toArray(String[]::new);
       assertArrayEquals(expectedExtensionLocations, actualExtensionLocations);
 
-      TreeElement[] epNodes = topLevelNodes[9].getChildren();
+      TreeElement[] epNodes = topLevelNodes[10].getChildren();
       assertSize(6, epNodes);
 
       String[] expectedEpNames = new String[] {"someExtensionPoint", "toolWindow", "projectConfigurable", "fileEditorProvider",
@@ -110,7 +110,7 @@ public class PluginDescriptorStructureTest extends JavaCodeInsightFixtureTestCas
         .toArray(String[]::new);
       assertArrayEquals(expectedEpLocations, actualEpLocations);
 
-      TreeElement applicationComponentNode = assertOneElement(topLevelNodes[10].getChildren());
+      TreeElement applicationComponentNode = assertOneElement(topLevelNodes[11].getChildren());
       assertEquals("Component", applicationComponentNode.getPresentation().getPresentableText());
       assertEquals("SomeApplicationComponentImplementation", applicationComponentNode.getPresentation().getLocationString());
 
@@ -122,7 +122,7 @@ public class PluginDescriptorStructureTest extends JavaCodeInsightFixtureTestCas
       assertEquals("Implementation Class", implementationClass.getPresentation().getPresentableText());
       assertEquals("com.jetbrains.test.SomeApplicationComponentImplementation", implementationClass.getPresentation().getLocationString());
 
-      TreeElement[] actionNodes = topLevelNodes[11].getChildren();
+      TreeElement[] actionNodes = topLevelNodes[12].getChildren();
       assertSize(2, actionNodes);
       TreeElement groupNode = actionNodes[0];
       assertEquals("Group", groupNode.getPresentation().getPresentableText());

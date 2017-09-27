@@ -69,6 +69,11 @@ public class PluginDescriptorStructureUtil {
     .put("id", "ID")
     .put("jsp", "JSP")
     .put("xml", "XML")
+    .put("ast", "AST")
+    .put("gdsl", "GDSL")
+    .put("pom", "POM")
+    .put("html", "HTML")
+    .put("php", "PHP")
     .build();
 
   private PluginDescriptorStructureUtil() {
@@ -200,7 +205,7 @@ public class PluginDescriptorStructureUtil {
     String since = element.getSinceBuild().getStringValue();
     if (StringUtil.isNotEmpty(since)) {
       String until = element.getUntilBuild().getStringValue();
-      return since + "-" + (StringUtil.isNotEmpty(until) ? until : "...");
+      return since + " - " + (StringUtil.isNotEmpty(until) ? until : "...");
     }
     return null;
   }

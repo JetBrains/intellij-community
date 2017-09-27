@@ -16,6 +16,7 @@
   </change-notes>
 
   <depends>com.intellij.java-i18n</depends>
+  <depends optional="true">com.intellij.javaee</depends>
   <idea-version until-build="130.0" since-build="125.5"/>
 
   <extensions defaultExtensionNs="plugin.id">
