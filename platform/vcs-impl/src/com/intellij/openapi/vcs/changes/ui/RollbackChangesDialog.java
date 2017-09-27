@@ -121,9 +121,9 @@ public class RollbackChangesDialog extends DialogWrapper {
       }
     };
     myBrowser = new LocalChangesBrowser(project);
+    myBrowser.setIncludedChanges(changes);
     myBrowser.setChangeLists(changeLists);
     myBrowser.setInclusionChangedListener(myListChangeListener);
-    myBrowser.setIncludedChanges(changes);
     Disposer.register(getDisposable(), myBrowser);
 
     myOperationName = operationNameByChanges(project, myBrowser.getAllChanges());

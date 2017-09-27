@@ -33,8 +33,8 @@ public abstract class ChangesTreeImpl<T> extends ChangesTree {
                          @NotNull Class<T> clazz,
                          @NotNull List<? extends T> changes) {
     this(project, showCheckboxes, highlightProblems, clazz);
-    setChangesToDisplay(changes);
     if (showCheckboxes) setIncludedChanges(changes);
+    setChangesToDisplay(changes);
   }
 
   public void setChangesToDisplay(@NotNull Collection<? extends T> changes) {

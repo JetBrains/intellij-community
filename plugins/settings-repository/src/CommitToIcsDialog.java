@@ -42,8 +42,8 @@ public class CommitToIcsDialog extends DialogWrapper {
     this.projectId = projectId;
 
     browser = new SimpleChangesBrowser(project, true, false);
-    browser.setChangesToDisplay(projectFileChanges);
     browser.setIncludedChanges(projectFileChanges);
+    browser.setChangesToDisplay(projectFileChanges);
 
     setTitle(IcsBundleKt.icsMessage("action.CommitToIcs.text"));
     setOKButtonText(IcsBundleKt.icsMessage("action.CommitToIcs.text"));

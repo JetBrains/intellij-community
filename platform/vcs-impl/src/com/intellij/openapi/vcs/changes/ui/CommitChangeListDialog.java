@@ -292,6 +292,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       LocalChangeList changeList = changeLists.get(0);
 
       myBrowser = new AlienChangeListBrowser(project, changeList, changes);
+      myBrowser.getViewer().setIncludedChanges(changes);
 
       myCommitMessageArea.setChangeList(changeList);
     }
@@ -299,6 +300,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       MultipleLocalChangeListsBrowser browser = new MultipleLocalChangeListsBrowser(project, true, true, myShowVcsCommit);
       myBrowser = browser;
 
+      browser.getViewer().setIncludedChanges(changes);
       if (initialSelection != null) browser.setSelectedChangeList(initialSelection);
       myCommitMessageArea.setChangeList(browser.getSelectedChangeList());
 
@@ -318,8 +320,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       browser.getViewer().addSelectionListener(() -> SwingUtilities.invokeLater(() -> changeDetails()));
       browser.getViewer().setKeepTreeState(true);
     }
-
-    myBrowser.getViewer().setIncludedChanges(changes);
 
     myChangesInfoCalculator = new ChangeInfoCalculator();
     myLegend = new CommitLegendPanel(myChangesInfoCalculator);

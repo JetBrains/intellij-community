@@ -673,8 +673,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     final List<AbstractFilePatchInProgress.PatchChange> changes = getAllChanges();
     final Collection<AbstractFilePatchInProgress.PatchChange> included = getIncluded(doInitCheck, changes);
 
-    myChangesTreeList.setChangesToDisplay(changes);
     myChangesTreeList.setIncludedChanges(included);
+    myChangesTreeList.setChangesToDisplay(changes);
     if (doInitCheck) {
       myChangesTreeList.expandAll();
     }

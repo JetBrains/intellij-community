@@ -63,6 +63,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog<VirtualFile> {
 
   public void setSelectedFiles(@NotNull final Collection<VirtualFile> selected) {
     myFileList.setIncludedChanges(selected);
+    myFileList.rebuildTree();
   }
 
   @NotNull
