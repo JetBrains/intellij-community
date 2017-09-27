@@ -112,10 +112,15 @@ public class PluginDescriptorStructureTest extends JavaCodeInsightFixtureTestCas
 
       TreeElement applicationComponentNode = assertOneElement(topLevelNodes[10].getChildren());
       assertEquals("Component", applicationComponentNode.getPresentation().getPresentableText());
-      assertEquals("SomeApplicationComponent", applicationComponentNode.getPresentation().getLocationString());
-      TreeElement implementationClass = assertOneElement(applicationComponentNode.getChildren());
+      assertEquals("SomeApplicationComponentImplementation", applicationComponentNode.getPresentation().getLocationString());
+
+      assertSize(2, applicationComponentNode.getChildren());
+      TreeElement interfaceClass = applicationComponentNode.getChildren()[0];
+      assertEquals("Interface Class", interfaceClass.getPresentation().getPresentableText());
+      assertEquals("com.jetbrains.test.SomeApplicationComponentInterface", interfaceClass.getPresentation().getLocationString());
+      TreeElement implementationClass = applicationComponentNode.getChildren()[1];
       assertEquals("Implementation Class", implementationClass.getPresentation().getPresentableText());
-      assertEquals("com.jetbrains.test.SomeApplicationComponent", implementationClass.getPresentation().getLocationString());
+      assertEquals("com.jetbrains.test.SomeApplicationComponentImplementation", implementationClass.getPresentation().getLocationString());
 
       TreeElement[] actionNodes = topLevelNodes[11].getChildren();
       assertSize(2, actionNodes);
