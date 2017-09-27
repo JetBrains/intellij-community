@@ -52,35 +52,35 @@ public class PyMethodNameTypedHandler extends TypedHandlerDelegate {
       final int offset = editor.getCaretModel().getOffset();
       documentManager.commitDocument(document);
 
-      PsiElement token = file.findElementAt(offset - 1);
+      final PsiElement token = file.findElementAt(offset - 1);
       if (token == null) return Result.CONTINUE; // sanity check: beyond EOL
 
-      final ASTNode token_node = token.getNode();
-      if (token_node != null && token_node.getElementType() == PyTokenTypes.IDENTIFIER) {
-        PsiElement maybe_def = PyPsiUtils.getPrevNonCommentSibling(token.getPrevSibling(), false);
-        if (maybe_def != null) {
-          ASTNode def_node = maybe_def.getNode();
-          if (def_node != null && def_node.getElementType() == PyTokenTypes.DEF_KEYWORD) {
-            PsiElement maybe_func = token.getParent();
-            if (maybe_func instanceof PyFunction) {
-              PyFunction func = (PyFunction)maybe_func;
-              PyUtil.MethodFlags flags = PyUtil.MethodFlags.of(func);
+      final ASTNode tokenNode = token.getNode();
+      if (tokenNode != null && tokenNode.getElementType() == PyTokenTypes.IDENTIFIER) {
+        final PsiElement maybeDef = PyPsiUtils.getPrevNonCommentSibling(token.getPrevSibling(), false);
+        if (maybeDef != null) {
+          final ASTNode defNode = maybeDef.getNode();
+          if (defNode != null && defNode.getElementType() == PyTokenTypes.DEF_KEYWORD) {
+            final PsiElement maybeFunc = token.getParent();
+            if (maybeFunc instanceof PyFunction) {
+              final PyFunction func = (PyFunction)maybeFunc;
+              final PyUtil.MethodFlags flags = PyUtil.MethodFlags.of(func);
               if (flags != null) {
                 // we're in a method
                 // TODO: all string constants go to Settings
                 String pname = flags.isClassMethod() || flags.isMetaclassMethod() ? "cls" : "self";
-                final boolean is_new = PyNames.NEW.equals(func.getName());
-                if (flags.isMetaclassMethod() && is_new) {
+                final boolean isNew = PyNames.NEW.equals(func.getName());
+                if (flags.isMetaclassMethod() && isNew) {
                   pname = "typ";
                 }
-                else if (flags.isClassMethod() || is_new) {
+                else if (flags.isClassMethod() || isNew) {
                   pname = "cls";
                 }
                 else if (flags.isStaticMethod()) pname = "";
                 // TODO: only print the ")" if Settings require it
-                int caretOffset = editor.getCaretModel().getOffset();
+                final int caretOffset = editor.getCaretModel().getOffset();
                 String textToType = "(" + pname + ")";
-                CharSequence chars = editor.getDocument().getCharsSequence();
+                final CharSequence chars = editor.getDocument().getCharsSequence();
                 if (caretOffset == chars.length() || chars.charAt(caretOffset) != ':') {
                   textToType += ':';
                 }
