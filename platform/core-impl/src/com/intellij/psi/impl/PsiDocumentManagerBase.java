@@ -755,6 +755,16 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   }
 
+  @Nullable
+  public TextRange getChangedRangeSinceCommit(@NotNull Document document, int delta) {
+    assert document instanceof DocumentImpl;
+    UncommittedInfo info = myUncommittedInfos.get(document);
+    if (info != null) {
+      return new TextRange(info.start, Math.max(info.start, info.end - delta));
+    }
+    return null;
+  }
+
   @Override
   @NotNull
   public Document[] getUncommittedDocuments() {
@@ -1052,6 +1062,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     private final FrozenDocument myFrozen;
     private final List<DocumentEvent> myEvents = ContainerUtil.newArrayList();
     private final ConcurrentMap<DocumentWindow, DocumentWindow> myFrozenWindows = ContainerUtil.newConcurrentMap();
+    public int start = Integer.MAX_VALUE, end = 0;
 
     private UncommittedInfo(DocumentImpl original) {
       myOriginal = original;
@@ -1067,6 +1078,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     @Override
     public void documentChanged(DocumentEvent e) {
       myEvents.add(e);
+      if (start > e.getOffset()) start = e.getOffset();
+      if (end < e.getOffset() - e.getOldLength() + e.getNewLength())  end = e.getOffset() - e.getOldLength() + e.getNewLength();
     }
 
     @Override

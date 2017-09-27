@@ -1,7 +1,7 @@
 import os
 import sys
 
-from _pydevd_bundle.pydevd_constants import SHOW_CYTHON_WARNING
+from _pydevd_bundle.pydevd_constants import IS_PYCHARM
 
 IS_PY36 = False
 if sys.version_info[0] == 3 and sys.version_info[1] == 6:
@@ -28,7 +28,7 @@ else:
 
             dirname = os.path.dirname(os.path.dirname(__file__))
 
-            if SHOW_CYTHON_WARNING:
+            if not IS_PYCHARM:
                 log_error_once("warning: Debugger speedups using cython not found. Run '\"%s\" \"%s\" build_ext --inplace' to build." % (
                     sys.executable, os.path.join(dirname, 'setup_cython.py')))
             else:

@@ -25,7 +25,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache.PolyVariantResolver;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
@@ -453,25 +452,20 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     try {
       ResolveProfiler.start();
-      boolean canBeMethod = ResolveUtil.canResolveToMethod(this);
-      if (!canBeMethod) {
-        if (ResolveUtil.isDefinitelyKeyOfMap(this)) return GroovyResolveResult.EMPTY_ARRAY;
-        final IElementType nameType = nameElement.getNode().getElementType();
-        if (nameType == GroovyTokenTypes.kTHIS) {
-          final GroovyResolveResult[] results = GrThisReferenceResolver.resolveThisExpression(this);
-          if (results != null) return results;
-        }
-        else if (nameType == GroovyTokenTypes.kSUPER) {
-          final GroovyResolveResult[] results = GrSuperReferenceResolver.resolveSuperExpression(this);
-          if (results != null) return results;
-        }
+      final IElementType nameType = nameElement.getNode().getElementType();
+      if (nameType == GroovyTokenTypes.kTHIS) {
+        final GroovyResolveResult[] results = GrThisReferenceResolver.resolveThisExpression(this);
+        if (results != null) return results;
       }
-
+      else if (nameType == GroovyTokenTypes.kSUPER) {
+        final GroovyResolveResult[] results = GrSuperReferenceResolver.resolveSuperExpression(this);
+        if (results != null) return results;
+      }
       final GroovyResolveResult[] results = resolveReferenceExpression(this, forceRValue, incompleteCode);
       if (results.length == 0) {
         return GroovyResolveResult.EMPTY_ARRAY;
       }
-      else if (!canBeMethod) {
+      else if (!ResolveUtil.canResolveToMethod(this)) {
         if (!ResolveUtil.mayBeKeyOfMap(this)) {
           return results;
         }

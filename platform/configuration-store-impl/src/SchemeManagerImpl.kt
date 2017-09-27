@@ -354,7 +354,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       replaceSchemeList(oldSchemes, schemes)
 
       @Suppress("UNCHECKED_CAST")
-      for (i in newSchemesOffset..schemes.size - 1) {
+      for (i in newSchemesOffset until schemes.size) {
         val scheme = schemes.get(i) as MUTABLE_SCHEME
         processor.initScheme(scheme)
         @Suppress("UNCHECKED_CAST")

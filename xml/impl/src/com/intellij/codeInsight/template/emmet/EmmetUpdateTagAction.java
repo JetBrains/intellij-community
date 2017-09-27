@@ -53,13 +53,13 @@ import java.util.Map;
 public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbAware, PopupAction {
   private static final String EMMET_RECENT_UPDATE_ABBREVIATIONS_KEY = "emmet.recent.update.abbreviations";
   private static final String EMMET_LAST_UPDATE_ABBREVIATIONS_KEY = "emmet.last.update.abbreviations";
-  private static final String DOCUMENTATION = "Update HTML tag with Emmet abbreviation:\n" +
-                                              ".class[attribute] to overwrite value;\n" +
-                                              ".+class[attribute] to append value;\n" +
-                                              ".-class[attribute] to remove value.\n" +
-                                              "\n" +
-                                              "For example, <code>.+c2[title=Hello]</code> abbreviation updates\n" +
-                                              "<code>&lt;div class=\"c1\"&gt;</code> to \n" +
+  private static final String DOCUMENTATION = "Update HTML tag with Emmet abbreviation:<br/>" +
+                                              ".class[attribute] to overwrite value;<br/>" +
+                                              ".+class[attribute] to append value;<br/>" +
+                                              ".-class[attribute] to remove value.<br/>" +
+                                              "<p/>" +
+                                              "For example, <code>.+c2[title=Hello]</code> abbreviation updates<br/>" +
+                                              "<code>&lt;div class=\"c1\"&gt;</code> to<br/>" +
                                               "<code>&lt;div class=\"c1 c2\" title=\"Hello\"&gt;</code>.";
   private static final EmmetContextHelp CONTEXT_HELP = new EmmetContextHelp(DOCUMENTATION);
 

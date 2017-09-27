@@ -9,7 +9,6 @@
   <!-- Enable command-line language -->
   <xi:include href="/META-INF/command-line.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
-
   <extensions defaultExtensionNs="com.intellij">
     <psi.treeChangePreprocessor implementation="com.jetbrains.python.PythonPsiManager"/>
     <library.type implementation="com.jetbrains.python.library.PythonLibraryType"/>
@@ -172,6 +171,7 @@
     <runConfigurationProducer implementation="com.jetbrains.python.testing.PyTestsConfigurationProducer"/>
 
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyLineMarkerProvider"/>
+    <codeInsight.typeInfo language="Python" implementationClass="com.jetbrains.python.actions.PythonExpressionTypeProvider"/>
     <runLineMarkerContributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PyRunLineMarkerContributor"/>
     <definitionsSearch implementation="com.jetbrains.python.psi.search.PyDefinitionsSearch"/>
     <gotoTargetRendererProvider implementation="com.jetbrains.python.codeInsight.PyGotoTargetRendererProvider"/>
@@ -872,6 +872,12 @@
             use-shortcut-of="ForceStepInto">
       <add-to-group group-id="DebugMainMenu" relative-to-action="StepInto" anchor="after"/>
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" relative-to-action="StepInto" anchor="after"/>
+    </action>
+
+    <action id="SetNextStatement" class="com.jetbrains.python.debugger.PySetNextStatementAction"
+            text="&amp;Jump To Cursor" description="Jump to the line where the caret is">
+      <add-to-group group-id="DebugMainMenu" relative-to-action="ForceRunToCursor" anchor="after"/>
+      <add-to-group group-id="EditorPopupMenuDebug" relative-to-action="ForceRunToCursor" anchor="after"/>
     </action>
 
     <action id="PySciView" class="com.jetbrains.python.actions.PySciViewAction">

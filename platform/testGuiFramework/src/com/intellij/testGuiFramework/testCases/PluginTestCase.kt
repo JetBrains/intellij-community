@@ -63,13 +63,15 @@ open class PluginTestCase : GuiTestCase() {
     }
   }
 
-  fun installPluginFromDisk(pluginName: String, pluginPath: String) {
+  fun installPluginFromDisk(pluginPath: String) {
     welcomeFrame {
       actionLink("Configure").click()
       popupClick("Plugins")
       dialog("Plugins") {
         button("Install plugin from disk...").click()
         chooseFileInFileChooser(pluginPath)
+        button("OK").click()
+        ensureButtonOkHasPressed(this@PluginTestCase)
       }
     }
   }

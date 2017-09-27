@@ -257,6 +257,11 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     assertEquals("(InspectionManagerEx)getInstance().createContext", element.toString());
   }
 
+  public void testChainEndedWithCast() {
+    JavaRelevantChainLookupElement element = assertOneElement(doCompletion());
+    assertEquals("(InspectionManagerEx)getInstance", element.toString());
+  }
+
   public void assertAdvisorLookupElementEquals(String lookupText,
                                                int unreachableParametersCount,
                                                int chainSize,

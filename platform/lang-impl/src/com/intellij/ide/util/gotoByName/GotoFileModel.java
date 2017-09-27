@@ -46,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Objects;
 
 /**
  * Model for "Go to | File" action
@@ -172,18 +173,20 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> implements Dum
   @Override
   @Nullable
   public String getFullName(final Object element) {
-    if (element instanceof PsiFileSystemItem) {
-      VirtualFile file = ((PsiFileSystemItem)element).getVirtualFile();
-      VirtualFile root = getTopLevelRoot(file);
-      return root != null ? GotoFileCellRenderer.getRelativePathFromRoot(file, root)
-                          : GotoFileCellRenderer.getRelativePath(file, myProject);
-    }
-
-    return getElementName(element);
+    return element instanceof PsiFileSystemItem ? getFullName(((PsiFileSystemItem)element).getVirtualFile()) : getElementName(element);
   }
 
-  private VirtualFile getTopLevelRoot(VirtualFile file) {
-    return JBIterable.generate(getContentRoot(file), r -> getContentRoot(r.getParent())).last();
+  @Nullable
+  public String getFullName(@NotNull VirtualFile file) {
+    VirtualFile root = getTopLevelRoot(file);
+    return root != null ? GotoFileCellRenderer.getRelativePathFromRoot(file, root)
+                        : GotoFileCellRenderer.getRelativePath(file, myProject);
+  }
+
+  @Nullable
+  public VirtualFile getTopLevelRoot(@NotNull VirtualFile file) {
+    VirtualFile root = getContentRoot(file);
+    return root == null ? null : JBIterable.generate(root, r -> getContentRoot(r.getParent())).last();
   }
 
   private VirtualFile getContentRoot(@Nullable VirtualFile file) {

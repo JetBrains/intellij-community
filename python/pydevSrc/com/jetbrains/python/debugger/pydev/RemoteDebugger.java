@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
@@ -334,7 +335,7 @@ public class RemoteDebugger implements ProcessDebugger {
       try {
         command.execute();
       }
-      catch (PyDebuggerException e) {
+      catch (Exception e) {
         LOG.error(e);
       }
       finally {
@@ -397,6 +398,15 @@ public class RemoteDebugger implements ProcessDebugger {
   @Override
   public void resumeOrStep(String threadId, ResumeOrStepCommand.Mode mode) {
     final ResumeOrStepCommand command = new ResumeOrStepCommand(this, threadId, mode);
+    execute(command);
+  }
+
+  @Override
+  public void setNextStatement(@NotNull String threadId,
+                               @NotNull XSourcePosition sourcePosition,
+                               @Nullable String functionName,
+                               @NotNull PyDebugCallback<Pair<Boolean, String>> callback) {
+    final SetNextStatementCommand command = new SetNextStatementCommand(this, threadId, sourcePosition, functionName, callback);
     execute(command);
   }
 

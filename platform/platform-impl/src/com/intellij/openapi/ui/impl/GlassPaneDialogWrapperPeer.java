@@ -41,6 +41,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
+import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.ui.JBInsets;
@@ -58,7 +59,7 @@ import java.lang.ref.WeakReference;
 /**
  * @author spleaner
  */
-public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
+public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements FocusTrackbackProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer");
 
   private DialogWrapper myWrapper;
@@ -153,6 +154,14 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     } else {
       throw new GlasspanePeerUnavailableException();
     }
+  }
+
+  @Override
+  public FocusTrackback getFocusTrackback() {
+    if (myDialog != null) {
+      return myDialog.getFocusTrackback();
+    }
+     return null;
   }
 
   @Override
@@ -369,7 +378,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     });
   }
 
-  private static class MyDialog extends JPanel implements Disposable, DialogWrapperDialog, DataProvider {
+  private static class MyDialog extends JPanel implements Disposable, DialogWrapperDialog, DataProvider, FocusTrackback.Provider {
     private final WeakReference<DialogWrapper> myDialogWrapper;
     private final IdeGlassPaneEx myPane;
     private JComponent myContentPane;
@@ -626,6 +635,11 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
       }
 
       super.setSize(rect.width, rect.height);
+    }
+
+    @Override
+    public FocusTrackback getFocusTrackback() {
+      return null;
     }
 
     @Nullable

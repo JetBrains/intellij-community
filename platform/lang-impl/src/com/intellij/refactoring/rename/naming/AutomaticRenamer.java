@@ -84,8 +84,7 @@ public abstract class AutomaticRenamer {
     final String newName = getNewName(element);
     if (newName != null) {
 
-      final LinkedHashMap<PsiNamedElement, String> renames = new LinkedHashMap<>();
-      renames.putAll(myRenames);
+      final LinkedHashMap<PsiNamedElement, String> renames = new LinkedHashMap<>(myRenames);
       if (allRenames != null) {
         for (PsiElement psiElement : allRenames.keySet()) {
           if (psiElement instanceof PsiNamedElement) {

@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.intellij.copyright
 
 import com.intellij.configurationStore.*
@@ -49,6 +37,7 @@ import com.maddyhome.idea.copyright.options.Options
 import com.maddyhome.idea.copyright.util.FileTypeUtil
 import com.maddyhome.idea.copyright.util.NewFileTracker
 import org.jdom.Element
+import org.jetbrains.annotations.TestOnly
 import java.util.*
 import java.util.function.Function
 
@@ -61,7 +50,7 @@ private const val MODULE = "module"
 private val LOG = Logger.getInstance(CopyrightManager::class.java)
 
 @State(name = "CopyrightManager", storages = arrayOf(Storage(value = "copyright/profiles_settings.xml", exclusive = true)))
-class CopyrightManager(private val project: Project, schemeManagerFactory: SchemeManagerFactory) : PersistentStateComponent<Element> {
+class CopyrightManager @JvmOverloads constructor(private val project: Project, schemeManagerFactory: SchemeManagerFactory, isSupportIprProjects: Boolean = true) : PersistentStateComponent<Element> {
   companion object {
     @JvmStatic
     fun getInstance(project: Project) = project.service<CopyrightManager>()
@@ -83,7 +72,7 @@ class CopyrightManager(private val project: Project, schemeManagerFactory: Schem
     if (project.isDirectoryBased) wrapScheme(element) else element
   }
 
-  private val schemeManagerIprProvider = if (project.isDirectoryBased) null else SchemeManagerIprProvider("copyright")
+  private val schemeManagerIprProvider = if (project.isDirectoryBased || !isSupportIprProjects) null else SchemeManagerIprProvider("copyright")
 
   private val schemeManager = schemeManagerFactory.create("copyright", object : LazySchemeProcessor<SchemeWrapper<CopyrightProfile>, SchemeWrapper<CopyrightProfile>>("myName") {
     override fun createScheme(dataHolder: SchemeDataHolder<SchemeWrapper<CopyrightProfile>>,
@@ -101,6 +90,12 @@ class CopyrightManager(private val project: Project, schemeManagerFactory: Schem
     if (project.isDirectoryBased || !app.isUnitTestMode) {
       schemeManager.loadSchemes()
     }
+  }
+
+  @TestOnly
+  fun loadSchemes() {
+    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode)
+    schemeManager.loadSchemes()
   }
 
   fun mapCopyright(scopeName: String, copyrightProfileName: String) {

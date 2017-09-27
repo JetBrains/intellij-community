@@ -1,7 +1,8 @@
 <idea-plugin>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.naming.convention.class" interface="com.siyeh.ig.naming.NamingConvention"/>
+    <extensionPoint qualifiedName="com.intellij.naming.convention.class" interface="com.intellij.codeInspection.NamingConvention"/>
+    <extensionPoint qualifiedName="com.intellij.naming.convention.method" interface="com.intellij.codeInspection.NamingConvention"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
 
@@ -1438,14 +1439,6 @@
                      key="junit3.style.test.method.in.junit4.class.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.JUnit3StyleTestMethodInJUnit4ClassInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="JUnit3MethodNamingConvention"
-                     bundle="com.siyeh.InspectionGadgetsBundle" key="junit3.method.naming.convention.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.junit.JUnit3MethodNamingConventionInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="JUnit4MethodNamingConvention"
-                     bundle="com.siyeh.InspectionGadgetsBundle" key="junit4.method.naming.convention.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.junit.JUnit4MethodNamingConventionInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="JUnit4AnnotatedMethodInJUnit3TestCase" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="junit4.test.method.in.class.extending.junit3.testcase.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
@@ -1664,14 +1657,25 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.naming.NewClassNamingConventionInspection"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.naming.ClassNamingConventionMerger"/>
-    <naming.convention.class implementation="com.siyeh.ig.naming.AnnotationNamingConvention" id="AnnotationNamingConvention" order="first"/>
-    <naming.convention.class implementation="com.siyeh.ig.naming.InterfaceNamingConvention" id="InterfaceNamingConvention" order="after AnnotationNamingConvention"/>
-    <naming.convention.class implementation="com.siyeh.ig.naming.EnumeratedClassNamingConvention" id="EnumeratedClassNamingConvention" order="after InterfaceNamingConvention"/>
-    <naming.convention.class implementation="com.siyeh.ig.naming.TypeParameterNamingConvention" id="TypeParameterNamingConvention" order="after EnumeratedClassNamingConvention"/>
-    <naming.convention.class implementation="com.siyeh.ig.junit.AbstractTestClassNamingConvention" id="JUnitAbstractTestClassNamingConvention" order="after TypeParameterNaming"/>
+    <naming.convention.class implementation="com.siyeh.ig.junit.AbstractTestClassNamingConvention" id="JUnitAbstractTestClassNamingConvention" order="first"/>
     <naming.convention.class implementation="com.siyeh.ig.junit.TestClassNamingConvention" id="JUnitTestClassNamingConvention" order="after JUnitAbstractTestClassNamingConvention"/>
-    <naming.convention.class implementation="com.siyeh.ig.naming.AbstractClassNamingConvention" id="AbstractClassNamingConvention" order="after JUnitTestClassNamingConvention"/>
+    <naming.convention.class implementation="com.siyeh.ig.naming.TypeParameterNamingConvention" id="TypeParameterNamingConvention" order="after JUnitTestClassNamingConvention"/>
+    <naming.convention.class implementation="com.siyeh.ig.naming.AnnotationNamingConvention" id="AnnotationNamingConvention" order="after TypeParameterNamingConvention"/>
+    <naming.convention.class implementation="com.siyeh.ig.naming.EnumeratedClassNamingConvention" id="EnumeratedClassNamingConvention" order="after AnnotationNamingConvention"/>
+    <naming.convention.class implementation="com.siyeh.ig.naming.InterfaceNamingConvention" id="InterfaceNamingConvention" order="after EnumeratedClassNamingConvention"/>
+    <naming.convention.class implementation="com.siyeh.ig.naming.AbstractClassNamingConvention" id="AbstractClassNamingConvention" order="after InterfaceNamingConvention"/>
     <naming.convention.class implementation="com.siyeh.ig.naming.ClassNamingConvention" id="ClassNamingConvention" order="last"/>
+
+    <localInspection groupPath="Java" language="JAVA" shortName="NewMethodNamingConvention" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="new.method.naming.convention.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.naming.conventions" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.naming.NewMethodNamingConventionInspection"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.naming.MethodNamingConventionMerger"/>
+    <naming.convention.method implementation="com.siyeh.ig.naming.InstanceMethodNamingConvention" id="InstanceMethodNamingConvention" order="last"/>
+    <naming.convention.method implementation="com.siyeh.ig.naming.StaticMethodNamingConvention" id="StaticMethodNamingConvention" order="before InstanceMethodNamingConvention"/>
+    <naming.convention.method implementation="com.siyeh.ig.naming.NativeMethodNamingConvention" id="NativeMethodNamingConvention" order="before StaticMethodNamingConvention"/>
+    <naming.convention.method implementation="com.siyeh.ig.junit.JUnit4MethodNamingConvention" id="JUnit4MethodNamingConvention" order="before NativeMethodNamingConvention"/>
+    <naming.convention.method implementation="com.siyeh.ig.junit.JUnit3MethodNamingConvention" id="JUnit3MethodNamingConvention" order="before JUnit4MethodNamingConvention"/>
 
     <localInspection groupPath="Java" language="JAVA" shortName="BooleanMethodNameMustStartWithQuestion" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="boolean.method.name.must.start.with.question.display.name" groupBundle="messages.InspectionsBundle"
@@ -1704,10 +1708,6 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="exception.name.doesnt.end.with.exception.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.naming.ExceptionNameDoesntEndWithExceptionInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="InstanceMethodNamingConvention" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="instance.method.naming.convention.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.naming.conventions" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.naming.InstanceMethodNamingConventionInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="InstanceVariableNamingConvention" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="instance.variable.naming.convention.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.naming.conventions" enabledByDefault="false" level="WARNING"
@@ -1737,10 +1737,6 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="method.names.differ.only.by.case.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.naming.MisspelledMethodNameInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="NativeMethodNamingConvention"
-                     bundle="com.siyeh.InspectionGadgetsBundle" key="native.method.naming.convention.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.naming.NativeMethodNamingConventionInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="NonBooleanMethodNameMayNotStartWithQuestion" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="non.boolean.method.name.must.not.start.with.question.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.naming.conventions" enabledByDefault="false" level="WARNING"
@@ -1775,10 +1771,6 @@
     <localInspection groupPath="Java" language="JAVA" shortName="StandardVariableNames" bundle="com.siyeh.InspectionGadgetsBundle" key="standard.variable.names.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.naming.StandardVariableNamesInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="StaticMethodNamingConvention" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="static.method.naming.convention.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.naming.conventions" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.naming.StaticMethodNamingConventionInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="StaticVariableNamingConvention" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="static.variable.naming.convention.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.naming.conventions" enabledByDefault="false" level="WARNING"
@@ -2806,6 +2798,14 @@
                      key="junit5.platform.runner.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.JUnit5PlatformInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="RedundantExplicitVariableType" enabledByDefault="true" level="WARNING"
+                     bundle="com.siyeh.InspectionGadgetsBundle" key="redundant.explicit.var.type.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids8"
+                     implementationClass="com.intellij.codeInspection.RedundantExplicitVariableTypeInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="VariableTypeCanBeExplicit" enabledByDefault="true" level="INFORMATION"
+                     bundle="com.siyeh.InspectionGadgetsBundle" key="variable.type.can.be.explicit.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
+                     implementationClass="com.intellij.codeInspection.VariableTypeCanBeExplicitInspection"/>
   </extensions>
 
 </idea-plugin>

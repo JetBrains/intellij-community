@@ -17,7 +17,6 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
-import java.util.Objects;
 
 /**
  * If you want to register a toolwindow, which will be enabled during the dumb mode, please use {@link ToolWindowManager}'s
@@ -147,30 +145,6 @@ public abstract class ToolWindowManager {
    */
   @Nullable
   public abstract String getActiveToolWindowId();
-
-  @Nullable
-  public static ToolWindow getActiveToolWindow () {
-    IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
-    Project project = frame == null ? ProjectManager.getInstance().getDefaultProject() : frame.getProject();
-
-    if (project != null) {
-      ToolWindowManager managerInstance = getInstance(project);
-      if (managerInstance != null) {
-        return managerInstance.getToolWindow(getActiveId());
-      }
-    }
-
-    return null;
-  }
-
-  @Nullable
-  public static String getActiveId () {
-    ToolWindowManager instance = getInstance(Objects.requireNonNull(Objects.requireNonNull(IdeFocusManager.getGlobalInstance().getLastFocusedFrame()).getProject()));
-
-    return instance == null ? "" : instance.getActiveToolWindowId();
-
-  }
-
 
   /**
    * @return registered tool window with specified {@code id}. If there is no registered

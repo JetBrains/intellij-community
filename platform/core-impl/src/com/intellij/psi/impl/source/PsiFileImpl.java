@@ -238,6 +238,13 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return findTreeForStub(ast, stubs, stub);
   }
 
+  @NotNull
+  @Override
+  public StubbedSpine getStubbedSpine() {
+    StubTree tree = getGreenStubTree();
+    return tree != null ? tree.getSpine() : calcTreeElement().getStubbedSpine();
+  }
+
   @Nullable
   private static ASTNode findTreeForStub(ASTNode tree, final Iterator<StubElement<?>> stubs, final StubElement stub) {
     final IElementType type = tree.getElementType();

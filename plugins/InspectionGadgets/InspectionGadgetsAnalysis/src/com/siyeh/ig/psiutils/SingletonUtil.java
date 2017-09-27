@@ -17,6 +17,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
@@ -58,12 +59,7 @@ public class SingletonUtil {
     if (!field.hasModifierProperty(PsiModifier.STATIC)) {
       return false;
     }
-    final PsiType type = field.getType();
-    if (!(type instanceof PsiClassType)) {
-      return false;
-    }
-    final PsiClassType classType = (PsiClassType)type;
-    final PsiClass targetClass = classType.resolve();
+    final PsiClass targetClass = PsiUtil.resolveClassInClassTypeOnly(field.getType());
     return aClass.equals(targetClass);
   }
 

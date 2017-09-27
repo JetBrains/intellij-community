@@ -45,6 +45,15 @@ if sys.version_info >= (3, 3):
             ],
             _arg: Any = ...,
         ) -> None: ...
+        def __new__(
+            cls,
+            o: Union[
+                Tuple[int, int, int, int, int, int, int, int, int],
+                Tuple[int, int, int, int, int, int, int, int, int, str],
+                Tuple[int, int, int, int, int, int, int, int, int, str, int]
+            ],
+            _arg: Any = ...,
+        ) -> struct_time: ...
 else:
     class struct_time(
         NamedTuple(
@@ -55,6 +64,7 @@ else:
         )
     ):
         def __init__(self, o: TimeTuple, _arg: Any = ...) -> None: ...
+        def __new__(cls, o: TimeTuple, _arg: Any = ...) -> struct_time: ...
 
 
 # ----- functions -----

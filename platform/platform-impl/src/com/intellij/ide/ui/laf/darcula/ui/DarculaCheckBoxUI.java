@@ -83,53 +83,68 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
     } else if (!selected && b.getIcon() != null) {
       b.getIcon().paintIcon(b, g, iconRect.x + JBUI.scale(4), iconRect.y + JBUI.scale(2));
     } else {
-      int off = JBUI.scale(3);
-      final int x = iconRect.x + off;
-      final int y = iconRect.y + off;
-      final int w = iconRect.width - 2*off;
-      final int h = iconRect.height - 2*off;
+      g = (Graphics2D)g.create();
+      try {
+        int off = JBUI.scale(3);
+        int x = iconRect.x + off;
+        int y = iconRect.y + off;
+        int w = iconRect.width - 2 * off;
+        int h = iconRect.height - 2 * off;
 
-      g.translate(x, y);
-      final Paint paint = UIUtil.getGradientPaint(w / 2, 0, b.getBackground().brighter(),
-                                                  w / 2, h, b.getBackground());
-      g.setPaint(paint);
-      final int fillOffset = JBUI.scale(1);
-      g.fillRect(fillOffset, fillOffset, w - 2*fillOffset, h - 2*fillOffset);
+        g.translate(x, y);
 
-      //setup AA for lines
-      final GraphicsConfig config = new GraphicsConfig(g);
-      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_DEFAULT);
+        //setup AA for lines
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_DEFAULT);
 
-      final boolean armed = b.getModel().isArmed();
+        if (c.isEnabled() || !UIUtil.isUnderDarcula()) {
+          Paint paint = UIUtil.getGradientPaint(w / 2, 0, b.getBackground().brighter(),
+                                                w / 2, h, b.getBackground());
+          g.setPaint(paint);
 
-      final int R = JBUI.scale(4);
-      boolean overrideBg = isIndeterminate(b) && fillBackgroundForIndeterminateSameAsForSelected();
-      if (c.hasFocus()) {
-        g.setPaint(UIUtil.getGradientPaint(w/2, 1, getFocusedBackgroundColor1(armed, selected || overrideBg), w/2, h, getFocusedBackgroundColor2(armed, selected || overrideBg)));
-        g.fillRoundRect(0, 0, w, h, R, R);
+          int fillOffset = JBUI.scale(1);
+          g.fillRect(fillOffset, fillOffset, w - 2 * fillOffset, h - 2 * fillOffset);
+        }
 
-        DarculaUIUtil.paintFocusRing(g, new Rectangle(1, 1, w - 2, h - 2));
-      } else {
-        g.setPaint(UIUtil.getGradientPaint(w / 2, 1, getBackgroundColor1(enabled, selected || overrideBg), w / 2, h, getBackgroundColor2(enabled, selected || overrideBg)));
-        g.fillRoundRect(0, 0, w, h , R, R);
+        boolean armed = b.getModel().isArmed();
 
-        final Color borderColor1 = getBorderColor1(enabled, selected || overrideBg);
-        final Color borderColor2 = getBorderColor2(enabled, selected || overrideBg);
-        g.setPaint(UIUtil.getGradientPaint(w / 2, 1, borderColor1, w / 2, h, borderColor2));
-        g.drawRoundRect(0, (UIUtil.isUnderDarcula() ? 1 : 0), w, h - 1, R, R);
+        int R = JBUI.scale(4);
+        int offset = 1;
+        boolean overrideBg = isIndeterminate(b) && fillBackgroundForIndeterminateSameAsForSelected();
 
-        g.setPaint(getInactiveFillColor());
-        g.drawRoundRect(0, 0, w, h - 1, R, R);
+        if (c.hasFocus()) {
+          g.setPaint(UIUtil.getGradientPaint(w/2, offset, getFocusedBackgroundColor1(armed, selected || overrideBg),
+                                             w/2, h, getFocusedBackgroundColor2(armed, selected || overrideBg)));
+          g.fillRoundRect(0, 0, w, h, R, R);
+
+          DarculaUIUtil.paintFocusRing(g, new Rectangle(offset, offset, w - offset * 2, h - offset * 2));
+        } else {
+          if (c.isEnabled() || !UIUtil.isUnderDarcula()) {
+            g.setPaint(UIUtil.getGradientPaint(w / 2, offset, getBackgroundColor1(enabled, selected || overrideBg),
+                                               w / 2, h, getBackgroundColor2(enabled, selected || overrideBg)));
+            g.fillRoundRect(0, 0, w, h , R, R);
+
+            Color borderColor1 = getBorderColor1(enabled, selected || overrideBg);
+            Color borderColor2 = getBorderColor2(enabled, selected || overrideBg);
+            g.setPaint(UIUtil.getGradientPaint(w / 2, offset, borderColor1, w / 2, h, borderColor2));
+            g.drawRoundRect(0, (UIUtil.isUnderDarcula() ? offset : 0), w, h - offset, R, R);
+
+            g.setPaint(getInactiveFillColor());
+            g.drawRoundRect(0, 0, w, h - offset, R, R);
+          } else {
+            g.setColor(Gray.x58);
+            g.drawRoundRect(0, 0, w, h - offset, R, R);
+          }
+        }
+
+        if (isIndeterminate(b)) {
+          paintIndeterminateSign(g, enabled, w, h);
+        } else if (b.getModel().isSelected()) {
+          paintCheckSign(g, enabled, w, h);
+        }
+      } finally {
+        g.dispose();
       }
-
-      if (isIndeterminate(b)) {
-        paintIndeterminateSign(g, enabled, w, h);
-      } else if (b.getModel().isSelected()) {
-        paintCheckSign(g, enabled, w, h);
-      }
-      g.translate(-x, -y);
-      config.restore();
     }
   }
 

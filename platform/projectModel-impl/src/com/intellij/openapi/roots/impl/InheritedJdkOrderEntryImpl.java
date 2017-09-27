@@ -34,13 +34,12 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
  */
 public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implements InheritedJdkOrderEntry, ClonableOrderEntry, WritableOrderEntry {
   @NonNls public static final String ENTRY_TYPE = JpsModuleRootModelSerializer.INHERITED_JDK_TYPE;
-  private final MyJdkTableListener myJdkTableListener = new MyJdkTableListener();
   private final MyProjectJdkListener myListener = new MyProjectJdkListener();
 
   InheritedJdkOrderEntryImpl(@NotNull RootModelImpl rootModel, @NotNull ProjectRootManagerImpl projectRootManager) {
     super(rootModel, projectRootManager);
     myProjectRootManagerImpl.addProjectJdkListener(myListener);
-    myProjectRootManagerImpl.addJdkTableListener(myJdkTableListener);
+    myProjectRootManagerImpl.addJdkTableListener(new MyJdkTableListener(), this);
     init();
   }
 
@@ -107,7 +106,6 @@ public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implem
   @Override
   public void dispose() {
     super.dispose();
-    myProjectRootManagerImpl.removeJdkTableListener(myJdkTableListener);
     myProjectRootManagerImpl.removeProjectJdkListener(myListener);
   }
 

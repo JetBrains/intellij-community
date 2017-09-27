@@ -55,9 +55,9 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   private static final Pattern REDIRECT = Pattern.compile("^Refer to `(.*)` for full documentation.$");
   private static final Pattern NUMPY_UNION_PATTERN = Pattern.compile("^\\{(.*)\\}$");
   private static final Pattern NUMPY_ARRAY_PATTERN = Pattern.compile("(\\(\\.\\.\\..*\\))(.*)");
-  public static String NDARRAY = "numpy.core.multiarray.ndarray";
+  public static final String NDARRAY = "numpy.core.multiarray.ndarray";
 
-  private static String NDARRAY_OR_ITERABLE = NDARRAY + " or collections.Iterable or int or long or float";
+  private static final String NDARRAY_OR_ITERABLE = NDARRAY + " or collections.Iterable or int or long or float";
 
   static {
     NUMPY_ALIAS_TO_REAL_TYPE.put("ndarray", NDARRAY);

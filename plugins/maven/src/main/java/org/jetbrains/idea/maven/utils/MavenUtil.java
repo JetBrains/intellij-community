@@ -763,8 +763,7 @@ public class MavenUtil {
   }
 
   public static List<LookupElement> getPhaseVariants(MavenProjectsManager manager) {
-    Set<String> goals = new HashSet<>();
-    goals.addAll(MavenConstants.PHASES);
+    Set<String> goals = new HashSet<>(MavenConstants.PHASES);
 
     for (MavenProject mavenProject : manager.getProjects()) {
       for (MavenPlugin plugin : mavenProject.getPlugins()) {

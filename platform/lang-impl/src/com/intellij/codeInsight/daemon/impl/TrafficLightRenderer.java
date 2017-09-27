@@ -391,7 +391,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     for (ProgressableTextEditorHighlightingPass pass : status.passStati) {
       JProgressBar progressBar = new JProgressBar(0, MAX);
       progressBar.setMaximum(MAX);
-      progressBar.putClientProperty("JComponent.sizeVariant", "mini");
+      UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, progressBar);
       JLabel percLabel = new JLabel();
       percLabel.setText(TrafficProgressPanel.MAX_TEXT);
       passes.put(pass, Pair.create(progressBar, percLabel));

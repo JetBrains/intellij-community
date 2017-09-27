@@ -20,7 +20,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +38,6 @@ public class PyStatementSelectionHandler extends ExtendWordSelectionHandlerBase 
   }
 
   public List<TextRange> select(final PsiElement e, final CharSequence editorText, final int cursorOffset, final Editor editor) {
-    List<TextRange> result = new ArrayList<>();
     PsiElement endElement = e;
     while(endElement.getLastChild() != null) {
       endElement = endElement.getLastChild();
@@ -46,9 +48,8 @@ public class PyStatementSelectionHandler extends ExtendWordSelectionHandlerBase 
         endElement = prevSibling;
       }
     }
-    result.addAll(expandToWholeLine(editorText, new TextRange(e.getTextRange().getStartOffset(),
-                                                              endElement.getTextRange().getEndOffset())));
 
-    return result;
+    return new ArrayList<>(expandToWholeLine(editorText, new TextRange(e.getTextRange().getStartOffset(),
+                                                                       endElement.getTextRange().getEndOffset())));
   }
 }

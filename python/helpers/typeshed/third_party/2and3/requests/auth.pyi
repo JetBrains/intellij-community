@@ -1,6 +1,6 @@
 # Stubs for requests.auth (Python 3)
 
-from typing import Any
+from typing import Any, Text, Union
 from . import compat
 from . import cookies
 from . import utils
@@ -13,6 +13,8 @@ codes = status_codes.codes
 
 CONTENT_TYPE_FORM_URLENCODED = ...  # type: Any
 CONTENT_TYPE_MULTI_PART = ...  # type: Any
+
+def _basic_auth_str(username: Union[bytes, Text], password: Union[bytes, Text]) -> str: ...
 
 class AuthBase:
     def __call__(self, r): ...

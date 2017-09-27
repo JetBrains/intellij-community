@@ -301,14 +301,14 @@ public class DeclarationParser {
       return declaration;
     }
 
-    PsiBuilder.Marker type = null;
+    ReferenceParser.TypeInfo type = null;
 
     if (TYPE_START.contains(builder.getTokenType())) {
       PsiBuilder.Marker pos = builder.mark();
 
       int flags = ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD;
       if (context == Context.CODE_BLOCK) flags |= ReferenceParser.VAR_TYPE;
-      type = myParser.getReferenceParser().parseType(builder, flags);
+      type = myParser.getReferenceParser().parseTypeInfo(builder, flags);
 
       if (type == null) {
         pos.rollbackTo();
@@ -353,31 +353,33 @@ public class DeclarationParser {
     }
 
     if (!expect(builder, JavaTokenType.IDENTIFIER)) {
-      if ((context == Context.CODE_BLOCK) && Boolean.TRUE.equals(modListInfo.second)) {
-        declaration.rollbackTo();
-        return null;
-      }
-      else {
+      if (context != Context.CODE_BLOCK ||
+          Boolean.FALSE.equals(modListInfo.second) ||
+          (type.isPrimitive && builder.getTokenType() != JavaTokenType.DOT)) {
         if (typeParams != null) {
-          typeParams.precede().errorBefore(JavaErrorMessages.message("unexpected.token"), type);
+          typeParams.precede().errorBefore(JavaErrorMessages.message("unexpected.token"), type.marker);
         }
         builder.error(JavaErrorMessages.message("expected.identifier"));
         declaration.drop();
         return modList;
+      }
+      else {
+        declaration.rollbackTo();
+        return null;
       }
     }
 
     if (builder.getTokenType() == JavaTokenType.LPARENTH) {
       if (context == Context.CLASS || context == Context.ANNOTATION_INTERFACE) {  // method
         if (typeParams == null) {
-          emptyElement(type, JavaElementType.TYPE_PARAMETER_LIST);
+          emptyElement(type.marker, JavaElementType.TYPE_PARAMETER_LIST);
         }
         return parseMethodFromLeftParenth(builder, declaration, (context == Context.ANNOTATION_INTERFACE), false);
       }
     }
 
     if (typeParams != null) {
-      typeParams.precede().errorBefore(JavaErrorMessages.message("unexpected.token"), type);
+      typeParams.precede().errorBefore(JavaErrorMessages.message("unexpected.token"), type.marker);
     }
     return parseFieldOrLocalVariable(builder, declaration, declarationStart, context);
   }

@@ -131,8 +131,9 @@ class JpsCompilationRunner {
         }
       }
     }
-    if (resolveProjectDependencies) {
+    if (resolveProjectDependencies && !compilationData.projectDependenciesResolved) {
       scopes.add(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope.newBuilder().setTypeId("project-dependencies-resolving").setForceBuild(false).setAllTargets(true).build())
+      compilationData.projectDependenciesResolved = true
     }
 
     context.messages.info("Starting build; incremental: $context.options.incrementalCompilation, cache directory: $compilationData.dataStorageRoot.absolutePath")

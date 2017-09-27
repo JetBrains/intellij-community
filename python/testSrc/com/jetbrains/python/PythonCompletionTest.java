@@ -23,7 +23,6 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.testFramework.PsiTestUtil;
-import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -33,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class PythonCompletionTest extends PyTestCase {
 
@@ -726,7 +726,9 @@ public class PythonCompletionTest extends PyTestCase {
                              "C().f.__<caret>");
     assertNotNull(suggested);
     assertContainsElements(suggested, PyNames.METHOD_SPECIAL_ATTRIBUTES);
-    assertDoesntContain(suggested, PyNames.FUNCTION_SPECIAL_ATTRIBUTES);
+    final Set<String> functionAttributes = new HashSet<>(PyNames.FUNCTION_SPECIAL_ATTRIBUTES);
+    functionAttributes.removeAll(PyNames.METHOD_SPECIAL_ATTRIBUTES);
+    assertDoesntContain(suggested, functionAttributes);
   }
 
   // PY-9342
@@ -738,7 +740,9 @@ public class PythonCompletionTest extends PyTestCase {
     final List<String> suggested = doTestByFile();
     assertNotNull(suggested);
     assertContainsElements(suggested, PyNames.METHOD_SPECIAL_ATTRIBUTES);
-    assertDoesntContain(suggested, PyNames.FUNCTION_SPECIAL_ATTRIBUTES);
+    final Set<String> functionAttributes = new HashSet<>(PyNames.FUNCTION_SPECIAL_ATTRIBUTES);
+    functionAttributes.removeAll(PyNames.METHOD_SPECIAL_ATTRIBUTES);
+    assertDoesntContain(suggested, functionAttributes);
   }
 
   // PY-9342
@@ -771,7 +775,9 @@ public class PythonCompletionTest extends PyTestCase {
     final List<String> suggested = doTestByFile();
     assertNotNull(suggested);
     assertContainsElements(suggested, PyNames.FUNCTION_SPECIAL_ATTRIBUTES);
-    assertDoesntContain(suggested, PyNames.METHOD_SPECIAL_ATTRIBUTES);
+    final Set<String> methodAttributes = new HashSet<>(PyNames.METHOD_SPECIAL_ATTRIBUTES);
+    methodAttributes.removeAll(PyNames.FUNCTION_SPECIAL_ATTRIBUTES);
+    assertDoesntContain(suggested, methodAttributes);
   }
 
   public void testSmartFromUsedMethodsOfString() {

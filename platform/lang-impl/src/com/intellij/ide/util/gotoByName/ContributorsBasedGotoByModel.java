@@ -287,4 +287,9 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
   public @NotNull String removeModelSpecificMarkup(@NotNull String pattern) {
     return pattern;
   }
+
+  @NotNull
+  public Project getProject() {
+    return myProject;
+  }
 }

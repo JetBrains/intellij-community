@@ -620,6 +620,12 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     return methodElement
   }
 
+  // used by MPS. Do not use if not approved.
+  fun reloadSchemes() {
+    workspaceSchemeManager.reload()
+    projectSchemeManager.reload()
+  }
+
   override fun noStateLoaded() {
     isFirstLoadState.set(false)
     projectSchemeManager.loadSchemes()

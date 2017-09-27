@@ -36,6 +36,7 @@ import org.junit.Assert.fail
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
+import java.lang.management.ManagementFactory
 import java.net.URL
 import java.nio.file.Paths
 import java.util.*
@@ -44,6 +45,8 @@ import java.util.concurrent.TimeUnit
 import java.util.jar.JarInputStream
 import java.util.stream.Collectors
 import kotlin.concurrent.thread
+
+
 
 /**
  * @author Sergey Karashevich
@@ -155,10 +158,15 @@ object GuiTestLocalLauncher {
                      commandName = null,
                      port = port)
 
+  /**
+   * customVmOptions should contain a full VM options formatted items like: customVmOptions = listOf("-Dapple.laf.useScreenMenuBar=true", "-Dide.mac.file.chooser.native=false").
+   * GuiTestLocalLauncher passed all VM options from test, that starts with "-Dpass."
+   */
   private fun createArgsBase(ide: Ide, mainClass: String, commandName: String?, firstStartClassName: String = "undefined", port: Int): List<String> {
+    val customVmOptions = getCustomPassedOptions()
     var resultingArgs = listOf<String>()
       .plus(getCurrentJavaExec())
-      .plus(getDefaultVmOptions(ide))
+      .plus(getDefaultAndCustomVmOptions(ide, customVmOptions))
       .plus("-Didea.gui.test.first.start.class=$firstStartClassName")
       .plus("-classpath")
       .plus(getOsSpecificClasspath(ide.ideType.mainModule))
@@ -183,10 +191,23 @@ object GuiTestLocalLauncher {
     return resultingArgs
   }
 
+  private fun getCurrentProcessVmOptions(): List<String> {
+    val runtimeMxBean = ManagementFactory.getRuntimeMXBean()
+    return runtimeMxBean.inputArguments
+  }
+
+  private fun getPassedVmOptions(): List<String> {
+    return getCurrentProcessVmOptions().filter { it.startsWith("-Dpass.") }
+  }
+
+  private fun getCustomPassedOptions(): List<String> {
+    return getPassedVmOptions().map { it.replace("-Dpass.", "-D") }
+  }
+
   /**
    * Default VM options to start IntelliJ IDEA (or IDEA-based IDE). To customize options use com.intellij.testGuiFramework.launcher.GuiTestOptions
    */
-  private fun getDefaultVmOptions(ide: Ide): List<String> {
+  private fun getDefaultAndCustomVmOptions(ide: Ide, customVmOptions: List<String> = emptyList()): List<String> {
     return listOf<String>()
       .plus("-Xmx${GuiTestOptions.getXmxSize()}m")
       .plus("-XX:ReservedCodeCacheSize=240m")
@@ -200,10 +221,12 @@ object GuiTestLocalLauncher {
       .plus("-Djava.net.preferIPv4Stack=true")
       .plus("-Dapple.laf.useScreenMenuBar=${GuiTestOptions.useAppleScreenMenuBar()}")
       .plus("-Didea.is.internal=${GuiTestOptions.isInternal()}")
+      .plus("-Didea.debug.mode=true")
       .plus("-Didea.config.path=${GuiTestOptions.getConfigPath()}")
       .plus("-Didea.system.path=${GuiTestOptions.getSystemPath()}")
       .plus("-Dfile.encoding=${GuiTestOptions.getEncoding()}")
       .plus("-Didea.platform.prefix=${ide.ideType.platformPrefix}")
+      .plus(customVmOptions)
       .plus("-Xdebug")
       .plus("-Xrunjdwp:transport=dt_socket,server=y,suspend=${GuiTestOptions.suspendDebug()},address=${GuiTestOptions.getDebugPort()}")
       .plus("-Duse.linux.keychain=false")

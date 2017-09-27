@@ -18,5 +18,8 @@
     <orderEntry type="module" module-name="core-api" scope="TEST" />
     <orderEntry type="module" module-name="projectModel-impl" scope="TEST" />
     <orderEntry type="module" module-name="jetCheck" scope="TEST" />
+    <orderEntry type="library" name="commons-compress" level="project" />
+    <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="testFramework" scope="TEST" />
   </component>
 </module>

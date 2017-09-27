@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python.debugger;
 
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -25,6 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -111,6 +115,19 @@ public class PyDebugSupportUtils {
       return true;
     }
 
+    return false;
+  }
+
+  public static boolean isPythonConfigurationSelected(Project project) {
+    if (project != null) {
+      RunnerAndConfigurationSettings settings = RunManager.getInstance(project).getSelectedConfiguration();
+      if (settings != null) {
+        RunConfiguration runConfiguration = settings.getConfiguration();
+        if (runConfiguration instanceof AbstractPythonRunConfiguration) {
+          return true;
+        }
+      }
+    }
     return false;
   }
 }

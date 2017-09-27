@@ -136,11 +136,7 @@ public class TypeUtils {
     if (type == null) {
       return null;
     }
-    if (!(type instanceof PsiClassType)) {
-      return null;
-    }
-    final PsiClassType classType = (PsiClassType)type;
-    final PsiClass aClass = classType.resolve();
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
     if (aClass == null) {
       return null;
     }
@@ -156,15 +152,7 @@ public class TypeUtils {
     if (expression == null) {
       return false;
     }
-    final PsiType type = expression.getType();
-    if (type == null) {
-      return false;
-    }
-    if (!(type instanceof PsiClassType)) {
-      return false;
-    }
-    final PsiClassType classType = (PsiClassType)type;
-    final PsiClass aClass = classType.resolve();
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
     if (aClass == null) {
       return false;
     }
@@ -180,12 +168,7 @@ public class TypeUtils {
     if (variable == null) {
       return false;
     }
-    final PsiType type = variable.getType();
-    if (!(type instanceof PsiClassType)) {
-      return false;
-    }
-    final PsiClassType classType = (PsiClassType)type;
-    final PsiClass aClass = classType.resolve();
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(variable.getType());
     if (aClass == null) {
       return false;
     }
@@ -233,11 +216,7 @@ public class TypeUtils {
   }
 
   public static boolean isTypeParameter(PsiType type) {
-    if (!(type instanceof PsiClassType)) {
-      return false;
-    }
-    final PsiClassType classType = (PsiClassType)type;
-    final PsiClass aClass = classType.resolve();
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
     return aClass instanceof PsiTypeParameter;
   }
 
@@ -263,5 +242,11 @@ public class TypeUtils {
       return PsiType.DOUBLE;
     }
     return type;
+  }
+
+  @Contract("null -> null")
+  public static String resolvedClassName(PsiType type) {
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    return aClass == null ? null : aClass.getQualifiedName();
   }
 }

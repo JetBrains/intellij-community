@@ -33,9 +33,8 @@ public class MavenDependencyTypeConverter extends MavenProjectConstantListConver
 
   @Override
   protected Collection<String> getValues(@NotNull ConvertContext context, @NotNull MavenProject project) {
-    Set<String> res = new LinkedHashSet<>();
-
-    res.addAll(MavenProjectsManager.getInstance(context.getProject()).getImportingSettings().getDependencyTypesAsSet());
+    Set<String> res =
+      new LinkedHashSet<>(MavenProjectsManager.getInstance(context.getProject()).getImportingSettings().getDependencyTypesAsSet());
 
     res.add(MavenConstants.TYPE_POM);
 

@@ -63,7 +63,7 @@ internal val deprecatedComparator = Comparator<Storage> { o1, o2 ->
 
 abstract class ComponentStoreImpl : IComponentStore {
   private val components = Collections.synchronizedMap(THashMap<String, ComponentInfo>())
-  private val settingsSavingComponents = com.intellij.util.containers.ContainerUtil.createLockFreeCopyOnWriteList<SettingsSavingComponent>();
+  private val settingsSavingComponents = com.intellij.util.containers.ContainerUtil.createLockFreeCopyOnWriteList<SettingsSavingComponent>()
   
   internal open val project: Project?
     get() = null
@@ -401,12 +401,12 @@ abstract class ComponentStoreImpl : IComponentStore {
     for (componentName in componentNames) {
       if (isNotReloadable(componentName)) {
         if (notReloadableComponents == null) {
-          notReloadableComponents = LinkedHashSet<String>()
+          notReloadableComponents = LinkedHashSet()
         }
         notReloadableComponents.add(componentName)
       }
     }
-    return notReloadableComponents ?: emptySet<String>()
+    return notReloadableComponents ?: emptySet()
   }
 
   override final fun reloadStates(componentNames: MutableSet<String>, messageBus: MessageBus) {
@@ -510,14 +510,7 @@ internal fun Array<out Storage>.sortByDeprecated(): List<Storage> {
   }
 
   if (!first().deprecated) {
-    var othersAreDeprecated = true
-    for (i in 1..size - 1) {
-      if (!get(i).deprecated) {
-        othersAreDeprecated = false
-        break
-      }
-    }
-
+    val othersAreDeprecated = (1 until size).any { get(it).deprecated }
     if (othersAreDeprecated) {
       return toList()
     }

@@ -2,7 +2,9 @@ package com.jetbrains.python.refactoring.classes;
 
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyStatement;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 
@@ -25,8 +27,7 @@ public class PyDependenciesComparatorTest extends PyTestCase {
     PyFunction method = clazz.getMethods()[0];
     PsiElement classField = clazz.getClassAttributes().get(0).getParent();
 
-    final List<PyStatement> elementList = new ArrayList<>();
-    elementList.addAll(Arrays.asList(clazz.getStatementList().getStatements()));
+    final List<PyStatement> elementList = new ArrayList<>(Arrays.asList(clazz.getStatementList().getStatements()));
     Collections.sort(elementList, PyDependenciesComparator.INSTANCE);
 
     Assert.assertThat("Members returned in wrong order", elementList, Matchers.contains(

@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.impl.VcsPathPresenter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcsUtil.VcsFilePathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,27 +88,30 @@ public class Change {
   }
 
   public Type getType() {
-    if (myType == null) {
-      if (myBeforeRevision == null) {
-        myType = Type.NEW;
-        return myType;
-      }
-
-      if (myAfterRevision == null) {
-        myType = Type.DELETED;
-        return myType;
-      }
-
-      if ((! Comparing.equal(myBeforeRevision.getFile(), myAfterRevision.getFile())) ||
-          ((! SystemInfo.isFileSystemCaseSensitive) && VcsFilePathUtil
-            .caseDiffers(myBeforeRevision.getFile().getPath(), myAfterRevision.getFile().getPath()))) {
-        myType = Type.MOVED;
-        return myType;
-      }
-
-      myType = Type.MODIFICATION;
+    Type type = myType;
+    if (type == null) {
+      myType = type = calcType();
     }
-    return myType;
+    return type;
+  }
+
+  @NotNull
+  private Type calcType() {
+    if (myBeforeRevision == null) return Type.NEW;
+    if (myAfterRevision == null) return Type.DELETED;
+
+    FilePath bFile = myBeforeRevision.getFile();
+    FilePath aFile = myAfterRevision.getFile();
+    if (!Comparing.equal(bFile, aFile)) return Type.MOVED;
+
+    // enforce case-sensitive check
+    if (!SystemInfo.isFileSystemCaseSensitive) {
+      String bPath = bFile.getPath();
+      String aPath = aFile.getPath();
+      if (!bPath.equals(aPath) && bPath.equalsIgnoreCase(aPath)) return Type.MOVED;
+    }
+
+    return Type.MODIFICATION;
   }
 
   @Nullable

@@ -17,7 +17,10 @@ package com.jetbrains.python.pyi;
 
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.codeInsight.PyCustomMember;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.resolve.PointInImport;
 import com.jetbrains.python.psi.types.PyModuleMembersProvider;
 import org.jetbrains.annotations.NotNull;
@@ -85,8 +88,7 @@ public class PyiModuleMembersProvider extends PyModuleMembersProvider {
   }
 
   private static List<PyImportElement> getImportElements(@NotNull PyFile file) {
-    final List<PyImportElement> result = new ArrayList<>();
-    result.addAll(file.getImportTargets());
+    final List<PyImportElement> result = new ArrayList<>(file.getImportTargets());
     for (PyFromImportStatement statement : file.getFromImports()) {
       result.addAll(Arrays.asList(statement.getImportElements()));
     }

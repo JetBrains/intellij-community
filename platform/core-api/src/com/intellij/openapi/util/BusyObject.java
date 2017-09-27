@@ -101,8 +101,7 @@ public interface BusyObject {
         }
 
         myReadyCallbacks.remove(readyRequestor);
-        ArrayList<ActionCallback> rejected = new ArrayList<>();
-        rejected.addAll(myReadyCallbacks.values());
+        ArrayList<ActionCallback> rejected = new ArrayList<>(myReadyCallbacks.values());
         myReadyCallbacks.clear();
         return new Pair<>(done, rejected);
       }

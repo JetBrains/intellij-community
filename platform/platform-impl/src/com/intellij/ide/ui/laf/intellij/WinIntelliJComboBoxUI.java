@@ -61,8 +61,6 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
   private PropertyChangeListener propertyListener;
 
   private MouseListener editorHoverListener;
-  private KeyListener   editorKeyListener;
-  private FocusListener editorFocusListener;
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -330,61 +328,25 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
       }
     };
 
-    Component ec = comboBoxEditor.getEditorComponent();
-    if (ec != null) {
-      editorKeyListener = new KeyAdapter() {
-        @Override public void keyPressed(KeyEvent e) {
-          process(e);
-        }
-        @Override public void keyReleased(KeyEvent e) {
-          process(e);
-        }
-
-        private void process(KeyEvent e) {
-          int code = e.getKeyCode();
-          if ((code == KeyEvent.VK_UP || code == KeyEvent.VK_DOWN) && e.getModifiers() == 0) {
-            comboBox.dispatchEvent(e);
-          }
-        }
-      };
-
-      ec.addKeyListener(editorKeyListener);
-    }
+    installEditorKeyListener(comboBoxEditor);
     return comboBoxEditor;
   }
 
   @Override protected void configureEditor() {
     super.configureEditor();
 
-    if (editor != null) {
-      editorFocusListener = new FocusAdapter() {
-        @Override public void focusGained(FocusEvent e) {
-          update();
-        }
-        @Override public void focusLost(FocusEvent e) {
-          update();
-        }
-
-        private void update() {
-          if (comboBox != null) {
-            comboBox.repaint();
-          }
-        }
-      };
-
-      editorHoverListener = new DarculaUIUtil.MouseHoverPropertyTrigger(comboBox, HOVER_PROPERTY);
-
+    if (editor instanceof JComponent) {
       JComponent jEditor = (JComponent)editor;
       jEditor.setOpaque(false);
       jEditor.setBorder(DEFAULT_EDITOR_BORDER);
 
+      editorHoverListener = new DarculaUIUtil.MouseHoverPropertyTrigger(comboBox, HOVER_PROPERTY);
+
       if (editor instanceof JTextComponent) {
-        editor.addFocusListener(editorFocusListener);
         editor.addMouseListener(editorHoverListener);
       } else {
         EditorTextField etf = UIUtil.findComponentOfType((JComponent)editor, EditorTextField.class);
         if (etf != null) {
-          etf.addFocusListener(editorFocusListener);
           etf.addMouseListener(editorHoverListener);
           etf.setBackground(getComboBackground(true));
 
@@ -397,25 +359,13 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
   @Override protected void unconfigureEditor() {
     super.unconfigureEditor();
 
-    if (editorKeyListener != null) {
-      editor.removeKeyListener(editorKeyListener);
-    }
-
     if (editor instanceof JTextComponent) {
-      if (editorFocusListener != null) {
-        editor.removeFocusListener(editorFocusListener);
-      }
-
       if (editorHoverListener != null) {
         editor.removeMouseListener(editorHoverListener);
       }
     } else {
       EditorTextField etf = UIUtil.findComponentOfType((JComponent)editor, EditorTextField.class);
       if (etf != null) {
-        if (editorHoverListener != null) {
-          etf.removeFocusListener(editorFocusListener);
-        }
-
         if (editorHoverListener != null) {
           etf.removeMouseListener(editorHoverListener);
         }

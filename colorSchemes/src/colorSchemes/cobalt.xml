@@ -1172,12 +1172,12 @@
         <option name="FOREGROUND" value="CCCCCC" />
       </value>
     </option>
-    <option name="OC.FUNCTION">
+    <option name="OC.FUNCTION_CALL">
       <value>
         <option name="FOREGROUND" value="FFDD00" />
       </value>
     </option>
-    <option name="OC.FUNCTION">
+    <option name="OC.FUNCTION_DECLARATION">
       <value>
         <option name="FOREGROUND" value="FFDD00" />
       </value>

@@ -1210,7 +1210,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
       if (newNameOfFirstParam != null) {
         processor.changeParamName(0, newNameOfFirstParam);
       }
-      ExtractMethodHandler.run(project, editor, processor);
+      ExtractMethodHandler.extractMethod(project, processor);
     }
 
     if (replaceAllDuplicates) {

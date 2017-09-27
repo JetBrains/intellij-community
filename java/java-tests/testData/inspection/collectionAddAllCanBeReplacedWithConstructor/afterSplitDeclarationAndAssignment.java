@@ -7,6 +7,6 @@ import java.util.HashSet;
 class C {
   void m() {
     final List<String> strings;
-    strings = new ArrayList<String>(new HashSet<String>());
+      strings = new ArrayList<String>(new HashSet<String>());
   }
 }

@@ -49,7 +49,9 @@ class JavaUastApiTest : AbstractJavaUastTest() {
 
             val index2 = file.psi.text.indexOf("q")
             val literal = PsiTreeUtil.getParentOfType(file.psi.findElementAt(index2), PsiLiteralExpression::class.java)!!
-            UsefulTestCase.assertInstanceOf(literal.toUElement(), ULiteralExpression::class.java)
+            val uLiteral = literal.toUElement()!!
+            UsefulTestCase.assertInstanceOf(uLiteral, ULiteralExpression::class.java)
+            UsefulTestCase.assertInstanceOf(uLiteral.uastParent, UCallExpression::class.java)
         }
     }
 

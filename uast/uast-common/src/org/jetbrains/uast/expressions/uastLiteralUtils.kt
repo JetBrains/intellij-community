@@ -16,6 +16,9 @@
 @file:JvmName("UastLiteralUtils")
 package org.jetbrains.uast
 
+import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.util.PsiTreeUtil
+
 /**
  * Checks if the [UElement] is a null literal.
  *
@@ -96,3 +99,9 @@ fun ULiteralExpression.getLongValue(): Long = value.let {
         else -> 0
     }
 }
+
+/**
+ * @return corresponding [PsiLanguageInjectionHost] for this literal expression if it exists.
+ */
+val ULiteralExpression.psiLanguageInjectionHost
+    get() = this.psi?.let { PsiTreeUtil.getParentOfType(it, PsiLanguageInjectionHost::class.java, false) }

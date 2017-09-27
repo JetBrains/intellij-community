@@ -126,13 +126,17 @@ public class LocalChangeListImpl extends LocalChangeList {
   void addChange(Change change) {
     myReadChangesCache = null;
     myChanges.add(change);
-    LOG.debug("List: " + myName + ". addChange: " + change);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("List: " + myName + ". addChange: " + change);
+    }
   }
 
   @Nullable
   Change removeChange(@Nullable Change change) {
     if (myChanges.remove(change)) {
-      LOG.debug("List: " + myName + ". removeChange: " + change);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("List: " + myName + ". removeChange: " + change);
+      }
       myReadChangesCache = null;
       return change;
     }

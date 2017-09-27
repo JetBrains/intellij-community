@@ -4,7 +4,7 @@ from typing import Any, Optional, Union
 
 PyCF_ONLY_AST = ...  # type: int
 
-identifier = str
+_identifier = str
 
 class AST:
     _attributes = ...  # type: typing.Tuple[str, ...]
@@ -32,21 +32,21 @@ class stmt(AST):
     col_offset = ...  # type: int
 
 class FunctionDef(stmt):
-    name = ...  # type: identifier
+    name = ...  # type: _identifier
     args = ...  # type: arguments
     body = ...  # type: typing.List[stmt]
     decorator_list = ...  # type: typing.List[expr]
     returns = ...  # type: Optional[expr]
 
 class AsyncFunctionDef(stmt):
-    name = ...  # type: identifier
+    name = ...  # type: _identifier
     args = ...  # type: arguments
     body = ...  # type: typing.List[stmt]
     decorator_list = ...  # type: typing.List[expr]
     returns = ...  # type: Optional[expr]
 
 class ClassDef(stmt):
-    name = ...  # type: identifier
+    name = ...  # type: _identifier
     bases = ...  # type: typing.List[expr]
     keywords = ...  # type: typing.List[keyword]
     body = ...  # type: typing.List[stmt]
@@ -115,15 +115,15 @@ class Import(stmt):
     names = ...  # type: typing.List[alias]
 
 class ImportFrom(stmt):
-    module = ...  # type: Optional[identifier]
+    module = ...  # type: Optional[_identifier]
     names = ...  # type: typing.List[alias]
     level = ...  # type: Optional[int]
 
 class Global(stmt):
-    names = ...  # type: typing.List[identifier]
+    names = ...  # type: typing.List[_identifier]
 
 class Nonlocal(stmt):
-    names = ...  # type: typing.List[identifier]
+    names = ...  # type: typing.List[_identifier]
 
 class Expr(stmt):
     value = ...  # type: expr
@@ -235,7 +235,7 @@ class Ellipsis(expr): ...
 
 class Attribute(expr):
     value = ...  # type: expr
-    attr = ...  # type: identifier
+    attr = ...  # type: _identifier
     ctx = ...  # type: expr_context
 
 class Subscript(expr):
@@ -248,7 +248,7 @@ class Starred(expr):
     ctx = ...  # type: expr_context
 
 class Name(expr):
-    id = ...  # type: identifier
+    id = ...  # type: _identifier
     ctx = ...  # type: expr_context
 
 class List(expr):
@@ -325,7 +325,7 @@ class comprehension(AST):
 
 class ExceptHandler(AST):
     type = ...  # type: Optional[expr]
-    name = ...  # type: Optional[identifier]
+    name = ...  # type: Optional[_identifier]
     body = ...  # type: typing.List[stmt]
     lineno = ...  # type: int
     col_offset = ...  # type: int
@@ -340,18 +340,18 @@ class arguments(AST):
     defaults = ...  # type: typing.List[expr]
 
 class arg(AST):
-    arg = ...  # type: identifier
+    arg = ...  # type: _identifier
     annotation = ...  # type: Optional[expr]
     lineno = ...  # type: int
     col_offset = ...  # type: int
 
 class keyword(AST):
-    arg = ...  # type: Optional[identifier]
+    arg = ...  # type: Optional[_identifier]
     value = ...  # type: expr
 
 class alias(AST):
-    name = ...  # type: identifier
-    asname = ...  # type: Optional[identifier]
+    name = ...  # type: _identifier
+    asname = ...  # type: Optional[_identifier]
 
 class withitem(AST):
     context_expr = ...  # type: expr

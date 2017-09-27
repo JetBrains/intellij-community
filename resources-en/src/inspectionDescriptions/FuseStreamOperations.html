@@ -1,0 +1,16 @@
+<html>
+<body>
+Detects when some transformations are performed on Stream API result which could be incorporated into the Stream API call chain directly. E.g.:
+<pre>
+  List&lt;String&gt; list = stream.collect(Collectors.toList());
+  list.sort(null);
+  return list.toArray(new String[list.size()]);
+</pre>
+Could be converted to
+<pre>
+  return stream.sorted().toArray(String[]::new);
+</pre>
+<!-- tooltip end -->
+<p><small>New in 2017.3</small></p>
+</body>
+</html>

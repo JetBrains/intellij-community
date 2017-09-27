@@ -54,7 +54,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
-import com.intellij.rt.debugger.agent.CaptureStorage;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
@@ -471,11 +470,14 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     ApplicationManager.getApplication().runReadAction(() -> {
       JavaSdkUtil.addRtJar(parameters.getClassPath());
       if (Registry.is("debugger.capture.points.agent")) {
-        String path = PathUtil.getJarPathForClass(CaptureStorage.class);
+        String path = PathUtil.getJarPathForClass(DebuggerManagerImpl.class);
         //TODO: for now works only in debug mode
         String agent = "-javaagent:" +
                        FileUtil.toSystemDependentName(PathUtil.getParentPath(PathUtil.getParentPath(path))) +
                        "/artifacts/debugger_agent/debugger-agent.jar";
+        if (Registry.is("debugger.capture.points.agent.debug")) {
+          agent += "=debug";
+        }
         if (!parameters.getVMParametersList().hasParameter(agent)) {
           parameters.getVMParametersList().add(agent);
         }

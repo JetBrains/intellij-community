@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SerializationFilterBase;
@@ -207,12 +208,7 @@ public class LoggerInitializedWithForeignClassInspectionBase extends BaseInspect
         return;
       }
       final PsiTypeElement operand = expression.getOperand();
-      final PsiType type = operand.getType();
-      if (!(type instanceof PsiClassType)) {
-        return;
-      }
-      final PsiClassType classType = (PsiClassType)type;
-      final PsiClass initializerClass = classType.resolve();
+      final PsiClass initializerClass = PsiUtil.resolveClassInClassTypeOnly(operand.getType());
       if (initializerClass == null) {
         return;
       }

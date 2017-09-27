@@ -51,7 +51,7 @@ public class MacComboBoxBorder extends MacIntelliJTextBorder {
       area.intersect(new Area(clip));
       g2.setClip(area);
 
-      int arc = isRound(c) ? JBUI.scale(6) : 0;
+      float arc = isRound(c) ? JBUI.scale(6f) : 0;
       Insets i = ((JComponent)c).getInsets();
 
       if (c instanceof JComboBox) {
@@ -80,15 +80,15 @@ public class MacComboBoxBorder extends MacIntelliJTextBorder {
       }
 
       Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
-      double lw = UIUtil.isRetina(g2) ? 0.5 : 1.0;
+      float lw = JBUI.scale(UIUtil.isRetina(g2) ? 0.5f : 1.0f);
       border.append(new RoundRectangle2D.Double(JBUI.scale(3), JBUI.scale(3),
-                                           c.getWidth() - JBUI.scale(6),
-                                           c.getHeight() - JBUI.scale(6),
+                                           c.getWidth() - JBUI.scale(3)*2,
+                                           c.getHeight() - JBUI.scale(3)*2,
                                                 arc, arc), false);
-      double innerArc = arc > 0 ? arc - lw : 0.0;
+      float innerArc = JBUI.scale(arc > 0 ? arc - lw : 0.0f);
       border.append(new RoundRectangle2D.Double(JBUI.scale(3) + lw, JBUI.scale(3) + lw,
-                                           c.getWidth() - JBUI.scale(6) - lw * 2,
-                                           c.getHeight() - JBUI.scale(6) - lw * 2,
+                                           c.getWidth() - (JBUI.scale(3) + lw) * 2,
+                                           c.getHeight() - (JBUI.scale(3) + lw) * 2,
                                                 innerArc, innerArc), false);
       g2.setColor(Gray.xBC);
       g2.fill(border);
@@ -146,15 +146,15 @@ public class MacComboBoxBorder extends MacIntelliJTextBorder {
 
   @Override void clipForBorder(Component c, Graphics2D g2, int width, int height) {
     Area area = new Area(new Rectangle2D.Double(0, 0, width, height));
-    double lw = UIUtil.isRetina(g2) ? 0.5 : 1.0;
+    double lw = JBUI.scale(UIUtil.isRetina(g2) ? 0.5f : 1.0f);
     Shape innerShape = isRound(c) ?
            new RoundRectangle2D.Double(JBUI.scale(3) + lw, JBUI.scale(3) + lw,
-                                       width - JBUI.scale(6) - lw * 2,
-                                       height - JBUI.scale(6) - lw * 2,
+                                       width - (JBUI.scale(3) + lw) * 2,
+                                       height - (JBUI.scale(3) + lw) * 2,
                                        JBUI.scale(3) + lw, JBUI.scale(3) + lw) :
            new Rectangle2D.Double(JBUI.scale(3) + lw, JBUI.scale(3) + lw,
-                                  width - JBUI.scale(6) - lw * 2,
-                                  height - JBUI.scale(6) - lw * 2);
+                                  width - (JBUI.scale(3) + lw) * 2,
+                                  height - (JBUI.scale(3) + lw) * 2);
 
     area.subtract(new Area(innerShape));
     area.add(getButtonBounds(c));

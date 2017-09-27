@@ -462,7 +462,7 @@ public class TreeUtil {
   @NotNull
   public static List<Pair<StubBase, TreeElement>> calcStubAstBindings(@NotNull StubTree stubTree, @NotNull FileElement tree) throws StubBindingException {
     PsiFile file = (PsiFile)tree.getPsi();
-    List<CompositeElement> nodes = tree.getStubbedDescendants();
+    List<CompositeElement> nodes = tree.getStubbedSpine().getNodes();
     List<StubElement<?>> stubs = stubTree.getPlainList();
     if (stubs.size() != nodes.size()) {
       throw new StubBindingException("Stub list in " + file.getName() + " length differs from PSI");

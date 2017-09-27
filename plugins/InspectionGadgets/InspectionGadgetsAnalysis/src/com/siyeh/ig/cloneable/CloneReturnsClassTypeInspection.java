@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,16 +133,9 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
         return;
       }
       final PsiType returnType = typeElement.getType();
-      if (!(returnType instanceof PsiClassType)) {
-        return;
-      }
-      final PsiClassType classType = (PsiClassType)returnType;
-      final PsiClass aClass = classType.resolve();
+      final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(returnType);
       final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
-      if (containingClass.equals(aClass)) {
+      if (containingClass == null || containingClass.equals(aClass)) {
         return;
       }
       if (!CloneUtils.isCloneable(containingClass)) {

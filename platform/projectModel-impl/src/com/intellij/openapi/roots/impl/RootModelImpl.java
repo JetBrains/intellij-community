@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -830,5 +831,10 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
         LOG.warn(e);
       }
     }
+  }
+
+  @NotNull
+  public VirtualFilePointerListener getRootsChangedListener() {
+    return myProjectRootManager.getRootsValidityChangedListener();
   }
 }

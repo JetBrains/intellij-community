@@ -16,7 +16,6 @@
 package com.siyeh.ipp.modifiers;
 
 import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -24,6 +23,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
@@ -147,21 +147,19 @@ abstract class ModifierIntention extends Intention implements LowPriorityAction 
     if (modifierList == null || modifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
       return MultiMap.emptyInstance();
     }
+    PsiModifierList copy = (PsiModifierList)modifierList.copy();
+    copy.setModifierProperty(getModifier(), true);
+    SearchScope useScope = member.getUseScope();
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       if (member instanceof PsiMethod) {
         JavaChangeSignatureUsageProcessor.ConflictSearcher.searchForHierarchyConflicts((PsiMethod)member, conflicts, getModifier());
       }
-      final PsiModifierList modifierListCopy = ReadAction.compute(() -> {
-        PsiModifierList copy = (PsiModifierList)modifierList.copy();
-        copy.setModifierProperty(getModifier(), true);
-        return copy;
-      });
-      
-      final Query<PsiReference> search = ReferencesSearch.search(member, member.getUseScope());
+
+      final Query<PsiReference> search = ReferencesSearch.search(member, useScope);
       search.forEach(reference -> {
         final PsiElement element = reference.getElement();
-        if (JavaResolveUtil.isAccessible(member, member.getContainingClass(), modifierListCopy, element, null, null)) {
+        if (JavaResolveUtil.isAccessible(member, member.getContainingClass(), copy, element, null, null)) {
           return true;
         }
         final PsiElement context = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiField.class, PsiClass.class, PsiFile.class);

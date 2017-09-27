@@ -32,7 +32,7 @@ public class ModalityStateEx extends ModalityState {
   @SuppressWarnings("unused")
   public ModalityStateEx() { } // used by reflection to initialize NON_MODAL
 
-  public ModalityStateEx(@NotNull Object[] modalEntities) {
+  public ModalityStateEx(Object... modalEntities) {
     Collections.addAll(myModalEntities, modalEntities);
   }
 
@@ -70,22 +70,6 @@ public class ModalityStateEx extends ModalityState {
     return this == NON_MODAL
            ? "ModalityState.NON_MODAL"
            : "ModalityState:{" + StringUtil.join(getModalEntities(), it -> "[" + it + "]", ", ") + "}";
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof ModalityStateEx)) return false;
-
-    List<Object> entities = getModalEntities();
-    if (entities.isEmpty()) return false; //e.g. NON_MODAL isn't equal to ANY
-
-    return entities.equals(((ModalityStateEx)o).getModalEntities());
-  }
-
-  @Override
-  public int hashCode() {
-    return getModalEntities().hashCode();
   }
 
   void removeModality(Object modalEntity) {

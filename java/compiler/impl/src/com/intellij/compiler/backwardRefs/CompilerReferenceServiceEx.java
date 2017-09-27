@@ -16,7 +16,9 @@
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerReferenceService;
-import com.intellij.compiler.chainsSearch.MethodRefAndOccurrences;
+import com.intellij.compiler.chainsSearch.ChainOpAndOccurrences;
+import com.intellij.compiler.chainsSearch.MethodCall;
+import com.intellij.compiler.chainsSearch.TypeCast;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -35,9 +37,13 @@ public abstract class CompilerReferenceServiceEx extends CompilerReferenceServic
   }
 
   @NotNull
-  public abstract SortedSet<MethodRefAndOccurrences> findMethodReferenceOccurrences(@NotNull String rawReturnType,
-                                                                                    @SignatureData.IteratorKind byte iteratorKind,
-                                                                                    @NotNull ChainCompletionContext context)
+  public abstract SortedSet<ChainOpAndOccurrences<MethodCall>> findMethodReferenceOccurrences(@NotNull String rawReturnType,
+                                                                                              @SignatureData.IteratorKind byte iteratorKind,
+                                                                                              @NotNull ChainCompletionContext context)
+    throws ReferenceIndexUnavailableException;
+
+  @Nullable
+  public abstract ChainOpAndOccurrences<TypeCast> getMostUsedTypeCast(@NotNull String operandQName)
     throws ReferenceIndexUnavailableException;
 
   @Nullable

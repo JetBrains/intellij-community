@@ -30,7 +30,6 @@ import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.ValueContainer;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
-import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.CompilerBackwardReferenceIndex;
@@ -179,22 +178,20 @@ class CompilerReferenceReader {
     return myIndex;
   }
 
-  TObjectIntHashMap<LightRef> getTypeCasts(@NotNull LightRef.LightClassHierarchyElementDef castType, @NotNull TIntHashSet fileIds) throws StorageException {
-    TObjectIntHashMap<LightRef> typeCastStats = new TObjectIntHashMap<>();
+  @NotNull
+  OccurrenceCounter<LightRef> getTypeCastOperands(@NotNull LightRef.LightClassHierarchyElementDef castType, @Nullable TIntHashSet fileIds) throws StorageException {
+    OccurrenceCounter<LightRef> result = new OccurrenceCounter<>();
     myIndex.get(CompilerIndices.BACK_CAST).getData(castType).forEach(new ValueContainer.ContainerAction<Collection<LightRef>>() {
       @Override
       public boolean perform(int id, Collection<LightRef> values) {
-        if (!fileIds.contains(id)) return true;
+        if (fileIds != null && !fileIds.contains(id)) return true;
         for (LightRef ref : values) {
-          if (!typeCastStats.adjustValue(ref, 1)) {
-            typeCastStats.put(ref, 1);
-          }
+          result.add(ref);
         }
         return true;
       }
     });
-
-    return typeCastStats;
+    return result;
   }
 
   static boolean exists(Project project) {

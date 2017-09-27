@@ -131,25 +131,33 @@ public class DarculaUIUtil {
   }
 
   public static void paintErrorBorder(Graphics2D g, int width, int height, int arc, boolean symmetric, boolean hasFocus) {
+    paintErrorBorder(g, width, height, (float)arc, symmetric, hasFocus);
+  }
+
+  public static void paintErrorBorder(Graphics2D g, int width, int height, float arc, boolean symmetric, boolean hasFocus) {
     g.setPaint(hasFocus ? ACTIVE_ERROR_COLOR : INACTIVE_ERROR_COLOR);
     doPaint(g, width, height, arc, symmetric);
   }
 
   public static void paintFocusBorder(Graphics2D g, int width, int height, int arc, boolean symmetric) {
+    paintFocusBorder(g, width, height, (float)arc, symmetric);
+  }
+
+  public static void paintFocusBorder(Graphics2D g, int width, int height, float arc, boolean symmetric) {
     g.setPaint(IntelliJLaf.isGraphite() ? MAC_GRAPHITE_COLOR : MAC_REGULAR_COLOR);
     doPaint(g, width, height, arc, symmetric);
   }
 
   @SuppressWarnings("SuspiciousNameCombination")
-  private static void doPaint(Graphics2D g, int width, int height, int arc, boolean symmetric) {
-    double bw = UIUtil.isUnderDefaultMacTheme() ? (UIUtil.isRetina(g) ? 0.5 : 1.0) : 0.0;
+  private static void doPaint(Graphics2D g, int width, int height, float arc, boolean symmetric) {
+    double bw = UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(UIUtil.isRetina(g) ? 0.5f : 1.0f) : 0.0;
     double lw = JBUI.scale(UIUtil.isUnderDefaultMacTheme() ? 3 : 2);
 
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
-    double outerArc = arc > 0 ? arc + lw - JBUI.scale(2) : lw;
-    double rightOuterArc = symmetric ? outerArc : JBUI.scale(6);
+    double outerArc = arc > 0 ? arc + lw - JBUI.scale(2f) : lw;
+    double rightOuterArc = symmetric ? outerArc : JBUI.scale(6f);
     Path2D outerRect = new Path2D.Double(Path2D.WIND_EVEN_ODD);
     outerRect.moveTo(width - rightOuterArc, 0);
     outerRect.quadTo(width, 0, width, rightOuterArc);
@@ -162,7 +170,7 @@ public class DarculaUIUtil {
     outerRect.closePath();
 
     lw += bw;
-    double rightInnerArc = symmetric ? outerArc : JBUI.scale(7);
+    double rightInnerArc = symmetric ? outerArc : JBUI.scale(7f);
     Path2D innerRect = new Path2D.Double(Path2D.WIND_EVEN_ODD);
     innerRect.moveTo(width - rightInnerArc, lw);
     innerRect.quadTo(width - lw, lw , width - lw, rightInnerArc);

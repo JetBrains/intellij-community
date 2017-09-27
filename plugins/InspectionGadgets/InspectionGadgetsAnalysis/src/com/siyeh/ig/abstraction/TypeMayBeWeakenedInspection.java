@@ -112,7 +112,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
   @NotNull
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
     final Iterable<PsiClass> weakerClasses = (Iterable<PsiClass>)infos[1];
-    final Collection<InspectionGadgetsFix> fixes = new ArrayList();
+    final Collection<InspectionGadgetsFix> fixes = new ArrayList<>();
     for (PsiClass weakestClass : weakerClasses) {
       final String className = getClassName(weakestClass);
       if (className == null) {
@@ -183,7 +183,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
       if (aClass != null) {
         final PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
         if (typeParameters.length != 0 && typeParameters.length == parameterTypes.length) {
-          final Map<PsiTypeParameter, PsiType> typeParameterMap = new HashMap();
+          final Map<PsiTypeParameter, PsiType> typeParameterMap = new HashMap<>();
           for (int i = 0; i < typeParameters.length; i++) {
             final PsiTypeParameter typeParameter = typeParameters[i];
             final PsiType parameterType = parameterTypes[i];

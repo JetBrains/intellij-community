@@ -1953,13 +1953,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     protected boolean isEnabled(final AnAction action) {
-      if (myDisabledActions.contains(action)) return false;
-      final AnActionEvent e = new AnActionEvent(myActionEvent.getInputEvent(),
-                                                myActionEvent.getDataContext(),
-                                                myActionEvent.getPlace(),
+      AnActionEvent event = myActionEvent;
+      if (myDisabledActions.contains(action) || event == null) return false;
+      final AnActionEvent e = new AnActionEvent(event.getInputEvent(),
+                                                event.getDataContext(),
+                                                event.getPlace(),
                                                 action.getTemplatePresentation().clone(),
-                                                myActionEvent.getActionManager(),
-                                                myActionEvent.getModifiers());
+                                                event.getActionManager(),
+                                                event.getModifiers());
 
       ApplicationManager.getApplication().invokeAndWait(() -> ActionUtil.performDumbAwareUpdate(action, e, false), ModalityState.NON_MODAL);
       final Presentation presentation = e.getPresentation();

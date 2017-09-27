@@ -606,32 +606,32 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, Applicat
       }
     };
 
-    final HTMLEditorKit.HTMLFactory factory = new HTMLEditorKit.HTMLFactory() {
-      @Override
-      public View create(Element elem) {
-        AttributeSet attrs = elem.getAttributes();
-        Object elementName = attrs.getAttribute(AbstractDocument.ElementNameAttribute);
-        Object o = elementName != null ? null : attrs.getAttribute(StyleConstants.NameAttribute);
-        if (o instanceof HTML.Tag) {
-          HTML.Tag kind = (HTML.Tag)o;
-          if (kind == HTML.Tag.HR) {
-            View view = super.create(elem);
-            try {
-              Field field = view.getClass().getDeclaredField("size");
-              field.setAccessible(true);
-              field.set(view, JBUI.scale(1));
-              return view;
-            }
-            catch (Exception ignored) {
-              //ignore
+    HTMLEditorKit kit = new UIUtil.JBHtmlEditorKit() {
+      final HTMLFactory factory = new HTMLFactory() {
+        @Override
+        public View create(Element elem) {
+          AttributeSet attrs = elem.getAttributes();
+          Object elementName = attrs.getAttribute(AbstractDocument.ElementNameAttribute);
+          Object o = elementName != null ? null : attrs.getAttribute(StyleConstants.NameAttribute);
+          if (o instanceof HTML.Tag) {
+            HTML.Tag kind = (HTML.Tag)o;
+            if (kind == HTML.Tag.HR) {
+              View view = super.create(elem);
+              try {
+                Field field = view.getClass().getDeclaredField("size");
+                field.setAccessible(true);
+                field.set(view, JBUI.scale(1));
+                return view;
+              }
+              catch (Exception ignored) {
+                //ignore
+              }
             }
           }
+          return super.create(elem);
         }
-        return super.create(elem);
-      }
-    };
+      };
 
-    HTMLEditorKit kit = new HTMLEditorKit() {
       @Override
       public ViewFactory getViewFactory() {
         return factory;

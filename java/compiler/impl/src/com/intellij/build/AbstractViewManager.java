@@ -221,6 +221,7 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
 
     @Override
     public void update(@NotNull AnActionEvent e) {
+      if (!myContent.isValid()) return;
       Boolean isPinnedAndExtracted = myContent.getUserData(PINNED_EXTRACTED_CONTENT);
       if (isPinnedAndExtracted == Boolean.TRUE) {
         e.getPresentation().setEnabledAndVisible(false);
@@ -264,21 +265,20 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
     public void actionPerformed(AnActionEvent e) {
       if (myBuildsView == null) return;
       Content content = myBuildsView.getContent();
-      final boolean removedOk = content.getManager().removeContent(content, true);
-      if (removedOk) {
-        if (myBuildsViewValue.getValue() == myBuildsView) {
-          myBuildsViewValue.drop();
-        }
-        else {
-          myPinnedViews.remove(myBuildsView);
-        }
-        myBuildsView = null;
+      if (!content.isValid()) return;
+      content.getManager().removeContent(content, true, true, true);
+      if (myBuildsViewValue.getValue() == myBuildsView) {
+        myBuildsViewValue.drop();
       }
+      else {
+        myPinnedViews.remove(myBuildsView);
+      }
+      myBuildsView = null;
     }
 
     @Override
     public void update(AnActionEvent e) {
-      if (myBuildsView.hasRunningBuilds()) {
+      if (myBuildsView != null && myBuildsView.hasRunningBuilds()) {
         e.getPresentation().setEnabled(false);
       }
       else {

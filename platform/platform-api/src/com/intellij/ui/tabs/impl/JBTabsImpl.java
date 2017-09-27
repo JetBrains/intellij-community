@@ -1348,8 +1348,7 @@ public class JBTabsImpl extends JComponent
   public List<TabInfo> getTabs() {
     if (myAllTabs != null) return myAllTabs;
 
-    ArrayList<TabInfo> result = new ArrayList<>();
-    result.addAll(myVisibleInfos);
+    ArrayList<TabInfo> result = new ArrayList<>(myVisibleInfos);
 
     for (TabInfo each : myHiddenInfos.keySet()) {
       result.add(getIndexInVisibleArray(each), each);
@@ -1487,8 +1486,7 @@ public class JBTabsImpl extends JComponent
       }
 
 
-      List<TabInfo> visible = new ArrayList<>();
-      visible.addAll(getVisibleInfos());
+      List<TabInfo> visible = new ArrayList<>(getVisibleInfos());
 
       if (myDropInfo != null && !visible.contains(myDropInfo) && myShowDropLocation) {
         if (getDropInfoIndex() >= 0 && getDropInfoIndex() < visible.size()) {

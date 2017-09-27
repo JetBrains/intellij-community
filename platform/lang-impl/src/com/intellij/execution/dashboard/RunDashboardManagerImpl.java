@@ -332,6 +332,8 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
 
   private void updateDashboard(final boolean withStructure) {
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+    if (toolWindowManager == null) return;
+
     toolWindowManager.invokeLater(() -> {
       if (myProject.isDisposed()) {
         return;
@@ -342,7 +344,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
         ToolWindow toolWindow = toolWindowManager.getToolWindow(getToolWindowId());
         if (toolWindow == null) {
           if (available) {
-            createToolWindow().show(null);
+            createToolWindow(toolWindowManager).show(null);
           }
           return;
         }
@@ -360,8 +362,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     });
   }
 
-  private ToolWindow createToolWindow() {
-    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+  private ToolWindow createToolWindow(ToolWindowManager toolWindowManager) {
     ToolWindow toolWindow = toolWindowManager.registerToolWindow(getToolWindowId(), false, ToolWindowAnchor.BOTTOM,
                                                                  myProject, true);
     toolWindow.setIcon(getToolWindowIcon());
@@ -375,9 +376,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
 
   private void updateToolWindowContent() {
     AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
-      if (myToolWindowContent == null) {
-        return;
-      }
+      if (myToolWindowContent == null) return;
 
       String tabName = null;
       Icon tabIcon = null;
@@ -391,7 +390,10 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
       myToolWindowContent.setDisplayName(tabName);
       myToolWindowContent.setIcon(tabIcon);
 
-      ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(getToolWindowId());
+      ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+      if (toolWindowManager == null) return;
+
+      ToolWindow toolWindow = toolWindowManager.getToolWindow(getToolWindowId());
       if (toolWindow instanceof ToolWindowImpl) {
         ToolWindowContentUi contentUi = ((ToolWindowImpl)toolWindow).getContentUI();
         contentUi.revalidate();

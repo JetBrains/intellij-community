@@ -437,6 +437,10 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     return tool == null ? new UnusedDeclarationInspectionBase() : tool;
   }
 
+  public static boolean isDeclaredAsEntryPoint(@NotNull PsiElement method) {
+    return findUnusedDeclarationInspection(method).isEntryPoint(method);
+  }
+
   private static class StrictUnreferencedFilter extends UnreferencedFilter {
     private StrictUnreferencedFilter(@NotNull UnusedDeclarationInspectionBase tool, @NotNull GlobalInspectionContext context) {
       super(tool, context);

@@ -337,4 +337,7 @@ public interface IdeActions {
   String ACTION_SWITCHER = "Switcher";
 
   @NonNls String INSPECTION_TOOL_WINDOW_TREE_POPUP = "InspectionToolWindow.TreePopup";
+
+  @NonNls String ACTION_METHOD_OVERLOAD_SWITCH_UP = "MethodOverloadSwitchUp";
+  @NonNls String ACTION_METHOD_OVERLOAD_SWITCH_DOWN = "MethodOverloadSwitchDown";
 }
