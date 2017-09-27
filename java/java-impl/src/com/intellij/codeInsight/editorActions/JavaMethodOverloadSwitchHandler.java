@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -96,34 +84,40 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
 
     Object[] objects = controller.getObjects();
     Object highlighted = controller.getHighlighted();
-    if (objects == null || objects.length <= 1 || highlighted == null) return;
+    if (objects == null || objects.length <= 1) return;
 
-    int currentIndex = ContainerUtil.indexOf(Arrays.asList(objects), highlighted);
-    if (currentIndex < 0) return;
-
-    PsiMethod currentMethod = (PsiMethod)((CandidateInfo)objects[currentIndex]).getElement();
-    int currentMethodParameterCount = currentMethod.getParameterList().getParametersCount();
-    PsiExpression[] enteredExpressions = ((PsiExpressionList)exprList).getExpressions();
-    int enteredCount = enteredExpressions.length;
-    if (currentMethodParameterCount != enteredCount && !(enteredCount == 0 && currentMethodParameterCount == 1)) {
-      // when parameter list has been edited, but popup wasn't updated for some reason
-      return;
-    }
-
-    UsageTrigger.trigger("method.overload.switch");
-    
     Map<String, String> enteredParameters = exprList.getUserData(ENTERED_PARAMETERS);
     if (enteredParameters == null) {
       exprList.putUserData(ENTERED_PARAMETERS, enteredParameters = new HashMap<>());
     }
-    for (int i = 0; i < enteredExpressions.length; i++) {
-      PsiExpression expression = enteredExpressions[i];
-      String value = expression.getText().trim();
-      if (!value.isEmpty()) {
-        String key = getParameterKey(currentMethod, i);
-        enteredParameters.put(key, value);
+    int currentIndex;
+    if (highlighted == null) {
+      currentIndex = mySwitchUp ? objects.length : -1;
+    }
+    else {
+      currentIndex = ContainerUtil.indexOf(Arrays.asList(objects), highlighted);
+      if (currentIndex < 0) return;
+
+      PsiMethod currentMethod = (PsiMethod)((CandidateInfo)objects[currentIndex]).getElement();
+      int currentMethodParameterCount = currentMethod.getParameterList().getParametersCount();
+      PsiExpression[] enteredExpressions = ((PsiExpressionList)exprList).getExpressions();
+      int enteredCount = enteredExpressions.length;
+      if (currentMethodParameterCount != enteredCount && !(enteredCount == 0 && currentMethodParameterCount == 1)) {
+        // when parameter list has been edited, but popup wasn't updated for some reason
+        return;
+      }
+
+      for (int i = 0; i < enteredExpressions.length; i++) {
+        PsiExpression expression = enteredExpressions[i];
+        String value = expression.getText().trim();
+        if (!value.isEmpty()) {
+          String key = getParameterKey(currentMethod, i);
+          enteredParameters.put(key, value);
+        }
       }
     }
+
+    UsageTrigger.trigger("method.overload.switch");
 
     final PsiMethod targetMethod =
       (PsiMethod)((CandidateInfo)objects[(currentIndex + (mySwitchUp ? -1 : 1) + objects.length) % objects.length]).getElement();
@@ -157,6 +151,7 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
     CompletionMemory.registerChosenMethod(targetMethod, methodCall);
     controller.resetHighlighted();
     controller.updateComponent(); // update popup immediately (otherwise, it will be updated only after delay)
+    controller.setPreservedOnHintHidden(true);
     ParameterHintsPass.syncUpdate(call, editor);
   }
 

@@ -447,6 +447,10 @@ public class ParameterInfoController implements Disposable {
     myComponent.setHighlightedParameter(null);
   }
 
+  public void setPreservedOnHintHidden(boolean value) {
+    myKeepOnHintHidden = value;
+  }
+
   @TestOnly
   public static void waitForDelayedActions(@NotNull Editor editor, long timeout, @NotNull TimeUnit unit) throws TimeoutException {
     long deadline = System.currentTimeMillis() + unit.toMillis(timeout);

@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -563,7 +551,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     waitForAllAsyncStuff();
     checkHintContents("<html><font color=gray>@NotNull String key</font color=gray></html>\n" +
                       "-\n" +
-                      "<html>@NotNull String key, <b>String def</b></html>");
+                      "[<html>@NotNull String key, <b>String def</b></html>]");
   }
 
   public void testHintPopupContentsForMethodWithoutOverloads() throws Exception {
@@ -590,7 +578,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     waitForAllAsyncStuff();
     checkHintContents("<html><b>@NotNull String key</b></html>\n" +
                       "-\n" +
-                      "<html><b>@NotNull String key</b>, String def</html>");
+                      "[<html><b>@NotNull String key</b>, String def</html>]");
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP);
     waitForAllAsyncStuff();
     checkResultWithInlays("<caret>class C { void m() { System.getProperty(<hint text=\"key:\"/>, <hint text=\"def:\"/>) } }");
@@ -606,7 +594,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     waitForAllAsyncStuff();
     checkHintContents("<html><b>@NotNull String key</b></html>\n" +
                       "-\n" +
-                      "<html><b>@NotNull String key</b>, String def</html>");
+                      "[<html><b>@NotNull String key</b>, String def</html>]");
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN);
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { void m() { System.getProperty(<hint text=\"key:\"/>, <hint text=\"def:\"/>) } }<caret>");
@@ -630,6 +618,31 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     complete("getProperty(String key)");
     waitForAllAsyncStuff();
     checkHintContents("<html><b>@NotNull String</b>&nbsp;&nbsp;<i>the name of the system property.  </i></html>");
+  }
+
+  public void testSwitchIsPossibleForManuallyEnteredUnmatchedMethodCall() throws Exception {
+    configureJava("class C {\n" +
+                  "  void a(int p, int q) {}\n" +
+                  "  void a(int p, int q, int r) {}\n" +
+                  "  void m() { a(<caret>) }\n" +
+                  "}");
+    showParameterInfo();
+    checkHintContents("<html><b>int p</b>, int q</html>\n" +
+                      "-\n" +
+                      "<html><b>int p</b>, int q, int r</html>");
+    methodOverloadDown();
+    checkResultWithInlays("class C {\n" +
+                          "  void a(int p, int q) {}\n" +
+                          "  void a(int p, int q, int r) {}\n" +
+                          "  void m() { a(<HINT text=\"p:\"/><caret>, <hint text=\"q:\"/>) }\n" +
+                          "}");
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "  void a(int p, int q) {}\n" +
+                          "  void a(int p, int q, int r) {}\n" +
+                          "  void m() { a(<hint text=\"p:\"/>, <HINT text=\"q:\"/><caret>) }\n" +
+                          "}");
   }
 
   private void checkResult(String text) {
