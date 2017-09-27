@@ -17,12 +17,12 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.RequireNonNullInspection;
+import com.intellij.codeInspection.ReplaceNullCheckInspection;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class RequireNonNullInspectionTest extends LightQuickFixParameterizedTestCase {
+public class ReplaceNullCheckInspectionTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected Sdk getProjectJDK() {
     return IdeaTestUtil.getMockJdk9();
@@ -31,7 +31,7 @@ public class RequireNonNullInspectionTest extends LightQuickFixParameterizedTest
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new RequireNonNullInspection()};
+    return new LocalInspectionTool[]{new ReplaceNullCheckInspection()};
   }
 
   public void test() {
