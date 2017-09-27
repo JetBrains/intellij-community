@@ -16,7 +16,6 @@
 package org.jetbrains.idea.devkit.navigation.structure;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
@@ -50,7 +49,6 @@ import java.util.List;
 import java.util.Set;
 
 public class PluginDescriptorStructureUtil {
-  private static final Logger LOG = Logger.getInstance(PluginDescriptorStructureUtil.class);
   private static final Set<String> KNOWN_TOP_LEVEL_NODE_NAMES =
     ContainerUtil.immutableSet("id", "name", "version", "category", "resource-bundle");
 
@@ -421,11 +419,7 @@ public class PluginDescriptorStructureUtil {
       return null;
     }
     UField field = UastContextKt.toUElement(resolved, UField.class);
-    if (field == null) {
-      LOG.error("Cannot convert PsiField to UField: " + resolved);
-      return null;
-    }
-
+    assert field != null;
     UExpression expression = field.getUastInitializer();
     if (expression == null) {
       return null;
