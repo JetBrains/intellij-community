@@ -21,7 +21,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
@@ -84,7 +83,7 @@ public class LaterInvocator {
   private static final Map<Project, List<Dialog>> projectToModalEntities = ContainerUtil.createWeakMap();
   private static final Map<Project, Stack<ModalityState>> projectToModalEntitiesStack = ContainerUtil.createWeakMap();
 
-  private static final Stack<ModalityState> ourModalityStack = new Stack<>(ModalityState.NON_MODAL);
+  private static final Stack<ModalityStateEx> ourModalityStack = new Stack<>((ModalityStateEx)ModalityState.NON_MODAL);
   private static final List<RunnableInfo> ourQueue = new ArrayList<>(); //protected by LOCK
   private static volatile int ourQueueSkipCount; // optimization: should look for next events starting from this index
   private static final FlushQueue ourFlushQueueRunnable = new FlushQueue();
@@ -103,27 +102,12 @@ public class LaterInvocator {
 
   @NotNull
   static ModalityStateEx modalityStateForWindow(@NotNull Window window) {
-    int index = ourModalEntities.indexOf(window);
-    if (index < 0) {
-      Window owner = window.getOwner();
-      if (owner == null) {
-        return (ModalityStateEx)ApplicationManager.getApplication().getNoneModalityState();
-      }
-      ModalityStateEx ownerState = modalityStateForWindow(owner);
-      if (window instanceof Dialog && ((Dialog)window).isModal()) {
-        return ownerState.appendEntity(window);
-      }
-      return ownerState;
-    }
-
-    List<Object> result = new ArrayList<>();
-    for (Object entity : ourModalEntities) {
-      if (entity instanceof Window ||
-          entity instanceof ProgressIndicator && ((ProgressIndicator)entity).isModal()) {
-        result.add(entity);
+    for (ModalityStateEx state : ourModalityStack) {
+      if (state.getModalEntities().contains(window)) {
+        return state;
       }
     }
-    return new ModalityStateEx(result.toArray());
+    return (ModalityStateEx)ModalityState.NON_MODAL;
   }
 
   @NotNull
@@ -191,6 +175,10 @@ public class LaterInvocator {
   }
 
   public static void enterModal(@NotNull Object modalEntity) {
+    enterModal(modalEntity, getCurrentModalityState().appendEntity(modalEntity));
+  }
+
+  public static void enterModal(@NotNull Object modalEntity, @NotNull ModalityStateEx appendedState) {
     LOG.assertTrue(isDispatchThread(), "enterModal() should be invoked in event-dispatch thread");
 
     if (LOG.isDebugEnabled()) {
@@ -200,11 +188,11 @@ public class LaterInvocator {
     ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(true);
 
     ourModalEntities.add(modalEntity);
-    ourModalityStack.push(new ModalityStateEx(ArrayUtil.toObjectArray(ourModalEntities)));
+    ourModalityStack.push(appendedState);
 
     TransactionGuardImpl guard = IdeaApplication.isLoaded() ? (TransactionGuardImpl)TransactionGuard.getInstance() : null;
     if (guard != null) {
-      guard.enteredModality(ourModalityStack.peek());
+      guard.enteredModality(appendedState);
     }
   }
 
@@ -247,7 +235,7 @@ public class LaterInvocator {
       ourModalEntities.remove(index);
       ourModalityStack.remove(index + 1);
       for (int i = 1; i < ourModalityStack.size(); i++) {
-        ((ModalityStateEx)ourModalityStack.get(i)).removeModality(dialog);
+        ourModalityStack.get(i).removeModality(dialog);
       }
     } else if (project != null) {
       List<Dialog> dialogs = projectToModalEntities.get(project);
@@ -310,7 +298,7 @@ public class LaterInvocator {
   }
 
   @NotNull
-  public static ModalityState getCurrentModalityState() {
+  public static ModalityStateEx getCurrentModalityState() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return ourModalityStack.peek();
   }
