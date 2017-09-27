@@ -193,14 +193,15 @@ abstract class PrebuiltStubsProviderBase : PrebuiltStubsProvider, Disposable {
   }
 
   private fun findPrebuiltIndicesRoot(): File? {
-    var path: String? = System.getProperty(PREBUILT_INDICES_PATH_PROPERTY)
+    val path: String? = System.getProperty(PREBUILT_INDICES_PATH_PROPERTY)
     if (path != null && File(path).exists()) {
       return File(path)
     }
-    path = PathManager.getHomePath()
-    val f = File(path, "index/$name") // compiled binary
+    val f = indexRoot()
     return if (f.exists()) f else null
   }
+
+  open fun indexRoot():File = File(PathManager.getHomePath(), "index/$name") // compiled binary
 }
 
 @TestOnly
