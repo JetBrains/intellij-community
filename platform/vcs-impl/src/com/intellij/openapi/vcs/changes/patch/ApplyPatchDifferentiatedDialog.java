@@ -160,7 +160,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myPreselectedChanges = preselectedChanges;
     myErrorNotificationPanel = new EditorNotificationPanel(LightColors.RED);
     cleanNotifications();
-    myChangesTreeList = new MyChangeTreeList(project, Collections.emptyList(),
+    myChangesTreeList = new MyChangeTreeList(project,
                                              new Runnable() {
                                                @Override
                                                public void run() {
@@ -570,33 +570,21 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
   }
 
-  private class MyChangeTreeList extends ChangesTreeList<AbstractFilePatchInProgress.PatchChange> {
+  private class MyChangeTreeList extends ChangesTreeImpl<AbstractFilePatchInProgress.PatchChange> {
+    @Nullable private final ChangeNodeDecorator myChangeNodeDecorator;
+
     private MyChangeTreeList(Project project,
-                             Collection<AbstractFilePatchInProgress.PatchChange> initiallyIncluded,
                              @Nullable Runnable inclusionListener,
                              @Nullable ChangeNodeDecorator decorator) {
-      super(project, initiallyIncluded, true, false, inclusionListener, decorator);
+      super(project, true, false, AbstractFilePatchInProgress.PatchChange.class);
+      setInclusionListener(inclusionListener);
+      myChangeNodeDecorator = decorator;
     }
 
+    @NotNull
     @Override
-    protected DefaultTreeModel buildTreeModel(List<AbstractFilePatchInProgress.PatchChange> changes,
-                                              ChangeNodeDecorator changeNodeDecorator) {
-      return TreeModelBuilder.buildFromChanges(myProject, isShowFlatten(), changes, changeNodeDecorator);
-    }
-
-    @Override
-    protected List<AbstractFilePatchInProgress.PatchChange> getSelectedObjects(ChangesBrowserNode<?> node) {
-      final List<Change> under = node.getAllChangesUnder();
-      return map(under, AbstractFilePatchInProgress.PatchChange.class::cast);
-    }
-
-    @Override
-    protected AbstractFilePatchInProgress.PatchChange getLeadSelectedObject(ChangesBrowserNode<?> node) {
-      final Object o = node.getUserObject();
-      if (o instanceof AbstractFilePatchInProgress.PatchChange) {
-        return (AbstractFilePatchInProgress.PatchChange)o;
-      }
-      return null;
+    protected DefaultTreeModel buildTreeModel(@NotNull List<AbstractFilePatchInProgress.PatchChange> changes) {
+      return TreeModelBuilder.buildFromChanges(myProject, isShowFlatten(), changes, myChangeNodeDecorator);
     }
 
     @Override
@@ -699,7 +687,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
           toSelect.add(change);
         }
       }
-      myChangesTreeList.select(toSelect);
+      myChangesTreeList.setSelectedChanges(toSelect);
     }
 
     myContainBasedChanges = false;
