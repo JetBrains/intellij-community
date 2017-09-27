@@ -752,7 +752,17 @@ public class PyCallExpressionHelper {
   private static List<PyCallExpression.PyRatedCallee> multiResolveCallee(@NotNull PyCallSiteExpression callSite,
                                                                          @NotNull PyResolveContext resolveContext) {
     if (callSite instanceof PyCallExpression) {
-      return PyUtil.filterTopPriorityResults(((PyCallExpression)callSite).multiResolveRatedCalleeFunction(resolveContext));
+      final List<PyCallExpression.PyRatedMarkedCallee> callees = ((PyCallExpression)callSite).multiResolveRatedCallee(resolveContext);
+
+      final com.intellij.util.Function<PyCallExpression.PyRatedMarkedCallee, PyCallExpression.PyRatedCallee> toRatedCallee =
+        markedCallee ->
+          new PyCallExpression.PyRatedCallee(
+            markedCallee.getMarkedCallee().getCallableType(),
+            markedCallee.getElement(),
+            markedCallee.getRate()
+          );
+
+      return PyUtil.filterTopPriorityResults(ContainerUtil.map(callees, toRatedCallee));
     }
     else if (callSite instanceof PySubscriptionExpression || callSite instanceof PyBinaryExpression) {
       final List<PyCallExpression.PyRatedCallee> results = new ArrayList<>();

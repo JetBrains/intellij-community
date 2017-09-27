@@ -247,8 +247,11 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * @param resolveContext resolve context
    * @return the rated resolved callees or an empty list.
    * <i>Note: the returned list does not contain null values.</i>
+   * @deprecated Use {@link PyCallExpression#multiResolveRatedCallee(PyResolveContext)} instead.
+   * This method will be removed in 2018.1.
    */
   @NotNull
+  @Deprecated
   default List<PyRatedCallee> multiResolveRatedCalleeFunction(@NotNull PyResolveContext resolveContext) {
     return ContainerUtil.map(multiResolveRatedCallee(resolveContext, 0),
                              markedCallee -> new PyRatedCallee(markedCallee.getMarkedCallee().getCallableType(),
