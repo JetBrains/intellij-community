@@ -59,8 +59,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
@@ -214,7 +212,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   public void setShowFlatten(final boolean showFlatten) {
     if (myShowFlatten == showFlatten) return;
 
-    final List<Object> oldSelection = getSelectedChanges();
+    final List<Object> oldSelection = getSelectedUserObjects();
     if (myKeepTreeState && showFlatten) {
       myNonFlatTreeState = TreeState.createOn(this, getRoot());
     }
@@ -345,30 +343,18 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
 
   @NotNull
-  private List<Object> getChanges() {
-    return getChanges(getRoot());
+  private List<Object> getAllUserObjects() {
+    return VcsTreeModelData.all(this).userObjects();
   }
 
   @NotNull
-  private List<Object> getChanges(@NotNull ChangesBrowserNode<?> node) {
-    return node.getNodesUnderStream()
-      .filter(ChangesBrowserNode::isMeaningfulNode)
-      .map(ChangesBrowserNode::getUserObject)
-      .collect(Collectors.toList());
+  private List<Object> getUserObjectsUnder(@NotNull ChangesBrowserNode<?> node) {
+    return VcsTreeModelData.children(node).userObjects();
   }
 
   @NotNull
-  private List<Object> getSelectedChanges() {
-    final TreePath[] paths = getSelectionPaths();
-    if (paths == null) return Collections.emptyList();
-
-    return Stream.of(paths)
-      .map(path -> (ChangesBrowserNode)path.getLastPathComponent())
-      .<ChangesBrowserNode>flatMap(ChangesBrowserNode::getNodesUnderStream)
-      .filter(ChangesBrowserNode::isMeaningfulNode)
-      .distinct()
-      .map(ChangesBrowserNode::getUserObject)
-      .collect(Collectors.toList());
+  private List<Object> getSelectedUserObjects() {
+    return VcsTreeModelData.selected(this).userObjects();
   }
 
 
@@ -533,7 +519,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     boolean hasIncluded = false;
     boolean hasExcluded = false;
 
-    for (Object change : getChanges(node)) {
+    for (Object change : getUserObjectsUnder(node)) {
       if (myIncludedChanges.contains(change)) {
         hasIncluded = true;
       }
@@ -554,8 +540,8 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   private class MyToggleSelectionAction extends AnAction implements DumbAware {
     @Override
     public void actionPerformed(AnActionEvent e) {
-      List<Object> changes = getSelectedChanges();
-      if (changes.isEmpty()) changes = getChanges();
+      List<Object> changes = getSelectedUserObjects();
+      if (changes.isEmpty()) changes = getAllUserObjects();
       toggleChanges(changes);
     }
   }
@@ -648,7 +634,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
         baseRect.setSize(myCheckboxWidth, baseRect.height);
         if (baseRect.contains(e.getPoint())) {
           setSelectionRow(row);
-          toggleChanges(getSelectedChanges());
+          toggleChanges(getSelectedUserObjects());
         }
       }
     }
