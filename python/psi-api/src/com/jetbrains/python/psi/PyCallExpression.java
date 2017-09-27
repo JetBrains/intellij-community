@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElement;
@@ -30,7 +18,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Represents an entire call expression, like <tt>foo()</tt> or <tt>foo.bar[1]('x')</tt>.
@@ -166,9 +153,11 @@ public interface PyCallExpression extends PyCallSiteExpression {
    *
    * @param resolveContext resolve context
    * @return the resolved callee or null if it cannot be resolved
-   * @see PyCallExpression#multiResolveCalleeFunction(PyResolveContext)
+   * @deprecated Use {@link PyCallExpression#multiResolveCalleeFunction(PyResolveContext)} instead.
+   * This method will be removed in 2018.1.
    */
   @Nullable
+  @Deprecated
   default PyCallable resolveCalleeFunction(@NotNull PyResolveContext resolveContext) {
     final PyRatedMarkedCallee first = ContainerUtil.getFirstItem(multiResolveRatedCallee(resolveContext, 0));
     return first == null ? null : first.getElement();
@@ -207,6 +196,8 @@ public interface PyCallExpression extends PyCallSiteExpression {
 
   /**
    * Resolves the callee to possible functions.
+   * Try to use {@link PyCallExpression#multiResolveCallee(PyResolveContext)}
+   * because resolve result could contain {@code null} callable but {@code non-null} callable type.
    *
    * @param resolveContext resolve context
    * @return the resolved callees or an empty list.
@@ -214,11 +205,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
    */
   @NotNull
   default List<PyCallable> multiResolveCalleeFunction(@NotNull PyResolveContext resolveContext) {
-    return multiResolveRatedCallee(resolveContext, 0)
-      .stream()
-      .map(PyRatedMarkedCallee::getElement)
-      .filter(Objects::nonNull)
-      .collect(Collectors.toList());
+    return ContainerUtil.mapNotNull(multiResolveRatedCallee(resolveContext, 0), PyRatedMarkedCallee::getElement);
   }
 
   /**
