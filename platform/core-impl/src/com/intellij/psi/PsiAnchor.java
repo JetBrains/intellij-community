@@ -396,9 +396,11 @@ public abstract class PsiAnchor {
       if (throwIfNull) throw new AssertionError("Null file");
       return null;
     }
-
+    
+    if (index == 0) return fileImpl;
+    
     StubbedSpine spine = fileImpl.getStubbedSpine();
-    StubBasedPsiElement psi = spine.getStubPsi(index);
+    StubBasedPsiElement psi = (StubBasedPsiElement)spine.getStubPsi(index);
     if (psi == null) {
       if (throwIfNull) throw new AssertionError("Too large index: " + index + ">=" + spine.getStubCount());
       return null;

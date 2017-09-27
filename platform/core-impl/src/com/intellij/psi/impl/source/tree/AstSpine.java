@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.source.StubbedSpine;
 import com.intellij.psi.tree.IElementType;
@@ -42,8 +43,8 @@ public class AstSpine implements StubbedSpine {
 
   @Nullable
   @Override
-  public StubBasedPsiElement getStubPsi(int index) {
-    return index >= myNodes.size() ? null : (StubBasedPsiElement)myNodes.get(index).getPsi();
+  public PsiElement getStubPsi(int index) {
+    return index >= myNodes.size() ? null : myNodes.get(index).getPsi();
   }
 
   public int getStubIndex(@NotNull StubBasedPsiElement psi) {

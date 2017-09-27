@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.stubs;
 
-import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.StubbedSpine;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
@@ -40,9 +40,9 @@ class StubSpine implements StubbedSpine {
 
   @Nullable
   @Override
-  public StubBasedPsiElement getStubPsi(int index) {
+  public PsiElement getStubPsi(int index) {
     List<StubElement<?>> stubs = myTree.getPlainList();
-    return index >= stubs.size() ? null : (StubBasedPsiElement)stubs.get(index).getPsi();
+    return index >= stubs.size() ? null : stubs.get(index).getPsi();
   }
 
   @Nullable

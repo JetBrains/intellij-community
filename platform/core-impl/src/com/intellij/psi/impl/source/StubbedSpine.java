@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.source;
 
-import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +29,7 @@ public interface StubbedSpine {
 
   /** @return the stubbed PSI element at the given index or null if index is greater than the spine size */
   @Nullable
-  StubBasedPsiElement getStubPsi(int index);
+  PsiElement getStubPsi(int index);
 
   /** 
    * @return the stubbed PSI element's type at the given index or null if index is greater than the spine size.
