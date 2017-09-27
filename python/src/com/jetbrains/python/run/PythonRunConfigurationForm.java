@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
@@ -33,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 
 /**
@@ -50,6 +50,11 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   private final Project myProject;
   private JBCheckBox myShowCommandLineCheckbox;
   private JBCheckBox myEmulateTerminalCheckbox;
+  private JBCheckBox myRunModuleCheckBox;
+  private JLabel myModuleLabel;
+  private RawCommandLineEditor myModuleField;
+  private JLabel myScriptLabel;
+  private boolean myModuleMode;
 
   public PythonRunConfigurationForm(PythonRunConfiguration configuration) {
     myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(configuration.getCommonOptionsFormData());
@@ -88,14 +93,17 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
     myEmulateTerminalCheckbox.setSelected(false);
 
-    myEmulateTerminalCheckbox.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        updateShowCommandLineEnabled();
-      }
-    });
+    myEmulateTerminalCheckbox.addChangeListener(
+      (ChangeEvent e) -> updateShowCommandLineEnabled());
 
     setAnchor(myCommonOptionsForm.getAnchor());
+
+    myRunModuleCheckBox.addChangeListener(
+      (ChangeEvent e) -> updateRunModuleMode());
+  }
+
+  private void updateRunModuleMode() {
+    setModuleModeInternal(myRunModuleCheckBox.isSelected());
   }
 
   private void updateShowCommandLineEnabled() {
@@ -118,12 +126,20 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
   @Override
   public String getScriptName() {
-    return FileUtil.toSystemIndependentName(myScriptTextField.getText().trim());
+    if (isModuleMode()) {
+      return myModuleField.getText().trim();
+    } else {
+      return FileUtil.toSystemIndependentName(myScriptTextField.getText().trim());
+    }
   }
 
   @Override
   public void setScriptName(String scriptName) {
-    myScriptTextField.setText(scriptName == null ? "" : FileUtil.toSystemDependentName(scriptName));
+    if (isModuleMode()) {
+      myModuleField.setText(StringUtil.notNullize(scriptName));
+    } else {
+      myScriptTextField.setText(scriptName == null ? "" : FileUtil.toSystemDependentName(scriptName));
+    }
   }
 
   @Override
@@ -157,6 +173,11 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   }
 
   @Override
+  public boolean isModuleMode() {
+    return myModuleMode;
+  }
+
+  @Override
   public JComponent getAnchor() {
     return anchor;
   }
@@ -173,5 +194,19 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     this.anchor = anchor;
     myScriptParametersLabel.setAnchor(anchor);
     myCommonOptionsForm.setAnchor(anchor);
+  }
+
+  @Override
+  public void setModuleMode(boolean moduleMode) {
+    myRunModuleCheckBox.setSelected(moduleMode);
+  }
+
+  private void setModuleModeInternal(boolean moduleMode) {
+    myModuleMode = moduleMode;
+
+    myScriptLabel.setVisible(!moduleMode);
+    myScriptTextField.setVisible(!moduleMode);
+    myModuleLabel.setVisible(moduleMode);
+    myModuleField.setVisible(moduleMode);
   }
 }
