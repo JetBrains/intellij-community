@@ -17,6 +17,7 @@ package com.jetbrains.python.run;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -50,10 +51,8 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   private final Project myProject;
   private JBCheckBox myShowCommandLineCheckbox;
   private JBCheckBox myEmulateTerminalCheckbox;
-  private JBCheckBox myRunModuleCheckBox;
-  private JLabel myModuleLabel;
   private RawCommandLineEditor myModuleField;
-  private JLabel myScriptLabel;
+  private ComboBox myTargetComboBox;
   private boolean myModuleMode;
 
   public PythonRunConfigurationForm(PythonRunConfiguration configuration) {
@@ -91,6 +90,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
       emulateTerminalEnabled(false);
     }
 
+    myTargetComboBox.setSelectedIndex(0);
     myEmulateTerminalCheckbox.setSelected(false);
 
     myEmulateTerminalCheckbox.addChangeListener(
@@ -98,12 +98,24 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
     setAnchor(myCommonOptionsForm.getAnchor());
 
-    myRunModuleCheckBox.addChangeListener(
-      (ChangeEvent e) -> updateRunModuleMode());
+    myTargetComboBox.addActionListener(e -> updateRunModuleMode());
   }
 
   private void updateRunModuleMode() {
-    setModuleModeInternal(myRunModuleCheckBox.isSelected());
+    boolean mode = myTargetComboBox.getSelectedIndex() == 1;
+    checkTargetComboConsistency(mode);
+    setModuleModeInternal(mode);
+  }
+
+  private void checkTargetComboConsistency(boolean mode) {
+    Object item = myTargetComboBox.getSelectedItem();
+    if (item == null) {
+      throw new IllegalArgumentException("item is null");
+    }
+    else //noinspection StringToUpperCaseOrToLowerCaseWithoutLocale
+      if (mode && !item.toString().toLowerCase().contains("module")) {
+        throw new IllegalArgumentException("This option should refer to a module");
+      }
   }
 
   private void updateShowCommandLineEnabled() {
@@ -128,7 +140,8 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   public String getScriptName() {
     if (isModuleMode()) {
       return myModuleField.getText().trim();
-    } else {
+    }
+    else {
       return FileUtil.toSystemIndependentName(myScriptTextField.getText().trim());
     }
   }
@@ -137,7 +150,8 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   public void setScriptName(String scriptName) {
     if (isModuleMode()) {
       myModuleField.setText(StringUtil.notNullize(scriptName));
-    } else {
+    }
+    else {
       myScriptTextField.setText(scriptName == null ? "" : FileUtil.toSystemDependentName(scriptName));
     }
   }
@@ -198,15 +212,14 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
   @Override
   public void setModuleMode(boolean moduleMode) {
-    myRunModuleCheckBox.setSelected(moduleMode);
+    myTargetComboBox.setSelectedIndex(moduleMode ? 1 : 0);
+    checkTargetComboConsistency(moduleMode);
   }
 
   private void setModuleModeInternal(boolean moduleMode) {
     myModuleMode = moduleMode;
 
-    myScriptLabel.setVisible(!moduleMode);
     myScriptTextField.setVisible(!moduleMode);
-    myModuleLabel.setVisible(moduleMode);
     myModuleField.setVisible(moduleMode);
   }
 }
