@@ -151,7 +151,7 @@ public class EmptyStatementBodyInspection extends BaseInspection {
         if (elseToken == null) {
           return;
         }
-        registerError(elseToken);
+        registerError(elseToken, new DeleteElementFix(elseBranch));
       }
     }
 
