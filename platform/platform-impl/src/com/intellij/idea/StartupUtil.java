@@ -38,7 +38,6 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.lang.UrlClassLoader;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
@@ -344,16 +343,6 @@ public class StartupUtil {
 
     if (SystemInfo.isWin2kOrNewer) {
       IdeaWin32.isAvailable();  // logging is done there
-    }
-
-    if (SystemInfo.isWin2kOrNewer && !Main.isHeadless()) {
-      try {
-        UrlClassLoader.loadPlatformLibrary("focusKiller");
-        log.info("Using \"FocusKiller\" library to prevent focus stealing.");
-      }
-      catch (Throwable t) {
-        log.info("\"FocusKiller\" library not found or there were problems loading it.", t);
-      }
     }
 
     if (SystemInfo.isWindows) {
