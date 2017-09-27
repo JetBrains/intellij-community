@@ -1,25 +1,32 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.intellij.codeInspection;
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
+package com.intellij.codeInspection.naming;
 
-public abstract class NamingConvention<T> {
-  
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.psi.PsiNameIdentifierOwner;
+
+public abstract class NamingConvention<T extends PsiNameIdentifierOwner> {
+  /**
+   * @return true if member can be processed by this convention. The first convention which returns {@code true}, wins.
+   */
   public abstract boolean isApplicable(T member);
+
+  /**
+   * @return Text presentation which will be shown in check box UI
+   */
   public abstract String getElementDescription();
+
+  /**
+   * @return unique short name;
+   *         if tool was already present and merging of settings is required ({@link AbstractNamingConventionMerger}),
+   *         short name should be equal to the old tool name
+   */
   public abstract String getShortName();
+
+  /**
+   * @return default settings for the convention
+   */
   public abstract NamingConventionBean createDefaultBean();
 
 

@@ -1,35 +1,23 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.siyeh.ig.naming;
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
+package com.intellij.codeInspection.naming;
 
-import com.intellij.codeInspection.NamingConvention;
-import com.intellij.codeInspection.NamingConventionBean;
-import com.intellij.codeInspection.NamingConventionWithFallbackBean;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.CheckBoxListListener;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.RenameFix;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,15 +28,22 @@ import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
 
-public abstract class AbstractNamingConventionInspection<T> extends BaseInspection {
+/**
+ * Abstract class for naming convention inspections. Base inspection expects {@link NamingConvention} extensions which are processed one by one,
+ * the first which returns true from {@link NamingConvention#isApplicable(PsiNameIdentifierOwner)}, wins and provides bean to check the member name.
+ *
+ * Provide {@link #createRenameFix()} to register rename fix.
+ * Register {@link AbstractNamingConventionMerger} to provide settings migration from multiple inspections to compound one
+ */
+public abstract class AbstractNamingConventionInspection<T extends PsiNameIdentifierOwner> extends LocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(AbstractNamingConventionInspection.class);
 
   private final Map<String, NamingConvention<T>> myNamingConventions = new LinkedHashMap<>();
   private final Map<String, NamingConventionBean> myNamingConventionBeans = new LinkedHashMap<>();
   private final Set<String> myDisabledShortNames = new HashSet<>();
-  private final String myDefaultConventionShortName;
+  @Nullable private final String myDefaultConventionShortName;
 
-  public AbstractNamingConventionInspection(NamingConvention<T>[] extensions, final String defaultConventionShortName) {
+  protected AbstractNamingConventionInspection(NamingConvention<T>[] extensions, @Nullable final String defaultConventionShortName) {
     for (NamingConvention<T> convention : extensions) {
       String shortName = convention.getShortName();
       NamingConvention<T> oldConvention = myNamingConventions.put(shortName, convention);
@@ -60,6 +55,9 @@ public abstract class AbstractNamingConventionInspection<T> extends BaseInspecti
     initDisabledState();
     myDefaultConventionShortName = defaultConventionShortName;
   }
+
+  @Nullable
+  protected abstract LocalQuickFix createRenameFix();
 
   private void initDisabledState() {
     myDisabledShortNames.clear();
@@ -75,10 +73,7 @@ public abstract class AbstractNamingConventionInspection<T> extends BaseInspecti
   }
 
   @NotNull
-  @Override
-  protected String buildErrorString(Object... infos) {
-    final String name = (String)infos[0];
-    final String shortName = (String)infos[1];
+  protected String createErrorMessage(String name, String shortName) {
     return myNamingConventions.get(shortName).createErrorMessage(name, myNamingConventionBeans.get(shortName));
   }
 
@@ -126,7 +121,25 @@ public abstract class AbstractNamingConventionInspection<T> extends BaseInspecti
     return !myDisabledShortNames.contains(shortName);
   }
 
-  protected void checkName(T member, String name, Consumer<String> errorRegister) {
+  protected void checkName(@NotNull T member, @NotNull String name, @NotNull ProblemsHolder holder) {
+    checkName(member, name, shortName -> {
+      LocalQuickFix[] fixes;
+      if (holder.isOnTheFly()) {
+        LocalQuickFix fix = createRenameFix();
+        fixes = fix != null ? new LocalQuickFix[]{ fix } : null;
+      }
+      else {
+        fixes = null;
+      }
+      PsiElement element = ObjectUtils.notNull(member.getNameIdentifier(), member);
+      if (!element.isPhysical()) {
+        element = element.getNavigationElement();
+      }
+      holder.registerProblem(element, createErrorMessage(name, shortName), fixes);
+    });
+  }
+
+  protected void checkName(@NotNull T member, @NotNull String name, @NotNull Consumer<String> errorRegister) {
     for (NamingConvention<T> namingConvention : myNamingConventions.values()) {
       if (namingConvention.isApplicable(member)) {
         String shortName = namingConvention.getShortName();
@@ -135,6 +148,7 @@ public abstract class AbstractNamingConventionInspection<T> extends BaseInspecti
         }
         NamingConventionBean activeBean = myNamingConventionBeans.get(shortName);
         if (activeBean instanceof NamingConventionWithFallbackBean && ((NamingConventionWithFallbackBean)activeBean).isInheritDefaultSettings()) {
+          LOG.assertTrue(myDefaultConventionShortName != null, activeBean + " expects that default conversion is configured");
           //disabled when fallback is disabled
           if (myDisabledShortNames.contains(myDefaultConventionShortName)) {
             break;
@@ -195,16 +209,5 @@ public abstract class AbstractNamingConventionInspection<T> extends BaseInspecti
     else {
       myDisabledShortNames.add(conventionShortName);
     }
-  }
-
-  @Override
-  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return true;
-  }
-
-  @Nullable
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new RenameFix();
   }
 }
