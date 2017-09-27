@@ -58,12 +58,21 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
         String method = getMethodWithClass(context.getExpression(), context.isStream());
 
         boolean isInfoLevel = ifStatement.getTextLength() < MINIMAL_WARN_SIZE;
-        ProblemHighlightType highlight = isInfoLevel
-                                          ? ProblemHighlightType.INFORMATION
-                                          : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+        ProblemHighlightType highlight = getHighlight(context, isInfoLevel);
         TextRange range = getRange(isInfoLevel, ifStatement, context.isStream()).shiftRight(-ifStatement.getTextOffset());
         holder.registerProblem(ifStatement, InspectionsBundle.message("inspection.require.non.null.message", method), highlight, range,
                                new ReplaceWithRequireNonNullFix(method));
+      }
+
+      @NotNull
+      private ProblemHighlightType getHighlight(NotNullContext context, boolean isInfoLevel) {
+        ProblemHighlightType highlight;
+        if (isInfoLevel) {
+          highlight = ProblemHighlightType.INFORMATION;
+        } else {
+          highlight = context.isStream() ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING : ProblemHighlightType.WEAK_WARNING;
+        }
+        return highlight;
       }
 
       @Override
