@@ -178,7 +178,7 @@ public abstract class AbstractNamingConventionInspection<T> extends BaseInspecti
     list.setCheckBoxListListener(new CheckBoxListListener() {
       @Override
       public void checkBoxSelectionChanged(int index, boolean value) {
-        NamingConvention<T> convention = new ArrayList<>(myNamingConventions.values()).get(index);
+        NamingConvention<T> convention = values.get(index);
         setEnabled(value, convention.getShortName());
         UIUtil.setEnabled(descriptionPanel, value, true);
       }
