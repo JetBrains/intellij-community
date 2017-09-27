@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Factory;
@@ -345,6 +346,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   public String getText() {
     final ASTNode tree = derefTreeElement();
     if (!isValid()) {
+      ProgressManager.checkCanceled();
+      
       // even invalid PSI can calculate its text by concatenating its children
       if (tree != null) return tree.getText();
 
