@@ -34,6 +34,7 @@ import com.intellij.util.JdomKt;
 import com.intellij.util.SmartList;
 import com.siyeh.ig.naming.ClassNamingConvention;
 import com.siyeh.ig.naming.NewClassNamingConventionInspection;
+import com.siyeh.ig.naming.NewMethodNamingConventionInspection;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -371,6 +372,60 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     assertTrue(profile.isToolEnabled(HighlightDisplayKey.find("NewClassNamingConvention"), null));
     assertFalse(tool.isConventionEnabled("TypeParameterNamingConvention"));
     assertFalse(tool.isConventionEnabled(ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME));
+
+    Element toImportElement = profile.writeScheme();
+    final InspectionProfileImpl importedProfile =
+      InspectionProfileSchemesPanel.importInspectionProfile(toImportElement, getApplicationProfileManager(), getProject());
+
+    //check merged
+    Element mergedElement = JdomKt.loadElement(customSettingsText);
+    profile = createProfile(new InspectionProfileImpl("foo"));
+    profile.readExternal(mergedElement);
+    profile.getModifiableModel().commit();
+    assertThat(profile.writeScheme()).isEqualTo(mergedElement);
+
+    assertThat(importedProfile.writeScheme()).isEqualTo(mergedElement);
+  }
+
+  public void testMergeMethodNamingConventions() throws Exception {
+    final Element element = JdomKt.loadElement("<profile version=\"1.0\">\n" +
+                                               "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                                               "</profile>");
+    InspectionProfileImpl profile = createProfile(new InspectionProfileImpl("foo"));
+    profile.readExternal(element);
+    profile.getModifiableModel().commit();
+    assertThat(profile.writeScheme()).isEqualTo(element);
+
+    String customSettingsText = "<profile version=\"1.0\">\n" +
+                       "  <option name=\"myName\" value=\"empty\" />\n" +
+                       "  <inspection_tool class=\"InstanceMethodNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                       "    <option name=\"m_regex\" value=\"i_[a-z][A-Za-z\\d]*\" />\n" +
+                       "    <option name=\"m_minLength\" value=\"4\" />\n" +
+                       "    <option name=\"m_maxLength\" value=\"32\" />\n" +
+                       "  </inspection_tool>\n" +
+                       "  <inspection_tool class=\"NativeMethodNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                       "    <option name=\"m_regex\" value=\"n_[a-z][A-Za-z\\d]*\" />\n" +
+                       "  </inspection_tool>\n" +
+                       "  <inspection_tool class=\"StaticMethodNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                       "    <option name=\"m_regex\" value=\"s_[a-z][A-Za-z\\d]*\" />\n" +
+                       "    <option name=\"m_minLength\" value=\"4\" />\n" +
+                       "    <option name=\"m_maxLength\" value=\"32\" />\n" +
+                       "  </inspection_tool>\n" +
+                       "</profile>";
+
+    final Element allEnabledProfile = JdomKt.loadElement(customSettingsText);
+    profile.readExternal(allEnabledProfile);
+    profile.getModifiableModel().commit();
+    assertEquals(customSettingsText, serialize(profile));
+
+    InspectionToolWrapper wrapper = profile.getInspectionTool("NewMethodNamingConvention", getProject());
+    assertNotNull(wrapper);
+    NewMethodNamingConventionInspection tool = (NewMethodNamingConventionInspection)wrapper.getTool();
+    assertEquals("i_[a-z][A-Za-z\\d]*", tool.getNamingConventionBean("InstanceMethodNamingConvention").m_regex);
+    assertEquals("n_[a-z][A-Za-z\\d]*", tool.getNamingConventionBean("NativeMethodNamingConvention").m_regex);
+    assertTrue(profile.isToolEnabled(HighlightDisplayKey.find("NewMethodNamingConvention"), null));
+    assertFalse(tool.isConventionEnabled("JUnit4MethodNamingConvention"));
+    assertFalse(tool.isConventionEnabled("JUnit3MethodNamingConvention"));
 
     Element toImportElement = profile.writeScheme();
     final InspectionProfileImpl importedProfile =

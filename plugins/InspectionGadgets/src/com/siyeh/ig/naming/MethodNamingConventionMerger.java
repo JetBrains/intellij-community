@@ -15,10 +15,10 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
 
-public class ClassNamingConventionMerger extends AbstractNamingConventionMerger<PsiClass> {
-  public ClassNamingConventionMerger() {
-    super(new NewClassNamingConventionInspection());
+public class MethodNamingConventionMerger extends AbstractNamingConventionMerger<PsiMethod> {
+  public MethodNamingConventionMerger() {
+    super(new NewMethodNamingConventionInspection());
   }
 }
