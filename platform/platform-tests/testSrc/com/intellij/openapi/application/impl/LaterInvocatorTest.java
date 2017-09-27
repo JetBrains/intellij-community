@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.testFramework.*;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 
@@ -581,5 +582,15 @@ public class LaterInvocatorTest extends PlatformTestCase {
       }
     });
 
+  }
+
+  public void testDifferentStatesAreNotEqualAfterGc() {
+    ModalityStateEx state1 = new ModalityStateEx("common", new String("foo"));
+    ModalityStateEx state2 = new ModalityStateEx("common", new String("bar"));
+    
+    assertFalse(state1.equals(state2));
+
+    GCUtil.tryGcSoftlyReachableObjects();
+    assertFalse(state1.equals(state2));
   }
 }
