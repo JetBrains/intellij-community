@@ -60,7 +60,6 @@ import static com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus.UNKN
 public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(StreamApiMigrationInspection.class);
 
-
   public boolean REPLACE_TRIVIAL_FOREACH;
   public boolean SUGGEST_FOREACH;
   private static final  String SHORT_NAME = "Convert2streamapi";
