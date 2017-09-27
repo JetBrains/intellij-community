@@ -17,8 +17,10 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.NullnessUtil;
+import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -30,10 +32,22 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class RequireNonNullInspection extends BaseJavaBatchLocalInspectionTool {
   private static final EquivalenceChecker ourEquivalence = EquivalenceChecker.getCanonicalPsiEquivalence();
+  public int MINIMAL_WARN_SIZE = 140;
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleIntegerFieldOptionsPanel(
+      InspectionsBundle.message("inspection.require.non.null.option.min.size"),
+      this, "MINIMAL_WARN_SIZE"
+    );
+  }
 
   @NotNull
   @Override
@@ -42,13 +56,19 @@ public class RequireNonNullInspection extends BaseJavaBatchLocalInspectionTool {
     if(!PsiUtil.isLanguageLevel9OrHigher(file)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
-    return new JavaRecursiveElementVisitor() {
+    return new JavaElementVisitor() {
       @Override
       public void visitIfStatement(PsiIfStatement ifStatement) {
         NotNullContext context = NotNullContext.from(ifStatement);
         if(context == null) return;
         String method = getMethod(context.getExpression());
-        holder.registerProblem(ifStatement, InspectionsBundle.message("inspection.require.non.null.message", method),
+
+        boolean isInfoLevel = ifStatement.getTextLength() < MINIMAL_WARN_SIZE;
+        ProblemHighlightType highlight = isInfoLevel
+                                          ? ProblemHighlightType.INFORMATION
+                                          : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+        TextRange range = getRange(isInfoLevel, ifStatement).shiftRight(-ifStatement.getTextOffset());
+        holder.registerProblem(ifStatement, InspectionsBundle.message("inspection.require.non.null.message", method), highlight, range,
                                new ReplaceWithRequireNonNullFix(method));
       }
 
@@ -108,6 +128,18 @@ public class RequireNonNullInspection extends BaseJavaBatchLocalInspectionTool {
       } else return;
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
       CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(result));
+    }
+  }
+
+  private static TextRange getRange(boolean isInfoLevel, @NotNull PsiIfStatement ifStatement) {
+    if(isInfoLevel) {
+      return ifStatement.getTextRange();
+    } else {
+      PsiExpression condition = ifStatement.getCondition();
+      if(condition == null) return ifStatement.getTextRange();
+      PsiElement nextSibling = condition.getNextSibling();
+      if(nextSibling == null) return ifStatement.getTextRange();
+      return new TextRange(ifStatement.getTextOffset(), nextSibling.getTextOffset() + 1);
     }
   }
 
@@ -235,6 +267,7 @@ public class RequireNonNullInspection extends BaseJavaBatchLocalInspectionTool {
     }
   }
 
+  @NotNull
   static String getMethod(PsiExpression expression) {
     return ExpressionUtils.isSimpleExpression(expression) ? "requireNonNullElse" : "requireNonNullElseGet";
   }
