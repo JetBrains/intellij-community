@@ -60,7 +60,6 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
       }
     }
 
-    ArrayList<AbstractTreeNode> nodes = new ArrayList<>();
     final PsiManager psiManager = PsiManager.getInstance(getProject());
 
     /*
@@ -69,7 +68,7 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     }
     */
 
-    nodes.addAll(modulesAndGroups(modules.toArray(new Module[modules.size()])));
+    ArrayList<AbstractTreeNode> nodes = new ArrayList<>(modulesAndGroups(modules.toArray(new Module[modules.size()])));
 
     final VirtualFile baseDir = getProject().getBaseDir();
     if (baseDir == null) return nodes;

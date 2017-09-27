@@ -477,8 +477,7 @@ public class DiffUtil {
   @Nullable
   private static JComponent createTitleWithNotifications(@Nullable JComponent title,
                                                          @NotNull DiffContent content) {
-    List<JComponent> notifications = new ArrayList<>();
-    notifications.addAll(getCustomNotifications(content));
+    List<JComponent> notifications = new ArrayList<>(getCustomNotifications(content));
 
     if (content instanceof DocumentContent) {
       Document document = ((DocumentContent)content).getDocument();

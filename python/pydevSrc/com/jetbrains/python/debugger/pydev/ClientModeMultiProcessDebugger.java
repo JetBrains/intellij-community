@@ -47,7 +47,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   private RemoteDebugger createDebugger() {
     return new RemoteDebugger(myDebugProcess, myHost, myPort) {
       @Override
-      protected void onProcessCreatedEvent() throws PyDebuggerException {
+      protected void onProcessCreatedEvent() {
         ApplicationManager.getApplication().executeOnPooledThread(ClientModeMultiProcessDebugger.this::connectToSubprocess);
       }
     };
@@ -99,9 +99,9 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   }
 
   private List<RemoteDebugger> allDebuggers() {
-    List<RemoteDebugger> result = new ArrayList<>();
+    List<RemoteDebugger> result;
     synchronized (myOtherDebuggersObject) {
-      result.addAll(myOtherDebuggers);
+      result = new ArrayList<>(myOtherDebuggers);
     }
     return result;
   }

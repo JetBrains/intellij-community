@@ -1170,8 +1170,7 @@ public class GenericPatchApplier {
         }
         i = endIdx;
         if (i < lines.size()) {
-          contextBefore = new ArrayList<>();
-          contextBefore.addAll(contextAfter);
+          contextBefore = new ArrayList<>(contextAfter);
         }
       }
       return result;

@@ -78,8 +78,7 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     if (vcsRoot == null) {
       return null;
     }
-    final List<VcsFileRevision> revisions = new ArrayList<>();
-    revisions.addAll(getHistory(filePath, vcsRoot, myProject));
+    final List<VcsFileRevision> revisions = new ArrayList<>(getHistory(filePath, vcsRoot, myProject));
     return createAppendableSession(vcsRoot, revisions, null);
   }
 

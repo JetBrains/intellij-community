@@ -44,8 +44,7 @@ public class CustomRegionStructureUtil {
     });
     Collection<CustomRegionTreeElement> customRegions = collectCustomRegions(rootElement, childrenRanges);
     if (customRegions.size() > 0) {
-      List<StructureViewTreeElement> result = new ArrayList<>();
-      result.addAll(customRegions);
+      List<StructureViewTreeElement> result = new ArrayList<>(customRegions);
       for (StructureViewTreeElement element : originalElements) {
         boolean isInCustomRegion = false;
         for (CustomRegionTreeElement customRegion : customRegions) {

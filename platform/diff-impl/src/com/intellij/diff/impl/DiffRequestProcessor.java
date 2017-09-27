@@ -403,8 +403,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   protected void collectToolbarActions(@Nullable List<AnAction> viewerActions) {
     myToolbarGroup.removeAll();
 
-    List<AnAction> navigationActions = new ArrayList<>();
-    navigationActions.addAll(getNavigationActions());
+    List<AnAction> navigationActions = new ArrayList<>(getNavigationActions());
     navigationActions.add(myOpenInEditorAction);
     navigationActions.add(new MyChangeDiffToolAction());
     DiffUtil.addActionBlock(myToolbarGroup,

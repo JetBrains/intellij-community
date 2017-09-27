@@ -164,8 +164,7 @@ public class UpdaterTreeState {
     final Object[] toExpand = getToExpand();
 
 
-    final Map<Object, Condition> adjusted = new WeakHashMap<>();
-    adjusted.putAll(myAdjustedSelection);
+    final Map<Object, Condition> adjusted = new WeakHashMap<>(myAdjustedSelection);
 
     clearSelection();
     clearExpansion();

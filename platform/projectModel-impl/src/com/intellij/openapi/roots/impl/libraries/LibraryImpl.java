@@ -154,8 +154,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   }
 
   private Set<OrderRootType> getAllRootTypes() {
-    Set<OrderRootType> rootTypes = new HashSet<>();
-    rootTypes.addAll(Arrays.asList(OrderRootType.getAllTypes()));
+    Set<OrderRootType> rootTypes = new HashSet<>(Arrays.asList(OrderRootType.getAllTypes()));
     if (myKind != null) {
       rootTypes.addAll(Arrays.asList(myKind.getAdditionalRootTypes()));
     }
@@ -394,8 +393,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
       }
     }
 
-    ArrayList<OrderRootType> storableRootTypes = new ArrayList<>();
-    storableRootTypes.addAll(Arrays.asList(OrderRootType.getAllTypes()));
+    ArrayList<OrderRootType> storableRootTypes = new ArrayList<>(Arrays.asList(OrderRootType.getAllTypes()));
     if (myKind != null) {
       storableRootTypes.addAll(Arrays.asList(myKind.getAdditionalRootTypes()));
     }

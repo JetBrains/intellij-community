@@ -172,9 +172,8 @@ public class ExceptionDeobfuscator {
       BasicBlock emptyblock = new BasicBlock(++graph.last_id);
       graph.getBlocks().addWithKey(emptyblock, emptyblock.id);
 
-      List<BasicBlock> lstTemp = new ArrayList<>();
       // only exception predecessors considered
-      lstTemp.addAll(handler.getPredExceptions());
+      List<BasicBlock> lstTemp = new ArrayList<>(handler.getPredExceptions());
 
       // replace predecessors
       for (BasicBlock pred : lstTemp) {
