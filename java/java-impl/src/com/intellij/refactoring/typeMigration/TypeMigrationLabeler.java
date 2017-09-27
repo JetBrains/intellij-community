@@ -9,6 +9,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -1121,7 +1122,6 @@ public class TypeMigrationLabeler {
     if (element == null) return false;
     return element.isValid() &&
            element.isPhysical() &&
-           element.isWritable() &&
            PsiSearchScopeUtil.isInScope(migrationScope, element);
   }
 
