@@ -32,11 +32,11 @@ public class ModalityStateEx extends ModalityState {
   @SuppressWarnings("unused")
   public ModalityStateEx() { } // used by reflection to initialize NON_MODAL
 
-  public ModalityStateEx(Object... modalEntities) {
+  ModalityStateEx(@NotNull Object... modalEntities) {
     Collections.addAll(myModalEntities, modalEntities);
   }
 
-  private List<Object> getModalEntities() {
+  List<Object> getModalEntities() {
     return myModalEntities.toStrongList();
   }
 
