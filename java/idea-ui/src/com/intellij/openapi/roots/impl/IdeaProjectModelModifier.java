@@ -1,22 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.LocateLibraryDialog;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
+import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,16 +17,21 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
+import com.intellij.openapi.roots.libraries.ui.OrderRoot;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
+import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author nik
@@ -68,10 +62,28 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
                                                     @NotNull final ExternalLibraryDescriptor descriptor,
                                                     @NotNull final DependencyScope scope) {
     List<String> defaultRoots = descriptor.getLibraryClassesRoots();
+    String version = descriptor.getMinVersion();
+    List<String> classesRoots;
     Module firstModule = ContainerUtil.getFirstItem(modules);
-    LOG.assertTrue(firstModule != null);
-    LocateLibraryDialog dialog = new LocateLibraryDialog(firstModule, defaultRoots, descriptor.getPresentableName());
-    List<String> classesRoots = dialog.showAndGetResult();
+    if (!defaultRoots.isEmpty() || version == null) {
+      LOG.assertTrue(firstModule != null);
+      classesRoots = new LocateLibraryDialog(firstModule, defaultRoots, descriptor.getPresentableName()).showAndGetResult();
+    }
+    else {
+      RepositoryLibraryProperties libraryProperties = new RepositoryLibraryProperties(descriptor.getLibraryGroupId(),
+                                                                                      descriptor.getLibraryArtifactId(),
+                                                                                      version);
+      Collection<OrderRoot> roots =
+        JarRepositoryManager.loadDependenciesModal(myProject, libraryProperties, true, false, null, null);
+      if (roots.isEmpty()) {
+        Messages.showErrorDialog(myProject, descriptor.getPresentableName() + " was not loaded.", "Failed to Download Library");
+        return Promises.rejectedPromise();
+      }
+      classesRoots = roots.stream()
+        .filter(root -> root.getType() == OrderRootType.CLASSES)
+        .map(root -> PathUtil.getLocalPath(root.getFile()))
+        .collect(Collectors.toList());
+    }
     if (!classesRoots.isEmpty()) {
       String libraryName = classesRoots.size() > 1 ? descriptor.getPresentableName() : null;
       final List<String> urls = OrderEntryFix.refreshAndConvertToUrls(classesRoots);
