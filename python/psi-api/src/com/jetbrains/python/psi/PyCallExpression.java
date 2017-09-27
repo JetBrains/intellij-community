@@ -169,7 +169,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * @param resolveContext resolve context
    * @return an object which contains callable, modifier, implicit offset and "implicitly resolved" flag.
    * Returns null if the callee cannot be resolved.
-   * @deprecated Use {@link PyCallExpression#multiResolveCallee(PyResolveContext)} instead.
+   * @deprecated Use {@link PyCallExpression#multiResolveCallee(PyResolveContext, int)} instead.
    * This method will be removed in 2018.1.
    */
   @Nullable
@@ -216,8 +216,11 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * @param resolveContext resolve context
    * @return objects which contains callable, modifier, implicit offset and "implicitly resolved" flag.
    * <i>Note: the returned list does not contain null values.</i>
+   * @deprecated Use {@link PyCallExpression#multiResolveCallee(PyResolveContext, int)} instead.
+   * This method will be removed in 2018.1.
    */
   @NotNull
+  @Deprecated
   default List<PyMarkedCallee> multiResolveCallee(@NotNull PyResolveContext resolveContext) {
     return ContainerUtil.map(multiResolveRatedCallee(resolveContext, 0), PyRatedMarkedCallee::getMarkedCallee);
   }
