@@ -6,6 +6,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
@@ -54,7 +55,7 @@ public class SvnKitContentClient extends BaseSvnClient implements ContentClient 
     } catch (FileTooBigRuntimeException e) {
       ContentRevisionCache.checkContentsSize(target.getPathOrUrlString(), buffer.size());
     } catch (SVNException e) {
-      throw new VcsException(e);
+      throw new SvnBindException(e);
     }
     return buffer.toByteArray();
   }

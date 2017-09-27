@@ -24,7 +24,6 @@ import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.diff.DiffOptions;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -69,12 +68,12 @@ public class CmdAnnotateClient extends BaseSvnClient implements AnnotateClient {
         }
       }
     }
-    catch (JAXBException | SVNException e) {
+    catch (JAXBException e) {
       throw new VcsException(e);
     }
   }
 
-  private static void invokeHandler(@NotNull AnnotationConsumer handler, @NotNull LineEntry entry) throws SVNException {
+  private static void invokeHandler(@NotNull AnnotationConsumer handler, @NotNull LineEntry entry) {
     if (entry.commit != null) {
       // line numbers in our api start from 0 - not from 1 like in svn output
       handler.consume(entry.lineNumber - 1, entry.commit.build(), entry.mergedCommit());

@@ -37,14 +37,13 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnDiffProvider;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.jetbrains.idea.svn.history.HistoryClient;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -121,8 +120,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
 
         info = myVcs.getInfo(ioFile);
         if (info == null) {
-          exception[0] = new VcsException(
-            new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "File ''{0}'' is not under version control", ioFile)));
+          exception[0] = new SvnBindException("File '" + ioFile + "' is not under version control");
           return;
         }
         SVNURL url = info.getURL();
@@ -161,13 +159,11 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
       catch (IOException e) {
         exception[0] = new VcsException(e);
       }
+      catch (SvnBindException e) {
+        handleSvnException(ioFile, info, e, file, revisionNumber, annotation, exception);
+      }
       catch (VcsException e) {
-        if (e.getCause() instanceof SVNException) {
-          handleSvnException(ioFile, info, (SVNException)e.getCause(), file, revisionNumber, annotation, exception);
-        }
-        else {
-          exception[0] = e;
-        }
+        exception[0] = e;
       }
     };
     if (ApplicationManager.getApplication().isDispatchThread()) {
@@ -185,29 +181,30 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
 
   private void handleSvnException(File ioFile,
                                   Info info,
-                                  @NotNull SVNException e,
+                                  @NotNull SvnBindException e,
                                   @NotNull VirtualFile file,
                                   @NotNull SvnRevisionNumber revisionNumber,
                                   @NotNull FileAnnotation[] annotation,
                                   @NotNull VcsException[] exception) {
     // TODO: Check how this scenario could be reproduced by user and what changes needs to be done for command line client
-    if (SVNErrorCode.FS_NOT_FOUND.equals(e.getErrorMessage().getErrorCode())) {
+    if (e.contains(SVNErrorCode.FS_NOT_FOUND)) {
       final CommittedChangesProvider<SvnChangeList, ChangeBrowserSettings> provider = myVcs.getCommittedChangesProvider();
       try {
         final Pair<SvnChangeList, FilePath> pair = provider.getOneList(file, revisionNumber);
         if (pair != null && info != null && pair.getSecond() != null && !Comparing.equal(pair.getSecond().getIOFile(), ioFile)) {
           annotation[0] = annotateNonExisting(pair, revisionNumber, info, file.getCharset(), file);
-          return;
         }
       }
       catch (VcsException e1) {
         exception[0] = e1;
       }
       catch (IOException e1) {
-        exception[0] = new VcsException(e);
+        exception[0] = new VcsException(e1);
       }
     }
-    exception[0] = new VcsException(e);
+    else {
+      exception[0] = e;
+    }
   }
 
   public static File getCommonAncestor(final File file1, final File file2) throws IOException {
