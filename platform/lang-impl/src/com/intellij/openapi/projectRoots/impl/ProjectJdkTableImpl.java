@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
@@ -23,6 +24,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -206,6 +208,9 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     myMessageBus.syncPublisher(JDK_TABLE_TOPIC).jdkRemoved(jdk);
     mySdks.remove(jdk);
+    if (jdk instanceof Disposable) {
+      Disposer.dispose((Disposable)jdk);
+    }
   }
 
   @Override

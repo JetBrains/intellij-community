@@ -15,17 +15,20 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.ide.highlighter.ArchiveFileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.impl.libraries.JarDirectories;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.impl.LightFilePointer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +44,8 @@ public class NewLibraryEditor extends LibraryEditorBase {
   private String myLibraryName;
   private final MultiMap<OrderRootType, LightFilePointer> myRoots;
   private final Set<LightFilePointer> myExcludedRoots;
-  private final JarDirectories myJarDirectories = new JarDirectories();
+  private final MultiMap<OrderRootType, String> myJarDirectoryUrls = new MultiMap<>();
+  private final MultiMap<OrderRootType, String> myJarDirectoryRecursiveUrls = new MultiMap<>();
   private LibraryType myType;
   private LibraryProperties myProperties;
   private boolean myKeepInvalidUrls = true;
@@ -55,10 +59,6 @@ public class NewLibraryEditor extends LibraryEditorBase {
     myProperties = properties;
     myRoots = new MultiMap<>();
     myExcludedRoots = new LinkedHashSet<>();
-  }
-
-  public boolean isKeepInvalidUrls() {
-    return myKeepInvalidUrls;
   }
 
   public void setKeepInvalidUrls(boolean keepInvalidUrls) {
@@ -122,8 +122,9 @@ public class NewLibraryEditor extends LibraryEditorBase {
 
       if (file.isDirectory()) {
         final String url = file.getUrl();
-        if (myJarDirectories.contains(rootType, url)) {
-          LibraryImpl.collectJarFiles(file, result, myJarDirectories.isRecursive(rootType, url));
+        if (isJarDirectory(url, rootType)) {
+          boolean recursive = myJarDirectoryRecursiveUrls.get(rootType).contains(url);
+          collectJarFiles(file, result, recursive);
           continue;
         }
       }
@@ -171,20 +172,15 @@ public class NewLibraryEditor extends LibraryEditorBase {
   @Override
   public void addJarDirectory(@NotNull final String url, boolean recursive, @NotNull OrderRootType rootType) {
     addRoot(url, rootType);
-    myJarDirectories.add(rootType, url, recursive);
+    (recursive ? myJarDirectoryRecursiveUrls : myJarDirectoryUrls).putValue(rootType, url);
   }
 
   @Override
   public void removeRoot(@NotNull String url, @NotNull OrderRootType rootType) {
     myRoots.remove(rootType, new LightFilePointer(url));
-    Iterator<LightFilePointer> iterator = myExcludedRoots.iterator();
-    while (iterator.hasNext()) {
-      LightFilePointer pointer = iterator.next();
-      if (!isUnderRoots(pointer.getUrl())) {
-        iterator.remove();
-      }
-    }
-    myJarDirectories.remove(rootType, url);
+    myExcludedRoots.removeIf(pointer -> !isUnderRoots(pointer.getUrl()));
+    myJarDirectoryUrls.remove(rootType, url);
+    myJarDirectoryRecursiveUrls.remove(rootType, url);
   }
 
   private boolean isUnderRoots(@NotNull String url) {
@@ -203,7 +199,7 @@ public class NewLibraryEditor extends LibraryEditorBase {
 
   @Override
   public boolean isJarDirectory(@NotNull String url, @NotNull OrderRootType rootType) {
-    return myJarDirectories.contains(rootType, url);
+    return myJarDirectoryUrls.get(rootType).contains(url) || myJarDirectoryRecursiveUrls.get(rootType).contains(url);
   }
 
   @Override
@@ -247,16 +243,39 @@ public class NewLibraryEditor extends LibraryEditorBase {
     // apply editor's state to the target container
     for (OrderRootType type : myRoots.keySet()) {
       for (LightFilePointer pointer : myRoots.get(type)) {
-        if (!myJarDirectories.contains(type, pointer.getUrl())) {
+        if (!isJarDirectory(pointer.getUrl(), type)) {
           addRoot.accept(pointer.getUrl(), type);
         }
       }
     }
-    for (OrderRootType type : myJarDirectories.getRootTypes()) {
-      for (String url : myJarDirectories.getDirectories(type)) {
-        addJarDir.accept(url, myJarDirectories.isRecursive(type, url), type);
+    for (Map.Entry<OrderRootType, Collection<String>> entry : myJarDirectoryUrls.entrySet()) {
+      OrderRootType type = entry.getKey();
+      for (String url : entry.getValue()) {
+        addJarDir.accept(url, false, type);
       }
     }
+    for (Map.Entry<OrderRootType, Collection<String>> entry : myJarDirectoryRecursiveUrls.entrySet()) {
+      OrderRootType type = entry.getKey();
+      for (String url : entry.getValue()) {
+        addJarDir.accept(url, true, type);
+      }
+    }
+  }
+
+  private static void collectJarFiles(@NotNull VirtualFile dir, @NotNull List<VirtualFile> container, final boolean recursively) {
+    VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor(VirtualFileVisitor.SKIP_ROOT, recursively ? null : VirtualFileVisitor.ONE_LEVEL_DEEP) {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        if (!file.isDirectory() && FileTypeRegistry.getInstance().getFileTypeByFileName(file.getName()) == ArchiveFileType.INSTANCE) {
+          VirtualFile jarRoot = StandardFileSystems.jar().findFileByPath(file.getPath() + URLUtil.JAR_SEPARATOR);
+          if (jarRoot != null) {
+            container.add(jarRoot);
+            return false;
+          }
+        }
+        return true;
+      }
+    });
   }
 
   @FunctionalInterface

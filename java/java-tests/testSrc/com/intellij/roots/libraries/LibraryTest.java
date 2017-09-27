@@ -226,22 +226,21 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     Library library = WriteAction.compute(() -> table.createLibrary("jarDirs"));
     Library.ModifiableModel model = library.getModifiableModel();
     model.addJarDirectory("file://jar-dir", false, OrderRootType.CLASSES);
+    model.addJarDirectory("file://jar-dir-rec", true, OrderRootType.CLASSES);
     model.addJarDirectory("file://jar-dir-src", false, OrderRootType.SOURCES);
     commit(model);
 
     assertThat(serialize(library)).isEqualTo("<root>\n" +
                                              "  <library name=\"jarDirs\">\n" +
-                                             "    <CLASSES>\n" +
-                                             "      <root url=\"file://jar-dir\" />\n" +
-                                             "    </CLASSES>\n" +
+                                             "    <CLASSES />\n" +
                                              "    <JAVADOC />\n" +
-                                             "    <SOURCES>\n" +
-                                             "      <root url=\"file://jar-dir-src\" />\n" +
-                                             "    </SOURCES>\n" +
+                                             "    <SOURCES />\n" +
                                              "    <jarDirectory url=\"file://jar-dir\" recursive=\"false\" />\n" +
+                                             "    <jarDirectory url=\"file://jar-dir-rec\" recursive=\"true\" />\n" +
                                              "    <jarDirectory url=\"file://jar-dir-src\" recursive=\"false\" type=\"SOURCES\" />\n" +
                                              "  </library>\n" +
-                                             "</root>");
+                                             "</root>"
+                                             );
   }
 
   private static Element serialize(Library library) {
