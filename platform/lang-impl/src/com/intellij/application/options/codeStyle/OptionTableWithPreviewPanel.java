@@ -765,8 +765,8 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
         return myIntLabel;
       }
 
-      myCheckBox.putClientProperty("JComponent.sizeVariant", "small");
-      myComboBox.putClientProperty("JComponent.sizeVariant", "small");
+      UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myCheckBox);
+      UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myComboBox);
 
       myEmptyLabel.setBackground(background);
       return myEmptyLabel;
@@ -854,8 +854,8 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
       };
       myBooleanEditor.addActionListener(itemChoosen);
       myOptionsEditor.addActionListener(itemChoosen);
-      myBooleanEditor.putClientProperty("JComponent.sizeVariant", "small");
-      myOptionsEditor.putClientProperty("JComponent.sizeVariant", "small");
+      UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myBooleanEditor);
+      UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myOptionsEditor);
     }
 
     @Override
