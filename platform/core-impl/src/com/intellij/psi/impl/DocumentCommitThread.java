@@ -737,7 +737,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
                                       @NotNull final FileASTNode oldFileNode) {
     Document document = task.getDocument();
     final CharSequence newDocumentText = document.getImmutableCharSequence();
-    final TextRange changedPsiRange = getChangedPsiRange(file, task.myLastCommittedText, newDocumentText);
+    final TextRange changedPsiRange = getChangedPsiRange(file, task, newDocumentText);
     if (changedPsiRange == null) {
       return null;
     }
@@ -835,20 +835,20 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
 
   @Nullable
   private static TextRange getChangedPsiRange(@NotNull PsiFile file,
-                                              @NotNull CharSequence oldDocumentText,
+                                              @NotNull CommitTask task,
                                               @NotNull CharSequence newDocumentText) {
+    CharSequence oldDocumentText = task.myLastCommittedText;
     int psiLength = oldDocumentText.length();
     if (!file.getViewProvider().supportsIncrementalReparse(file.getLanguage())) {
       return new TextRange(0, psiLength);
     }
-
-    int commonPrefixLength = StringUtil.commonPrefixLength(oldDocumentText, newDocumentText);
-    if (commonPrefixLength == newDocumentText.length() && newDocumentText.length() == psiLength) {
+    final TextRange changedPsiRange =
+      ((PsiDocumentManagerBase)PsiDocumentManagerBase.getInstance(file.getProject()))
+        .getChangedRangeSinceCommit(task.document, newDocumentText.length() - oldDocumentText.length());
+    if (changedPsiRange == null || changedPsiRange.getStartOffset() == newDocumentText.length() && newDocumentText.length() == psiLength) {
       return null;
     }
-
-    int commonSuffixLength = Math.min(StringUtil.commonSuffixLength(oldDocumentText, newDocumentText), psiLength - commonPrefixLength);
-    return new TextRange(commonPrefixLength, psiLength - commonSuffixLength);
+    return changedPsiRange;
   }
 
   public static void doActualPsiChange(@NotNull final PsiFile file, @NotNull final DiffLog diffLog) {
