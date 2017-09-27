@@ -169,7 +169,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * @param resolveContext resolve context
    * @return an object which contains callable, modifier, implicit offset and "implicitly resolved" flag.
    * Returns null if the callee cannot be resolved.
-   * @deprecated Use {@link PyCallExpression#multiResolveCallee(PyResolveContext, int)} instead.
+   * @deprecated Use {@link PyCallExpression#multiResolveRatedCallee(PyResolveContext)} instead.
    * This method will be removed in 2018.1.
    */
   @Nullable
@@ -186,7 +186,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * @param implicitOffset implicit offset which is known from the context
    * @return an object which contains callable, modifier, implicit offset and "implicitly resolved" flag.
    * Returns null if the callee cannot be resolved.
-   * @deprecated Use {@link PyCallExpression#multiResolveCallee(PyResolveContext, int)} instead.
+   * @deprecated Use {@link PyCallExpression#multiResolveRatedCallee(PyResolveContext, int)} instead.
    * This method will be removed in 2018.1.
    */
   @Nullable
@@ -216,7 +216,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * @param resolveContext resolve context
    * @return objects which contains callable, modifier, implicit offset and "implicitly resolved" flag.
    * <i>Note: the returned list does not contain null values.</i>
-   * @deprecated Use {@link PyCallExpression#multiResolveCallee(PyResolveContext, int)} instead.
+   * @deprecated Use {@link PyCallExpression#multiResolveRatedCallee(PyResolveContext)} instead.
    * This method will be removed in 2018.1.
    */
   @NotNull
@@ -232,8 +232,11 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * @param implicitOffset implicit offset which is known from the context
    * @return objects which contains callable, modifier, implicit offset and "implicitly resolved" flag.
    * <i>Note: the returned list does not contain null values.</i>
+   * @deprecated Use {@link PyCallExpression#multiResolveRatedCallee(PyResolveContext, int)} instead.
+   * This method will be removed in 2018.1.
    */
   @NotNull
+  @Deprecated
   default List<PyMarkedCallee> multiResolveCallee(@NotNull PyResolveContext resolveContext, int implicitOffset) {
     return ContainerUtil.map(multiResolveRatedCallee(resolveContext, implicitOffset), PyRatedMarkedCallee::getMarkedCallee);
   }
