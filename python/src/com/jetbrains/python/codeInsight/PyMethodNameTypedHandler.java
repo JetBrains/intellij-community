@@ -50,6 +50,7 @@ public class PyMethodNameTypedHandler extends TypedHandlerDelegate {
       final Document document = editor.getDocument();
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
       final int offset = editor.getCaretModel().getOffset();
+      documentManager.commitDocument(document);
 
       PsiElement token = file.findElementAt(offset - 1);
       if (token == null) return Result.CONTINUE; // sanity check: beyond EOL
@@ -76,7 +77,6 @@ public class PyMethodNameTypedHandler extends TypedHandlerDelegate {
                   pname = "cls";
                 }
                 else if (flags.isStaticMethod()) pname = "";
-                documentManager.commitDocument(document);
                 // TODO: only print the ")" if Settings require it
                 int caretOffset = editor.getCaretModel().getOffset();
                 String textToType = "(" + pname + ")";
