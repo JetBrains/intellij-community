@@ -67,7 +67,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
       @NotNull
       private ProblemHighlightType getHighlight(NotNullContext context, boolean isInfoLevel) {
         ProblemHighlightType highlight;
-        if (isInfoLevel) {
+        if (isInfoLevel && !context.isStream()) {
           highlight = ProblemHighlightType.INFORMATION;
         } else {
           highlight = context.isStream() ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING : ProblemHighlightType.WEAK_WARNING;
