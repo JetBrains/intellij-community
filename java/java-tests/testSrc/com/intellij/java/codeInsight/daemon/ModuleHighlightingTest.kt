@@ -345,6 +345,35 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         }""".trimIndent())
   }
 
+  fun testInaccessibleMemberType() {
+    addFile("module-info.java", "module C { exports pkg.c; }", M8)
+    addFile("module-info.java", "module B { requires C; exports pkg.b; }", M6)
+    addFile("module-info.java", "module A { requires B; }")
+    addFile("pkg/c/C.java", "package pkg.c;\npublic class C { }", M8)
+    addFile("pkg/b/B.java", """
+        package pkg.b;
+        import pkg.c.C;
+        public class B {
+          private static class I { }
+          public C f1;
+          public I f2;
+          public C m1(C p1, Class<? extends C> p2) { return new C(); }
+          public I m2(I p1, Class<? extends I> p2) { return new I(); }
+        }""".trimIndent(), M6)
+    highlight("pkg/a/A.java", """
+        package pkg.a;
+        import pkg.b.B;
+        public class A {
+          void test() {
+            B exposer = new B();
+            exposer.f1 = null;
+            exposer.f2 = null;
+            Object o1 = exposer.m1(null, null);
+            Object o2 = exposer.m2(null, null);
+          }
+        }""".trimIndent())
+  }
+
   //<editor-fold desc="Helpers.">
   private fun highlight(text: String) = highlight("module-info.java", text)
 
