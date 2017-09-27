@@ -119,7 +119,7 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
       final PsiType fromType = field.getType();
       final PsiType toType = elementFactory.createTypeFromText(myProperty.myObservableType.myText, field);
       try {
-        final TypeMigrationRules rules = new TypeMigrationRules();
+        final TypeMigrationRules rules = new TypeMigrationRules(myProject);
         final Set<VirtualFile> virtualFiles = ContainerUtil.map2SetNotNull(myFiles, PsiFile::getVirtualFile);
         rules.setBoundScope(GlobalSearchScope.filesScope(myProject, virtualFiles));
         final TypeMigrationLabeler labeler = new TypeMigrationLabeler(rules, toType, myProject);
