@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -88,12 +89,14 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     String sanitized = getSanitizedPattern(pattern, myModel);
     NameGrouper grouper = new NameGrouper(sanitized.substring(sanitized.lastIndexOf('/') + 1));
     myModel.processNames(name -> grouper.processName(name), true);
+
+    Ref<Boolean> hasSuggestions = Ref.create(false);
     DirectoryPathMatcher dirMatcher = DirectoryPathMatcher.root(myModel);
     while (true) {
       int index = grouper.index;
       SuffixMatches group = grouper.nextGroup(base);
       if (group == null) return true;
-      if (!group.processFiles(pattern, sanitized, everywhere, consumer, dirMatcher)) {
+      if (!group.processFiles(pattern, sanitized, everywhere, consumer, hasSuggestions, dirMatcher)) {
         return false;
       }
       dirMatcher = dirMatcher.appendChar(sanitized.charAt(index));
@@ -137,7 +140,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   private List<PsiFileSystemItem> getFilesMatchingPath(@NotNull String pattern,
                                                        boolean everywhere,
                                                        MinusculeMatcher fullMatcher,
-                                                       List<String> fileNames, 
+                                                       List<String> fileNames,
                                                        DirectoryPathMatcher dirMatcher) {
     GlobalSearchScope scope = dirMatcher.narrowDown(FindSymbolParameters.searchScopeFor(myProject, everywhere));
     FindSymbolParameters parameters = new FindSymbolParameters(pattern, pattern, scope, null);
@@ -270,25 +273,23 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     boolean processFiles(@NotNull String pattern,
                          String sanitizedPattern,
                          boolean everywhere,
-                         Processor<? super PsiFileSystemItem> processor, 
+                         Processor<? super PsiFileSystemItem> processor,
+                         Ref<Boolean> hasSuggestions,
                          DirectoryPathMatcher dirMatcher) {
       MinusculeMatcher fullMatcher = getQualifiedNameMatcher(sanitizedPattern);
 
-      boolean empty = true;
       List<List<String>> groups = groupByMatchingDegree(!pattern.startsWith("*"));
       for (List<String> group : groups) {
         List<PsiFileSystemItem> files = getFilesMatchingPath(pattern, everywhere, fullMatcher, group, dirMatcher);
-        empty &= files.isEmpty();
+        if (!files.isEmpty()) {
+          hasSuggestions.set(true);
+        }
         if (!ContainerUtil.process(files, processor)) {
           return false;
         }
       }
 
-      if (!empty) {
-        return false; // don't process expensive worse matches
-      }
-
-      if (!everywhere && hasSuggestionsOutsideProject(pattern, fullMatcher, groups, dirMatcher)) {
+      if (!hasSuggestions.get() && !everywhere && hasSuggestionsOutsideProject(pattern, fullMatcher, groups, dirMatcher)) {
         // let the framework switch to searching outside project to display these well-matching suggestions
         // instead of worse-matching ones in project (that are very expensive to calculate)
         return false;
