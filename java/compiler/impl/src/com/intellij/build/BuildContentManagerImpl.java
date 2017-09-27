@@ -18,10 +18,10 @@ package com.intellij.build;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
@@ -34,7 +34,6 @@ import com.intellij.ui.content.*;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -74,27 +73,20 @@ public class BuildContentManagerImpl implements BuildContentManager, ContentMana
     myProject = project;
     if (project.isDefault()) return;
 
-    final Runnable runnable = () -> {
-      if(myProject.isDisposed()) return;
-
+    StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
       ToolWindow toolWindow = ToolWindowManager.getInstance(project)
         .registerToolWindow(ToolWindowId.BUILD, true, ToolWindowAnchor.BOTTOM, project, true);
       toolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
       toolWindow.setIcon(AllIcons.Actions.Compile);
+      toolWindow.setAvailable(true, null);
+      toolWindow.hide(null);
       myToolWindow = toolWindow;
       myToolWindow.getContentManager().addContentManagerListener(this);
       for (Runnable postponedRunnable : myPostponedRunnables) {
         postponedRunnable.run();
       }
       myPostponedRunnables.clear();
-    };
-
-    if (project.isInitialized()) {
-      UIUtil.invokeLaterIfNeeded(runnable);
-    }
-    else {
-      StartupManager.getInstance(project).registerPostStartupActivity(runnable);
-    }
+    });
   }
 
   public Promise<Void> runWhenInitialized(final Runnable runnable) {
@@ -105,7 +97,7 @@ public class BuildContentManagerImpl implements BuildContentManager, ContentMana
     else {
       final AsyncPromise<Void> promise = new AsyncPromise<>();
       myPostponedRunnables.add(() -> {
-        if(!myProject.isDisposed()) {
+        if (!myProject.isDisposed()) {
           runnable.run();
           promise.setResult(null);
         }
@@ -162,53 +154,61 @@ public class BuildContentManagerImpl implements BuildContentManager, ContentMana
   }
 
   public void updateTabDisplayName(Content content, String tabName) {
-    String displayName;
-    ContentManager contentManager = myToolWindow.getContentManager();
-    Content firstContent = contentManager.getContent(0);
-    assert firstContent != null;
-    if (!Build.equals(firstContent.getTabName())) {
-      if (contentManager.getContentCount() > 1) {
-        setIdLabelHidden(false);
-        displayName = tabName;
+    runWhenInitialized(() -> {
+      String displayName;
+      ContentManager contentManager = myToolWindow.getContentManager();
+      Content firstContent = contentManager.getContent(0);
+      assert firstContent != null;
+      if (!Build.equals(firstContent.getTabName())) {
+        if (contentManager.getContentCount() > 1) {
+          setIdLabelHidden(false);
+          displayName = tabName;
+        }
+        else {
+          displayName = Build + ": " + tabName;
+        }
       }
       else {
-        displayName = Build + ": " + tabName;
+        displayName = tabName;
+        setIdLabelHidden(true);
       }
-    }
-    else {
-      displayName = tabName;
-      setIdLabelHidden(true);
-    }
 
-    if (!displayName.equals(content.getDisplayName())) {
-      // we are going to adjust display name, so we need to ensure tab name is not retrieved based on display name
-      content.setTabName(tabName);
-      content.setDisplayName(displayName);
-    }
+      if (!displayName.equals(content.getDisplayName())) {
+        // we are going to adjust display name, so we need to ensure tab name is not retrieved based on display name
+        content.setTabName(tabName);
+        content.setDisplayName(displayName);
+      }
+    });
   }
 
   @Override
   public void removeContent(Content content) {
-    ContentManager contentManager = myToolWindow.getContentManager();
-    if (contentManager != null && (!contentManager.isDisposed())) {
-      contentManager.removeContent(content, true);
-    }
+    runWhenInitialized(() -> {
+      ContentManager contentManager = myToolWindow.getContentManager();
+      if (contentManager != null && (!contentManager.isDisposed())) {
+        contentManager.removeContent(content, true);
+      }
+    });
   }
 
   @Override
-  public ActionCallback setSelectedContent(Content content,
-                                           boolean requestFocus,
-                                           boolean forcedFocus,
+  public ActionCallback setSelectedContent(@NotNull final Content content,
+                                           final boolean requestFocus,
+                                           final boolean forcedFocus,
                                            boolean activate,
-                                           Runnable activationCallback) {
-    ActionCallback actionCallback = new ActionCallback();
+                                           @Nullable Runnable activationCallback) {
+    final ActionCallback actionCallback = new ActionCallback();
+    Disposer.register(content, actionCallback);
     runWhenInitialized(() -> {
+      if (!myToolWindow.isAvailable()) {
+        actionCallback.setRejected();
+        return;
+      }
+      if (activate) {
+        myToolWindow.show(activationCallback);
+      }
       ActionCallback callback = myToolWindow.getContentManager().setSelectedContent(content, requestFocus, forcedFocus, false);
       callback.notify(actionCallback);
-      if (activate) {
-        ApplicationManager.getApplication().invokeLater(
-          () -> myToolWindow.activate(activationCallback, requestFocus, requestFocus), myProject.getDisposed());
-      }
     });
     return actionCallback;
   }
@@ -232,34 +232,34 @@ public class BuildContentManagerImpl implements BuildContentManager, ContentMana
     return content;
   }
 
-  public void startBuildNotified(Content content) {
-    if(myToolWindow == null) return;
-
-    Pair<Icon, AtomicInteger> pair = liveContentsMap.computeIfAbsent(content, c -> Pair.pair(c.getIcon(), new AtomicInteger(0)));
-    pair.second.incrementAndGet();
-    content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
-    content.setIcon(ExecutionUtil.getLiveIndicator(pair.first));
-    JComponent component = content.getComponent();
-    if (component != null) {
-      component.invalidate();
-    }
-    myToolWindow.setIcon(ExecutionUtil.getLiveIndicator(AllIcons.Actions.Compile));
+  public void startBuildNotified(@NotNull Content content) {
+    runWhenInitialized(() -> {
+      Pair<Icon, AtomicInteger> pair = liveContentsMap.computeIfAbsent(content, c -> Pair.pair(c.getIcon(), new AtomicInteger(0)));
+      pair.second.incrementAndGet();
+      content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
+      content.setIcon(ExecutionUtil.getLiveIndicator(pair.first));
+      JComponent component = content.getComponent();
+      if (component != null) {
+        component.invalidate();
+      }
+      myToolWindow.setIcon(ExecutionUtil.getLiveIndicator(AllIcons.Actions.Compile));
+    });
   }
 
-  public void finishBuildNotified(Content content) {
-    if(myToolWindow == null) return;
-
-    Pair<Icon, AtomicInteger> pair = liveContentsMap.get(content);
-    if (pair != null && pair.second.decrementAndGet() == 0) {
-      content.setIcon(pair.first);
-      if (pair.first == null) {
-        content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.FALSE);
+  public void finishBuildNotified(@NotNull Content content) {
+    runWhenInitialized(() -> {
+      Pair<Icon, AtomicInteger> pair = liveContentsMap.get(content);
+      if (pair != null && pair.second.decrementAndGet() == 0) {
+        content.setIcon(pair.first);
+        if (pair.first == null) {
+          content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.FALSE);
+        }
+        liveContentsMap.remove(content);
+        if (liveContentsMap.isEmpty()) {
+          myToolWindow.setIcon(AllIcons.Actions.Compile);
+        }
       }
-      liveContentsMap.remove(content);
-      if (liveContentsMap.isEmpty()) {
-        myToolWindow.setIcon(AllIcons.Actions.Compile);
-      }
-    }
+    });
   }
 
   private void setIdLabelHidden(boolean hide) {

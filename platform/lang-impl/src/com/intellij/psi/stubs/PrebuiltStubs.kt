@@ -21,7 +21,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileTypeExtension
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.indexing.FileContent
 import com.intellij.util.indexing.IndexInfrastructure
@@ -104,7 +103,7 @@ abstract class PrebuiltStubsProviderBase : PrebuiltStubsProvider, Disposable {
   companion object {
     val PREBUILT_INDICES_PATH_PROPERTY = "prebuilt_indices_path"
     val SDK_STUBS_STORAGE_NAME = "sdk-stubs"
-    private val LOG = Logger.getInstance("#com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProviderBase")
+    private val LOG = Logger.getInstance("#com.intellij.psi.stubs.PrebuiltStubsProviderBase")
   }
 
   internal fun init() {
@@ -112,7 +111,7 @@ abstract class PrebuiltStubsProviderBase : PrebuiltStubsProvider, Disposable {
     try {
       if (indexesRoot != null) {
         // we should copy prebuilt indexes to a writable folder
-        indexesRoot = copyPrebuiltIndexesToIndexRoot(indexesRoot)
+        indexesRoot = copyPrebuiltIndicesToIndexRoot(indexesRoot)
         // otherwise we can get access denied error, because persistent hash map opens file for read and write
 
         val versionInFile = FileUtil.loadFile(File(indexesRoot, SDK_STUBS_STORAGE_NAME + ".version"))
@@ -129,12 +128,10 @@ abstract class PrebuiltStubsProviderBase : PrebuiltStubsProvider, Disposable {
 
           mySerializationManager = SerializationManagerImpl(File(indexesRoot, SDK_STUBS_STORAGE_NAME + ".names"))
 
-          Disposer.register(this, mySerializationManager!!)
-
           LOG.info("Using prebuilt stubs from " + myPrebuiltStubsStorage!!.baseFile.absolutePath)
         }
         else {
-          LOG.error("Prebuilt stubs version mismatch: $versionInFile, current version is $versionInFile")
+          LOG.error("Prebuilt stubs version mismatch: $versionInFile, current version is $stubVersion")
         }
       }
     }
@@ -183,7 +180,7 @@ abstract class PrebuiltStubsProviderBase : PrebuiltStubsProvider, Disposable {
   }
 
   @Throws(IOException::class)
-  private fun copyPrebuiltIndexesToIndexRoot(prebuiltIndicesRoot: File): File {
+  private fun copyPrebuiltIndicesToIndexRoot(prebuiltIndicesRoot: File): File {
     val indexRoot = File(IndexInfrastructure.getPersistentIndexRoot(), "prebuilt/" + name)
 
     FileUtil.copyDir(prebuiltIndicesRoot, indexRoot)

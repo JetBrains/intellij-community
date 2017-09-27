@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ig.memory;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class InnerClassReferenceVisitor extends JavaRecursiveElementWalkingVisitor {
@@ -141,12 +142,7 @@ public class InnerClassReferenceVisitor extends JavaRecursiveElementWalkingVisit
       return;
     }
     super.visitTypeElement(typeElement);
-    final PsiType type = typeElement.getType();
-    if (!(type instanceof PsiClassType)) {
-      return;
-    }
-    final PsiClassType classType = (PsiClassType)type;
-    final PsiClass aClass = classType.resolve();
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(typeElement.getType());
     if (aClass instanceof PsiTypeParameter && !PsiTreeUtil.isAncestor(innerClass, aClass, true)) {
       referencesStaticallyAccessible = false;
     }

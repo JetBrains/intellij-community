@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
@@ -151,11 +152,7 @@ class CollectionQueryUpdateCalledVisitor extends JavaRecursiveElementWalkingVisi
           return;
         }
         final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false);
-        if (!(expectedType instanceof PsiClassType)) {
-          return;
-        }
-        final PsiClassType classType = (PsiClassType)expectedType;
-        final PsiClass aClass = classType.resolve();
+        final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expectedType);
         if (aClass == null || LambdaHighlightingUtil.checkInterfaceFunctional(aClass) != null) {
           return;
         }

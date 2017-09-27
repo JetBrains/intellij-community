@@ -39,7 +39,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ProjectViewTestUtil;
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture;
-import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.fest.swing.core.MouseButton;
@@ -391,36 +390,42 @@ public class ProjectViewFixture extends ToolWindowFixture {
       myPane.getTree();
       final JTree tree = myPane.getTree();
 
-      pause(new Condition("Waiting until default tree node for node: " + myNode.getTitle() + " will be loaded") {
+      return GuiActionRunner.execute(new GuiQuery<Point>() {
         @Override
-        public boolean test() {
-          final DefaultMutableTreeNode treeNode = TreeUtil.findNodeWithObject((DefaultMutableTreeNode)tree.getModel().getRoot(), myNode);
-          if (treeNode == null) {
-            return false;
-          }
-          else {
-            mutableTreeNodeRef.set(treeNode);
-            return true;
-          }
-        }
-      }, GuiTestUtil.THIRTY_SEC_TIMEOUT);
-      assertNotNull(mutableTreeNodeRef.get());
+        protected Point executeInEDT() throws Throwable {
+          pause(new Condition("Waiting until default tree node for node: " + myNode.getTitle() + " will be loaded") {
+            @Override
+            public boolean test() {
+              final DefaultMutableTreeNode treeNode =
+                TreeUtil.findNodeWithObject((DefaultMutableTreeNode)tree.getModel().getRoot(), myNode);
+              if (treeNode == null) {
+                return false;
+              }
+              else {
+                mutableTreeNodeRef.set(treeNode);
+                return true;
+              }
+            }
+          }, THIRTY_SEC_TIMEOUT);
+          assertNotNull(mutableTreeNodeRef.get());
 
-      Ref<Rectangle> boundsRef = new Ref<>();
-      pause(new Condition("Waiting until bounds of tree node: " + myNode.getTitle() + " will be not null") {
-        @Override
-        public boolean test() {
-          return ReadAction.compute(() -> {
-            final TreePath path = TreeUtil.getPathFromRoot(mutableTreeNodeRef.get());
-            final Rectangle bounds = tree.getPathBounds(path);
-            if (bounds != null) boundsRef.set(bounds);
-            return (bounds != null);
-          });
-        }
-      }, GuiTestUtil.THIRTY_SEC_TIMEOUT);
+          Ref<Rectangle> boundsRef = new Ref<>();
+          pause(new Condition("Waiting until bounds of tree node: " + myNode.getTitle() + " will be not null") {
+            @Override
+            public boolean test() {
+              return ReadAction.compute(() -> {
+                final TreePath path = TreeUtil.getPathFromRoot(mutableTreeNodeRef.get());
+                final Rectangle bounds = tree.getPathBounds(path);
+                if (bounds != null) boundsRef.set(bounds);
+                return (bounds != null);
+              });
+            }
+          }, THIRTY_SEC_TIMEOUT);
 
-      Rectangle bounds = boundsRef.get();
-      return new Point(bounds.x + bounds.height / 2, bounds.y + bounds.height / 2);
+          Rectangle bounds = boundsRef.get();
+          return new Point(bounds.x + bounds.height / 2, bounds.y + bounds.height / 2);
+        }
+      });
     }
 
 

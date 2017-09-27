@@ -43,7 +43,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * User: ktisha
@@ -184,7 +187,7 @@ public class PyProtectedMemberInspection extends PyInspection {
         .of(node.getImportElements())
         .map(PyImportElement::getImportReferenceExpression)
         .nonNull()
-        .filter(referenceExpression -> !dunderAlls.contains(referenceExpression.getName()))
+        .filter(referenceExpression -> !dunderAlls.contains(referenceExpression.getName()) && !resolvesToDirectory(referenceExpression))
         .forEach(
           referenceExpression -> {
             final String message = "'" + referenceExpression.getName() + "' is not declared in __all__";
@@ -211,6 +214,16 @@ public class PyProtectedMemberInspection extends PyInspection {
         result.addAll(dunderAll);
       }
       return result;
+    }
+
+    private boolean resolvesToDirectory(@NotNull PyReferenceExpression referenceExpression) {
+      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
+
+      return StreamEx
+        .of(referenceExpression.getReference(resolveContext).multiResolve(false))
+        .map(ResolveResult::getElement)
+        .map(PyUtil::turnInitIntoDir)
+        .anyMatch(PsiDirectory.class::isInstance);
     }
   }
 

@@ -67,9 +67,9 @@ public interface VirtualFilePointerContainer {
    * </myroot>
    * }</pre>
    */
-  void readExternal(@NotNull Element rootChild, @NotNull String childElementName) throws InvalidDataException;
+  void readExternal(@NotNull Element rootChild, @NotNull String childElementName, boolean externalizeJarDirectories) throws InvalidDataException;
 
-  void writeExternal(@NotNull Element element, @NotNull String childElementName);
+  void writeExternal(@NotNull Element element, @NotNull String childElementName, boolean externalizeJarDirectories);
 
   void moveUp(@NotNull String url);
 

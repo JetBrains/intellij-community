@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes
@@ -208,20 +196,22 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         }""".trimIndent())
   }
 
-  fun testModuleRefFixes() {
+  fun testQuickFixes() {
+    addFile("pkg/main/impl/X.java", "package pkg.main.impl;\npublic class X { }")
+    addFile("module-info.java", "module M2 { exports pkg.m2; }", M2)
+    addFile("pkg/m2/C2.java", "package pkg.m2;\npublic class C2 { }", M2)
+    addFile("pkg/m3/C3.java", "package pkg.m3;\npublic class C3 { }", M3)
+
     fixes("module M { requires <caret>M.missing; }")
-    fixes("module M { requires <caret>M3; }", "AddModuleDependencyFix")
-  }
+    fixes("module M { requires <caret>M3; }", arrayOf("AddModuleDependencyFix"))
+    fixes("module M { exports pkg.main.impl to <caret>M3; }")
 
-  fun testPackageRefFixes() {
     fixes("module M { exports <caret>pkg.missing; }")
-    addFile("pkg/m3/C3.java", "package pkg.m3;\npublic class C3 { }", M3)
     fixes("module M { exports <caret>pkg.m3; }")
-  }
 
-  fun testClassRefFixes() {
-    addFile("pkg/m3/C3.java", "package pkg.m3;\npublic class C3 { }", M3)
-    fixes("module M { uses <caret>pkg.m3.C3; }", "AddModuleDependencyFix")
+    fixes("module M { uses <caret>pkg.m3.C3; }", arrayOf("AddModuleDependencyFix"))
+
+    fixes("pkg/main/C.java", "package pkg.main;\nimport <caret>pkg.m2.C2;", arrayOf("AddRequiredModuleFix"))
   }
 
   fun testPackageAccessibility() = doTestPackageAccessibility(moduleFileInTests = false, checkFileInTests = false)
@@ -355,6 +345,35 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         }""".trimIndent())
   }
 
+  fun testInaccessibleMemberType() {
+    addFile("module-info.java", "module C { exports pkg.c; }", M8)
+    addFile("module-info.java", "module B { requires C; exports pkg.b; }", M6)
+    addFile("module-info.java", "module A { requires B; }")
+    addFile("pkg/c/C.java", "package pkg.c;\npublic class C { }", M8)
+    addFile("pkg/b/B.java", """
+        package pkg.b;
+        import pkg.c.C;
+        public class B {
+          private static class I { }
+          public C f1;
+          public I f2;
+          public C m1(C p1, Class<? extends C> p2) { return new C(); }
+          public I m2(I p1, Class<? extends I> p2) { return new I(); }
+        }""".trimIndent(), M6)
+    highlight("pkg/a/A.java", """
+        package pkg.a;
+        import pkg.b.B;
+        public class A {
+          void test() {
+            B exposer = new B();
+            exposer.f1 = null;
+            exposer.f2 = null;
+            Object o1 = exposer.m1(null, null);
+            Object o2 = exposer.m2(null, null);
+          }
+        }""".trimIndent())
+  }
+
   //<editor-fold desc="Helpers.">
   private fun highlight(text: String) = highlight("module-info.java", text)
 
@@ -363,9 +382,12 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     myFixture.checkHighlighting()
   }
 
-  private fun fixes(text: String, vararg fixes: String) {
-    myFixture.configureByText("module-info.java", text)
-    assertThat(myFixture.getAllQuickFixes().map { it.javaClass.simpleName }).containsExactlyInAnyOrder(*fixes)
+  private fun fixes(text: String, fixes: Array<String> = arrayOf()) = fixes("module-info.java", text, fixes)
+
+  private fun fixes(path: String, text: String, fixes: Array<String> = arrayOf()) {
+    myFixture.configureFromExistingVirtualFile(addFile(path, text))
+    val available = myFixture.getAllQuickFixes().filter { it.isAvailable(project, editor, file) }.map { it::class.simpleName }
+    assertThat(available).containsExactlyInAnyOrder(*fixes)
   }
   //</editor-fold>
 }

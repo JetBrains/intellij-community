@@ -15,6 +15,9 @@
  */
 package com.siyeh.ig.naming;
 
+import com.intellij.codeInspection.NamingConvention;
+import com.intellij.codeInspection.NamingConventionBean;
+import com.intellij.codeInspection.NamingConventionWithFallbackBean;
 import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 
@@ -25,7 +28,7 @@ public class EnumeratedClassNamingConvention extends NamingConvention<PsiClass> 
 
   @Override
   public NamingConventionBean createDefaultBean() {
-    return new NamingConventionBean("[A-Z][A-Za-z\\d]*", DEFAULT_MIN_LENGTH, DEFAULT_MAX_LENGTH);
+    return new NamingConventionWithFallbackBean("[A-Z][A-Za-z\\d]*", DEFAULT_MIN_LENGTH, DEFAULT_MAX_LENGTH);
   }
 
   @Override

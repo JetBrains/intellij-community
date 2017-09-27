@@ -1,6 +1,7 @@
 package com.jetbrains.python.debugger.pydev;
 
 import com.google.common.collect.Lists;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.debugger.*;
 import com.thoughtworks.xstream.io.naming.NoNameCoder;
@@ -133,6 +134,21 @@ public class ProtocolParser {
 
   public static boolean parseInputCommand(String payload) throws PyDebuggerException {
     return payload.equals("True");
+  }
+
+  public static Pair<Boolean, String> parseSetNextStatementCommand(String payload) throws PyDebuggerException {
+    String[] values = payload.split("\t");
+    if (values.length > 0) {
+      boolean success = values[0].equals("True");
+      String errorMessage = "Error";
+      if (values.length > 1) {
+        errorMessage = errorMessage + ": " + values[1];
+      }
+      return new Pair<>(success, errorMessage);
+    }
+    else {
+      throw new PyDebuggerException("Unable to parse value: " + payload);
+    }
   }
 
   public static String parseSourceContent(String payload) throws PyDebuggerException {

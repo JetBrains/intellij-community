@@ -37,14 +37,16 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Generated;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.regex.Matcher;
 
 public class JavaSuppressionUtil {
+  private static final String GENERATED_ANNOTATION_NAME = "javax.annotation.Generated";
+
   public static final String SUPPRESS_INSPECTIONS_ANNOTATION_NAME = "java.lang.SuppressWarnings";
+
   public static boolean alreadyHas14Suppressions(@NotNull PsiJavaDocumentedElement commentOwner) {
     final PsiDocComment docComment = commentOwner.getDocComment();
     return docComment != null && docComment.findTagByName(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME) != null;
@@ -141,7 +143,7 @@ public class JavaSuppressionUtil {
       if (directory != null) {
         final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
         if (aPackage != null) {
-          return AnnotationUtil.findAnnotation(aPackage, Generated.class.getName());
+          return AnnotationUtil.findAnnotation(aPackage, GENERATED_ANNOTATION_NAME);
         }
       }
     }
@@ -157,7 +159,7 @@ public class JavaSuppressionUtil {
         return modifierList != null ? AnnotationUtil.findAnnotation(owner, SUPPRESS_INSPECTIONS_ANNOTATION_NAME) : null;
       }
     }
-    return AnnotationUtil.findAnnotation(owner, Generated.class.getName());
+    return AnnotationUtil.findAnnotation(owner, GENERATED_ANNOTATION_NAME);
   }
 
   static PsiElement getDocCommentToolSuppressedIn(@NotNull PsiJavaDocumentedElement owner, @NotNull String inspectionToolID) {

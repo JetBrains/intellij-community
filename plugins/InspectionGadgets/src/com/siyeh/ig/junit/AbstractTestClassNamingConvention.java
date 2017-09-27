@@ -16,11 +16,11 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.codeInspection.NamingConvention;
+import com.intellij.codeInspection.NamingConventionBean;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.naming.NamingConvention;
-import com.siyeh.ig.naming.NamingConventionBean;
 
 public class AbstractTestClassNamingConvention extends NamingConvention<PsiClass> {
 

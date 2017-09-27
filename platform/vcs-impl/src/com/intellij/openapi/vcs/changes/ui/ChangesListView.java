@@ -33,6 +33,7 @@ import com.intellij.ui.SmartExpander;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
@@ -40,9 +41,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.event.MouseEvent;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -98,34 +99,33 @@ public class ChangesListView extends DnDAwareTree implements TypeSafeDataProvide
   public void updateModel(@NotNull DefaultTreeModel newModel) {
     TreeState state = TreeState.createOn(this, getRoot());
     state.setScrollToSelection(false);
-    DefaultTreeModel oldModel = getModel();
+    ChangesBrowserNode oldRoot = getRoot();
     setModel(newModel);
     ChangesBrowserNode newRoot = getRoot();
     expandPath(new TreePath(newRoot.getPath()));
     state.applyTo(this, newRoot);
-    expandDefaultChangeList(oldModel, newRoot);
+    expandDefaultChangeList(oldRoot, newRoot);
   }
 
-  private void expandDefaultChangeList(DefaultTreeModel oldModel, ChangesBrowserNode root) {
-    if (((ChangesBrowserNode)oldModel.getRoot()).getFileCount() == 0 && TreeUtil.collectExpandedPaths(this).size() == 1) {
-      TreeNode toExpand = null;
-      for (int i = 0; i < root.getChildCount(); i++) {
-        TreeNode node = root.getChildAt(i);
-        if (node instanceof ChangesBrowserChangeListNode && node.getChildCount() > 0) {
-          ChangeList object = ((ChangesBrowserChangeListNode)node).getUserObject();
-          if (object instanceof LocalChangeList) {
-            if (((LocalChangeList)object).isDefault()) {
-              toExpand = node;
-              break;
-            }
-          }
-        }
-      }
+  private void expandDefaultChangeList(ChangesBrowserNode oldRoot, ChangesBrowserNode root) {
+    if (oldRoot.getFileCount() != 0) return;
+    if (TreeUtil.collectExpandedPaths(this).size() != 1) return;
 
-      if (toExpand != null) {
-        expandPath(new TreePath(new Object[] {root, toExpand}));
+    //noinspection unchecked
+    Iterator<ChangesBrowserNode> nodes = ContainerUtil.<ChangesBrowserNode>iterate(root.children());
+    ChangesBrowserNode defaultListNode = ContainerUtil.find(nodes, node -> {
+      if (node instanceof ChangesBrowserChangeListNode) {
+        ChangeList list = ((ChangesBrowserChangeListNode)node).getUserObject();
+        return list instanceof LocalChangeList && ((LocalChangeList)list).isDefault();
       }
-    }
+      return false;
+    });
+
+    if (defaultListNode == null) return;
+    if (defaultListNode.getChildCount() == 0) return;
+    if (defaultListNode.getChildCount() > 10000) return; // expanding lots of nodes is a slow operation (and result is not very useful)
+
+    expandPath(new TreePath(new Object[]{root, defaultListNode}));
   }
 
   @Override

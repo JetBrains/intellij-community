@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 
 package com.intellij.codeInsight.hint;
 
@@ -20,8 +8,10 @@ import com.google.common.collect.ImmutableMap;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -56,7 +46,7 @@ public class ParameterInfoComponent extends JPanel {
   private final Font NORMAL_FONT;
   private final Font BOLD_FONT;
 
-  private static final Border LAST_ITEM_BORDER = BorderFactory.createEmptyBorder();
+  private static final Border EMPTY_BORDER = BorderFactory.createEmptyBorder();
   private static final Border BOTTOM_BORDER = new SideBorder(new JBColor(JBColor.LIGHT_GRAY, Gray._90), SideBorder.BOTTOM);
 
   protected int myWidthLimit = 500;
@@ -89,10 +79,11 @@ public class ParameterInfoComponent extends JPanel {
   }
 
   ParameterInfoComponent(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler) {
-    this(objects, editor, handler, false);
+    this(objects, editor, handler, false, false);
   }
 
-  ParameterInfoComponent(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler, boolean requestFocus) {
+  ParameterInfoComponent(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler, 
+                         boolean requestFocus, boolean allowSwitchLabel) {
     super(new BorderLayout());
     myRequestFocus = requestFocus;
 
@@ -127,13 +118,23 @@ public class ParameterInfoComponent extends JPanel {
     pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     add(pane, BorderLayout.CENTER);
 
-    myShortcutLabel = new JLabel(CodeInsightBundle.message("parameter.info.switch.overload.shortcuts"));
-    myShortcutLabel.setForeground(new JBColor(0x787878, 0x787878));
-    Font labelFont = UIUtil.getLabelFont();
-    myShortcutLabel.setFont(labelFont.deriveFont(labelFont.getSize2D() - (SystemInfo.isWindows ? 1 : 2)));
-    myShortcutLabel.setBorder(new JBEmptyBorder(3, 0, 0, 0));
-    add(myShortcutLabel, BorderLayout.SOUTH);
-
+    String upShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_METHOD_OVERLOAD_SWITCH_UP);
+    String downShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_METHOD_OVERLOAD_SWITCH_DOWN);
+    if (!allowSwitchLabel || myObjects.length <= 1 || !myHandler.supportsOverloadSwitching() || 
+        upShortcut.isEmpty() && downShortcut.isEmpty()) {
+      myShortcutLabel = null;
+    }
+    else {
+      myShortcutLabel = new JLabel(
+        upShortcut.isEmpty() || downShortcut.isEmpty() 
+        ? CodeInsightBundle.message("parameter.info.switch.overload.shortcuts.single", upShortcut.isEmpty() ? downShortcut : upShortcut)
+        : CodeInsightBundle.message("parameter.info.switch.overload.shortcuts", upShortcut, downShortcut));
+      myShortcutLabel.setForeground(new JBColor(0x787878, 0x787878));
+      Font labelFont = UIUtil.getLabelFont();
+      myShortcutLabel.setFont(labelFont.deriveFont(labelFont.getSize2D() - (SystemInfo.isWindows ? 1 : 2)));
+      myShortcutLabel.setBorder(new JBEmptyBorder(3, 0, 0, 0));
+      add(myShortcutLabel, BorderLayout.SOUTH);
+    }
     myCurrentParameterIndex = -1;
   }
 
@@ -151,7 +152,10 @@ public class ParameterInfoComponent extends JPanel {
 
   @Override
   public String toString() {
-    return Stream.of(myPanels).filter(Component::isVisible).map(Object::toString).collect(Collectors.joining("\n"));
+    return Stream.of(myPanels)
+      .filter(Component::isVisible)
+      .map(c -> c.toString() + (c.getBorder() == BOTTOM_BORDER ? "\n-" : ""))
+      .collect(Collectors.joining("\n"));
   }
 
   public Object getHighlighted() {
@@ -181,20 +185,20 @@ public class ParameterInfoComponent extends JPanel {
                                                Color background) {
       final String resultedText =
         myPanels[i].setup(text, myEscapeFunction, highlightStartOffset, highlightEndOffset, isDisabled, strikeout, isDisabledBeforeHighlight, background);
-      myPanels[i].setBorder(isLastParameterOwner() ? LAST_ITEM_BORDER : BOTTOM_BORDER);
+      myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
       return resultedText;
     }
 
     @Override
     public void setupRawUIComponentPresentation(String htmlText) {
       myPanels[i].setup(htmlText, getDefaultParameterColor());
-      myPanels[i].setBorder(isLastParameterOwner() ? LAST_ITEM_BORDER : BOTTOM_BORDER);
+      myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
     }
 
     @Override
     public String setupUIComponentPresentation(final String[] texts, final EnumSet<Flag>[] flags, final Color background) {
       final String resultedText = myPanels[i].setup(texts, myEscapeFunction, flags, background);
-      myPanels[i].setBorder(isLastParameterOwner() ? LAST_ITEM_BORDER : BOTTOM_BORDER);
+      myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
       return resultedText;
     }
 
@@ -266,7 +270,7 @@ public class ParameterInfoComponent extends JPanel {
       }
     }
 
-    myShortcutLabel.setVisible(!singleParameterInfo && myObjects.length > 1 && myHandler.supportsOverloadSwitching());
+    if (myShortcutLabel != null) myShortcutLabel.setVisible(!singleParameterInfo);
 
     invalidate();
     validate();
@@ -319,7 +323,10 @@ public class ParameterInfoComponent extends JPanel {
 
     @Override
     public String toString() {
-      return Stream.of(myOneLineComponents).filter(Objects::nonNull).map(Object::toString).collect(Collectors.joining());
+      boolean highlighted = myOneLineComponents.length > 0 && 
+                            !HintUtil.getInformationColor().equals(myOneLineComponents[0].getBackground());
+      String text = Stream.of(myOneLineComponents).filter(Objects::nonNull).map(Object::toString).collect(Collectors.joining());
+      return highlighted ? '[' + text + ']' : text;
     }
 
     private void setup(String htmlText, Color background) {

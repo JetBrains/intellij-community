@@ -260,8 +260,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   }
 
   public List<CodeStyleScheme> getAllSortedSchemes() {
-    List<CodeStyleScheme> schemes = new ArrayList<>();
-    schemes.addAll(getSchemes());
+    List<CodeStyleScheme> schemes = new ArrayList<>(getSchemes());
     Collections.sort(schemes, (s1, s2) -> {
       if (isProjectScheme(s1)) return -1;
       if (isProjectScheme(s2)) return 1;

@@ -35,11 +35,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.rt.debugger.agent.CaptureStorage;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
@@ -291,25 +291,46 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     return null;
   }
 
+  private static final Key<Pair<ClassType, Method>> CAPTURE_STORAGE_METHOD = Key.create("CAPTURE_STORAGE_METHOD");
+  public static final Pair<ClassType, Method> NO_CAPTURE_AGENT = Pair.empty();
+
   private static List<StackFrameItem> getProcessCapturedStack(Value key, EvaluationContextImpl evaluationContext)
     throws EvaluateException {
-    if (Registry.is("debugger.capture.points.agent")) {
-      DebugProcessImpl process = evaluationContext.getDebugProcess();
-      // TODO: cache class & method
-      ClassType captureClass = (ClassType)process.findClass(evaluationContext, CaptureStorage.class.getName(), null);
-      Method getRelatedStackMethod = captureClass.methodsByName("getRelatedStack").get(0);
-      Value resArray = process.invokeMethod(evaluationContext, captureClass, getRelatedStackMethod, Collections.singletonList(key), true);
-      if (resArray instanceof ArrayReference) {
-        List<Value> values = ((ArrayReference)resArray).getValues();
-        List<StackFrameItem> res = new ArrayList<>(values.size());
-        for (Value value : values) {
+    DebugProcessImpl process = evaluationContext.getDebugProcess();
+    Pair<ClassType, Method> methodPair = process.getUserData(CAPTURE_STORAGE_METHOD);
+    if (methodPair == NO_CAPTURE_AGENT) {
+      return null;
+    }
+    if (methodPair == null) {
+      try {
+        ClassType captureClass = (ClassType)process.findClass(evaluationContext, "com.intellij.rt.debugger.agent.CaptureStorage", null);
+        Method getRelatedStackMethod = captureClass.methodsByName("getRelatedStack").get(0);
+        methodPair = Pair.create(captureClass, getRelatedStackMethod);
+      }
+      catch (EvaluateException e) {
+        methodPair = NO_CAPTURE_AGENT;
+        LOG.debug("Error loading debug agent", e);
+      }
+      putProcessUserData(CAPTURE_STORAGE_METHOD, methodPair, process);
+    }
+
+    Value resArray = process.invokeMethod(evaluationContext, methodPair.first, methodPair.second, Collections.singletonList(key),
+                                          ObjectReference.INVOKE_SINGLE_THREADED, true);
+    if (resArray instanceof ArrayReference) {
+      List<Value> values = ((ArrayReference)resArray).getValues();
+      List<StackFrameItem> res = new ArrayList<>(values.size());
+      for (Value value : values) {
+        if (value == null) {
+          res.add(null);
+        }
+        else {
           List<Value> values1 = ((ArrayReference)value).getValues();
           res.add(new ProcessStackFrameItem(getStringRefValue((StringReference)values1.get(0)),
                                             getStringRefValue((StringReference)values1.get(2)),
                                             Integer.parseInt(((StringReference)values1.get(3)).value())));
         }
-        return res;
       }
+      return res;
     }
     return null;
   }
@@ -345,6 +366,11 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     @Override
     public String method() {
       return myMethod;
+    }
+
+    @Override
+    public String toString() {
+      return myClass + "." + myMethod + ":" + myLine;
     }
   }
 

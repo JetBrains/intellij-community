@@ -17,7 +17,6 @@ package com.intellij.compiler.options;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.ui.ComboBox;
@@ -75,7 +74,7 @@ public class TargetOptionsComponent extends JPanel {
 
     final TableColumn moduleColumn = myTable.getColumnModel().getColumn(0);
     moduleColumn.setHeaderValue("Module");
-    moduleColumn.setCellRenderer(new ModuleCellRenderer());
+    moduleColumn.setCellRenderer(new ModuleTableCellRenderer());
 
     final TableColumn targetLevelColumn = myTable.getColumnModel().getColumn(1);
     final String columnTitle = "Target bytecode version";
@@ -167,12 +166,18 @@ public class TargetOptionsComponent extends JPanel {
   }
 
   public void setModuleTargetLevels(Map<String, String> moduleLevels) {
-    final Map<Module, String> map = new HashMap<>();
-    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
-      final String target = moduleLevels.get(module.getName());
-      if (target != null) {
-        map.put(module, target);
+    final Map<Module, String> map;
+    if (!moduleLevels.isEmpty()) {
+      map = new HashMap<>();
+      for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+        final String target = moduleLevels.get(module.getName());
+        if (target != null) {
+          map.put(module, target);
+        }
       }
+    }
+    else {
+      map = Collections.emptyMap();
     }
     ((TargetLevelTableModel)myTable.getModel()).setItems(map);
   }
@@ -340,26 +345,6 @@ public class TargetOptionsComponent extends JPanel {
       }
     });
     return combo;
-  }
-
-  private static class ModuleCellRenderer extends DefaultTableCellRenderer {
-    @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      try {
-        return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      }
-      finally {
-        final Module module = (Module)value;
-        if (module != null) {
-          setText(module.getName());
-          setIcon(ModuleType.get(module).getIcon());
-        }
-        else {
-          setText("");
-          setIcon(null);
-        }
-      }
-    }
   }
 
   private static class TargetLevelCellEditor extends DefaultCellEditor {

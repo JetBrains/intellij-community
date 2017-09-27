@@ -1569,4 +1569,8 @@ class Foo {
       assert method.name == 'getStuff'
     }
   }
+
+  void 'test prefer local over map key'() {
+    resolveByText 'def abc = 42; [:].with { <caret>abc }', GrVariable
+  }
 }

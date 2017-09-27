@@ -403,11 +403,13 @@ public class PsiImplUtil {
 
     for (GrParameter p : parameters) {
       final GrTypeElement declaredType = p.getTypeElementGroovy();
-      if ((declaredType == null || declaredType.getType().equalsToText(CommonClassNames.JAVA_LANG_STRING + "[]")) &&
-          p.getInitializerGroovy() == null) {
+      boolean optional = p.isOptional();
+      if (optional) {
+        optional_count++;
+      }
+      else if (declaredType == null || declaredType.getType().equalsToText(CommonClassNames.JAVA_LANG_STRING + "[]")) {
         args_count++;
       }
-      if (p.getInitializerGroovy() != null) optional_count++;
     }
 
     return optional_count == parameters.length - 1 && args_count == 1;

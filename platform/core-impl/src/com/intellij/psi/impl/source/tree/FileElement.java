@@ -34,14 +34,13 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class FileElement extends LazyParseableElement implements FileASTNode, Getter<FileElement> {
   public static final FileElement[] EMPTY_ARRAY = new FileElement[0];
   private volatile CharTable myCharTable = new CharTableImpl();
   private volatile boolean myDetached;
-  private volatile Reference<List<CompositeElement>> myStubbedDescendants;
+  private volatile Reference<AstSpine> myStubbedSpine;
 
   @Override
   protected PsiElement createPsiNoLock() {
@@ -104,18 +103,18 @@ public class FileElement extends LazyParseableElement implements FileASTNode, Ge
   @Override
   public void clearCaches() {
     super.clearCaches();
-    myStubbedDescendants = null;
+    myStubbedSpine = null;
   }
 
   @NotNull
-  public final List<CompositeElement> getStubbedDescendants() {
-    List<CompositeElement> result = SoftReference.dereference(myStubbedDescendants);
+  public final AstSpine getStubbedSpine() {
+    AstSpine result = SoftReference.dereference(myStubbedSpine);
     if (result == null) {
       IStubFileElementType type = ((PsiFileImpl)getPsi()).getElementTypeForStubBuilder();
-      if (type == null) return Collections.emptyList();
+      if (type == null) return AstSpine.EMPTY_SPINE;
 
-      result = calcStubbedDescendants(type.getBuilder());
-      myStubbedDescendants = getManager().isBatchFilesProcessingMode() ? new WeakReference<>(result) : new SoftReference<>(result);
+      result = new AstSpine(calcStubbedDescendants(type.getBuilder()));
+      myStubbedSpine = getManager().isBatchFilesProcessingMode() ? new WeakReference<>(result) : new SoftReference<>(result);
     }
     return result;
   }

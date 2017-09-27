@@ -19,12 +19,17 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.testFramework.*;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -581,5 +586,42 @@ public class LaterInvocatorTest extends PlatformTestCase {
       }
     });
 
+  }
+
+  public void testDifferentStatesAreNotEqualAfterGc() {
+    ModalityStateEx state1 = new ModalityStateEx("common", new String("foo"));
+    ModalityStateEx state2 = new ModalityStateEx("common", new String("bar"));
+    
+    assertFalse(state1.equals(state2));
+
+    GCUtil.tryGcSoftlyReachableObjects();
+    assertFalse(state1.equals(state2));
+  }
+
+  public void testStateForComponentIdentity() {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      JPanel panel = new JPanel();
+      myWindow1.add(panel);
+      LaterInvocator.enterModal(myWindow1);
+
+      ModalityState state1 = ModalityState.stateForComponent(myWindow1);
+      assertSame(state1, ModalityState.stateForComponent(myWindow1));
+      assertSame(state1, ModalityState.stateForComponent(panel));
+
+      LaterInvocator.enterModal(myWindow1);
+      assertSame(state1, ModalityState.stateForComponent(panel));
+      assertNotSame(state1, ModalityState.stateForComponent(myWindow2));
+    });
+  }
+
+  public void testProgressModality() {
+    ApplicationManager.getApplication().invokeAndWait(() -> ProgressManager.getInstance().run(new Task.Modal(myProject, "", false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        ModalityState state = indicator.getModalityState();
+        assertSame(state, ModalityState.defaultModalityState());
+        ApplicationManager.getApplication().invokeAndWait(() -> assertSame(state, ModalityState.defaultModalityState()), state);
+      }
+    }));
   }
 }

@@ -143,6 +143,13 @@ public final class IconLoader {
     return findIcon(path, callerClass);
   }
 
+  @Nullable
+  public static Icon findIcon(@NonNls @NotNull String path, boolean strict) {
+    Class callerClass = ReflectionUtil.getGrandCallerClass();
+    if (callerClass == null) return null;
+    return findIcon(path, callerClass, false, strict);
+  }
+
   @NotNull
   public static Icon getIcon(@NotNull String path, @NotNull final Class aClass) {
     final Icon icon = findIcon(path, aClass);
@@ -225,7 +232,7 @@ public final class IconLoader {
     }
     CachedImageIcon icon = ourIconsCache.get(url);
     if (icon == null) {
-      icon = new CachedImageIcon(url);
+      icon = new CachedImageIcon(url, useCache);
       if (useCache) {
         icon = ConcurrencyUtil.cacheOrGet(ourIconsCache, url, icon);
       }
@@ -381,7 +388,23 @@ public final class IconLoader {
     return icon;
   }
 
-  private static final class CachedImageIcon extends RasterJBIcon implements ScalableIcon {
+  /**
+   *  For internal usage. Converts the icon to 1x scale when applicable.
+   */
+  public static Icon get1xIcon(Icon icon) {
+    if (icon instanceof LazyIcon) {
+      icon = ((LazyIcon)icon).getOrComputeIcon();
+    }
+    if (icon instanceof CachedImageIcon) {
+      Image img = ((CachedImageIcon)icon).loadFromUrl(ScaleContext.create(USR_SCALE.of(1d), SYS_SCALE.of(1d)));
+      if (img != null) {
+        icon = new ImageIcon(img);
+      }
+    }
+    return icon;
+  }
+
+  public static final class CachedImageIcon extends RasterJBIcon implements ScalableIcon {
     private volatile Object myRealIcon;
     private String myOriginalPath;
     private ClassLoader myClassLoader;
@@ -390,6 +413,7 @@ public final class IconLoader {
     private volatile boolean dark;
     private volatile int numberOfPatchers = ourPatchers.size();
     private boolean svg;
+    private boolean useCacheOnLoad = true;
 
     private ImageFilter[] myFilters;
     private final MyScaledIconsCache myScaledIconsCache = new MyScaledIconsCache();
@@ -413,13 +437,19 @@ public final class IconLoader {
       numberOfPatchers = icon.numberOfPatchers;
       myFilters = icon.myFilters;
       svg = myOriginalPath != null ? myOriginalPath.toLowerCase().endsWith("svg") : false;
+      useCacheOnLoad = icon.useCacheOnLoad;
     }
 
     public CachedImageIcon(@NotNull URL url) {
+      this(url, true);
+    }
+
+    public CachedImageIcon(@NotNull URL url, boolean useCacheOnLoad) {
       myUrl = url;
       dark = USE_DARK_ICONS;
       myFilters = new ImageFilter[] {IMAGE_FILTER};
       svg = url.toString().endsWith("svg");
+      this.useCacheOnLoad = useCacheOnLoad;
     }
 
     private void setGlobalFilter(ImageFilter globalFilter) {
@@ -538,7 +568,7 @@ public final class IconLoader {
     }
 
     private Image loadFromUrl(ScaleContext ctx) {
-      return ImageLoader.loadFromUrl(myUrl, true, myFilters, ctx);
+      return ImageLoader.loadFromUrl(myUrl, true, useCacheOnLoad, myFilters, ctx);
     }
 
     private class MyScaledIconsCache {
@@ -638,19 +668,6 @@ public final class IconLoader {
     }
 
     protected abstract Icon compute();
-
-    public Icon inOriginalScale() {
-      Icon icon = getOrComputeIcon();
-      if (icon != null) {
-        if (icon instanceof CachedImageIcon) {
-          Image img = ((CachedImageIcon)icon).loadFromUrl(ScaleContext.create(USR_SCALE.of(1d), SYS_SCALE.of(1d)));
-          if (img != null) {
-            icon = new ImageIcon(img);
-          }
-        }
-      }
-      return icon;
-    }
   }
 
   private static class LabelHolder {

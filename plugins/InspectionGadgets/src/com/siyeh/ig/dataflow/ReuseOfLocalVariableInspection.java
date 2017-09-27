@@ -89,7 +89,7 @@ public class ReuseOfLocalVariableInspection
         ReferencesSearch.search(variable, scope, false);
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       final PsiElementFactory factory = psiFacade.getElementFactory();
-      List<PsiReferenceExpression> collectedReferences = new ArrayList();
+      List<PsiReferenceExpression> collectedReferences = new ArrayList<>();
       for (PsiReference reference : query) {
         final PsiElement referenceElement = reference.getElement();
         if (referenceElement == null) {

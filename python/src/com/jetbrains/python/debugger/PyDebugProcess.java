@@ -42,6 +42,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -543,6 +544,22 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     passToCurrentThread(context, ResumeOrStepCommand.Mode.STEP_INTO_MY_CODE);
   }
 
+  public void startSetNextStatement(@Nullable XSuspendContext context,
+                                    @NotNull XSourcePosition sourcePosition,
+                                    @NotNull PyDebugCallback<Pair<Boolean, String>> callback) {
+    if (!checkCanPerformCommands()) return;
+    dropFrameCaches();
+    if (isConnected()) {
+      String threadId = threadIdBeforeResumeOrStep(context);
+      for (PyThreadInfo suspendedThread : mySuspendedThreads) {
+        if (threadId != null && threadId.equals(suspendedThread.getId())) {
+          myDebugger.setNextStatement(threadId, sourcePosition, getFunctionName(sourcePosition), callback);
+          break;
+        }
+      }
+    }
+  }
+
   @Override
   public void startStepOut(@Nullable XSuspendContext context) {
     passToCurrentThread(context, ResumeOrStepCommand.Mode.STEP_OUT);
@@ -818,19 +835,21 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return frame;
   }
 
+  private String getFunctionNameForBreakpoint(final XLineBreakpoint breakpoint) {
+    XSourcePosition sourcePosition = breakpoint.getSourcePosition();
+    return sourcePosition == null ? null : getFunctionName(sourcePosition);
+  }
+
   @Nullable
-  private String getFunctionName(final XLineBreakpoint breakpoint) {
-    if (breakpoint.getSourcePosition() == null) {
-      return null;
-    }
-    final VirtualFile file = breakpoint.getSourcePosition().getFile();
+  private String getFunctionName(@NotNull final XSourcePosition position) {
+    final VirtualFile file = position.getFile();
     AccessToken lock = ApplicationManager.getApplication().acquireReadActionLock();
     try {
       final Document document = FileDocumentManager.getInstance().getDocument(file);
       final Project project = getSession().getProject();
       if (document != null) {
         if (file.getFileType() == PythonFileType.INSTANCE) {
-          int breakpointLine = breakpoint.getSourcePosition().getLine();
+          int breakpointLine = position.getLine();
           if (breakpointLine < document.getLineCount()) {
             PsiElement psiElement = XDebuggerUtil.getInstance().
               findContextElement(file, document.getLineStartOffset(breakpointLine), project, false);
@@ -863,7 +882,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
                                position.getLine(),
                                conditionExpression,
                                logExpression,
-                               getFunctionName(breakpoint),
+                               getFunctionNameForBreakpoint(breakpoint),
                                policy
       );
     }

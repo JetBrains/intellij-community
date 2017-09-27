@@ -215,9 +215,8 @@ public class ArrangementEngine {
     //    --------------------------
     //      arrange 'Entry1 Entry2'
 
-    List<ArrangementEntryWrapper<E>> entries = new ArrayList<>();
     Stack<StackEntry> stack = new Stack<>();
-    entries.addAll(context.wrappers);
+    List<ArrangementEntryWrapper<E>> entries = new ArrayList<>(context.wrappers);
     stack.push(new StackEntry(0, context.wrappers.size()));
     while (!stack.isEmpty()) {
       StackEntry stackEntry = stack.peek();

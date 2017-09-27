@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -444,13 +444,8 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
   }
 
   private static boolean isAutoCloseable(PsiVariable variable) {
-    final PsiType type = variable.getType();
-    if (!(type instanceof PsiClassType)) {
-      return false;
-    }
-    final PsiClassType classType = (PsiClassType)type;
-    final PsiClass aClass = classType.resolve();
-    return aClass != null && InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE);
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(variable.getType());
+    return InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE);
   }
 
   private static int findInitialization(PsiElement[] elements, PsiVariable variable, boolean hasInitializer) {

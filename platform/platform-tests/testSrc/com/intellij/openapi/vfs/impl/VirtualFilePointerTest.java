@@ -746,17 +746,19 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     final File ioTempDir = createTempDirectory();
     final VirtualFile temp = PlatformTestUtil.notNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioTempDir));
     final List<VFileEvent> events = new ArrayList<>();
-    for (int i = 0; i < 100_000; i++) {
-      myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl("/a/b/c/d/" + i), disposable, listener);
-      events.add(new VFileCreateEvent(this, temp, "xxx" + i, false, true));
-    }
-    PlatformTestUtil.startPerformanceTest("vfp update", 6000, () -> {
-      for (int i=0; i< 100; i++) {
-        // simulate VFS refresh events since launching the actual refresh is too slow
-        myVirtualFilePointerManager.before(events);
-        myVirtualFilePointerManager.after(events);
+    myVirtualFilePointerManager.shelveAllPointersIn(()->{
+      for (int i = 0; i < 100_000; i++) {
+        myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl("/a/b/c/d/" + i), disposable, listener);
+        events.add(new VFileCreateEvent(this, temp, "xxx" + i, false, true));
       }
-    }).assertTiming();
+      PlatformTestUtil.startPerformanceTest("vfp update", 5000, () -> {
+        for (int i=0; i< 100; i++) {
+          // simulate VFS refresh events since launching the actual refresh is too slow
+          myVirtualFilePointerManager.before(events);
+          myVirtualFilePointerManager.after(events);
+        }
+      }).assertTiming();
+    });
   }
 
   public void testMultipleCreationOfTheSamePointerPerformance() {

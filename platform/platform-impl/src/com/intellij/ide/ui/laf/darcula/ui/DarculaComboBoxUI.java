@@ -19,11 +19,13 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.ErrorBorderCapable;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import sun.swing.DefaultLookup;
 
 import javax.swing.*;
@@ -33,11 +35,9 @@ import javax.swing.plaf.DimensionUIResource;
 import javax.swing.plaf.InsetsUIResource;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicComboBoxUI;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.awt.geom.Path2D;
 
 /**
@@ -59,6 +59,9 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   public static ComponentUI createUI(final JComponent c) {
     return new DarculaComboBoxUI();
   }
+
+  protected KeyListener   editorKeyListener;
+  protected FocusListener editorFocusListener;
 
   @Override
   protected void installDefaults() {
@@ -203,7 +206,6 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     }
     Rectangle r = rectangleForCurrentValue();
     if (!isTableCellEditor(c)) {
-      paintBorder(c, g, 0, 0, c.getWidth(), c.getHeight());
       hasFocus = comboBox.hasFocus();
       paintCurrentValueBackground(g, r, hasFocus);
     }
@@ -276,15 +278,22 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   @Override
   protected ComboBoxEditor createEditor() {
-    final ComboBoxEditor comboBoxEditor = super.createEditor();
-    Component editor = comboBoxEditor == null ? null : comboBoxEditor.getEditorComponent();
-    if (editor instanceof JComponent) {
-      ((JComponent)editor).setBorder(JBUI.Borders.empty());
-    }
-    if (editor != null) {
-      editor.addKeyListener(new KeyAdapter() {
+    ComboBoxEditor comboBoxEditor = super.createEditor();
+    installEditorKeyListener(comboBoxEditor);
+    return comboBoxEditor;
+  }
+
+  protected void installEditorKeyListener(@NotNull ComboBoxEditor cbe) {
+    Component ec = cbe.getEditorComponent();
+    if (ec != null) {
+      editorKeyListener = new KeyAdapter() {
         @Override
         public void keyPressed(KeyEvent e) {
+          process(e);
+        }
+
+        @Override
+        public void keyReleased(KeyEvent e) {
           process(e);
         }
 
@@ -294,32 +303,10 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
             comboBox.dispatchEvent(e);
           }
         }
+      };
 
-        @Override
-        public void keyReleased(KeyEvent e) {
-          process(e);
-        }
-      });
-      editor.addFocusListener(new FocusAdapter() {
-        @Override
-        public void focusGained(FocusEvent e) {
-          update();
-        }
-
-        void update() {
-          if (comboBox != null) {
-            comboBox.revalidate();
-            comboBox.repaint();
-          }
-        }
-
-        @Override
-        public void focusLost(FocusEvent e) {
-          update();
-        }
-      });
+      ec.addKeyListener(editorKeyListener);
     }
-    return comboBoxEditor;
   }
 
   @Override
@@ -356,7 +343,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
       final Color borderColor = getBorderColor();//ColorUtil.shift(UIUtil.getBorderColor(), 4);
       g2.setColor(getArrowButtonFillColor(borderColor));
-      int off = hasFocus ? 1 : 0;
+      int off = JBUI.scale(hasFocus ? 1 : 0);
       g2.drawLine(xxx + JBUI.scale(5), y + JBUI.scale(1) + off, xxx + JBUI.scale(5), height - JBUI.scale(2));
 
       Rectangle r = rectangleForCurrentValue();
@@ -402,9 +389,8 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     if (hasFocus) return;
 
     ComboBoxEditor ed = comboBox.getEditor();
-    editor = ed == null ? null : ed.getEditorComponent();
-    if (editor != null) {
-      hasFocus = hasFocus(editor);
+    if (ed != null) {
+      hasFocus = hasFocus(ed.getEditorComponent());
     }
   }
 
@@ -433,6 +419,37 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   @Override
   protected void configureEditor() {
     super.configureEditor();
+
+    if (editor != null) {
+      editorFocusListener = new FocusAdapter() {
+        @Override public void focusGained(FocusEvent e) {
+          update();
+        }
+        @Override public void focusLost(FocusEvent e) {
+          update();
+        }
+
+        private void update() {
+          if (comboBox != null) {
+            comboBox.repaint();
+          }
+        }
+      };
+
+      if (editor instanceof JTextComponent) {
+        editor.addFocusListener(editorFocusListener);
+      } else {
+        EditorTextField etf = UIUtil.findComponentOfType((JComponent)editor, EditorTextField.class);
+        if (etf != null) {
+          etf.addFocusListener(editorFocusListener);
+        }
+      }
+    }
+
+    if (editor instanceof JComponent) {
+      ((JComponent)editor).setBorder(JBUI.Borders.empty());
+    }
+
     if (Registry.is("ide.ui.composite.editor.for.combobox")) {
       // BasicComboboxUI sets focusability depending on the combobox focusability.
       // JPanel usually is unfocusable and uneditable.
@@ -440,6 +457,27 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       // In such cases we should restore unfocusable state for panels.
       if (editor instanceof JPanel) {
         editor.setFocusable(false);
+      }
+    }
+  }
+
+  @Override protected void unconfigureEditor() {
+    super.unconfigureEditor();
+
+    if (editorKeyListener != null) {
+      editor.removeKeyListener(editorKeyListener);
+    }
+
+    if (editor instanceof JTextComponent) {
+      if (editorFocusListener != null) {
+        editor.removeFocusListener(editorFocusListener);
+      }
+    } else {
+      EditorTextField etf = UIUtil.findComponentOfType((JComponent)editor, EditorTextField.class);
+      if (etf != null) {
+        if (editorFocusListener != null) {
+          etf.removeFocusListener(editorFocusListener);
+        }
       }
     }
   }

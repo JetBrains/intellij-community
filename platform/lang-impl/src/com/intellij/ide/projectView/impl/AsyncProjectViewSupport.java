@@ -163,8 +163,21 @@ class AsyncProjectViewSupport {
     TreeVisitor visitor = createVisitor(element, file, null);
     if (visitor != null) {
       expand(tree, promise -> myAsyncTreeModel.visit(visitor).processed(path -> {
-        if (path != null) TreeUtil.selectPath(tree, path);
-        promise.setResult(null);
+        if (path != null) {
+          TreeUtil.selectPath(tree, path);
+          promise.setResult(null);
+        }
+        else if (element == null || file == null) {
+          promise.setResult(null);
+        }
+        else {
+          // try to search the specified file instead of element,
+          // because Kotlin files cannot represent containing functions
+          myAsyncTreeModel.visit(createVisitor(null, file, null)).processed(path2 -> {
+            if (path2 != null) TreeUtil.selectPath(tree, path2);
+            promise.setResult(null);
+          });
+        }
       }));
     }
   }

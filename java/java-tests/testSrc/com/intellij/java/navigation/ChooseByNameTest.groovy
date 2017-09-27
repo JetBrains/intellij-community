@@ -22,9 +22,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.CommonClassNames
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
@@ -398,10 +400,23 @@ class Intf {
     assert gotoFile("somefb\\index.html") == [someFbFile]
   }
 
+  void "test show matches from different suffixes"() {
+    def enumControl = addEmptyFile("sample/EnumControl.java")
+    def control = addEmptyFile("sample/ControlSmth.java")
+    assert gotoFile('samplecontrol', false) == [enumControl, control]
+  }
+
+  void "test show longer suffix matches from jdk and shorter from project"() {
+    def seq = addEmptyFile("langc/Sequence.java")
+    def charSeq = JavaPsiFacade.getInstance(project).findClass(CharSequence.name, GlobalSearchScope.allScope(project))
+    assert gotoFile('langcsequence', false) == [charSeq.containingFile, seq]
+  }
+
   void "test fix keyboard layout"() {
     assert (gotoClass('Ыекштп')[0] as PsiClass).name == 'String'
     assert (gotoSymbol('Ыекштп')[0] as PsiClass).name == 'String'
     assert (gotoFile('Ыекштп')[0] as PsiFile).name == 'String.class'
+    assert (gotoFile('дфтпЫекштп')[0] as PsiFile).name == 'String.class'
   }
 
   void "test prefer exact case match"() {

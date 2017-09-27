@@ -88,9 +88,10 @@ public class CommonDataflow {
 
   private static DataflowResult getDataflowResult(PsiElement context) {
     PsiMember member = PsiTreeUtil.getParentOfType(context, PsiMember.class);
-    if(!(member instanceof PsiMethod)) return null;
-    return CachedValuesManager.getCachedValue(member, () -> {
-      PsiCodeBlock body = ((PsiMethod)member).getBody();
+    if(!(member instanceof PsiMethod) && !(member instanceof PsiField) && !(member instanceof PsiClassInitializer)) return null;
+    PsiElement body = member instanceof PsiMethod ? ((PsiMethod)member).getBody() : member.getContainingClass();
+    if (body == null) return null;
+    return CachedValuesManager.getCachedValue(body, () -> {
       DataflowResult result = runDFA(body);
       return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
     });

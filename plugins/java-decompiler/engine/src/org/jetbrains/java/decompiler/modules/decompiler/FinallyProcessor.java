@@ -898,8 +898,7 @@ public class FinallyProcessor {
       newblock.setSeq(seq);
       newblock.getInstrOldOffsets().addAll(oldOffsets);
 
-      List<BasicBlock> lstTemp = new ArrayList<>();
-      lstTemp.addAll(sample.getSuccs());
+      List<BasicBlock> lstTemp = new ArrayList<>(sample.getSuccs());
 
       // move successors
       for (BasicBlock suc : lstTemp) {

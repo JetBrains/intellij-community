@@ -89,7 +89,7 @@ public final class IfsUtil {
 
         if (isScalableImage(file)) {
           try {
-            Icon icon = IconLoader.findIcon(new File(file.getPath()).toURI().toURL());
+            Icon icon = IconLoader.findIcon(new File(file.getPath()).toURI().toURL(), false);
             file.putUserData(FORMAT_KEY, SVG_FORMAT);
             file.putUserData(IMAGE_PROVIDER_REF_KEY, new SoftReference<>(zoom -> {
               Icon scaledIcon = IconUtil.scale(icon, null, zoom.floatValue());

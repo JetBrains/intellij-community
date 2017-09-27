@@ -263,8 +263,7 @@ public class CustomizationUtil {
 
   private static ActionUrl[] getChildUserObjects(DefaultMutableTreeNode node, ActionUrl parent) {
     ArrayList<ActionUrl> result = new ArrayList<>();
-    ArrayList<String> groupPath = new ArrayList<>();
-    groupPath.addAll(parent.getGroupPath());
+    ArrayList<String> groupPath = new ArrayList<>(parent.getGroupPath());
     for (int i = 0; i < node.getChildCount(); i++) {
       DefaultMutableTreeNode child = (DefaultMutableTreeNode)node.getChildAt(i);
       ActionUrl url = new ActionUrl();

@@ -21,8 +21,7 @@ import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import java.util.Collection;
 
 /**
- * An extension for setting up additional options for external java compiler.
- * See {@link JavaBuilder#loadCommonJavacOptions(org.jetbrains.jps.incremental.CompileContext, JavaCompilingTool)}
+ * An extension for setting up additional VM options for external java compiler.
  */
 public interface ExternalJavacOptionsProvider {
   @NotNull

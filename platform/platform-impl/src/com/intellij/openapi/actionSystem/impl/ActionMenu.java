@@ -229,7 +229,11 @@ public final class ActionMenu extends JBMenu {
     UISettings settings = UISettings.getInstanceOrNull();
     if (settings != null && settings.getShowIconsInMenus()) {
       final Presentation presentation = myPresentation;
-      final Icon icon = presentation.getIcon();
+      Icon icon = presentation.getIcon();
+      if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
+        // JDK can't paint correctly our HiDPI icons at the system menu bar
+        icon = IconLoader.get1xIcon(icon);
+      }
       setIcon(icon);
       if (presentation.getDisabledIcon() != null) {
         setDisabledIcon(presentation.getDisabledIcon());

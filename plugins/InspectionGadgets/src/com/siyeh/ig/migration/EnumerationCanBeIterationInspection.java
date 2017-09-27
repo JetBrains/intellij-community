@@ -241,7 +241,7 @@ public class EnumerationCanBeIterationInspection extends EnumerationCanBeIterati
       final PsiElementFactory factory = facade.getElementFactory();
       final Query<PsiReference> query = ReferencesSearch.search(
         enumerationVariable);
-      final List<PsiElement> referenceElements = new ArrayList();
+      final List<PsiElement> referenceElements = new ArrayList<>();
       for (PsiReference reference : query) {
         final PsiElement referenceElement = reference.getElement();
         referenceElements.add(referenceElement);

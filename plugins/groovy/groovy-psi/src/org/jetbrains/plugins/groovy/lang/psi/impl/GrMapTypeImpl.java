@@ -72,8 +72,7 @@ public class GrMapTypeImpl extends GrMapType {
   @Override
   @NotNull
   protected PsiType[] getAllValueTypes() {
-    Set<PsiType> result = new HashSet<>();
-    result.addAll(myStringEntries.values());
+    Set<PsiType> result = new HashSet<>(myStringEntries.values());
     for (Couple<PsiType> entry : myOtherEntries) {
       result.add(entry.second);
     }

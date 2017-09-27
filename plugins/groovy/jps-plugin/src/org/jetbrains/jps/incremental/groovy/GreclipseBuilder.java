@@ -138,28 +138,26 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
 
       ClassLoader loader = createGreclipseLoader(greclipseSettings.greclipsePath);
       if (loader == null) {
-        context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, 
-                                                   "Invalid jar path in the compiler settings: '" + greclipseSettings.greclipsePath + "'"));
+        context.processMessage(new CompilerMessage(
+          getPresentableName(), BuildMessage.Kind.ERROR, "Invalid jar path in the compiler settings: '" + greclipseSettings.greclipsePath + "'")
+        );
         return ExitCode.ABORT;
       }
-
-      final JpsJavaExtensionService javaExt = JpsJavaExtensionService.getInstance();
-      final JpsJavaCompilerConfiguration compilerConfig = javaExt.getCompilerConfiguration(project);
-      assert compilerConfig != null;
 
       final Set<JpsModule> modules = chunk.getModules();
       ProcessorConfigProfile profile = null;
       if (modules.size() == 1) {
+        final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
+        assert compilerConfig != null;
         profile = compilerConfig.getAnnotationProcessingProfile(modules.iterator().next());
       }
       else {
-        String message = JavaBuilder.validateCycle(chunk, javaExt, compilerConfig, modules);
+        final String message = JavaBuilder.validateCycle(context, chunk);
         if (message != null) {
           context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, message));
           return ExitCode.ABORT;
         }
       }
-
 
       String mainOutputDir = outputDirs.get(chunk.representativeTarget());
       final List<String> args = createCommandLine(context, chunk, toCompile, mainOutputDir, profile, greclipseSettings);

@@ -62,7 +62,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     myInfo = processInfo;
 
     myProgress = new JProgressBar(SwingConstants.HORIZONTAL);
-    myProgress.putClientProperty("JComponent.sizeVariant", "mini");
+    UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, myProgress);
 
     myComponent = new MyComponent(compact, myProcessName);
     myEastButtons = createEastButtons();

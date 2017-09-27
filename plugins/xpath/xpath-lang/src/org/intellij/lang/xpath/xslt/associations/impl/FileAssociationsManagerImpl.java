@@ -65,7 +65,7 @@ class FileAssociationsManagerImpl extends FileAssociationsManager implements Pro
       if (url != null) {
         final VirtualFilePointer pointer = myFilePointerManager.create(url, myProject, null);
         final VirtualFilePointerContainer container = myFilePointerManager.createContainer(myProject);
-        container.readExternal(child, "association");
+        container.readExternal(child, "association", false);
         myAssociations.put(pointer, container);
       }
     }
@@ -77,7 +77,7 @@ class FileAssociationsManagerImpl extends FileAssociationsManager implements Pro
       final Element e = new Element("file");
       e.setAttribute("url", pointer.getUrl());
       final VirtualFilePointerContainer container = myAssociations.get(pointer);
-      container.writeExternal(e, "association");
+      container.writeExternal(e, "association", false);
       element.addContent(e);
     }
   }

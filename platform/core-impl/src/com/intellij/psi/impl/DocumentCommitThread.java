@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -738,7 +737,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
                                       @NotNull final FileASTNode oldFileNode) {
     Document document = task.getDocument();
     final CharSequence newDocumentText = document.getImmutableCharSequence();
-    final TextRange changedPsiRange = getChangedPsiRange(file, task.myLastCommittedText, task.reason, newDocumentText);
+    final TextRange changedPsiRange = getChangedPsiRange(file, task, newDocumentText);
     if (changedPsiRange == null) {
       return null;
     }
@@ -836,27 +835,20 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
 
   @Nullable
   private static TextRange getChangedPsiRange(@NotNull PsiFile file,
-                                              @NotNull CharSequence oldDocumentText,
-                                              Object reason, @NotNull CharSequence newDocumentText) {
+                                              @NotNull CommitTask task,
+                                              @NotNull CharSequence newDocumentText) {
+    CharSequence oldDocumentText = task.myLastCommittedText;
     int psiLength = oldDocumentText.length();
     if (!file.getViewProvider().supportsIncrementalReparse(file.getLanguage())) {
       return new TextRange(0, psiLength);
     }
-
-    int commonPrefixLength;
-    commonPrefixLength = reason instanceof DocumentEvent
-                         ? ((DocumentEvent)reason).getOffset()
-                         : StringUtil.commonPrefixLength(oldDocumentText, newDocumentText);
-    if (commonPrefixLength == newDocumentText.length() && newDocumentText.length() == psiLength) {
+    final TextRange changedPsiRange =
+      ((PsiDocumentManagerBase)PsiDocumentManagerBase.getInstance(file.getProject()))
+        .getChangedRangeSinceCommit(task.document, newDocumentText.length() - oldDocumentText.length());
+    if (changedPsiRange == null || changedPsiRange.getStartOffset() == newDocumentText.length() && newDocumentText.length() == psiLength) {
       return null;
     }
-
-    int commonSuffixLength;
-    commonSuffixLength = reason instanceof DocumentEvent
-                         ? newDocumentText.length() - commonPrefixLength - ((DocumentEvent)reason).getNewLength()
-                         : StringUtil.commonSuffixLength(oldDocumentText, newDocumentText);
-    commonSuffixLength = Math.min(commonSuffixLength, psiLength - commonPrefixLength);
-    return new TextRange(commonPrefixLength, psiLength - commonSuffixLength);
+    return changedPsiRange;
   }
 
   public static void doActualPsiChange(@NotNull final PsiFile file, @NotNull final DiffLog diffLog) {

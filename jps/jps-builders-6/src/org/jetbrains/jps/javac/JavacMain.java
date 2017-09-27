@@ -260,8 +260,7 @@ public class JavacMain {
   }
 
   private static Collection<String> prepareOptions(final Collection<String> options, @NotNull JavaCompilingTool compilingTool) {
-    final List<String> result = new ArrayList<String>();
-    result.addAll(compilingTool.getDefaultCompilerOptions());
+    final List<String> result = new ArrayList<String>(compilingTool.getDefaultCompilerOptions());
     boolean skip = false;
     for (String option : options) {
       if (FILTERED_OPTIONS.contains(option)) {

@@ -101,8 +101,7 @@ public class MakeExternalAnnotationExplicit extends BaseIntentionAction {
                                               ExternalAnnotationsManager externalAnnotationsManager) {
     List<PsiFile> files = externalAnnotationsManager.findExternalAnnotationsFiles(owner);
     if (files != null) {
-      List<PsiFile> elements = new ArrayList<>();
-      elements.addAll(files);
+      List<PsiFile> elements = new ArrayList<>(files);
       elements.add(file);
       return elements;
     }

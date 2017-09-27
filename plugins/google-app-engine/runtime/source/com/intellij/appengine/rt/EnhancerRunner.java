@@ -32,8 +32,7 @@ public class EnhancerRunner {
     throws IOException, NoSuchMethodException, ClassNotFoundException, InvocationTargetException, IllegalAccessException {
     File argsFile = new File(args[0]);
     String className = args[1];
-    List<String> argsList = new ArrayList<String>();
-    argsList.addAll(Arrays.asList(args).subList(2, args.length));
+    List<String> argsList = new ArrayList<String>(Arrays.asList(args).subList(2, args.length));
     BufferedReader reader = new BufferedReader(new FileReader(argsFile));
     try {
       while (reader.ready()) {

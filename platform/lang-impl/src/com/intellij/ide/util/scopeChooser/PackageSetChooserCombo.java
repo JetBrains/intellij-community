@@ -153,9 +153,8 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
   }
 
   protected NamedScope[] createModel() {
-    final Collection<NamedScope> model = new ArrayList<>();
     final DependencyValidationManager manager = DependencyValidationManager.getInstance(myProject);
-    model.addAll(Arrays.asList(manager.getScopes()));
+    final Collection<NamedScope> model = new ArrayList<>(Arrays.asList(manager.getScopes()));
     for (PackageSet unnamedScope : manager.getUnnamedScopes().values()) {
       model.add(new NamedScope.UnnamedScope(unnamedScope));
     }

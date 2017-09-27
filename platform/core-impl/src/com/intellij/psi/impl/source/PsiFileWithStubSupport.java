@@ -24,6 +24,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubTree;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -44,4 +45,10 @@ public interface PsiFileWithStubSupport extends PsiFile {
    */
   @Nullable
   ASTNode findTreeForStub(StubTree tree, StubElement<?> stub);
+
+  /**
+   * @return StubbedSpine for accessing stubbed PSI, which can be backed up by stubs or AST
+   */
+  @NotNull
+  StubbedSpine getStubbedSpine();
 }

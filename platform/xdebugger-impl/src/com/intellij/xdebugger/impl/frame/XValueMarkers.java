@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,12 @@ public class XValueMarkers<V extends XValue, M> {
   }
 
   public void markValue(@NotNull XValue value, @NotNull ValueMarkup markup) {
+    // remove the existing label if any
+    myMarkers.entrySet().stream()
+      .filter(entry -> markup.getText().equals(entry.getValue().getText()))
+      .findFirst()
+      .ifPresent(entry -> myMarkers.remove(entry.getKey()));
+
     //noinspection unchecked
     M m = myProvider.markValue((V)value);
     myMarkers.put(m, markup);

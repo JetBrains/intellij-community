@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Factory;
@@ -238,6 +239,13 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return findTreeForStub(ast, stubs, stub);
   }
 
+  @NotNull
+  @Override
+  public StubbedSpine getStubbedSpine() {
+    StubTree tree = getGreenStubTree();
+    return tree != null ? tree.getSpine() : calcTreeElement().getStubbedSpine();
+  }
+
   @Nullable
   private static ASTNode findTreeForStub(ASTNode tree, final Iterator<StubElement<?>> stubs, final StubElement stub) {
     final IElementType type = tree.getElementType();
@@ -338,6 +346,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   public String getText() {
     final ASTNode tree = derefTreeElement();
     if (!isValid()) {
+      ProgressManager.checkCanceled();
+      
       // even invalid PSI can calculate its text by concatenating its children
       if (tree != null) return tree.getText();
 

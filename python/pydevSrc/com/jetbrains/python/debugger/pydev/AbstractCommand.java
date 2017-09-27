@@ -28,6 +28,7 @@ public abstract class AbstractCommand<T> {
   public static final int ADD_EXCEPTION_BREAKPOINT = 122;
   public static final int REMOVE_EXCEPTION_BREAKPOINT = 123;
   public static final int LOAD_SOURCE = 124;
+  public static final int SET_NEXT_STATEMENT = 127;
   public static final int SMART_STEP_INTO = 128;
   public static final int EXIT = 129;
   public static final int GET_DESCRIPTION = 148;
@@ -63,7 +64,6 @@ public abstract class AbstractCommand<T> {
   public static final String NEW_LINE_CHAR = "@_@NEW_LINE_CHAR@_@";
   public static final String TAB_CHAR = "@_@TAB_CHAR@_@";
 
-  
 
   @NotNull private final RemoteDebugger myDebugger;
   private final int myCommandCode;
