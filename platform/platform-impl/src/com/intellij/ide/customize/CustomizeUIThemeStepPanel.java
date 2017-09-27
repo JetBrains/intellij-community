@@ -229,7 +229,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
       }
       if (myColumnMode) {
         myPreviewLabel.setIcon(theme.getIcon());
-        myPreviewLabel.setBorder(BorderFactory.createLineBorder(UIManager.getColor("Label.disabledForeground")));
+        myPreviewLabel.setBorder(BorderFactory.createLineBorder(UIManager.getColor("Label.foreground")));
       }
     }
     catch (Exception e) {
