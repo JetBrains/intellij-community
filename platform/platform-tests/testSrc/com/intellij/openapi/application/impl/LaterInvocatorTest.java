@@ -604,8 +604,13 @@ public class LaterInvocatorTest extends PlatformTestCase {
       myWindow1.add(panel);
       LaterInvocator.enterModal(myWindow1);
 
-      assertSame(ModalityState.stateForComponent(myWindow1), ModalityState.stateForComponent(myWindow1));
-      assertSame(ModalityState.stateForComponent(myWindow1), ModalityState.stateForComponent(panel));
+      ModalityState state1 = ModalityState.stateForComponent(myWindow1);
+      assertSame(state1, ModalityState.stateForComponent(myWindow1));
+      assertSame(state1, ModalityState.stateForComponent(panel));
+
+      LaterInvocator.enterModal(myWindow1);
+      assertSame(state1, ModalityState.stateForComponent(panel));
+      assertNotSame(state1, ModalityState.stateForComponent(myWindow2));
     });
   }
 
