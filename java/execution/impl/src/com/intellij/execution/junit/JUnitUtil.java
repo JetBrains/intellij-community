@@ -33,6 +33,7 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.testIntegration.TestFramework;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -134,7 +135,7 @@ public class JUnitUtil {
     if (checkClass && checkRunWith) {
       PsiAnnotation annotation = getRunWithAnnotation(aClass);
       if (annotation != null) {
-        return !isParameterized(annotation);
+        return !isRunnerWithRequiredAnnotationOnTestMethod(annotation, "org.junit.runners.Parameterized", "org.junit.runners.BlockJUnit4ClassRunner");
       }
     }
     if (psiMethod.getParameterList().getParametersCount() > 0) return false;
@@ -413,11 +414,15 @@ public class JUnitUtil {
   }
 
   public static boolean isParameterized(PsiAnnotation annotation) {
+    return isRunnerWithRequiredAnnotationOnTestMethod(annotation,"org.junit.runners.Parameterized");
+  }
+
+  private static boolean isRunnerWithRequiredAnnotationOnTestMethod(PsiAnnotation annotation, String... runners) {
     final PsiAnnotationMemberValue value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
     if (value instanceof PsiClassObjectAccessExpression) {
       final PsiTypeElement operand = ((PsiClassObjectAccessExpression)value).getOperand();
       final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(operand.getType());
-      return psiClass != null && "org.junit.runners.Parameterized".equals(psiClass.getQualifiedName());
+      return psiClass != null && ArrayUtil.find(runners, psiClass.getQualifiedName()) > -1;
     }
     return false;
   }
