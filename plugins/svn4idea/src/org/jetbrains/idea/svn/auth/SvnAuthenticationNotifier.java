@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.api.ClientFactory;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.info.InfoClient;
@@ -56,7 +57,6 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.swing.*;
 import java.awt.*;
@@ -240,7 +240,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     Info info = null;
 
     try {
-      info = factory.create(InfoClient.class, false).doInfo(SvnTarget.fromURL(url), SVNRevision.UNDEFINED);
+      info = factory.create(InfoClient.class, false).doInfo(Target.on(url), SVNRevision.UNDEFINED);
     }
     catch (SvnBindException ignore) {
     }

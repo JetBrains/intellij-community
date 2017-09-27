@@ -33,6 +33,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.BasicAction;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.checkin.CommitEventHandler;
 import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
@@ -41,7 +42,6 @@ import org.jetbrains.idea.svn.update.SingleRootSwitcher;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 
@@ -94,9 +94,9 @@ public class CreateBranchOrTagAction extends BasicAction {
             handler = new IdeaCommitHandler(progress);
           }
 
-          SvnTarget source = isSrcFile ? SvnTarget.fromFile(srcFile, revision) : SvnTarget.fromURL(srcUrl, revision);
+          Target source = isSrcFile ? Target.on(srcFile, revision) : Target.on(srcUrl, revision);
           long newRevision = vcs.getFactory(source).createCopyMoveClient()
-            .copy(source, SvnTarget.fromURL(dstSvnUrl), revision, true, false, comment, handler);
+            .copy(source, Target.on(dstSvnUrl), revision, true, false, comment, handler);
 
           updateStatusBar(newRevision, vcs.getProject());
         }

@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.NodeKind;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.checkin.CmdCheckinClient;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
@@ -33,7 +34,6 @@ import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.lock.Lock;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.XmlAttribute;
@@ -50,7 +50,7 @@ import static org.jetbrains.idea.svn.SvnUtil.append;
 public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
 
   @Override
-  public void list(@NotNull SvnTarget target,
+  public void list(@NotNull Target target,
                    @Nullable SVNRevision revision,
                    @Nullable Depth depth,
                    @Nullable DirectoryEntryConsumer handler) throws VcsException {
@@ -66,11 +66,11 @@ public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
     CommandExecutor command = execute(myVcs, target, SvnCommandName.list, parameters, null);
     Info info = myFactory.createInfoClient().doInfo(target, revision);
 
-    parseOutput(target.getURL(), command, handler, info != null ? info.getRepositoryRootURL() : null);
+    parseOutput(target.getUrl(), command, handler, info != null ? info.getRepositoryRootURL() : null);
   }
 
   @Override
-  public long createDirectory(@NotNull SvnTarget target, @NotNull String message, boolean makeParents) throws VcsException {
+  public long createDirectory(@NotNull Target target, @NotNull String message, boolean makeParents) throws VcsException {
     assertUrl(target);
 
     List<String> parameters = ContainerUtil.newArrayList();

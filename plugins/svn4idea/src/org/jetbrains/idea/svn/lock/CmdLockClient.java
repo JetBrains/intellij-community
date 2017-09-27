@@ -19,23 +19,16 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
-import org.jetbrains.idea.svn.api.BaseSvnClient;
-import org.jetbrains.idea.svn.api.EventAction;
-import org.jetbrains.idea.svn.api.ProgressEvent;
-import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.api.*;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class CmdLockClient extends BaseSvnClient implements LockClient {
 
   @Override
@@ -45,7 +38,7 @@ public class CmdLockClient extends BaseSvnClient implements LockClient {
     parameters.add("--message");
     parameters.add(message);
 
-    CommandExecutor command = execute(myVcs, SvnTarget.fromFile(file), SvnCommandName.lock, parameters, null);
+    CommandExecutor command = execute(myVcs, Target.on(file), SvnCommandName.lock, parameters, null);
     handleCommandCompletion(command, file, EventAction.LOCKED, EventAction.LOCK_FAILED, handler);
   }
 
@@ -53,7 +46,7 @@ public class CmdLockClient extends BaseSvnClient implements LockClient {
   public void unlock(@NotNull File file, boolean force, @Nullable ProgressTracker handler) throws VcsException {
     List<String> parameters = prepareParameters(file, force);
 
-    CommandExecutor command = execute(myVcs, SvnTarget.fromFile(file), SvnCommandName.unlock, parameters, null);
+    CommandExecutor command = execute(myVcs, Target.on(file), SvnCommandName.unlock, parameters, null);
     handleCommandCompletion(command, file, EventAction.UNLOCKED, EventAction.UNLOCK_FAILED, handler);
   }
 

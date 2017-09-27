@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.SvnClient;
+import org.jetbrains.idea.svn.api.Target;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public interface BrowseClient extends SvnClient {
 
-  void list(@NotNull SvnTarget target, @Nullable SVNRevision revision, @Nullable Depth depth, @Nullable DirectoryEntryConsumer handler)
+  void list(@NotNull Target target, @Nullable SVNRevision revision, @Nullable Depth depth, @Nullable DirectoryEntryConsumer handler)
     throws VcsException;
 
-  long createDirectory(@NotNull SvnTarget target, @NotNull String message, boolean makeParents) throws VcsException;
+  long createDirectory(@NotNull Target target, @NotNull String message, boolean makeParents) throws VcsException;
 }

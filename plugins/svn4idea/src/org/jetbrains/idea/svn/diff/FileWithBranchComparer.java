@@ -29,14 +29,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.api.Target;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.IOException;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class FileWithBranchComparer extends ElementWithBranchComparer {
 
   @NotNull private final Ref<byte[]> content = new Ref<>();
@@ -61,7 +58,7 @@ public class FileWithBranchComparer extends ElementWithBranchComparer {
   @Override
   protected void compare() throws VcsException {
     remoteTitleBuilder.append(myElementUrl);
-    content.set(SvnUtil.getFileContents(myVcs, SvnTarget.fromURL(myElementUrl), SVNRevision.HEAD, SVNRevision.UNDEFINED));
+    content.set(SvnUtil.getFileContents(myVcs, Target.on(myElementUrl), SVNRevision.HEAD, SVNRevision.UNDEFINED));
     success.set(true);
   }
 

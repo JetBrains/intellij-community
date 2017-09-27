@@ -25,12 +25,12 @@ import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.util.Map;
 
@@ -85,7 +85,7 @@ public class LatestExistentSearcher {
       }
 
       final SVNRevision startRevision = SVNRevision.create(myStartNumber);
-      SvnTarget target = SvnTarget.fromURL(existingParent, startRevision);
+      Target target = Target.on(existingParent, startRevision);
       myVcs.getFactory(target).createHistoryClient().doLog(target, startRevision, SVNRevision.HEAD, false, true, false, 0, null,
                                                            createHandler(latest));
     }

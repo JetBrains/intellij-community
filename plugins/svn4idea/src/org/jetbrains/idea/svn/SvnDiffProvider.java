@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.history.LatestExistentSearcher;
 import org.jetbrains.idea.svn.info.Info;
@@ -40,7 +41,6 @@ import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.List;
@@ -166,7 +166,7 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
     try {
       PropertyValue property =
         myVcs.getFactory(path).createPropertyClient()
-          .getProperty(SvnTarget.fromFile(path), COMMIT_MESSAGE, true, info.getCommittedRevision());
+          .getProperty(Target.on(path), COMMIT_MESSAGE, true, info.getCommittedRevision());
 
       result = PropertyValue.toString(property);
     }

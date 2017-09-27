@@ -20,12 +20,12 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.XmlElement;
@@ -33,13 +33,10 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
 
   @Override
-  public void doLog(@NotNull SvnTarget target,
+  public void doLog(@NotNull Target target,
                     @NotNull SVNRevision startRevision,
                     @NotNull SVNRevision endRevision,
                     boolean stopOnCopy,
@@ -87,7 +84,7 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
     }
   }
 
-  private static List<String> prepareCommand(@NotNull SvnTarget target,
+  private static List<String> prepareCommand(@NotNull Target target,
                                              @NotNull SVNRevision startRevision,
                                              @NotNull SVNRevision endRevision,
                                              boolean stopOnCopy, boolean discoverChangedPaths, boolean includeMergedRevisions, long limit) {

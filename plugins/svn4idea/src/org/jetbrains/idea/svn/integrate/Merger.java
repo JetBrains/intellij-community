@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,11 +30,11 @@ import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.List;
@@ -154,7 +154,7 @@ public class Merger implements IMerger {
   }
 
   protected void doMerge() throws VcsException {
-    SvnTarget source = SvnTarget.fromURL(myCurrentBranchUrl);
+    Target source = Target.on(myCurrentBranchUrl);
     MergeClient client = myVcs.getFactory(myTarget).createMergeClient();
 
     client.merge(source, myMergeChunk.revisionRange(), myTarget, Depth.INFINITY, mySvnConfig.isMergeDryRun(), myRecordOnly, true,

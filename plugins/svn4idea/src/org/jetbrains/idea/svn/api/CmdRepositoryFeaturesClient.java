@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,7 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class CmdRepositoryFeaturesClient extends BaseSvnClient implements RepositoryFeaturesClient {
 
   @Override
@@ -34,7 +30,7 @@ public class CmdRepositoryFeaturesClient extends BaseSvnClient implements Reposi
 
     try {
       myFactory.createHistoryClient()
-        .doLog(SvnTarget.fromURL(url), SVNRevision.HEAD, SVNRevision.create(1), false, false, true, 1, null, null);
+        .doLog(Target.on(url), SVNRevision.HEAD, SVNRevision.create(1), false, false, true, 1, null, null);
       result = true;
     }
     catch (SvnBindException e) {

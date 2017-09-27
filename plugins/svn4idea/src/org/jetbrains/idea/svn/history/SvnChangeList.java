@@ -37,12 +37,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -503,7 +503,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
       final String path = getRelativePath(contentRevision);
       SVNURL fullPath = createUrl(((SvnRepositoryContentRevision)contentRevision).getFullPath());
       SVNRevision revisionNumber = SVNRevision.create(getRevision(isBefore));
-      SvnTarget target = SvnTarget.fromURL(fullPath, revisionNumber);
+      Target target = Target.on(fullPath, revisionNumber);
 
       myVcs.getFactory(target).createBrowseClient().list(target, revisionNumber, Depth.INFINITY, entry -> {
         final String childPath = path + '/' + entry.getRelativePath();

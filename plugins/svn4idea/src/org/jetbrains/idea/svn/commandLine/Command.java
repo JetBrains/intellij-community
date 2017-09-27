@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -7,10 +22,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -18,9 +33,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 // TODO: Probably make command immutable and use CommandBuilder for updates.
 public class Command {
 
@@ -32,7 +44,7 @@ public class Command {
   @Nullable private File myConfigDir;
   @Nullable private LineCommandListener myResultBuilder;
   @Nullable private volatile SVNURL myRepositoryUrl;
-  @NotNull private SvnTarget myTarget;
+  @NotNull private Target myTarget;
   @Nullable private Collection<File> myTargets;
   @Nullable private PropertyValue myPropertyValue;
 
@@ -46,7 +58,7 @@ public class Command {
     CommandUtil.put(myParameters, depth, false);
   }
 
-  public void put(@NotNull SvnTarget target) {
+  public void put(@NotNull Target target) {
     CommandUtil.put(myParameters, target);
   }
 
@@ -109,7 +121,7 @@ public class Command {
   }
 
   @NotNull
-  public SvnTarget getTarget() {
+  public Target getTarget() {
     return myTarget;
   }
 
@@ -144,7 +156,7 @@ public class Command {
     myRepositoryUrl = repositoryUrl;
   }
 
-  public void setTarget(@NotNull SvnTarget target) {
+  public void setTarget(@NotNull Target target) {
     myTarget = target;
   }
 

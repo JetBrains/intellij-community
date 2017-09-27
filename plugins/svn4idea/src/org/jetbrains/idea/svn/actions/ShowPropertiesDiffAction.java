@@ -39,6 +39,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.difftool.properties.SvnPropertiesDiffRequest;
 import org.jetbrains.idea.svn.difftool.properties.SvnPropertiesDiffRequest.PropertyContent;
@@ -48,7 +49,6 @@ import org.jetbrains.idea.svn.properties.PropertyData;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -217,13 +217,13 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
       return Collections.emptyList();
     }
 
-    SvnTarget target;
+    Target target;
     if (contentRevision instanceof SvnRepositoryContentRevision) {
       SvnRepositoryContentRevision svnRevision = (SvnRepositoryContentRevision)contentRevision;
-      target = SvnTarget.fromURL(createUrl(svnRevision.getFullPath()), revision);
+      target = Target.on(createUrl(svnRevision.getFullPath()), revision);
     } else {
       File ioFile = contentRevision.getFile().getIOFile();
-      target = SvnTarget.fromFile(ioFile, revision);
+      target = Target.on(ioFile, revision);
     }
 
     return getPropertyList(vcs, target, revision);
@@ -232,17 +232,17 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
   @NotNull
   public static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs, @NotNull SVNURL url, @Nullable SVNRevision revision)
     throws SvnBindException {
-    return getPropertyList(vcs, SvnTarget.fromURL(url, revision), revision);
+    return getPropertyList(vcs, Target.on(url, revision), revision);
   }
 
   @NotNull
   public static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs, @NotNull File ioFile, @Nullable SVNRevision revision)
     throws SvnBindException {
-    return getPropertyList(vcs, SvnTarget.fromFile(ioFile, revision), revision);
+    return getPropertyList(vcs, Target.on(ioFile, revision), revision);
   }
 
   @NotNull
-  private static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs, @NotNull SvnTarget target, @Nullable SVNRevision revision)
+  private static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs, @NotNull Target target, @Nullable SVNRevision revision)
     throws SvnBindException {
     List<PropertyData> lines = new ArrayList<>();
     PropertyConsumer propertyHandler = createHandler(revision, lines);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.*;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -57,7 +57,7 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
     };
 
     try {
-      CommandExecutor command = execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.info, parameters, listener);
+      CommandExecutor command = execute(myVcs, Target.on(path), SvnCommandName.info, parameters, listener);
 
       return command.getOutput();
     }
@@ -124,7 +124,7 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
   }
 
   @NotNull
-  private static List<String> buildParameters(@NotNull SvnTarget target, @Nullable SVNRevision revision, @Nullable Depth depth) {
+  private static List<String> buildParameters(@NotNull Target target, @Nullable SVNRevision revision, @Nullable Depth depth) {
     List<String> parameters = ContainerUtil.newArrayList();
 
     CommandUtil.put(parameters, depth);
@@ -139,11 +139,11 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
   public Info doInfo(@NotNull File path, @Nullable SVNRevision revision) throws SvnBindException {
     File base = CommandUtil.requireExistingParent(path);
 
-    return parseResult(base, execute(buildParameters(SvnTarget.fromFile(path), revision, Depth.EMPTY), path));
+    return parseResult(base, execute(buildParameters(Target.on(path), revision, Depth.EMPTY), path));
   }
 
   @Override
-  public Info doInfo(@NotNull SvnTarget target, @Nullable SVNRevision revision) throws SvnBindException {
+  public Info doInfo(@NotNull Target target, @Nullable SVNRevision revision) throws SvnBindException {
     assertUrl(target);
 
     CommandExecutor command = execute(myVcs, target, SvnCommandName.info, buildParameters(target, revision, Depth.EMPTY), null);

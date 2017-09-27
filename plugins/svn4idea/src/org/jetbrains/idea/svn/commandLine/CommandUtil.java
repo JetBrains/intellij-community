@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,10 @@ import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -35,9 +35,6 @@ import java.io.File;
 import java.io.StringReader;
 import java.util.List;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class CommandUtil {
 
   private static final Logger LOG = Logger.getInstance(CommandUtil.class);
@@ -96,15 +93,15 @@ public class CommandUtil {
     return builder.toString();
   }
 
-  public static void put(@NotNull List<String> parameters, @NotNull SvnTarget target) {
-    put(parameters, target.getPathOrUrlString(), target.getPegRevision());
+  public static void put(@NotNull List<String> parameters, @NotNull Target target) {
+    put(parameters, target.getPath(), target.getPegRevision());
   }
 
-  public static void put(@NotNull List<String> parameters, @NotNull SvnTarget target, boolean usePegRevision) {
+  public static void put(@NotNull List<String> parameters, @NotNull Target target, boolean usePegRevision) {
     if (usePegRevision) {
       put(parameters, target);
     } else {
-      parameters.add(target.getPathOrUrlString());
+      parameters.add(target.getPath());
     }
   }
 

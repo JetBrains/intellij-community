@@ -21,19 +21,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class SvnKitBrowseClient extends BaseSvnClient implements BrowseClient {
   @Override
-  public void list(@NotNull SvnTarget target,
+  public void list(@NotNull Target target,
                    @Nullable SVNRevision revision,
                    @Nullable Depth depth,
                    @Nullable DirectoryEntryConsumer handler) throws VcsException {
@@ -48,7 +45,8 @@ public class SvnKitBrowseClient extends BaseSvnClient implements BrowseClient {
         client.doList(target.getFile(), target.getPegRevision(), notNullize(revision), true, toDepth(depth), SVNDirEntry.DIRENT_ALL, wrappedHandler);
       }
       else {
-        client.doList(target.getURL(), target.getPegRevision(), notNullize(revision), true, toDepth(depth), SVNDirEntry.DIRENT_ALL, wrappedHandler);
+        client.doList(target.getUrl(), target.getPegRevision(), notNullize(revision), true, toDepth(depth), SVNDirEntry.DIRENT_ALL,
+                      wrappedHandler);
       }
     }
     catch (SVNException e) {
@@ -57,12 +55,12 @@ public class SvnKitBrowseClient extends BaseSvnClient implements BrowseClient {
   }
 
   @Override
-  public long createDirectory(@NotNull SvnTarget target, @NotNull String message, boolean makeParents) throws VcsException {
+  public long createDirectory(@NotNull Target target, @NotNull String message, boolean makeParents) throws VcsException {
     assertUrl(target);
 
     try {
       SVNCommitInfo commitInfo =
-        myVcs.getSvnKitManager().createCommitClient().doMkDir(new SVNURL[]{target.getURL()}, message, null, makeParents);
+        myVcs.getSvnKitManager().createCommitClient().doMkDir(new SVNURL[]{target.getUrl()}, message, null, makeParents);
 
       return commitInfo.getNewRevision();
     }

@@ -22,6 +22,7 @@ import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.EventAction;
 import org.jetbrains.idea.svn.api.ProgressEvent;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.BaseUpdateCommandListener;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
@@ -30,7 +31,6 @@ import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -55,7 +55,7 @@ public class CmdUpdateClient extends SvnKitUpdateClient {
     updatedToRevision.set(new long[0]);
 
     final BaseUpdateCommandListener listener = createCommandListener(new File[]{path}, updatedToRevision, base);
-    execute(myVcs, SvnTarget.fromFile(base), command, parameters, listener);
+    execute(myVcs, Target.on(base), command, parameters, listener);
 
     listener.throwWrappedIfException();
 
@@ -130,7 +130,7 @@ public class CmdUpdateClient extends SvnKitUpdateClient {
 
     List<String> parameters = new ArrayList<>();
 
-    CommandUtil.put(parameters, SvnTarget.fromURL(url, pegRevision));
+    CommandUtil.put(parameters, Target.on(url, pegRevision));
     CommandUtil.put(parameters, path, false);
     fillParameters(parameters, revision, depth, depthIsSticky, allowUnversionedObstructions);
     if (!myVcs.is16SupportedByCommandLine() ||

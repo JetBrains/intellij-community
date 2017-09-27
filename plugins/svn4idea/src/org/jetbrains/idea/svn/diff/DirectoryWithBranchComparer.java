@@ -26,7 +26,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.api.ClientFactory;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.jetbrains.idea.svn.api.Target;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -34,9 +34,6 @@ import java.util.List;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class DirectoryWithBranchComparer extends ElementWithBranchComparer {
 
   @NotNull private final StringBuilder titleBuilder = new StringBuilder();
@@ -54,8 +51,8 @@ public class DirectoryWithBranchComparer extends ElementWithBranchComparer {
     titleBuilder.append(SvnBundle.message("repository.browser.compare.title", myElementUrl,
                                           FileUtil.toSystemDependentName(myVirtualFile.getPresentableUrl())));
 
-    SvnTarget target1 = SvnTarget.fromURL(myElementUrl);
-    SvnTarget target2 = SvnTarget.fromFile(virtualToIoFile(myVirtualFile));
+    Target target1 = Target.on(myElementUrl);
+    Target target2 = Target.on(virtualToIoFile(myVirtualFile));
 
     changes.addAll(getClientFactory().createDiffClient().compare(target1, target2));
   }

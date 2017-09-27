@@ -23,11 +23,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.*;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -65,7 +65,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
 
     putParameters(parameters, path, depth, remote, reportAll, includeIgnored);
 
-    CommandExecutor command = execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.st, parameters, null);
+    CommandExecutor command = execute(myVcs, Target.on(path), SvnCommandName.st, parameters, null);
     parseResult(path, revision, handler, base, infoBase, command);
     return 0;
   }

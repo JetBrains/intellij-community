@@ -39,10 +39,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
@@ -137,7 +137,7 @@ public class SvnEditCommitMessageAction extends AnAction {
           myException = new VcsException("Can not determine repository root for URL: " + url);
           return;
         }
-        SvnTarget target = SvnTarget.fromURL(root);
+        Target target = Target.on(root);
         myVcs.getFactory(target).createPropertyClient()
           .setRevisionProperty(target, SvnPropertyKeys.LOG, SVNRevision.create(myNumber), PropertyValue.create(myNewMessage), false);
       }

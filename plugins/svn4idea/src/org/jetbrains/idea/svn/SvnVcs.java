@@ -88,7 +88,6 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.*;
@@ -536,7 +535,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     }
 
     PropertyClient client = getFactory(ioFile).createPropertyClient();
-    final PropertyValue value = client.getProperty(SvnTarget.fromFile(ioFile, SVNRevision.WORKING), propName, false, SVNRevision.WORKING);
+    final PropertyValue value = client.getProperty(Target.on(ioFile, SVNRevision.WORKING), propName, false, SVNRevision.WORKING);
 
     if (cachedMap == null) {
       cachedMap = new HashMap<>();
@@ -573,7 +572,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @Nullable
   public Info getInfo(@NotNull SVNURL url, SVNRevision pegRevision, SVNRevision revision) throws SvnBindException {
-    return getFactory().createInfoClient().doInfo(SvnTarget.fromURL(url, pegRevision), revision);
+    return getFactory().createInfoClient().doInfo(Target.on(url, pegRevision), revision);
   }
 
   @Nullable
@@ -931,7 +930,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @NotNull
-  public ClientFactory getFactory(@NotNull SvnTarget target) {
+  public ClientFactory getFactory(@NotNull Target target) {
     return target.isFile() ? getFactory(target.getFile()) : getFactory();
   }
 

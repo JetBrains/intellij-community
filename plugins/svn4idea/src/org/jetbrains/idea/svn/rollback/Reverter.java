@@ -24,10 +24,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnFileSystemListener;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.api.EventAction;
-import org.jetbrains.idea.svn.api.ProgressEvent;
-import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.api.*;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.properties.PropertiesMap;
 import org.jetbrains.idea.svn.properties.PropertyConsumer;
@@ -35,7 +32,6 @@ import org.jetbrains.idea.svn.properties.PropertyData;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,9 +40,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-/**
-* @author Konstantin Kolosovsky.
-*/
 public class Reverter {
 
   @NotNull private final SvnVcs myVcs;
@@ -94,7 +87,7 @@ public class Reverter {
         final File source = entry.getKey();
         final ThroughRenameInfo info = entry.getValue();
         if (info.isVersioned()) {
-          myVcs.getFactory(source).createPropertyClient().list(SvnTarget.fromFile(source), SVNRevision.WORKING, Depth.EMPTY, handler);
+          myVcs.getFactory(source).createPropertyClient().list(Target.on(source), SVNRevision.WORKING, Depth.EMPTY, handler);
         }
         if (source.isDirectory()) {
           if (!FileUtil.filesEqual(info.getTo(), info.getFirstTo())) {

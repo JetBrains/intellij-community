@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.IOException;
 import java.util.Date;
@@ -213,7 +213,7 @@ public class SvnFileRevision implements VcsFileRevision {
                message("progress.text2.revision.information", getRevision()));
 
       try {
-        myContents = getFileContents(myVCS, SvnTarget.fromURL(myURL), getRevision(), myPegRevision);
+        myContents = getFileContents(myVCS, Target.on(myURL), getRevision(), myPegRevision);
       }
       catch (VcsException e) {
         myException = e;

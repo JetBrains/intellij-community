@@ -27,21 +27,18 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.util.ArrayList;
 
 import static org.jetbrains.idea.svn.SvnUtil.append;
 import static org.jetbrains.idea.svn.SvnUtil.removePathTail;
 
-/**
-* @author Konstantin Kolosovsky.
-*/
 public class DefaultBranchConfigInitializer implements Runnable {
 
   private static final Logger LOG = Logger.getInstance(DefaultBranchConfigInitializer.class);
@@ -100,9 +97,9 @@ public class DefaultBranchConfigInitializer implements Runnable {
 
     SVNURL branchLocationsParent = getBranchLocationsParent(url);
     if (branchLocationsParent != null) {
-      SvnTarget target = SvnTarget.fromURL(branchLocationsParent);
+      Target target = Target.on(branchLocationsParent);
 
-      vcs.getFactory(target).createBrowseClient().list(target, SVNRevision.HEAD, Depth.IMMEDIATES, createHandler(result, target.getURL()));
+      vcs.getFactory(target).createBrowseClient().list(target, SVNRevision.HEAD, Depth.IMMEDIATES, createHandler(result, target.getUrl()));
     }
 
     return result;

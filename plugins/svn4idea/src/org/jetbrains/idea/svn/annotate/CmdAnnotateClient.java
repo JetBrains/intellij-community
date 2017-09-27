@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,13 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.XmlAttribute;
@@ -34,13 +34,10 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class CmdAnnotateClient extends BaseSvnClient implements AnnotateClient {
 
   @Override
-  public void annotate(@NotNull SvnTarget target,
+  public void annotate(@NotNull Target target,
                        @NotNull SVNRevision startRevision,
                        @NotNull SVNRevision endRevision,
                        boolean includeMergedRevisions,

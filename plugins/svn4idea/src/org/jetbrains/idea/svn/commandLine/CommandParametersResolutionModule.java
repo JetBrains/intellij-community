@@ -21,17 +21,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.InfoCommandRepositoryProvider;
 import org.jetbrains.idea.svn.api.Repository;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.api.UrlMappingRepositoryProvider;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class CommandParametersResolutionModule extends BaseCommandRuntimeModule {
 
   public CommandParametersResolutionModule(@NotNull CommandRuntime runtime) {
@@ -65,7 +62,7 @@ public class CommandParametersResolutionModule extends BaseCommandRuntimeModule 
 
   @NotNull
   private File resolveWorkingDirectory(@NotNull Command command) {
-    SvnTarget target = command.getTarget();
+    Target target = command.getTarget();
     File workingDirectory = target.isFile() ? target.getFile() : null;
     // TODO: Do we really need search existing parent - or just take parent directory if target is file???
     workingDirectory = CommandUtil.findExistingParent(workingDirectory);

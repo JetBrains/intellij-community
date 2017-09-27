@@ -48,10 +48,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.api.EventAction;
-import org.jetbrains.idea.svn.api.ProgressEvent;
-import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.api.*;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
@@ -74,7 +71,6 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.net.URI;
@@ -552,7 +548,7 @@ public class SvnUtil {
   }
 
   public static boolean remoteFolderIsEmpty(@NotNull SvnVcs vcs, @NotNull String url) throws VcsException {
-    SvnTarget target = SvnTarget.fromURL(createUrl(url));
+    Target target = Target.on(createUrl(url));
     Ref<Boolean> result = new Ref<>(true);
     DirectoryEntryConsumer handler = entry -> {
       if (entry != null) {
@@ -609,7 +605,7 @@ public class SvnUtil {
     return getRelativeUrl(parentUrl.toDecodedString(), childUrl.toDecodedString());
   }
 
-  public static String getRelativeUrl(@NotNull SvnTarget parent, @NotNull SvnTarget child) {
+  public static String getRelativeUrl(@NotNull Target parent, @NotNull Target child) {
     return getRelativeUrl(toDecodedString(parent), toDecodedString(child));
   }
 
@@ -662,7 +658,7 @@ public class SvnUtil {
   }
 
   public static byte[] getFileContents(@NotNull final SvnVcs vcs,
-                                       @NotNull final SvnTarget target,
+                                       @NotNull final Target target,
                                        @Nullable final SVNRevision revision,
                                        @Nullable final SVNRevision pegRevision)
     throws VcsException {
@@ -765,19 +761,19 @@ public class SvnUtil {
 
   // TODO: Create custom Target class and implement append there
   @NotNull
-  public static SvnTarget append(@NotNull SvnTarget target, @NotNull String path) throws SvnBindException {
+  public static Target append(@NotNull Target target, @NotNull String path) throws SvnBindException {
     return append(target, path, false);
   }
 
   @NotNull
-  public static SvnTarget append(@NotNull SvnTarget target, @NotNull String path, boolean checkAbsolute) throws SvnBindException {
-    SvnTarget result;
+  public static Target append(@NotNull Target target, @NotNull String path, boolean checkAbsolute) throws SvnBindException {
+    Target result;
 
     if (target.isFile()) {
-      result = SvnTarget.fromFile(resolvePath(target.getFile(), path));
+      result = Target.on(resolvePath(target.getFile(), path));
     }
     else {
-      result = SvnTarget.fromURL(checkAbsolute && URI.create(path).isAbsolute() ? createUrl(path) : append(target.getURL(), path));
+      result = Target.on(checkAbsolute && URI.create(path).isAbsolute() ? createUrl(path) : append(target.getUrl(), path));
     }
 
     return result;
@@ -801,8 +797,8 @@ public class SvnUtil {
    * Current utility method fixes this case.
    */
   @NotNull
-  public static String toDecodedString(@NotNull SvnTarget target) {
-    return target.isFile() ? target.getFile().getPath() : target.getURL().toDecodedString();
+  public static String toDecodedString(@NotNull Target target) {
+    return target.isFile() ? target.getFile().getPath() : target.getUrl().toDecodedString();
   }
 
   private static class WorkingCopyFormatOperation implements FileUtilRt.RepeatableIOOperation<WorkingCopyFormat, RuntimeException> {

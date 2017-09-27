@@ -30,15 +30,11 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public abstract class BaseSvnClient implements SvnClient {
   protected SvnVcs myVcs;
   protected ClientFactory myFactory;
@@ -71,19 +67,19 @@ public abstract class BaseSvnClient implements SvnClient {
     myIsActive = isActive;
   }
 
-  protected void assertUrl(@NotNull SvnTarget target) {
-    if (!target.isURL()) {
+  protected void assertUrl(@NotNull Target target) {
+    if (!target.isUrl()) {
       throw new IllegalArgumentException("Target should be url " + target);
     }
   }
 
-  protected void assertFile(@NotNull SvnTarget target) {
+  protected void assertFile(@NotNull Target target) {
     if (!target.isFile()) {
       throw new IllegalArgumentException("Target should be file " + target);
     }
   }
 
-  protected void assertDirectory(@NotNull SvnTarget target) {
+  protected void assertDirectory(@NotNull Target target) {
     assertFile(target);
     if (!target.getFile().isDirectory()) {
       throw new IllegalArgumentException("Target should be directory " + target);
@@ -99,7 +95,7 @@ public abstract class BaseSvnClient implements SvnClient {
 
   @NotNull
   public CommandExecutor execute(@NotNull SvnVcs vcs,
-                                 @NotNull SvnTarget target,
+                                 @NotNull Target target,
                                  @NotNull SvnCommandName name,
                                  @NotNull List<String> parameters,
                                  @Nullable LineCommandListener listener) throws SvnBindException {
@@ -108,7 +104,7 @@ public abstract class BaseSvnClient implements SvnClient {
 
   @NotNull
   public CommandExecutor execute(@NotNull SvnVcs vcs,
-                                 @NotNull SvnTarget target,
+                                 @NotNull Target target,
                                  @Nullable File workingDirectory,
                                  @NotNull SvnCommandName name,
                                  @NotNull List<String> parameters,
@@ -122,7 +118,7 @@ public abstract class BaseSvnClient implements SvnClient {
 
   @NotNull
   public CommandExecutor execute(@NotNull SvnVcs vcs,
-                                 @NotNull SvnTarget target,
+                                 @NotNull Target target,
                                  @Nullable File workingDirectory,
                                  @NotNull Command command,
                                  @Nullable LineCommandListener listener) throws SvnBindException {

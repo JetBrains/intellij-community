@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 
@@ -81,7 +81,7 @@ public class BranchMerger implements IMerger {
 
     File destination = new File(myTargetPath);
     MergeClient client = myVcs.getFactory(destination).createMergeClient();
-    SvnTarget source = SvnTarget.fromURL(mySourceUrl);
+    Target source = Target.on(mySourceUrl);
 
     if (mySupportsMergeInfo) {
       client.merge(source, destination, false, myReintegrate, createDiffOptions(), myHandler);

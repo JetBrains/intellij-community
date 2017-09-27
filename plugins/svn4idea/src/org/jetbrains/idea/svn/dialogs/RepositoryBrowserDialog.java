@@ -40,6 +40,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.BrowseRepositoryAction;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
@@ -52,7 +53,6 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.swing.*;
 import javax.swing.tree.TreeNode;
@@ -952,7 +952,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         progress.setText(SvnBundle.message("progress.text.browser.creating", url.toString()));
       }
       SvnVcs vcs = SvnVcs.getInstance(project);
-      SvnTarget target = SvnTarget.fromURL(url);
+      Target target = Target.on(url);
       try {
         vcs.getFactoryFromSettings().createBrowseClient().createDirectory(target, comment, false);
       }
@@ -977,7 +977,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       }
       SvnVcs vcs = SvnVcs.getInstance(myProject);
       try {
-        vcs.getFactoryFromSettings().createCopyMoveClient().copy(SvnTarget.fromURL(src), SvnTarget.fromURL(dst), SVNRevision.HEAD, true,
+        vcs.getFactoryFromSettings().createCopyMoveClient().copy(Target.on(src), Target.on(dst), SVNRevision.HEAD, true,
                                                                  move, comment, null);
       }
       catch (VcsException e) {
@@ -1065,8 +1065,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     OutputStream os = null;
     try {
       os = new BufferedOutputStream(new FileOutputStream(targetFile));
-      myVCS.getFactoryFromSettings().createDiffClient().unifiedDiff(SvnTarget.fromURL(sourceURL, SVNRevision.HEAD),
-                                                                    SvnTarget.fromURL(targetURL, SVNRevision.HEAD), os);
+      myVCS.getFactoryFromSettings().createDiffClient().unifiedDiff(Target.on(sourceURL, SVNRevision.HEAD),
+                                                                    Target.on(targetURL, SVNRevision.HEAD), os);
     }
     catch (IOException | VcsException e) {
       LOG.info(e);
@@ -1084,7 +1084,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
   private void doGraphicalDiff(SVNURL sourceURL, SVNURL targetURL) throws VcsException {
     List<Change> changes =
-      myVCS.getFactoryFromSettings().createDiffClient().compare(SvnTarget.fromURL(sourceURL), SvnTarget.fromURL(targetURL));
+      myVCS.getFactoryFromSettings().createDiffClient().compare(Target.on(sourceURL), Target.on(targetURL));
 
     showDiffEditorResults(changes, SVNPathUtil.tail(sourceURL.toString()), SVNPathUtil.tail(targetURL.toString()));
   }

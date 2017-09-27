@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,9 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Target;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +49,7 @@ public class SvnLogUtil implements SvnLogLoader {
     throws VcsException {
     final List<CommittedChangeList> result = new ArrayList<>();
     LogEntryConsumer handler = createLogHandler(fromIncluding, toIncluding, includingYoungest, includeOldest, result);
-    SvnTarget target = SvnTarget.fromURL(myLocation.toSvnUrl());
+    Target target = Target.on(myLocation.toSvnUrl());
 
     myVcs.getFactory(target).createHistoryClient().doLog(target, fromIncluding, toIncluding, true, true, false, maxCount, null, handler);
 

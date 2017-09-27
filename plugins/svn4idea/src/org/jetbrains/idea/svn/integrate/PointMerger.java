@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.copy.CopyMoveClient;
 import org.jetbrains.idea.svn.delete.DeleteClient;
 import org.jetbrains.idea.svn.history.SvnRepositoryContentRevision;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.Comparator;
@@ -72,8 +72,8 @@ public class PointMerger extends Merger {
 
   private void merge(@NotNull SvnRepositoryContentRevision before, @NotNull SvnRepositoryContentRevision after) throws VcsException {
     MergeClient client = myVcs.getFactory(myTarget).createMergeClient();
-    SvnTarget source1 = before.toTarget();
-    SvnTarget source2 = after.toTarget();
+    Target source1 = before.toTarget();
+    Target source2 = after.toTarget();
     File localPath = getLocalPath(after.getFullPath());
 
     client.merge(source1, source2, localPath, Depth.FILES, true, mySvnConfig.isMergeDryRun(), false, false, mySvnConfig.getMergeOptions(),

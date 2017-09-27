@@ -49,12 +49,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -66,8 +66,7 @@ import java.util.List;
 
 import static org.jetbrains.idea.svn.SvnUtil.*;
 
-public class SvnHistoryProvider
-  implements VcsHistoryProvider, VcsCacheableHistorySessionFactory<Boolean, SvnHistorySession> {
+public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHistorySessionFactory<Boolean, SvnHistorySession> {
   private final SvnVcs myVcs;
 
   public SvnHistoryProvider(SvnVcs vcs) {
@@ -333,7 +332,7 @@ public class SvnHistoryProvider
         myPI.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", myUrl.toDecodedString()));
       }
       final SVNRevision pegRevision = myInfo.getRevision();
-      final SvnTarget target = SvnTarget.fromFile(myFile.getIOFile(), myPeg);
+      final Target target = Target.on(myFile.getIOFile(), myPeg);
       try {
         myVcs.getFactory(target).createHistoryClient().doLog(
           target,
@@ -390,7 +389,7 @@ public class SvnHistoryProvider
           throw new VcsException("Could not find repository root for URL: " + myUrl.toDecodedString());
         }
         String relativeUrl = getRelativeUrl(rootURL, myUrl);
-        SvnTarget target = SvnTarget.fromURL(myUrl, myPeg == null ? myFrom : myPeg);
+        Target target = Target.on(myUrl, myPeg == null ? myFrom : myPeg);
         RepositoryLogEntryHandler handler =
           new RepositoryLogEntryHandler(myVcs, myUrl, SVNRevision.UNDEFINED, relativeUrl, myConsumer::consume, rootURL);
 
@@ -417,7 +416,7 @@ public class SvnHistoryProvider
         new RepositoryLogEntryHandler(myVcs, myUrl, SVNRevision.UNDEFINED, relativeUrl, revision -> myConsumer.consume(revision), rootURL);
       repositoryLogEntryHandler.setThrowCancelOnMeetPathCreation(true);
 
-      SvnTarget target = SvnTarget.fromURL(rootURL, myFrom);
+      Target target = Target.on(rootURL, myFrom);
       myVcs.getFactory(target).createHistoryClient()
         .doLog(target, myFrom, myTo == null ? SVNRevision.create(1) : myTo, false, true, myShowMergeSources && mySupport15, 1, null,
                repositoryLogEntryHandler);

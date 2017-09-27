@@ -24,6 +24,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.history.SvnChangeList;
@@ -36,7 +37,6 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.*;
@@ -227,7 +227,7 @@ public class BranchInfo {
       result = SvnMergeInfoCache.MergeCheckResult.getInstance(mergeInfo.contains(revisionAsked));
     }
     else {
-      SvnTarget target = SvnTarget.fromURL(branchUrl);
+      Target target = Target.on(branchUrl);
       PropertyValue mergeinfoProperty = myVcs.getFactory(target).createPropertyClient()
         .getProperty(target, SvnPropertyKeys.MERGE_INFO, false, SVNRevision.create(targetRevision));
 
@@ -291,16 +291,16 @@ public class BranchInfo {
             myMixedRevisionsFound = true;
           }
 
-          SvnTarget target;
+          Target target;
           SVNRevision revision;
           if (actualRevision == targetRevisionCorrected) {
             // look in WC
-            target = SvnTarget.fromFile(pathFile, SVNRevision.WORKING);
+            target = Target.on(pathFile, SVNRevision.WORKING);
             revision = SVNRevision.WORKING;
           }
           else {
             // in repo
-            target = SvnTarget.fromURL(svnInfo.getURL());
+            target = Target.on(svnInfo.getURL());
             revision = SVNRevision.create(targetRevisionCorrected);
           }
 

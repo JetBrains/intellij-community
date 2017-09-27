@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,13 +47,13 @@ import org.jetbrains.idea.svn.actions.SvnExcludingIgnoredOperation;
 import org.jetbrains.idea.svn.api.ClientFactory;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.checkin.CommitEventHandler;
 import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
 import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
 import org.jetbrains.idea.svn.dialogs.UpgradeFormatDialog;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.List;
@@ -146,7 +146,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         ProgressManager.progress(message("progress.text.checking.out", target.getAbsolutePath()));
         try {
           getFactory(vcs, format).createCheckoutClient()
-            .checkout(SvnTarget.fromURL(url), target, revision, depth, ignoreExternals, true, format, handler);
+            .checkout(Target.on(url), target, revision, depth, ignoreExternals, true, format, handler);
           ProgressManager.checkCanceled();
           checkoutSuccessful.set(Boolean.TRUE);
         }
@@ -222,7 +222,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         try {
           progressIndicator.setText(message("progress.text.export", target.getAbsolutePath()));
 
-          SvnTarget from = SvnTarget.fromURL(url);
+          Target from = Target.on(url);
           ExportClient client = vcs.getFactoryFromSettings().createExportClient();
           client.export(from, target, SVNRevision.HEAD, depth, eolStyle, force, ignoreExternals, handler);
         }

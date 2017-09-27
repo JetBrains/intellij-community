@@ -28,12 +28,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.branchConfig.ConfigureBranchesAction;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -112,7 +112,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
           consumer.consume(list);
         }
       };
-      SvnTarget target = SvnTarget.fromURL(svnLocation.toSvnUrl(), createBeforeRevision(settings));
+      Target target = Target.on(svnLocation.toSvnUrl(), createBeforeRevision(settings));
 
       getCommittedChangesImpl(settings, target, maxCount, resultConsumer, false, true);
     }
@@ -131,7 +131,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     SVNURL repositoryRoot = getRepositoryRoot(svnLocation);
     ThrowableConsumer<LogEntry, SvnBindException> resultConsumer =
       logEntry -> result.add(new SvnChangeList(myVcs, svnLocation, logEntry, repositoryRoot));
-    SvnTarget target = SvnTarget.fromURL(svnLocation.toSvnUrl(), createBeforeRevision(settings));
+    Target target = Target.on(svnLocation.toSvnUrl(), createBeforeRevision(settings));
 
     getCommittedChangesImpl(settings, target, maxCount, resultConsumer, false, true);
     settings.filterChanges(result);
@@ -149,7 +149,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       node -> finalConsumer.consume(new SvnChangeList(myVcs, svnLocation, node.getMe(), repositoryRoot), node));
     SvnMergeSourceTracker mergeSourceTracker = new SvnMergeSourceTracker(builder);
 
-    getCommittedChangesImpl(settings, SvnTarget.fromURL(svnLocation.toSvnUrl()), maxCount, mergeSourceTracker, true, false);
+    getCommittedChangesImpl(settings, Target.on(svnLocation.toSvnUrl()), maxCount, mergeSourceTracker, true, false);
 
     builder.finish();
   }
@@ -169,13 +169,13 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   private void getCommittedChangesImpl(@NotNull ChangeBrowserSettings settings,
-                                       @NotNull SvnTarget target,
+                                       @NotNull Target target,
                                        int maxCount,
                                        @NotNull ThrowableConsumer<LogEntry, SvnBindException> resultConsumer,
                                        boolean includeMergedRevisions,
                                        boolean filterOutByDate) throws VcsException {
     progress(message("progress.text.changes.collecting.changes"),
-             message("progress.text2.changes.establishing.connection", target.getPathOrUrlString()));
+             message("progress.text2.changes.establishing.connection", target.getPath()));
 
     String author = settings.getUserFilter();
     SVNRevision revisionBefore = createBeforeRevision(settings);

@@ -22,12 +22,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.*;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.XmlAttribute;
@@ -39,16 +39,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
 
   private static final Logger LOG = Logger.getInstance(CmdPropertyClient.class);
 
   @Nullable
   @Override
-  public PropertyValue getProperty(@NotNull SvnTarget target,
+  public PropertyValue getProperty(@NotNull Target target,
                                    @NotNull String property,
                                    boolean revisionProperty,
                                    @Nullable SVNRevision revision)
@@ -88,7 +85,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
   }
 
   @Override
-  public void getProperty(@NotNull SvnTarget target,
+  public void getProperty(@NotNull Target target,
                           @NotNull String property,
                           @Nullable SVNRevision revision,
                           @Nullable Depth depth,
@@ -110,7 +107,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
   }
 
   @Override
-  public void list(@NotNull SvnTarget target,
+  public void list(@NotNull Target target,
                    @Nullable SVNRevision revision,
                    @Nullable Depth depth,
                    @Nullable PropertyConsumer handler) throws SvnBindException {
@@ -127,7 +124,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
                           @Nullable PropertyValue value,
                           @Nullable Depth depth,
                           boolean force) throws SvnBindException {
-    runSetProperty(SvnTarget.fromFile(file), property, null, depth, value, force);
+    runSetProperty(Target.on(file), property, null, depth, value, force);
   }
 
   @Override
@@ -151,7 +148,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
   private PropertiesMap collectPropertiesToDelete(@NotNull File file) throws SvnBindException {
     final PropertiesMap result = new PropertiesMap();
 
-    list(SvnTarget.fromFile(file), null, Depth.EMPTY, new PropertyConsumer() {
+    list(Target.on(file), null, Depth.EMPTY, new PropertyConsumer() {
       @Override
       public void handleProperty(File path, PropertyData property) {
         // null indicates property will be deleted
@@ -171,7 +168,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
   }
 
   @Override
-  public void setRevisionProperty(@NotNull SvnTarget target,
+  public void setRevisionProperty(@NotNull Target target,
                                   @NotNull String property,
                                   @NotNull SVNRevision revision,
                                   @Nullable PropertyValue value,
@@ -179,7 +176,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     runSetProperty(target, property, revision, null, value, force);
   }
 
-  private void runSetProperty(@NotNull SvnTarget target,
+  private void runSetProperty(@NotNull Target target,
                               @NotNull String property,
                               @Nullable SVNRevision revision,
                               @Nullable Depth depth,
@@ -204,7 +201,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     execute(myVcs, target, null, command, null);
   }
 
-  private void fillListParameters(@NotNull SvnTarget target,
+  private void fillListParameters(@NotNull Target target,
                                   @Nullable SVNRevision revision,
                                   @Nullable Depth depth,
                                   @NotNull List<String> parameters,
@@ -217,7 +214,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
   }
 
   @Nullable
-  private PropertyData parseSingleProperty(SvnTarget target, @NotNull CommandExecutor command) throws SvnBindException {
+  private PropertyData parseSingleProperty(Target target, @NotNull CommandExecutor command) throws SvnBindException {
     final PropertyData[] data = new PropertyData[1];
     PropertyConsumer handler = new PropertyConsumer() {
       @Override
@@ -241,13 +238,13 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     return data[0];
   }
 
-  private static void parseOutput(SvnTarget target, @NotNull CommandExecutor command, PropertyConsumer handler) throws SvnBindException {
+  private static void parseOutput(Target target, @NotNull CommandExecutor command, PropertyConsumer handler) throws SvnBindException {
     try {
       Properties properties = CommandUtil.parse(command.getOutput(), Properties.class);
 
       if (properties != null) {
-        for (Target childInfo : properties.targets) {
-          SvnTarget childTarget = SvnUtil.append(target, childInfo.path);
+        for (PropertiesTarget childInfo : properties.targets) {
+          Target childTarget = SvnUtil.append(target, childInfo.path);
           for (Property property : childInfo.properties) {
             invokeHandler(childTarget, create(property.name, property.value), handler);
           }
@@ -267,13 +264,13 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     }
   }
 
-  private static void invokeHandler(@NotNull SvnTarget target, @Nullable PropertyData data, @Nullable PropertyConsumer handler)
+  private static void invokeHandler(@NotNull Target target, @Nullable PropertyData data, @Nullable PropertyConsumer handler)
     throws SvnBindException {
     if (handler != null && data != null) {
       if (target.isFile()) {
         handler.handleProperty(target.getFile(), data);
       } else {
-        handler.handleProperty(target.getURL(), data);
+        handler.handleProperty(target.getUrl(), data);
       }
     }
   }
@@ -319,13 +316,13 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
   public static class Properties {
 
     @XmlElement(name = "target")
-    public List<Target> targets = new ArrayList<>();
+    public List<PropertiesTarget> targets = new ArrayList<>();
 
     @XmlElement(name = "revprops")
     public RevisionProperties revisionProperties;
   }
 
-  public static class Target {
+  public static class PropertiesTarget {
 
     @XmlAttribute(name = "path")
     public String path;
