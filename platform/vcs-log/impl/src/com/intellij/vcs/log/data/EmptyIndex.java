@@ -45,6 +45,10 @@ public class EmptyIndex implements VcsLogIndex {
   }
 
   @Override
+  public void reindexWithRenames(int commit, @NotNull VirtualFile root) {
+  }
+
+  @Override
   public boolean canFilter(@NotNull List<VcsLogDetailsFilter> filters) {
     return false;
   }
