@@ -27,7 +27,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.security.ProtectionDomain;
 import java.util.*;
-import java.util.function.Supplier;
 import java.util.jar.JarFile;
 
 /**
@@ -35,20 +34,42 @@ import java.util.jar.JarFile;
  */
 public class CaptureAgent {
   private static Instrumentation ourInstrumentation;
-
-  private static volatile Map<String, List<CapturePoint>> myCapturePoints = new HashMap<>();
-  static {
-    CapturePoint invokeLater = new CapturePoint("javax/swing/SwingUtilities", "invokeLater", 0);
-    myCapturePoints.put(invokeLater.myClassName, Collections.singletonList(invokeLater));
-  }
-
-  private static volatile Map<String, List<InsertPoint>> myInsertPoints = new HashMap<>();
-
   private static boolean DEBUG = false;
 
+  static final KeyProvider THIS_KEY_PROVIDER = new ParamKeyProvider(0);
+
+  private static Map<String, List<CapturePoint>> myCapturePoints = new HashMap<>();
+  private static Map<String, List<InsertPoint>> myInsertPoints = new HashMap<>();
+
   static {
-    InsertPoint invokeLater = new InsertPoint("java/awt/event/InvocationEvent", "dispatch", "runnable", "Ljava/lang/Runnable;");
-    myInsertPoints.put(invokeLater.myClassName, Collections.singletonList(invokeLater));
+    addCapturePoint("javax/swing/SwingUtilities", "invokeLater", new ParamKeyProvider(0));
+    addInsertPoint("java/awt/event/InvocationEvent", "dispatch",
+                   new FieldKeyProvider("java/awt/event/InvocationEvent", "runnable", "Ljava/lang/Runnable;"));
+
+    addCapturePoint("java/lang/Thread", "start", THIS_KEY_PROVIDER);
+    addInsertPoint("java/lang/Thread", "run", THIS_KEY_PROVIDER);
+
+    addCapturePoint("java/util/concurrent/ExecutorService", "submit", new ParamKeyProvider(1));
+    addInsertPoint("java/util/concurrent/Executors$RunnableAdapter", "call",
+                   new FieldKeyProvider("java/util/concurrent/Executors$RunnableAdapter", "task", "Ljava/lang/Runnable;"));
+
+    addCapturePoint("java/util/concurrent/ThreadPoolExecutor", "execute", new ParamKeyProvider(1));
+    addInsertPoint("java/util/concurrent/FutureTask", "run", THIS_KEY_PROVIDER);
+
+    addCapturePoint("java/util/concurrent/CompletableFuture", "supplyAsync", new ParamKeyProvider(0));
+    addInsertPoint("java/util/concurrent/CompletableFuture$AsyncSupply", "run",
+                   new FieldKeyProvider("java/util/concurrent/CompletableFuture$AsyncSupply", "fn", "Ljava/util/function/Supplier;"));
+
+    addCapturePoint("java/util/concurrent/CompletableFuture", "runAsync", new ParamKeyProvider(0));
+    addInsertPoint("java/util/concurrent/CompletableFuture$AsyncRun", "run",
+                   new FieldKeyProvider("java/util/concurrent/CompletableFuture$AsyncRun", "fn", "Ljava/lang/Runnable;"));
+
+    //addCapturePoint("java/util/concurrent/CompletableFuture", "thenAcceptAsync", new ParamKeyProvider(1));
+    //addInsertPoint("java/util/concurrent/CompletableFuture$UniAccept", "tryFire",
+    //               new FieldKeyProvider("java/util/concurrent/CompletableFuture$UniAccept", "fn", "Ljava/util/function/Consumer;"));
+    //
+    //addCapturePoint("java/util/concurrent/CompletableFuture", "thenRunAsync", new ParamKeyProvider(1));
+    //addInsertPoint("java/util/concurrent/CompletableFuture", "uniRun", new ParamKeyProvider(2));
   }
 
   public static void premain(String args, Instrumentation instrumentation) throws IOException {
@@ -56,6 +77,17 @@ public class CaptureAgent {
     instrumentation.appendToBootstrapClassLoaderSearch(createTempJar("debugger-agent-storage.jar"));
     instrumentation.appendToSystemClassLoaderSearch(createTempJar("asm-all.jar"));
     instrumentation.addTransformer(new CaptureTransformer());
+    for (Class aClass : instrumentation.getAllLoadedClasses()) {
+      String name = aClass.getName().replaceAll("\\.", "/");
+      if (myCapturePoints.containsKey(name) || myInsertPoints.containsKey(name)) {
+        try {
+          instrumentation.retransformClasses(aClass);
+        }
+        catch (UnmodifiableClassException e) {
+          e.printStackTrace();
+        }
+      }
+    }
     DEBUG = "debug".equals(args);
     if (DEBUG) {
       CaptureStorage.setDebug(true);
@@ -79,20 +111,13 @@ public class CaptureAgent {
       if (!capturePoints.isEmpty() || !insertPoints.isEmpty()) {
         ClassReader reader = new ClassReader(classfileBuffer);
         ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES);
-        for (CapturePoint point : capturePoints) {
-          try {
-            reader.accept(new CaptureInstrumentor(Opcodes.ASM6, writer, point), 0);
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
+
+        try {
+          reader.accept(new CaptureInstrumentor(Opcodes.ASM6, writer, capturePoints, insertPoints), 0);
+        } catch (Exception e) {
+          e.printStackTrace();
         }
-        for (InsertPoint point : insertPoints) {
-          try {
-            reader.accept(new InsertInstrumentor(Opcodes.ASM6, writer, point), 0);
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
-        }
+
         byte[] bytes = writer.toByteArray();
 
         if (DEBUG) {
@@ -112,42 +137,14 @@ public class CaptureAgent {
   }
 
   private static class CaptureInstrumentor extends ClassVisitor {
-    private CapturePoint capturePoint;
+    private final List<CapturePoint> myCapturePoints;
+    private final List<InsertPoint> myInsertPoints;
+    List<Runnable> myOriginalMethodsGenerators = new ArrayList<>();
 
-    public CaptureInstrumentor(int api, ClassVisitor cv, CapturePoint capturePoint) {
+    public CaptureInstrumentor(int api, ClassVisitor cv, List<CapturePoint> capturePoints, List<InsertPoint> insertPoints) {
       super(api, cv);
-      this.capturePoint = capturePoint;
-    }
-
-    @Override
-    public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-      MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
-      if (capturePoint.myMethodName.equals(name)) {
-        if (DEBUG) {
-          System.out.println("Capture agent: instrumented capture point at " + capturePoint.myClassName + "." + name);
-        }
-        return new MethodVisitor(api, mv) {
-          @Override
-          public void visitCode() {
-            visitVarInsn(Opcodes.ALOAD, capturePoint.myParamSlotId);
-            visitMethodInsn(Opcodes.INVOKESTATIC, CaptureStorage.class.getName().replaceAll("\\.", "/"), "capture",
-                            "(Ljava/lang/Object;)V", false);
-            super.visitCode();
-          }
-        };
-      }
-      return mv;
-    }
-  }
-
-  private static class InsertInstrumentor extends ClassVisitor {
-    private InsertPoint myInsertPoint;
-    Supplier<MethodVisitor> myVisitMethod = null;
-    String myDesc;
-
-    public InsertInstrumentor(int api, ClassVisitor cv, InsertPoint insertPoint) {
-      super(api, cv);
-      this.myInsertPoint = insertPoint;
+      this.myCapturePoints = capturePoints;
+      this.myInsertPoints = insertPoints;
     }
 
     private static String getNewName(String name) {
@@ -156,62 +153,81 @@ public class CaptureAgent {
 
     @Override
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-      if (myInsertPoint.myMethodName.equals(name)) {
-        MethodVisitor mv = super.visitMethod(access, getNewName(name), desc, signature, exceptions);
-        myDesc = desc;
-        myVisitMethod = () -> super.visitMethod(access, name, desc, signature, exceptions);
-        if (DEBUG) {
-          System.out.println("Capture agent: instrumented insert point at " + myInsertPoint.myClassName + "." + name);
+      if ((access & Opcodes.ACC_BRIDGE) == 0) {
+        for (CapturePoint capturePoint : myCapturePoints) {
+          if (capturePoint.myMethodName.equals(name)) {
+            if (DEBUG) {
+              System.out.println("Capture agent: instrumented capture point at " + capturePoint.myClassName + "." + name + desc);
+
+            }
+            return new MethodVisitor(api, super.visitMethod(access, name, desc, signature, exceptions)) {
+              @Override
+              public void visitCode() {
+                capturePoint.myKeyProvider.loadKey(mv);
+                visitMethodInsn(Opcodes.INVOKESTATIC, CaptureStorage.class.getName().replaceAll("\\.", "/"), "capture", "(Ljava/lang/Object;)V", false);
+                super.visitCode();
+              }
+            };
+          }
         }
-        return mv;
+
+        for (InsertPoint insertPoint : myInsertPoints) {
+          if (insertPoint.myMethodName.equals(name)) {
+            MethodVisitor mv = super.visitMethod(access, getNewName(name), desc, signature, exceptions);
+            myOriginalMethodsGenerators.add(() -> generateTryFinally(super.visitMethod(access, name, desc, signature, exceptions), insertPoint, desc));
+            if (DEBUG) {
+              System.out.println("Capture agent: instrumented insert point at " + insertPoint.myClassName + "." +
+                      name + desc);
+            }
+            return mv;
+          }
+        }
       }
       return super.visitMethod(access, name, desc, signature, exceptions);
     }
 
     @Override
     public void visitEnd() {
-      if (myVisitMethod != null) {
-        MethodVisitor mv = myVisitMethod.get();
-
-        Label start = new Label();
-        mv.visitLabel(start);
-
-        insertEnter(mv);
-
-        mv.visitVarInsn(Opcodes.ALOAD, 0);
-        // TODO: mv.loadArgs();
-        mv.visitMethodInsn(Opcodes.INVOKESPECIAL, myInsertPoint.myClassName, getNewName(myInsertPoint.myMethodName), myDesc, false);
-
-        Label end = new Label();
-        mv.visitLabel(end);
-
-        // regular exit
-        insertExit(mv);
-        mv.visitInsn(Opcodes.RETURN);
-
-        Label catchLabel = new Label();
-        mv.visitLabel(catchLabel);
-        mv.visitTryCatchBlock(start, end, catchLabel, null);
-
-        // exception exit
-        insertExit(mv);
-        mv.visitInsn(Opcodes.ATHROW);
-
-        mv.visitMaxs(0, 0);
-        mv.visitEnd();
-      }
+      myOriginalMethodsGenerators.forEach(Runnable::run);
     }
 
-    private void insertEnter(MethodVisitor mv) {
+    private static void generateTryFinally(MethodVisitor mv, InsertPoint insertPoint, String desc) {
+      Label start = new Label();
+      mv.visitLabel(start);
+
+      insertEnter(mv, insertPoint);
+
       mv.visitVarInsn(Opcodes.ALOAD, 0);
-      mv.visitFieldInsn(Opcodes.GETFIELD, myInsertPoint.myClassName, myInsertPoint.myField, myInsertPoint.myFieldDesc);
+      // TODO: mv.loadArgs();
+      mv.visitMethodInsn(Opcodes.INVOKESPECIAL, insertPoint.myClassName, getNewName(insertPoint.myMethodName), desc, false);
+
+      Label end = new Label();
+      mv.visitLabel(end);
+
+      // regular exit
+      insertExit(mv, insertPoint);
+      mv.visitInsn(Opcodes.RETURN);
+
+      Label catchLabel = new Label();
+      mv.visitLabel(catchLabel);
+      mv.visitTryCatchBlock(start, end, catchLabel, null);
+
+      // exception exit
+      insertExit(mv, insertPoint);
+      mv.visitInsn(Opcodes.ATHROW);
+
+      mv.visitMaxs(0, 0);
+      mv.visitEnd();
+    }
+
+    private static void insertEnter(MethodVisitor mv, InsertPoint insertPoint) {
+      insertPoint.myKeyProvider.loadKey(mv);
       mv.visitMethodInsn(Opcodes.INVOKESTATIC, CaptureStorage.class.getName().replaceAll("\\.", "/"), "insertEnter",
                          "(Ljava/lang/Object;)V", false);
     }
 
-    private void insertExit(MethodVisitor mv) {
-      mv.visitVarInsn(Opcodes.ALOAD, 0);
-      mv.visitFieldInsn(Opcodes.GETFIELD, myInsertPoint.myClassName, myInsertPoint.myField, myInsertPoint.myFieldDesc);
+    private static void insertExit(MethodVisitor mv, InsertPoint insertPoint) {
+      insertPoint.myKeyProvider.loadKey(mv);
       mv.visitMethodInsn(Opcodes.INVOKESTATIC, CaptureStorage.class.getName().replaceAll("\\.", "/"), "insertExit",
                          "(Ljava/lang/Object;)V", false);
     }
@@ -220,26 +236,24 @@ public class CaptureAgent {
   static class CapturePoint {
     final String myClassName;
     final String myMethodName;
-    final int myParamSlotId;
+    final KeyProvider myKeyProvider;
 
-    public CapturePoint(String className, String methodName, int paramSlotId) {
+    public CapturePoint(String className, String methodName, KeyProvider keyProvider) {
       this.myClassName = className;
       this.myMethodName = methodName;
-      this.myParamSlotId = paramSlotId;
+      this.myKeyProvider = keyProvider;
     }
   }
 
   static class InsertPoint {
     final String myClassName;
     final String myMethodName;
-    final String myField;
-    final String myFieldDesc;
+    final KeyProvider myKeyProvider;
 
-    public InsertPoint(String className, String methodName, String field, String fieldDesc) {
+    public InsertPoint(String className, String methodName, KeyProvider keyProvider) {
       this.myClassName = className;
       this.myMethodName = methodName;
-      this.myField = field;
-      myFieldDesc = fieldDesc;
+      this.myKeyProvider = keyProvider;
     }
   }
 
@@ -276,7 +290,7 @@ public class CaptureAgent {
         currentPoints = new ArrayList<>();
         points.put(className, currentPoints);
       }
-      currentPoints.add(new CapturePoint(className, (String)capturePoint[1], (int)capturePoint[2]));
+      //currentPoints.add(new CapturePoint(className, (String)capturePoint[1], (int)capturePoint[2]));
     }
     myCapturePoints = points;
 
@@ -290,5 +304,58 @@ public class CaptureAgent {
       }
     }
     ourInstrumentation.retransformClasses(classes.toArray(new Class[0]));
+  }
+
+  private static void addCapturePoint(String className, String methodName, KeyProvider keyProvider) {
+    List<CapturePoint> points = myCapturePoints.get(className);
+    if (points == null) {
+      points = new ArrayList<>();
+      myCapturePoints.put(className, points);
+    }
+    points.add(new CapturePoint(className, methodName, keyProvider));
+  }
+
+  private static void addInsertPoint(String className, String methodName, KeyProvider keyProvider) {
+    List<InsertPoint> points = myInsertPoints.get(className);
+    if (points == null) {
+      points = new ArrayList<>();
+      myInsertPoints.put(className, points);
+    }
+    points.add(new InsertPoint(className, methodName, keyProvider));
+  }
+
+  private interface KeyProvider {
+    void loadKey(MethodVisitor mv);
+  }
+
+  private static class FieldKeyProvider implements KeyProvider {
+    String myClassName;
+    String myFieldName;
+    String myFieldDesc;
+
+    public FieldKeyProvider(String className, String fieldName, String fieldDesc) {
+      myClassName = className;
+      myFieldName = fieldName;
+      myFieldDesc = fieldDesc;
+    }
+
+    @Override
+    public void loadKey(MethodVisitor mv) {
+      mv.visitVarInsn(Opcodes.ALOAD, 0);
+      mv.visitFieldInsn(Opcodes.GETFIELD, myClassName, myFieldName, myFieldDesc);
+    }
+  }
+
+  private static class ParamKeyProvider implements KeyProvider {
+    int mySlot;
+
+    public ParamKeyProvider(int slot) {
+      mySlot = slot;
+    }
+
+    @Override
+    public void loadKey(MethodVisitor mv) {
+      mv.visitVarInsn(Opcodes.ALOAD, 0);
+    }
   }
 }
