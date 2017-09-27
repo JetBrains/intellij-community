@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ContainerProvider;
@@ -73,6 +61,8 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.intellij.openapi.util.Pair.pair;
 
 /**
  * @author cdr
@@ -430,24 +420,23 @@ public class HighlightUtil extends HighlightUtilBase {
   static HighlightInfo checkVarTypeApplicability(@NotNull PsiVariable variable) {
     PsiTypeElement typeElement = variable.getTypeElement();
     if (typeElement != null && typeElement.isInferredType()) {
-
-
       PsiElement parent = variable.getParent();
       if (variable instanceof PsiLocalVariable) {
-        PsiType lType = variable.getType();
         PsiExpression initializer = variable.getInitializer();
         if (initializer == null) {
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
             .descriptionAndTooltip("Cannot infer type: 'var' on variable without initializer")
             .range(variable).create();
         }
+
         PsiLocalVariable[] localVariables = PsiTreeUtil.getChildrenOfType(parent, PsiLocalVariable.class);
-        if (localVariables.length > 1) {
+        if (localVariables != null && localVariables.length > 1) {
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
             .descriptionAndTooltip("'var' is not allowed in a compound declaration")
             .range(variable).create();
         }
 
+        PsiType lType = variable.getType();
         if (lType instanceof PsiArrayType && !lType.equals(typeElement.getType())) {
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
             .descriptionAndTooltip("'var' is not allowed as an element type of an array")
@@ -456,7 +445,8 @@ public class HighlightUtil extends HighlightUtilBase {
         }
 
         if (PsiType.NULL.equals(lType)) {
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip("Cannot infer type: variable initializer is 'null'")
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+            .descriptionAndTooltip("Cannot infer type: variable initializer is 'null'")
             .range(variable).create();
         }
       }
@@ -1575,48 +1565,49 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @NotNull
-  static String buildProblemWithStaticDescription(@NotNull PsiElement refElement) {
+  static String staticContextProblemDescription(@NotNull PsiElement refElement) {
     String type = LanguageFindUsages.INSTANCE.forLanguage(JavaLanguage.INSTANCE).getType(refElement);
     String name = HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY);
     return JavaErrorMessages.message("non.static.symbol.referenced.from.static.context", type, name);
   }
 
   @NotNull
-  static String buildProblemWithAccessDescription(@NotNull PsiElement ref, @NotNull PsiElement resolved, @NotNull JavaResolveResult result) {
-    return accessProblemTextAndFixes(ref, resolved, result).first;
+  static String accessProblemDescription(@NotNull PsiElement ref, @NotNull PsiElement resolved, @NotNull JavaResolveResult result) {
+    return accessProblemDescriptionAndFixes(ref, resolved, result).first;
   }
 
-  @NotNull
-  private static Pair<String, List<IntentionAction>> accessProblemTextAndFixes(@NotNull PsiElement reference,
-                                                                               @NotNull PsiElement resolved,
-                                                                               @NotNull JavaResolveResult result) {
+  private static Pair<String, List<IntentionAction>> accessProblemDescriptionAndFixes(PsiElement ref,
+                                                                                      PsiElement resolved,
+                                                                                      JavaResolveResult result) {
     assert resolved instanceof PsiModifierListOwner : resolved;
     PsiModifierListOwner refElement = (PsiModifierListOwner)resolved;
     String symbolName = HighlightMessageUtil.getSymbolName(refElement, result.getSubstitutor());
 
     if (refElement.hasModifierProperty(PsiModifier.PRIVATE)) {
       String containerName = getContainerName(refElement, result.getSubstitutor());
-      return Pair.create(JavaErrorMessages.message("private.symbol", symbolName, containerName), null);
+      return pair(JavaErrorMessages.message("private.symbol", symbolName, containerName), null);
     }
+
     if (refElement.hasModifierProperty(PsiModifier.PROTECTED)) {
       String containerName = getContainerName(refElement, result.getSubstitutor());
-      return Pair.create(JavaErrorMessages.message("protected.symbol", symbolName, containerName), null);
+      return pair(JavaErrorMessages.message("protected.symbol", symbolName, containerName), null);
     }
-    PsiClass packageLocalClass = HighlightFixUtil.getPackageLocalClassInTheMiddle(reference);
+
+    PsiClass packageLocalClass = HighlightFixUtil.getPackageLocalClassInTheMiddle(ref);
     if (packageLocalClass != null) {
       refElement = packageLocalClass;
       symbolName = HighlightMessageUtil.getSymbolName(refElement, result.getSubstitutor());
     }
+
     if (refElement.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) || packageLocalClass != null) {
       String containerName = getContainerName(refElement, result.getSubstitutor());
-      return Pair.create(JavaErrorMessages.message("package.local.symbol", symbolName, containerName), null);
+      return pair(JavaErrorMessages.message("package.local.symbol", symbolName, containerName), null);
     }
-    else {
-      String containerName = getContainerName(refElement, result.getSubstitutor());
-      ErrorWithFixes problem = checkModuleAccess(resolved, reference, symbolName, containerName);
-      if (problem != null) return Pair.create(problem.message, problem.fixes);
-      return Pair.create(JavaErrorMessages.message("visibility.access.problem", symbolName, containerName), null);
-    }
+
+    String containerName = getContainerName(refElement, result.getSubstitutor());
+    ErrorWithFixes problem = checkModuleAccess(resolved, ref, symbolName, containerName);
+    if (problem != null) return pair(problem.message, problem.fixes);
+    return pair(JavaErrorMessages.message("visibility.access.problem", symbolName, containerName), null);
   }
 
   private static ErrorWithFixes checkModuleAccess(PsiElement target, PsiElement place, String symbolName, String containerName) {
@@ -2552,7 +2543,7 @@ public class HighlightUtil extends HighlightUtilBase {
         String description = JavaErrorMessages.message("single.import.class.conflict", formatClass(importedClass));
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description).create();
       }
-      importedClasses.put(name, Pair.create(null, (PsiClass)element));
+      importedClasses.put(name, pair(null, (PsiClass)element));
     }
     return null;
   }
@@ -2662,7 +2653,7 @@ public class HighlightUtil extends HighlightUtilBase {
       resolved instanceof PsiPackage && ref.getParent() instanceof PsiJavaCodeReferenceElement;
     if (!skipValidityChecks && !result.isValidResult()) {
       if (!result.isAccessible()) {
-        Pair<String, List<IntentionAction>> problem = accessProblemTextAndFixes(ref, resolved, result);
+        Pair<String, List<IntentionAction>> problem = accessProblemDescriptionAndFixes(ref, resolved, result);
         boolean moduleAccessProblem = problem.second != null;
         PsiElement range = moduleAccessProblem ? findPackagePrefix(ref) : refName;
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(range).descriptionAndTooltip(problem.first).create();
@@ -2680,7 +2671,7 @@ public class HighlightUtil extends HighlightUtilBase {
       }
 
       if (!result.isStaticsScopeCorrect()) {
-        String description = buildProblemWithStaticDescription(resolved);
+        String description = staticContextProblemDescription(resolved);
         HighlightInfo info =
           HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refName).descriptionAndTooltip(description).create();
         HighlightFixUtil.registerStaticProblemQuickFixAction(resolved, info, ref);

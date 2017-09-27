@@ -10,7 +10,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil.Feature;
 import com.intellij.codeInsight.daemon.impl.quickfix.AdjustFunctionContextFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -1327,7 +1326,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
     final PsiElement method = result.getElement();
     if (method != null && !result.isAccessible()) {
-      String accessProblem = HighlightUtil.buildProblemWithAccessDescription(expression, method, result);
+      String accessProblem = HighlightUtil.accessProblemDescription(expression, method, result);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(accessProblem).create();
       HighlightFixUtil.registerAccessQuickFixAction((PsiMember)method, expression, info, result.getCurrentFileResolveScope());
       myHolder.add(info);
@@ -1348,45 +1347,44 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create());
     }
 
-    final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
     if (!myHolder.hasErrorResults()) {
-      if (functionalInterfaceType != null) {
-        final boolean notFunctional = !LambdaUtil.isFunctionalType(functionalInterfaceType);
+      PsiElement referenceNameElement = expression.getReferenceNameElement();
+      if (referenceNameElement instanceof PsiKeyword) {
+        if (!PsiMethodReferenceUtil.isValidQualifier(expression)) {
+          PsiElement qualifier = expression.getQualifier();
+          if (qualifier != null) {
+            String description = "Cannot find class " + qualifier.getText();
+            myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(qualifier).descriptionAndTooltip(description).create());
+          }
+        }
+      }
+    }
+
+    PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
+    if (functionalInterfaceType != null) {
+      if (!myHolder.hasErrorResults()) {
+        boolean notFunctional = !LambdaUtil.isFunctionalType(functionalInterfaceType);
         if (notFunctional) {
           String description = functionalInterfaceType.getPresentableText() + " is not a functional interface";
           myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create());
         }
       }
-    }
       if (!myHolder.hasErrorResults()) {
-        final PsiElement referenceNameElement = expression.getReferenceNameElement();
-        if (referenceNameElement instanceof PsiKeyword) {
-          if (!PsiMethodReferenceUtil.isValidQualifier(expression)) {
-            PsiElement qualifier = expression.getQualifier();
-            if (qualifier != null) {
-              String description = "Cannot find class " + qualifier.getText();
-              myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(qualifier).descriptionAndTooltip(description).create());
-            }
-          }
-        }
+        checkFunctionalInterfaceTypeAccessible(expression, functionalInterfaceType);
       }
-    if (!myHolder.hasErrorResults()) {
-      checkFunctionalInterfaceTypeAccessible(expression, functionalInterfaceType);
-    }
-
-    if (!myHolder.hasErrorResults() && functionalInterfaceType != null) {
-      final String errorMessage = PsiMethodReferenceUtil.checkMethodReferenceContext(expression);
-      if (errorMessage != null) {
-        final HighlightInfo info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(errorMessage).create();
-        if (method instanceof PsiMethod && !((PsiMethod)method).isConstructor() &&
-            !((PsiMethod)method).hasModifierProperty(PsiModifier.ABSTRACT)) {
-          final boolean shouldHave = !((PsiMethod)method).hasModifierProperty(PsiModifier.STATIC);
-          final LocalQuickFixAndIntentionActionOnPsiElement fixStaticModifier =
-            QuickFixFactory.getInstance().createModifierListFix((PsiModifierListOwner)method, PsiModifier.STATIC, shouldHave, false);
-          QuickFixAction.registerQuickFixAction(info, fixStaticModifier);
+      if (!myHolder.hasErrorResults()) {
+        String errorMessage = PsiMethodReferenceUtil.checkMethodReferenceContext(expression);
+        if (errorMessage != null) {
+          HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(errorMessage).create();
+          if (method instanceof PsiMethod &&
+              !((PsiMethod)method).isConstructor() &&
+              !((PsiMethod)method).hasModifierProperty(PsiModifier.ABSTRACT)) {
+            boolean shouldHave = !((PsiMethod)method).hasModifierProperty(PsiModifier.STATIC);
+            QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createModifierListFix(
+              (PsiModifierListOwner)method, PsiModifier.STATIC, shouldHave, false));
+          }
+          myHolder.add(info);
         }
-        myHolder.add(info);
       }
     }
 
@@ -1469,7 +1467,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     PsiClass psiClass = resolveResult.getElement();
     if (psiClass != null) {
       if (!PsiUtil.isAccessible(myFile.getProject(), psiClass, expression, null)) {
-        String text = HighlightUtil.buildProblemWithAccessDescription(expression, psiClass, resolveResult);
+        String text = HighlightUtil.accessProblemDescription(expression, psiClass, resolveResult);
         myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(text).create());
       }
       else {
