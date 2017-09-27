@@ -8,6 +8,6 @@ import java.util.HashSet;
 class C {
   void m(String s) {
     final List<String> strings;
-    strings = new ArrayList<String>(Arrays.asList(s, ","));
+      strings = new ArrayList<String>(Arrays.asList(s, ","));
   }
 }
