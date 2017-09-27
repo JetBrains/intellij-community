@@ -297,6 +297,9 @@ idea.fatal.error.notification=disabled
     }
     compileModules(pluginsToPublish.collect { it.moduleJars.values()  }.flatten() as List<String>)
     distributionJARsBuilder.pluginsToPublish.addAll(pluginsToPublish)
+
+    //we need this to ensure that all libraries which may be used in the distribution are resolved, even if product modules don't depend on them (e.g. JUnit5)
+    CompilationTasks.create(buildContext).resolveProjectDependencies()
   }
 
   @Override
