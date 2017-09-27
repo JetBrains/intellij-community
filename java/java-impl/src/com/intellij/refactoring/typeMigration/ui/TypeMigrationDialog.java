@@ -58,8 +58,8 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
   private final ScopeChooserCombo myScopeChooserCombo;
 
   public TypeMigrationDialog(@NotNull Project project,
-                             PsiElement[] roots,
-                             TypeMigrationRules rules) {
+                             @NotNull PsiElement[] roots,
+                             @Nullable TypeMigrationRules rules) {
     super(project, false);
     myRoots = roots;
     myRules = rules;
@@ -122,7 +122,10 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
   public static class MultipleElements extends TypeMigrationDialog {
     private final Function<PsiElement, PsiType> myMigrationTypeFunction;
 
-    public MultipleElements(@NotNull Project project, PsiElement[] roots, Function<PsiElement, PsiType> migrationTypeFunction, TypeMigrationRules rules) {
+    public MultipleElements(@NotNull Project project,
+                            @NotNull PsiElement[] roots,
+                            @NotNull Function<PsiElement, PsiType> migrationTypeFunction,
+                            @NotNull TypeMigrationRules rules) {
       super(project, roots, rules);
       myMigrationTypeFunction = migrationTypeFunction;
       init();
@@ -140,14 +143,11 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     private final EditorComboBox myToTypeEditor;
 
     public SingleElement(@NotNull Project project,
-                         PsiElement[] roots,
-                         PsiType migrationType,
-                         TypeMigrationRules rules) {
-      super(project, roots, rules);
+                         @NotNull PsiElement[] roots) {
+      super(project, roots, null);
       LOG.assertTrue(roots.length > 0);
       final PsiType rootType = getRootType();
-      final String text = migrationType != null ? migrationType.getCanonicalText(true) :
-                          rootType != null ? rootType.getCanonicalText(true) : "";
+      final String text = rootType != null ? rootType.getCanonicalText(true) : "";
       int flags = 0;
       PsiElement root = roots[0];
       if (root instanceof PsiParameter) {

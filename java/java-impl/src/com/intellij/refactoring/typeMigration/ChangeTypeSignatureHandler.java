@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -28,6 +16,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.typeMigration.ui.TypeMigrationDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,7 +42,7 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
         toMigrate = new PsiElement[]{parent};
       }
       if (toMigrate != null && toMigrate.length > 0) {
-        invoke(project, toMigrate, null, null, editor);
+        invoke(project, toMigrate, editor);
         return;
       }
       typeElement = PsiTreeUtil.getParentOfType(parent, PsiTypeElement.class, false);
@@ -75,7 +64,7 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
         (element instanceof PsiMember && !(element instanceof PsiClass)) ||
         element instanceof PsiFile  ||
         isClassArgument(element)) {
-      invoke(project, new PsiElement[] {element}, null, null, null);
+      invoke(project, new PsiElement[] {element}, (Editor)null);
     }
   }
 
@@ -95,9 +84,11 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
     return false;
   }
 
-  public static void invoke(final Project project, final PsiElement[] roots, final PsiType type, final TypeMigrationRules rules, final Editor editor) {
+  private static void invoke(@NotNull Project project,
+                             @NotNull PsiElement[] roots,
+                             @Nullable Editor editor) {
     if (Util.canBeMigrated(roots)) {
-      TypeMigrationDialog dialog = new TypeMigrationDialog.SingleElement(project, roots, type, rules);
+      TypeMigrationDialog dialog = new TypeMigrationDialog.SingleElement(project, roots);
       dialog.show();
       return;
     }
