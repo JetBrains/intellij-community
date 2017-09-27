@@ -27,6 +27,7 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
 
   public static final String REFACTORING_NAME = "Type Migration";
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     final int offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
@@ -52,14 +53,14 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
                                         REFACTORING_NAME, "refactoring.migrateType");
   }
 
-
+  @Override
   public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
     LOG.assertTrue(elements.length == 1);
     final PsiElement element = elements[0];
     invokeOnElement(project, element);
   }
 
-  public static void invokeOnElement(final Project project, final PsiElement element) {
+  private static void invokeOnElement(final Project project, final PsiElement element) {
     if (element instanceof PsiVariable ||
         (element instanceof PsiMember && !(element instanceof PsiClass)) ||
         element instanceof PsiFile  ||
@@ -68,7 +69,7 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
     }
   }
 
-  protected static boolean isClassArgument(PsiElement element) {
+  private static boolean isClassArgument(PsiElement element) {
     if (element instanceof PsiReferenceParameterList) {
       final PsiMember member = PsiTreeUtil.getParentOfType(element, PsiMember.class);
       if (member instanceof PsiAnonymousClass) {
