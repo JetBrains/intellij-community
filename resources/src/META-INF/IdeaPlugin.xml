@@ -17,6 +17,11 @@
   <id>com.intellij</id>
   <name>IDEA CORE</name>
 
+  <actions>
+    <action id="MethodOverloadSwitchUp" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchUpAction"/>
+    <action id="MethodOverloadSwitchDown" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchDownAction" />
+  </actions>
+
   <xi:include href="/META-INF/IdeTipsAndTricks.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/idea/RichPlatformPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <module value="com.intellij.modules.java"/>
@@ -2074,8 +2079,6 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
 
-    <action id="MethodOverloadSwitchUp" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchUpAction"/>
-    <action id="MethodOverloadSwitchDown" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchDownAction" />
   </actions>
 
 </idea-plugin>

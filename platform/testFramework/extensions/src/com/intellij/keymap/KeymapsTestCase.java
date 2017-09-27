@@ -124,6 +124,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "alt DOWN",                 "EditorUnSelectWord", "Arrangement.Rule.Match.Condition.Move.Down"},
     { "alt UP",                   "EditorSelectWord", "Arrangement.Rule.Match.Condition.Move.Up"},
     { "ctrl m",                   "EditorMatchBrace", "Vcs.ShowMessageHistory"},
+    { "control P",                "EditorUp", "MethodOverloadSwitchUp"},
+    { "control N",                "EditorDown", "MethodOverloadSwitchDown"},
     });
     put("Mac OS X", new String[][] {
     { "BACK_SPACE",               "$Delete", "EditorBackSpace", "Images.Thumbnails.UpFolder"},
