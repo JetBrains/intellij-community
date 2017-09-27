@@ -562,6 +562,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     showParameterInfo();
     waitForAllAsyncStuff();
     checkHintContents("<html><font color=gray>@NotNull String key</font color=gray></html>\n" +
+                      "-\n" +
                       "<html>@NotNull String key, <b>String def</b></html>");
   }
 
@@ -588,6 +589,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     showParameterInfo();
     waitForAllAsyncStuff();
     checkHintContents("<html><b>@NotNull String key</b></html>\n" +
+                      "-\n" +
                       "<html><b>@NotNull String key</b>, String def</html>");
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP);
     waitForAllAsyncStuff();
@@ -603,6 +605,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     showParameterInfo();
     waitForAllAsyncStuff();
     checkHintContents("<html><b>@NotNull String key</b></html>\n" +
+                      "-\n" +
                       "<html><b>@NotNull String key</b>, String def</html>");
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN);
     waitForAllAsyncStuff();
@@ -620,6 +623,13 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     left();
     waitForAllAsyncStuff();
     checkHintContents(null);
+  }
+
+  public void testNoLineUnderPopupText() throws Exception {
+    configureJava("class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key)");
+    waitForAllAsyncStuff();
+    checkHintContents("<html><b>@NotNull String</b>&nbsp;&nbsp;<i>the name of the system property.  </i></html>");
   }
 
   private void checkResult(String text) {
