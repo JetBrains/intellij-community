@@ -41,6 +41,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -62,7 +63,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
   public boolean REPLACE_TRIVIAL_FOREACH;
   public boolean SUGGEST_FOREACH;
-  private static final  String SHORT_NAME = "Convert2streamapi";
+  private static final String SHORT_NAME = "Convert2streamapi";
 
   @Nullable
   @Override
@@ -470,7 +471,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                            !terminal.isTrivial();
       return new CollectMigration(shouldWarn, terminal.getMethodName());
     }
-    if(JoiningMigration.extractTerminal(tb, nonFinalVariables) != null) {
+    if (JoiningMigration.extractTerminal(tb, nonFinalVariables) != null) {
       return new JoiningMigration(true);
     }
     if (tb.getCountExpression() != null || tb.isEmpty()) return null;
@@ -481,7 +482,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       return new SumMigration(true);
     }
     FindExtremumMigration.ExtremumTerminal extremumTerminal = FindExtremumMigration.extract(tb, nonFinalVariables);
-    if(extremumTerminal != null) {
+    if (extremumTerminal != null) {
       return new FindExtremumMigration(true, FindExtremumMigration.getOperation(extremumTerminal.isMax()) + "()");
     }
     for (OperationReductionMigration.ReductionOperation reductionOperation : OperationReductionMigration.OPERATIONS) {
@@ -491,7 +492,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     }
     Collection<PsiStatement> exitPoints = tb.findExitPoints(controlFlow);
     if (exitPoints == null) return null;
-    boolean onlyNonLabeledContinue = StreamEx.of(exitPoints).allMatch(statement -> statement instanceof PsiContinueStatement && ((PsiContinueStatement)statement).getLabelIdentifier() == null);
+    boolean onlyNonLabeledContinue = StreamEx.of(exitPoints)
+      .allMatch(statement -> statement instanceof PsiContinueStatement && ((PsiContinueStatement)statement).getLabelIdentifier() == null);
     if (onlyNonLabeledContinue && nonFinalVariables.isEmpty()) {
       boolean shouldWarn = suggestForeach &&
                            (replaceTrivialForEach ||
@@ -914,23 +916,31 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
     @Contract("null -> null")
     static StreamSource tryCreate(PsiLoopStatement statement) {
+      if (statement == null) return null;
+      BufferedReaderLines readerSource = BufferedReaderLines.from(statement);
+      if (readerSource != null) return readerSource;
       if (statement instanceof PsiForStatement) {
-        return CountingLoopSource.from((PsiForStatement)statement);
+        CountingLoopSource countingLoopSource = CountingLoopSource.from((PsiForStatement)statement);
+        if (countingLoopSource != null) return countingLoopSource;
+        return IterateStreamSource.from((PsiForStatement)statement);
       }
       if (statement instanceof PsiForeachStatement) {
         ArrayStream source = ArrayStream.from((PsiForeachStatement)statement);
         return source == null ? CollectionStream.from((PsiForeachStatement)statement) : source;
-      }
-      if (statement instanceof PsiWhileStatement) {
-        return BufferedReaderLines.from((PsiWhileStatement)statement);
       }
       return null;
     }
   }
 
   static class BufferedReaderLines extends StreamSource {
-    private BufferedReaderLines(PsiLoopStatement loop, PsiVariable variable, PsiExpression expression) {
+    private static final CallMatcher BUFFERED_READER_READ_LINE =
+      CallMatcher.instanceCall("java.io.BufferedReader", "readLine").parameterCount(0);
+
+    private boolean myDeleteVariable;
+
+    private BufferedReaderLines(PsiLoopStatement loop, PsiVariable variable, PsiExpression expression, boolean deleteVariable) {
       super(loop, variable, expression);
+      myDeleteVariable = deleteVariable;
     }
 
     @Override
@@ -940,43 +950,129 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
     @Override
     void cleanUp() {
-      myVariable.delete();
+      if (myDeleteVariable) {
+        myVariable.delete();
+      }
     }
 
     @Override
     boolean isWriteAllowed(PsiVariable variable, PsiExpression reference) {
-      return myVariable == variable && reference.getParent() == PsiTreeUtil.getParentOfType(myExpression, PsiAssignmentExpression.class);
+      if (myVariable == variable) {
+        if (reference.getParent() == PsiTreeUtil.getParentOfType(myExpression, PsiAssignmentExpression.class)) return true;
+        PsiForStatement forStatement = PsiTreeUtil.getParentOfType(variable, PsiForStatement.class);
+        if (forStatement != null && forStatement == PsiTreeUtil.getParentOfType(myVariable, PsiForStatement.class)) {
+          return PsiTreeUtil.isAncestor(forStatement.getUpdate(), reference, false) ||
+                 PsiTreeUtil.isAncestor(forStatement.getCondition(), reference, false);
+        }
+      }
+      return false;
     }
 
     @Nullable
-    public static BufferedReaderLines from(PsiWhileStatement whileLoop) {
-      // while ((line = br.readLine()) != null)
-      PsiBinaryExpression binOp = tryCast(PsiUtil.skipParenthesizedExprDown(whileLoop.getCondition()), PsiBinaryExpression.class);
+    public static BufferedReaderLines from(PsiLoopStatement loopStatement) {
+      BufferedReaderLines whileSimple = extractWhileSimple(loopStatement);
+      if (whileSimple != null) return whileSimple;
+      BufferedReaderLines forSimple = extractForSimple(loopStatement);
+      if (forSimple != null) return forSimple;
+      return extractForReadInCondition(loopStatement);
+    }
+
+    /**
+     * Extracts BufferedReaderSource from condition (for update or while condition), but additional checks may be required
+     * Condition must look like: (line = reader.readLine()) != null
+     */
+    @Nullable
+    private static BufferedReaderLines extractReaderFromCondition(@Nullable PsiExpression condition,
+                                                                  @NotNull PsiLoopStatement loopStatement) {
+      PsiBinaryExpression binOp = tryCast(PsiUtil.skipParenthesizedExprDown(condition), PsiBinaryExpression.class);
       if (binOp == null) return null;
       if (!JavaTokenType.NE.equals(binOp.getOperationTokenType())) return null;
       PsiExpression operand = ExpressionUtils.getValueComparedWithNull(binOp);
       if (operand == null) return null;
       PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(PsiUtil.skipParenthesizedExprDown(operand));
       if (assignment == null) return null;
-      PsiReferenceExpression lValue = tryCast(assignment.getLExpression(), PsiReferenceExpression.class);
-      if (lValue == null) return null;
-      PsiLocalVariable var = tryCast(lValue.resolve(), PsiLocalVariable.class);
-      if (var == null) return null;
-      if (!ReferencesSearch.search(var).forEach(ref -> {
-        return PsiTreeUtil.isAncestor(whileLoop, ref.getElement(), true);
+      PsiMethodCallExpression readerCall = tryCast(assignment.getRExpression(), PsiMethodCallExpression.class);
+      if (!BUFFERED_READER_READ_LINE.test(readerCall)) return null;
+      PsiExpression reader = readerCall.getMethodExpression().getQualifierExpression();
+
+      PsiLocalVariable lineVar = ExpressionUtils.resolveLocalVariable(assignment.getLExpression());
+      if (lineVar == null) return null;
+      if (!ReferencesSearch.search(lineVar).forEach(ref -> {
+        return PsiTreeUtil.isAncestor(loopStatement, ref.getElement(), true);
       })) {
         return null;
       }
-      PsiMethodCallExpression call = tryCast(PsiUtil.skipParenthesizedExprDown(assignment.getRExpression()), PsiMethodCallExpression.class);
-      if (call == null || call.getArgumentList().getExpressions().length != 0) return null;
-      if (!"readLine".equals(call.getMethodExpression().getReferenceName())) return null;
-      PsiExpression readerExpression = call.getMethodExpression().getQualifierExpression();
-      if (readerExpression == null) return null;
-      PsiMethod method = call.resolveMethod();
-      if (method == null) return null;
-      PsiClass aClass = method.getContainingClass();
-      if (aClass == null || !"java.io.BufferedReader".equals(aClass.getQualifiedName())) return null;
-      return new BufferedReaderLines(whileLoop, var, readerExpression);
+      return new BufferedReaderLines(loopStatement, lineVar, reader, false);
+    }
+
+    // for (String line; (line = reader.readLine()) != null; )
+    @Nullable
+    private static BufferedReaderLines extractForReadInCondition(PsiLoopStatement loopStatement) {
+      PsiForStatement forLoop = tryCast(loopStatement, PsiForStatement.class);
+      if (forLoop == null || forLoop.getUpdate() != null) return null;
+
+      BufferedReaderLines reader = extractReaderFromCondition(forLoop.getCondition(), loopStatement);
+      if (reader == null) return null;
+
+      PsiDeclarationStatement declaration = tryCast(forLoop.getInitialization(), PsiDeclarationStatement.class);
+      if (declaration == null) return null;
+      PsiElement[] declaredElements = declaration.getDeclaredElements();
+      if (declaredElements.length != 1) return null;
+      PsiVariable lineVar = reader.getVariable();
+      if (declaredElements[0] != lineVar) return null;
+      return reader;
+    }
+
+    // for (String line = reader.readLine(); line != null; line = reader.readLine()) ...
+    @Nullable
+    private static BufferedReaderLines extractForSimple(PsiLoopStatement loopStatement) {
+      PsiForStatement forLoop = tryCast(loopStatement, PsiForStatement.class);
+      if (forLoop == null) return null;
+
+      PsiDeclarationStatement declarationStatement = tryCast(forLoop.getInitialization(), PsiDeclarationStatement.class);
+      if (declarationStatement == null) return null;
+      PsiElement[] declarations = declarationStatement.getDeclaredElements();
+      if (declarations.length != 1) return null;
+      PsiLocalVariable lineVar = tryCast(declarations[0], PsiLocalVariable.class);
+      if (lineVar == null) return null;
+      if (!ReferencesSearch.search(lineVar).forEach(ref -> {
+        return PsiTreeUtil.isAncestor(forLoop, ref.getElement(), true);
+      })) {
+        return null;
+      }
+      PsiMethodCallExpression maybeReadLines = tryCast(lineVar.getInitializer(), PsiMethodCallExpression.class);
+      if (!BUFFERED_READER_READ_LINE.test(maybeReadLines)) return null;
+      PsiExpression reader = maybeReadLines.getMethodExpression().getQualifierExpression();
+      PsiReferenceExpression readerRef = tryCast(reader, PsiReferenceExpression.class);
+      if (readerRef == null) return null;
+      PsiVariable readerVar = tryCast(readerRef.resolve(), PsiVariable.class);
+      if (readerVar == null) return null;
+
+      PsiBinaryExpression binOp = tryCast(PsiUtil.skipParenthesizedExprDown(forLoop.getCondition()), PsiBinaryExpression.class);
+      if (binOp == null) return null;
+      if (!JavaTokenType.NE.equals(binOp.getOperationTokenType())) return null;
+      PsiExpression lineExpr = ExpressionUtils.getValueComparedWithNull(binOp);
+      if (!ExpressionUtils.isReferenceTo(lineExpr, lineVar)) return null;
+
+
+      PsiExpressionStatement updateStmt = tryCast(forLoop.getUpdate(), PsiExpressionStatement.class);
+      if (updateStmt == null) return null;
+      PsiExpression readNewLineExpr = ExpressionUtils.getAssignmentTo(updateStmt.getExpression(), lineVar);
+      PsiMethodCallExpression readNewLineCall = tryCast(readNewLineExpr, PsiMethodCallExpression.class);
+      if (!BUFFERED_READER_READ_LINE.test(readNewLineCall)) return null;
+      if (!ExpressionUtils.isReferenceTo(readNewLineCall.getMethodExpression().getQualifierExpression(), readerVar)) return null;
+      return new BufferedReaderLines(forLoop, lineVar, reader, false);
+    }
+
+    // while ((line = br.readLine()) != null)
+    @Nullable
+    private static BufferedReaderLines extractWhileSimple(PsiLoopStatement loopStatement) {
+      PsiWhileStatement whileLoop = tryCast(loopStatement, PsiWhileStatement.class);
+      if (whileLoop == null) return null;
+      BufferedReaderLines reader = extractReaderFromCondition(whileLoop.getCondition(), loopStatement);
+      if (reader == null) return null;
+      reader.myDeleteVariable = true;
+      return reader;
     }
   }
 
@@ -1126,4 +1222,187 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     }
   }
 
+  /**
+   * for(int i = 0;; i = i + 1) // i + 1   - expression
+   */
+  static class IterateStreamSource extends StreamSource {
+    private final PsiExpression myInitializer;
+    private @Nullable final PsiExpression myCondition;
+    private @Nullable final IElementType myOpType;
+    private @Nullable final PsiUnaryExpression myUnaryExpression;
+
+    /**
+     * @param condition
+     * @param type            if not null, equivalent form of update is: variable type= expression;
+     * @param unaryExpression
+     */
+    protected IterateStreamSource(
+      @NotNull PsiLoopStatement loop,
+      @NotNull PsiVariable variable,
+      @Nullable PsiExpression expression,
+      @NotNull PsiExpression initializer,
+      @Nullable PsiExpression condition,
+      @Nullable IElementType type,
+      @Nullable PsiUnaryExpression unaryExpression) {
+      super(loop, variable, expression);
+      myInitializer = initializer;
+      myCondition = condition;
+      myOpType = type;
+      myUnaryExpression = unaryExpression;
+    }
+
+    @Nullable
+    @Contract(pure = true)
+    private static String getOperationSign(IElementType op) {
+      if (op == JavaTokenType.AND) {
+        return "&";
+      }
+      else if (op == JavaTokenType.ASTERISK) {
+        return "*";
+      }
+      else if (op == JavaTokenType.DIV) {
+        return "/";
+      }
+      else if (op == JavaTokenType.GTGT) {
+        return ">>";
+      }
+      else if (op == JavaTokenType.GTGTGT) {
+        return ">>>";
+      }
+      else if (op == JavaTokenType.LTLT) {
+        return "<<";
+      }
+      else if (op == JavaTokenType.MINUS) {
+        return "-";
+      }
+      else if (op == JavaTokenType.OR) {
+        return "|";
+      }
+      else if (op == JavaTokenType.PERC) {
+        return "%";
+      }
+      else if (op == JavaTokenType.PLUS) {
+        return "+";
+      }
+      else if (op == JavaTokenType.XOR) {
+        return "^";
+      }
+      return null;
+    }
+
+    @Override
+    String createReplacement() {
+      String lambda;
+      if (myOpType != null) {
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(myVariable.getProject());
+        PsiExpression expression = myUnaryExpression == null ? myExpression : factory.createExpressionFromText("1", null);
+        String expressionText = ParenthesesUtils.getText(expression, ParenthesesUtils.getPrecedenceForOperator(myOpType));
+        String lambdaBody = myVariable.getName() + getOperationSign(myOpType) + expressionText;
+        if (!myVariable.getType().equals(expression.getType())) {
+          lambdaBody = ("(" + myVariable.getType().getCanonicalText() + ")") + "(" + lambdaBody + ")";
+        }
+        lambda = myVariable.getName() + "->" + lambdaBody;
+      }
+      else {
+        lambda = LambdaUtil.createLambda(myVariable, myExpression);
+      }
+      String maybeCondition = myCondition != null ? LambdaUtil.createLambda(myVariable, myCondition) + "," : "";
+
+      return getStreamClass(myVariable.getType()) + ".iterate(" + myInitializer.getText() + "," + maybeCondition + lambda + ")";
+    }
+
+    @Contract(value = "null -> null", pure = true)
+    private static String getStreamClass(@Nullable PsiType type) {
+      if (type == null) return null;
+      if (ClassUtils.isPrimitive(type)) {
+        if (type.equals(PsiType.INT)) {
+          return CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM;
+        }
+        else if (type.equals(PsiType.DOUBLE)) {
+          return CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM;
+        }
+        else if (type.equals(PsiType.LONG)) {
+          return CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM;
+        }
+        return null;
+      }
+      return CommonClassNames.JAVA_UTIL_STREAM_STREAM;
+    }
+
+    @Override
+    StreamEx<PsiExpression> expressions() {
+      return StreamEx.of(myInitializer, myExpression);
+    }
+
+    @Override
+    boolean isWriteAllowed(PsiVariable variable, PsiExpression reference) {
+      if (variable == myVariable) {
+        PsiForStatement forStatement = PsiTreeUtil.getParentOfType(variable, PsiForStatement.class);
+        if (forStatement != null) {
+          return PsiTreeUtil.isAncestor(forStatement.getUpdate(), reference, false);
+        }
+      }
+      return false;
+    }
+
+    @Override
+    boolean canReassignVariable(PsiVariable variable) {
+      return variable != myVariable;
+    }
+
+    @Nullable
+    static IterateStreamSource from(@NotNull PsiForStatement forStatement) {
+      PsiExpression condition = forStatement.getCondition();
+      if (!PsiUtil.isLanguageLevel9OrHigher(forStatement) && condition != null) return null;
+      PsiStatement initialization = forStatement.getInitialization();
+      PsiDeclarationStatement initStmt = tryCast(initialization, PsiDeclarationStatement.class);
+      if (initStmt == null || initStmt.getDeclaredElements().length != 1) return null;
+      PsiLocalVariable variable = tryCast(initStmt.getDeclaredElements()[0], PsiLocalVariable.class);
+      if (variable == null) return null;
+      if (getStreamClass(variable.getType()) == null) return null;
+      PsiExpression initializer = variable.getInitializer();
+      if (initializer == null) return null;
+      PsiStatement update = forStatement.getUpdate();
+      if (update == null) return null;
+      PsiExpressionStatement exprStmt = tryCast(update, PsiExpressionStatement.class);
+      if (exprStmt == null) return null;
+      PsiExpression expression = exprStmt.getExpression();
+      PsiExpression updateExpr = null;
+      IElementType op;
+      PsiUnaryExpression unaryExpression = null;
+      if (expression instanceof PsiAssignmentExpression) {
+        PsiAssignmentExpression assignment = (PsiAssignmentExpression)expression;
+        op = TypeConversionUtil.convertEQtoOperation(assignment.getOperationTokenType());
+        updateExpr = assignment.getRExpression();
+        if (!ExpressionUtils.isReferenceTo(assignment.getLExpression(), variable)) return null;
+        if (updateExpr == null) return null;
+      }
+      else if (expression instanceof PsiUnaryExpression) {
+        unaryExpression = (PsiUnaryExpression)expression;
+        IElementType tokenType = unaryExpression.getOperationTokenType();
+        op = getOperation(tokenType);
+        if (op == null) return null;
+      }
+      else {
+        return null;
+      }
+      if (updateExpr != null && !ExceptionUtil.getThrownCheckedExceptions(updateExpr).isEmpty()) return null;
+      if (condition != null && !ExceptionUtil.getThrownCheckedExceptions(condition).isEmpty()) return null;
+      if (!VariableAccessUtils.variableIsUsed(variable, update)) return null;
+      return new IterateStreamSource(forStatement, variable, updateExpr, initializer, condition, op, unaryExpression);
+    }
+
+    @Nullable
+    private static IElementType getOperation(IElementType tokenType) {
+      if (tokenType == JavaTokenType.PLUSPLUS) {
+        return JavaTokenType.PLUS;
+      }
+      else if (tokenType == JavaTokenType.MINUSMINUS) {
+        return JavaTokenType.MINUS;
+      }
+      else {
+        return null;
+      }
+    }
+  }
 }
