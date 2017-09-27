@@ -1028,12 +1028,12 @@
         <option name="FOREGROUND" value="D0D0FF" />
       </value>
     </option>
-    <option name="OC.FUNCTION">
+    <option name="OC.FUNCTION_CALL">
       <value>
         <option name="FOREGROUND" value="FFC66D" />
       </value>
     </option>
-    <option name="OC.FUNCTION">
+    <option name="OC.FUNCTION_DECLARATION">
       <value>
         <option name="FOREGROUND" value="FFC66D" />
       </value>

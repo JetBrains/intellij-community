@@ -960,8 +960,8 @@
     </option>
     <option baseAttributes="TEXT" name="OC.DOT" />
     <option baseAttributes="OC.LOCAL_VARIABLE" name="OC.EXTERN_VARIABLE" />
-    <option baseAttributes="TEXT" name="OC.FUNCTION" />
-    <option baseAttributes="MESSAGE_ARGUMENT" name="OC.FUNCTION" />
+    <option baseAttributes="TEXT" name="OC.FUNCTION_CALL" />
+    <option baseAttributes="MESSAGE_ARGUMENT" name="OC.FUNCTION_CALL" />
     <option baseAttributes="OC.LOCAL_VARIABLE" name="OC.GLOBAL_VARIABLE" />
     <option name="OC.KEYWORD">
       <value>
