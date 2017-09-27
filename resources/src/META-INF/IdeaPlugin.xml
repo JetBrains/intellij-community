@@ -981,7 +981,7 @@
                      displayName="Null value for Optional type"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="RequireNonNull"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids9" enabledByDefault="true" level="INFORMATION"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids9" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.RequireNonNullInspection"
                      displayName="Replace null checked condition with Objects static method"/>
     <localInspection groupPath="Java" language="JAVA" shortName="Java9ModuleExportsPackageToItself"
