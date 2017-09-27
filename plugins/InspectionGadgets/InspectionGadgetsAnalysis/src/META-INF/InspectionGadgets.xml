@@ -1653,7 +1653,7 @@
                       implementationClass="com.siyeh.ig.modularization.ModuleWithTooFewClassesInspection"/>
 
     <!--group.names.naming.conventions-->
-    <localInspection groupPath="Java" shortName="NewClassNamingConvention" bundle="com.siyeh.InspectionGadgetsBundle" key="class.naming.convention.display.name"
+    <localInspection groupPath="Java" language="JAVA" shortName="NewClassNamingConvention" bundle="com.siyeh.InspectionGadgetsBundle" key="class.naming.convention.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.naming.NewClassNamingConventionInspection"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.naming.ClassNamingConventionMerger"/>

@@ -43,7 +43,7 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
   private final Set<String> myDisabledShortNames = new HashSet<>();
   @Nullable private final String myDefaultConventionShortName;
 
-  protected AbstractNamingConventionInspection(NamingConvention<T>[] extensions, @Nullable final String defaultConventionShortName) {
+  protected AbstractNamingConventionInspection(Iterable<NamingConvention<T>> extensions, @Nullable final String defaultConventionShortName) {
     for (NamingConvention<T> convention : extensions) {
       String shortName = convention.getShortName();
       NamingConvention<T> oldConvention = myNamingConventions.put(shortName, convention);

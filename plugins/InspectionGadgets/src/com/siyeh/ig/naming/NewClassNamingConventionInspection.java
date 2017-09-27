@@ -34,15 +34,20 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.naming.AbstractNamingConventionInspection;
 import com.intellij.codeInspection.naming.NamingConvention;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiElementVisitor;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
 
 public class NewClassNamingConventionInspection extends AbstractNamingConventionInspection<PsiClass> {
   public static final ExtensionPointName<NamingConvention<PsiClass>> EP_NAME = ExtensionPointName.create("com.intellij.naming.convention.class");
 
   public NewClassNamingConventionInspection() {
-    super(EP_NAME.getExtensions(), ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME);
+    super(Arrays.asList(EP_NAME.getExtensions()), ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME);
   }
 
   @Override
@@ -58,13 +63,10 @@ public class NewClassNamingConventionInspection extends AbstractNamingConvention
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
-        if (element instanceof PsiClass) {
-          PsiClass aClass = (PsiClass)element;
-          final String name = aClass.getName();
-          if (name == null) return;
-          checkName(aClass, name, holder);
-        }
+      public void visitClass(PsiClass aClass) {
+        final String name = aClass.getName();
+        if (name == null) return;
+        checkName(aClass, name, holder);
       }
     };
   }
