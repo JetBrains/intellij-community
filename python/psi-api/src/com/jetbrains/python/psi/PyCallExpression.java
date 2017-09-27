@@ -288,8 +288,11 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * @param resolveContext resolve context
    * @return an object which contains callable and mappings.
    * Returns mapping created by {@link PyArgumentsMapping#empty(PyCallSiteExpression)} if the callee cannot be resolved.
+   * @deprecated Use {@link PyCallExpression#multiMapArguments(PyResolveContext)} instead.
+   * This method will be removed in 2018.1.
    */
   @NotNull
+  @Deprecated
   default PyArgumentsMapping mapArguments(@NotNull PyResolveContext resolveContext) {
     return Optional
       .of(multiMapArguments(resolveContext, 0))

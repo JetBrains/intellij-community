@@ -99,7 +99,8 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
     }
 
     private void checkArguments(PyCallExpression callExpr, PyExpression[] arguments) {
-      final PyCallExpression.PyArgumentsMapping mapping = callExpr.mapArguments(getResolveContext());
+      final PyCallExpression.PyArgumentsMapping mapping = ContainerUtil.getFirstItem(callExpr.multiMapArguments(getResolveContext()));
+      if (mapping == null) return;
       final Set<PyExpression> problemElements = new HashSet<>();
       for (Map.Entry<PyExpression, PyCallableParameter> e : mapping.getMappedParameters().entrySet()) {
         final PyExpression defaultValue = e.getValue().getDefaultValue();
