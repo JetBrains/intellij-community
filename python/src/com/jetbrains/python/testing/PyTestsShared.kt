@@ -27,9 +27,12 @@ import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.RefactoringListenerProvider
 import com.intellij.execution.configurations.RuntimeConfigurationWarning
+import com.intellij.execution.filters.ConsoleInputFilterProvider
+import com.intellij.execution.filters.InputFilter
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.execution.testframework.sm.runner.SMTestLocator
+import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope
 import com.intellij.openapi.options.SettingsEditor
@@ -68,6 +71,9 @@ import com.jetbrains.reflection.DelegationProperty
 import com.jetbrains.reflection.Properties
 import com.jetbrains.reflection.Property
 import com.jetbrains.reflection.getProperties
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
+import jetbrains.buildServer.messages.serviceMessages.TestStdErr
+import jetbrains.buildServer.messages.serviceMessages.TestStdOut
 
 
 /**
@@ -780,6 +786,20 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
   }
 }
 
+private object PyTestInputFilter : InputFilter {
+  override fun applyFilter(text: String, contentType: ConsoleViewContentType?): List<Pair<String, ConsoleViewContentType>>? {
+    val parsedMessage = ServiceMessage.parse(text.trim()) ?: return null // Not a TC message
+    return when (parsedMessage) {
+      is TestStdOut -> listOf(Pair(parsedMessage.stdOut, contentType!!)) // TC with stdout
+      is TestStdErr -> listOf(Pair(parsedMessage.stdErr, contentType!!)) // TC with stderr
+      else -> emptyList() // TC with out of any output
+    }
+  }
+}
+
+object PyTestConsoleInputFilterProvider : ConsoleInputFilterProvider {
+  override fun getDefaultFilters(project: Project): Array<InputFilter> = arrayOf(PyTestInputFilter)
+}
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.PROPERTY)
