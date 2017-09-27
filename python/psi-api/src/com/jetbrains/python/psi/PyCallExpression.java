@@ -169,9 +169,11 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * @param resolveContext resolve context
    * @return an object which contains callable, modifier, implicit offset and "implicitly resolved" flag.
    * Returns null if the callee cannot be resolved.
-   * @see PyCallExpression#multiResolveCallee(PyResolveContext)
+   * @deprecated Use {@link PyCallExpression#multiResolveCallee(PyResolveContext)} instead.
+   * This method will be removed in 2018.1.
    */
   @Nullable
+  @Deprecated
   default PyMarkedCallee resolveCallee(@NotNull PyResolveContext resolveContext) {
     final PyRatedMarkedCallee first = ContainerUtil.getFirstItem(multiResolveRatedCallee(resolveContext, 0));
     return first == null ? null : first.getMarkedCallee();
