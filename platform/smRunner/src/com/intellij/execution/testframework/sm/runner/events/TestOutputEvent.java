@@ -15,7 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner.events;
 
-import jetbrains.buildServer.messages.serviceMessages.intellij.BaseTestMessage;
+import jetbrains.buildServer.messages.serviceMessages.BaseTestMessage;
 import org.jetbrains.annotations.NotNull;
 
 public class TestOutputEvent extends TreeNodeEvent {
