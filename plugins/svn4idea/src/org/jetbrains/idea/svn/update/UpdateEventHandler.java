@@ -251,7 +251,7 @@ public class UpdateEventHandler implements ProgressTracker {
     final String path = event.getFile().getAbsolutePath();
     myFilesWaitingForRevision.peek().add(Pair.create(id, path));
     if (event.getErrorMessage() != null) {
-      fileGroup.addError(path, event.getErrorMessage().getMessage());
+      fileGroup.addError(path, event.getErrorMessage());
     }
   }
 

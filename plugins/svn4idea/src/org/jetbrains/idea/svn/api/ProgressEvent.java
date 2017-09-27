@@ -18,15 +18,11 @@ package org.jetbrains.idea.svn.api;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.status.StatusType;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 
 import java.io.File;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class ProgressEvent {
 
   private final File myFile;
@@ -36,7 +32,7 @@ public class ProgressEvent {
 
   @NotNull private final StatusType myContentsStatus;
   @NotNull private final StatusType myPropertiesStatus;
-  private final SVNErrorMessage myErrorMessage;
+  @Nullable private final String myErrorMessage;
   private final EventAction myAction;
 
   @Nullable
@@ -44,20 +40,23 @@ public class ProgressEvent {
     ProgressEvent result = null;
 
     if (event != null) {
+      String errorMessage = event.getErrorMessage() != null ? event.getErrorMessage().getFullMessage() : null;
+
       if (event.getFile() == null && event.getURL() == null) {
-        result = new ProgressEvent(event.getErrorMessage());
+        result = new ProgressEvent(errorMessage);
       }
       else {
         result =
-          new ProgressEvent(event.getFile(), event.getRevision(), StatusType.from(event.getContentsStatus()), StatusType.from(event.getPropertiesStatus()),
-                            EventAction.from(event.getAction()), event.getErrorMessage(), event.getURL());
+          new ProgressEvent(event.getFile(), event.getRevision(), StatusType.from(event.getContentsStatus()),
+                            StatusType.from(event.getPropertiesStatus()), EventAction.from(event.getAction()), errorMessage,
+                            event.getURL());
       }
     }
 
     return result;
   }
 
-  public ProgressEvent(SVNErrorMessage errorMessage) {
+  public ProgressEvent(@Nullable String errorMessage) {
     this(null, 0, null, null, EventAction.SKIP, errorMessage, null);
   }
 
@@ -66,14 +65,14 @@ public class ProgressEvent {
                        @Nullable StatusType contentStatus,
                        @Nullable StatusType propertiesStatus,
                        EventAction action,
-                       SVNErrorMessage error,
+                       @Nullable String errorMessage,
                        SVNURL url) {
     myFile = file != null ? file.getAbsoluteFile() : null;
     myRevision = revision;
     myContentsStatus = contentStatus == null ? StatusType.INAPPLICABLE : contentStatus;
     myPropertiesStatus = propertiesStatus == null ? StatusType.INAPPLICABLE : propertiesStatus;
     myAction = action;
-    myErrorMessage = error;
+    myErrorMessage = errorMessage;
     myURL = url;
   }
 
@@ -90,7 +89,8 @@ public class ProgressEvent {
     return myContentsStatus;
   }
 
-  public SVNErrorMessage getErrorMessage() {
+  @Nullable
+  public String getErrorMessage() {
     return myErrorMessage;
   }
 

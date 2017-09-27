@@ -23,7 +23,6 @@ import org.jetbrains.idea.svn.api.*;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -65,13 +64,13 @@ public class CmdLockClient extends BaseSvnClient implements LockClient {
                                               @NotNull EventAction failure,
                                               @Nullable ProgressTracker handler) throws VcsException {
     // just warning appears in output when can not lock/unlock file for some reason (like, that file is already locked)
-    SVNErrorMessage error = SvnUtil.parseWarning(command.getErrorOutput());
+    String error = SvnUtil.parseWarning(command.getErrorOutput());
 
     callHandler(handler, createEvent(file, error == null ? success : failure, error));
   }
 
   @NotNull
-  private static ProgressEvent createEvent(@NotNull File file, @NotNull EventAction action, @Nullable SVNErrorMessage error) {
+  private static ProgressEvent createEvent(@NotNull File file, @NotNull EventAction action, @Nullable String error) {
     return new ProgressEvent(file, -1, null, null, action, error, null);
   }
 }

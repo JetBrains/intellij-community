@@ -65,7 +65,6 @@ import org.tmatesoft.sqljet.core.table.ISqlJetOptions;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.sqljet.core.table.engine.SqlJetEngine;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -87,6 +86,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.map2Array;
 import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static java.util.Collections.emptyList;
@@ -109,17 +109,10 @@ public class SvnUtil {
   private SvnUtil() { }
 
   @Nullable
-  public static SVNErrorMessage parseWarning(@NotNull String text) {
+  public static String parseWarning(@NotNull String text) {
     Matcher matcher = WARNING_PATTERN.matcher(text);
-    SVNErrorMessage error = null;
-
     // currently treating only first warning
-    if (matcher.find()) {
-      error = SVNErrorMessage
-        .create(SVNErrorCode.getErrorCode(Integer.parseInt(matcher.group(2))), matcher.group(3), SVNErrorMessage.TYPE_WARNING);
-    }
-
-    return error;
+    return matcher.find() ? matcher.group() : null;
   }
 
   public static boolean isSvnVersioned(@NotNull SvnVcs vcs, @NotNull File file) {
@@ -205,9 +198,7 @@ public class SvnUtil {
       @Override
       public void consume(ProgressEvent event) {
         if (event.getAction() == EventAction.LOCK_FAILED) {
-          failedLocks.add(event.getErrorMessage() != null ?
-                          event.getErrorMessage().getFullMessage() :
-                          event.getFile().getAbsolutePath());
+          failedLocks.add(notNull(event.getErrorMessage(), event.getFile().getAbsolutePath()));
           count[0]--;
         }
       }
@@ -269,9 +260,7 @@ public class SvnUtil {
       @Override
       public void consume(ProgressEvent event) {
         if (event.getAction() == EventAction.UNLOCK_FAILED) {
-          failedUnlocks.add(event.getErrorMessage() != null ?
-                            event.getErrorMessage().getFullMessage() :
-                            event.getFile().getAbsolutePath());
+          failedUnlocks.add(notNull(event.getErrorMessage(), event.getFile().getAbsolutePath()));
           count[0]--;
         }
       }
