@@ -34,6 +34,7 @@ import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -46,6 +47,7 @@ import org.jetbrains.uast.UastContextKt;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class PluginDescriptorStructureUtil {
@@ -53,6 +55,21 @@ public class PluginDescriptorStructureUtil {
 
   private static final Set<String> KNOWN_TOP_LEVEL_NODE_NAMES =
     ContainerUtil.immutableSet("id", "name", "version", "category", "resource-bundle");
+
+  private static final Map<String, String> TAG_DISPLAY_NAME_REPLACEMENTS = new ContainerUtil.ImmutableMapBuilder<String, String>()
+    .put("psi", "PSI")
+    .put("dom", "DOM")
+    .put("sdk", "SDK")
+    .put("junit", "JUnit")
+    .put("idea", "IDEA")
+    .put("javaee", "JavaEE")
+    .put("jsf", "JSF")
+    .put("mvc", "MVC")
+    .put("el", "EL")
+    .put("id", "ID")
+    .put("jsp", "JSP")
+    .put("xml", "XML")
+    .build();
 
   private PluginDescriptorStructureUtil() {
   }
@@ -243,7 +260,8 @@ public class PluginDescriptorStructureUtil {
       String extensionsNamespace = ((Extensions)parent).getDefaultExtensionNs().getStringValue();
       if (Extensions.DEFAULT_PREFIX.equals(extensionsNamespace)) {
         String elementName = element.getXmlElementName();
-        if (elementName.equalsIgnoreCase("applicationService") || elementName.equalsIgnoreCase("projectService") ||
+        if (elementName.equalsIgnoreCase("applicationService") ||
+            elementName.equalsIgnoreCase("projectService") ||
             elementName.equalsIgnoreCase("moduleService")) {
           String result = element.getId().getStringValue();
           if (StringUtil.isEmpty(result)) {
@@ -368,12 +386,18 @@ public class PluginDescriptorStructureUtil {
   @NotNull
   private static String toDisplayName(@NotNull String tagName) {
     String result = tagName.replaceAll("-", " ").replaceAll("\\.", " | ");
-    result = StringUtil.join(NameUtil.nameToWords(result), " ");
+
+    String[] words = NameUtil.nameToWords(result);
+    for (int i = 0; i < words.length; i++) {
+      @NonNls String word = words[i];
+      String replacement = TAG_DISPLAY_NAME_REPLACEMENTS.get(word.toLowerCase());
+      if (replacement != null) {
+        words[i] = replacement;
+      }
+    }
+
+    result = StringUtil.join(words, " ");
     result = StringUtil.capitalizeWords(result, true);
-    result = StringUtil.replace(
-      result,
-      new String[] {"Psi", "Dom", "Sdk", "Junit", "Idea", "Javaee", "Jsf", "Mvc", "El", "Id", "Jsp", "Xml"},
-      new String[] {"PSI", "DOM", "SDK", "JUnit", "IDEA", "JavaEE", "JSF", "MVC", "EL", "ID", "JSP", "XML"});
 
     return result;
   }
