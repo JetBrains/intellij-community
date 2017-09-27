@@ -18,7 +18,6 @@ package com.siyeh.ig;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -81,13 +80,33 @@ public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
     return false;
   }
 
+  /**
+   * Build a fix for this inspection based on infos passed to {@link BaseInspectionVisitor#registerError(PsiElement, Object...)}
+   * or similar methods. Override this method in concrete inspection to provide a fix.
+   * Use {@link DelegatingFix} if your fix does not extend {@link InspectionGadgetsFix}.
+   *
+   * <p>
+   * This method is ignored is {@link #buildFixes(Object...)} is overridden as well and returns a non-empty result.
+   * Normally one should not override both this method and {@link #buildFixes(Object...)}.
+   *
+   * @param infos additional information which was supplied by {@link BaseInspectionVisitor} during error registration.
+   * @return a new fix or null if no fix is available
+   */
   @Nullable
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected InspectionGadgetsFix buildFix(Object... infos) {
     return null;
   }
 
+  /**
+   * Build fixes based on infos passed to {@link BaseInspectionVisitor#registerError(PsiElement, Object...)} or similar methods.
+   * Override this method in concrete inspection to provide fixes. Use {@link DelegatingFix} if your fix does not extend
+   * {@link InspectionGadgetsFix}.
+   *
+   * @param infos additional information which was supplied by {@link BaseInspectionVisitor} during error registration.
+   * @return an array of fixes (empty array if no fix is available).
+   */
   @NotNull
-  protected LocalQuickFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
     return InspectionGadgetsFix.EMPTY_ARRAY;
   }
 
@@ -134,7 +153,7 @@ public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
 
   /**
    * To check precondition(s) on the entire file, to prevent doing the check on every PsiElement visited.
-   * Useful for e.g. a {@link com.intellij.psi.util.PsiUtil#isLanguageLevel5OrHigher(com.intellij.psi.PsiElement)} check
+   * Useful for e.g. a {@link com.intellij.psi.util.PsiUtil#isLanguageLevel5OrHigher(PsiElement)} check
    * which will be the same for all elements in the specified file.
    * When this method returns false, {@link #buildVisitor()} will not be called.
    */

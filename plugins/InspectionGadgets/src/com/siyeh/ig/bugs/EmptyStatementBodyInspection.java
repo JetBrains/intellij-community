@@ -28,6 +28,8 @@ import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.DelegatingFix;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -90,8 +92,9 @@ public class EmptyStatementBodyInspection extends BaseInspection {
 
   @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
-    return ObjectUtils.tryCast(ArrayUtil.getFirstElement(infos), LocalQuickFix.class);
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    LocalQuickFix fix = ObjectUtils.tryCast(ArrayUtil.getFirstElement(infos), LocalQuickFix.class);
+    return fix == null ? null : new DelegatingFix(fix);
   }
 
   @Override
