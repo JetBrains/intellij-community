@@ -158,6 +158,7 @@ public class TreeModelBuilder {
                                                      @NotNull ChangesBrowserSpecificFilesNode node) {
     myModel.insertNodeInto(node, myRoot, myRoot.getChildCount());
     if (!node.isManyFiles()) {
+      node.markAsHelperNode();
       insertFilesIntoNode(specificFiles, node);
     }
     return this;
@@ -170,6 +171,7 @@ public class TreeModelBuilder {
       List<Change> changes = ContainerUtil.sorted(list.getChanges(), PATH_LENGTH_COMPARATOR);
       ChangeListRemoteState listRemoteState = new ChangeListRemoteState(changes.size());
       ChangesBrowserChangeListNode listNode = new ChangesBrowserChangeListNode(myProject, list, listRemoteState);
+
       myModel.insertNodeInto(listNode, myRoot, 0);
 
       for (int i = 0; i < changes.size(); i++) {
@@ -207,6 +209,8 @@ public class TreeModelBuilder {
     if (tag == null) return myRoot;
 
     ChangesBrowserNode subtreeRoot = ChangesBrowserNode.create(myProject, tag);
+    subtreeRoot.markAsHelperNode();
+
     myModel.insertNodeInto(subtreeRoot, myRoot, myRoot.getChildCount());
     return subtreeRoot;
   }
@@ -298,6 +302,8 @@ public class TreeModelBuilder {
                                                                 VirtualFileHierarchicalComparator.getInstance());
       if (switchedFileList.size() > 0) {
         ChangesBrowserNode branchNode = ChangesBrowserNode.create(myProject, branchName);
+        branchNode.markAsHelperNode();
+
         myModel.insertNodeInto(branchNode, subtreeRoot, subtreeRoot.getChildCount());
 
         for (VirtualFile file : switchedFileList) {
@@ -453,6 +459,7 @@ public class TreeModelBuilder {
     if (policy != null) {
       ChangesBrowserNode nodeFromPolicy = policy.getParentNodeFor(nodePath, subtreeRoot);
       if (nodeFromPolicy != null) {
+        nodeFromPolicy.markAsHelperNode();
         return nodeFromPolicy;
       }
     }
@@ -464,6 +471,8 @@ public class TreeModelBuilder {
 
       ChangesBrowserNode parentNode = nodeBuilder.convert(parentPath);
       if (parentNode != null) {
+        parentNode.markAsHelperNode();
+
         ChangesBrowserNode grandPa = getParentNodeFor(parentPath, subtreeRoot, nodeBuilder);
         myModel.insertNodeInto(parentNode, grandPa, grandPa.getChildCount());
         getFolderCache(subtreeRoot).put(parentPath.getKey(), parentNode);

@@ -60,6 +60,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
@@ -355,7 +357,10 @@ public abstract class ChangesTree extends Tree implements TypeSafeDataProvider {
 
   @NotNull
   private List<Object> getChanges(@NotNull ChangesBrowserNode<?> node) {
-    return node.getAllObjectsUnder(Object.class);
+    return node.getNodesUnderStream()
+      .filter(ChangesBrowserNode::isMeaningfulNode)
+      .map(ChangesBrowserNode::getUserObject)
+      .collect(Collectors.toList());
   }
 
   @NotNull
@@ -363,12 +368,13 @@ public abstract class ChangesTree extends Tree implements TypeSafeDataProvider {
     final TreePath[] paths = getSelectionPaths();
     if (paths == null) return Collections.emptyList();
 
-    LinkedHashSet<Object> changes = ContainerUtil.newLinkedHashSet();
-    for (TreePath path : paths) {
-      ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
-      changes.addAll(node.getAllObjectsUnder(Object.class));
-    }
-    return ContainerUtil.newArrayList(changes);
+    return Stream.of(paths)
+      .map(path -> (ChangesBrowserNode)path.getLastPathComponent())
+      .<ChangesBrowserNode>flatMap(ChangesBrowserNode::getNodesUnderStream)
+      .filter(ChangesBrowserNode::isMeaningfulNode)
+      .distinct()
+      .map(ChangesBrowserNode::getUserObject)
+      .collect(Collectors.toList());
   }
 
 

@@ -69,6 +69,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
 
   private int myFileCount = -1;
   private int myDirectoryCount = -1;
+  private boolean myHelper;
 
   protected ChangesBrowserNode(Object userObject) {
     super(userObject);
@@ -77,7 +78,9 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
 
   @NotNull
   public static ChangesBrowserNode createRoot(@NotNull Project project) {
-    return create(project, ROOT_NODE_VALUE);
+    ChangesBrowserNode root = create(project, ROOT_NODE_VALUE);
+    root.markAsHelperNode();
+    return root;
   }
 
   @NotNull
@@ -125,6 +128,14 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     return false;
   }
 
+  public void markAsHelperNode() {
+    myHelper = true;
+  }
+
+  public boolean isMeaningfulNode() {
+    return !myHelper;
+  }
+
   public int getFileCount() {
     if (myFileCount == -1) {
       myFileCount = (isFile() ? 1 : 0) + toStream(children()).mapToInt(ChangesBrowserNode::getFileCount).sum();
@@ -142,6 +153,11 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   private void resetFileCounters() {
     myFileCount = -1;
     myDirectoryCount = -1;
+  }
+
+  @NotNull
+  public Stream<ChangesBrowserNode> getNodesUnderStream() {
+    return toStream(preorderEnumeration());
   }
 
   @NotNull
