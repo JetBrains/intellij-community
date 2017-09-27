@@ -61,7 +61,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
         ProblemHighlightType highlight = isInfoLevel
                                           ? ProblemHighlightType.INFORMATION
                                           : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
-        TextRange range = getRange(isInfoLevel, ifStatement).shiftRight(-ifStatement.getTextOffset());
+        TextRange range = getRange(isInfoLevel, ifStatement, context.isStream()).shiftRight(-ifStatement.getTextOffset());
         holder.registerProblem(ifStatement, InspectionsBundle.message("inspection.require.non.null.message", method), highlight, range,
                                new ReplaceWithRequireNonNullFix(method));
       }
@@ -131,8 +131,8 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     }
   }
 
-  private static TextRange getRange(boolean isInfoLevel, @NotNull PsiIfStatement ifStatement) {
-    if(isInfoLevel) {
+  private static TextRange getRange(boolean isInfoLevel, @NotNull PsiIfStatement ifStatement, boolean isStream) {
+    if(isInfoLevel || isStream) {
       return ifStatement.getTextRange();
     } else {
       PsiExpression condition = ifStatement.getCondition();
