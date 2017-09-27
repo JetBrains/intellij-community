@@ -22,11 +22,7 @@ import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
-import com.intellij.ide.util.treeView.smartTree.TreeElement;
-import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
@@ -34,11 +30,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
-import javax.swing.*;
 import java.util.Comparator;
 
-public class PluginDescriptorXmlStructureViewModel extends XmlStructureViewTreeModel
-  implements StructureViewModel.ElementInfoProvider, DumbAware {
+public class PluginDescriptorXmlStructureViewModel extends XmlStructureViewTreeModel implements StructureViewModel.ElementInfoProvider {
 
   public PluginDescriptorXmlStructureViewModel(@NotNull XmlFile file, @Nullable Editor editor) {
     super(file, editor);
@@ -48,11 +42,6 @@ public class PluginDescriptorXmlStructureViewModel extends XmlStructureViewTreeM
   @NotNull
   @Override
   public StructureViewTreeElement getRoot() {
-    if (DumbService.isDumb(getPsiFile().getProject())) {
-      // an empty tree will be rendered until the indexing is finished
-      return new DumbStructureViewTreeElement();
-    }
-
     XmlFile file = getPsiFile();
     if (DescriptorUtil.isPluginXml(file)) {
       XmlTag rootTag = file.getRootTag();
@@ -122,56 +111,5 @@ public class PluginDescriptorXmlStructureViewModel extends XmlStructureViewTreeM
   @Override
   protected Class[] getSuitableClasses() {
     return new Class[]{XmlTag.class};
-  }
-
-  private static class DumbStructureViewTreeElement implements StructureViewTreeElement {
-    @Override
-    public void navigate(boolean requestFocus) {
-    }
-
-    @Override
-    public boolean canNavigate() {
-      return false;
-    }
-
-    @Override
-    public boolean canNavigateToSource() {
-      return false;
-    }
-
-    @NotNull
-    @Override
-    public ItemPresentation getPresentation() {
-      return new ItemPresentation() {
-        @Nullable
-        @Override
-        public String getPresentableText() {
-          return null;
-        }
-
-        @NotNull
-        @Override
-        public String getLocationString() {
-          return "Loading...";
-        }
-
-        @Nullable
-        @Override
-        public Icon getIcon(boolean unused) {
-          return null;
-        }
-      };
-    }
-
-    @NotNull
-    @Override
-    public TreeElement[] getChildren() {
-      return TreeElement.EMPTY_ARRAY;
-    }
-
-    @Override
-    public Object getValue() {
-      return null;
-    }
   }
 }

@@ -17,6 +17,8 @@ package org.jetbrains.idea.devkit.navigation.structure;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +28,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 
-public class PluginDescriptorTreeElement extends PsiTreeElementBase<XmlTag> {
+public class PluginDescriptorTreeElement extends PsiTreeElementBase<XmlTag> implements DumbAware {
   private final boolean myIsRoot;
   private final boolean myIsTopLevelNode; // true for direct children of <idea-plugin>
 
@@ -50,17 +52,30 @@ public class PluginDescriptorTreeElement extends PsiTreeElementBase<XmlTag> {
   @Nullable
   @Override
   public String getPresentableText() {
-    return PluginDescriptorStructureUtil.getTagDisplayText(getElement());
+    XmlTag element = getElement();
+    try {
+      return PluginDescriptorStructureUtil.getTagDisplayText(element);
+    } catch (IndexNotReadyException ignore) {
+      return PluginDescriptorStructureUtil.safeGetTagDisplayText(element);
+    }
   }
 
   @Override
   public String getLocationString() {
-    return PluginDescriptorStructureUtil.getTagLocationString(getElement());
+    try {
+      return PluginDescriptorStructureUtil.getTagLocationString(getElement());
+    } catch (IndexNotReadyException ignore) {
+      return null;
+    }
   }
 
   @Override
   public Icon getIcon(boolean open) {
-    return PluginDescriptorStructureUtil.getTagIcon(getElement());
+    try {
+      return PluginDescriptorStructureUtil.getTagIcon(getElement());
+    } catch (IndexNotReadyException ignore) {
+      return PluginDescriptorStructureUtil.DEFAULT_ICON;
+    }
   }
 
   @Override

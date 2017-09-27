@@ -49,6 +49,8 @@ import java.util.List;
 import java.util.Set;
 
 public class PluginDescriptorStructureUtil {
+  public static final Icon DEFAULT_ICON = AllIcons.Nodes.Tag;
+
   private static final Set<String> KNOWN_TOP_LEVEL_NODE_NAMES =
     ContainerUtil.immutableSet("id", "name", "version", "category", "resource-bundle");
 
@@ -60,7 +62,7 @@ public class PluginDescriptorStructureUtil {
   public static String getTagDisplayText(@Nullable XmlTag tag) {
     DomElement element = getDomElement(tag);
     if (element == null) {
-      return DevKitBundle.message("error.plugin.xml.tag.invalid");
+      return safeGetTagDisplayText(tag);
     }
 
     if (element instanceof Action) {
@@ -85,11 +87,16 @@ public class PluginDescriptorStructureUtil {
     return toDisplayName(element.getXmlElementName()); // default
   }
 
+  @NotNull
+  public static String safeGetTagDisplayText(@Nullable XmlTag tag) {
+    return tag != null ? toDisplayName(tag.getLocalName()) : DevKitBundle.message("error.plugin.xml.tag.invalid");
+  }
+
   @Nullable
   public static Icon getTagIcon(@Nullable XmlTag tag) {
     DomElement element = getDomElement(tag);
     if (element == null) {
-      return null;
+      return tag != null ? DEFAULT_ICON : null;
     }
 
     if (element instanceof Action) {
@@ -120,7 +127,7 @@ public class PluginDescriptorStructureUtil {
       return AllIcons.Actions.GroupByPackage;
     }
 
-    return AllIcons.Nodes.Tag;
+    return DEFAULT_ICON;
   }
 
   @Nullable
