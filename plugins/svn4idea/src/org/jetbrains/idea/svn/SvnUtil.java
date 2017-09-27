@@ -59,6 +59,7 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.LockDialog;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.status.Status;
+import org.jetbrains.idea.svn.svnkit.SvnKitManager;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.schema.SqlJetSchema;
 import org.tmatesoft.sqljet.core.internal.table.ISqlJetBtreeSchemaTable;
@@ -72,10 +73,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
-import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
@@ -440,29 +438,6 @@ public class SvnUtil {
     return FileUtil.filesEqual(file, getWorkingCopyRootNew(file));
   }
 
-  @Nullable
-  public static File getWorkingCopyRoot(final File inFile) {
-    File file = inFile;
-    while ((file != null) && (file.isFile() || (! file.exists()))) {
-      file = file.getParentFile();
-    }
-
-    if (file == null) {
-      return null;
-    }
-
-    File workingCopyRoot = null;
-    try {
-      workingCopyRoot = SVNWCUtil.getWorkingCopyRoot(file, true);
-    } catch (SVNException e) {
-      //
-    }
-    if (workingCopyRoot == null) {
-     workingCopyRoot = getWcCopyRootIf17(file, null);
-    }
-    return workingCopyRoot;
-  }
-
   @NotNull
   public static File fileFromUrl(final File baseDir, final String baseUrl, final String fullUrl) {
     assert fullUrl.startsWith(baseUrl);
@@ -593,26 +568,6 @@ public class SvnUtil {
     return new File(file, SVN_ADMIN_DIR_NAME + "/wc.db");
   }
 
-  @Nullable
-  public static File getWcCopyRootIf17(final File file, @Nullable final File upperBound) {
-    File current = getParentWithDb(file);
-    if (current == null) return null;
-
-    while (current != null) {
-      try {
-        final SvnWcGeneration svnWcGeneration = SvnOperationFactory.detectWcGeneration(current, false);
-        if (SvnWcGeneration.V17.equals(svnWcGeneration)) return current;
-        if (SvnWcGeneration.V16.equals(svnWcGeneration)) return null;
-        if (upperBound != null && FileUtil.filesEqual(upperBound, current)) return null;
-        current = current.getParentFile();
-      }
-      catch (SVNException e) {
-        return null;
-      }
-    }
-    return null;
-  }
-
   /**
    * Utility method that deals also with 1.8 working copies.
    * TODO: Should be renamed when all parts updated for 1.8.
@@ -623,14 +578,15 @@ public class SvnUtil {
   @Nullable
   public static File getWorkingCopyRootNew(final File file) {
     File current = getParentWithDb(file);
-    if (current == null) return getWorkingCopyRoot(file);
+    if (current == null) return SvnKitManager.getWorkingCopyRoot(file);
 
     WorkingCopyFormat format = getFormat(current);
 
-    return format.isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN) ? current : getWorkingCopyRoot(file);
+    return format.isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN) ? current : SvnKitManager.getWorkingCopyRoot(file);
   }
 
-  private static File getParentWithDb(File file) {
+  @Nullable
+  public static File getParentWithDb(File file) {
     File current = file;
     boolean wcDbFound = false;
     while (current != null) {

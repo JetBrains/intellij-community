@@ -104,7 +104,7 @@ public class SvnFormatWorker extends Task.Backgroundable {
       for (WCInfo wcInfo : myWcInfos) {
         File path = new File(wcInfo.getPath());
         if (! wcInfo.isIsWcRoot()) {
-          path = SvnUtil.getWorkingCopyRoot(path);
+          path = SvnUtil.getWorkingCopyRootNew(path);
         }
         try {
           String cleanupMessage = SvnBundle.message("action.Subversion.cleanup.progress.text", path.getAbsolutePath());

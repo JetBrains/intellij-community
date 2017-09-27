@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,14 +22,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.RepeatSvnActionThroughBusy;
-import org.jetbrains.idea.svn.SvnConfiguration;
-import org.jetbrains.idea.svn.SvnHttpAuthMethodsDefaultChecker;
-import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.svnkit.lowLevel.PrimitivePool;
@@ -43,6 +41,7 @@ import org.tmatesoft.svn.core.internal.util.jna.SVNJNAUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea14;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
+import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.*;
@@ -100,6 +99,79 @@ public class SvnKitManager {
     myConfiguration = myVcs.getSvnConfiguration();
 
     refreshSSLProperty();
+  }
+
+  @NotNull
+  public static WorkingCopyFormat getWorkingCopyFormat(File path) {
+    try {
+      final SvnWcGeneration svnWcGeneration = SvnOperationFactory.detectWcGeneration(path, true);
+      if (SvnWcGeneration.V17.equals(svnWcGeneration)) return WorkingCopyFormat.ONE_DOT_SEVEN;
+    }
+    catch (SVNException e) {
+      //
+    }
+    int format = 0;
+    // it is enough to check parent and this.
+    try {
+      format = SVNAdminAreaFactory.checkWC(path, false);
+    }
+    catch (SVNException e) {
+      //
+    }
+    try {
+      if (format == 0 && path.getParentFile() != null) {
+        format = SVNAdminAreaFactory.checkWC(path.getParentFile(), false);
+      }
+    }
+    catch (SVNException e) {
+      //
+    }
+
+    return WorkingCopyFormat.getInstance(format);
+  }
+
+  @Nullable
+  public static File getWorkingCopyRoot(final File inFile) {
+    File file = inFile;
+    while ((file != null) && (file.isFile() || (!file.exists()))) {
+      file = file.getParentFile();
+    }
+
+    if (file == null) {
+      return null;
+    }
+
+    File workingCopyRoot = null;
+    try {
+      workingCopyRoot = SVNWCUtil.getWorkingCopyRoot(file, true);
+    }
+    catch (SVNException e) {
+      //
+    }
+    if (workingCopyRoot == null) {
+      workingCopyRoot = getWcCopyRootIf17(file, null);
+    }
+    return workingCopyRoot;
+  }
+
+  @Nullable
+  private static File getWcCopyRootIf17(final File file, @Nullable final File upperBound) {
+    File current = SvnUtil.getParentWithDb(file);
+    if (current == null) return null;
+
+    while (current != null) {
+      try {
+        final SvnWcGeneration svnWcGeneration = SvnOperationFactory.detectWcGeneration(current, false);
+        if (SvnWcGeneration.V17.equals(svnWcGeneration)) return current;
+        if (SvnWcGeneration.V16.equals(svnWcGeneration)) return null;
+        if (upperBound != null && FileUtil.filesEqual(upperBound, current)) return null;
+        current = current.getParentFile();
+      }
+      catch (SVNException e) {
+        return null;
+      }
+    }
+    return null;
   }
 
   @Nullable
