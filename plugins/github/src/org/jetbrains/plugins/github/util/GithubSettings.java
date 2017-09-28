@@ -52,6 +52,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     @NotNull public AuthType AUTH_TYPE = AuthType.ANONYMOUS;
     public boolean ANONYMOUS_GIST = false;
     public boolean OPEN_IN_BROWSER_GIST = true;
+    public boolean COPY_URL_TO_CLIPBOARD = false;
     public boolean PRIVATE_GIST = true;
     public boolean SAVE_PASSWORD = true;
     public int CONNECTION_TIMEOUT = 5000;
@@ -111,6 +112,10 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     return myState.OPEN_IN_BROWSER_GIST;
   }
 
+  public boolean isCopyURLToClipboardGist() {
+    return myState.COPY_URL_TO_CLIPBOARD;
+  }
+
   public boolean isPrivateGist() {
     return myState.PRIVATE_GIST;
   }
@@ -158,6 +163,10 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
 
   public void setOpenInBrowserGist(final boolean openInBrowserGist) {
     myState.OPEN_IN_BROWSER_GIST = openInBrowserGist;
+  }
+
+  public void setCopyURLToClipboardGist(final boolean copyURLToClipboardGist) {
+    myState.COPY_URL_TO_CLIPBOARD = copyURLToClipboardGist;
   }
 
   public void setCloneGitUsingSsh(boolean value) {
