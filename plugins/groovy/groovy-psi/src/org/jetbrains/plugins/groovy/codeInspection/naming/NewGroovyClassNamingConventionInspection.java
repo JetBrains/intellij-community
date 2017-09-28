@@ -43,6 +43,7 @@ public class NewGroovyClassNamingConventionInspection extends AbstractNamingConv
         @Override
         public String getShortName() {
           String shortName = ex.getShortName();
+          if (shortName.startsWith("JUnit")) return shortName;
           return "Groovy" + (shortName.startsWith("Enum") ? "EnumerationNamingConvention" : shortName);
         }
 
