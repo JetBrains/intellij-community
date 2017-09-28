@@ -17,7 +17,6 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurableUi;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
@@ -25,7 +24,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.ui.MultiLineTooltipUI;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier;
@@ -42,16 +40,12 @@ public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration> {
   private TextFieldWithBrowseButton myConfigurationDirectoryText;
   private JButton myClearAuthButton;
   private JCheckBox myLockOnDemand;
-  private JBCheckBox myWithCommandLineClient;
   private JBCheckBox myRunUnderTerminal;
   private TextFieldWithBrowseButton myCommandLineClient;
-  private JPanel myCommandLineClientOptions;
 
   public GeneralSettingsPanel(@NotNull Project project) {
     myProject = project;
 
-    myWithCommandLineClient.addItemListener(e -> enableCommandLineClientOptions());
-    enableCommandLineClientOptions();
     myUseCustomConfigurationDirectory.addActionListener(e -> {
       boolean enabled = myUseCustomConfigurationDirectory.isSelected();
       myConfigurationDirectoryText.setEnabled(enabled);
@@ -95,7 +89,6 @@ public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration> {
     myConfigurationDirectoryText.setEditable(enabled);
     myLockOnDemand.setSelected(configuration.isUpdateLockOnDemand());
 
-    myWithCommandLineClient.setSelected(configuration.isCommandLine());
     myRunUnderTerminal.setSelected(configuration.isRunUnderTerminal());
     final SvnApplicationSettings applicationSettings17 = SvnApplicationSettings.getInstance();
     myCommandLineClient.setText(applicationSettings17.getCommandLinePath());
@@ -109,7 +102,6 @@ public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration> {
     if (configuration.isUpdateLockOnDemand() != myLockOnDemand.isSelected()) {
       return true;
     }
-    if (!configuration.getUseAcceleration().equals(acceleration())) return true;
     if (configuration.isRunUnderTerminal() != myRunUnderTerminal.isSelected()) return true;
     final SvnApplicationSettings applicationSettings17 = SvnApplicationSettings.getInstance();
     if (!Comparing.equal(applicationSettings17.getCommandLinePath(), myCommandLineClient.getText().trim())) return true;
@@ -126,9 +118,7 @@ public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration> {
     configuration.setUpdateLockOnDemand(myLockOnDemand.isSelected());
 
     final SvnApplicationSettings applicationSettings17 = SvnApplicationSettings.getInstance();
-    boolean reloadWorkingCopies = !acceleration().equals(configuration.getUseAcceleration()) ||
-                                  !StringUtil.equals(applicationSettings17.getCommandLinePath(), myCommandLineClient.getText().trim());
-    configuration.setUseAcceleration(acceleration());
+    boolean reloadWorkingCopies = !StringUtil.equals(applicationSettings17.getCommandLinePath(), myCommandLineClient.getText().trim());
     configuration.setRunUnderTerminal(myRunUnderTerminal.isSelected());
 
     applicationSettings17.setCommandLinePath(myCommandLineClient.getText().trim());
@@ -137,15 +127,6 @@ public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration> {
       vcs17.invokeRefreshSvnRoots();
       VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     }
-  }
-
-  public void enableCommandLineClientOptions() {
-    UIUtil.setEnabled(myCommandLineClientOptions, myWithCommandLineClient.isSelected(), true);
-  }
-
-  private SvnConfiguration.UseAcceleration acceleration() {
-    if (myWithCommandLineClient.isSelected()) return SvnConfiguration.UseAcceleration.commandLine;
-    return SvnConfiguration.UseAcceleration.nothing;
   }
 
   private void createUIComponents() {

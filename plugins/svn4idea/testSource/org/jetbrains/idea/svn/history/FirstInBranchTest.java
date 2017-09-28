@@ -39,8 +39,6 @@ public class FirstInBranchTest extends Svn17TestCase {
 
   @Override
   public void setUp() throws Exception {
-    ourGlobalUseNativeAcceleration = true;
-
     super.setUp();
 
     myVcs = SvnVcs.getInstance(myProject);
@@ -52,13 +50,6 @@ public class FirstInBranchTest extends Svn17TestCase {
 
     myRepositoryUrl = createUrl(myRepoUrl);
     myHeadRevision = getHeadRevision(myVcs, myRepositoryUrl).getNumber();
-  }
-
-  @Override
-  public void tearDown() throws Exception {
-    super.tearDown();
-
-    ourGlobalUseNativeAcceleration = false;
   }
 
   @Test

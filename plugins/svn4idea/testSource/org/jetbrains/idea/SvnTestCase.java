@@ -58,7 +58,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
-import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnFileUrlMappingImpl;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.CreateExternalAction;
@@ -67,7 +66,9 @@ import org.junit.Before;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static org.junit.Assert.*;
@@ -78,15 +79,11 @@ import static org.junit.Assert.*;
 public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
   public static String ourGlobalTestDataDir;
-  public static Boolean ourGlobalUseNativeAcceleration;
 
   protected TempDirTestFixture myTempDirFixture;
   protected String myRepoUrl;
   protected TestClientRunner myRunner;
   protected String myWcRootName;
-  // TODO: Change this to explicitly run either with native acceleration or not.
-  // properties set through run configurations or different runners (like Suite) could be used
-  private boolean myUseNativeAcceleration = new GregorianCalendar().get(Calendar.HOUR_OF_DAY) % 2 == 0;
 
   private String myTestDataDir;
   private File myRepoRoot;
@@ -116,8 +113,6 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
   @Before
   public void setUp() throws Exception {
-    System.out.println("Native client for status: " + isUseNativeAcceleration());
-
     String property = System.getProperty("svn.test.data.directory");
     if (!StringUtil.isEmpty(property)) {
       myTestDataDir = property;
@@ -203,9 +198,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
   @Override
   protected void projectCreated() {
-    SvnConfiguration.getInstance(myProject).setUseAcceleration(
-      isUseNativeAcceleration() ? SvnConfiguration.UseAcceleration.commandLine : SvnConfiguration.UseAcceleration.nothing);
-      SvnApplicationSettings.getInstance().setCommandLinePath(myClientBinaryPath + File.separator + "svn");
+    SvnApplicationSettings.getInstance().setCommandLinePath(myClientBinaryPath + File.separator + "svn");
   }
 
   @After
@@ -316,14 +309,6 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
   public void setTestDataDir(String testDataDir) {
     myTestDataDir = testDataDir;
-  }
-
-  public boolean isUseNativeAcceleration() {
-    return ourGlobalUseNativeAcceleration != null ? ourGlobalUseNativeAcceleration : myUseNativeAcceleration;
-  }
-
-  public void setUseNativeAcceleration(boolean useNativeAcceleration) {
-    myUseNativeAcceleration = useNativeAcceleration;
   }
 
   protected class SubTree {
@@ -580,8 +565,6 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
   protected void setNativeAcceleration(final boolean value) {
     System.out.println("Set native acceleration to " + value);
-    SvnConfiguration.getInstance(myProject).setUseAcceleration(
-      value ? SvnConfiguration.UseAcceleration.commandLine : SvnConfiguration.UseAcceleration.nothing);
     SvnApplicationSettings.getInstance().setCommandLinePath(myClientBinaryPath + File.separator + "svn");
   }
 }

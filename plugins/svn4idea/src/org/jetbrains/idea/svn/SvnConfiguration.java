@@ -64,8 +64,9 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   private IdeaSVNConfigFile myServersFile;
   private SVNConfigFile myConfigFile;
 
+  @Deprecated // Required for compatibility with external plugins.
   public boolean isCommandLine() {
-    return UseAcceleration.commandLine.equals(getUseAcceleration());
+    return true;
   }
 
   @NotNull
@@ -187,14 +188,6 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
 
   public void setUpdateDepth(Depth updateDepth) {
     myState.UPDATE_DEPTH = updateDepth;
-  }
-
-  public UseAcceleration getUseAcceleration() {
-    return myState.accelerationType;
-  }
-
-  public void setUseAcceleration(UseAcceleration useAcceleration) {
-    myState.accelerationType = useAcceleration;
   }
 
   public boolean isRunUnderTerminal() {
@@ -522,11 +515,6 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
 
   public void setMaxAnnotateRevisions(int maxAnnotateRevisions) {
     myState.maxAnnotateRevisions = maxAnnotateRevisions;
-  }
-
-  public enum UseAcceleration {
-    commandLine,
-    nothing
   }
 
   public boolean isCleanupRun() {
