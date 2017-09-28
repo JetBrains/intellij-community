@@ -421,6 +421,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     //Do nothing
   }
 
+  @NotNull
   public SMTestProxy.SMRootTestProxy getTestsRootNode() {
     return myTestsRootNode;
   }
