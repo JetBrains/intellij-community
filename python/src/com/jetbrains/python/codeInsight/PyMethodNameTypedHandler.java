@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -33,6 +34,8 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 
+import java.util.regex.Pattern;
+
 /**
  * Adds appropriate first parameter to a freshly-typed method declaration.
  * <br/>
@@ -40,6 +43,8 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
  * Date: 11/29/10 12:44 AM
  */
 public class PyMethodNameTypedHandler extends TypedHandlerDelegate {
+  private static final Pattern DEF_THEN_IDENTIFIER = Pattern.compile(".*\\bdef\\s+" + PyNames.IDENTIFIER_RE);
+
   @Override
   public Result beforeCharTyped(char character, Project project, Editor editor, PsiFile file, FileType fileType) {
     if (DumbService.isDumb(project) || !(fileType instanceof PythonFileType)) return Result.CONTINUE; // else we'd mess up with other file types!
@@ -50,6 +55,12 @@ public class PyMethodNameTypedHandler extends TypedHandlerDelegate {
       final Document document = editor.getDocument();
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
       final int offset = editor.getCaretModel().getOffset();
+      final int lineNumber = document.getLineNumber(offset);
+
+      final String linePrefix = document.getText(TextRange.create(document.getLineStartOffset(lineNumber), offset));
+      if (!DEF_THEN_IDENTIFIER.matcher(linePrefix).matches()) {
+        return Result.CONTINUE;
+      }
       documentManager.commitDocument(document);
 
       final PsiElement token = file.findElementAt(offset - 1);
