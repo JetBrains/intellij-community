@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -167,7 +168,7 @@ class AsyncProjectViewSupport {
           TreeUtil.selectPath(tree, path);
           promise.setResult(null);
         }
-        else if (element == null || file == null) {
+        else if (element == null || file == null || Registry.is("async.project.view.support.extra.select.disabled")) {
           promise.setResult(null);
         }
         else {
