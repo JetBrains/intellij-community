@@ -137,7 +137,7 @@ class JpsCompilationRunner {
                         boolean resolveProjectDependencies) {
     System.setProperty(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "false")
     final AntMessageHandler messageHandler = new AntMessageHandler()
-    AntLoggerFactory.ourMessageHandler = new AntMessageHandler()
+    AntLoggerFactory.ourMessageHandler = messageHandler
     AntLoggerFactory.ourFileLoggerFactory = compilationData.fileLoggerFactory
     Logger.setFactory(AntLoggerFactory.class)
     boolean forceBuild = !context.options.incrementalCompilation
