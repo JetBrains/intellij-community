@@ -26,7 +26,6 @@ import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
@@ -107,10 +106,9 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
   @NotNull
   @Override
   protected List<AnAction> createToolbarActions() {
-    List<AnAction> result = new ArrayList<>();
-    result.addAll(super.createToolbarActions());
+    List<AnAction> result = new ArrayList<>(super.createToolbarActions());
 
-    result.add(new MyRefreshAction());
+    result.add(ActionManager.getInstance().getAction("ChangesView.Refresh"));
 
     if (myEnableUnversioned) {
       result.add(new ShowHideUnversionedFilesAction());
@@ -387,17 +385,6 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
       else {
         myViewer.excludeChange(change);
       }
-    }
-  }
-
-  private class MyRefreshAction extends DumbAwareAction {
-    public MyRefreshAction() {
-      super("Refresh Changes", null, AllIcons.Actions.Refresh);
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      updateDisplayedChangeLists();
     }
   }
 

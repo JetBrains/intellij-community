@@ -183,7 +183,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
       return;
     }
     if (!ApplicationManager.getApplication().isDispatchThread()) {
-      ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> fileStatusesChanged(), ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> fileStatusesChanged(), ModalityState.any());
       return;
     }
 
