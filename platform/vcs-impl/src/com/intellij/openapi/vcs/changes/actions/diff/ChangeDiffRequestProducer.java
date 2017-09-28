@@ -61,6 +61,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
   private static final Logger LOG = Logger.getInstance(ChangeDiffRequestProducer.class);
 
   public static final Key<Change> CHANGE_KEY = Key.create("DiffRequestPresentable.Change");
+  public static final Key<Change> TAG_KEY = Key.create("DiffRequestPresentable.Tag");
 
   public static final String YOUR_VERSION = "Your version";
   public static final String SERVER_VERSION = "Server version";
@@ -103,6 +104,12 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
   @Override
   public FileStatus getFileStatus() {
     return myChange.getFileStatus();
+  }
+
+  @Nullable
+  @Override
+  public Object getPopupTag() {
+    return myChangeContext.get(TAG_KEY);
   }
 
   public static boolean isEquals(@NotNull Change change1, @NotNull Change change2) {

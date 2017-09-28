@@ -151,11 +151,5 @@ public class MergedChangeDiffRequestProvider implements ChangeDiffRequestProvide
     public FileStatus getFileStatus() {
       return myMergedChange.getFileStatus();
     }
-
-    @Nullable
-    @Override
-    public Object getPopupTag() {
-      return null;
-    }
   }
 }
