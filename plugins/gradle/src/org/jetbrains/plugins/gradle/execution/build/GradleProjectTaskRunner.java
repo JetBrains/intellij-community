@@ -226,6 +226,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
         gradlePath = "";
       }
 
+      String assembleTask = "assemble";
       if (GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY.equals(moduleType)) {
         String sourceSetName = GradleProjectResolverUtil.getSourceSetName(module);
         String gradleTask = StringUtil.isEmpty(sourceSetName) || "main".equals(sourceSetName) ? "classes" : sourceSetName + "Classes";
@@ -239,7 +240,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
           if (!moduleBuildTask.isIncrementalBuild()) {
             cleanRootTasks.add(gradlePath + ":clean");
           }
-          buildRootTasks.add(gradlePath + ":build");
+          buildRootTasks.add(gradlePath + ":" + assembleTask);
         }
       }
       else {
@@ -249,21 +250,20 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
             cleanRootTasks.add((StringUtil.equals(rootProjectPath, externalProjectPath) ? ":cleanTestClasses" : gradlePath + ":cleanTestClasses"));
           }
           else if (gradleTasks.contains("clean")) {
-            cleanRootTasks.add((StringUtil.equals(rootProjectPath, externalProjectPath) ? "clean" : gradlePath + ":clean"));
+            cleanRootTasks.add((StringUtil.equals(rootProjectPath, externalProjectPath) ? ":clean" : gradlePath + ":clean"));
           }
           else {
-            cleanTasksMap.getModifiable(externalProjectPath).add("clean");
+            if (StringUtil.equals(rootProjectPath, externalProjectPath)) {
+              cleanRootTasks.add("clean");
+            }
           }
         }
         if (gradleTasks.contains("classes")) {
           buildRootTasks.add((StringUtil.equals(rootProjectPath, externalProjectPath) ? ":classes" : gradlePath + ":classes"));
           buildRootTasks.add((StringUtil.equals(rootProjectPath, externalProjectPath) ? ":testClasses" : gradlePath + ":testClasses"));
         }
-        else if (gradleTasks.contains("build")) {
-          buildRootTasks.add((StringUtil.equals(rootProjectPath, externalProjectPath) ? "build" : gradlePath + ":build"));
-        }
-        else {
-          buildTasksMap.getModifiable(externalProjectPath).add("build");
+        else if (gradleTasks.contains(assembleTask)) {
+          buildRootTasks.add((StringUtil.equals(rootProjectPath, externalProjectPath) ? assembleTask : gradlePath + ":" + assembleTask));
         }
       }
     }
