@@ -34,10 +34,7 @@ import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.sdk.InvalidSdkException;
-import com.jetbrains.python.testing.PyUnitTestConfiguration;
-import com.jetbrains.python.testing.PyUnitTestFactory;
-import com.jetbrains.python.testing.PythonTestConfigurationsModel;
-import com.jetbrains.python.testing.TestTargetType;
+import com.jetbrains.python.testing.*;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
@@ -56,6 +53,20 @@ import static org.junit.Assert.assertEquals;
  */
 public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUnitTestProcessRunner> {
 
+  @Test(expected = RuntimeConfigurationWarning.class)
+  public void testEmptyValidation() {
+    new ConfigurationTarget("", TestTargetType.PATH).checkValid();
+  }
+
+  @Test(expected = RuntimeConfigurationWarning.class)
+  public void testPythonValidation() {
+    new ConfigurationTarget("c:/bad/", TestTargetType.PYTHON).checkValid();
+  }
+
+  @Test
+  public void testValidationOk() {
+    new ConfigurationTarget("foo.bar", TestTargetType.PYTHON).checkValid();
+  }
 
   @Test
   public void testTcMessageEscaped() {

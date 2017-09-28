@@ -84,5 +84,22 @@ public class ConstantNamingConvention extends NamingConvention<PsiField> {
       return panel;
     }
 
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof ConstantNamingConventionBean)) return false;
+      if (!super.equals(o)) return false;
+
+      ConstantNamingConventionBean bean = (ConstantNamingConventionBean)o;
+
+      if (onlyCheckImmutables != bean.onlyCheckImmutables) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 31 * super.hashCode() + (onlyCheckImmutables ? 1 : 0);
+    }
   }
 }

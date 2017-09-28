@@ -6,6 +6,7 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.codeInsight.daemon.impl.quickfix.LocateLibraryDialog;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.jarRepository.JarRepositoryManager;
+import com.intellij.jarRepository.RepositoryAttachDialog;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,9 +19,11 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -62,19 +65,25 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
                                                     @NotNull final ExternalLibraryDescriptor descriptor,
                                                     @NotNull final DependencyScope scope) {
     List<String> defaultRoots = descriptor.getLibraryClassesRoots();
-    String version = descriptor.getMinVersion();
     List<String> classesRoots;
     Module firstModule = ContainerUtil.getFirstItem(modules);
-    if (!defaultRoots.isEmpty() || version == null) {
+    if (!defaultRoots.isEmpty()) {
       LOG.assertTrue(firstModule != null);
       classesRoots = new LocateLibraryDialog(firstModule, defaultRoots, descriptor.getPresentableName()).showAndGetResult();
     }
     else {
-      RepositoryLibraryProperties libraryProperties = new RepositoryLibraryProperties(descriptor.getLibraryGroupId(),
-                                                                                      descriptor.getLibraryArtifactId(),
-                                                                                      version);
+      String mavenCoordinates = descriptor.getLibraryGroupId() + ":" +
+                                descriptor.getLibraryArtifactId() +
+                                ObjectUtils.notNull(":" + descriptor.getMinVersion(), "");
+      RepositoryAttachDialog dialog = new RepositoryAttachDialog(myProject, mavenCoordinates, RepositoryAttachDialog.Mode.DOWNLOAD);
+      dialog.show();
+      if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
+        return Promises.rejectedPromise();
+      }
+
+      RepositoryLibraryProperties libraryProperties = new RepositoryLibraryProperties(dialog.getCoordinateText(), true);
       Collection<OrderRoot> roots =
-        JarRepositoryManager.loadDependenciesModal(myProject, libraryProperties, true, false, null, null);
+        JarRepositoryManager.loadDependenciesModal(myProject, libraryProperties, dialog.getAttachSources(), dialog.getAttachJavaDoc(), null, null);
       if (roots.isEmpty()) {
         Messages.showErrorDialog(myProject, descriptor.getPresentableName() + " was not loaded.", "Failed to Download Library");
         return Promises.rejectedPromise();
