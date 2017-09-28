@@ -69,9 +69,9 @@ public class MacComboBoxBorder extends MacIntelliJTextBorder {
         } else {
           Path2D path = new Path2D.Double(Path2D.WIND_EVEN_ODD);
           path.moveTo(i.left + VALUE_OFFSET, i.top);
-          path.lineTo(i.left + VALUE_OFFSET, c.getHeight() - i.bottom);
-          path.lineTo(i.left + arc, c.getHeight() - i.bottom);
-          path.quadTo(i.left, c.getHeight() - i.bottom, i.left, c.getHeight() - arc - i.bottom);
+          path.lineTo(i.left + VALUE_OFFSET, height - i.bottom);
+          path.lineTo(i.left + arc, height - i.bottom);
+          path.quadTo(i.left, height - i.bottom, i.left, height - arc - i.bottom);
           path.lineTo(i.left, arc + i.top);
           path.quadTo(i.left, i.top, arc + i.left, i.top);
           path.closePath();
@@ -82,13 +82,13 @@ public class MacComboBoxBorder extends MacIntelliJTextBorder {
       Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
       float lw = JBUI.scale(UIUtil.isRetina(g2) ? 0.5f : 1.0f);
       border.append(new RoundRectangle2D.Double(JBUI.scale(3), JBUI.scale(3),
-                                           c.getWidth() - JBUI.scale(3)*2,
-                                           c.getHeight() - JBUI.scale(3)*2,
+                                           width - JBUI.scale(3)*2,
+                                           height - JBUI.scale(3)*2,
                                                 arc, arc), false);
       float innerArc = JBUI.scale(arc > 0 ? arc - lw : 0.0f);
       border.append(new RoundRectangle2D.Double(JBUI.scale(3) + lw, JBUI.scale(3) + lw,
-                                           c.getWidth() - (JBUI.scale(3) + lw) * 2,
-                                           c.getHeight() - (JBUI.scale(3) + lw) * 2,
+                                           width - (JBUI.scale(3) + lw) * 2,
+                                           height - (JBUI.scale(3) + lw) * 2,
                                                 innerArc, innerArc), false);
       g2.setColor(Gray.xBC);
       g2.fill(border);

@@ -21,32 +21,15 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.FixedComboBoxEditor;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 
 public class ComboboxEditorTextField extends EditorTextField {
-
-  public static final Border EDITOR_TEXTFIELD_BORDER = new FixedComboBoxEditor.MacComboBoxEditorBorder(false) {
-    @Override
-    public Insets getBorderInsets(Component c) {
-      return JBUI.insets(5, 6, 5, 3);
-    }
-  };
-
-  public static final Border EDITOR_TEXTFIELD_DISABLED_BORDER = new FixedComboBoxEditor.MacComboBoxEditorBorder(true) {
-    @Override
-    public Insets getBorderInsets(Component c) {
-      return JBUI.insets(5, 6, 5, 3);
-    }
-  };
 
   public ComboboxEditorTextField(@NotNull String text, Project project, FileType fileType) {
     super(text, project, fileType);
@@ -69,20 +52,11 @@ public class ComboboxEditorTextField extends EditorTextField {
   }
 
   @Override
-  public void setBounds(int x, int y, int width, int height) {
-    UIUtil.setComboBoxEditorBounds(x, y, width, height, this);
-  }
-
-  @Override
-  protected void updateBorder(@NotNull final EditorEx editor) {
-    if (UIUtil.isUnderAquaLookAndFeel()) {
-      editor.setBorder(isEnabled() ? EDITOR_TEXTFIELD_BORDER : EDITOR_TEXTFIELD_DISABLED_BORDER);
-    }
-  }
+  protected void updateBorder(@NotNull EditorEx editor) {}
 
   @Override
   protected EditorEx createEditor() {
-    final EditorEx result = super.createEditor();
+    EditorEx result = super.createEditor();
 
     result.addFocusListener(new FocusChangeListener() {
       @Override
@@ -106,20 +80,8 @@ public class ComboboxEditorTextField extends EditorTextField {
 
   @Override
   public Dimension getPreferredSize() {
-    final Dimension preferredSize = super.getPreferredSize();
+    Dimension preferredSize = super.getPreferredSize();
     return new Dimension(preferredSize.width, UIUtil.fixComboBoxHeight(preferredSize.height));
-  }
-
-  @Override
-  public void setEnabled(boolean enabled) {
-    if (UIUtil.isUnderAquaLookAndFeel()) {
-      final Editor editor = getEditor();
-      if (editor != null) {
-        editor.setBorder(enabled ? EDITOR_TEXTFIELD_BORDER : EDITOR_TEXTFIELD_DISABLED_BORDER);
-      }
-    }
-
-    super.setEnabled(enabled);
   }
 
   private void repaintComboBox() {
