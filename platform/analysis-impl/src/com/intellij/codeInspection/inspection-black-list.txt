@@ -161,10 +161,6 @@ com.siyeh.ig.migration.IfCanBeSwitchInspection
 com.siyeh.ig.modularization.ModuleWithTooFewClassesInspection
 com.siyeh.ig.modularization.ModuleWithTooManyClassesInspection
 com.siyeh.ig.naming.BooleanMethodNameMustStartWithQuestionInspection
-com.siyeh.ig.naming.ConstantNamingConventionInspection
-com.siyeh.ig.naming.EnumeratedConstantNamingConventionInspection
-com.siyeh.ig.naming.InstanceMethodNamingConventionInspection
-com.siyeh.ig.naming.InstanceVariableNamingConventionInspection
 com.siyeh.ig.naming.LocalVariableNamingConventionInspection
 com.siyeh.ig.naming.NonBooleanMethodNameMayNotStartWithQuestionInspection
 com.siyeh.ig.naming.OverloadedMethodsWithSameNumberOfParametersInspection

@@ -122,7 +122,7 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
   }
 
   protected void checkName(@NotNull T member, @NotNull String name, @NotNull ProblemsHolder holder) {
-    checkName(member, name, shortName -> {
+    checkName(member, shortName -> {
       LocalQuickFix[] fixes;
       if (holder.isOnTheFly()) {
         LocalQuickFix fix = createRenameFix();
@@ -139,7 +139,7 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
     });
   }
 
-  protected void checkName(@NotNull T member, @NotNull String name, @NotNull Consumer<String> errorRegister) {
+  protected void checkName(@NotNull T member, @NotNull Consumer<String> errorRegister) {
     for (NamingConvention<T> namingConvention : myNamingConventions.values()) {
       if (namingConvention.isApplicable(member)) {
         String shortName = namingConvention.getShortName();
@@ -155,7 +155,7 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
           }
           activeBean = myNamingConventionBeans.get(myDefaultConventionShortName);
         }
-        if (!activeBean.isValid(name)) {
+        if (!namingConvention.isValid(member, activeBean)) {
           errorRegister.accept(shortName);
         }
         break;

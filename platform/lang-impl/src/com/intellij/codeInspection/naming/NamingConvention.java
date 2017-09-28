@@ -43,6 +43,8 @@ public abstract class NamingConvention<T extends PsiNameIdentifierOwner> {
     return InspectionsBundle.message("naming.convention.problem.descriptor.regex.mismatch", getElementDescription(), bean.m_regex);
   }
 
-  
-  
+  public boolean isValid(T member, NamingConventionBean bean) {
+    String name = member.getName();
+    return name != null && bean.isValid(name);
+  }
 }

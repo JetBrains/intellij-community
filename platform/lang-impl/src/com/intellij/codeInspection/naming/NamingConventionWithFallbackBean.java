@@ -3,12 +3,13 @@
 // found in the LICENSE file.
 package com.intellij.codeInspection.naming;
 
+import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class NamingConventionWithFallbackBean extends NamingConventionBean {
+public class NamingConventionWithFallbackBean<T extends PsiNameIdentifierOwner> extends NamingConventionBean {
   public boolean inheritDefaultSettings = false;
 
   public NamingConventionWithFallbackBean(String regex, int minLength, int maxLength, String... predefinedNames) {
