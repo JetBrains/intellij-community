@@ -7,10 +7,8 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +31,7 @@ public class ResourceBundleMoveProvider extends MoveHandlerDelegate {
 
   @Override
   public boolean isValidTarget(PsiElement psiElement, PsiElement[] sources) {
-    return (psiElement == null && (sources == null || sources.length == 0)) || MoveFilesOrDirectoriesHandler.isValidTarget(psiElement);
+    return MoveFilesOrDirectoriesHandler.isValidTarget(psiElement);
   }
 
   @Override
@@ -55,13 +53,5 @@ public class ResourceBundleMoveProvider extends MoveHandlerDelegate {
       return source.getParent() == target;
     }
     return super.isMoveRedundant(source, target);
-  }
-
-  @Override
-  public void doMove(Project project,
-                     PsiElement[] elements,
-                     @Nullable PsiElement targetContainer,
-                     @Nullable MoveCallback callback) {
-    super.doMove(project, elements, targetContainer, callback);
   }
 }
