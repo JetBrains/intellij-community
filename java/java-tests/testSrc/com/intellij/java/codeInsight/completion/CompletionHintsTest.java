@@ -645,6 +645,21 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
                           "}");
   }
 
+  public void testShortHintIsShownAfterFullHint() throws Exception {
+    configureJava("class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key, String def)");
+    waitForAllAsyncStuff();
+    showParameterInfo();
+    checkHintContents("<html><b>@NotNull String key</b></html>\n" +
+                      "-\n" +
+                      "[<html><b>@NotNull String key</b>, String def</html>]");
+    escape();
+    checkHintContents(null);
+    right();
+    waitForAllAsyncStuff();
+    checkHintContents("<html><b>String</b>&nbsp;&nbsp;<i>a default value.  </i></html>");
+  }
+  
   private void checkResult(String text) {
     myFixture.checkResult(text);
   }
@@ -687,6 +702,10 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
 
   private void backspace() {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
+  }
+
+  private void escape() {
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
   }
 
   private void configureJava(String text) {

@@ -205,7 +205,7 @@ public class ParameterInfoController implements Disposable {
   }
 
   public void showHint(boolean requestFocus, boolean singleParameterInfo) {
-    mySingleParameterInfo = singleParameterInfo;
+    mySingleParameterInfo = singleParameterInfo && myKeepOnHintHidden;
     
     Pair<Point, Short> pos = myProvider.getBestPointPosition(myHint, myComponent.getParameterOwner(), myLbraceMarker.getStartOffset(), true, HintManager.ABOVE);
     HintHint hintHint = HintManagerImpl.createHintHint(myEditor, pos.getFirst(), myHint, pos.getSecond());
@@ -291,13 +291,11 @@ public class ParameterInfoController implements Disposable {
 
     if (elementForUpdating != null) {
       myHandler.updateParameterInfo(elementForUpdating, context);
-      if (mySingleParameterInfo) {
-        if (myComponent.getCurrentParameterIndex() == -1 && myHint.isVisible()) {
-          myHint.hide();
-        }
-        else if (myComponent.getCurrentParameterIndex() != -1 && !myHint.isVisible()) {
-          AutoPopupController.getInstance(myProject).autoPopupParameterInfo(myEditor, null);
-        }
+      if (mySingleParameterInfo && myComponent.getCurrentParameterIndex() == -1 && myHint.isVisible()) {
+        myHint.hide();
+      }
+      if (myKeepOnHintHidden && myComponent.getCurrentParameterIndex() != -1 && !myHint.isVisible()) {
+        AutoPopupController.getInstance(myProject).autoPopupParameterInfo(myEditor, null);
       }
       if (!myDisposed && myHint.isVisible() && !myEditor.isDisposed() &&
           (myEditor.getComponent().getRootPane() != null || ApplicationManager.getApplication().isUnitTestMode())) {
