@@ -35,7 +35,7 @@ public class WSLUtil {
   private static final Logger LOG = Logger.getInstance(WSLUtil.class);
   private static final String WSL_ROOT_CHUNK = "\\lxss\\rootfs";
   private static final String WSL_MNT_ROOT = "/mnt";
-  private static final Pattern WIN_IN_WSL_PATH_PATTERN = Pattern.compile(WSL_MNT_ROOT + "/(.)(?:/(.*))?");
+  private static final Pattern WIN_IN_WSL_PATH_PATTERN = Pattern.compile(WSL_MNT_ROOT + "/(\\S)(.*)?");
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
 
   /* https://msdn.microsoft.com/en-us/commandline/wsl/about */
