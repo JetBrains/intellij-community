@@ -27,9 +27,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -79,23 +83,41 @@ public class PyMethodNameTypedHandler extends TypedHandlerDelegate {
               if (flags != null) {
                 // we're in a method
                 // TODO: all string constants go to Settings
-                String pname = flags.isClassMethod() || flags.isMetaclassMethod() ? "cls" : "self";
+                String paramName = flags.isClassMethod() || flags.isMetaclassMethod() ? "cls" : "self";
                 final boolean isNew = PyNames.NEW.equals(func.getName());
                 if (flags.isMetaclassMethod() && isNew) {
-                  pname = "typ";
+                  paramName = "typ";
                 }
                 else if (flags.isClassMethod() || isNew) {
-                  pname = "cls";
+                  paramName = "cls";
                 }
-                else if (flags.isStaticMethod()) pname = "";
+                else if (flags.isStaticMethod()) {
+                  paramName = "";
+                }
                 // TODO: only print the ")" if Settings require it
+                final CodeStyleSettings settingsManager = CodeStyleSettingsManager.getSettings(project);
+                final CommonCodeStyleSettings settings = settingsManager.getCommonSettings(PythonLanguage.getInstance());
+                final StringBuilder textToType = new StringBuilder();
+                textToType.append("(");
+                if (!paramName.isEmpty()) {
+                  if (settings.SPACE_WITHIN_METHOD_PARENTHESES) {
+                    textToType.append(" ");
+                  }
+                  textToType.append(paramName);
+                  if (settings.SPACE_WITHIN_METHOD_PARENTHESES) {
+                    textToType.append(" ");
+                  }
+                }
+                else if (settings.SPACE_WITHIN_EMPTY_METHOD_PARENTHESES) {
+                  textToType.append(" ");
+                }
+                textToType.append(")");
                 final int caretOffset = editor.getCaretModel().getOffset();
-                String textToType = "(" + pname + ")";
                 final CharSequence chars = editor.getDocument().getCharsSequence();
                 if (caretOffset == chars.length() || chars.charAt(caretOffset) != ':') {
-                  textToType += ':';
+                  textToType.append(':');
                 }
-                EditorModificationUtil.insertStringAtCaret(editor, textToType, true, 1 + pname.length()); // right after param name
+                EditorModificationUtil.insertStringAtCaret(editor, textToType.toString(), true, 1 + paramName.length()); // right after param name
                 return Result.STOP;
               }
             }
