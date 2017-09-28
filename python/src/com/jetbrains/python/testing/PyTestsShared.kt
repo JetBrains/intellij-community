@@ -85,6 +85,19 @@ val factories: Array<PythonConfigurationFactoryBase> = arrayOf(
   PyNoseTestFactory,
   PyTrialTestFactory)
 
+/**
+ * Accepts text that may be wrapped in TC message. Unwarps it and removes TC escape code.
+ * Regular text is unchanged
+ */
+fun processTCMessage(text: String): String {
+  val parsedMessage = ServiceMessage.parse(text.trim()) ?: return text // Not a TC message
+  return when (parsedMessage) {
+    is TestStdOut  -> parsedMessage.stdOut // TC with stdout
+    is TestStdErr -> parsedMessage.stdErr // TC with stderr
+    else -> "" // TC with out of any output
+  }
+}
+
 internal fun getAdditionalArgumentsPropertyName() = com.jetbrains.python.testing.PyAbstractTestConfiguration::additionalArguments.name
 
 /**
@@ -787,21 +800,6 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
                                                                           psiElement) ?: return false
     return configuration.target == targetForConfig.first
   }
-}
-
-private object PyTestInputFilter : InputFilter {
-  override fun applyFilter(text: String, contentType: ConsoleViewContentType?): List<Pair<String, ConsoleViewContentType>>? {
-    val parsedMessage = ServiceMessage.parse(text.trim()) ?: return null // Not a TC message
-    return when (parsedMessage) {
-      is TestStdOut -> listOf(Pair(parsedMessage.stdOut, contentType!!)) // TC with stdout
-      is TestStdErr -> listOf(Pair(parsedMessage.stdErr, contentType!!)) // TC with stderr
-      else -> emptyList() // TC with out of any output
-    }
-  }
-}
-
-object PyTestConsoleInputFilterProvider : ConsoleInputFilterProvider {
-  override fun getDefaultFilters(project: Project): Array<InputFilter> = arrayOf(PyTestInputFilter)
 }
 
 @Retention(AnnotationRetention.RUNTIME)
