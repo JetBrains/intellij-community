@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseNodeDescription;
 import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
-import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNURL;
 
 import java.util.Comparator;
@@ -39,13 +38,6 @@ public class DirectoryEntry extends BaseNodeDescription implements Comparable<Di
   private final String myPath;
   private final SVNURL myUrl;
   private final SVNURL myRepositoryRoot;
-
-  @NotNull
-  public static DirectoryEntry create(@NotNull SVNDirEntry entry) {
-    return new DirectoryEntry(entry.getURL(), entry.getRepositoryRoot(), entry.getName(), NodeKind.from(entry.getKind()),
-                              new CommitInfo.Builder(entry.getRevision(), entry.getDate(), entry.getAuthor()).build(),
-                              entry.getRelativePath());
-  }
 
   public DirectoryEntry(SVNURL url,
                         SVNURL repositoryRoot,

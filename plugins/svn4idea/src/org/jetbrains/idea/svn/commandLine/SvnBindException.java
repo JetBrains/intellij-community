@@ -32,8 +32,7 @@ import org.tmatesoft.svn.core.SVNException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.util.ObjectUtils.*;
-import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public class SvnBindException extends VcsException {
 
@@ -80,14 +79,6 @@ public class SvnBindException extends VcsException {
       parse(message, SvnUtil.ERROR_PATTERN, errors);
       parse(message, SvnUtil.WARNING_PATTERN, warnings);
     }
-  }
-
-  @NotNull
-  public SVNException toSVNException() {
-    int type = errors.isEmpty() && !warnings.isEmpty() ? SVNErrorMessage.TYPE_WARNING : SVNErrorMessage.TYPE_ERROR;
-    int code = notNull(coalesce(getFirstItem(errors.keySet()), getFirstItem(warnings.keySet())), SVNErrorCode.UNKNOWN.getCode());
-
-    return new SVNException(SVNErrorMessage.create(SVNErrorCode.getErrorCode(code), getMessage(), type), this);
   }
 
   public boolean isDbBusy() {

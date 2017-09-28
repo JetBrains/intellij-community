@@ -24,15 +24,11 @@ import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.lock.Lock;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.Date;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class Info extends BaseNodeDescription {
 
   public static final String SCHEDULE_ADD = "add";
@@ -57,27 +53,6 @@ public class Info extends BaseNodeDescription {
   @Nullable private final File myPropConflictFile;
   private final Depth myDepth;
   @Nullable private final TreeConflictDescription myTreeConflict;
-
-  @NotNull
-  public static Info create(@NotNull SVNInfo info) {
-    Info result;
-
-    if (info.isRemote()) {
-      result = new Info(info.getPath(), info.getURL(), info.getRevision(), NodeKind.from(info.getKind()), info.getRepositoryUUID(),
-                        info.getRepositoryRootURL(), info.getCommittedRevision().getNumber(), info.getCommittedDate(), info.getAuthor(),
-                        Lock.create(info.getLock()), Depth.from(info.getDepth()));
-    }
-    else {
-      result =
-        new Info(info.getFile(), info.getURL(), info.getRepositoryRootURL(), info.getRevision().getNumber(), NodeKind.from(info.getKind()),
-                 info.getRepositoryUUID(), info.getCommittedRevision().getNumber(), toString(info.getCommittedDate()), info.getAuthor(),
-                 info.getSchedule(), info.getCopyFromURL(), info.getCopyFromRevision().getNumber(), getName(info.getConflictOldFile()),
-                 getName(info.getConflictNewFile()), getName(info.getConflictWrkFile()), getName(info.getPropConflictFile()),
-                 Lock.create(info.getLock()), Depth.from(info.getDepth()), TreeConflictDescription.create(info.getTreeConflict()));
-    }
-
-    return result;
-  }
 
   public Info(File file,
               SVNURL url,
@@ -260,15 +235,5 @@ public class Info extends BaseNodeDescription {
   @Nullable
   private static File resolveConflictFile(@Nullable File file, @Nullable String path) {
     return file != null && path != null ? new File(file.getParentFile(), path) : null;
-  }
-
-  @Nullable
-  private static String getName(@Nullable File file) {
-    return file != null ? file.getName() : null;
-  }
-
-  @Nullable
-  private static String toString(@Nullable Date date) {
-    return date != null ? date.toString() : null;
   }
 }

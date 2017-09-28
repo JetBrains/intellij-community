@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn.api;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
@@ -24,11 +23,6 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.auth.AuthenticationService;
 import org.jetbrains.idea.svn.commandLine.*;
-import org.jetbrains.idea.svn.diff.DiffOptions;
-import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.SVNDiffOptions;
-import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
@@ -148,48 +142,6 @@ public abstract class BaseSvnClient implements SvnClient {
   @NotNull
   protected static ProgressEvent createEvent(@NotNull File path, @Nullable EventAction action) {
     return new ProgressEvent(path, 0, null, null, action, null, null);
-  }
-
-  @Nullable
-  protected static ISVNEventHandler toEventHandler(@Nullable final ProgressTracker handler) {
-    ISVNEventHandler result = null;
-
-    if (handler != null) {
-      result = new ISVNEventHandler() {
-        @Override
-        public void handleEvent(SVNEvent event, double progress) throws SVNException {
-          try {
-            handler.consume(ProgressEvent.create(event));
-          }
-          catch (SvnBindException e) {
-            throw e.toSVNException();
-          }
-        }
-
-        @Override
-        public void checkCancelled() throws SVNCancelException {
-          try {
-            handler.checkCancelled();
-          }
-          catch (ProcessCanceledException e) {
-            throw new SVNCancelException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, e.getMessage()), e);
-          }
-        }
-      };
-    }
-
-    return result;
-  }
-
-  @Nullable
-  protected static SVNDiffOptions toDiffOptions(@Nullable DiffOptions options) {
-    return options != null ? new SVNDiffOptions(options.isIgnoreAllWhitespace(), options.isIgnoreAmountOfWhitespace(),
-                                                options.isIgnoreEOLStyle()) : null;
-  }
-
-  @Nullable
-  protected static SVNDepth toDepth(@Nullable Depth depth) {
-    return depth != null ? SVNDepth.fromString(depth.getName()) : null;
   }
 
   @NotNull

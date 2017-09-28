@@ -141,7 +141,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
 
   @NotNull
   private Change createChange(@NotNull Target target1, @NotNull Target target2, @NotNull DiffPath diffPath) throws SvnBindException {
-    // TODO: 1) Unify logic of creating Change instance with SvnDiffEditor and SvnChangeProviderContext
+    // TODO: 1) Unify logic of creating Change instance with SvnChangeProviderContext
     // TODO: 2) If some directory is switched, files inside it are returned as modified in "svn diff --summarize", even if they are equal
     // TODO: to branch files by content - possibly add separate processing of all switched files
     // TODO: 3) Properties change is currently not added as part of result change like in SvnChangeProviderContext.patchWithPropertyChange

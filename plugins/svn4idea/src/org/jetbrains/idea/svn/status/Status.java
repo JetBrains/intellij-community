@@ -19,21 +19,15 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.NodeKind;
-import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.lock.Lock;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatus;
 
 import java.io.File;
 
-import static org.jetbrains.idea.svn.SvnUtil.createUrl;
-
 /**
  * TODO: Could also inherit BaseNodeDescription when myKind becomes final.
- *
- * @author Konstantin Kolosovsky.
  */
 public class Status {
   private SVNURL myURL;
@@ -59,29 +53,6 @@ public class Status {
 
   private StatusType myNodeStatus;
   private SVNURL myRepositoryRootURL;
-
-  @Nullable
-  public static Status create(@Nullable SVNStatus status) throws SvnBindException {
-    Status result = null;
-
-    if (status != null) {
-      result =
-        new Status(status.getURL(), status.getFile(), NodeKind.from(status.getKind()), status.getRevision(), status.getCommittedRevision(),
-                   StatusType.from(status.getContentsStatus()), StatusType.from(status.getPropertiesStatus()),
-                   StatusType.from(status.getRemoteContentsStatus()), StatusType.from(status.getRemotePropertiesStatus()),
-                   status.isLocked(), status.isCopied(), status.isSwitched(),
-                   status.getCopyFromURL() != null ? createUrl(status.getCopyFromURL()) : null, Lock.create(status.getRemoteLock()),
-                   Lock.create(status.getLocalLock()), status.getChangelistName(),
-                   TreeConflictDescription.create(status.getTreeConflict()));
-      result.setIsConflicted(status.isConflicted());
-      result.setNodeStatus(StatusType.from(status.getNodeStatus()));
-      result.setRemoteNodeStatus(StatusType.from(status.getRemoteNodeStatus()));
-      result.setRemoteRevision(status.getRemoteRevision());
-      result.setRepositoryRootURL(status.getRepositoryRootURL());
-    }
-
-    return result;
-  }
 
   public Status(SVNURL url,
                 File file,

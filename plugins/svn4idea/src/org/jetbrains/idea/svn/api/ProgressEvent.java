@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNEvent;
 
 import java.io.File;
 
@@ -34,27 +33,6 @@ public class ProgressEvent {
   @NotNull private final StatusType myPropertiesStatus;
   @Nullable private final String myErrorMessage;
   private final EventAction myAction;
-
-  @Nullable
-  public static ProgressEvent create(@Nullable SVNEvent event) {
-    ProgressEvent result = null;
-
-    if (event != null) {
-      String errorMessage = event.getErrorMessage() != null ? event.getErrorMessage().getFullMessage() : null;
-
-      if (event.getFile() == null && event.getURL() == null) {
-        result = new ProgressEvent(errorMessage);
-      }
-      else {
-        result =
-          new ProgressEvent(event.getFile(), event.getRevision(), StatusType.from(event.getContentsStatus()),
-                            StatusType.from(event.getPropertiesStatus()), EventAction.from(event.getAction()), errorMessage,
-                            event.getURL());
-      }
-    }
-
-    return result;
-  }
 
   public ProgressEvent(@Nullable String errorMessage) {
     this(null, 0, null, null, EventAction.SKIP, errorMessage, null);

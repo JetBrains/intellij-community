@@ -17,15 +17,11 @@ package org.jetbrains.idea.svn.api;
 
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.tmatesoft.svn.core.SVNNodeKind;
 
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
 import java.util.Map;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 @XmlEnum
 public enum NodeKind {
 
@@ -80,11 +76,6 @@ public enum NodeKind {
     }
 
     return result;
-  }
-
-  @NotNull
-  public static NodeKind from(@NotNull SVNNodeKind nodeKind) {
-    return from(nodeKind.toString());
   }
 
   @NotNull

@@ -20,29 +20,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseNodeDescription;
 import org.jetbrains.idea.svn.api.NodeKind;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class ConflictVersion extends BaseNodeDescription {
 
   private final SVNURL myRepositoryRoot;
   private final String myPath;
   private final long myPegRevision;
-
-  @Nullable
-  public static ConflictVersion create(@Nullable SVNConflictVersion conflictVersion) {
-    ConflictVersion result = null;
-
-    if (conflictVersion != null) {
-      result = new ConflictVersion(conflictVersion.getRepositoryRoot(), conflictVersion.getPath(), conflictVersion.getPegRevision(),
-                                   NodeKind.from(conflictVersion.getKind()));
-    }
-
-    return result;
-  }
-
   public ConflictVersion(SVNURL repositoryRoot, String path, long pegRevision, @NotNull NodeKind kind) {
     super(kind);
     myRepositoryRoot = repositoryRoot;
