@@ -1279,7 +1279,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     }
   }
 
-  public static class MavenProjectsWatcherContributor implements ExternalSystemProjectsWatcherImpl.Contributor {
+  public static class ExternalWatcherContributor implements ExternalSystemProjectsWatcherImpl.Contributor {
 
     @Override
     public void markDirtyAllExternalProjects(@NotNull Project project) {
