@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,6 +74,42 @@ public class WSLUtil {
    */
   public static boolean hasWSL() {
     return getWSLBashFile() != null;
+  }
+
+  private static final Pattern WIN_BUILD_VER = Pattern.compile(".*(?:\\[Version \\d+\\.\\d+\\.(\\d+)\\])");
+  /*
+   * WSL version equals Windows build number
+   * (https://github.com/Microsoft/BashOnWindows/issues/1728)
+   */
+  private static final AtomicNullableLazyValue<String> ourWSLVersion = AtomicNullableLazyValue.createValue(() -> {
+    final GeneralCommandLine cl = new GeneralCommandLine("cmd", "/c", "ver");
+    cl.setCharset(CharsetToolkit.getDefaultSystemCharset());
+
+    try {
+      final CapturingProcessHandler handler = new CapturingProcessHandler(cl);
+      final ProcessOutput result = handler.runProcess(1000);
+      if (result.isTimeout()) return null;
+
+      final String out = result.getStdout().trim();
+      final Matcher dependency = WIN_BUILD_VER.matcher(out);
+      if (dependency.find()) {
+        return dependency.group(1);
+      }
+    }
+    catch (ExecutionException ignored) {
+      ignored.printStackTrace();
+    }
+    return null;
+  });
+
+  /**
+   * @return WSL build number or null if it cannot be determined
+   */
+  public static String getWslVersion() {
+    if (hasWSL()) {
+      return ourWSLVersion.getValue();
+    }
+    return null;
   }
 
   /**
@@ -227,6 +264,26 @@ public class WSLUtil {
 
   private static String createAdditionalCommand(@NotNull String... commands) {
     return new GeneralCommandLine(commands).getCommandLineString();
+  }
+
+  @NotNull
+  public static String resolveSymlink(@NotNull String path) {
+    final GeneralCommandLine cl = new GeneralCommandLine();
+    cl.setExePath("readlink");
+    cl.addParameter("-f");
+    cl.addParameter(path);
+
+    final GeneralCommandLine cmd = patchCommandLine(cl, null, null, false);
+
+    try {
+      final CapturingProcessHandler process = new CapturingProcessHandler(cmd);
+      final ProcessOutput output = process.runProcess(1000);
+      if (output.getExitCode() == 0) {
+        return output.getStdout().trim();
+      }
+    }
+    catch (ExecutionException ignored) {}
+    return path;
   }
 
   /**
