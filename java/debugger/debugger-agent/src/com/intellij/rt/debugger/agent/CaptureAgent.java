@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.intellij.rt.debugger.agent;
 
 import org.jetbrains.org.objectweb.asm.*;
@@ -106,31 +94,34 @@ public class CaptureAgent {
                             Class<?> classBeingRedefined,
                             ProtectionDomain protectionDomain,
                             byte[] classfileBuffer) {
-      List<CapturePoint> capturePoints = getNotNull(myCapturePoints.get(className));
-      List<InsertPoint> insertPoints = getNotNull(myInsertPoints.get(className));
-      if (!capturePoints.isEmpty() || !insertPoints.isEmpty()) {
-        ClassReader reader = new ClassReader(classfileBuffer);
-        ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES);
+      if (className != null) {
+        List<CapturePoint> capturePoints = getNotNull(myCapturePoints.get(className));
+        List<InsertPoint> insertPoints = getNotNull(myInsertPoints.get(className));
+        if (!capturePoints.isEmpty() || !insertPoints.isEmpty()) {
+          ClassReader reader = new ClassReader(classfileBuffer);
+          ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES);
 
-        try {
-          reader.accept(new CaptureInstrumentor(Opcodes.ASM6, writer, capturePoints, insertPoints), 0);
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
-
-        byte[] bytes = writer.toByteArray();
-
-        if (DEBUG) {
           try {
-            Path path = new File("instrumented_" + className.replaceAll("/", "_") + ".class").toPath();
-            Files.write(path, bytes);
+            reader.accept(new CaptureInstrumentor(Opcodes.ASM6, writer, capturePoints, insertPoints), 0);
           }
-          catch (IOException e) {
+          catch (Exception e) {
             e.printStackTrace();
           }
-        }
 
-        return bytes;
+          byte[] bytes = writer.toByteArray();
+
+          if (DEBUG) {
+            try {
+              Path path = new File("instrumented_" + className.replaceAll("/", "_") + ".class").toPath();
+              Files.write(path, bytes);
+            }
+            catch (IOException e) {
+              e.printStackTrace();
+            }
+          }
+
+          return bytes;
+        }
       }
       return null;
     }
