@@ -883,6 +883,11 @@
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.CollectionAddAllCanBeReplacedWithConstructorInspection"
                      displayName="Redundant 'Collection.addAll()' call"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="OverwrittenKey"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.OverwrittenKeyInspection"
+                     displayName="Overwritten Map key or Set element"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="AnonymousHasLambdaAlternative" displayName="Anonymous type has shorter lambda alternative"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.AnonymousHasLambdaAlternativeInspection" />
