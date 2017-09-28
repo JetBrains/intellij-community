@@ -236,9 +236,9 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
                                                      boolean checkInProcessData) {
     DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
     Map<Object, List<StackFrameItem>> capturedStacks = debugProcess.getUserData(CAPTURED_STACKS);
-    //if (ContainerUtil.isEmpty(capturedStacks) && !Registry.is("debugger.capture.points.agent")) {
-    //  return null;
-    //}
+    if (ContainerUtil.isEmpty(capturedStacks) && !Registry.is("debugger.capture.points.agent")) {
+      return null;
+    }
     List<StackCapturingLineBreakpoint> captureBreakpoints = debugProcess.getUserData(CAPTURE_BREAKPOINTS);
     if (ContainerUtil.isEmpty(captureBreakpoints)) {
       return null;
