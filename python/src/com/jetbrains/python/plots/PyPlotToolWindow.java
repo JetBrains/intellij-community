@@ -52,6 +52,7 @@ import com.intellij.ui.tabs.impl.DefaultEditorTabsPainter;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.TabLabel;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,7 +100,7 @@ public class PyPlotToolWindow extends JPanel implements DumbAware {
     final TabInfo info = new TabInfo(panel);
     info.setTabColor(UIUtil.getPanelBackground());
     final BufferedImage image = plotVirtualFile.getImage();
-    final Image after = image.getScaledInstance(64, 48, Image.SCALE_SMOOTH);
+    final Image after = image.getScaledInstance(JBUI.scale(64), JBUI.scale(48), Image.SCALE_SMOOTH);
     info.setIcon(new ImageIcon(after));
     info.setText(" ");
     info.setTabLabelActions(new DefaultActionGroup(new ClosePlotAction(info)), ActionPlaces.UNKNOWN);
@@ -152,7 +153,7 @@ public class PyPlotToolWindow extends JPanel implements DumbAware {
 
     @Override
     public Dimension getPreferredSize() {
-      return new Dimension(ourPreviewSize + 20, ourPreviewSize);
+      return new Dimension(JBUI.scale(ourPreviewSize + 20), JBUI.scale(ourPreviewSize));
     }
   }
 
