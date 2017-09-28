@@ -34,6 +34,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
+import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcherImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareRunnable;
@@ -75,6 +76,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @State(name = "MavenProjectsManager")
@@ -1274,6 +1276,29 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     }
 
     default void importAndResolveScheduled() {
+    }
+  }
+
+  public static class MavenProjectsWatcherContributor implements ExternalSystemProjectsWatcherImpl.Contributor {
+
+    @Override
+    public void markDirtyAllExternalProjects(@NotNull Project project) {
+      runWhenFullyOpen(project, (manager) -> manager.doScheduleUpdateProjects(null, true, true));
+    }
+
+    @Override
+    public void markDirty(@NotNull Module module) {
+      runWhenFullyOpen(module.getProject(), (manager) -> {
+        MavenProject mavenProject = manager.findProject(module);
+        if (mavenProject != null) {
+          manager.doScheduleUpdateProjects(ContainerUtil.list(mavenProject), true, true);
+        }
+      });
+    }
+
+    private static void runWhenFullyOpen(@NotNull Project project, @NotNull Consumer<MavenProjectsManager> consumer) {
+      MavenProjectsManager manager = getInstance(project);
+      manager.runWhenFullyOpen(() -> consumer.accept(manager));
     }
   }
 }

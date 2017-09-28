@@ -21,5 +21,7 @@
                     interface="com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager"/>
     <extensionPoint name="externalSystemViewContributor" interface="com.intellij.openapi.externalSystem.view.ExternalSystemViewContributor"/>
     <extensionPoint name="externalProjectStructureCustomizer" interface="com.intellij.openapi.externalSystem.importing.ExternalProjectStructureCustomizer"/>
+    <extensionPoint name="externalProjectWatcherContributor"
+                    interface="com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcherImpl$Contributor"/>
   </extensionPoints>
 </idea-plugin>
