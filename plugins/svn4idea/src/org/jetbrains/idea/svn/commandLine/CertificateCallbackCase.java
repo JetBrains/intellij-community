@@ -15,13 +15,9 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.auth.AuthenticationService;
 import org.tmatesoft.svn.core.SVNURL;
-
-import static org.jetbrains.idea.svn.SvnUtil.removePathTail;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -41,54 +37,24 @@ public class CertificateCallbackCase extends AuthCallbackCase {
 
   @Override
   public boolean canHandle(String error) {
-    boolean useSvnKit = Registry.is("svn.use.svnkit.for.https.server.certificate.check");
-
     return error.startsWith(CERTIFICATE_ERROR) ||
            // https one-way protocol untrusted server certificate
            error.contains(UNTRUSTED_SERVER_CERTIFICATE) ||
-           // any certificate verification failure - for instance, "certificate issued for a different hostname" and/or
-           // "issuer is not trusted" - for both 1.7 and 1.8.
-           // SVNKit-based implementation persists credentials (by utilizing SVNKit api) emulating situation as if credentials were cached
-           // by Subversion. That is why we could process both untrusted and invalid certificate errors.
-           useSvnKit && isCertificateVerificationFailed(error) ||
            // valid but untrusted certificates - "issuer is not trusted" error - for both 1.7 and 1.8.
            // Implementation not based on SVNKit does not persist credentials to emulate situation as if credentials were cached by
            // Subversion. And in "--non-interactive" mode we could only make Subversion accept untrusted, but not invalid certificate.
            // So we explicitly check that verification failure is only "issuer is not trusted". If certificate has some other failures,
            // command will end with error.
-           !useSvnKit && isValidButUntrustedCertificate(error);
+           isValidButUntrustedCertificate(error);
   }
 
   @Override
   public boolean getCredentials(final String errText) throws SvnBindException {
-    String realm = getRealm(errText);
-
-    if (!errText.startsWith(CERTIFICATE_ERROR)) {
-      // if we do not have explicit realm in error message - use server url and not full repository url
-      // as SVNKit lifecycle resolves ssl realm (for saving certificate to runtime storage) as server url
-      SVNURL serverUrl = getServerUrl(realm);
-      realm = serverUrl != null ? serverUrl.toString() : realm;
-    }
-
-    if (myAuthenticationService.acceptSSLServerCertificate(myUrl, realm)) {
+    if (myAuthenticationService.acceptSSLServerCertificate(myUrl)) {
       accepted = true;
       return true;
     }
     throw new SvnBindException("Server SSL certificate rejected");
-  }
-
-  private static String getRealm(String errText) throws SvnBindException {
-    String realm = errText;
-    final int idx1 = realm.indexOf('\'');
-    if (idx1 == -1) {
-      throw new SvnBindException("Can not detect authentication realm name: " + errText);
-    }
-    final int idx2 = realm.indexOf('\'', idx1 + 1);
-    if (idx2 == -1) {
-      throw new SvnBindException("Can not detect authentication realm name: " + errText);
-    }
-    realm = realm.substring(idx1 + 1, idx2);
-    return realm;
   }
 
   @Override
@@ -106,20 +72,5 @@ public class CertificateCallbackCase extends AuthCallbackCase {
 
   public static boolean isCertificateVerificationFailed(@NotNull String error) {
     return error.contains(CERTIFICATE_VERIFICATION_FAILED);
-  }
-
-  private SVNURL getServerUrl(String realm) {
-    SVNURL result = parseUrl(realm);
-
-    while (result != null && !StringUtil.isEmpty(result.getPath())) {
-      try {
-        result = removePathTail(result);
-      }
-      catch (SvnBindException e) {
-        result = null;
-      }
-    }
-
-    return result;
   }
 }

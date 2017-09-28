@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.auth.AuthenticationService;
@@ -50,8 +49,6 @@ public class UsernamePasswordCallback extends AuthCallbackCase {
 
   @Override
   public boolean canHandle(String error) {
-    boolean useSvnKit = Registry.is("svn.use.svnkit.for.https.server.certificate.check");
-
     return
       // http/https protocol invalid credentials
       error.contains(AUTHENTICATION_FAILED_MESSAGE) ||
@@ -59,8 +56,8 @@ public class UsernamePasswordCallback extends AuthCallbackCase {
       error.contains(INVALID_CREDENTIALS_FOR_SVN_PROTOCOL) && error.contains(PASSWORD_STRING) ||
       // http/https protocol, svn 1.7, non-interactive
       // we additionally check that error is not related to certificate verification - as CertificateCallbackCase could only handle
-      // untrusted certificates, but not invalid when useSvnKit = false
-      (error.contains(UNABLE_TO_CONNECT_MESSAGE) && (useSvnKit || !CertificateCallbackCase.isCertificateVerificationFailed(error))) ||
+      // untrusted but not invalid certificates
+      (error.contains(UNABLE_TO_CONNECT_MESSAGE) && !CertificateCallbackCase.isCertificateVerificationFailed(error)) ||
       // http, svn 1.6, non-interactive
       StringUtil.containsIgnoreCase(error, COULD_NOT_AUTHENTICATE_TO_SERVER_MESSAGE);
   }

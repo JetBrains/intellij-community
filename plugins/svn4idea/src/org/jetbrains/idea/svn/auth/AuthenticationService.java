@@ -22,7 +22,6 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.WaitForProgressToShow;
@@ -188,29 +187,19 @@ public class AuthenticationService {
     return result;
   }
 
-  public boolean acceptSSLServerCertificate(@Nullable SVNURL repositoryUrl, final String realm) throws SvnBindException {
+  public boolean acceptSSLServerCertificate(@Nullable SVNURL repositoryUrl) throws SvnBindException {
     if (repositoryUrl == null) {
       return false;
     }
 
-    boolean result;
-
-    if (Registry.is("svn.use.svnkit.for.https.server.certificate.check")) {
-      result = new SSLServerCertificateAuthenticator(this, repositoryUrl, realm).tryAuthenticate();
+    HttpClient client = getClient(repositoryUrl);
+    try {
+      client.execute(new HttpGet(repositoryUrl.toDecodedString()));
+      return true;
     }
-    else {
-      HttpClient client = getClient(repositoryUrl);
-
-      try {
-        client.execute(new HttpGet(repositoryUrl.toDecodedString()));
-        result = true;
-      }
-      catch (IOException e) {
-        throw new SvnBindException(fixMessage(e), e);
-      }
+    catch (IOException e) {
+      throw new SvnBindException(fixMessage(e), e);
     }
-
-    return result;
   }
 
   @Nullable
