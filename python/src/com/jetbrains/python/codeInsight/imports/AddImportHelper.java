@@ -493,13 +493,17 @@ public class AddImportHelper {
       target instanceof PsiFileSystemItem ? ((PsiFileSystemItem)target).getParent() : target.getContainingFile();
     if (toImport == null) return;
     final ImportPriority priority = getImportPriority(file, toImport);
-    final QualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(target, element);
+    QualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(target, element);
     if (qName == null) return;
     String path = qName.toString();
     if (target instanceof PsiFileSystemItem && qName.getComponentCount() == 1) {
       addImportStatement(file, path, null, priority, element);
     }
     else {
+      if (target instanceof PsiFileSystemItem) {
+        qName = qName.removeTail(1);
+      }
+
       if (useQualified) {
         addImportStatement(file, path, null, priority, element);
         final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(file.getProject());
