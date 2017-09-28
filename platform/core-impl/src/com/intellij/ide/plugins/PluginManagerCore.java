@@ -1512,7 +1512,8 @@ public class PluginManagerCore {
   static class EssentialPluginMissingException extends RuntimeException {
     final Set<String> pluginIds;
 
-    public EssentialPluginMissingException(@NotNull Set<String> ids) {
+    EssentialPluginMissingException(@NotNull Set<String> ids) {
+      super("Missing essential plugins: " + StringUtil.join(ids, ", "));
       this.pluginIds = ids;
     }
   }
