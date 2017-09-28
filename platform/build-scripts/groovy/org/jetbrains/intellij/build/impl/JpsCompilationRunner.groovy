@@ -265,7 +265,7 @@ class JpsCompilationRunner {
   }
 
   static class AntLoggerFactory implements Logger.Factory {
-    private static final String COMPILER_NAME = "build runner"
+    public static final String COMPILER_NAME = "build runner" //it's public to workaround Groovy bug (IDEA-179735)
     private static AntMessageHandler ourMessageHandler
     private static Logger.Factory ourFileLoggerFactory
 
