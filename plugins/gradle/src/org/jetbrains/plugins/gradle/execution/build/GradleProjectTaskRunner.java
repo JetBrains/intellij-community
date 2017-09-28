@@ -222,8 +222,8 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       final String moduleType = ExternalSystemApiUtil.getExternalModuleType(module);
       String gradlePath = GradleProjectResolverUtil.getGradlePath(module);
       if(gradlePath == null) continue;
-      if(gradlePath.equals(":")) {
-        gradlePath = "";
+      if (!StringUtil.endsWithChar(gradlePath, ':')) {
+        gradlePath += ":";
       }
 
       String assembleTask = "assemble";
@@ -232,38 +232,33 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
         String gradleTask = StringUtil.isEmpty(sourceSetName) || "main".equals(sourceSetName) ? "classes" : sourceSetName + "Classes";
         if (gradleTasks.contains(gradleTask)) {
           if (!moduleBuildTask.isIncrementalBuild()) {
-            cleanRootTasks.add(gradlePath + ":clean" + StringUtil.capitalize(gradleTask));
+            cleanRootTasks.add(gradlePath + "clean" + StringUtil.capitalize(gradleTask));
           }
-          buildRootTasks.add(gradlePath + ":" + gradleTask);
+          buildRootTasks.add(gradlePath + gradleTask);
         }
         else if ("main".equals(sourceSetName) || "test".equals(sourceSetName)) {
           if (!moduleBuildTask.isIncrementalBuild()) {
-            cleanRootTasks.add(gradlePath + ":clean");
+            cleanRootTasks.add(gradlePath + "clean");
           }
-          buildRootTasks.add(gradlePath + ":" + assembleTask);
+          buildRootTasks.add(gradlePath + assembleTask);
         }
       }
       else {
         if (!moduleBuildTask.isIncrementalBuild()) {
           if (gradleTasks.contains("classes")) {
-            cleanRootTasks.add((StringUtil.equals(rootProjectPath, externalProjectPath) ? ":cleanClasses" : gradlePath + ":cleanClasses"));
-            cleanRootTasks.add((StringUtil.equals(rootProjectPath, externalProjectPath) ? ":cleanTestClasses" : gradlePath + ":cleanTestClasses"));
+            cleanRootTasks.add(gradlePath + "cleanClasses");
+            cleanRootTasks.add(gradlePath + "cleanTestClasses");
           }
           else if (gradleTasks.contains("clean")) {
-            cleanRootTasks.add((StringUtil.equals(rootProjectPath, externalProjectPath) ? ":clean" : gradlePath + ":clean"));
-          }
-          else {
-            if (StringUtil.equals(rootProjectPath, externalProjectPath)) {
-              cleanRootTasks.add("clean");
-            }
+            cleanRootTasks.add(gradlePath + "clean");
           }
         }
         if (gradleTasks.contains("classes")) {
-          buildRootTasks.add((StringUtil.equals(rootProjectPath, externalProjectPath) ? ":classes" : gradlePath + ":classes"));
-          buildRootTasks.add((StringUtil.equals(rootProjectPath, externalProjectPath) ? ":testClasses" : gradlePath + ":testClasses"));
+          buildRootTasks.add(gradlePath + "classes");
+          buildRootTasks.add(gradlePath + "testClasses");
         }
         else if (gradleTasks.contains(assembleTask)) {
-          buildRootTasks.add((StringUtil.equals(rootProjectPath, externalProjectPath) ? assembleTask : gradlePath + ":" + assembleTask));
+          buildRootTasks.add(gradlePath + assembleTask);
         }
       }
     }
