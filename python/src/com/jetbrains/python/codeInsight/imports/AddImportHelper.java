@@ -534,34 +534,52 @@ public class AddImportHelper {
    * @see #addImportStatement
    * @see #addOrUpdateFromImportStatement
    */
-  public static void addImport(final PsiNamedElement target, final PsiFile file, final PyElement element) {
-    final boolean useQualified = !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT;
-    final PsiFileSystemItem toImport =
-      target instanceof PsiFileSystemItem ? ((PsiFileSystemItem)target).getParent() : target.getContainingFile();
+  public static void addImport(@NotNull PsiNamedElement target, @NotNull PsiFile file, @NotNull PyElement element) {
+    if (target instanceof PsiFileSystemItem) {
+      addFileSystemItemImport((PsiFileSystemItem)target, file, element);
+      return;
+    }
+
+    final String name = target.getName();
+    if (name == null) return;
+
+    final PsiFileSystemItem toImport = target.getContainingFile();
     if (toImport == null) return;
+
+    final QualifiedName importPath = QualifiedNameFinder.findCanonicalImportPath(target, element);
+    if (importPath == null) return;
+
+    final String path = importPath.toString();
     final ImportPriority priority = getImportPriority(file, toImport);
-    QualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(target, element);
-    if (qName == null) return;
-    String path = qName.toString();
-    if (target instanceof PsiFileSystemItem && qName.getComponentCount() == 1) {
+    if (!PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT) {
       addImportStatement(file, path, null, priority, element);
+
+      final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(file.getProject());
+      element.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(target), path + "." + name));
     }
     else {
-      if (target instanceof PsiFileSystemItem) {
-        qName = qName.removeTail(1);
-      }
+      addOrUpdateFromImportStatement(file, path, name, null, priority, element);
+    }
+  }
 
-      if (useQualified) {
-        addImportStatement(file, path, null, priority, element);
-        final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(file.getProject());
-        final String targetName = PyUtil.getElementNameWithoutExtension(target);
-        element.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(target), qName + "." + targetName));
-      }
-      else {
-        final String name = target.getName();
-        if (name != null)
-          addOrUpdateFromImportStatement(file, qName.toString(), name, null, priority, element);
-      }
+  private static void addFileSystemItemImport(@NotNull PsiFileSystemItem target, @NotNull PsiFile file, @NotNull PyElement element) {
+    final PsiFileSystemItem toImport = target.getParent();
+    if (toImport == null) return;
+
+    final QualifiedName importPath = QualifiedNameFinder.findCanonicalImportPath(target, element);
+    if (importPath == null) return;
+
+    final ImportPriority priority = getImportPriority(file, toImport);
+    if (importPath.getComponentCount() == 1 || !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT) {
+      final String path = importPath.toString();
+
+      addImportStatement(file, path, null, priority, element);
+
+      final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(file.getProject());
+      element.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(target), path));
+    }
+    else {
+      addOrUpdateFromImportStatement(file, importPath.removeLastComponent().toString(), target.getName(), null, priority, element);
     }
   }
 }
