@@ -13,6 +13,7 @@ import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluatorImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.jdi.DecompiledLocalVariable;
+import com.intellij.debugger.jdi.GeneratedLocation;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.memory.utils.StackFrameItem;
@@ -322,7 +323,8 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
         }
         else {
           List<Value> values1 = ((ArrayReference)value).getValues();
-          res.add(new ProcessStackFrameItem(getStringRefValue((StringReference)values1.get(0)),
+          res.add(new ProcessStackFrameItem(process,
+                                            getStringRefValue((StringReference)values1.get(0)),
                                             getStringRefValue((StringReference)values1.get(2)),
                                             Integer.parseInt(((StringReference)values1.get(3)).value())));
         }
@@ -341,8 +343,8 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     final String myMethod;
     final int myLine;
 
-    public ProcessStackFrameItem(String aClass, String method, int line) {
-      super(null, null);
+    public ProcessStackFrameItem(DebugProcessImpl debugProcess, String aClass, String method, int line) {
+      super(new GeneratedLocation(debugProcess, aClass, method, line), null);
       myClass = aClass;
       myMethod = method;
       myLine = line;
