@@ -28,6 +28,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.header.InspectionProfileSchemesPanel;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.JdomKt;
@@ -291,7 +292,80 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
     assertThat(importedProfile.writeScheme()).isEqualTo(mergedElement);
   }
-  
+
+  public void testScopesInNamingConventions() throws Exception {
+    String unchanged = "<profile version=\"1.0\">\n" +
+                       "  <option name=\"myName\" value=\"Name convention\" />\n" +
+                       "  <inspection_tool class=\"AnnotationNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                       "    <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*Ann\" />\n" +
+                       "    <option name=\"m_minLength\" value=\"8\" />\n" +
+                       "    <option name=\"m_maxLength\" value=\"58\" />\n" +
+                       "  </inspection_tool>\n" +
+                       "  <inspection_tool class=\"ClassNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                       "    <scope name=\"Production\" level=\"ERROR\" enabled=\"true\">\n" +
+                       "      <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*\" />\n" +
+                       "      <option name=\"m_minLength\" value=\"8\" />\n" +
+                       "      <option name=\"m_maxLength\" value=\"64\" />\n" +
+                       "    </scope>\n" +
+                       "    <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*Class\" />\n" +
+                       "    <option name=\"m_minLength\" value=\"10\" />\n" +
+                       "    <option name=\"m_maxLength\" value=\"60\" />\n" +
+                       "  </inspection_tool>\n" +
+                       "  <inspection_tool class=\"EnumeratedClassNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                       "    <scope name=\"Tests\" level=\"WEAK WARNING\" enabled=\"true\">\n" +
+                       "      <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*\" />\n" +
+                       "      <option name=\"m_minLength\" value=\"8\" />\n" +
+                       "      <option name=\"m_maxLength\" value=\"64\" />\n" +
+                       "    </scope>\n" +
+                       "    <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*Enum\" />\n" +
+                       "    <option name=\"m_minLength\" value=\"12\" />\n" +
+                       "    <option name=\"m_maxLength\" value=\"62\" />\n" +
+                       "  </inspection_tool>\n" +
+                       "  <inspection_tool class=\"InterfaceNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                       "    <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*I\" />\n" +
+                       "    <option name=\"m_minLength\" value=\"14\" />\n" +
+                       "    <option name=\"m_maxLength\" value=\"64\" />\n" +
+                       "  </inspection_tool>\n" +
+                       "  <inspection_tool class=\"JUnitAbstractTestClassNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                       "    <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*TestCase\" />\n" +
+                       "    <option name=\"m_minLength\" value=\"2\" />\n" +
+                       "    <option name=\"m_maxLength\" value=\"52\" />\n" +
+                       "  </inspection_tool>\n" +
+                       "  <inspection_tool class=\"JUnitTestClassNamingConvention\" enabled=\"true\" level=\"ERROR\" enabled_by_default=\"true\">\n" +
+                       "    <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*Test\" />\n" +
+                       "    <option name=\"m_minLength\" value=\"4\" />\n" +
+                       "    <option name=\"m_maxLength\" value=\"54\" />\n" +
+                       "  </inspection_tool>\n" +
+                       "  <inspection_tool class=\"TypeParameterNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                       "    <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*TP\" />\n" +
+                       "    <option name=\"m_minLength\" value=\"16\" />\n" +
+                       "    <option name=\"m_maxLength\" value=\"66\" />\n" +
+                       "  </inspection_tool>\n" +
+                       "</profile>";
+    InspectionProfileImpl profile = createProfile(new InspectionProfileImpl("foo"));
+    final Element oldProfile = JdomKt.loadElement(unchanged);
+    profile.readExternal(oldProfile);
+    profile.getModifiableModel().commit();
+    assertEquals(unchanged, serialize(profile));
+    ToolsImpl tools = profile.getToolsOrNull("NewClassNamingConvention", getProject());
+    assertTrue(tools.isEnabled());
+    for (ScopeToolState toolState : tools.getTools()) {
+      NamedScope scope = toolState.getScope(getProject());
+      assertTrue(scope != null);
+      String scopeName = scope.getName();
+      NewClassNamingConventionInspection tool = (NewClassNamingConventionInspection)toolState.getTool().getTool();
+      if ("Production".equals(scopeName)) {
+        assertTrue(tool.isConventionEnabled(ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME));
+        assertTrue(tool.isConventionEnabled("TypeParameterNamingConvention"));
+        assertEquals(16, tool.getNamingConventionBean("TypeParameterNamingConvention").m_minLength);
+      }
+      else if ("Tests".equals(scopeName)) {
+        assertTrue(tool.isConventionEnabled("TypeParameterNamingConvention"));
+        assertEquals(16, tool.getNamingConventionBean("TypeParameterNamingConvention").m_minLength);
+      }
+    }
+  }
+
   public void testMergeNamingConventions() throws Exception {
     //no specific settings
     final Element element = JdomKt.loadElement("<profile version=\"1.0\">\n" +

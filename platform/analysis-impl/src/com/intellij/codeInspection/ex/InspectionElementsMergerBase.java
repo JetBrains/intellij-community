@@ -20,9 +20,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 
 public abstract class InspectionElementsMergerBase extends InspectionElementsMerger {
@@ -74,6 +72,7 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
 
   protected Element merge(Map<String, Element> inspectionElements, boolean includeDefaults) {
     LinkedHashMap<String, Element> scopes = new LinkedHashMap<>();
+    LinkedHashMap<String, Set<String>> mentionedTools = new LinkedHashMap<>();
     boolean enabled = false;
     String level = null;
 
@@ -98,7 +97,7 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
       }
 
       if (sourceElement != null) {
-        collectContent(sourceToolName, sourceElement, toolElement, scopes);
+        collectContent(sourceToolName, sourceElement, toolElement, scopes, mentionedTools);
 
         enabled |= Boolean.parseBoolean(sourceElement.getAttributeValue(ToolsImpl.ENABLED_ATTRIBUTE));
         if (level == null) {
@@ -114,7 +113,15 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
       }
       toolElement.setAttribute(ToolsImpl.ENABLED_BY_DEFAULT_ATTRIBUTE, String.valueOf(enabled));
 
-      for (Element scopeEl : scopes.values()) {
+      for (String scopeName : scopes.keySet()) {
+        Element scopeEl = scopes.get(scopeName);
+        Set<String> toolsWithScope = mentionedTools.get(scopeName);
+        //copy default settings if tool has no such scope defined
+        for (String sourceToolName : getSourceToolNames()) {
+          if (!toolsWithScope.contains(sourceToolName)) {
+            copyDefaultSettings(scopeEl, inspectionElements, sourceToolName);
+          }
+        }
         toolElement.addContent(scopeEl);
       }
       
@@ -123,24 +130,37 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
     return null;
   }
 
+  private void copyDefaultSettings(Element targetElement, Map<String, Element> inspectionElements, String sourceToolName) {
+    Element oldElement = inspectionElements.get(sourceToolName);
+    if (oldElement != null) {
+      Element defaultElement = wrapElement(sourceToolName, oldElement, targetElement);
+      oldElement.getChildren().stream()
+        .filter(child -> !"scope".equals(child.getName()))
+        .forEach(child -> defaultElement.addContent(child.clone()));
+    }
+  }
+
   private static String getLevel(Element element) {
     return element != null ? element.getAttributeValue(ToolsImpl.LEVEL_ATTRIBUTE) : HighlightSeverity.WARNING.getName();
   }
 
-  protected void collectContent(String sourceToolName, Element sourceElement, Element toolElement, Map<String, Element> scopes) {
+  protected void collectContent(String sourceToolName,
+                                Element sourceElement,
+                                Element toolElement,
+                                Map<String, Element> scopes,
+                                LinkedHashMap<String, Set<String>> mentionedTools) {
     if (sourceElement != null) {
       Element wrapElement = wrapElement(sourceToolName, sourceElement, toolElement);
       for (Element element : sourceElement.getChildren()) {
         if ("scope".equals(element.getName())) {
           String scopeName = element.getAttributeValue("name");
-          if (scopes.containsKey(scopeName)) {
-            copyScopeContent(sourceToolName, element, scopes.get(scopeName));
-          }
-          else if (scopeName != null) {
-            Element scopeElement = element.clone();
-            scopeElement.removeContent();
-            scopes.put(scopeName, scopeElement);
-            copyScopeContent(sourceToolName, element, scopeElement);
+          if (scopeName != null) {
+            mentionedTools.computeIfAbsent(scopeName, s -> new HashSet<>()).add(sourceToolName);
+            copyScopeContent(sourceToolName, element, scopes.computeIfAbsent(scopeName, key -> {
+              Element scopeElement = element.clone();
+              scopeElement.removeContent();
+              return scopeElement;
+            }));
           }
         }
         else {
@@ -151,7 +171,7 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
   }
 
   private void copyScopeContent(String sourceToolName, Element element, Element scopeElement) {
-    Element wrappedScope = wrapElement(sourceToolName, null, scopeElement);
+    Element wrappedScope = wrapElement(sourceToolName, element, scopeElement);
     for (Element scopeEl : element.getChildren()) {
       wrappedScope.addContent(scopeEl.clone());
     }
