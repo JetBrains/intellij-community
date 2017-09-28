@@ -1,18 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.execution.CantRunException;
@@ -36,12 +34,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.lang.ClassPath;
 import com.intellij.util.lang.UrlClassLoader;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -266,7 +262,7 @@ public class JdkUtil {
 
       commandLine.addParameter("@" + argFile.getAbsolutePath());
 
-      getFilesToDeleteUserData(commandLine).add(argFile);
+      OSProcessHandler.deleteFileOnTermination(commandLine, argFile);
     }
     catch (IOException e) {
       throwUnableToCreateTempFile(e);
@@ -355,21 +351,19 @@ public class JdkUtil {
 
       commandLine.addParameter(commandLineWrapper.getName());
       commandLine.addParameter(classpathFile.getAbsolutePath());
+      OSProcessHandler.deleteFileOnTermination(commandLine, classpathFile);
 
       if (vmParamsFile != null) {
         commandLine.addParameter("@vm_params");
         commandLine.addParameter(vmParamsFile.getAbsolutePath());
+        OSProcessHandler.deleteFileOnTermination(commandLine, vmParamsFile);
       }
 
       if (appParamsFile != null) {
         commandLine.addParameter("@app_params");
         commandLine.addParameter(appParamsFile.getAbsolutePath());
+        OSProcessHandler.deleteFileOnTermination(commandLine, appParamsFile);
       }
-
-      Set<File> filesToDelete = getFilesToDeleteUserData(commandLine);
-      ContainerUtil.addIfNotNull(filesToDelete, classpathFile);
-      ContainerUtil.addIfNotNull(filesToDelete, vmParamsFile);
-      ContainerUtil.addIfNotNull(filesToDelete, appParamsFile);
     }
     catch (IOException e) {
       throwUnableToCreateTempFile(e);
@@ -421,7 +415,7 @@ public class JdkUtil {
       }
       commandLine.addParameter(jarFilePath);
 
-      getFilesToDeleteUserData(commandLine).add(classpathJarFile);
+      OSProcessHandler.deleteFileOnTermination(commandLine, classpathJarFile);
     }
     catch (IOException e) {
       throwUnableToCreateTempFile(e);
@@ -518,15 +512,6 @@ public class JdkUtil {
     else {
       throw new CantRunException(ExecutionBundle.message("main.class.is.not.specified.error.message"));
     }
-  }
-
-  private static Set<File> getFilesToDeleteUserData(GeneralCommandLine commandLine) {
-    Set<File> filesToDelete = commandLine.getUserData(OSProcessHandler.DELETE_FILES_ON_TERMINATION);
-    if (filesToDelete == null) {
-      filesToDelete = new THashSet<>();
-      commandLine.putUserData(OSProcessHandler.DELETE_FILES_ON_TERMINATION, filesToDelete);
-    }
-    return filesToDelete;
   }
 
   @Nullable
