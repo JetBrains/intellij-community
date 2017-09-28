@@ -2048,8 +2048,8 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.performance.SubstringZeroInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="TailRecursion" bundle="com.siyeh.InspectionGadgetsBundle" key="tail.recursion.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.performance.TailRecursionInspection"/>
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="true"
+                     level="INFORMATION" implementationClass="com.siyeh.ig.performance.TailRecursionInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ToArrayCallWithZeroLengthArrayArgument" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="to.array.call.with.zero.length.array.argument.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
