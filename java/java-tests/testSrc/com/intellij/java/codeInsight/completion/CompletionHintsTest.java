@@ -659,7 +659,18 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     waitForAllAsyncStuff();
     checkHintContents("<html><b>String</b>&nbsp;&nbsp;<i>a default value.  </i></html>");
   }
-  
+
+  public void testAutopopupIsShownWithCompletionHintsDisabled() throws Exception {
+    CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION = false;
+    configureJava("class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key, String def)");
+    checkResultWithInlays("class C { void m() { System.getProperty(<caret>) } }");
+    waitForAllAsyncStuff();
+    checkHintContents("<html><b>@NotNull String key</b></html>\n" +
+                      "-\n" +
+                      "[<html><b>@NotNull String key</b>, String def</html>]");
+  }
+
   private void checkResult(String text) {
     myFixture.checkResult(text);
   }
