@@ -44,7 +44,8 @@ internal abstract class FileSystemExternalSystemStorage(dirName: String, project
 
   protected val dir: Path = ExternalProjectsDataStorage.getProjectConfigurationDir(project).resolve(dirName)
 
-  private var hasSomeData: Boolean
+  var hasSomeData: Boolean
+    private set
 
   init {
     val fileAttributes = dir.basicAttributesIfExists()
