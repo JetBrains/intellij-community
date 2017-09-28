@@ -2149,8 +2149,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testModificationInExcludedFileDoesNotCauseRehighlight() {
-    final PsiFile excluded = configureByText(JavaFileType.INSTANCE, "class EEE { void f(){} }");
-    PsiTestUtil.addExcludedRoot(myModule, excluded.getVirtualFile().getParent());
+    VirtualFile excluded = configureByText(JavaFileType.INSTANCE, "class EEE { void f(){} }").getVirtualFile();
+    PsiTestUtil.addExcludedRoot(myModule, excluded.getParent());
 
     configureByText(JavaFileType.INSTANCE, "class X { <caret> }");
     List<HighlightInfo> errors = highlightErrors();
@@ -2159,7 +2159,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     TextRange scope = me.getFileDirtyScope(getEditor().getDocument(), Pass.UPDATE_ALL);
     assertNull(scope);
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> ((PsiJavaFile)excluded).getClasses()[0].getMethods()[0].delete());
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> ((PsiJavaFile)PsiManager.getInstance(myProject).findFile(excluded)).getClasses()[0].getMethods()[0].delete());
 
     UIUtil.dispatchAllInvocationEvents();
     scope = me.getFileDirtyScope(getEditor().getDocument(), Pass.UPDATE_ALL);

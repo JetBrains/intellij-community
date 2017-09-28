@@ -1004,16 +1004,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   protected PsiFile addFileToProject(@NotNull final String rootPath, @NotNull final String relativePath, @NotNull final String fileText) {
-    return new WriteCommandAction<PsiFile>(getProject()) {
+    VirtualFile file = new WriteCommandAction<VirtualFile>(getProject()) {
       @Override
-      protected void run(@NotNull Result<PsiFile> result) throws Throwable {
+      protected void run(@NotNull Result<VirtualFile> result) {
         try {
           if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
-            final VirtualFile file = myTempDirFixture.createFile(relativePath, fileText);
-            result.setResult(PsiManager.getInstance(getProject()).findFile(file));
+            result.setResult(myTempDirFixture.createFile(relativePath, fileText));
           }
           else {
-            result.setResult(((HeavyIdeaTestFixture)myProjectFixture).addFileToProject(rootPath, relativePath, fileText));
+            result.setResult(((HeavyIdeaTestFixture)myProjectFixture).addFileToProject(rootPath, relativePath, fileText).getViewProvider().getVirtualFile());
           }
         }
         catch (IOException e) {
@@ -1024,6 +1023,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         }
       }
     }.execute().getResultObject();
+    return ReadAction.compute(() -> PsiManager.getInstance(getProject()).findFile(file));
   }
 
   public <T> void registerExtension(final ExtensionsArea area, final ExtensionPointName<T> epName, final T extension) {
