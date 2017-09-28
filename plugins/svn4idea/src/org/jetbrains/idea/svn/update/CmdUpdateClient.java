@@ -19,10 +19,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
-import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.api.EventAction;
-import org.jetbrains.idea.svn.api.ProgressEvent;
-import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.*;
 import org.jetbrains.idea.svn.commandLine.BaseUpdateCommandListener;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
@@ -37,8 +34,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-// TODO: Currently make inherit SVNKit update implementation not to duplicate setXxx() methods.
-public class CmdUpdateClient extends SvnKitUpdateClient {
+public class CmdUpdateClient extends BaseSvnClient implements UpdateClient {
+
+  @Nullable private ProgressTracker myDispatcher;
+  private boolean myIgnoreExternals;
+
+  @Override
+  public void setUpdateLocksOnDemand(boolean locksOnDemand) {
+  }
+
+  @Override
+  public void setEventHandler(ProgressTracker dispatcher) {
+    myDispatcher = dispatcher;
+  }
+
+  @Override
+  public void setIgnoreExternals(boolean ignoreExternals) {
+    myIgnoreExternals = ignoreExternals;
+  }
 
   private void checkWorkingCopy(@NotNull File path) throws SvnBindException {
     final Info info = myFactory.createInfoClient().doInfo(path, SVNRevision.UNDEFINED);
