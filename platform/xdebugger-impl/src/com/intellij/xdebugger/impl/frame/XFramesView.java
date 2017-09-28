@@ -70,7 +70,7 @@ public class XFramesView extends XDebugView {
   private final ActionToolbarImpl myToolbar;
   private final Wrapper myThreadsPanel;
   private boolean myThreadsCalculated = false;
-  private final TransferToEDTQueue<Runnable> myLaterInvocator = TransferToEDTQueue.createRunnableMerger("XFramesView later invocator", 50);
+  private final TransferToEDTQueue<Runnable> myLaterInvocator = TransferToEDTQueue.createRunnableMerger("XFramesView later invocator");
   private boolean myRefresh = false;
 
   public XFramesView(@NotNull Project project) {

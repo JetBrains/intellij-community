@@ -117,7 +117,7 @@ public class ExternalSystemApiUtil {
     new TransferToEDTQueue<>("External System queue", runnable -> {
       runnable.run();
       return true;
-    }, Conditions.alwaysFalse(), 300);
+    }, Conditions.alwaysFalse());
 
   private ExternalSystemApiUtil() {
   }
