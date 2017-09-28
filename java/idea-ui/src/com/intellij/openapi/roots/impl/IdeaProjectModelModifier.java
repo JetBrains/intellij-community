@@ -19,11 +19,9 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -72,12 +70,12 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
       classesRoots = new LocateLibraryDialog(firstModule, defaultRoots, descriptor.getPresentableName()).showAndGetResult();
     }
     else {
+      String version = descriptor.getMinVersion();
       String mavenCoordinates = descriptor.getLibraryGroupId() + ":" +
                                 descriptor.getLibraryArtifactId() +
-                                ObjectUtils.notNull(":" + descriptor.getMinVersion(), "");
+                                (version != null ? ":" + version : "");
       RepositoryAttachDialog dialog = new RepositoryAttachDialog(myProject, mavenCoordinates, RepositoryAttachDialog.Mode.DOWNLOAD);
-      dialog.show();
-      if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
+      if (!dialog.showAndGet()) {
         return Promises.rejectedPromise();
       }
 
