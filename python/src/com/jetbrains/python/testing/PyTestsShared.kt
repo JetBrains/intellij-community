@@ -253,7 +253,10 @@ data class ConfigurationTarget(@ConfigField var target: String,
    */
   fun checkValid() {
     if (targetType != TestTargetType.CUSTOM && target.isEmpty()) {
-      throw RuntimeConfigurationWarning("Target should be set for anything but custom")
+      throw RuntimeConfigurationWarning("Target not provided")
+    }
+    if (targetType == TestTargetType.PYTHON && !Regex("^[a-zA-Z0-9.]+[a-zA-Z0-9]$").matches(target)) {
+      throw RuntimeConfigurationWarning("Provide qualified python name")
     }
   }
 
