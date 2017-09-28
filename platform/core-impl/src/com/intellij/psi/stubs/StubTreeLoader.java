@@ -69,7 +69,7 @@ public abstract class StubTreeLoader {
   }
 
   @NotNull
-  public RuntimeException stubTreeAndIndexDoNotMatch(@NotNull String _message, @NotNull ObjectStubTree stubTree, @NotNull PsiFileWithStubSupport psiFile) {
+  public RuntimeException stubTreeAndIndexDoNotMatch(@NotNull String _message, @Nullable ObjectStubTree stubTree, @NotNull PsiFileWithStubSupport psiFile) {
     VirtualFile file = psiFile.getViewProvider().getVirtualFile();
     StubTree stubTreeFromIndex = (StubTree)readFromVFile(psiFile.getProject(), file);
     boolean compiled = psiFile instanceof PsiCompiledElement;
@@ -100,11 +100,15 @@ public abstract class StubTreeLoader {
       }
     }
 
-    msg += "\n stub debugInfo=" + stubTree.getDebugInfo();
+    if (stubTree != null) {
+      msg += "\n stub debugInfo=" + stubTree.getDebugInfo();
+    }
 
     msg += "\nlatestIndexedStub=" + stubTreeFromIndex;
     if (stubTreeFromIndex != null) {
-      msg += "\n   same size=" + (stubTree.getPlainList().size() == stubTreeFromIndex.getPlainList().size());
+      if (stubTree != null) {
+        msg += "\n   same size=" + (stubTree.getPlainList().size() == stubTreeFromIndex.getPlainList().size());
+      }
       msg += "\n   debugInfo=" + stubTreeFromIndex.getDebugInfo();
     }
 
@@ -137,13 +141,15 @@ public abstract class StubTreeLoader {
   }
 
   @NotNull
-  private static Attachment[] createAttachments(@NotNull ObjectStubTree stubTree,
+  private static Attachment[] createAttachments(@Nullable ObjectStubTree stubTree,
                                                 @NotNull PsiFileWithStubSupport psiFile,
                                                 VirtualFile file,
                                                 @Nullable StubTree stubTreeFromIndex) {
     List<Attachment> attachments = ContainerUtil.newArrayList();
     attachments.add(new Attachment(file.getPath() + "_file.txt", psiFile instanceof PsiCompiledElement ? "compiled" : psiFile.getText()));
-    attachments.add(new Attachment("stubTree.txt", ((PsiFileStubImpl)stubTree.getRoot()).printTree()));
+    if (stubTree != null) {
+      attachments.add(new Attachment("stubTree.txt", ((PsiFileStubImpl)stubTree.getRoot()).printTree()));
+    }
     if (stubTreeFromIndex != null) {
       attachments.add(new Attachment("stubTreeFromIndex.txt", ((PsiFileStubImpl)stubTreeFromIndex.getRoot()).printTree()));
     }

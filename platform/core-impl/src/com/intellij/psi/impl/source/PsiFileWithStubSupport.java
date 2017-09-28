@@ -19,10 +19,8 @@
  */
 package com.intellij.psi.impl.source;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubTree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,12 +37,6 @@ public interface PsiFileWithStubSupport extends PsiFile {
    */
   @Nullable
   StubTree getStubTree();
-
-  /**
-   * Loads the AST for this file and returns the node which corresponds to the given stub
-   */
-  @Nullable
-  ASTNode findTreeForStub(StubTree tree, StubElement<?> stub);
 
   /**
    * @return StubbedSpine for accessing stubbed PSI, which can be backed up by stubs or AST
