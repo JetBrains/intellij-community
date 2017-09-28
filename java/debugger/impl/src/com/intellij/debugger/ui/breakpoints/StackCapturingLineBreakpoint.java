@@ -236,9 +236,9 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
                                                      boolean checkInProcessData) {
     DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
     Map<Object, List<StackFrameItem>> capturedStacks = debugProcess.getUserData(CAPTURED_STACKS);
-    if (ContainerUtil.isEmpty(capturedStacks) && !Registry.is("debugger.capture.points.agent")) {
-      return null;
-    }
+    //if (ContainerUtil.isEmpty(capturedStacks) && !Registry.is("debugger.capture.points.agent")) {
+    //  return null;
+    //}
     List<StackCapturingLineBreakpoint> captureBreakpoints = debugProcess.getUserData(CAPTURE_BREAKPOINTS);
     if (ContainerUtil.isEmpty(captureBreakpoints)) {
       return null;
@@ -284,14 +284,21 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
 
   private static List<StackFrameItem> getProcessCapturedStack(Value key, EvaluationContextImpl evaluationContext)
     throws EvaluateException {
+    evaluationContext = evaluationContext.withAutoLoadClasses(false);
+
     DebugProcessImpl process = evaluationContext.getDebugProcess();
     Pair<ClassType, Method> methodPair = process.getUserData(CAPTURE_STORAGE_METHOD);
 
     if (methodPair == null) {
       try {
         ClassType captureClass = (ClassType)process.findClass(evaluationContext, "com.intellij.rt.debugger.agent.CaptureStorage", null);
-        Method getRelatedStackMethod = captureClass.methodsByName("getRelatedStack").get(0);
-        methodPair = Pair.create(captureClass, getRelatedStackMethod);
+        if (captureClass == null) {
+          methodPair = NO_CAPTURE_AGENT;
+          LOG.debug("Error loading debug agent", "agent class not found");
+        }
+        else {
+          methodPair = Pair.create(captureClass, captureClass.methodsByName("getRelatedStack").get(0));
+        }
       }
       catch (EvaluateException e) {
         methodPair = NO_CAPTURE_AGENT;
