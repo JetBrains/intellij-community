@@ -5,6 +5,7 @@ package com.jetbrains.python;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.override.PyMethodMember;
 import com.jetbrains.python.codeInsight.override.PyOverrideImplementUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -14,6 +15,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 
+import java.util.Arrays;
 import java.util.Collections;
 
 /**
@@ -117,6 +119,21 @@ public class PyOverrideTest extends PyTestCase {
   // PY-11127
   public void testOverriddenMethodRaisesNotImplementedErrorNoInstance() {
     doTest();
+  }
+
+  // PY-25906
+  public void testImplementationOrder() {
+    myFixture.configureByFile("override/" + getTestName(true) + ".py");
+
+    final PyFunction[] toImplement = getTopLevelClass(0).getMethods();
+    assertEquals(Arrays.asList("foo", "bar"), ContainerUtil.map(toImplement, PyFunction::getName));
+
+    PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(),
+                                            getTopLevelClass(1),
+                                            ContainerUtil.map(toImplement, PyMethodMember::new),
+                                            true);
+
+    myFixture.checkResultByFile("override/" + getTestName(true) + "_after.py", true);
   }
 
   public void testPy3k() {
