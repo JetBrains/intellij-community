@@ -38,6 +38,8 @@ public abstract class ShowSettingsUtil {
 
   public abstract void showSettingsDialog(@NotNull final Project project, final Configurable toSelect);
 
+  public abstract void showSettingsDialogInternal(@Nullable Project project, final String id2Select, final String filter);
+
   public abstract <T extends Configurable> void showSettingsDialog(@Nullable Project project,
                                                                    @NotNull Class<T> configurableClass,
                                                                    @Nullable Consumer<T> additionalConfiguration);

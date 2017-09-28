@@ -146,6 +146,10 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   public static void showSettingsDialog(@Nullable Project project, final String id2Select, final String filter) {
+    getInstance().showSettingsDialogInternal(project, id2Select, filter);
+  }
+
+  public void showSettingsDialogInternal(@Nullable Project project, final String id2Select, final String filter) {
     ConfigurableGroup[] group = getConfigurableGroups(project, true);
 
     group = filterEmptyGroups(group);
