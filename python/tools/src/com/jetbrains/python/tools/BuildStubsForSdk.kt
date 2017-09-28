@@ -29,13 +29,13 @@ fun getBaseDirValue(): String? {
   if (path == null) {
     Assert.fail("$PREBUILT_INDICES_PATH_PROPERTY variable is not defined")
   }
-  else
-    if (File(path).exists()) {
-      return path
+  else {
+    if (!File(path).exists()) {
+      File(path).mkdirs()
     }
-    else {
-      Assert.fail("Directory $path doesn't exist")
-    }
+    return path
+  }
+
   return null
 }
 
