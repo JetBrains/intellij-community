@@ -547,6 +547,16 @@ public class PyEditingTest extends PyTestCase {
     doTypingTest('(');
   }
 
+  // PY-21269
+  public void testFirstParamMultipleMethods() {
+    doTypingTest('(');
+  }
+
+  // PY-21289
+  public void testPairedParenthesesMultipleCalls() {
+    doTypingTest('(');
+  }
+
   public void testEnterBeforeString() {  // PY-3673
     doTestEnter("<caret>''", "\n''");
   }
