@@ -15,6 +15,7 @@
  */
 package git4idea.repo;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -34,9 +35,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.dvcs.DvcsUtil.ensureAllChildrenInVfs;
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
-
 /**
  * Listens to .git service files changes and updates {@link GitRepository} when needed.
  */
@@ -45,11 +43,12 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
   @NotNull private final GitRepository myRepository;
   @NotNull private final GitRepositoryFiles myRepositoryFiles;
   @Nullable private final MessageBusConnection myMessageBusConnection;
-  @NotNull private final QueueProcessor<List<? extends VFileEvent> > myUpdateQueue;
+  @NotNull private final QueueProcessor<Object> myUpdateQueue;
+  @NotNull private final Object DUMMY_UPDATE_OBJECT = new Object();
   @Nullable private final VirtualFile myRemotesDir;
   @Nullable private final VirtualFile myHeadsDir;
   @Nullable private final VirtualFile myTagsDir;
-  @NotNull private final Set<LocalFileSystem.WatchRequest> myWatchRequests;
+  @Nullable private final Set<LocalFileSystem.WatchRequest> myWatchRequests;
 
   GitRepositoryUpdater(@NotNull GitRepository repository, @NotNull GitRepositoryFiles gitFiles) {
     myRepository = repository;
@@ -63,8 +62,7 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
     myTagsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsTagsFile());
 
     Project project = repository.getProject();
-    myUpdateQueue = new QueueProcessor<>(events -> processEvents(events), project.getDisposed());
-
+    myUpdateQueue = new QueueProcessor<>(new DvcsUtil.Updater(repository), project.getDisposed());
     if (!project.isDisposed()) {
       myMessageBusConnection = project.getMessageBus().connect();
       myMessageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, this);
@@ -84,10 +82,6 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
 
   @Override
   public void after(@NotNull List<? extends VFileEvent> events) {
-    myUpdateQueue.add(newArrayList(events));
-  }
-
-  private void processEvents(@NotNull List<? extends VFileEvent> events) {
     // which files in .git were changed
     boolean configChanged = false;
     boolean headChanged = false;
@@ -105,11 +99,11 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
       } else if (myRepositoryFiles.isBranchFile(filePath)) {
         // it is also possible, that a local branch with complex name ("folder/branch") was created => the folder also to be watched.
           branchFileChanged = true;
-        ensureAllChildrenInVfs(myHeadsDir);
+        DvcsUtil.ensureAllChildrenInVfs(myHeadsDir);
       } else if (myRepositoryFiles.isRemoteBranchFile(filePath)) {
         // it is possible, that a branch from a new remote was fetch => we need to add new remote folder to the VFS
         branchFileChanged = true;
-        ensureAllChildrenInVfs(myRemotesDir);
+        DvcsUtil.ensureAllChildrenInVfs(myRemotesDir);
       } else if (myRepositoryFiles.isPackedRefs(filePath)) {
         packedRefsChanged = true;
       } else if (myRepositoryFiles.isRebaseFile(filePath)) {
@@ -117,13 +111,13 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
       } else if (myRepositoryFiles.isMergeFile(filePath)) {
         mergeFileChanged = true;
       } else if (myRepositoryFiles.isTagFile(filePath)) {
-        ensureAllChildrenInVfs(myTagsDir);
+        DvcsUtil.ensureAllChildrenInVfs(myTagsDir);
         tagChanged = true;
       }
     }
 
     if (headChanged || configChanged || branchFileChanged || packedRefsChanged || rebaseFileChanged || mergeFileChanged) {
-      myRepository.update();
+      myUpdateQueue.add(DUMMY_UPDATE_OBJECT);
     }
     else if (tagChanged) {
       myRepository.getProject().getMessageBus().syncPublisher(GitRepository.GIT_REPO_CHANGE).repositoryChanged(myRepository);
@@ -135,7 +129,7 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
       rootDir.getChildren();
     }
     for (String path : myRepositoryFiles.getDirsToWatch()) {
-      ensureAllChildrenInVfs(LocalFileSystem.getInstance().refreshAndFindFileByPath(path));
+      DvcsUtil.ensureAllChildrenInVfs(LocalFileSystem.getInstance().refreshAndFindFileByPath(path));
     }
   }
 }

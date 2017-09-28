@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
-import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBusConnection;
 import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
@@ -35,8 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 /**
  * <p>
@@ -82,6 +79,8 @@ import static com.intellij.util.containers.ContainerUtil.newArrayList;
  *   This is done so, because the latter two variables are accessed from the AWT in after() and we don't want to lock the AWT long,
  *   while myDefinitelyUntrackedFiles is modified along with native request to Git.
  * </p>
+ *
+ * @author Kirill Likhodedov
  */
 public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
 
@@ -102,8 +101,6 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   private final Object LOCK = new Object();
   private final GitRepositoryManager myRepositoryManager;
 
-  private final QueueProcessor<List<? extends VFileEvent>> myEventsProcessor;
-
   GitUntrackedFilesHolder(@NotNull GitRepository repository, @NotNull GitRepositoryFiles gitFiles) {
     myProject = repository.getProject();
     myRepository = repository;
@@ -115,8 +112,6 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
 
     myRepositoryManager = GitUtil.getRepositoryManager(myProject);
     myRepositoryFiles = gitFiles;
-
-    myEventsProcessor = new QueueProcessor<>(events -> processEvents(events), myProject.getDisposed());
   }
 
   void setupVfsListener(@NotNull Project project) {
@@ -235,10 +230,6 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
 
   @Override
   public void after(@NotNull List<? extends VFileEvent> events) {
-    myEventsProcessor.add(newArrayList(events));
-  }
-
-  private void processEvents(@NotNull List<? extends VFileEvent> events) {
     boolean allChanged = false;
     Set<VirtualFile> filesToRefresh = new HashSet<>();
 
