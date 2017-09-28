@@ -51,7 +51,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class PyDataView implements DumbAware {
-  public static final String DATA_VIEWER_ID = "Data View";
+  public static final String DATA_VIEWER_ID = "SciView";
   public static final String COLORED_BY_DEFAULT = "python.debugger.dataview.coloredbydefault";
   public static final String AUTO_RESIZE = "python.debugger.dataview.autoresize";
   public static final String EMPTY_TAB_NAME = "empty";
@@ -77,6 +77,10 @@ public class PyDataView implements DumbAware {
       dataViewerPanel.apply(value);
     });
     window.show(null);
+    final Content dataView = window.getContentManager().getContent(0);
+    if (dataView != null) {
+      window.getContentManager().setSelectedContent(dataView);
+    }
   }
 
   public void closeTabs(Predicate<PyFrameAccessor> ifClose) {
@@ -162,7 +166,7 @@ public class PyDataView implements DumbAware {
     myTabs = new PyDataViewTabs(myProject);
     myTabs.setPopupGroup(new DefaultActionGroup(new ColoredAction()), ActionPlaces.UNKNOWN, true);
     myTabs.setTabDraggingEnabled(true);
-    final Content content = ContentFactory.SERVICE.getInstance().createContent(myTabs, "", false);
+    final Content content = ContentFactory.SERVICE.getInstance().createContent(myTabs, "Data", false);
     content.setCloseable(true);
     toolWindow.getContentManager().addContent(content);
     ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).addToolWindowManagerListener(new ToolWindowManagerAdapter() {

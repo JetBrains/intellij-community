@@ -54,6 +54,7 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.remote.RemoteProcessControl;
 import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.actions.PySciProjectComponent;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
@@ -371,6 +372,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   public void customizeEnvironmentVars(Map<String, String> envs, boolean passParentEnvs) {
+    if (PySciProjectComponent.getInstance(myConfig.getProject()).matplotlibInToolwindow() &&
+        PySciProjectComponent.getInstance(myConfig.getProject()).getPort() != -1) {
+      envs.put("PYCHARM_MATPLOTLIB_PORT", String.valueOf(PySciProjectComponent.getInstance(myConfig.getProject()).getPort()));
+    }
   }
 
   private static void setupEncodingEnvs(Map<String, String> envs, Charset charset) {
@@ -380,7 +385,11 @@ public abstract class PythonCommandLineState extends CommandLineState {
   private static void buildPythonPath(Project project, GeneralCommandLine commandLine, PythonRunParams config, boolean isDebug) {
     Sdk pythonSdk = PythonSdkType.findSdkByPath(config.getSdkHome());
     if (pythonSdk != null) {
-      List<String> pathList = Lists.newArrayList(getAddedPaths(pythonSdk));
+      List<String> pathList = Lists.newArrayList();
+      if (PySciProjectComponent.getInstance(project).matplotlibInToolwindow()) {
+        pathList.add(PythonHelpersLocator.getHelperPath("pycharm_matplotlib_backend"));
+      }
+      pathList.addAll(getAddedPaths(pythonSdk));
       pathList.addAll(collectPythonPath(project, config, isDebug));
       initPythonPath(commandLine, config.isPassParentEnvs(), pathList, config.getSdkHome());
     }

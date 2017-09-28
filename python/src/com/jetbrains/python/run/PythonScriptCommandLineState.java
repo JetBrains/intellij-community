@@ -115,6 +115,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
 
   @Override
   public void customizeEnvironmentVars(Map<String, String> envs, boolean passParentEnvs) {
+    super.customizeEnvironmentVars(envs, passParentEnvs);
     if (myConfig.emulateTerminal()) {
       if (!SystemInfo.isWindows) {
         envs.put("TERM", "xterm-256color");
