@@ -61,17 +61,20 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   private final SmartPsiFileRange myReferencePointer;
 
   protected OrderEntryFix(@Nullable PsiReference reference) {
+    myReferencePointer = createReferencePointer(reference);
+  }
+
+  @Nullable
+  private static SmartPsiFileRange createReferencePointer(@Nullable PsiReference reference) {
     if (reference != null) {
       PsiElement element = reference.getElement();
       int offset = element.getTextRange().getStartOffset() + reference.getRangeInElement().getStartOffset();
       PsiFile file = element.getContainingFile();
-      if (!areReferencesEquivalent(reference, file.findReferenceAt(offset))) {
-        throw new AssertionError();
+      if (areReferencesEquivalent(reference, file.findReferenceAt(offset))) {
+        return SmartPointerManager.getInstance(element.getProject()).createSmartPsiFileRangePointer(file, TextRange.from(offset, 0));
       }
-      myReferencePointer = SmartPointerManager.getInstance(element.getProject()).createSmartPsiFileRangePointer(file, TextRange.from(offset, 0));
-    } else {
-      myReferencePointer = null;
     }
+    return null;
   }
 
   private static boolean areReferencesEquivalent(@NotNull PsiReference ref1, @Nullable PsiReference ref2) {
