@@ -70,4 +70,13 @@ class BaseLayoutSpec {
   void excludeFromModule(String moduleName, String excludedPattern) {
     layout.moduleExcludes.put(moduleName, excludedPattern)
   }
+
+  /**
+   * Include an artifact output to the plugin distribution.
+   * @param artifactName name of the project configuration  
+   * @param relativeOutputPath target path relative to 'lib' directory
+   */
+  void withArtifact(String artifactName, String relativeOutputPath) {
+    layout.includedArtifacts.put(artifactName, relativeOutputPath)
+  }
 }

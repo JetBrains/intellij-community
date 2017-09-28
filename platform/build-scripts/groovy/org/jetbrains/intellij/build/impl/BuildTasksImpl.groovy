@@ -18,6 +18,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.intellij.build.*
+import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
@@ -300,6 +301,8 @@ idea.fatal.error.notification=disabled
 
     //we need this to ensure that all libraries which may be used in the distribution are resolved, even if product modules don't depend on them (e.g. JUnit5)
     CompilationTasks.create(buildContext).resolveProjectDependencies()
+
+    CompilationTasks.create(buildContext).buildProjectArtifacts(distributionJARsBuilder.includedProjectArtifacts)
   }
 
   @Override
@@ -445,6 +448,7 @@ idea.fatal.error.notification=disabled
       checkModules(plugin.moduleJars.values() - plugin.optionalModules, "'$plugin.mainModule' plugin")
       checkModules(plugin.moduleExcludes.keySet(), "'$plugin.mainModule' plugin")
       checkProjectLibraries(plugin.includedProjectLibraries, "'$plugin.mainModule' plugin")
+      checkArtifacts(plugin.includedArtifacts.keySet(), "'$plugin.mainModule' plugin")
     }
   }
 
@@ -459,6 +463,13 @@ idea.fatal.error.notification=disabled
     def unknownLibraries = names.findAll {buildContext.project.libraryCollection.findLibrary(it) == null}
     if (!unknownLibraries.empty) {
       buildContext.messages.error("The following libraries from $fieldName aren't found in the project: $unknownLibraries")
+    }
+  }
+
+  private void checkArtifacts(Collection<String> names, String fieldName) {
+    def unknownArtifacts = names - JpsArtifactService.instance.getArtifacts(buildContext.project).collect {it.name}
+    if (!unknownArtifacts.empty) {
+      buildContext.messages.error("The following artifacts from $fieldName aren't found in the project: $unknownArtifacts")
     }
   }
 
