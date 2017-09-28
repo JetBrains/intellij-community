@@ -46,6 +46,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@SuppressWarnings("StatementWithEmptyBody")
 @JITSensitive
 public class ApplicationImplTest extends LightPlatformTestCase {
   @Override
@@ -75,6 +76,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
           CpuUsageData dataAcq = CpuUsageData.measureCpuUsage(() -> {
             for (int i1 = 0; i1 < N; i1++) {
               AccessToken token = application.acquireReadActionLock();
+              //noinspection EmptyTryBlock
               try {
                 // do it
               }
@@ -510,20 +512,24 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       UIUtil.dispatchAllInvocationEvents();
     }
     //System.out.println("warming finished");
-    final int readIterations = 100000000;
+    final int readIterations = 100_000_000;
     PlatformTestUtil.startPerformanceTest("RWLock/unlock", 1500, ()-> {
       ReadMostlyRWLock lock = new ReadMostlyRWLock(Thread.currentThread());
 
       final int numOfThreads = JobSchedulerImpl.CORES_COUNT;
       List<Thread> threads = new ArrayList<>(numOfThreads);
       for (int i = 0; i < numOfThreads; i++) {
-        Thread thread = new Thread(() -> {
-          for (int i1 = 0; i1 < readIterations; i1++) {
-            try {
-              lock.readLock();
-            }
-            finally {
-              lock.readUnlock();
+        @SuppressWarnings("Convert2Lambda") // runnable is more debuggable
+        Thread thread = new Thread(new Runnable() {
+          @Override
+          public void run() {
+            for (int r = 0; r < readIterations; r++) {
+              try {
+                lock.readLock();
+              }
+              finally {
+                lock.readUnlock();
+              }
             }
           }
         }, "read thread " + i);
@@ -573,14 +579,14 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       log.add("write started");
       app.executeSuspendingWriteAction(ourProject, "", () -> {
         app.invokeAndWait(() ->
-          futures.add(app.executeOnPooledThread((Runnable)() -> ReadAction.run((ThrowableRunnable<RuntimeException>)() -> log.add("foreign read")))));
+          futures.add(app.executeOnPooledThread(() -> ReadAction.run(() -> log.add("foreign read")))));
 
         mayStartForeignRead.up();
         TimeoutUtil.sleep(50);
 
         ReadAction.run(() -> log.add("progress read"));
         app.invokeAndWait(() -> WriteAction.run(() -> log.add("nested write")));
-        waitForFuture(app.executeOnPooledThread((Runnable)() -> ReadAction.run((ThrowableRunnable<RuntimeException>)() -> log.add("forked read"))));
+        waitForFuture(app.executeOnPooledThread(() -> ReadAction.run(() -> log.add("forked read"))));
       });
       log.add("write finished");
     });
@@ -607,7 +613,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       assertTrue(app.hasWriteAction(actionClass));
       app.executeSuspendingWriteAction(ourProject, "", () -> ReadAction.run(() -> {
         assertTrue(app.hasWriteAction(actionClass));
-        waitForFuture(app.executeOnPooledThread((Runnable)() -> ReadAction.run((ThrowableRunnable<RuntimeException>)() -> assertTrue(app.hasWriteAction(actionClass)))));
+        waitForFuture(app.executeOnPooledThread(() -> ReadAction.run(() -> assertTrue(app.hasWriteAction(actionClass)))));
       }));
     });
   }
@@ -639,7 +645,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
   public void testPooledThreadsStartedAfterQuickSuspendedWriteActionDontGetReadPrivileges() {
     for (int i = 0; i < 1000; i++) {
-      safeWrite(() -> checkPooledThreadsDontGetWrongPrivileges());
+      safeWrite(ApplicationImplTest::checkPooledThreadsDontGetWrongPrivileges);
     }
   }
 
@@ -737,13 +743,11 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     Future<?> readAction2 = app.executeOnPooledThread(() -> {
       // wait for write action attempt to start
       while (!app.isWriteActionPending());
-      ProgressManager.getInstance().executeNonCancelableSection(()->{
-        app.executeByImpatientReader(() -> {
-          executingImpatientReader.set(true);
-          app.runReadAction(EmptyRunnable.getInstance());
-          // must not throw
-        });
-      });
+      ProgressManager.getInstance().executeNonCancelableSection(()-> app.executeByImpatientReader(() -> {
+        executingImpatientReader.set(true);
+        app.runReadAction(EmptyRunnable.getInstance());
+        // must not throw
+      }));
     });
 
     Future<?> readAction1Canceler = app.executeOnPooledThread(() -> {
