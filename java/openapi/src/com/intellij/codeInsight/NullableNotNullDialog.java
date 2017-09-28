@@ -23,6 +23,7 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -56,7 +57,7 @@ public class NullableNotNullDialog extends DialogWrapper {
     super(project, true);
     myProject = project;
     init();
-    setTitle("Nullable/NotNull configuration");
+    setTitle("Nullable/NotNull Configuration");
   }
 
   public static JButton createConfigureAnnotationsButton(Component context) {
@@ -112,18 +113,18 @@ public class NullableNotNullDialog extends DialogWrapper {
   private class AnnotationsPanel {
     private String myDefaultAnnotation;
     private final Set<String> myDefaultAnnotations;
-    private final JBList myList;
+    private final JBList<String> myList;
     private final JPanel myComponent;
 
     private AnnotationsPanel(final String name, final String defaultAnnotation,
                              final Collection<String> annotations, final String[] defaultAnnotations) {
       myDefaultAnnotation = defaultAnnotation;
-      myDefaultAnnotations = new HashSet(Arrays.asList(defaultAnnotations));
-      myList = new JBList(annotations);
-      myList.setCellRenderer(new ColoredListCellRenderer() {
+      myDefaultAnnotations = new HashSet<>(Arrays.asList(defaultAnnotations));
+      myList = new JBList<>(annotations);
+      myList.setCellRenderer(new ColoredListCellRenderer<String>() {
         @Override
-        protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
-          append((String)value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        protected void customizeCellRenderer(@NotNull JList list, String value, int index, boolean selected, boolean hasFocus) {
+          append(value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
           if (value.equals(myDefaultAnnotation)) {
             setIcon(AllIcons.Diff.CurrentLine);
           } else {
@@ -139,10 +140,10 @@ public class NullableNotNullDialog extends DialogWrapper {
         new AnActionButton("Select annotation used for code generation", AllIcons.Actions.Checked) {
           @Override
           public void actionPerformed(AnActionEvent e) {
-            final String selectedValue = (String)myList.getSelectedValue();
+            final String selectedValue = myList.getSelectedValue();
             if (selectedValue == null) return;
             myDefaultAnnotation = selectedValue;
-            final DefaultListModel model = (DefaultListModel)myList.getModel();
+            DefaultListModel<String> model = (DefaultListModel<String>)myList.getModel();
 
             // to show the new default value in the ui
             model.setElementAt(myList.getSelectedValue(), myList.getSelectedIndex());
@@ -150,11 +151,8 @@ public class NullableNotNullDialog extends DialogWrapper {
 
           @Override
           public void updateButton(AnActionEvent e) {
-            final String selectedValue = (String)myList.getSelectedValue();
-            final boolean enabled = selectedValue != null && !selectedValue.equals(myDefaultAnnotation);
-            if (!enabled) {
-              e.getPresentation().setEnabled(enabled);
-            }
+            String selectedValue = myList.getSelectedValue();
+            e.getPresentation().setEnabled(selectedValue != null && !selectedValue.equals(myDefaultAnnotation));
           }
         };
 
@@ -168,9 +166,9 @@ public class NullableNotNullDialog extends DialogWrapper {
         .setRemoveAction(new AnActionButtonRunnable() {
           @Override
           public void run(AnActionButton anActionButton) {
-            final String selectedValue = (String)myList.getSelectedValue();
+            final String selectedValue = myList.getSelectedValue();
             if (selectedValue == null) return;
-            if (myDefaultAnnotation.equals(selectedValue)) myDefaultAnnotation = (String)myList.getModel().getElementAt(0);
+            if (myDefaultAnnotation.equals(selectedValue)) myDefaultAnnotation = myList.getModel().getElementAt(0);
 
             ((DefaultListModel)myList.getModel()).removeElement(selectedValue);
           }
@@ -178,16 +176,16 @@ public class NullableNotNullDialog extends DialogWrapper {
         .addExtraAction(selectButton);
       final JPanel panel = toolbarDecorator.createPanel();
       myComponent = new JPanel(new BorderLayout());
-      myComponent.setBorder(IdeBorderFactory.createTitledBorder(name + " annotations", false, new Insets(10, 0, 0, 0)));
+      myComponent.setBorder(IdeBorderFactory.createTitledBorder(name + " annotations", false, JBUI.insetsTop(10)));
       myComponent.add(panel);
       final AnActionButton removeButton = ToolbarDecorator.findRemoveButton(myComponent);
       myList.addListSelectionListener(new ListSelectionListener() {
         @Override
         public void valueChanged(ListSelectionEvent e) {
           if (e.getValueIsAdjusting()) return;
-          final String selectedValue = (String)myList.getSelectedValue();
+          final String selectedValue = myList.getSelectedValue();
           if (myDefaultAnnotations.contains(selectedValue)) {
-            SwingUtilities.invokeLater(() -> removeButton.setEnabled(false));
+            ApplicationManager.getApplication().invokeLater(() -> removeButton.setEnabled(false));
           }
         }
       });
@@ -209,7 +207,8 @@ public class NullableNotNullDialog extends DialogWrapper {
         return;
       }
       final String qualifiedName = selected.getQualifiedName();
-      final DefaultListModel model = (DefaultListModel)list.getModel();
+      //noinspection unchecked
+      final DefaultListModel<String> model = (DefaultListModel<String>)list.getModel();
       final int index = model.indexOf(qualifiedName);
       if (index < 0) {
         model.addElement(qualifiedName);
