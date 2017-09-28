@@ -151,7 +151,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private SvnCheckoutProvider myCheckoutProvider;
 
   @NotNull private final ClientFactory cmdClientFactory;
-  @NotNull private final ClientFactory svnKitClientFactory;
   @NotNull private final SvnKitManager svnKitManager;
 
   private final boolean myLogExceptions;
@@ -165,7 +164,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     myAuthNotifier = new SvnAuthenticationNotifier(this);
 
     cmdClientFactory = new CmdClientFactory(this);
-    svnKitClientFactory = new SvnKitClientFactory(this);
     svnKitManager = new SvnKitManager(this);
 
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
@@ -879,13 +877,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return svnKitManager;
   }
 
-  @NotNull
-  private WorkingCopyFormat getProjectRootFormat() {
-    VirtualFile baseDir = myProject.getBaseDir();
-
-    return baseDir != null ? getWorkingCopyFormat(virtualToIoFile(baseDir)) : WorkingCopyFormat.UNKNOWN;
-  }
-
   /**
    * Detects appropriate client factory based on project root directory working copy format.
    * <p>
@@ -899,34 +890,25 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
    */
   @NotNull
   public ClientFactory getFactory() {
-    return getFactory(getProjectRootFormat(), false);
+    return cmdClientFactory;
   }
 
+  @SuppressWarnings("unused")
   @NotNull
   public ClientFactory getFactory(@NotNull WorkingCopyFormat format) {
-    return getFactory(format, false);
+    return cmdClientFactory;
   }
 
+  @SuppressWarnings("unused")
   @NotNull
   public ClientFactory getFactory(@NotNull File file) {
-    return getFactory(file, true);
+    return cmdClientFactory;
   }
 
+  @SuppressWarnings("unused")
   @NotNull
   public ClientFactory getFactory(@NotNull File file, boolean useMapping) {
-    return getFactory(getWorkingCopyFormat(file, useMapping), true);
-  }
-
-  @NotNull
-  private ClientFactory getFactory(@NotNull WorkingCopyFormat format, boolean useProjectRootForUnknown) {
-    boolean is18OrGreater = format.isOrGreater(WorkingCopyFormat.ONE_DOT_EIGHT);
-    boolean isUnknown = WorkingCopyFormat.UNKNOWN.equals(format);
-
-    return is18OrGreater
-           ? cmdClientFactory
-           : (!isUnknown && !isSupportedByCommandLine(format)
-              ? svnKitClientFactory
-              : (useProjectRootForUnknown && isUnknown ? getFactory() : getFactoryFromSettings()));
+    return cmdClientFactory;
   }
 
   @NotNull
@@ -940,23 +922,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @NotNull
-  public ClientFactory getOtherFactory() {
-    return svnKitClientFactory;
-  }
-
-  @NotNull
-  public ClientFactory getOtherFactory(@NotNull ClientFactory factory) {
-    return factory.equals(cmdClientFactory) ? svnKitClientFactory : cmdClientFactory;
-  }
-
-  @NotNull
   public ClientFactory getCommandLineFactory() {
     return cmdClientFactory;
-  }
-
-  @NotNull
-  public ClientFactory getSvnKitFactory() {
-    return svnKitClientFactory;
   }
 
   @NotNull

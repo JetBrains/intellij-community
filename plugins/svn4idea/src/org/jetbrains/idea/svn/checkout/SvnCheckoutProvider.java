@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.checkout;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -102,13 +101,8 @@ public class SvnCheckoutProvider implements CheckoutProvider {
   }
 
   @NotNull
-  public static ClientFactory getFactory(@NotNull SvnVcs vcs, @NotNull WorkingCopyFormat format) throws VcsException {
-    ClientFactory settingsFactory = vcs.getFactoryFromSettings();
-    ClientFactory otherFactory = vcs.getOtherFactory();
-    List<WorkingCopyFormat> settingsFactoryFormats = settingsFactory.createCheckoutClient().getSupportedFormats();
-    List<WorkingCopyFormat> otherFactoryFormats = CheckoutFormatFromUserProvider.getOtherFactoryFormats(otherFactory);
-
-    return settingsFactoryFormats.contains(format) || !otherFactoryFormats.contains(format) ? settingsFactory : otherFactory;
+  public static ClientFactory getFactory(@NotNull SvnVcs vcs) {
+    return vcs.getFactoryFromSettings();
   }
 
 
@@ -145,7 +139,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         ProgressTracker handler = new CheckoutEventHandler(vcs, false, ProgressManager.getInstance().getProgressIndicator());
         ProgressManager.progress(message("progress.text.checking.out", target.getAbsolutePath()));
         try {
-          getFactory(vcs, format).createCheckoutClient()
+          getFactory(vcs).createCheckoutClient()
             .checkout(Target.on(url), target, revision, depth, ignoreExternals, true, format, handler);
           ProgressManager.checkCanceled();
           checkoutSuccessful.set(Boolean.TRUE);
@@ -299,8 +293,6 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
   public static class CheckoutFormatFromUserProvider {
 
-    private static final Logger LOG = Logger.getInstance(CheckoutFormatFromUserProvider.class);
-
     @NotNull private final Project myProject;
     @NotNull private final SvnVcs myVcs;
     @NotNull private final File myPath;
@@ -360,27 +352,9 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
       try {
         result.addAll(myVcs.getFactoryFromSettings().createCheckoutClient().getSupportedFormats());
-        result.addAll(getOtherFactoryFormats(myVcs.getOtherFactory()));
       }
       catch (VcsException e) {
         error.set(e.getMessage());
-      }
-
-      return result;
-    }
-
-    @NotNull
-    private static List<WorkingCopyFormat> getOtherFactoryFormats(@NotNull ClientFactory otherFactory) {
-      List<WorkingCopyFormat> result;
-
-      try {
-        result = otherFactory.createCheckoutClient().getSupportedFormats();
-      }
-      catch (VcsException e) {
-        // do not add error as it is just usability fix and "other factory" could be incorrectly configured (for instance, invalid
-        // executable path)
-        result = ContainerUtil.newArrayList();
-        LOG.info("Failed to get checkout formats from other factory", e);
       }
 
       return result;

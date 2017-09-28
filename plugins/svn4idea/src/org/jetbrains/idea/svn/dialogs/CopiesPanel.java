@@ -296,11 +296,9 @@ public class CopiesPanel {
   private List<WorkingCopyFormat> getSupportedFormats() {
     List<WorkingCopyFormat> result = ContainerUtil.newArrayList();
     ClientFactory factory = myVcs.getFactory();
-    ClientFactory otherFactory = myVcs.getOtherFactory(factory);
 
     try {
       result.addAll(factory.createUpgradeClient().getSupportedFormats());
-      result.addAll(SvnFormatWorker.getOtherFactoryFormats(otherFactory));
     }
     catch (VcsException e) {
       LOG.info(e);

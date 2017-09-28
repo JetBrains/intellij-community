@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.api.ClientFactory;
 import org.jetbrains.idea.svn.api.Target;
 
@@ -64,11 +63,9 @@ public class DirectoryWithBranchComparer extends ElementWithBranchComparer {
 
   @NotNull
   public static ClientFactory getClientFactory(@NotNull SvnVcs vcs, @NotNull File file) {
-    WorkingCopyFormat format = vcs.getWorkingCopyFormat(file);
-
-    // svn 1.7 command line "--summarize" option for "diff" command does not support comparing working copy directories with repository
-    // directories - that is why command line is only used explicitly for svn 1.8
-    return format.isOrGreater(WorkingCopyFormat.ONE_DOT_EIGHT) ? vcs.getCommandLineFactory() : vcs.getSvnKitFactory();
+    // TODO: Fix for svn 1.7 and lower as svn 1.7 command line "--summarize" option for "diff" command does not support comparing working
+    // TODO: copy directories with repository directories
+    return vcs.getFactory(file);
   }
 
   @Override

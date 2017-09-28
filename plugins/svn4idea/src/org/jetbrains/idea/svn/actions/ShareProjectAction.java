@@ -116,7 +116,7 @@ public class ShareProjectAction extends BasicAction {
 
             progress(message("share.directory.checkout.back.progress.text", checkoutTarget.getPath()));
 
-            ClientFactory factory = SvnCheckoutProvider.getFactory(vcs, format);
+            ClientFactory factory = SvnCheckoutProvider.getFactory(vcs);
 
             factory.createCheckoutClient()
               .checkout(Target.on(checkoutTarget.getUrl()), virtualToIoFile(file), checkoutTarget.getPegRevision(), Depth.INFINITY,
