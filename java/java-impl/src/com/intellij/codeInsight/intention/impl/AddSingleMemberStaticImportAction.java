@@ -109,10 +109,9 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
                 }
               }
               else {
-                final PsiJavaCodeReferenceElement copy = (PsiJavaCodeReferenceElement)refExpr.copy();
-                final PsiElement qualifier = copy.getQualifier();
-                if (qualifier == null) return null;
-                qualifier.delete();
+                PsiElement refNameElement = refExpr.getReferenceNameElement();
+                if (!(refNameElement instanceof PsiJavaCodeReferenceElement)) return null;
+                final PsiJavaCodeReferenceElement copy = (PsiJavaCodeReferenceElement)refNameElement.copy();
                 final PsiElement target = copy.resolve();
                 if (target != null && PsiTreeUtil.getParentOfType(target, PsiClass.class) != aClass) return null;
               }
