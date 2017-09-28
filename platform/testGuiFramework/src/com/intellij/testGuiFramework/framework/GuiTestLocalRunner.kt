@@ -77,8 +77,9 @@ class GuiTestLocalRunner @Throws(InitializationError::class)
       if (!server.isConnected()) {
         val localIde = ide ?: getIdeFromAnnotation(this@GuiTestLocalRunner.testClass.javaClass)
         runIdeLocally(port = server.getPort(), ide = localIde)
+        if (!server.isStarted())
+          server.start()
       }
-      server.start()
       val jUnitTestContainer = JUnitTestContainer(method.declaringClass, method.name)
       server.send(TransportMessage(MessageType.RUN_TEST, jUnitTestContainer))
     }

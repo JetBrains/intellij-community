@@ -164,12 +164,11 @@ public class PortableStatus extends Status {
    * @return the item ancestor's URL
    */
   @Override
-  public String getCopyFromURL() {
+  public SVNURL getCopyFromURL() {
     if (! isCopied()) return null;
     final Info info = initInfo();
     if (info == null) return null;
-    SVNURL url = initInfo().getCopyFromURL();
-    return url == null ? null : url.toString();
+    return initInfo().getCopyFromURL();
   }
 
   @Override

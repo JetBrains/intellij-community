@@ -19,7 +19,6 @@ import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.bookmarks.BookmarkItem;
 import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.ide.bookmarks.BookmarksListener;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -30,8 +29,8 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.components.JBList;
@@ -41,24 +40,20 @@ import com.intellij.ui.popup.util.MasterDetailPopupBuilder;
 import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.TreeSet;
 
 /**
  * @author max
  */
 public class BookmarksAction extends AnAction implements DumbAware, MasterDetailPopupBuilder.Delegate {
-  @NonNls private static final String DIMENSION_SERVICE_KEY = "bookmarks";
-  @NonNls public static final Key<Disposable> BOOKMARKS_POPUP_DISPOSER = Key.create("BOOKMARKS_POPUP_DISPOSER");
+  private static final String DIMENSION_SERVICE_KEY = "bookmarks";
 
   private JBPopup myPopup;
 
@@ -73,7 +68,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = e.getProject();
+    Project project = e.getProject();
     if (project == null) return;
 
     if (myPopup != null && myPopup.isVisible()) {
@@ -81,7 +76,8 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
       return;
     }
 
-    final JBList list = new JBList(buildModel(project));
+    DefaultListModel<BookmarkItem> model = buildModel(project);
+    JBList<BookmarkItem> list = new JBList<>(model);
 
     EditBookmarkDescriptionAction editDescriptionAction = new EditBookmarkDescriptionAction(project, list);
     DefaultActionGroup actions = new DefaultActionGroup();
@@ -101,27 +97,22 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
       setPopupTuner(builder -> builder.setCloseOnEnter(false).setCancelOnClickOutside(false)).
       setDoneRunnable(() -> { if (myPopup != null) myPopup.cancel(); }).
       createMasterDetailPopup();
-    popup.getContent().putClientProperty(BOOKMARKS_POPUP_DISPOSER, new Disposable() {
-      @Override
-      public void dispose() {
-        if (myPopup != null && !Disposer.isDisposed(myPopup)) {
-          myPopup.cancel();
-        }
-      }
-    });
+
     myPopup = popup;
+
     new AnAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        @SuppressWarnings("deprecation") Object[] values = list.getSelectedValues();
-        for (Object item : values) {
-          if (item instanceof BookmarkItem) {
-            itemChosen((BookmarkItem)item, project, popup, true);
+        for (BookmarkItem item : list.getSelectedValuesList()) {
+          if (item != null) {
+            itemChosen(item, project, popup, true);
           }
         }
       }
     }.registerCustomShortcutSet(CommonShortcuts.getEditSource(), list, popup);
+
     editDescriptionAction.setPopup(popup);
+
     Disposer.register(popup, () -> {
       if (myPopup == popup) {
         myPopup = null;
@@ -129,7 +120,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
       }
     });
 
-    final Point location = DimensionService.getInstance().getLocation(DIMENSION_SERVICE_KEY, project);
+    Point location = DimensionService.getInstance().getLocation(DIMENSION_SERVICE_KEY, project);
     if (location != null) {
       popup.showInScreenCoordinates(WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow(), location);
     }
@@ -139,27 +130,12 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
 
     list.getEmptyText().setText("No Bookmarks");
     list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+
     project.getMessageBus().connect(popup).subscribe(BookmarksListener.TOPIC, new BookmarksListener() {
       @Override
-      public void bookmarkAdded(@NotNull Bookmark b) {
-      }
-
-      @Override
-      public void bookmarkRemoved(@NotNull Bookmark b) {
-      }
-
-      @Override
-      public void bookmarkChanged(@NotNull Bookmark b) {
-      }
-
-      @Override
       public void bookmarksOrderChanged() {
-        doUpdate();
-      }
-
-      private void doUpdate() {
-        TreeSet selectedValues = new TreeSet(list.getSelectedValuesList());
-        DefaultListModel listModel = buildModel(project);
+        Set<BookmarkItem> selectedValues = new TreeSet<>(list.getSelectedValuesList());
+        DefaultListModel<BookmarkItem> listModel = buildModel(project);
         list.setModel(listModel);
         ListSelectionModel selectionModel = list.getSelectionModel();
         for (int i = 0; i < listModel.getSize(); i++) {
@@ -169,11 +145,24 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
         }
       }
     });
+
+    BookmarkInContextInfo info = new BookmarkInContextInfo(e.getDataContext(), project).invoke();
+    if (info != null) {
+      Bookmark bookmark = info.getBookmarkAtPlace();
+      if (bookmark != null) {
+        for (int i = 0; i < model.getSize(); i++) {
+          BookmarkItem item = model.getElementAt(i);
+          if (item != null && item.getBookmark() == bookmark) {
+            list.setSelectedValue(item, true);
+            break;
+          }
+        }
+      }
+    }
   }
 
-  @SuppressWarnings("unchecked")
-  private static DefaultListModel buildModel(Project project) {
-    DefaultListModel model = new DefaultListModel();
+  private static DefaultListModel<BookmarkItem> buildModel(Project project) {
+    DefaultListModel<BookmarkItem> model = new DefaultListModel<>();
     for (Bookmark bookmark : BookmarkManager.getInstance(project).getValidBookmarks()) {
       model.addElement(new BookmarkItem(bookmark));
     }
@@ -187,12 +176,11 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
 
   @Override
   public void handleMnemonic(KeyEvent e, Project project, JBPopup popup) {
-    if (!e.isControlDown()) return;
-    char mnemonic = (char)e.getKeyCode();
+    char mnemonic = e.getKeyChar();
     final Bookmark bookmark = BookmarkManager.getInstance(project).findBookmarkForMnemonic(mnemonic);
     if (bookmark != null) {
       popup.cancel();
-      bookmark.navigate(true);
+      IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> bookmark.navigate(true));
     }
   }
 
@@ -226,7 +214,6 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
 
   @Override
   public void removeSelectedItemsInTree() { }
-
 
   protected static class BookmarkInContextInfo {
     private final DataContext myDataContext;
@@ -290,13 +277,12 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     }
   }
 
-  static List<Bookmark> getSelectedBookmarks(JList list) {
+  static List<Bookmark> getSelectedBookmarks(JList<BookmarkItem> list) {
     List<Bookmark> answer = new ArrayList<>();
 
-    //noinspection deprecation
-    for (Object value : list.getSelectedValues()) {
-      if (value instanceof BookmarkItem) {
-        answer.add(((BookmarkItem)value).getBookmark());
+    for (BookmarkItem value : list.getSelectedValuesList()) {
+      if (value != null) {
+        answer.add(value.getBookmark());
       }
       else {
         return Collections.emptyList();
@@ -306,11 +292,10 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     return answer;
   }
 
-  static boolean notFiltered(JList list) {
-    ListModel model1 = list.getModel();
-    if (!(model1 instanceof FilteringListModel)) return true;
-    final FilteringListModel model = (FilteringListModel)model1;
-    return model.getOriginalModel().getSize() == model.getSize();
+  static boolean notFiltered(JList<BookmarkItem> list) {
+    ListModel<BookmarkItem> model = list.getModel();
+    return !(model instanceof FilteringListModel) ||
+           ((FilteringListModel)model).getOriginalModel().getSize() == model.getSize();
   }
 
   private static class MyDetailView extends DetailViewImpl {

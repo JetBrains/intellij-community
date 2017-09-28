@@ -2,9 +2,9 @@ import sys
 from asyncio.events import AbstractEventLoop
 from .coroutines import coroutine
 from .futures import Future
-from typing import Any, Generator, Generic, TypeVar
+from typing import Any, Generator, Generic, List, TypeVar
 
-__all__ = ...  # type: str
+__all__: List[str]
 
 
 class QueueEmpty(Exception): ...

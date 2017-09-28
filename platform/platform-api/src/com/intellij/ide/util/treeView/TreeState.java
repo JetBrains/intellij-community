@@ -36,7 +36,9 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -55,7 +57,6 @@ import static org.jetbrains.concurrency.Promises.collectResults;
 /**
  * @see #createOn(JTree)
  * @see #createOn(JTree, DefaultMutableTreeNode)
- *
  * @see #applyTo(JTree)
  * @see #applyTo(JTree, Object)
  */
@@ -64,6 +65,7 @@ public class TreeState implements JDOMExternalizable {
 
   public static final Key<WeakReference<ActionCallback>> CALLBACK = Key.create("Callback");
   public static final Key<Function<TreeVisitor, Promise<TreePath>>> VISIT = Key.create("TreeVisit");
+  private static final Key<Promise<Void>> EXPANDING = Key.create("TreeExpanding");
 
   private static final String EXPAND_TAG = "expand";
   private static final String SELECT_TAG = "select";
@@ -443,6 +445,28 @@ public class TreeState implements JDOMExternalizable {
     return "TreeState(" + myScrollToSelection + ")\n" + content;
   }
 
+  /**
+   * Temporary solution to resolve simultaneous expansions with async tree model.
+   * Not that the specified consumer must resolve async promise at the end.
+   */
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  public static void expand(@NotNull JTree tree, @NotNull Consumer<AsyncPromise<Void>> consumer) {
+    Promise<Void> expanding = UIUtil.getClientProperty(tree, EXPANDING);
+    if (expanding == null) expanding = Promises.resolvedPromise();
+    expanding.processed(value -> {
+      AsyncPromise<Void> promise = new AsyncPromise<>();
+      UIUtil.putClientProperty(tree, EXPANDING, promise);
+      consumer.accept(promise);
+    });
+  }
+
+  private static boolean isSelectionNeeded(List<TreePath> list, @NotNull JTree tree, AsyncPromise<Void> promise) {
+    if (list != null && tree.getSelectionCount() == 0) return true;
+    if (promise != null) promise.setResult(null);
+    return false;
+  }
+
   private Promise<List<TreePath>> expand(@NotNull Function<TreeVisitor, Promise<TreePath>> visit, @NotNull JTree tree) {
     return collectResults(myExpandedPaths.stream().map(elements -> new Visitor(elements, tree::expandPath)).map(visit).collect(toList()));
   }
@@ -455,17 +479,18 @@ public class TreeState implements JDOMExternalizable {
     Function<TreeVisitor, Promise<TreePath>> visit = UIUtil.getClientProperty(tree, VISIT);
     if (visit == null) return false;
 
-    expand(visit, tree).done(expanded -> {
-      if (tree.getSelectionCount() == 0) {
-        select(visit).done(selected -> {
-          if (tree.getSelectionCount() == 0) {
+    expand(tree, promise -> expand(visit, tree).processed(expanded -> {
+      if (isSelectionNeeded(expanded, tree, promise)) {
+        select(visit).processed(selected -> {
+          if (isSelectionNeeded(selected, tree, promise)) {
             for (TreePath path : selected) {
               tree.addSelectionPath(path);
             }
+            promise.setResult(null);
           }
         });
       }
-    });
+    }));
     return true;
   }
 

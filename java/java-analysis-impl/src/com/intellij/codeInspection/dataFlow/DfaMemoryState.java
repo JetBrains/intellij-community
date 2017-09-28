@@ -76,4 +76,6 @@ public interface DfaMemoryState {
   void markEphemeral();
   
   boolean isEphemeral();
+
+  boolean isEmptyStack();
 }

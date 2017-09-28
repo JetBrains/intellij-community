@@ -147,4 +147,9 @@ public class EmptyGroovyQuickFixFactory extends GroovyQuickFixFactory {
   public GroovyFix createMultipleAssignmentFix(int size) {
     return GroovyFix.EMPTY_FIX;
   }
+
+  @Override
+  public GroovyFix createSpreadArgumentFix(int size) {
+    return GroovyFix.EMPTY_FIX;
+  }
 }

@@ -102,7 +102,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
   @Nullable
   @Override
   public RootType getRootType(@Nullable VirtualFile file) {
-    if (file == null) return null;
+    if (file == null || !file.isInLocalFileSystem()) return null;
     VirtualFile directory = file.isDirectory() ? file : file.getParent();
     RootType result = myIndex.getInfoForFile(directory);
     return result == NULL_TYPE ? null : result;

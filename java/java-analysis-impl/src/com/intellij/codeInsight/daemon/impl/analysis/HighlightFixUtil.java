@@ -231,25 +231,34 @@ public class HighlightFixUtil {
     for (IntentionAction action : getChangeVariableTypeFixes(parameter, itemType)) {
       QuickFixAction.registerQuickFixAction(highlightInfo, action);
     }
+    registerChangeReturnTypeFix(highlightInfo, expr, parameter.getType());
+  }
+
+  static void registerChangeReturnTypeFix(@NotNull HighlightInfo highlightInfo, @Nullable PsiExpression expr, @NotNull PsiType toType) {
     if (expr instanceof PsiMethodCallExpression) {
       final PsiMethod method = ((PsiMethodCallExpression)expr).resolveMethod();
       if (method != null) {
         QuickFixAction.registerQuickFixAction(highlightInfo, PriorityActionWrapper
-          .lowPriority(method, QUICK_FIX_FACTORY.createMethodReturnFix(method, parameter.getType(), true)));
+          .lowPriority(method, QUICK_FIX_FACTORY.createMethodReturnFix(method, toType, true)));
       }
     }
   }
 
+  /**
+   * @param variable variable to create change type fixes for
+   * @param itemType a desired variable type
+   * @return a list of created fix actions
+   */
   @NotNull
-  public static List<IntentionAction> getChangeVariableTypeFixes(@NotNull PsiVariable parameter, PsiType itemType) {
+  public static List<IntentionAction> getChangeVariableTypeFixes(@NotNull PsiVariable variable, PsiType itemType) {
     if (itemType instanceof PsiMethodReferenceType) return Collections.emptyList();
     List<IntentionAction> result = new ArrayList<>();
     if (itemType != null) {
       for (ChangeVariableTypeQuickFixProvider fixProvider : Extensions.getExtensions(ChangeVariableTypeQuickFixProvider.EP_NAME)) {
-        Collections.addAll(result, fixProvider.getFixes(parameter, itemType));
+        Collections.addAll(result, fixProvider.getFixes(variable, itemType));
       }
     }
-    IntentionAction changeFix = getChangeParameterClassFix(parameter.getType(), itemType);
+    IntentionAction changeFix = getChangeParameterClassFix(variable.getType(), itemType);
     if (changeFix != null) result.add(changeFix);
     return result;
   }

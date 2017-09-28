@@ -205,20 +205,24 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       downloadDependenciesWhenRequired(project, classPath,
                                        new RepositoryLibraryProperties("org.junit.platform", "junit-platform-launcher", version));
     }
-    
-    if (!hasPackageWithDirectories(psiFacade, "org.junit.jupiter.engine", globalSearchScope) &&
-        hasPackageWithDirectories(psiFacade, JUnitUtil.TEST5_PACKAGE_FQN, globalSearchScope)) {
-      PsiClass testAnnotation = psiFacade.findClass(JUnitUtil.TEST5_ANNOTATION, globalSearchScope);
-      String version = ObjectUtils.notNull(getVersion(testAnnotation), "5.0.0");
-      downloadDependenciesWhenRequired(project, classPath,
-                                       new RepositoryLibraryProperties("org.junit.jupiter", "junit-jupiter-engine", version));
-    }
 
-    if (!hasPackageWithDirectories(psiFacade, "org.junit.vintage", globalSearchScope) &&
-        hasPackageWithDirectories(psiFacade, "junit.framework", globalSearchScope)) {
-      String version = "4.12.0"; //todo
-      downloadDependenciesWhenRequired(project, classPath,
-                                       new RepositoryLibraryProperties("org.junit.vintage", "junit-vintage-engine", version));
+    //add standard engines only if no engine api is present
+    if (!hasPackageWithDirectories(psiFacade, "org.junit.platform.engine", globalSearchScope)) {
+
+      if (!hasPackageWithDirectories(psiFacade, "org.junit.jupiter.engine", globalSearchScope) &&
+          hasPackageWithDirectories(psiFacade, JUnitUtil.TEST5_PACKAGE_FQN, globalSearchScope)) {
+        PsiClass testAnnotation = psiFacade.findClass(JUnitUtil.TEST5_ANNOTATION, globalSearchScope);
+        String version = ObjectUtils.notNull(getVersion(testAnnotation), "5.0.0");
+        downloadDependenciesWhenRequired(project, classPath,
+                                         new RepositoryLibraryProperties("org.junit.jupiter", "junit-jupiter-engine", version));
+      }
+
+      if (!hasPackageWithDirectories(psiFacade, "org.junit.vintage", globalSearchScope) &&
+          hasPackageWithDirectories(psiFacade, "junit.framework", globalSearchScope)) {
+        String version = "4.12.0"; //todo
+        downloadDependenciesWhenRequired(project, classPath,
+                                         new RepositoryLibraryProperties("org.junit.vintage", "junit-vintage-engine", version));
+      }
     }
   }
 

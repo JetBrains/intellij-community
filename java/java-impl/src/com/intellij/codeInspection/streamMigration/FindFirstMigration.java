@@ -42,7 +42,7 @@ class FindFirstMigration extends BaseStreamApiMigration {
       PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
       PsiExpression value = returnStatement.getReturnValue();
       if (value == null) return null;
-      PsiReturnStatement nextReturnStatement = StreamApiMigrationInspection.getNextReturnStatement(loopStatement);
+      PsiReturnStatement nextReturnStatement = ControlFlowUtils.getNextReturnStatement(loopStatement);
       if (nextReturnStatement == null) return null;
       PsiExpression orElseExpression = nextReturnStatement.getReturnValue();
       if (!ExpressionUtils.isSimpleExpression(orElseExpression)) return null;
@@ -50,7 +50,7 @@ class FindFirstMigration extends BaseStreamApiMigration {
       restoreComments(loopStatement, body);
       boolean sibling = nextReturnStatement.getParent() == loopStatement.getParent();
       PsiElement replacement = loopStatement.replace(elementFactory.createStatementFromText("return " + stream + ";", loopStatement));
-      if(sibling || !isReachable(nextReturnStatement)) {
+      if(sibling || !ControlFlowUtils.isReachable(nextReturnStatement)) {
         nextReturnStatement.delete();
       }
       return replacement;

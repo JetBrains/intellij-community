@@ -26,7 +26,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,8 +38,10 @@ import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrSpreadArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 
 import java.util.Arrays;
 import java.util.List;
@@ -162,5 +166,25 @@ public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
     finally {
       myHolder = null;
     }
+  }
+
+  @Override
+  public void visitSpreadArgument(@NotNull GrSpreadArgument spreadArgument) {
+    registerError(
+      spreadArgument,
+      GroovyBundle.message("spread.operator.is.not.available"),
+      buildSpreadArgumentFix(spreadArgument),
+      ProblemHighlightType.GENERIC_ERROR
+    );
+  }
+
+  private static LocalQuickFix[] buildSpreadArgumentFix(GrSpreadArgument spreadArgument) {
+    GrCallExpression parent = PsiTreeUtil.getParentOfType(spreadArgument, GrCallExpression.class);
+    if (parent == null) return LocalQuickFix.EMPTY_ARRAY;
+    PsiMethod resolveMethod = parent.resolveMethod();
+
+    if (resolveMethod == null) return LocalQuickFix.EMPTY_ARRAY;
+
+    return new LocalQuickFix[]{ GroovyQuickFixFactory.getInstance().createSpreadArgumentFix(resolveMethod.getParameters().length)};
   }
 }

@@ -230,6 +230,11 @@ public class MinusculeMatcher implements Matcher {
     return matchingFragments(name) != null;
   }
 
+  @NotNull
+  public String getPattern() {
+    return new String(myPattern);
+  }
+
   @Nullable
   public FList<TextRange> matchingFragments(@NotNull String name) {
     if (name.length() < myMinNameLength) {

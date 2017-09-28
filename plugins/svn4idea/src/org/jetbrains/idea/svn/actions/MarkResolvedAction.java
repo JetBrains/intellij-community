@@ -130,7 +130,7 @@ public class MarkResolvedAction extends BasicAction {
               status.getPropertiesStatus() == StatusType.STATUS_CONFLICTED) {
             result.add(status.getFile().getAbsolutePath());
           }
-        }, null);
+        });
       }
       catch (SvnBindException e) {
         LOG.warn(e);

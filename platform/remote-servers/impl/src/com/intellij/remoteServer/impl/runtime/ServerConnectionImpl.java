@@ -480,14 +480,13 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
     private Collection<Deployment> doListDeployments() {
       //assumed both myLocalLock and myRemoteLock
-      Set<Deployment> result = new LinkedHashSet<>();
       Map<Deployment, DeploymentImpl> orderedDeployments = new TreeMap<>(myDeploymentComparator);
 
       for (LocalDeploymentImpl localDeployment : myLocalDeployments.values()) {
         localDeployment.setRemoteDeployment(null);
         orderedDeployments.put(localDeployment, localDeployment);
       }
-      result.addAll(orderedDeployments.keySet());
+      Set<Deployment> result = new LinkedHashSet<>(orderedDeployments.keySet());
 
       for (DeploymentImpl remoteDeployment : myRemoteDeployments.values()) {
         DeploymentImpl deployment = orderedDeployments.get(remoteDeployment);

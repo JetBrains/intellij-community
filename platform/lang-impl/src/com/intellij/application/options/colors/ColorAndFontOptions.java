@@ -441,14 +441,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     List<ColorAndFontPanelFactory> panelFactories = createPanelFactories();
 
-    List<Configurable> result = new ArrayList<>();
     mySubPanelFactories = new LinkedHashMap<>(panelFactories.size());
     for (ColorAndFontPanelFactory panelFactory : panelFactories) {
       mySubPanelFactories.put(panelFactory, new InnerSearchableConfigurable(panelFactory));
     }
 
-    result.addAll(new ArrayList<SearchableConfigurable>(mySubPanelFactories.values()));
-    return result.toArray(new Configurable[result.size()]);
+    return mySubPanelFactories.values().toArray(new Configurable[0]);
   }
 
   @NotNull
@@ -464,8 +462,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   }
 
   protected List<ColorAndFontPanelFactory> createPanelFactories() {
-    List<ColorAndFontPanelFactory> result = new ArrayList<>();
-
     List<ColorAndFontPanelFactory> extensions = new ArrayList<>();
     extensions.add(new FontConfigurableFactory());
     extensions.add(new ConsoleFontConfigurableFactory());
@@ -510,7 +506,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       }
       return f1.getPanelDisplayName().compareToIgnoreCase(f2.getPanelDisplayName());
     });
-    result.addAll(extensions);
+    List<ColorAndFontPanelFactory> result = new ArrayList<>(extensions);
 
     result.add(new ScopeColorsPageFactory());
 

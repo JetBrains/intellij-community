@@ -796,7 +796,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
           continue;
         }
       }
-      infos.add(new MyPair<>(vf, url.toString(), s));
+      infos.add(new MyPair<>(vf, url, s));
     }
     List<MyPair<S>> filtered = new UniqueRootsFilter().filter(infos);
     List<S> converted = map(filtered, MyPair::getSrc);
@@ -807,10 +807,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   private static class MyPair<T> implements RootUrlPair {
     @NotNull private final VirtualFile myFile;
-    @NotNull private final String myUrl;
+    @NotNull private final SVNURL myUrl;
     private final T mySrc;
 
-    private MyPair(@NotNull VirtualFile file, @NotNull String url, T src) {
+    private MyPair(@NotNull VirtualFile file, @NotNull SVNURL url, T src) {
       myFile = file;
       myUrl = url;
       mySrc = src;
@@ -828,7 +828,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
     @NotNull
     @Override
-    public String getUrl() {
+    public SVNURL getUrl() {
       return myUrl;
     }
   }

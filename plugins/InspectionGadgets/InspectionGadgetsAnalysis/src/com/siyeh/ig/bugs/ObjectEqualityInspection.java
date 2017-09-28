@@ -134,12 +134,7 @@ public class ObjectEqualityInspection extends BaseInspection {
       if (expression == null) {
         return false;
       }
-      final PsiType type = expression.getType();
-      if (!(type instanceof PsiClassType)) {
-        return false;
-      }
-      final PsiClassType classType = (PsiClassType)type;
-      final PsiClass aClass = classType.resolve();
+      final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
       if (aClass != null && aClass.isInterface()) {
         return implementersHaveOnlyPrivateConstructors(aClass);
       }

@@ -61,11 +61,7 @@ public class WeakestTypeFinder {
     else {
       throw new IllegalArgumentException("PsiMethod or PsiVariable expected: " + variableOrMethod);
     }
-    if (!(variableOrMethodType instanceof PsiClassType)) {
-      return Collections.emptyList();
-    }
-    final PsiClassType variableOrMethodClassType = (PsiClassType)variableOrMethodType;
-    final PsiClass variableOrMethodClass = variableOrMethodClassType.resolve();
+    final PsiClass variableOrMethodClass = PsiUtil.resolveClassInClassTypeOnly(variableOrMethodType);
     if (variableOrMethodClass == null || variableOrMethodClass instanceof PsiTypeParameter) {
       return Collections.emptyList();
     }
@@ -214,13 +210,8 @@ public class WeakestTypeFinder {
         // only enums and primitives can be a switch expression
         return Collections.emptyList();
       }
-      else if (referenceParent instanceof PsiPrefixExpression) {
-        // only primitives and boxed types are the target of a prefix
-        // expression
-        return Collections.emptyList();
-      }
-      else if (referenceParent instanceof PsiPostfixExpression) {
-        // only primitives and boxed types are the target of a postfix
+      else if (referenceParent instanceof PsiUnaryExpression) {
+        // only primitives and boxed types are the target of an unary
         // expression
         return Collections.emptyList();
       }
@@ -238,12 +229,7 @@ public class WeakestTypeFinder {
         final PsiNewExpression newExpression = (PsiNewExpression)referenceParent;
         final PsiExpression qualifier = newExpression.getQualifier();
         if (qualifier != null) {
-          final PsiType type = newExpression.getType();
-          if (!(type instanceof PsiClassType)) {
-            return Collections.emptyList();
-          }
-          final PsiClassType classType = (PsiClassType)type;
-          final PsiClass innerClass = classType.resolve();
+          final PsiClass innerClass = PsiUtil.resolveClassInClassTypeOnly(newExpression.getType());
           if (innerClass == null) {
             return Collections.emptyList();
           }
@@ -340,11 +326,7 @@ public class WeakestTypeFinder {
 
   private static boolean checkType(@Nullable PsiType type, @NotNull PsiSubstitutor substitutor,
                                    @NotNull Collection<PsiClass> weakestTypeClasses) {
-    if (!(type instanceof PsiClassType)) {
-      return false;
-    }
-    final PsiClassType classType = (PsiClassType)type;
-    final PsiClass aClass = classType.resolve();
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
     if (aClass == null) {
       return false;
     }
@@ -533,11 +515,7 @@ public class WeakestTypeFinder {
 
   @Contract("null, _ -> false")
   private static boolean checkType(@Nullable PsiType type, @NotNull Collection<PsiClass> weakestTypeClasses) {
-    if (!(type instanceof PsiClassType)) {
-      return false;
-    }
-    final PsiClassType classType = (PsiClassType)type;
-    final PsiClass aClass = classType.resolve();
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
     if (aClass == null) {
       return false;
     }

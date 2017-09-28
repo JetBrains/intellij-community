@@ -99,12 +99,12 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
       }
 
       @Override
-      protected String getName(Object o) {
+      protected String getName(@NotNull Object o) {
         return RemoteExternalSystemFacade.class.getName();
       }
 
       @Override
-      protected RunProfileState getRunProfileState(Object o, String configuration, Executor executor) throws ExecutionException {
+      protected RunProfileState getRunProfileState(@NotNull Object o, @NotNull String configuration, @NotNull Executor executor) throws ExecutionException {
         return createRunProfileState(configuration);
       }
     };

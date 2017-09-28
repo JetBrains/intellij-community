@@ -235,8 +235,8 @@ public class SeverityEditorDialog extends DialogWrapper {
   private void fillList(final @Nullable HighlightSeverity severity) {
     DefaultListModel model = new DefaultListModel();
     model.removeAllElements();
-    final List<SeverityBasedTextAttributes> infoTypes = new ArrayList<>();
-    infoTypes.addAll(SeverityUtil.getRegisteredHighlightingInfoTypes(mySeverityRegistrar));
+    final List<SeverityBasedTextAttributes> infoTypes =
+      new ArrayList<>(SeverityUtil.getRegisteredHighlightingInfoTypes(mySeverityRegistrar));
     Collections.sort(infoTypes,
                      (attributes1, attributes2) -> -mySeverityRegistrar.compare(attributes1.getSeverity(), attributes2.getSeverity()));
     SeverityBasedTextAttributes preselection = null;

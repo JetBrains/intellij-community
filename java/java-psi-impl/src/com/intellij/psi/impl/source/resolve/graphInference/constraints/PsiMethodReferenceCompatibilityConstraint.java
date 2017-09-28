@@ -253,10 +253,12 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
             return PsiSubstitutor.EMPTY;
           }
 
-          psiSubstitutor = helper.inferTypeArguments(PsiTypesUtil.filterUnusedTypeParameters(qContainingClass.getTypeParameters(), paramTypes),
-                                                     paramTypes,
-                                                     signature.getParameterTypes(),
-                                                     PsiUtil.getLanguageLevel(methodReferenceExpression));
+          if (paramTypes.length == signature.getParameterTypes().length) {
+            psiSubstitutor = helper.inferTypeArguments(PsiTypesUtil.filterUnusedTypeParameters(qContainingClass.getTypeParameters(), paramTypes),
+                                                       paramTypes,
+                                                       signature.getParameterTypes(),
+                                                       PsiUtil.getLanguageLevel(methodReferenceExpression));
+          }
         }
         else {
           psiSubstitutor = PsiSubstitutor.EMPTY;

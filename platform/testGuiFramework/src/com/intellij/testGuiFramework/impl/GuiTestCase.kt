@@ -15,6 +15,7 @@
  */
 package com.intellij.testGuiFramework.impl
 
+import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
@@ -33,7 +34,11 @@ import com.intellij.testGuiFramework.impl.GuiTestUtilKt.findBoundedComponentByTe
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.getComponentText
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.isTextComponent
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.typeMatcher
+import com.intellij.testGuiFramework.launcher.system.SystemInfo
 import com.intellij.testGuiFramework.launcher.system.SystemInfo.isMac
+import com.intellij.testGuiFramework.util.Clipboard
+import com.intellij.testGuiFramework.util.Key
+import com.intellij.testGuiFramework.util.Shortcut
 import com.intellij.ui.CheckboxTree
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.components.labels.LinkLabel
@@ -86,7 +91,8 @@ import javax.swing.text.JTextComponent
 @RunWith(GuiTestLocalRunner::class)
 open class GuiTestCase {
 
-  @Rule @JvmField
+  @Rule
+  @JvmField
   val guiTestRule = GuiTestRule()
 
   /**
@@ -128,12 +134,22 @@ open class GuiTestCase {
    * methods on the receiver object (JDialogFixture instance).
    *
    * @title title of searching dialog window. If dialog should be only one title could be omitted or set to null.
+   * @needToKeepDialog is true if no need to wait when dialog is closed
    * @timeout time in seconds to find dialog in GUI hierarchy.
    */
-  fun dialog(title: String? = null, ignoreCaseTitle: Boolean = false, timeout: Long = defaultTimeout, func: JDialogFixture.() -> Unit) {
+  fun dialog(title: String? = null, ignoreCaseTitle: Boolean = false, timeout: Long = defaultTimeout, needToKeepDialog: Boolean = false, func: JDialogFixture.() -> Unit) {
     val dialog = dialog(title, ignoreCaseTitle, timeout)
     func(dialog)
-    dialog.waitTillGone()
+    if (!needToKeepDialog) dialog.waitTillGone()
+  }
+
+
+  /**
+   * Waits for a native file chooser, types the path in a textfield and closes it by clicking OK button. Or runs AppleScript if the file chooser
+   * is a Mac native.
+   */
+  fun chooseFileInFileChooser(path: String, timeout: Long = defaultTimeout) {
+    findFileChooserAndTypePath(path, timeout.toInt())
   }
 
   /**
@@ -461,6 +477,15 @@ open class GuiTestCase {
    */
   fun shortcut(keyStroke: String) = GuiTestUtil.invokeActionViaShortcut(guiTestRule.robot(), keyStroke)
 
+  fun shortcut(shortcut: Shortcut) = shortcut(shortcut.getKeystroke())
+
+  fun shortcut(key: Key) = shortcut(key.name)
+
+  /**
+   * copies a given string to a system clipboard
+   */
+  fun copyToClipboard(string: String) = Clipboard.copyToClipboard(string)
+
   /**
    * Invoke action by actionId through its keystroke
    */
@@ -501,11 +526,13 @@ open class GuiTestCase {
           val allMatchedDialogs = guiTestRule.robot().finder().findAll(typeMatcher(JDialog::class.java) {
             if (ignoreCaseTitle) it.title.toLowerCase() == title.toLowerCase() else it.title == title
           }).filter { it.isShowing && it.isEnabled && it.isVisible }
-          if (allMatchedDialogs.size > 1) throw Exception("Found more than one (${allMatchedDialogs.size}) dialogs matched title \"$title\"")
+          if (allMatchedDialogs.size > 1) throw Exception(
+            "Found more than one (${allMatchedDialogs.size}) dialogs matched title \"$title\"")
           allMatchedDialogs.firstOrNull()
         }
         return JDialogFixture(guiTestRule.robot(), dialog)
-      } catch (timeoutError: WaitTimedOutError) {
+      }
+      catch (timeoutError: WaitTimedOutError) {
         throw ComponentLookupException("Timeout error for finding JDialog by title \"$title\" for $timeoutInSeconds seconds")
       }
     }
@@ -545,8 +572,7 @@ open class GuiTestCase {
   private fun componentWithBrowseButton(container: Container,
                                         foo: Class<out ComponentWithBrowseButton<out JComponent>>,
                                         timeout: Long): ComponentWithBrowseButtonFixture {
-    val component = waitUntilFound(container, ComponentWithBrowseButton::class.java, timeout) {
-      component ->
+    val component = waitUntilFound(container, ComponentWithBrowseButton::class.java, timeout) { component ->
       component.isShowing && foo.isInstance(component)
     }
     return ComponentWithBrowseButtonFixture(component, guiTestRule.robot())
@@ -557,7 +583,10 @@ open class GuiTestCase {
     try {
       waitUntilFound(container, Component::class.java,
                      timeout) { it.flags { isShowing && isTextComponent() && getComponentText() == text } }
-    } catch (e: WaitTimedOutError) { throw ComponentLookupException("Unable to find label for a combobox with text \"$text\" in $timeout seconds")}
+    }
+    catch (e: WaitTimedOutError) {
+      throw ComponentLookupException("Unable to find label for a combobox with text \"$text\" in $timeout seconds")
+    }
     val comboBox = findBoundedComponentByText(guiTestRule.robot(), container, text, JComboBox::class.java)
     val comboboxFixture = ComboBoxFixture(guiTestRule.robot(), comboBox)
     comboboxFixture.replaceCellReader(ExtendedJComboboxCellReader())
@@ -571,7 +600,8 @@ open class GuiTestCase {
     return CheckBoxFixture(guiTestRule.robot(), jCheckBox)
   }
 
-  private fun actionLink(container: Container, name: String, timeout: Long) = ActionLinkFixture.findActionLinkByName(name, guiTestRule.robot(),
+  private fun actionLink(container: Container, name: String, timeout: Long) = ActionLinkFixture.findActionLinkByName(name,
+                                                                                                                     guiTestRule.robot(),
                                                                                                                      container,
                                                                                                                      timeout.toFestTimeout())
 
@@ -589,7 +619,8 @@ open class GuiTestCase {
 
   private fun editor(ideFrameFixture: IdeFrameFixture, timeout: Long): EditorFixture = EditorFixture(guiTestRule.robot(), ideFrameFixture)
 
-  private fun radioButton(container: Container, labelText: String, timeout: Long) = GuiTestUtil.findRadioButton(guiTestRule.robot(), container,
+  private fun radioButton(container: Container, labelText: String, timeout: Long) = GuiTestUtil.findRadioButton(guiTestRule.robot(),
+                                                                                                                container,
                                                                                                                 labelText,
                                                                                                                 timeout.toFestTimeout())
 
@@ -608,7 +639,8 @@ open class GuiTestCase {
   }
 
   private fun linkLabel(container: Container, labelText: String, timeout: Long): ComponentFixture<ComponentFixture<*, *>, LinkLabel<*>> {
-    val myLinkLabel = waitUntilFound(guiTestRule.robot(), container, typeMatcher(LinkLabel::class.java) { it.isShowing && (it.text == labelText) },
+    val myLinkLabel = waitUntilFound(guiTestRule.robot(), container,
+                                     typeMatcher(LinkLabel::class.java) { it.isShowing && (it.text == labelText) },
                                      timeout.toFestTimeout())
     return ComponentFixture<ComponentFixture<*, *>, LinkLabel<*>>(ComponentFixture::class.java, guiTestRule.robot(), myLinkLabel)
   }
@@ -634,7 +666,8 @@ open class GuiTestCase {
     }
   }
 
-  private fun pluginTable(container: Container, timeout: Long) = PluginTableFixture.find(guiTestRule.robot(), container, timeout.toFestTimeout())
+  private fun pluginTable(container: Container, timeout: Long) = PluginTableFixture.find(guiTestRule.robot(), container,
+                                                                                         timeout.toFestTimeout())
 
   private fun popupClick(container: Container, itemName: String, timeout: Long) {
     GuiTestUtil.clickPopupMenuItem(itemName, false, container, guiTestRule.robot(), timeout.toFestTimeout())
@@ -647,11 +680,43 @@ open class GuiTestCase {
       myTree = waitUntilFound(guiTestRule.robot(), container, typeMatcher(JTree::class.java) { true }, timeout.toFestTimeout())
     }
     else {
-      myTree = waitUntilFound(guiTestRule.robot(), container, typeMatcher(JTree::class.java) { ExtendedTreeFixture(guiTestRule.robot(), it).hasPath(pathList) },
+      myTree = waitUntilFound(guiTestRule.robot(), container,
+                              typeMatcher(JTree::class.java) { ExtendedTreeFixture(guiTestRule.robot(), it).hasPath(pathList) },
                               timeout.toFestTimeout())
     }
     val treeFixture: ExtendedTreeFixture = ExtendedTreeFixture(guiTestRule.robot(), myTree)
     return treeFixture
+  }
+
+  private fun findFileChooserAndTypePath(path: String, timeoutInSeconds: Int) {
+    val macNativeFileChooser = SystemInfo.isMac() && (System.getProperty("ide.mac.file.chooser.native", "true").toLowerCase() == "true")
+    if (macNativeFileChooser) {
+      MacFileChooserDialogFixture(robot()).selectByPath(path)
+    }
+    else {
+      val fileChooserDialog: JDialog
+      try {
+         fileChooserDialog = GuiTestUtilKt.withPauseWhenNull(timeoutInSeconds) {
+          robot().finder()
+            .findAll(GuiTestUtilKt.typeMatcher(JDialog::class.java) { true })
+            .firstOrNull {
+              GuiTestUtilKt.findAllWithBFS(it, JPanel::class.java).any {
+                it.javaClass.name.contains(FileChooserDialogImpl::class.java.simpleName)
+              }
+            }
+        }
+      } catch (timeoutError: WaitTimedOutError) {
+        throw ComponentLookupException("Unable to find file chooser dialog in $timeoutInSeconds seconds")
+      }
+      val dialogFixture = JDialogFixture(robot(), fileChooserDialog)
+      with(dialogFixture) {
+        textfield("")
+        invokeAction("\$SelectAll")
+        typeText(path)
+        button("OK").clickWhenEnabled()
+        waitTillGone()
+      }
+    }
   }
 
   private fun checkboxTree(container: Container, timeout: Long, vararg pathStrings: String): CheckboxTreeFixture {
@@ -667,7 +732,7 @@ open class GuiTestCase {
       fixture.invoke()
       defaultTimeout = tmp
     }
-    catch(ex: Exception) {
+    catch (ex: Exception) {
       when (ex) {
         is ComponentLookupException,
         is WaitTimedOutError -> {
@@ -703,9 +768,9 @@ open class GuiTestCase {
   }
 
   fun <Fixture, ComponentType : Component> waitUntilFoundFixture(container: Container?,
-                                                                           componentClass: Class<ComponentType>,
-                                                                           timeout: Long,
-                                                                           matcher: (ComponentType) -> Pair<Boolean, Fixture>): Fixture {
+                                                                 componentClass: Class<ComponentType>,
+                                                                 timeout: Long,
+                                                                 matcher: (ComponentType) -> Pair<Boolean, Fixture>): Fixture {
     val ref = Ref<Fixture>()
     GuiTestUtil.waitUntilFound(guiTestRule.robot(), container, typeMatcher(componentClass)
     {

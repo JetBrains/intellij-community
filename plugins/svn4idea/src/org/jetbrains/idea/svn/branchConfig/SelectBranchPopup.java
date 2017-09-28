@@ -71,7 +71,7 @@ public class SelectBranchPopup {
     SVNURL svnurl = urlMapping.getUrlForFile(virtualToIoFile(file));
 
     if (svnurl != null) {
-      RootUrlInfo rootUrlInfo = urlMapping.getWcRootForUrl(svnurl.toString());
+      RootUrlInfo rootUrlInfo = urlMapping.getWcRootForUrl(svnurl);
 
       if (rootUrlInfo != null) {
         // not vcs root but wc root is ok

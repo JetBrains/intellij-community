@@ -15,10 +15,7 @@
  */
 package com.intellij.execution.dashboard.actions;
 
-import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.ExecutionTargetManager;
-import com.intellij.execution.Executor;
-import com.intellij.execution.ProgramRunnerUtil;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
@@ -47,15 +44,7 @@ public abstract class ExecutorAction extends RunDashboardTreeLeafAction<RunDashb
   }
 
   @Override
-  protected boolean isEnabled4(RunDashboardRunConfigurationNode node) {
-    String executorId = getExecutor().getId();
-    ProgramRunner runner = ProgramRunnerUtil.getRunner(executorId, node.getConfigurationSettings());
-    return runner != null && runner.canRun(executorId, node.getConfigurationSettings().getConfiguration());
-  }
-
-  @Override
   public void update(@NotNull AnActionEvent e) {
-    super.update(e);
     Project project = e.getProject();
     if (project == null) {
       update(e, false);
@@ -68,13 +57,26 @@ public abstract class ExecutorAction extends RunDashboardTreeLeafAction<RunDashb
         return content != null && !RunContentManagerImpl.isTerminated(content);
       });
       update(e, running);
-      e.getPresentation().setEnabled(targetNodes.stream().anyMatch(this::isValid));
+      e.getPresentation().setEnabled(targetNodes.stream().anyMatch(this::canRun));
     }
     else {
       Content content = RunDashboardManager.getInstance(project).getDashboardContentManager().getSelectedContent();
       update(e, content != null && !RunContentManagerImpl.isTerminated(content));
       e.getPresentation().setEnabled(content != null);
     }
+  }
+
+  private boolean canRun(RunDashboardRunConfigurationNode node) {
+    final String executorId = getExecutor().getId();
+    final RunnerAndConfigurationSettings configurationSettings = node.getConfigurationSettings();
+    final ProgramRunner runner = ProgramRunnerUtil.getRunner(executorId, configurationSettings);
+    final ExecutionTarget target = ExecutionTargetManager.getActiveTarget(node.getProject());
+
+    return isValid(node) &&
+           runner != null &&
+           runner.canRun(executorId, configurationSettings.getConfiguration()) &&
+           ExecutionTargetManager.canRun(configurationSettings, target) &&
+           !ExecutorRegistry.getInstance().isStarting(node.getProject(), executorId, runner.getRunnerId());
   }
 
   private boolean isValid(RunDashboardRunConfigurationNode node) {
@@ -122,7 +124,7 @@ public abstract class ExecutorAction extends RunDashboardTreeLeafAction<RunDashb
 
   @Override
   protected void doActionPerformed(RunDashboardRunConfigurationNode node) {
-    if (!isValid(node)) return;
+    if (!canRun(node)) return;
 
     RunContentDescriptor descriptor = node.getDescriptor();
     ExecutionManager.getInstance(node.getProject()).restartRunProfile(node.getProject(),

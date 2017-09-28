@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -40,15 +39,13 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.difftool.properties.SvnPropertiesDiffRequest;
 import org.jetbrains.idea.svn.difftool.properties.SvnPropertiesDiffRequest.PropertyContent;
 import org.jetbrains.idea.svn.history.SvnRepositoryContentRevision;
 import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
 import org.jetbrains.idea.svn.properties.PropertyValue;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -62,6 +59,7 @@ import java.util.List;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.exists;
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
 
@@ -96,17 +94,17 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
     private List<PropertyData> myAfterContent;
     private SVNRevision myBeforeRevisionValue;
     private SVNRevision myAfterRevision;
-    private Exception myException;
+    private SvnBindException myException;
     private final String myErrorTitle;
 
-    private CalculateAndShow(@NotNull Project project, final Change change, final String errorTitle) {
+    private CalculateAndShow(@NotNull Project project, Change change, String errorTitle) {
       super(project, SvnBundle.message("fetching.properties.contents.progress.title"), true, PerformInBackgroundOption.DEAF);
       myChange = change;
       myErrorTitle = errorTitle;
     }
 
-    public void run(@NotNull final ProgressIndicator indicator) {
-      final SvnVcs vcs = SvnVcs.getInstance(myProject);
+    public void run(@NotNull ProgressIndicator indicator) {
+      SvnVcs vcs = SvnVcs.getInstance(myProject);
 
       try {
         myBeforeRevisionValue = getBeforeRevisionValue(myChange);
@@ -117,7 +115,7 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
         // gets exactly WORKING revision property
         myAfterContent = getPropertyList(vcs, myChange.getAfterRevision(), myAfterRevision);
       }
-      catch (SVNException | VcsException exc) {
+      catch (SvnBindException exc) {
         myException = exc;
       }
     }
@@ -173,11 +171,11 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
   @NotNull
   private static String getDiffWindowTitle(@NotNull Change change) {
     if (change.isMoved() || change.isRenamed()) {
-      final FilePath beforeFilePath = ChangesUtil.getBeforePath(change);
-      final FilePath afterFilePath = ChangesUtil.getAfterPath(change);
+      FilePath beforeFilePath = ChangesUtil.getBeforePath(change);
+      FilePath afterFilePath = ChangesUtil.getAfterPath(change);
 
-      final String beforePath = beforeFilePath == null ? "" : beforeFilePath.getPath();
-      final String afterPath = afterFilePath == null ? "" : afterFilePath.getPath();
+      String beforePath = beforeFilePath == null ? "" : beforeFilePath.getPath();
+      String afterPath = afterFilePath == null ? "" : afterFilePath.getPath();
       return SvnBundle.message("action.Subversion.properties.difference.diff.for.move.title", beforePath, afterPath);
     } else {
       return SvnBundle.message("action.Subversion.properties.difference.diff.title", ChangesUtil.getFilePath(change).getPath());
@@ -213,19 +211,18 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
 
   @NotNull
   private static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs,
-                                                    @Nullable final ContentRevision contentRevision,
-                                                    @Nullable final SVNRevision revision)
-  throws SVNException, VcsException {
+                                                    @Nullable ContentRevision contentRevision,
+                                                    @Nullable SVNRevision revision) throws SvnBindException {
     if (contentRevision == null) {
       return Collections.emptyList();
     }
 
     SvnTarget target;
     if (contentRevision instanceof SvnRepositoryContentRevision) {
-      final SvnRepositoryContentRevision svnRevision = (SvnRepositoryContentRevision)contentRevision;
-      target = SvnTarget.fromURL(SVNURL.parseURIEncoded(svnRevision.getFullPath()), revision);
+      SvnRepositoryContentRevision svnRevision = (SvnRepositoryContentRevision)contentRevision;
+      target = SvnTarget.fromURL(createUrl(svnRevision.getFullPath()), revision);
     } else {
-      final File ioFile = contentRevision.getFile().getIOFile();
+      File ioFile = contentRevision.getFile().getIOFile();
       target = SvnTarget.fromFile(ioFile, revision);
     }
 
@@ -233,27 +230,22 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  public static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs, @NotNull final SVNURL url, @Nullable final SVNRevision revision)
-    throws VcsException {
+  public static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs, @NotNull SVNURL url, @Nullable SVNRevision revision)
+    throws SvnBindException {
     return getPropertyList(vcs, SvnTarget.fromURL(url, revision), revision);
   }
 
   @NotNull
-  public static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs, @NotNull final File ioFile, @Nullable final SVNRevision revision)
-    throws SVNException {
-    try {
-      return getPropertyList(vcs, SvnTarget.fromFile(ioFile, revision), revision);
-    }
-    catch (VcsException e) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_GENERAL, e), e);
-    }
+  public static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs, @NotNull File ioFile, @Nullable SVNRevision revision)
+    throws SvnBindException {
+    return getPropertyList(vcs, SvnTarget.fromFile(ioFile, revision), revision);
   }
 
   @NotNull
   private static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs, @NotNull SvnTarget target, @Nullable SVNRevision revision)
-    throws VcsException {
-    final List<PropertyData> lines = new ArrayList<>();
-    final PropertyConsumer propertyHandler = createHandler(revision, lines);
+    throws SvnBindException {
+    List<PropertyData> lines = new ArrayList<>();
+    PropertyConsumer propertyHandler = createHandler(revision, lines);
 
     vcs.getFactory(target).createPropertyClient().list(target, revision, Depth.EMPTY, propertyHandler);
 
@@ -261,23 +253,23 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  private static PropertyConsumer createHandler(SVNRevision revision, @NotNull final List<PropertyData> lines) {
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+  private static PropertyConsumer createHandler(SVNRevision revision, @NotNull List<PropertyData> lines) {
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.checkCanceled();
       indicator.setText(SvnBundle.message("show.properties.diff.progress.text.revision.information", revision.toString()));
     }
 
     return new PropertyConsumer() {
-      public void handleProperty(final File path, final PropertyData property) {
+      public void handleProperty(File path, PropertyData property) {
         registerProperty(property);
       }
 
-      public void handleProperty(final SVNURL url, final PropertyData property) {
+      public void handleProperty(SVNURL url, PropertyData property) {
         registerProperty(property);
       }
 
-      public void handleProperty(final long revision, final PropertyData property) {
+      public void handleProperty(long revision, PropertyData property) {
         // revision properties here
       }
 

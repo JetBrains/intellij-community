@@ -17,9 +17,13 @@ package com.intellij.testGuiFramework.fixtures
 
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.JBTerminalPanel
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
+import com.intellij.ui.content.Content
 import com.jediterm.terminal.model.TerminalTextBuffer
 import org.fest.swing.core.Robot
+import org.fest.swing.exception.ComponentLookupException
+import org.fest.swing.exception.WaitTimedOutError
 
 class TerminalFixture(project: Project, robot: Robot): ToolWindowFixture("Terminal", project, robot) {
 
@@ -28,7 +32,13 @@ class TerminalFixture(project: Project, robot: Robot): ToolWindowFixture("Termin
 
   init {
     val content = this.getContent("") ?: throw Exception("Unable to get content of terminal tool window")
-    myJBTerminalPanel = myRobot.finder().find(content.component) { component -> component is JBTerminalPanel } as JBTerminalPanel
+    try {
+      myJBTerminalPanel = GuiTestUtilKt.withPauseWhenNull {
+        getJBTerminalPanel(content)
+      }
+    } catch (e: WaitTimedOutError) {
+      throw ComponentLookupException("Unable to find JBTerminalPanel")
+    }
     terminalTextBuffer = myJBTerminalPanel.terminalTextBuffer
   }
 
@@ -44,6 +54,15 @@ class TerminalFixture(project: Project, robot: Robot): ToolWindowFixture("Termin
   fun waitUntilTextAppeared(text: String, timeoutInSeconds: Int = 60) {
     waitUntil(condition = "'$text' appeared in terminal", timeoutInSeconds = timeoutInSeconds) {
       terminalTextBuffer.screenLines.contains(text)
+    }
+  }
+
+  private fun getJBTerminalPanel(content: Content): JBTerminalPanel? {
+    return try {
+      myRobot.finder().find(content.component) { component -> component is JBTerminalPanel } as JBTerminalPanel
+    }
+    catch (e: ComponentLookupException) {
+      null
     }
   }
 

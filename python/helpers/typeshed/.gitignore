@@ -61,3 +61,7 @@ analyze.py
 .*.sw?
 .vscode/
 .idea/
+.venv*/
+
+# Mypy cache
+.mypy_cache/

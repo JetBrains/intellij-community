@@ -48,20 +48,29 @@ public class Utils {
     return myTempFile;
   }
 
+  public static String findDirectory(long requiredFreeSpace) {
+    String dir = System.getProperty("idea.updater.log");
+    if (dir == null || !isValidDir(dir, requiredFreeSpace)) {
+      dir = System.getProperty("java.io.tmpdir");
+      if (!isValidDir(dir, requiredFreeSpace)) {
+        dir = System.getProperty("user.home");
+      }
+    }
+    return dir;
+  }
+
+  private static boolean isValidDir(String path, long space) {
+    File dir = new File(path);
+    return dir.isDirectory() && dir.canWrite() && dir.getUsableSpace() >= space;
+  }
+
   public static File getTempFile(String name) throws IOException {
     if (myTempDir == null) {
-      myTempDir = findUniqueName(Runner.getDir(REQUIRED_FREE_SPACE) + "/idea.updater.files");
+      myTempDir = findUniqueName(findDirectory(REQUIRED_FREE_SPACE) + "/idea.updater.files");
       if (!myTempDir.mkdirs()) throw new IOException("Cannot create working directory: " + myTempDir);
       Runner.logger().info("created working directory: " + myTempDir);
     }
     return findUniqueName(myTempDir.getPath() + '/' + name);
-  }
-
-  public static File createTempDir() throws IOException {
-    File tempDir = getTempFile("temp");
-    if (!tempDir.mkdir()) throw new IOException("Cannot create temp directory: " + tempDir);
-    Runner.logger().info("created temp directory: " + tempDir.getPath());
-    return tempDir;
   }
 
   public static void cleanup() throws IOException {
@@ -111,8 +120,7 @@ public class Utils {
       }
       catch (IOException ignore) { }
 
-      try { Thread.sleep(10); }
-      catch (InterruptedException ignore) { }
+      pause(10);
     }
 
     throw new IOException("Cannot delete: " + path);
@@ -337,5 +345,10 @@ public class Utils {
     public synchronized void writeTo(OutputStream out) throws IOException {
       writeBytes(buf, count, out);
     }
+  }
+
+  public static void pause(long millis) {
+    try { Thread.sleep(millis); }
+    catch (InterruptedException ignore) { }
   }
 }

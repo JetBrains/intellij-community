@@ -694,6 +694,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
+  public boolean isEmptyStack() {
+    return myStack.isEmpty();
+  }
+
+  @Override
   public boolean applyInstanceofOrNull(@NotNull DfaRelationValue dfaCond) {
     DfaValue left = unwrap(dfaCond.getLeftOperand());
 
@@ -965,7 +970,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (dfaRight instanceof DfaConstValue) {
       Object constVal = ((DfaConstValue)dfaRight).getValue();
       if (constVal instanceof Boolean) {
-        DfaConstValue negVal = myFactory.getConstFactory().createFromValue(!((Boolean)constVal).booleanValue(), PsiType.BOOLEAN, null);
+        DfaConstValue negVal = myFactory.getBoolean(!((Boolean)constVal).booleanValue());
         if (!applyRelation(dfaLeft, negVal, !negated)) {
           return false;
         }

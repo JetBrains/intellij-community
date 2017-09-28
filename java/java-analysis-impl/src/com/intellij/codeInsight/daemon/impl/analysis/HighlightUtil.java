@@ -322,9 +322,7 @@ public class HighlightUtil extends HighlightUtilBase {
       lValue = assignment.getLExpression();
     }
     else if (PsiUtil.isIncrementDecrementOperation(expression)) {
-      lValue = expression instanceof PsiPostfixExpression
-               ? ((PsiPostfixExpression)expression).getOperand()
-               : ((PsiPrefixExpression)expression).getOperand();
+      lValue = ((PsiUnaryExpression)expression).getOperand();
     }
     else {
       lValue = null;
@@ -501,6 +499,7 @@ public class HighlightUtil extends HighlightUtilBase {
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createWrapWithAdapterFix(lType, expression));
       AddTypeArgumentsConditionalFix.register(highlightInfo, expression, lType);
       HighlightFixUtil.registerCollectionToArrayFixAction(highlightInfo, rType, lType, expression);
+      HighlightFixUtil.registerChangeReturnTypeFix(highlightInfo, expression, lType);
     }
     ChangeNewOperatorTypeFix.register(highlightInfo, expression, lType);
     return highlightInfo;
@@ -2931,5 +2930,17 @@ public class HighlightUtil extends HighlightUtilBase {
     }
 
     return message;
+  }
+
+  /**
+   * @param variable variable to create change type fixes for
+   * @param itemType a desired variable type
+   * @return a list of created fix actions
+   * @deprecated Will be removed in 2018.1. Use {@link HighlightFixUtil#getChangeVariableTypeFixes(PsiVariable, PsiType)} instead.
+   */
+  @Deprecated
+  @NotNull
+  public static List<IntentionAction> getChangeVariableTypeFixes(@NotNull PsiVariable variable, PsiType itemType) {
+    return HighlightFixUtil.getChangeVariableTypeFixes(variable, itemType);
   }
 }

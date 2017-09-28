@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @SuppressWarnings({"unchecked"})
 public class SemServiceImpl extends SemService{
   private final ConcurrentMap<PsiElement, SemCacheChunk> myCache = ContainerUtil.createConcurrentWeakKeySoftValueMap();
-  private volatile MultiMap<SemKey, NullableFunction<PsiElement, ? extends SemElement>> myProducers;
+  private volatile  MultiMap<SemKey, NullableFunction<PsiElement, Collection<? extends SemElement>>> myProducers;
   private final Project myProject;
 
   private boolean myBulkChange = false;
@@ -79,14 +79,26 @@ public class SemServiceImpl extends SemService{
     }, project);
   }
 
-  private MultiMap<SemKey, NullableFunction<PsiElement, ? extends SemElement>> collectProducers() {
-    final MultiMap<SemKey, NullableFunction<PsiElement, ? extends SemElement>> map = MultiMap.createSmart();
+  private MultiMap<SemKey, NullableFunction<PsiElement, Collection<? extends SemElement>>> collectProducers() {
+    final MultiMap<SemKey, NullableFunction<PsiElement, Collection<? extends SemElement>>> map = MultiMap.createSmart();
 
     final SemRegistrar registrar = new SemRegistrar() {
       @Override
       public <T extends SemElement, V extends PsiElement> void registerSemElementProvider(SemKey<T> key,
                                                                                           final ElementPattern<? extends V> place,
                                                                                           final NullableFunction<V, T> provider) {
+        map.putValue(key, element -> {
+          if (place.accepts(element)) {
+            return Collections.singleton(provider.fun((V)element));
+          }
+          return null;
+        });
+      }
+
+      @Override
+      public <T extends SemElement, V extends PsiElement> void registerRepeatableSemElementProvider(SemKey<T> key,
+                                                                                                    ElementPattern<? extends V> place,
+                                                                                                    NullableFunction<V, Collection<T>> provider) {
         map.putValue(key, element -> {
           if (place.accepts(element)) {
             return provider.fun((V)element);
@@ -169,15 +181,15 @@ public class SemServiceImpl extends SemService{
   @NotNull
   private List<SemElement> createSemElements(SemKey key, PsiElement psi) {
     List<SemElement> result = null;
-    final Collection<NullableFunction<PsiElement, ? extends SemElement>> producers = myProducers.get(key);
-    if (!producers.isEmpty()) {
-      for (final NullableFunction<PsiElement, ? extends SemElement> producer : producers) {
+    Collection<NullableFunction<PsiElement, Collection<? extends SemElement>>> functions = myProducers.get(key);
+    if (!functions.isEmpty()) {
+      for (final NullableFunction<PsiElement, Collection<? extends SemElement>> producer : functions) {
         myCreatingSem.incrementAndGet();
         try {
-          final SemElement element = producer.fun(psi);
-          if (element != null) {
+          final Collection<? extends SemElement> elements = producer.fun(psi);
+          if (elements != null) {
             if (result == null) result = new SmartList<>();
-            result.add(element);
+            ContainerUtil.addAllNotNull(result, elements);
           }
         }
         finally {

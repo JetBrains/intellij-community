@@ -66,17 +66,6 @@ class FileChooserDialogFixture private constructor(robot: Robot,
     return this
   }
 
-  private fun sleepWithTimeBomb() {
-    //TODO: why this bombed?
-    assert(System.currentTimeMillis() < 1452600000000L)  // 2016-01-12 12:00
-    try {
-      Thread.sleep(5000)
-    }
-    catch (e: InterruptedException) {
-    }
-
-  }
-
   val textFieldFixture: JTextComponentFixture
     get() {
       if (myJTextFieldFixture == null) {
@@ -107,7 +96,6 @@ class FileChooserDialogFixture private constructor(robot: Robot,
   }
 
   companion object {
-
 
     fun findOpenProjectDialog(robot: Robot): FileChooserDialogFixture {
       return findDialog(robot, object : GenericTypeMatcher<JDialog>(JDialog::class.java) {

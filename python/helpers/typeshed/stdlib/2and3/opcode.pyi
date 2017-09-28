@@ -12,7 +12,7 @@ hascompare = ...  # type: List[int]
 hasfree = ...  # type: List[int]
 opname = ...  # type: List[str]
 
-opmap = ...  # Dict[str, int]
+opmap = ...  # type: Dict[str, int]
 HAVE_ARGUMENT = ...  # type: int
 EXTENDED_ARG = ...  # type: int
 

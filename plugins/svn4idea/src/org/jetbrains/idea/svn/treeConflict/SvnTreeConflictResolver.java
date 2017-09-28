@@ -131,7 +131,7 @@ public class SvnTreeConflictResolver {
       if (status != null && StatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
         result.add(status.getFile());
       }
-    }, null);
+    });
 
     return result;
   }

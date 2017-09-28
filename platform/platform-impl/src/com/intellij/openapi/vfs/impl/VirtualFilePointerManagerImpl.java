@@ -207,7 +207,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     return pointer;
   }
 
-  private final Map<String, IdentityVirtualFilePointer> myUrlToIdentity = new THashMap<>();
+  private final Map<String, IdentityVirtualFilePointer> myUrlToIdentity = new THashMap<>(); // guarded by this
   @NotNull
   private IdentityVirtualFilePointer getOrCreateIdentity(@NotNull String url,
                                                          @Nullable VirtualFile found,
@@ -484,7 +484,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
             }
           }
           newNode.addAllPointersTo(myPointers);
-          VirtualFilePointerImpl[] newMyPointers = myPointers.toArray(new VirtualFilePointerImpl[myPointers.size()]);
+          Object newMyPointers = myPointers.size() == 1 ? myPointers.get(0) : myPointers.toArray(new VirtualFilePointerImpl[myPointers.size()]);
           newNode.associate(newMyPointers, after);
           newNode.incrementUsageCount(useCount);
         }
@@ -592,8 +592,26 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   @TestOnly
-  int numberOfCachedUrlToIdentity() {
+  synchronized int numberOfCachedUrlToIdentity() {
     return myUrlToIdentity.size();
   }
 
+  // tests need to operate deterministic number of pointers, so we clear all of them out of the way during the test execution
+  @TestOnly
+  void shelveAllPointersIn(@NotNull Runnable runnable) {
+    Map<VirtualFilePointerListener, FilePointerPartNode> shelvedPointers;
+    synchronized (this) {
+      shelvedPointers = new LinkedHashMap<>(myPointers);
+      myPointers.clear();
+    }
+    try {
+      runnable.run();
+    }
+    finally {
+      synchronized (this) {
+        myPointers.clear();
+        myPointers.putAll(shelvedPointers);
+      }
+    }
+  }
 }

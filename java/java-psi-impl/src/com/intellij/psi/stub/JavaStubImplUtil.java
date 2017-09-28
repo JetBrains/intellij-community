@@ -15,31 +15,27 @@
  */
 package com.intellij.psi.stub;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiMethodImpl;
+import com.intellij.psi.impl.source.StubbedSpine;
 import com.intellij.psi.impl.source.tree.JavaElementType;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubTree;
-import com.intellij.util.ArrayUtil;
 
 public class JavaStubImplUtil {
   public static int getMethodStubIndex(PsiMethod method) {
     if (!(method instanceof PsiMethodImpl)) return -1;
     PsiFileImpl file = (PsiFileImpl)method.getContainingFile();
-    if (file.getElementTypeForStubBuilder() == null) return -1;
-    StubTree stubTree = file.getStubTree();
-    if (stubTree == null) {
-      stubTree = file.calcStubTree();
-    }
+    StubbedSpine spine = file.getStubbedSpine();
 
-    PsiElement[] stubs = stubTree
-      .getPlainList()
-      .stream()
-      .filter(e -> e.getStubType() == JavaElementType.METHOD)
-      .map(StubElement::getPsi)
-      .toArray(PsiElement[]::new);
-    return ArrayUtil.indexOf(stubs, method);
+    int result = 0;
+    for (int i = 0; i < spine.getStubCount(); i++) {
+      if (spine.getStubType(i) == JavaElementType.METHOD) {
+        if (spine.getStubPsi(i) == method) {
+          return result;
+        }
+        result++;
+      }
+    }
+    return -1;
   }
 }

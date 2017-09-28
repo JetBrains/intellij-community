@@ -275,7 +275,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
            '}';
   }
 
-  public abstract static class EdgeFilter<T> extends JBIterable.StatefulFilter<T> {
+  public abstract static class EdgeFilter<T> extends JBIterable.SCond<T> {
 
     protected T edgeSource;
 

@@ -22,7 +22,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
@@ -40,7 +39,6 @@ import java.util.*;
 
 public class DataFlowRunner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowRunner");
-  private static final Key<Integer> TOO_EXPENSIVE_HASH = Key.create("TOO_EXPENSIVE_HASH");
 
   private Instruction[] myInstructions;
   private final MultiMap<PsiElement, DfaMemoryState> myNestedClosures = new MultiMap<>();
@@ -138,12 +136,6 @@ public class DataFlowRunner {
         }
       }
 
-      Integer tooExpensiveHash = psiBlock.getUserData(TOO_EXPENSIVE_HASH);
-      if (tooExpensiveHash != null && tooExpensiveHash == psiBlock.getText().hashCode()) {
-        LOG.trace("Too complex because hasn't changed since being too complex already");
-        return RunnerResult.TOO_COMPLEX;
-      }
-
       final StateQueue queue = new StateQueue();
       for (final DfaMemoryState initialState : initialStates) {
         queue.offer(new DfaInstructionState(myInstructions[0], initialState));
@@ -156,10 +148,13 @@ public class DataFlowRunner {
       int count = 0;
       while (!queue.isEmpty()) {
         List<DfaInstructionState> states = queue.getNextInstructionStates(joinInstructions);
+        if (states.size() > MAX_STATES_PER_BRANCH) {
+          LOG.trace("Too complex because too many different possible states");
+          return RunnerResult.TOO_COMPLEX;
+        }
         for (DfaInstructionState instructionState : states) {
           if (count++ > stateLimit) {
             LOG.trace("Too complex data flow: too many instruction states processed");
-            psiBlock.putUserData(TOO_EXPENSIVE_HASH, psiBlock.getText().hashCode());
             return RunnerResult.TOO_COMPLEX;
           }
           ProgressManager.checkCanceled();
@@ -180,7 +175,7 @@ public class DataFlowRunner {
             }
             if (processed.size() > MAX_STATES_PER_BRANCH) {
               LOG.trace("Too complex because too many different possible states");
-              return RunnerResult.TOO_COMPLEX; // Too complex :(
+              return RunnerResult.TOO_COMPLEX;
             }
             if (loopNumber[branching.getIndex()] != 0) {
               processedStates.putValue(branching, instructionState.getMemoryState().createCopy());
@@ -188,6 +183,15 @@ public class DataFlowRunner {
           }
 
           DfaInstructionState[] after = acceptInstruction(visitor, instructionState);
+          if (LOG.isDebugEnabled() && instruction instanceof ControlTransferInstruction && after.length == 0) {
+            DfaMemoryState memoryState = instructionState.getMemoryState();
+            if (!memoryState.isEmptyStack()) {
+              DfaValue topValue = memoryState.pop();
+              if (!(topValue instanceof DfaControlTransferValue || psiBlock instanceof PsiCodeFragment && memoryState.isEmptyStack())) {
+                LOG.error("Stack is corrupted at " + instructionState);
+              }
+            }
+          }
           for (DfaInstructionState state : after) {
             Instruction nextInstruction = state.getInstruction();
             if (nextInstruction.getIndex() >= endOffset) {
@@ -209,7 +213,6 @@ public class DataFlowRunner {
         }
       }
 
-      psiBlock.putUserData(TOO_EXPENSIVE_HASH, null);
       LOG.trace("Analysis ok");
       return RunnerResult.OK;
     }

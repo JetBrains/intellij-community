@@ -755,7 +755,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   public void testRun() throws IncorrectOperationException {
     testPrepare();
     testNullness();
-    ExtractMethodHandler.run(myProject, myEditor, this);
+    ExtractMethodHandler.extractMethod(myProject, this);
   }
 
   @TestOnly

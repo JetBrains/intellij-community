@@ -509,13 +509,13 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     }
   }
 
-  private final class MyRenderer extends JPanel implements TreeCellRenderer {
-    private final SimpleColoredComponent myTextLabel = new SimpleColoredComponent();
-    private final JLabel myNodeIcon = new JLabel();
-    private final JLabel myProjectIcon = new JLabel();
+  private final class MyRenderer extends CellRendererPanel implements TreeCellRenderer {
+    final SimpleColoredComponent myTextLabel = new SimpleColoredComponent();
+    final JLabel myNodeIcon = new JLabel();
+    final JLabel myProjectIcon = new JLabel();
 
-    public MyRenderer() {
-      super(new BorderLayout(ICON_GAP, 0));
+    MyRenderer() {
+      setLayout(new BorderLayout(ICON_GAP, 0));
       myNodeIcon.setName(NODE_ICON);
       myTextLabel.setOpaque(false);
       add(BorderLayout.CENTER, myTextLabel);

@@ -221,14 +221,35 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     }
   }
 
-
+  @Nullable
+  public final String getCannotPreviewMessage(@Nullable final List<UsageInfo> infos) {
+    if (infos == null || infos.isEmpty()) {
+      return UsageViewBundle.message("select.the.usage.to.preview", myPresentation.getUsagesWord());
+    } else {
+      PsiFile psiFile = null;
+      for (UsageInfo info : infos) {
+        PsiElement element = info.getElement();
+        if (element == null) continue;
+        PsiFile file = element.getContainingFile();
+        if (psiFile == null) {
+          psiFile = file;
+        } else {
+          if (psiFile != file) {
+            return UsageViewBundle.message("several.occurrences.selected");
+          }
+        }
+      }
+    }
+    return null;
+  }
 
   @Override
   public void updateLayoutLater(@Nullable final List<UsageInfo> infos) {
-    if (infos == null) {
+    String cannotPreviewMessage = getCannotPreviewMessage(infos);
+    if (cannotPreviewMessage != null) {
       releaseEditor();
       removeAll();
-      JComponent titleComp = new JLabel(UsageViewBundle.message("select.the.usage.to.preview", myPresentation.getUsagesWord()), SwingConstants.CENTER);
+      JComponent titleComp = new JLabel(cannotPreviewMessage, SwingConstants.CENTER);
       add(titleComp, BorderLayout.CENTER);
       revalidate();
     }

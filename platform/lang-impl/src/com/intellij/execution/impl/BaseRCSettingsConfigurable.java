@@ -38,7 +38,7 @@ abstract class BaseRCSettingsConfigurable extends SettingsEditorConfigurable<Run
       RunnerAndConfigurationSettings snapshot = getEditor().getSnapshot();
 
       final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(original.getConfiguration().getProject());
-      if (!runManager.hasSettings(original)) {
+      if (!original.isTemplate() && !runManager.hasSettings(original)) {
         return true;
       }
       if (!super.isModified()) {

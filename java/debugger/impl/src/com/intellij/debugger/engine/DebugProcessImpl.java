@@ -1176,13 +1176,22 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                             ClassType classType,
                             Method method,
                             List<? extends Value> args) throws EvaluateException {
-    return invokeMethod(evaluationContext, classType, method, args, false);
+    return invokeMethod(evaluationContext, classType, method, args, 0,false);
   }
 
   public Value invokeMethod(@NotNull EvaluationContext evaluationContext,
                             @NotNull final ClassType classType,
                             @NotNull Method method,
                             @NotNull List<? extends Value> args,
+                            boolean internalEvaluate) throws EvaluateException {
+    return invokeMethod(evaluationContext, classType, method, args, 0, internalEvaluate);
+  }
+
+  public Value invokeMethod(@NotNull EvaluationContext evaluationContext,
+                            @NotNull final ClassType classType,
+                            @NotNull Method method,
+                            @NotNull List<? extends Value> args,
+                            int extraInvocationOptions,
                             boolean internalEvaluate) throws EvaluateException {
     final ThreadReference thread = getEvaluationThread(evaluationContext);
     return new InvokeCommand<Value>(method, args) {
@@ -1194,7 +1203,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         if (LOG.isDebugEnabled()) {
           LOG.debug("Invoking " + classType.name() + "." + method.name());
         }
-        return classType.invokeMethod(thread, method, args, invokePolicy);
+        return classType.invokeMethod(thread, method, args, invokePolicy | extraInvocationOptions);
       }
     }.start((EvaluationContextImpl)evaluationContext, internalEvaluate);
   }

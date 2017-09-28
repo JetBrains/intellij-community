@@ -96,7 +96,7 @@ public class OptionalChainInliner implements CallInliner {
           .evaluateFunction(fn)
           .dup()
           .ifNotNull()
-          .invokeFunction(0, fn)
+          .invokeFunction(1, fn)
           .elseBranch()
           .pop()
           .pushUnknown()

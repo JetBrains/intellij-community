@@ -110,14 +110,23 @@ public class PySciViewAction extends ToggleAction implements DumbAware {
   }
 
   private void showConsoleToolwindow(@NotNull final Project project) {
-    final ToolWindow consoleToolWindow = PythonConsoleToolWindow.getInstance(project).getToolWindow();
+    final PythonConsoleToolWindow pythonConsoleToolWindow = PythonConsoleToolWindow.getInstance(project);
+    if (pythonConsoleToolWindow == null) return;
+    final ToolWindow consoleToolWindow = pythonConsoleToolWindow.getToolWindow();
+    if (consoleToolWindow == null) return;
     wasConsoleVisible = consoleToolWindow.isVisible();
     consoleToolWindow.show(null);
   }
 
   private void hideConsoleToolwindow(@NotNull final Project project) {
     if (!wasConsoleVisible) {
-      PythonConsoleToolWindow.getInstance(project).getToolWindow().hide(null);
+      final PythonConsoleToolWindow pythonConsoleToolWindow = PythonConsoleToolWindow.getInstance(project);
+      if (pythonConsoleToolWindow != null) {
+        final ToolWindow consoleToolWindow = pythonConsoleToolWindow.getToolWindow();
+        if (consoleToolWindow != null) {
+          consoleToolWindow.hide(null);
+        }
+      }
     }
   }
 
@@ -135,7 +144,6 @@ public class PySciViewAction extends ToggleAction implements DumbAware {
       DocumentationManager.getInstance(project).showJavaDocInfo(element, element);
     }
     setDocFontSize();
-
   }
 
   private static void setDocFontSize() {

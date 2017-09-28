@@ -30,44 +30,47 @@ import java.util.*
 
 class ScreenshotOnFailure: TestWatcher() {
 
-  private val LOG = Logger.getInstance(ScreenshotOnFailure::class.java)
-  private val myScreenshotTaker = ScreenshotTaker()
-
   override fun failed(throwable: Throwable?, description: Description?) {
     val screenshotName = "${description!!.testClass.simpleName}.${description.methodName}"
     takeScreenshotOnFailure(throwable!!, screenshotName)
   }
 
-  private fun takeScreenshotOnFailure(e: Throwable, screenshotName: String) {
+  companion object {
+    private val LOG = Logger.getInstance(ScreenshotOnFailure::class.java)
+    private val myScreenshotTaker = ScreenshotTaker()
 
-    try {
-      var file = File(IdeTestApplication.getFailedTestScreenshotDirPath(), "$screenshotName.png")
-      if (file.exists())
-        file = File(IdeTestApplication.getFailedTestScreenshotDirPath(), "$screenshotName.${getDateAndTime()}.png")
-      file.delete()
-      if (e is ComponentLookupException)
-        LOG.error("${getHierarchy()} \n caused by:", e)
-      myScreenshotTaker.saveDesktopAsPng(file.path)
-      LOG.info("Screenshot: $file")
+    fun takeScreenshotOnFailure(e: Throwable, screenshotName: String) {
+
+      try {
+        var file = File(IdeTestApplication.getFailedTestScreenshotDirPath(), "$screenshotName.png")
+        if (file.exists())
+          file = File(IdeTestApplication.getFailedTestScreenshotDirPath(), "$screenshotName.${getDateAndTime()}.png")
+        file.delete()
+        if (e is ComponentLookupException)
+          LOG.error("${getHierarchy()} \n caused by:", e)
+        myScreenshotTaker.saveDesktopAsPng(file.path)
+        LOG.info("Screenshot: $file")
+      }
+      catch (t: Throwable) {
+        LOG.error("Screenshot failed. ${t.message}")
+      }
     }
-    catch (t: Throwable) {
-      LOG.error("Screenshot failed. ${t.message}")
+
+    fun getHierarchy(): String {
+      val out = ByteArrayOutputStream()
+      val printStream = PrintStream(out, true)
+      val componentPrinter = BasicComponentPrinter.printerWithCurrentAwtHierarchy()
+      componentPrinter.printComponents(printStream)
+      printStream.flush()
+      return String(out.toByteArray())
+    }
+
+    private fun getDateAndTime(): String {
+      val dateFormat = SimpleDateFormat("yyyy_MM_dd.HH_mm_ss_SSS")
+      val date = Date()
+      return dateFormat.format(date) //2016/11/16 12:08:43
     }
   }
 
-  private fun getDateAndTime(): String {
-    val dateFormat = SimpleDateFormat("yyyy_MM_dd.HH_mm_ss_SSS")
-    val date = Date()
-    return dateFormat.format(date) //2016/11/16 12:08:43
-  }
-
-  private fun getHierarchy(): String {
-    val out = ByteArrayOutputStream()
-    val printStream = PrintStream(out, true)
-    val componentPrinter = BasicComponentPrinter.printerWithCurrentAwtHierarchy()
-    componentPrinter.printComponents(printStream)
-    printStream.flush()
-    return String(out.toByteArray())
-  }
 
 }

@@ -24,6 +24,7 @@ import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
+import java.util.Map;
 
 public class JpsCompilerConfigurationTest extends JpsSerializationTestCase {
   public void testLoadFromIpr() {
@@ -67,6 +68,10 @@ public class JpsCompilerConfigurationTest extends JpsSerializationTestCase {
     assertFalse(options.DEBUGGING_INFO);
     assertTrue(options.GENERATE_NO_WARNINGS);
     assertEquals("-Xlint", options.ADDITIONAL_OPTIONS_STRING);
+    final Map<String, String> override = options.ADDITIONAL_OPTIONS_OVERRIDE;
+    assertEquals(2, override.size());
+    assertEquals("-param_1", override.get("mod_1"));
+    assertEquals("-param_2", override.get("mod_2"));
   }
 
   private boolean isExcluded(JpsCompilerExcludes excludes, final String path) {

@@ -353,7 +353,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       String url = node.getURL().toDecodedString();
 
       AbstractVcsHelper.getInstance(myProject)
-        .showFileHistory(myVCS.getVcsHistoryProvider(), VcsUtil.getFilePathOnNonLocal(url, isDirectory), myVCS, url);
+        .showFileHistory(myVCS.getVcsHistoryProvider(), VcsUtil.getFilePathOnNonLocal(url, isDirectory), myVCS);
       node.reload(false);
     }
   }
@@ -1045,7 +1045,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
           return;
         }
 
-      SvnCheckoutProvider.doCheckout(myProject, dir, url.toString(), revision, dialog.getDepth(), dialog.isIgnoreExternals(), listener);
+      SvnCheckoutProvider.doCheckout(myProject, dir, url, revision, dialog.getDepth(), dialog.isIgnoreExternals(), listener);
     }
   }
 

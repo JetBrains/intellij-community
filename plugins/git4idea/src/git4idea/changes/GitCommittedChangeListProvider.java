@@ -96,10 +96,6 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
     return new GitRepositoryLocation(trackedBranch.getRemote().getFirstUrl(), rootFile);
   }
 
-  public RepositoryLocation getLocationFor(FilePath root, String repositoryPath) {
-    return getLocationFor(root);
-  }
-
   @Nullable
   public VcsCommittedListsZipper getZipper() {
     return null;

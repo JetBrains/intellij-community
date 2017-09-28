@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -110,11 +111,7 @@ public class SynchronizeOnThisInspection extends BaseInspection {
     }
 
     private static boolean isPrivateClassType(PsiType type) {
-      if (!(type instanceof PsiClassType)) {
-        return false;
-      }
-      final PsiClassType extendsBoundClassType = (PsiClassType)type;
-      final PsiClass aClass = extendsBoundClassType.resolve();
+      final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
       return aClass == null || !aClass.hasModifierProperty(PsiModifier.PRIVATE);
     }
   }

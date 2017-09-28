@@ -17,6 +17,7 @@ package com.siyeh.ig.threading;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -93,29 +94,15 @@ public class NonAtomicOperationOnVolatileFieldInspection extends BaseInspection 
     }
 
     @Override
-    public void visitPrefixExpression(PsiPrefixExpression expression) {
-      super.visitPrefixExpression(expression);
-      final IElementType tokenType = expression.getOperationTokenType();
-      if (JavaTokenType.PLUS.equals(tokenType) ||
-          JavaTokenType.MINUS.equals(tokenType) ||
-          JavaTokenType.EXCL.equals(tokenType)) {
+    public void visitUnaryExpression(PsiUnaryExpression expression) {
+      super.visitUnaryExpression(expression);
+      if (!PsiUtil.isIncrementDecrementOperation(expression)) {
         return;
       }
       final PsiExpression operand = expression.getOperand();
       if (operand == null) {
         return;
       }
-      final PsiField volatileField = findNonSynchronizedVolatileField(operand);
-      if (volatileField == null) {
-        return;
-      }
-      registerError(operand);
-    }
-
-    @Override
-    public void visitPostfixExpression(PsiPostfixExpression expression) {
-      super.visitPostfixExpression(expression);
-      final PsiExpression operand = expression.getOperand();
       final PsiField volatileField = findNonSynchronizedVolatileField(operand);
       if (volatileField == null) {
         return;

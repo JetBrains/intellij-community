@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.NodeKind;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.lock.Lock;
 import org.tmatesoft.svn.core.SVNURL;
@@ -26,6 +27,8 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 
 import java.io.File;
+
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 /**
  * TODO: Could also inherit BaseNodeDescription when myKind becomes final.
@@ -46,7 +49,7 @@ public class Status {
   private boolean myIsLocked;
   private boolean myIsCopied;
   private boolean myIsSwitched;
-  private String myCopyFromURL;
+  private SVNURL myCopyFromURL;
   @Nullable private Lock myRemoteLock;
   @Nullable private Lock myLocalLock;
   private SVNRevision myRemoteRevision;
@@ -58,7 +61,7 @@ public class Status {
   private SVNURL myRepositoryRootURL;
 
   @Nullable
-  public static Status create(@Nullable SVNStatus status) {
+  public static Status create(@Nullable SVNStatus status) throws SvnBindException {
     Status result = null;
 
     if (status != null) {
@@ -66,7 +69,8 @@ public class Status {
         new Status(status.getURL(), status.getFile(), NodeKind.from(status.getKind()), status.getRevision(), status.getCommittedRevision(),
                    StatusType.from(status.getContentsStatus()), StatusType.from(status.getPropertiesStatus()),
                    StatusType.from(status.getRemoteContentsStatus()), StatusType.from(status.getRemotePropertiesStatus()),
-                   status.isLocked(), status.isCopied(), status.isSwitched(), status.getCopyFromURL(), Lock.create(status.getRemoteLock()),
+                   status.isLocked(), status.isCopied(), status.isSwitched(),
+                   status.getCopyFromURL() != null ? createUrl(status.getCopyFromURL()) : null, Lock.create(status.getRemoteLock()),
                    Lock.create(status.getLocalLock()), status.getChangelistName(),
                    TreeConflictDescription.create(status.getTreeConflict()));
       result.setIsConflicted(status.isConflicted());
@@ -91,7 +95,7 @@ public class Status {
                 boolean isLocked,
                 boolean isCopied,
                 boolean isSwitched,
-                String copyFromURL,
+                SVNURL copyFromURL,
                 @Nullable Lock remoteLock,
                 @Nullable Lock localLock,
                 String changelistName,
@@ -189,7 +193,8 @@ public class Status {
     return myIsSwitched;
   }
 
-  public String getCopyFromURL() {
+  @Nullable
+  public SVNURL getCopyFromURL() {
     return myCopyFromURL;
   }
 

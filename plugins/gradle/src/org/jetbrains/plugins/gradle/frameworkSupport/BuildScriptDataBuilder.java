@@ -49,6 +49,13 @@ public class BuildScriptDataBuilder {
     return myBuildScriptFile;
   }
 
+  /**
+   * @deprecated use {@link #buildMainPart()} and {@link #buildConfigurationPart()} instead
+   */
+  public String build() {
+    return buildMainPart();
+  }
+
   public String buildConfigurationPart() {
     List<String> lines = ContainerUtil.newArrayList();
     addBuildscriptLines(lines, BuildScriptDataBuilder::padding);

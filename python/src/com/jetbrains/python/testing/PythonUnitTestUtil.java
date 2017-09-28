@@ -74,7 +74,8 @@ public final class PythonUnitTestUtil {
     if (isTestCaseClassRequired(file, testCaseClassRequired)) {
       return false;
     }
-    return file.getTopLevelFunctions().stream().anyMatch(o -> isTestFunction(o, testCaseClassRequired, context));
+    return file.getName().startsWith("test_") ||
+           file.getTopLevelFunctions().stream().anyMatch(o -> isTestFunction(o, testCaseClassRequired, context));
   }
 
   /**

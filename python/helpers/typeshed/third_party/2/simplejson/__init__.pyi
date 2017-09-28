@@ -1,8 +1,8 @@
 from typing import Any, IO
 
-from simplejson.scanner import JSONDecodeError
-from simplejson.decoder import JSONDecoder
-from simplejson.encoder import JSONEncoder, JSONEncoderForHTML
+from simplejson.scanner import JSONDecodeError as JSONDecodeError
+from simplejson.decoder import JSONDecoder as JSONDecoder
+from simplejson.encoder import JSONEncoder as JSONEncoder, JSONEncoderForHTML as JSONEncoderForHTML
 
 def dumps(obj: Any, *args: Any, **kwds: Any) -> str: ...
 def dump(obj: Any, fp: IO[str], *args: Any, **kwds: Any) -> None: ...

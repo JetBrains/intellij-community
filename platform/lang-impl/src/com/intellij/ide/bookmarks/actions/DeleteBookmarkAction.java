@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ide.bookmarks.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.bookmarks.Bookmark;
+import com.intellij.ide.bookmarks.BookmarkItem;
 import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -29,9 +30,9 @@ import java.util.List;
 
 class DeleteBookmarkAction extends DumbAwareAction {
   private final Project myProject;
-  private final JList myList;
+  private final JList<BookmarkItem> myList;
 
-  DeleteBookmarkAction(Project project, JList list) {
+  DeleteBookmarkAction(Project project, JList<BookmarkItem> list) {
     super("Delete", "Delete current bookmark", AllIcons.General.Remove);
     setEnabledInModalContext(true);
     myProject = project;

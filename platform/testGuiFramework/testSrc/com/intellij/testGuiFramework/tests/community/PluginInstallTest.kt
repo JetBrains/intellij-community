@@ -26,6 +26,12 @@ class PluginInstallTest : PluginTestCase() {
     checkPluginsFunctionality("Dart")
   }
 
+  @Test
+  fun testPluginByPath() {
+    installPluginAndRestart { installPluginFromDisk("/Users/jetbrains/Downloads/Dart-172.4155.35.zip") }
+    checkPluginsFunctionality("Dart")
+  }
+
   private fun checkPluginsFunctionality(vararg pluginNames: String) {
     pluginNames.forEach { println("Plugin '$it' is OK") }
   }

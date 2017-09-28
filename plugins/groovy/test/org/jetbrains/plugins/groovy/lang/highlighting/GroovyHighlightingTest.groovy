@@ -2142,4 +2142,8 @@ w.width.intValue()
 w.width.compareTo(2f)
 ''', GrUnresolvedAccessInspection
   }
+
+  void "test no warning on extension method with spread operator"() {
+    testHighlighting '[1, 2, 3]*.multiply(4)', GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection
+  }
 }

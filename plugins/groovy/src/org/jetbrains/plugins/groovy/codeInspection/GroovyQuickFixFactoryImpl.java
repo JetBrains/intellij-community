@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.codeInspection.bugs.AddClassToExtendsFix;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.AddMethodFix;
 import org.jetbrains.plugins.groovy.codeInspection.confusing.ReplaceWithImportFix;
 import org.jetbrains.plugins.groovy.codeInspection.cs.GrReplaceMultiAssignmentFix;
+import org.jetbrains.plugins.groovy.codeInspection.cs.SpreadArgumentFix;
 import org.jetbrains.plugins.groovy.codeInspection.local.RemoveUnusedGrParameterFix;
 import org.jetbrains.plugins.groovy.codeInspection.naming.RenameFix;
 import org.jetbrains.plugins.groovy.dsl.InvestigateFix;
@@ -155,5 +156,10 @@ public class GroovyQuickFixFactoryImpl extends GroovyQuickFixFactory {
   @Override
   public GroovyFix createMultipleAssignmentFix(int size) {
     return new GrReplaceMultiAssignmentFix(size);
+  }
+
+  @Override
+  public GroovyFix createSpreadArgumentFix(int size) {
+    return new SpreadArgumentFix(size);
   }
 }

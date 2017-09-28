@@ -17,9 +17,8 @@ package com.intellij.application.options.codeStyle;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.openapi.ui.ComboBox;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.codeStyle.presentation.CodeStyleBoundedIntegerSettingPresentation;
 import com.intellij.psi.codeStyle.presentation.CodeStyleSelectSettingPresentation;
 import com.intellij.psi.codeStyle.presentation.CodeStyleSettingPresentation;
@@ -37,15 +36,15 @@ import java.util.function.Function;
 
 public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
 
-  public static final String DEFAULT_VALUE_TEXT = ApplicationBundle.message("integer.option.default.value.text");
-
   private MultiMap<String, String> myGroupToFields = new MultiMap<>();
   private Map<String, SettingsGroup> myFieldNameToGroup;
   private final CommaSeparatedIntegersField mySoftMarginsEditor =
-    new CommaSeparatedIntegersField(null, 0, CodeStyleSettings.MAX_RIGHT_MARGIN, "Optional");
+    new CommaSeparatedIntegersField(null, 0, CodeStyleConstraints.MAX_RIGHT_MARGIN, "Optional");
+  private final JComboBox<String> myWrapOnTypingCombo = new ComboBox<>(WRAP_ON_TYPING_OPTIONS);
 
   public WrappingAndBracesPanel(CodeStyleSettings settings) {
     super(settings);
+    MarginOptionsUtil.customizeWrapOnTypingCombo(myWrapOnTypingCombo, settings);
     init();
   }
 
@@ -102,10 +101,10 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
 
   private Function<Integer,String> getDefaultIntValueRenderer(@NotNull String fieldName) {
     if ("RIGHT_MARGIN".equals(fieldName)) {
-      return integer -> DEFAULT_VALUE_TEXT + ": " + getSettings().getDefaultRightMargin();
+      return integer -> MarginOptionsUtil.getDefaultRightMarginText(getSettings());
     }
     else {
-      return integer -> DEFAULT_VALUE_TEXT;
+      return integer -> ApplicationBundle.message("integer.field.value.default");
     }
   }
 
@@ -191,6 +190,11 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     if (CodeStyleSoftMarginsPresentation.OPTION_NAME.equals(optionName)) {
       return new JLabel(getSoftMarginsString(castToIntList(value)));
     }
+    else if ("WRAP_ON_TYPING".equals(optionName)) {
+      if (value.equals(ApplicationBundle.message("wrapping.wrap.on.typing.default"))) {
+        return new JLabel(MarginOptionsUtil.getDefaultWrapOnTypingText(getSettings()));
+      }
+    }
     return super.getCustomValueRenderer(optionName, value);
   }
 
@@ -199,9 +203,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     if (intList.size() > 0) {
       return CommaSeparatedIntegersValueEditor.intListToString(intList);
     }
-    List<Integer> defaultMargins = getSettings().getDefaultSoftMargins();
-    String defaultsStr = defaultMargins.size() > 0 ? CommaSeparatedIntegersValueEditor.intListToString(defaultMargins) : "None";
-    return "Default: " + defaultsStr;
+    return MarginOptionsUtil.getDefaultVisualGuidesText(getSettings());
   }
 
   @Nullable
@@ -212,6 +214,18 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
       mySoftMarginsEditor.setValue(castToIntList(node.getValue()));
       return mySoftMarginsEditor;
     }
+    else if ("WRAP_ON_TYPING".equals(optionName)) {
+      Object value = node.getValue();
+      if (value instanceof String) {
+        for (int i = 0; i < CodeStyleSettingsCustomizable.WRAP_ON_TYPING_OPTIONS.length; i ++) {
+          if (CodeStyleSettingsCustomizable.WRAP_ON_TYPING_OPTIONS.equals(value)) {
+            myWrapOnTypingCombo.setSelectedIndex(i);
+            break;
+          }
+        }
+      }
+      return myWrapOnTypingCombo;
+    }
     return super.getCustomNodeEditor(node);
   }
 
@@ -220,6 +234,10 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
   protected Object getCustomNodeEditorValue(@NotNull JComponent customEditor) {
     if (customEditor instanceof CommaSeparatedIntegersField) {
       return ((CommaSeparatedIntegersField)customEditor).getValue();
+    }
+    else if (customEditor == myWrapOnTypingCombo) {
+      int i = myWrapOnTypingCombo.getSelectedIndex();
+      return i >= 0 ? CodeStyleSettingsCustomizable.WRAP_ON_TYPING_OPTIONS[i] : null;
     }
     return super.getCustomNodeEditorValue(customEditor);
   }

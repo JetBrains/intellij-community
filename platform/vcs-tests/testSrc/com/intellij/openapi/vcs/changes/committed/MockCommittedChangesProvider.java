@@ -59,11 +59,6 @@ public class MockCommittedChangesProvider implements CachingCommittedChangesProv
     return new DefaultRepositoryLocation(root.getPath());
   }
 
-  @Override
-  public RepositoryLocation getLocationFor(final FilePath root, final String repositoryPath) {
-    return getLocationFor(root);
-  }
-
   @Nullable
   @Override
   public VcsCommittedListsZipper getZipper() {

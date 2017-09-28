@@ -1,7 +1,8 @@
 # Stubs for typing (Python 2.7)
 
 from abc import abstractmethod, ABCMeta
-from types import CodeType, FrameType
+from types import CodeType, FrameType, TracebackType
+import collections  # Needed by aliases like DefaultDict, see mypy issue 2986
 
 # Definitions of special type checking related constructs.  Their definitions
 # are not used, so their value does not matter.
@@ -9,15 +10,24 @@ from types import CodeType, FrameType
 overload = object()
 Any = object()
 TypeVar = object()
-Generic = object()
-Tuple = object()
-Callable = object()
-Type = object()
 _promote = object()
 no_type_check = object()
-ClassVar = object()
+
+class _SpecialForm(object):
+    def __getitem__(self, typeargs: Any) -> object: ...
+
+Tuple: _SpecialForm = ...
+Generic: _SpecialForm = ...
+Callable: _SpecialForm = ...
+Type: _SpecialForm = ...
+ClassVar: _SpecialForm = ...
 
 class GenericMeta(type): ...
+
+# Return type that indicates a function does not return.
+# This type is equivalent to the None type, but the no-op Union is necessary to
+# distinguish the None type from the None value.
+NoReturn = Union[None]
 
 # Type aliases and type constructors
 
@@ -199,6 +209,12 @@ class ValuesView(MappingView, Iterable[_VT_co], Generic[_VT_co]):
     def __contains__(self, o: object) -> bool: ...
     def __iter__(self) -> Iterator[_VT_co]: ...
 
+class ContextManager(Generic[_T_co]):
+    def __enter__(self) -> _T_co: ...
+    def __exit__(self, exc_type: Optional[Type[BaseException]],
+                 exc_value: Optional[BaseException],
+                 traceback: Optional[TracebackType]) -> Optional[bool]: ...
+
 class Mapping(Iterable[_KT], Container[_KT], Sized, Generic[_KT, _VT_co]):
     # TODO: We wish the key type could also be covariant, but that doesn't work,
     # see discussion in https: //github.com/python/typing/pull/273.
@@ -206,9 +222,9 @@ class Mapping(Iterable[_KT], Container[_KT], Sized, Generic[_KT, _VT_co]):
     def __getitem__(self, k: _KT) -> _VT_co:
         ...
     # Mixin methods
-    @overload  # type: ignore
+    @overload
     def get(self, k: _KT) -> Optional[_VT_co]: ...
-    @overload  # type: ignore
+    @overload
     def get(self, k: _KT, default: Union[_VT_co, _T]) -> Union[_VT_co, _T]: ...
     def keys(self) -> list[_KT]: ...
     def values(self) -> list[_VT_co]: ...
@@ -381,7 +397,8 @@ class Pattern(Generic[AnyStr]):
 
 # Functions
 
-def get_type_hints(obj: Callable) -> dict[str, Any]: ...
+def get_type_hints(obj: Callable, globalns: Optional[dict[Text, Any]] = ...,
+                   localns: Optional[dict[Text, Any]] = ...) -> None: ...
 
 def cast(tp: Type[_T], obj: Any) -> _T: ...
 

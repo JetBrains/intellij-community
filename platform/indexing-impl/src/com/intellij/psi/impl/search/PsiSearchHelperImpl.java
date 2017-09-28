@@ -406,7 +406,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       ApplicationUtil.tryRunReadAction(() -> {
         final Project project = myManager.getProject();
         if (project.isDisposed()) throw new ProcessCanceledException();
-        if (DumbService.isDumb(project)) throw new ApplicationUtil.CannotRunReadActionException();
+        if (DumbService.isDumb(project)) throw ApplicationUtil.CannotRunReadActionException.create();
 
         List<PsiFile> psiRoots = file.getViewProvider().getAllFiles();
         Set<PsiFile> processed = new THashSet<>(psiRoots.size() * 2, (float)0.5);

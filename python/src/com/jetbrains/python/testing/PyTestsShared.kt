@@ -285,7 +285,7 @@ data class ConfigurationTarget(@ConfigField var target: String,
   private fun getArgumentsForPythonTarget(configuration: PyAbstractTestConfiguration): List<String> {
     val element = asPsiElement(configuration) ?:
                   throw ExecutionException(
-                    "Can't resolve $target. Try to remove configuration and generate is again")
+                    "Can't resolve $target. Try to remove configuration and generate it again")
 
     if (element is PsiDirectory) {
       // Directory is special case: we can't run it as package for now, so we run it as path

@@ -66,7 +66,7 @@ public class UnusedReturnValueLocalInspection extends BaseJavaLocalInspectionToo
         method.hasModifierProperty(PsiModifier.NATIVE) ||
         MethodUtils.hasSuper(method) ||
         RefUtil.isImplicitRead(method) ||
-        UnusedDeclarationInspectionBase.findUnusedDeclarationInspection(method).isEntryPoint(method)) return null;
+        UnusedDeclarationInspectionBase.isDeclaredAsEntryPoint(method)) return null;
 
     final boolean[] atLeastOneUsageExists = new boolean[]{false};
     if (UnusedSymbolUtil.processUsages(manager.getProject(), method.getContainingFile(), method, new EmptyProgressIndicator(), null, u -> {

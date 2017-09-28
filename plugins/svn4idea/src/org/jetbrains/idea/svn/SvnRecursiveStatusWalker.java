@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,7 +105,7 @@ public class SvnRecursiveStatusWalker {
     File ioFile = item.getPath().getIOFile();
 
     myHandler.setCurrentItem(item);
-    item.getClient().doStatus(ioFile, SVNRevision.WORKING, item.getDepth(), false, false, true, true, myHandler, null);
+    item.getClient().doStatus(ioFile, SVNRevision.WORKING, item.getDepth(), false, false, true, true, myHandler);
 
     // check if current item was already processed - not to request its status once again
     if (!myHandler.myMetCurrentItem) {
@@ -114,12 +114,7 @@ public class SvnRecursiveStatusWalker {
   }
 
   private void processFile(@NotNull MyItem item) throws SvnBindException {
-    try {
-      myReceiver.process(item.getPath(), item.getClient().doStatus(item.getPath().getIOFile(), false));
-    }
-    catch (SVNException e) {
-      throw new SvnBindException(e);
-    }
+    myReceiver.process(item.getPath(), item.getClient().doStatus(item.getPath().getIOFile(), false));
   }
 
   public void checkCanceled() {
@@ -296,7 +291,7 @@ public class SvnRecursiveStatusWalker {
     }
 
     @Override
-    public void consume(final Status status) throws SVNException {
+    public void consume(final Status status) throws SvnBindException {
       checkCanceled();
       final File ioFile = status.getFile();
       checkIfCopyRootWasReported(status);

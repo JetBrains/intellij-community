@@ -165,9 +165,8 @@ public class AnnotationUtil {
         collectSuperParameters(result, (PsiParameter)element);
       }
 
-      List<T> list = new ArrayList<>();
       //noinspection unchecked
-      list.addAll((Collection<? extends T>)result);
+      List<T> list = new ArrayList<>((Collection<? extends T>)result);
 
       return CachedValueProvider.Result.create(list, PsiModificationTracker.MODIFICATION_COUNT);
     });

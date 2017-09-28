@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightVariableBuilder;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
@@ -491,7 +492,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         }
         if (length != null) {
           addInstruction(new PushInstruction(length.createValue(myFactory, qualifier), null));
-          addInstruction(new PushInstruction(myFactory.getConstFactory().createFromValue(0, PsiType.INT, null), null));
+          addInstruction(new PushInstruction(myFactory.getInt(0), null));
           addInstruction(new BinopInstruction(JavaTokenType.EQEQ, iteratedValue, myProject));
           addInstruction(new ConditionalGotoInstruction(loopEndOffset, false, null));
           hasSizeCheck = true;
@@ -879,12 +880,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private static class ApplyNotNullInstruction extends Instruction {
-    private final PsiMethodCallExpression myCall;
-
-    private ApplyNotNullInstruction(PsiMethodCallExpression call) {
-      myCall = call;
-    }
-
     @Override
     public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState state, InstructionVisitor visitor) {
       DfaValue value = state.pop();
@@ -1049,13 +1044,46 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(expression);
   }
 
+  @Nullable
+  private DfaVariableValue getTargetVariable(PsiExpression expression) {
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+    if (parent instanceof PsiVariable) {
+      // initialization
+      return getFactory().getVarFactory().createVariableValue((PsiVariable)expression.getParent(), false);
+    }
+    if (parent instanceof PsiAssignmentExpression) {
+      PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+      if (assignmentExpression.getOperationTokenType().equals(JavaTokenType.EQ) &&
+          PsiTreeUtil.isAncestor(assignmentExpression.getRExpression(), expression, false)) {
+        DfaValue value = getFactory().createValue(assignmentExpression.getLExpression());
+        if (value instanceof DfaVariableValue) {
+          return (DfaVariableValue)value;
+        }
+      }
+    }
+    return null;
+  }
+
   @Override
   public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
     startElement(expression);
     PsiType type = expression.getType();
     PsiType componentType = type instanceof PsiArrayType ? ((PsiArrayType)type).getComponentType() : null;
+    DfaVariableValue var = getTargetVariable(expression);
     processArrayInitializers(expression, componentType, DfaPsiUtil.getTypeNullability(componentType));
-    pushUnknown();
+    if (var != null) {
+      // Declaration: write array length
+      addInstruction(new PushInstruction(var, null, true));
+      addInstruction(new PushInstruction(getFactory().createTypeValue(type, Nullness.NOT_NULL), expression));
+      addInstruction(new AssignInstruction(expression, var));
+      addInstruction(new PushInstruction(SpecialField.ARRAY_LENGTH.createValue(getFactory(), var), null, true));
+      addInstruction(new PushInstruction(getFactory().getInt(expression.getInitializers().length), null));
+      addInstruction(new AssignInstruction(null, null));
+      addInstruction(new PopInstruction());
+    }
+    else {
+      pushUnknown();
+    }
     finishElement(expression);
   }
 
@@ -1469,7 +1497,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       // stack: .., arg1, call-result
       ConditionalGotoInstruction ifFalse = addInstruction(new ConditionalGotoInstruction(null, true, null));
 
-      addInstruction(new ApplyNotNullInstruction(expression));
+      addInstruction(new ApplyNotNullInstruction());
       addInstruction(new PushInstruction(myFactory.getConstFactory().getTrue(), null));
       addInstruction(new GotoInstruction(getEndOffset(expression)));
 
@@ -1572,16 +1600,23 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new PopInstruction());
     }
 
-    pushUnknown();
-
     PsiType type = expression.getType();
     if (type instanceof PsiArrayType) {
+      DfaVariableValue var = getTargetVariable(expression);
+      if (var == null) {
+        var = getFactory().getVarFactory().createVariableValue(createTempVariable(type), false);
+      }
+      DfaValue length = SpecialField.ARRAY_LENGTH.createValue(getFactory(), var);
+      addInstruction(new PushInstruction(length, null, true));
+      // stack: ... var.length
       final PsiExpression[] dimensions = expression.getArrayDimensions();
+      boolean sizeOnStack = false;
       for (final PsiExpression dimension : dimensions) {
         dimension.accept(this);
-      }
-      for (PsiExpression ignored : dimensions) {
-        addInstruction(new PopInstruction());
+        if (sizeOnStack) {
+          addInstruction(new PopInstruction());
+        }
+        sizeOnStack = true;
       }
       final PsiArrayInitializerExpression arrayInitializer = expression.getArrayInitializer();
       if (arrayInitializer != null) {
@@ -1593,11 +1628,27 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
           }
         }
         processArrayInitializers(arrayInitializer, ((PsiArrayType)type).getComponentType(), nullability);
+        if (!sizeOnStack) {
+          sizeOnStack = true;
+          addInstruction(new PushInstruction(getFactory().getInt(arrayInitializer.getInitializers().length), null));
+        }
       }
-      addConditionalRuntimeThrow();
-      addInstruction(new MethodCallInstruction(expression, null, Collections.emptyList()));
+      if (!sizeOnStack) {
+        pushUnknown();
+      }
+      // stack: ... var.length actual_size
+      addInstruction(new PushInstruction(var, null, true));
+      addInstruction(new PushInstruction(getFactory().createTypeValue(type, Nullness.NOT_NULL), expression));
+      addInstruction(new AssignInstruction(expression, var));
+      // stack: ... var.length actual_size var
+      addInstruction(new SpliceInstruction(3, 0, 2, 1));
+      // stack: ... var var.length actual_size
+      addInstruction(new AssignInstruction(null, length));
+      addInstruction(new PopInstruction());
+      // stack: ... var
     }
     else {
+      pushUnknown(); // qualifier
       PsiMethod constructor = pushConstructorArguments(expression);
 
       addConditionalRuntimeThrow();
@@ -1784,14 +1835,42 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     startElement(block);
     try {
       block.accept(this);
-      // return value for void or incomplete block
-      pushUnknown();
     }
     finally {
       finishElement(block);
       myInlinedBlockContext = oldBlock;
       // Pop transfer value
       addInstruction(new PopInstruction());
+    }
+  }
+
+  /**
+   * Create a temporary {@link PsiVariable} (not declared in the original code) to be used within this control flow.
+   *
+   * @param type a type of variable to create
+   * @return newly created variable
+   */
+  @NotNull
+  PsiVariable createTempVariable(@Nullable PsiType type) {
+    if(type == null) {
+      type = PsiType.VOID;
+    }
+    return new TempVariable(getInstructionCount(), type, getContext());
+  }
+
+  /**
+   * Checks whether supplied variable is a temporary variable created previously via {@link #createTempVariable(PsiType)}
+   *
+   * @param variable to check
+   * @return true if supplied variable is a temp variable.
+   */
+  public static boolean isTempVariable(PsiModifierListOwner variable) {
+    return variable instanceof TempVariable;
+  }
+
+  private static class TempVariable extends LightVariableBuilder<TempVariable> {
+    TempVariable(int index, @NotNull PsiType type, @NotNull PsiElement navigationElement) {
+      super("tmp$" + index, type, navigationElement);
     }
   }
 

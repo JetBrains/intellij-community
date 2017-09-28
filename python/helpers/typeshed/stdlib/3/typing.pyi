@@ -2,7 +2,8 @@
 
 import sys
 from abc import abstractmethod, ABCMeta
-from types import CodeType, FrameType
+from types import CodeType, FrameType, TracebackType
+import collections  # Needed by aliases like DefaultDict, see mypy issue 2986
 
 # Definitions of special type checking related constructs.  Their definition
 # are not used, so their value does not matter.
@@ -10,15 +11,24 @@ from types import CodeType, FrameType
 overload = object()
 Any = object()
 TypeVar = object()
-Generic = object()
-Tuple = object()
-Callable = object()
-Type = object()
 _promote = object()
 no_type_check = object()
-ClassVar = object()
+
+class _SpecialForm:
+    def __getitem__(self, typeargs: Any) -> Any: ...
+
+Tuple: _SpecialForm = ...
+Generic: _SpecialForm = ...
+Callable: _SpecialForm = ...
+Type: _SpecialForm = ...
+ClassVar: _SpecialForm = ...
 
 class GenericMeta(type): ...
+
+# Return type that indicates a function does not return.
+# This type is equivalent to the None type, but the no-op Union is necessary to
+# distinguish the None type from the None value.
+NoReturn = Union[None]
 
 # Type aliases and type constructors
 
@@ -111,9 +121,8 @@ class Generator(Iterator[_T_co], Generic[_T_co, _T_contra, _V_co]):
     def send(self, value: _T_contra) -> _T_co: ...
 
     @abstractmethod
-    def throw(self, typ: Type[BaseException], val: Optional[BaseException] = None,
-              # TODO: tb should be TracebackType but that's defined in types
-              tb: Any = None) -> None: ...
+    def throw(self, typ: Type[BaseException], val: Optional[BaseException] = ...,
+              tb: Optional[TracebackType] = ...) -> None: ...
 
     @abstractmethod
     def close(self) -> None: ...
@@ -127,7 +136,7 @@ class Generator(Iterator[_T_co], Generic[_T_co, _T_contra, _V_co]):
     gi_yieldfrom = ...  # type: Optional[Generator]
 
 # TODO: Several types should only be defined if sys.python_version >= (3, 5):
-# Awaitable, AsyncIterator, AsyncIterable, Coroutine, Collection, ContextManager.
+# Awaitable, AsyncIterator, AsyncIterable, Coroutine, Collection.
 # See https: //github.com/python/typeshed/issues/655 for why this is not easy.
 
 class Awaitable(Generic[_T_co]):
@@ -139,9 +148,8 @@ class Coroutine(Awaitable[_V_co], Generic[_T_co, _T_contra, _V_co]):
     def send(self, value: _T_contra) -> _T_co: ...
 
     @abstractmethod
-    def throw(self, typ: Type[BaseException], val: Optional[BaseException] = None,
-              # TODO: tb should be TracebackType but that's defined in types
-              tb: Any = None) -> None: ...
+    def throw(self, typ: Type[BaseException], val: Optional[BaseException] = ...,
+              tb: Optional[TracebackType] = ...) -> None: ...
 
     @abstractmethod
     def close(self) -> None: ...
@@ -155,7 +163,7 @@ class AwaitableGenerator(Generator[_T_co, _T_contra, _V_co], Awaitable[_V_co],
 
 class AsyncIterable(Generic[_T_co]):
     @abstractmethod
-    def __anext__(self) -> Awaitable[_T_co]: ...
+    def __aiter__(self) -> 'AsyncIterator[_T_co]': ...
 
 class AsyncIterator(AsyncIterable[_T_co],
                     Generic[_T_co]):
@@ -281,7 +289,18 @@ class ValuesView(MappingView, Iterable[_VT_co], Generic[_VT_co]):
     def __contains__(self, o: object) -> bool: ...
     def __iter__(self) -> Iterator[_VT_co]: ...
 
-# TODO: ContextManager (only if contextlib.AbstractContextManager exists)
+class ContextManager(Generic[_T_co]):
+    def __enter__(self) -> _T_co: ...
+    def __exit__(self, exc_type: Optional[Type[BaseException]],
+                 exc_value: Optional[BaseException],
+                 traceback: Optional[TracebackType]) -> Optional[bool]: ...
+
+if sys.version_info >= (3, 5):
+    class AsyncContextManager(Generic[_T_co]):
+        def __aenter__(self) -> Awaitable[_T_co]: ...
+        def __aexit__(self, exc_type: Optional[Type[BaseException]],
+                      exc_value: Optional[BaseException],
+                      traceback: Optional[TracebackType]) -> Awaitable[Optional[bool]]: ...
 
 class Mapping(_Collection[_KT], Generic[_KT, _VT_co]):
     # TODO: We wish the key type could also be covariant, but that doesn't work,
@@ -290,9 +309,9 @@ class Mapping(_Collection[_KT], Generic[_KT, _VT_co]):
     def __getitem__(self, k: _KT) -> _VT_co:
         ...
     # Mixin methods
-    @overload  # type: ignore
+    @overload
     def get(self, k: _KT) -> Optional[_VT_co]: ...
-    @overload  # type: ignore
+    @overload
     def get(self, k: _KT, default: Union[_VT_co, _T]) -> Union[_VT_co, _T]: ...
     def items(self) -> AbstractSet[Tuple[_KT, _VT_co]]: ...
     def keys(self) -> AbstractSet[_KT]: ...
@@ -383,8 +402,7 @@ class IO(Iterator[AnyStr], Generic[AnyStr]):
     def __enter__(self) -> 'IO[AnyStr]': ...
     @abstractmethod
     def __exit__(self, t: Optional[Type[BaseException]], value: Optional[BaseException],
-                 # TODO: traceback should be TracebackType but that's defined in types
-                 traceback: Optional[Any]) -> bool: ...
+                 traceback: Optional[TracebackType]) -> bool: ...
 
 class BinaryIO(IO[bytes]):
     # TODO readinto
@@ -484,7 +502,8 @@ class Pattern(Generic[AnyStr]):
 
 # Functions
 
-def get_type_hints(obj: Callable) -> dict[str, Any]: ...
+def get_type_hints(obj: Callable, globalns: Optional[dict[str, Any]] = ...,
+                   localns: Optional[dict[str, Any]] = ...) -> dict[str, Any]: ...
 
 def cast(tp: Type[_T], obj: Any) -> _T: ...
 
@@ -493,6 +512,7 @@ def cast(tp: Type[_T], obj: Any) -> _T: ...
 # NamedTuple is special-cased in the type checker
 class NamedTuple(tuple):
     _fields = ...  # type: Tuple[str, ...]
+    _source = ...  # type: str
 
     def __init__(self, typename: str, fields: Iterable[Tuple[str, Any]] = ..., *,
                  verbose: bool = ..., rename: bool = ..., **kwargs: Any) -> None: ...

@@ -15,12 +15,15 @@
  */
 package com.intellij.core;
 
+import com.intellij.lang.jvm.facade.JvmFacade;
+import com.intellij.lang.jvm.facade.JvmFacadeImpl;
 import com.intellij.mock.MockFileIndexFacade;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JvmPsiConversionHelper;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiResolveHelper;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -28,6 +31,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
 import com.intellij.psi.controlFlow.ControlFlowFactory;
 import com.intellij.psi.impl.JavaPsiFacadeImpl;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
+import com.intellij.psi.impl.JvmPsiConversionHelperImpl;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.impl.source.resolve.JavaResolveCache;
@@ -55,6 +59,8 @@ public class JavaCoreProjectEnvironment extends CoreProjectEnvironment {
     myProject.registerService(JavaCodeStyleSettingsFacade.class, new CoreJavaCodeStyleSettingsFacade());
     myProject.registerService(JavaCodeStyleManager.class, new CoreJavaCodeStyleManager());
     myProject.registerService(ControlFlowFactory.class, new ControlFlowFactory(myPsiManager));
+    myProject.registerService(JvmFacade.class, new JvmFacadeImpl(myProject, myMessageBus));
+    myProject.registerService(JvmPsiConversionHelper.class, new JvmPsiConversionHelperImpl());
 
     myPackageIndex = createCorePackageIndex();
     myProject.registerService(PackageIndex.class, myPackageIndex);

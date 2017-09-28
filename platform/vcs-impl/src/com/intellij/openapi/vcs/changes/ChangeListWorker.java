@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.PlusMinusModify;
@@ -253,8 +252,11 @@ public class ChangeListWorker {
   }
 
   public void addChangeToList(@NotNull String name, @NotNull Change change, VcsKey vcsKey) {
-    LOG.debug("[addChangeToList] name: " + name + " change: " + ChangesUtil.getFilePath(change).getPath() + " vcs: " +
-              (vcsKey == null ? null : vcsKey.getName()));
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("[addChangeToList] name: " + name + " change: " + ChangesUtil.getFilePath(change).getPath() +
+                " vcs: " + (vcsKey == null ? null : vcsKey.getName()));
+    }
+
     final LocalChangeListImpl changeList = myMap.get(name);
     if (changeList == null) return;
 
@@ -262,17 +264,26 @@ public class ChangeListWorker {
   }
 
   public void addChangeToCorrespondingList(@NotNull Change change, VcsKey vcsKey) {
-    final String path = ChangesUtil.getFilePath(change).getPath();
-    LOG.debug("[addChangeToCorrespondingList] for change " + path  + " type: " + change.getType() + " have before revision: " + (change.getBeforeRevision() != null));
+    if (LOG.isDebugEnabled()) {
+      final String path = ChangesUtil.getFilePath(change).getPath();
+      LOG.debug("[addChangeToCorrespondingList] for change " + path + " type: " + change.getType() +
+                " have before revision: " + (change.getBeforeRevision() != null));
+    }
+
     for (LocalChangeListImpl list : myMap.values()) {
       OpenTHashSet<Change> changesBeforeUpdate = myChangesBeforeUpdateMap.get(list.getName());
       if (changesBeforeUpdate.contains(change)) {
-        LOG.debug("[addChangeToCorrespondingList] matched: " + list.getName());
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("[addChangeToCorrespondingList] matched: " + list.getName());
+        }
         addChangeToList(list, change, vcsKey);
         return;
       }
     }
-    LOG.debug("[addChangeToCorrespondingList] added to default list");
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("[addChangeToCorrespondingList] added to default list");
+    }
     addChangeToList(myDefault, change, vcsKey);
   }
 
@@ -512,7 +523,7 @@ public class ChangeListWorker {
 
   @NotNull
   public List<File> getAffectedPaths() {
-    final SortedSet<FilePath> set = myIdx.getAffectedPaths();
+    final Set<FilePath> set = myIdx.getAffectedPaths();
     final List<File> result = new ArrayList<>(set.size());
     for (FilePath path : set) {
       result.add(path.getIOFile());
@@ -668,11 +679,7 @@ public class ChangeListWorker {
 
   public ThreeState haveChangesUnder(@NotNull VirtualFile virtualFile) {
     FilePath dir = VcsUtil.getFilePath(virtualFile);
-    FilePath changeCandidate = myIdx.getAffectedPaths().ceiling(dir);
-    if (changeCandidate == null) {
-      return ThreeState.NO;
-    }
-    return FileUtil.isAncestorThreeState(dir.getPath(), changeCandidate.getPath(), false);
+    return myIdx.haveChangesUnder(dir);
   }
 
   @NotNull

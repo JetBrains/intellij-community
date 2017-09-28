@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference;
 
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiUtil;
@@ -138,10 +139,20 @@ public class PsiPolyExpressionUtil {
     return PsiUtil.isCondition(expr, context) ||
            context instanceof PsiReturnStatement ||
            context instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)context).getOperationTokenType() == JavaTokenType.EQ ||
-           context instanceof PsiVariable ||
+           context instanceof PsiVariable && !isVarContext((PsiVariable)context) ||
            context instanceof PsiLambdaExpression;
   }
 
+  private static boolean isVarContext(PsiVariable variable) {
+    if (PsiUtil.getLanguageLevel(variable).isAtLeast(LanguageLevel.JDK_X)) {
+      PsiTypeElement typeElement = variable.getTypeElement();
+      if (typeElement != null && typeElement.isInferredType()) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
   public static boolean isExpressionOfPrimitiveType(@Nullable PsiExpression arg) {
     if (arg != null && !isPolyExpression(arg)) {
       final PsiType type = arg.getType();

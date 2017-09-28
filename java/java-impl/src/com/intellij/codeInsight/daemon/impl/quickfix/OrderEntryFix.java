@@ -29,6 +29,8 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -56,7 +58,36 @@ import java.util.stream.Stream;
  * @author cdr
  */
 public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
-  protected OrderEntryFix() { }
+  private final SmartPsiFileRange myReferencePointer;
+
+  protected OrderEntryFix(@Nullable PsiReference reference) {
+    if (reference != null) {
+      PsiElement element = reference.getElement();
+      int offset = element.getTextRange().getStartOffset() + reference.getRangeInElement().getStartOffset();
+      PsiFile file = element.getContainingFile();
+      if (!areReferencesEquivalent(reference, file.findReferenceAt(offset))) {
+        throw new AssertionError();
+      }
+      myReferencePointer = SmartPointerManager.getInstance(element.getProject()).createSmartPsiFileRangePointer(file, TextRange.from(offset, 0));
+    } else {
+      myReferencePointer = null;
+    }
+  }
+
+  private static boolean areReferencesEquivalent(@NotNull PsiReference ref1, @Nullable PsiReference ref2) {
+    if (ref2 == null) return false;
+    if (ref1.getClass() != ref2.getClass()) return false;
+    if (ref1.getElement() != ref2.getElement()) return false;
+    if (!ref1.getRangeInElement().equals(ref2.getRangeInElement())) return false;
+    return true;
+  }
+
+  @Nullable
+  protected PsiReference restoreReference() {
+    PsiFile file = myReferencePointer == null ? null : myReferencePointer.getContainingFile();
+    Segment range = myReferencePointer == null ? null : myReferencePointer.getPsiRange();
+    return file == null || range == null ? null : file.findReferenceAt(range.getStartOffset());
+  }
 
   @Override
   public boolean startInWriteAction() {

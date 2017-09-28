@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.template.emmet;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,6 +25,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.util.ui.JBUI;
@@ -41,7 +43,7 @@ public class EmmetAbbreviationBalloon {
   private final String myAbbreviationsHistoryKey;
   private final String myLastAbbreviationKey;
   private final Callback myCallback;
-  @NotNull private final String myDocumentation;
+  @NotNull private final EmmetContextHelp myContextHelp;
 
   @Nullable
   private static String ourTestingAbbreviation;
@@ -50,11 +52,11 @@ public class EmmetAbbreviationBalloon {
   public EmmetAbbreviationBalloon(@NotNull String abbreviationsHistoryKey,
                                   @NotNull String lastAbbreviationKey,
                                   @NotNull Callback callback,
-                                  @NotNull String documentation) {
+                                  @NotNull EmmetContextHelp contextHelp) {
     myAbbreviationsHistoryKey = abbreviationsHistoryKey;
     myLastAbbreviationKey = lastAbbreviationKey;
     myCallback = callback;
-    myDocumentation = documentation;
+    myContextHelp = contextHelp;
   }
 
 
@@ -85,7 +87,7 @@ public class EmmetAbbreviationBalloon {
     field.setPreferredSize(new Dimension(Math.max(220, fieldPreferredSize.width), fieldPreferredSize.height));
     field.setHistorySize(10);
 
-    ContextHelpLabel label = new ContextHelpLabel(myDocumentation);
+    ContextHelpLabel label = myContextHelp.createHelpLabel();
     label.setBorder(JBUI.Borders.empty(0, 3, 0, 1));
 
     panel.add(field, BorderLayout.CENTER);
@@ -176,6 +178,35 @@ public class EmmetAbbreviationBalloon {
 
   private static boolean isValid(CustomTemplateCallback callback) {
     return !callback.getEditor().isDisposed();
+  }
+
+  public static class EmmetContextHelp {
+    @NotNull
+    private String myDescription;
+
+    @Nullable
+    private String myLinkText = null;
+
+    @Nullable
+    private String myLinkUrl = null;
+
+    public EmmetContextHelp(@NotNull String description) {
+      myDescription = description;
+    }
+
+    public EmmetContextHelp(@NotNull String description, @NotNull String linkText, @NotNull String linkUrl) {
+      myDescription = description;
+      myLinkText = linkText;
+      myLinkUrl = linkUrl;
+    }
+
+    @NotNull
+    public ContextHelpLabel createHelpLabel() {
+      if (StringUtil.isEmpty(myLinkText) || StringUtil.isEmpty(myLinkUrl)) {
+        return ContextHelpLabel.create(myDescription);
+      }
+      return ContextHelpLabel.createWithLink(null, myDescription, myLinkText, () -> BrowserUtil.browse(myLinkUrl));
+    }
   }
 
   public interface Callback {

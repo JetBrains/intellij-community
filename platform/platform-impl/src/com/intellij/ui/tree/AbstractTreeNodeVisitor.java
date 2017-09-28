@@ -100,15 +100,24 @@ public abstract class AbstractTreeNodeVisitor<T> implements TreeVisitor {
    * @return {@code true} if the specified node is an ancestor of the given element
    */
   protected boolean contains(@NotNull AbstractTreeNode node, @NotNull T element) {
-    return isAncestor(node.getValue(), element);
+    T content = getContent(node);
+    return content != null && isAncestor(content, element);
   }
 
   /**
-   * @param value   a content of a tree node
-   * @param element an element to find
-   * @return
+   * @param node a node of a tree structure
+   * @return a content of the specified tree or {@code null}
    */
-  protected boolean isAncestor(Object value, @NotNull T element) {
+  protected T getContent(@NotNull AbstractTreeNode node) {
+    return null;
+  }
+
+  /**
+   * @param content a content of a tree node
+   * @param element an element to find
+   * @return {@code true} if the specified content is an ancestor of the given element
+   */
+  protected boolean isAncestor(@NotNull T content, @NotNull T element) {
     return false;
   }
 }

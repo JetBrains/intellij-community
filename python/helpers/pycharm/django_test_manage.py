@@ -51,7 +51,7 @@ if not settings_file:
   settings_file = 'settings'
 
 import django
-if django.VERSION[0:2] >= (1, 7):
+if django.VERSION >= (1, 7):
     if not settings.configured:
         settings.configure()
     django.setup()

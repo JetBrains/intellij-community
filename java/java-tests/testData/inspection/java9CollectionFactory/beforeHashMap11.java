@@ -1,4 +1,4 @@
-// "Replace with 'Map.of' call" "false"
+// "Replace with 'Map.ofEntries' call" "true"
 import java.util.*;
 
 public class Test {

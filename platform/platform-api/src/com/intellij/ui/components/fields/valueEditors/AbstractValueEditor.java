@@ -20,10 +20,14 @@ import com.intellij.openapi.util.InvalidDataException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public abstract class AbstractValueEditor<T> implements ValueEditor<T> {
 
   private @NotNull T myDefaultValue;
   private @Nullable String myValueName;
+  private final List<Listener<T>> myListeners = new ArrayList<>();
 
   protected AbstractValueEditor(@Nullable String valueName,
                                 @NotNull T defaultValue) {
@@ -89,5 +93,14 @@ public abstract class AbstractValueEditor<T> implements ValueEditor<T> {
   @Override
   public T getDefaultValue() {
     return myDefaultValue;
+  }
+
+  @Override
+  public void addListener(@NotNull Listener<T> editorListener) {
+    myListeners.add(editorListener);
+  }
+
+  public void fireValueChanged(@NotNull T newValue) {
+    for (Listener<T> listener : myListeners) listener.valueChanged(newValue);
   }
 }

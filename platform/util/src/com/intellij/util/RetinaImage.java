@@ -61,11 +61,11 @@ public class RetinaImage { // [tav] todo: create HiDPIImage class
    * @return the Retina-aware wrapper
    */
   @NotNull
-  public static Image createFrom(Image image, final float scale, ImageObserver observer) {
+  public static Image createFrom(Image image, final double scale, ImageObserver observer) {
     int w = image.getWidth(observer);
     int h = image.getHeight(observer);
 
-    Image hidpi = new JBHiDPIScaledImage(image, (int)(w / scale), (int)(h / scale), BufferedImage.TYPE_INT_ARGB);
+    Image hidpi = new JBHiDPIScaledImage(image, w / scale, h / scale, BufferedImage.TYPE_INT_ARGB);
     if (SystemInfo.isAppleJvm) {
       Graphics2D g = (Graphics2D)hidpi.getGraphics();
       g.scale(1f / scale, 1f / scale);

@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class FileAccessorCache<K, T> implements com.intellij.util.containers.hash.EqualityPolicy<K> {
   /*@GuardedBy("myCacheLock")*/ private final SLRUMap<K, Handle<T>> myCache;
@@ -136,17 +137,38 @@ public abstract class FileAccessorCache<K, T> implements com.intellij.util.conta
 
   public static final class Handle<T> extends ResourceHandle<T> {
     private final FileAccessorCache<?, T> myOwner;
-    
+    private final T myResource;
+    private final AtomicInteger myRefCount = new AtomicInteger(1);
+
     public Handle(T fileAccessor, FileAccessorCache<?, T> owner) {
-      super(fileAccessor);
+      myResource = fileAccessor;
       myOwner = owner;
     }
 
-    @Override
-    protected void disposeResource() {
-      synchronized (myOwner.myCacheLock) {
-        myOwner.myElementsToBeDisposed.add(get());
+    public void allocate() {
+      myRefCount.incrementAndGet();
+    }
+
+    public final void release() {
+      if (myRefCount.decrementAndGet() == 0) {
+        synchronized (myOwner.myCacheLock) {
+          myOwner.myElementsToBeDisposed.add(myResource);
+        }
       }
+    }
+
+    public int getRefCount() {
+      return myRefCount.get();
+    }
+
+    @Override
+    public void close() {
+      release();
+    }
+
+    @Override
+    public T get() {
+      return myResource;
     }
   }
 }

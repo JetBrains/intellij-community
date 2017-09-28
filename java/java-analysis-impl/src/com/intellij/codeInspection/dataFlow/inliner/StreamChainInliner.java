@@ -552,7 +552,7 @@ public class StreamChainInliner implements CallInliner {
           .checkNotNull(qualifierExpression, NullabilityProblem.passingNullableToNotNullParameter)
           .pop()
           .push(SpecialField.ARRAY_LENGTH.createValue(builder.getFactory(), qualifierValue))
-          .push(builder.getFactory().getConstFactory().createFromValue(0, PsiType.INT, null))
+          .push(builder.getFactory().getInt(0))
           .ifCondition(JavaTokenType.GT)
           .chain(b -> makeMainLoop(b, firstStep, inType))
           .endIf();
@@ -568,7 +568,7 @@ public class StreamChainInliner implements CallInliner {
           .checkNotNull(sourceCall, NullabilityProblem.callNPE)
           .pop()
           .push(SpecialField.COLLECTION_SIZE.createValue(builder.getFactory(), qualifierValue))
-          .push(builder.getFactory().getConstFactory().createFromValue(0, PsiType.INT, null))
+          .push(builder.getFactory().getInt(0))
           .ifCondition(JavaTokenType.GT)
           .chain(b -> makeMainLoop(b, firstStep, inType))
           .endIf();

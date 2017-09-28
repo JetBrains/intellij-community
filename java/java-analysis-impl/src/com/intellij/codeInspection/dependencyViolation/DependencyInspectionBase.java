@@ -78,7 +78,7 @@ public class DependencyInspectionBase extends BaseJavaBatchLocalInspectionTool {
     DependenciesBuilder.analyzeFileDependencies(file, new DependenciesBuilder.DependencyProcessor() {
       @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
       private final Map<PsiFile, DependencyRule[]> violations =
-        FactoryMap.createMap(dependencyFile -> validationManager.getViolatorDependencyRules(file, dependencyFile));
+        FactoryMap.create(dependencyFile -> validationManager.getViolatorDependencyRules(file, dependencyFile));
 
       @Override
       public void process(PsiElement place, PsiElement dependency) {

@@ -351,7 +351,12 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
               processHandler.notifyTextAvailable("\r", ProcessOutputTypes.SYSTEM);
               myResetGreeting = false;
             }
-            consoleManager.onOutput(consoleView, processHandler, text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
+            if (consoleView != null) {
+              consoleManager.onOutput(consoleView, processHandler, text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
+            }
+            else {
+              processHandler.notifyTextAvailable(text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
+            }
           }
 
           @Override
@@ -409,6 +414,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       if (contentDescriptor != null) {
         contentDescriptor.setExecutionId(myEnv.getExecutionId());
         contentDescriptor.setContentToolWindowId(ToolWindowId.BUILD);
+        contentDescriptor.setAutoFocusContent(true);
         RunnerAndConfigurationSettings settings = myEnv.getRunnerAndConfigurationSettings();
         if (settings != null) {
           contentDescriptor.setActivateToolWindowWhenAdded(settings.isActivateToolWindowBeforeRun());
@@ -417,7 +423,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     }
   }
 
-  private static void foldGreetingOrFarewell(ExecutionConsole consoleView, String text, boolean isGreeting) {
+  private static void foldGreetingOrFarewell(@Nullable ExecutionConsole consoleView, String text, boolean isGreeting) {
     int limit = 100;
     if (text.length() < limit) {
       return;

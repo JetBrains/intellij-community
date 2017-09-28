@@ -65,13 +65,15 @@ class FilePointerPartNode {
     return part + (children.length == 0 ? "" : " -> "+children.length);
   }
 
-  // returns the node and length of matched characters in that node, or null if there is no match
+  // tries to match the VirtualFile path hierarchy with the trie structure of FilePointerPartNodes
+  // returns the node (in outNode[0]) and length of matched characters in that node, or -1 if there is no match
+  // recursive nodes (i.e. the nodes containing VFP with recursive==true) will be added to outDirs
   private int position(@Nullable VirtualFile parent,
                        @Nullable CharSequence parentName,
                        boolean separator,
                        @NotNull CharSequence childName, int childStart, int childEnd,
                        @NotNull FilePointerPartNode[] outNode,
-                       @NotNull List<FilePointerPartNode> dirs) {
+                       @Nullable List<FilePointerPartNode> outDirs) {
     int partStart;
     if (parent == null) {
       partStart = 0;
@@ -80,11 +82,13 @@ class FilePointerPartNode {
     else {
       VirtualFile gParent = parent.getParent();
       CharSequence gParentName = gParent == null ? null : gParent.getNameSequence();
-      partStart = position(gParent, gParentName, gParentName != null && !StringUtil.equals(gParentName, "/"), parentName, 0, parentName.length(), outNode, dirs);
+      boolean gSeparator = gParentName != null && !StringUtil.equals(gParentName, "/");
+      partStart = position(gParent, gParentName, gSeparator, parentName, 0, parentName.length(), outNode, outDirs);
       if (partStart == -1) return -1;
     }
 
     FilePointerPartNode found = outNode[0];
+
     boolean childSeparator = false;
     if (separator) {
       if (partStart == found.part.length()) {
@@ -99,17 +103,17 @@ class FilePointerPartNode {
     int index = indexOfFirstDifferentChar(childName, childStart, found.part, partStart);
 
     if (index == childEnd) {
-      addRecursiveDirectoryPtr(dirs);
-
-      return partStart+index;
+      addRecursiveDirectoryPtr(outDirs);
+      return partStart + childEnd - childStart;
     }
 
     if (partStart + index-childStart == found.part.length()) {
       // go to children
       for (FilePointerPartNode child : found.children) {
-        int childPos = child.position(null, null, childSeparator, childName, index, childEnd, outNode, dirs);
+        // do not accidentally modify outDirs
+        int childPos = child.position(null, null, childSeparator, childName, index, childEnd, outNode, null);
         if (childPos != -1) {
-          addRecursiveDirectoryPtr(dirs);
+          addRecursiveDirectoryPtr(outDirs);
 
           return childPos;
         }
@@ -119,8 +123,8 @@ class FilePointerPartNode {
     return -1;
   }
 
-  private void addRecursiveDirectoryPtr(@NotNull List<FilePointerPartNode> dirs) {
-    if(hasRecursiveDirectoryPointer() && (dirs.isEmpty() || dirs.get(dirs.size()-1) != this)) {
+  private void addRecursiveDirectoryPtr(@Nullable List<FilePointerPartNode> dirs) {
+    if(dirs != null && hasRecursiveDirectoryPointer() && (dirs.isEmpty() || dirs.get(dirs.size()-1) != this)) {
       dirs.add(this);
     }
   }
@@ -325,6 +329,7 @@ class FilePointerPartNode {
     return result;
   }
 
+  // return an index in s1 of the first different char of strings s1[start1..) and s2[start2..)
   private static int indexOfFirstDifferentChar(@NotNull CharSequence s1, int start1, @NotNull String s2, int start2) {
     boolean ignoreCase = !SystemInfo.isFileSystemCaseSensitive;
     int len1 = s1.length();

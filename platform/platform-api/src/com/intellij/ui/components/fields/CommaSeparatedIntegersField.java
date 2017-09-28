@@ -67,4 +67,8 @@ public class CommaSeparatedIntegersField extends JBTextField {
   public void validateContent() throws ConfigurationException {
     myValueEditor.validateContent();
   }
+
+  public ValueEditor<List<Integer>> getValueEditor() {
+    return myValueEditor;
+  }
 }

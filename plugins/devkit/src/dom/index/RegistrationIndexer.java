@@ -52,7 +52,7 @@ class RegistrationIndexer {
     final DomFileElement<IdeaPlugin> fileElement = DescriptorUtil.getIdeaPlugin((XmlFile)file);
     if (fileElement == null) return Collections.emptyMap();
 
-    myValueMap = FactoryMap.createMap(s -> new SmartList<>());
+    myValueMap = FactoryMap.create(s -> new SmartList<>());
     process(fileElement.getRootElement());
 
     return myValueMap;

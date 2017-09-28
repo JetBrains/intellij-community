@@ -128,9 +128,11 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   public void testToStringOnQualified() {
     final PsiFile file = myFixture.addFileToProject("Foo.java", "public class Fix {\n" +
                                                                 "    {\n" +
-                                                                "        Fix ff = new FixImpl1();\n" +
+                                                                "        Fix ff = getFix();\n" +
                                                                 "        ff.<caret>toString();\n" +
                                                                 "    }\n" +
+                                                                "    \n" +
+                                                                "    Fix getFix() {return new FixImpl1();}\n" +
                                                                 "}\n" +
                                                                 "class FixImpl1 extends Fix {\n" +
                                                                 "    @Override\n" +

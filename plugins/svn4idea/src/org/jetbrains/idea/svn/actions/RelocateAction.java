@@ -33,6 +33,7 @@ import org.jetbrains.idea.svn.info.Info;
 import java.io.File;
 
 import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class RelocateAction extends BasicAction {
 
@@ -73,7 +74,7 @@ public class RelocateAction extends BasicAction {
       try {
         File path = VfsUtilCore.virtualToIoFile(file);
 
-        vcs.getFactory(path).createRelocateClient().relocate(path, beforeURL, afterURL);
+        vcs.getFactory(path).createRelocateClient().relocate(path, createUrl(beforeURL, false), createUrl(afterURL, false));
         VcsDirtyScopeManager.getInstance(vcs.getProject()).markEverythingDirty();
       }
       catch (VcsException e) {

@@ -16,7 +16,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.CopyProvider;
-import com.intellij.ide.dnd.DnDAware;
+import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
@@ -31,21 +31,19 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SmartExpander;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -56,8 +54,7 @@ import static com.intellij.util.containers.UtilKt.getIfSingle;
 import static com.intellij.util.containers.UtilKt.stream;
 import static java.util.stream.Collectors.toList;
 
-// TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
-public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAware {
+public class ChangesListView extends DnDAwareTree implements TypeSafeDataProvider {
   private final Project myProject;
   private boolean myShowFlatten = false;
   private final CopyProvider myCopyProvider;
@@ -75,7 +72,6 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
 
     setShowsRootHandles(true);
     setRootVisible(false);
-    setDragEnabled(true);
 
     myCopyProvider = new ChangesBrowserNodeCopyProvider(this);
 
@@ -103,34 +99,33 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   public void updateModel(@NotNull DefaultTreeModel newModel) {
     TreeState state = TreeState.createOn(this, getRoot());
     state.setScrollToSelection(false);
-    DefaultTreeModel oldModel = getModel();
+    ChangesBrowserNode oldRoot = getRoot();
     setModel(newModel);
     ChangesBrowserNode newRoot = getRoot();
     expandPath(new TreePath(newRoot.getPath()));
     state.applyTo(this, newRoot);
-    expandDefaultChangeList(oldModel, newRoot);
+    expandDefaultChangeList(oldRoot, newRoot);
   }
 
-  private void expandDefaultChangeList(DefaultTreeModel oldModel, ChangesBrowserNode root) {
-    if (((ChangesBrowserNode)oldModel.getRoot()).getFileCount() == 0 && TreeUtil.collectExpandedPaths(this).size() == 1) {
-      TreeNode toExpand = null;
-      for (int i = 0; i < root.getChildCount(); i++) {
-        TreeNode node = root.getChildAt(i);
-        if (node instanceof ChangesBrowserChangeListNode && node.getChildCount() > 0) {
-          ChangeList object = ((ChangesBrowserChangeListNode)node).getUserObject();
-          if (object instanceof LocalChangeList) {
-            if (((LocalChangeList)object).isDefault()) {
-              toExpand = node;
-              break;
-            }
-          }
-        }
-      }
+  private void expandDefaultChangeList(ChangesBrowserNode oldRoot, ChangesBrowserNode root) {
+    if (oldRoot.getFileCount() != 0) return;
+    if (TreeUtil.collectExpandedPaths(this).size() != 1) return;
 
-      if (toExpand != null) {
-        expandPath(new TreePath(new Object[] {root, toExpand}));
+    //noinspection unchecked
+    Iterator<ChangesBrowserNode> nodes = ContainerUtil.<ChangesBrowserNode>iterate(root.children());
+    ChangesBrowserNode defaultListNode = ContainerUtil.find(nodes, node -> {
+      if (node instanceof ChangesBrowserChangeListNode) {
+        ChangeList list = ((ChangesBrowserChangeListNode)node).getUserObject();
+        return list instanceof LocalChangeList && ((LocalChangeList)list).isDefault();
       }
-    }
+      return false;
+    });
+
+    if (defaultListNode == null) return;
+    if (defaultListNode.getChildCount() == 0) return;
+    if (defaultListNode.getChildCount() > 10000) return; // expanding lots of nodes is a slow operation (and result is not very useful)
+
+    expandPath(new TreePath(new Object[]{root, defaultListNode}));
   }
 
   @Override
@@ -358,12 +353,6 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   }
 
   @Override
-  @NotNull
-  public JComponent getComponent() {
-    return this;
-  }
-
-  @Override
   public void processMouseEvent(final MouseEvent e) {
     if (MouseEvent.MOUSE_RELEASED == e.getID() && !isSelectionEmpty() && !e.isShiftDown() && !e.isControlDown()  &&
         !e.isMetaDown() && !e.isPopupTrigger()) {
@@ -376,17 +365,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
       }
     }
 
-
     super.processMouseEvent(e);
   }
 
-  @Override
-  public boolean isOverSelection(final Point point) {
-    return TreeUtil.isOverSelection(this, point);
-  }
-
-  @Override
-  public void dropSelectionButUnderPoint(final Point point) {
-    TreeUtil.dropSelectionButUnderPoint(this, point);
-  }
 }

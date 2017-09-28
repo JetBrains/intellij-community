@@ -179,8 +179,7 @@ public class CachingSvnRepositoryPool implements SvnRepositoryPool {
     }
 
     public void dispose() {
-      final List<SVNRepository> listForClose = new ArrayList<>();
-      listForClose.addAll(myInactive.values());
+      final List<SVNRepository> listForClose = new ArrayList<>(myInactive.values());
       myInactive.clear();
       myUsed.clear();   // todo use counter instead of list??
 

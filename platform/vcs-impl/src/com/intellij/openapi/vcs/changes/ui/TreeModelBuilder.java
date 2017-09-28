@@ -30,7 +30,6 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,10 +73,10 @@ public class TreeModelBuilder {
     myShowFlatten = showFlatten;
     myRoot = ChangesBrowserNode.createRoot(myProject);
     myModel = new DefaultTreeModel(myRoot);
-    myGroupingPoliciesCache = FactoryMap.createMap(key-> {
-          ChangesGroupingPolicyFactory factory = ChangesGroupingPolicyFactory.getInstance(myProject);
-          return factory != null ? factory.createGroupingPolicy(myModel) : null;
-        });
+    myGroupingPoliciesCache = FactoryMap.create(key -> {
+      ChangesGroupingPolicyFactory factory = ChangesGroupingPolicyFactory.getInstance(myProject);
+      return factory != null ? factory.createGroupingPolicy(myModel) : null;
+    });
     myFoldersCache = new HashMap<>();
   }
 
@@ -357,23 +356,26 @@ public class TreeModelBuilder {
   }
 
   private static void collapseDirectories(@NotNull DefaultTreeModel model, @NotNull ChangesBrowserNode node) {
-    if (node.getUserObject() instanceof FilePath && node.getChildCount() == 1) {
-      final ChangesBrowserNode child = (ChangesBrowserNode)node.getChildAt(0);
-      if (child.getUserObject() instanceof FilePath && !child.isLeaf()) {
-        ChangesBrowserNode parent = (ChangesBrowserNode)node.getParent();
-        final int idx = parent.getIndex(node);
-        model.removeNodeFromParent(node);
-        model.removeNodeFromParent(child);
-        model.insertNodeInto(child, parent, idx);
-        collapseDirectories(model, parent);
-      }
+    ChangesBrowserNode collapsedNode = node;
+    while (collapsedNode.getUserObject() instanceof FilePath && collapsedNode.getChildCount() == 1) {
+      ChangesBrowserNode child = (ChangesBrowserNode)collapsedNode.getChildAt(0);
+      if (!(child.getUserObject() instanceof FilePath) || child.isLeaf()) break;
+      collapsedNode = child;
     }
-    else {
-      final Enumeration children = node.children();
-      while (children.hasMoreElements()) {
-        ChangesBrowserNode child = (ChangesBrowserNode)children.nextElement();
-        collapseDirectories(model, child);
-      }
+
+    if (collapsedNode != node) {
+      ChangesBrowserNode parent = (ChangesBrowserNode)node.getParent();
+      final int idx = parent.getIndex(node);
+      model.removeNodeFromParent(node);
+      model.insertNodeInto(collapsedNode, parent, idx);
+
+      node = collapsedNode;
+    }
+
+    final Enumeration children = node.children();
+    while (children.hasMoreElements()) {
+      ChangesBrowserNode child = (ChangesBrowserNode)children.nextElement();
+      collapseDirectories(model, child);
     }
   }
 

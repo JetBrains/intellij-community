@@ -33,18 +33,11 @@ public abstract class TasksViewManager extends AbstractViewManager {
 
   @Override
   protected void onBuildStart(BuildDescriptor buildDescriptor) {
-    if (!isTabbedView()) {
-      BuildInfo buildInfo = (BuildInfo)buildDescriptor;
-      Content content = buildInfo.content;
-      Map<BuildInfo, BuildView> buildsMap = getBuildsMap();
-      String tabName = buildsMap.size() > 1 ? getViewName() : getViewName() + ": " + buildInfo.getTitle();
-      ((BuildContentManagerImpl)myBuildContentManager).updateTabDisplayName(content, tabName);
-    }
-  }
-
-  @Override
-  protected boolean isTabbedView() {
-    return false;
+    BuildInfo buildInfo = (BuildInfo)buildDescriptor;
+    Content content = buildInfo.content;
+    Map<BuildInfo, BuildView> buildsMap = getBuildsMap();
+    String tabName = buildsMap.size() > 1 ? getViewName() : getViewName() + ": " + buildInfo.getTitle();
+    ((BuildContentManagerImpl)myBuildContentManager).updateTabDisplayName(content, tabName);
   }
 
   @Override

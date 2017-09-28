@@ -35,7 +35,7 @@ public class CompareRevisionsAction implements AnActionExtensionProvider {
     DiffFromHistoryHandler diffHandler = customDiffHandler == null ? new StandardDiffFromHistoryHandler() : customDiffHandler;
 
     if (revisions.length == 2) {
-      diffHandler.showDiffForTwo(e.getRequiredData(CommonDataKeys.PROJECT), filePath, revisions[0], revisions[1]);
+      diffHandler.showDiffForTwo(e.getRequiredData(CommonDataKeys.PROJECT), filePath, revisions[1], revisions[0]);
     }
     else if (revisions.length == 1) {
       VcsFileRevision previousRevision = e.getRequiredData(FileHistoryPanelImpl.PREVIOUS_REVISION_FOR_DIFF);

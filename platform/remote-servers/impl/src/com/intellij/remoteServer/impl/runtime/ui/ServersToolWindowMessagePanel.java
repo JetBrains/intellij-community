@@ -25,6 +25,7 @@ import javax.swing.*;
 class ServersToolWindowMessagePanel implements ServersToolWindowContent.MessagePanel {
   private JPanel myPanel;
   private JEditorPane myMessageArea;
+  private String myCurrentText;
 
   public ServersToolWindowMessagePanel() {
     myMessageArea.setBackground(UIUtil.getPanelBackground());
@@ -35,6 +36,9 @@ class ServersToolWindowMessagePanel implements ServersToolWindowContent.MessageP
 
   @Override
   public void setEmptyText(@NotNull String text) {
+    if (text.equals(myCurrentText)) {
+      return;
+    }
     myMessageArea.setText("<html><head>" +
                           UIUtil.getCssFontDeclaration(UIUtil.getLabelFont(), null, null, null) +
                           "<style>body {" +
@@ -43,6 +47,7 @@ class ServersToolWindowMessagePanel implements ServersToolWindowContent.MessageP
                           "color: #" + ColorUtil.toHex(UIUtil.getInactiveTextColor()) + ";" +
                           "}</style>" +
                           "</head><body>" + text + "</body></html>");
+    myCurrentText = text;
   }
 
   @NotNull

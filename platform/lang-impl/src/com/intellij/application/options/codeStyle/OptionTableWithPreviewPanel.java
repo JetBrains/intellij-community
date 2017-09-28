@@ -737,6 +737,12 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
       }
 
       Color background = table.getBackground();
+      if (key != null && value != null) {
+        JComponent customRenderer = getCustomValueRenderer(key.getOptionName(), value);
+        if (customRenderer != null) {
+          return customRenderer;
+        }
+      }
       if (value instanceof Boolean) {
         myCheckBox.setSelected(((Boolean)value).booleanValue());
         myCheckBox.setBackground(background);
@@ -758,15 +764,9 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
         }
         return myIntLabel;
       }
-      else if (key != null && value != null) {
-        JComponent customRenderer = getCustomValueRenderer(key.getOptionName(), value);
-        if (customRenderer != null) {
-          return customRenderer;
-        }
-      }
 
-      myCheckBox.putClientProperty("JComponent.sizeVariant", "small");
-      myComboBox.putClientProperty("JComponent.sizeVariant", "small");
+      UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myCheckBox);
+      UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myComboBox);
 
       myEmptyLabel.setBackground(background);
       return myEmptyLabel;
@@ -854,8 +854,8 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
       };
       myBooleanEditor.addActionListener(itemChoosen);
       myOptionsEditor.addActionListener(itemChoosen);
-      myBooleanEditor.putClientProperty("JComponent.sizeVariant", "small");
-      myOptionsEditor.putClientProperty("JComponent.sizeVariant", "small");
+      UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myBooleanEditor);
+      UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myOptionsEditor);
     }
 
     @Override

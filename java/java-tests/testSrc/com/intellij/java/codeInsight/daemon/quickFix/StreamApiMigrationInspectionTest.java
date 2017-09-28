@@ -46,6 +46,7 @@ import org.junit.runners.Suite;
   StreamApiMigrationInspectionTest.ReductionTest.class,
   StreamApiMigrationInspectionTest.SumTest.class,
   StreamApiMigrationInspectionTest.TakeWhileTest.class,
+  StreamApiMigrationInspectionTest.Java9Test.class,
 })
 public class StreamApiMigrationInspectionTest {
   public static abstract class StreamApiMigrationInspectionBaseTest extends LightQuickFixParameterizedTestCase {
@@ -212,6 +213,18 @@ public class StreamApiMigrationInspectionTest {
     @Override
     String getFolder() {
       return "takeWhile";
+    }
+  }
+
+  public static class Java9Test extends StreamApiMigrationInspectionBaseTest {
+    @Override
+    String getFolder() {
+      return "java9";
+    }
+
+    @Override
+    protected LanguageLevel getDefaultLanguageLevel() {
+      return LanguageLevel.JDK_1_9;
     }
   }
 }

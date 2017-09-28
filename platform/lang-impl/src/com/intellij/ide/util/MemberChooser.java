@@ -206,28 +206,27 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     final DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
     final Ref<Integer> count = new Ref<>(0);
     Ref<Map<MemberChooserObject, ParentNode>> mapRef = new Ref<>();
-    mapRef.set(FactoryMap.createMap(key-> {
-        ParentNode node = null;
-        DefaultMutableTreeNode parentNode = rootNode;
+    mapRef.set(FactoryMap.create(key -> {
+      ParentNode node = null;
+      DefaultMutableTreeNode parentNode1 = rootNode;
 
-        if (supportsNestedContainers() && key instanceof ClassMember) {
-          MemberChooserObject parentNodeDelegate = ((ClassMember)key).getParentNodeDelegate();
+      if (supportsNestedContainers() && key instanceof ClassMember) {
+        MemberChooserObject parentNodeDelegate = ((ClassMember)key).getParentNodeDelegate();
 
-          if (parentNodeDelegate != null) {
-            parentNode = mapRef.get().get(parentNodeDelegate);
-          }
+        if (parentNodeDelegate != null) {
+          parentNode1 = mapRef.get().get(parentNodeDelegate);
         }
-        if (isContainerNode(key)) {
-            final ContainerNode containerNode = new ContainerNode(parentNode, key, count);
-            node = containerNode;
-            myContainerNodes.add(containerNode);
-        }
-        if (node == null) {
-          node = new ParentNode(parentNode, key, count);
-        }
-        return node;
       }
-    ));
+      if (isContainerNode(key)) {
+        final ContainerNode containerNode = new ContainerNode(parentNode1, key, count);
+        node = containerNode;
+        myContainerNodes.add(containerNode);
+      }
+      if (node == null) {
+        node = new ParentNode(parentNode1, key, count);
+      }
+      return node;
+    }));
     final Map<MemberChooserObject, ParentNode> map = mapRef.get();
     for (T object : myElements) {
       final ParentNode parentNode = map.get(object.getParentNodeDelegate());

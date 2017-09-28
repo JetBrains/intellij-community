@@ -16,7 +16,7 @@
 package git4idea;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.ide.BrowserUtil;
+import com.intellij.notification.BrowseNotificationAction;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -400,12 +400,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
         String title = String.format("Git %s Is Not Supported", myVersion.getPresentation());
         String message = String.format("At least %s is required.",GitVersion.MIN.getPresentation());
         Notification notification = STANDARD_NOTIFICATION.createNotification(title, message, NotificationType.ERROR, null);
-        notification.addAction(new NotificationAction("Download...") {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-            BrowserUtil.browse("http://git-scm.com/download");
-            }
-        });
+        notification.addAction(new BrowseNotificationAction("Download...", "http://git-scm.com/download"));
         notification.addAction(new NotificationAction("Configure...") {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {

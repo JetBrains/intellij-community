@@ -533,8 +533,7 @@ public class NewMappings {
     synchronized (myLock) {
       final String defaultVcs = haveDefaultMapping();
       if (defaultVcs == null) return Collections.emptyList();
-      final List<VirtualFile> list = new ArrayList<>();
-      list.addAll(myDefaultVcsRootPolicy.getDefaultVcsRoots(this, defaultVcs));
+      final List<VirtualFile> list = new ArrayList<>(myDefaultVcsRootPolicy.getDefaultVcsRoots(this, defaultVcs));
       if (StringUtil.isEmptyOrSpaces(defaultVcs)) {
         return AbstractVcs.filterUniqueRootsDefault(list, identity());
       }

@@ -43,9 +43,7 @@
       <localInspection groupPath="Java" language="JAVA" shortName="MisorderedAssertEqualsArgumentsTestNG" displayName="Misordered 'assertEquals()' arguments"
                        groupName="TestNG" enabledByDefault="false" level="WARNING"
                        implementationClass="com.theoryinpractice.testng.inspection.MisorderedAssertEqualsArgumentsTestNGInspection"/>
-      <localInspection groupPath="Java" language="JAVA" shortName="TestNGMethodNamingConvention" displayName="TestNG test method naming convention"
-                       groupName="TestNG" enabledByDefault="false" level="WARNING"
-                       implementationClass="com.theoryinpractice.testng.inspection.TestNGMethodNamingConventionInspection"/>
+      <naming.convention.method implementation="com.theoryinpractice.testng.inspection.TestNGMethodNamingConvention" id="TestNGMethodNamingConvention" order="first"/>
       <localInspection groupPath="Java" language="JAVA" shortName="DuplicatedDataProviderNames" displayName="Duplicated data provider names"
                        groupName="TestNG" enabledByDefault="true" level="ERROR"
                        implementationClass="com.theoryinpractice.testng.inspection.DuplicatedDataProviderNamesInspection"/>

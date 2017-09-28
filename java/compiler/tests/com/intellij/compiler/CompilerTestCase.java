@@ -226,8 +226,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     }
 
     if (recompiled.length != getRecompiledCount()) {
-      final Set<String> extraRecompiled = new HashSet<>();
-      extraRecompiled.addAll(myRecompiledPaths);
+      final Set<String> extraRecompiled = new HashSet<>(myRecompiledPaths);
       extraRecompiled.removeAll(Arrays.asList(recompiled));
       for (String path : extraRecompiled) {
         fail("file \"" + path + "\" should NOT be recompiled");

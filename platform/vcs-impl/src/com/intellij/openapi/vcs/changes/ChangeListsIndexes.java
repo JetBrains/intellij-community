@@ -15,37 +15,40 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.google.common.collect.Sets;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
+import com.intellij.util.ThreeState;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.util.containers.ContainerUtil.newHashSet;
-
 public class ChangeListsIndexes {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListsIndexes");
-  private final TreeMap<FilePath, Data> myMap;
+  private final Map<FilePath, Data> myMap;
+  private final TreeSet<FilePath> myAffectedPaths;
 
   public ChangeListsIndexes() {
-    myMap = new TreeMap<>(HierarchicalFilePathComparator.SYSTEM_CASE_SENSITIVE);
+    myMap = new HashMap<>();
+    myAffectedPaths = new TreeSet<>(HierarchicalFilePathComparator.SYSTEM_CASE_SENSITIVE);
   }
 
   public ChangeListsIndexes(@NotNull ChangeListsIndexes idx) {
-    myMap = new TreeMap<>(idx.myMap);
+    myMap = new HashMap<>(idx.myMap);
+    myAffectedPaths = new TreeSet<>(idx.myAffectedPaths);
   }
 
   private void add(@NotNull FilePath file, @NotNull FileStatus status, @Nullable VcsKey key, @NotNull VcsRevisionNumber number) {
     myMap.put(file, new Data(status, key, number));
+    myAffectedPaths.add(file);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Set status " + status + " for " + file);
     }
@@ -53,6 +56,7 @@ public class ChangeListsIndexes {
 
   public void remove(final FilePath file) {
     myMap.remove(file);
+    myAffectedPaths.remove(file);
   }
 
   @Nullable
@@ -124,36 +128,39 @@ public class ChangeListsIndexes {
                        Set<BaseRevision> toRemove,
                        Set<BaseRevision> toAdd,
                        Set<BeforeAfter<BaseRevision>> toModify) {
-    TreeMap<FilePath, Data> oldMap = myMap;
-    TreeMap<FilePath, Data> newMap = newIndexes.myMap;
-    Set<FilePath> oldFiles = oldMap.keySet();
-    Set<FilePath> newFiles = newMap.keySet();
+    Map<FilePath, Data> oldMap = myMap;
+    Map<FilePath, Data> newMap = newIndexes.myMap;
 
-    final Set<FilePath> toRemoveSet = newHashSet(oldFiles);
-    toRemoveSet.removeAll(newFiles);
+    for (Map.Entry<FilePath, Data> entry : oldMap.entrySet()) {
+      FilePath s = entry.getKey();
+      Data oldData = entry.getValue();
+      Data newData = newMap.get(s);
 
-    final Set<FilePath> toAddSet = newHashSet(newFiles);
-    toAddSet.removeAll(oldFiles);
-
-    final Set<FilePath> toModifySet = newHashSet(oldFiles);
-    toModifySet.removeAll(toRemoveSet);
-
-    for (FilePath s : toRemoveSet) {
-      final Data data = oldMap.get(s);
-      toRemove.add(createBaseRevision(s, data));
-    }
-    for (FilePath s : toAddSet) {
-      final Data data = newMap.get(s);
-      toAdd.add(createBaseRevision(s, data));
-    }
-    for (FilePath s : toModifySet) {
-      final Data oldData = oldMap.get(s);
-      final Data newData = newMap.get(s);
-      assert oldData != null && newData != null;
-      if (!oldData.sameRevisions(newData)) {
-        toModify.add(new BeforeAfter<>(createBaseRevision(s, oldData), createBaseRevision(s, newData)));
+      if (newData != null) {
+        if (!oldData.sameRevisions(newData)) {
+          toModify.add(new BeforeAfter<>(createBaseRevision(s, oldData), createBaseRevision(s, newData)));
+        }
+      }
+      else {
+        toRemove.add(createBaseRevision(s, oldData));
       }
     }
+
+    for (Map.Entry<FilePath, Data> entry : newMap.entrySet()) {
+      FilePath s = entry.getKey();
+      Data newData = entry.getValue();
+
+      if (!oldMap.containsKey(s)) {
+        toAdd.add(createBaseRevision(s, newData));
+      }
+    }
+  }
+
+  @NotNull
+  public ThreeState haveChangesUnder(@NotNull FilePath dir) {
+    FilePath changeCandidate = myAffectedPaths.ceiling(dir);
+    if (changeCandidate == null) return ThreeState.NO;
+    return FileUtil.isAncestorThreeState(dir.getPath(), changeCandidate.getPath(), false);
   }
 
   private static BaseRevision createBaseRevision(@NotNull FilePath path, @NotNull Data data) {
@@ -172,11 +179,12 @@ public class ChangeListsIndexes {
 
   public void clear() {
     myMap.clear();
+    myAffectedPaths.clear();
   }
 
   @NotNull
-  public NavigableSet<FilePath> getAffectedPaths() {
-    return Sets.unmodifiableNavigableSet(myMap.navigableKeySet());
+  public Set<FilePath> getAffectedPaths() {
+    return Collections.unmodifiableSet(myMap.keySet());
   }
 
   private static class Data {

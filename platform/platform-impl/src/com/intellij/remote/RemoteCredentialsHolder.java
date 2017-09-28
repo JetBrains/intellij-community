@@ -152,11 +152,19 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     myPrivateKeyFile = privateKeyFile;
   }
 
+  /**
+   * @deprecated see {@link RemoteCredentials#getKnownHostsFile()}
+   */
+  @Deprecated
   @Override
   public String getKnownHostsFile() {
     return myKnownHostsFile;
   }
 
+  /**
+   * @deprecated see {@link MutableRemoteCredentials#setKnownHostsFile(String)}
+   */
+  @Deprecated
   public void setKnownHostsFile(String knownHostsFile) {
     myKnownHostsFile = knownHostsFile;
   }

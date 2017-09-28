@@ -218,8 +218,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
 
   @NotNull
   protected Collection<? extends PsiElement> getElementsToWrite(@NotNull final UsageViewDescriptor descriptor) {
-    List<PsiElement> result = new ArrayList<>();
-    result.addAll(super.getElementsToWrite(descriptor));
+    List<PsiElement> result = new ArrayList<>(super.getElementsToWrite(descriptor));
     result.add(myTargetClass);
     return result;
   }

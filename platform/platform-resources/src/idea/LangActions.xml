@@ -1051,8 +1051,10 @@
     </group>
 
     <group id="RunDashboardContentToolbar">
-      <action id="RunDashboard.Run" class="com.intellij.execution.dashboard.actions.RunAction"/>
-      <action id="RunDashboard.Debug" class="com.intellij.execution.dashboard.actions.DebugAction"/>
+      <!--suppress PluginXmlValidity -->
+      <action id="RunDashboard.Run" class="com.intellij.execution.dashboard.actions.RunAction" use-shortcut-of="RunClass"/>
+      <!--suppress PluginXmlValidity -->
+      <action id="RunDashboard.Debug" class="com.intellij.execution.dashboard.actions.DebugAction" use-shortcut-of="DebugClass"/>
       <action id="RunDashboard.Stop" class="com.intellij.execution.dashboard.actions.StopAction"/>
     </group>
 

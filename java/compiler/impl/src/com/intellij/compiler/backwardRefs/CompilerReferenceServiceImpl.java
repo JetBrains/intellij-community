@@ -20,8 +20,10 @@ import com.intellij.compiler.backwardRefs.view.CompilerReferenceFindUsagesTestIn
 import com.intellij.compiler.backwardRefs.view.CompilerReferenceHierarchyTestInfo;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
 import com.intellij.compiler.chainsSearch.ChainSearchMagicConstants;
-import com.intellij.compiler.chainsSearch.MethodIncompleteSignature;
-import com.intellij.compiler.chainsSearch.SignatureAndOccurrences;
+import com.intellij.compiler.chainsSearch.MethodCall;
+import com.intellij.compiler.chainsSearch.ChainOpAndOccurrences;
+import com.intellij.compiler.chainsSearch.TypeCast;
+import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.BuildManagerListener;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -220,8 +222,9 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
 
   @NotNull
   @Override
-  public SortedSet<SignatureAndOccurrences> findMethodReferenceOccurrences(@NotNull String rawReturnType,
-                                                                                                      @SignatureData.IteratorKind byte iteratorKind) {
+  public SortedSet<ChainOpAndOccurrences<MethodCall>> findMethodReferenceOccurrences(@NotNull String rawReturnType,
+                                                                         @SignatureData.IteratorKind byte iteratorKind,
+                                                                         @NotNull ChainCompletionContext context) {
     try {
       myReadDataLock.lock();
       try {
@@ -240,15 +243,15 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
             .distinct()
             .map(r -> {
               int count = myReader.getOccurrenceCount(r);
-              return count <= 1 ? null : new SignatureAndOccurrences(
-                new MethodIncompleteSignature((LightRef.JavaLightMethodRef)r, sd, this),
+              return count <= 1 ? null : new ChainOpAndOccurrences<>(
+                new MethodCall((LightRef.JavaLightMethodRef)r, sd, context),
                 count);
             }))
           .filter(Objects::nonNull)
-          .collect(Collectors.groupingBy(x -> x.getSignature(), Collectors.summarizingInt(x -> x.getOccurrenceCount())))
+          .collect(Collectors.groupingBy(x -> x.getOperation(), Collectors.summarizingInt(x -> x.getOccurrenceCount())))
           .entrySet()
           .stream()
-          .map(e -> new SignatureAndOccurrences(e.getKey(), (int)e.getValue().getSum()))
+          .map(e -> new ChainOpAndOccurrences<>(e.getKey(), (int)e.getValue().getSum()))
           .collect(Collectors.toCollection(TreeSet::new));
       }
       finally {
@@ -258,6 +261,63 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     catch (Exception e) {
       onException(e, "find methods");
       return Collections.emptySortedSet();
+    }
+  }
+
+  @Nullable
+  @Override
+  public ChainOpAndOccurrences<TypeCast> getMostUsedTypeCast(@NotNull String operandQName)
+    throws ReferenceIndexUnavailableException {
+    try {
+      myReadDataLock.lock();
+      try {
+        if (myReader == null) throw new ReferenceIndexUnavailableException();
+        int nameId = getNameId(operandQName);
+        if (nameId == 0) return null;
+        LightRef.JavaLightClassRef target = new LightRef.JavaLightClassRef(nameId);
+        OccurrenceCounter<LightRef> typeCasts = myReader.getTypeCastOperands(target, null);
+        LightRef bestCast = typeCasts.getBest();
+        if (bestCast == null) return null;
+        return new ChainOpAndOccurrences<>(new TypeCast((LightRef.LightClassHierarchyElementDef)bestCast, target, this), typeCasts.getBestOccurrences());
+      }
+      finally {
+        myReadDataLock.unlock();
+      }
+    } catch (Exception e) {
+      onException(e, "best type cast search");
+      return null;
+    }
+  }
+
+  /**
+   * finds one best candidate to do a cast type before given method call (eg.: <code>((B) a).someMethod()</code>). Follows given formula:
+   *
+   * #(files where method & type cast is occurred) / #(files where method is occurred) > 1 - 1 / probabilityThreshold
+   */
+  @Nullable
+  @Override
+  public LightRef.LightClassHierarchyElementDef mayCallOfTypeCast(@NotNull LightRef.JavaLightMethodRef method, int probabilityThreshold)
+    throws ReferenceIndexUnavailableException {
+    try {
+      myReadDataLock.lock();
+      try {
+        if (myReader == null) throw new ReferenceIndexUnavailableException();
+        final TIntHashSet ids = myReader.getAllContainingFileIds(method);
+
+        LightRef.LightClassHierarchyElementDef owner = method.getOwner();
+
+        OccurrenceCounter<LightRef> bestTypeCast = myReader.getTypeCastOperands(owner, ids);
+        LightRef best = bestTypeCast.getBest();
+        return best != null && ids.size() > probabilityThreshold * (ids.size() - bestTypeCast.getBestOccurrences())
+               ? (LightRef.LightClassHierarchyElementDef)best
+               : null;
+      }
+      finally {
+        myReadDataLock.unlock();
+      }
+    } catch (Exception e) {
+      onException(e, "conditional probability");
+      return null;
     }
   }
 

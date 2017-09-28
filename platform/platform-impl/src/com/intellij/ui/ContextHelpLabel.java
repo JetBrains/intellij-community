@@ -16,50 +16,43 @@
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeTooltipManager;
-import com.intellij.ide.TooltipEvent;
-import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
-import java.awt.*;
+import org.jetbrains.annotations.Nullable;
 
 public class ContextHelpLabel extends JBLabel {
 
-  public ContextHelpLabel(@NotNull String helpText) {
-    super(AllIcons.General.ContextHelp);
-    IdeTooltipManager.getInstance().setCustomTooltip(this, new ContextHelpTooltip(this, helpText));
+  public ContextHelpLabel(String label, String description) {
+    super(label);
+    init(new HelpTooltip().setDescription(description));
   }
 
-  private static class ContextHelpTooltip extends TooltipWithClickableLinks.ForBrowser {
-    public ContextHelpTooltip(@NotNull JComponent component, @NotNull String text) {
-      super(component, text);
+  private ContextHelpLabel(@NotNull HelpTooltip tooltip) {
+    super(AllIcons.General.ContextHelp);
+    init(tooltip);
+  }
 
-      JBInsets insets = JBUI.insets(11, 10, 11, 17);
-      setBorderInsets(insets);
-      setPreferredPosition(Balloon.Position.below);
-      setCalloutShift(insets.top);
-      setBorderColor(new JBColor(Gray._161, new Color(91, 92, 94)));
-      setTextBackground(new JBColor(Gray._247, new Color(70, 72, 74)));
-      setTextForeground(new JBColor(Gray._33, Gray._191));
-    }
+  private void init(@NotNull HelpTooltip tooltip) {
+    tooltip.
+      setNeverHideOnTimeout(true).
+      setLocation(HelpTooltip.Alignment.HELP_BUTTON).
+      installOn(this);
+  }
 
-    @Override
-    protected boolean canAutohideOn(TooltipEvent event) {
-      return event.getInputEvent() != null && super.canAutohideOn(event);
-    }
+  @NotNull
+  public static ContextHelpLabel create(@NotNull String description) {
+    return new ContextHelpLabel(new HelpTooltip().setDescription(description));
+  }
 
-    @Override
-    public int getShowDelay() {
-      return 0;
-    }
+  @NotNull
+  public static ContextHelpLabel create(@NotNull String title, @NotNull String description) {
+    return new ContextHelpLabel(new HelpTooltip().setDescription(description).setTitle(title));
+  }
 
-    @Override
-    public boolean canBeDismissedOnTimeout() {
-      return true;
-    }
+  @NotNull
+  public static ContextHelpLabel createWithLink(@Nullable String title, @NotNull String description,
+                                                @NotNull String linkText, @NotNull Runnable linkAction) {
+    return new ContextHelpLabel(new HelpTooltip().setDescription(description).setTitle(title).setLink(linkText, linkAction));
   }
 }

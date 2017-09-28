@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.LibraryUtil;
-import org.jetbrains.annotations.NonNls;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -135,21 +135,8 @@ public class ObsoleteCollectionInspection extends BaseInspection {
         return false;
       }
       final PsiType deepComponentType = type.getDeepComponentType();
-      if (!(deepComponentType instanceof PsiClassType)) {
-        return false;
-      }
-      final PsiClassType classType = (PsiClassType)deepComponentType;
-      @NonNls final String className = classType.getClassName();
-      if (!"Vector".equals(className) && !"Hashtable".equals(className)) {
-        return false;
-      }
-      final PsiClass aClass = classType.resolve();
-      if (aClass == null) {
-        return false;
-      }
-      final String name = aClass.getQualifiedName();
-      return "java.util.Vector".equals(name) ||
-             "java.util.Hashtable".equals(name);
+      final String className = TypeUtils.resolvedClassName(deepComponentType);
+      return "java.util.Vector".equals(className) || "java.util.Hashtable".equals(className);
     }
 
     private boolean checkReferences(PsiNamedElement namedElement) {

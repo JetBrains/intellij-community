@@ -24,7 +24,6 @@
     <keyboard-shortcut first-keystroke="control alt E"/>
   </action>
   <action id="$Paste">
-    <keyboard-shortcut first-keystroke="alt P"/>
     <keyboard-shortcut first-keystroke="shift INSERT"/>
     <keyboard-shortcut first-keystroke="control Y"/>
   </action>

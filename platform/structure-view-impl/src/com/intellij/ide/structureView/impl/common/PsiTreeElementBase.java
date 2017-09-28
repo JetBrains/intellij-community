@@ -107,9 +107,8 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
   private StructureViewTreeElement[] doGetChildren() {
     final T element = getElement();
     if (element == null) return EMPTY_ARRAY;
-    List<StructureViewTreeElement> result = new ArrayList<>();
     Collection<StructureViewTreeElement> baseChildren = getChildrenBase();
-    result.addAll(CustomRegionStructureUtil.groupByCustomRegions(element, baseChildren));
+    List<StructureViewTreeElement> result = new ArrayList<>(CustomRegionStructureUtil.groupByCustomRegions(element, baseChildren));
     StructureViewFactoryEx structureViewFactory = StructureViewFactoryEx.getInstanceEx(element.getProject());
     Class<? extends PsiElement> aClass = element.getClass();
     for (StructureViewExtension extension : structureViewFactory.getAllExtensions(aClass)) {

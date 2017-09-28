@@ -31,6 +31,8 @@ abstract class TestingTasks {
    */
   abstract void runTests(List<String> additionalJvmOptions, String defaultMainModule, Predicate<File> rootExcludeCondition)
 
+  abstract File createSnapshotsDirectory()
+
   static TestingTasks create(CompilationContext context, TestingOptions options = new TestingOptions()) {
     return new TestingTasksImpl(context, options)
   }

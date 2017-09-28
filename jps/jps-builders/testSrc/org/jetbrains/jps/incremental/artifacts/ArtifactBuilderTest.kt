@@ -290,14 +290,14 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
   }
 
   fun testSelfIncludingArtifact() {
-    val a = addArtifact("a", root())
+    val a = addArtifact("a", root().fileCopy(createFile("a.txt")))
     LayoutElementTestUtil.addArtifactToLayout(a, a)
     assertBuildFailed(a)
   }
 
   fun testCircularInclusion() {
-    val a = addArtifact("a", root())
-    val b = addArtifact("b", root())
+    val a = addArtifact("a", root().fileCopy(createFile("a.txt")))
+    val b = addArtifact("b", root().fileCopy(createFile("b.txt")))
     LayoutElementTestUtil.addArtifactToLayout(a, b)
     LayoutElementTestUtil.addArtifactToLayout(b, a)
     assertBuildFailed(a)
@@ -305,10 +305,10 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
   }
 
   fun testArtifactContainingSelfIncludingArtifact() {
-    val c = addArtifact("c", root())
-    val a = addArtifact("a", root().artifact(c))
+    val c = addArtifact("c", root().fileCopy(createFile("c.txt")))
+    val a = addArtifact("a", root().artifact(c).fileCopy(createFile("a.txt")))
     LayoutElementTestUtil.addArtifactToLayout(a, a)
-    val b = addArtifact("b", root().artifact(a))
+    val b = addArtifact("b", root().artifact(a).fileCopy(createFile("b.txt")))
 
     buildArtifacts(c)
     assertBuildFailed(b)
@@ -316,7 +316,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
   }
 
   fun testArtifactContainingSelfIncludingArtifactWithoutOutput() {
-    val a = addArtifact("a", root())
+    val a = addArtifact("a", root().fileCopy(createFile("a.txt")))
     LayoutElementTestUtil.addArtifactToLayout(a, a)
     val b = addArtifact("b", root().artifact(a))
     a.outputPath = null

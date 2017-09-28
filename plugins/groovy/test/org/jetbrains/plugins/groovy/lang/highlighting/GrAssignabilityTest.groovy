@@ -292,10 +292,10 @@ class Ca {
 }
 
 use(Ca) {
-  1.<warning descr="Category method 'foo' cannot be applied to 'java.lang.Integer'">foo</warning>()
-  (1 as int).<warning descr="Category method 'foo' cannot be applied to 'int'">foo</warning>()
+  1.<warning descr="Cannot resolve symbol 'foo'">foo</warning>()
+  (1 as int).<warning descr="Cannot resolve symbol 'foo'">foo</warning>()
 }
-''')
+''', GrUnresolvedAccessInspection)
   }
 
   void testCompileStaticWithAssignabilityCheck() {

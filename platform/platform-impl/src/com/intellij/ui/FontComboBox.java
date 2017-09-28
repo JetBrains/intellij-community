@@ -40,7 +40,7 @@ public final class FontComboBox extends ComboBox {
   private static final FontInfoRenderer RENDERER = new FontInfoRenderer();
 
   private Model myModel;
-  private JBDimension myPrefSize;
+  private final JBDimension mySize;
 
   public FontComboBox() {
     this(false);
@@ -52,9 +52,10 @@ public final class FontComboBox extends ComboBox {
 
   public FontComboBox(boolean withAllStyles, boolean filterNonLatin, boolean noFontItem) {
     super(new Model(withAllStyles, filterNonLatin, noFontItem));
-    Dimension size = getPreferredSize();
+    Dimension size = super.getPreferredSize();
     size.width = size.height * 8;
-    myPrefSize = JBDimension.create(size, false);
+    // preScaled=true as 'size' reflects already scaled font
+    mySize = JBDimension.create(size, true);
     setSwingPopup(true);
     setRenderer(RENDERER);
     getModel().addListDataListener(new ListDataListener() {
@@ -77,9 +78,8 @@ public final class FontComboBox extends ComboBox {
 
   @Override
   public Dimension getPreferredSize() {
-    if (isPreferredSizeSet() || myPrefSize == null) return super.getPreferredSize();
-    myPrefSize.update();
-    return myPrefSize;
+    if (isPreferredSizeSet()) return super.getPreferredSize();
+    return mySize.size();
   }
 
   public boolean isMonospacedOnly() {

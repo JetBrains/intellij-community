@@ -156,9 +156,6 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
       int endLine = block.endLine;
       Document document = block.editor.getDocument();
       PsiFile psiFile = block.psiFile;
-      
-      CommonCodeStyleSettings languageSettings = codeStyleSettings.getCommonSettings(psiFile.getLanguage());
-
       block.startOffsets = new int[endLine - startLine + 1];
       block.endOffsets = new int[endLine - startLine + 1];
       block.commenters = new Commenter[endLine - startLine + 1];
@@ -172,6 +169,8 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
       int endOffset = CharArrayUtil.shiftBackward(chars, document.getLineEndOffset(endLine), " \t\n");
 
       block.blockSuitableCommenter = getBlockSuitableCommenter(psiFile, offset, endOffset);
+      Language lineStartLanguage = getLineStartLanguage(block.editor, psiFile, startLine);
+      CommonCodeStyleSettings languageSettings = codeStyleSettings.getCommonSettings(lineStartLanguage);
       block.commentWithIndent = !languageSettings.LINE_COMMENT_AT_FIRST_COLUMN;
       block.addSpace = languageSettings.LINE_COMMENT_ADD_SPACE;
 
@@ -380,21 +379,30 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
   }
 
   @Nullable
-  private static Commenter findCommenter(Editor editor, PsiFile file, final int line) {
+  private static Commenter findCommenter(@NotNull Editor editor, @NotNull PsiFile file, final int line) {
     final FileType fileType = file.getFileType();
     if (fileType instanceof AbstractFileType) {
       return ((AbstractFileType)fileType).getCommenter();
     }
+    final Language lineStartLanguage = getLineStartLanguage(editor, file, line);
+    final Language lineEndLanguage = getLineEndLanguage(file, editor, line);
+    return CommentByBlockCommentHandler.getCommenter(file, editor, lineStartLanguage, lineEndLanguage);
+  }
 
+  @NotNull
+  private static Language getLineStartLanguage(@NotNull Editor editor, @NotNull PsiFile file, int line) {
     Document document = editor.getDocument();
     int lineStartOffset = document.getLineStartOffset(line);
+    lineStartOffset = Math.max(0, CharArrayUtil.shiftForward(document.getCharsSequence(), lineStartOffset, " \t"));
+    return PsiUtilCore.getLanguageAtOffset(file, lineStartOffset);
+  }
+
+  @NotNull
+  private static Language getLineEndLanguage(@NotNull PsiFile file, @NotNull Editor editor, int line) {
+    Document document = editor.getDocument();
     int lineEndOffset = document.getLineEndOffset(line) - 1;
-    final CharSequence charSequence = document.getCharsSequence();
-    lineStartOffset = Math.max(0, CharArrayUtil.shiftForward(charSequence, lineStartOffset, " \t"));
-    lineEndOffset = Math.max(0, CharArrayUtil.shiftBackward(charSequence, lineEndOffset < 0 ? 0 : lineEndOffset, " \t"));
-    final Language lineStartLanguage = PsiUtilCore.getLanguageAtOffset(file, lineStartOffset);
-    final Language lineEndLanguage = PsiUtilCore.getLanguageAtOffset(file, lineEndOffset);
-    return CommentByBlockCommentHandler.getCommenter(file, editor, lineStartLanguage, lineEndLanguage);
+    lineEndOffset = Math.max(0, CharArrayUtil.shiftBackward(document.getCharsSequence(), lineEndOffset < 0 ? 0 : lineEndOffset, " \t"));
+    return PsiUtilCore.getLanguageAtOffset(file, lineEndOffset);
   }
 
   private Indent computeMinIndent(Editor editor, PsiFile psiFile, int line1, int line2, FileType fileType) {

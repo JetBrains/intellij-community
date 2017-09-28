@@ -822,8 +822,7 @@ public class ExpressionUtils {
       }
     }
     final PsiType expressionType = expression.getType();
-    if (PsiPrimitiveType.getUnboxedType(expressionType) != null &&
-        (parent instanceof PsiPrefixExpression || parent instanceof PsiPostfixExpression)) {
+    if (PsiPrimitiveType.getUnboxedType(expressionType) != null && parent instanceof PsiUnaryExpression) {
       return true;
     }
     if (expressionType == null || expressionType.equals(PsiType.VOID) || !TypeConversionUtil.isPrimitiveAndNotNull(expressionType)) {

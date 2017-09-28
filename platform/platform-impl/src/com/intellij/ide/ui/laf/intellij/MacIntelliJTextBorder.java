@@ -61,13 +61,13 @@ public class MacIntelliJTextBorder implements Border, UIResource, ErrorBorderCap
       g2.translate(x, y);
 
       Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
-      double lw = UIUtil.isRetina(g2) ? 0.5 : 1.0;
+      double lw = JBUI.scale(UIUtil.isRetina(g2) ? 0.5f : 1.0f);
       border.append(new Rectangle2D.Double(JBUI.scale(3), JBUI.scale(3),
-                                                c.getWidth() - JBUI.scale(6),
-                                                c.getHeight() - JBUI.scale(6)), false);
+                                                c.getWidth() - JBUI.scale(3)*2,
+                                                c.getHeight() - JBUI.scale(3)*2), false);
       border.append(new Rectangle2D.Double(JBUI.scale(3) + lw, JBUI.scale(3) + lw,
-                                                c.getWidth() - JBUI.scale(6) - lw * 2,
-                                                c.getHeight() - JBUI.scale(6) - lw * 2), false);
+                                                c.getWidth() - (JBUI.scale(3) + lw) * 2,
+                                                c.getHeight() - (JBUI.scale(3) + lw) * 2), false);
       g2.setColor(Gray.xBC);
       g2.fill(border);
 
@@ -79,7 +79,7 @@ public class MacIntelliJTextBorder implements Border, UIResource, ErrorBorderCap
     }
   }
 
-  public void paint(Component c, Graphics2D g2, int width, int height, int arc) {
+  public void paint(Component c, Graphics2D g2, int width, int height, float arc) {
     clipForBorder(c, g2, width, height);
 
     if (((JComponent)c).getClientProperty("JComponent.error.outline") == Boolean.TRUE) {
@@ -95,10 +95,10 @@ public class MacIntelliJTextBorder implements Border, UIResource, ErrorBorderCap
 
   void clipForBorder(Component c, Graphics2D g2, int width, int height) {
     Area area = new Area(new Rectangle2D.Double(0, 0, width, height));
-    double lw = UIUtil.isRetina(g2) ? 0.5 : 1.0;
+    double lw = JBUI.scale(UIUtil.isRetina(g2) ? 0.5f : 1.0f);
     area.subtract(new Area(new Rectangle2D.Double(JBUI.scale(3) + lw, JBUI.scale(3) + lw,
-                                                  width - JBUI.scale(6) - lw * 2,
-                                                  height - JBUI.scale(6) - lw * 2)));
+                                                  width - (JBUI.scale(3) + lw) * 2,
+                                                  height - (JBUI.scale(3) + lw) * 2)));
     area.intersect(new Area(g2.getClip()));
     g2.setClip(area);
   }

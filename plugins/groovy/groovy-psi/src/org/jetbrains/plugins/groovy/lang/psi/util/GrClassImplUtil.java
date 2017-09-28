@@ -209,10 +209,10 @@ public class GrClassImplUtil {
                                             @NotNull ResolveState state,
                                             @Nullable PsiElement lastParent,
                                             @NotNull PsiElement place) {
-    if (place instanceof GrCodeReferenceElement && lastParent instanceof GrModifierList) {
+    if (place instanceof GrCodeReferenceElement) {
       final PsiElement possibleAnnotation = PsiTreeUtil.skipParentsOfType(place, GrCodeReferenceElement.class);
-      if (possibleAnnotation instanceof GrAnnotation && possibleAnnotation.getParent() == lastParent) {
-        return true; //don't process class members while resolving annotation which annotates current class
+      if (possibleAnnotation instanceof GrAnnotation) {
+        return true; //don't process class members while resolving annotation
       }
     }
 

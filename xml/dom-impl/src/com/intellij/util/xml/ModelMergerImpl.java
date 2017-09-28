@@ -352,12 +352,11 @@ public class ModelMergerImpl implements ModelMerger {
 
     if (returnType.isInterface()) {
       final List<Object> orderedPrimaryKeys = new SmartList<>();
-      final Map<Object, List<Set<Object>>> map = FactoryMap.createMap(key-> {
-          orderedPrimaryKeys.add(key);
-          return new SmartList<>();
-        }
-      );
-      final Map<Object, int[]> counts = FactoryMap.createMap(key -> new int[implementations.size()]);
+      final Map<Object, List<Set<Object>>> map = FactoryMap.create(key -> {
+        orderedPrimaryKeys.add(key);
+        return new SmartList<>();
+      });
+      final Map<Object, int[]> counts = FactoryMap.create(key -> new int[implementations.size()]);
       for (int i = 0; i < implementations.size(); i++) {
         Object t = implementations.get(i);
         final Object o = method.invoke(t, args);

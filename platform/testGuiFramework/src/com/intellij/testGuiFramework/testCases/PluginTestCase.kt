@@ -63,6 +63,19 @@ open class PluginTestCase : GuiTestCase() {
     }
   }
 
+  fun installPluginFromDisk(pluginPath: String) {
+    welcomeFrame {
+      actionLink("Configure").click()
+      popupClick("Plugins")
+      dialog("Plugins") {
+        button("Install plugin from disk...").click()
+        chooseFileInFileChooser(pluginPath)
+        button("OK").click()
+        ensureButtonOkHasPressed(this@PluginTestCase)
+      }
+    }
+  }
+
   private fun ensureButtonOkHasPressed(guiTestCase: GuiTestCase) {
     val dialogTitle = "Plugins"
     try {

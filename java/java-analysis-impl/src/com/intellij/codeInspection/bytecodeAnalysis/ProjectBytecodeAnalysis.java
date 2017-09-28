@@ -108,22 +108,11 @@ public class ProjectBytecodeAnalysis {
                                               () -> CachedValueProvider.Result.create(collectInferredAnnotations(listOwner), listOwner));
   }
 
-  /**
-   * Ignore inside android.jar because all class files there are dummy and contain no code at all.
-   * Rely on the fact that it's always located at .../platforms/android-.../android.jar!/
-   */
-  private static boolean isInsideDummyAndroidJar(@Nullable PsiFile psiFile) {
-    VirtualFile file = psiFile == null ? null : psiFile.getVirtualFile();
-    if (file == null) return false;
-
-    String path = file.getPath();
-    int index = path.indexOf("/android.jar!/");
-    return index > 0 && path.lastIndexOf("platforms/android-", index) > 0;
-  }
-
   @NotNull
   private PsiAnnotation[] collectInferredAnnotations(PsiModifierListOwner listOwner) {
-    if (isInsideDummyAndroidJar(listOwner.getContainingFile())) return PsiAnnotation.EMPTY_ARRAY;
+    PsiFile psiFile = listOwner.getContainingFile();
+    VirtualFile file = psiFile == null ? null : psiFile.getVirtualFile();
+    if (file != null && ClassDataIndexer.isFileExcluded(file)) return PsiAnnotation.EMPTY_ARRAY;
 
     try {
       MessageDigest md = BytecodeAnalysisConverter.getMessageDigest();
@@ -395,7 +384,7 @@ public class ProjectBytecodeAnalysis {
     }
   }
 
-  private void collectSingleEquation(EKey curKey, Solver solver) throws EquationsLimitException {
+  private void collectSingleEquation(EKey curKey, Solver solver) {
     ProgressManager.checkCanceled();
 
     for (Equations equations : myEquationProvider.getEquations(curKey.method)) {
@@ -467,7 +456,7 @@ public class ProjectBytecodeAnalysis {
       String classFileName = className + ".class";
       for (PsiDirectory directory : aPackage.getDirectories()) {
         VirtualFile file = directory.getVirtualFile().findChild(classFileName);
-        if (file != null) {
+        if (file != null && !ClassDataIndexer.isFileExcluded(file)) {
           return file;
         }
       }

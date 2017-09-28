@@ -62,14 +62,14 @@ public class BranchConfigurationDialog extends DialogWrapper {
                                    @NotNull SvnBranchConfigurationNew configuration,
                                    @NotNull SVNURL rootUrl,
                                    @NotNull VirtualFile root,
-                                   @NotNull String url) {
+                                   @NotNull SVNURL url) {
     super(project, true);
     myRoot = root;
     init();
     setTitle(SvnBundle.message("configure.branches.title"));
 
     if (isEmptyOrSpaces(configuration.getTrunkUrl())) {
-      configuration.setTrunkUrl(url);
+      configuration.setTrunkUrl(url.toString());
     }
 
     mySvnBranchConfigManager = SvnBranchConfigurationManager.getInstance(project).getSvnBranchConfigManager();
@@ -201,7 +201,7 @@ public class BranchConfigurationDialog extends DialogWrapper {
     SvnBranchConfigurationNew configuration = SvnBranchConfigurationManager.getInstance(project).get(file);
     SvnBranchConfigurationNew clonedConfiguration = configuration.copy();
 
-    if (new BranchConfigurationDialog(project, clonedConfiguration, wcRoot.getRepositoryUrlUrl(), file, wcRoot.getUrl()).showAndGet()) {
+    if (new BranchConfigurationDialog(project, clonedConfiguration, wcRoot.getRepositoryUrl(), file, wcRoot.getUrl()).showAndGet()) {
       SvnBranchConfigurationManager.getInstance(project).setConfiguration(file, clonedConfiguration);
     }
   }

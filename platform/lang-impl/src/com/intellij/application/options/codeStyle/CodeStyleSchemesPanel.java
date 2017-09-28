@@ -55,8 +55,7 @@ public class CodeStyleSchemesPanel extends SimpleSchemesPanel<CodeStyleScheme> {
   public void resetSchemesCombo() {
     myIsReset = true;
     try {
-      List<CodeStyleScheme> schemes = new ArrayList<>();
-      schemes.addAll(myModel.getAllSortedSchemes());
+      List<CodeStyleScheme> schemes = new ArrayList<>(myModel.getAllSortedSchemes());
       resetSchemes(schemes);
       selectScheme(myModel.getSelectedScheme());
     }

@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 class AddLibraryDependencyFix extends OrderEntryFix {
-  @SuppressWarnings("StatefulEp") private final PsiReference myReference;
   private final Module myCurrentModule;
   private final Library myLibrary;
   private final DependencyScope myScope;
@@ -46,7 +45,7 @@ class AddLibraryDependencyFix extends OrderEntryFix {
                                  DependencyScope scope,
                                  boolean exported,
                                  String qName) {
-    myReference = reference;
+    super(reference);
     myCurrentModule = currentModule;
     myLibrary = library;
     myScope = scope;
@@ -76,7 +75,7 @@ class AddLibraryDependencyFix extends OrderEntryFix {
     JavaProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, myLibrary, myScope, myExported);
 
     if (myQualifiedClassName != null && editor != null) {
-      importClass(myCurrentModule, editor, myReference, myQualifiedClassName);
+      importClass(myCurrentModule, editor, restoreReference(), myQualifiedClassName);
     }
   }
 }

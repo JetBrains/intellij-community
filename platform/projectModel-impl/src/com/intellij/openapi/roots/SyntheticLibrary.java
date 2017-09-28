@@ -80,6 +80,9 @@ public abstract class SyntheticLibrary {
    * <p>
    * NOTE: The condition is participating in building indexing and project model,
    * it must be bloody fast in order not to affect overall IDE performance.
+   * <p>
+   * NOTE 2: Try not to use file.getFileType() method since it might load file's content to know the type,
+   * which will try to load encoding and guess files project which is lead to SOE.
    */
   @Nullable
   public Condition<VirtualFile> getExcludeFileCondition() {

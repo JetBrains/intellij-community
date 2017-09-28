@@ -28,6 +28,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.io.PersistentEnumeratorBase;
 import gnu.trove.THashMap;
@@ -75,7 +76,11 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 /**
@@ -95,11 +100,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static final Key<JavaCompilingTool> COMPILING_TOOL = Key.create("_java_compiling_tool_");
   private static final Key<ConcurrentMap<String, Collection<String>>> COMPILER_USAGE_STATISTICS = Key.create("_java_compiler_usage_stats_");
   private static final List<String> COMPILABLE_EXTENSIONS = Collections.singletonList(JAVA_EXTENSION);
+  private static final String MODULE_DIR_MACRO_TEMPLATE = "$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$";
 
   private static final Set<String> FILTERED_OPTIONS = ContainerUtil.newHashSet(
-    "-target");
+    "-target"
+  );
   private static final Set<String> FILTERED_SINGLE_OPTIONS = ContainerUtil.newHashSet(
-    "-g", "-deprecation", "-nowarn", "-verbose", "-proc:none", "-proc:only", "-proceedOnError");
+    "-g", "-deprecation", "-nowarn", "-verbose", "-proc:none", "-proc:only", "-proceedOnError"
+  );
 
   private static final List<ClassPostProcessor> ourClassProcessors = new ArrayList<>();
   private static final Set<JpsModuleType<?>> ourCompilableModuleTypes = new HashSet<>();
@@ -120,6 +128,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
     ourDefaultRtJar = rtJar;
   }
+
 
   public static void registerClassPostProcessor(ClassPostProcessor processor) {
     ourClassProcessors.add(processor);
@@ -373,20 +382,20 @@ public class JavaBuilder extends ModuleLevelBuilder {
                               OutputFileConsumer outputSink,
                               JavaCompilingTool compilingTool,
                               boolean hasModules) throws Exception {
-    Semaphore counter = new Semaphore();
+    final Semaphore counter = new Semaphore();
     COUNTER_KEY.set(context, counter);
-
-    final JpsJavaExtensionService javaExt = JpsJavaExtensionService.getInstance();
-    final JpsJavaCompilerConfiguration compilerConfig = javaExt.getCompilerConfiguration(context.getProjectDescriptor().getProject());
-    assert compilerConfig != null;
 
     final Set<JpsModule> modules = chunk.getModules();
     ProcessorConfigProfile profile = null;
+    
     if (modules.size() == 1) {
+      final JpsJavaCompilerConfiguration compilerConfig =
+        JpsJavaExtensionService.getInstance().getCompilerConfiguration(context.getProjectDescriptor().getProject());
+      assert compilerConfig != null;
       profile = compilerConfig.getAnnotationProcessingProfile(modules.iterator().next());
     }
     else {
-      String message = validateCycle(chunk, javaExt, compilerConfig, modules);
+      final String message = validateCycle(context, chunk);
       if (message != null) {
         diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, message));
         return true;
@@ -411,7 +420,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
       final int compilerSdkVersion = forkSdk == null? getCompilerSdkVersion(context) : forkSdk.getSecond();
 
-      final List<String> options = getCompilationOptions(compilerSdkVersion, context, chunk, profile, compilingTool);
+      final Pair<List<String>, List<String>> vm_compilerOptions = getCompilationOptions(
+        compilerSdkVersion, context, chunk, profile, compilingTool
+      );
+      final List<String> vmOptions = vm_compilerOptions.first;
+      final List<String> options = vm_compilerOptions.second;
+
       if (LOG.isDebugEnabled()) {
         String mode = shouldForkJavac ? "fork" : "in-process";
         LOG.debug("Compiling chunk [" + chunk.getName() + "] with options: \"" + StringUtil.join(options, " ") + "\", mode=" + mode);
@@ -476,7 +490,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
       else {
         updateCompilerUsageStatistics(context, "javac " + forkSdk.getSecond(), chunk);
-        final List<String> vmOptions = getCompilationVMOptions(context, compilingTool);
         final ExternalJavacManager server = ensureJavacServerStarted(context);
         rc = server.forkJavac(
           forkSdk.getFirst(),
@@ -520,10 +533,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   @Nullable
-  public static String validateCycle(ModuleChunk chunk,
-                                     JpsJavaExtensionService javaExt,
-                                     JpsJavaCompilerConfiguration compilerConfig,
-                                     Set<JpsModule> modules) {
+  public static String validateCycle(CompileContext context, ModuleChunk chunk) {
+    final JpsJavaExtensionService javaExt = JpsJavaExtensionService.getInstance();
+    final JpsJavaCompilerConfiguration compilerConfig = javaExt.getCompilerConfiguration(context.getProjectDescriptor().getProject());
+    assert compilerConfig != null;
+    final Set<JpsModule> modules = chunk.getModules();
     Pair<String, LanguageLevel> pair = null;
     for (JpsModule module : modules) {
       final LanguageLevel moduleLevel = javaExt.getLanguageLevel(module);
@@ -533,6 +547,33 @@ public class JavaBuilder extends ModuleLevelBuilder {
       else if (!Comparing.equal(pair.getSecond(), moduleLevel)) {
         return "Modules " + pair.getFirst() + " and " + module.getName() +
                " must have the same language level because of cyclic dependencies between them";
+      }
+    }
+
+    final JpsJavaCompilerOptions compilerOptions = compilerConfig.getCurrentCompilerOptions();
+    final Map<String, String> overrideMap = compilerOptions.ADDITIONAL_OPTIONS_OVERRIDE;
+    if (!overrideMap.isEmpty()) {
+      // check that options are consistently overridden for all modules in the cycle
+      Pair<String, Set<String>> overridden = null;
+      for (JpsModule module : modules) {
+        final String opts = overrideMap.get(module.getName());
+        if (!StringUtil.isEmptyOrSpaces(opts)) {
+          final Set<String> parsed = parseOptions(opts);
+          if (overridden == null) {
+            overridden = Pair.create(module.getName(), parsed);
+          }
+          else {
+            if (!overridden.second.equals(parsed)) {
+              return "Modules " + overridden.first + " and " + module.getName() + " must have the same 'additional command line parameters' specified because of cyclic dependencies between them";
+            }
+          }
+        }
+        else {
+          context.processMessage(new CompilerMessage(
+            BUILDER_NAME, BuildMessage.Kind.WARNING,
+            "Some modules with cyclic dependencies [" + chunk.getName() + "] have 'additional command line parameters' overridden in project settings.\nThese compilation options were applied to all modules in the cycle."
+          ));
+        }
       }
     }
 
@@ -546,6 +587,15 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
     }
     return null;
+  }
+
+  private static Set<String> parseOptions(String str) {
+    final Set<String> result = new SmartHashSet<>();
+    StringTokenizer t = new StringTokenizer(str, " \n\t", false);
+    while (t.hasMoreTokens()) {
+      result.add(t.nextToken());
+    }
+    return result;
   }
 
   private static boolean shouldUseReleaseOption(CompileContext context, int compilerVersion, int chunkSdkVersion, int targetLanguageLevel) {
@@ -707,48 +757,91 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
-  private static final Key<List<String>> JAVAC_OPTIONS = Key.create("_javac_options_");
-  private static final Key<List<String>> JAVAC_VM_OPTIONS = Key.create("_javac_vm_options_");
   private static final Key<String> USER_DEFINED_BYTECODE_TARGET = Key.create("_user_defined_bytecode_target_");
 
-  private static List<String> getCompilationVMOptions(CompileContext context, JavaCompilingTool compilingTool) {
-    List<String> cached = JAVAC_VM_OPTIONS.get(context);
-    if (cached == null) {
-      loadCommonJavacOptions(context, compilingTool);
-      cached = JAVAC_VM_OPTIONS.get(context);
+  private static Pair<List<String>, List<String>> getCompilationOptions(int compilerSdkVersion,
+                                                                        CompileContext context,
+                                                                        ModuleChunk chunk,
+                                                                        @Nullable ProcessorConfigProfile profile,
+                                                                        @NotNull JavaCompilingTool compilingTool) {
+    final List<String> _compilationOptions = new ArrayList<>();
+    final List<String> vmOptions = new ArrayList<>();
+    final JpsProject project = context.getProjectDescriptor().getProject();
+    final JpsJavaCompilerOptions compilerOptions = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).getCurrentCompilerOptions();
+    if (compilerOptions.DEBUGGING_INFO) {
+      _compilationOptions.add("-g");
     }
-    return cached;
-  }
-
-  private static List<String> getCompilationOptions(int compilerSdkVersion,
-                                                    CompileContext context,
-                                                    ModuleChunk chunk,
-                                                    @Nullable ProcessorConfigProfile profile,
-                                                    @NotNull JavaCompilingTool compilingTool) {
-    List<String> cached = JAVAC_OPTIONS.get(context);
-    if (cached == null) {
-      loadCommonJavacOptions(context, compilingTool);
-      cached = JAVAC_OPTIONS.get(context);
-      assert cached != null : context;
+    if (compilerOptions.DEPRECATION) {
+      _compilationOptions.add("-deprecation");
     }
-
-    List<String> options = new ArrayList<>();
-    JpsModule module = chunk.representativeTarget().getModule();
-    File baseDirectory = JpsModelSerializationDataService.getBaseDirectory(module);
-    if (baseDirectory != null) {
-      //this is a temporary workaround to allow passing per-module compiler options for Eclipse compiler in form
-      // -properties $MODULE_DIR$/.settings/org.eclipse.jdt.core.prefs
-      String stringToReplace = "$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$";
-      String moduleDirPath = FileUtil.toCanonicalPath(baseDirectory.getAbsolutePath());
-      for (String s : cached) {
-        options.add(StringUtil.replace(s, stringToReplace, moduleDirPath));
+    if (compilerOptions.GENERATE_NO_WARNINGS) {
+      _compilationOptions.add("-nowarn");
+    }
+    if (compilerOptions instanceof EclipseCompilerOptions) {
+      final EclipseCompilerOptions eclipseOptions = (EclipseCompilerOptions)compilerOptions;
+      if (eclipseOptions.PROCEED_ON_ERROR) {
+        Utils.PROCEED_ON_ERROR_KEY.set(context, Boolean.TRUE);
+        _compilationOptions.add("-proceedOnError");
       }
     }
-    else {
-      options.addAll(cached);
+
+    String customArgs = compilerOptions.ADDITIONAL_OPTIONS_STRING;
+    final Map<String, String> overrideMap = compilerOptions.ADDITIONAL_OPTIONS_OVERRIDE;
+    if (!overrideMap.isEmpty()) {
+      for (JpsModule m : chunk.getModules()) {
+        final String overridden = overrideMap.get(m.getName());
+        if (overridden != null) {
+          customArgs = overridden;
+          break;
+        }
+      }
     }
-    addCompilationOptions(compilerSdkVersion, options, context, chunk, profile);
-    return options;
+
+    if (customArgs != null) {
+      BiConsumer<List<String>, String> appender = List::add;
+      final JpsModule module = chunk.representativeTarget().getModule();
+      final File baseDirectory = JpsModelSerializationDataService.getBaseDirectory(module);
+      if (baseDirectory != null) {
+        //this is a temporary workaround to allow passing per-module compiler options for Eclipse compiler in form
+        // -properties $MODULE_DIR$/.settings/org.eclipse.jdt.core.prefs
+        final String moduleDirPath = FileUtil.toCanonicalPath(baseDirectory.getAbsolutePath());
+        appender = (strings, option) -> strings.add(StringUtil.replace(option, MODULE_DIR_MACRO_TEMPLATE, moduleDirPath));
+      }
+
+      boolean skip = false;
+      boolean targetOptionFound = false;
+      for (final String userOption : ParametersListUtil.parse(customArgs)) {
+        if (FILTERED_OPTIONS.contains(userOption)) {
+          skip = true;
+          targetOptionFound = "-target".equals(userOption);
+          continue;
+        }
+        if (skip) {
+          skip = false;
+          if (targetOptionFound) {
+            targetOptionFound = false;
+            USER_DEFINED_BYTECODE_TARGET.set(context, userOption);
+          }
+        }
+        else {
+          if (!FILTERED_SINGLE_OPTIONS.contains(userOption)) {
+            if (userOption.startsWith("-J-")) {
+              vmOptions.add(userOption.substring("-J".length()));
+            }
+            else {
+              appender.accept(_compilationOptions, userOption);
+            }
+          }
+        }
+      }
+    }
+
+    for (ExternalJavacOptionsProvider extension : JpsServiceManager.getInstance().getExtensions(ExternalJavacOptionsProvider.class)) {
+      vmOptions.addAll(extension.getOptions(compilingTool));
+    }
+    addCompilationOptions(compilerSdkVersion, _compilationOptions, context, chunk, profile);
+
+    return Pair.create(vmOptions, _compilationOptions);
   }
 
   public static void addCompilationOptions(List<String> options,
@@ -980,75 +1073,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
     // this constraint should be validated on build start
     final JpsSdk<JpsDummyElement> sdk = chunk.representativeTarget().getModule().getSdk(JpsJavaSdkType.INSTANCE);
     return sdk != null? Pair.create(sdk, JpsJavaSdkType.parseVersion(sdk.getVersionString())) : null;
-  }
-
-  private static void loadCommonJavacOptions(@NotNull CompileContext context, @NotNull JavaCompilingTool compilingTool) {
-    final List<String> options = new ArrayList<>();
-
-    final JpsProject project = context.getProjectDescriptor().getProject();
-    final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
-    final JpsJavaCompilerOptions compilerOptions = compilerConfig.getCurrentCompilerOptions();
-    if (compilerOptions.DEBUGGING_INFO) {
-      options.add("-g");
-    }
-    if (compilerOptions.DEPRECATION) {
-      options.add("-deprecation");
-    }
-    if (compilerOptions.GENERATE_NO_WARNINGS) {
-      options.add("-nowarn");
-    }
-    if (compilerOptions instanceof EclipseCompilerOptions) {
-      final EclipseCompilerOptions eclipseOptions = (EclipseCompilerOptions)compilerOptions;
-      if (eclipseOptions.PROCEED_ON_ERROR) {
-        options.add("-proceedOnError");
-      }
-    }
-    final String customArgs = compilerOptions.ADDITIONAL_OPTIONS_STRING;
-    final List<String> vmOptions = new ArrayList<>();
-    if (customArgs != null) {
-      boolean skip = false;
-      boolean targetOptionFound = false;
-      for (final String userOption : ParametersListUtil.parse(customArgs)) {
-        if (FILTERED_OPTIONS.contains(userOption)) {
-          skip = true;
-          targetOptionFound = "-target".equals(userOption);
-          continue;
-        }
-        if (skip) {
-          skip = false;
-          if (targetOptionFound) {
-            targetOptionFound = false;
-            USER_DEFINED_BYTECODE_TARGET.set(context, userOption);
-          }
-        }
-        else {
-          if (!FILTERED_SINGLE_OPTIONS.contains(userOption)) {
-            if (userOption.startsWith("-J-")) {
-              vmOptions.add(userOption.substring("-J".length()));
-            }
-            else {
-              options.add(userOption);
-            }
-          }
-        }
-      }
-    }
-
-    for (ExternalJavacOptionsProvider extension : JpsServiceManager.getInstance().getExtensions(ExternalJavacOptionsProvider.class)) {
-      vmOptions.addAll(extension.getOptions(compilingTool));
-    }
-
-    if (JavaCompilers.ECLIPSE_ID.equals(compilingTool.getId())) {
-      for (String option : options) {
-        if (option.startsWith("-proceedOnError")) {
-          Utils.PROCEED_ON_ERROR_KEY.set(context, Boolean.TRUE);
-          break;
-        }
-      }
-    }
-
-    JAVAC_OPTIONS.set(context, options);
-    JAVAC_VM_OPTIONS.set(context, vmOptions);
   }
 
   @Override

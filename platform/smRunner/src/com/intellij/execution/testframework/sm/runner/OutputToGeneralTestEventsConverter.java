@@ -20,6 +20,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import jetbrains.buildServer.messages.serviceMessages.*;
@@ -48,8 +49,10 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   private final String myTestFrameworkName;
   private final OutputLineSplitter mySplitter;
 
-  private GeneralTestEventsProcessor myProcessor;
+  private volatile GeneralTestEventsProcessor myProcessor;
   private boolean myPendingLineBreakFlag;
+  private Runnable myTestingStartedHandler;
+  private boolean myFirstTestingStartedEvent = true;
 
   public OutputToGeneralTestEventsConverter(@NotNull String testFrameworkName, @NotNull TestConsoleProperties consoleProperties) {
     this(testFrameworkName, consoleProperties.isEditable());
@@ -334,10 +337,34 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
+  public void setTestingStartedHandler(@NotNull Runnable testingStartedHandler) {
+    myTestingStartedHandler = testingStartedHandler;
+  }
+
   public void onStartTesting() {}
 
+  public void startTesting() {
+    myTestingStartedHandler.run();
+    onStartTesting();
+    GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
+      processor.onStartTesting();
+    }
+  }
+
+  public synchronized void finishTesting() {
+    GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
+      processor.onFinishTesting();
+      Disposer.dispose(processor);
+      myProcessor = null;
+    }
+  }
+
   private class MyServiceMessageVisitor extends DefaultServiceMessageVisitor {
-    @NonNls public static final String KEY_TESTS_COUNT = "testCount";
+    @NonNls private static final String TESTING_STARTED = "testingStarted";
+    @NonNls private static final String TESTING_FINISHED = "testingFinished";
+    @NonNls private static final String KEY_TESTS_COUNT = "testCount";
     @NonNls private static final String ATTR_KEY_TEST_ERROR = "error";
     @NonNls private static final String ATTR_KEY_TEST_COUNT = "count";
     @NonNls private static final String ATTR_KEY_TEST_DURATION = "duration";
@@ -519,7 +546,18 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
         LOG.debug(msg.asString());
       }
 
-      if (KEY_TESTS_COUNT.equals(name)) {
+      if (TESTING_STARTED.equals(name)) {
+        // Since a test reporter may not emit "testingStarted"/"testingFinished" events,
+        // startTesting() is already invoked before starting processing messages.
+        if (!myFirstTestingStartedEvent) {
+          startTesting();
+        }
+        myFirstTestingStartedEvent = false;
+      }
+      else if (TESTING_FINISHED.equals(name)) {
+        finishTesting();
+      }
+      else if (KEY_TESTS_COUNT.equals(name)) {
         processTestCountInSuite(msg);
       }
       else if (CUSTOM_STATUS.equals(name)) {

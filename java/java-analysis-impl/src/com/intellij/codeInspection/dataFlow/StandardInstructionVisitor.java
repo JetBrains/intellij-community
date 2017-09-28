@@ -23,9 +23,9 @@ import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.search.JavaOverridingMethodsSearcher;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
@@ -120,8 +120,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     boolean alwaysOutOfBounds = false;
     if (index != DfaUnknownValue.getInstance()) {
       DfaValueFactory factory = runner.getFactory();
-      DfaValue indexNonNegative =
-        factory.createCondition(index, RelationType.GE, factory.getConstFactory().createFromValue(0, PsiType.INT, null));
+      DfaValue indexNonNegative = factory.createCondition(index, RelationType.GE, factory.getInt(0));
       if (!memState.applyCondition(indexNonNegative)) {
         alwaysOutOfBounds = true;
       }
@@ -487,8 +486,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (specificQualifierClass != null && qualifierClass != null &&
         !specificQualifierClass.equals(qualifierClass) &&
         InheritanceUtil.isInheritorOrSelf(specificQualifierClass, qualifierClass, true)) {
-      PsiMethod realMethod =
-        JavaOverridingMethodsSearcher.findOverridingMethod(method.getProject(), specificQualifierClass, method, qualifierClass);
+      PsiMethod realMethod = MethodSignatureUtil.findMethodBySuperMethod(specificQualifierClass, method, true);
       if (realMethod != null) {
         return realMethod;
       }

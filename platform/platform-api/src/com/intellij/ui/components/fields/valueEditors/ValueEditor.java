@@ -84,4 +84,10 @@ public interface ValueEditor<T> {
    * @param value The value to check.
    */
   void assertValid(@NotNull T value);
+
+  void addListener(@NotNull Listener<T> editorListener);
+
+  interface Listener<T> {
+    void valueChanged(@NotNull T newValue);
+  }
 }

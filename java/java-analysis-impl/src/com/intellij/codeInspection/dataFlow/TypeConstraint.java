@@ -17,10 +17,13 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
 import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.EntryStream;
+import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -155,7 +158,17 @@ public final class TypeConstraint {
     if (myInstanceofValues.isEmpty()) {
       return null;
     }
-    return myInstanceofValues.iterator().next().getPsiType();
+    if (myInstanceofValues.size() == 1) {
+      return myInstanceofValues.iterator().next().getPsiType();
+    }
+    return StreamEx.of(myInstanceofValues).map(DfaPsiType::getPsiType)
+      .select(PsiClassType.class)
+      .filter(type -> {
+        PsiClass psiClass = type.resolve();
+        return psiClass != null && !psiClass.isInterface();
+      })
+      .collect(MoreCollectors.onlyOne())
+      .orElse(null);
   }
 
   boolean isSuperStateOf(@NotNull TypeConstraint that) {
