@@ -413,7 +413,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
       return true;
     }
-  }, myProject.getDisposed(), 200);
+  }, myProject.getDisposed());
 
   private final Set<Pair<TextRange, String>> emptyActionRegistered = Collections.synchronizedSet(new THashSet<Pair<TextRange, String>>());
 

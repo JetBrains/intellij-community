@@ -65,7 +65,7 @@ import java.util.List;
  * @author nik
  */
 public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposable {
-  private final TransferToEDTQueue<Runnable> myLaterInvocator = TransferToEDTQueue.createRunnableMerger("XDebuggerTree later invocator", 100);
+  private final TransferToEDTQueue<Runnable> myLaterInvocator = TransferToEDTQueue.createRunnableMerger("XDebuggerTree later invocator");
 
   private final ComponentListener myMoveListener = new ComponentAdapter() {
     @Override

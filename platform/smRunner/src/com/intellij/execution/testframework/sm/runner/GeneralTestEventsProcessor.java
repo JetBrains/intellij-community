@@ -60,7 +60,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     myTransferToEDTQueue = new TransferToEDTQueue<>("SM queue", runnable -> {
       runnable.run();
       return true;
-    }, project.getDisposed(), 300);
+    }, project.getDisposed());
     myTestsRootProxy = testsRootProxy;
   }
   // tree construction events
