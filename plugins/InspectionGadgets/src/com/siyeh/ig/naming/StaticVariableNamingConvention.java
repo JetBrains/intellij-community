@@ -86,5 +86,22 @@ public class StaticVariableNamingConvention extends NamingConvention<PsiField> {
       return panel;
     }
 
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof ConstantNamingConventionBean)) return false;
+      if (!super.equals(o)) return false;
+
+      ConstantNamingConventionBean bean = (ConstantNamingConventionBean)o;
+
+      if (checkMutableFinals != bean.checkMutableFinals) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 31 * super.hashCode() + (checkMutableFinals ? 1 : 0);
+    }
   }
 }

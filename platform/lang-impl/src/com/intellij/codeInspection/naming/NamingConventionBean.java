@@ -15,6 +15,8 @@ import java.util.regex.Pattern;
 
 /**
  * @see NamingConventionWithFallbackBean for default fallbacks
+ *
+ * When beans have custom fields, ensure to provide {@link #equals(Object)}/{@link #hashCode()} for correct serialization
  */
 public class NamingConventionBean {
   public String m_regex;
