@@ -384,6 +384,9 @@
     <projectStructure.sourceRootEditHandler implementation="com.intellij.openapi.roots.ui.configuration.JavaTestResourceRootEditHandler"/>
 
     <buildProcess.parametersProvider implementation="com.intellij.compiler.CompilerReferenceIndexBuildParametersProvider"/>
+    <experimentalFeature id="project.view.async.tree.model" internalFeature="true" percentOfUsers="10" requireRestart="true">
+      <description>New implementation based on AsyncTreeModel + StructureTreeModel</description>
+    </experimentalFeature>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <webServerRootsProvider implementation="org.jetbrains.builtInWebServer.ArtifactWebServerRootsProvider" order="last"/>
