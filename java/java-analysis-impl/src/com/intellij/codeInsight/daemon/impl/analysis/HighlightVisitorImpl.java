@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil.Feature;
 import com.intellij.codeInsight.daemon.impl.quickfix.AdjustFunctionContextFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -1467,8 +1468,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     PsiClass psiClass = resolveResult.getElement();
     if (psiClass != null) {
       if (!PsiUtil.isAccessible(myFile.getProject(), psiClass, expression, null)) {
-        String text = HighlightUtil.accessProblemDescription(expression, psiClass, resolveResult);
-        myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(text).create());
+        Pair<String, List<IntentionAction>> problem = HighlightUtil.accessProblemDescriptionAndFixes(expression, psiClass, resolveResult);
+        HighlightInfo info =
+          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(problem.first).create();
+        myHolder.add(info);
+        if (problem.second != null) {
+          problem.second.forEach(fix -> QuickFixAction.registerQuickFixAction(info, fix));
+        }
       }
       else {
         for (PsiType type : resolveResult.getSubstitutor().getSubstitutionMap().values()) {

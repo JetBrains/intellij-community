@@ -1576,9 +1576,10 @@ public class HighlightUtil extends HighlightUtilBase {
     return accessProblemDescriptionAndFixes(ref, resolved, result).first;
   }
 
-  private static Pair<String, List<IntentionAction>> accessProblemDescriptionAndFixes(PsiElement ref,
-                                                                                      PsiElement resolved,
-                                                                                      JavaResolveResult result) {
+  @NotNull
+  static Pair<String, List<IntentionAction>> accessProblemDescriptionAndFixes(@NotNull PsiElement ref,
+                                                                              @NotNull PsiElement resolved,
+                                                                              @NotNull JavaResolveResult result) {
     assert resolved instanceof PsiModifierListOwner : resolved;
     PsiModifierListOwner refElement = (PsiModifierListOwner)resolved;
     String symbolName = HighlightMessageUtil.getSymbolName(refElement, result.getSubstitutor());
