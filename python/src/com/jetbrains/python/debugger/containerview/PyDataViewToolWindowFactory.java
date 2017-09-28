@@ -27,7 +27,9 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowFactory;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
@@ -37,6 +39,7 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerManagerListener;
 import com.jetbrains.python.console.PythonConsoleToolWindowFactory;
 import com.jetbrains.python.debugger.PyDebugProcess;
+import com.jetbrains.python.plots.PyPlotToolWindow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +49,11 @@ public class PyDataViewToolWindowFactory implements ToolWindowFactory {
 
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
+    initializeDataTab(project, toolWindow);
+    PyPlotToolWindow.getInstance(project).init(toolWindow);
+  }
+
+  private static void initializeDataTab(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     PyDataView.getInstance(project).init(toolWindow);
     final MessageBusConnection connection = project.getMessageBus().connect(project);
     connection.subscribe(XDebuggerManager.TOPIC, new ChangeContentXDebuggerManagerListener(project));

@@ -57,7 +57,6 @@ public class PySciViewAction extends ToggleAction implements DumbAware {
   private boolean wasConsoleVisible = false;
 
   public static final String ACTION_ID = "PySciView";
-  private ToolWindowType myDataViewType = ToolWindowType.FLOATING;
   private Color myDocumentationBackgroundColor = EditorColorsManager.getInstance().getGlobalScheme().getColor(COLOR_KEY);
 
   public PySciViewAction() {
@@ -176,17 +175,16 @@ public class PySciViewAction extends ToggleAction implements DumbAware {
     }
   }
 
-  private void showDataViewAsToolwindow(@NotNull final Project project) {
+  public static void showDataViewAsToolwindow(@NotNull final Project project) {
     ToolWindow dataViewToolWindow = ToolWindowManager.getInstance(project).getToolWindow(DATA_VIEWER_ID);
-    myDataViewType = dataViewToolWindow.getType();
     dataViewToolWindow.setType(ToolWindowType.DOCKED, null);
     dataViewToolWindow.setAutoHide(false);
     dataViewToolWindow.setShowStripeButton(true);
   }
 
-  private void hideDataViewer(Project project) {
+  public static void hideDataViewer(Project project) {
     final ToolWindow dataViewer = ToolWindowManager.getInstance(project).getToolWindow(DATA_VIEWER_ID);
-    dataViewer.setType(myDataViewType, null);
+    dataViewer.setType(ToolWindowType.FLOATING, null);
     dataViewer.setAutoHide(true);
     dataViewer.setShowStripeButton(false);
   }

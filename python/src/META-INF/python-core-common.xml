@@ -624,8 +624,9 @@
     <breadcrumbsInfoProvider implementation="com.jetbrains.python.breadcrumbs.PyBreadcrumbsInfoProvider"/>
     <highlightVisitor implementation="com.jetbrains.python.highlighting.PyRainbowVisitor"/>
 
-    <toolWindow id="Data View" factoryClass="com.jetbrains.python.debugger.containerview.PyDataViewToolWindowFactory" anchor="right" icon="PythonIcons.Python.DataView"/>
+    <toolWindow id="SciView" factoryClass="com.jetbrains.python.debugger.containerview.PyDataViewToolWindowFactory" anchor="right" icon="PythonIcons.Python.DataView"/>
     <projectService serviceInterface="com.jetbrains.python.debugger.containerview.PyDataView" serviceImplementation="com.jetbrains.python.debugger.containerview.PyDataView"/>
+    <projectService serviceInterface="com.jetbrains.python.plots.PyPlotToolWindow" serviceImplementation="com.jetbrains.python.plots.PyPlotToolWindow"/>
 
     <createFromTemplateHandler implementation="com.jetbrains.python.packaging.setupPy.PyCreateSetupPyFromTemplateHandler"/>
     <consoleHistoryModelProvider implementation="com.jetbrains.python.console.PyConsoleHistoryModelProvider"/>
@@ -894,6 +895,11 @@
   <project-components>
     <component>
       <implementation-class>com.jetbrains.python.actions.PySciProjectComponent</implementation-class>
+    </component>
+  </project-components>
+  <project-components>
+    <component>
+      <implementation-class>com.jetbrains.python.plots.PyPlotToolWindow</implementation-class>
     </component>
   </project-components>
 
