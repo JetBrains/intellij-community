@@ -95,11 +95,18 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
     MakeBeforeRunTask task = null;
     if (shouldCreateTask(configuration)) {
       task = new MakeBeforeRunTask();
-      if (configuration instanceof RunConfigurationBase) {
-        task.setEnabled(((RunConfigurationBase)configuration).isCompileBeforeLaunchAddedByDefault());
-      }
+      task.setEnabled(isEnabledByDefault(configuration));
     }
     return task;
+  }
+
+  private static boolean isEnabledByDefault(@NotNull RunConfiguration configuration) {
+    return (configuration instanceof RunProfileWithCompileBeforeLaunchOption &&
+            ((RunProfileWithCompileBeforeLaunchOption)configuration).isBuildBeforeLaunchAddedByDefault()
+           ) &&
+           (configuration instanceof RunConfigurationBase &&
+            ((RunConfigurationBase)configuration).isCompileBeforeLaunchAddedByDefault()
+           );
   }
 
   static boolean shouldCreateTask(RunConfiguration configuration) {
