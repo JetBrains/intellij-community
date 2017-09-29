@@ -70,6 +70,7 @@ class FigureCanvasInterAgg(FigureCanvasAgg):
             sock = socket.socket()
             sock.connect((HOST, PORT))
             sock.send(struct.pack('>i', width))
+            sock.send(struct.pack('>i', len(buffer)))
             sock.send(buffer)
         except ConnectionRefusedError as _:
             # nothing bad. It just means, that our tool window doesn't run yet

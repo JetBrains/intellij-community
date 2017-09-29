@@ -35,13 +35,12 @@ import com.intellij.ui.content.Content;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.plots.PyPlotToolWindow;
 import org.jetbrains.annotations.Nullable;
-import sun.misc.IOUtils;
 
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.ByteBuffer;
 
 import static com.intellij.codeInsight.documentation.DocumentationComponent.COLOR_KEY;
 import static com.jetbrains.python.actions.PySciViewAction.hideDataViewer;
@@ -148,12 +147,12 @@ public class PySciProjectComponent extends AbstractProjectComponent implements P
       final Socket socket = myServerSocket.accept();
       try {
         final InputStream stream = socket.getInputStream();
-        byte[] widthBytes = new byte[4];
-        final int read = stream.read(widthBytes);
-        if (read != 0) {
-          final int width = ByteBuffer.wrap(widthBytes).getInt();
-          final byte[] raw = IOUtils.readFully(stream, -1, false);
-          if (raw.length == 0) return;
+        final DataInputStream inputStream = new DataInputStream(stream);
+        try {
+          final int width = inputStream.readInt();
+          final int count = inputStream.readInt();
+          final byte[] raw = new byte[count];
+          inputStream.readFully(raw);
 
           PyPlotToolWindow.getInstance(myProject).onMessage(width, raw);
           ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(DATA_VIEWER_ID);
@@ -168,9 +167,12 @@ public class PySciProjectComponent extends AbstractProjectComponent implements P
             }
           });
         }
-      }
-      catch (IOException e) {
-        LOG.error(e.getMessage());
+        catch (IOException e) {
+          LOG.error(e.getMessage());
+        }
+        finally {
+          inputStream.close();
+        }
       }
       finally {
         if (!socket.isClosed()) {
