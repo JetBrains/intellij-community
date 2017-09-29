@@ -28,10 +28,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
  */
 class GradleIdeaSettingsContributor: GradleMethodContextContributor {
   companion object {
-    val projectSettingsFQN = "org.jetbrains.gradle.ext.ProjectSettings"
-    val moduleSettingsFQN = "org.jetbrains.gradle.ext.ModuleSettings"
+    val PROJECT_SETTINGS_FQN = "org.jetbrains.gradle.ext.ProjectSettings"
+    val MODULE_SETTINGS_FQN = "org.jetbrains.gradle.ext.ModuleSettings"
 
-    val compilerSettingsClosure = groovyClosure().inMethod(psiMethod(projectSettingsFQN, "compiler"))
+    val compilerSettingsClosure = groovyClosure().inMethod(psiMethod(PROJECT_SETTINGS_FQN, "compiler"))
   }
 
   override fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? = when {
@@ -54,7 +54,7 @@ class GradleIdeaSettingsContributor: GradleMethodContextContributor {
             containingClass = ideaProjectClass
             returnType = PsiType.VOID
             addAndGetParameter("configuration", GroovyCommonClassNames.GROOVY_LANG_CLOSURE, false).apply {
-              putUserData(DELEGATES_TO_KEY, projectSettingsFQN)
+              putUserData(DELEGATES_TO_KEY, PROJECT_SETTINGS_FQN)
               putUserData(DELEGATES_TO_STRATEGY_KEY, Closure.DELEGATE_FIRST)
             }
           }
@@ -68,7 +68,7 @@ class GradleIdeaSettingsContributor: GradleMethodContextContributor {
             containingClass = ideaModuleClass
             returnType = PsiType.VOID
             addAndGetParameter("configuration", GroovyCommonClassNames.GROOVY_LANG_CLOSURE, false).apply {
-              putUserData(DELEGATES_TO_KEY, moduleSettingsFQN)
+              putUserData(DELEGATES_TO_KEY, MODULE_SETTINGS_FQN)
               putUserData(DELEGATES_TO_STRATEGY_KEY, Closure.DELEGATE_FIRST)
             }
           }
