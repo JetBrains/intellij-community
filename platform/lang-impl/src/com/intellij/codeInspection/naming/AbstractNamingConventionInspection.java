@@ -153,11 +153,14 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
         NamingConventionBean activeBean = myNamingConventionBeans.get(shortName);
         if (activeBean instanceof NamingConventionWithFallbackBean && ((NamingConventionWithFallbackBean)activeBean).isInheritDefaultSettings()) {
           LOG.assertTrue(myDefaultConventionShortName != null, activeBean + " expects that default conversion is configured");
+          shortName = myDefaultConventionShortName;
           //disabled when fallback is disabled
-          if (myDisabledShortNames.contains(myDefaultConventionShortName)) {
+          if (myDisabledShortNames.contains(shortName)) {
             break;
           }
-          activeBean = myNamingConventionBeans.get(myDefaultConventionShortName);
+
+          activeBean = myNamingConventionBeans.get(shortName);
+          namingConvention = myNamingConventions.get(shortName);
         }
         if (!namingConvention.isValid(member, activeBean)) {
           errorRegister.accept(shortName);
