@@ -30,6 +30,7 @@ public class VcsLogActionPlaces {
   public static final String VCS_LOG_TOOLBAR_PLACE = "Vcs.Log.Toolbar";
   public static final String VCS_HISTORY_PLACE = "Vcs.FileHistory.ContextMenu";
   public static final String VCS_HISTORY_TOOLBAR_PLACE = "Vcs.FileHistory.Toolbar";
+  public static final String VCS_LOG_GEAR_POPUP_PLACE = "Vcs.Log.Gear.Popup";
 
   // action ids
   public static final String VCS_LOG_INTELLI_SORT_ACTION = "Vcs.Log.IntelliSortChooser";
