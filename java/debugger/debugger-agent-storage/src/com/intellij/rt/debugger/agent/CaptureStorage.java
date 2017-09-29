@@ -1,37 +1,20 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.rt.debugger.agent;
 
 import sun.misc.JavaLangAccess;
 import sun.misc.SharedSecrets;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author egor
  */
 public class CaptureStorage {
   private static final int MAX_STORED_STACKS = 1000;
+  private static final Map<Object, CapturedStack> STORAGE = new ConcurrentHashMap<>();
+  private static final Deque<Object> HISTORY = new ArrayDeque<>(MAX_STORED_STACKS);
 
-  private static final Map<Object, CapturedStack> STORAGE = Collections.synchronizedMap(new LinkedHashMap<Object, CapturedStack>() {
-    @Override
-    protected boolean removeEldestEntry(Map.Entry eldest) {
-      return size() > MAX_STORED_STACKS;
-    }
-  });
   private static final ThreadLocal<Deque<InsertMatch>> CURRENT_STACKS = ThreadLocal.withInitial(LinkedList::new);
   private static final JavaLangAccess ourJavaLangAccess = SharedSecrets.getJavaLangAccess();
 
@@ -44,7 +27,18 @@ public class CaptureStorage {
     }
     Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
     CapturedStack stack = createCapturedStack(new Throwable(), currentStacks.isEmpty() ? null : currentStacks.getLast());
-    STORAGE.put(key, stack);
+    synchronized (HISTORY) {
+      CapturedStack old = STORAGE.put(key, stack);
+      if (old == null) {
+        if (HISTORY.size() >= MAX_STORED_STACKS) {
+          STORAGE.remove(HISTORY.removeFirst());
+        }
+      }
+      else {
+        HISTORY.remove(old); // must not happen often
+      }
+      HISTORY.addLast(key);
+    }
   }
 
   @SuppressWarnings("unused")
