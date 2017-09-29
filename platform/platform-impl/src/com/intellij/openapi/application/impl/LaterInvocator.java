@@ -452,7 +452,7 @@ public class LaterInvocator {
     synchronized (LOCK) {
       reincludeSkippedItems();
 
-      List<RunnableInfo> alive = new ArrayList<>();
+      List<RunnableInfo> alive = new ArrayList<>(ourQueue.size());
       for (RunnableInfo info : ourQueue) {
         if (info.expired.value(null)) {
           info.markDone();
