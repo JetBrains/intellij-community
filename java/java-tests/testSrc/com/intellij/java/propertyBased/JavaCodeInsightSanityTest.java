@@ -16,7 +16,6 @@
 package com.intellij.java.propertyBased;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -38,7 +37,7 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected void tearDown() throws Exception {
     // remove jdk if it was created during highlighting to avoid leaks
-    WriteAction.run(()->JavaAwareProjectJdkTableImpl.getInstanceEx().removeJdk(JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk()));
+    JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
     super.tearDown();
   }
 

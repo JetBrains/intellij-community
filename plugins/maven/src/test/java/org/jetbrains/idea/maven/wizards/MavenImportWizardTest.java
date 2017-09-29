@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.projectWizard.ProjectWizardTestCase;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import org.jetbrains.idea.maven.MavenTestCase;
@@ -34,7 +33,7 @@ public class MavenImportWizardTest extends ProjectWizardTestCase {
   public void tearDown() throws Exception {
     try {
       MavenServerManager.getInstance().shutdown(true);
-      WriteAction.run(()->JavaAwareProjectJdkTableImpl.getInstanceEx().removeJdk(JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk()));
+      JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
     }
     finally {
       super.tearDown();
