@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.*;
@@ -50,6 +48,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
 
 import javax.swing.*;
 import java.io.File;
@@ -468,9 +467,9 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
           agentFile = new File(classesRoot.getParentFile().getParentFile(), "/artifacts/debugger_agent/" + agentName);
         }
         if (agentFile.exists()) {
-          String agent = "-javaagent:" + agentFile;
+          String agent = "-javaagent:" + agentFile + "=" + PathUtil.getJarPathForClass(MethodVisitor.class);
           if (Registry.is("debugger.capture.points.agent.debug")) {
-            agent += "=debug";
+            agent += ";debug";
           }
           if (!parameters.getVMParametersList().hasParameter(agent)) {
             parameters.getVMParametersList().add(agent);

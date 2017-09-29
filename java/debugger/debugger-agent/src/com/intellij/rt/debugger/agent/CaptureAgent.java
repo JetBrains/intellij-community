@@ -10,7 +10,6 @@ import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.jar.JarFile;
@@ -61,8 +60,27 @@ public class CaptureAgent {
 
   public static void premain(String args, Instrumentation instrumentation) throws IOException {
     ourInstrumentation = instrumentation;
-    instrumentation.appendToBootstrapClassLoaderSearch(createTempJar("debugger-agent-storage.jar"));
-    instrumentation.appendToSystemClassLoaderSearch(createTempJar("asm-all.jar"));
+
+    String asmPath = null;
+    if (args != null) {
+      String[] split = args.split(";");
+      for (String s : split) {
+        if ("debug".equals(s)) {
+          DEBUG = true;
+          CaptureStorage.setDebug(true);
+        }
+        else {
+          asmPath = s;
+        }
+      }
+    }
+
+    if (asmPath == null) {
+      System.out.println("Capture agent: asm path is not specified, exiting");
+      return;
+    }
+    instrumentation.appendToSystemClassLoaderSearch(new JarFile(asmPath));
+
     instrumentation.addTransformer(new CaptureTransformer());
     for (Class aClass : instrumentation.getAllLoadedClasses()) {
       String name = aClass.getName().replaceAll("\\.", "/");
@@ -75,9 +93,7 @@ public class CaptureAgent {
         }
       }
     }
-    DEBUG = "debug".equals(args);
     if (DEBUG) {
-      CaptureStorage.setDebug(true);
       System.out.println("Capture agent: ready");
     }
   }
@@ -252,25 +268,6 @@ public class CaptureAgent {
       this.myMethodName = methodName;
       this.myKeyProvider = keyProvider;
     }
-  }
-
-  // TODO: these files are not deleted even if deleteOnExit or anything else, we need to separate jars
-  private static JarFile createTempJar(String name) throws IOException {
-    File tempJar = File.createTempFile("Capture", ".jar");
-    Files.copy(CaptureAgent.class.getClassLoader().getResourceAsStream(name), tempJar.toPath(),
-               StandardCopyOption.REPLACE_EXISTING);
-    JarFile res = new JarFile(tempJar);
-    Runtime.getRuntime().addShutdownHook(new Thread() {
-      public void run() {
-        try {
-          res.close();
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
-        tempJar.delete();
-      }
-    });
-    return res;
   }
 
   // to be run from the debugger
