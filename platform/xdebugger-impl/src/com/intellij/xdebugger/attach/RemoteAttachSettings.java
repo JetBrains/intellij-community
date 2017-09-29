@@ -18,6 +18,9 @@ package com.intellij.xdebugger.attach;
 import com.intellij.execution.process.ProcessInfo;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * remote process settings (knows both about the connection and the processInfo)
+ */
 public class RemoteAttachSettings implements AttachToProcessSettings {
   @NotNull private ProcessInfo myInfo;
   @NotNull private RemoteSettings mySettings;

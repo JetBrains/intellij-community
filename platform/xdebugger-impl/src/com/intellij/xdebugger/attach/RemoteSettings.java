@@ -18,6 +18,9 @@ package com.intellij.xdebugger.attach;
 import com.intellij.remote.RemoteSdkCredentials;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * remote connection(ssh, vagrant, docker) settings
+ */
 public class RemoteSettings implements AttachSettings<RemoteSdkCredentials> {
   @NotNull private RemoteSdkCredentials myCredentials;
   @NotNull private XRemoteProcessListProvider myProvider;

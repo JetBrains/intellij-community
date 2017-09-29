@@ -17,6 +17,8 @@ package com.intellij.xdebugger.attach;
 
 import com.intellij.execution.process.ProcessInfo;
 
+@Deprecated
+//use AttachSettings<ProcessInfo>
 public interface AttachToProcessSettings extends AttachSettings<ProcessInfo> {
 
 }
