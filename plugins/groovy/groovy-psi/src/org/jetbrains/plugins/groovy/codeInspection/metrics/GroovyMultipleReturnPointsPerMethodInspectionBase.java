@@ -24,11 +24,6 @@ public class GroovyMultipleReturnPointsPerMethodInspectionBase extends GroovyMet
   }
 
   @Override
-  protected String getConfigurationLabel() {
-    return "Return point limit:";
-  }
-
-  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final Integer returnPointCount = (Integer) infos[0];

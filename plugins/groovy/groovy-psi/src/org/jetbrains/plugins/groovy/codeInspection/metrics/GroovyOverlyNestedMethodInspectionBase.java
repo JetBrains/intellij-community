@@ -21,11 +21,6 @@ public class GroovyOverlyNestedMethodInspectionBase extends GroovyMethodMetricIn
   }
 
   @Override
-  protected String getConfigurationLabel() {
-    return "Maximum nesting depth:";
-  }
-
-  @Override
   public String buildErrorString(Object... args) {
     return "Method '#ref' is overly nested ( nesting depth =" + args[0] + '>' + args[1] + ')';
   }

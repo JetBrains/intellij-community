@@ -23,6 +23,6 @@ public class GroovyOverlyComplexMethodInspection extends GroovyOverlyComplexMeth
 
   @Override
   public JComponent createOptionsPanel() {
-    return InspectionUtil.createSingleIntegerFieldOptionsPanel(this, "m_limit", getConfigurationLabel());
+    return InspectionUtil.createSingleIntegerFieldOptionsPanel(this, "m_limit", "Method complexity limit:");
   }
 }

@@ -21,11 +21,6 @@ public class GroovyOverlyComplexMethodInspectionBase extends GroovyMethodMetricI
   }
 
   @Override
-  protected String getConfigurationLabel() {
-    return "Method complexity limit:";
-  }
-
-  @Override
   public String buildErrorString(Object... args) {
     return "Method '#ref' is overly complex ( cyclomatic complexity =" + args[0] + '>' + args[1] + ')';
   }

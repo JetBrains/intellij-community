@@ -21,11 +21,6 @@ public class GroovyOverlyLongMethodInspectionBase extends GroovyMethodMetricInsp
   }
 
   @Override
-  protected String getConfigurationLabel() {
-    return "Maximum statements per method:";
-  }
-
-  @Override
   public String buildErrorString(Object... args) {
     return "Method '#ref' is too long ( statement count =" + args[0] + '>' + args[1] + ')';
   }

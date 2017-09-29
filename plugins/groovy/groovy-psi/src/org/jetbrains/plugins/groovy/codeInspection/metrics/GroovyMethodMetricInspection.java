@@ -25,8 +25,6 @@ public abstract class GroovyMethodMetricInspection extends BaseInspection {
     m_limit = defaultLimit;
   }
 
-    protected abstract String getConfigurationLabel();
-
   protected int getLimit() {
     return m_limit;
   }

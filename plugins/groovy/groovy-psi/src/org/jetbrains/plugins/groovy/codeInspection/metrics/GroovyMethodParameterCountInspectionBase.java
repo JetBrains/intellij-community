@@ -22,11 +22,6 @@ public class GroovyMethodParameterCountInspectionBase extends GroovyMethodMetric
   }
 
   @Override
-  protected String getConfigurationLabel() {
-    return "Maximum number of parameters:";
-  }
-
-  @Override
   public String buildErrorString(Object... args) {
     return "Method '#ref' contains too many parameters (" + args[0] + '>' + args[1] + ')';
   }
