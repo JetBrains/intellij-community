@@ -90,8 +90,11 @@ public class PyPlotToolWindow extends JPanel implements DumbAware {
   public void onMessage(int width, byte[] raw) {
     final PyPlotVirtualFile plotVirtualFile = new PyPlotVirtualFile(width, raw);
     final TabInfo info = createTabInfo(plotVirtualFile);
-    myTabs.addTab(info);
-    ApplicationManager.getApplication().invokeLater(() -> myTabs.select(info, true));
+
+    ApplicationManager.getApplication().invokeLater(() -> {
+      myTabs.addTab(info);
+      myTabs.select(info, true);
+    });
   }
 
   @NotNull
