@@ -58,6 +58,7 @@ class CrossPlatformDistributionBuilder {
           exclude(name: "bin/idea.properties")
         }
         fileset(dir: zipDir)
+        fileset(file: "$buildContext.paths.artifacts/dependencies.txt")
 
         fileset(dir: winDistPath) {
           exclude(name: "bin/fsnotifier*.exe")
