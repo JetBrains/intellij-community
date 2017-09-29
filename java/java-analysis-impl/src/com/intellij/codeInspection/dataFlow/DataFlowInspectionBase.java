@@ -47,6 +47,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.StreamEx;
@@ -761,15 +762,9 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       return evaluatesToTrue;
     }
     if (parent instanceof PsiIfStatement && psiAnchor == ((PsiIfStatement)parent).getCondition()) {
-      PsiStatement thenBranch = ((PsiIfStatement)parent).getThenBranch();
+      PsiStatement thenBranch = ControlFlowUtils.stripBraces(((PsiIfStatement)parent).getThenBranch());
       if (thenBranch instanceof PsiThrowStatement) {
         return !evaluatesToTrue;
-      }
-      if (thenBranch instanceof PsiBlockStatement) {
-        PsiStatement[] statements = ((PsiBlockStatement)thenBranch).getCodeBlock().getStatements();
-        if (statements.length == 1 && statements[0] instanceof PsiThrowStatement) {
-          return !evaluatesToTrue;
-        }
       }
     }
     return false;
