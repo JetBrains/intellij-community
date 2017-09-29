@@ -671,6 +671,14 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
                       "[<html><b>@NotNull String key</b>, String def</html>]");
   }
 
+  public void testFullPopupIsHiddenOnTyping() {
+    configureJava("class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key, String def)");
+    showParameterInfo();
+    type(' ');
+    checkHintContents(null);
+  }
+
   private void checkResult(String text) {
     myFixture.checkResult(text);
   }
