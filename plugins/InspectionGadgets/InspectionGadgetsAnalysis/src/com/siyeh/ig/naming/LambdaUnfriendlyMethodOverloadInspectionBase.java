@@ -22,6 +22,7 @@ import com.intellij.util.containers.IntArrayList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -75,6 +76,9 @@ public class LambdaUnfriendlyMethodOverloadInspectionBase extends BaseInspection
       }
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) {
+        return;
+      }
+      if (MethodUtils.hasSuper(method)) {
         return;
       }
       final String name = method.getName();

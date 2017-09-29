@@ -74,3 +74,14 @@ interface AB {
   void <warning descr="Lambda-unfriendly overload of method 'm()'">m</warning>(Runnable r, Function<String, String> f);
   void <warning descr="Lambda-unfriendly overload of method 'm()'">m</warning>(Runnable r, IntFunction<String> f);
 }
+class C implements AB {
+  @Override
+  public void m(Runnable r, Function<String, String> f) {
+    // don't warn on method implementing or overriding
+  }
+
+  @Override
+  public void m(Runnable r, IntFunction<String> f) {
+
+  }
+}
