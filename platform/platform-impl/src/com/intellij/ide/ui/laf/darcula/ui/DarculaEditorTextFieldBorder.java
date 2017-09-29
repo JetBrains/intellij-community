@@ -19,6 +19,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
+import com.intellij.openapi.ui.ErrorBorderCapable;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -32,15 +33,12 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class DarculaEditorTextFieldBorder implements Border {
-  protected final JComponent editorTextField;
-
+public class DarculaEditorTextFieldBorder implements Border, ErrorBorderCapable {
   public DarculaEditorTextFieldBorder() {
     this(null, null);
   }
 
   public DarculaEditorTextFieldBorder(EditorTextField editorTextField, EditorEx editor) {
-    this.editorTextField = editorTextField;
     if (editorTextField != null && editor != null) {
       editor.addFocusListener(new FocusChangeListener() {
         @Override
@@ -58,15 +56,16 @@ public class DarculaEditorTextFieldBorder implements Border {
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-    if (isComboBoxEditor(c) /*|| isCellEditor(c)*/) {
+    if (isComboBoxEditor(c)) {
       g.setColor(c.getBackground());
       g.fillRect(x, y, width, height);
       return;
     }
-    final EditorTextField textField = UIUtil.getParentOfType(EditorTextField.class, c);
-    if (textField == null) return;
 
-    final Rectangle r = new Rectangle(x + 1, y + 1, width - 2, height - 2);
+    EditorTextField editorTextField = UIUtil.getParentOfType(EditorTextField.class, c);
+    if (editorTextField == null) return;
+
+    Rectangle r = new Rectangle(x + 1, y + 1, width - 2, height - 2);
 
     if (c.isOpaque()) {
       g.setColor(UIUtil.getPanelBackground());
@@ -76,11 +75,15 @@ public class DarculaEditorTextFieldBorder implements Border {
     g.setColor(c.getBackground());
     g.fillRect(r.x, r.y, r.width, r.height);
 
-    if (!textField.isEnabled()) {
+    if (!editorTextField.isEnabled()) {
       ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
     }
 
-    if (textField.isEnabled() && textField.isVisible() && textField.getFocusTarget().hasFocus()) {
+    boolean hasFocus = editorTextField.getFocusTarget().hasFocus();
+    if (editorTextField.getClientProperty("JComponent.error.outline") == Boolean.TRUE) {
+      g.translate(x, y);
+      DarculaUIUtil.paintErrorBorder((Graphics2D)g, width, height, 0, true, hasFocus);
+    } else if (editorTextField.isEnabled() && editorTextField.isVisible() && hasFocus) {
       DarculaUIUtil.paintFocusRing(g, new Rectangle(r.x + 1, r.y + 1, r.width - 2, r.height - 2));
     } else {
       g.setColor(new JBColor(Gray._150, Gray._100));
@@ -90,7 +93,7 @@ public class DarculaEditorTextFieldBorder implements Border {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    if (isComboBoxEditor(c) /*|| isCellEditor(c)*/) {
+    if (isComboBoxEditor(c)) {
       return new InsetsUIResource(2, 3, 2, 3);
     }
     return new InsetsUIResource(4, 7, 4, 7);
@@ -104,8 +107,4 @@ public class DarculaEditorTextFieldBorder implements Border {
   public static boolean isComboBoxEditor(Component c) {
     return UIUtil.getParentOfType(JComboBox.class, c) != null;
   }
-
-  //public static boolean isCellEditor(Component c) {
-  //  return UIUtil.getParentOfType(JTable.class, c) != null;
-  //}
 }

@@ -39,8 +39,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
-import java.util.Arrays;
-import java.util.List;
 
 import static com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI.isSearchFieldWithHistoryPopup;
 import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.HOVER_PROPERTY;
@@ -222,9 +220,8 @@ public class DarculaUIUtil {
         return;
       }
 
-      if (UIUtil.getParentOfType(EditorTextField.class, c) == null) {
-        return;
-      }
+      EditorTextField editorTextField = UIUtil.getParentOfType(EditorTextField.class, c);
+      if (editorTextField == null) return;
 
       Graphics2D g2 = (Graphics2D)g.create();
       try {
@@ -233,7 +230,7 @@ public class DarculaUIUtil {
           g2.fillRect(x, y, width, height);
         }
 
-        Rectangle2D rect = new Rectangle2D.Double(x + JBUI.scale(3), y + JBUI.scale(3), width - JBUI.scale(6), height - JBUI.scale(6));
+        Rectangle2D rect = new Rectangle2D.Double(x + JBUI.scale(3), y + JBUI.scale(3), width - JBUI.scale(3)*2, height - JBUI.scale(3)*2);
         g2.setColor(c.getBackground());
         g2.fill(rect);
 
@@ -251,8 +248,12 @@ public class DarculaUIUtil {
         g2.setColor(Gray.xBC);
         g2.fill(outline);
 
-        if (editorTextField.isEnabled() && editorTextField.isVisible() && hasFocus(editorTextField)) {
-          g2.translate(x, y);
+        g2.translate(x, y);
+
+        boolean hasFocus = editorTextField.getFocusTarget().hasFocus();
+        if (editorTextField.getClientProperty("JComponent.error.outline") == Boolean.TRUE) {
+          paintErrorBorder(g2, width, height, 0, true, hasFocus);
+        } else if (editorTextField.isEnabled() && editorTextField.isVisible() && hasFocus) {
           paintFocusBorder(g2, width, height, 0, true);
         }
       } finally {
@@ -267,24 +268,18 @@ public class DarculaUIUtil {
   }
 
   public static class WinEditorTextFieldBorder extends DarculaEditorTextFieldBorder {
-    private final JComponent editorComponent;
-
     public WinEditorTextFieldBorder(EditorTextField editorTextField, EditorEx editor) {
       super(editorTextField, editor);
-      editorComponent = editor.getComponent();
-
       editor.addEditorMouseListener(new EditorMouseAdapter() {
         @Override
         public void mouseEntered(EditorMouseEvent e) {
-          JComponent c = e.getEditor().getComponent();
-          c.putClientProperty(HOVER_PROPERTY, Boolean.TRUE);
+          editorTextField.putClientProperty(HOVER_PROPERTY, Boolean.TRUE);
           editorTextField.repaint();
         }
 
         @Override
         public void mouseExited(EditorMouseEvent e) {
-          JComponent c = e.getEditor().getComponent();
-          c.putClientProperty(HOVER_PROPERTY, Boolean.FALSE);
+          editorTextField.putClientProperty(HOVER_PROPERTY, Boolean.FALSE);
           editorTextField.repaint();
         }
       });
@@ -298,9 +293,8 @@ public class DarculaUIUtil {
         return;
       }
 
-      if (UIUtil.getParentOfType(EditorTextField.class, c) == null) {
-        return;
-      }
+      EditorTextField editorTextField = UIUtil.getParentOfType(EditorTextField.class, c);
+      if (editorTextField == null) return;
 
       Graphics2D g2 = (Graphics2D)g.create();
       try {
@@ -327,26 +321,33 @@ public class DarculaUIUtil {
         }
 
         // draw border itself
-        if (hasFocus(editorTextField)) {
-          g2.setColor(UIManager.getColor("TextField.focusedBorderColor"));
-        } else if (editorTextField.isEnabled() &&
-                   editorComponent != null && editorComponent.getClientProperty(HOVER_PROPERTY) == Boolean.TRUE) {
-          g2.setColor(UIManager.getColor("TextField.hoverBorderColor"));
+        boolean hasFocus = editorTextField.getFocusTarget().hasFocus();
+        int bw = 1;
+
+        if (editorTextField.getClientProperty("JComponent.error.outline") == Boolean.TRUE) {
+          g2.setColor(hasFocus ? ACTIVE_ERROR_COLOR : INACTIVE_ERROR_COLOR);
+          bw = 2;
         } else {
-          g2.setColor(UIManager.getColor("TextField.borderColor"));
+          if (hasFocus) {
+            g2.setColor(UIManager.getColor("TextField.focusedBorderColor"));
+          } else if (editorTextField.isEnabled() &&
+                     editorTextField.getClientProperty(HOVER_PROPERTY) == Boolean.TRUE) {
+            g2.setColor(UIManager.getColor("TextField.hoverBorderColor"));
+          } else {
+            g2.setColor(UIManager.getColor("TextField.borderColor"));
+          }
+          JBInsets.removeFrom(r, JBUI.insets(1));
         }
 
         if (!editorTextField.isEnabled()) {
           g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.47f));
         }
 
-
         Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
-        JBInsets.removeFrom(r, JBUI.insets(1));
         border.append(r, false);
 
         Rectangle innerRect = new Rectangle(r);
-        JBInsets.removeFrom(innerRect, JBUI.insets(1));
+        JBInsets.removeFrom(innerRect, JBUI.insets(bw));
         border.append(innerRect, false);
 
         g2.fill(border);
@@ -363,24 +364,6 @@ public class DarculaUIUtil {
         return isComboBoxEditor(c) ? JBUI.insets(1, 6).asUIResource() : JBUI.insets(4, 6).asUIResource();
       }
     }
-  }
-
-  private static boolean hasFocus(@NotNull Component component) {
-    if (component.hasFocus()) return true;
-    if (!(component instanceof JComponent)) return false;
-
-    List<Component> children;
-    synchronized (component.getTreeLock()) {
-      children = Arrays.asList(((Container)component).getComponents());
-    }
-
-    for (Component c : children) {
-      if (hasFocus(c)) {
-        return true;
-      }
-    }
-
-    return false;
   }
 
   public static class MouseHoverPropertyTrigger extends MouseAdapter {
