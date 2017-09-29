@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.rt.debugger.agent;
 
 import org.jetbrains.org.objectweb.asm.*;
@@ -52,12 +50,13 @@ public class CaptureAgent {
     addInsertPoint("java/util/concurrent/CompletableFuture$AsyncRun", "run",
                    new FieldKeyProvider("java/util/concurrent/CompletableFuture$AsyncRun", "fn", "Ljava/lang/Runnable;"));
 
-    //addCapturePoint("java/util/concurrent/CompletableFuture", "thenAcceptAsync", new ParamKeyProvider(1));
+    addCapturePoint("java/util/concurrent/CompletableFuture", "thenAcceptAsync", new ParamKeyProvider(1));
+    addInsertPoint("java/util/concurrent/CompletableFuture", "uniAccept", new ParamKeyProvider(2));
     //addInsertPoint("java/util/concurrent/CompletableFuture$UniAccept", "tryFire",
     //               new FieldKeyProvider("java/util/concurrent/CompletableFuture$UniAccept", "fn", "Ljava/util/function/Consumer;"));
-    //
-    //addCapturePoint("java/util/concurrent/CompletableFuture", "thenRunAsync", new ParamKeyProvider(1));
-    //addInsertPoint("java/util/concurrent/CompletableFuture", "uniRun", new ParamKeyProvider(2));
+
+    addCapturePoint("java/util/concurrent/CompletableFuture", "thenRunAsync", new ParamKeyProvider(1));
+    addInsertPoint("java/util/concurrent/CompletableFuture", "uniRun", new ParamKeyProvider(2));
   }
 
   public static void premain(String args, Instrumentation instrumentation) throws IOException {
@@ -165,7 +164,8 @@ public class CaptureAgent {
         for (InsertPoint insertPoint : myInsertPoints) {
           if (insertPoint.myMethodName.equals(name)) {
             MethodVisitor mv = super.visitMethod(access, getNewName(name), desc, signature, exceptions);
-            myOriginalMethodsGenerators.add(() -> generateTryFinally(super.visitMethod(access, name, desc, signature, exceptions), insertPoint, desc));
+            myOriginalMethodsGenerators.add(
+              () -> generateTryFinally(super.visitMethod(access, name, desc, signature, exceptions), insertPoint, access, desc));
             if (DEBUG) {
               System.out.println("Capture agent: instrumented insert point at " + insertPoint.myClassName + "." +
                       name + desc);
@@ -182,14 +182,21 @@ public class CaptureAgent {
       myOriginalMethodsGenerators.forEach(Runnable::run);
     }
 
-    private static void generateTryFinally(MethodVisitor mv, InsertPoint insertPoint, String desc) {
+    private static void generateTryFinally(MethodVisitor mv, InsertPoint insertPoint, int access, String desc) {
       Label start = new Label();
       mv.visitLabel(start);
 
       insertEnter(mv, insertPoint);
 
+      // this
       mv.visitVarInsn(Opcodes.ALOAD, 0);
-      // TODO: mv.loadArgs();
+      // params
+      int index = (access & Opcodes.ACC_STATIC) == 0 ? 1 : 0;
+      for (Type t : Type.getMethodType(desc).getArgumentTypes()) {
+        mv.visitVarInsn(t.getOpcode(Opcodes.ILOAD), index);
+        index += t.getSize();
+      }
+      // original call
       mv.visitMethodInsn(Opcodes.INVOKESPECIAL, insertPoint.myClassName, getNewName(insertPoint.myMethodName), desc, false);
 
       Label end = new Label();
@@ -197,7 +204,7 @@ public class CaptureAgent {
 
       // regular exit
       insertExit(mv, insertPoint);
-      mv.visitInsn(Opcodes.RETURN);
+      mv.visitInsn(Type.getReturnType(desc).getOpcode(Opcodes.IRETURN));
 
       Label catchLabel = new Label();
       mv.visitLabel(catchLabel);
@@ -346,7 +353,7 @@ public class CaptureAgent {
 
     @Override
     public void loadKey(MethodVisitor mv) {
-      mv.visitVarInsn(Opcodes.ALOAD, 0);
+      mv.visitVarInsn(Opcodes.ALOAD, mySlot);
     }
   }
 }
