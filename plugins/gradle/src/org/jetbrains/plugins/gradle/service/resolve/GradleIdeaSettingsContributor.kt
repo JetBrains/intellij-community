@@ -12,10 +12,15 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import groovy.lang.Closure
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
+import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyClosure
+import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DELEGATES_TO_KEY
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DELEGATES_TO_STRATEGY_KEY
+import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
 
 /**
  * Created by Nikita.Skvortsov
@@ -25,6 +30,13 @@ class GradleIdeaSettingsContributor: GradleMethodContextContributor {
   companion object {
     val projectSettingsFQN = "org.jetbrains.gradle.ext.ProjectSettings"
     val moduleSettingsFQN = "org.jetbrains.gradle.ext.ModuleSettings"
+
+    val compilerSettingsClosure = groovyClosure().inMethod(psiMethod(projectSettingsFQN, "compiler"))
+  }
+
+  override fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? = when {
+      compilerSettingsClosure.accepts(closure) -> DelegatesToInfo(TypesUtil.createType("org.jetbrains.gradle.ext.IdeaCompilerConfiguration", closure), Closure.DELEGATE_FIRST)
+      else -> null
   }
 
   override fun process(methodCallInfo: MutableList<String>, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
