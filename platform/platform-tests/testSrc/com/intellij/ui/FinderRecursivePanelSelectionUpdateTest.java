@@ -32,20 +32,15 @@ public class FinderRecursivePanelSelectionUpdateTest extends LightPlatformTestCa
   public void testUpdate() {
     StringFinderRecursivePanel panel_0 = new StringFinderRecursivePanel(getProject());
     disposeOnTearDown(panel_0);
-
-    final StringFinderRecursivePanel panel_1 = new StringFinderRecursivePanel(panel_0);
-    panel_1.setSecondComponent(panel_0);
     panel_0.setTestSelectedIndex(0);
 
-    final StringFinderRecursivePanel panel_2 = new StringFinderRecursivePanel(panel_1);
-    panel_1.setSecondComponent(panel_2);
+    final StringFinderRecursivePanel panel_1 = new StringFinderRecursivePanel(panel_0);
     panel_1.setTestSelectedIndex(1);
 
-    final StringFinderRecursivePanel panel_3 = new StringFinderRecursivePanel(panel_2);
-    panel_2.setSecondComponent(panel_3);
+    final StringFinderRecursivePanel panel_2 = new StringFinderRecursivePanel(panel_1);
     panel_2.setTestSelectedIndex(2);
 
-    panel_3.setSecondComponent(new StringFinderRecursivePanel(panel_3));
+    final StringFinderRecursivePanel panel_3 = new StringFinderRecursivePanel(panel_2);
     panel_3.setTestSelectedIndex(3);
 
     panel_0.updatePanel();
