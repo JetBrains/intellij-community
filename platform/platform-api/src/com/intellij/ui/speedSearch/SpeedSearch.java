@@ -62,10 +62,10 @@ public class SpeedSearch extends SpeedSearchSupply {
   }
 
   public void process(KeyEvent e) {
-    String old = myString;
-
     if (e.isConsumed()) return;
+    if (e.getID() != KeyEvent.KEY_TYPED) return;
 
+    String old = myString;
     if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
       backspace();
       e.consume();
@@ -77,7 +77,7 @@ public class SpeedSearch extends SpeedSearchSupply {
       }
     }
     else {
-      final char ch = e.getKeyChar();
+      char ch = e.getKeyChar();
       if (Character.isLetterOrDigit(ch) || ALLOWED_SPECIAL_SYMBOLS.indexOf(ch) != -1) {
         type(Character.toString(ch));
         e.consume();

@@ -47,7 +47,9 @@ public abstract class MnemonicsSearch<T> {
   }
 
   public void process(KeyEvent e) {
-    if (e.isConsumed() || !StringUtil.isEmptyOrSpaces(myPopup.getSpeedSearch().getFilter())) return;
+    if (e.isConsumed()) return;
+    if (e.getID() != KeyEvent.KEY_TYPED) return;
+    if (!StringUtil.isEmptyOrSpaces(myPopup.getSpeedSearch().getFilter())) return;
 
     if (Character.isLetterOrDigit(e.getKeyChar())) {
       final String s = Character.toString(e.getKeyChar());

@@ -89,9 +89,6 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
 
     myList.addKeyListener(new KeyAdapter() {
       public void keyPressed(final KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_A && (e.isControlDown() || e.isMetaDown())) {
-          return;
-        }
         mySpeedSearch.process(e);
       }
     });
