@@ -19,13 +19,11 @@ import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.psi.PsiMethod;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,10 +31,7 @@ import org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupVirtualFile;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.ListIterator;
+import java.util.*;
 
 public class TestDataNavigationHandler implements GutterIconNavigationHandler<PsiMethod> {
   @Override
@@ -119,56 +114,37 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
 
   private static List<TestDataNavigationElement> getElementsToDisplay(Project project, List<String> filePaths) {
     ContainerUtil.removeDuplicates(filePaths);
-
-    filePaths.sort(new Comparator<String>() {
-      @Override
-      public int compare(String path1, String path2) {
-        String name1 = stripBeforeAfterFromFileName(PathUtil.getFileName(path1));
-        String name2 = stripBeforeAfterFromFileName(PathUtil.getFileName(path2));
-        return name1.compareToIgnoreCase(name2);
-      }
-
-      private String stripBeforeAfterFromFileName(String name) {
-        String result = StringUtil.trimStart(name, TestDataUtil.TESTDATA_FILE_BEFORE_PREFIX);
-        result = StringUtil.trimStart(result, TestDataUtil.TESTDATA_FILE_AFTER_PREFIX);
-
-        String extension = PathUtil.getFileExtension(result);
-        if (extension != null) {
-          extension = "." + extension;
-          if (result.endsWith(TestDataUtil.TESTDATA_FILE_AFTER_SUFFIX + extension)) {
-            result = StringUtil.substringBeforeLast(result, TestDataUtil.TESTDATA_FILE_AFTER_SUFFIX + extension) + extension;
-          }
-          else if (result.endsWith(TestDataUtil.TESTDATA_FILE_BEFORE_SUFFIX + extension)) {
-            result = StringUtil.substringBeforeLast(result, TestDataUtil.TESTDATA_FILE_BEFORE_SUFFIX + extension) + extension;
-          }
-        }
-        else {
-          result = StringUtil.trimEnd(result, TestDataUtil.TESTDATA_FILE_AFTER_SUFFIX);
-          result = StringUtil.trimEnd(result, TestDataUtil.TESTDATA_FILE_BEFORE_SUFFIX);
-        }
-
-        return result;
-      }
-    });
+    Collections.sort(filePaths, String.CASE_INSENSITIVE_ORDER);
 
     List<TestDataNavigationElement> result = new ArrayList<>();
-    for (ListIterator<String> iterator = filePaths.listIterator(); iterator.hasNext(); ) {
-      String path = iterator.next();
-
-      // check if there's a testdata group
-      if (iterator.hasNext()) {
-        String nextPath = iterator.next();
-        TestDataGroupVirtualFile group = TestDataUtil.getTestDataGroup(path, nextPath);
-        if (group != null) {
-          result.add(TestDataNavigationElementFactory.createForGroup(project, group));
-          continue;
-        }
-        else {
-          iterator.previous();
-        }
+    Set<String> usedPaths = new HashSet<>();
+    for (String path1 : filePaths) {
+      if (usedPaths.contains(path1)) {
+        continue;
       }
 
-      result.add(TestDataNavigationElementFactory.createForFile(project, path));
+      boolean groupFound = false;
+      for (String path2 : filePaths) {
+        if (usedPaths.contains(path2) || path2.equals(path1)) {
+          continue;
+        }
+
+        TestDataGroupVirtualFile group = TestDataUtil.getTestDataGroup(path1, path2);
+        if (group == null) {
+          continue;
+        }
+
+        groupFound = true;
+        result.add(TestDataNavigationElementFactory.createForGroup(project, group));
+        usedPaths.add(path1);
+        usedPaths.add(path2);
+        break;
+      }
+
+      if (!groupFound) {
+        result.add(TestDataNavigationElementFactory.createForFile(project, path1));
+        usedPaths.add(path1);
+      }
     }
 
     return result;

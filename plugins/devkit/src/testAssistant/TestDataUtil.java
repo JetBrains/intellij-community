@@ -42,11 +42,8 @@ import java.io.IOException;
 import java.util.List;
 
 class TestDataUtil {
-  public static final String TESTDATA_FILE_BEFORE_PREFIX = "before";
-  public static final String TESTDATA_FILE_AFTER_PREFIX = "after";
-  // Note: these suffixes are used BEFORE the file extension
-  public static final String TESTDATA_FILE_BEFORE_SUFFIX = "_before";
-  public static final String TESTDATA_FILE_AFTER_SUFFIX = "_after";
+  public static final String TESTDATA_FILE_BEFORE_MARKER = "before";
+  public static final String TESTDATA_FILE_AFTER_MARKER = "after";
 
   private TestDataUtil() {
   }
@@ -80,10 +77,10 @@ class TestDataUtil {
       }
     }
 
-    if (isAfterSuffixed(file1Name, commonPrefixLength)) {
+    if (isAfterSuffixed(file1Name, file2Name, commonPrefixLength)) {
       return new TestDataGroupVirtualFile(file2, file1);
     }
-    if (isAfterSuffixed(file2Name, commonPrefixLength)) {
+    if (isAfterSuffixed(file2Name, file1Name, commonPrefixLength)) {
       return new TestDataGroupVirtualFile(file1, file2);
     }
 
@@ -92,13 +89,26 @@ class TestDataUtil {
 
   private static boolean isBeforeAfterPrefixedPair(@NonNls String name1, @NonNls String name2) {
     //noinspection ConstantConditions - no NPE
-    return name1.toLowerCase().startsWith(TESTDATA_FILE_BEFORE_PREFIX) && name2.startsWith(TESTDATA_FILE_AFTER_PREFIX)
-           && StringUtil.substringAfter(name1, TESTDATA_FILE_BEFORE_PREFIX)
-             .equals(StringUtil.substringAfter(name2, TESTDATA_FILE_AFTER_PREFIX));
+    return name1.toLowerCase().startsWith(TESTDATA_FILE_BEFORE_MARKER) && name2.startsWith(TESTDATA_FILE_AFTER_MARKER)
+           && StringUtil.substringAfter(name1, TESTDATA_FILE_BEFORE_MARKER)
+             .equals(StringUtil.substringAfter(name2, TESTDATA_FILE_AFTER_MARKER));
   }
 
-  private static boolean isAfterSuffixed(@NonNls String name, int commonPrefixLength) {
-    return name.substring(commonPrefixLength).toLowerCase().contains(TESTDATA_FILE_AFTER_SUFFIX);
+  private static boolean isAfterSuffixed(@NonNls String nameToCheck, @NonNls String secondName, int commonPrefixLength) {
+    String nameToCheckLastPart = nameToCheck.substring(commonPrefixLength).toLowerCase();
+    if (!nameToCheckLastPart.contains(TESTDATA_FILE_AFTER_MARKER)) {
+      return false;
+    }
+
+    String nameToCheckWithoutAfter = nameToCheckLastPart.replace(TESTDATA_FILE_AFTER_MARKER, "");
+    String nameToCheckExt = StringUtil.substringAfterLast(nameToCheckWithoutAfter, ".");
+    String nameToCheckWithoutAfterAndExt = StringUtil.substringBeforeLast(nameToCheckWithoutAfter, ".");
+
+    String secondNameLastPart = secondName.substring(commonPrefixLength).toLowerCase();
+    String secondNameWithoutAfterAndExt = nameToCheckExt == null ? secondNameLastPart : secondNameLastPart.replace(nameToCheckExt, "");
+
+    return !StringUtil.containsAlphaCharacters(nameToCheckWithoutAfterAndExt) &&
+           !StringUtil.containsAlphaCharacters(secondNameWithoutAfterAndExt);
   }
 
   static VirtualFile createFileByName(final Project project, final String path) {
