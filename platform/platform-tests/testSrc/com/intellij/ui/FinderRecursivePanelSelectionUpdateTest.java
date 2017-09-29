@@ -68,6 +68,36 @@ public class FinderRecursivePanelSelectionUpdateTest extends LightPlatformTestCa
     assertEquals("c", panel_2.getSelectedValue());
   }
 
+  public void testUpdateSelectedPathFailsNoRightComponent() {
+    StringFinderRecursivePanel panel_0 = new StringFinderRecursivePanel(getProject());
+    disposeOnTearDown(panel_0);
+
+    try {
+      panel_0.updateSelectedPath("a", "b");
+      fail();
+    }
+    catch (Exception e) {
+      final IllegalStateException exception = assertInstanceOf(e, IllegalStateException.class);
+      assertEquals("failed to select idx=1: component=null, pathToSelect=[a, b]", exception.getMessage());
+    }
+  }
+
+  public void testUpdateSelectedPathFailsNoFinderRecursivePanelRightComponent() {
+    StringFinderRecursivePanel panel_0 = new StringFinderRecursivePanel(getProject());
+    disposeOnTearDown(panel_0);
+    final JLabel placeholder = new JLabel("placeholder");
+    panel_0.setRightComponent(placeholder);
+
+    try {
+      panel_0.updateSelectedPath("a", "b");
+      fail();
+    }
+    catch (Exception e) {
+      final IllegalStateException exception = assertInstanceOf(e, IllegalStateException.class);
+      assertEquals("failed to select idx=1: component=" + placeholder.toString() + ", pathToSelect=[a, b]", exception.getMessage());
+    }
+  }
+
   @SuppressWarnings("InnerClassMayBeStatic")
   private class StringFinderRecursivePanel extends FinderRecursivePanel<String> {
 
