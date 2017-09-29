@@ -289,7 +289,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
     reportAlwaysFailingCalls(holder, visitor, reportedAnchors);
 
-    reportConstantPushes(runner, holder, visitor, reportedAnchors);
+    reportConstantPushes(runner, holder, reportedAnchors);
 
     reportNullableFunctions(visitor, holder, reportedAnchors);
     reportNullableArguments(visitor, holder, reportedAnchors);
@@ -306,7 +306,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
     visitor.getBooleanCalls().forEach((call, state) -> {
       if (state != ThreeState.UNSURE && reportedAnchors.add(call)) {
-        reportConstantCondition(holder, visitor, call, state.toBoolean());
+        reportConstantCondition(holder, call, state.toBoolean());
       }
     });
 
@@ -417,17 +417,14 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     return call;
   }
 
-  private void reportConstantPushes(StandardDataFlowRunner runner,
-                                    ProblemsHolder holder,
-                                    DataFlowInstructionVisitor visitor,
-                                    Set<PsiElement> reportedAnchors) {
+  private void reportConstantPushes(StandardDataFlowRunner runner, ProblemsHolder holder, Set<PsiElement> reportedAnchors) {
     for (Instruction instruction : runner.getInstructions()) {
       if (instruction instanceof PushInstruction) {
         PsiExpression place = ((PushInstruction)instruction).getPlace();
         DfaValue value = ((PushInstruction)instruction).getValue();
         Object constant = value instanceof DfaConstValue ? ((DfaConstValue)value).getValue() : null;
         if (place instanceof PsiPolyadicExpression && constant instanceof Boolean && !isFlagCheck(place) && reportedAnchors.add(place)) {
-          reportConstantCondition(holder, visitor, place, (Boolean)constant);
+          reportConstantCondition(holder, place, (Boolean)constant);
         }
       }
     }
@@ -560,10 +557,10 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       }
       else {
         final LocalQuickFix localQuickFix = createSimplifyBooleanExpressionFix(psiAnchor, true);
-        holder.registerProblem(psiAnchor,
-                               InspectionsBundle.message(isAtRHSOfBooleanAnd(psiAnchor)
-                                                         ? "dataflow.message.constant.condition.when.reached" : "dataflow.message.constant.condition", Boolean.toString(true)),
-                               localQuickFix == null ? null : new LocalQuickFix[]{localQuickFix});
+        String message = InspectionsBundle.message(isAtRHSOfBooleanAnd(psiAnchor)
+                                                   ? "dataflow.message.constant.condition.when.reached"
+                                                   : "dataflow.message.constant.condition", Boolean.toString(true));
+        holder.registerProblem(psiAnchor, message, localQuickFix);
       }
     }
     else if (psiAnchor instanceof PsiSwitchLabelStatement) {
@@ -583,35 +580,30 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         );
       }
       else {
-        reportConstantCondition(holder, visitor, psiAnchor, evaluatesToTrue);
+        reportConstantCondition(holder, psiAnchor, evaluatesToTrue);
       }
       reportedAnchors.add(psiAnchor);
     }
   }
 
-  private void reportConstantCondition(ProblemsHolder holder,
-                                       StandardInstructionVisitor visitor,
-                                       PsiElement psiAnchor,
-                                       boolean evaluatesToTrue) {
-    if (!skipReportingConstantCondition(visitor, psiAnchor, evaluatesToTrue)) {
-      if (psiAnchor.getParent() instanceof PsiForeachStatement) {
-        // highlighted for-each iterated value means evaluatesToTrue == "collection is always empty"
-        if (!evaluatesToTrue) {
-          // loop on always non-empty collection -- nothing to report
-          return;
-        }
-        boolean array = psiAnchor instanceof PsiExpression && ((PsiExpression)psiAnchor).getType() instanceof PsiArrayType;
-        holder.registerProblem(psiAnchor, array ?
-                                          InspectionsBundle.message("dataflow.message.loop.on.empty.array") :
-                                          InspectionsBundle.message("dataflow.message.loop.on.empty.collection"));
+  private void reportConstantCondition(ProblemsHolder holder, PsiElement psiAnchor, boolean evaluatesToTrue) {
+    if (psiAnchor.getParent() instanceof PsiForeachStatement) {
+      // highlighted for-each iterated value means evaluatesToTrue == "collection is always empty"
+      if (!evaluatesToTrue) {
+        // loop on always non-empty collection -- nothing to report
+        return;
       }
-      else {
-        final LocalQuickFix fix = createSimplifyBooleanExpressionFix(psiAnchor, evaluatesToTrue);
-        String message = InspectionsBundle.message(isAtRHSOfBooleanAnd(psiAnchor) ?
-                                                   "dataflow.message.constant.condition.when.reached" :
-                                                   "dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
-        holder.registerProblem(psiAnchor, message, fix == null ? null : new LocalQuickFix[]{fix});
-      }
+      boolean array = psiAnchor instanceof PsiExpression && ((PsiExpression)psiAnchor).getType() instanceof PsiArrayType;
+      holder.registerProblem(psiAnchor, array ?
+                                        InspectionsBundle.message("dataflow.message.loop.on.empty.array") :
+                                        InspectionsBundle.message("dataflow.message.loop.on.empty.collection"));
+    }
+    else if (!skipReportingConstantCondition(psiAnchor, evaluatesToTrue)) {
+      final LocalQuickFix fix = createSimplifyBooleanExpressionFix(psiAnchor, evaluatesToTrue);
+      String message = InspectionsBundle.message(isAtRHSOfBooleanAnd(psiAnchor) ?
+                                                 "dataflow.message.constant.condition.when.reached" :
+                                                 "dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
+      holder.registerProblem(psiAnchor, message, fix);
     }
   }
 
@@ -619,7 +611,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     return LocalQuickFix.EMPTY_ARRAY;
   }
 
-  private boolean skipReportingConstantCondition(StandardInstructionVisitor visitor, PsiElement psiAnchor, boolean evaluatesToTrue) {
+  private boolean skipReportingConstantCondition(PsiElement psiAnchor, boolean evaluatesToTrue) {
     return DONT_REPORT_TRUE_ASSERT_STATEMENTS && isAssertionEffectively(psiAnchor, evaluatesToTrue);
   }
 
