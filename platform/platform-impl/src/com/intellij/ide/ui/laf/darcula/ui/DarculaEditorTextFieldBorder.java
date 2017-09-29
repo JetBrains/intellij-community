@@ -80,9 +80,11 @@ public class DarculaEditorTextFieldBorder implements Border, ErrorBorderCapable 
     }
 
     boolean hasFocus = editorTextField.getFocusTarget().hasFocus();
-    if (editorTextField.getClientProperty("JComponent.error.outline") == Boolean.TRUE) {
+    Object op = editorTextField.getClientProperty("JComponent.outline");
+    if (op != null) {
       g.translate(x, y);
-      DarculaUIUtil.paintErrorBorder((Graphics2D)g, width, height, 0, true, hasFocus);
+      DarculaUIUtil.paintOutlineBorder((Graphics2D)g, width, height, 0, true, hasFocus,
+                                       DarculaUIUtil.Outline.valueOf(op.toString()));
     } else if (editorTextField.isEnabled() && editorTextField.isVisible() && hasFocus) {
       DarculaUIUtil.paintFocusRing(g, new Rectangle(r.x + 1, r.y + 1, r.width - 2, r.height - 2));
     } else {

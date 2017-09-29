@@ -37,13 +37,12 @@ import javax.swing.plaf.basic.BasicComboPopup;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.geom.Path2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.ACTIVE_ERROR_COLOR;
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.INACTIVE_ERROR_COLOR;
 
 /**
  * @author Konstantin Bulenkov
@@ -388,8 +387,9 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
       Rectangle innerRect = new Rectangle(outerRect);
       JBInsets.removeFrom(innerRect, JBUI.insets(2));
 
-      if (comboBox.getClientProperty("JComponent.error.outline") == Boolean.TRUE) {
-        g2.setColor(hasFocus ? ACTIVE_ERROR_COLOR : INACTIVE_ERROR_COLOR);
+      Object op = comboBox.getClientProperty("JComponent.outline");
+      if (op != null) {
+        DarculaUIUtil.Outline.valueOf(op.toString()).setGraphicsColor(g2, hasFocus);
       } else if (comboBox.isEnabled()) {
         if (comboBox.isEditable()) {
           if (hasFocus) {

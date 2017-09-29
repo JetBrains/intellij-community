@@ -1955,7 +1955,7 @@ public abstract class DialogWrapper {
     List<ValidationInfo> corrected = myInfo.stream().filter((vi) -> !info.contains(vi)).collect(Collectors.toList());
     if (Registry.is("ide.inplace.errors.outline")) {
       corrected.stream().filter(vi -> (vi.component != null && vi.component.getBorder() instanceof ErrorBorderCapable)).
-            forEach(vi -> vi.component.putClientProperty("JComponent.error.outline", false));
+            forEach(vi -> vi.component.putClientProperty("JComponent.outline", null));
     }
 
     if (Registry.is("ide.inplace.errors.balloon")) {
@@ -1982,7 +1982,7 @@ public abstract class DialogWrapper {
 
     if (Registry.is("ide.inplace.errors.outline")) {
       myInfo.stream().filter(vi -> (vi.component != null && vi.component.getBorder() instanceof ErrorBorderCapable)).
-        forEach(vi -> vi.component.putClientProperty("JComponent.error.outline", true));
+        forEach(vi -> vi.component.putClientProperty("JComponent.outline", "error"));
     }
 
     if (Registry.is("ide.inplace.errors.balloon") && !myInfo.isEmpty()) {
