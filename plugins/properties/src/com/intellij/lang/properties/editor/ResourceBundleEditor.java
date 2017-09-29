@@ -18,7 +18,7 @@ package com.intellij.lang.properties.editor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.ide.FileEditorProvider;
+import com.intellij.ide.FileSelectInContext;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
@@ -688,38 +688,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
 
   private Object getData(final String dataId) {
     if (SelectInContext.DATA_KEY.is(dataId)) {
-      return new SelectInContext(){
-        @Override
-        @NotNull
-        public Project getProject() {
-          return myProject;
-        }
-
-        @Override
-        @NotNull
-        public VirtualFile getVirtualFile() {
-          VirtualFile virtualFile = getSelectedPropertiesFile();
-          assert virtualFile != null;
-          return virtualFile;
-        }
-
-        @Override
-        public Object getSelectorInFile() {
-          return getSelectedPropertiesFile();
-        }
-
-        @Override
-        public FileEditorProvider getFileEditorProvider() {
-          final VirtualFile selectedPropertiesFile = getSelectedPropertiesFile();
-          if (selectedPropertiesFile == null) return null;
-          return new FileEditorProvider() {
-            @Override
-            public FileEditor openFileEditor() {
-              return FileEditorManager.getInstance(getProject()).openFile(selectedPropertiesFile, false)[0];
-            }
-          };
-        }
-      };
+      VirtualFile file = getSelectedPropertiesFile();
+      return file == null ? null : new FileSelectInContext(myProject, file, true);
     }
     else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       for (Map.Entry<VirtualFile, EditorEx> entry : myEditors.entrySet()) {

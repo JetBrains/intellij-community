@@ -49,42 +49,17 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 
-public class SelectInContextImpl implements SelectInContext {
-  private final PsiFile myPsiFile;
+public class SelectInContextImpl extends FileSelectInContext {
   private final Object mySelector;
 
   private SelectInContextImpl(@NotNull PsiFile psiFile, @Nullable Object selector) {
-    myPsiFile = psiFile;
-    mySelector = selector;
-  }
-
-  @Override
-  @NotNull
-  public Project getProject() {
-    return myPsiFile.getProject();
-  }
-
-
-  @Override
-  @NotNull
-  public VirtualFile getVirtualFile() {
-    return myPsiFile.getViewProvider().getVirtualFile();
+    super(psiFile.getProject(), psiFile.getViewProvider().getVirtualFile(), true);
+    mySelector = selector != null ? selector : psiFile;
   }
 
   @Override
   public Object getSelectorInFile() {
-    return ObjectUtils.notNull(mySelector, myPsiFile);
-  }
-
-  @Nullable
-  @Override
-  public FileEditorProvider getFileEditorProvider() {
-    return new FileEditorProvider() {
-      @Override
-      public FileEditor openFileEditor() {
-        return ArrayUtil.getFirstElement(FileEditorManager.getInstance(getProject()).openFile(getVirtualFile(), false));
-      }
-    };
+    return mySelector;
   }
 
   @Nullable
@@ -173,7 +148,10 @@ public class SelectInContextImpl implements SelectInContext {
           if (file.getViewProvider() instanceof TemplateLanguageFileViewProvider) {
             return super.getSelectorInFile();
           }
-          Editor editor = ((TextEditor)getFileEditor()).getEditor();
+          Editor editor = getEditor();
+          if (editor == null) {
+            return super.getSelectorInFile();
+          }
           int offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
           PsiElement element = file.findElementAt(offset);
           return element != null ? element : super.getSelectorInFile();

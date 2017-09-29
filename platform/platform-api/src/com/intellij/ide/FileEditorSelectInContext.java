@@ -19,8 +19,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ObjectUtils;
@@ -29,31 +27,14 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author gregsh
+ * @author Sergey Malenkov
  */
-public class FileEditorSelectInContext implements SelectInContext {
-  private final FileEditor myFileEditor;
+public class FileEditorSelectInContext extends FileSelectInContext {
   private final PsiFile myPsiFile;
 
   public FileEditorSelectInContext(@NotNull FileEditor fileEditor, @NotNull PsiFile psiFile) {
-    myFileEditor = fileEditor;
+    super(psiFile.getProject(), psiFile.getViewProvider().getVirtualFile(), () -> fileEditor);
     myPsiFile = psiFile;
-  }
-
-  @NotNull
-  @Override
-  public Project getProject() {
-    return myPsiFile.getProject();
-  }
-
-  @NotNull
-  @Override
-  public VirtualFile getVirtualFile() {
-    return myPsiFile.getViewProvider().getVirtualFile();
-  }
-
-  @NotNull
-  public FileEditor getFileEditor() {
-    return myFileEditor;
   }
 
   @NotNull
@@ -69,8 +50,8 @@ public class FileEditorSelectInContext implements SelectInContext {
 
   @Nullable
   public PsiElement getElementAtCaret(boolean tryInjected) {
-    if (!(myFileEditor instanceof TextEditor)) return null;
-    Editor editor = ((TextEditor)myFileEditor).getEditor();
+    Editor editor = getEditor();
+    if (editor == null) return null;
     int offset = editor.getCaretModel().getOffset();
     if (tryInjected) {
       InjectedLanguageManager manager = InjectedLanguageManager.getInstance(getProject());
@@ -81,13 +62,15 @@ public class FileEditorSelectInContext implements SelectInContext {
   }
 
   @Nullable
-  @Override
-  public FileEditorProvider getFileEditorProvider() {
-    return new FileEditorProvider() {
-      @Override
-      public FileEditor openFileEditor() {
-        return myFileEditor;
+  public Editor getEditor() {
+    FileEditorProvider provider = getFileEditorProvider();
+    if (provider != null) {
+      FileEditor fileEditor = provider.openFileEditor();
+      if (fileEditor instanceof TextEditor) {
+        TextEditor textEditor = (TextEditor)fileEditor;
+        return textEditor.getEditor();
       }
-    };
+    }
+    return null;
   }
 }
