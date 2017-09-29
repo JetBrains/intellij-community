@@ -289,7 +289,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
     reportAlwaysFailingCalls(holder, visitor, reportedAnchors);
 
-    reportConstantPushes(runner, holder, reportedAnchors);
+    reportConstantPushes(runner, holder, reportedAnchors, onTheFly);
 
     reportNullableFunctions(visitor, holder, reportedAnchors);
     reportNullableArguments(visitor, holder, reportedAnchors);
@@ -302,11 +302,11 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
     reportOptionalOfNullableImprovements(holder, reportedAnchors, visitor.getOfNullableCalls());
 
-    reportUncheckedOptionalGet(holder, visitor.getOptionalCalls(), visitor.getOptionalQualifiers());
+    reportUncheckedOptionalGet(holder, visitor.getOptionalCalls(), visitor.getOptionalQualifiers(), onTheFly);
 
     visitor.getBooleanCalls().forEach((call, state) -> {
       if (state != ThreeState.UNSURE && reportedAnchors.add(call)) {
-        reportConstantCondition(holder, call, state.toBoolean());
+        reportConstantCondition(holder, call, state.toBoolean(), onTheFly);
       }
     });
 
@@ -315,11 +315,11 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     reportArrayAccessProblems(holder, visitor);
 
     if (REPORT_CONSTANT_REFERENCE_VALUES) {
-      reportConstantReferenceValues(holder, visitor, reportedAnchors);
+      reportConstantReferenceValues(holder, visitor, reportedAnchors, onTheFly);
     }
 
     if (REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL && visitor.isAlwaysReturnsNotNull(runner.getInstructions())) {
-      reportAlwaysReturnsNotNull(holder, scope);
+      reportAlwaysReturnsNotNull(holder, scope, onTheFly);
     }
   }
 
@@ -346,7 +346,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
   private void reportUncheckedOptionalGet(ProblemsHolder holder,
                                           Map<PsiMethodCallExpression, ThreeState> calls,
-                                          List<PsiExpression> qualifiers) {
+                                          List<PsiExpression> qualifiers, boolean isOnTheFly) {
     if (!REPORT_UNCHECKED_OPTIONALS) return;
     for (Map.Entry<PsiMethodCallExpression, ThreeState> entry : calls.entrySet()) {
       ThreeState state = entry.getValue();
@@ -363,12 +363,15 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         // without deep correspondence analysis
         continue;
       }
+      LocalQuickFix fix = isOnTheFly ? new SetInspectionOptionFix(this, "REPORT_UNCHECKED_OPTIONALS", InspectionsBundle
+        .message("inspection.data.flow.turn.off.unchecked.optional.get.quickfix"), false) : null;
       holder.registerProblem(getElementToHighlight(call),
-                             InspectionsBundle.message("dataflow.message.optional.get.without.is.present", optionalClass.getName()));
+                             InspectionsBundle.message("dataflow.message.optional.get.without.is.present", optionalClass.getName()),
+                             fix);
     }
   }
 
-  private static void reportAlwaysReturnsNotNull(ProblemsHolder holder, PsiElement scope) {
+  private void reportAlwaysReturnsNotNull(ProblemsHolder holder, PsiElement scope, boolean isOnTheFly) {
     if (!(scope.getParent() instanceof PsiMethod)) return;
 
     PsiMethod method = (PsiMethod)scope.getParent();
@@ -381,7 +384,15 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     assert annoName != null;
     String msg = "@" + NullableStuffInspectionBase.getPresentableAnnoName(nullableAnno) +
                  " method '" + method.getName() + "' always returns a non-null value";
-    holder.registerProblem(annoName, msg, new AddNotNullAnnotationFix(method));
+    LocalQuickFix[] fixes = {new AddNotNullAnnotationFix(method)};
+    if (isOnTheFly) {
+      fixes = ArrayUtil.append(fixes, new SetInspectionOptionFix(this, "REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL",
+                                                                 InspectionsBundle
+                                                                   .message(
+                                                                     "inspection.data.flow.turn.off.nullable.returning.notnull.quickfix"),
+                                                                 false));
+    }
+    holder.registerProblem(annoName, msg, fixes);
   }
 
   private static void reportAlwaysFailingCalls(ProblemsHolder holder,
@@ -417,14 +428,17 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     return call;
   }
 
-  private void reportConstantPushes(StandardDataFlowRunner runner, ProblemsHolder holder, Set<PsiElement> reportedAnchors) {
+  private void reportConstantPushes(StandardDataFlowRunner runner,
+                                    ProblemsHolder holder,
+                                    Set<PsiElement> reportedAnchors,
+                                    boolean isOnTheFly) {
     for (Instruction instruction : runner.getInstructions()) {
       if (instruction instanceof PushInstruction) {
         PsiExpression place = ((PushInstruction)instruction).getPlace();
         DfaValue value = ((PushInstruction)instruction).getValue();
         Object constant = value instanceof DfaConstValue ? ((DfaConstValue)value).getValue() : null;
         if (place instanceof PsiPolyadicExpression && constant instanceof Boolean && !isFlagCheck(place) && reportedAnchors.add(place)) {
-          reportConstantCondition(holder, place, (Boolean)constant);
+          reportConstantCondition(holder, place, (Boolean)constant, isOnTheFly);
         }
       }
     }
@@ -451,7 +465,10 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     });
   }
 
-  private static void reportConstantReferenceValues(ProblemsHolder holder, StandardInstructionVisitor visitor, Set<PsiElement> reportedAnchors) {
+  private void reportConstantReferenceValues(ProblemsHolder holder,
+                                             StandardInstructionVisitor visitor,
+                                             Set<PsiElement> reportedAnchors,
+                                             boolean isOnTheFly) {
     for (Pair<PsiReferenceExpression, DfaConstValue> pair : visitor.getConstantReferenceValues()) {
       PsiReferenceExpression ref = pair.first;
       if (ref.getParent() instanceof PsiReferenceExpression || !reportedAnchors.add(ref)) {
@@ -466,8 +483,15 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         continue;
       }
 
-      holder.registerProblem(ref, "Value <code>#ref</code> #loc is always '" + presentableName + "'",
-                             new ReplaceWithConstantValueFix(presentableName, exprText));
+      LocalQuickFix[] fixes = {new ReplaceWithConstantValueFix(presentableName, exprText)};
+      if (isOnTheFly) {
+        fixes = ArrayUtil.append(fixes, new SetInspectionOptionFix(this, "REPORT_CONSTANT_REFERENCE_VALUES",
+                                                                   InspectionsBundle
+                                                                     .message("inspection.data.flow.turn.off.constant.references.quickfix"),
+                                                                   false));
+      }
+
+      holder.registerProblem(ref, "Value <code>#ref</code> #loc is always '" + presentableName + "'", fixes);
     }
   }
 
@@ -580,13 +604,13 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         );
       }
       else {
-        reportConstantCondition(holder, psiAnchor, evaluatesToTrue);
+        reportConstantCondition(holder, psiAnchor, evaluatesToTrue, onTheFly);
       }
       reportedAnchors.add(psiAnchor);
     }
   }
 
-  private void reportConstantCondition(ProblemsHolder holder, PsiElement psiAnchor, boolean evaluatesToTrue) {
+  private void reportConstantCondition(ProblemsHolder holder, PsiElement psiAnchor, boolean evaluatesToTrue, boolean isOnTheFly) {
     if (psiAnchor.getParent() instanceof PsiForeachStatement) {
       // highlighted for-each iterated value means evaluatesToTrue == "collection is always empty"
       if (!evaluatesToTrue) {
@@ -598,21 +622,25 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
                                         InspectionsBundle.message("dataflow.message.loop.on.empty.array") :
                                         InspectionsBundle.message("dataflow.message.loop.on.empty.collection"));
     }
-    else if (!skipReportingConstantCondition(psiAnchor, evaluatesToTrue)) {
-      final LocalQuickFix fix = createSimplifyBooleanExpressionFix(psiAnchor, evaluatesToTrue);
-      String message = InspectionsBundle.message(isAtRHSOfBooleanAnd(psiAnchor) ?
-                                                 "dataflow.message.constant.condition.when.reached" :
-                                                 "dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
-      holder.registerProblem(psiAnchor, message, fix);
+    else {
+      boolean isAssertion = isAssertionEffectively(psiAnchor, evaluatesToTrue);
+      if (!DONT_REPORT_TRUE_ASSERT_STATEMENTS || !isAssertion) {
+        List<LocalQuickFix> fixes = new ArrayList<>();
+        ContainerUtil.addIfNotNull(fixes, createSimplifyBooleanExpressionFix(psiAnchor, evaluatesToTrue));
+        if (isAssertion && isOnTheFly) {
+          fixes.add(new SetInspectionOptionFix(this, "DONT_REPORT_TRUE_ASSERT_STATEMENTS",
+                                               InspectionsBundle.message("inspection.data.flow.turn.off.true.asserts.quickfix"), true));
+        }
+        String message = InspectionsBundle.message(isAtRHSOfBooleanAnd(psiAnchor) ?
+                                                   "dataflow.message.constant.condition.when.reached" :
+                                                   "dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
+        holder.registerProblem(psiAnchor, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+      }
     }
   }
 
   protected LocalQuickFix[] createConditionalAssignmentFixes(boolean evaluatesToTrue, PsiAssignmentExpression parent, final boolean onTheFly) {
     return LocalQuickFix.EMPTY_ARRAY;
-  }
-
-  private boolean skipReportingConstantCondition(PsiElement psiAnchor, boolean evaluatesToTrue) {
-    return DONT_REPORT_TRUE_ASSERT_STATEMENTS && isAssertionEffectively(psiAnchor, evaluatesToTrue);
   }
 
   private static void reportNullableFunctions(DataFlowInstructionVisitor visitor, ProblemsHolder holder, Set<PsiElement> reportedAnchors) {
