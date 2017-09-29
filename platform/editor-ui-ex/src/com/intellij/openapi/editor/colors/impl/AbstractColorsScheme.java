@@ -61,7 +61,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   public static final Color INHERITED_COLOR_MARKER = ColorUtil.marker("INHERITED_COLOR_MARKER");
   public static final Color NULL_COLOR_MARKER = ColorUtil.marker("NULL_COLOR_MARKER");
 
-  private static final int CURR_VERSION = 142;
+  public static final int CURR_VERSION = 142;
 
   // todo: unify with UIUtil.DEF_SYSTEM_FONT_SIZE
   private static final FontSize DEFAULT_FONT_SIZE = FontSize.SMALL;

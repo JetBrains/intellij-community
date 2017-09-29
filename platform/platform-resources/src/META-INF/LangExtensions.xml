@@ -1011,6 +1011,10 @@
       name="Intellij IDEA color scheme (.icls)"
       schemeClass="com.intellij.openapi.editor.colors.EditorColorsScheme"
       implementationClass="com.intellij.application.options.colors.ColorSchemeExporter"/>
+    <schemeExporter
+        name="Color scheme plug-in .jar"
+        schemeClass="com.intellij.openapi.editor.colors.EditorColorsScheme"
+        implementationClass="com.intellij.application.options.colors.pluginExport.ColorSchemePluginExporter"/>
     <schemeImporter
       name="Intellij IDEA code style XML"
       schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
