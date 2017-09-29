@@ -13,11 +13,16 @@ import java.util.concurrent.ConcurrentHashMap;
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class CaptureStorage {
   private static final int MAX_STORED_STACKS = 1000;
-  private static final Map<Object, CapturedStack> STORAGE = new ConcurrentHashMap<>();
-  private static final Deque<Object> HISTORY = new ArrayDeque<>(MAX_STORED_STACKS);
+  private static final Map<Object, CapturedStack> STORAGE = new ConcurrentHashMap<Object, CapturedStack>();
+  private static final Deque HISTORY = new ArrayDeque(MAX_STORED_STACKS);
 
   @SuppressWarnings("SSBasedInspection")
-  private static final ThreadLocal<Deque<InsertMatch>> CURRENT_STACKS = ThreadLocal.withInitial(LinkedList::new);
+  private static final ThreadLocal<Deque<InsertMatch>> CURRENT_STACKS = new ThreadLocal<Deque<InsertMatch>>() {
+    @Override
+    protected Deque<InsertMatch> initialValue() {
+      return new LinkedList<InsertMatch>();
+    }
+  };
   private static final JavaLangAccess ourJavaLangAccess = SharedSecrets.getJavaLangAccess();
 
   private static boolean DEBUG = false;
@@ -106,7 +111,7 @@ public class CaptureStorage {
       else {
         List<StackTraceElement> insertStack = myInsertMatch.myStack.getStackTrace();
         int insertPos = stackTrace.length - myInsertMatch.myDepth + 2;
-        ArrayList<StackTraceElement> res = new ArrayList<>(insertPos + insertStack.size() + 1);
+        ArrayList<StackTraceElement> res = new ArrayList<StackTraceElement>(insertPos + insertStack.size() + 1);
         res.addAll(Arrays.asList(stackTrace).subList(1, insertPos));
         res.add(null);
         res.addAll(insertStack);

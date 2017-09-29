@@ -500,7 +500,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       String version = jdk != null ? JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION) : null;
       if (version != null) {
         JavaSdkVersion sdkVersion = JavaSdkVersion.fromVersionString(version);
-        if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_8)) {
+        if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_6)) {
           File classesRoot = new File(PathUtil.getJarPathForClass(DebuggerManagerImpl.class));
           String agentName = "debugger-agent.jar";
           File agentFile;

@@ -3,13 +3,11 @@ package com.intellij.rt.debugger.agent;
 
 import org.jetbrains.org.objectweb.asm.*;
 
-import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.jar.JarFile;
@@ -24,8 +22,8 @@ public class CaptureAgent {
 
   static final KeyProvider THIS_KEY_PROVIDER = new ParamKeyProvider(0);
 
-  private static Map<String, List<CapturePoint>> myCapturePoints = new HashMap<>();
-  private static Map<String, List<InsertPoint>> myInsertPoints = new HashMap<>();
+  private static Map<String, List<CapturePoint>> myCapturePoints = new HashMap<String, List<CapturePoint>>();
+  private static Map<String, List<InsertPoint>> myInsertPoints = new HashMap<String, List<InsertPoint>>();
 
   static {
     addCapturePoint("javax/swing/SwingUtilities", "invokeLater", new ParamKeyProvider(0));
@@ -100,7 +98,7 @@ public class CaptureAgent {
   }
 
   private static <T> List<T> getNotNull(List<T> list) {
-    return list != null ? list : Collections.emptyList();
+    return list != null ? list : Collections.<T>emptyList();
   }
 
   private static class CaptureTransformer implements ClassFileTransformer {
@@ -128,8 +126,12 @@ public class CaptureAgent {
 
           if (DEBUG) {
             try {
-              Path path = new File("instrumented_" + className.replaceAll("/", "_") + ".class").toPath();
-              Files.write(path, bytes);
+              FileOutputStream stream = new FileOutputStream("instrumented_" + className.replaceAll("/", "_") + ".class");
+              try {
+                stream.write(bytes);
+              } finally {
+                stream.close();
+              }
             }
             catch (IOException e) {
               e.printStackTrace();
@@ -160,7 +162,7 @@ public class CaptureAgent {
     @Override
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
       if ((access & Opcodes.ACC_BRIDGE) == 0) {
-        for (CapturePoint capturePoint : myCapturePoints) {
+        for (final CapturePoint capturePoint : myCapturePoints) {
           if (capturePoint.myMethodName.equals(name)) {
             if (DEBUG) {
               System.out.println("Capture agent: instrumented capture point at " + capturePoint.myClassName + "." + name + desc);
@@ -274,22 +276,22 @@ public class CaptureAgent {
   // to be run from the debugger
   @SuppressWarnings("unused")
   public static void setCapturePoints(Object[][] capturePoints) throws UnmodifiableClassException {
-    Set<String> classNames = new HashSet<>(myCapturePoints.keySet());
+    Set<String> classNames = new HashSet<String>(myCapturePoints.keySet());
 
-    Map<String, List<CapturePoint>> points = new HashMap<>();
+    Map<String, List<CapturePoint>> points = new HashMap<String, List<CapturePoint>>();
     for (Object[] capturePoint : capturePoints) {
       String className = (String)capturePoint[0];
       classNames.add(className);
       List<CapturePoint> currentPoints = points.get(className);
       if (currentPoints == null) {
-        currentPoints = new ArrayList<>();
+        currentPoints = new ArrayList<CapturePoint>();
         points.put(className, currentPoints);
       }
       //currentPoints.add(new CapturePoint(className, (String)capturePoint[1], (int)capturePoint[2]));
     }
     myCapturePoints = points;
 
-    List<Class> classes = new ArrayList<>(capturePoints.length);
+    List<Class> classes = new ArrayList<Class>(capturePoints.length);
     for (String name : classNames) {
       try {
         classes.add(Class.forName(name));
@@ -305,7 +307,7 @@ public class CaptureAgent {
   private static void addCapturePoint(String className, String methodName, KeyProvider keyProvider) {
     List<CapturePoint> points = myCapturePoints.get(className);
     if (points == null) {
-      points = new ArrayList<>();
+      points = new ArrayList<CapturePoint>();
       myCapturePoints.put(className, points);
     }
     points.add(new CapturePoint(className, methodName, keyProvider));
@@ -314,7 +316,7 @@ public class CaptureAgent {
   private static void addInsertPoint(String className, String methodName, KeyProvider keyProvider) {
     List<InsertPoint> points = myInsertPoints.get(className);
     if (points == null) {
-      points = new ArrayList<>();
+      points = new ArrayList<InsertPoint>();
       myInsertPoints.put(className, points);
     }
     points.add(new InsertPoint(className, methodName, keyProvider));
