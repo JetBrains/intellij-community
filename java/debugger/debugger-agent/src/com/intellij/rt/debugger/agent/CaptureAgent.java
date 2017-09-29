@@ -129,7 +129,6 @@ public class CaptureAgent {
   private static class CaptureInstrumentor extends ClassVisitor {
     private final List<CapturePoint> myCapturePoints;
     private final List<InsertPoint> myInsertPoints;
-    List<Runnable> myOriginalMethodsGenerators = new ArrayList<>();
 
     public CaptureInstrumentor(int api, ClassVisitor cv, List<CapturePoint> capturePoints, List<InsertPoint> insertPoints) {
       super(api, cv);
@@ -163,26 +162,26 @@ public class CaptureAgent {
 
         for (InsertPoint insertPoint : myInsertPoints) {
           if (insertPoint.myMethodName.equals(name)) {
-            MethodVisitor mv = super.visitMethod(access, getNewName(name), desc, signature, exceptions);
-            myOriginalMethodsGenerators.add(
-              () -> generateTryFinally(super.visitMethod(access, name, desc, signature, exceptions), insertPoint, access, desc));
             if (DEBUG) {
               System.out.println("Capture agent: instrumented insert point at " + insertPoint.myClassName + "." +
                       name + desc);
             }
-            return mv;
+            generateWrapper(access, name, desc, signature, exceptions, insertPoint);
+            return super.visitMethod(access, getNewName(name), desc, signature, exceptions);
           }
         }
       }
       return super.visitMethod(access, name, desc, signature, exceptions);
     }
 
-    @Override
-    public void visitEnd() {
-      myOriginalMethodsGenerators.forEach(Runnable::run);
-    }
+    private void generateWrapper(int access,
+                                        String name,
+                                        String desc,
+                                        String signature,
+                                        String[] exceptions,
+                                        InsertPoint insertPoint) {
+      MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 
-    private static void generateTryFinally(MethodVisitor mv, InsertPoint insertPoint, int access, String desc) {
       Label start = new Label();
       mv.visitLabel(start);
 
