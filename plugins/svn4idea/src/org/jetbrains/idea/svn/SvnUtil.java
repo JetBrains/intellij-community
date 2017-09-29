@@ -55,7 +55,6 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.LockDialog;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.status.Status;
-import org.jetbrains.idea.svn.svnkit.SvnKitManager;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -542,11 +541,11 @@ public class SvnUtil {
   @Nullable
   public static File getWorkingCopyRootNew(final File file) {
     File current = getParentWithDb(file);
-    if (current == null) return SvnKitManager.getWorkingCopyRoot(file);
+    if (current == null) return null;
 
     WorkingCopyFormat format = getFormat(current);
 
-    return format.isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN) ? current : SvnKitManager.getWorkingCopyRoot(file);
+    return format.isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN) ? current : null;
   }
 
   @Nullable

@@ -17,7 +17,7 @@ package org.jetbrains.idea.svn.svnkit;
 
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnFormatSelector;
+import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnWorkingCopyFormatHolder;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -52,7 +52,7 @@ public class SvnKitAdminAreaFactorySelector implements ISVNAdminAreaFactorySelec
     }
 
     if (result == null) {
-      final WorkingCopyFormat format = SvnFormatSelector.getWorkingCopyFormat(path);
+      final WorkingCopyFormat format = SvnUtil.getFormat(path);
       result = format2Factories(format, factories);
     }
 

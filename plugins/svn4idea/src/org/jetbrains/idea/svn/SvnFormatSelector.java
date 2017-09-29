@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.svnkit.SvnKitManager;
 
 import java.io.File;
 
@@ -26,13 +25,6 @@ public class SvnFormatSelector {
   public static WorkingCopyFormat findRootAndGetFormat(final File path) {
     File root = SvnUtil.getWorkingCopyRootNew(path);
 
-    return root != null ? getWorkingCopyFormat(root) : WorkingCopyFormat.UNKNOWN;
-  }
-
-  @NotNull
-  public static WorkingCopyFormat getWorkingCopyFormat(final File path) {
-    WorkingCopyFormat format = SvnUtil.getFormat(path);
-
-    return WorkingCopyFormat.UNKNOWN.equals(format) ? SvnKitManager.getWorkingCopyFormat(path) : format;
+    return root != null ? SvnUtil.getFormat(root) : WorkingCopyFormat.UNKNOWN;
   }
 }
