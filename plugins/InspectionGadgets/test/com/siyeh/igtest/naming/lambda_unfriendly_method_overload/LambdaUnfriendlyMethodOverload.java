@@ -70,3 +70,7 @@ class Test {
   public <T, V> void test(Iterable<T> list, Consumer<V> consumer) {
   }
 }
+interface AB {
+  void <warning descr="Lambda-unfriendly overload of method 'm()'">m</warning>(Runnable r, Function<String, String> f);
+  void <warning descr="Lambda-unfriendly overload of method 'm()'">m</warning>(Runnable r, IntFunction<String> f);
+}
