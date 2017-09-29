@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author Eugene Zhuravlev
@@ -124,8 +122,11 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
         allClasses().forEach(t -> myAllClassesByName.putValue(t.signature(), t));
       }
       Collection<ReferenceType> res = myAllClassesByName.get(signature);
-      if (res.isEmpty() && !myVirtualMachine.classesByName(s).isEmpty()) {
-        LOG.error("Debugger VM cache does not contain a loaded class " + s);
+      if (res.isEmpty()) {
+        res = myVirtualMachine.classesByName(s);
+        if (!res.isEmpty()) {
+          LOG.error("Debugger VM cache does not contain a loaded class " + s);
+        }
       }
       return (List<ReferenceType>)res;
     }
