@@ -227,9 +227,8 @@ class GitApplyChangesProcess(private val project: Project,
     ApplicationManager.getApplication().invokeAndWait({
       try {
         cleanupBeforeCommit(repository)
-        val changes = commit.changes
         val commitNotCancelled = vcsHelper.commitChanges(
-          changes, changeList, commitMessage,
+          findLocalChanges(commit.changes), changeList, commitMessage,
           object : CommitResultHandler {
             override fun onSuccess(commitMessage1: String) {
               commitSucceeded.set(true)
