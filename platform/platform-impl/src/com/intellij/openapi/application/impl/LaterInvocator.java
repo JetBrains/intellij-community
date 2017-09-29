@@ -38,10 +38,8 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @SuppressWarnings("SSBasedInspection")
@@ -90,7 +88,7 @@ public class LaterInvocator {
 
   private static final Stack<ModalityStateEx> ourModalityStack = new Stack<>((ModalityStateEx)ModalityState.NON_MODAL);
   private static final List<RunnableInfo> ourSkippedItems = new ArrayList<>(); //protected by LOCK
-  private static final LinkedList<RunnableInfo> ourQueue = new LinkedList<>(); //protected by LOCK
+  private static final ArrayDeque<RunnableInfo> ourQueue = new ArrayDeque<>(); //protected by LOCK
   private static final FlushQueue ourFlushQueueRunnable = new FlushQueue();
 
   private static final EventDispatcher<ModalityStateListener> ourModalityStateMulticaster = EventDispatcher.create(ModalityStateListener.class);
@@ -129,11 +127,11 @@ public class LaterInvocator {
   @NotNull
   static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition<?> expired) {
     ActionCallback callback = new ActionCallback();
-    invokeLaterWitCallback(runnable, modalityState, expired, callback);
+    invokeLaterWithCallback(runnable, modalityState, expired, callback);
     return callback;
   }
 
-  static void invokeLaterWitCallback(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition<?> expired, @Nullable ActionCallback callback) {
+  static void invokeLaterWithCallback(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition<?> expired, @Nullable ActionCallback callback) {
     if (expired.value(null)) {
       if (callback != null) {
         callback.setRejected();
@@ -173,7 +171,7 @@ public class LaterInvocator {
         return "InvokeAndWait[" + runnable + "]";
       }
     };
-    invokeLaterWitCallback(runnable1, modalityState, Conditions.FALSE, null);
+    invokeLaterWithCallback(runnable1, modalityState, Conditions.FALSE, null);
     semaphore.waitFor();
     if (!exception.isNull()) {
       Throwable cause = exception.get();
@@ -268,8 +266,12 @@ public class LaterInvocator {
   }
 
   private static void reincludeSkippedItems() {
-    ourQueue.addAll(0, ourSkippedItems);
-    ourSkippedItems.clear();
+    synchronized (LOCK) {
+      for (int i = ourSkippedItems.size() - 1; i >= 0; i--) {
+        ourQueue.addFirst(ourSkippedItems.get(i));
+      }
+      ourSkippedItems.clear();
+    }
   }
 
   public static void leaveModal(@NotNull Object modalEntity) {
@@ -448,17 +450,20 @@ public class LaterInvocator {
 
   public static void purgeExpiredItems() {
     synchronized (LOCK) {
-      boolean removed = false;
-      for (int i = ourQueue.size() - 1; i >= 0; i--) {
-        RunnableInfo info = ourQueue.get(i);
+      reincludeSkippedItems();
+
+      List<RunnableInfo> alive = new ArrayList<>();
+      for (RunnableInfo info : ourQueue) {
         if (info.expired.value(null)) {
-          ourQueue.remove(i);
           info.markDone();
-          removed = true;
+        }
+        else {
+          alive.add(info);
         }
       }
-      if (removed) {
-        reincludeSkippedItems();
+      if (alive.size() < ourQueue.size()) {
+        ourQueue.clear();
+        ourQueue.addAll(alive);
       }
     }
   }

@@ -396,7 +396,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition expired) {
-    LaterInvocator.invokeLaterWitCallback(myTransactionGuard.wrapLaterInvocation(runnable, state), state, expired, null);
+    LaterInvocator.invokeLaterWithCallback(myTransactionGuard.wrapLaterInvocation(runnable, state), state, expired, null);
   }
 
   @Override
