@@ -283,7 +283,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
           return false;
         }
       } else {
-        if (for16move(vcs, src, dst, isUndo)) return false;
+        if (for16move(dst, isUndo)) return false;
       }
 
       if (! isUndo && list != null) {
@@ -377,17 +377,14 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
            srcStatus.is(StatusType.STATUS_UNVERSIONED, StatusType.STATUS_OBSTRUCTED, StatusType.STATUS_MISSING, StatusType.STATUS_EXTERNAL);
   }
 
-  private boolean for16move(SvnVcs vcs, final File src, final File dst, final boolean undo) throws VcsException {
+  private boolean for16move(final File dst, final boolean undo) {
     if (undo) {
       myUndoingMove = true;
       restoreFromUndoStorage(dst);
     }
-    else if (doUsualMove(vcs, src)) return true;
 
     // TODO: Implement svn 1.6 support for command line.
-    // TODO: Remove this and just "return true" when SVNKit is fully removed.
-    vcs.getSvnKitManager().move(src, dst, undo);
-    return false;
+    return true;
   }
 
   private void restoreFromUndoStorage(final File dst) {
