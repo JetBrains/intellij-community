@@ -128,7 +128,7 @@ public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
   }
 
   @Nullable
-  protected String extractJdkVersion(@NotNull Module module) {
+  protected static String extractJdkVersion(@NotNull Module module) {
     String jdkVersion = null;
     Optional<Sdk> sdk = Optional.ofNullable(ModuleRootManager.getInstance(module).getSdk());
 
