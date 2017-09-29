@@ -57,6 +57,8 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
   public static final String[] LANGUAGE =
     {"JavaScript", "VBScript", "JScript", "JavaScript1.2", "JavaScript1.3", "JavaScript1.4", "JavaScript1.5"};
   public static final String[] TYPE = {"text/css", "text/html", "text/plain", "text/xml"};
+  public static final String[] SANDBOX = {"allow-forms", "allow-pointer-lock", "allow-popups", "allow-same-origin",
+    "allow-scripts", "allow-top-navigation"};
 
   public HtmlCompletionContributor() {
     extend(CompletionType.BASIC, psiElement().inside(XmlPatterns.xmlAttributeValue()), new CompletionProvider<CompletionParameters>() {
@@ -116,6 +118,9 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
       }
       else if ("language".equals(name)) {
         return LANGUAGE;
+      }
+      else if ("sandbox".equals(name)) {
+        return SANDBOX;
       }
       else if ("type".equals(name) && "link".equals(tagName)) {
         return TYPE;
