@@ -25,10 +25,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
-public class SpeedSearch extends SpeedSearchSupply {
+public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
   private static final String ALLOWED_SPECIAL_SYMBOLS = " *_-\"'/.$>:";
 
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
@@ -63,7 +64,6 @@ public class SpeedSearch extends SpeedSearchSupply {
 
   public void process(KeyEvent e) {
     if (e.isConsumed()) return;
-    if (e.getID() != KeyEvent.KEY_TYPED) return;
 
     String old = myString;
     if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
@@ -76,7 +76,10 @@ public class SpeedSearch extends SpeedSearchSupply {
         e.consume();
       }
     }
-    else {
+    else if (e.getID() == KeyEvent.KEY_TYPED) {
+      // key-char is good only on KEY_TYPED
+      // for example: key-char on ctrl-J PRESSED is \n
+      // see https://en.wikipedia.org/wiki/Control_character
       char ch = e.getKeyChar();
       if (Character.isLetterOrDigit(ch) || ALLOWED_SPECIAL_SYMBOLS.indexOf(ch) != -1) {
         type(Character.toString(ch));
@@ -180,5 +183,20 @@ public class SpeedSearch extends SpeedSearchSupply {
   @Override
   public void findAndSelectElement(@NotNull String searchQuery) {
 
+  }
+
+  @Override
+  public void keyTyped(KeyEvent e) {
+    process(e);
+  }
+
+  @Override
+  public void keyPressed(KeyEvent e) {
+    process(e);
+  }
+
+  @Override
+  public void keyReleased(KeyEvent e) {
+    process(e);
   }
 }

@@ -164,7 +164,6 @@ public class AbstractPopup implements JBPopup {
   protected SearchTextField mySpeedSearchPatternField;
   private boolean myNativePopup;
   private boolean myMayBeParent;
-  private AbstractPopup.SpeedSearchKeyListener mySearchKeyListener;
   private JLabel myAdComponent;
   private boolean myDisposed;
 
@@ -1141,8 +1140,7 @@ public class AbstractPopup implements JBPopup {
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
 
-    mySearchKeyListener = new SpeedSearchKeyListener();
-    myContent.addKeyListener(mySearchKeyListener);
+    myContent.addKeyListener(mySpeedSearch);
 
     if (myCancelOnMouseOutCallback != null || myCancelOnWindow) {
       myMouseOutCanceller = new Canceller();
@@ -1398,7 +1396,7 @@ public class AbstractPopup implements JBPopup {
       Container parent = myContent.getParent();
       if (parent != null) parent.remove(myContent);
       myContent.removeAll();
-      myContent.removeKeyListener(mySearchKeyListener);
+      myContent.removeKeyListener(mySpeedSearch);
     }
     myContent = null;
     myPreferredFocusedComponent = null;
@@ -1890,29 +1888,12 @@ public class AbstractPopup implements JBPopup {
       return handler.fun(e);
     }
     else {
-      if (isCloseRequest(e) && myCancelKeyEnabled) {
+      if (isCloseRequest(e) && myCancelKeyEnabled && !mySpeedSearch.isHoldingFilter()) {
         cancel(e);
         return true;
       }
     }
     return false;
-  }
-
-  private class SpeedSearchKeyListener implements KeyListener {
-    @Override
-    public void keyTyped(final KeyEvent e) {
-      mySpeedSearch.process(e);
-    }
-
-    @Override
-    public void keyPressed(final KeyEvent e) {
-      mySpeedSearch.process(e);
-    }
-
-    @Override
-    public void keyReleased(final KeyEvent e) {
-      mySpeedSearch.process(e);
-    }
   }
 
   @NotNull

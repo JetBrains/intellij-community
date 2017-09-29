@@ -347,7 +347,9 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   public final boolean dispatch(KeyEvent event) {
-    if (event.getID() != KeyEvent.KEY_PRESSED && event.getID() != KeyEvent.KEY_RELEASED) {
+    if (event.getID() != KeyEvent.KEY_PRESSED &&
+        event.getID() != KeyEvent.KEY_RELEASED &&
+        event.getID() != KeyEvent.KEY_TYPED) {
       // do not dispatch these events to Swing
       event.consume();
       return true;
