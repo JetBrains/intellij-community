@@ -180,7 +180,8 @@
                     testServiceImplementation="com.intellij.build.internal.DummyBuildContentManager"/>
 
     <projectService serviceInterface="com.intellij.build.BuildViewManager"
-                    serviceImplementation="com.intellij.build.BuildViewManager"/>
+                    serviceImplementation="com.intellij.build.BuildViewManager"
+                    testServiceImplementation="com.intellij.build.internal.DummyBuildViewManager"/>
     <projectService serviceInterface="com.intellij.build.SyncViewManager"
                     serviceImplementation="com.intellij.build.SyncViewManager"
                     testServiceImplementation="com.intellij.build.internal.DummySyncViewManager"/>
