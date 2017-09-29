@@ -140,18 +140,10 @@ public class SubtractionInCompareToInspectionBase extends BaseInspection {
         long leftMax = leftRange.max();
         long rightMin = rightRange.min();
         long rightMax = rightRange.max();
-        if (PsiType.INT.equals(type) &&
-            !overflowsInt(leftMin, rightMin) &&
-            !overflowsInt(leftMin, rightMax) &&
-            !overflowsInt(leftMax, rightMin) &&
-            !overflowsInt(leftMax, rightMax)) {
+        if (PsiType.INT.equals(type) && !overflowsInt(leftMin, rightMax) && !overflowsInt(leftMax, rightMin)) {
           return true;
         }
-        if (PsiType.LONG.equals(type) &&
-            !overflowsLong(leftMin, rightMin) &&
-            !overflowsLong(leftMin, rightMax) &&
-            !overflowsLong(leftMax, rightMin) &&
-            !overflowsLong(leftMax, rightMax)) {
+        if (PsiType.LONG.equals(type) && !overflowsLong(leftMin, rightMax) && !overflowsLong(leftMax, rightMin)) {
           return true;
         }
       }
