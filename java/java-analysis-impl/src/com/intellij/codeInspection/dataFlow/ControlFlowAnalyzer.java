@@ -399,7 +399,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(statement);
   }
 
-  private void controlTransfer(InstructionTransfer target, FList<Trap> traps) {
+  private void controlTransfer(@NotNull InstructionTransfer target, FList<Trap> traps) {
     addInstruction(new ControlTransferInstruction(myFactory.controlTransfer(target, traps)));
   }
 
