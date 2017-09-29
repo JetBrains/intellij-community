@@ -61,7 +61,11 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
 
   private void initDisabledState() {
     myDisabledShortNames.clear();
-    myDisabledShortNames.addAll(myNamingConventions.keySet());
+    for (NamingConvention<T> convention : myNamingConventions.values()) {
+      if (!convention.isEnabledByDefault()) {
+        myDisabledShortNames.add(convention.getShortName());
+      }
+    }
   }
 
   public NamingConventionBean getNamingConventionBean(String shortName) {

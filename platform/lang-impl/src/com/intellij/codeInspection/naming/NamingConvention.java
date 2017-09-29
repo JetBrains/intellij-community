@@ -29,6 +29,13 @@ public abstract class NamingConvention<T extends PsiNameIdentifierOwner> {
    */
   public abstract NamingConventionBean createDefaultBean();
 
+  /**
+   * @return true, if newly created inspection should contain this convention on.
+   *         false, if convention should be disabled for newly created inspection or if inspection is merged from inspections, disabled by default.
+   */
+  public boolean isEnabledByDefault() {
+    return false;
+  }
 
   public String createErrorMessage(String name, NamingConventionBean bean) {
     final int length = name.length();
