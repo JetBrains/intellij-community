@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,11 +56,28 @@ public class FinderRecursivePanelSelectionUpdateTest extends LightPlatformTestCa
     assertEquals("d", panel_3.getSelectedValue());
   }
 
+  public void testUpdateSelectedPath() {
+    StringFinderRecursivePanel panel_0 = new StringFinderRecursivePanel(getProject());
+    disposeOnTearDown(panel_0);
+
+    final StringFinderRecursivePanel panel_1 = new StringFinderRecursivePanel(panel_0);
+    panel_0.setRightComponent(panel_1);
+
+    final StringFinderRecursivePanel panel_2 = new StringFinderRecursivePanel(panel_1);
+    panel_1.setRightComponent(panel_2);
+
+    panel_0.updateSelectedPath("a", "b", "c");
+
+    assertEquals("a", panel_0.getSelectedValue());
+    assertEquals("b", panel_1.getSelectedValue());
+    assertEquals("c", panel_2.getSelectedValue());
+  }
 
   @SuppressWarnings("InnerClassMayBeStatic")
   private class StringFinderRecursivePanel extends FinderRecursivePanel<String> {
 
     private JBList<String> myList;
+    private JComponent myRightComponent;
 
     private StringFinderRecursivePanel(Project project) {
       super(project, "fooPanel");
@@ -70,6 +87,10 @@ public class FinderRecursivePanelSelectionUpdateTest extends LightPlatformTestCa
     public StringFinderRecursivePanel(StringFinderRecursivePanel panel) {
       super(panel);
       initPanel();
+    }
+
+    public void setRightComponent(JComponent rightComponent) {
+      myRightComponent = rightComponent;
     }
 
     @NotNull
@@ -92,7 +113,7 @@ public class FinderRecursivePanelSelectionUpdateTest extends LightPlatformTestCa
     @Nullable
     @Override
     protected JComponent createRightComponent(String s) {
-      return null;
+      return myRightComponent;
     }
 
     @Override
