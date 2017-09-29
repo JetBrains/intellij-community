@@ -3,6 +3,8 @@
 // found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.resolve
 
+import com.intellij.openapi.externalSystem.service.project.manage.ConfigurationDataService
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
@@ -26,6 +28,10 @@ class GradleIdeaSettingsContributor: GradleMethodContextContributor {
   }
 
   override fun process(methodCallInfo: MutableList<String>, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
+    if (!Registry.`is`(ConfigurationDataService.EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED)) {
+      return true
+    }
+
     val resolveScope = place.resolveScope
 
     if (psiElement().inside(GradleIdeaPluginScriptContributor.ideaClosure).accepts(place)) {
