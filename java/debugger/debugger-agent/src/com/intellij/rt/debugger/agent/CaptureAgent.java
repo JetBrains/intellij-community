@@ -17,6 +17,7 @@ import java.util.jar.JarFile;
 /**
  * @author egor
  */
+@SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public class CaptureAgent {
   private static Instrumentation ourInstrumentation;
   private static boolean DEBUG = false;
@@ -297,6 +298,7 @@ public class CaptureAgent {
         e.printStackTrace();
       }
     }
+    //noinspection SSBasedInspection
     ourInstrumentation.retransformClasses(classes.toArray(new Class[0]));
   }
 
