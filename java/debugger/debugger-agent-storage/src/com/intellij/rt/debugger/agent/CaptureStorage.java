@@ -10,11 +10,13 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author egor
  */
+@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class CaptureStorage {
   private static final int MAX_STORED_STACKS = 1000;
   private static final Map<Object, CapturedStack> STORAGE = new ConcurrentHashMap<>();
   private static final Deque<Object> HISTORY = new ArrayDeque<>(MAX_STORED_STACKS);
 
+  @SuppressWarnings("SSBasedInspection")
   private static final ThreadLocal<Deque<InsertMatch>> CURRENT_STACKS = ThreadLocal.withInitial(LinkedList::new);
   private static final JavaLangAccess ourJavaLangAccess = SharedSecrets.getJavaLangAccess();
 
