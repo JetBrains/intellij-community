@@ -31,7 +31,6 @@ import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.util.JpsPathUtil
-
 /**
  * Assembles output of modules to platform JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAll distAll}/lib directory),
  * bundled plugins' JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAll distAll}/plugins directory) and zip archives with
@@ -146,6 +145,10 @@ class DistributionJARsBuilder {
   List<String> getPlatformModules() {
     (platform.moduleJars.values() as List<String>) +
     ["java-runtime", "platform-main", /*required to build searchable options index*/ "updater"]
+  }
+
+  Collection<String> getIncludedProjectArtifacts() {
+    platform.includedArtifacts.keySet() + pluginsToPublish.collectMany {it.includedArtifacts.keySet()}
   }
 
   void buildJARs() {
@@ -402,6 +405,13 @@ class DistributionJARsBuilder {
         }
         layout.includedProjectLibraries.each {
           projectLibrary(it)
+        }
+        layout.includedArtifacts.entrySet().each {
+          def artifactName = it.key
+          def relativePath = it.value
+          dir(relativePath) {
+            artifact(artifactName)
+          }
         }
 
         //include all module libraries from the plugin modules added to IDE classpath to layout

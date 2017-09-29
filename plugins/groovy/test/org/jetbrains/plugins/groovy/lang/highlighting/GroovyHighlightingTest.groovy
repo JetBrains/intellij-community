@@ -17,8 +17,8 @@ package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.siyeh.ig.junit.AbstractTestClassNamingConvention
 import com.siyeh.ig.junit.TestClassNamingConvention
-import com.siyeh.ig.naming.NewClassNamingConventionInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.codeInspection.naming.NewGroovyClassNamingConventionInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 
 /**
@@ -300,7 +300,7 @@ class Bar {{
 
   void testJUnitConvention() {
     myFixture.addClass("package junit.framework; public class TestCase {}")
-    def inspection = new NewClassNamingConventionInspection()
+    def inspection = new NewGroovyClassNamingConventionInspection()
     inspection.setEnabled(true, TestClassNamingConvention.TEST_CLASS_NAMING_CONVENTION_SHORT_NAME)
     inspection.setEnabled(true, AbstractTestClassNamingConvention.ABSTRACT_TEST_CLASS_NAMING_CONVENTION_SHORT_NAME)
     doTest(inspection)

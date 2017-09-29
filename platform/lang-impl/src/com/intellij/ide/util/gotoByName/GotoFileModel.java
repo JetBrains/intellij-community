@@ -46,7 +46,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Objects;
 
 /**
  * Model for "Go to | File" action
@@ -115,7 +114,7 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> implements Dum
 
   @Override
   public String getNotInMessage() {
-    return IdeBundle.message("label.no.non.java.files.found");
+    return "";
   }
 
   @Override

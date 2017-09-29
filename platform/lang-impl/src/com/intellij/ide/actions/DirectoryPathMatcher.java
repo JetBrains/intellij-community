@@ -53,8 +53,14 @@ class DirectoryPathMatcher {
     myPattern = pattern;
   }
 
-  static DirectoryPathMatcher root(@NotNull GotoFileModel model) {
-    return new DirectoryPathMatcher(model, null, "");
+  @Nullable
+  static DirectoryPathMatcher root(@NotNull GotoFileModel model, @NotNull String pattern) {
+    DirectoryPathMatcher matcher = new DirectoryPathMatcher(model, null, "");
+    for (int i = 0; i < pattern.length(); i++) {
+      matcher = matcher.appendChar(pattern.charAt(i));
+      if (matcher == null) return null;
+    }
+    return matcher;
   }
 
   @Nullable

@@ -42,4 +42,9 @@ public class FakeRevision implements ContentRevision {
   public VcsRevisionNumber getRevisionNumber() {
     return VcsRevisionNumber.NULL;
   }
+
+  @Override
+  public String toString() {
+    return myFile.getPath();
+  }
 }

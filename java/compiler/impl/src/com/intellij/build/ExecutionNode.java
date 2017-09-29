@@ -77,6 +77,11 @@ public class ExecutionNode extends CachingSimpleNode {
   }
 
   @Override
+  protected void updateFileStatus() {
+    // DO NOTHING
+  }
+
+  @Override
   protected void doUpdate() {
     setIcon(
       isRunning() ? ExecutionNodeProgressAnimator.getCurrentFrame() :

@@ -1123,22 +1123,12 @@
                      groupBundle="org.jetbrains.plugins.groovy.GroovyBundle"
                      key="check.labeled.statement" groupKey="inspection.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyLabeledStatementInspection"/>
-    <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyClassNamingConvention" displayName="Class naming convention"
+    <localInspection language="Groovy" groupPath="Groovy" shortName="NewGroovyClassNamingConvention" displayName="Class naming convention"
                      groupKey="inspection.naming"
                      enabledByDefault="false" level="WARNING"
-                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.naming.GroovyClassNamingConventionInspection"/>
-    <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyInterfaceNamingConvention"
-                     displayName="Interface naming convention" groupKey="inspection.naming"
-                     enabledByDefault="false" level="WARNING"
-                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.naming.GroovyInterfaceNamingConventionInspection"/>
-    <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyAnnotationNamingConvention"
-                     displayName="Annotation naming convention" groupKey="inspection.naming"
-                     enabledByDefault="false" level="WARNING"
-                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.naming.GroovyAnnotationNamingConventionInspection"/>
-    <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyEnumerationNamingConvention"
-                     displayName="Enumeration naming convention"
-                     groupKey="inspection.naming" enabledByDefault="false" level="WARNING"
-                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.naming.GroovyEnumerationNamingConventionInspection"/>
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.naming.NewGroovyClassNamingConventionInspection"/>
+    <inspectionElementsMerger implementation="org.jetbrains.plugins.groovy.codeInspection.naming.GroovyClassNamingConventionMerger"/>
+
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyLocalVariableNamingConvention"
                      displayName="Local variable naming convention"
                      groupKey="inspection.naming" enabledByDefault="false" level="WARNING"

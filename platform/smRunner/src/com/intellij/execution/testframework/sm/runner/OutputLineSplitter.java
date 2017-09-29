@@ -18,7 +18,7 @@ package com.intellij.execution.testframework.sm.runner;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
 import gnu.trove.THashMap;
-import jetbrains.buildServer.messages.serviceMessages.intellij.ServiceMessage;
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

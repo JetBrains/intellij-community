@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.intellij.codeInsight.hint.api.impls;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -143,47 +131,47 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       if (candidates != null && candidates.length != 0) {
         Object currentMethodInfo = context.getHighlightedParameter();
         if (currentMethodInfo == null) currentMethodInfo = candidates[0];
-        if ((currentMethodInfo instanceof CandidateInfo)) {
-          PsiElement element = ((CandidateInfo)currentMethodInfo).getElement();
-          if ((element instanceof PsiMethod)) {
-            PsiMethod method = (PsiMethod)element;
-            PsiElement parent = expressionList.getParent();
+        PsiElement element = currentMethodInfo instanceof CandidateInfo ? ((CandidateInfo)currentMethodInfo).getElement() : 
+                             currentMethodInfo instanceof PsiElement ? (PsiElement) currentMethodInfo : 
+                             null;
+        if ((element instanceof PsiMethod)) {
+          PsiMethod method = (PsiMethod)element;
+          PsiElement parent = expressionList.getParent();
 
-            String originalMethodName = method.getName();
-            PsiQualifiedReference currentMethodReference = null;
-            if (parent instanceof PsiMethodCallExpression && !method.isConstructor()) {
-              currentMethodReference = ((PsiMethodCallExpression)parent).getMethodExpression();
-            }
-            else if (parent instanceof PsiNewExpression) {
-              currentMethodReference = ((PsiNewExpression)parent).getClassReference();
-            }
-            else if (parent instanceof PsiAnonymousClass) {
-              currentMethodReference = ((PsiAnonymousClass)parent).getBaseClassReference();
-            }
-            if (currentMethodReference == null || originalMethodName.equals(currentMethodReference.getReferenceName())) {
+          String originalMethodName = method.getName();
+          PsiQualifiedReference currentMethodReference = null;
+          if (parent instanceof PsiMethodCallExpression && !method.isConstructor()) {
+            currentMethodReference = ((PsiMethodCallExpression)parent).getMethodExpression();
+          }
+          else if (parent instanceof PsiNewExpression) {
+            currentMethodReference = ((PsiNewExpression)parent).getClassReference();
+          }
+          else if (parent instanceof PsiAnonymousClass) {
+            currentMethodReference = ((PsiAnonymousClass)parent).getBaseClassReference();
+          }
+          if (currentMethodReference == null || originalMethodName.equals(currentMethodReference.getReferenceName())) {
 
-              int currentNumberOfParameters = expressionList.getExpressions().length;
-              PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(context.getProject());
-              Document document = psiDocumentManager.getCachedDocument(context.getFile());
-              if (parent instanceof PsiCallExpression && JavaMethodCallElement.isCompletionMode((PsiCall)parent)) {
-                PsiMethod chosenMethod = CompletionMemory.getChosenMethod((PsiCall)parent);
-                if ((context.getHighlightedParameter() != null || candidates.length == 1) && chosenMethod != null &&
-                    document != null && psiDocumentManager.isCommitted(document) &&
-                    isIncompatibleParameterCount(chosenMethod, currentNumberOfParameters)) {
-                  JavaMethodCallElement.setCompletionMode((PsiCall)parent, false);
-                  highlightHints(context.getEditor(), null, -1);
-                }
-                else {
-                  int index = ParameterInfoUtils.getCurrentParameterIndex(expressionList.getNode(), 
-                                                                          context.getOffset(), JavaTokenType.COMMA);
-                  TextRange textRange = expressionList.getTextRange();
-                  if (context.getOffset() <= textRange.getStartOffset() || context.getOffset() >= textRange.getEndOffset()) index = -1;
-                  highlightHints(context.getEditor(), expressionList, context.isInnermostContext() ? index : -1);
-                }
+            int currentNumberOfParameters = expressionList.getExpressions().length;
+            PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(context.getProject());
+            Document document = psiDocumentManager.getCachedDocument(context.getFile());
+            if (parent instanceof PsiCallExpression && JavaMethodCallElement.isCompletionMode((PsiCall)parent)) {
+              PsiMethod chosenMethod = CompletionMemory.getChosenMethod((PsiCall)parent);
+              if ((context.getHighlightedParameter() != null || candidates.length == 1) && chosenMethod != null &&
+                  document != null && psiDocumentManager.isCommitted(document) &&
+                  isIncompatibleParameterCount(chosenMethod, currentNumberOfParameters)) {
+                JavaMethodCallElement.setCompletionMode((PsiCall)parent, false);
+                highlightHints(context.getEditor(), null, -1);
               }
-
-              return expressionList;
+              else {
+                int index = ParameterInfoUtils.getCurrentParameterIndex(expressionList.getNode(), 
+                                                                        context.getOffset(), JavaTokenType.COMMA);
+                TextRange textRange = expressionList.getTextRange();
+                if (context.getOffset() <= textRange.getStartOffset() || context.getOffset() >= textRange.getEndOffset()) index = -1;
+                highlightHints(context.getEditor(), expressionList, context.isInnermostContext() ? index : -1);
+              }
             }
+
+            return expressionList;
           }
         }
       }

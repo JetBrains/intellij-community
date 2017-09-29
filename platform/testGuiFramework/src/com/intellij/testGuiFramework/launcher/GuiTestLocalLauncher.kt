@@ -221,6 +221,7 @@ object GuiTestLocalLauncher {
       .plus("-Djava.net.preferIPv4Stack=true")
       .plus("-Dapple.laf.useScreenMenuBar=${GuiTestOptions.useAppleScreenMenuBar()}")
       .plus("-Didea.is.internal=${GuiTestOptions.isInternal()}")
+      .plus("-Didea.debug.mode=true")
       .plus("-Didea.config.path=${GuiTestOptions.getConfigPath()}")
       .plus("-Didea.system.path=${GuiTestOptions.getSystemPath()}")
       .plus("-Dfile.encoding=${GuiTestOptions.getEncoding()}")

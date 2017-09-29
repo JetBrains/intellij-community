@@ -225,7 +225,7 @@ class TrafficProgressPanel extends JPanel {
 
       Pair<JProgressBar, JLabel> pair = myTrafficLightRenderer.passes.get(pass);
       JProgressBar progressBar = pair.getFirst();
-      progressBar.putClientProperty("JComponent.sizeVariant", "mini");
+      UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, progressBar);
       JLabel percLabel = pair.getSecond();
       myProgressToText.put(progressBar, percLabel);
       c.gridx = 0;

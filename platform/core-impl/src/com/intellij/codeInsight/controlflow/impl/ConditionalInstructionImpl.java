@@ -25,13 +25,13 @@ import org.jetbrains.annotations.Nullable;
  * @author oleg
  */
 public class ConditionalInstructionImpl extends InstructionImpl implements ConditionalInstruction {
-  @NotNull
+  @Nullable
   private final PsiElement myCondition;
   private final boolean myResult;
 
   public ConditionalInstructionImpl(final ControlFlowBuilder builder,
                                     @Nullable final PsiElement element,
-                                    @NotNull final PsiElement condition,
+                                    @Nullable final PsiElement condition,
                                     final boolean result) {
     super(builder, element);
     myCondition = condition;
@@ -39,7 +39,7 @@ public class ConditionalInstructionImpl extends InstructionImpl implements Condi
   }
 
 
-  @NotNull
+  @Nullable
   @Override
   public PsiElement getCondition() {
     return myCondition;
@@ -53,6 +53,6 @@ public class ConditionalInstructionImpl extends InstructionImpl implements Condi
   @NotNull
   @Override
   public String toString() {
-    return super.toString() + ". Condition: " + myCondition.getText() + ":" + myResult;
+    return super.toString() + ". Condition: " + (myCondition != null ? myCondition.getText() : null) + ":" + myResult;
   }
 }

@@ -16,7 +16,7 @@
 package com.intellij.execution.testframework.sm.runner.events;
 
 import com.intellij.openapi.util.text.StringUtil;
-import jetbrains.buildServer.messages.serviceMessages.intellij.MessageWithAttributes;
+import jetbrains.buildServer.messages.serviceMessages.MessageWithAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

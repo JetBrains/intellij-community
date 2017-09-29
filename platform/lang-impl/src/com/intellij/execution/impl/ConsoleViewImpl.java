@@ -631,7 +631,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  private static ModalityState getStateForUpdate() {
+  protected ModalityState getStateForUpdate() {
     return null;
   }
 
@@ -765,7 +765,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return myProject.isDisposed() || myEditor == null;
   }
 
-  private void doClear() {
+  protected void doClear() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     if (isDisposed()) return;

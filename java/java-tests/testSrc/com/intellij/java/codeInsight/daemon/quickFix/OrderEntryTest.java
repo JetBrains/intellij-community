@@ -76,8 +76,8 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     String testFullPath = BASE_PATH + fileName;
 
     VirtualFile root = ModuleRootManager.getInstance(myModule).getContentRoots()[0].getParent();
-    VirtualFile virtualFile = root.findFileByRelativePath(fileName);
-    configureByExistingFile(virtualFile);
+    configureByExistingFile(root.findFileByRelativePath(fileName));
+    VirtualFile virtualFile = getFile().getVirtualFile();
     ActionHint actionHint = ActionHint.parse(getFile(), getFile().getText());
     Collection<HighlightInfo> infosBefore = highlightErrors();
     final IntentionAction action = findActionAndCheck(actionHint, infosBefore);
@@ -85,6 +85,8 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     if(action != null) {
       String text = action.getText();
       WriteCommandAction.runWriteCommandAction(null, () -> action.invoke(getProject(), getEditor(), getFile()));
+
+      myFile = getPsiManager().findFile(virtualFile);
 
       Collection<HighlightInfo> infosAfter = highlightErrors();
       final IntentionAction afterAction = findActionWithText(text);

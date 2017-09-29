@@ -21,7 +21,6 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBGradientPaint;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
@@ -95,7 +94,6 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
       JBGradientPaint ijGradient = new JBGradientPaint(c, new Color(0x4985e4), new Color(0x4074c9));
 
       //setup AA for lines
-      GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
       boolean focus = c.hasFocus();
       boolean selected = ((AbstractButton)c).isSelected();
 

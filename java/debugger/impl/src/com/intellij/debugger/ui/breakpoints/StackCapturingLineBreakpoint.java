@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -25,6 +13,7 @@ import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluatorImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.jdi.DecompiledLocalVariable;
+import com.intellij.debugger.jdi.GeneratedLocation;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.memory.utils.StackFrameItem;
@@ -296,22 +285,31 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
 
   private static List<StackFrameItem> getProcessCapturedStack(Value key, EvaluationContextImpl evaluationContext)
     throws EvaluateException {
+    evaluationContext = evaluationContext.withAutoLoadClasses(false);
+
     DebugProcessImpl process = evaluationContext.getDebugProcess();
     Pair<ClassType, Method> methodPair = process.getUserData(CAPTURE_STORAGE_METHOD);
-    if (methodPair == NO_CAPTURE_AGENT) {
-      return null;
-    }
+
     if (methodPair == null) {
       try {
         ClassType captureClass = (ClassType)process.findClass(evaluationContext, "com.intellij.rt.debugger.agent.CaptureStorage", null);
-        Method getRelatedStackMethod = captureClass.methodsByName("getRelatedStack").get(0);
-        methodPair = Pair.create(captureClass, getRelatedStackMethod);
+        if (captureClass == null) {
+          methodPair = NO_CAPTURE_AGENT;
+          LOG.debug("Error loading debug agent", "agent class not found");
+        }
+        else {
+          methodPair = Pair.create(captureClass, captureClass.methodsByName("getRelatedStack").get(0));
+        }
       }
       catch (EvaluateException e) {
         methodPair = NO_CAPTURE_AGENT;
         LOG.debug("Error loading debug agent", e);
       }
       putProcessUserData(CAPTURE_STORAGE_METHOD, methodPair, process);
+    }
+
+    if (methodPair == NO_CAPTURE_AGENT) {
+      return null;
     }
 
     Value resArray = process.invokeMethod(evaluationContext, methodPair.first, methodPair.second, Collections.singletonList(key),
@@ -325,7 +323,8 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
         }
         else {
           List<Value> values1 = ((ArrayReference)value).getValues();
-          res.add(new ProcessStackFrameItem(getStringRefValue((StringReference)values1.get(0)),
+          res.add(new ProcessStackFrameItem(process,
+                                            getStringRefValue((StringReference)values1.get(0)),
                                             getStringRefValue((StringReference)values1.get(2)),
                                             Integer.parseInt(((StringReference)values1.get(3)).value())));
         }
@@ -344,8 +343,8 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     final String myMethod;
     final int myLine;
 
-    public ProcessStackFrameItem(String aClass, String method, int line) {
-      super(null, null);
+    public ProcessStackFrameItem(DebugProcessImpl debugProcess, String aClass, String method, int line) {
+      super(new GeneratedLocation(debugProcess, aClass, method, line), null);
       myClass = aClass;
       myMethod = method;
       myLine = line;

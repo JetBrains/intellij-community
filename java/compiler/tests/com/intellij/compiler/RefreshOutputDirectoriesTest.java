@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
@@ -60,9 +61,10 @@ public class RefreshOutputDirectoriesTest extends BaseCompilerTestCase {
     subscribeToRootChanges();
     make(modulesArray);
     assertOutputDirectoriesRefreshed(modulesArray);
-  }
+    }
 
   private void subscribeToRootChanges() {
+    PlatformTestUtil.saveProject(getProject());
     myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {

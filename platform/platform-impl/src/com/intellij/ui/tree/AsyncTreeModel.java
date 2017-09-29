@@ -442,8 +442,14 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
     @Override
     public Node get() {
       started = true;
-      LOG.debug("background command: ", this);
-      return getNode(object);
+      if (isObsolete()) {
+        LOG.debug("obsolete command: ", this);
+        return null;
+      }
+      else {
+        LOG.debug("background command: ", this);
+        return getNode(object);
+      }
     }
 
     @Override
@@ -543,7 +549,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
     @Override
     Node getNode(Object object) {
       Node loaded = new Node(object, model.isLeaf(object));
-      if (loaded.leaf) return loaded;
+      if (loaded.leaf || isObsolete()) return loaded;
 
       if (model instanceof ChildrenProvider) {
         //noinspection unchecked

@@ -1172,16 +1172,8 @@
         <option name="FOREGROUND" value="CCCCCC" />
       </value>
     </option>
-    <option name="OC.FUNCTION">
-      <value>
-        <option name="FOREGROUND" value="FFDD00" />
-      </value>
-    </option>
-    <option name="OC.FUNCTION">
-      <value>
-        <option name="FOREGROUND" value="FFDD00" />
-      </value>
-    </option>
+    <option baseAttributes="DEFAULT_FUNCTION_CALL" name="OC.FUNCTION" />
+    <option baseAttributes="DEFAULT_FUNCTION_DECLARATION" name="OC.FUNCTION_DECLARATION" />
     <option name="OC.GLOBAL_VARIABLE">
       <value>
         <option name="FOREGROUND" value="CCCCCC" />

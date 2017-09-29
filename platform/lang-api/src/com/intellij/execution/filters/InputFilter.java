@@ -17,6 +17,7 @@ package com.intellij.execution.filters;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -29,6 +30,6 @@ public interface InputFilter {
    * @return            <tt>null</tt>, if there was no match, otherwise, a list of pairs like ('string to use', 'content type to use')
    */
   @Nullable
-  List<Pair<String, ConsoleViewContentType>> applyFilter(String text, ConsoleViewContentType contentType);
+  List<Pair<String, ConsoleViewContentType>> applyFilter(@NotNull  String text, ConsoleViewContentType contentType);
 
 }

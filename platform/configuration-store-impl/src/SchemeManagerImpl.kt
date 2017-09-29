@@ -200,7 +200,10 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
         val bytes = file.contentsToByteArray()
         lazyPreloadScheme(bytes, isOldShemeNaming) { name, parser ->
           val attributeProvider = Function<String, String?> { parser.getAttributeValue(null, it) }
-          val schemeName = name ?: processor.getName(attributeProvider, FileUtilRt.getNameWithoutExtension(fileName))
+          val schemeName = name
+                           ?: processor.getName(attributeProvider, FileUtilRt.getNameWithoutExtension(fileName))
+                           ?: throw RuntimeException("Name is missed:\n${bytes.toString(Charsets.UTF_8)}")
+
           val dataHolder = SchemeDataHolderImpl(bytes, externalInfo)
           @Suppress("UNCHECKED_CAST")
           (processor as SchemeContentChangedHandler<MUTABLE_SCHEME>).schemeContentChanged(changedScheme, schemeName, dataHolder)
@@ -276,10 +279,12 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
         val attributeProvider = Function<String, String?> { parser.getAttributeValue(null, it) }
         val fileName = PathUtilRt.getFileName(url.path)
         val extension = getFileExtension(fileName, true)
-        val externalInfo = ExternalInfo(
-          fileName.substring(0, fileName.length - extension.length), extension)
+        val externalInfo = ExternalInfo(fileName.substring(0, fileName.length - extension.length), extension)
 
-        val schemeName = name ?: (processor as LazySchemeProcessor).getName(attributeProvider, externalInfo.fileNameWithoutExtension)
+        val schemeName = name
+                         ?: (processor as LazySchemeProcessor).getName(attributeProvider, externalInfo.fileNameWithoutExtension)
+                         ?: throw RuntimeException("Name is missed:\n${bytes.toString(Charsets.UTF_8)}")
+
         externalInfo.schemeName = schemeName
 
         val scheme = (processor as LazySchemeProcessor).createScheme(SchemeDataHolderImpl(bytes, externalInfo), schemeName,
@@ -354,7 +359,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       replaceSchemeList(oldSchemes, schemes)
 
       @Suppress("UNCHECKED_CAST")
-      for (i in newSchemesOffset..schemes.size - 1) {
+      for (i in newSchemesOffset until schemes.size) {
         val scheme = schemes.get(i) as MUTABLE_SCHEME
         processor.initScheme(scheme)
         @Suppress("UNCHECKED_CAST")
@@ -487,6 +492,9 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       lazyPreloadScheme(bytes, isOldShemeNaming) { name, parser ->
         val attributeProvider = Function<String, String?> { parser.getAttributeValue(null, it) }
         val schemeName = name ?: processor.getName(attributeProvider, fileNameWithoutExtension)
+        if (schemeName == null) {
+          throw RuntimeException("Name is missed:\n${bytes.toString(Charsets.UTF_8)}")
+        }
         if (!checkExisting(schemeName)) {
           return null
         }

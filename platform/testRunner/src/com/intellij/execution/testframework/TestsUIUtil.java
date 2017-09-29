@@ -28,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.AppIconScheme;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -237,13 +236,20 @@ public class TestsUIUtil {
       } else{
         if (failedCount > 0) {
           myTitle = ExecutionBundle.message("junit.runing.info.tests.failed.label");
-          myText = passedCount + " passed, " + failedCount + " failed" + (notStartedCount > 0 ? ", " + notStartedCount + " not started" : "");
+          String notStartedMessage = ignoredCount > 0 ? ", " + ignoredCount + " ignored"
+                                                      : notStartedCount > 0 ? ", " + notStartedCount + " not started" : "";
+          myText = passedCount + " passed, " + failedCount + " failed" + notStartedMessage;
           myType = MessageType.ERROR;
         }
+        else if (ignoredCount > 0) {
+          myTitle = "Tests Ignored";
+          myText = passedCount + " passed, " + ignoredCount + " ignored";
+          myType = MessageType.WARNING;
+        }
         else if (notStartedCount > 0) {
-          myTitle = ignoredCount > 0 ? "Tests Ignored" : ExecutionBundle.message("junit.running.info.failed.to.start.error.message");
-          myText = passedCount + " passed, " + notStartedCount + (ignoredCount > 0 ? " ignored" : " not started");
-          myType = ignoredCount > 0 ? MessageType.WARNING : MessageType.ERROR;
+          myTitle = ExecutionBundle.message("junit.running.info.failed.to.start.error.message");
+          myText = passedCount + " passed, " + notStartedCount + " not started";
+          myType = MessageType.ERROR;
         }
         else {
           myTitle = ExecutionBundle.message("junit.runing.info.tests.passed.label");

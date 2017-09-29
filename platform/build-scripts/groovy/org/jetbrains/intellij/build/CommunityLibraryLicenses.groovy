@@ -232,8 +232,6 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://opensource.org/licenses/BSD-3-Clause"),
     new LibraryLicense(name: "JUnit", libraryName: "JUnit3", version: "3.8.1", license: "CPL 1.0", url: "http://junit.org/"),
     new LibraryLicense(name: "JUnit", libraryName: "JUnit4", version: "4.11", license: "CPL 1.0", url: "http://junit.org/"),
-    new LibraryLicense(name: "JUnit5", libraryName: "JUnit5", version: "5.0.0", license: "Eclipse Public License 2.0",
-                       url: "http://junit.org/"),
     new LibraryLicense(name: "jzlib", libraryName: "jzlib", version: "1.1.1", license: "BSD", url: "http://www.jcraft.com/jzlib/",
                        licenseUrl: "http://www.jcraft.com/jzlib/LICENSE.txt"),
     new LibraryLicense(name: "Kryo", libraryName: "Kryo", version: "2.22", license: "New BSD License",

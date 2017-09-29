@@ -54,7 +54,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     .register(CallMatcher.staticCall(CommonClassNames.JAVA_LANG_LONG, "numberOfLeadingZeros", "numberOfTrailingZeros", "bitCount"),
               LongRangeSet.range(0, Long.SIZE))
     .register(CallMatcher.staticCall(CommonClassNames.JAVA_LANG_INTEGER, "numberOfLeadingZeros", "numberOfTrailingZeros", "bitCount"),
-              LongRangeSet.range(0, Integer.SIZE));
+              LongRangeSet.range(0, Integer.SIZE))
+    .register(CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_ENUM, "ordinal").parameterCount(0), LongRangeSet.indexRange());
 
   private final Set<BinopInstruction> myReachable = new THashSet<>();
   private final Set<BinopInstruction> myCanBeNullInInstanceof = new THashSet<>();

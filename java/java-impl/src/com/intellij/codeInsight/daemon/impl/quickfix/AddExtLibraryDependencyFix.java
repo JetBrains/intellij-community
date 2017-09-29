@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 class AddExtLibraryDependencyFix extends OrderEntryFix {
-  @SuppressWarnings("StatefulEp") private final PsiReference myReference;
   private final Module myCurrentModule;
   private final ExternalLibraryDescriptor myLibraryDescriptor;
   private final DependencyScope myScope;
@@ -46,7 +45,7 @@ class AddExtLibraryDependencyFix extends OrderEntryFix {
                                     ExternalLibraryDescriptor descriptor,
                                     DependencyScope scope,
                                     String qName) {
-    myReference = reference;
+    super(reference);
     myCurrentModule = currentModule;
     myLibraryDescriptor = descriptor;
     myScope = scope;
@@ -79,7 +78,7 @@ class AddExtLibraryDependencyFix extends OrderEntryFix {
       .done(aVoid -> new WriteAction() {
         protected void run(@NotNull final Result result) {
           try {
-            importClass(myCurrentModule, editor, myReference, myQualifiedClassName);
+            importClass(myCurrentModule, editor, restoreReference(), myQualifiedClassName);
           }
           catch (IndexNotReadyException e) {
             Logger.getInstance(AddExtLibraryDependencyFix.class).info(e);

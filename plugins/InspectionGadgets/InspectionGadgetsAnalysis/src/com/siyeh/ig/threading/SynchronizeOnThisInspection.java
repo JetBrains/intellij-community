@@ -98,7 +98,7 @@ public class SynchronizeOnThisInspection extends BaseInspection {
         return false;
       }
       final PsiType parameterType = parameters[0];
-      if (isPrivateClassType(parameterType)) {
+      if (isNonPrivateClassType(parameterType)) {
         return true;
       }
       if (!(parameterType instanceof PsiCapturedWildcardType)) {
@@ -107,12 +107,12 @@ public class SynchronizeOnThisInspection extends BaseInspection {
       final PsiCapturedWildcardType capturedWildcardType = (PsiCapturedWildcardType)parameterType;
       final PsiWildcardType wildcardType = capturedWildcardType.getWildcard();
       final PsiType extendsBoundType = wildcardType.getExtendsBound();
-      return isPrivateClassType(extendsBoundType);
+      return isNonPrivateClassType(extendsBoundType);
     }
 
-    private static boolean isPrivateClassType(PsiType type) {
+    private static boolean isNonPrivateClassType(PsiType type) {
       final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
-      return aClass == null || !aClass.hasModifierProperty(PsiModifier.PRIVATE);
+      return aClass != null && !aClass.hasModifierProperty(PsiModifier.PRIVATE);
     }
   }
 }

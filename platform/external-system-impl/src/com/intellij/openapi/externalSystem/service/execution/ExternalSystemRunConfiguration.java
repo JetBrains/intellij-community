@@ -316,11 +316,11 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
         final String greeting;
         if (mySettings.getTaskNames().size() > 1) {
           greeting = ExternalSystemBundle
-            .message("run.text.starting.multiple.task", startDateTime, mySettings.toString());
+            .message("run.text.starting.multiple.task", startDateTime, mySettings.toString()) + "\n";
         }
         else {
           greeting =
-            ExternalSystemBundle.message("run.text.starting.single.task", startDateTime, mySettings.toString());
+            ExternalSystemBundle.message("run.text.starting.single.task", startDateTime, mySettings.toString()) + "\n";
         }
         ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
 
@@ -334,7 +334,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
               progressListener.onEvent(
                 new StartBuildEventImpl(new DefaultBuildDescriptor(id, executionName, workingDir, eventTime), "running...")
                   .withProcessHandler(processHandler, view -> {
-                    processHandler.notifyTextAvailable(greeting + "\n\n", ProcessOutputTypes.SYSTEM);
+                    processHandler.notifyTextAvailable(greeting + "\n", ProcessOutputTypes.SYSTEM);
                     foldGreetingOrFarewell(consoleView, greeting, true);
                   })
                   .withContentDescriptorSupplier(() -> myContentDescriptor)
@@ -457,7 +457,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
           final FoldingModel foldingModel = consoleViewImpl.getEditor().getFoldingModel();
           foldingModel.runBatchFoldingOperation(() -> {
             FoldRegion region = foldingModel.addFoldRegion(document.getLineStartOffset(line),
-                                                           document.getLineEndOffset(line),
+                                                           document.getLineEndOffset(line) + 1,
                                                            StringUtil.trimLog(text, limit));
             if (region != null) {
               region.setExpanded(false);

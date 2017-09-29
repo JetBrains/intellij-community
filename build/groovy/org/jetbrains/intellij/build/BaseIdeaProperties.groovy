@@ -90,6 +90,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
       layout.customize {
         withModule("java-runtime", "idea_rt.jar", false)
+        withArtifact("debugger-agent", "rt")
         withProjectLibrary("Eclipse")
         withProjectLibrary("jgoodies-common")
         withProjectLibrary("jgoodies-looks")

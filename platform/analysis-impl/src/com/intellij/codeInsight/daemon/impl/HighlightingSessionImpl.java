@@ -57,7 +57,7 @@ public class HighlightingSessionImpl implements HighlightingSession {
     myEDTQueue = new TransferToEDTQueue<Runnable>("Apply highlighting results", runnable -> {
       runnable.run();
       return true;
-    }, o -> myProject.isDisposed() || getProgressIndicator().isCanceled(), 200) {
+    }, o -> myProject.isDisposed() || getProgressIndicator().isCanceled()) {
       @Override
       protected void schedule(@NotNull Runnable updateRunnable) {
         ApplicationManager.getApplication().invokeLater(updateRunnable, ModalityState.any());

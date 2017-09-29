@@ -62,6 +62,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.ui.navigation.Place;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
@@ -642,7 +643,8 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     @NotNull
     @Override
     public String getDisplayName() {
-      return myFlattenModules ? getModule().getName() : getModuleGrouper().getShortenedName(getModule());
+      return myFlattenModules ? ObjectUtils.notNull(myContext.myModulesConfigurator.getModuleModel().getNewName(getModule()), getModule().getName())
+                              : getModuleGrouper().getShortenedName(getModule());
     }
 
     private ModuleGrouper getModuleGrouper() {

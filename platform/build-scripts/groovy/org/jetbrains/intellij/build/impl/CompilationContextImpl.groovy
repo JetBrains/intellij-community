@@ -25,6 +25,7 @@ import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -161,17 +162,25 @@ class CompilationContextImpl implements CompilationContext {
                                              System.getProperty("intellij.build.debug.logging.categories", ""), messages)
 
     def classesDirName = "classes"
+    def projectArtifactsDirName = "project-artifacts"
     def classesOutput = "$paths.buildOutputRoot/$classesDirName"
     List<String> outputDirectoriesToKeep = ["log"]
     if (options.pathToCompiledClassesArchive != null) {
       unpackCompiledClasses(messages, ant, classesOutput, options)
       outputDirectoriesToKeep.add(classesDirName)
     }
+
+    String baseArtifactsOutput = "$paths.buildOutputRoot/$projectArtifactsDirName"
+    JpsArtifactService.instance.getArtifacts(project).each {
+      it.outputPath = "$baseArtifactsOutput/$it.name"
+    }
+
     messages.info("Incremental compilation: " + options.incrementalCompilation)
     if (options.incrementalCompilation) {
       System.setProperty("kotlin.incremental.compilation", "true")
       outputDirectoriesToKeep.add(dataDirName)
       outputDirectoriesToKeep.add(classesDirName)
+      outputDirectoriesToKeep.add(projectArtifactsDirName)
     }
     if (!options.useCompiledClassesFromProjectOutput) {
       projectOutputDirectory = classesOutput

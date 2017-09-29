@@ -73,7 +73,7 @@ class FilePointerPartNode {
                        boolean separator,
                        @NotNull CharSequence childName, int childStart, int childEnd,
                        @NotNull FilePointerPartNode[] outNode,
-                       @NotNull List<FilePointerPartNode> outDirs) {
+                       @Nullable List<FilePointerPartNode> outDirs) {
     int partStart;
     if (parent == null) {
       partStart = 0;
@@ -110,7 +110,8 @@ class FilePointerPartNode {
     if (partStart + index-childStart == found.part.length()) {
       // go to children
       for (FilePointerPartNode child : found.children) {
-        int childPos = child.position(null, null, childSeparator, childName, index, childEnd, outNode, outDirs);
+        // do not accidentally modify outDirs
+        int childPos = child.position(null, null, childSeparator, childName, index, childEnd, outNode, null);
         if (childPos != -1) {
           addRecursiveDirectoryPtr(outDirs);
 
@@ -122,8 +123,8 @@ class FilePointerPartNode {
     return -1;
   }
 
-  private void addRecursiveDirectoryPtr(@NotNull List<FilePointerPartNode> dirs) {
-    if(hasRecursiveDirectoryPointer() && (dirs.isEmpty() || dirs.get(dirs.size()-1) != this)) {
+  private void addRecursiveDirectoryPtr(@Nullable List<FilePointerPartNode> dirs) {
+    if(dirs != null && hasRecursiveDirectoryPointer() && (dirs.isEmpty() || dirs.get(dirs.size()-1) != this)) {
       dirs.add(this);
     }
   }

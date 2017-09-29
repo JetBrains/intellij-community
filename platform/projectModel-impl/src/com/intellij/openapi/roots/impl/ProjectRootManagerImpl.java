@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -31,9 +32,11 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,8 +56,8 @@ import java.util.*;
 public class ProjectRootManagerImpl extends ProjectRootManagerEx implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectRootManagerImpl");
 
-  @NonNls public static final String PROJECT_JDK_NAME_ATTR = "project-jdk-name";
-  @NonNls public static final String PROJECT_JDK_TYPE_ATTR = "project-jdk-type";
+  @NonNls private static final String PROJECT_JDK_NAME_ATTR = "project-jdk-name";
+  @NonNls private static final String PROJECT_JDK_TYPE_ATTR = "project-jdk-type";
 
   protected final Project myProject;
 
@@ -92,16 +95,12 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
       myBatchLevel -= 1;
       if (myChanged && myBatchLevel == 0) {
         try {
-          WriteAction.run(this::fireChange);
+          WriteAction.run(() -> fireRootsChanged(myFileTypes));
         }
         finally {
           myChanged = false;
         }
       }
-    }
-
-    private boolean fireChange() {
-      return fireRootsChanged(myFileTypes);
     }
 
     protected void beforeRootsChanged() {
@@ -114,7 +113,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
     protected void rootsChanged() {
       if (myBatchLevel == 0) {
-        if (fireChange()) {
+        if (fireRootsChanged(myFileTypes)) {
           myChanged = false;
         }
       }
@@ -123,6 +122,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   protected final BatchSession myRootsChanged = new BatchSession(false);
   protected final BatchSession myFileTypesChanged = new BatchSession(true);
+  private final VirtualFilePointerListener myRootsValidityChangedListener = new VirtualFilePointerListener(){};
 
   public static ProjectRootManagerImpl getInstanceImpl(Project project) {
     return (ProjectRootManagerImpl)getInstance(project);
@@ -253,12 +253,12 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   }
 
   @Override
-  public void addProjectJdkListener(ProjectJdkListener listener) {
+  public void addProjectJdkListener(@NotNull ProjectJdkListener listener) {
     myProjectJdkEventDispatcher.addListener(listener);
   }
 
   @Override
-  public void removeProjectJdkListener(ProjectJdkListener listener) {
+  public void removeProjectJdkListener(@NotNull ProjectJdkListener listener) {
     myProjectJdkEventDispatcher.removeListener(listener);
   }
 
@@ -419,6 +419,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   protected void addRootsToWatch() {
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }
@@ -610,7 +611,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
         }
       });
       String currentName = getProjectSdkName();
-      if (previousName != null && previousName.equals(currentName)) {
+      if (previousName.equals(currentName)) {
         // if already had jdk name and that name was the name of the jdk just changed
         myProjectSdkName = jdk.getName();
         myProjectSdkType = jdk.getSdkType().getName();
@@ -618,14 +619,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
   }
 
-  private final Map<RootProvider, Set<OrderEntry>> myRegisteredRootProviders = new HashMap<>();
+  private final Map<RootProvider, Set<OrderEntry>> myRegisteredRootProviders = ContainerUtil.newIdentityTroveMap();
 
-  void addJdkTableListener(ProjectJdkTable.Listener jdkTableListener) {
+  void addJdkTableListener(@NotNull ProjectJdkTable.Listener jdkTableListener, @NotNull Disposable parent) {
     myJdkTableMultiListener.addListener(jdkTableListener);
-  }
-
-  void removeJdkTableListener(ProjectJdkTable.Listener jdkTableListener) {
-    myJdkTableMultiListener.removeListener(jdkTableListener);
+    Disposer.register(parent, ()->myJdkTableMultiListener.removeListener(jdkTableListener));
   }
 
   void assertListenersAreDisposed() {
@@ -663,4 +661,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   }
 
   public void markRootsForRefresh() { }
+
+  @NotNull
+  public VirtualFilePointerListener getRootsValidityChangedListener() {
+    return myRootsValidityChangedListener;
+  }
 }

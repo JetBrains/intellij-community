@@ -27,9 +27,12 @@ import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.RefactoringListenerProvider
 import com.intellij.execution.configurations.RuntimeConfigurationWarning
+import com.intellij.execution.filters.ConsoleInputFilterProvider
+import com.intellij.execution.filters.InputFilter
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.execution.testframework.sm.runner.SMTestLocator
+import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope
 import com.intellij.openapi.options.SettingsEditor
@@ -68,6 +71,9 @@ import com.jetbrains.reflection.DelegationProperty
 import com.jetbrains.reflection.Properties
 import com.jetbrains.reflection.Property
 import com.jetbrains.reflection.getProperties
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
+import jetbrains.buildServer.messages.serviceMessages.TestStdErr
+import jetbrains.buildServer.messages.serviceMessages.TestStdOut
 
 
 /**
@@ -78,6 +84,19 @@ val factories: Array<PythonConfigurationFactoryBase> = arrayOf(
   PyTestFactory,
   PyNoseTestFactory,
   PyTrialTestFactory)
+
+/**
+ * Accepts text that may be wrapped in TC message. Unwarps it and removes TC escape code.
+ * Regular text is unchanged
+ */
+fun processTCMessage(text: String): String {
+  val parsedMessage = ServiceMessage.parse(text.trim()) ?: return text // Not a TC message
+  return when (parsedMessage) {
+    is TestStdOut  -> parsedMessage.stdOut // TC with stdout
+    is TestStdErr -> parsedMessage.stdErr // TC with stderr
+    else -> "" // TC with out of any output
+  }
+}
 
 internal fun getAdditionalArgumentsPropertyName() = com.jetbrains.python.testing.PyAbstractTestConfiguration::additionalArguments.name
 
@@ -247,7 +266,10 @@ data class ConfigurationTarget(@ConfigField var target: String,
    */
   fun checkValid() {
     if (targetType != TestTargetType.CUSTOM && target.isEmpty()) {
-      throw RuntimeConfigurationWarning("Target should be set for anything but custom")
+      throw RuntimeConfigurationWarning("Target not provided")
+    }
+    if (targetType == TestTargetType.PYTHON && !Regex("^[a-zA-Z0-9.]+[a-zA-Z0-9]$").matches(target)) {
+      throw RuntimeConfigurationWarning("Provide qualified python name")
     }
   }
 
@@ -285,7 +307,7 @@ data class ConfigurationTarget(@ConfigField var target: String,
   private fun getArgumentsForPythonTarget(configuration: PyAbstractTestConfiguration): List<String> {
     val element = asPsiElement(configuration) ?:
                   throw ExecutionException(
-                    "Can't resolve $target. Try to remove configuration and generate is again")
+                    "Can't resolve $target. Try to remove configuration and generate it again")
 
     if (element is PsiDirectory) {
       // Directory is special case: we can't run it as package for now, so we run it as path
@@ -779,7 +801,6 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
     return configuration.target == targetForConfig.first
   }
 }
-
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.PROPERTY)

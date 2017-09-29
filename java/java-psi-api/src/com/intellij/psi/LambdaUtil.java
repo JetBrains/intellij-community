@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -364,10 +352,11 @@ public class LambdaUtil {
       if (psiType instanceof PsiArrayType) {
         return ((PsiArrayType)psiType).getComponentType();
       }
-    } else if (parent instanceof PsiTypeCastExpression) {
-      //ensure no capture is performed to target type of cast expression, from 15.16 Cast Expressions:
-      //Casts can be used to explicitly "tag" a lambda expression or a method reference expression with a particular target type. 
-      //To provide an appropriate degree of flexibility, the target type may be a list of types denoting an intersection type, 
+    }
+    else if (parent instanceof PsiTypeCastExpression) {
+      // Ensure no capture is performed to target type of cast expression, from 15.16 "Cast Expressions":
+      // Casts can be used to explicitly "tag" a lambda expression or a method reference expression with a particular target type.
+      // To provide an appropriate degree of flexibility, the target type may be a list of types denoting an intersection type,
       // provided the intersection induces a functional interface (p9.8).
       final PsiTypeElement castTypeElement = ((PsiTypeCastExpression)parent).getCastType();
       final PsiType castType = castTypeElement != null ? castTypeElement.getType() : null;
@@ -387,8 +376,7 @@ public class LambdaUtil {
     else if (parent instanceof PsiExpressionList) {
       final PsiExpressionList expressionList = (PsiExpressionList)parent;
       final int lambdaIdx = getLambdaIdx(expressionList, expression);
-      if (lambdaIdx > -1) {
-
+      if (lambdaIdx >= 0) {
         PsiElement gParent = expressionList.getParent();
 
         if (gParent instanceof PsiAnonymousClass) {
@@ -481,7 +469,7 @@ public class LambdaUtil {
     }
     return false;
   }
-  
+
   @Nullable
   private static PsiType extractFunctionalConjunct(PsiIntersectionType type) {
     PsiType conjunct = null;
@@ -502,7 +490,7 @@ public class LambdaUtil {
 
     return conjunct;
   }
-  
+
   private static PsiType getFunctionalInterfaceTypeByContainingLambda(@NotNull PsiLambdaExpression parentLambda) {
     final PsiType parentInterfaceType = parentLambda.getFunctionalInterfaceType();
     return parentInterfaceType != null ? getFunctionalInterfaceReturnType(parentInterfaceType) : null;
@@ -593,7 +581,7 @@ public class LambdaUtil {
   }
 
   // http://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.12.2.1
-  // A lambda expression or a method reference expression is potentially compatible with a type variable 
+  // A lambda expression or a method reference expression is potentially compatible with a type variable
   // if the type variable is a type parameter of the candidate method.
   public static boolean isPotentiallyCompatibleWithTypeParameter(PsiFunctionalExpression expression,
                                                                  PsiExpressionList argsList,
@@ -853,7 +841,7 @@ public class LambdaUtil {
    */
   public static boolean isIdentityLambda(PsiLambdaExpression lambda) {
     PsiParameterList parameters = lambda.getParameterList();
-    if(parameters.getParametersCount() != 1) return false;
+    if (parameters.getParametersCount() != 1) return false;
     PsiExpression expression = PsiUtil.skipParenthesizedExprDown(extractSingleExpressionFromBody(lambda.getBody()));
     return expression instanceof PsiReferenceExpression &&
            ((PsiReferenceExpression)expression).isReferenceTo(parameters.getParameters()[0]);

@@ -27,20 +27,19 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.performance.CollectionsListSettings;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
 
@@ -52,7 +51,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
   private final CollectionsListSettings mySettings = new CollectionsListSettings() {
     @Override
     protected Collection<String> getDefaultSettings() {
-      return ContainerUtil.append(new ArrayList<>(DEFAULT_COLLECTION_LIST), "java.util.TreeSet", "java.util.TreeMap");
+      return StreamEx.of(DEFAULT_COLLECTION_LIST).append("java.util.TreeSet", "java.util.TreeMap").sorted().toList();
     }
   };
 

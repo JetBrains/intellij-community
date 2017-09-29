@@ -143,6 +143,13 @@ public final class IconLoader {
     return findIcon(path, callerClass);
   }
 
+  @Nullable
+  public static Icon findIcon(@NonNls @NotNull String path, boolean strict) {
+    Class callerClass = ReflectionUtil.getGrandCallerClass();
+    if (callerClass == null) return null;
+    return findIcon(path, callerClass, false, strict);
+  }
+
   @NotNull
   public static Icon getIcon(@NotNull String path, @NotNull final Class aClass) {
     final Icon icon = findIcon(path, aClass);
@@ -381,7 +388,23 @@ public final class IconLoader {
     return icon;
   }
 
-  private static final class CachedImageIcon extends RasterJBIcon implements ScalableIcon {
+  /**
+   *  For internal usage. Converts the icon to 1x scale when applicable.
+   */
+  public static Icon get1xIcon(Icon icon) {
+    if (icon instanceof LazyIcon) {
+      icon = ((LazyIcon)icon).getOrComputeIcon();
+    }
+    if (icon instanceof CachedImageIcon) {
+      Image img = ((CachedImageIcon)icon).loadFromUrl(ScaleContext.create(USR_SCALE.of(1d), SYS_SCALE.of(1d)));
+      if (img != null) {
+        icon = new ImageIcon(img);
+      }
+    }
+    return icon;
+  }
+
+  public static final class CachedImageIcon extends RasterJBIcon implements ScalableIcon {
     private volatile Object myRealIcon;
     private String myOriginalPath;
     private ClassLoader myClassLoader;
@@ -645,19 +668,6 @@ public final class IconLoader {
     }
 
     protected abstract Icon compute();
-
-    public Icon inOriginalScale() {
-      Icon icon = getOrComputeIcon();
-      if (icon != null) {
-        if (icon instanceof CachedImageIcon) {
-          Image img = ((CachedImageIcon)icon).loadFromUrl(ScaleContext.create(USR_SCALE.of(1d), SYS_SCALE.of(1d)));
-          if (img != null) {
-            icon = new ImageIcon(img);
-          }
-        }
-      }
-      return icon;
-    }
   }
 
   private static class LabelHolder {

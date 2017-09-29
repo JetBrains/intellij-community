@@ -1028,16 +1028,8 @@
         <option name="FOREGROUND" value="D0D0FF" />
       </value>
     </option>
-    <option name="OC.FUNCTION">
-      <value>
-        <option name="FOREGROUND" value="FFC66D" />
-      </value>
-    </option>
-    <option name="OC.FUNCTION">
-      <value>
-        <option name="FOREGROUND" value="FFC66D" />
-      </value>
-    </option>
+    <option baseAttributes="DEFAULT_FUNCTION_CALL" name="OC.FUNCTION" />
+    <option baseAttributes="DEFAULT_FUNCTION_DECLARATION" name="OC.FUNCTION_DECLARATION" />
     <option name="OC.GLOBAL_VARIABLE">
       <value>
         <option name="FOREGROUND" value="D0D0FF" />

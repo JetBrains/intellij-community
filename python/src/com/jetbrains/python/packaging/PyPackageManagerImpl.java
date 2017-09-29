@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.OrderRootType;
@@ -161,7 +162,16 @@ public class PyPackageManagerImpl extends PyPackageManager {
   protected void subscribeToLocalChanges() {
     final Application app = ApplicationManager.getApplication();
     final MessageBusConnection connection = app.getMessageBus().connect();
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, new MySdkRootWatcher());
+    MySdkRootWatcher watcher = new MySdkRootWatcher();
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, watcher);
+    connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, new ProjectJdkTable.Adapter() {
+      @Override
+      public void jdkRemoved(@NotNull Sdk jdk) {
+        if (jdk == getSdk()) {
+          connection.disconnect();
+        }
+      }
+    });
   }
 
   @NotNull

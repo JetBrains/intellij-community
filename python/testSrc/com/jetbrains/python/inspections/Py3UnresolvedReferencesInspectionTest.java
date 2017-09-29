@@ -68,12 +68,12 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
   protected void doMultiFileTest(@NotNull String filename, @NotNull List<String> sourceRoots) {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
       myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
-      final PsiFile currentFile = myFixture.configureFromTempProjectFile(filename);
       final Module module = myFixture.getModule();
       for (String root : sourceRoots) {
         PsiTestUtil.addSourceRoot(module, myFixture.findFileInTempDir(root));
       }
       try {
+        final PsiFile currentFile = myFixture.configureFromTempProjectFile(filename);
         myFixture.enableInspections(getInspectionClass());
         myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
         assertProjectFilesNotParsed(currentFile);

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.naming;
 
+import com.intellij.codeInspection.naming.AbstractNamingConventionMerger;
 import com.intellij.psi.PsiClass;
 
 public class ClassNamingConventionMerger extends AbstractNamingConventionMerger<PsiClass> {

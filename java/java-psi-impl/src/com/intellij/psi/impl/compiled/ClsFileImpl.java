@@ -19,7 +19,6 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
@@ -555,11 +554,6 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     }
 
     return stubTree;
-  }
-
-  @Override
-  public ASTNode findTreeForStub(final StubTree tree, final StubElement<?> stub) {
-    return null;
   }
 
   @NotNull
