@@ -290,9 +290,11 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       AnAction[] restartActions;
       if (consoleView == null) {
         restartActions = AnAction.EMPTY_ARRAY;
+        Disposer.register(myProject, processHandler);
       }
       else {
         Disposer.register(myProject, consoleView);
+        Disposer.register(consoleView, processHandler);
         restartActions = consoleManager.getRestartActions(consoleView);
       }
       Class<? extends BuildProgressListener> progressListenerClazz = task.getUserData(PROGRESS_LISTENER_KEY);

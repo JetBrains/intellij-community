@@ -442,6 +442,9 @@ public class ExternalSystemUtil {
           consoleManager.attachExecutionConsole(project, myTask, null, processHandler);
         if (consoleView != null) {
           Disposer.register(project, consoleView);
+          Disposer.register(consoleView, processHandler);
+        } else {
+          Disposer.register(project, processHandler);
         }
 
         ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {

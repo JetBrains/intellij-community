@@ -17,6 +17,7 @@ package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
 import com.intellij.openapi.util.Key;
@@ -33,14 +34,15 @@ import java.io.PipedOutputStream;
 /**
  * @author Vladislav.Soroka
  */
-public class ExternalSystemProcessHandler extends ProcessHandler implements AnsiEscapeDecoder.ColoredTextAcceptor {
+public class ExternalSystemProcessHandler extends ProcessHandler implements AnsiEscapeDecoder.ColoredTextAcceptor, Disposable {
   private static final Logger LOG = Logger.getInstance(ExternalSystemProcessHandler.class);
-  private final ExternalSystemTask myTask;
+  @Nullable
+  private ExternalSystemTask myTask;
   private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
   @Nullable
   private OutputStream myProcessInput;
 
-  public ExternalSystemProcessHandler(ExternalSystemTask task) {
+  public ExternalSystemProcessHandler(@NotNull ExternalSystemTask task) {
     myTask = task;
     if (task instanceof UserDataHolder) {
       try {
@@ -61,7 +63,9 @@ public class ExternalSystemProcessHandler extends ProcessHandler implements Ansi
 
   @Override
   protected void destroyProcessImpl() {
-    myTask.cancel();
+    if (myTask != null) {
+      myTask.cancel();
+    }
     closeInput();
   }
 
@@ -96,5 +100,11 @@ public class ExternalSystemProcessHandler extends ProcessHandler implements Ansi
   protected void closeInput() {
     StreamUtil.closeStream(myProcessInput);
     myProcessInput = null;
+  }
+
+  @Override
+  public void dispose() {
+    myTask = null;
+    detachProcessImpl();
   }
 }
