@@ -38,6 +38,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @SuppressWarnings({"SSBasedInspection", "SynchronizeOnThis"})
 @SkipInHeadlessEnvironment
@@ -623,5 +624,30 @@ public class LaterInvocatorTest extends PlatformTestCase {
         ApplicationManager.getApplication().invokeAndWait(() -> assertSame(state, ModalityState.defaultModalityState()), state);
       }
     }));
+  }
+
+  public void testAppVsSwingPerformance() throws Exception {
+    int n = 1_000_000;
+
+    AtomicInteger counter = new AtomicInteger();
+    Runnable r = () -> counter.incrementAndGet();
+
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      PlatformTestUtil.startPerformanceTest("Swing invokeLater", 13_000, () -> {
+        for (int i = 0; i < n; i++) {
+          SwingUtilities.invokeLater(r);
+        }
+        SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());
+        assertEquals(n, counter.getAndSet(0));
+      }).assertTiming();
+
+      PlatformTestUtil.startPerformanceTest("Application invokeLater", 800, () -> {
+        for (int i = 0; i < n; i++) {
+          ApplicationManager.getApplication().invokeLater(r);
+        }
+        ApplicationManager.getApplication().invokeAndWait(EmptyRunnable.getInstance());
+        assertEquals(n, counter.getAndSet(0));
+      }).assertTiming();
+    }).get();
   }
 }
