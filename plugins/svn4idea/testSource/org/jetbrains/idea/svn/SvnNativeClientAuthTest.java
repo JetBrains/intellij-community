@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,9 @@ import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.junit.Before;
-import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.*;
-import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
@@ -577,14 +574,6 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
       ++ myExpectedCreds;
       ++ myExpectedCert;
     }
-  }
-
-  private void testBrowseRepositoryImpl(final String url) throws SVNException {
-    final List<SVNDirEntry> list = new ArrayList<>();
-    final SVNRepository repository = myVcs.getSvnKitManager().createRepository(url);
-    repository.getDir(".", -1, null, dirEntry -> list.add(dirEntry));
-
-    Assert.assertTrue(!list.isEmpty());
   }
 
   private static @interface Test {}

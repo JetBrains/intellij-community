@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,14 +37,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import junit.framework.Assert;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
+import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.junit.Before;
-import org.tmatesoft.svn.core.SVNDirEntry;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.*;
-import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
@@ -53,6 +52,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 
 public class SvnProtocolsTest extends Svn17TestCase {
@@ -108,12 +108,11 @@ public class SvnProtocolsTest extends Svn17TestCase {
     }
   }
 
-  private void testBrowseRepositoryImpl(SVNURL url) throws SVNException {
-    final List<SVNDirEntry> list = new ArrayList<>();
-    final SVNRepository repository = myVcs.getSvnKitManager().createRepository(url);
-    repository.getDir(".", -1, null, dirEntry -> list.add(dirEntry));
+  private void testBrowseRepositoryImpl(SVNURL url) throws VcsException {
+    List<DirectoryEntry> list = newArrayList();
+    myVcs.getFactoryFromSettings().createBrowseClient().list(Target.on(url), null, null, list::add);
 
-    Assert.assertTrue(! list.isEmpty());
+    Assert.assertTrue(!list.isEmpty());
   }
 
   @Test

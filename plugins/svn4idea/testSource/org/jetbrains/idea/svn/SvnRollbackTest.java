@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,23 +22,22 @@ import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.ignore.FileGroupInfo;
 import org.jetbrains.idea.svn.ignore.SvnPropertyService;
+import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
 import java.util.*;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static org.tmatesoft.svn.core.wc.SVNRevision.WORKING;
 
 public class SvnRollbackTest extends Svn17TestCase {
 
@@ -297,19 +296,14 @@ public class SvnRollbackTest extends Svn17TestCase {
     Assert.assertEquals("cde", getProperty(fileAfter, "abc"));
   }
 
-  private String getProperty(File file, String name) throws SVNException {
-    final SVNWCClient client = myVcs.getSvnKitManager().createWCClient();
-    final SVNPropertyData data = client.doGetProperty(file, name, SVNRevision.UNDEFINED, SVNRevision.WORKING);
-    return data == null ? null : new String(data.getValue().getBytes());
+  private String getProperty(File file, String name) throws SvnBindException {
+    PropertyValue value = myVcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), name, false, WORKING);
+
+    return PropertyValue.toString(value);
   }
 
-  private void setProperty(final File file, final String name, final String value) throws SVNException {
-    final SVNWCClient client = myVcs.getSvnKitManager().createWCClient();
-    client.doSetProperty(file, (path, properties) -> {
-      final SVNProperties result = new SVNProperties();
-      result.put(name, SVNPropertyValue.create(value));
-      return result;
-    }, true, SVNDepth.EMPTY, null, null);
+  private void setProperty(final File file, final String name, final String value) throws SvnBindException {
+    myVcs.getFactory(file).createPropertyClient().setProperty(file, name, PropertyValue.create(value), Depth.EMPTY, true);
   }
 
   @Test

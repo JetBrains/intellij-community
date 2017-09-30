@@ -25,6 +25,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.history.SvnChangeList;
@@ -34,24 +36,21 @@ import org.jetbrains.idea.svn.integrate.MergeContext;
 import org.jetbrains.idea.svn.mergeinfo.BranchInfo;
 import org.jetbrains.idea.svn.mergeinfo.OneShotMergeInfoHelper;
 import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache;
+import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.junit.Assert;
 import org.junit.Test;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
+import static org.jetbrains.idea.svn.SvnPropertyKeys.MERGE_INFO;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 
-// TODO: Many tests in this class are written with direct SVNKit usage - could not utilize it for svn 1.8
 public class SvnMergeInfoTest extends Svn17TestCase {
 
   private static final String CONTENT1 = "123\n456\n123";
@@ -357,17 +356,16 @@ public class SvnMergeInfoTest extends Svn17TestCase {
     waitTime();
   }
 
-  private void assertMergeInfo(@NotNull File file, @NotNull String... values) throws SVNException {
-    // TODO: Replace with ClientFactory model
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    final SVNWCClient wcClient = vcs.getSvnKitManager().createWCClient();
-    final SVNPropertyData data = wcClient.doGetProperty(file, "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
-    assert data != null && data.getValue() != null;
+  private void assertMergeInfo(@NotNull File file, @NotNull String... values) throws SvnBindException {
+    SvnVcs vcs = SvnVcs.getInstance(myProject);
+    PropertyValue propertyValue =
+      vcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), MERGE_INFO, false, SVNRevision.WORKING);
+    assert propertyValue != null;
 
     boolean result = false;
 
     for (String value : values) {
-      result |= value.equals(data.getValue().getString());
+      result |= value.equals(propertyValue.toString());
     }
 
     assert result;
