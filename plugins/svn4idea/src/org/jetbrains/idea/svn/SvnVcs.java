@@ -80,7 +80,6 @@ import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
-import org.jetbrains.idea.svn.svnkit.SvnKitManager;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -151,7 +150,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private SvnCheckoutProvider myCheckoutProvider;
 
   @NotNull private final ClientFactory cmdClientFactory;
-  @NotNull private final SvnKitManager svnKitManager;
 
   private final boolean myLogExceptions;
 
@@ -164,7 +162,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     myAuthNotifier = new SvnAuthenticationNotifier(this);
 
     cmdClientFactory = new CmdClientFactory(this);
-    svnKitManager = new SvnKitManager(this);
 
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     myAddConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, this);
@@ -328,8 +325,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
     myAuthNotifier.init();
     mySvnBranchPointsCalculator = new SvnBranchPointsCalculator(this);
-
-    svnKitManager.activate();
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       checkCommandLineVersion();
@@ -870,11 +865,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       myCheckoutProvider = new SvnCheckoutProvider();
     }
     return myCheckoutProvider;
-  }
-
-  @NotNull
-  public SvnKitManager getSvnKitManager() {
-    return svnKitManager;
   }
 
   /**
