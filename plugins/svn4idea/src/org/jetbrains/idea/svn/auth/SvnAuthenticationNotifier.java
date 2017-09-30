@@ -21,6 +21,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -49,8 +50,6 @@ import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.info.InfoClient;
-import org.tmatesoft.svn.core.SVNAuthenticationException;
-import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
@@ -66,6 +65,8 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+
+import static org.jetbrains.idea.svn.SvnUtil.isAuthError;
 
 public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthenticationNotifier.AuthenticationRequest, SVNURL> {
   private static final Logger LOG = Logger.getInstance(SvnAuthenticationNotifier.class);
@@ -236,6 +237,10 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     return calculatedResult ? ThreeState.YES : ThreeState.NO;
   }
 
+  // TODO: Looks like passive authentication for command line integration could show dialogs for proxy errors. So, it could make sense to
+  // TODO: reuse some logic from validationImpl().
+  // TODO: Also SvnAuthenticationNotifier is not called for command line integration (ensureNotify() is called only in SVNKit lifecycle).
+  // TODO: Though its logic with notifications seems rather convenient. Fix this.
   private static boolean passiveValidation(@NotNull ClientFactory factory, @NotNull SVNURL url) {
     Info info = null;
 
@@ -366,15 +371,15 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
       }
     }
     SvnInteractiveAuthenticationProvider.clearCallState();
+    Target target = Target.on(url);
     try {
-      // start svnkit authentication cycle
-      SvnVcs.getInstance(project).getSvnKitManager().createWCClient(manager).doInfo(url, SVNRevision.UNDEFINED, SVNRevision.HEAD);
-      //SvnVcs.getInstance(project).getInfo(url, SVNRevision.HEAD, manager);
-    } catch (SVNAuthenticationException | SVNCancelException e) {
-      log(e);
+      SvnVcs.getInstance(project).getFactory(target).create(InfoClient.class, interactive).doInfo(target, SVNRevision.HEAD);
+    }
+    catch (ProcessCanceledException e) {
       return false;
-    } catch (final SVNException e) {
-      if (e.getErrorMessage().getErrorCode().isAuthentication()) {
+    }
+    catch (SvnBindException e) {
+      if (isAuthError(e)) {
         log(e);
         return false;
       }
@@ -419,7 +424,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
 
   private static void showAuthenticationFailedWithHotFixes(final Project project,
                                                            final SvnConfiguration configuration,
-                                                           final SVNException e) {
+                                                           final SvnBindException e) {
     ApplicationManager.getApplication().invokeLater(() -> VcsBalloonProblemNotifier
       .showOverChangesView(project, "Authentication failed: " + e.getMessage(), MessageType.ERROR, new NamedRunnable(
                              SvnBundle.message("confirmation.title.clear.authentication.cache")) {

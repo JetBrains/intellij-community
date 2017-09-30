@@ -726,6 +726,13 @@ public class SvnUtil {
            StringUtil.containsIgnoreCase(e.getMessage(), "(not a versioned resource)");
   }
 
+  public static boolean isAuthError(@NotNull SvnBindException e) {
+    return e.contains(SVNErrorCode.RA_NOT_AUTHORIZED) ||
+           e.contains(SVNErrorCode.RA_UNKNOWN_AUTH) ||
+           e.containsCategory(SVNErrorCode.AUTHZ_CATEGORY) ||
+           e.containsCategory(SVNErrorCode.AUTHN_CATEGORY);
+  }
+
   // TODO: Create custom Target class and implement append there
   @NotNull
   public static Target append(@NotNull Target target, @NotNull String path) throws SvnBindException {
