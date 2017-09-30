@@ -311,12 +311,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   }
 
   private static boolean isCancelled(@NotNull List<ExecutionException> exceptions) {
-    for (ExecutionException e : exceptions) {
-      if (e instanceof RunCanceledByUserException) {
-        return true;
-      }
-    }
-    return false;
+    return exceptions.stream().anyMatch(e -> e instanceof RunCanceledByUserException);
   }
 
   @NotNull

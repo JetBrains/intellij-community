@@ -153,12 +153,7 @@ public class JpsJavaDependenciesEnumeratorImpl extends JpsDependenciesEnumerator
   }
 
   public boolean isProductionOnTests(JpsDependencyElement element) {
-    for (JpsJavaDependenciesEnumerationHandler handler : myHandlers) {
-      if (handler.isProductionOnTestsDependency(element)) {
-        return true;
-      }
-    }
-    return false;
+    return myHandlers.stream().anyMatch(handler -> handler.isProductionOnTestsDependency(element));
   }
 
   public boolean shouldIncludeTestsFromDependentModulesToTestClasspath() {
@@ -171,11 +166,6 @@ public class JpsJavaDependenciesEnumeratorImpl extends JpsDependenciesEnumerator
   }
 
   public boolean shouldAddRuntimeDependenciesToTestCompilationClasspath() {
-    for (JpsJavaDependenciesEnumerationHandler handler : myHandlers) {
-      if (handler.shouldAddRuntimeDependenciesToTestCompilationClasspath()) {
-        return true;
-      }
-    }
-    return false;
+    return myHandlers.stream().anyMatch(handler -> handler.shouldAddRuntimeDependenciesToTestCompilationClasspath());
   }
 }

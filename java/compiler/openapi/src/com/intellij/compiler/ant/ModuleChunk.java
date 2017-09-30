@@ -154,12 +154,7 @@ public class ModuleChunk {
 
 
   public boolean contains(final Module module) {
-    for (Module chunkModule : myModules) {
-      if (chunkModule.equals(module)) {
-        return true;
-      }
-    }
-    return false;
+    return myModules.stream().anyMatch(chunkModule -> chunkModule.equals(module));
   }
 
   private static void appendOption(StringBuilder options, @NotNull final String name, @Nullable String value) {

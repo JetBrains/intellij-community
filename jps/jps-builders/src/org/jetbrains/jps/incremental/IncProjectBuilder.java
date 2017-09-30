@@ -902,12 +902,7 @@ public class IncProjectBuilder {
   }
 
   private static boolean isAffected(CompileScope scope, BuildTargetChunk chunk) {
-    for (BuildTarget<?> target : chunk.getTargets()) {
-      if (scope.isAffected(target)) {
-        return true;
-      }
-    }
-    return false;
+    return chunk.getTargets().stream().anyMatch(target -> scope.isAffected(target));
   }
 
   private boolean runBuildersForChunk(final CompileContext context, final BuildTargetChunk chunk) throws ProjectBuildException, IOException {

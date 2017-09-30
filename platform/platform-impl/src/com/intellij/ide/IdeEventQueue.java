@@ -652,12 +652,7 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private boolean dispatchByCustomDispatchers(@NotNull AWTEvent e) {
-    for (EventDispatcher eachDispatcher : myDispatchers) {
-      if (eachDispatcher.dispatch(e)) {
-        return true;
-      }
-    }
-    return false;
+    return myDispatchers.stream().anyMatch(eachDispatcher -> eachDispatcher.dispatch(e));
   }
 
   private static void fixStickyWindow(@NotNull KeyboardFocusManager mgr, Window wnd, @NotNull String resetMethod) {

@@ -697,12 +697,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     pause(new Condition("Waiting for 'Welcome' page to show up") {
       @Override
       public boolean test() {
-        for (Frame frame : Frame.getFrames()) {
-          if (frame == WelcomeFrame.getInstance() && frame.isShowing()) {
-            return true;
-          }
-        }
-        return false;
+        return Frame.getFrames().stream().anyMatch(frame -> frame == WelcomeFrame.getInstance() && frame.isShowing());
       }
     });
   }

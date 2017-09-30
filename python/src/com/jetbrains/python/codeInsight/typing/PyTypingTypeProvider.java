@@ -465,12 +465,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   private static boolean isGeneric(@NotNull PyClass cls, @NotNull Context context) {
-    for (PyClassLikeType ancestor : cls.getAncestorTypes(context.getTypeContext())) {
-      if (ancestor != null && GENERIC_CLASSES.contains(ancestor.getClassQName())) {
-        return true;
-      }
-    }
-    return false;
+    return cls.getAncestorTypes(context.getTypeContext()).stream().anyMatch(ancestor -> ancestor != null && GENERIC_CLASSES.contains(ancestor.getClassQName()));
   }
 
   @Nullable

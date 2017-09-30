@@ -105,12 +105,7 @@ public class FormatChangedTextUtil {
       }
     }.execute().getResultObject();
     try {
-      for (Module module : moduleModel.getModules()) {
-        if (hasChanges(module)) {
-          return true;
-        }
-      }
-      return false;
+      return moduleModel.getModules().stream().anyMatch(module -> hasChanges(module));
     }
     finally {
       moduleModel.dispose();

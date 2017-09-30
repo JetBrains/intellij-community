@@ -500,20 +500,10 @@ public class ClipboardSynchronizer implements Disposable, ApplicationComponent {
 
 
   private static boolean areDataFlavorsAvailable(Transferable contents, DataFlavor... flavors) {
-    for (DataFlavor flavor : flavors) {
-      if (contents.isDataFlavorSupported(flavor)) {
-        return true;
-      }
-    }
-    return false;
+    return flavors.stream().anyMatch(flavor -> contents.isDataFlavorSupported(flavor));
   }
 
   private static boolean areDataFlavorsAvailable(Collection<DataFlavor> contents, DataFlavor... flavors) {
-    for (DataFlavor flavor : flavors) {
-      if (contents.contains(flavor)) {
-        return true;
-      }
-    }
-    return false;
+    return flavors.stream().anyMatch(flavor -> contents.contains(flavor));
   }
 }

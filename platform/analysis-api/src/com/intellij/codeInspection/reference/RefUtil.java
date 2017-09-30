@@ -57,12 +57,7 @@ public class RefUtil {
   }
 
   public static boolean contains(RefEntity element, @NotNull Collection<RefEntity> entities){
-    for (RefEntity refEntity : entities) {
-      if (Comparing.equal(refEntity, element)) {
-        return true;
-      }
-    }
-    return false;
+    return entities.stream().anyMatch(refEntity -> Comparing.equal(refEntity, element));
   }
 
   public static boolean isImplicitWrite(PsiElement element) {

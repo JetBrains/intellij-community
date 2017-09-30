@@ -868,12 +868,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   }
 
   private static boolean needUnshelve(final FilePatch patch, final List<ShelvedChange> changes) {
-    for (ShelvedChange change : changes) {
-      if (Comparing.equal(patch.getBeforeName(), change.getBeforePath())) {
-        return true;
-      }
-    }
-    return false;
+    return changes.stream().anyMatch(change -> Comparing.equal(patch.getBeforeName(), change.getBeforePath()));
   }
 
   private static void writePatchesToFile(final Project project,

@@ -62,12 +62,7 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
   }
 
   private static boolean isUnderRefactoring(PsiElement psiElement, PsiDirectory[] directoriesToMove) {
-    for (PsiDirectory directory : directoriesToMove) {
-      if (PsiTreeUtil.isAncestor(directory, psiElement, true)) {
-        return true;
-      }
-    }
-    return false;
+    return directoriesToMove.stream().anyMatch(directory -> PsiTreeUtil.isAncestor(directory, psiElement, true));
   }
 
   @Override

@@ -192,12 +192,7 @@ public final class Urls {
   }
 
   public static boolean equalsIgnoreParameters(@NotNull Url url, @NotNull Collection<Url> urls, boolean caseSensitive) {
-    for (Url otherUrl : urls) {
-      if (equals(url, otherUrl, caseSensitive, true)) {
-        return true;
-      }
-    }
-    return false;
+    return urls.stream().anyMatch(otherUrl -> equals(url, otherUrl, caseSensitive, true));
   }
 
   public static boolean equalsIgnoreParameters(@NotNull Url url, @NotNull VirtualFile file) {

@@ -49,11 +49,6 @@ public abstract class TestClassesFilter {
   }
 
   protected static boolean matchesAnyPattern(Collection<Pattern> patterns, String className) {
-    for (Pattern pattern : patterns) {
-      if (pattern.matcher(className).matches()) {
-        return true;
-      }
-    }
-    return false;
+    return patterns.stream().anyMatch(pattern -> pattern.matcher(className).matches());
   }
 }

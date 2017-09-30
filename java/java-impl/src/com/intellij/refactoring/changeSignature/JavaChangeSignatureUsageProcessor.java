@@ -305,13 +305,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
   }
 
   private static boolean callerSignatureIsAboutToChangeToo(@NotNull final PsiMethod caller, final UsageInfo[] usages) {
-    for (UsageInfo usage : usages) {
-      if (usage instanceof MethodCallUsageInfo &&
-          MethodSignatureUtil.isSuperMethod(((MethodCallUsageInfo)usage).getReferencedMethod(), caller)) {
-        return true;
-      }
-    }
-    return false;
+    return usages.stream().anyMatch(usage -> usage instanceof MethodCallUsageInfo &&
+          MethodSignatureUtil.isSuperMethod(((MethodCallUsageInfo)usage).getReferencedMethod(), caller));
   }
 
   private static PsiClassType[] getCalleeChangedExceptionInfo(final PsiMethod callee) {

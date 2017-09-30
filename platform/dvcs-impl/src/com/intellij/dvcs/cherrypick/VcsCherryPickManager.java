@@ -57,12 +57,7 @@ public class VcsCherryPickManager {
   }
 
   public boolean isCherryPickAlreadyStartedFor(@NotNull List<CommitId> commits) {
-    for (CommitId commit : commits) {
-      if (myIdsInProgress.contains(commit)) {
-        return true;
-      }
-    }
-    return false;
+    return commits.stream().anyMatch(commit -> myIdsInProgress.contains(commit));
   }
 
   @Nullable

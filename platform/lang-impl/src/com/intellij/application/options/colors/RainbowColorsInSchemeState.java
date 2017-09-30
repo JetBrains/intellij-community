@@ -72,11 +72,6 @@ public class RainbowColorsInSchemeState {
   }
 
   private boolean isRainbowColorsModified() {
-    for (TextAttributesKey key : RainbowHighlighter.RAINBOW_COLOR_KEYS) {
-      if (!myEditedScheme.getAttributes(key).equals(myOriginalScheme.getAttributes(key)) ) {
-        return true;
-      }
-    }
-    return false;
+    return RainbowHighlighter.RAINBOW_COLOR_KEYS.stream().anyMatch(key -> !myEditedScheme.getAttributes(key).equals(myOriginalScheme.getAttributes(key)));
   }
 }

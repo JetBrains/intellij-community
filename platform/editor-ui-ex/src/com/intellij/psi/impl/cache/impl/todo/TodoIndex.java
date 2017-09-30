@@ -136,12 +136,7 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
   };
 
   private static boolean isInContentOfAnyProject(@NotNull VirtualFile file) {
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      if (ProjectFileIndex.getInstance(project).isInContent(file)) {
-        return true;
-      }
-    }
-    return false;
+    return ProjectManager.getInstance().getOpenProjects().stream().anyMatch(project -> ProjectFileIndex.getInstance(project).isInContent(file));
   }
 
   @Override

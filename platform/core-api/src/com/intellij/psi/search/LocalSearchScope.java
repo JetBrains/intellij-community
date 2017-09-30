@@ -264,12 +264,7 @@ public class LocalSearchScope extends SearchScope {
   }
 
   public boolean containsRange(PsiFile file, @NotNull TextRange range) {
-    for (PsiElement element : getScope()) {
-      if (file == element.getContainingFile() && element.getTextRange().contains(range)) {
-        return true;
-      }
-    }
-    return false;
+    return getScope().stream().anyMatch(element -> file == element.getContainingFile() && element.getTextRange().contains(range));
   }
 
   @NotNull

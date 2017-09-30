@@ -210,12 +210,7 @@ public final class PythonSdkType extends SdkType {
   }
 
   public static boolean hasValidSdk() {
-    for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
-      if (sdk.getSdkType() instanceof PythonSdkType) {
-        return true;
-      }
-    }
-    return false;
+    return ProjectJdkTable.getInstance().getAllJdks().stream().anyMatch(sdk -> sdk.getSdkType() instanceof PythonSdkType);
   }
 
   @Override

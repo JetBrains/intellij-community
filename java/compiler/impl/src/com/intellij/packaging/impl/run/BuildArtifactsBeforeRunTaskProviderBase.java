@@ -112,12 +112,7 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
 
   @Override
   public boolean canExecuteTask(@NotNull RunConfiguration configuration, @NotNull T task) {
-    for (ArtifactPointer pointer : (List<ArtifactPointer>)task.getArtifactPointers()) {
-      if (pointer.getArtifact() != null) {
-        return true;
-      }
-    }
-    return false;
+    return (List<ArtifactPointer>)task.getArtifactPointers().stream().anyMatch(pointer -> pointer.getArtifact() != null);
   }
 
   public boolean executeTask(DataContext context,

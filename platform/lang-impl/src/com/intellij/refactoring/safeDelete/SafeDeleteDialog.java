@@ -185,12 +185,7 @@ public class SafeDeleteDialog extends DialogWrapper {
   }
 
   private boolean needSearchForTextOccurrences() {
-    for (PsiElement element : myElements) {
-      if (TextOccurrencesUtil.isSearchTextOccurencesEnabled(element)) {
-        return true;
-      }
-    }
-    return false;
+    return myElements.stream().anyMatch(element -> TextOccurrencesUtil.isSearchTextOccurencesEnabled(element));
   }
 
 

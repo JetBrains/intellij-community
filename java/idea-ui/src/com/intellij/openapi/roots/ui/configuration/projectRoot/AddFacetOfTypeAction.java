@@ -139,12 +139,7 @@ class AddFacetOfTypeAction extends DumbAwareAction {
   }
 
   private static boolean hasSuitableModules(StructureConfigurableContext context, FacetType type) {
-    for (Module module : context.getModules()) {
-      if (type.isSuitableModuleType(ModuleType.get(module))) {
-        return true;
-      }
-    }
-    return false;
+    return context.getModules().stream().anyMatch(module -> type.isSuitableModuleType(ModuleType.get(module)));
   }
 
   private static class ChooseParentFacetDialog extends ChooseElementsDialog<Facet> {

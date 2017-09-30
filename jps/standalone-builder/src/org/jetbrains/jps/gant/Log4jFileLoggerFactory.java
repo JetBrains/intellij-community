@@ -53,11 +53,6 @@ public class Log4jFileLoggerFactory implements com.intellij.openapi.diagnostic.L
   }
 
   private boolean isDebugLevel(String category) {
-    for (String debug : myCategoriesWithDebugLevel) {
-      if (category.startsWith(debug)) {
-        return true;
-      }
-    }
-    return false;
+    return myCategoriesWithDebugLevel.stream().anyMatch(debug -> category.startsWith(debug));
   }
 }

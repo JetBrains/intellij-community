@@ -209,12 +209,7 @@ public class DocPreviewUtil {
   }
   
   private static boolean intersects(@NotNull List<TextRange> ranges, int start, int end) {
-    for (TextRange range : ranges) {
-      if (range.intersectsStrict(start, end)) {
-        return true;
-      }
-    }
-    return false;
+    return ranges.stream().anyMatch(range -> range.intersectsStrict(start, end));
   }
 
   private enum State {TEXT, INSIDE_OPEN_TAG, INSIDE_CLOSE_TAG}

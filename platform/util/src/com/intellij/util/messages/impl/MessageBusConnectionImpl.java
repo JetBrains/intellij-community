@@ -139,12 +139,7 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
   }
 
   boolean containsMessage(@NotNull Topic topic) {
-    for (Message message : myPendingMessages.get()) {
-      if (message.getTopic() == topic) {
-        return true;
-      }
-    }
-    return false;
+    return myPendingMessages.get().stream().anyMatch(message -> message.getTopic() == topic);
   }
 
   public String toString() {

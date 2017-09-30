@@ -174,12 +174,7 @@ public final class ModuleCompilerUtil {
     Collection<Chunk<ModuleSourceSet>> chunks = computeSourceSetCycles(new DefaultModulesProvider(project));
     final Set<Module> modulesSet = new HashSet<>(modules);
     return ContainerUtil.filter(chunks, chunk -> {
-      for (ModuleSourceSet sourceSet : chunk.getNodes()) {
-        if (modulesSet.contains(sourceSet.getModule())) {
-          return true;
-        }
-      }
-      return false;
+      return chunk.getNodes().stream().anyMatch(sourceSet -> modulesSet.contains(sourceSet.getModule()));
     });
   }
 

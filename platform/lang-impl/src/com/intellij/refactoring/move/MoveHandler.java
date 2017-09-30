@@ -78,13 +78,7 @@ public class MoveHandler implements RefactoringActionHandler {
 
   private static boolean tryToMoveElement(final PsiElement element, final Project project, final DataContext dataContext,
                                           final PsiReference reference, final Editor editor) {
-    for(MoveHandlerDelegate delegate: Extensions.getExtensions(MoveHandlerDelegate.EP_NAME)) {
-      if (delegate.tryToMove(element, project, dataContext, reference, editor)) {
-        return true;
-      }
-    }
-
-    return false;
+    return Extensions.getExtensions(MoveHandlerDelegate.EP_NAME).stream().anyMatch(delegate -> delegate.tryToMove(element, project, dataContext, reference, editor));
   }
 
   /**

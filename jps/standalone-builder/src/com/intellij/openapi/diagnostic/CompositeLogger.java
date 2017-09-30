@@ -32,12 +32,7 @@ public class CompositeLogger extends Logger {
 
   @Override
   public boolean isDebugEnabled() {
-    for (Logger logger : myLoggers) {
-      if (logger.isDebugEnabled()) {
-        return true;
-      }
-    }
-    return false;
+    return myLoggers.stream().anyMatch(logger -> logger.isDebugEnabled());
   }
 
   @Override
@@ -63,12 +58,7 @@ public class CompositeLogger extends Logger {
 
   @Override
   public boolean isTraceEnabled() {
-    for (Logger logger : myLoggers) {
-      if (logger.isTraceEnabled()) {
-        return true;
-      }
-    }
-    return false;
+    return myLoggers.stream().anyMatch(logger -> logger.isTraceEnabled());
   }
 
   @Override

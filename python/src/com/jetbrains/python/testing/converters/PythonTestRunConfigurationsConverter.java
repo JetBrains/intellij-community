@@ -36,12 +36,7 @@ public class PythonTestRunConfigurationsConverter extends ConversionProcessor<Ru
   
   @Override
   public boolean isConversionNeeded(RunManagerSettings runManagerSettings) {
-    for (Element e : runManagerSettings.getRunConfigurations()) {
-      if (isConversionNeeded(e)) {
-        return true;
-      }
-    }
-    return false;
+    return runManagerSettings.getRunConfigurations().stream().anyMatch(e -> isConversionNeeded(e));
   }
 
   @Override

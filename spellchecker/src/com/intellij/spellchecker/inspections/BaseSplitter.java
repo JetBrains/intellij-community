@@ -59,12 +59,7 @@ public abstract class BaseSplitter implements Splitter {
   }
 
   protected static boolean containsShortWord(@NotNull List<TextRange> words) {
-    for (TextRange word : words) {
-      if (word.getLength() < MIN_RANGE_LENGTH) {
-        return true;
-      }
-    }
-    return false;
+    return words.stream().anyMatch(word -> word.getLength() < MIN_RANGE_LENGTH);
   }
 
   @NotNull

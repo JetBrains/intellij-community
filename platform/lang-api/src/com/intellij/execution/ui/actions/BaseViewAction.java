@@ -43,13 +43,7 @@ public abstract class BaseViewAction extends DumbAwareAction {
   }
 
   private boolean containsInvalidContent(Content[] content) {
-    for (Content each : content) {
-      if (!each.isValid()) {
-        return true;
-      }
-    }
-
-    return false;
+    return content.stream().anyMatch(each -> !each.isValid());
   }
 
   protected void update(AnActionEvent e, ViewContext context, Content[] content) {

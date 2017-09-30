@@ -661,12 +661,7 @@ public class VfsUtilCore {
   }
 
   public static boolean hasInvalidFiles(@NotNull Iterable<VirtualFile> files) {
-    for (VirtualFile file : files) {
-      if (!file.isValid()) {
-        return true;
-      }
-    }
-    return false;
+    return files.stream().anyMatch(file -> !file.isValid());
   }
 
   /**

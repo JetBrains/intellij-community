@@ -101,12 +101,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
                                      CommonClassNames.JAVA_LANG_THROWABLE, position.getResolveScope()));
       }
       return psiClass -> {
-        for (PsiClass exception : thrownExceptions) {
-          if (InheritanceUtil.isInheritorOrSelf(psiClass, exception, true)) {
-            return true;
-          }
-        }
-        return false;
+        return thrownExceptions.stream().anyMatch(exception -> InheritanceUtil.isInheritorOrSelf(psiClass, exception, true));
       };
     }
     else if (JavaSmartCompletionContributor.AFTER_THROW_NEW.accepts(position) || INSIDE_METHOD_THROWS_CLAUSE.accepts(position)) {

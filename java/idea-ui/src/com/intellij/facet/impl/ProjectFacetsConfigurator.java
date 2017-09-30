@@ -118,12 +118,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
   }
 
   private boolean facetExists(final String facetName, final Collection<? extends Facet> facets) {
-    for (Facet facet : facets) {
-      if (getFacetName(facet).equals(facetName)) {
-        return true;
-      }
-    }
-    return false;
+    return facets.stream().anyMatch(facet -> getFacetName(facet).equals(facetName));
   }
 
   public void addFacetInfo(final Facet facet) {

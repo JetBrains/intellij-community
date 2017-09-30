@@ -169,12 +169,7 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
 
   @Override
   public boolean isModified(CodeStyleSettings settings) {
-    for (IntOption option : myOptions) {
-      if (option.getFieldValue(settings) != option.getValue()) {
-        return true;
-      }
-    }
-    return false;
+    return myOptions.stream().anyMatch(option -> option.getFieldValue(settings) != option.getValue());
   }
 
   @Override

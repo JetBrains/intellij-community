@@ -148,12 +148,7 @@ public class PyUnionType implements PyType {
   }
 
   public boolean isWeak() {
-    for (PyType member : myMembers) {
-      if (member == null) {
-        return true;
-      }
-    }
-    return false;
+    return myMembers.stream().anyMatch(member -> member == null);
   }
 
   public Collection<PyType> getMembers() {

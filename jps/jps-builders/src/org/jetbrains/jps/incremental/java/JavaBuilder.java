@@ -1006,12 +1006,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private static boolean isEncodingSet(List<String> options) {
-    for (String option : options) {
-      if ("-encoding".equals(option)) {
-        return true;
-      }
-    }
-    return false;
+    return options.stream().anyMatch(option -> "-encoding".equals(option));
   }
 
   private static int getCompilerSdkVersion(CompileContext context) {

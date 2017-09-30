@@ -47,12 +47,7 @@ public class InvertBooleanAction extends BaseRefactoringAction {
                                                         @NotNull final Editor editor, 
                                                         @NotNull PsiFile file,
                                                         @NotNull DataContext context) {
-    for (InvertBooleanDelegate delegate : Extensions.getExtensions(InvertBooleanDelegate.EP_NAME)) {
-      if (delegate.isAvailableOnElement(element)) {
-        return true;
-      }
-    }
-    return false;
+    return Extensions.getExtensions(InvertBooleanDelegate.EP_NAME).stream().anyMatch(delegate -> delegate.isAvailableOnElement(element));
   }
 
   protected RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {

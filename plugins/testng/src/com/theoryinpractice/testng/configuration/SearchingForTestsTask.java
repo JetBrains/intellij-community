@@ -171,12 +171,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
   }
 
   private boolean shouldSearchForTestMethods() {
-    for (Map<PsiMethod, List<String>> methods : myClasses.values()) {
-      if (!methods.isEmpty()) {
-        return true;
-      }
-    }
-    return false;
+    return myClasses.values().stream().anyMatch(methods -> !methods.isEmpty());
   }
 
   private void composeTestSuiteFromXml() throws CantRunException {

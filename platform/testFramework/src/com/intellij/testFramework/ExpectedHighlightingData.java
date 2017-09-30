@@ -578,12 +578,7 @@ public class ExpectedHighlightingData {
   }
 
   private static boolean infosContainsExpectedInfo(Collection<HighlightInfo> infos, HighlightInfo expectedInfo) {
-    for (HighlightInfo info : infos) {
-      if (infoEquals(expectedInfo, info)) {
-        return true;
-      }
-    }
-    return false;
+    return infos.stream().anyMatch(info -> infoEquals(expectedInfo, info));
   }
 
   private boolean expectedInfosContainsInfo(HighlightInfo info) {

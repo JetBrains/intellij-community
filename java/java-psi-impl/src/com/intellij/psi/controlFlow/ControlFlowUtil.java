@@ -2041,12 +2041,7 @@ public class ControlFlowUtil {
   }
 
   private static boolean hasCalls(ControlFlow flow) {
-    for (Instruction instruction : flow.getInstructions()) {
-      if (instruction instanceof CallInstruction) {
-        return true;
-      }
-    }
-    return false;
+    return flow.getInstructions().stream().anyMatch(instruction -> instruction instanceof CallInstruction);
   }
 
   private abstract static class ControlFlowGraph extends InstructionClientVisitor<Void> {
@@ -2195,12 +2190,7 @@ public class ControlFlowUtil {
 
   private static boolean mightBeAssignableFromSubclass(@NotNull final PsiClassType throwType, @NotNull PsiType catchType) {
     if (catchType instanceof PsiDisjunctionType) {
-      for (PsiType catchDisjunction : ((PsiDisjunctionType)catchType).getDisjunctions()) {
-        if (throwType.isAssignableFrom(catchDisjunction)) {
-          return true;
-        }
-      }
-      return false;
+      return ((PsiDisjunctionType)catchType).getDisjunctions().stream().anyMatch(catchDisjunction -> throwType.isAssignableFrom(catchDisjunction));
     }
     return throwType.isAssignableFrom(catchType);
   }

@@ -51,12 +51,7 @@ public class IncreaseIndentAction extends AbstractGuiEditorAction {
   }
 
   private boolean canAdjustIndent(final ArrayList<RadComponent> selection) {
-    for(RadComponent c: selection) {
-      if (canAdjustIndent(c)) {
-        return true;
-      }
-    }
-    return false;
+    return selection.stream().anyMatch(c -> canAdjustIndent(c));
   }
 
   protected int adjustIndent(final int indent) {

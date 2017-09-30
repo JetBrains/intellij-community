@@ -69,11 +69,6 @@ public class UISimpleSettingsProvider implements SearchTopHitProvider, OptionsTo
   }
 
   private static boolean patternContains(String pattern, String search) {
-    for (String s : pattern.split(" ")) {
-      if (s.contains(search)) {
-        return true;
-      }
-    }
-    return false;
+    return pattern.split(" ").stream().anyMatch(s -> s.contains(search));
   }
 }

@@ -467,12 +467,7 @@ public class SrcFileAnnotator implements Disposable {
   }
 
   private static boolean classesArePresentInCoverageData(ProjectData data, Set<String> qualifiedNames) {
-    for (String qualifiedName : qualifiedNames) {
-      if (data.getClassData(qualifiedName) != null) {
-        return true;
-      }
-    }
-    return false;
+    return qualifiedNames.stream().anyMatch(qualifiedName -> data.getClassData(qualifiedName) != null);
   }
 
   private RangeHighlighter createRangeHighlighter(final long date, final MarkupModel markupModel,

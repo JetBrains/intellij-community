@@ -883,12 +883,7 @@ public class TypeConversionUtil {
     if (psiClass == null) return false;
 
     if (psiClass instanceof PsiTypeParameter) {
-      for (PsiClassType bound : psiClass.getExtendsListTypes()) {
-        if (types.add(bound) && isUnboxable(left, bound, types)) {
-          return true;
-        }
-      }
-      return false;
+      return psiClass.getExtendsListTypes().stream().anyMatch(bound -> types.add(bound) && isUnboxable(left, bound, types));
     }
 
     final PsiPrimitiveType rightUnboxedType = PsiPrimitiveType.getUnboxedType(right);

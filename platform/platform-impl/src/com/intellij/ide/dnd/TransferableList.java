@@ -56,12 +56,7 @@ abstract public class TransferableList<T> implements Transferable {
 
   @Override
   public boolean isDataFlavorSupported(DataFlavor flavor) {
-    for (DataFlavor supported : getTransferDataFlavors()) {
-      if (supported.equals(flavor)) {
-        return true;
-      }
-    }
-    return false;
+    return getTransferDataFlavors().stream().anyMatch(supported -> supported.equals(flavor));
   }
 
   @Override

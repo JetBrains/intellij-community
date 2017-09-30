@@ -459,12 +459,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   }
 
   private static boolean isInternalTemplateName(final String templateName) {
-    for(InternalTemplateBean bean: Extensions.getExtensions(InternalTemplateBean.EP_NAME)) {
-      if (Comparing.strEqual(templateName, bean.name)) {
-        return true;
-      }
-    }
-    return false;
+    return Extensions.getExtensions(InternalTemplateBean.EP_NAME).stream().anyMatch(bean -> Comparing.strEqual(templateName, bean.name));
   }
 
   private void initLists() {

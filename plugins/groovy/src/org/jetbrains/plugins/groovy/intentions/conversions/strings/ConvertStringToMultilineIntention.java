@@ -218,12 +218,7 @@ public class ConvertStringToMultilineIntention extends Intention {
   }
 
   private static boolean containsInjections(@NotNull List<GrLiteral> literals) {
-    for (GrLiteral literal : literals) {
-      if (literal instanceof GrString && ((GrString)literal).getInjections().length > 0) {
-        return true;
-      }
-    }
-    return false;
+    return literals.stream().anyMatch(literal -> literal instanceof GrString && ((GrString)literal).getInjections().length > 0);
   }
 
 

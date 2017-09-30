@@ -179,12 +179,7 @@ public abstract class StringMatcher<T> {
     }
 
     public boolean matches(String what) {
-      for (StringMatcher matcher : myTarget) {
-        if (matcher.matches(what)) {
-          return true;
-        }
-      }
-      return false;
+      return myTarget.stream().anyMatch(matcher -> matcher.matches(what));
     }
 
     public String getPattern() {

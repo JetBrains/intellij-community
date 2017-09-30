@@ -152,11 +152,6 @@ public class TaskFile {
   }
 
   public boolean hasFailedPlaceholders() {
-    for (AnswerPlaceholder placeholder : myAnswerPlaceholders) {
-      if (placeholder.getStatus() == StudyStatus.Failed) {
-        return true;
-      }
-    }
-    return false;
+    return myAnswerPlaceholders.stream().anyMatch(placeholder -> placeholder.getStatus() == StudyStatus.Failed);
   }
 }

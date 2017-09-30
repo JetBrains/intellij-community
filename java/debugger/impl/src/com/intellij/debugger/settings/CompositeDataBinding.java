@@ -42,11 +42,6 @@ public class CompositeDataBinding implements DataBinding{
   }
 
   public boolean isModified(Object obj) {
-    for (DataBinding myBinding : myBindings) {
-      if (myBinding.isModified(obj)) {
-        return true;
-      }
-    }
-    return false;
+    return myBindings.stream().anyMatch(myBinding -> myBinding.isModified(obj));
   }
 }

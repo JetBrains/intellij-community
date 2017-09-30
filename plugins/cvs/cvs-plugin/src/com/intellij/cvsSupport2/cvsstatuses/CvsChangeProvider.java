@@ -178,12 +178,7 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
   private static boolean hasRemovedFiles(final Collection<VirtualFileEntry> files) {
-    for(VirtualFileEntry e: files) {
-      if (e.getEntry().isRemoved()) {
-        return true;
-      }
-    }
-    return false;
+    return files.stream().anyMatch(e -> e.getEntry().isRemoved());
   }
 
   private void processFile(final FilePath filePath, final ChangelistBuilder builder, final ProgressIndicator progress) throws VcsException {

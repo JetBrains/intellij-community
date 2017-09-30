@@ -35,12 +35,7 @@ public class GlobalPathReferenceProvider implements PathReferenceProvider {
   };
 
   public static boolean startsWithAllowedPrefix(String s) {
-    for (String prefix : PREFIXES) {
-      if (s.startsWith(prefix)) {
-        return true;
-      }
-    }
-    return false;
+    return PREFIXES.stream().anyMatch(prefix -> s.startsWith(prefix));
   }
 
   @Override

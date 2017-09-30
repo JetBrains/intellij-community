@@ -137,12 +137,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
   }
 
   private static boolean methodContainsParameterWithName(@NotNull PsiMethod constructor, @NotNull String name) {
-    for (PsiParameter parameter : constructor.getParameterList().getParameters()) {
-      if (name.equals(parameter.getName())) {
-        return true;
-      }
-    }
-    return false;
+    return constructor.getParameterList().getParameters().stream().anyMatch(parameter -> name.equals(parameter.getName()));
   }
 
   @NotNull

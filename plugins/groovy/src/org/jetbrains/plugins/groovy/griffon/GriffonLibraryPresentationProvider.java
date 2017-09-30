@@ -109,12 +109,7 @@ public class GriffonLibraryPresentationProvider extends GroovyLibraryPresentatio
   }
 
   public static boolean isGriffonSdk(VirtualFile[] files) {
-    for (VirtualFile file : files) {
-      if (isGriffonCoreJar(file)) {
-        return true;
-      }
-    }
-    return false;
+    return files.stream().anyMatch(file -> isGriffonCoreJar(file));
   }
 
   @Nullable
