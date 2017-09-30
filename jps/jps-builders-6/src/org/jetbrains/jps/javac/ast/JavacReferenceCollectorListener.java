@@ -326,7 +326,10 @@ final class JavacReferenceCollectorListener implements TaskListener {
 
   //TODO
   private static Element getElementIfJdkUnder8(Tree tree) {
-    if (tree == null || tree instanceof PrimitiveTypeTree) return null;
+    if (tree == null || tree instanceof PrimitiveTypeTree || tree instanceof ArrayTypeTree) return null;
+    if (tree instanceof ParameterizedTypeTree) {
+      return getElementIfJdkUnder8(((ParameterizedTypeTree)tree).getType());
+    }
     Field symField;
     try {
       //should be the same to com.sun.tools.javac.tree.TreeInfo.symbolForImpl() since com.sun.source.util.Trees.getElement() works improperly under jdk 6-7
