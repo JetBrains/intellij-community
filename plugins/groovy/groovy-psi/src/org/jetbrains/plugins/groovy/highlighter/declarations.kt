@@ -27,7 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTraitTypeDefinition
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.isSimplePropertyAccessor
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isScriptField
 
 class GroovyDeclarationHighlightingPassFactory(project: Project, registrar: TextEditorHighlightingPassRegistrar)
@@ -83,7 +82,8 @@ private fun getReferenceHighlightingAttribute(reference: GrReferenceElement<*>):
   if (reference.isReferenceWithLiteralName()) return null // don't highlight literal references
   if (reference.isAnonymousClassReference()) return null
 
-  val resolved = reference.resolve() ?: return null
+  val resolveResult = reference.advancedResolve()
+  val resolved = resolveResult.element ?: return null
   return if (resolved is PsiMethod) {
     if (resolved.isConstructor) {
       val referenceNodeType = reference.referenceNameElement?.node?.elementType
@@ -96,7 +96,7 @@ private fun getReferenceHighlightingAttribute(reference: GrReferenceElement<*>):
     }
     else {
       val isStatic = resolved.hasModifierProperty(PsiModifier.STATIC)
-      if (isSimplePropertyAccessor(resolved)) {
+      if (resolveResult.isInvokedOnProperty) {
         if (isStatic) STATIC_PROPERTY_REFERENCE else INSTANCE_PROPERTY_REFERENCE
       }
       else {

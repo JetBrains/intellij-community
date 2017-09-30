@@ -54,11 +54,11 @@ def <info descr="null" textAttributesKey="Groovy var">c</info> = new <info descr
 <info descr="null" textAttributesKey="Groovy var">c</info>.<info descr="null" textAttributesKey="Instance property reference ID">instanceGetterBool</info>
 <info descr="null" textAttributesKey="Groovy var">c</info>.<info descr="null" textAttributesKey="Instance property reference ID">instanceSetter</info> = 42
 
-<info descr="null" textAttributesKey="Groovy var">c</info>.<info descr="null" textAttributesKey="Instance property reference ID">getInstanceProperty</info>()
-<info descr="null" textAttributesKey="Groovy var">c</info>.<info descr="null" textAttributesKey="Instance property reference ID">setInstanceProperty</info>(42)
-<info descr="null" textAttributesKey="Groovy var">c</info>.<info descr="null" textAttributesKey="Instance property reference ID">getInstanceGetter</info>()
-<info descr="null" textAttributesKey="Groovy var">c</info>.<info descr="null" textAttributesKey="Instance property reference ID">isInstanceGetterBool</info>()
-<info descr="null" textAttributesKey="Groovy var">c</info>.<info descr="null" textAttributesKey="Instance property reference ID">setInstanceSetter</info>(42)
+<info descr="null" textAttributesKey="Groovy var">c</info>.<info descr="null" textAttributesKey="Method call">getInstanceProperty</info>()
+<info descr="null" textAttributesKey="Groovy var">c</info>.<info descr="null" textAttributesKey="Method call">setInstanceProperty</info>(42)
+<info descr="null" textAttributesKey="Groovy var">c</info>.<info descr="null" textAttributesKey="Method call">getInstanceGetter</info>()
+<info descr="null" textAttributesKey="Groovy var">c</info>.<info descr="null" textAttributesKey="Method call">isInstanceGetterBool</info>()
+<info descr="null" textAttributesKey="Groovy var">c</info>.<info descr="null" textAttributesKey="Method call">setInstanceSetter</info>(42)
 
 <info descr="null" textAttributesKey="Groovy var">c</info>.<info descr="null" textAttributesKey="Method call">instanceMethod</info>()
 
@@ -70,11 +70,11 @@ def <info descr="null" textAttributesKey="Groovy var">c</info> = new <info descr
 <info descr="null" textAttributesKey="Class">C</info>.<info descr="null" textAttributesKey="Static property reference ID">staticGetterBool</info>
 <info descr="null" textAttributesKey="Class">C</info>.<info descr="null" textAttributesKey="Static property reference ID">staticSetter</info> = 42
 
-<info descr="null" textAttributesKey="Class">C</info>.<info descr="null" textAttributesKey="Static property reference ID">getStaticProperty</info>()
-<info descr="null" textAttributesKey="Class">C</info>.<info descr="null" textAttributesKey="Static property reference ID">setStaticProperty</info>(42)
-<info descr="null" textAttributesKey="Class">C</info>.<info descr="null" textAttributesKey="Static property reference ID">getStaticGetter</info>()
-<info descr="null" textAttributesKey="Class">C</info>.<info descr="null" textAttributesKey="Static property reference ID">isStaticGetterBool</info>()
-<info descr="null" textAttributesKey="Class">C</info>.<info descr="null" textAttributesKey="Static property reference ID">setStaticSetter</info>(42)
+<info descr="null" textAttributesKey="Class">C</info>.<info descr="null" textAttributesKey="Static method access">getStaticProperty</info>()
+<info descr="null" textAttributesKey="Class">C</info>.<info descr="null" textAttributesKey="Static method access">setStaticProperty</info>(42)
+<info descr="null" textAttributesKey="Class">C</info>.<info descr="null" textAttributesKey="Static method access">getStaticGetter</info>()
+<info descr="null" textAttributesKey="Class">C</info>.<info descr="null" textAttributesKey="Static method access">isStaticGetterBool</info>()
+<info descr="null" textAttributesKey="Class">C</info>.<info descr="null" textAttributesKey="Static method access">setStaticSetter</info>(42)
 
 <info descr="null" textAttributesKey="Class">C</info>.<info descr="null" textAttributesKey="Static method access">staticMethod</info>()
 
