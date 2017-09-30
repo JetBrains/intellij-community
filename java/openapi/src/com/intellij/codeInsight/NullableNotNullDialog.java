@@ -1,18 +1,16 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInspection.InspectionsBundle;
@@ -23,7 +21,6 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -38,8 +35,6 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -157,12 +152,7 @@ public class NullableNotNullDialog extends DialogWrapper {
         };
 
       final ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myList).disableUpDownActions()
-        .setAddAction(new AnActionButtonRunnable() {
-          @Override
-          public void run(AnActionButton anActionButton) {
-            chooseAnnotation(name, myList);
-          }
-        })
+        .setAddAction(b -> chooseAnnotation(name, myList))
         .setRemoveAction(new AnActionButtonRunnable() {
           @Override
           public void run(AnActionButton anActionButton) {
@@ -173,22 +163,12 @@ public class NullableNotNullDialog extends DialogWrapper {
             ((DefaultListModel)myList.getModel()).removeElement(selectedValue);
           }
         })
+        .setRemoveActionUpdater(e -> !myDefaultAnnotations.contains(myList.getSelectedValue()))
         .addExtraAction(selectButton);
       final JPanel panel = toolbarDecorator.createPanel();
       myComponent = new JPanel(new BorderLayout());
       myComponent.setBorder(IdeBorderFactory.createTitledBorder(name + " annotations", false, JBUI.insetsTop(10)));
       myComponent.add(panel);
-      final AnActionButton removeButton = ToolbarDecorator.findRemoveButton(myComponent);
-      myList.addListSelectionListener(new ListSelectionListener() {
-        @Override
-        public void valueChanged(ListSelectionEvent e) {
-          if (e.getValueIsAdjusting()) return;
-          final String selectedValue = myList.getSelectedValue();
-          if (myDefaultAnnotations.contains(selectedValue)) {
-            ApplicationManager.getApplication().invokeLater(() -> removeButton.setEnabled(false));
-          }
-        }
-      });
       myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       myList.setSelectedValue(myDefaultAnnotation, true);
     }
