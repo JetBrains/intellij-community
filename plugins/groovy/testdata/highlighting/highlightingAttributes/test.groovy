@@ -45,7 +45,7 @@ enum <info descr="null" textAttributesKey="Enum name">E</info> {}
   <info descr="null" textAttributesKey="Class">String</info> <info descr="null" textAttributesKey="Groovy method declaration">parameter</info>()
 }
 
-def <info descr="null" textAttributesKey="Groovy var">c</info> = new <info descr="null" textAttributesKey="Class"><info descr="null" textAttributesKey="Anonymous class name">C</info></info>() {}
+def <info descr="null" textAttributesKey="Groovy var">c</info> = new <info descr="null" textAttributesKey="Anonymous class name">C</info>() {}
 <info descr="null" textAttributesKey="Groovy var">c</info>.<info descr="null" textAttributesKey="Instance field">instanceField</info>
 
 <info descr="null" textAttributesKey="Groovy var">c</info>.<info descr="null" textAttributesKey="Instance property reference ID">instanceProperty</info>

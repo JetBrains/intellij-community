@@ -81,6 +81,7 @@ private fun getElementAttribute(element: PsiElement): TextAttributesKey? {
 
 private fun getReferenceHighlightingAttribute(reference: GrReferenceElement<*>): TextAttributesKey? {
   if (reference.isReferenceWithLiteralName()) return null // don't highlight literal references
+  if (reference.isAnonymousClassReference()) return null
 
   val resolved = reference.resolve() ?: return null
   return if (resolved is PsiMethod) {

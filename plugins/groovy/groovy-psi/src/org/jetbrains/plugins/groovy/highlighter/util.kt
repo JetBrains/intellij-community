@@ -14,6 +14,7 @@ import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 
 internal fun PsiFile.getGroovyFile(): GroovyFileBase? = viewProvider.getPsi(GroovyLanguage) as? GroovyFileBase
@@ -43,3 +44,7 @@ internal fun PsiMethod.isMethodWithLiteralName() = this is GrMethod && nameIdent
 internal fun GrReferenceElement<*>.isReferenceWithLiteralName() = referenceNameElement.isStringNameElement()
 
 private fun PsiElement?.isStringNameElement() = this?.node?.elementType in TokenSets.STRING_LITERAL_SET
+
+internal fun GrReferenceElement<*>.isAnonymousClassReference(): Boolean {
+  return (parent as? GrAnonymousClassDefinition)?.baseClassReferenceGroovy == this
+}
