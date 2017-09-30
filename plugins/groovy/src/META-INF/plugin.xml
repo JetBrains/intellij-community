@@ -16,7 +16,7 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <id>org.intellij.groovy</id>
   <name>Groovy</name>
-  <description>Plugin for Groovy language support, including Groovy++, Grape, Gant and Griffon</description>
+  <description>Plugin for Groovy language support, including, Grape, Gant and Griffon</description>
   <version>9.0</version>
   <vendor>JetBrains</vendor>
   <depends>com.intellij.properties</depends>
