@@ -139,6 +139,7 @@ public class SMTestRunnerConnectionUtil {
         }
 
         SMTestRunnerResultsForm resultsForm = consoleView.getResultsViewer();
+        resultsForm.getTestsRootNode().setHandler(processHandler);
         attachEventsProcessors(properties,
                                resultsForm,
                                processHandler,

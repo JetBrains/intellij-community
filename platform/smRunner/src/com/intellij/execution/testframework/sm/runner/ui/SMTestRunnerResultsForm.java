@@ -30,8 +30,10 @@ import com.intellij.execution.testframework.sm.runner.history.ImportedTestConsol
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -232,8 +234,9 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myMentionedCategories.clear();
 
     myAnimator.setCurrentTestCase(myTestsRootNode);
-    if (!myTestsRootNode.getChildren().isEmpty()) {
-      myTestsRootNode.getChildren().clear();
+    if (myEndTime != 0) { // avoid to reset root node needlessly, e.g. for the first time
+      myTestsRootNode.testingRestarted(DataManager.getInstance().getDataContext(myConsole).getData(LangDataKeys.CONSOLE_VIEW));
+      myEndTime = 0;
     }
     myTreeBuilder.updateFromRoot();
 
