@@ -2039,7 +2039,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                   size.height = Math.max(JBUI.scale(30), listSize.height);
                 }
 
-                if (size.width < myBalloon.getSize().width) {
+                if (myBalloon != null && size.width < myBalloon.getSize().width) {
                   size.width = myBalloon.getSize().width;
                 }
 
