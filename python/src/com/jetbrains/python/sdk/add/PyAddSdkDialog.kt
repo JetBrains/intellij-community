@@ -54,7 +54,8 @@ class PyAddSdkDialog(private val project: Project?,
     val sdks = existingSdks
       .filter { it.sdkType is PythonSdkType && !PythonSdkType.isInvalid(it) }
       .sortedWith(PreferredSdkComparator())
-    return createCardSplitter(listOf(createLocalInterpreterPanel(project, sdks, newProjectPath),
+    return createCardSplitter(listOf(createVirtualEnvPanel(project, sdks, newProjectPath),
+                                     PyAddSystemWideInterpreterPanel(existingSdks),
                                      createAnacondaPanel()))
   }
 
@@ -97,25 +98,23 @@ class PyAddSdkDialog(private val project: Project?,
     }
   }
 
-  private fun createLocalInterpreterPanel(project: Project?,
-                                          existingSdks: List<Sdk>,
-                                          newProjectPath: String?): PyAddSdkPanel {
+  private fun createVirtualEnvPanel(project: Project?,
+                                    existingSdks: List<Sdk>,
+                                    newProjectPath: String?): PyAddSdkPanel {
     val newVirtualEnvPanel = if (project != null || PlatformUtils.isPyCharmEducational())
       PyAddNewVirtualEnvPanel(project, existingSdks, newProjectPath)
     else
       null
     val existingVirtualEnvPanel = PyAddExistingVirtualEnvPanel(project, existingSdks, newProjectPath)
-    val systemInterpreterPanel = PyAddSystemWideInterpreterPanel(existingSdks)
     val panels = listOf(newVirtualEnvPanel,
-                        existingVirtualEnvPanel,
-                        systemInterpreterPanel)
+                        existingVirtualEnvPanel)
       .filterNotNull()
     val defaultPanel = when {
       detectVirtualEnvs(project, existingSdks).any { it.isAssociatedWithProject(project) } -> existingVirtualEnvPanel
       newVirtualEnvPanel != null -> newVirtualEnvPanel
-      else -> systemInterpreterPanel
+      else -> existingVirtualEnvPanel
     }
-    return PyAddSdkGroupPanel("Local interpreter", PythonIcons.Python.Python, panels, defaultPanel)
+    return PyAddSdkGroupPanel("Virtual environment", PythonIcons.Python.Virtualenv, panels, defaultPanel)
   }
 
   private fun createAnacondaPanel(): PyAddSdkPanel {
