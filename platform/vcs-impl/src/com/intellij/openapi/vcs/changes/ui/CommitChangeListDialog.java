@@ -305,7 +305,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       DiffCommitMessageEditor commitMessageEditor = new DiffCommitMessageEditor(myProject, myCommitMessageArea);
       browser.setBottomDiffComponent(commitMessageEditor);
 
-      browser.setInclusionChangedListener(() -> myHandlers.forEach(CheckinHandler::includedChangesChanged));
+      browser.setInclusionChangedListener(() -> {
+        myHandlers.forEach(CheckinHandler::includedChangesChanged);
+        updateButtons();
+      });
       browser.setSelectedListChangeListener(() -> {
         myCommitMessageArea.setChangeList(browser.getSelectedChangeList());
         updateOnListSelection();
