@@ -57,6 +57,8 @@ public class RightMarginForm {
   private CommaSeparatedIntegersField myVisualGuidesField;
   @SuppressWarnings("unused") private ActionLink myResetLink;
   private JLabel myVisualGuidesHint;
+  private JLabel myVisualGuidesLabel;
+  private ActionLink myResetGuidesLink;
   private final Language myLanguage;
   private final CodeStyleSettings mySettings;
 
@@ -71,6 +73,7 @@ public class RightMarginForm {
     MarginOptionsUtil.customizeWrapOnTypingCombo(myWrapOnTypingCombo, settings);
     myVisualGuidesHint.setForeground(JBColor.GRAY);
     myVisualGuidesHint.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
+    myVisualGuidesLabel.setText(ApplicationBundle.message("settings.code.style.visual.guides") + ":");
   }
 
   void createUIComponents() {
@@ -89,16 +92,26 @@ public class RightMarginForm {
     myVisualGuidesField.getValueEditor().addListener(new ValueEditor.Listener<List<Integer>>() {
       @Override
       public void valueChanged(@NotNull List<Integer> newValue) {
+        myResetGuidesLink.setVisible(!myVisualGuidesField.isEmpty());
         myVisualGuidesField.getEmptyText().setText(MarginOptionsUtil.getDefaultVisualGuidesText(mySettings));
       }
     });
     myResetLink = new ActionLink("Reset", new ResetRightMarginAction());
+    myVisualGuidesLabel = new JLabel();
+    myResetGuidesLink = new ActionLink("Reset", new ResetGuidesAction());
   }
 
   private class ResetRightMarginAction extends DumbAwareAction {
     @Override
     public void actionPerformed(AnActionEvent e) {
       myRightMarginField.resetToDefault();
+    }
+  }
+
+  private class ResetGuidesAction extends DumbAwareAction {
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      myVisualGuidesField.clear();
     }
   }
 
@@ -113,6 +126,7 @@ public class RightMarginForm {
     }
     myVisualGuidesField.setValue(langSettings.getSoftMargins());
     myResetLink.setVisible(langSettings.RIGHT_MARGIN >= 0);
+    myResetGuidesLink.setVisible(!langSettings.getSoftMargins().isEmpty());
     myRightMarginField.getEmptyText().setText(MarginOptionsUtil.getDefaultRightMarginText(settings));
     myVisualGuidesField.getEmptyText().setText(MarginOptionsUtil.getDefaultVisualGuidesText(settings));
   }
