@@ -28,7 +28,7 @@ public class ShowUsagesSettings implements PersistentStateComponent<ShowUsagesSe
     XmlSerializerUtil.copyBean(state, myState);
   }
 
-  public void loadState(UsageViewSettings state) {
+  public void loadUsageViewSettings(UsageViewSettings state) {
     XmlSerializerUtil.copyBean(state, myState);
   }
 
