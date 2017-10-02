@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.util.containers.Convertor;
-import org.jetbrains.idea.svn.auth.ProviderType;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
@@ -72,7 +71,7 @@ public class SvnTestInteractiveAuthentication implements ISVNAuthenticationProvi
       }
     }
     if (! ISVNAuthenticationManager.USERNAME.equals(kind)) {
-      myManager.requested(ProviderType.interactive, url, realm, kind, result == null);
+      myManager.requested(result == null);
     }
     return result;
   }

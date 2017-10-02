@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,7 +161,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
 
     final boolean wasCanceled = result[0] == null;
     callState.setWasCancelled(wasCanceled);
-    myManager.requested(ProviderType.interactive, url, realm, kind, wasCanceled);
+    myManager.requested(wasCanceled);
     return result[0];
   }
 

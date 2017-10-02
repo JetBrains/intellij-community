@@ -32,7 +32,6 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.net.HttpConfigurable;
@@ -62,11 +61,7 @@ import java.util.*;
 import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
-/**
- * @author alex
- */
-public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager
-  implements SvnAuthenticationListener, ISVNAuthenticationManagerExt {
+public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager implements ISVNAuthenticationManagerExt {
   private static final Logger LOG = Logger.getInstance(SvnAuthenticationManager.class);
   // while Mac storage not working for IDEA, we use this key to check whether to prompt abt plaintext or just store
   public static final String SVN_SSH = "svn+ssh";
@@ -84,7 +79,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager
   private SvnConfiguration myConfig;
   private static final ThreadLocal<Boolean> ourJustEntered = new ThreadLocal<>();
   private SvnAuthenticationInteraction myInteraction;
-  private EventDispatcher<SvnAuthenticationListener> myListener;
   private IdeaSVNHostOptionsProvider myLocalHostOptionsProvider;
   private final ThreadLocalSavePermissions mySavePermissions;
   private final Map<Thread, String> myKeyAlgorithm;
@@ -100,7 +94,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager
     myProject = myVcs.getProject();
     myConfigDirectory = configDirectory;
     myKeyAlgorithm = new HashMap<>();
-    ensureListenerCreated();
     mySavePermissions = new ThreadLocalSavePermissions();
     myConfig = myVcs.getSvnConfiguration();
     if (myPersistentAuthenticationProviderProxy != null) {
@@ -265,12 +258,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager
     myArtificialSaving = artificialSaving;
   }
 
-  private void ensureListenerCreated() {
-    if (myListener == null) {
-      myListener = EventDispatcher.create(SvnAuthenticationListener.class);
-    }
-  }
-
   @Override
   public IdeaSVNHostOptionsProvider getHostOptionsProvider() {
     if (myLocalHostOptionsProvider == null) {
@@ -279,36 +266,10 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager
     return myLocalHostOptionsProvider;
   }
 
-  public void addListener(final SvnAuthenticationListener listener) {
-    myListener.addListener(listener);
-  }
-
-  @Override
-  public void actualSaveWillBeTried(ProviderType type, SVNURL url, String realm, String kind) {
-    myListener.getMulticaster().actualSaveWillBeTried(type, url, realm, kind);
-  }
-
-  @Override
-  public void saveAttemptStarted(ProviderType type, SVNURL url, String realm, String kind) {
-    myListener.getMulticaster().saveAttemptStarted(type, url, realm, kind);
-  }
-
-  @Override
-  public void saveAttemptFinished(ProviderType type, SVNURL url, String realm, String kind) {
-    myListener.getMulticaster().saveAttemptFinished(type, url, realm, kind);
-  }
-
-  @Override
-  public void acknowledge(boolean accepted, String kind, String realm, SVNErrorMessage message, SVNAuthentication authentication) {
-    myListener.getMulticaster().acknowledge(accepted, kind, realm, message, authentication);
-  }
-
-  @Override
-  public void requested(ProviderType type, SVNURL url, String realm, String kind, boolean canceled) {
-    if (ProviderType.interactive.equals(type) && (!canceled)) {
+  public void requested(boolean canceled) {
+    if (!canceled) {
       ourJustEntered.set(true);
     }
-    myListener.getMulticaster().requested(type, url, realm, kind, canceled);
   }
 
   @Override
@@ -346,7 +307,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager
           return false;
         }
       };
-      ensureListenerCreated();
       myDelegate = new DefaultSVNPersistentAuthenticationProvider(authDir, userName, delegatingOptions, getDefaultOptions(),
                                                                   getHostOptionsProvider()) {
         @Override
@@ -355,7 +315,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager
           final IPasswordStorage[] proxied = new IPasswordStorage[passwordStorages.length];
           for (int i = 0; i < passwordStorages.length; i++) {
             final IPasswordStorage storage = passwordStorages[i];
-            proxied[i] = new ProxyPasswordStorageForDebug(storage, myListener);
+            proxied[i] = new ProxyPasswordStorageForDebug(storage);
           }
           return proxied;
         }
@@ -374,12 +334,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager
                                                          final SVNAuthentication previousAuth,
                                                          final boolean authMayBeStored) {
       try {
-        return wrapNativeCall(() -> {
-          final SVNAuthentication svnAuthentication =
-            myDelegate.requestClientAuthentication(kind, url, realm, errorMessage, previousAuth, authMayBeStored);
-          myListener.getMulticaster().requested(ProviderType.persistent, url, realm, kind, svnAuthentication == null);
-          return svnAuthentication;
-        });
+        return wrapNativeCall(() -> myDelegate.requestClientAuthentication(kind, url, realm, errorMessage, previousAuth, authMayBeStored));
       }
       catch (SVNException e) {
         LOG.info(e);
@@ -422,9 +377,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager
             // not what user entered
             return null;
           }
-          myListener.getMulticaster().saveAttemptStarted(ProviderType.persistent, auth.getURL(), realm, auth.getKind());
           ((ISVNPersistentAuthenticationProvider)myDelegate).saveAuthentication(auth, kind, realm);
-          myListener.getMulticaster().saveAttemptFinished(ProviderType.persistent, auth.getURL(), realm, auth.getKind());
           return null;
         });
       }
@@ -531,7 +484,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager
       CommonProxy.getInstance().removeNoProxy(url.getProtocol(), url.getHost(), url.getPort());
     }
     boolean successSaving = false;
-    myListener.getMulticaster().acknowledge(accepted, kind, realm, errorMessage, authentication);
     try {
       final boolean authStorageEnabled = getHostOptionsProvider().getHostOptions(authentication.getURL()).isAuthStorageEnabled();
       final SVNAuthentication proxy = ProxySvnAuthentication.proxy(authentication, authStorageEnabled, myArtificialSaving);
@@ -1085,12 +1037,9 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager
 
   private static class ProxyPasswordStorageForDebug implements DefaultSVNPersistentAuthenticationProvider.IPasswordStorage {
     private final DefaultSVNPersistentAuthenticationProvider.IPasswordStorage myDelegate;
-    private final EventDispatcher<SvnAuthenticationListener> myListener;
 
-    public ProxyPasswordStorageForDebug(final DefaultSVNPersistentAuthenticationProvider.IPasswordStorage delegate,
-                                        final EventDispatcher<SvnAuthenticationListener> listener) {
+    public ProxyPasswordStorageForDebug(final DefaultSVNPersistentAuthenticationProvider.IPasswordStorage delegate) {
       myDelegate = delegate;
-      myListener = listener;
     }
 
     @Override
@@ -1100,12 +1049,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager
 
     @Override
     public boolean savePassword(String realm, char[] password, SVNAuthentication auth, SVNProperties authParameters) throws SVNException {
-      final boolean saved = myDelegate.savePassword(realm, password, auth, authParameters);
-      if (saved) {
-        myListener.getMulticaster().actualSaveWillBeTried(ProviderType.persistent, auth.getURL(), realm, auth.getKind()
-        );
-      }
-      return saved;
+      return myDelegate.savePassword(realm, password, auth, authParameters);
     }
 
     @Override
@@ -1116,12 +1060,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager
     @Override
     public boolean savePassphrase(String realm, char[] passphrase, SVNAuthentication auth, SVNProperties authParameters, boolean force)
       throws SVNException {
-      final boolean saved = myDelegate.savePassphrase(realm, passphrase, auth, authParameters, force);
-      if (saved) {
-        myListener.getMulticaster().actualSaveWillBeTried(ProviderType.persistent, auth.getURL(), realm, auth.getKind()
-        );
-      }
-      return saved;
+      return myDelegate.savePassphrase(realm, passphrase, auth, authParameters, force);
     }
 
     @Override
