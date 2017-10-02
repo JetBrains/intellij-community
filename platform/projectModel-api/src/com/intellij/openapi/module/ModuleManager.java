@@ -48,7 +48,7 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    * Creates a module of the specified type at the specified path and adds it to the project
    * to which the module manager is related.
    *
-   * @param filePath     the path at which the module is created.
+   * @param filePath     path to an *.iml file where module configuration will be saved; name of the module will be equal to the file name without extension.
    * @param moduleTypeId the ID of the module type to create.
    * @return the module instance.
    */
