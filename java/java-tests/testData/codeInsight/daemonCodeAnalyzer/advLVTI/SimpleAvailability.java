@@ -3,10 +3,10 @@ class Main {
     private static void localVariableDeclaration() {
         var a = 1;
         <error descr="'var' is not allowed in a compound declaration">var b = 2</error>, <error descr="'var' is not allowed in a compound declaration">c = 3.0;</error>
-        <error descr="'var' is not allowed as an element type of an array">var d[] = new int[4];</error>
+        <error descr="'var' is not allowed as an element type of an array">var</error> d[] = new int[4];
         var d1 = new int[] {4};                                                                                          
         var d2 = new int[4];                                                                                          
-        <error descr="Cannot infer type: 'var' on variable without initializer">var e;</error>
+        <error descr="Cannot infer type: 'var' on variable without initializer">var</error> e;
         var f = <error descr="Array initializer is not allowed here">{ 6 }</error>;
         var g = (<error descr="Incompatible types. Found: 'int', required: 'null'">g = 7</error>);
     }
@@ -26,9 +26,9 @@ class Main {
         var e = (CharSequence & Comparable<String>) "x";
         int el = e.compareTo("");
 
-        var f = <error descr="<lambda expression> is not a functional interface">() -> "hello"</error>;
-        var m = <error descr="<method reference> is not a functional interface">Main::localVariableDeclaration</error>;
-        <error descr="Cannot infer type: variable initializer is 'null'">var g = null;</error>
+        <error descr="Cannot infer type: lambda expression requires an explicit target type">var</error> f = () -> "hello";
+        <error descr="Cannot infer type: method reference requires an explicit target type">var</error> m = Main::localVariableDeclaration;
+        <error descr="Cannot infer type: variable initializer is 'null'">var</error> g = null;
     }
 
    private void forEachType(String[] strs, Iterable<String> it, Iterable raw) {
@@ -53,7 +53,7 @@ class Main {
     }
 
     private void tryWithResources(AutoCloseable c) throws Exception {
-        try (<error descr="Cannot infer type: variable initializer is 'null'">var v = null</error>) { }
+        try (<error descr="Cannot infer type: variable initializer is 'null'">var</error> v = null) { }
         try (var v = c) { }
 
     }
