@@ -18,6 +18,7 @@ package com.jetbrains.python.plots;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.BinaryLightVirtualFile;
 import com.intellij.util.ui.UIUtil;
 
@@ -28,7 +29,7 @@ import java.io.IOException;
 
 public class PyPlotVirtualFile extends BinaryLightVirtualFile {
   private static final Logger LOG = Logger.getInstance(PyPlotToolWindow.class);
-  private final BufferedImage myImage;
+  private BufferedImage myImage;
 
   public PyPlotVirtualFile(int width, byte[] raw) {
     super(PyPlotToolWindow.PLOT_DEFAULT_NAME + "." + PyPlotToolWindow.PLOT_FORMAT);
@@ -39,6 +40,9 @@ public class PyPlotVirtualFile extends BinaryLightVirtualFile {
                                                              new int[]{0, 1, 2});
     final Raster raster = Raster.createRaster(sampleModel, buffer, null);
     myImage = UIUtil.createImage(width, height, BufferedImage.TYPE_INT_RGB);
+    if (SystemInfo.isMac && UIUtil.isRetina()) {
+      myImage = myImage.getSubimage(0, 0, width / 2, height / 2);
+    }
     myImage.setData(raster);
     byte[] bytes = imageToByteArray(myImage);
     if (bytes == null) return;

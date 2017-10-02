@@ -177,16 +177,20 @@ public class PySciViewAction extends ToggleAction implements DumbAware {
 
   public static void showDataViewAsToolwindow(@NotNull final Project project) {
     ToolWindow dataViewToolWindow = ToolWindowManager.getInstance(project).getToolWindow(DATA_VIEWER_ID);
-    dataViewToolWindow.setType(ToolWindowType.DOCKED, null);
-    dataViewToolWindow.setAutoHide(false);
-    dataViewToolWindow.setShowStripeButton(true);
+    if (dataViewToolWindow != null) {
+      dataViewToolWindow.setType(ToolWindowType.DOCKED, null);
+      dataViewToolWindow.setAutoHide(false);
+      dataViewToolWindow.setShowStripeButton(true);
+    }
   }
 
   public static void hideDataViewer(Project project) {
     final ToolWindow dataViewer = ToolWindowManager.getInstance(project).getToolWindow(DATA_VIEWER_ID);
-    dataViewer.setType(ToolWindowType.FLOATING, null);
-    dataViewer.setAutoHide(true);
-    dataViewer.setShowStripeButton(false);
+    if (dataViewer != null) {
+      dataViewer.setType(ToolWindowType.FLOATING, null);
+      dataViewer.setAutoHide(true);
+      dataViewer.setShowStripeButton(false);
+    }
   }
 
   private static PsiElement getPsiElement(AnActionEvent e, Project project) {
