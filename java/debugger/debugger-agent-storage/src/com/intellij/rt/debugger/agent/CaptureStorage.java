@@ -4,6 +4,7 @@ package com.intellij.rt.debugger.agent;
 import sun.misc.JavaLangAccess;
 import sun.misc.SharedSecrets;
 
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -13,8 +14,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class CaptureStorage {
   private static final int MAX_STORED_STACKS = 1000;
-  private static final Map<Object, CapturedStack> STORAGE = new ConcurrentHashMap<Object, CapturedStack>();
-  private static final Deque HISTORY = new ArrayDeque(MAX_STORED_STACKS);
+  private static final Map<WeakReference, CapturedStack> STORAGE = new ConcurrentHashMap<WeakReference, CapturedStack>();
+  private static final Deque<WeakReference> HISTORY = new ArrayDeque<WeakReference>(MAX_STORED_STACKS);
 
   @SuppressWarnings("SSBasedInspection")
   private static final ThreadLocal<Deque<InsertMatch>> CURRENT_STACKS = new ThreadLocal<Deque<InsertMatch>>() {
@@ -39,16 +40,17 @@ public class CaptureStorage {
     Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
     CapturedStack stack = createCapturedStack(new Throwable(), currentStacks.isEmpty() ? null : currentStacks.getLast());
     synchronized (HISTORY) {
-      CapturedStack old = STORAGE.put(key, stack);
+      WeakKey keyRef = new WeakKey(key);
+      CapturedStack old = STORAGE.put(keyRef, stack);
       if (old == null) {
         if (HISTORY.size() >= MAX_STORED_STACKS) {
           STORAGE.remove(HISTORY.removeFirst());
         }
       }
       else {
-        HISTORY.remove(old); // must not happen often
+        HISTORY.remove(keyRef); // must not happen often
       }
-      HISTORY.addLast(key);
+      HISTORY.addLast(keyRef);
     }
   }
 
@@ -57,7 +59,7 @@ public class CaptureStorage {
     if (!ENABLED) {
       return;
     }
-    CapturedStack stack = STORAGE.get(key);
+    CapturedStack stack = STORAGE.get(new WeakKey(key));
     Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
     if (stack != null) {
       currentStacks.add(new InsertMatch(stack, ourJavaLangAccess.getStackTraceDepth(new Throwable())));
@@ -70,6 +72,25 @@ public class CaptureStorage {
       if (DEBUG) {
         System.out.println("insert -> " + key + ", no stack found (" + currentStacks.size() + ")");
       }
+    }
+  }
+
+  private static class WeakKey extends WeakReference {
+    private final int myHashCode;
+
+    public WeakKey(Object referent) {
+      super(referent);
+      myHashCode = System.identityHashCode(referent);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      return this == o || (o instanceof WeakKey && ((WeakKey)o).get() == get());
+    }
+
+    @Override
+    public int hashCode() {
+      return myHashCode;
     }
   }
 
@@ -145,7 +166,7 @@ public class CaptureStorage {
   // to be run from the debugger
   @SuppressWarnings("unused")
   public static Object[][] getRelatedStack(Object key) {
-    CapturedStack stack = STORAGE.get(key);
+    CapturedStack stack = STORAGE.get(new WeakKey(key));
     if (stack == null) {
       return null;
     }
