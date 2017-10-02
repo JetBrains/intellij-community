@@ -23,5 +23,6 @@
     <orderEntry type="module" module-name="ipnb" />
     <orderEntry type="module" module-name="settings-repository" />
     <orderEntry type="module" module-name="python-terminal" />
+    <orderEntry type="module" module-name="properties" />
   </component>
 </module>
