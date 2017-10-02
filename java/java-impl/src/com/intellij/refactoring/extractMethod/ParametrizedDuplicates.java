@@ -71,6 +71,9 @@ public class ParametrizedDuplicates {
       return null;
     }
     List<Match> matches = findOriginalDuplicates(originalProcessor);
+    if (matches.isEmpty()) {
+      return null;
+    }
 
     ParametrizedDuplicates duplicates = new ParametrizedDuplicates(pattern);
     if (!duplicates.initMatches(matches)) {
@@ -124,23 +127,13 @@ public class ParametrizedDuplicates {
     myOccurrencesList = new ArrayList<>();
     Map<PsiExpression, Occurrences> occurrencesMap = new THashMap<>();
     Set<Match> badMatches = new THashSet<>();
-    matches:
     for (Match match : matches) {
-      List<Occurrences> matchOccurrences = new ArrayList<>();
-      List<ExtractedParameter> parameters = match.getExtractedParameters();
-      for (ExtractedParameter parameter : parameters) {
-        Occurrences occurrences = occurrencesMap.get(parameter.myPattern.getUsage());
-        if (occurrences != null && !occurrences.isEquivalent(parameter) ||
-            occurrences == null && Occurrences.isPresent(occurrencesMap, parameter)) {
-          badMatches.add(match);
-          continue matches;
-        }
-        if (occurrences == null) {
-          matchOccurrences.add(occurrences = new Occurrences(parameter));
-        }
-        occurrences.add(parameter);
+      List<Occurrences> occurrencesInMatch = getOccurrencesInMatch(occurrencesMap, match);
+      if (occurrencesInMatch == null) {
+        badMatches.add(match);
+        continue;
       }
-      for (Occurrences occurrences : matchOccurrences) {
+      for (Occurrences occurrences : occurrencesInMatch) {
         myOccurrencesList.add(occurrences);
         for (PsiExpression expression : occurrences.myPatterns) {
           occurrencesMap.put(expression, occurrences);
@@ -154,6 +147,24 @@ public class ParametrizedDuplicates {
     }
     myMatches = matches;
     return !myMatches.isEmpty() && !myOccurrencesList.isEmpty();
+  }
+
+  @Nullable
+  private static List<Occurrences> getOccurrencesInMatch(@NotNull Map<PsiExpression, Occurrences> occurrencesMap, @NotNull Match match) {
+    List<Occurrences> matchOccurrences = new ArrayList<>();
+    List<ExtractedParameter> parameters = match.getExtractedParameters();
+    for (ExtractedParameter parameter : parameters) {
+      Occurrences occurrences = occurrencesMap.get(parameter.myPattern.getUsage());
+      if (occurrences != null && !occurrences.isEquivalent(parameter) ||
+          occurrences == null && Occurrences.isPresent(occurrencesMap, parameter)) {
+        return null;
+      }
+      if (occurrences == null) {
+        matchOccurrences.add(occurrences = new Occurrences(parameter));
+      }
+      occurrences.add(parameter);
+    }
+    return matchOccurrences;
   }
 
   private boolean extract(@NotNull ExtractMethodProcessor originalProcessor) {
