@@ -111,7 +111,7 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
     ExternalSystemTaskExecutionSettings taskSettings = new ExternalSystemTaskExecutionSettings();
     taskSettings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.getId());
     taskSettings.setExternalProjectPath(ExternalSystemApiUtil.getExternalProjectPath(module));
-    final String runAppTaskName = "run " + mainClass.getName();
+    final String runAppTaskName = mainClass.getName() + ".main()";
     taskSettings.setTaskNames(Collections.singletonList(runAppTaskName));
 
     String executorId = executor == null ? DefaultRunExecutor.EXECUTOR_ID : executor.getId();
