@@ -15,7 +15,6 @@
  */
 package com.intellij.debugger.streams.psi.impl
 
-import com.intellij.debugger.streams.lib.LibraryManager
 import com.intellij.debugger.streams.psi.StreamApiUtil
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -38,7 +37,7 @@ class KotlinJavaStreamChainBuilder : KotlinChainBuilderBase(KotlinChainTransform
       val type = expression.analyze().getType(expression) ?: return
 
       val name = type.getJetTypeFqName(false)
-      if (LibraryManager.getInstance(expression.project).isPackageSupported(StringUtil.getPackageName(name))) {
+      if (StringUtil.getPackageName(name).startsWith("java.util.stream")) {
         fireElementFound()
       }
     }

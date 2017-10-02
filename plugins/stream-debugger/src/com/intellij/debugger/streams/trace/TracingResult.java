@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.streams.trace;
 
-import com.intellij.debugger.streams.lib.LibraryManager;
+import com.intellij.debugger.streams.lib.ResolverFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -36,5 +36,5 @@ public interface TracingResult {
   List<TraceInfo> getTrace();
 
   @NotNull
-  ResolvedTracingResult resolve(@NotNull LibraryManager libraryManager);
+  ResolvedTracingResult resolve(@NotNull ResolverFactory resolverFactory);
 }

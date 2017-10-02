@@ -15,7 +15,6 @@
  */
 package com.intellij.debugger.streams.psi;
 
-import com.intellij.debugger.streams.lib.LibraryManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -74,19 +73,18 @@ public class StreamApiUtil {
     final KotlinType receiverType = KotlinPsiUtilKt.receiverType(expression);
     final KotlinType resultType = KotlinPsiUtilKt.resolveType(expression);
 
-    final LibraryManager manager = LibraryManager.getInstance(expression.getProject());
     return (receiverType == null || // there is no producer or producer is a static method
-            shouldSupportReceiver == isSupportedType(receiverType, manager)) &&
-           shouldSupportResult == isSupportedType(resultType, manager);
+            shouldSupportReceiver == isSupportedType(receiverType)) &&
+           shouldSupportResult == isSupportedType(resultType);
   }
 
-  private static boolean isSupportedType(@Nullable KotlinType type, @NotNull LibraryManager manager) {
+  private static boolean isSupportedType(@Nullable KotlinType type) {
     if (type == null) {
       return false;
     }
 
     final String typeName = DescriptorUtilsKt.getJetTypeFqName(type, false);
-    return manager.isPackageSupported(StringUtil.getPackageName(typeName));
+    return StringUtil.getPackageName(typeName).startsWith("java.util.stream");
   }
 
   private static boolean checkStreamCall(@NotNull PsiMethodCallExpression expression,

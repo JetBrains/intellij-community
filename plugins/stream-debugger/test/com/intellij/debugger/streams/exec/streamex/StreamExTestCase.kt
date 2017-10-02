@@ -16,6 +16,8 @@
 package com.intellij.debugger.streams.exec.streamex
 
 import com.intellij.debugger.streams.exec.TraceExecutionTestCase
+import com.intellij.debugger.streams.lib.LibrarySupportProvider
+import com.intellij.debugger.streams.lib.impl.StreamExLibrarySupportProvider
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
@@ -27,6 +29,10 @@ import java.io.File
  */
 abstract class StreamExTestCase : TraceExecutionTestCase() {
   abstract protected val packageName: String
+
+  override fun getLibrarySupportProvider(): LibrarySupportProvider {
+    return StreamExLibrarySupportProvider()
+  }
 
   override fun setUpModule() {
     super.setUpModule()

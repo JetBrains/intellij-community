@@ -56,24 +56,15 @@
   <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
   <idea-version since-build="171"/>
 
-  <project-components>
-    <component>
-      <interface-class>com.intellij.debugger.streams.lib.LibraryManager</interface-class>
-      <implementation-class>com.intellij.debugger.streams.lib.impl.LibraryManagerImpl</implementation-class>
-    </component>
-  </project-components>
-
   <depends optional="true">org.jetbrains.kotlin</depends>
 
   <extensionPoints>
-    <extensionPoint name="librarySupport" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.intellij.debugger.streams.lib.LibrarySupportProvider"/>
-    </extensionPoint>
+    <extensionPoint name="librarySupport" interface="com.intellij.debugger.streams.lib.LibrarySupportProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.debugger.streams">
-    <librarySupport language="JAVA" implementationClass="com.intellij.debugger.streams.lib.impl.DefaultLibrarySupportProvider"/>
-    <librarySupport language="JAVA" implementationClass="com.intellij.debugger.streams.lib.impl.StreamExLibrarySupportProvider"/>
+    <librarySupport implementation="com.intellij.debugger.streams.lib.impl.StandardLibrarySupportProvider"/>
+    <librarySupport implementation="com.intellij.debugger.streams.lib.impl.StreamExLibrarySupportProvider"/>
   </extensions>
 
   <actions>
