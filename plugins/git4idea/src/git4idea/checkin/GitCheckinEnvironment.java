@@ -52,7 +52,6 @@ import com.intellij.util.textCompletion.TextFieldWithCompletion;
 import com.intellij.util.textCompletion.ValuesCompletionProvider.ValuesCompletionProviderDumbAware;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
-import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcs.log.util.VcsUserUtil;
@@ -837,11 +836,13 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     @Override
     public void onChangeListSelected(LocalChangeList list) {
       Object data = list.getData();
-      if (data instanceof VcsFullCommitDetails) {
-        VcsFullCommitDetails commit = (VcsFullCommitDetails)data;
-        String author = VcsUserUtil.toExactString(commit.getAuthor());
-        myAuthorField.setText(author);
-        myAuthorDate = new Date(commit.getAuthorTime());
+      if (data instanceof ChangeListData) {
+        ChangeListData changeListData = (ChangeListData)data;
+        VcsUser author = changeListData.getAuthor();
+        if (author != null) {
+          myAuthorField.setText(VcsUserUtil.toExactString(author));
+        }
+        myAuthorDate = changeListData.getDate();
       }
       else {
         myAuthorField.setText(null);

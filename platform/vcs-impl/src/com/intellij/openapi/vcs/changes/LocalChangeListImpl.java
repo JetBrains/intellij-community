@@ -113,7 +113,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     myIsReadOnly = isReadOnly;
   }
 
-  void setData(@Nullable Object data) {
+  void setData(@Nullable ChangeListData data) {
     myData = data;
   }
 

@@ -45,6 +45,7 @@ import git4idea.merge.GitConflictResolver
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.util.GitUntrackedFilesHelper
+import java.util.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
@@ -278,7 +279,7 @@ class GitApplyChangesProcess(private val project: Project,
 
     val changeListName = createNameForChangeList(commitMessage)
     val createdChangeList = (changeListManager as ChangeListManagerEx).addChangeList(changeListName, commitMessage,
-                                                                                     if (preserveCommitMetadata) commit else null)
+                                                                                     if (preserveCommitMetadata) createChangeListData(commit) else null)
     val actualChangeList = moveChanges(originalChanges, createdChangeList)
     if (actualChangeList != null && !actualChangeList.changes.isEmpty()) {
       return createdChangeList
@@ -288,6 +289,9 @@ class GitApplyChangesProcess(private val project: Project,
     changeListManager.removeChangeList(createdChangeList)
     return null
   }
+
+  private fun createChangeListData(commit: VcsFullCommitDetails) = ChangeListData(commit.fullMessage, commit.author,
+                                                                                  Date(commit.authorTime))
 
   private fun noChangesAfterApply(originalChanges: Collection<Change>): Boolean {
     return findLocalChanges(originalChanges).isEmpty()

@@ -198,13 +198,13 @@ public class ChangeListWorker {
   }
 
   @NotNull
-  public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable Object data) {
+  public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable ChangeListData data) {
     return addChangeList(name, comment, false, data);
   }
 
   @NotNull
   private LocalChangeList addChangeList(@NotNull String name, @Nullable String description, boolean inUpdate,
-                                        @Nullable Object data) {
+                                        @Nullable ChangeListData data) {
     if (myMap.containsKey(name)) {
       LOG.error("Attempt to create duplicate changelist " + name);
       return myMap.get(name);
