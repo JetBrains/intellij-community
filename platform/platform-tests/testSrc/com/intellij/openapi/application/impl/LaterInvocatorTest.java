@@ -72,7 +72,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
   };
 
   @Override
-  protected void setUp() throws Exception {
+  protected void setUp() {
     myWindow1 = new Frame() {
       public String toString() {
         return "Window1";
@@ -102,7 +102,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
   }
 
   @Override
-  protected void tearDown() throws Exception {
+  protected void tearDown() {
     myOrder.clear();
     final boolean[] inModalState = {true};
     ApplicationManager.getApplication().invokeLater(() -> {
@@ -436,7 +436,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
   private class MyRunnable implements Runnable {
     private final String myId;
 
-    public MyRunnable(String id) {
+    MyRunnable(String id) {
       myId = id;
     }
 
@@ -626,28 +626,38 @@ public class LaterInvocatorTest extends PlatformTestCase {
     }));
   }
 
-  public void testAppVsSwingPerformance() throws Exception {
-    int n = 1_000_000;
+  public void testAppVsSwingPerformance() {
+    int N = 1_000_000;
 
     AtomicInteger counter = new AtomicInteger();
     Runnable r = () -> counter.incrementAndGet();
 
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      PlatformTestUtil.startPerformanceTest("Swing invokeLater", 13_000, () -> {
-        for (int i = 0; i < n; i++) {
-          SwingUtilities.invokeLater(r);
-        }
-        SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());
-        assertEquals(n, counter.getAndSet(0));
-      }).assertTiming();
+    PlatformTestUtil.startPerformanceTest("Swing invokeLater", 13_000, () -> {
+      for (int i = 0; i < N; i++) {
+        SwingUtilities.invokeLater(r);
+      }
+      SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());
+      assertEquals(N, counter.getAndSet(0));
+    }).assertTiming();
 
-      PlatformTestUtil.startPerformanceTest("Application invokeLater", 800, () -> {
-        for (int i = 0; i < n; i++) {
-          ApplicationManager.getApplication().invokeLater(r);
-        }
-        ApplicationManager.getApplication().invokeAndWait(EmptyRunnable.getInstance());
-        assertEquals(n, counter.getAndSet(0));
-      }).assertTiming();
-    }).get();
+    PlatformTestUtil.startPerformanceTest("Application invokeLater", 800, () -> {
+      for (int i = 0; i < N; i++) {
+        ApplicationManager.getApplication().invokeLater(r);
+      }
+      ApplicationManager.getApplication().invokeAndWait(EmptyRunnable.getInstance());
+      assertEquals(N, counter.getAndSet(0));
+    }).assertTiming();
+
+    PlatformTestUtil.startPerformanceTest("Application invokeLater in modal context", 800, () -> {
+      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> LaterInvocator.enterModal(myWindow1));
+      for (int i = 0; i < N; i++) {
+        ApplicationManager.getApplication().invokeLater(r);
+      }
+      assertEquals(0, counter.get());
+      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> LaterInvocator.leaveModal(myWindow1));
+      ApplicationManager.getApplication().invokeAndWait(EmptyRunnable.getInstance());
+      assertEquals(N, counter.getAndSet(0));
+    }).assertTiming();
+
   }
 }
