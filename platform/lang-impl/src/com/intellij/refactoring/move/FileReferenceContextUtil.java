@@ -45,8 +45,10 @@ public class FileReferenceContextUtil {
         }
 
         final PsiReference[] refs = element.getReferences();
-        if (refs.length > 0 && refs[0] instanceof FileReferenceOwner) {
-          final PsiFileReference ref = ((FileReferenceOwner)refs[0]).getLastFileReference();
+        outer: for (PsiReference reference : refs) {
+          final PsiFileReference ref = reference instanceof FileReferenceOwner ?
+                                       ((FileReferenceOwner)reference).getLastFileReference() :
+                                       null;
           if (ref != null) {
             final ResolveResult[] results = ref.multiResolve(false);
             for (ResolveResult result : results) {
@@ -54,7 +56,7 @@ public class FileReferenceContextUtil {
                 PsiFileSystemItem fileSystemItem = (PsiFileSystemItem)result.getElement();
                 element.putCopyableUserData(REF_FILE_SYSTEM_ITEM_KEY, fileSystemItem);
                 map.put(element.getText(), fileSystemItem);
-                break;
+                break outer;
               }
             }
           }
