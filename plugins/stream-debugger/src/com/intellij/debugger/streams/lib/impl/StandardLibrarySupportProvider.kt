@@ -15,19 +15,34 @@
  */
 package com.intellij.debugger.streams.lib.impl
 
-import com.intellij.debugger.streams.lib.Language
+import com.intellij.debugger.streams.lib.LibrarySupport
+import com.intellij.debugger.streams.lib.LibrarySupportProvider
+import com.intellij.debugger.streams.psi.impl.JavaChainTransformerImpl
+import com.intellij.debugger.streams.psi.impl.JavaStreamChainBuilder
 import com.intellij.debugger.streams.trace.TraceExpressionBuilder
-import com.intellij.debugger.streams.trace.dsl.StatementFactory
+import com.intellij.debugger.streams.trace.dsl.Dsl
 import com.intellij.debugger.streams.trace.dsl.impl.DslImpl
 import com.intellij.debugger.streams.trace.dsl.impl.java.JavaStatementFactory
 import com.intellij.debugger.streams.trace.impl.JavaTraceExpressionBuilder
+import com.intellij.debugger.streams.wrapper.StreamChainBuilder
 import com.intellij.openapi.project.Project
 
 /**
  * @author Vitaliy.Bibaev
  */
-class JavaLanguage(project: Project) : Language {
-  override val name: String = "Java"
-  override val statementFactory: StatementFactory = JavaStatementFactory()
-  override val expressionBuilder: TraceExpressionBuilder = JavaTraceExpressionBuilder(project, DslImpl(statementFactory))
+class StandardLibrarySupportProvider : LibrarySupportProvider {
+  private companion object {
+    val builder: StreamChainBuilder = JavaStreamChainBuilder(JavaChainTransformerImpl())
+    val support: LibrarySupport = StandardLibrarySupport()
+    val dsl: Dsl = DslImpl(JavaStatementFactory())
+  }
+
+  override fun getLanguageId(): String = "JAVA"
+
+  override fun getExpressionBuilder(project: Project): TraceExpressionBuilder =
+    JavaTraceExpressionBuilder(project, support.createHandlerFactory(dsl))
+
+  override fun getChainBuilder(): StreamChainBuilder = builder
+
+  override fun getLibrarySupport(): LibrarySupport = support
 }

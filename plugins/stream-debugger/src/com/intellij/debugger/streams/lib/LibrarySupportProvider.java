@@ -18,6 +18,7 @@ package com.intellij.debugger.streams.lib;
 import com.intellij.debugger.streams.trace.TraceExpressionBuilder;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,16 +29,16 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public interface LibrarySupportProvider {
-  ExtensionPointName<LibrarySupportProvider> EP_NAME = ExtensionPointName.create("com.intellij.streams.librarySupportProvider");
+  ExtensionPointName<LibrarySupportProvider> EP_NAME = ExtensionPointName.create("org.jetbrains.debugger.streams.librarySupport");
 
   @NotNull
   static List<LibrarySupportProvider> getList() {
-    final LibrarySupportProvider[] extensions = EP_NAME.getExtensions();
+    final LibrarySupportProvider[] extensions = Extensions.getExtensions(EP_NAME);
     return Arrays.asList(extensions);
   }
 
   @NotNull
-  String getLibraryName();
+  String getLanguageId();
 
   @NotNull
   StreamChainBuilder getChainBuilder();
