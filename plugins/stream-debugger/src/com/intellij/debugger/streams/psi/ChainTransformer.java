@@ -19,7 +19,6 @@ import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethodCallExpression;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.psi.KtCallExpression;
 
 import java.util.List;
 
@@ -31,8 +30,5 @@ public interface ChainTransformer<T extends PsiElement> {
   StreamChain transform(@NotNull List<T> callChain, @NotNull PsiElement context);
 
   interface Java extends ChainTransformer<PsiMethodCallExpression> {
-  }
-
-  interface Kotlin extends ChainTransformer<KtCallExpression> {
   }
 }
