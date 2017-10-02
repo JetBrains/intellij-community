@@ -24,6 +24,7 @@ import com.jetbrains.python.sdk.isNotEmptyDirectory
 import icons.PythonIcons
 import java.io.File
 import javax.swing.Icon
+import javax.swing.JComponent
 import javax.swing.JPanel
 
 /**
@@ -51,10 +52,10 @@ abstract class PyAddSdkPanel : JPanel() {
       return message?.let { ValidationInfo(it, field) }
     }
 
-    @JvmStatic protected fun validateAnacondaPresense(): ValidationInfo? =
+    @JvmStatic protected fun validateAnacondaPresense(component: JComponent?): ValidationInfo? =
       when {
         PyCondaPackageService.getSystemCondaExecutable() == null ->
-          ValidationInfo("Anaconda installation is not found")
+          ValidationInfo("Anaconda installation is not found", component)
         else -> null
       }
 

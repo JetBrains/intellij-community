@@ -74,7 +74,7 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
   }
 
   override fun validateAll() =
-    listOf(validateAnacondaPresense(),
+    listOf(validateAnacondaPresense(pathField),
            validateEmptyOrNonExistingDirectoryLocation(pathField))
       .filterNotNull()
 

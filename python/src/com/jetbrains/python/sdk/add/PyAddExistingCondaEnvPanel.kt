@@ -47,7 +47,7 @@ class PyAddExistingCondaEnvPanel(private val project: Project?,
   }
 
   override fun validateAll() =
-    listOf(validateAnacondaPresense(),
+    listOf(validateAnacondaPresense(sdkComboBox),
            validateSdkComboBox(sdkComboBox))
       .filterNotNull()
 
