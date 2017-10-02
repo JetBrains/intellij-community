@@ -27,7 +27,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -276,13 +275,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
                                                          final SVNErrorMessage errorMessage,
                                                          final SVNAuthentication previousAuth,
                                                          final boolean authMayBeStored) {
-      try {
-        return wrapNativeCall(() -> myDelegate.requestClientAuthentication(kind, url, realm, errorMessage, previousAuth, authMayBeStored));
-      }
-      catch (SVNException e) {
-        LOG.info(e);
-        throw new RuntimeException(e);
-      }
+      return myDelegate.requestClientAuthentication(kind, url, realm, errorMessage, previousAuth, authMayBeStored);
     }
 
     public int acceptServerAuthentication(final SVNURL url, final String realm, final Object certificate, final boolean resultMayBeStored) {
@@ -311,48 +304,22 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
       }
     }
 
-    public void saveAuthentication(final SVNAuthentication auth, final String kind, final String realm) {
-      try {
-        wrapNativeCall(() -> {
-          final Boolean fromInteractive = ourJustEntered.get();
-          ourJustEntered.set(null);
-          if (!Boolean.TRUE.equals(fromInteractive)) {
-            // not what user entered
-            return null;
-          }
-          ((ISVNPersistentAuthenticationProvider)myDelegate).saveAuthentication(auth, kind, realm);
-          return null;
-        });
-      }
-      catch (SVNException e) {
-        LOG.info(e);
-        throw new RuntimeException(e);
+    public void saveAuthentication(final SVNAuthentication auth, final String kind, final String realm) throws SVNException {
+      Boolean fromInteractive = ourJustEntered.get();
+      ourJustEntered.set(null);
+      if (Boolean.TRUE.equals(fromInteractive)) {
+        ((ISVNPersistentAuthenticationProvider)myDelegate).saveAuthentication(auth, kind, realm);
       }
     }
 
     @Override
     public void saveFingerprints(final String realm, final byte[] fingerprints) {
-      try {
-        wrapNativeCall(() -> {
-          ((ISVNPersistentAuthenticationProvider)myDelegate).saveFingerprints(realm, fingerprints);
-          return null;
-        });
-      }
-      catch (SVNException e) {
-        LOG.info(e);
-        throw new RuntimeException(e);
-      }
+      ((ISVNPersistentAuthenticationProvider)myDelegate).saveFingerprints(realm, fingerprints);
     }
 
     @Override
     public byte[] loadFingerprints(final String realm) {
-      try {
-        return wrapNativeCall(() -> ((ISVNPersistentAuthenticationProvider)myDelegate).loadFingerprints(realm));
-      }
-      catch (SVNException e) {
-        LOG.info(e);
-        throw new RuntimeException(e);
-      }
+      return ((ISVNPersistentAuthenticationProvider)myDelegate).loadFingerprints(realm);
     }
 
     private final static int maxAttempts = 10;
@@ -1003,31 +970,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     @Override
     public char[] readPassphrase(String realm, SVNProperties authParameters) throws SVNException {
       return myDelegate.readPassphrase(realm, authParameters);
-    }
-  }
-
-  private <T> T wrapNativeCall(final ThrowableComputable<T, SVNException> runnable) throws SVNException {
-    try {
-      NativeLogReader.startTracking();
-      final T t = runnable.compute();
-      final List<NativeLogReader.CallInfo> logged = NativeLogReader.getLogged();
-      final StringBuilder sb = new StringBuilder();
-      for (NativeLogReader.CallInfo info : logged) {
-        final String message = SvnNativeCallsTranslator.getMessage(info);
-        if (message != null) {
-          if (sb.length() > 0) sb.append('\n');
-          sb.append(message);
-        }
-      }
-      if (sb.length() > 0) {
-        VcsBalloonProblemNotifier.showOverChangesView(myProject, sb.toString(), MessageType.ERROR);
-        LOG.info(sb.toString());
-      }
-      return t;
-    }
-    finally {
-      NativeLogReader.clear();
-      NativeLogReader.endTracking();
     }
   }
 
