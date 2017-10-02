@@ -59,7 +59,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
@@ -130,7 +129,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private static TestCase ourTestCase;
   public static Thread ourTestThread;
   private static LightProjectDescriptor ourProjectDescriptor;
-  private static Sdk[] myOldSdks;
+  private static SdkLeakTracker myOldSdks;
 
   private ThreadTracker myThreadTracker;
 
@@ -296,7 +295,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     IdeaLogger.ourErrorsOccurred = null;
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    myOldSdks = ProjectJdkTable.getInstance().getAllJdks();
+    myOldSdks = new SdkLeakTracker();
 
     boolean reusedProject = true;
     if (ourProject == null || ourProjectDescriptor == null || !ourProjectDescriptor.equals(descriptor)) {
@@ -383,7 +382,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       this::checkForSettingsDamage,
       () -> doTearDown(project, ourApplication),
       () -> checkEditorsReleased(),
-      () -> checkForJdkTableLeaks(myOldSdks),
+      () -> myOldSdks.checkForJdkTableLeaks(),
       super::tearDown,
       () -> myThreadTracker.checkLeak(),
       () -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project),

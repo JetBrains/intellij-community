@@ -127,7 +127,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   private static boolean ourPlatformPrefixInitialized;
   private static Set<VirtualFile> ourEternallyLivingFilesCache;
-  private Sdk[] myOldSdks;
+  private SdkLeakTracker myOldSdks;
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
 
   /**
@@ -148,7 +148,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       cleanPersistedVFSContent();
     }
     // try to remember old sdks as soon as possible after the app instantiation
-    myOldSdks = ProjectJdkTable.getInstance().getAllJdks();
+    myOldSdks = new SdkLeakTracker();
   }
 
   private static final String[] PREFIX_CANDIDATES = {
@@ -210,7 +210,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
     initApplication();
     if (myOldSdks == null) { // some bastard's overridden initApplication completely
-      myOldSdks = ProjectJdkTable.getInstance().getAllJdks();
+      myOldSdks = new SdkLeakTracker();
     }
 
     myEditorListenerTracker = new EditorListenerTracker();
@@ -522,7 +522,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         }
       })
       .append(LightPlatformTestCase::checkEditorsReleased)
-      .append(() -> UsefulTestCase.checkForJdkTableLeaks(myOldSdks))
+      .append(() -> myOldSdks.checkForJdkTableLeaks())
       .append(() -> myVirtualFilePointerTracker.assertPointersAreDisposed())
       .append(() -> {
         myProjectManager = null;
