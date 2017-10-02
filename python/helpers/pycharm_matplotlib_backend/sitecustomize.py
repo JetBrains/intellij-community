@@ -31,7 +31,7 @@ try:
                 sys.modules[sitecustomize] = pycharm_sitecustomize_module
 
         sys.path.append(parent_dir)
-except StandardError:
+except:
     # fallback in case matplotlib is not loaded correctly
     import sys
 
