@@ -63,7 +63,6 @@ public class RemoteSdkCredentialsBuilder {
     copyTo.setUserName(data.getUserName());
     copyTo.setPassword(data.getPassword());
     copyTo.setPrivateKeyFile(data.getPrivateKeyFile());
-    copyTo.setKnownHostsFile(data.getKnownHostsFile());
     copyTo.setPassphrase(data.getPassphrase());
     copyTo.setAuthType(data.getAuthType());
 
