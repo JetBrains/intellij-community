@@ -12,7 +12,6 @@ initscript {
 
 apply plugin: JetGradlePlugin
 
-@SuppressWarnings("GrPackage")
 class JetGradlePlugin implements Plugin<Gradle> {
   void apply(Gradle gradle) {
     def extraModelBuilderInstance = new ExtraModelBuilder()
