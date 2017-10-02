@@ -54,7 +54,7 @@ class Main {
 
     private void tryWithResources(AutoCloseable c) throws Exception {
         try (<error descr="Cannot infer type: variable initializer is 'null'">var</error> v = null) { }
-        try (var v = c) { }
+        try (var v = c; var v1 = c) { }
 
     }
 }

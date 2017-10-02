@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -36,8 +35,10 @@ public class RedundantExplicitVariableTypeInspection extends BaseJavaBatchLocalI
       public void visitLocalVariable(PsiLocalVariable variable) {
         PsiTypeElement typeElement = variable.getTypeElement();
         if (!typeElement.isInferredType()) {
-          PsiLocalVariable[] variables = PsiTreeUtil.getChildrenOfType(variable.getParent(), PsiLocalVariable.class);
-          if (variables == null || variables.length > 1) return;
+          PsiElement parent = variable.getParent();
+          if (parent instanceof PsiDeclarationStatement && ((PsiDeclarationStatement)parent).getDeclaredElements().length > 1) {
+            return;
+          }
           doCheck(variable, (PsiLocalVariable)variable.copy(), typeElement);
         }
       }

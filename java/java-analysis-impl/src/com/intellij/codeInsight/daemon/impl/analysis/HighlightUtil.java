@@ -436,8 +436,7 @@ public class HighlightUtil extends HighlightUtilBase {
             .range(typeElement).create();
         }
 
-        PsiLocalVariable[] localVariables = PsiTreeUtil.getChildrenOfType(parent, PsiLocalVariable.class);
-        if (localVariables != null && localVariables.length > 1) {
+        if (parent instanceof PsiDeclarationStatement && ((PsiDeclarationStatement)parent).getDeclaredElements().length > 1) {
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
             .descriptionAndTooltip("'var' is not allowed in a compound declaration")
             .range(variable).create();
