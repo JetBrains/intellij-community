@@ -24,10 +24,7 @@ public class ProxySvnAuthentication {
   private ProxySvnAuthentication() {
   }
 
-  public static SVNAuthentication proxy(final SVNAuthentication in, final boolean storeAuth, boolean forceSaving) {
-    if (forceSaving && storeAuth) {
-      return putPassedValueAsSave(in, forceSaving);
-    }
+  public static SVNAuthentication proxy(final SVNAuthentication in, final boolean storeAuth) {
     if (in.isStorageAllowed() == storeAuth || ( ! in.isStorageAllowed())) return in;
     return putPassedValueAsSave(in, storeAuth);
   }

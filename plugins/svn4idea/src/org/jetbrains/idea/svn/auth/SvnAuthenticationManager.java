@@ -79,7 +79,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   private IdeaSVNHostOptionsProvider myLocalHostOptionsProvider;
   private final ThreadLocalSavePermissions mySavePermissions;
   private final Map<Thread, String> myKeyAlgorithm;
-  private boolean myArtificialSaving;
   private ISVNAuthenticationProvider myProvider;
   private final static ThreadLocal<ISVNAuthenticationProvider> ourThreadLocalProvider = new ThreadLocal<>();
 
@@ -202,10 +201,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     return myConfig;
   }
 
-  public void setArtificialSaving(boolean artificialSaving) {
-    myArtificialSaving = artificialSaving;
-  }
-
   @Override
   public IdeaSVNHostOptionsProvider getHostOptionsProvider() {
     if (myLocalHostOptionsProvider == null) {
@@ -321,7 +316,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
         wrapNativeCall(() -> {
           final Boolean fromInteractive = ourJustEntered.get();
           ourJustEntered.set(null);
-          if (!myArtificialSaving && !Boolean.TRUE.equals(fromInteractive)) {
+          if (!Boolean.TRUE.equals(fromInteractive)) {
             // not what user entered
             return null;
           }
@@ -431,19 +426,13 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     if (url != null) {
       CommonProxy.getInstance().removeNoProxy(url.getProtocol(), url.getHost(), url.getPort());
     }
-    boolean successSaving = false;
     try {
       final boolean authStorageEnabled = getHostOptionsProvider().getHostOptions(authentication.getURL()).isAuthStorageEnabled();
-      final SVNAuthentication proxy = ProxySvnAuthentication.proxy(authentication, authStorageEnabled, myArtificialSaving);
+      final SVNAuthentication proxy = ProxySvnAuthentication.proxy(authentication, authStorageEnabled);
       super.acknowledgeAuthentication(accepted, kind, realm, errorMessage, proxy);
-      successSaving = true;
     }
     finally {
       mySavePermissions.remove();
-      if (myArtificialSaving) {
-        myArtificialSaving = false;
-        throw new CredentialsSavedException(successSaving);
-      }
     }
   }
 
@@ -1057,18 +1046,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
       UIUtil.invokeAndWaitIfNeeded((Runnable)() -> result
         .set(Messages.showPasswordDialog(myProject, message, SvnBundle.message("subversion.name"), Messages.getQuestionIcon())));
       return !result.isNull() ? result.get().toCharArray() : null;
-    }
-  }
-
-  public static class CredentialsSavedException extends RuntimeException {
-    private final boolean mySuccess;
-
-    public CredentialsSavedException(boolean success) {
-      mySuccess = success;
-    }
-
-    public boolean isSuccess() {
-      return mySuccess;
     }
   }
 }
