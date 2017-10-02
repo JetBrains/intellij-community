@@ -184,6 +184,7 @@ public class DebuggerUIUtil {
       if (!balloonRef.isNull()) {
         balloonRef.get().hide();
       }
+      propertiesPanel.dispose();
       showXBreakpointEditorBalloon(project, point, component, true, breakpoint);
       moreOptionsRequested.set(true);
     });
