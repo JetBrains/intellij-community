@@ -65,6 +65,17 @@
 
   <depends optional="true">org.jetbrains.kotlin</depends>
 
+  <extensionPoints>
+    <extensionPoint name="librarySupport" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.debugger.streams.lib.LibrarySupportProvider"/>
+    </extensionPoint>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="org.jetbrains.debugger.streams">
+    <librarySupport language="JAVA" implementationClass="com.intellij.debugger.streams.lib.impl.DefaultLibrarySupportProvider"/>
+    <librarySupport language="JAVA" implementationClass="com.intellij.debugger.streams.lib.impl.StreamExLibrarySupportProvider"/>
+  </extensions>
+
   <actions>
     <action id="StreamTracerAction"
             class="com.intellij.debugger.streams.action.TraceStreamAction"
