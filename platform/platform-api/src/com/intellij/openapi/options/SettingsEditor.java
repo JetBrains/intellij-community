@@ -21,6 +21,8 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -37,6 +39,7 @@ public abstract class SettingsEditor<Settings> implements Disposable {
   private final Factory<Settings> mySettingsFactory;
   private CompositeSettingsEditor<Settings> myOwner;
   private JComponent myEditorComponent;
+  private MergingUpdateQueue myUpdateQueue;
 
   protected abstract void resetEditorFrom(@NotNull Settings s);
   protected abstract void applyEditorTo(@NotNull Settings s) throws ConfigurationException;
@@ -119,16 +122,24 @@ public abstract class SettingsEditor<Settings> implements Disposable {
   }
 
   protected void installWatcher(JComponent c) {
+    myUpdateQueue = new MergingUpdateQueue("SettingsEditor.fireEditorStateChanged()", 100, true, MergingUpdateQueue.ANY_COMPONENT, this);
     myWatcher = new UserActivityWatcher();
     myWatcher.register(c);
     UserActivityListener userActivityListener = new UserActivityListener() {
       @Override
       public void stateChanged() {
-        fireEditorStateChanged();
+        myUpdateQueue.queue(myUpdate);
       }
     };
     myWatcher.addUserActivityListener(userActivityListener, this);
   }
+
+  private final Update myUpdate = new Update(SettingsEditor.this) {
+    @Override
+    public void run() {
+      fireEditorStateChanged();
+    }
+  };
 
   public final void addSettingsEditorListener(SettingsEditorListener<Settings> listener) {
     myListeners.add(listener);

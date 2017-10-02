@@ -17,10 +17,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.ide.FileEditorProvider;
-import com.intellij.ide.FileEditorSelectInContext;
-import com.intellij.ide.FileSelectInContext;
-import com.intellij.ide.SelectInContext;
+import com.intellij.ide.*;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -41,7 +38,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,9 +48,10 @@ import java.awt.event.InputEvent;
 public class SelectInContextImpl extends FileSelectInContext {
   private final Object mySelector;
 
-  private SelectInContextImpl(@NotNull PsiFile psiFile, @Nullable Object selector) {
+  private SelectInContextImpl(@NotNull PsiFile psiFile, @NotNull Object selector) {
     super(psiFile.getProject(), psiFile.getViewProvider().getVirtualFile(), true);
-    mySelector = selector != null ? selector : psiFile;
+    assert selector instanceof PsiElement : "use SmartSelectInContext instead";
+    mySelector = selector;
   }
 
   @Override
@@ -108,19 +105,11 @@ public class SelectInContextImpl extends FileSelectInContext {
     if (document == null) return null;
     PsiFile psiFile = PsiDocumentManager.getInstance(descriptor.getProject()).getPsiFile(document);
     if (psiFile == null) return null;
-    return new SelectInContextImpl(psiFile, null) {
-      @Override
-      public FileEditorProvider getFileEditorProvider() {
-        return new FileEditorProvider() {
-          @Override
-          public FileEditor openFileEditor() {
-            descriptor.navigate(false);
-            FileEditor[] allEditors = FileEditorManager.getInstance(descriptor.getProject()).getAllEditors(descriptor.getFile());
-            return ArrayUtil.getFirstElement(allEditors);
-          }
-        };
-      }
-    };
+    return new SmartSelectInContext(psiFile, psiFile, () -> {
+      descriptor.navigate(false);
+      FileEditor[] allEditors = FileEditorManager.getInstance(descriptor.getProject()).getAllEditors(descriptor.getFile());
+      return ArrayUtil.getFirstElement(allEditors);
+    });
   }
 
   private static SelectInContext createEditorContext(@Nullable Project project,
@@ -145,6 +134,8 @@ public class SelectInContextImpl extends FileSelectInContext {
         @Override
         public Object getSelectorInFile() {
           PsiFile file = getPsiFile();
+          if (file == null) return null;
+
           if (file.getViewProvider() instanceof TemplateLanguageFileViewProvider) {
             return super.getSelectorInFile();
           }
@@ -163,7 +154,9 @@ public class SelectInContextImpl extends FileSelectInContext {
       StructureView structureView = builder != null ? builder.createStructureView(editor, project) : null;
       Object selectorInFile = structureView != null ? structureView.getTreeModel().getCurrentEditorElement() : null;
       if (structureView != null) Disposer.dispose(structureView);
-      return new SelectInContextImpl(psiFile, ObjectUtils.chooseNotNull(selectorInFile, psiFile));
+      if (selectorInFile == null) return new SmartSelectInContext(psiFile, psiFile);
+      if (selectorInFile instanceof PsiElement) return new SmartSelectInContext(psiFile, (PsiElement)selectorInFile);
+      return new SelectInContextImpl(psiFile, selectorInFile);
     }
   }
 
@@ -178,7 +171,7 @@ public class SelectInContextImpl extends FileSelectInContext {
     if (psiFile == null) {
       return null;
     }
-    return new SelectInContextImpl(psiFile, psiElement);
+    return new SmartSelectInContext(psiFile, psiElement);
   }
 
   @Nullable

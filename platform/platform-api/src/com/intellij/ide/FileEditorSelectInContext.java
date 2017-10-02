@@ -29,36 +29,35 @@ import org.jetbrains.annotations.Nullable;
  * @author gregsh
  * @author Sergey Malenkov
  */
-public class FileEditorSelectInContext extends FileSelectInContext {
-  private final PsiFile myPsiFile;
-
+public class FileEditorSelectInContext extends SmartSelectInContext {
   public FileEditorSelectInContext(@NotNull FileEditor fileEditor, @NotNull PsiFile psiFile) {
-    super(psiFile.getProject(), psiFile.getViewProvider().getVirtualFile(), () -> fileEditor);
-    myPsiFile = psiFile;
-  }
-
-  @NotNull
-  public PsiFile getPsiFile() {
-    return myPsiFile;
+    super(psiFile, psiFile, () -> fileEditor);
   }
 
   @Nullable
   @Override
   public Object getSelectorInFile() {
-    return ObjectUtils.notNull(getElementAtCaret(false), myPsiFile);
+    PsiFile file = getPsiFile();
+    return file == null ? null : ObjectUtils.notNull(getElementAtCaret(file, false), file);
   }
 
   @Nullable
   public PsiElement getElementAtCaret(boolean tryInjected) {
+    PsiFile file = getPsiFile();
+    return file == null ? null : getElementAtCaret(file, tryInjected);
+  }
+
+  @Nullable
+  private PsiElement getElementAtCaret(@NotNull PsiFile file, boolean tryInjected) {
     Editor editor = getEditor();
     if (editor == null) return null;
     int offset = editor.getCaretModel().getOffset();
     if (tryInjected) {
       InjectedLanguageManager manager = InjectedLanguageManager.getInstance(getProject());
-      PsiElement injectedElementAt = manager.findInjectedElementAt(myPsiFile, offset);
+      PsiElement injectedElementAt = manager.findInjectedElementAt(file, offset);
       if (injectedElementAt != null) return injectedElementAt;
     }
-    return myPsiFile.findElementAt(offset);
+    return file.findElementAt(offset);
   }
 
   @Nullable
