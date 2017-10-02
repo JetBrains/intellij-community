@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
+import com.intellij.ide.ActionsTopHitProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.actions.ApplyIntentionAction;
@@ -96,9 +97,10 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     return processItems(pattern, wrappers, consumer);
   }
 
-  private static boolean processTopHits(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
+  private boolean processTopHits(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final CollectConsumer<Object> collector = new CollectConsumer<>();
+    final CollectConsumer<Object> actionsCollector = new CollectConsumer<>();
     for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
       //noinspection deprecation
       if (provider instanceof OptionsTopHitProvider.CoveredByToggleActions) continue;
@@ -107,9 +109,19 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
         String prefix = "#" + ((OptionsTopHitProvider)provider).getId() + " ";
         provider.consumeTopHits(prefix + pattern, collector, project);
       }
+      if (provider instanceof ActionsTopHitProvider) {
+        provider.consumeTopHits(pattern, actionsCollector, project);
+        continue;
+      }
       provider.consumeTopHits(pattern, collector, project);
     }
     Collection<Object> result = collector.getResult();
+
+    JBIterable.from(actionsCollector.getResult()).transform(o -> {
+      if (!(o instanceof AnAction)) return null;
+      AnAction action = (AnAction) o;
+      return new ActionWrapper(action, myModel.myActionGroups.get(action), MatchMode.NAME, dataContext, myModel);
+    }).addAllTo(result);
     return processItems(pattern, JBIterable.from(result).filter(Comparable.class), consumer);
   }
 
