@@ -68,6 +68,9 @@ public class CaptureAgent {
           DEBUG = true;
           CaptureStorage.setDebug(true);
         }
+        else if ("disabled".equals(s)) {
+          CaptureStorage.setEnabled(false);
+        }
         else {
           asmPath = s;
         }

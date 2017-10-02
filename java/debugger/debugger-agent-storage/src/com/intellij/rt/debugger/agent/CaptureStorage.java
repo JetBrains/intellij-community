@@ -26,9 +26,13 @@ public class CaptureStorage {
   private static final JavaLangAccess ourJavaLangAccess = SharedSecrets.getJavaLangAccess();
 
   private static boolean DEBUG = false;
+  private static boolean ENABLED = true;
 
   @SuppressWarnings("unused")
   public static void capture(Object key) {
+    if (!ENABLED) {
+      return;
+    }
     if (DEBUG) {
       System.out.println("capture - " + key);
     }
@@ -50,6 +54,9 @@ public class CaptureStorage {
 
   @SuppressWarnings("unused")
   public static void insertEnter(Object key) {
+    if (!ENABLED) {
+      return;
+    }
     CapturedStack stack = STORAGE.get(key);
     Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
     if (stack != null) {
@@ -68,6 +75,9 @@ public class CaptureStorage {
 
   @SuppressWarnings("unused")
   public static void insertExit(Object key) {
+    if (!ENABLED) {
+      return;
+    }
     Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
     currentStacks.removeLast();
     if (DEBUG) {
@@ -155,5 +165,9 @@ public class CaptureStorage {
 
   public static void setDebug(boolean debug) {
     DEBUG = debug;
+  }
+
+  public static void setEnabled(boolean enabled) {
+    ENABLED = enabled;
   }
 }
