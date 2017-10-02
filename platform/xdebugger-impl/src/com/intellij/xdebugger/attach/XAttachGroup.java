@@ -29,12 +29,27 @@ public interface XAttachGroup<T extends AttachSettings> {
   @NotNull
   String getGroupName();
 
+  /**
+   * @param dataHolder you may put your specific data into the holder at previous step in method @{@link XLocalAttachDebuggerProvider#getAvailableDebuggers(Project, ProcessInfo, UserDataHolder)}
+   *                   and use it for presentation
+   * @return an icon to be shown in popup menu for your debugger item
+   */
   @NotNull
   Icon getIcon(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder);
 
+  /**
+   * @param dataHolder you may put your specific data into the holder at previous step in method @{@link XLocalAttachDebuggerProvider#getAvailableDebuggers(Project, ProcessInfo, UserDataHolder)}
+   * and use it for presentation
+   * @return a text to be shown on your debugger item
+   */
   @NotNull
   String getItemDisplayText(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder);
 
+  /**
+   * Specifies process order in your group
+   * @param dataHolder you may put your specific data into the holder at previous step in method @{@link XLocalAttachDebuggerProvider#getAvailableDebuggers(Project, ProcessInfo, UserDataHolder)}
+   * and use it for comparison
+   */
   int compare(@NotNull Project project, @NotNull T a, @NotNull T b, @NotNull UserDataHolder dataHolder);
 
   XAttachGroup DEFAULT = new XDefaultAttachGroup();
