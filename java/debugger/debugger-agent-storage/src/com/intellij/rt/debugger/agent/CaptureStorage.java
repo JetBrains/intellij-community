@@ -39,8 +39,8 @@ public class CaptureStorage {
     }
     Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
     CapturedStack stack = createCapturedStack(new Throwable(), currentStacks.isEmpty() ? null : currentStacks.getLast());
+    WeakKey keyRef = new WeakKey(key);
     synchronized (HISTORY) {
-      WeakKey keyRef = new WeakKey(key);
       CapturedStack old = STORAGE.put(keyRef, stack);
       if (old == null) {
         if (HISTORY.size() >= MAX_STORED_STACKS) {
@@ -48,7 +48,7 @@ public class CaptureStorage {
         }
       }
       else {
-        HISTORY.remove(keyRef); // must not happen often
+        HISTORY.removeFirstOccurrence(keyRef); // must not happen often
       }
       HISTORY.addLast(keyRef);
     }
