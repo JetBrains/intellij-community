@@ -24,6 +24,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 public abstract class BaseAnalysisAction extends AnAction {
+  private static final String DIMENSION_KEY_PREFIX = "ANALYSIS_DLG_";
+
   private final String myTitle;
   private final String myAnalysisNoon;
 
@@ -53,6 +55,11 @@ public abstract class BaseAnalysisAction extends AnAction {
     AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
     PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(title, noon, project, scope, module, rememberScope, uiOptions, element) {
+      @Override
+      protected String getDimensionServiceKey() {
+        return DIMENSION_KEY_PREFIX + getClass().getName();
+      }
+
       @Override
       protected JComponent getAdditionalActionSettings(Project project) {
         return BaseAnalysisAction.this.getAdditionalActionSettings(project, this);
