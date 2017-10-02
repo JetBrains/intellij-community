@@ -158,6 +158,7 @@
       <module fileurl="file://$PROJECT_DIR$/../studio/google/samples/google-samples.iml" filepath="$PROJECT_DIR$/../studio/google/samples/google-samples.iml" group="plugins/Google" />
       <module fileurl="file://$PROJECT_DIR$/../studio/google/services/google-services.iml" filepath="$PROJECT_DIR$/../studio/google/services/google-services.iml" group="plugins/Google" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/gradle.iml" filepath="$PROJECT_DIR$/plugins/gradle/gradle.iml" group="plugins/gradle" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/gradle-dsl-parser/gradle-dsl-parser.iml" filepath="$PROJECT_DIR$/../adt/idea/gradle-dsl-parser/gradle-dsl-parser.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/jps-plugin/gradle-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/gradle/jps-plugin/gradle-jps-plugin.iml" group="plugins/gradle" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/gradle-tests.iml" filepath="$PROJECT_DIR$/plugins/gradle/gradle-tests.iml" group="plugins/gradle" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/tooling-extension-api/gradle-tooling-extension-api.iml" filepath="$PROJECT_DIR$/plugins/gradle/tooling-extension-api/gradle-tooling-extension-api.iml" group="plugins/gradle" />

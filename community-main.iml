@@ -140,5 +140,6 @@
     <orderEntry type="module" module-name="designer" />
     <orderEntry type="module" module-name="smali" />
     <orderEntry type="module" module-name="platform-build-scripts" scope="TEST" />
+    <orderEntry type="module" module-name="gradle-dsl-parser" />
   </component>
 </module>

@@ -757,5 +757,6 @@ iml_module(
         "//tools/adt/idea/designer[module]",
         "//tools/adt/idea/smali[module]",
         "//tools/idea/platform/build-scripts:platform-build-scripts[module, test]",
+        "//tools/adt/idea/gradle-dsl-parser[module]",
     ],
 )
