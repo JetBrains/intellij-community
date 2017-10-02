@@ -21,10 +21,20 @@
  */
 package com.intellij.openapi.vcs.changes
 
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.text.DateFormatUtil
 import com.intellij.vcs.log.VcsUser
 import java.util.*
+import kotlin.collections.ArrayList
 
-open class ChangeListData @JvmOverloads constructor(val description: String = "", val author: VcsUser? = null, val date: Date? = null)
+open class ChangeListData @JvmOverloads constructor(val author: VcsUser? = null, val date: Date? = null) {
+  override fun toString(): String {
+    val lines = ArrayList<String>()
+    author?.let { lines.add("Author: $author") }
+    date?.let { lines.add("Date: ${DateFormatUtil.formatDateTime(date)}") }
+    return StringUtil.join(lines, "\n")
+  }
+}
                                                               
                                                               
                                                               

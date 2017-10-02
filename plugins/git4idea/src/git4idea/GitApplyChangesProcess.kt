@@ -34,7 +34,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.util.VcsUserUtil
@@ -277,7 +276,7 @@ class GitApplyChangesProcess(private val project: Project,
       return null
     }
 
-    val changeListName = createNameForChangeList(commitMessage)
+    val changeListName = createNameForChangeList(project, commitMessage)
     val createdChangeList = (changeListManager as ChangeListManagerEx).addChangeList(changeListName, commitMessage,
                                                                                      if (preserveCommitMetadata) createChangeListData(commit) else null)
     val actualChangeList = moveChanges(originalChanges, createdChangeList)
@@ -290,8 +289,7 @@ class GitApplyChangesProcess(private val project: Project,
     return null
   }
 
-  private fun createChangeListData(commit: VcsFullCommitDetails) = ChangeListData(commit.fullMessage, commit.author,
-                                                                                  Date(commit.authorTime))
+  private fun createChangeListData(commit: VcsFullCommitDetails) = ChangeListData(commit.author, Date(commit.authorTime))
 
   private fun noChangesAfterApply(originalChanges: Collection<Change>): Boolean {
     return findLocalChanges(originalChanges).isEmpty()
@@ -328,14 +326,6 @@ class GitApplyChangesProcess(private val project: Project,
     finally {
       changeListManager.removeChangeListListener(listener)
     }
-  }
-
-  private fun createNameForChangeList(commitMessage: String): String {
-    val proposedName = commitMessage.trim()
-      .substringBefore('\n')
-      .trim()
-      .replace("[ ]{2,}".toRegex(), " ")
-    return UniqueNameGenerator.generateUniqueName(proposedName, "", "", "-", "", { changeListManager.findChangeList(it) == null })
   }
 
   private fun notifyResult(successfulCommits: List<VcsFullCommitDetails>, skipped: List<VcsFullCommitDetails>) {
