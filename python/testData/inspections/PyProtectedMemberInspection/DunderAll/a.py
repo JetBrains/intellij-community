@@ -10,3 +10,7 @@ print(m1m1)
 
 from pkg.A import B
 print(B)
+
+
+from pkg.A import C
+print(C)
