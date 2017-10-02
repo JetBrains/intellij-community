@@ -24,10 +24,10 @@ public class PyResolveCalleeTest extends PyTestCase {
     final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
     final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
 
-    final List<PyCallExpression.PyRatedMarkedCallee> callees = call.multiResolveRatedCallee(resolveContext);
+    final List<PyCallExpression.PyMarkedCallee> callees = call.multiResolveCallee(resolveContext);
     assertEquals(1, callees.size());
 
-    return callees.get(0).getMarkedCallee();
+    return callees.get(0);
   }
 
   public void testInstanceCall() {
