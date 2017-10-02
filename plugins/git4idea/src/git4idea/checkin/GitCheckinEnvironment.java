@@ -88,8 +88,10 @@ import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterPath;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getBeforePath;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.vcs.log.util.VcsUserUtil.isSamePerson;
 import static git4idea.GitUtil.*;
 import static java.util.Arrays.asList;
+import static one.util.streamex.StreamEx.of;
 
 public class GitCheckinEnvironment implements CheckinEnvironment {
   private static final Logger LOG = Logger.getInstance(GitCheckinEnvironment.class);
@@ -710,6 +712,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   public class GitCheckinOptions implements CheckinChangeListSpecificComponent, RefreshableOnComponent  {
     @NotNull private final GitVcs myVcs;
+    @NotNull private final CheckinProjectPanel myCheckinProjectPanel;
     @NotNull private JPanel myPanel;
     @NotNull private final EditorTextField myAuthorField;
     @Nullable private Date myAuthorDate;
@@ -718,7 +721,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
     GitCheckinOptions(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
       myVcs = assertNotNull(GitVcs.getInstance(project));
-
+      myCheckinProjectPanel = panel;
       myAuthorField = createTextField(project, getAuthors(project));
       myAuthorField.setToolTipText(GitBundle.getString("commit.author.tooltip"));
       JLabel authorLabel = new JBLabel(GitBundle.message("commit.author"));
@@ -808,6 +811,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     public void refresh() {
       myAmendComponent.refresh();
       myAuthorField.setText(null);
+      myAuthorField.putClientProperty("JComponent.outline", null);
       myAuthorDate = null;
       reset();
     }
@@ -836,13 +840,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     @Override
     public void onChangeListSelected(LocalChangeList list) {
       Object data = list.getData();
+      myAuthorField.putClientProperty("JComponent.outline", null);
       if (data instanceof ChangeListData) {
-        ChangeListData changeListData = (ChangeListData)data;
-        VcsUser author = changeListData.getAuthor();
-        if (author != null) {
+        VcsUser author = ((ChangeListData)data).getAuthor();
+        if (author != null && !isDefaultAuthor(author)) {
           myAuthorField.setText(VcsUserUtil.toExactString(author));
+          myAuthorField.putClientProperty("JComponent.outline", "warning");
         }
-        myAuthorDate = changeListData.getDate();
+        myAuthorDate = ((ChangeListData)data).getDate();
       }
       else {
         myAuthorField.setText(null);
@@ -853,6 +858,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     @Override
     public JComponent getComponent() {
       return myPanel;
+    }
+
+    public boolean isDefaultAuthor(@NotNull VcsUser author) {
+      Collection<VirtualFile> affectedGitRoots = filter(myCheckinProjectPanel.getRoots(), virtualFile -> findGitDir(virtualFile) != null);
+      GitUserRegistry gitUserRegistry = GitUserRegistry.getInstance(myProject);
+      return of(affectedGitRoots).map(vf -> gitUserRegistry.getUser(vf)).allMatch(user -> user != null && isSamePerson(author, user));
     }
   }
 
