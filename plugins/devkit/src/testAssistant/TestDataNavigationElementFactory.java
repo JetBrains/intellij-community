@@ -129,7 +129,7 @@ public class TestDataNavigationElementFactory {
       String afterName = afterFile.getName();
 
       List<Pair<String, SimpleTextAttributes>> result = new ArrayList<>();
-      result.add(new Pair<>("<" + beforeName + ", " + afterName + "> (", SimpleTextAttributes.REGULAR_ATTRIBUTES));
+      result.add(new Pair<>(TestDataUtil.getGroupDisplayName(beforeName, afterName) + " (", SimpleTextAttributes.REGULAR_ATTRIBUTES));
 
       Pair<String, String> beforeRelativePath = TestDataUtil.getModuleOrProjectRelativeParentPath(myProject, beforeFile);
       Pair<String, String> afterRelativePath = TestDataUtil.getModuleOrProjectRelativeParentPath(myProject, afterFile);

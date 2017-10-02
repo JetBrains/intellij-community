@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,11 +42,45 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-class TestDataUtil {
-  public static final String TESTDATA_FILE_BEFORE_MARKER = "before";
-  public static final String TESTDATA_FILE_AFTER_MARKER = "after";
+public class TestDataUtil {
+  private static final String TESTDATA_FILE_AFTER_MARKER = "after";
+  private static final String TESTDATA_FILE_BEFORE_MARKER = "before";
+  public static final String BEFORE_AFTER_DISPLAY_NAME_PART = TESTDATA_FILE_BEFORE_MARKER + "/" + TESTDATA_FILE_AFTER_MARKER;
 
   private TestDataUtil() {
+  }
+
+  @NotNull
+  public static String getGroupDisplayName(@NotNull String beforeName, @NotNull String afterName) {
+    if (isBeforeAfterPrefixedPair(beforeName, afterName)) {
+      return BEFORE_AFTER_DISPLAY_NAME_PART + StringUtil.trimStart(beforeName, TESTDATA_FILE_BEFORE_MARKER);
+    }
+
+    String commonPrefix = StringUtil.commonPrefix(beforeName, afterName);
+    if (!commonPrefix.isEmpty()) {
+      String beforeNameExt = PathUtil.getFileExtension(beforeName);
+      String beforeNameWithoutExt = beforeNameExt == null ? beforeName : StringUtil.substringBeforeLast(beforeName, "." + beforeNameExt);
+      String beforeNameWithoutCommonPrefixAndExt =
+        StringUtil.trimStart(beforeNameWithoutExt,
+                             commonPrefix.endsWith(".") ? StringUtil.trimEnd(commonPrefix, ".") : commonPrefix);
+
+      String beforeNameWithoutCommonPrefixAndExtAndBefore =
+        StringUtil.trimEnd(beforeNameWithoutCommonPrefixAndExt, TESTDATA_FILE_BEFORE_MARKER);
+      if (!StringUtil.containsAlphaCharacters(beforeNameWithoutCommonPrefixAndExtAndBefore)) {
+        String result = commonPrefix;
+        char lastChar = commonPrefix.charAt(commonPrefix.length() - 1);
+        if (Character.isDigit(lastChar) || Character.isLetter(lastChar)) {
+          result += "_";
+        }
+        result += BEFORE_AFTER_DISPLAY_NAME_PART;
+        if (beforeNameExt != null) {
+          result += "." + beforeNameExt;
+        }
+        return result;
+      }
+    }
+
+    return beforeName + " | " + afterName;
   }
 
   @Nullable

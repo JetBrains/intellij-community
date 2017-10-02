@@ -22,4 +22,20 @@ public class TestDataUtilTest extends TestDataPathTestCase {
     assertNull(TestDataUtil.getTestDataGroup(dotAfterSomething, dotAfterAfter));
     assertNotNull(TestDataUtil.getTestDataGroup(dotAfter, dotAfterAfter));
   }
+
+  public void testGetGroupDisplayName() {
+    assertEquals(TestDataUtil.BEFORE_AFTER_DISPLAY_NAME_PART + "Something",
+                 TestDataUtil.getGroupDisplayName("beforeSomething", "afterSomething"));
+    assertEquals(TestDataUtil.BEFORE_AFTER_DISPLAY_NAME_PART + "Something.ext",
+                 TestDataUtil.getGroupDisplayName("beforeSomething.ext", "afterSomething.ext"));
+    assertEquals(TestDataUtil.BEFORE_AFTER_DISPLAY_NAME_PART + "_Something.ext",
+                 TestDataUtil.getGroupDisplayName("before_Something.ext", "after_Something.ext"));
+
+    assertEquals("something_" + TestDataUtil.BEFORE_AFTER_DISPLAY_NAME_PART + ".ext",
+                 TestDataUtil.getGroupDisplayName("something_before.ext", "something_after.ext"));
+    assertEquals("something_" + TestDataUtil.BEFORE_AFTER_DISPLAY_NAME_PART + ".ext",
+                 TestDataUtil.getGroupDisplayName("something.ext", "something_after.ext"));
+    assertEquals("something." + TestDataUtil.BEFORE_AFTER_DISPLAY_NAME_PART + ".ext",
+                 TestDataUtil.getGroupDisplayName("something.ext", "something.after.ext"));
+  }
 }
