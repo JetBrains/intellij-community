@@ -1317,6 +1317,9 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myType1 == JavaElementType.MODULE_REFERENCE || myType2 == JavaElementType.MODULE_REFERENCE) {
       createSpaceInCode(true);
     }
+    else if (myType1 == JavaElementType.MODIFIER_LIST) {
+      processModifierList();
+    }
   }
 
   @Override
