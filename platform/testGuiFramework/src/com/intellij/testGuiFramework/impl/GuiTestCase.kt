@@ -247,7 +247,9 @@ open class GuiTestCase {
    * @throws ComponentLookupException if component has not been found or timeout exceeded
    */
   fun <S, C : Component> ComponentFixture<S, C>.actionLink(name: String, timeout: Long = defaultTimeout): ActionLinkFixture =
-    if (target() is Container) actionLink(target() as Container, name, timeout)
+    if (target() is Container) {
+      ActionLinkFixture.findActionLinkByName(name, guiTestRule.robot(), target() as Container, timeout.toFestTimeout())
+    }
     else throw UnableToFindComponent("""ActionLink by name "$name"""")
 
   /**
@@ -270,7 +272,9 @@ open class GuiTestCase {
    */
   fun <S, C : Component> ComponentFixture<S, C>.actionButtonByClass(actionClassName: String,
                                                                     timeout: Long = defaultTimeout): ActionButtonFixture =
-    if (target() is Container) actionButtonByClass(target() as Container, actionClassName, timeout)
+    if (target() is Container) {
+      ActionButtonFixture.findByActionClassName(actionClassName, guiTestRule.robot(), target() as Container, timeout.toFestTimeout())
+    }
     else throw UnableToFindComponent("""ActionButton by action class name "$actionClassName"""")
 
   /**
@@ -280,7 +284,7 @@ open class GuiTestCase {
    * @throws ComponentLookupException if component has not been found or timeout exceeded
    */
   fun <S, C : Component> ComponentFixture<S, C>.radioButton(textLabel: String, timeout: Long = defaultTimeout): RadioButtonFixture =
-    if (target() is Container) radioButton(target() as Container, textLabel, timeout)
+    if (target() is Container) GuiTestUtil.findRadioButton(guiTestRule.robot(), target() as Container, textLabel, timeout.toFestTimeout())
     else throw UnableToFindComponent("""RadioButton by label "$textLabel"""")
 
   /**
@@ -334,7 +338,9 @@ open class GuiTestCase {
    * @throws ComponentLookupException if component has not been found or timeout exceeded
    */
   fun <S, C : Component> ComponentFixture<S, C>.popupClick(itemName: String, timeout: Long = defaultTimeout) =
-    if (target() is Container) popupClick(target() as Container, itemName, timeout)
+    if (target() is Container) {
+      GuiTestUtil.clickPopupMenuItem(itemName, false, target() as Container, guiTestRule.robot(), timeout.toFestTimeout())
+    }
     else throw UnableToFindComponent("Popup")
 
   /**
@@ -359,7 +365,7 @@ open class GuiTestCase {
    * @throws ComponentLookupException if component has not been found or timeout exceeded
    */
   fun <S, C : Component> ComponentFixture<S, C>.pluginTable(timeout: Long = defaultTimeout) =
-    if (target() is Container) pluginTable(target() as Container, timeout)
+    if (target() is Container) PluginTableFixture.find(guiTestRule.robot(), target() as Container, timeout.toFestTimeout())
     else throw UnableToFindComponent("PluginTable")
 
   /**
@@ -369,7 +375,7 @@ open class GuiTestCase {
    * @throws ComponentLookupException if component has not been found or timeout exceeded
    */
   fun <S, C : Component> ComponentFixture<S, C>.message(title: String, timeout: Long = defaultTimeout) =
-    if (target() is Container) message(target() as Container, title, timeout)
+    if (target() is Container) MessagesFixture.findByTitle(guiTestRule.robot(), target() as Container, title, timeout.toFestTimeout())
     else throw UnableToFindComponent("Message")
 
 
@@ -380,7 +386,7 @@ open class GuiTestCase {
    * @throws ComponentLookupException if component has not been found or timeout exceeded
    */
   fun <S, C : Component> ComponentFixture<S, C>.message(title: String, timeout: Long = defaultTimeout, func: MessagesFixture.() -> Unit) {
-    if (target() is Container) func(message(target() as Container, title, timeout))
+    if (target() is Container) func(MessagesFixture.findByTitle(guiTestRule.robot(), target() as Container, title, timeout.toFestTimeout()))
     else throw UnableToFindComponent("Message")
   }
 
@@ -510,9 +516,6 @@ open class GuiTestCase {
 
   private fun Long.toFestTimeout(): Timeout = if (this == 0L) timeout(50, TimeUnit.MILLISECONDS) else timeout(this, TimeUnit.SECONDS)
 
-  private fun message(container: Container, title: String, timeout: Long): MessagesFixture
-    = MessagesFixture.findByTitle(guiTestRule.robot(), container, title, timeout.toFestTimeout())
-
   private fun jList(container: Container, containingItem: String? = null, timeout: Long): JListFixture {
 
     val extCellReader = ExtendedJListCellReader()
@@ -568,11 +571,6 @@ open class GuiTestCase {
     return CheckBoxFixture(guiTestRule.robot(), jCheckBox)
   }
 
-  private fun actionLink(container: Container, name: String, timeout: Long) = ActionLinkFixture.findActionLinkByName(name,
-                                                                                                                     guiTestRule.robot(),
-                                                                                                                     container,
-                                                                                                                     timeout.toFestTimeout())
-
   private fun actionButton(container: Container, actionName: String, timeout: Long): ActionButtonFixture {
     return try {
       ActionButtonFixture.findByText(actionName, guiTestRule.robot(), container, timeout.toFestTimeout())
@@ -582,15 +580,7 @@ open class GuiTestCase {
     }
   }
 
-  private fun actionButtonByClass(container: Container, actionClassName: String, timeout: Long): ActionButtonFixture =
-    ActionButtonFixture.findByActionClassName(actionClassName, guiTestRule.robot(), container, timeout.toFestTimeout())
-
   private fun editor(ideFrameFixture: IdeFrameFixture, timeout: Long): EditorFixture = EditorFixture(guiTestRule.robot(), ideFrameFixture)
-
-  private fun radioButton(container: Container, labelText: String, timeout: Long) = GuiTestUtil.findRadioButton(guiTestRule.robot(),
-                                                                                                                container,
-                                                                                                                labelText,
-                                                                                                                timeout.toFestTimeout())
 
   private fun textfield(container: Container, labelText: String?, timeout: Long): JTextComponentFixture {
     //if 'textfield()' goes without label
@@ -632,13 +622,6 @@ open class GuiTestCase {
       }
       Pair(hasCellWithText, jTableFixture)
     }
-  }
-
-  private fun pluginTable(container: Container, timeout: Long) = PluginTableFixture.find(guiTestRule.robot(), container,
-                                                                                         timeout.toFestTimeout())
-
-  private fun popupClick(container: Container, itemName: String, timeout: Long) {
-    GuiTestUtil.clickPopupMenuItem(itemName, false, container, guiTestRule.robot(), timeout.toFestTimeout())
   }
 
   private fun jTreePath(container: Container, timeout: Long, vararg pathStrings: String): ExtendedTreeFixture {
