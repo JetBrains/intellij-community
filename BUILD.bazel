@@ -33,6 +33,7 @@ iml_project(
         "native/WinLauncher/WinLauncher/resource.h",
     ]),
     modules = [
+        "//tools/adt/idea/android-lang:android-lang-tests",
         "//tools/adt/idea/kotlin-integration:kotlin-integration-tests",
         "//tools/adt/idea/observable-demo",
         "//tools/adt/idea/project-system-gradle:project-system-gradle-tests",
