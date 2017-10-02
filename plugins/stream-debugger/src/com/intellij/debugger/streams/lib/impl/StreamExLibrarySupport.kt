@@ -24,15 +24,13 @@ import com.intellij.debugger.streams.trace.impl.handler.unified.DistinctByKeyHan
 import com.intellij.debugger.streams.trace.impl.handler.unified.DistinctKeysHandler
 import com.intellij.debugger.streams.trace.impl.handler.unified.DistinctTraceHandler
 import com.intellij.debugger.streams.trace.impl.handler.unified.DistinctValuesHandler
-import com.intellij.openapi.project.Project
 
 
 /**
  * @author Vitaliy.Bibaev
  */
-class StreamExLibrarySupport(project: Project)
-  : LibrarySupportBase(LibraryImpl("StreamEx", JavaLanguage(project), "one.util.streamex"),
-                       StandardLibrarySupport(project)) {
+class StreamExLibrarySupport
+  : LibrarySupportBase(StandardLibrarySupport()) {
   init {
     addIntermediateOperationsSupport(*filterOperations(
       "atLeast", "atMost", "less", "greater", "filterBy", "filterKeys", "filterValues", "filterKeyValue",

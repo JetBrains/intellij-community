@@ -27,8 +27,7 @@ import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
 /**
  * @author Vitaliy.Bibaev
  */
-abstract class LibrarySupportBase(override val description: Library,
-                                  private val compatibleLibrary: LibrarySupport = LibrarySupportBase.EMPTY) : LibrarySupport {
+abstract class LibrarySupportBase(private val compatibleLibrary: LibrarySupport = LibrarySupportBase.EMPTY) : LibrarySupport {
   companion object {
     val EMPTY: LibrarySupport = DefaultLibrarySupport()
   }

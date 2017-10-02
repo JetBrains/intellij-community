@@ -19,13 +19,12 @@ import com.intellij.debugger.streams.trace.impl.handler.unified.DistinctTraceHan
 import com.intellij.debugger.streams.trace.impl.interpret.AllMatchTraceInterpreter
 import com.intellij.debugger.streams.trace.impl.interpret.AnyMatchTraceInterpreter
 import com.intellij.debugger.streams.trace.impl.interpret.NoneMatchTraceInterpreter
-import com.intellij.openapi.project.Project
 
 /**
  * @author Vitaliy.Bibaev
  */
-class StandardLibrarySupport(project: Project)
-  : LibrarySupportBase(LibraryImpl("Java 8 Stream API", JavaLanguage(project), "java.util.stream")) {
+class StandardLibrarySupport
+  : LibrarySupportBase() {
 
   init {
     addIntermediateOperationsSupport(FilterOperation("filter"),
