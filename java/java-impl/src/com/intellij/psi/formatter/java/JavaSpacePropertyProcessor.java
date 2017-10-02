@@ -11,6 +11,7 @@ import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -1764,41 +1765,22 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
     if (result == null) {
       Lexer lexer = JavaParserDefinition.createLexer(LanguageLevel.HIGHEST);
-
-      TokenCheckResult res1 = checkToken(token1, type1, lexer), res2 = checkToken(token2, type2, lexer);
-      if (res1 == TokenCheckResult.INCORRECT || res2 == TokenCheckResult.INCORRECT) {
-        return true;
-      }
-
-      if (res1 == TokenCheckResult.RESTRICTED_KEYWORD || type1 == JavaTokenType.IDENTIFIER && res2 == TokenCheckResult.RESTRICTED_KEYWORD) {
-        result = false;
-      }
-      else {
-        lexer.start(token1.getText() + token2.getText());
-        boolean canMerge = lexer.getTokenType() == type1;
-        lexer.advance();
-        canMerge &= lexer.getTokenType() == type2;
-        result = canMerge;
-      }
-
+      String text1 = token1.getText(), text2 = token2.getText();
+      lexer.start(text1 + text2);
+      IElementType reparsedType1 = lexer.getTokenType();
+      String reparsedText1 = lexer.getTokenText();
+      lexer.advance();
+      IElementType reparsedType2 = lexer.getTokenType();
+      String reparsedText2 = lexer.getTokenText();
+      result = sameTokens(type1, text1, reparsedType1, reparsedText1) && sameTokens(type2, text2, reparsedType2, reparsedText2);
       ourTokenStickingMatrix.put(key, result);
     }
 
     return result.booleanValue();
   }
 
-  private enum TokenCheckResult {OK, INCORRECT, RESTRICTED_KEYWORD}
-
-  private static TokenCheckResult checkToken(ASTNode token, IElementType tokenType, Lexer lexer) {
-    lexer.start(token.getText());
-
-    IElementType first = lexer.getTokenType();
-    if (first != tokenType) {
-      boolean kw = first == JavaTokenType.IDENTIFIER && ElementType.KEYWORD_BIT_SET.contains(tokenType);
-      return kw ? TokenCheckResult.RESTRICTED_KEYWORD : TokenCheckResult.INCORRECT;
-    }
-
-    lexer.advance();
-    return lexer.getTokenType() == null ? TokenCheckResult.OK : TokenCheckResult.INCORRECT;
+  private static boolean sameTokens(IElementType type, String text, IElementType reparsedType, String reparsedText) {
+    return reparsedType == type ||
+           reparsedType == JavaTokenType.IDENTIFIER && ElementType.KEYWORD_BIT_SET.contains(type) && Comparing.equal(text, reparsedText);
   }
 }

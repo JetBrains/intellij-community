@@ -1,15 +1,24 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.formatter.java;
 
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.LightPlatformTestCase;
 
 /**
  * Is intended to hold specific java formatting tests for 'spacing' settings.
  *
  * @author Denis Zhdanov
- * @since Apr 29, 2010 5:50:34 PM
+ * @since Apr 29, 2010
  */
 public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    LanguageLevelProjectExtension.getInstance(LightPlatformTestCase.getProject()).setLanguageLevel(LanguageLevel.JDK_X);
+  }
+
   public void testSpacingBetweenTypeParameters() {
     // Implied by IDEADEV-3666
     getSettings().SPACE_AFTER_COMMA = true;
@@ -669,5 +678,10 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "public void main(String[] args , String xxx) {\n" +
       "    foo(100 , 200);\n" +
       "}");
+  }
+
+  public void testSpacingAroundVarKeyword() {
+    doMethodTest("for (  var  path  :  paths) ;", "for (var path : paths) ;");
+    doMethodTest("try ( @A  var  r  =  open()) { }", "try (@A var r = open()) {\n}");
   }
 }
