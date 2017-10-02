@@ -37,7 +37,11 @@ class PyAddSdkGroupPanel(name: String,
 
   init {
     layout = BorderLayout()
-    add(createRadioButtonPanel(panels, defaultPanel), BorderLayout.NORTH)
+    val contentPanel = when (panels.size) {
+      1 -> panels[0]
+      else -> createRadioButtonPanel(panels, defaultPanel)
+    }
+    add(contentPanel, BorderLayout.NORTH)
   }
 
   override fun validateAll() = panels.filter { it.isEnabled }.flatMap { it.validateAll() }

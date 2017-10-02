@@ -26,7 +26,7 @@ import java.awt.BorderLayout
  * @author vlan
  */
 class PyAddSystemWideInterpreterPanel(private val existingSdks: List<Sdk>) : PyAddSdkPanel() {
-  override val panelName = "System-wide interpreter"
+  override val panelName = "System interpreter"
   private val sdkComboBox = PySdkPathChoosingComboBox(detectSystemWideSdks(existingSdks), null)
 
   init {
