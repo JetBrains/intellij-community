@@ -180,7 +180,7 @@ abstract class FirstStart(val ideType: IdeType) {
       val title = "Customize $ideName"
       LOG.info("Waiting for '$title' dialog")
       dialog(title)
-      val buttonText = "Skip All and Set Defaults"
+      val buttonText = "Skip Remaining and Set Defaults"
       LOG.info("Click '$buttonText'")
       button(buttonText).click()
     }
