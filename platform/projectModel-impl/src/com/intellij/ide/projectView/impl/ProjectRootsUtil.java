@@ -92,10 +92,20 @@ public class ProjectRootsUtil {
     return directoryFile.equals(contentRootForFile);
   }
 
-  public static String computeNameOfUnloadedModuleByContentRoot(@NotNull final VirtualFile root, @NotNull Project project) {
+  public static String findUnloadedModuleByContentRoot(@NotNull final VirtualFile root, @NotNull Project project) {
     final DirectoryInfo info = DirectoryIndex.getInstance(project).getInfoForFile(root);
     if (info.isExcluded(root) && root.equals(info.getContentRoot()) && info.getUnloadedModuleName() != null) {
       return info.getUnloadedModuleName();
+    }
+    return null;
+  }
+
+  public static String findUnloadedModuleByFile(@NotNull final VirtualFile file, @NotNull Project project) {
+    DirectoryInfo info = DirectoryIndex.getInstance(project).getInfoForFile(file);
+    VirtualFile contentRoot = info.getContentRoot();
+    if (info.isExcluded(file) && contentRoot != null) {
+      DirectoryInfo rootInfo = DirectoryIndex.getInstance(project).getInfoForFile(contentRoot);
+      return rootInfo.getUnloadedModuleName();
     }
     return null;
   }
