@@ -24,10 +24,12 @@ import com.intellij.psi.codeStyle.CodeStyleConstraints;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.fields.CommaSeparatedIntegersField;
 import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.ui.components.fields.valueEditors.ValueEditor;
 import com.intellij.ui.components.labels.ActionLink;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -54,6 +56,7 @@ public class RightMarginForm {
   private JComboBox<String> myWrapOnTypingCombo;
   private CommaSeparatedIntegersField myVisualGuidesField;
   @SuppressWarnings("unused") private ActionLink myResetLink;
+  private JLabel myVisualGuidesHint;
   private final Language myLanguage;
   private final CodeStyleSettings mySettings;
 
@@ -66,6 +69,8 @@ public class RightMarginForm {
       CodeStyleSettingsCustomizable.WRAP_ON_TYPING_OPTIONS
     ));
     MarginOptionsUtil.customizeWrapOnTypingCombo(myWrapOnTypingCombo, settings);
+    myVisualGuidesHint.setForeground(JBColor.GRAY);
+    myVisualGuidesHint.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
   }
 
   void createUIComponents() {
