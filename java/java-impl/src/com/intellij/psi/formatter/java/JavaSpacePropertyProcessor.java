@@ -105,7 +105,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         myResult = Spacing.createKeepingFirstColumnSpacing(0, Integer.MAX_VALUE, true, mySettings.KEEP_BLANK_LINES_IN_CODE);
       }
       else {
-        myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, 0,  true, mySettings.KEEP_BLANK_LINES_IN_CODE);
+        myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, 0, true, mySettings.KEEP_BLANK_LINES_IN_CODE);
       }
     }
     else if (myParent != null) {
@@ -565,12 +565,11 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
    * Allows to calculate {@code 'min line feed'} setting of the {@link Spacing} to be used between two closing braces
    * (assuming that left AST node that ends with closing brace is given to this method).
    *
-   * @param leftNode    left AST node that ends with closing brace
-   * @return            {@code 'min line feed'} setting of {@link Spacing} object to use for the given AST node and
-   *                    closing brace
+   * @param leftNode left AST node that ends with closing brace
+   * @return {@code 'min line feed'} setting of {@link Spacing} object to use for the given AST node and
+   * closing brace
    */
   private static int getMinLineFeedsBetweenRBraces(ASTNode leftNode) {
-
     // The general idea is to return zero in situation when opening curly braces goes one after other, e.g.
     //     new Expectations() {{
     //         foo();}}
@@ -623,7 +622,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   public void visitEnumConstantInitializer(PsiEnumConstantInitializer enumConstantInitializer) {
     if (myRole2 == ChildRole.EXTENDS_LIST || myRole2 == ChildRole.IMPLEMENTS_LIST) {
       createSpaceInCode(true);
-    } else {
+    }
+    else {
       processMethod();
     }
   }
@@ -641,7 +641,6 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
                                        mySettings.KEEP_LINE_BREAKS,
                                        mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
     }
-
   }
 
   @Override
@@ -669,7 +668,6 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       int lf = mySettings.BLANK_LINES_AROUND_CLASS + 1;
       myResult = Spacing.createSpacing(0, 0, lf, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
     }
-
   }
 
   @Override
@@ -683,7 +681,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole2 == ChildRole.LOOP_BODY || myChild2.getElementType() == JavaElementType.CODE_BLOCK) {
       if (myChild2.getElementType() == JavaElementType.BLOCK_STATEMENT) {
         myResult = getSpaceBeforeLBrace(myChild2, mySettings.SPACE_BEFORE_WHILE_LBRACE, null);
-      } else {
+      }
+      else {
         createSpacingBeforeElementInsideControlStatement();
       }
     }
@@ -700,7 +699,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole2 == ChildRole.LOOP_BODY) {
       if (myChild2.getElementType() == JavaElementType.BLOCK_STATEMENT) {
         myResult = getSpaceBeforeLBrace(myChild2, mySettings.SPACE_BEFORE_DO_LBRACE, null);
-      } else {
+      }
+      else {
         createSpacingBeforeElementInsideControlStatement();
       }
     }
@@ -748,7 +748,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     if (myRole2 == ChildRole.TRY_BLOCK) {
       TextRange dependentRange = null;
       if (myChild1 instanceof PsiResourceList && mySettings.BRACE_STYLE == NEXT_LINE_IF_WRAPPED) {
-          dependentRange = myChild1.getTextRange();
+        dependentRange = myChild1.getTextRange();
       }
       myResult = getSpaceBeforeLBrace(myChild2, mySettings.SPACE_BEFORE_TRY_LBRACE, dependentRange);
     }
@@ -793,7 +793,6 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole2 == ChildRole.RPARENTH) {
       createParenthSpace(mySettings.PARENTHESES_EXPRESSION_RPAREN_WRAP, mySettings.SPACE_WITHIN_PARENTHESES);
     }
-
   }
 
   @Override
@@ -873,10 +872,9 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       //   1. Call 'introduce variable' refactoring for the code like 'System.out.println(1);';
       //   2. When KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE is on, the output looks like 'int i = 1; System.out.println(i);';
       // That's why we process the option only during the explicit reformat (directly invoked by an user).
-      if ((mySettings.KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE
-             && (FormatterUtil.isFormatterCalledExplicitly() || ApplicationManager.getApplication().isUnitTestMode()))
-          || psi != null && PsiTreeUtil.hasErrorElements(psi))
-      {
+      if ((mySettings.KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE &&
+           (FormatterUtil.isFormatterCalledExplicitly() || ApplicationManager.getApplication().isUnitTestMode())) ||
+          psi != null && PsiTreeUtil.hasErrorElements(psi)) {
         minSpaces = 1;
         minLineFeeds = 0;
         if (myChild1 != null) {
@@ -956,7 +954,6 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (myRole2 == ChildRole.THEN_BRANCH) {
       createSpacingBeforeElementInsideControlStatement();
-
     }
   }
 
@@ -1198,9 +1195,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   @Override
   public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
-    if (myRole1 == ChildRole.TYPE && myRole2 == ChildRole.DOT
-        || myRole1 == ChildRole.DOT && myRole2 == ChildRole.CLASS_KEYWORD)
-    {
+    if (myRole1 == ChildRole.TYPE && myRole2 == ChildRole.DOT ||
+        myRole1 == ChildRole.DOT && myRole2 == ChildRole.CLASS_KEYWORD) {
       createSpaceInCode(false);
     }
   }
@@ -1635,7 +1631,9 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     // There is a possible case that annotation key-value pair is used in 'shorten' form (with implicit name 'values'). It's also
     // possible that target value is surrounded by curly braces. We want to define child role accordingly then.
-    else if (myRole1 == ChildRole.LPARENTH && mySettings.SPACE_BEFORE_ANNOTATION_ARRAY_INITIALIZER_LBRACE && myRole2 == ChildRole.ANNOTATION_VALUE) {
+    else if (myRole1 == ChildRole.LPARENTH &&
+             mySettings.SPACE_BEFORE_ANNOTATION_ARRAY_INITIALIZER_LBRACE &&
+             myRole2 == ChildRole.ANNOTATION_VALUE) {
       createSpaceInCode(true);
     }
     else if (myRole1 == ChildRole.LPARENTH || myRole2 == ChildRole.RPARENTH) {
@@ -1672,7 +1670,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
           spaces = mySettings.SPACE_WITHIN_EMPTY_ARRAY_INITIALIZER_BRACES ? 1 : 0;
         }
         myResult = Spacing.createDependentLFSpacing(spaces, spaces, myParent.getTextRange(), mySettings.KEEP_LINE_BREAKS,
-                                    mySettings.KEEP_BLANK_LINES_IN_CODE);
+                                                    mySettings.KEEP_BLANK_LINES_IN_CODE);
       }
       else {
         boolean addSpace = (myRole2 != ChildRole.RBRACE)
@@ -1688,7 +1686,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       if (mySettings.ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE) {
         int spaces = mySettings.SPACE_WITHIN_ARRAY_INITIALIZER_BRACES ? 1 : 0;
         myResult = Spacing.createDependentLFSpacing(spaces, spaces, myParent.getTextRange(), mySettings.KEEP_LINE_BREAKS,
-                                    mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
+                                                    mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
       }
       else {
         createSpaceProperty(mySettings.SPACE_WITHIN_ARRAY_INITIALIZER_BRACES, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
