@@ -940,6 +940,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
         modules.add(module);
         ((ModuleEx)module).rename(modulesToNewNamesMap.get(module), true);
         moduleModel.myModules.put(module.getName(), module);
+        myUnloadedModules.remove(module.getName());
       }
 
       moduleModel.myIsWritable = false;
@@ -953,6 +954,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       }
 
       for (Module addedModule : addedModules) {
+        myUnloadedModules.remove(addedModule.getName());
         ((ModuleEx)addedModule).moduleAdded();
         cleanCachedStuff();
         fireModuleAdded(addedModule);
@@ -961,6 +963,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       cleanCachedStuff();
       fireModulesRenamed(modules, oldNames);
       cleanCachedStuff();
+      UnloadedModulesListStorage unloadedModulesListStorage = UnloadedModulesListStorage.getInstance(myProject);
+      unloadedModulesListStorage.setUnloadedModuleNames(ContainerUtil.filter(unloadedModulesListStorage.getUnloadedModuleNames(), myUnloadedModules::containsKey));
     }, false, true);
   }
 
