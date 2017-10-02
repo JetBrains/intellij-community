@@ -384,8 +384,8 @@ open class GuiTestCase {
     else throw UnableToFindComponent("Message")
   }
 
-  private fun <S, C : Component> ComponentFixture<S, C>.UnableToFindComponent(component: String): UnsupportedOperationException {
-    return UnsupportedOperationException("""Sorry, unable to find $component component with ${target()} as a Container""")
+  private fun <S, C : Component> ComponentFixture<S, C>.UnableToFindComponent(component: String): ComponentLookupException {
+    return ComponentLookupException("""Sorry, unable to find $component component with ${target()} as a Container""")
   }
 
   //*********FIXTURES METHODS FOR IDEFRAME WITHOUT ROBOT and TARGET
