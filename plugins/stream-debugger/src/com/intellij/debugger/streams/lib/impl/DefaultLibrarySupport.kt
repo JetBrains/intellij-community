@@ -29,11 +29,6 @@ import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
 
 class DefaultLibrarySupport : LibrarySupport {
-  override val description: Library
-    get() {
-      throw RuntimeException("There is no description for empty library")
-    }
-
   override fun createHandlerFactory(dsl: Dsl): HandlerFactory = object : HandlerFactory {
     override fun getForIntermediate(number: Int, call: IntermediateStreamCall): IntermediateCallHandler {
       return PeekTraceHandler(number, call.name, call.typeBefore, call.typeAfter, dsl)
