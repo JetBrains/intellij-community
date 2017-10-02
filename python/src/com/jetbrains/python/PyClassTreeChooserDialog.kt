@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.debugger
+package com.jetbrains.python
 
 import com.google.common.collect.Lists
 import com.intellij.ide.util.AbstractTreeClassChooserDialog
