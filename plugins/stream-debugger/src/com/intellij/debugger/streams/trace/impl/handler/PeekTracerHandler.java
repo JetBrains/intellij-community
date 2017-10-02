@@ -21,7 +21,6 @@ import com.intellij.debugger.streams.trace.dsl.impl.TextExpression;
 import com.intellij.debugger.streams.trace.dsl.impl.java.JavaCodeBlock;
 import com.intellij.debugger.streams.trace.dsl.impl.java.JavaStatementFactory;
 import com.intellij.debugger.streams.trace.dsl.impl.java.JavaTypes;
-import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +74,7 @@ public class PeekTracerHandler extends HandlerBase.Intermediate {
   public CodeBlock prepareResult() {
     final String beforeConversion = myBeforeVariable.convertToArray(BEFORE_ARRAY_NAME);
     final String afterConversion = myAfterVariable.convertToArray(AFTER_ARRAY_NAME);
-    String res = beforeConversion + TraceExpressionBuilderImpl.LINE_SEPARATOR + afterConversion;
+    String res = beforeConversion + '\n' + afterConversion;
     return new JavaCodeBlock(new JavaStatementFactory());
   }
 

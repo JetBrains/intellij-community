@@ -18,7 +18,6 @@ package com.intellij.debugger.streams.trace.impl.handler;
 import com.intellij.debugger.streams.trace.dsl.CodeBlock;
 import com.intellij.debugger.streams.trace.dsl.Expression;
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression;
-import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.CallArgument;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
@@ -64,7 +63,7 @@ public class MatchHandler extends HandlerBase.Terminator {
   @NotNull
   @Override
   public CodeBlock prepareResult() {
-    final String separator = TraceExpressionBuilderImpl.LINE_SEPARATOR;
+    final String separator = "\n";
     String res = "Object[] result = new Object[3];" + separator +
                  "{" + separator +
                  myBeforeFilterPeekInserter.prepareResult() +

@@ -21,7 +21,6 @@ import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 import com.intellij.debugger.streams.trace.dsl.impl.java.JavaCodeBlock
 import com.intellij.debugger.streams.trace.dsl.impl.java.JavaStatementFactory
 import com.intellij.debugger.streams.trace.dsl.impl.java.JavaTypes
-import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl.LINE_SEPARATOR
 import com.intellij.debugger.streams.trace.impl.handler.HandlerBase.Intermediate
 import com.intellij.debugger.streams.trace.impl.handler.type.ClassTypeImpl
 import com.intellij.debugger.streams.wrapper.CallArgument
@@ -36,6 +35,7 @@ import com.intellij.openapi.util.TextRange
 open class DistinctByKeyHandler(callNumber: Int, call: IntermediateStreamCall) : Intermediate() {
   private companion object {
     val KEY_EXTRACTOR_VARIABLE_PREFIX = "keyExtractor"
+    val LINE_SEPARATOR = "\n"
   }
 
   private val myPeekHandler: PeekTracerHandler = PeekTracerHandler(callNumber, "distinct", call.typeBefore, call.typeAfter)

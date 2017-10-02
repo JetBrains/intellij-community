@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Vitaliy.Bibaev
  */
 public interface Variable {
-  String DECLARATION_FORMAT = "final %s %s = %s;" + TraceExpressionBuilderImpl.LINE_SEPARATOR;
+  String DECLARATION_FORMAT = "final %s %s = %s;" + '\n';
 
   @NotNull
   String getName();

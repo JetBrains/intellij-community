@@ -19,7 +19,6 @@ import com.intellij.debugger.streams.trace.dsl.CodeBlock;
 import com.intellij.debugger.streams.trace.dsl.Expression;
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression;
 import com.intellij.debugger.streams.trace.dsl.impl.java.JavaTypes;
-import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import com.intellij.debugger.streams.trace.impl.handler.type.ClassTypeImpl;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
@@ -33,6 +32,7 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public class DistinctHandler extends HandlerBase.Intermediate {
+  private static final String LINE_SEPARATOR = "\n";
   private final PeekTracerHandler myPeekTracer;
   private final HashMapVariableImpl myStoreMapVariable;
   private final HashMapVariableImpl myResolveMapVariable;
@@ -76,7 +76,7 @@ public class DistinctHandler extends HandlerBase.Intermediate {
   @NotNull
   @Override
   public CodeBlock prepareResult() {
-    final String newLine = TraceExpressionBuilderImpl.LINE_SEPARATOR;
+    final String newLine = LINE_SEPARATOR;
     final CodeBlock peekPrepare = myPeekTracer.prepareResult();
 
     final String storeMapName = myStoreMapVariable.getName();
@@ -94,7 +94,7 @@ public class DistinctHandler extends HandlerBase.Intermediate {
       "}" + newLine;
 
     final String peekResult =
-      "final java.lang.Object peekResult = " + myPeekTracer.getResultExpression() + ";" + TraceExpressionBuilderImpl.LINE_SEPARATOR;
+      "final java.lang.Object peekResult = " + myPeekTracer.getResultExpression() + ";" + LINE_SEPARATOR;
     final String resolve2Array = myResolveMapVariable.convertToArray("resolve");
     String res = peekPrepare + prepareResolveMap + resolve2Array + peekResult;
     return peekPrepare;
@@ -114,7 +114,7 @@ public class DistinctHandler extends HandlerBase.Intermediate {
 
   @NotNull
   private String createResolveLambda() {
-    final String newLine = TraceExpressionBuilderImpl.LINE_SEPARATOR;
+    final String newLine = LINE_SEPARATOR;
     final String storeMap = myStoreMapVariable.getName();
     final String resolveReverseMap = myReverseUtilMapVariable.getName();
     final GenericType storeValueType = myStoreMapVariable.getValueType();

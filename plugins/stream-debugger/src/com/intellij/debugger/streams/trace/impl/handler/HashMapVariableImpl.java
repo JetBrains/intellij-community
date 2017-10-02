@@ -15,7 +15,6 @@
  */
 package com.intellij.debugger.streams.trace.impl.handler;
 
-import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +44,7 @@ class HashMapVariableImpl extends VariableImpl {
 
   @NotNull
   String convertToArray(@NotNull String arrayName) {
-    final String newLine = TraceExpressionBuilderImpl.LINE_SEPARATOR;
+    final String newLine = "\n";
 
     final String keysType = myKeyType.getVariableTypeName();
     final String valuesType = myValueType.getVariableTypeName();

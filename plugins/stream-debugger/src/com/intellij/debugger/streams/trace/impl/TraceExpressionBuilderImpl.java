@@ -52,8 +52,7 @@ import java.util.List;
  */
 public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
   private static final Logger LOG = Logger.getInstance(TraceExpressionBuilderImpl.class);
-
-  public static final String LINE_SEPARATOR = "\n";
+  private static final String LINE_SEPARATOR = "\n";
 
   private static final String RESULT_VARIABLE_NAME = "myRes";
   private static final String RESULT_VARIABLE_DECLARATION = "Object " + RESULT_VARIABLE_NAME + " = null;" + LINE_SEPARATOR;
