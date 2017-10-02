@@ -46,7 +46,7 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
     new PyPrebuiltStubsGenerator().generateResources(context)
 
     context.ant.copy(todir: "$targetDirectory/index", failonerror: true) {
-      fileset(dir: "$context.paths.temp/index", erroronmissingdir:true) {
+      fileset(dir: "$context.paths.temp/index", erroronmissingdir: true) {
         include(name: "*")
       }
     }
@@ -64,11 +64,22 @@ class PyPrebuiltStubsGenerator implements ResourcesGenerator {
     CompilationTasks.create(context).compileModules(["python-community-tools"])
     List<String> buildClasspath = context.getModuleRuntimeClasspath(context.findModule("python-community-tools"), false)
 
+    def zipPath = "$context.paths.temp/zips"
+
+    context.ant.copy(todir: "$zipPath", failonerror: true) {
+      fileset(dir: "$context.paths.projectHome/python-distributions", erroronmissingdir: true) {
+        include(name: "*.zip")
+      }
+      fileset(dir: "$context.paths.projectHome/skeletons", erroronmissingdir: true) {
+        include(name: "*.zip")
+      }
+    }
+
     def outputPath = "$context.paths.temp/index"
 
     context.ant.java(classname: "com.jetbrains.python.tools.PyPrebuiltStubsGeneratorKt", fork: true) {
       jvmarg(line: "-ea -Xmx1500m")
-      arg(value: "$context.paths.projectHome/python-distributions")
+      arg(value: zipPath)
       arg(value: outputPath)
       classpath {
         buildClasspath.each {
