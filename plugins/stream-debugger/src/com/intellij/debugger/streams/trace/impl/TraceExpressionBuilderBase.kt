@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.streams.trace.impl
 
-import com.intellij.debugger.streams.lib.LibraryManager
+import com.intellij.debugger.streams.lib.HandlerFactory
 import com.intellij.debugger.streams.trace.IntermediateCallHandler
 import com.intellij.debugger.streams.trace.TerminatorCallHandler
 import com.intellij.debugger.streams.trace.TraceExpressionBuilder
@@ -29,20 +29,18 @@ import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.wrapper.StreamChain
 import com.intellij.debugger.streams.wrapper.impl.StreamChainImpl
-import com.intellij.openapi.project.Project
 import java.util.*
 
 /**
  * @author Vitaliy.Bibaev
  */
-abstract class TraceExpressionBuilderBase(private val myProject: Project, protected val dsl: Dsl) : TraceExpressionBuilder {
+abstract class TraceExpressionBuilderBase(protected val dsl: Dsl, private val handlerFactory: HandlerFactory)
+  : TraceExpressionBuilder {
   protected val resultVariableName = "myRes"
 
   override fun createTraceExpression(chain: StreamChain): String {
-    val libraryManager = LibraryManager.getInstance(myProject)
-    val intermediateHandlers = getHandlers(libraryManager, chain.intermediateCalls)
+    val intermediateHandlers = chain.intermediateCalls.mapIndexedTo(ArrayList(), handlerFactory::getForIntermediate)
     val terminatorCall = chain.terminationCall
-    val handlerFactory = libraryManager.getLibrary(terminatorCall).createHandlerFactory(dsl)
     val terminatorHandler = handlerFactory.getForTermination(terminatorCall, "evaluationResult[0]")
 
     val traceChain = buildTraceChain(chain, intermediateHandlers, terminatorHandler)
@@ -99,7 +97,7 @@ abstract class TraceExpressionBuilderBase(private val myProject: Project, protec
     val terminatorCall = terminatorHandler.transformCall(chain.terminationCall)
 
     return StreamChainImpl(qualifierExpression, newIntermediateCalls, terminatorCall,
-                                                                      chain.context)
+                           chain.context)
   }
 
   private fun createTimePeekCall(elementType: GenericType): IntermediateStreamCall {
@@ -153,10 +151,4 @@ abstract class TraceExpressionBuilderBase(private val myProject: Project, protec
       }
     }
   }
-
-  private fun getHandlers(libraryManager: LibraryManager,
-                          intermediateCalls: List<IntermediateStreamCall>): List<IntermediateCallHandler> =
-    intermediateCalls.mapIndexedTo(ArrayList()) { i, call ->
-      libraryManager.getLibrary(call).createHandlerFactory(dsl).getForIntermediate(i, call)
-    }
 }

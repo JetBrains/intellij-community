@@ -15,15 +15,15 @@
  */
 package com.intellij.debugger.streams.trace.impl
 
+import com.intellij.debugger.streams.lib.HandlerFactory
 import com.intellij.debugger.streams.trace.dsl.Dsl
 import com.intellij.debugger.streams.wrapper.StreamChain
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.project.Project
 
 /**
  * @author Vitaliy.Bibaev
  */
-class KotlinTraceExpressionBuilder(project: Project, dsl: Dsl) : TraceExpressionBuilderBase(project, dsl) {
+class KotlinTraceExpressionBuilder(dsl: Dsl, handlerFactory: HandlerFactory) : TraceExpressionBuilderBase(dsl, handlerFactory) {
   private companion object {
     private val LOG = Logger.getInstance(KotlinTraceExpressionBuilder::class.java)
   }
