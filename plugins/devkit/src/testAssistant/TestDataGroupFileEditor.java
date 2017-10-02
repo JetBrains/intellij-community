@@ -25,7 +25,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupVirtualFile;
 
@@ -67,9 +69,8 @@ public class TestDataGroupFileEditor extends UserDataHolderBase implements FileE
 
   private static JComponent wrapWithTitle(String name, final FileEditor beforeEditor) {
     JPanel panel = new JPanel(new BorderLayout());
-    final JLabel label = new JLabel(name);
+    final JLabel label = new JBLabel(name, UIUtil.ComponentStyle.SMALL);
     label.setBorder(JBUI.Borders.empty(1, 4, 2, 0));
-    label.setFont(label.getFont().deriveFont(Font.BOLD));
     panel.add(BorderLayout.NORTH, label);
     panel.add(BorderLayout.CENTER, beforeEditor.getComponent());
     return panel;
