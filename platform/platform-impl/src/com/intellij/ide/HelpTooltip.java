@@ -56,12 +56,13 @@ public class HelpTooltip {
   private static Color BACKGROUND_COLOR = new JBColor(Gray.xF7, new Color(0x46484a));
   private static Color FONT_COLOR = new JBColor(Gray.x33, Gray.xBF);
   private static Color SHORTCUT_COLOR = new JBColor(Gray.x78, Gray.x87);
-  private static Color BORDER_COLOR = new JBColor(Gray.xA1, new Color(0x5b5c5e));
+  private static Color BORDER_COLOR = new JBColor(Gray.xAD, new Color(0x616366));
 
-  private static Border DEFAULT_BORDER = JBUI.Borders.empty(10, 10, 10, 16);
-  private static Border SMALL_BORDER = JBUI.Borders.empty(SystemInfo.isMac ? 4 : 5, 8, 4, 8);
-
-  private static final int DEFAULT_OFFSET = 2;
+  private static Border DEFAULT_BORDER = JBUI.Borders.empty(SystemInfo.isWindows ? 7 : 10, 10, 10, 16);
+  private static Border SMALL_BORDER = JBUI.Borders.empty(SystemInfo.isMac ? 3 : (SystemInfo.isWindows ? 2 : 5),
+                                                          8,
+                                                          SystemInfo.isMac ? 5 : 4,
+                                                          8);
 
   private static final int VGAP = JBUI.scale(UIUtil.DEFAULT_VGAP);
   private static final int HGAP = JBUI.scale(UIUtil.DEFAULT_HGAP);
@@ -90,45 +91,30 @@ public class HelpTooltip {
 
   public enum Alignment {
     RIGHT {
-      @Override public Point getPoint(Dimension ownerSize, Dimension popupSize) {
-        int offset = getOffset();
-        return new Point(ownerSize.width + VGAP - offset, offset);
+      @Override public Point getPointFor(JComponent owner) {
+        Dimension size = owner.getSize();
+        return new Point(size.width + JBUI.scale(1) - xOffset + VGAP, JBUI.scale(1) + yOffset);
       }
     },
 
     BOTTOM {
-      @Override public Point getPoint(Dimension ownerSize, Dimension popupSize) {
-        int offset = getOffset();
-        return new Point(offset, ownerSize.height + VGAP - offset);
-      }
-    },
-
-    TOP {
-      @Override public Point getPoint(Dimension ownerSize, Dimension popupSize) {
-        int offset = getOffset();
-        return new Point(offset, - popupSize.height - VGAP + offset);
+      @Override public Point getPointFor(JComponent owner) {
+        Dimension size = owner.getSize();
+        return new Point(JBUI.scale(1) + xOffset, JBUI.scale(1) + size.height - yOffset + VGAP);
       }
     },
 
     HELP_BUTTON {
-      @Override public Point getPoint(Dimension ownerSize, Dimension popupSize) {
-        int offset = getOffset();
-        return new Point(-offset, ownerSize.height + VGAP - offset);
+      @Override public Point getPointFor(JComponent owner) {
+        Dimension size = owner.getSize();
+        return new Point(xOffset - JBUI.scale(5), JBUI.scale(1) + size.height - yOffset + VGAP);
       }
     };
 
-    private final int myOffset;
+    protected final int xOffset = JBUI.scale(UIManager.getInt("HelpTooltip.xOffset"));
+    protected final int yOffset = JBUI.scale(UIManager.getInt("HelpTooltip.yOffset"));
 
-    Alignment() {
-      int offset = UIManager.getInt("HelpTooltip.offset");
-      myOffset = (offset == 0) ? DEFAULT_OFFSET : offset;
-    }
-
-    protected int getOffset() {
-      return JBUI.scale(myOffset);
-    }
-
-    public abstract Point getPoint(Dimension ownerSize, Dimension popupSize);
+    public abstract Point getPointFor(JComponent owner);
   }
 
   @SuppressWarnings("unused")
@@ -256,7 +242,7 @@ public class HelpTooltip {
     popupAlarm.cancelAllRequests();
     popupAlarm.addRequest(() -> {
       myPopup = myPopupBuilder.createPopup();
-      myPopup.show(new RelativePoint(owner, alignment.getPoint(owner.getSize(), myPopup.getSize())));
+      myPopup.show(new RelativePoint(owner, alignment.getPointFor(owner)));
       if (!neverHide) {
         scheduleHide(true, myDismissDelay);
       }

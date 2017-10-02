@@ -56,13 +56,13 @@ public class Win10ActionButtonLook extends ActionButtonLook {
         g2.setColor(getBorderColorForState(state));
 
         Rectangle outerRect = new Rectangle(component.getSize());
-        JBInsets.removeFrom(outerRect, component.getInsets());
-
-        Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
-        border.append(outerRect, false);
+        JBInsets.removeFrom(outerRect, JBUI.insets(1));
 
         Rectangle innerRect = new Rectangle(outerRect);
         JBInsets.removeFrom(innerRect, JBUI.insets(1));
+
+        Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+        border.append(outerRect, false);
         border.append(innerRect, false);
 
         g2.fill(border);
@@ -73,7 +73,7 @@ public class Win10ActionButtonLook extends ActionButtonLook {
   }
 
   @Override public Insets getInsets() {
-    return JBUI.insets(1);
+    return JBUI.insets(2, 1);
   }
 
   private static Color getBorderColorForState(int state) {
