@@ -1869,24 +1869,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       createToolbarActions();
     }
 
-    private class MySelectInContext implements SelectInContext {
-      @NotNull private final PsiFile myPsiFile;
+    private class MySelectInContext extends SmartSelectInContext {
       @Nullable private final Editor myEditor;
 
       private MySelectInContext(@NotNull PsiFile psiFile, @Nullable Editor editor) {
-        myPsiFile = psiFile;
+        super(psiFile, psiFile);
         myEditor = editor;
-      }
-
-      @Override
-      @NotNull
-      public Project getProject() {
-        return myProject;
-      }
-
-      @NotNull
-      private PsiFile getPsiFile() {
-        return myPsiFile;
       }
 
       @Override
@@ -1895,36 +1883,22 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         return new FileEditorProvider() {
           @Override
           public FileEditor openFileEditor() {
-            return myFileEditorManager.openFile(myPsiFile.getContainingFile().getVirtualFile(), false)[0];
+            return ArrayUtil.getFirstElement(myFileEditorManager.openFile(getVirtualFile(), false));
           }
         };
       }
 
-      @NotNull
-      private PsiElement getPsiElement() {
-        PsiElement e = null;
-        if (myEditor != null) {
-          final int offset = myEditor.getCaretModel().getOffset();
-          if (PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments()) {
-            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-          }
-          e = getPsiFile().findElementAt(offset);
-        }
-        if (e == null) {
-          e = getPsiFile();
-        }
-        return e;
-      }
-
-      @Override
-      @NotNull
-      public VirtualFile getVirtualFile() {
-        return getPsiFile().getVirtualFile();
-      }
-
       @Override
       public Object getSelectorInFile() {
-        return getPsiElement();
+        PsiFile file = getPsiFile();
+        if (file != null && myEditor != null) {
+          final int offset = myEditor.getCaretModel().getOffset();
+          PsiDocumentManager manager = PsiDocumentManager.getInstance(getProject());
+          if (manager.hasUncommitedDocuments()) manager.commitAllDocuments();
+          PsiElement element = file.findElementAt(offset);
+          if (element != null) return element;
+        }
+        return file;
       }
     }
   }
