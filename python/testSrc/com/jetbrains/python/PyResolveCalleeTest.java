@@ -32,31 +32,31 @@ public class PyResolveCalleeTest extends PyTestCase {
 
   public void testInstanceCall() {
     final PyCallExpression.PyMarkedCallee resolved = resolveCallee();
-    assertNotNull(resolved.getCallable());
+    assertNotNull(resolved.getElement());
     assertEquals(1, resolved.getImplicitOffset());
   }
 
   public void testClassCall() {
     final PyCallExpression.PyMarkedCallee resolved = resolveCallee();
-    assertNotNull(resolved.getCallable());
+    assertNotNull(resolved.getElement());
     assertEquals(null, resolved.getModifier());
   }
 
   public void testDecoCall() {
     final PyCallExpression.PyMarkedCallee resolved = resolveCallee();
-    assertNotNull(resolved.getCallable());
+    assertNotNull(resolved.getElement());
     assertEquals(1, resolved.getImplicitOffset());
   }
 
   public void testDecoParamCall() {
     final PyCallExpression.PyMarkedCallee resolved = resolveCallee();
-    assertNotNull(resolved.getCallable());
+    assertNotNull(resolved.getElement());
     assertNull(resolved.getModifier());
   }
   
   public void testWrappedStaticMethod() {
     final PyCallExpression.PyMarkedCallee resolved = resolveCallee();
-    assertNotNull(resolved.getCallable());
+    assertNotNull(resolved.getElement());
     assertEquals(0, resolved.getImplicitOffset());
     assertEquals(PyFunction.Modifier.STATICMETHOD, resolved.getModifier());
   }

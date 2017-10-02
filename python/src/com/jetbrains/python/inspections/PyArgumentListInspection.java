@@ -73,7 +73,7 @@ public class PyArgumentListInspection extends PyInspection {
         if (deco.hasArgumentList()) continue;
         final PyCallExpression.PyMarkedCallee markedCallee = ContainerUtil.getFirstItem(deco.multiResolveCallee(getResolveContext()));
         if (markedCallee != null && !markedCallee.isImplicitlyResolved()) {
-          final PyCallable callable = markedCallee.getCallable();
+          final PyCallable callable = markedCallee.getElement();
           if (callable == null) return;
           final int firstParamOffset = markedCallee.getImplicitOffset();
           final List<PyCallableParameter> params = markedCallee.getCallableType().getParameters(myTypeEvalContext);
@@ -115,7 +115,7 @@ public class PyArgumentListInspection extends PyInspection {
     for (PyCallExpression.PyArgumentsMapping mapping : mappings) {
       final PyCallExpression.PyMarkedCallee callee = mapping.getMarkedCallee();
       if (callee != null) {
-        final PyCallable callable = callee.getCallable();
+        final PyCallable callable = callee.getElement();
         if (callable instanceof PyFunction) {
           final PyFunction function = (PyFunction)callable;
 
@@ -201,7 +201,7 @@ public class PyArgumentListInspection extends PyInspection {
       if (!mapping.getUnmappedArguments().isEmpty() && mapping.getUnmappedParameters().isEmpty()) {
         final PyCallExpression.PyMarkedCallee markedCallee = mapping.getMarkedCallee();
         if (markedCallee != null) {
-          final PyCallable callable = markedCallee.getCallable();
+          final PyCallable callable = markedCallee.getElement();
           final Project project = node.getProject();
           if (callable instanceof PyFunction && !PyChangeSignatureHandler.isNotUnderSourceRoot(project, callable.getContainingFile())) {
             holder.registerProblem(node, PyBundle.message("INSP.unexpected.arg(s)"), PyChangeSignatureQuickFix.forMismatchedCall(mapping));
@@ -281,7 +281,7 @@ public class PyArgumentListInspection extends PyInspection {
 
   @Nullable
   private static String calculatePossibleCalleeRepresentation(@NotNull PyCallExpression.PyMarkedCallee markedCallee, @NotNull TypeEvalContext context) {
-    final String name = markedCallee.getCallable() != null ? markedCallee.getCallable().getName() : "";
+    final String name = markedCallee.getElement() != null ? markedCallee.getElement().getName() : "";
     final List<PyCallableParameter> callableParameters = markedCallee.getCallableType().getParameters(context);
     if (callableParameters == null) return null;
 
@@ -289,7 +289,7 @@ public class PyArgumentListInspection extends PyInspection {
     final String callableNameAndParameters = name + parameters;
 
     return Optional
-      .ofNullable(PyUtil.as(markedCallee.getCallable(), PyFunction.class))
+      .ofNullable(PyUtil.as(markedCallee.getElement(), PyFunction.class))
       .map(PyFunction::getContainingClass)
       .map(PyClass::getName)
       .map(className -> PyNames.INIT.equals(name) ? className + parameters : className + "." + callableNameAndParameters)

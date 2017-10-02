@@ -756,7 +756,7 @@ public class PyCallExpressionHelper {
       final List<PyCallExpression.PyMarkedCallee> callees = ((PyCallExpression)callSite).multiResolveCallee(resolveContext);
 
       return ContainerUtil.map(PyUtil.filterTopPriorityResults(callees),
-                               callee -> Pair.create(callee.getCallable(), callee.getCallableType()));
+                               callee -> Pair.create(callee.getElement(), callee.getCallableType()));
     }
     else if (callSite instanceof PySubscriptionExpression || callSite instanceof PyBinaryExpression) {
       final List<Pair<PyCallable, PyCallableType>> results = new ArrayList<>();

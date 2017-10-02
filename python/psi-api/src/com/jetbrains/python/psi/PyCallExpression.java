@@ -160,7 +160,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
   @Deprecated
   default PyCallable resolveCalleeFunction(@NotNull PyResolveContext resolveContext) {
     final PyMarkedCallee first = ContainerUtil.getFirstItem(multiResolveCallee(resolveContext, 0));
-    return first == null ? null : first.getCallable();
+    return first == null ? null : first.getElement();
   }
 
   /**
@@ -205,7 +205,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
    */
   @NotNull
   default List<PyCallable> multiResolveCalleeFunction(@NotNull PyResolveContext resolveContext) {
-    return ContainerUtil.mapNotNull(multiResolveCallee(resolveContext, 0), PyMarkedCallee::getCallable);
+    return ContainerUtil.mapNotNull(multiResolveCallee(resolveContext, 0), PyMarkedCallee::getElement);
   }
 
   /**
@@ -245,7 +245,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
   default List<PyRatedCallee> multiResolveRatedCalleeFunction(@NotNull PyResolveContext resolveContext) {
     return ContainerUtil.map(multiResolveCallee(resolveContext, 0),
                              markedCallee -> new PyRatedCallee(markedCallee.getCallableType(),
-                                                               markedCallee.getCallable(),
+                                                               markedCallee.getElement(),
                                                                markedCallee.getRate()));
   }
 
@@ -489,9 +489,21 @@ public interface PyCallExpression extends PyCallSiteExpression {
       return myCallableType;
     }
 
+    /**
+     * @return resolved callable
+     * @deprecated Use {@link PyMarkedCallee#getElement()} instead.
+     * This method will be removed in 2018.1.
+     */
     @Nullable
+    @Deprecated
     public PyCallable getCallable() {
-      return (PyCallable)getElement();
+      return getElement();
+    }
+
+    @Override
+    @Nullable
+    public PyCallable getElement() {
+      return (PyCallable)super.getElement();
     }
 
     @Nullable
@@ -555,7 +567,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
     private final PyMarkedCallee myMarkedCallee;
 
     public PyRatedMarkedCallee(@NotNull PyMarkedCallee markedCallee, int rate) {
-      super(rate, markedCallee.getCallable());
+      super(rate, markedCallee.getElement());
       myMarkedCallee = markedCallee;
     }
 

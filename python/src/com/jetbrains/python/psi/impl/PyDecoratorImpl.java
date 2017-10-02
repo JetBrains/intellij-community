@@ -107,7 +107,7 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
       if (!hasArgumentList()) {
         // NOTE: that +1 thing looks fishy
         return new PyMarkedCallee(markedCallee.getCallableType(),
-                                  markedCallee.getCallable(),
+                                  markedCallee.getElement(),
                                   markedCallee.getModifier(),
                                   markedCallee.getImplicitOffset() + 1,
                                   markedCallee.isImplicitlyResolved(),
