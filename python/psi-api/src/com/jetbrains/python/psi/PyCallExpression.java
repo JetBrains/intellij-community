@@ -516,6 +516,11 @@ public interface PyCallExpression extends PyCallSiteExpression {
     }
   }
 
+  /**
+   * @deprecated Use {@link PyMarkedCallee} or {@link PyRatedMarkedCallee} instead.
+   * This class will be removed in 2018.1.
+   */
+  @Deprecated
   class PyRatedCallee extends RatedResolveResult {
 
     @NotNull

@@ -742,46 +742,37 @@ public class PyCallExpressionHelper {
   public static List<PyCallExpression.PyArgumentsMapping> mapArguments(@NotNull PyCallSiteExpression callSite,
                                                                        @NotNull PyResolveContext resolveContext) {
     final List<PyCallExpression.PyArgumentsMapping> results = new ArrayList<>();
-    for (PyCallExpression.PyRatedCallee ratedCallee : multiResolveCallee(callSite, resolveContext)) {
-      results.add(mapArguments(callSite, ratedCallee.getCallableType(), ratedCallee.getElement(), resolveContext));
+    for (Pair<PyCallable, PyCallableType> callableAndType : multiResolveCalleeFunction(callSite, resolveContext)) {
+      results.add(mapArguments(callSite, callableAndType.second, callableAndType.first, resolveContext));
     }
     return results;
   }
 
   @NotNull
-  private static List<PyCallExpression.PyRatedCallee> multiResolveCallee(@NotNull PyCallSiteExpression callSite,
-                                                                         @NotNull PyResolveContext resolveContext) {
+  private static List<Pair<PyCallable, PyCallableType>> multiResolveCalleeFunction(@NotNull PyCallSiteExpression callSite,
+                                                                                   @NotNull PyResolveContext resolveContext) {
     if (callSite instanceof PyCallExpression) {
       final List<PyCallExpression.PyRatedMarkedCallee> callees = ((PyCallExpression)callSite).multiResolveRatedCallee(resolveContext);
 
-      final com.intellij.util.Function<PyCallExpression.PyRatedMarkedCallee, PyCallExpression.PyRatedCallee> toRatedCallee =
-        markedCallee ->
-          new PyCallExpression.PyRatedCallee(
-            markedCallee.getMarkedCallee().getCallableType(),
-            markedCallee.getElement(),
-            markedCallee.getRate()
-          );
-
-      return PyUtil.filterTopPriorityResults(ContainerUtil.map(callees, toRatedCallee));
+      return ContainerUtil.map(PyUtil.filterTopPriorityResults(callees),
+                               callee -> Pair.create(callee.getElement(), callee.getMarkedCallee().getCallableType()));
     }
     else if (callSite instanceof PySubscriptionExpression || callSite instanceof PyBinaryExpression) {
-      final List<PyCallExpression.PyRatedCallee> results = new ArrayList<>();
-      boolean resolvedToUnknownResult = false;
+      final List<Pair<PyCallable, PyCallableType>> results = new ArrayList<>();
+
       for (PsiElement result : PyUtil.multiResolveTopPriority(callSite, resolveContext)) {
         if (result instanceof PyTypedElement) {
           final PyType resultType = resolveContext.getTypeEvalContext().getType((PyTypedElement)result);
           if (resultType instanceof PyCallableType) {
-            final PyCallExpression.PyRatedCallee ratedCallee =
-              new PyCallExpression.PyRatedCallee((PyCallableType)resultType,
-                                                 PyUtil.as(result, PyCallable.class),
-                                                 RatedResolveResult.RATE_NORMAL);
-            results.add(ratedCallee);
+            final PyCallable callable = PyUtil.as(result, PyCallable.class);
+            results.add(Pair.create(callable, (PyCallableType)resultType));
             continue;
           }
         }
-        resolvedToUnknownResult = true;
+        return Collections.emptyList();
       }
-      return resolvedToUnknownResult ? Collections.emptyList() : results;
+
+      return results;
     }
     else {
       return Collections.emptyList();
