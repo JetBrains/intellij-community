@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
@@ -33,12 +32,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.messages.Topic;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.ui.UIUtil;
 import com.trilead.ssh2.auth.AgentProxy;
-import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
@@ -84,8 +81,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   private final Map<Thread, String> myKeyAlgorithm;
   private boolean myArtificialSaving;
   private ISVNAuthenticationProvider myProvider;
-  public static final Topic<ISVNAuthenticationProviderListener> AUTHENTICATION_PROVIDER_LISTENER =
-    new Topic<>("AUTHENTICATION_PROVIDER_LISTENER", ISVNAuthenticationProviderListener.class);
   private final static ThreadLocal<ISVNAuthenticationProvider> ourThreadLocalProvider = new ThreadLocal<>();
 
   public SvnAuthenticationManager(@NotNull SvnVcs vcs, final File configDirectory) {
@@ -166,56 +161,9 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     return null;
   }
 
-  private class AuthenticationProviderProxy implements ISVNAuthenticationProvider {
-    private final ISVNAuthenticationProvider myDelegate;
-
-    private AuthenticationProviderProxy(ISVNAuthenticationProvider delegate) {
-      myDelegate = delegate;
-    }
-
-    @Override
-    public SVNAuthentication requestClientAuthentication(String kind,
-                                                         SVNURL url,
-                                                         String realm,
-                                                         SVNErrorMessage errorMessage,
-                                                         SVNAuthentication previousAuth, boolean authMayBeStored) {
-      final SVNAuthentication authentication =
-        myDelegate.requestClientAuthentication(kind, url, realm, errorMessage, previousAuth, authMayBeStored);
-      BackgroundTaskUtil.syncPublisher(myProject, AUTHENTICATION_PROVIDER_LISTENER)
-        .requestClientAuthentication(kind, url, realm, errorMessage, previousAuth, authMayBeStored, authentication);
-      return authentication;
-    }
-
-    @Override
-    public int acceptServerAuthentication(SVNURL url,
-                                          String realm,
-                                          Object certificate,
-                                          boolean resultMayBeStored) {
-      final int result = myDelegate.acceptServerAuthentication(url, realm, certificate, resultMayBeStored);
-      BackgroundTaskUtil.syncPublisher(myProject, AUTHENTICATION_PROVIDER_LISTENER)
-        .acceptServerAuthentication(url, realm, certificate, resultMayBeStored, result);
-      return result;
-    }
-  }
-
-  public interface ISVNAuthenticationProviderListener {
-    void requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage,
-                                     SVNAuthentication previousAuth, boolean authMayBeStored, SVNAuthentication authentication);
-
-    void acceptServerAuthentication(SVNURL url,
-                                    String realm,
-                                    Object certificate,
-                                    boolean resultMayBeStored,
-                                    @MagicConstant int acceptResult);
-  }
-
   @Override
   public void setAuthenticationProvider(ISVNAuthenticationProvider provider) {
-    ISVNAuthenticationProvider useProvider = provider;
-    if (!(provider instanceof AuthenticationProviderProxy)) {
-      useProvider = new AuthenticationProviderProxy(provider);
-    }
-    myProvider = useProvider;
+    myProvider = provider;
     super.setAuthenticationProvider(myProvider);
   }
 
