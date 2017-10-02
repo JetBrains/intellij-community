@@ -1,5 +1,5 @@
 <component name="ArtifactManager">
-  <artifact type="jar" build-on-make="true" name="debugger-agent">
+  <artifact type="jar" name="debugger-agent">
     <output-path>$PROJECT_DIR$/out/classes/artifacts/debugger_agent</output-path>
     <root id="archive" name="debugger-agent.jar">
       <element id="module-output" name="debugger-agent" />
