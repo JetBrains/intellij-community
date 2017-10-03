@@ -4,6 +4,7 @@ package com.intellij.debugger.impl;
 import com.intellij.debugger.*;
 import com.intellij.debugger.apiAdapters.TransportServiceWrapper;
 import com.intellij.debugger.engine.*;
+import com.intellij.debugger.settings.CaptureSettingsProvider;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.GetJPDADialog;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
@@ -36,6 +37,7 @@ import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,6 +55,8 @@ import org.jetbrains.org.objectweb.asm.MethodVisitor;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.*;
 import java.util.jar.Attributes;
 import java.util.stream.Stream;
@@ -496,39 +500,67 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
 
   private static void addDebuggerAgent(JavaParameters parameters) {
     if (Registry.is("debugger.capture.points.agent")) {
-      Sdk jdk = parameters.getJdk();
-      String version = jdk != null ? JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION) : null;
-      if (version != null) {
-        JavaSdkVersion sdkVersion = JavaSdkVersion.fromVersionString(version);
-        if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_6)) {
-          File classesRoot = new File(PathUtil.getJarPathForClass(DebuggerManagerImpl.class));
-          String agentName = "debugger-agent.jar";
-          File agentFile;
-          if (classesRoot.isFile()) {
-            agentFile = new File(classesRoot.getParentFile(), "rt/" + agentName);
+      String prefix = "-javaagent:";
+      String agentName = "debugger-agent.jar";
+      ParametersList parametersList = parameters.getVMParametersList();
+      if (parametersList.getParameters().stream().noneMatch(p -> p.startsWith(prefix) && p.contains(agentName))) {
+        Sdk jdk = parameters.getJdk();
+        String version = jdk != null ? JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION) : null;
+        if (version != null) {
+          JavaSdkVersion sdkVersion = JavaSdkVersion.fromVersionString(version);
+          if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_6)) {
+            File classesRoot = new File(PathUtil.getJarPathForClass(DebuggerManagerImpl.class));
+            File agentFile;
+            if (classesRoot.isFile()) {
+              agentFile = new File(classesRoot.getParentFile(), "rt/" + agentName);
+            }
+            else {
+              agentFile = new File(classesRoot.getParentFile().getParentFile(), "/artifacts/debugger_agent/" + agentName);
+            }
+            if (agentFile.exists()) {
+              parametersList.add(prefix + agentFile + "=" + generateAgentSettings());
+            }
+            else {
+              LOG.warn("Capture agent not found: " + agentFile);
+            }
           }
           else {
-            agentFile = new File(classesRoot.getParentFile().getParentFile(), "/artifacts/debugger_agent/" + agentName);
+            LOG.warn("Capture agent is not supported for jre " + version);
           }
-          if (agentFile.exists()) {
-            String agent = "-javaagent:" + agentFile + "=" + PathUtil.getJarPathForClass(MethodVisitor.class);
-            if (Registry.is("debugger.capture.points.agent.debug")) {
-              agent += ";debug";
-            }
-            ParametersList parametersList = parameters.getVMParametersList();
-            if (!parametersList.hasParameter(agent)) {
-              parametersList.add(agent);
-            }
-          }
-          else {
-            LOG.warn("Capture agent not found: " + agentFile);
-          }
-        }
-        else {
-          LOG.warn("Capture agent is not supported for jre " + version);
         }
       }
     }
+  }
+
+  private static String generateAgentSettings() {
+    Properties properties = new Properties();
+    properties.setProperty("asm-lib", PathUtil.getJarPathForClass(MethodVisitor.class));
+    if (Registry.is("debugger.capture.points.agent.debug")) {
+      properties.setProperty("debug", "true");
+    }
+    int idx = 0;
+    for (CaptureSettingsProvider.AgentPoint point : CaptureSettingsProvider.getCapturePoints()) {
+      properties.setProperty("capture" + idx++, point.myClassName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
+                                                point.myMethodName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
+                                                point.myKey.asString());
+    }
+    idx = 0;
+    for (CaptureSettingsProvider.AgentPoint point : CaptureSettingsProvider.getInsertPoints()) {
+      properties.setProperty("insert" + idx++, point.myClassName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
+                                               point.myMethodName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
+                                               point.myKey.asString());
+    }
+    try {
+      File file = FileUtil.createTempFile("capture", ".props");
+      try (FileOutputStream out = new FileOutputStream(file)) {
+        properties.store(out, null);
+        return file.getAbsolutePath();
+      }
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+    return null;
   }
 
   private static boolean shouldForceNoJIT(Sdk jdk) {

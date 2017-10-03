@@ -3,7 +3,9 @@ package com.intellij.rt.debugger.agent;
 
 import org.jetbrains.org.objectweb.asm.*;
 
+import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
@@ -25,78 +27,68 @@ public class CaptureAgent {
   private static Map<String, List<CapturePoint>> myCapturePoints = new HashMap<String, List<CapturePoint>>();
   private static Map<String, List<InsertPoint>> myInsertPoints = new HashMap<String, List<InsertPoint>>();
 
-  static {
-    addCapturePoint("javax/swing/SwingUtilities", "invokeLater", new ParamKeyProvider(0));
-    addInsertPoint("java/awt/event/InvocationEvent", "dispatch",
-                   new FieldKeyProvider("java/awt/event/InvocationEvent", "runnable", "Ljava/lang/Runnable;"));
-
-    addCapturePoint("java/lang/Thread", "start", THIS_KEY_PROVIDER);
-    addInsertPoint("java/lang/Thread", "run", THIS_KEY_PROVIDER);
-
-    addCapturePoint("java/util/concurrent/ExecutorService", "submit", new ParamKeyProvider(1));
-    addInsertPoint("java/util/concurrent/Executors$RunnableAdapter", "call",
-                   new FieldKeyProvider("java/util/concurrent/Executors$RunnableAdapter", "task", "Ljava/lang/Runnable;"));
-
-    addCapturePoint("java/util/concurrent/ThreadPoolExecutor", "execute", new ParamKeyProvider(1));
-    addInsertPoint("java/util/concurrent/FutureTask", "run", THIS_KEY_PROVIDER);
-
-    addCapturePoint("java/util/concurrent/CompletableFuture", "supplyAsync", new ParamKeyProvider(0));
-    addInsertPoint("java/util/concurrent/CompletableFuture$AsyncSupply", "run",
-                   new FieldKeyProvider("java/util/concurrent/CompletableFuture$AsyncSupply", "fn", "Ljava/util/function/Supplier;"));
-
-    addCapturePoint("java/util/concurrent/CompletableFuture", "runAsync", new ParamKeyProvider(0));
-    addInsertPoint("java/util/concurrent/CompletableFuture$AsyncRun", "run",
-                   new FieldKeyProvider("java/util/concurrent/CompletableFuture$AsyncRun", "fn", "Ljava/lang/Runnable;"));
-
-    addCapturePoint("java/util/concurrent/CompletableFuture", "thenAcceptAsync", new ParamKeyProvider(1));
-    addInsertPoint("java/util/concurrent/CompletableFuture", "uniAccept", new ParamKeyProvider(2));
-    //addInsertPoint("java/util/concurrent/CompletableFuture$UniAccept", "tryFire",
-    //               new FieldKeyProvider("java/util/concurrent/CompletableFuture$UniAccept", "fn", "Ljava/util/function/Consumer;"));
-
-    addCapturePoint("java/util/concurrent/CompletableFuture", "thenRunAsync", new ParamKeyProvider(1));
-    addInsertPoint("java/util/concurrent/CompletableFuture", "uniRun", new ParamKeyProvider(2));
-  }
-
   public static void premain(String args, Instrumentation instrumentation) throws IOException {
     ourInstrumentation = instrumentation;
 
-    String asmPath = null;
-    if (args != null) {
-      String[] split = args.split(";");
-      for (String s : split) {
-        if ("debug".equals(s)) {
-          DEBUG = true;
-          CaptureStorage.setDebug(true);
+    FileReader reader = null;
+    try {
+      reader = new FileReader(args);
+      Properties properties = new Properties();
+      properties.load(reader);
+
+      DEBUG = Boolean.parseBoolean(properties.getProperty("debug", "false"));
+      if (DEBUG) {
+        CaptureStorage.setDebug(true);
+      }
+
+      if (Boolean.parseBoolean(properties.getProperty("disabled", "false"))) {
+        CaptureStorage.setEnabled(false);
+      }
+
+      String asmPath = properties.getProperty("asm-lib");
+      if (asmPath == null) {
+        System.out.println("Capture agent: asm path is not specified, exiting");
+        return;
+      }
+
+      Enumeration<?> propNames = properties.propertyNames();
+      while (propNames.hasMoreElements()) {
+        String propName = (String)propNames.nextElement();
+        if (propName.startsWith("capture")) {
+          addPoint(true, properties.getProperty(propName));
         }
-        else if ("disabled".equals(s)) {
-          CaptureStorage.setEnabled(false);
-        }
-        else {
-          asmPath = s;
+        else if (propName.startsWith("insert")) {
+          addPoint(false, properties.getProperty(propName));
         }
       }
-    }
 
-    if (asmPath == null) {
-      System.out.println("Capture agent: asm path is not specified, exiting");
-      return;
-    }
-    instrumentation.appendToSystemClassLoaderSearch(new JarFile(asmPath));
+      instrumentation.appendToSystemClassLoaderSearch(new JarFile(asmPath));
 
-    instrumentation.addTransformer(new CaptureTransformer());
-    for (Class aClass : instrumentation.getAllLoadedClasses()) {
-      String name = aClass.getName().replaceAll("\\.", "/");
-      if (myCapturePoints.containsKey(name) || myInsertPoints.containsKey(name)) {
-        try {
-          instrumentation.retransformClasses(aClass);
-        }
-        catch (UnmodifiableClassException e) {
-          e.printStackTrace();
+      instrumentation.addTransformer(new CaptureTransformer());
+      for (Class aClass : instrumentation.getAllLoadedClasses()) {
+        String name = aClass.getName().replaceAll("\\.", "/");
+        if (myCapturePoints.containsKey(name) || myInsertPoints.containsKey(name)) {
+          try {
+            instrumentation.retransformClasses(aClass);
+          }
+          catch (UnmodifiableClassException e) {
+            e.printStackTrace();
+          }
         }
       }
+      if (DEBUG) {
+        System.out.println("Capture agent: ready");
+      }
     }
-    if (DEBUG) {
-      System.out.println("Capture agent: ready");
+    catch (IOException e) {
+      System.out.println("Capture agent: unable to read settings");
+      e.printStackTrace();
+    }
+    finally {
+      if (reader != null) {
+        reader.close();
+      }
+      new File(args).delete();
     }
   }
 
@@ -307,6 +299,17 @@ public class CaptureAgent {
     ourInstrumentation.retransformClasses(classes.toArray(new Class[0]));
   }
 
+  private static void addPoint(boolean capture, String line) {
+    String[] split = line.split(" ");
+    KeyProvider keyProvider = createKeyProvider(Arrays.copyOfRange(split, 2, split.length));
+    if (capture) {
+      addCapturePoint(split[0], split[1], keyProvider);
+    }
+    else {
+      addInsertPoint(split[0], split[1], keyProvider);
+    }
+  }
+
   private static void addCapturePoint(String className, String methodName, KeyProvider keyProvider) {
     List<CapturePoint> points = myCapturePoints.get(className);
     if (points == null) {
@@ -323,6 +326,18 @@ public class CaptureAgent {
       myInsertPoints.put(className, points);
     }
     points.add(new InsertPoint(className, methodName, keyProvider));
+  }
+
+  private static KeyProvider createKeyProvider(String[] line) {
+    if ("this".equals(line[0])) {
+      return THIS_KEY_PROVIDER;
+    }
+    try {
+      return new ParamKeyProvider(Integer.parseInt(line[0]));
+    }
+    catch (NumberFormatException ignored) {
+    }
+    return new FieldKeyProvider(line[0], line[1], line[2]);
   }
 
   private interface KeyProvider {
