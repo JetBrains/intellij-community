@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.auth;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -70,7 +69,6 @@ public class SvnAuthenticationManager {
     }
   };
   private SvnConfiguration myConfig;
-  private SvnAuthenticationInteraction myInteraction;
   private AuthenticationProvider myProvider;
 
   public SvnAuthenticationManager(@NotNull SvnVcs vcs, final File configDirectory) {
@@ -78,18 +76,13 @@ public class SvnAuthenticationManager {
     myProject = myVcs.getProject();
     myConfigDirectory = configDirectory;
     myConfig = myVcs.getSvnConfiguration();
-    myInteraction = new MySvnAuthenticationInteraction(myProject);
     Disposer.register(myProject, () -> {
       myVcs = null;
       myProject = null;
-      if (myInteraction instanceof MySvnAuthenticationInteraction) {
-        ((MySvnAuthenticationInteraction)myInteraction).myProject = null;
-      }
       if (myConfig != null) {
         myConfig.clear();
         myConfig = null;
       }
-      myInteraction = null;
     });
   }
 
@@ -230,60 +223,9 @@ public class SvnAuthenticationManager {
     return value == null || "yes".equalsIgnoreCase(value) || "on".equalsIgnoreCase(value) || "true".equalsIgnoreCase(value);
   }
 
-  private static class MySvnAuthenticationInteraction implements SvnAuthenticationInteraction {
-    private Project myProject;
-
-    private MySvnAuthenticationInteraction(Project project) {
-      myProject = project;
-    }
-
-    @Override
-    public void warnOnAuthStorageDisabled(SVNURL url) {
-      VcsBalloonProblemNotifier
-        .showOverChangesView(myProject, "Cannot store credentials: forbidden by \"store-auth-creds=no\"", MessageType.ERROR);
-    }
-
-    @Override
-    public void warnOnPasswordStorageDisabled(SVNURL url) {
-      VcsBalloonProblemNotifier
-        .showOverChangesView(myProject, "Cannot store password: forbidden by \"store-passwords=no\"", MessageType.ERROR);
-    }
-
-    @Override
-    public void warnOnSSLPassphraseStorageDisabled(SVNURL url) {
-      VcsBalloonProblemNotifier
-        .showOverChangesView(myProject, "Cannot store passphrase: forbidden by \"store-ssl-client-cert-pp=no\"", MessageType.ERROR);
-    }
-
-    @Override
-    public boolean promptForPlaintextPasswordSaving(SVNURL url, String realm) {
-      final int answer = Messages.showYesNoDialog(myProject, String.format("Your password for authentication realm:\n" +
-                                                                           "%s\ncan only be stored to disk unencrypted. Would you like to store it in plaintext?",
-                                                                           realm),
-                                                  "Store the password in plaintext?", Messages.getQuestionIcon());
-      return answer == Messages.YES;
-    }
-
-    @Override
-    public boolean promptInAwt() {
-      return true;
-    }
-
-    @Override
-    public boolean promptForSSLPlaintextPassphraseSaving(SVNURL url, String realm, File certificateFile, String certificateName) {
-      final int answer = Messages.showYesNoDialog(myProject,
-                                                  String.format("Your passphrase for " +
-                                                                certificateName +
-                                                                ":\n%s\ncan only be stored to disk unencrypted. Would you like to store it in plaintext?",
-                                                                certificateFile.getPath()),
-                                                  "Store the passphrase in plaintext?", Messages.getQuestionIcon());
-      return answer == Messages.YES;
-    }
-
-    @Override
-    public void dispose() {
-      myProject = null;
-    }
+  public void warnOnAuthStorageDisabled() {
+    VcsBalloonProblemNotifier
+      .showOverChangesView(myProject, "Cannot store credentials: forbidden by \"store-auth-creds=no\"", MessageType.ERROR);
   }
 
   public class HostOptions {
@@ -299,7 +241,7 @@ public class SvnAuthenticationManager {
         perHostValue != null ? isTurned(perHostValue) : isTurned(myConfigFile.getValue().getPropertyValue("auth", "store-auth-creds"));
 
       if (!storageEnabled) {
-        myInteraction.warnOnAuthStorageDisabled(myUrl);
+        warnOnAuthStorageDisabled();
       }
 
       return storageEnabled;
