@@ -137,14 +137,24 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
       return getMessage(myMayChangeSemantics, myType);
     }
 
+    boolean isInSingleStatementBranch(@NotNull PsiIfStatement ifStatement) {
+      PsiElement parent = ifStatement.getParent();
+      return parent instanceof PsiIfStatement || parent instanceof PsiLoopStatement;
+    }
+
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiIfStatement ifStatement = tryCast(descriptor.getStartElement(), PsiIfStatement.class);
       if (ifStatement == null) return;
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      if(isInSingleStatementBranch(ifStatement)) {
+        PsiBlockStatement block =
+          (PsiBlockStatement)ifStatement.replace(factory.createStatementFromText("{" + ifStatement.getText() + "}", ifStatement));
+        ifStatement = (PsiIfStatement)block.getCodeBlock().getStatements()[0];
+      }
       ExtractionContext context = ExtractionContext.from(ifStatement, myMayChangeSemantics);
       if (context == null) return;
       List<ExtractionUnit> units = context.getStartingUnits();
-      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
 
       if (context.getImplicitElse() == null) {
         if (!tryCleanUpHead(ifStatement, units, factory)) return;
@@ -508,7 +518,7 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
       }
       if(canBeExtractedFromEnd == tailCommonParts.size()) {
         // trying to append to tail statements that may change semantics from head, because in tail they can't change semantics
-        for (int i = headCommonParts.size() - 1; i > 0; i--) {
+        for (int i = headCommonParts.size() - 1; i >= 0; i--) {
           ExtractionUnit unit = headCommonParts.get(i);
           PsiStatement thenStatement = unit.getThenStatement();
           if(unit.mayChangeSemantics() && unit.hasEquivalentStatements()) {
