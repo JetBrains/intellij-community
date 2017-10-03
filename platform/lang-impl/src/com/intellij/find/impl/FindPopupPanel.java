@@ -697,7 +697,23 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     });
   }
 
+  //Some popups shown above may prevent panel closing, first of all we should close them
+  private boolean canBeClosedImmediately() {
+    boolean state = myIsPinned.get();
+    myIsPinned.set(false);
+    try {
+      //Here we actually close popups
+      return myBalloon != null && myBalloon.canClose();
+    } finally {
+      myIsPinned.set(state);
+    }
+  }
+
   private void doOK(boolean promptOnReplace) {
+    if (!canBeClosedImmediately()) {
+      return;
+    }
+
     FindModel validateModel = myHelper.getModel().clone();
     applyTo(validateModel, false);
 
@@ -720,7 +736,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       return;
     }
     myIsPinned.set(false);
-    Disposer.dispose(myBalloon);
+    myBalloon.cancel();
   }
 
   @Nullable
@@ -743,7 +759,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     DumbAwareAction closeAction = new DumbAwareAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        if (myBalloon != null && myBalloon.isVisible()) {
+        if (canBeClosedImmediately() && myBalloon != null && myBalloon.isVisible()) {
           myIsPinned.set(false);
           myBalloon.cancel();
         }
