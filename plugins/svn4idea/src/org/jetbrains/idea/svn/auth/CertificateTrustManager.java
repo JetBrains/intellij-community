@@ -93,8 +93,7 @@ public class CertificateTrustManager extends ClientOnlyTrustManager {
   }
 
   private void checkActive(@NotNull X509Certificate certificate) throws CertificateException {
-    boolean isStorageEnabled =
-      myAuthenticationService.getAuthenticationManager().getHostOptionsProvider().getHostOptions(myRepositoryUrl).isAuthStorageEnabled();
+    boolean isStorageEnabled = myAuthenticationService.getAuthenticationManager().getHostOptions(myRepositoryUrl).isAuthStorageEnabled();
     AcceptResult result = myAuthenticationService.getAuthenticationManager().getProvider()
       .acceptServerAuthentication(myRepositoryUrl, myRealm, certificate, isStorageEnabled);
 

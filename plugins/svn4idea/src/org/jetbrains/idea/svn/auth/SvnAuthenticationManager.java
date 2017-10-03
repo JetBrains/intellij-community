@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.proxy.CommonProxy;
@@ -31,11 +32,12 @@ import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.config.ProxyGroup;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
-import org.tmatesoft.svn.core.internal.wc.*;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
+import org.tmatesoft.svn.core.internal.wc.SVNCompositeConfigFile;
+import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 import java.io.File;
 import java.util.Map;
@@ -51,9 +53,26 @@ public class SvnAuthenticationManager {
   private SvnVcs myVcs;
   private Project myProject;
   private File myConfigDirectory;
+  private final NotNullLazyValue<SVNCompositeConfigFile> myConfigFile = new NotNullLazyValue<SVNCompositeConfigFile>() {
+    @NotNull
+    @Override
+    protected SVNCompositeConfigFile compute() {
+      SVNConfigFile userConfig = new SVNConfigFile(new File(myConfigDirectory, "config"));
+      SVNConfigFile systemConfig = new SVNConfigFile(new File(SVNFileUtil.getSystemConfigurationDirectory(), "config"));
+      return new SVNCompositeConfigFile(systemConfig, userConfig);
+    }
+  };
+  private final NotNullLazyValue<SVNCompositeConfigFile> myServersFile = new NotNullLazyValue<SVNCompositeConfigFile>() {
+    @NotNull
+    @Override
+    protected SVNCompositeConfigFile compute() {
+      SVNConfigFile userConfig = new SVNConfigFile(new File(myConfigDirectory, "servers"));
+      SVNConfigFile systemConfig = new SVNConfigFile(new File(SVNFileUtil.getSystemConfigurationDirectory(), "servers"));
+      return new SVNCompositeConfigFile(systemConfig, userConfig);
+    }
+  };
   private SvnConfiguration myConfig;
   private SvnAuthenticationInteraction myInteraction;
-  private IdeaSVNHostOptionsProvider myLocalHostOptionsProvider;
   private AuthenticationProvider myProvider;
 
   public SvnAuthenticationManager(@NotNull SvnVcs vcs, final File configDirectory) {
@@ -98,11 +117,9 @@ public class SvnAuthenticationManager {
     return myConfig;
   }
 
-  public IdeaSVNHostOptionsProvider getHostOptionsProvider() {
-    if (myLocalHostOptionsProvider == null) {
-      myLocalHostOptionsProvider = new IdeaSVNHostOptionsProvider();
-    }
-    return myLocalHostOptionsProvider;
+  @NotNull
+  public HostOptions getHostOptions(@NotNull SVNURL url) {
+    return new HostOptions(url);
   }
 
   public void acknowledgeAuthentication(String kind, String realm, SVNAuthentication authentication) {
@@ -114,19 +131,19 @@ public class SvnAuthenticationManager {
     if (url != null) {
       CommonProxy.getInstance().removeNoProxy(url.getProtocol(), url.getHost(), url.getPort());
     }
-    final boolean authStorageEnabled = getHostOptionsProvider().getHostOptions(authentication.getURL()).isAuthStorageEnabled();
+    final boolean authStorageEnabled = getHostOptions(authentication.getURL()).isAuthStorageEnabled();
     final SVNAuthentication proxy = ProxySvnAuthentication.proxy(authentication, authStorageEnabled);
     getConfig().acknowledge(kind, realm, proxy);
   }
 
-  // 30 seconds
   private final static int DEFAULT_READ_TIMEOUT = 30 * 1000;
+  private final static int DEFAULT_CONNECT_TIMEOUT = 60 * 1000;
 
   public int getReadTimeout(@NotNull SVNURL url) {
     String protocol = url.getProtocol();
     if (HTTP.equals(protocol) || HTTPS.equals(protocol)) {
       String host = url.getHost();
-      String timeout = getServersPropertyIdea(host, "http-timeout");
+      String timeout = getPropertyIdea(host, myServersFile.getValue(), "http-timeout");
       if (timeout != null) {
         try {
           return Integer.parseInt(timeout) * 1000;
@@ -148,17 +165,8 @@ public class SvnAuthenticationManager {
     if (SVN_SSH.equals(protocol)) {
       return (int)getConfig().getSshConnectionTimeout();
     }
-    final int connectTimeout = getHostOptionsProvider().getHostOptions(url).getConnectTimeout();
-    if ((HTTP.equals(protocol) || HTTPS.equals(protocol)) && (connectTimeout <= 0)) {
-      return DEFAULT_READ_TIMEOUT;
-    }
-    return connectTimeout;
-  }
 
-  // taken from default manager as is
-  private String getServersPropertyIdea(String host, final String name) {
-    final SVNCompositeConfigFile serversFile = getHostOptionsProvider().getServersFile();
-    return getPropertyIdea(host, serversFile, name);
+    return HTTP.equals(protocol) || HTTPS.equals(protocol) ? DEFAULT_CONNECT_TIMEOUT : 0;
   }
 
   private static String getPropertyIdea(String host, SVNCompositeConfigFile serversFile, final String name) {
@@ -288,91 +296,28 @@ public class SvnAuthenticationManager {
     }
   }
 
-  public class IdeaSVNHostOptionsProvider extends DefaultSVNHostOptionsProvider {
-    public IdeaSVNHostOptionsProvider() {
-      super(myConfigDirectory);
-    }
+  public class HostOptions {
+    @NotNull private final SVNURL myUrl;
 
-    @Override
-    public SVNCompositeConfigFile getServersFile() {
-      return super.getServersFile();
-    }
-
-    @Override
-    public ISVNHostOptions getHostOptions(SVNURL url) {
-      return new IdeaSVNHostOptions(getServersFile(), url);
-    }
-  }
-
-  private class IdeaSVNHostOptions extends DefaultSVNHostOptions {
-    private SVNCompositeConfigFile myConfigFile;
-    private final SVNURL myUrl;
-
-    private IdeaSVNHostOptions(SVNCompositeConfigFile serversFile, SVNURL url) {
-      super(serversFile, url);
+    private HostOptions(@NotNull SVNURL url) {
       myUrl = url;
     }
 
-    @Override
-    public boolean isStorePlainTextPasswords(final String realm, SVNAuthentication auth) throws SVNException {
-      return ISVNAuthenticationManager.USERNAME.equals(auth.getKind()) || super.isStorePlainTextPasswords(realm, auth);
-    }
-
-    @Override
-    public boolean isStorePlainTextPassphrases(final String realm, final SVNAuthentication auth) throws SVNException {
-      return ISVNAuthenticationManager.USERNAME.equals(auth.getKind()) || super.isStorePlainTextPassphrases(realm, auth);
-    }
-
-    @Override
     public boolean isAuthStorageEnabled() {
-      final boolean value;
-      if (hasAuthStorageEnabledOption()) {
-        value = super.isAuthStorageEnabled();
-      }
-      else {
-        value = isTurned(getConfigFile().getPropertyValue("auth", "store-auth-creds"));
-      }
-      if (!value) {
+      String perHostValue = getPropertyIdea(myUrl.getHost(), myServersFile.getValue(), "store-auth-creds");
+      boolean storageEnabled =
+        perHostValue != null ? isTurned(perHostValue) : isTurned(myConfigFile.getValue().getPropertyValue("auth", "store-auth-creds"));
+
+      if (!storageEnabled) {
         myInteraction.warnOnAuthStorageDisabled(myUrl);
       }
-      return value;
+
+      return storageEnabled;
     }
 
-    @Override
-    public boolean isStorePasswords() {
-      final String storePasswords = getServersPropertyIdea(getHost(), "store-passwords");
-      final boolean value;
-      if (storePasswords != null) {
-        value = isTurned(storePasswords);
-      }
-      else {
-        final String configValue = getConfigFile().getPropertyValue("auth", "store-passwords");
-        value = isTurned(configValue);
-      }
-      if (!value) {
-        myInteraction.warnOnPasswordStorageDisabled(myUrl);
-      }
-      return value;
-    }
-
-    @Override
-    public boolean isStoreSSLClientCertificatePassphrases() {
-      final boolean value = super.isStoreSSLClientCertificatePassphrases();
-      if (!value) {
-        myInteraction.warnOnSSLPassphraseStorageDisabled(myUrl);
-      }
-      return value;
-    }
-
-    private SVNCompositeConfigFile getConfigFile() {
-      if (myConfigFile == null) {
-        final File config = new File(myConfigDirectory, "config");
-        SVNConfigFile.createDefaultConfiguration(myConfigDirectory);
-        SVNConfigFile userConfig = new SVNConfigFile(config);
-        SVNConfigFile systemConfig = new SVNConfigFile(new File(SVNFileUtil.getSystemConfigurationDirectory(), "config"));
-        myConfigFile = new SVNCompositeConfigFile(systemConfig, userConfig);
-      }
-      return myConfigFile;
+    @Nullable
+    public String getSSLClientCertFile() {
+      return getPropertyIdea(myUrl.getHost(), myServersFile.getValue(), "ssl-client-cert-file");
     }
   }
 }
