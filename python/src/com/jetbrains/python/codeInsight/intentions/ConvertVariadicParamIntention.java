@@ -77,7 +77,7 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
         final PyExpression firstArgument = ArrayUtil.getFirstElement(call.getArguments());
         final String firstArgumentValue = PyStringLiteralUtil.getStringValue(firstArgument);
         if (firstArgumentValue != null &&
-            PyNames.isIdentifierString(firstArgumentValue) &&
+            PyNames.isIdentifier(firstArgumentValue) &&
             (caretInParameterList || PsiTreeUtil.isAncestor(call, element, true))) {
           return true;
         }
@@ -87,7 +87,7 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
         final PyExpression indexExpression = subscription.getIndexExpression();
         final String indexValue = PyStringLiteralUtil.getStringValue(indexExpression);
         if (indexValue != null &&
-            PyNames.isIdentifierString(indexValue) &&
+            PyNames.isIdentifier(indexValue) &&
             (caretInParameterList || PsiTreeUtil.isAncestor(subscription, element, true))) {
           return true;
         }
@@ -137,6 +137,7 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
         .ofNullable(subscription.getIndexExpression())
         .map(indexExpression -> PyUtil.as(indexExpression, PyStringLiteralExpression.class))
         .map(PyStringLiteralExpression::getStringValue)
+        .filter(PyNames::isIdentifier)
         .map(indexValue -> elementGenerator.createExpressionFromText(LanguageLevel.forElement(function), indexValue))
         .ifPresent(
           parameter -> {
@@ -161,9 +162,10 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
         .map(ArrayUtil::getFirstElement)
         .map(firstArgument -> PyUtil.as(firstArgument, PyStringLiteralExpression.class))
         .map(PyStringLiteralExpression::getStringValue)
+        .filter(PyNames::isIdentifier)
         .ifPresent(
           indexValue -> {
-            final PyNamedParameter parameterWithDefaultValue = getParameterWithDefaultValue(elementGenerator, call, indexValue);
+            final PyNamedParameter parameterWithDefaultValue = createParameterWithDefaultValue(elementGenerator, call, indexValue);
             final PyExpression parameter = elementGenerator.createExpressionFromText(LanguageLevel.forElement(function), indexValue);
             final PyParameter keywordContainer = getKeywordContainer(function);
 
@@ -239,9 +241,9 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
   }
 
   @Nullable
-  private static PyNamedParameter getParameterWithDefaultValue(@NotNull PyElementGenerator elementGenerator,
-                                                               @NotNull PyCallExpression call,
-                                                               @NotNull String parameterName) {
+  private static PyNamedParameter createParameterWithDefaultValue(@NotNull PyElementGenerator elementGenerator,
+                                                                  @NotNull PyCallExpression call,
+                                                                  @NotNull String parameterName) {
     final PyExpression[] arguments = call.getArguments();
     if (arguments.length > 1) {
       return elementGenerator.createParameter(parameterName + "=" + arguments[1].getText());
