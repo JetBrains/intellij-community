@@ -58,7 +58,7 @@ public class TypeUtils {
   }
 
   public static PsiClassType getType(@NotNull PsiClass aClass) {
-    return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass);
+    return JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass);
   }
 
   public static PsiClassType getObjectType(@NotNull PsiElement context) {
@@ -110,7 +110,7 @@ public class TypeUtils {
     if (type == null) {
       return false;
     }
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
     for (String rhsTypeText : rhsTypeTexts) {
       final PsiClassType rhsType = factory.createTypeByFQClassName(rhsTypeText, expression.getResolveScope());
       if (type.isAssignableFrom(rhsType)) {

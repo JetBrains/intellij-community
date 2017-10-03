@@ -118,11 +118,9 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
       for (String annotation : typeAnnotations) {
         buffer.append(annotation).append(' ');
       }
-      final PsiManager manager = modifierList.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
       buffer.append("void x() {}");
       final String text = buffer.toString();
-      final PsiMethod method = factory.createMethodFromText(text, modifierList);
+      final PsiMethod method = JavaPsiFacade.getElementFactory(project).createMethodFromText(text, modifierList);
       final PsiModifierList newModifierList = method.getModifierList();
       modifierList.replace(newModifierList);
     }
