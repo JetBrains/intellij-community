@@ -13,14 +13,37 @@ public class TestDataUtilTest extends TestDataPathTestCase {
     return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/testDataUtil";
   }
 
-  public void testDotAfter() {
+  public void testGetTestDataGroup() {
+    String something = myFixture.copyFileToProject("something.txt").getPath();
+    String somethingAfter = myFixture.copyFileToProject("something_after.txt").getPath();
+    String somethingBefore = myFixture.copyFileToProject("something_before.txt").getPath();
+    String afterSomething = myFixture.copyFileToProject("afterSomething.txt").getPath();
+    String beforeSomething = myFixture.copyFileToProject("beforeSomething.txt").getPath();
+
+    assertNotNull(TestDataUtil.getTestDataGroup(something, somethingAfter));
+    assertNotNull(TestDataUtil.getTestDataGroup(somethingAfter, something));
+
+    assertNotNull(TestDataUtil.getTestDataGroup(somethingBefore, somethingAfter));
+    assertNotNull(TestDataUtil.getTestDataGroup(somethingAfter, somethingBefore));
+
+    assertNotNull(TestDataUtil.getTestDataGroup(beforeSomething, afterSomething));
+    assertNotNull(TestDataUtil.getTestDataGroup(afterSomething, beforeSomething));
+  }
+
+  // https://youtrack.jetbrains.com/issue/IDEA-179740
+  public void testGetTestDataGroupDotAfter() {
     String dotAfter = myFixture.copyFileToProject("dotAfter.txt").getPath();
     String dotAfterAfter = myFixture.copyFileToProject("dotAfter.after.txt").getPath();
     String dotAfterSomething = myFixture.copyFileToProject("dotAfter.something.txt").getPath();
 
     assertNull(TestDataUtil.getTestDataGroup(dotAfter, dotAfterSomething));
+    assertNull(TestDataUtil.getTestDataGroup(dotAfterSomething, dotAfter));
+
     assertNull(TestDataUtil.getTestDataGroup(dotAfterSomething, dotAfterAfter));
+    assertNull(TestDataUtil.getTestDataGroup(dotAfterAfter, dotAfterSomething));
+
     assertNotNull(TestDataUtil.getTestDataGroup(dotAfter, dotAfterAfter));
+    assertNotNull(TestDataUtil.getTestDataGroup(dotAfterAfter, dotAfter));
   }
 
   public void testGetGroupDisplayName() {

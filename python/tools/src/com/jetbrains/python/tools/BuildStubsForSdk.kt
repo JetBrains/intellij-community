@@ -78,7 +78,8 @@ fun packStdlibFromPath(baseDir: String, root: String) {
       val output = cph.runProcess()
       println(output.stdout + output.stderr)
     }
-  } finally {
+  }
+  finally {
     System.exit(0)
   }
 }
@@ -89,13 +90,13 @@ class PyProjectSdkStubsGenerator : ProjectSdkStubsGenerator() {
 
   override fun createSdkProducer(sdkPath: String) = createPythonSdkProducer(sdkPath)
 
-  override fun createStubsGenerator() = PyStubsGenerator(stubsVersion)
+  override fun createStubsGenerator() = PyStubsGenerator()
 
   override val root: String?
     get() = System.getenv(PYCHARM_PYTHONS)
 }
 
-class PyStubsGenerator(stubsVersion: String) : LanguageLevelAwareStubsGenerator<LanguageLevel>(stubsVersion) {
+class PyStubsGenerator : LanguageLevelAwareStubsGenerator<LanguageLevel>(PyFileElementType.INSTANCE.stubVersion.toString()) {
   override fun defaultLanguageLevel(): LanguageLevel = LanguageLevel.getDefault()
 
   override fun languageLevelIterator() = LanguageLevel.SUPPORTED_LEVELS.iterator()

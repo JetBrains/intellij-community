@@ -24,6 +24,9 @@ import org.jetbrains.annotations.NotNull;
  * @author traff
  */
 public class PyPrebuiltStubsProvider extends PrebuiltStubsProviderBase {
+
+  public static final String NAME = PythonFileType.INSTANCE.getName();
+
   @Override
   protected int getStubVersion() {
     return PyFileElementType.INSTANCE.getStubVersion();
@@ -32,6 +35,6 @@ public class PyPrebuiltStubsProvider extends PrebuiltStubsProviderBase {
   @NotNull
   @Override
   protected String getName() {
-    return PythonFileType.INSTANCE.getName();
+    return NAME;
   }
 }

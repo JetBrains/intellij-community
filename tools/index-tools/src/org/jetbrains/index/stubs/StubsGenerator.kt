@@ -21,6 +21,7 @@ package org.jetbrains.index.stubs
 
 import com.google.common.hash.HashCode
 import com.intellij.idea.IdeaTestApplication
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.project.ProjectManager
@@ -31,7 +32,9 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileVisitor
+import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.DebugUtil
+import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.stubs.*
 import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.io.PersistentHashMap
@@ -41,6 +44,8 @@ import java.io.ByteArrayInputStream
 import java.io.File
 import java.util.*
 
+
+val CHECK_COLLISIONS = false
 
 /**
  * Generates stubs and stores them in one persistent hash map
@@ -89,12 +94,20 @@ open class StubsGenerator(private val stubsVersion: String) {
                 val item = map.get(hashCode)
                 if (item == null) {
                   storage.put(hashCode, stubTree)
-                  map.put(hashCode, Pair(fileContent.contentAsText.toString(), stubTree))
+
+                  if (CHECK_COLLISIONS) {
+                    map.put(hashCode, Pair(fileContent.contentAsText.toString(), stubTree))
+                  }
                 }
                 else {
                   TestCase.assertEquals(item.first, fileContent.contentAsText.toString())
                   TestCase.assertTrue(stubTree == item.second)
                 }
+
+                // This avoids memory leak in EmptyFileManager.myVFileToViewProviderMap TODO: better fix
+                ApplicationManager.getApplication().invokeAndWait(
+                  Runnable { ((stub as PsiFileStubImpl<PsiFile>).psi.viewProvider.manager as PsiManagerImpl).cleanupForNextTest() })
+
               }
             }
             catch (e: NoSuchElementException) {

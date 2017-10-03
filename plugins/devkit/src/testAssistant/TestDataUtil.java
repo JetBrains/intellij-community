@@ -136,14 +136,14 @@ public class TestDataUtil {
     }
 
     String nameToCheckWithoutAfter = nameToCheckLastPart.replace(TESTDATA_FILE_AFTER_MARKER, "");
-    String nameToCheckExt = StringUtil.substringAfterLast(nameToCheckWithoutAfter, ".");
+    String nameToCheckExt = StringUtil.substringAfterLast(nameToCheck, ".");
     String nameToCheckWithoutAfterAndExt = StringUtil.substringBeforeLast(nameToCheckWithoutAfter, ".");
 
     String secondNameLastPart = secondName.substring(commonPrefixLength).toLowerCase();
-    String secondNameWithoutAfterAndExt = nameToCheckExt == null ? secondNameLastPart : secondNameLastPart.replace(nameToCheckExt, "");
+    String secondNameExt = nameToCheckExt == null ? secondNameLastPart : secondNameLastPart.replace(nameToCheckExt, "");
 
     return !StringUtil.containsAlphaCharacters(nameToCheckWithoutAfterAndExt) &&
-           !StringUtil.containsAlphaCharacters(secondNameWithoutAfterAndExt);
+           !StringUtil.containsAlphaCharacters(secondNameExt.replace(TESTDATA_FILE_BEFORE_MARKER, ""));
   }
 
   static VirtualFile createFileByName(final Project project, final String path) {

@@ -15,10 +15,7 @@
  */
 package org.jetbrains.intellij.build.pycharm
 
-import org.jetbrains.intellij.build.ApplicationInfoProperties
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildTasks
-import org.jetbrains.intellij.build.ProductProperties
+import org.jetbrains.intellij.build.*
 
 /**
  * @author nik
@@ -45,9 +42,12 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
         include(name: "*.pdf")
       }
     }
-    context.ant.copy(todir: "$targetDirectory/index", failonerror: false) {
-      fileset(dir: "$context.paths.projectHome/index", erroronmissingdir:false) {
-        include(name: "sdk-stubs*")
+
+    new PyPrebuiltStubsGenerator().generateResources(context)
+
+    context.ant.copy(todir: "$targetDirectory/index", failonerror: true) {
+      fileset(dir: "$context.paths.temp/index", erroronmissingdir: true) {
+        include(name: "*")
       }
     }
   }
@@ -55,5 +55,39 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
   @Override
   String getEnvironmentVariableBaseName(ApplicationInfoProperties applicationInfo) {
     "PYCHARM"
+  }
+}
+
+class PyPrebuiltStubsGenerator implements ResourcesGenerator {
+  @Override
+  File generateResources(BuildContext context) {
+    CompilationTasks.create(context).compileModules(["python-community-tools"])
+    List<String> buildClasspath = context.getModuleRuntimeClasspath(context.findModule("python-community-tools"), false)
+
+    def zipPath = "$context.paths.temp/zips"
+
+    context.ant.copy(todir: "$zipPath", failonerror: true) {
+      fileset(dir: "$context.paths.projectHome/python-distributions", erroronmissingdir: true) {
+        include(name: "*.zip")
+      }
+      fileset(dir: "$context.paths.projectHome/skeletons", erroronmissingdir: true) {
+        include(name: "*.zip")
+      }
+    }
+
+    def outputPath = "$context.paths.temp/index"
+
+    context.ant.java(classname: "com.jetbrains.python.tools.PyPrebuiltStubsGeneratorKt", fork: true) {
+      jvmarg(line: "-ea -Xmx1500m")
+      arg(value: zipPath)
+      arg(value: outputPath)
+      classpath {
+        buildClasspath.each {
+          pathelement(location: it)
+        }
+      }
+    }
+
+    return new File(outputPath)
   }
 }

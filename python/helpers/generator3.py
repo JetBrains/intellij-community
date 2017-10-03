@@ -3,7 +3,6 @@ import atexit
 import zipfile
 
 from pycharm_generator_utils.clr_tools import *
-from pycharm_generator_utils.constants import *
 from pycharm_generator_utils.module_redeclarator import *
 from pycharm_generator_utils.util_methods import *
 
@@ -263,6 +262,8 @@ def zip_stdlib(zip_path):
 
     zip_filename = os.path.normpath(os.path.sep.join([zip_path, "python-%s-stdlib-%s.zip" % ('.'.join(map(str, sys.version_info)),
                                                                                              platform.platform())]))
+
+    print("Adding file to %s" %zip_filename)
 
     try:
         zip = zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED)

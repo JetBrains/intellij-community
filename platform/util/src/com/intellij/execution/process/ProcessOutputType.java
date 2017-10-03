@@ -20,11 +20,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a stream (stdout/stderr) output type. It can be a base output type or colored output type.
- * Base stdout/stderr output types is constants: {@link ProcessOutputTypes#STDOUT} and
- * {@link ProcessOutputTypes#STDERR}.<br/>
- * A colored stdout/stderr output type is created one per each unique color attributes info decoded as
- * {@code name} parameter, and base stream output type (stdout/stderr) - {@code streamType} parameter.
+ * Represents a stream (stdout/stderr/system) output type. It can be a base output type or a colored output type.
+ * Base stdout/stderr output types are constants: {@link ProcessOutputTypes#STDOUT}, {@link ProcessOutputTypes#STDERR} and
+ * {@link ProcessOutputTypes#SYSTEM}.<br/>
+ * A colored stdout/stderr output type corresponds to an unique ANSI color attributes info passed as
+ * {@code name} constructor parameter, and base stream output type (stdout/stderr) - {@code streamType} parameter.
  * <p/>
  * Use {@link com.intellij.execution.ui.ConsoleViewContentType#getConsoleViewType} to get TextAttributes for an instance
  * of this class.
