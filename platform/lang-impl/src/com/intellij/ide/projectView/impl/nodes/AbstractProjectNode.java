@@ -31,7 +31,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformIcons;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
@@ -43,19 +42,19 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
   }
 
   protected Collection<AbstractTreeNode> modulesAndGroups(Module[] modules) {
-    Map<String, List<Module>> groups = new THashMap<>();
+    Set<String> groups = new LinkedHashSet<>();
     List<Module> nonGroupedModules = new ArrayList<>(Arrays.asList(modules));
     for (final Module module : modules) {
       final String[] path = ModuleManager.getInstance(getProject()).getModuleGroupPath(module);
       if (path != null) {
         final String topLevelGroupName = path[0];
-        groups.computeIfAbsent(topLevelGroupName, k -> new ArrayList<>()).add(module);
+        groups.add(topLevelGroupName);
         nonGroupedModules.remove(module);
       }
     }
     List<AbstractTreeNode> result = new ArrayList<>();
     try {
-      for (String groupPath : groups.keySet()) {
+      for (String groupPath : groups) {
         result.add(createModuleGroupNode(new ModuleGroup(Collections.singletonList(groupPath))));
       }
       for (Module module : nonGroupedModules) {
