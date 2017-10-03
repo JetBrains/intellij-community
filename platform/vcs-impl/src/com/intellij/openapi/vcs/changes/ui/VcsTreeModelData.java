@@ -96,6 +96,18 @@ public abstract class VcsTreeModelData {
 
 
   @NotNull
+  public Stream<Object> rawUserObjectsStream() {
+    return rawUserObjectsStream(Object.class);
+  }
+
+  @NotNull
+  public <U> Stream<U> rawUserObjectsStream(@NotNull Class<U> clazz) {
+    //noinspection unchecked
+    return (Stream<U>)rawNodesStream().map(ChangesBrowserNode::getUserObject).filter(clazz::isInstance);
+  }
+
+
+  @NotNull
   public Stream<Object> userObjectsStream() {
     return userObjectsStream(Object.class);
   }

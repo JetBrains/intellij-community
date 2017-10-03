@@ -171,6 +171,7 @@ public class TreeModelBuilder {
       List<Change> changes = ContainerUtil.sorted(list.getChanges(), PATH_LENGTH_COMPARATOR);
       ChangeListRemoteState listRemoteState = new ChangeListRemoteState(changes.size());
       ChangesBrowserChangeListNode listNode = new ChangesBrowserChangeListNode(myProject, list, listRemoteState);
+      listNode.markAsHelperNode();
 
       myModel.insertNodeInto(listNode, myRoot, 0);
 
