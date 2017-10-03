@@ -138,10 +138,9 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
 
   private void suppressByDocComment(@NotNull Project project, PsiJavaDocumentedElement container) {
     PsiDocComment docComment = container.getDocComment();
-    PsiManager manager = PsiManager.getInstance(project);
     if (docComment == null) {
       String commentText = "/** @" + SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME + " " + getID(container) + "*/";
-      docComment = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createDocCommentFromText(commentText);
+      docComment = JavaPsiFacade.getElementFactory(project).createDocCommentFromText(commentText);
       PsiElement firstChild = container.getFirstChild();
       container.addBefore(docComment, firstChild);
     }
@@ -149,11 +148,11 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
       PsiDocTag noInspectionTag = docComment.findTagByName(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME);
       if (noInspectionTag != null) {
         String tagText = noInspectionTag.getText() + ", " + getID(container);
-        noInspectionTag.replace(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createDocTagFromText(tagText));
+        noInspectionTag.replace(JavaPsiFacade.getElementFactory(project).createDocTagFromText(tagText));
       }
       else {
         String tagText = "@" + SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME + " " + getID(container);
-        docComment.add(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createDocTagFromText(tagText));
+        docComment.add(JavaPsiFacade.getElementFactory(project).createDocTagFromText(tagText));
       }
     }
   }
