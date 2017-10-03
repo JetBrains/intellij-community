@@ -70,8 +70,9 @@ import static org.jetbrains.idea.svn.SvnUtil.isAuthError;
 public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthenticationNotifier.AuthenticationRequest, SVNURL> {
   private static final Logger LOG = Logger.getInstance(SvnAuthenticationNotifier.class);
 
-  private static final List<String> ourAuthKinds = Arrays.asList(ISVNAuthenticationManager.PASSWORD, ISVNAuthenticationManager.SSH,
-    ISVNAuthenticationManager.SSL, ISVNAuthenticationManager.USERNAME, "svn.ssl.server", "svn.ssh.server");
+  private static final List<String> ourAuthKinds = Arrays
+    .asList(ISVNAuthenticationManager.PASSWORD, "svn.ssh", ISVNAuthenticationManager.SSL, ISVNAuthenticationManager.USERNAME,
+            "svn.ssl.server", "svn.ssh.server");
 
   private final SvnVcs myVcs;
   private final RootsToWorkingCopies myRootsToWorkingCopies;
@@ -410,7 +411,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     final SVNAuthentication svnAuthentication = provider.requestClientAuthentication(kind, url, realm, true);
     if (svnAuthentication != null) {
       configuration.acknowledge(kind, realm, svnAuthentication);
-      configuration.getAuthenticationManager(svnVcs).acknowledgeAuthentication(kind, realm, null, svnAuthentication);
+      configuration.getAuthenticationManager(svnVcs).acknowledgeAuthentication(kind, realm, svnAuthentication);
       return true;
     }
     return false;

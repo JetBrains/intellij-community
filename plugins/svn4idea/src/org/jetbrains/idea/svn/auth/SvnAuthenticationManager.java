@@ -20,11 +20,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.proxy.CommonProxy;
-import com.trilead.ssh2.auth.AgentProxy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.IdeaSVNConfigFile;
@@ -33,16 +31,13 @@ import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.config.ProxyGroup;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
-import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.internal.wc.*;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
@@ -59,15 +54,12 @@ public class SvnAuthenticationManager {
   private SvnConfiguration myConfig;
   private SvnAuthenticationInteraction myInteraction;
   private IdeaSVNHostOptionsProvider myLocalHostOptionsProvider;
-  private DefaultSVNOptions myDefaultOptions;
-  private final Map<Thread, String> myKeyAlgorithm;
   private AuthenticationProvider myProvider;
 
   public SvnAuthenticationManager(@NotNull SvnVcs vcs, final File configDirectory) {
     myVcs = vcs;
     myProject = myVcs.getProject();
     myConfigDirectory = configDirectory;
-    myKeyAlgorithm = new HashMap<>();
     myConfig = myVcs.getSvnConfiguration();
     myInteraction = new MySvnAuthenticationInteraction(myProject);
     Disposer.register(myProject, () -> {
@@ -84,27 +76,12 @@ public class SvnAuthenticationManager {
     });
   }
 
-  public DefaultSVNOptions getDefaultOptions() {
-    if (myDefaultOptions == null) {
-      myDefaultOptions = new DefaultSVNOptions(myConfigDirectory, true);
-    }
-    return myDefaultOptions;
-  }
-
   public SVNAuthentication requestFromCache(String kind, String realm) {
     return (SVNAuthentication)SvnConfiguration.RUNTIME_AUTH_CACHE.getDataWithLowerCheck(kind, realm);
   }
 
-  public String getDefaultUsername(String kind, SVNURL url) {
-    String result = SystemProperties.getUserName();
-
-    // USERNAME authentication is also requested in SVNSSHConnector.open()
-    if (ISVNAuthenticationManager.SSH.equals(kind) ||
-        (ISVNAuthenticationManager.USERNAME.equals(kind) && SVN_SSH.equals(url.getProtocol()))) {
-      result = url != null && !StringUtil.isEmpty(url.getUserInfo()) ? url.getUserInfo() : getDefaultOptions().getDefaultSSHUserName();
-    }
-
-    return result;
+  public String getDefaultUsername() {
+    return SystemProperties.getUserName();
   }
 
   public void setAuthenticationProvider(AuthenticationProvider provider) {
@@ -128,22 +105,11 @@ public class SvnAuthenticationManager {
     return myLocalHostOptionsProvider;
   }
 
-  @Nullable
-  public String getSSHKeyAlgorithm() {
-    return myKeyAlgorithm.get(Thread.currentThread());
+  public void acknowledgeAuthentication(String kind, String realm, SVNAuthentication authentication) {
+    acknowledgeAuthentication(kind, realm, authentication, null);
   }
 
-  public void acknowledgeAuthentication(String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication) {
-    acknowledgeAuthentication(kind, realm, errorMessage, authentication, null);
-  }
-
-  public void acknowledgeAuthentication(String kind,
-                                        String realm,
-                                        SVNErrorMessage errorMessage,
-                                        SVNAuthentication authentication,
-                                        SVNURL url) {
-    showSshAgentErrorIfAny(errorMessage, authentication);
-
+  public void acknowledgeAuthentication(String kind, String realm, SVNAuthentication authentication, SVNURL url) {
     SSLExceptionsHelper.removeInfo();
     if (url != null) {
       CommonProxy.getInstance().removeNoProxy(url.getProtocol(), url.getHost(), url.getPort());
@@ -151,22 +117,6 @@ public class SvnAuthenticationManager {
     final boolean authStorageEnabled = getHostOptionsProvider().getHostOptions(authentication.getURL()).isAuthStorageEnabled();
     final SVNAuthentication proxy = ProxySvnAuthentication.proxy(authentication, authStorageEnabled);
     getConfig().acknowledge(kind, realm, proxy);
-  }
-
-  /**
-   * "Pageant is not running" error thrown in PageantConnector.query() method is caught and "eaten" in SVNKit logic.
-   * So for both cases "Pageant is not running" and "There are no valid keys in agent (both no keys at all and no valid keys for host)"
-   * we will get same "Credentials rejected by SSH server" error.
-   */
-  private void showSshAgentErrorIfAny(@Nullable SVNErrorMessage errorMessage, @Nullable SVNAuthentication authentication) {
-    if (errorMessage != null && authentication instanceof SVNSSHAuthentication) {
-      AgentProxy agentProxy = ((SVNSSHAuthentication)authentication).getAgentProxy();
-
-      if (agentProxy != null) {
-        // TODO: Most likely this should be updated with new VcsNotifier api.
-        VcsBalloonProblemNotifier.showOverChangesView(myProject, errorMessage.getFullMessage(), MessageType.ERROR);
-      }
-    }
   }
 
   // 30 seconds

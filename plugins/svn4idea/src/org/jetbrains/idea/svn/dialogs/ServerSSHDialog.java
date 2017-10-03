@@ -23,14 +23,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
-import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
 
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author irengrig
- */
 public class ServerSSHDialog extends DialogWrapper {
   private int myResult;
   private String myFingerprints;
@@ -38,11 +34,6 @@ public class ServerSSHDialog extends DialogWrapper {
   private final boolean myStore;
   private final String myHost;
   private final String myAlgorithm;
-
-  public ServerSSHDialog(Project project, boolean store, @NotNull final String host, @Nullable final String algorithm,
-                         @NotNull final byte[] fingerprints) {
-    this(project, store, host, algorithm, SVNSSLUtil.getFingerprint(fingerprints, "SHA1"));
-  }
 
   public ServerSSHDialog(Project project,
                          boolean store,

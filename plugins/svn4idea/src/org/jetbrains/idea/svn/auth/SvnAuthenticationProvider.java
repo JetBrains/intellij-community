@@ -48,7 +48,7 @@ public class SvnAuthenticationProvider implements AuthenticationProvider {
                                                        final String realm,
                                                        final boolean canCache) {
     if (ApplicationManager.getApplication().isUnitTestMode() && ISVNAuthenticationManager.USERNAME.equals(kind)) {
-      String userName = myAuthenticationManager.getDefaultUsername(kind, url);
+      String userName = myAuthenticationManager.getDefaultUsername();
       return new SVNUserNameAuthentication(userName, false);
     }
     final SvnAuthenticationNotifier.AuthenticationRequest obj =

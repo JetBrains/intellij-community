@@ -57,8 +57,6 @@ public class SvnTestInteractiveAuthentication implements AuthenticationProvider 
         result = new SVNUserNameAuthentication("username", canCache);
       } else if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
         result = new SVNPasswordAuthentication("username", "abc", canCache, url, false);
-      } else if (ISVNAuthenticationManager.SSH.equals(kind)) {
-        result = new SVNSSHAuthentication("username", "abc", -1, canCache, url, false);
       } else if (ISVNAuthenticationManager.SSL.equals(kind)) {
         result = new SVNSSLAuthentication(new File("aaa"), "abc", canCache, url, false);
       }
