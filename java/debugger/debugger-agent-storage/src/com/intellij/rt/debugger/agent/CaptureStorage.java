@@ -24,7 +24,6 @@ public class CaptureStorage {
       return new LinkedList<InsertMatch>();
     }
   };
-  private static final JavaLangAccess ourJavaLangAccess = SharedSecrets.getJavaLangAccess();
 
   private static boolean DEBUG = false;
   private static boolean ENABLED = true;
@@ -62,7 +61,7 @@ public class CaptureStorage {
     CapturedStack stack = STORAGE.get(new WeakKey(key));
     Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
     if (stack != null) {
-      currentStacks.add(new InsertMatch(stack, ourJavaLangAccess.getStackTraceDepth(new Throwable())));
+      currentStacks.add(new InsertMatch(stack, getStackTraceDepth(new Throwable())));
       if (DEBUG) {
         System.out.println("insert -> " + key + ", stack saved (" + currentStacks.size() + ")");
       }
@@ -190,5 +189,21 @@ public class CaptureStorage {
 
   public static void setEnabled(boolean enabled) {
     ENABLED = enabled;
+  }
+
+  private static final JavaLangAccess ourJavaLangAccess;
+  static {
+    JavaLangAccess access = null;
+    try {
+      access = SharedSecrets.getJavaLangAccess();
+    }
+    catch (Throwable e) {
+      // java 9
+    }
+    ourJavaLangAccess = access;
+  }
+  // TODO: this is a workaround for java 9 where SharedSecrets are not available
+  private static int getStackTraceDepth(Throwable exception) {
+    return ourJavaLangAccess != null ? ourJavaLangAccess.getStackTraceDepth(exception) : exception.getStackTrace().length;
   }
 }
