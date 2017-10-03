@@ -313,6 +313,7 @@
     <localInspection groupPath="Java" language="JAVA" shortName="NumberEquality" bundle="com.siyeh.InspectionGadgetsBundle" key="number.comparison.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.NumberEqualityInspection"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.bugs.ObjectEqualityInspectionMerger"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ObjectEquality" bundle="com.siyeh.InspectionGadgetsBundle" key="object.comparison.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.bugs.ObjectEqualityInspection"/>
