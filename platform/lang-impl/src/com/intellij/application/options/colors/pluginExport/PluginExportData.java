@@ -37,19 +37,17 @@ public class PluginExportData {
   private String myPluginVersion;
   private String myChangeNotes;
 
-  private final Properties myMetaInfo;
 
   public PluginExportData(@NotNull Properties info) {
-    myMetaInfo = info;
-    initData();
+    initData(info);
   }
 
-  private void initData() {
-    myDescription = myMetaInfo.getProperty(DESCRIPTION_PROPERTY);
-    myVendorName = myMetaInfo.getProperty(VENDOR_NAME_PROPERTY);
-    myVendorMail = myMetaInfo.getProperty(VENDOR_MAIL_PROPERTY);
-    myVendorUrl = myMetaInfo.getProperty(VENDOR_URL_PROPERTY);
-    myPluginVersion = myMetaInfo.getProperty(VERSION_PROPERTY);
+  private void initData(@NotNull Properties info) {
+    myDescription = info.getProperty(DESCRIPTION_PROPERTY);
+    myVendorName = info.getProperty(VENDOR_NAME_PROPERTY);
+    myVendorMail = info.getProperty(VENDOR_MAIL_PROPERTY);
+    myVendorUrl = info.getProperty(VENDOR_URL_PROPERTY);
+    myPluginVersion = info.getProperty(VERSION_PROPERTY);
   }
 
   public String getDescription() {
@@ -58,7 +56,6 @@ public class PluginExportData {
 
   public void setDescription(String description) {
     myDescription = description;
-    myMetaInfo.setProperty(DESCRIPTION_PROPERTY, myDescription);
   }
 
   public String getVendorName() {
@@ -67,7 +64,6 @@ public class PluginExportData {
 
   public void setVendorName(String vendorName) {
     myVendorName = vendorName;
-    myMetaInfo.setProperty(VENDOR_NAME_PROPERTY, vendorName);
   }
 
   public String getVendorMail() {
@@ -76,7 +72,6 @@ public class PluginExportData {
 
   public void setVendorMail(String vendorMail) {
     myVendorMail = vendorMail;
-    myMetaInfo.setProperty(VENDOR_MAIL_PROPERTY, vendorMail);
   }
 
   public String getVendorUrl() {
@@ -85,7 +80,6 @@ public class PluginExportData {
 
   public void setVendorUrl(String vendorUrl) {
     myVendorUrl = vendorUrl;
-    myMetaInfo.setProperty(VENDOR_URL_PROPERTY, vendorUrl);
   }
 
   public String getPluginVersion() {
@@ -94,7 +88,6 @@ public class PluginExportData {
 
   public void setPluginVersion(String pluginVersion) {
     myPluginVersion = pluginVersion;
-    myMetaInfo.setProperty(VERSION_PROPERTY, pluginVersion);
   }
 
   public String getChangeNotes() {
@@ -120,5 +113,13 @@ public class PluginExportData {
       myVendorUrl == null &&
       myVendorMail == null &&
       myVendorName == null;
+  }
+
+  public void saveToProperties(@NotNull Properties properties) {
+    properties.setProperty(DESCRIPTION_PROPERTY, getDescription());
+    properties.setProperty(VERSION_PROPERTY, getPluginVersion());
+    properties.setProperty(VENDOR_URL_PROPERTY, getVendorUrl());
+    properties.setProperty(VENDOR_MAIL_PROPERTY, getVendorMail());
+    properties.setProperty(VENDOR_NAME_PROPERTY, getVendorName());
   }
 }

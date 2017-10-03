@@ -20,6 +20,7 @@ import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.options.ConfigurableSchemeExporter;
+import com.intellij.openapi.options.SchemeManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +28,6 @@ import java.awt.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.util.Properties;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -58,11 +58,13 @@ public class ColorSchemePluginExporter extends ConfigurableSchemeExporter<Plugin
   @Override
   public PluginExportData getConfiguration(@NotNull Component parent, @NotNull EditorColorsScheme scheme) {
     PluginExportData exportData = getPluginExportData(scheme);
+    EditorColorsScheme schemeToUpdate = getSchemeToUpdate(scheme);
     PluginInfoDialog infoDialog = new PluginInfoDialog(parent, exportData);
     if (infoDialog.showAndGet()) {
       infoDialog.apply();
-      // To save metadata
-      if (scheme instanceof AbstractColorsScheme) ((AbstractColorsScheme)scheme).setSaveNeeded(true);
+      // Save metadata
+      exportData.saveToProperties(schemeToUpdate.getMetaProperties());
+      if (schemeToUpdate instanceof AbstractColorsScheme) ((AbstractColorsScheme)schemeToUpdate).setSaveNeeded(true);
       return exportData;
     }
     return null;
@@ -78,6 +80,15 @@ public class ColorSchemePluginExporter extends ConfigurableSchemeExporter<Plugin
       OutputStreamWriter writer = new OutputStreamWriter(outputStream);
     writer.write(template.getText());
     writer.flush();
+  }
+
+  @NotNull
+  private static EditorColorsScheme getSchemeToUpdate(@NotNull EditorColorsScheme scheme) {
+    if (scheme instanceof AbstractColorsScheme) {
+      EditorColorsScheme original = ((AbstractColorsScheme)scheme).getOriginal();
+      if (original != null) return original;
+    }
+    return scheme;
   }
 
   @NotNull
