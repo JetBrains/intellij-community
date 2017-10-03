@@ -79,8 +79,8 @@
       <module fileurl="file://$PROJECT_DIR$/colorSchemes/colorSchemes.iml" filepath="$PROJECT_DIR$/colorSchemes/colorSchemes.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/commander/commander.iml" filepath="$PROJECT_DIR$/plugins/commander/commander.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/../base/common/common.iml" filepath="$PROJECT_DIR$/../base/common/common.iml" group="android/sdktools" />
-      <module fileurl="file://$PROJECT_DIR$/../base/common/common-tests.iml" filepath="$PROJECT_DIR$/../base/common/common-tests.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/plugins/eclipse/common-eclipse-util/common-eclipse-util.iml" filepath="$PROJECT_DIR$/plugins/eclipse/common-eclipse-util/common-eclipse-util.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/../base/common/common-tests.iml" filepath="$PROJECT_DIR$/../base/common/common-tests.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/community-main.iml" filepath="$PROJECT_DIR$/community-main.iml" />
       <module fileurl="file://$PROJECT_DIR$/community-main-tests/community-main-tests.iml" filepath="$PROJECT_DIR$/community-main-tests/community-main-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/community-resources/community-resources.iml" filepath="$PROJECT_DIR$/community-resources/community-resources.iml" />
