@@ -40,7 +40,6 @@ public class IgnoredViewDialog extends SpecificFilesViewDialog {
       public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
         if (action.equals(deleteAction)) {
           refreshView();
-          refreshChanges(myProject, getBrowserBase(myView));
         }
       }
     }, myDisposable);
