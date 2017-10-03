@@ -27,6 +27,8 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -38,6 +40,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -498,11 +501,23 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     PsiFile context = getTopLevelFileInBaseLanguage(element);
     PsiFile myContext = getTopLevelFileInBaseLanguage(getFile());
     if (context != getFile()) {
-      LOG.error("Reported element " + element + " is not from the file '" + file + "' the inspection '" + toolWrapper + "' ("+ tool.getClass()+") "+
-                "was invoked for. Message: '" + descriptor+"'.\n" +
-                "Element' containing file: "+ context +"\n"
-                +"Inspection invoked for file: "+ myContext+"\n"
-      );
+      ClassLoader toolClassLoader = tool.getClass().getClassLoader();
+      PluginId pluginId = null;
+      if (toolClassLoader instanceof PluginClassLoader) {
+        pluginId = ((PluginClassLoader)toolClassLoader).getPluginId();
+      }
+      String message = "Reported element " + element +
+                       " is not from the file '" + file +
+                       "' the inspection '" + toolWrapper +
+                       "' (" + tool.getClass() +
+                       ") was invoked for. Message: '" + descriptor + "'.\nElement' containing file: " +
+                       context + "\nInspection invoked for file: " + myContext + "\n";
+      if (pluginId == null) {
+        LOG.error(message);
+      }
+      else {
+        LOG.error(new PluginException(message, pluginId));
+      }
     }
     boolean isInjected = file != getFile();
     if (!isInjected) {
