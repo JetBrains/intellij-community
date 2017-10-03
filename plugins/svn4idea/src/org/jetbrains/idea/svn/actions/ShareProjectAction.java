@@ -27,7 +27,10 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.SvnStatusUtil;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.api.ClientFactory;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Target;
@@ -108,8 +111,6 @@ public class ShareProjectAction extends BasicAction {
       ExclusiveBackgroundVcsAction.run(vcs.getProject(), () ->
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
           try {
-            SvnWorkingCopyFormatHolder.setPresetFormat(format);
-
             Target checkoutTarget =
               createFolderStructure(vcs, file, shareTarget, shareDialog.createStandardStructure(), createUrl(parent),
                                     shareDialog.getCommitText());
@@ -128,7 +129,6 @@ public class ShareProjectAction extends BasicAction {
           }
           finally {
             vcs.invokeRefreshSvnRoots();
-            SvnWorkingCopyFormatHolder.setPresetFormat(null);
           }
         }, message("share.directory.title"), true, vcs.getProject()));
 

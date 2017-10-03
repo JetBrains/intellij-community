@@ -39,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.SvnWorkingCopyFormatHolder;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.actions.ExclusiveBackgroundVcsAction;
 import org.jetbrains.idea.svn.actions.SvnExcludingIgnoredOperation;
@@ -131,10 +130,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
                                                                                message("message.title.check.out"), true,
                                                                                VcsConfiguration.getInstance(project).getCheckoutOption()) {
       public void run(@NotNull final ProgressIndicator indicator) {
-        final WorkingCopyFormat format = selectedFormat == null ? UNKNOWN : selectedFormat;
-
-        SvnWorkingCopyFormatHolder.setPresetFormat(format);
-
+        WorkingCopyFormat format = selectedFormat == null ? UNKNOWN : selectedFormat;
         SvnVcs vcs = SvnVcs.getInstance(project);
         ProgressTracker handler = new CheckoutEventHandler(vcs, false, ProgressManager.getInstance().getProgressIndicator());
         ProgressManager.progress(message("progress.text.checking.out", target.getAbsolutePath()));
@@ -146,9 +142,6 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         }
         catch (VcsException e) {
           exception[0] = e;
-        }
-        finally {
-          SvnWorkingCopyFormatHolder.setPresetFormat(null);
         }
       }
 
