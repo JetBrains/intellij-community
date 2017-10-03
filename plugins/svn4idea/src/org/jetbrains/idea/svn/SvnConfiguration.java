@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
@@ -23,7 +22,6 @@ import org.jetbrains.idea.svn.update.MergeRootInfo;
 import org.jetbrains.idea.svn.update.UpdateRootInfo;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
-import org.tmatesoft.svn.core.internal.wc.ISVNAuthenticationStorage;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
@@ -34,6 +32,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeSet;
+
+import static com.intellij.util.containers.ContainerUtil.newHashMap;
+import static com.intellij.util.containers.ContainerUtil.newTreeSet;
 
 @State(name = "SvnConfiguration", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class SvnConfiguration implements PersistentStateComponent<SvnConfigurationState> {
@@ -417,10 +418,10 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   }
 
   // TODO: Rewrite AutoStorage to use MemoryPasswordSafe at least
-  public static class AuthStorage implements ISVNAuthenticationStorage {
+  public static class AuthStorage {
 
-    private final TreeSet<String> myKeys = ContainerUtil.newTreeSet();
-    private final Map<String, Object> myStorage = ContainerUtil.newHashMap();
+    @NotNull private final TreeSet<String> myKeys = newTreeSet();
+    @NotNull private final Map<String, Object> myStorage = newHashMap();
 
     @NotNull
     public static String getKey(@NotNull String type, @NotNull String realm) {
@@ -432,7 +433,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
       myKeys.clear();
     }
 
-    public synchronized void putData(String kind, String realm, Object data) {
+    public synchronized void putData(@NotNull String kind, @NotNull String realm, @Nullable Object data) {
       String key = getKey(kind, realm);
 
       if (data == null) {
@@ -444,11 +445,8 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
       }
     }
 
-    public synchronized Object getData(String kind, String realm) {
-      return myStorage.get(getKey(kind, realm));
-    }
-
-    public synchronized Object getDataWithLowerCheck(String kind, String realm) {
+    @Nullable
+    public synchronized Object getDataWithLowerCheck(@NotNull String kind, @NotNull String realm) {
       String key = getKey(kind, realm);
       Object result = myStorage.get(key);
 
@@ -484,18 +482,17 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     return Collections.unmodifiableMap(myUpdateRootInfos);
   }
 
-  public void acknowledge(final String kind, final String realm, final Object object) {
+  public void acknowledge(@NotNull String kind, @NotNull String realm, @Nullable Object object) {
     RUNTIME_AUTH_CACHE.putData(kind, realm, object);
   }
 
-  public void clearCredentials(final String kind, final String realm) {
+  public void clearCredentials(@NotNull String kind, @NotNull String realm) {
     RUNTIME_AUTH_CACHE.putData(kind, realm, null);
   }
 
   public void clearRuntimeStorage() {
     RUNTIME_AUTH_CACHE.clear();
   }
-
 
   public int getMaxAnnotateRevisions() {
     return myState.maxAnnotateRevisions;
