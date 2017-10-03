@@ -1049,7 +1049,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (parent instanceof PsiVariable) {
       // initialization
-      return getFactory().getVarFactory().createVariableValue((PsiVariable)expression.getParent(), false);
+      return getFactory().getVarFactory().createVariableValue((PsiVariable)parent, false);
     }
     if (parent instanceof PsiAssignmentExpression) {
       PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
