@@ -43,6 +43,7 @@ import junit.framework.TestCase
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
 
 
 val CHECK_COLLISIONS = false
@@ -71,6 +72,8 @@ open class StubsGenerator(private val stubsVersion: String) {
       val map = HashMap<HashCode, Pair<String, SerializedStubTree>>()
 
       for (file in roots) {
+        println("Processing files in root ${file.path}")
+        val cnt = AtomicInteger()
         VfsUtilCore.visitChildrenRecursively(file, object : VirtualFileVisitor<Boolean>() {
           override fun visitFile(file: VirtualFile): Boolean {
             try {
@@ -94,6 +97,7 @@ open class StubsGenerator(private val stubsVersion: String) {
                 val item = map.get(hashCode)
                 if (item == null) {
                   storage.put(hashCode, stubTree)
+                  cnt.incrementAndGet()
 
                   if (CHECK_COLLISIONS) {
                     map.put(hashCode, Pair(fileContent.contentAsText.toString(), stubTree))
@@ -117,6 +121,8 @@ open class StubsGenerator(private val stubsVersion: String) {
             return true
           }
         })
+
+        println("${cnt.get()} entries written")
       }
     }
     finally {
