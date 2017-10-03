@@ -25,13 +25,13 @@ import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final EquivalenceChecker ourEquivalence = EquivalenceChecker.getCanonicalPsiEquivalence();
-  public int MINIMAL_WARN_SIZE = 140;
+  public int MINIMAL_WARN_DELTA_SIZE = 30;
 
   private static final CallMatcher STREAM_EMPTY = CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "empty")
     .parameterCount(0);
   private static final CallMatcher STREAM_OF = CallMatcher.anyOf(
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "ofNullable").parameterCount(1),
-    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "of").parameterCount(1)
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "of").parameterTypes("T")
   );
 
   @Nullable
@@ -39,7 +39,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
   public JComponent createOptionsPanel() {
     return new SingleIntegerFieldOptionsPanel(
       InspectionsBundle.message("inspection.require.non.null.option.min.size"),
-      this, "MINIMAL_WARN_SIZE"
+      this, "MINIMAL_WARN_DELTA_SIZE"
     );
   }
 
@@ -55,24 +55,25 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
       public void visitIfStatement(PsiIfStatement ifStatement) {
         NotNullContext context = NotNullContext.from(ifStatement);
         if(context == null) return;
-        String method = getMethodWithClass(context.getExpression(), context.isStream());
+        String method = getMethodWithClass(context.getExpressionToReplace(), context.isStream());
 
-        boolean isInfoLevel = ifStatement.getTextLength() < MINIMAL_WARN_SIZE;
+        PsiStatement nextToDelete = context.getNextToDelete();
+        int maybeImplicitElseLength = nextToDelete != null ? nextToDelete.getTextLength() : 0;
+        boolean isInfoLevel = ifStatement.getTextLength() + maybeImplicitElseLength - context.getLenAfterReplace() < MINIMAL_WARN_DELTA_SIZE;
         ProblemHighlightType highlight = getHighlight(context, isInfoLevel);
-        TextRange range = getRange(isInfoLevel, ifStatement, context.isStream()).shiftRight(-ifStatement.getTextOffset());
-        holder.registerProblem(ifStatement, InspectionsBundle.message("inspection.require.non.null.message", method), highlight, range,
+        holder.registerProblem(ifStatement, InspectionsBundle.message("inspection.require.non.null.message", method), highlight,
                                new ReplaceWithRequireNonNullFix(method));
       }
 
       @NotNull
       private ProblemHighlightType getHighlight(NotNullContext context, boolean isInfoLevel) {
-        ProblemHighlightType highlight;
-        if (isInfoLevel && !context.isStream()) {
-          highlight = ProblemHighlightType.INFORMATION;
-        } else {
-          highlight = context.isStream() ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING : ProblemHighlightType.WEAK_WARNING;
+        if(context.isStream()) {
+          return ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
         }
-        return highlight;
+        if (isInfoLevel) {
+          return ProblemHighlightType.INFORMATION;
+        }
+        return ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
       }
 
       @Override
@@ -113,7 +114,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
         NotNullContext context = NotNullContext.from((PsiIfStatement)element);
         if (context == null) return;
         CommentTracker tracker = new CommentTracker();
-        PsiExpression expression = context.getExpression();
+        PsiExpression expression = context.getExpressionToReplace();
         if(!context.isStream()) {
           PsiExpression requireCall = createRequireExpression(tracker, expression, project, context.getVariable(), context.getReference());
           context.getReference().replace(requireCall);
@@ -140,18 +141,6 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     }
   }
 
-  private static TextRange getRange(boolean isInfoLevel, @NotNull PsiIfStatement ifStatement, boolean isStream) {
-    if(isInfoLevel || isStream) {
-      return ifStatement.getTextRange();
-    } else {
-      PsiExpression condition = ifStatement.getCondition();
-      if(condition == null) return ifStatement.getTextRange();
-      PsiElement nextSibling = condition.getNextSibling();
-      if(nextSibling == null) return ifStatement.getTextRange();
-      return new TextRange(ifStatement.getTextOffset(), nextSibling.getTextOffset() + 1);
-    }
-  }
-
   @NotNull
   private static PsiExpression createRequireExpression(@NotNull CommentTracker tracker,
                                                        @NotNull PsiExpression expression,
@@ -170,7 +159,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
   }
 
   private static class NotNullContext {
-    private final @NotNull PsiExpression myExpression;
+    private final @NotNull PsiExpression myExpressionToReplace;
     private final @NotNull PsiExpression myReference;
     private final @NotNull PsiStatement myNullBranchStmt;
     private final @NotNull PsiVariable myVariable;
@@ -178,14 +167,14 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     private final @Nullable PsiStatement myNextToDelete;
     private final boolean myIsStream;
 
-    private NotNullContext(@NotNull PsiExpression expression,
+    private NotNullContext(@NotNull PsiExpression expressionToReplace,
                            @NotNull PsiExpression reference,
                            @NotNull PsiStatement nullBranchStmt,
                            @NotNull PsiVariable variable,
                            @NotNull PsiIfStatement statement,
                            @Nullable PsiStatement nextToDelete,
                            boolean isStream) {
-      myExpression = expression;
+      myExpressionToReplace = expressionToReplace;
       myReference = reference;
       myNullBranchStmt = nullBranchStmt;
       myVariable = variable;
@@ -195,8 +184,8 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     }
 
     @NotNull
-    public PsiExpression getExpression() {
-      return myExpression;
+    public PsiExpression getExpressionToReplace() {
+      return myExpressionToReplace;
     }
 
     @NotNull
@@ -230,6 +219,14 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
       return myIsStream;
     }
 
+
+    int getLenAfterReplace() {
+      int lengthAfterReplace = getExpressionToReplace().getTextLength() + getMethodWithClass(getExpressionToReplace(), isStream()).length();
+      if(!isStream()) {
+        lengthAfterReplace += getNullBranchStmt().getTextLength() + 6;
+      }
+      return lengthAfterReplace;
+    }
 
     @Nullable
     static NotNullContext from(@NotNull PsiIfStatement ifStatement) {
@@ -292,13 +289,13 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
   }
 
   @NotNull
-  static String getMethod(PsiExpression expression) {
+  private static String getMethod(PsiExpression expression) {
     return ExpressionUtils.isSimpleExpression(expression) ? "requireNonNullElse" : "requireNonNullElseGet";
   }
 
   @NotNull
-  static String getMethodWithClass(PsiExpression expression, boolean isStream) {
-    return isStream ? "Stream.of" : "Objects." + getMethod(expression);
+  private static String getMethodWithClass(PsiExpression expression, boolean isStream) {
+    return isStream ? "Stream.ofNullable" : "Objects." + getMethod(expression);
   }
 
   @Nullable
