@@ -975,7 +975,6 @@
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids9" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ReplaceNullCheckInspection"
-                     displayName="Replace null checked condition with Objects static method"
                      bundle="messages.InspectionsBundle"
                      key="inspection.require.non.null.message"/>
     <localInspection groupPath="Java" language="JAVA" shortName="Java9ModuleExportsPackageToItself"

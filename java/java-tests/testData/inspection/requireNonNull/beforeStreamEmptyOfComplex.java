@@ -1,4 +1,4 @@
-// "Replace condition with Stream.of" "true"
+// "Replace condition with Stream.ofNullable" "true"
 
 import java.util.*;
 import java.util.stream.Stream;
