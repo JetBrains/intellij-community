@@ -18,10 +18,11 @@ package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ModuleGroup;
+import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.scratch.ScratchProjectViewPane;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.impl.LoadedModuleDescriptionImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Comparing;
@@ -32,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -51,12 +53,17 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     if (myProject.isDisposed()) return Collections.emptyList();
     List<VirtualFile> topLevelContentRoots = ProjectViewDirectoryHelper.getInstance(myProject).getTopLevelRoots();
 
-    Set<Module> modules = new LinkedHashSet<>(topLevelContentRoots.size());
-
+    Set<ModuleDescription> modules = new LinkedHashSet<>(topLevelContentRoots.size());
     for (VirtualFile root : topLevelContentRoots) {
       final Module module = ModuleUtil.findModuleForFile(root, myProject);
-      if (module != null) { // Some people exclude module's content roots...
-        modules.add(module);
+      if (module != null) {
+        modules.add(new LoadedModuleDescriptionImpl(module));
+      }
+      else {
+        String unloadedModuleName = ProjectRootsUtil.findUnloadedModuleByContentRoot(root, myProject);
+        if (unloadedModuleName != null) {
+          ContainerUtil.addIfNotNull(modules, ModuleManager.getInstance(myProject).getUnloadedModuleDescription(unloadedModuleName));
+        }
       }
     }
 
@@ -68,7 +75,7 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     }
     */
 
-    ArrayList<AbstractTreeNode> nodes = new ArrayList<>(modulesAndGroups(modules.toArray(new Module[modules.size()])));
+    List<AbstractTreeNode> nodes = new ArrayList<>(modulesAndGroups(modules));
 
     final VirtualFile baseDir = getProject().getBaseDir();
     if (baseDir == null) return nodes;
@@ -138,6 +145,19 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     }
 
     return new ProjectViewModuleNode(getProject(), module, getSettings());
+  }
+
+  @Override
+  protected AbstractTreeNode createUnloadedModuleNode(UnloadedModuleDescription moduleDescription) {
+    List<VirtualFile> roots = ProjectViewDirectoryHelper.getInstance(myProject).getTopLevelUnloadedModuleRoots(moduleDescription, getSettings());
+    if (roots.size() == 1) {
+      final PsiDirectory psi = PsiManager.getInstance(myProject).findDirectory(roots.get(0));
+      if (psi != null) {
+        return new PsiDirectoryNode(myProject, psi, getSettings());
+      }
+    }
+
+    return new ProjectViewUnloadedModuleNode(getProject(), moduleDescription, getSettings());
   }
 
   @Override
