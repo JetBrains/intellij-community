@@ -52,10 +52,7 @@ import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.remote.PyProjectSynchronizer;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
-import com.jetbrains.python.sdk.PreferredSdkComparator;
-import com.jetbrains.python.sdk.PyLazySdk;
-import com.jetbrains.python.sdk.PySdkUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.add.PyAddNewVirtualEnvPanel;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
@@ -246,7 +243,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
         }
         return true;
       }
-      if (PythonSdkType.isInvalid(sdk)) {
+      if (!(sdk instanceof PyLazySdk) && PythonSdkType.isInvalid(sdk)) {
         setErrorText("Choose valid python interpreter");
         return false;
       }
