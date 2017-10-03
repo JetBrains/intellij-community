@@ -339,7 +339,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
       @Override
       public String getPreviousOccurenceActionName() {
-        return InspectionsBundle.message("inspection.actiongo.prev");
+        return InspectionsBundle.message("inspection.action.go.prev");
       }
     };
   }
