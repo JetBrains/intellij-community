@@ -40,10 +40,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.config.ProxyGroup;
-import org.jetbrains.idea.svn.config.SvnServerFileKeys;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.*;
 import org.tmatesoft.svn.core.internal.wc.*;
@@ -59,7 +57,7 @@ import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager implements ISVNAuthenticationManagerExt {
   private static final Logger LOG = Logger.getInstance(SvnAuthenticationManager.class);
-  // while Mac storage not working for IDEA, we use this key to check whether to prompt abt plaintext or just store
+
   public static final String SVN_SSH = "svn+ssh";
   public static final String HTTP = "http";
   public static final String HTTPS = "https";
@@ -189,11 +187,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     return myProvider;
   }
 
-  @Override
-  public ISVNAuthenticationStorage getRuntimeAuthStorage() {
-    return super.getRuntimeAuthStorage();
-  }
-
   // since set to null during dispose and we have background processes
   private SvnConfiguration getConfig() {
     if (myConfig == null) throw new ProcessCanceledException();
@@ -251,16 +244,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
       };
       myDelegate = new DefaultSVNPersistentAuthenticationProvider(authDir, userName, delegatingOptions, getDefaultOptions(),
                                                                   getHostOptionsProvider()) {
-        @Override
-        protected IPasswordStorage[] createPasswordStorages(DefaultSVNOptions options) {
-          final IPasswordStorage[] passwordStorages = super.createPasswordStorages(options);
-          final IPasswordStorage[] proxied = new IPasswordStorage[passwordStorages.length];
-          for (int i = 0; i < passwordStorages.length; i++) {
-            final IPasswordStorage storage = passwordStorages[i];
-            proxied[i] = new ProxyPasswordStorageForDebug(storage);
-          }
-          return proxied;
-        }
       };
       myAuthDir = authDir;
     }
@@ -416,22 +399,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
         // TODO: Most likely this should be updated with new VcsNotifier api.
         VcsBalloonProblemNotifier.showOverChangesView(myProject, errorMessage.getFullMessage(), MessageType.ERROR);
       }
-    }
-  }
-
-  public void acknowledgeForSSL(boolean accepted, SVNAuthentication proxy) {
-    if (accepted && proxy instanceof SVNSSLAuthentication && (((SVNSSLAuthentication)proxy).getCertificateFile() != null)) {
-      final SVNSSLAuthentication svnsslAuthentication = (SVNSSLAuthentication)proxy;
-      final SVNURL url = svnsslAuthentication.getURL();
-
-      final IdeaSVNHostOptionsProvider provider = getHostOptionsProvider();
-      final SVNCompositeConfigFile serversFile = provider.getServersFile();
-      String groupName = getGroupName(serversFile.getProperties("groups"), url.getHost());
-
-      groupName = StringUtil.isEmptyOrSpaces(groupName) ? "global" : groupName;
-      serversFile
-        .setPropertyValue(groupName, SvnServerFileKeys.SSL_CLIENT_CERT_FILE, svnsslAuthentication.getCertificateFile().getPath(), true);
-      serversFile.save();
     }
   }
 
@@ -710,10 +677,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     return pi.getModalityState();
   }
 
-  public void setInteraction(SvnAuthenticationInteraction interaction) {
-    myInteraction = interaction;
-  }
-
   private static class MySvnAuthenticationInteraction implements SvnAuthenticationInteraction {
     private Project myProject;
 
@@ -875,7 +838,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
 
     @Override
     public boolean isStorePasswords() {
-      final String storePasswords = getStorePasswords();
+      final String storePasswords = getServersPropertyIdea(getHost(), "store-passwords");
       final boolean value;
       if (storePasswords != null) {
         value = isTurned(storePasswords);
@@ -897,10 +860,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
         myInteraction.warnOnSSLPassphraseStorageDisabled(myUrl);
       }
       return value;
-    }
-
-    public String getStorePasswords() {
-      return getServersPropertyIdea(getHost(), "store-passwords");
     }
 
     private SVNCompositeConfigFile getConfigFile() {
@@ -936,40 +895,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
         saveOnce[0] = Boolean.TRUE.equals(prompt.get());
         actualSave.run();
       }
-    }
-  }
-
-  private static class ProxyPasswordStorageForDebug implements DefaultSVNPersistentAuthenticationProvider.IPasswordStorage {
-    private final DefaultSVNPersistentAuthenticationProvider.IPasswordStorage myDelegate;
-
-    public ProxyPasswordStorageForDebug(final DefaultSVNPersistentAuthenticationProvider.IPasswordStorage delegate) {
-      myDelegate = delegate;
-    }
-
-    @Override
-    public String getPassType() {
-      return myDelegate.getPassType();
-    }
-
-    @Override
-    public boolean savePassword(String realm, char[] password, SVNAuthentication auth, SVNProperties authParameters) throws SVNException {
-      return myDelegate.savePassword(realm, password, auth, authParameters);
-    }
-
-    @Override
-    public char[] readPassword(String realm, String userName, SVNProperties authParameters) throws SVNException {
-      return myDelegate.readPassword(realm, userName, authParameters);
-    }
-
-    @Override
-    public boolean savePassphrase(String realm, char[] passphrase, SVNAuthentication auth, SVNProperties authParameters, boolean force)
-      throws SVNException {
-      return myDelegate.savePassphrase(realm, passphrase, auth, authParameters, force);
-    }
-
-    @Override
-    public char[] readPassphrase(String realm, SVNProperties authParameters) throws SVNException {
-      return myDelegate.readPassphrase(realm, authParameters);
     }
   }
 
