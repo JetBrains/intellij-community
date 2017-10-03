@@ -145,7 +145,7 @@ public class ActivityMonitorTest extends LightPlatformTestCase {
 
       Dialog popup = new Dialog(dialog, "popup", true);
       ModalityState m2 = ApplicationManager.getApplication().getModalityStateForComponent(popup);
-      assertTrue(m2.dominates(m1));
+      assertTrue("m1: "+m1+"; m2:"+m2, m2.dominates(m1));
       myMonitor.addActivity(new UiActivity("modal_2"), m2);
       assertBusy(null);
     }
