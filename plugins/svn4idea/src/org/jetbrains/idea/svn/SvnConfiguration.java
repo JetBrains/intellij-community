@@ -24,8 +24,6 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.wc.ISVNOptions;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 import java.io.File;
 import java.util.Collections;
@@ -48,7 +46,6 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   @NotNull
   private SvnConfigurationState myState = new SvnConfigurationState();
 
-  private ISVNOptions myOptions;
   private SvnAuthenticationManager myAuthManager;
   private SvnAuthenticationManager myPassiveAuthManager;
   private SvnAuthenticationManager myInteractiveManager;
@@ -323,7 +320,6 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   }
 
   public void clear() {
-    myOptions = null;
     myAuthManager = null;
     myPassiveAuthManager = null;
     myInteractiveManager = null;
@@ -333,14 +329,6 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
 
   private void setUseDefaultConfiguation(boolean useDefault) {
     myState.directory.useDefault = useDefault;
-  }
-
-  public ISVNOptions getOptions() {
-    if (myOptions == null) {
-      File path = new File(getConfigurationDirectory());
-      myOptions = SVNWCUtil.createDefaultOptions(path.getAbsoluteFile(), true);
-    }
-    return myOptions;
   }
 
   public SvnAuthenticationManager getAuthenticationManager(@NotNull SvnVcs svnVcs) {
