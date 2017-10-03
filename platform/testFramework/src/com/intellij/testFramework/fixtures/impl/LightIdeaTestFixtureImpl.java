@@ -28,6 +28,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.LightIdeaTestFixture;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author mike
@@ -38,7 +39,7 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
   private CodeStyleSettings myOldCodeStyleSettings;
   private SdkLeakTracker myOldSdks;
 
-  public LightIdeaTestFixtureImpl(LightProjectDescriptor projectDescriptor) {
+  public LightIdeaTestFixtureImpl(@NotNull LightProjectDescriptor projectDescriptor) {
     myProjectDescriptor = projectDescriptor;
   }
 
@@ -58,7 +59,7 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
   }
 
   @Override
-  public void tearDown() throws Exception {
+  public void tearDown() {
     Project project = getProject();
     CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
     CodeStyleSettings oldCodeStyleSettings = myOldCodeStyleSettings;
@@ -66,8 +67,8 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
 
     new RunAll()
       .append(() -> UsefulTestCase.doCheckForSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings()))
+      .append(super::tearDown) // call all disposables' dispose() while the project is still open
       .append(() -> LightPlatformTestCase.doTearDown(project, LightPlatformTestCase.getApplication()))
-      .append(super::tearDown)
       .append(() -> LightPlatformTestCase.checkEditorsReleased())
       .append(() -> myOldSdks.checkForJdkTableLeaks())
       .append(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project))

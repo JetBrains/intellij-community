@@ -857,10 +857,10 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     private void disposeModel() {
       Module[] modules = getModules();
       myModulesCache = null;
+      myModules.clear(); // clear module list before disposing to avoid getModules() returning already disposed modules
       for (Module module : modules) {
         Disposer.dispose(module);
       }
-      myModules.clear();
       myModuleGroupPath = null;
     }
 

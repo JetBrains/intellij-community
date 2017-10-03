@@ -137,6 +137,17 @@ public final class ObjectTree<T> {
     return true;
   }
 
+  public boolean isDisposing(@NotNull T disposable) {
+    List<ObjectNode<T>> guard = getNodesInExecution();
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    synchronized (guard) {
+      for (ObjectNode<T> node : guard) {
+        if (node.getObject() == disposable) return true;
+      }
+    }
+    return false;
+  }
+
   @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
   static <T> void executeActionWithRecursiveGuard(@NotNull T object,
                                                   @NotNull List<T> recursiveGuard,
