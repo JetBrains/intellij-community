@@ -36,6 +36,7 @@ iml_project(
         "//tools/adt/idea/android-adb:android-adb-tests",
         "//tools/adt/idea/android-debuggers:android-debuggers-tests",
         "//tools/adt/idea/android-lang:android-lang-tests",
+        "//tools/adt/idea/android-uitests",
         "//tools/adt/idea/kotlin-integration:kotlin-integration-tests",
         "//tools/adt/idea/observable-demo",
         "//tools/adt/idea/project-system-gradle:project-system-gradle-tests",
