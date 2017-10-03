@@ -54,10 +54,17 @@ public class TipDialog extends DialogWrapper{
       setCancelButtonText(CommonBundle.getCloseButtonText());
       myTipPanel = new TipPanel();
       myTipPanel.nextTip();
+      setDoNotAskOption(myTipPanel);
       setHorizontalStretch(1.33f);
       setVerticalStretch(1.25f);
       init();
     }
+
+  @NotNull
+  @Override
+  protected DialogStyle getStyle() {
+    return DialogStyle.COMPACT;
+  }
 
   @NotNull
   protected Action[] createActions(){
