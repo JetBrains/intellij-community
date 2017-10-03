@@ -28,7 +28,7 @@ import java.util.*
 import kotlin.collections.ArrayList
 
 open class ChangeListData @JvmOverloads constructor(val author: VcsUser? = null, val date: Date? = null) {
-  override fun toString(): String {
+  fun getPresentation(): String {
     val lines = ArrayList<String>()
     author?.let { lines.add("Author: $author") }
     date?.let { lines.add("Date: ${DateFormatUtil.formatDateTime(date)}") }

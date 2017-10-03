@@ -71,6 +71,12 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
     }
   }
 
+  @Override
+  public void clear() {
+    setToolTipText(null);
+    super.clear();
+  }
+
   public void appendTextWithIssueLinks(@NotNull String text, @NotNull SimpleTextAttributes baseStyle) {
     myIssueLinkRenderer.appendTextWithLinks(text, baseStyle);
   }
