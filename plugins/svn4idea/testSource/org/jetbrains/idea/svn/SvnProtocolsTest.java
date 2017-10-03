@@ -46,7 +46,6 @@ import org.junit.Before;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
-import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
@@ -96,7 +95,6 @@ public class SvnProtocolsTest extends Svn17TestCase {
     // will be the same as in interactive -> authentication notifier is not used
     manager.setAuthenticationProvider(authentication);
 
-    authentication.addAuthentication(ISVNAuthenticationManager.USERNAME, o -> new SVNUserNameAuthentication(SSH_USER_NAME, true, o, false));
     authentication
       .addAuthentication(ISVNAuthenticationManager.PASSWORD, o -> new SVNPasswordAuthentication("sally", "abcde", true, o, false));
   }

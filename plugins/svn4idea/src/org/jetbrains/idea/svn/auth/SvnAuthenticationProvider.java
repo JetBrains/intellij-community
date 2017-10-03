@@ -15,13 +15,10 @@
  */
 package org.jetbrains.idea.svn.auth;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
-import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -47,10 +44,6 @@ public class SvnAuthenticationProvider implements AuthenticationProvider {
                                                        final SVNURL url,
                                                        final String realm,
                                                        final boolean canCache) {
-    if (ApplicationManager.getApplication().isUnitTestMode() && ISVNAuthenticationManager.USERNAME.equals(kind)) {
-      String userName = myAuthenticationManager.getDefaultUsername();
-      return new SVNUserNameAuthentication(userName, false);
-    }
     final SvnAuthenticationNotifier.AuthenticationRequest obj =
       new SvnAuthenticationNotifier.AuthenticationRequest(myProject, kind, url, realm);
     final SVNURL wcUrl = myAuthenticationNotifier.getWcUrl(obj);

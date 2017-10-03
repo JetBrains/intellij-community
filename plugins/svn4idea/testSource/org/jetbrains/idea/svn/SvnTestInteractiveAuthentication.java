@@ -19,7 +19,10 @@ import com.intellij.util.containers.Convertor;
 import org.jetbrains.idea.svn.auth.AcceptResult;
 import org.jetbrains.idea.svn.auth.AuthenticationProvider;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.*;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.auth.SVNAuthentication;
+import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
+import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 
 import java.io.File;
 import java.util.HashMap;
@@ -53,9 +56,7 @@ public class SvnTestInteractiveAuthentication implements AuthenticationProvider 
     Convertor<SVNURL, SVNAuthentication> convertor = myData.get(kind);
     SVNAuthentication result = convertor == null ? null : convertor.convert(url);
     if (result == null) {
-      if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
-        result = new SVNUserNameAuthentication("username", canCache);
-      } else if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
+      if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
         result = new SVNPasswordAuthentication("username", "abc", canCache, url, false);
       } else if (ISVNAuthenticationManager.SSL.equals(kind)) {
         result = new SVNSSLAuthentication(new File("aaa"), "abc", canCache, url, false);

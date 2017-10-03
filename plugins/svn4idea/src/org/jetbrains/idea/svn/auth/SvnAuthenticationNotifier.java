@@ -71,8 +71,8 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
   private static final Logger LOG = Logger.getInstance(SvnAuthenticationNotifier.class);
 
   private static final List<String> ourAuthKinds = Arrays
-    .asList(ISVNAuthenticationManager.PASSWORD, "svn.ssh", ISVNAuthenticationManager.SSL, ISVNAuthenticationManager.USERNAME,
-            "svn.ssl.server", "svn.ssh.server");
+    .asList(ISVNAuthenticationManager.PASSWORD, "svn.ssh", ISVNAuthenticationManager.SSL, "svn.username", "svn.ssl.server",
+            "svn.ssh.server");
 
   private final SvnVcs myVcs;
   private final RootsToWorkingCopies myRootsToWorkingCopies;

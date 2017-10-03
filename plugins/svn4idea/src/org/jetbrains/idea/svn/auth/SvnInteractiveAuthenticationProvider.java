@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn.auth;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -30,9 +29,11 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.SSLCredentialsDialog;
 import org.jetbrains.idea.svn.dialogs.ServerSSLDialog;
 import org.jetbrains.idea.svn.dialogs.SimpleCredentialsDialog;
-import org.jetbrains.idea.svn.dialogs.UserNameCredentialsDialog;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.*;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.auth.SVNAuthentication;
+import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
+import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 
 import java.io.File;
 import java.security.cert.X509Certificate;
@@ -85,19 +86,6 @@ public class SvnInteractiveAuthenticationProvider implements AuthenticationProvi
         setTitle(dialog);
         if (dialog.showAndGet()) {
           result[0] = new SVNPasswordAuthentication(dialog.getUserName(), dialog.getPassword(), dialog.isSaveAllowed(), url, false);
-        }
-      };
-    }
-    else if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        return new SVNUserNameAuthentication(userName, false);
-      }
-      command = () -> {
-        UserNameCredentialsDialog dialog = new UserNameCredentialsDialog(myProject);
-        dialog.setup(realm, userName, authCredsOn);
-        setTitle(dialog);
-        if (dialog.showAndGet()) {
-          result[0] = new SVNUserNameAuthentication(dialog.getUserName(), dialog.isSaveAllowed(), url, false);
         }
       };
     }

@@ -4,7 +4,6 @@ package org.jetbrains.idea.svn.auth;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
-import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 
 public class ProxySvnAuthentication {
   private ProxySvnAuthentication() {
@@ -28,8 +27,6 @@ public class ProxySvnAuthentication {
         return new SVNSSLAuthentication(svnsslAuthentication.getCertificateFile(), svnsslAuthentication.getPassword(),
                                         storeAuth, svnsslAuthentication.getURL(), svnsslAuthentication.isPartial());
       }
-    } else if (in instanceof SVNUserNameAuthentication) {
-      return new SVNUserNameAuthentication(in.getUserName(), storeAuth, in.getURL(), in.isPartial());
     }
     return in;
   }
