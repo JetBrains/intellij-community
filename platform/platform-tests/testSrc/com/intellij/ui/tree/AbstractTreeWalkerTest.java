@@ -22,7 +22,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -416,10 +415,10 @@ public class AbstractTreeWalkerTest {
 
     @NotNull
     @Override
-    public Action accept(@NotNull TreePath path) {
+    public Action visit(@NotNull TreePath path) {
       count++;
       if (PRINT) System.out.println(path);
-      return visitor.accept(path);
+      return visitor.visit(path);
     }
   }
 }

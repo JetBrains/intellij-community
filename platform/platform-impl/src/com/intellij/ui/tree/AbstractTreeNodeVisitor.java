@@ -44,7 +44,7 @@ public abstract class AbstractTreeNodeVisitor<T> implements TreeVisitor {
 
   @NotNull
   @Override
-  public Action accept(@NotNull TreePath path) {
+  public Action visit(@NotNull TreePath path) {
     if (LOG.isTraceEnabled()) LOG.debug("process ", path);
     T element = supplier == null ? null : supplier.get();
     if (element == null) return Action.SKIP_SIBLINGS;

@@ -31,7 +31,6 @@ import com.intellij.util.Range;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,25 +47,25 @@ import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 public final class TreeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.tree.TreeUtil");
-  @NonNls @NotNull private static final String TREE_UTIL_SCROLL_TIME_STAMP = "TreeUtil.scrollTimeStamp";
+  private static final String TREE_UTIL_SCROLL_TIME_STAMP = "TreeUtil.scrollTimeStamp";
+  private static final JBIterable<Integer> NUMBERS = JBIterable.generate(0, i -> i + 1);
 
   private TreeUtil() {}
 
   @NotNull
   public static JBTreeTraverser<TreePath> treePathTraverser(@NotNull JTree tree) {
     TreeModel model = tree.getModel();
-    JBIterable<Integer> numbers = JBIterable.generate(0, i -> i + 1);
     Object root = model.getRoot();
     TreePath rootPath = root == null ? null : new TreePath(root);
-    return new JBTreeTraverser<TreePath>(o -> {
-      Object parent = o.getLastPathComponent();
-      int count = model.getChildCount(parent);
-
-      return count == 0 ? JBIterable.empty() :
-             numbers.take(count).map(
-               index -> o.pathByAddingChild(model.getChild(parent, index)));
-    })
+    return new JBTreeTraverser<TreePath>(path -> nodeChildren(path.getLastPathComponent(), model)
+      .map(o -> path.pathByAddingChild(o)))
       .withRoot(rootPath);
+  }
+
+  @NotNull
+  public static JBIterable<Object> nodeChildren(@Nullable Object node, @NotNull TreeModel model) {
+    int count = model.getChildCount(node);
+    return count == 0 ? JBIterable.empty() : NUMBERS.take(count).map(index -> model.getChild(node, index));
   }
 
   @NotNull
