@@ -691,6 +691,17 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     checkHintContents(null);
   }
 
+  public void testNextParameterWorksWhenTabCompletionDoesntChangeAnything() throws Exception {
+    configureJava("class C { void m() { String local = \"a\"; String local2 = \"b\"; System.getPro<caret> } }");
+    complete("getProperty(String key, String def)");
+    type("local");
+    complete();
+    assertEquals("local", myFixture.getLookupElements()[0].getLookupString());
+    myFixture.performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE);
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { String local = \"a\"; String local2 = \"b\"; System.getProperty(<hint text=\"key:\"/>local, <HINT text=\"def:\"/><caret>) } }");
+  }
+
   private void checkResult(String text) {
     myFixture.checkResult(text);
   }
