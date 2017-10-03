@@ -268,7 +268,7 @@ data class ConfigurationTarget(@ConfigField var target: String,
     if (targetType != TestTargetType.CUSTOM && target.isEmpty()) {
       throw RuntimeConfigurationWarning("Target not provided")
     }
-    if (targetType == TestTargetType.PYTHON && !Regex("^[a-zA-Z0-9.]+[a-zA-Z0-9]$").matches(target)) {
+    if (targetType == TestTargetType.PYTHON && !Regex("^[a-zA-Z0-9._]+[a-zA-Z0-9_]$").matches(target)) {
       throw RuntimeConfigurationWarning("Provide qualified python name")
     }
   }
