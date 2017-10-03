@@ -6,6 +6,8 @@ package com.intellij.refactoring.extractMethod;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
@@ -15,7 +17,9 @@ import com.intellij.refactoring.util.VariableData;
 import com.intellij.refactoring.util.duplicates.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -42,24 +46,28 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
     myOutputVariable = ArrayUtil.getFirstElement(myOutputVariables);
     myArtificialOutputVariable = variablesMapping.getOrDefault(from.myArtificialOutputVariable, from.myArtificialOutputVariable);
 
-    int parameterCount = Math.max(myInputVariables.getInputVariables().size(), from.myVariableDatum.length);
-    myVariableDatum = new VariableData[parameterCount];
+    List<VariableData> variableDatum = new ArrayList<>();
     for (int i = 0; i < from.myVariableDatum.length; i++) {
       VariableData fromData = from.myVariableDatum[i];
       PsiVariable mappedVariable = variablesMapping.get(fromData.variable);
-      if (mappedVariable == null) {
-        myVariableDatum[i] = fromData;
-      }
-      else {
-        myVariableDatum[i] = new VariableData(mappedVariable, fromData.type);
-        myVariableDatum[i].name = fromData.name;
-        myVariableDatum[i].originalName = fromData.originalName;
-        myVariableDatum[i].passAsParameter = fromData.passAsParameter;
+      if (isReferenced(mappedVariable)) {
+        VariableData newData = new VariableData(mappedVariable, fromData.type);
+        newData.name = fromData.name;
+        newData.originalName = fromData.originalName;
+        newData.passAsParameter = fromData.passAsParameter;
+        variableDatum.add(newData);
       }
     }
-    for (int i = from.myVariableDatum.length; i < myVariableDatum.length; i++) {
-      myVariableDatum[i] = myInputVariables.getInputVariables().get(i);
+    List<VariableData> inputVariables = getInputVariables().getInputVariables();
+    for (int i = variableDatum.size(); i < inputVariables.size(); i++) {
+      variableDatum.add(inputVariables.get(i));
     }
+    myVariableDatum = variableDatum.toArray(new VariableData[0]);
+  }
+
+  @Contract("null -> false")
+  private boolean isReferenced(@Nullable PsiVariable variable) {
+    return variable != null && ReferencesSearch.search(variable, new LocalSearchScope(myElements)).findFirst() != null;
   }
 
   public void applyDefaults(@NotNull String methodName, @PsiModifier.ModifierConstant @NotNull String visibility) {

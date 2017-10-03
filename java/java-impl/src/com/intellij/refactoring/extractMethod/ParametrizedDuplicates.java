@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
@@ -30,6 +31,7 @@ import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.refactoring.util.duplicates.ExtractedParameter;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.refactoring.util.duplicates.VariableReturnValue;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -53,7 +55,7 @@ public class ParametrizedDuplicates {
   private PsiMethodCallExpression myParametrizedCall;
   private VariableData[] myVariableData;
 
-  public ParametrizedDuplicates(PsiElement[] pattern) {
+  private ParametrizedDuplicates(PsiElement[] pattern) {
     if (pattern[0] instanceof PsiStatement) {
       Project project = pattern[0].getProject();
       PsiElement[] copy = IntroduceParameterHandler.getElementsInCopy(project, pattern[0].getContainingFile(), pattern);
@@ -90,10 +92,12 @@ public class ParametrizedDuplicates {
   private static List<Match> findOriginalDuplicates(@NotNull ExtractMethodProcessor processor) {
     PsiElement[] elements = getFilteredElements(processor.myElements);
 
-    DuplicatesFinder finder = new DuplicatesFinder(elements, processor.myInputVariables.copy(),
+    List<PsiVariable> variables = ContainerUtil.map(processor.myInputVariables.getInputVariables(), iv -> iv.variable);
+    InputVariables inputVariables = new InputVariables(variables, processor.myProject, new LocalSearchScope(processor.myElements), false);
+    DuplicatesFinder finder = new DuplicatesFinder(elements, inputVariables,
                                                    processor.myOutputVariable != null
                                                    ? new VariableReturnValue(processor.myOutputVariable) : null,
-                                                   Arrays.asList(processor.myOutputVariables), true) {
+                                                   Collections.emptyList(), true) {
       @Override
       protected boolean isSelf(@NotNull PsiElement candidate) {
         for (PsiElement element : elements) {

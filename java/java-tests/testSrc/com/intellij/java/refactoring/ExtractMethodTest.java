@@ -783,7 +783,23 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
-  public void _testSuggestChangeSignatureWithFolding() throws Exception {
+  public void testSuggestChangeSignatureWithFolding() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testSuggestChangeSignatureWithArrayFolding() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testSuggestChangeSignatureWithGetterFolding() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testSuggestChangeSignatureWithMultiFolding() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testSuggestChangeSignatureWithTwoWayFolding() throws Exception {
     doDuplicatesTest();
   }
 

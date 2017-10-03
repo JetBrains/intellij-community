@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.util.duplicates;
 
+import com.intellij.codeInsight.JavaPsiEquivalenceUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -63,11 +64,14 @@ public class ExtractableExpressionPart {
     if (myValue != null && myValue.equals(part.myValue)) {
       return true;
     }
-    return false;
+    return JavaPsiEquivalenceUtil.areExpressionsEquivalent(PsiUtil.skipParenthesizedExprDown(myUsage),
+                                                           PsiUtil.skipParenthesizedExprDown(part.myUsage));
   }
 
   @Nullable
-  static ExtractableExpressionPart match(@NotNull PsiExpression expression, @Nullable List<PsiElement> scope) {
+  static ExtractableExpressionPart match(@NotNull PsiExpression expression,
+                                         @NotNull List<PsiElement> scope,
+                                         @Nullable ParameterFolding parameterFolding) {
     if (PsiUtil.isConstantExpression(expression)) {
       if (PsiTreeUtil.findChildOfType(expression, PsiJavaCodeReferenceElement.class) != null) {
         return null;
@@ -76,6 +80,12 @@ public class ExtractableExpressionPart {
     }
     if (expression instanceof PsiReferenceExpression) {
       return matchVariable((PsiReferenceExpression)expression, scope);
+    }
+    if (parameterFolding != null && parameterFolding.isAcceptableComplexity(expression)) {
+      PsiType type = expression.getType();
+      if (type != null && !PsiType.VOID.equals(type)) {
+        return new ExtractableExpressionPart(expression, null, null, type);
+      }
     }
     return null;
   }
