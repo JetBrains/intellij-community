@@ -30,6 +30,8 @@ public class CaptureAgent {
   public static void premain(String args, Instrumentation instrumentation) throws IOException {
     ourInstrumentation = instrumentation;
 
+    boolean deleteSettings = true;
+
     FileReader reader = null;
     try {
       reader = new FileReader(args);
@@ -44,6 +46,8 @@ public class CaptureAgent {
       if (Boolean.parseBoolean(properties.getProperty("disabled", "false"))) {
         CaptureStorage.setEnabled(false);
       }
+
+      deleteSettings = Boolean.parseBoolean(properties.getProperty("deleteSettings", "true"));
 
       String asmPath = properties.getProperty("asm-lib");
       if (asmPath == null) {
@@ -88,7 +92,9 @@ public class CaptureAgent {
       if (reader != null) {
         reader.close();
       }
-      new File(args).delete();
+      if (deleteSettings) {
+        new File(args).delete();
+      }
     }
   }
 
