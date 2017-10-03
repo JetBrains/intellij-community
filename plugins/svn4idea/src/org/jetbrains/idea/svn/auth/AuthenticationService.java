@@ -21,7 +21,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.WaitForProgressToShow;
@@ -45,7 +44,6 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.SimpleCredentialsDialog;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 
 import javax.net.ssl.SSLContext;
@@ -55,17 +53,15 @@ import java.io.File;
 import java.io.IOException;
 import java.net.*;
 import java.security.KeyManagementException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 public class AuthenticationService {
 
+  private static final Logger LOG = Logger.getInstance(AuthenticationService.class);
+
   @NotNull private final SvnVcs myVcs;
   private final boolean myIsActive;
-  private static final Logger LOG = Logger.getInstance(AuthenticationService.class);
-  private File myTempDirectory;
   private boolean myProxyCredentialsWereReturned;
   @NotNull private final SvnConfiguration myConfiguration;
   private final Set<String> myRequestedCredentials;
@@ -80,11 +76,6 @@ public class AuthenticationService {
   @NotNull
   public SvnVcs getVcs() {
     return myVcs;
-  }
-
-  @Nullable
-  public File getTempDirectory() {
-    return myTempDirectory;
   }
 
   public boolean isActive() {
@@ -284,16 +275,6 @@ public class AuthenticationService {
     return isActive() ? myConfiguration.getInteractiveManager(myVcs) : myConfiguration.getPassiveAuthenticationManager(myVcs);
   }
 
-  public void clearPassiveCredentials(String realm, SVNURL repositoryUrl, boolean password) {
-    if (repositoryUrl == null) {
-      return;
-    }
-
-    for (String kind : getKinds(repositoryUrl, password)) {
-      myConfiguration.clearCredentials(kind, realm);
-    }
-  }
-
   // TODO: rename
   public boolean haveDataForTmpConfig() {
     final HttpConfigurable instance = HttpConfigurable.getInstance();
@@ -369,37 +350,10 @@ public class AuthenticationService {
   }
 
   public void reset() {
-    if (myTempDirectory != null) {
-      FileUtil.delete(myTempDirectory);
-    }
   }
 
   @NotNull
-  public static List<String> getKinds(final SVNURL url, boolean passwordRequest) {
-    if (passwordRequest || "http".equals(url.getProtocol())) {
-      return Collections.singletonList(ISVNAuthenticationManager.PASSWORD);
-    }
-    else if ("https".equals(url.getProtocol())) {
-      return Collections.singletonList(ISVNAuthenticationManager.SSL);
-    }
-    else if ("svn".equals(url.getProtocol())) {
-      return Collections.singletonList(ISVNAuthenticationManager.PASSWORD);
-    }
-    else if (url.getProtocol().contains("svn+")) {  // todo +-
-      return Arrays.asList(ISVNAuthenticationManager.SSH, ISVNAuthenticationManager.USERNAME);
-    }
-    return Collections.singletonList(ISVNAuthenticationManager.USERNAME);
-  }
-
-  @Nullable
   public File getSpecialConfigDir() {
-    return myTempDirectory != null ? myTempDirectory : new File(myConfiguration.getConfigurationDirectory());
-  }
-
-  public void initTmpDir() throws IOException {
-    if (myTempDirectory == null) {
-      myTempDirectory = FileUtil.createTempDirectory("tmp", "Subversion");
-      FileUtil.copyDir(new File(myConfiguration.getConfigurationDirectory()), myTempDirectory);
-    }
+    return new File(myConfiguration.getConfigurationDirectory());
   }
 }
