@@ -47,7 +47,7 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
 
     context.ant.copy(todir: "$targetDirectory/index", failonerror: true) {
       fileset(dir: "$context.paths.temp/index", erroronmissingdir: true) {
-        include(name: "*")
+        include(name: "**")
       }
     }
   }
