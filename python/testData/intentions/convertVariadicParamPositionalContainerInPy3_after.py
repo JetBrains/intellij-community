@@ -1,2 +1,2 @@
-def foo(*args, bar, **kwargs<caret>):
+def foo(baz=None, *args, bar, **kwargs<caret>):
     return bar
