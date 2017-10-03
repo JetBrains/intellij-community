@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.NonClasspathClassFinder;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.structuralsearch.plugin.util.StructuralSearchScriptScope;
 import org.jetbrains.annotations.NotNull;
@@ -37,5 +38,11 @@ public class IdeaOpenApiClassFinder extends NonClasspathClassFinder {
   @Override
   public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     return !(scope instanceof StructuralSearchScriptScope) ? null : super.findClass(qualifiedName, scope);
+  }
+
+  @NotNull
+  @Override
+  public PsiPackage[] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+    return !(scope instanceof StructuralSearchScriptScope) ? PsiPackage.EMPTY_ARRAY : super.getSubPackages(psiPackage, scope);
   }
 }
