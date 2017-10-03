@@ -105,6 +105,9 @@ public class TestDataFilesReferencesContributor extends PsiReferenceContributor 
     }
 
     PsiParameter[] parameters = callMethod.getParameterList().getParameters();
+    if (parameters.length == 0) {
+      return null;
+    }
     // index may be greater than parameters length in case of varargs
     return index >= parameters.length ? parameters[parameters.length - 1] : parameters[index];
   }
