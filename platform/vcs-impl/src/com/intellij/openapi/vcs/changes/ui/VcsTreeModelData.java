@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.io.File;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -31,7 +32,7 @@ public abstract class VcsTreeModelData {
   public static VcsTreeModelData all(@NotNull JTree tree) {
     assert tree.getModel().getRoot() instanceof ChangesBrowserNode;
     ChangesBrowserNode<?> root = (ChangesBrowserNode<?>)tree.getModel().getRoot();
-    return new AllNodesUnder(root);
+    return new AllUnderData(root);
   }
 
   @NotNull
@@ -49,17 +50,44 @@ public abstract class VcsTreeModelData {
   @NotNull
   public static VcsTreeModelData included(@NotNull ChangesTree tree) {
     assert tree.getModel().getRoot() instanceof ChangesBrowserNode;
-    return new IncludedData(tree);
+    ChangesBrowserNode<?> root = (ChangesBrowserNode<?>)tree.getModel().getRoot();
+    return new IncludedUnderData(tree, root);
   }
 
   @NotNull
   public static VcsTreeModelData children(@NotNull ChangesBrowserNode<?> node) {
-    return new AllNodesUnder(node);
+    return new AllUnderData(node);
   }
 
 
   @NotNull
-  protected abstract Stream<ChangesBrowserNode> rawNodesStream();
+  public static VcsTreeModelData allUnderTag(@NotNull JTree tree, @NotNull Object tag) {
+    assert tree.getModel().getRoot() instanceof ChangesBrowserNode;
+
+    ChangesBrowserNode<?> tagNode = findTagNode(tree, tag);
+    if (tagNode == null) return new EmptyData();
+    return new AllUnderData(tagNode);
+  }
+
+  @NotNull
+  public static VcsTreeModelData selectedUnderTag(@NotNull JTree tree, @NotNull Object tag) {
+    assert tree.getModel().getRoot() instanceof ChangesBrowserNode;
+    return new SelectedTagData(tree, tag);
+  }
+
+  @NotNull
+  public static VcsTreeModelData includedUnderTag(@NotNull ChangesTree tree, @NotNull Object tag) {
+    assert tree.getModel().getRoot() instanceof ChangesBrowserNode;
+
+    ChangesBrowserNode<?> tagNode = findTagNode(tree, tag);
+    if (tagNode == null) return new EmptyData();
+
+    return new IncludedUnderData(tree, tagNode);
+  }
+
+
+  @NotNull
+  public abstract Stream<ChangesBrowserNode> rawNodesStream();
 
   @NotNull
   public Stream<ChangesBrowserNode> nodesStream() {
@@ -69,7 +97,7 @@ public abstract class VcsTreeModelData {
 
   @NotNull
   public Stream<Object> userObjectsStream() {
-    return nodesStream().map(ChangesBrowserNode::getUserObject).filter(Objects::nonNull);
+    return userObjectsStream(Object.class);
   }
 
   @NotNull
@@ -90,10 +118,21 @@ public abstract class VcsTreeModelData {
   }
 
 
-  private static class AllNodesUnder extends VcsTreeModelData {
+  private static class EmptyData extends VcsTreeModelData {
+    public EmptyData() {
+    }
+
+    @NotNull
+    @Override
+    public Stream<ChangesBrowserNode> rawNodesStream() {
+      return Stream.empty();
+    }
+  }
+
+  private static class AllUnderData extends VcsTreeModelData {
     @NotNull private final ChangesBrowserNode<?> myNode;
 
-    public AllNodesUnder(@NotNull ChangesBrowserNode<?> node) {
+    public AllUnderData(@NotNull ChangesBrowserNode<?> node) {
       myNode = node;
     }
 
@@ -141,19 +180,47 @@ public abstract class VcsTreeModelData {
     }
   }
 
-  private static class IncludedData extends VcsTreeModelData {
-    @NotNull private final ChangesTree myTree;
+  private static class SelectedTagData extends VcsTreeModelData {
+    @NotNull private final JTree myTree;
+    @NotNull private final Object myTag;
 
-    public IncludedData(@NotNull ChangesTree tree) {
+    public SelectedTagData(@NotNull JTree tree, @NotNull Object tag) {
       myTree = tree;
+      myTag = tag;
+    }
+
+    @NotNull
+    @Override
+    public Stream<ChangesBrowserNode> rawNodesStream() {
+      ChangesBrowserNode<?> tagNode = findTagNode(myTree, myTag);
+      if (tagNode == null) return Stream.empty();
+
+      TreePath[] paths = myTree.getSelectionPaths();
+      if (paths == null) return Stream.empty();
+
+      return Stream.of(paths)
+        .filter(path -> path.getPathCount() <= 1 ||
+                        path.getPathComponent(1) == tagNode)
+        .map(path -> (ChangesBrowserNode)path.getLastPathComponent())
+        .<ChangesBrowserNode>flatMap(ChangesBrowserNode::getNodesUnderStream)
+        .distinct(); // filter out nodes that already were processed (because their parent selected too)
+    }
+  }
+
+  private static class IncludedUnderData extends VcsTreeModelData {
+    @NotNull private final ChangesTree myTree;
+    @NotNull private final ChangesBrowserNode<?> myNode;
+
+    public IncludedUnderData(@NotNull ChangesTree tree, @NotNull ChangesBrowserNode<?> node) {
+      myTree = tree;
+      myNode = node;
     }
 
     @NotNull
     @Override
     public Stream<ChangesBrowserNode> rawNodesStream() {
       Set<Object> included = myTree.getIncludedSet();
-      ChangesBrowserNode<?> root = (ChangesBrowserNode<?>)myTree.getModel().getRoot();
-      return root.getNodesUnderStream().filter(node -> included.contains(node.getUserObject()));
+      return myNode.getNodesUnderStream().filter(node -> included.contains(node.getUserObject()));
     }
   }
 
@@ -245,6 +312,15 @@ public abstract class VcsTreeModelData {
         return null;
       })
       .filter(Objects::nonNull);
+  }
+
+
+  @Nullable
+  private static ChangesBrowserNode<?> findTagNode(@NotNull JTree tree, @NotNull Object tag) {
+    ChangesBrowserNode<?> root = (ChangesBrowserNode<?>)tree.getModel().getRoot();
+    //noinspection unchecked
+    Iterator<ChangesBrowserNode> iterator = ContainerUtil.<ChangesBrowserNode>iterate(root.children());
+    return ContainerUtil.find(iterator, node -> tag.equals(node.getUserObject()));
   }
 }
 

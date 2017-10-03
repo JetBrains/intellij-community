@@ -50,9 +50,7 @@ import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.shortenTextWithEllipsis;
@@ -283,14 +281,31 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
   @Override
   public List<VirtualFile> getSelectedUnversionedFiles() {
     if (!isShowUnversioned()) return Collections.emptyList();
-    return VcsTreeModelData.selected(myViewer).userObjects(VirtualFile.class);
+
+    VcsTreeModelData treeModelData = VcsTreeModelData.selectedUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
+    if (containsCollapsedUnversionedNode(treeModelData)) return myUnversioned;
+
+    return treeModelData.userObjects(VirtualFile.class);
   }
 
   @NotNull
   @Override
   public List<VirtualFile> getIncludedUnversionedFiles() {
     if (!isShowUnversioned()) return Collections.emptyList();
-    return VcsTreeModelData.included(myViewer).userObjects(VirtualFile.class);
+
+    VcsTreeModelData treeModelData = VcsTreeModelData.includedUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
+    if (containsCollapsedUnversionedNode(treeModelData)) return myUnversioned;
+
+    return treeModelData.userObjects(VirtualFile.class);
+  }
+
+  private static boolean containsCollapsedUnversionedNode(@NotNull VcsTreeModelData treeModelData) {
+    Optional<ChangesBrowserNode> node = treeModelData.nodesStream()
+      .filter(it -> it instanceof ChangesBrowserUnversionedFilesNode).findAny();
+    if (!node.isPresent()) return false;
+
+    ChangesBrowserUnversionedFilesNode unversionedFilesNode = (ChangesBrowserUnversionedFilesNode)node.get();
+    return unversionedFilesNode.isManyFiles();
   }
 
 
