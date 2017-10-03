@@ -19,6 +19,7 @@ import java.util.function.Function;
 
 /**
  * Helper component that stores nesting rules and apply them to files
+ * @see NestingTreeStructureProvider
  */
 public class FileNestingBuilder {
 
@@ -74,7 +75,7 @@ public class FileNestingBuilder {
   }
 
   /*
-    This is a graph theory problem. T is a graph node represents a file. fileNameFunc should return appropriate file name for a T node.
+    This is a graph theory problem. T is a graph node that represents a file. fileNameFunc should return appropriate file name for a T node.
     Edges go from parent file to child file according to NestingRules, for example foo.js->foo.min.js.
     Parent may have several children. Child may have several parents.
     There may be cycles with 3 or more nodes, but cycle with 2 nodes (A->B and B->A) is impossible because parentFileSuffix != childFileSuffix
@@ -132,7 +133,7 @@ public class FileNestingBuilder {
   }
 
   /**
-   * Returns true is the rule applies to the file [as parent; as child] pair
+   * Returns true if the rule applies to the file [as parent; as child] pair
    */
   public static Couple<Boolean> checkMatchingAsParentOrChild(@NotNull final ProjectViewFileNestingService.NestingRule rule,
                                                              @NotNull final String fileName) {
