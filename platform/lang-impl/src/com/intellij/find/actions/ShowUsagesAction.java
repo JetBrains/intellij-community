@@ -240,7 +240,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     }
 
     Disposer.register(usageView, () -> {
-      showUsagesSettings.loadUsageViewSettings(usageViewSettings);
+      showUsagesSettings.loadState(usageViewSettings);
       usageViewSettings.loadState(savedGlobalSettings);
     });
 
@@ -679,13 +679,13 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     DefaultActionGroup toolbar = new DefaultActionGroup();
     usageView.addFilteringActions(toolbar);
 
-    toolbar.add(UsageGroupingRuleProviderImpl.createGroupByFileStructureAction(usageView));
+    toolbar.add(UsageGroupingRuleProviderImpl.createGroupByFileStructureAction(usageView)); 
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.USAGE_VIEW_TOOLBAR, toolbar, true);
     actionToolbar.setReservePlaceAutoPopupIcon(false);
     final JComponent toolBar = actionToolbar.getComponent();
     toolBar.setOpaque(false);
     builder.setSettingButton(toolBar);
-    builder.setCancelKeyEnabled(false);
+    builder.setCancelKeyEnabled(false); 
 
     popup[0] = builder.createPopup();
     JComponent content = popup[0].getContent();
@@ -1168,7 +1168,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     public int getRowHeight() {
       return super.getRowHeight() + 2 * MARGIN;
     }
-
+    
     @NotNull
     @Override
     public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
