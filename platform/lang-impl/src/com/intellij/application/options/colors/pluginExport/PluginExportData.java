@@ -112,4 +112,13 @@ public class PluginExportData {
   private static String normalize(@Nullable String value, @NotNull String defaultValue) {
     return value == null || StringUtil.isEmptyOrSpaces(value) ? defaultValue : value.trim();
   }
+
+  public boolean isEmpty() {
+    return
+      myDescription == null &&
+      myPluginVersion == null &&
+      myVendorUrl == null &&
+      myVendorMail == null &&
+      myVendorName == null;
+  }
 }

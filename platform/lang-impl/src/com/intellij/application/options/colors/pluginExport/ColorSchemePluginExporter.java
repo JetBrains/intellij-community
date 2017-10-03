@@ -27,6 +27,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.util.Properties;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -56,7 +57,7 @@ public class ColorSchemePluginExporter extends ConfigurableSchemeExporter<Plugin
   @Nullable
   @Override
   public PluginExportData getConfiguration(@NotNull Component parent, @NotNull EditorColorsScheme scheme) {
-    PluginExportData exportData = new PluginExportData(scheme.getMetaProperties());
+    PluginExportData exportData = getPluginExportData(scheme);
     PluginInfoDialog infoDialog = new PluginInfoDialog(parent, exportData);
     if (infoDialog.showAndGet()) {
       infoDialog.apply();
@@ -77,5 +78,17 @@ public class ColorSchemePluginExporter extends ConfigurableSchemeExporter<Plugin
       OutputStreamWriter writer = new OutputStreamWriter(outputStream);
     writer.write(template.getText());
     writer.flush();
+  }
+
+  @NotNull
+  private static PluginExportData getPluginExportData(@NotNull EditorColorsScheme scheme) {
+    PluginExportData data = new PluginExportData(scheme.getMetaProperties());
+    if (data.isEmpty() && scheme instanceof AbstractColorsScheme) {
+      EditorColorsScheme original = ((AbstractColorsScheme)scheme).getOriginal();
+      if (original != null) {
+        return getPluginExportData(original);
+      }
+    }
+    return data;
   }
 }
