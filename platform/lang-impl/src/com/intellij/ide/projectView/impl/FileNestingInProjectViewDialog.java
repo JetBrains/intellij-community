@@ -41,7 +41,7 @@ public class FileNestingInProjectViewDialog extends DialogWrapper {
     }
   };
 
-  protected FileNestingInProjectViewDialog(@NotNull final Project project) {
+  public FileNestingInProjectViewDialog(@NotNull final Project project) {
     super(project);
     setTitle(IdeBundle.message("file.nesting.dialog.title"));
 

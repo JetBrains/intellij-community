@@ -1043,6 +1043,7 @@
     <applicationService serviceInterface="com.intellij.ide.projectView.impl.ProjectViewFileNestingService"
                         serviceImplementation="com.intellij.ide.projectView.impl.ProjectViewFileNestingService"/>
     <treeStructureProvider implementation="com.intellij.ide.projectView.impl.NestingTreeStructureProvider" order="last"/>
+    <applicationService serviceImplementation="com.intellij.ide.projectView.impl.FileNestingBuilder" />
     <refactoring.safeDeleteProcessor implementation="com.intellij.refactoring.safeDelete.RelatedFilesSafeDeleteProcessorDelegate"/>
     <automaticRenamerFactory implementation="com.intellij.refactoring.rename.RelatedFilesRenamerFactory"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.MoveRelatedFilesHandler"
