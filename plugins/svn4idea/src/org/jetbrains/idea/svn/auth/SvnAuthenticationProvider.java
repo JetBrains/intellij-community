@@ -66,7 +66,7 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
       return mySvnInteractiveAuthenticationProvider.requestClientAuthentication(kind, url, realm, errorMessage, previousAuth, authMayBeStored);
     } else {
       if (myAuthenticationNotifier.ensureNotify(obj)) {
-        return myAuthenticationManager.requestFromCache(kind, url, realm, errorMessage, previousAuth, authMayBeStored);
+        return myAuthenticationManager.requestFromCache(kind, realm);
       }
     }
     return null;

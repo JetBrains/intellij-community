@@ -303,6 +303,7 @@ public class AuthenticationService {
 
   @Nullable
   public static Proxy getIdeaDefinedProxy(@NotNull final SVNURL url) {
+    // TODO: Check if removeNoProxy() is still needed
     // SVNKit authentication implementation sets repositories as noProxy() to provide custom proxy authentication logic - see for instance,
     // SvnAuthenticationManager.getProxyManager(). But noProxy() setting is not cleared correctly in all cases - so if svn command
     // (for command line) is executed on thread where repository url was added as noProxy() => proxies are not retrieved for such commands

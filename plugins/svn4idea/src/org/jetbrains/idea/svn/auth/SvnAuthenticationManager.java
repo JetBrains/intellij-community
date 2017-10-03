@@ -15,90 +15,70 @@
  */
 package org.jetbrains.idea.svn.auth;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.proxy.CommonProxy;
-import com.intellij.util.ui.UIUtil;
 import com.trilead.ssh2.auth.AgentProxy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.IdeaSVNConfigFile;
+import org.jetbrains.idea.svn.SSLExceptionsHelper;
+import org.jetbrains.idea.svn.SvnConfiguration;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.config.ProxyGroup;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.*;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
+import org.tmatesoft.svn.core.auth.SVNAuthentication;
+import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.internal.wc.*;
-import org.tmatesoft.svn.core.io.SVNRepository;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.*;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.StringTokenizer;
 
-import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
-public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager implements ISVNAuthenticationManagerExt {
-  private static final Logger LOG = Logger.getInstance(SvnAuthenticationManager.class);
+public class SvnAuthenticationManager {
 
   public static final String SVN_SSH = "svn+ssh";
   public static final String HTTP = "http";
   public static final String HTTPS = "https";
-  public static final String HTTP_PROXY_HOST = "http-proxy-host";
-  public static final String HTTP_PROXY_PORT = "http-proxy-port";
-  public static final String HTTP_PROXY_USERNAME = "http-proxy-username";
-  public static final String HTTP_PROXY_PASSWORD = "http-proxy-password";
   private SvnVcs myVcs;
   private Project myProject;
   private File myConfigDirectory;
-  private ISVNAuthenticationProvider myRuntimeCacheProvider;
-  private PersistentAuthenticationProviderProxy myPersistentAuthenticationProviderProxy;
   private SvnConfiguration myConfig;
   private static final ThreadLocal<Boolean> ourJustEntered = new ThreadLocal<>();
   private SvnAuthenticationInteraction myInteraction;
   private IdeaSVNHostOptionsProvider myLocalHostOptionsProvider;
+  private DefaultSVNOptions myDefaultOptions;
   private final ThreadLocalSavePermissions mySavePermissions;
   private final Map<Thread, String> myKeyAlgorithm;
   private ISVNAuthenticationProvider myProvider;
   private final static ThreadLocal<ISVNAuthenticationProvider> ourThreadLocalProvider = new ThreadLocal<>();
 
   public SvnAuthenticationManager(@NotNull SvnVcs vcs, final File configDirectory) {
-    super(configDirectory, true, null, null);
     myVcs = vcs;
     myProject = myVcs.getProject();
     myConfigDirectory = configDirectory;
     myKeyAlgorithm = new HashMap<>();
     mySavePermissions = new ThreadLocalSavePermissions();
     myConfig = myVcs.getSvnConfiguration();
-    if (myPersistentAuthenticationProviderProxy != null) {
-      myPersistentAuthenticationProviderProxy.setProject(myProject);
-    }
     myInteraction = new MySvnAuthenticationInteraction(myProject);
     Disposer.register(myProject, () -> {
       myVcs = null;
       myProject = null;
-      if (myPersistentAuthenticationProviderProxy != null) {
-        myPersistentAuthenticationProviderProxy.myProject = null;
-        ((MyKeyringMasterKeyProvider)myPersistentAuthenticationProviderProxy.myISVNGnomeKeyringPasswordProvider).myProject = null;
-        myPersistentAuthenticationProviderProxy = null;
-      }
       if (myInteraction instanceof MySvnAuthenticationInteraction) {
         ((MySvnAuthenticationInteraction)myInteraction).myProject = null;
       }
@@ -108,19 +88,17 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
       }
       myInteraction = null;
     });
-    // This is not the same instance as DefaultSVNAuthenticationManager.myProviders[1], but currently
-    // DefaultSVNAuthenticationManager.CacheAuthenticationProvider uses only its outer class state - so we utilize necessary logic with
-    // this new instance.
-    myRuntimeCacheProvider = createRuntimeAuthenticationProvider();
   }
 
-  public SVNAuthentication requestFromCache(String kind,
-                                            SVNURL url,
-                                            String realm,
-                                            SVNErrorMessage errorMessage,
-                                            SVNAuthentication previousAuth,
-                                            boolean authMayBeStored) {
-    return myRuntimeCacheProvider.requestClientAuthentication(kind, url, realm, errorMessage, previousAuth, authMayBeStored);
+  public DefaultSVNOptions getDefaultOptions() {
+    if (myDefaultOptions == null) {
+      myDefaultOptions = new DefaultSVNOptions(myConfigDirectory, true);
+    }
+    return myDefaultOptions;
+  }
+
+  public SVNAuthentication requestFromCache(String kind, String realm) {
+    return (SVNAuthentication)SvnConfiguration.RUNTIME_AUTH_CACHE.getDataWithLowerCheck(kind, realm);
   }
 
   public String getDefaultUsername(String kind, SVNURL url) {
@@ -135,32 +113,8 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     return result;
   }
 
-  @Override
-  protected SVNSSHAuthentication getDefaultSSHAuthentication(SVNURL url) {
-    String userName = getDefaultUsername(ISVNAuthenticationManager.SSH, url);
-
-    // This is fully copied from base class - DefaultSVNAuthenticationManager - as there are no setters in Authentication classes
-    // and there is no url parameter if overriding getDefaultOptions()
-    String password = getDefaultOptions().getDefaultSSHPassword();
-    String keyFile = getDefaultOptions().getDefaultSSHKeyFile();
-    int port = getDefaultOptions().getDefaultSSHPortNumber();
-    String passphrase = getDefaultOptions().getDefaultSSHPassphrase();
-
-    if (userName != null && password != null) {
-      return new SVNSSHAuthentication(userName, password, port, getHostOptionsProvider().getHostOptions(url).isAuthStorageEnabled(), url,
-                                      false);
-    }
-    else if (userName != null && keyFile != null) {
-      return new SVNSSHAuthentication(userName, new File(keyFile), passphrase, port,
-                                      getHostOptionsProvider().getHostOptions(url).isAuthStorageEnabled(), url, false);
-    }
-    return null;
-  }
-
-  @Override
   public void setAuthenticationProvider(ISVNAuthenticationProvider provider) {
     myProvider = provider;
-    super.setAuthenticationProvider(myProvider);
   }
 
   public ISVNAuthenticationProvider getProvider() {
@@ -193,7 +147,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     return myConfig;
   }
 
-  @Override
   public IdeaSVNHostOptionsProvider getHostOptionsProvider() {
     if (myLocalHostOptionsProvider == null) {
       myLocalHostOptionsProvider = new IdeaSVNHostOptionsProvider();
@@ -207,168 +160,20 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     }
   }
 
-  @Override
-  protected ISVNAuthenticationProvider createCacheAuthenticationProvider(File authDir, String userName) {
-    // this is a hack due to the fact this method is called from super() constructor
-    myConfigDirectory = new File(authDir.getParent());
-    myPersistentAuthenticationProviderProxy = new PersistentAuthenticationProviderProxy(authDir, userName);
-    return myPersistentAuthenticationProviderProxy;
-  }
-
-  private class PersistentAuthenticationProviderProxy implements ISVNAuthenticationProvider, ISVNPersistentAuthenticationProvider {
-    private final ISVNAuthenticationProvider myDelegate;
-    private final ISVNGnomeKeyringPasswordProvider myISVNGnomeKeyringPasswordProvider;
-    private final File myAuthDir;
-    private Project myProject;
-
-    private PersistentAuthenticationProviderProxy(File authDir, String userName) {
-      myISVNGnomeKeyringPasswordProvider = new MyKeyringMasterKeyProvider(myProject);
-      ISVNAuthenticationStorageOptions delegatingOptions = new ISVNAuthenticationStorageOptions() {
-        public boolean isNonInteractive() throws SVNException {
-          return getAuthenticationStorageOptions().isNonInteractive();
-        }
-
-        public ISVNAuthStoreHandler getAuthStoreHandler() throws SVNException {
-          return getAuthenticationStorageOptions().getAuthStoreHandler();
-        }
-
-        @Override
-        public ISVNGnomeKeyringPasswordProvider getGnomeKeyringPasswordProvider() {
-          return myISVNGnomeKeyringPasswordProvider;
-        }
-
-        @Override
-        public boolean isSSLPassphrasePromptSupported() {
-          return false;
-        }
-      };
-      myDelegate = new DefaultSVNPersistentAuthenticationProvider(authDir, userName, delegatingOptions, getDefaultOptions(),
-                                                                  getHostOptionsProvider()) {
-      };
-      myAuthDir = authDir;
-    }
-
-    public void setProject(Project project) {
-      myProject = project;
-    }
-
-    public SVNAuthentication requestClientAuthentication(final String kind,
-                                                         final SVNURL url,
-                                                         final String realm,
-                                                         final SVNErrorMessage errorMessage,
-                                                         final SVNAuthentication previousAuth,
-                                                         final boolean authMayBeStored) {
-      return myDelegate.requestClientAuthentication(kind, url, realm, errorMessage, previousAuth, authMayBeStored);
-    }
-
-    public int acceptServerAuthentication(final SVNURL url, final String realm, final Object certificate, final boolean resultMayBeStored) {
-      return ACCEPTED_TEMPORARY;
-    }
-
-    private void actualSavePermissions(String realm, SVNAuthentication auth) {
-      final String actualKind = auth.getKind();
-      File dir = new File(myAuthDir, actualKind);
-      String fileName = SVNFileUtil.computeChecksum(realm);
-      File authFile = new File(dir, fileName);
-
-      try {
-        ((ISVNPersistentAuthenticationProvider)myDelegate).saveAuthentication(auth, actualKind, realm);
-      }
-      catch (SVNException e) {
-        if (myProject != null) {
-          ApplicationManager.getApplication().invokeLater(new VcsBalloonProblemNotifier(myProject,
-                                                                                        "<b>Problem when storing Subversion credentials:</b>&nbsp;" +
-                                                                                        e.getMessage(), MessageType.ERROR));
-        }
-      }
-      finally {
-        // do not make password file readonly
-        setWriteable(authFile);
-      }
-    }
-
-    public void saveAuthentication(final SVNAuthentication auth, final String kind, final String realm) throws SVNException {
-      Boolean fromInteractive = ourJustEntered.get();
-      ourJustEntered.set(null);
-      if (Boolean.TRUE.equals(fromInteractive)) {
-        ((ISVNPersistentAuthenticationProvider)myDelegate).saveAuthentication(auth, kind, realm);
-      }
-    }
-
-    @Override
-    public void saveFingerprints(final String realm, final byte[] fingerprints) {
-      ((ISVNPersistentAuthenticationProvider)myDelegate).saveFingerprints(realm, fingerprints);
-    }
-
-    @Override
-    public byte[] loadFingerprints(final String realm) {
-      return ((ISVNPersistentAuthenticationProvider)myDelegate).loadFingerprints(realm);
-    }
-
-    private final static int maxAttempts = 10;
-
-    private void setWriteable(final File file) {
-      if (!file.exists()) return;
-      if (file.getParentFile() == null) {
-        return;
-      }
-      for (int i = 0; i < maxAttempts; i++) {
-        final File parent = file.getParentFile();
-        try {
-          final File tempFile = FileUtil.createTempFile(parent, "123", "1", true);
-          FileUtil.delete(tempFile);
-          if (!file.renameTo(tempFile)) continue;
-          if (!file.createNewFile()) continue;
-          FileUtil.copy(tempFile, file);
-          FileUtil.delete(tempFile);
-          return;
-        }
-        catch (IOException e) {
-          //
-        }
-      }
-    }
-  }
-
-  @Override
-  public void verifyHostKey(String hostName, int port, String keyAlgorithm, byte[] hostKey) throws SVNException {
-    myKeyAlgorithm.put(Thread.currentThread(), keyAlgorithm);
-    try {
-      super.verifyHostKey(hostName, port, keyAlgorithm, hostKey);
-    }
-    finally {
-      myKeyAlgorithm.remove(Thread.currentThread());
-    }
-  }
-
   @Nullable
   public String getSSHKeyAlgorithm() {
     return myKeyAlgorithm.get(Thread.currentThread());
   }
 
-  @Override
-  public void acknowledgeConnectionSuccessful(SVNURL url, String method) {
-    CommonProxy.getInstance().removeNoProxy(url.getProtocol(), url.getHost(), url.getPort());
-    SSLExceptionsHelper.removeInfo();
-    ourThreadLocalProvider.remove();
+  public void acknowledgeAuthentication(String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication) {
+    acknowledgeAuthentication(kind, realm, errorMessage, authentication, null);
   }
 
-  @Override
-  public void acknowledgeAuthentication(boolean accepted,
-                                        String kind,
-                                        String realm,
-                                        SVNErrorMessage errorMessage,
-                                        SVNAuthentication authentication) throws SVNException {
-    acknowledgeAuthentication(accepted, kind, realm, errorMessage, authentication, null);
-  }
-
-  @Override
-  public void acknowledgeAuthentication(boolean accepted,
-                                        String kind,
+  public void acknowledgeAuthentication(String kind,
                                         String realm,
                                         SVNErrorMessage errorMessage,
                                         SVNAuthentication authentication,
-                                        SVNURL url) throws SVNException {
+                                        SVNURL url) {
     showSshAgentErrorIfAny(errorMessage, authentication);
 
     SSLExceptionsHelper.removeInfo();
@@ -379,7 +184,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     try {
       final boolean authStorageEnabled = getHostOptionsProvider().getHostOptions(authentication.getURL()).isAuthStorageEnabled();
       final SVNAuthentication proxy = ProxySvnAuthentication.proxy(authentication, authStorageEnabled);
-      super.acknowledgeAuthentication(accepted, kind, realm, errorMessage, proxy);
+      getConfig().acknowledge(kind, realm, proxy);
     }
     finally {
       mySavePermissions.remove();
@@ -399,147 +204,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
         // TODO: Most likely this should be updated with new VcsNotifier api.
         VcsBalloonProblemNotifier.showOverChangesView(myProject, errorMessage.getFullMessage(), MessageType.ERROR);
       }
-    }
-  }
-
-  public ISVNProxyManager getProxyManager(SVNURL url) {
-    SSLExceptionsHelper.addInfo("Accessing URL: " + url.toString());
-    ourThreadLocalProvider.set(myProvider);
-    // in proxy creation, we need proxy information from common proxy. but then we should forbid common proxy to intercept
-    final ISVNProxyManager proxy = createProxy(url);
-    CommonProxy.getInstance().noProxy(url.getProtocol(), url.getHost(), url.getPort());
-    return proxy;
-  }
-
-  private ISVNProxyManager createProxy(SVNURL url) {
-    // this code taken from default manager (changed for system properties reading)
-    String host = url.getHost();
-
-    String proxyHost = getServersPropertyIdea(host, HTTP_PROXY_HOST);
-    if (StringUtil.isEmptyOrSpaces(proxyHost)) {
-      if (getConfig().isIsUseDefaultProxy()) {
-        // ! use common proxy if it is set
-        try {
-          final List<Proxy> proxies = HttpConfigurable.getInstance().getOnlyBySettingsSelector().select(new URI(url.toString()));
-          if (proxies != null && !proxies.isEmpty()) {
-            for (Proxy proxy : proxies) {
-              if (HttpConfigurable.isRealProxy(proxy) && Proxy.Type.HTTP.equals(proxy.type())) {
-                final SocketAddress address = proxy.address();
-                if (address instanceof InetSocketAddress) {
-                  return new MyPromptingProxyManager(((InetSocketAddress)address).getHostName(),
-                                                     String.valueOf(((InetSocketAddress)address).getPort()), url.getProtocol());
-                }
-              }
-            }
-          }
-        }
-        catch (URISyntaxException e) {
-          LOG.info(e);
-        }
-      }
-      return null;
-    }
-    String proxyExceptions = getServersPropertyIdea(host, "http-proxy-exceptions");
-    String proxyExceptionsSeparator = ",";
-    if (proxyExceptions == null) {
-      proxyExceptions = System.getProperty("http.nonProxyHosts");
-      proxyExceptionsSeparator = "|";
-    }
-    if (proxyExceptions != null) {
-      for (StringTokenizer exceptions = new StringTokenizer(proxyExceptions, proxyExceptionsSeparator); exceptions.hasMoreTokens(); ) {
-        String exception = exceptions.nextToken().trim();
-        if (DefaultSVNOptions.matches(exception, host)) {
-          return null;
-        }
-      }
-    }
-    String proxyPort = getServersPropertyIdea(host, HTTP_PROXY_PORT);
-    String proxyUser = getServersPropertyIdea(host, HTTP_PROXY_USERNAME);
-    String proxyPassword = getServersPropertyIdea(host, HTTP_PROXY_PASSWORD);
-    return new MySimpleProxyManager(proxyHost, proxyPort, proxyUser, proxyPassword);
-  }
-
-
-  private static class MyPromptingProxyManager extends MySimpleProxyManager {
-
-    private final String myProtocol;
-
-    private MyPromptingProxyManager(final String host, final String port, String protocol) {
-      super(host, port, null, null);
-      myProtocol = protocol;
-    }
-
-    @Override
-    public String getProxyUserName() {
-      if (myProxyUser != null) {
-        return myProxyUser;
-      }
-      tryGetCredentials();
-      return myProxyUser;
-    }
-
-    private void tryGetCredentials() {
-      try {
-        final InetAddress ia = InetAddress.getByName(getProxyHost());
-        final PasswordAuthentication authentication =
-          Authenticator.requestPasswordAuthentication(getProxyHost(), ia, getProxyPort(), myProtocol, getProxyHost(), myProtocol,
-                                                      null, Authenticator.RequestorType.PROXY);
-        if (authentication != null) {
-          myProxyUser = authentication.getUserName();
-          myProxyPassword = String.valueOf(authentication.getPassword());
-        }
-      }
-      catch (UnknownHostException e) {
-        //
-      }
-    }
-
-    @Override
-    public String getProxyPassword() {
-      if (myProxyPassword != null) {
-        return myProxyPassword;
-      }
-      tryGetCredentials();
-      return myProxyPassword;
-    }
-  }
-
-  private static class MySimpleProxyManager implements ISVNProxyManager {
-    protected String myProxyHost;
-    private final String myProxyPort;
-    protected String myProxyUser;
-    protected String myProxyPassword;
-
-    public MySimpleProxyManager(String host, String port, String user, String password) {
-      myProxyHost = host;
-      myProxyPort = port == null ? "3128" : port;
-      myProxyUser = user;
-      myProxyPassword = password;
-    }
-
-    public String getProxyHost() {
-      return myProxyHost;
-    }
-
-    public int getProxyPort() {
-      try {
-        return Integer.parseInt(myProxyPort);
-      }
-      catch (NumberFormatException nfe) {
-        //
-      }
-      return 3128;
-    }
-
-    public String getProxyUserName() {
-      return myProxyUser;
-    }
-
-    public String getProxyPassword() {
-      return myProxyPassword;
-    }
-
-    public void acknowledgeProxyContext(boolean accepted, SVNErrorMessage errorMessage) {
     }
   }
 
@@ -577,16 +241,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
       return DEFAULT_READ_TIMEOUT;
     }
     return connectTimeout;
-  }
-
-  @Override
-  public int getReadTimeout(@NotNull SVNRepository repository) {
-    return getReadTimeout(repository.getLocation());
-  }
-
-  @Override
-  public int getConnectTimeout(@NotNull SVNRepository repository) {
-    return getConnectTimeout(repository.getLocation());
   }
 
   // taken from default manager as is
@@ -664,17 +318,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   // default = yes
   private static boolean isTurned(final String value) {
     return value == null || "yes".equalsIgnoreCase(value) || "on".equalsIgnoreCase(value) || "true".equalsIgnoreCase(value);
-  }
-
-  private static ModalityState getCurrent() {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      return ModalityState.current();
-    }
-    final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
-    if (pi == null) {
-      return ModalityState.defaultModalityState();
-    }
-    return pi.getModalityState();
   }
 
   private static class MySvnAuthenticationInteraction implements SvnAuthenticationInteraction {
@@ -784,41 +427,17 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
 
     @Override
     public boolean isStorePlainTextPasswords(final String realm, SVNAuthentication auth) throws SVNException {
-      if (USERNAME.equals(auth.getKind())) return true;
+      if (ISVNAuthenticationManager.USERNAME.equals(auth.getKind())) return true;
 
       final boolean superValue = super.isStorePlainTextPasswords(realm, auth);
-      final boolean value = mySavePermissions.allowed() || superValue;
-      if ((!value) && (!mySavePermissions.have())) {
-        promptAndSaveWhenWeLackEncryption(realm, auth, () -> myInteraction.promptForPlaintextPasswordSaving(myUrl, realm));
-      }
-      return value;
+      return mySavePermissions.allowed() || superValue;
     }
 
     @Override
     public boolean isStorePlainTextPassphrases(final String realm, final SVNAuthentication auth) throws SVNException {
-      if (USERNAME.equals(auth.getKind())) return true;
+      if (ISVNAuthenticationManager.USERNAME.equals(auth.getKind())) return true;
 
-      final boolean value = mySavePermissions.allowed() || super.isStorePlainTextPassphrases(realm, auth);
-      if ((!value) && (!mySavePermissions.have())) {
-        promptAndSaveWhenWeLackEncryption(realm, auth, () -> {
-          File file = null;
-          String certificateName = null;
-          if (auth instanceof SVNSSLAuthentication) {
-            file = ((SVNSSLAuthentication)auth).getCertificateFile();
-            certificateName = "client certificate";
-          }
-          else if (auth instanceof SVNSSHAuthentication) {
-            file = ((SVNSSHAuthentication)auth).getPrivateKeyFile();
-            certificateName = "private key file";
-          }
-          else {
-            assert false;
-          }
-          return myInteraction.promptForSSLPlaintextPassphraseSaving(myUrl, realm,
-                                                                     file, certificateName);
-        });
-      }
-      return value;
+      return mySavePermissions.allowed() || super.isStorePlainTextPassphrases(realm, auth);
     }
 
     @Override
@@ -871,48 +490,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
         myConfigFile = new SVNCompositeConfigFile(systemConfig, userConfig);
       }
       return myConfigFile;
-    }
-
-    private void promptAndSaveWhenWeLackEncryption(final String realm, final SVNAuthentication auth, final Getter<Boolean> prompt) {
-      final Boolean[] saveOnce = new Boolean[1];
-      final Runnable actualSave = () -> {
-        mySavePermissions.put(Boolean.TRUE.equals(saveOnce[0]));
-        try {
-          myPersistentAuthenticationProviderProxy.actualSavePermissions(realm, auth);
-        }
-        finally {
-          mySavePermissions.remove();
-        }
-      };
-
-      if (myInteraction.promptInAwt()) {
-        runOrInvokeLaterAboveProgress(() -> {
-          saveOnce[0] = Boolean.TRUE.equals(prompt.get());
-          ApplicationManager.getApplication().executeOnPooledThread(actualSave);
-        }, getCurrent(), myProject);
-      }
-      else {
-        saveOnce[0] = Boolean.TRUE.equals(prompt.get());
-        actualSave.run();
-      }
-    }
-  }
-
-  private static class MyKeyringMasterKeyProvider implements ISVNGnomeKeyringPasswordProvider {
-    private Project myProject;
-
-    public MyKeyringMasterKeyProvider(Project project) {
-      myProject = project;
-    }
-
-    @Override
-    public char[] getKeyringPassword(final String keyringName) {
-      final String message = keyringName != null ? SvnBundle.message("gnome.keyring.prompt.named", keyringName)
-                                                 : SvnBundle.message("gnome.keyring.prompt.nameless");
-      final Ref<String> result = Ref.create();
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> result
-        .set(Messages.showPasswordDialog(myProject, message, SvnBundle.message("subversion.name"), Messages.getQuestionIcon())));
-      return !result.isNull() ? result.get().toCharArray() : null;
     }
   }
 }

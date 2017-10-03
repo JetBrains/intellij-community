@@ -50,7 +50,6 @@ import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.info.InfoClient;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
@@ -411,12 +410,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     final SVNAuthentication svnAuthentication = provider.requestClientAuthentication(kind, url, realm, null, null, true);
     if (svnAuthentication != null) {
       configuration.acknowledge(kind, realm, svnAuthentication);
-      try {
-        configuration.getAuthenticationManager(svnVcs).acknowledgeAuthentication(true, kind, realm, null, svnAuthentication);
-      }
-      catch (SVNException e) {
-        LOG.info(e);
-      }
+      configuration.getAuthenticationManager(svnVcs).acknowledgeAuthentication(kind, realm, null, svnAuthentication);
       return true;
     }
     return false;

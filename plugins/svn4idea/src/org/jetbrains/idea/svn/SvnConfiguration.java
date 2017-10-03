@@ -354,7 +354,6 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
       getInteractiveManager(svnVcs);
       // to init
       myAuthManager.setAuthenticationProvider(new SvnAuthenticationProvider(svnVcs, myInteractiveProvider, myAuthManager));
-      myAuthManager.setRuntimeStorage(RUNTIME_AUTH_CACHE);
     }
     return myAuthManager;
   }
@@ -378,7 +377,6 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
           return REJECTED;
         }
       });
-      myPassiveAuthManager.setRuntimeStorage(RUNTIME_AUTH_CACHE);
     }
     return myPassiveAuthManager;
   }
@@ -386,7 +384,6 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   public SvnAuthenticationManager getInteractiveManager(@NotNull SvnVcs svnVcs) {
     if (myInteractiveManager == null) {
       myInteractiveManager = new SvnAuthenticationManager(svnVcs, new File(getConfigurationDirectory()));
-      myInteractiveManager.setRuntimeStorage(RUNTIME_AUTH_CACHE);
       myInteractiveProvider = new SvnInteractiveAuthenticationProvider(svnVcs, myInteractiveManager);
       myInteractiveManager.setAuthenticationProvider(myInteractiveProvider);
     }
