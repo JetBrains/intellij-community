@@ -56,7 +56,7 @@
         <border type="none"/>
         <children/>
       </grid>
-      <component id="2e74" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myTargetText">
+      <component id="2e74" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myTargetText" custom-create="true">
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -67,8 +67,7 @@
         <constraints>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
-        <properties>
-        </properties>
+        <properties/>
         <border type="none"/>
         <children/>
       </grid>

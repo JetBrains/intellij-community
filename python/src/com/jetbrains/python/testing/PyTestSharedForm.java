@@ -18,6 +18,8 @@ package com.jetbrains.python.testing;
 import com.google.common.collect.ObjectArrays;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,6 +28,7 @@ import com.intellij.ui.components.JBRadioButton;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.jetbrains.PyTextFieldWithBrowseButton;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.PyCommonOptionsFormFactory;
@@ -61,6 +64,8 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
    */
   private JPanel myOptionsPanel;
   private TextFieldWithBrowseButton myTargetText;
+  @NotNull
+  private final Module myModule;
   /**
    * Test label
    */
@@ -86,20 +91,23 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
   }
 
   @Override
-  public void setPropertyValue(@NotNull
-                               final String propertyName, @Nullable
-                               final String propertyValue) {
+  public void setPropertyValue(@NotNull final String propertyName, @Nullable final String propertyValue) {
     myCustomOptions.get(propertyName).myOptionValue.setText(propertyValue != null ? propertyValue : "");
   }
 
   @Nullable
   @Override
-  public String getPropertyValue(@NotNull
-                                 final String propertyName) {
+  public String getPropertyValue(@NotNull final String propertyName) {
     return myCustomOptions.get(propertyName).myOptionValue.getText();
   }
 
-  private PyTestSharedForm() {
+  private PyTestSharedForm(@NotNull final Module module) {
+    myModule = module;
+  }
+
+  private void createUIComponents() {
+    // TODO: place custom component creation code here
+    myTargetText = new PyTextFieldWithBrowseButton();
   }
 
   /**
@@ -107,21 +115,19 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
    * @param customOptions additional option names this form shall support. Make sure your configuration has appropriate properties.
    */
   @NotNull
-  public static PyTestSharedForm create(@NotNull
-                                           final PyAbstractTestConfiguration configuration,
-                                        @NotNull
-                                           final CustomOption... customOptions) { // TODO: DOC
+  public static PyTestSharedForm create(@NotNull final PyAbstractTestConfiguration configuration,
+                                        @NotNull final CustomOption... customOptions) { // TODO: DOC
 
 
-    final PyTestSharedForm form = new PyTestSharedForm();
-    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor(PythonFileType.INSTANCE);
+    final PyTestSharedForm form = new PyTestSharedForm(configuration.getModule());
+    /*final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor(PythonFileType.INSTANCE);
     form.myTargetText.addBrowseFolderListener("Choose File or Folder", null, configuration.getProject(),
-                                              descriptor);
+                                              descriptor);*/
 
     for (final TestTargetType testTargetType : TestTargetType.values()) {
       final JBRadioButton button = new JBRadioButton(StringUtil.capitalize(testTargetType.name().toLowerCase(Locale.getDefault())));
       button.setActionCommand(testTargetType.name());
-      button.addActionListener(o -> form.configureElementsVisibility());
+      button.addActionListener(o -> form.onTargetTypeChanged());
       form.myButtonGroup.add(button);
       form.myTargets.add(button);
     }
@@ -143,8 +149,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
     return form;
   }
 
-  private void addCustomOptions(@NotNull
-                                final CustomOption... customOptions) {
+  private void addCustomOptions(@NotNull final CustomOption... customOptions) {
     if (customOptions.length == 0) {
       return;
     }
@@ -195,18 +200,24 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
   }
 
 
-  public void setTarget(@NotNull
-                        final String targetText) {
+  public void setTarget(@NotNull final String targetText) {
     myTargetText.setText(targetText);
   }
 
-  private void configureElementsVisibility() {
+  private void onTargetTypeChanged() {
     final TestTargetType targetType = getTargetType();
     myTargetText.setVisible(targetType != TestTargetType.CUSTOM);
-    myTargetText.getButton().setVisible(targetType == TestTargetType.PATH);
 
     for (final OptionHolder optionHolder : myCustomOptions.values()) {
       optionHolder.setType(targetType);
+    }
+
+    if (targetType == TestTargetType.PATH) {
+      final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor(PythonFileType.INSTANCE);
+      ((PyTextFieldWithBrowseButton)myTargetText).switchToFileMode(descriptor, myModule.getProject());
+    }
+    if (targetType == TestTargetType.PYTHON) {
+      ((PyTextFieldWithBrowseButton)myTargetText).switchToPythonMode(myModule);
     }
   }
 
@@ -227,7 +238,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
         break;
       }
     }
-    configureElementsVisibility();
+    onTargetTypeChanged();
   }
 
   static final class CustomOption {
