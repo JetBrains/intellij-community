@@ -74,11 +74,11 @@ public class TestDataGuessByExistingFilesUtil {
    * @return            collection of paths to the test data files for the given test if it's possible to guess them;
    *                    {@code null} otherwise
    */
-  @Nullable
+  @NotNull
   static List<String> collectTestDataByExistingFiles(@NotNull PsiMethod psiMethod) {
     TestDataDescriptor descriptor = buildDescriptorFromExistingTestData(psiMethod);
     if (descriptor == null || !descriptor.isComplete()) {
-      return null;
+      return Collections.emptyList();
     }
     return descriptor.generate();
   }
@@ -108,7 +108,7 @@ public class TestDataGuessByExistingFilesUtil {
   @Nullable
   private static String getFilePath(PsiMethod psiMethod, String testName) {
     List<String> strings = collectTestDataByExistingFiles(psiMethod);
-    if (strings != null && !strings.isEmpty()) {
+    if (!strings.isEmpty()) {
       String s = strings.get(0);
       return new File(new File(s).getParent(), testName + "." + FileUtilRt.getExtension(new File(s).getName())).getPath();
     }

@@ -26,34 +26,42 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupVirtualFile;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class TestDataNavigationHandler implements GutterIconNavigationHandler<PsiMethod> {
   @Override
   public void navigate(MouseEvent e, PsiMethod elt) {
     List<String> fileNames = getFileNames(elt);
 
-    if (fileNames == null || fileNames.isEmpty()) {
+    if (fileNames.isEmpty()) {
       return;
     }
     navigate(new RelativePoint(e), fileNames, elt.getProject());
   }
 
-  @Nullable
+  @NotNull
   static List<String> getFileNames(PsiMethod method) {
+    return getFileNames(method, true);
+  }
+
+  @NotNull
+  static List<String> getFileNames(PsiMethod method, boolean collectByExistingFiles) {
     List<String> fileNames = null;
     String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(method.getContainingClass());
     if (testDataPath != null) {
       fileNames = new TestDataReferenceCollector(testDataPath, method.getName().substring(4)).collectTestDataReferences(method);
     }
 
-    if (fileNames == null || fileNames.isEmpty()) {
+    if (collectByExistingFiles && (fileNames == null || fileNames.isEmpty())) {
       fileNames = TestDataGuessByExistingFilesUtil.collectTestDataByExistingFiles(method);
+    }
+    if (fileNames == null) {
+      fileNames = Collections.emptyList();
     }
     return fileNames;
   }
@@ -73,6 +81,14 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
         showNavigationPopup(project, testDataFiles, point);
       }
     }
+  }
+
+  @NotNull
+  public static List<String> fastGetTestDataPathsByRelativePath(@NotNull String testDataFileRelativePath, PsiMethod method) {
+    return getFileNames(method, false).stream()
+      .filter(path -> path.endsWith(testDataFileRelativePath.startsWith("/") ? testDataFileRelativePath : "/" + testDataFileRelativePath))
+      .distinct()
+      .collect(Collectors.toList());
   }
 
   /**
