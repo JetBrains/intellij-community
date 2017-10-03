@@ -20,16 +20,17 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.GuiUtils;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
@@ -48,7 +49,6 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
   protected JPanel myPanel;
   protected final ChangesListView myView;
   protected final ChangeListManager myChangeListManager;
-  protected boolean myInRefresh;
   protected final Project myProject;
 
   protected SpecificFilesViewDialog(@NotNull Project project,
@@ -81,6 +81,16 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     init();
     initData(initDataFiles);
     myView.setMinimumSize(new JBDimension(100, 100));
+
+
+    ChangeListAdapter changeListListener = new ChangeListAdapter() {
+      @Override
+      public void changeListUpdateDone() {
+        refreshView();
+      }
+    };
+    ChangeListManager.getInstance(myProject).addChangeListListener(changeListListener);
+    Disposer.register(myDisposable, () -> ChangeListManager.getInstance(myProject).removeChangeListListener(changeListListener));
   }
 
 
@@ -158,19 +168,11 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
   }
 
   protected void refreshView() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    if (myInRefresh) return;
-    myInRefresh = true;
-
-    myChangeListManager.invokeAfterUpdate(() -> {
-      try {
+    GuiUtils.invokeLaterIfNeeded(() -> {
+      if (isVisible()) {
         initData(getFiles());
       }
-      finally {
-        myInRefresh = false;
-      }
-    }, InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE, "", ModalityState.current());
+    }, ModalityState.stateForComponent(myView));
   }
 
   @NotNull
