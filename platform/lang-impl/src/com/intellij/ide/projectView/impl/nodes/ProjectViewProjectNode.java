@@ -25,19 +25,13 @@ import com.intellij.openapi.module.*;
 import com.intellij.openapi.module.impl.LoadedModuleDescriptionImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
@@ -69,12 +63,6 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
 
     final PsiManager psiManager = PsiManager.getInstance(getProject());
 
-    /*
-    for (VirtualFile root : reduceRoots(topLevelContentRoots)) {
-      nodes.add(new PsiDirectoryNode(getProject(), psiManager.findDirectory(root), getSettings()));
-    }
-    */
-
     List<AbstractTreeNode> nodes = new ArrayList<>(modulesAndGroups(modules));
 
     final VirtualFile baseDir = getProject().getBaseDir();
@@ -97,40 +85,6 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     }
 
     return nodes;
-  }
-
-  private static List<VirtualFile> reduceRoots(List<VirtualFile> roots) {
-    if (roots.isEmpty()) return Collections.emptyList();
-
-    String userHome;
-    try {
-      userHome = FileUtil.toSystemIndependentName(new File(SystemProperties.getUserHome()).getCanonicalPath());
-    }
-    catch (IOException e) {
-      userHome = null;
-    }
-
-    Collections.sort(roots, (o1, o2) -> o1.getPath().compareTo(o2.getPath()));
-
-    Iterator<VirtualFile> it = roots.iterator();
-    VirtualFile current = it.next();
-
-    List<VirtualFile> reducedRoots = new ArrayList<>();
-    while (it.hasNext()) {
-      VirtualFile next = it.next();
-      VirtualFile common = VfsUtilCore.getCommonAncestor(current, next);
-
-      if (common == null || common.getParent() == null || Comparing.equal(common.getPath(), userHome)) {
-        reducedRoots.add(current);
-        current = next;
-      }
-      else {
-        current = common;
-      }
-    }
-
-    reducedRoots.add(current);
-    return reducedRoots;
   }
 
   @Override
