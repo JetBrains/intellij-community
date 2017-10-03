@@ -26,15 +26,15 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableWithText;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 public class SyntheticLibraryElementNode extends ProjectViewNode<SyntheticLibrary> implements NavigatableWithText {
   public SyntheticLibraryElementNode(@NotNull Project project, @NotNull SyntheticLibrary library, ViewSettings settings) {
@@ -51,27 +51,11 @@ public class SyntheticLibraryElementNode extends ProjectViewNode<SyntheticLibrar
   @NotNull
   @Override
   public Collection<AbstractTreeNode> getChildren() {
-    List<AbstractTreeNode> children = new ArrayList<>();
     SyntheticLibrary library = getLibrary();
     Project project = Objects.requireNonNull(getProject());
-    PsiManager psiManager = PsiManager.getInstance(project);
     Set<VirtualFile> excludedRoots = library.getExcludedRoots();
-    for (VirtualFile file : library.getSourceRoots()) {
-      if (!file.isValid() || excludedRoots.contains(file)) continue;
-      if (file.isDirectory()) {
-        PsiDirectory psiDir = psiManager.findDirectory(file);
-        if (psiDir != null) {
-          children.add(new PsiDirectoryNode(project, psiDir, getSettings()));
-        }
-      }
-      else {
-        PsiFile psiFile = psiManager.findFile(file);
-        if (psiFile != null) {
-          children.add(new PsiFileNode(project, psiFile, getSettings()));
-        }
-      }
-    }
-    return children;
+    List<VirtualFile> children = ContainerUtil.filter(library.getSourceRoots(), file -> file.isValid() && !excludedRoots.contains(file));
+    return ProjectViewDirectoryHelper.getInstance(project).createFileAndDirectoryNodes(children, getSettings());
   }
 
   @Override

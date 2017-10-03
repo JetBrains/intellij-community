@@ -382,15 +382,15 @@ public class ProjectViewDirectoryHelper {
   public Collection<AbstractTreeNode> createFileAndDirectoryNodes(@NotNull List<VirtualFile> files, @Nullable ViewSettings viewSettings) {
     final List<AbstractTreeNode> children = new ArrayList<>(files.size());
     final PsiManager psiManager = PsiManager.getInstance(myProject);
-    for (final VirtualFile contentRoot : files) {
-      if (contentRoot.isDirectory()) {
-        PsiDirectory directory = psiManager.findDirectory(contentRoot);
+    for (final VirtualFile virtualFile : files) {
+      if (virtualFile.isDirectory()) {
+        PsiDirectory directory = psiManager.findDirectory(virtualFile);
         if (directory != null) {
           children.add(new PsiDirectoryNode(myProject, directory, viewSettings));
         }
       }
       else {
-        PsiFile file = psiManager.findFile(contentRoot);
+        PsiFile file = psiManager.findFile(virtualFile);
         if (file != null) {
           children.add(new PsiFileNode(myProject, file, viewSettings));
         }
