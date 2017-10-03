@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.hint;
 
@@ -47,6 +45,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +67,7 @@ public class ParameterInfoController implements Disposable {
   @NotNull private final Editor myEditor;
 
   private final RangeMarker myLbraceMarker;
-  private final LightweightHint myHint;
+  private LightweightHint myHint;
   private final ParameterInfoComponent myComponent;
   private boolean myKeepOnHintHidden;
 
@@ -138,7 +137,7 @@ public class ParameterInfoController implements Disposable {
     myProvider = new MyBestLocationPointProvider(editor);
     myLbraceMarker = editor.getDocument().createRangeMarker(lbraceOffset, lbraceOffset);
     myComponent = new ParameterInfoComponent(descriptors, editor, handler, requestFocus, true);
-    myHint = new LightweightHint(myComponent);
+    myHint = createHint();
     myKeepOnHintHidden = !showHint;
     mySingleParameterInfo = !showHint;
 
@@ -193,6 +192,12 @@ public class ParameterInfoController implements Disposable {
     updateComponent();
   }
 
+  private LightweightHint createHint() {
+    JPanel wrapper = new WrapperPanel();
+    wrapper.add(myComponent);
+    return new LightweightHint(wrapper);
+  }
+
   @Override
   public void dispose(){
     if (myDisposed) return;
@@ -205,6 +210,12 @@ public class ParameterInfoController implements Disposable {
   }
 
   public void showHint(boolean requestFocus, boolean singleParameterInfo) {
+    if (myHint.isVisible()) {
+      myHint.getComponent().remove(myComponent);
+      myHint.hide();
+      myHint = createHint();
+    }
+
     mySingleParameterInfo = singleParameterInfo && myKeepOnHintHidden;
     
     Pair<Point, Short> pos = myProvider.getBestPointPosition(myHint, myComponent.getParameterOwner(), myLbraceMarker.getStartOffset(), true, HintManager.ABOVE);
@@ -689,6 +700,35 @@ public class ParameterInfoController implements Disposable {
       previousBestPosition = position.getSecond();
       previousOffset = offset;
       return position;
+    }
+  }
+
+  private static class WrapperPanel extends JPanel {
+    public WrapperPanel() {
+      super(new BorderLayout());
+      setBorder(JBUI.Borders.empty());
+    }
+
+    // foreground/background/font are used to style the popup (HintManagerImpl.createHintHint) 
+    @Override
+    public Color getForeground() {
+      return getComponentCount() == 0 ? super.getForeground() : getComponent(0).getForeground();
+    }
+
+    @Override
+    public Color getBackground() {
+      return getComponentCount() == 0 ? super.getBackground() : getComponent(0).getBackground();
+    }
+
+    @Override
+    public Font getFont() {
+      return getComponentCount() == 0 ? super.getFont() : getComponent(0).getFont();
+    }
+
+    // for test purposes
+    @Override
+    public String toString() {
+      return getComponentCount() == 0 ? "<empty>" : getComponent(0).toString();
     }
   }
 }

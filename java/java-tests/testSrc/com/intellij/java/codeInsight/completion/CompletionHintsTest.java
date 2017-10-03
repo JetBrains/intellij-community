@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -171,6 +169,9 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
                           "  void m() { some(<HINT text=\"from:\"/><caret>, <hint text=\"to:\"/>, <hint text=\"other:\"/>) }\n" +
                           "}");
     showParameterInfo();
+    checkHintContents("<html><b>int from</b>, int to</html>\n" +
+                      "-\n" +
+                      "[<html><b>int from</b>, int to, int other</html>]");
     methodOverloadDown();
     waitForAllAsyncStuff();
     checkResultWithInlays("class C {\n" +
@@ -178,6 +179,9 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
                           "  int some(int from, int to, int other) { return 0; }\n" +
                           "  void m() { some(<HINT text=\"from:\"/><caret>, <hint text=\"to:\"/>) }\n" +
                           "}");
+    checkHintContents("[<html><b>int from</b>, int to</html>]\n" +
+                      "-\n" +
+                      "<html><b>int from</b>, int to, int other</html>");
   }
 
   public void testNoHintsForMethodReference() {
@@ -676,6 +680,14 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     complete("getProperty(String key, String def)");
     showParameterInfo();
     type(' ');
+    checkHintContents(null);
+  }
+
+  public void testFullPopupIsHiddenOnTypingAfterOverloadSwitch() {
+    configureJava("class C { void m() { System.getProperty(\"a\"<caret>) } }");
+    showParameterInfo();
+    methodOverloadDown();
+    type("\"b");
     checkHintContents(null);
   }
 
