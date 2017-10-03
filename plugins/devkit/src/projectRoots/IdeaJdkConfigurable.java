@@ -149,7 +149,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
         if (!((SdkType) javaJdk.getSdkType()).isRootTypeApplicable(type)) {
           continue;
         }
-        final VirtualFile[] internalRoots = javaJdk.getSdkModificator().getRoots(type);
+        final VirtualFile[] internalRoots = javaJdk.getRootProvider().getFiles(type);
         final VirtualFile[] configuredRoots = mySdkModificator.getRoots(type);
         for (VirtualFile file : internalRoots) {
           if (e.getStateChange() == ItemEvent.DESELECTED) {
