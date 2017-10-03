@@ -4,6 +4,7 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -16,6 +17,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+/**
+ * Helper component that stores nesting rules and apply them to files
+ */
 public class FileNestingBuilder {
 
   public static FileNestingBuilder getInstance() {
@@ -25,6 +29,9 @@ public class FileNestingBuilder {
   private long myBaseListModCount = -1;
   private Set<ProjectViewFileNestingService.NestingRule> myNestingRules;
 
+  /**
+   * Returns all possible nesting rules, including transitive rules
+   */
   @NotNull
   public Collection<ProjectViewFileNestingService.NestingRule> getNestingRules() {
     final ProjectViewFileNestingService fileNestingService = ProjectViewFileNestingService.getInstance();
@@ -67,7 +74,7 @@ public class FileNestingBuilder {
   }
 
   /*
-    This is a graph theory problem. PsiFileNodes are graph nodes.
+    This is a graph theory problem. T is a graph node represents a file. fileNameFunc should return appropriate file name for a T node.
     Edges go from parent file to child file according to NestingRules, for example foo.js->foo.min.js.
     Parent may have several children. Child may have several parents.
     There may be cycles with 3 or more nodes, but cycle with 2 nodes (A->B and B->A) is impossible because parentFileSuffix != childFileSuffix
@@ -76,8 +83,8 @@ public class FileNestingBuilder {
     One child still may have more than one parent. For real use cases it is not expected to happen, but anyway it's not a big problem, it will be shown as a subnode more than once.
    */
   @NotNull
-  public <T> MultiMap<T, T> calcParentToChildren(@NotNull final Collection<T> nodes,
-                                                 @NotNull final Function<T, String> fileNameFunc) {
+  public <T> MultiMap<T, T> mapParentToChildren(@NotNull final Collection<T> nodes,
+                                                @NotNull final Function<T, String> fileNameFunc) {
 
     final Collection<ProjectViewFileNestingService.NestingRule> rules = getNestingRules();
     if (rules.isEmpty()) return MultiMap.empty();
@@ -124,14 +131,22 @@ public class FileNestingBuilder {
     return parentToChildren == null ? MultiMap.empty() : parentToChildren;
   }
 
-  public static Couple<Boolean> checkMatchingAsParentOrChild(@NotNull final ProjectViewFileNestingService.NestingRule rule, @NotNull final String fileName) {
-    boolean matchesParent = !fileName.equals(rule.getParentFileSuffix()) && fileName.endsWith(rule.getParentFileSuffix());
-    boolean matchesChild = !fileName.equals(rule.getChildFileSuffix()) && fileName.endsWith(rule.getChildFileSuffix());
+  /**
+   * Returns true is the rule applies to the file [as parent; as child] pair
+   */
+  public static Couple<Boolean> checkMatchingAsParentOrChild(@NotNull final ProjectViewFileNestingService.NestingRule rule,
+                                                             @NotNull final String fileName) {
+    String parentFileSuffix = rule.getParentFileSuffix();
+    String childFileSuffix = rule.getChildFileSuffix();
+
+    boolean matchesParent = !fileName.equalsIgnoreCase(parentFileSuffix) && StringUtil.endsWithIgnoreCase(fileName, parentFileSuffix);
+    boolean matchesChild = !fileName.equalsIgnoreCase(childFileSuffix) && StringUtil.endsWithIgnoreCase(fileName, childFileSuffix);
 
     if (matchesParent && matchesChild) {
-      if (rule.getParentFileSuffix().length() > rule.getChildFileSuffix().length()) {
+      if (parentFileSuffix.length() > childFileSuffix.length()) {
         matchesChild = false;
-      } else {
+      }
+      else {
         matchesParent = false;
       }
     }
