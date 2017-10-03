@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,23 +71,27 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
     final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
 
     if (function != null) {
+      final boolean caretInParameterList = PsiTreeUtil.isAncestor(function.getParameterList(), element, true);
+
       for (PyCallExpression call : findKeywordContainerCalls(function)) {
         final PyExpression firstArgument = ArrayUtil.getFirstElement(call.getArguments());
         final String firstArgumentValue = PyStringLiteralUtil.getStringValue(firstArgument);
-        if (firstArgumentValue == null || !PyNames.isIdentifierString(firstArgumentValue)) {
-          return false;
+        if (firstArgumentValue != null &&
+            PyNames.isIdentifierString(firstArgumentValue) &&
+            (caretInParameterList || PsiTreeUtil.isAncestor(call, element, true))) {
+          return true;
         }
       }
 
       for (PySubscriptionExpression subscription : findKeywordContainerSubscriptions(function)) {
         final PyExpression indexExpression = subscription.getIndexExpression();
         final String indexValue = PyStringLiteralUtil.getStringValue(indexExpression);
-        if (indexValue == null || !PyNames.isIdentifierString(indexValue)) {
-          return false;
+        if (indexValue != null &&
+            PyNames.isIdentifierString(indexValue) &&
+            (caretInParameterList || PsiTreeUtil.isAncestor(subscription, element, true))) {
+          return true;
         }
       }
-
-      return getKeywordContainer(function) != null;
     }
 
     return false;
@@ -186,8 +190,8 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
     final String keywordContainerName = keywordContainer == null ? null : keywordContainer.getName();
 
     if (keywordContainerName != null) {
-      final List<T> result = new ArrayList<T>();
-      final Stack<PsiElement> stack = new Stack<PsiElement>();
+      final List<T> result = new ArrayList<>();
+      final Stack<PsiElement> stack = new Stack<>();
 
       for (PyStatement statement : function.getStatementList().getStatements()) {
         stack.push(statement);
