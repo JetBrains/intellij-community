@@ -14,21 +14,17 @@ import org.jetbrains.annotations.Nullable;
     @Storage("usageView.xml")
   }
 )
-public class ShowUsagesSettings implements PersistentStateComponent<ShowUsagesSettings.MyUsageViewSettings> {
-  private final MyUsageViewSettings myState = new MyUsageViewSettings();
-
+public class ShowUsagesSettings implements PersistentStateComponent<UsageViewSettings> {
+  private final UsageViewSettings myState = new UsageViewSettings();
+  
   @Nullable
   @Override
-  public MyUsageViewSettings getState() {
+  public UsageViewSettings getState() {
     return myState;
   }
 
   @Override
-  public void loadState(MyUsageViewSettings state) {
-    XmlSerializerUtil.copyBean(state, myState);
-  }
-
-  public void loadUsageViewSettings(UsageViewSettings state) {
+  public void loadState(UsageViewSettings state) {
     XmlSerializerUtil.copyBean(state, myState);
   }
 
@@ -36,13 +32,11 @@ public class ShowUsagesSettings implements PersistentStateComponent<ShowUsagesSe
     return ServiceManager.getService(ShowUsagesSettings.class);
   }
 
-  static class MyUsageViewSettings extends UsageViewSettings {
-    public MyUsageViewSettings() {
-      GROUP_BY_FILE_STRUCTURE = false;
-      GROUP_BY_MODULE = false;
-      GROUP_BY_PACKAGE = false;
-      GROUP_BY_USAGE_TYPE = false;
-      GROUP_BY_SCOPE = false;
-    }
+  public ShowUsagesSettings() {
+    myState.GROUP_BY_FILE_STRUCTURE = false;
+    myState.GROUP_BY_MODULE = false;
+    myState.GROUP_BY_PACKAGE = false;
+    myState.GROUP_BY_USAGE_TYPE = false;
+    myState.GROUP_BY_SCOPE = false;
   }
 }
