@@ -25,7 +25,6 @@ import org.jetbrains.idea.svn.SvnConfiguration;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 
-import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
@@ -97,7 +96,7 @@ public class CertificateTrustManager extends ClientOnlyTrustManager {
   private void checkActive(@NotNull X509Certificate certificate) throws CertificateException {
     boolean isStorageEnabled =
       myAuthenticationService.getAuthenticationManager().getHostOptionsProvider().getHostOptions(myRepositoryUrl).isAuthStorageEnabled();
-    int result = myAuthenticationService.getAuthenticationManager().getInnerProvider()
+    int result = myAuthenticationService.getAuthenticationManager().getProvider()
       .acceptServerAuthentication(myRepositoryUrl, myRealm, certificate, isStorageEnabled);
 
     switch (result) {

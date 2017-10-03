@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.util.containers.Convertor;
-import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.*;
@@ -26,12 +25,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SvnTestInteractiveAuthentication implements ISVNAuthenticationProvider {
-  private final SvnAuthenticationManager myManager;
   private boolean mySaveData;
   private final Map<String, Convertor<SVNURL, SVNAuthentication>> myData;
 
-  public SvnTestInteractiveAuthentication(SvnAuthenticationManager manager) {
-    myManager = manager;
+  public SvnTestInteractiveAuthentication() {
     mySaveData = true;
     myData = new HashMap<>();
   }
@@ -69,9 +66,6 @@ public class SvnTestInteractiveAuthentication implements ISVNAuthenticationProvi
       } else if (ISVNAuthenticationManager.SSL.equals(kind)) {
         result = new SVNSSLAuthentication(new File("aaa"), "abc", authMayBeStored, url, false);
       }
-    }
-    if (! ISVNAuthenticationManager.USERNAME.equals(kind)) {
-      myManager.requested(result == null);
     }
     return result;
   }

@@ -81,7 +81,7 @@ public class SvnProtocolsTest extends Svn17TestCase {
     // replace authentication provider so that pass credentials without dialogs
     final SvnConfiguration configuration = SvnConfiguration.getInstance(myProject);
     final SvnAuthenticationManager interactiveManager = configuration.getInteractiveManager(myVcs);
-    final SvnTestInteractiveAuthentication authentication = new SvnTestInteractiveAuthentication(interactiveManager) {
+    final SvnTestInteractiveAuthentication authentication = new SvnTestInteractiveAuthentication() {
       @Override
       public int acceptServerAuthentication(SVNURL url, String realm, Object certificate, boolean resultMayBeStored) {
         return ISVNAuthenticationProvider.ACCEPTED;

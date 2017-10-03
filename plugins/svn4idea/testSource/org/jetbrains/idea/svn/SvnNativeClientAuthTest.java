@@ -79,7 +79,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     configuration.setConfigurationDirParameters(false, svnconfig.getPath());
 
     final SvnAuthenticationManager interactiveManager = configuration.getInteractiveManager(myVcs);
-    final SvnTestInteractiveAuthentication authentication = new SvnTestInteractiveAuthentication(interactiveManager) {
+    final SvnTestInteractiveAuthentication authentication = new SvnTestInteractiveAuthentication() {
       @Override
       public int acceptServerAuthentication(SVNURL url, String realm, Object certificate, boolean resultMayBeStored) {
         ++ myCertificateAskedInteractivelyCount;

@@ -43,7 +43,6 @@ import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.internal.wc.*;
 
 import java.io.File;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -59,21 +58,17 @@ public class SvnAuthenticationManager {
   private Project myProject;
   private File myConfigDirectory;
   private SvnConfiguration myConfig;
-  private static final ThreadLocal<Boolean> ourJustEntered = new ThreadLocal<>();
   private SvnAuthenticationInteraction myInteraction;
   private IdeaSVNHostOptionsProvider myLocalHostOptionsProvider;
   private DefaultSVNOptions myDefaultOptions;
-  private final ThreadLocalSavePermissions mySavePermissions;
   private final Map<Thread, String> myKeyAlgorithm;
   private ISVNAuthenticationProvider myProvider;
-  private final static ThreadLocal<ISVNAuthenticationProvider> ourThreadLocalProvider = new ThreadLocal<>();
 
   public SvnAuthenticationManager(@NotNull SvnVcs vcs, final File configDirectory) {
     myVcs = vcs;
     myProject = myVcs.getProject();
     myConfigDirectory = configDirectory;
     myKeyAlgorithm = new HashMap<>();
-    mySavePermissions = new ThreadLocalSavePermissions();
     myConfig = myVcs.getSvnConfiguration();
     myInteraction = new MySvnAuthenticationInteraction(myProject);
     Disposer.register(myProject, () -> {
@@ -118,26 +113,6 @@ public class SvnAuthenticationManager {
   }
 
   public ISVNAuthenticationProvider getProvider() {
-    final ISVNAuthenticationProvider threadProvider = ourThreadLocalProvider.get();
-    if (threadProvider != null) return threadProvider;
-    return myProvider;
-  }
-
-  /**
-   * Gets authentication provider without looking into thread local storage for providers.
-   * <p>
-   * TODO:
-   * Thread local storage is used "for some interaction with SVNKit" and is not always cleared correctly. So some threads contain
-   * "passive provider" in thread local storage - and getProvider() returns this "passive provider". This occurs, for instance when
-   * RemoteRevisionsCache is refreshed in background - after its execution, corresponding thread has "passive provider" in thread local
-   * storage.
-   * <p>
-   * As a result authentication fails in such cases (at least for command line implementation). To fix this, command line implementation is
-   * updated not to check thread local storage at all.
-   *
-   * @return
-   */
-  public ISVNAuthenticationProvider getInnerProvider() {
     return myProvider;
   }
 
@@ -152,12 +127,6 @@ public class SvnAuthenticationManager {
       myLocalHostOptionsProvider = new IdeaSVNHostOptionsProvider();
     }
     return myLocalHostOptionsProvider;
-  }
-
-  public void requested(boolean canceled) {
-    if (!canceled) {
-      ourJustEntered.set(true);
-    }
   }
 
   @Nullable
@@ -177,18 +146,12 @@ public class SvnAuthenticationManager {
     showSshAgentErrorIfAny(errorMessage, authentication);
 
     SSLExceptionsHelper.removeInfo();
-    ourThreadLocalProvider.remove();
     if (url != null) {
       CommonProxy.getInstance().removeNoProxy(url.getProtocol(), url.getHost(), url.getPort());
     }
-    try {
-      final boolean authStorageEnabled = getHostOptionsProvider().getHostOptions(authentication.getURL()).isAuthStorageEnabled();
-      final SVNAuthentication proxy = ProxySvnAuthentication.proxy(authentication, authStorageEnabled);
-      getConfig().acknowledge(kind, realm, proxy);
-    }
-    finally {
-      mySavePermissions.remove();
-    }
+    final boolean authStorageEnabled = getHostOptionsProvider().getHostOptions(authentication.getURL()).isAuthStorageEnabled();
+    final SVNAuthentication proxy = ProxySvnAuthentication.proxy(authentication, authStorageEnabled);
+    getConfig().acknowledge(kind, realm, proxy);
   }
 
   /**
@@ -392,30 +355,6 @@ public class SvnAuthenticationManager {
     }
   }
 
-  private static class ThreadLocalSavePermissions {
-    private final Map<Thread, Boolean> myPlainTextAllowed;
-
-    private ThreadLocalSavePermissions() {
-      myPlainTextAllowed = Collections.synchronizedMap(new HashMap<Thread, Boolean>());
-    }
-
-    public void put(final boolean value) {
-      myPlainTextAllowed.put(Thread.currentThread(), value);
-    }
-
-    public boolean have() {
-      return myPlainTextAllowed.containsKey(Thread.currentThread());
-    }
-
-    public void remove() {
-      myPlainTextAllowed.remove(Thread.currentThread());
-    }
-
-    public boolean allowed() {
-      return Boolean.TRUE.equals(myPlainTextAllowed.get(Thread.currentThread()));
-    }
-  }
-
   private class IdeaSVNHostOptions extends DefaultSVNHostOptions {
     private SVNCompositeConfigFile myConfigFile;
     private final SVNURL myUrl;
@@ -427,17 +366,12 @@ public class SvnAuthenticationManager {
 
     @Override
     public boolean isStorePlainTextPasswords(final String realm, SVNAuthentication auth) throws SVNException {
-      if (ISVNAuthenticationManager.USERNAME.equals(auth.getKind())) return true;
-
-      final boolean superValue = super.isStorePlainTextPasswords(realm, auth);
-      return mySavePermissions.allowed() || superValue;
+      return ISVNAuthenticationManager.USERNAME.equals(auth.getKind()) || super.isStorePlainTextPasswords(realm, auth);
     }
 
     @Override
     public boolean isStorePlainTextPassphrases(final String realm, final SVNAuthentication auth) throws SVNException {
-      if (ISVNAuthenticationManager.USERNAME.equals(auth.getKind())) return true;
-
-      return mySavePermissions.allowed() || super.isStorePlainTextPassphrases(realm, auth);
+      return ISVNAuthenticationManager.USERNAME.equals(auth.getKind()) || super.isStorePlainTextPassphrases(realm, auth);
     }
 
     @Override

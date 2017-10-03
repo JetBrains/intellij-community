@@ -161,7 +161,6 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
 
     final boolean wasCanceled = result[0] == null;
     callState.setWasCancelled(wasCanceled);
-    myManager.requested(wasCanceled);
     return result[0];
   }
 
