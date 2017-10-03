@@ -68,6 +68,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
 
   @NotNull private final VcsLogUiProperties.PropertiesChangeListener myListener;
 
+  @Nullable private VcsFullCommitDetails myDetail;
   @Nullable private VirtualFile myRoot;
   @NotNull private final List<Change> myChanges = ContainerUtil.newArrayList();
   @NotNull private final Map<Hash, Set<Change>> myChangesToParents = ContainerUtil.newHashMap();
@@ -114,6 +115,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
   }
 
   public void resetSelectedDetails() {
+    myDetail = null;
     myRoot = null;
     myChanges.clear();
     myChangesToParents.clear();
@@ -122,6 +124,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
   }
 
   public void setSelectedDetails(@NotNull List<VcsFullCommitDetails> detailsList) {
+    myDetail = null;
     myRoot = null;
     myChanges.clear();
     myChangesToParents.clear();
@@ -130,18 +133,18 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
       myViewer.setEmptyText("No commits selected");
     }
     else if (detailsList.size() == 1) {
-      VcsFullCommitDetails details = notNull(getFirstItem(detailsList));
-      myRoot = details.getRoot();
-      myChanges.addAll(details.getChanges());
+      myDetail = notNull(getFirstItem(detailsList));
+      myRoot = myDetail.getRoot();
+      myChanges.addAll(myDetail.getChanges());
 
-      if (details.getParents().size() > 1) {
-        for (int i = 0; i < details.getParents().size(); i++) {
-          THashSet<Change> changesSet = ContainerUtil.newIdentityTroveSet(details.getChanges(i));
-          myChangesToParents.put(details.getParents().get(i), changesSet);
+      if (myDetail.getParents().size() > 1) {
+        for (int i = 0; i < myDetail.getParents().size(); i++) {
+          THashSet<Change> changesSet = ContainerUtil.newIdentityTroveSet(myDetail.getChanges(i));
+          myChangesToParents.put(myDetail.getParents().get(i), changesSet);
         }
       }
 
-      if (myChanges.isEmpty() && details.getParents().size() > 1) {
+      if (myChanges.isEmpty() && myDetail.getParents().size() > 1) {
         myViewer.getEmptyText().setText("No merged conflicts.").
           appendSecondaryText("Show changes to parents", getLinkAttributes(),
                      e -> myUiProperties.set(SHOW_CHANGES_FROM_PARENTS, true));
@@ -231,18 +234,23 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
     if (userObject instanceof Change) {
       Change change = (Change)userObject;
 
-      Hash parentHash = null;
-      for (Hash hash : myChangesToParents.keySet()) {
-        if (myChangesToParents.get(hash).contains(change)) {
-          parentHash = hash;
-          break;
+      if (myDetail != null && myDetail.getParents().size() > 1) {
+        Hash parentHash = null;
+        for (Hash hash : myChangesToParents.keySet()) {
+          if (myChangesToParents.get(hash).contains(change)) {
+            parentHash = hash;
+            break;
+          }
+        }
+
+        if (parentHash != null && myRoot != null) {
+          RootTag tag = new RootTag(parentHash, getText(parentHash, myRoot));
+          Map<Key, Object> context = Collections.singletonMap(ChangeDiffRequestProducer.TAG_KEY, tag);
+          return ChangeDiffRequestProducer.create(myProject, change, context);
         }
       }
-
-      if (parentHash != null && myRoot != null) {
-        RootTag tag = new RootTag(parentHash, getText(parentHash, myRoot));
-        Map<Key, Object> context = Collections.singletonMap(ChangeDiffRequestProducer.TAG_KEY, tag);
-        return ChangeDiffRequestProducer.create(myProject, change, context);
+      else {
+        return ChangeDiffRequestProducer.create(myProject, change);
       }
     }
     return null;
