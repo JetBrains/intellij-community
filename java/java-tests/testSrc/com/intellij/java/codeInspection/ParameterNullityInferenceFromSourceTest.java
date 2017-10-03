@@ -117,6 +117,38 @@ public class ParameterNullityInferenceFromSourceTest extends LightCodeInsightFix
                   "}");
   }
 
+  public void testTryNPECaught() {
+    assertNullity("-",
+                  "String test(String s) {" +
+                  "try {System.out.println(s.trim());}" +
+                  "catch(RuntimeException ex) {}" +
+                  "}");
+  }
+
+  public void testTryNPECaughtMultiCatch() {
+    assertNullity("-",
+                  "String test(String s) {" +
+                  "try {System.out.println(s.trim());}" +
+                  "catch(InternalError | NullPointerException ex) {}" +
+                  "}");
+  }
+
+  public void testTryNPENotCaught() {
+    assertNullity("+",
+                  "String test(String s) {" +
+                  "try {System.out.println(s.trim());}" +
+                  "catch(InternalError ex) {}" +
+                  "}");
+  }
+
+  public void testTryWithResources() {
+    assertNullity("+",
+                  "String test(String path) {" +
+                  "try(java.io.FileReader fr = new java.io.FileReader(path.trim())) {System.out.println(fr.read());}" +
+                  "catch(java.io.IOException ex) {}" +
+                  "}");
+  }
+
   // expected: + = notnull, - = unknown/nullable for each parameter
   private void assertNullity(String expected, String classBody) {
     PsiClass clazz = myFixture.addClass("final class Foo { " + classBody + " }");
