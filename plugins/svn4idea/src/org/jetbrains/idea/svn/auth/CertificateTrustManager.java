@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -96,17 +95,17 @@ public class CertificateTrustManager extends ClientOnlyTrustManager {
   private void checkActive(@NotNull X509Certificate certificate) throws CertificateException {
     boolean isStorageEnabled =
       myAuthenticationService.getAuthenticationManager().getHostOptionsProvider().getHostOptions(myRepositoryUrl).isAuthStorageEnabled();
-    int result = myAuthenticationService.getAuthenticationManager().getProvider()
+    AcceptResult result = myAuthenticationService.getAuthenticationManager().getProvider()
       .acceptServerAuthentication(myRepositoryUrl, myRealm, certificate, isStorageEnabled);
 
     switch (result) {
-      case ISVNAuthenticationProvider.ACCEPTED:
+      case ACCEPTED_PERMANENTLY:
         // TODO: --trust-server-cert command line key does not allow caching credentials permanently - so permanent caching should be
         // TODO: separately implemented. Try utilizing "Server Certificates" settings for this.
-      case ISVNAuthenticationProvider.ACCEPTED_TEMPORARY:
+      case ACCEPTED_TEMPORARILY:
         // acknowledge() is called in checkServerTrusted()
         break;
-      case ISVNAuthenticationProvider.REJECTED:
+      case REJECTED:
         throw new CertificateException("Server SSL certificate rejected");
     }
   }

@@ -38,12 +38,16 @@ import com.intellij.vcsUtil.VcsUtil;
 import junit.framework.Assert;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.auth.AcceptResult;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.junit.Before;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.*;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
+import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
+import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
@@ -83,8 +87,8 @@ public class SvnProtocolsTest extends Svn17TestCase {
     final SvnAuthenticationManager interactiveManager = configuration.getInteractiveManager(myVcs);
     final SvnTestInteractiveAuthentication authentication = new SvnTestInteractiveAuthentication() {
       @Override
-      public int acceptServerAuthentication(SVNURL url, String realm, Object certificate, boolean resultMayBeStored) {
-        return ISVNAuthenticationProvider.ACCEPTED;
+      public AcceptResult acceptServerAuthentication(SVNURL url, String realm, Object certificate, boolean canCache) {
+        return AcceptResult.ACCEPTED_PERMANENTLY;
       }
     };
     interactiveManager.setAuthenticationProvider(authentication);

@@ -17,30 +17,25 @@ package org.jetbrains.idea.svn.auth;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author alex
- */
-public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
+public class SvnAuthenticationProvider implements AuthenticationProvider {
 
   private final Project myProject;
   private final SvnAuthenticationNotifier myAuthenticationNotifier;
-  private final ISVNAuthenticationProvider mySvnInteractiveAuthenticationProvider;
+  private final AuthenticationProvider mySvnInteractiveAuthenticationProvider;
   private final SvnAuthenticationManager myAuthenticationManager;
   private static final Set<Thread> ourForceInteractive = new HashSet<>();
 
-  public SvnAuthenticationProvider(final SvnVcs svnVcs, final ISVNAuthenticationProvider provider,
+  public SvnAuthenticationProvider(final SvnVcs svnVcs,
+                                   final AuthenticationProvider provider,
                                    final SvnAuthenticationManager authenticationManager) {
     myAuthenticationManager = authenticationManager;
     myProject = svnVcs.getProject();
@@ -51,11 +46,9 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
   public SVNAuthentication requestClientAuthentication(final String kind,
                                                        final SVNURL url,
                                                        final String realm,
-                                                       SVNErrorMessage errorMessage,
-                                                       final SVNAuthentication previousAuth,
-                                                       final boolean authMayBeStored) {
+                                                       final boolean canCache) {
     if (ApplicationManager.getApplication().isUnitTestMode() && ISVNAuthenticationManager.USERNAME.equals(kind)) {
-      final String userName = previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : SystemProperties.getUserName();
+      String userName = myAuthenticationManager.getDefaultUsername(kind, url);
       return new SVNUserNameAuthentication(userName, false);
     }
     final SvnAuthenticationNotifier.AuthenticationRequest obj =
@@ -63,7 +56,7 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
     final SVNURL wcUrl = myAuthenticationNotifier.getWcUrl(obj);
     if (wcUrl == null || ourForceInteractive.contains(Thread.currentThread())) {
       // outside-project url
-      return mySvnInteractiveAuthenticationProvider.requestClientAuthentication(kind, url, realm, errorMessage, previousAuth, authMayBeStored);
+      return mySvnInteractiveAuthenticationProvider.requestClientAuthentication(kind, url, realm, canCache);
     } else {
       if (myAuthenticationNotifier.ensureNotify(obj)) {
         return myAuthenticationManager.requestFromCache(kind, realm);
@@ -80,7 +73,7 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
     ourForceInteractive.remove(Thread.currentThread());
   }
 
-  public int acceptServerAuthentication(SVNURL url, String realm, final Object certificate, final boolean resultMayBeStored) {
-    return mySvnInteractiveAuthenticationProvider.acceptServerAuthentication(url, realm, certificate, resultMayBeStored);
+  public AcceptResult acceptServerAuthentication(SVNURL url, String realm, final Object certificate, final boolean canCache) {
+    return mySvnInteractiveAuthenticationProvider.acceptServerAuthentication(url, realm, certificate, canCache);
   }
 }

@@ -15,17 +15,13 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
-import org.jetbrains.idea.svn.auth.SvnAuthenticationProvider;
-import org.jetbrains.idea.svn.auth.SvnInteractiveAuthenticationProvider;
+import org.jetbrains.idea.svn.auth.*;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.config.SvnServerFileKeys;
 import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.jetbrains.idea.svn.update.MergeRootInfo;
 import org.jetbrains.idea.svn.update.UpdateRootInfo;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.internal.wc.ISVNAuthenticationStorage;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
@@ -361,20 +357,15 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   public SvnAuthenticationManager getPassiveAuthenticationManager(@NotNull SvnVcs svnVcs) {
     if (myPassiveAuthManager == null) {
       myPassiveAuthManager = new SvnAuthenticationManager(svnVcs, new File(getConfigurationDirectory()));
-      myPassiveAuthManager.setAuthenticationProvider(new ISVNAuthenticationProvider() {
+      myPassiveAuthManager.setAuthenticationProvider(new AuthenticationProvider() {
         @Override
-        public SVNAuthentication requestClientAuthentication(String kind,
-                                                             SVNURL url,
-                                                             String realm,
-                                                             SVNErrorMessage errorMessage,
-                                                             SVNAuthentication previousAuth,
-                                                             boolean authMayBeStored) {
+        public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, boolean canCache) {
           return null;
         }
 
         @Override
-        public int acceptServerAuthentication(SVNURL url, String realm, Object certificate, boolean resultMayBeStored) {
-          return REJECTED;
+        public AcceptResult acceptServerAuthentication(SVNURL url, String realm, Object certificate, boolean canCache) {
+          return AcceptResult.REJECTED;
         }
       });
     }

@@ -16,7 +16,8 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.util.containers.Convertor;
-import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.jetbrains.idea.svn.auth.AcceptResult;
+import org.jetbrains.idea.svn.auth.AuthenticationProvider;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.*;
 
@@ -24,7 +25,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SvnTestInteractiveAuthentication implements ISVNAuthenticationProvider {
+public class SvnTestInteractiveAuthentication implements AuthenticationProvider {
   private boolean mySaveData;
   private final Map<String, Convertor<SVNURL, SVNAuthentication>> myData;
 
@@ -38,8 +39,8 @@ public class SvnTestInteractiveAuthentication implements ISVNAuthenticationProvi
   }
 
   @Override
-  public int acceptServerAuthentication(SVNURL url, String realm, Object certificate, boolean resultMayBeStored) {
-    return ISVNAuthenticationProvider.REJECTED;
+  public AcceptResult acceptServerAuthentication(SVNURL url, String realm, Object certificate, boolean canCache) {
+    return AcceptResult.REJECTED;
   }
 
   public void addAuthentication(final String kind, final Convertor<SVNURL, SVNAuthentication> authentication) {
@@ -47,24 +48,19 @@ public class SvnTestInteractiveAuthentication implements ISVNAuthenticationProvi
   }
 
   @Override
-  public SVNAuthentication requestClientAuthentication(String kind,
-                                                       SVNURL url,
-                                                       String realm,
-                                                       SVNErrorMessage errorMessage,
-                                                       SVNAuthentication previousAuth,
-                                                       boolean authMayBeStored) {
-    authMayBeStored = authMayBeStored && mySaveData;
+  public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, boolean canCache) {
+    canCache = canCache && mySaveData;
     Convertor<SVNURL, SVNAuthentication> convertor = myData.get(kind);
     SVNAuthentication result = convertor == null ? null : convertor.convert(url);
     if (result == null) {
       if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
-        result = new SVNUserNameAuthentication("username", authMayBeStored);
+        result = new SVNUserNameAuthentication("username", canCache);
       } else if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
-        result = new SVNPasswordAuthentication("username", "abc", authMayBeStored, url, false);
+        result = new SVNPasswordAuthentication("username", "abc", canCache, url, false);
       } else if (ISVNAuthenticationManager.SSH.equals(kind)) {
-        result = new SVNSSHAuthentication("username", "abc", -1, authMayBeStored, url, false);
+        result = new SVNSSHAuthentication("username", "abc", -1, canCache, url, false);
       } else if (ISVNAuthenticationManager.SSL.equals(kind)) {
-        result = new SVNSSLAuthentication(new File("aaa"), "abc", authMayBeStored, url, false);
+        result = new SVNSSLAuthentication(new File("aaa"), "abc", canCache, url, false);
       }
     }
     return result;

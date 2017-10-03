@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.*;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.*;
 import org.tmatesoft.svn.core.internal.wc.ISVNHostOptions;
@@ -41,7 +40,7 @@ import org.tmatesoft.svn.core.internal.wc.ISVNHostOptions;
 import java.io.File;
 import java.security.cert.X509Certificate;
 
-public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationProvider {
+public class SvnInteractiveAuthenticationProvider implements AuthenticationProvider {
   private static final Logger LOG = Logger.getInstance(SvnInteractiveAuthenticationProvider.class);
   @NotNull private final SvnVcs myVcs;
   @NotNull private final Project myProject;
@@ -66,12 +65,11 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
     return myCallState.get() != null && myCallState.get().isWasCancelled();
   }
 
+  @Override
   public SVNAuthentication requestClientAuthentication(final String kind,
                                                        final SVNURL url,
                                                        final String realm,
-                                                       final SVNErrorMessage errorMessage,
-                                                       final SVNAuthentication previousAuth,
-                                                       final boolean authMayBeStored) {
+                                                       final boolean canCache) {
     final MyCallState callState = new MyCallState(true, false);
     myCallState.set(callState);
     // once we came here, we don't know _correct_ auth todo +-
@@ -80,15 +78,14 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
     final SVNAuthentication[] result = new SVNAuthentication[1];
     Runnable command = null;
 
-    final boolean authCredsOn = authMayBeStored && myManager.getHostOptionsProvider().getHostOptions(url).isAuthStorageEnabled();
+    final boolean authCredsOn = canCache && myManager.getHostOptionsProvider().getHostOptions(url).isAuthStorageEnabled();
 
-    final String userName =
-      previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : myManager.getDefaultUsername(kind, url);
+    final String userName = myManager.getDefaultUsername(kind, url);
     if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {// || ISVNAuthenticationManager.USERNAME.equals(kind)) {
       command = () -> {
         SimpleCredentialsDialog dialog = new SimpleCredentialsDialog(myProject);
         dialog.setup(realm, userName, authCredsOn);
-        setTitle(dialog, errorMessage);
+        setTitle(dialog);
         if (dialog.showAndGet()) {
           result[0] = new SVNPasswordAuthentication(dialog.getUserName(), dialog.getPassword(), dialog.isSaveAllowed(), url, false);
         }
@@ -101,7 +98,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
       command = () -> {
         UserNameCredentialsDialog dialog = new UserNameCredentialsDialog(myProject);
         dialog.setup(realm, userName, authCredsOn);
-        setTitle(dialog, errorMessage);
+        setTitle(dialog);
         if (dialog.showAndGet()) {
           result[0] = new SVNUserNameAuthentication(dialog.getUserName(), dialog.isSaveAllowed(), url, false);
         }
@@ -115,7 +112,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
 
       command = () -> {
         SSHCredentialsDialog dialog = new SSHCredentialsDialog(myProject, realm, userName, authCredsOn, url.getPort(), isAgentAvailable);
-        setTitle(dialog, errorMessage);
+        setTitle(dialog);
         if (dialog.showAndGet()) {
           int port = dialog.getPortNumber();
           if (dialog.isSshAgentSelected()) {
@@ -146,7 +143,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
         if (!StringUtil.isEmptyOrSpaces(file)) {
           dialog.setFile(file);
         }
-        setTitle(dialog, errorMessage);
+        setTitle(dialog);
         if (dialog.showAndGet()) {
           result[0] = new SVNSSLAuthentication(new File(dialog.getCertificatePath()), String.valueOf(dialog.getCertificatePassword()),
                                                dialog.getSaveAuth(), url, false);
@@ -178,20 +175,22 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
     return result;
   }
 
-  private static void setTitle(@NotNull DialogWrapper dialog, @Nullable SVNErrorMessage errorMessage) {
-    dialog.setTitle(errorMessage == null
-                    ? SvnBundle.message("dialog.title.authentication.required")
-                    : SvnBundle.message("dialog.title.authentication.required.was.failed"));
+  private static void setTitle(@NotNull DialogWrapper dialog) {
+    dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
   }
 
-  public int acceptServerAuthentication(final SVNURL url, String realm, final Object certificate, final boolean resultMayBeStored) {
+  @Override
+  public AcceptResult acceptServerAuthentication(final SVNURL url,
+                                                 String realm,
+                                                 final Object certificate,
+                                                 final boolean canCache) {
     final int[] result = new int[1];
     Runnable command;
     if (certificate instanceof X509Certificate || certificate instanceof String) {
       command = () -> {
         ServerSSLDialog dialog = certificate instanceof X509Certificate
-                                 ? new ServerSSLDialog(myProject, (X509Certificate)certificate, resultMayBeStored)
-                                 : new ServerSSLDialog(myProject, (String)certificate, resultMayBeStored);
+                                 ? new ServerSSLDialog(myProject, (X509Certificate)certificate, canCache)
+                                 : new ServerSSLDialog(myProject, (String)certificate, canCache);
         dialog.show();
         result[0] = dialog.getResult();
       };
@@ -199,18 +198,18 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
       final String sshKeyAlgorithm = myManager.getSSHKeyAlgorithm();
       command = () -> {
         final ServerSSHDialog serverSSHDialog =
-          new ServerSSHDialog(myProject, resultMayBeStored, url.toDecodedString(), sshKeyAlgorithm, (byte[])certificate);
+          new ServerSSHDialog(myProject, canCache, url.toDecodedString(), sshKeyAlgorithm, (byte[])certificate);
         serverSSHDialog.show();
         result[0] = serverSSHDialog.getResult();
       };
     } else {
       VcsBalloonProblemNotifier.showOverChangesView(myProject, "Subversion: unknown certificate type from " + url.toDecodedString(),
                                                     MessageType.ERROR);
-      return REJECTED;
+      return AcceptResult.REJECTED;
     }
 
     showAndWait(command);
-    return result[0];
+    return AcceptResult.from(result[0]);
   }
 
   private static void showAndWait(@NotNull Runnable command) {

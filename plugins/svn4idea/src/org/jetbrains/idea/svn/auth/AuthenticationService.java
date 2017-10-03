@@ -99,7 +99,7 @@ public class AuthenticationService {
       final String realm = repositoryUrl.toDecodedString();
 
       authentication = requestCredentials(realm, type, () -> myConfiguration.getInteractiveManager(myVcs).getProvider()
-        .requestClientAuthentication(type, repositoryUrl, realm, null, null, true));
+        .requestClientAuthentication(type, repositoryUrl, realm, true));
     }
 
     if (authentication == null) {
@@ -176,8 +176,7 @@ public class AuthenticationService {
       result = (AcceptResult)data;
     }
     else {
-      result =
-        AcceptResult.from(getAuthenticationManager().getProvider().acceptServerAuthentication(url, realm, certificateInfo, true));
+      result = getAuthenticationManager().getProvider().acceptServerAuthentication(url, realm, certificateInfo, true);
 
       if (!AcceptResult.REJECTED.equals(result)) {
         myConfiguration.acknowledge(kind, realm, result);

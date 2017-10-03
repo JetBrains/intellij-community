@@ -37,7 +37,6 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.internal.wc.*;
@@ -62,7 +61,7 @@ public class SvnAuthenticationManager {
   private IdeaSVNHostOptionsProvider myLocalHostOptionsProvider;
   private DefaultSVNOptions myDefaultOptions;
   private final Map<Thread, String> myKeyAlgorithm;
-  private ISVNAuthenticationProvider myProvider;
+  private AuthenticationProvider myProvider;
 
   public SvnAuthenticationManager(@NotNull SvnVcs vcs, final File configDirectory) {
     myVcs = vcs;
@@ -108,11 +107,11 @@ public class SvnAuthenticationManager {
     return result;
   }
 
-  public void setAuthenticationProvider(ISVNAuthenticationProvider provider) {
+  public void setAuthenticationProvider(AuthenticationProvider provider) {
     myProvider = provider;
   }
 
-  public ISVNAuthenticationProvider getProvider() {
+  public AuthenticationProvider getProvider() {
     return myProvider;
   }
 

@@ -407,7 +407,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     final SvnVcs svnVcs = SvnVcs.getInstance(project);
 
     final SvnInteractiveAuthenticationProvider provider = new SvnInteractiveAuthenticationProvider(svnVcs, manager);
-    final SVNAuthentication svnAuthentication = provider.requestClientAuthentication(kind, url, realm, null, null, true);
+    final SVNAuthentication svnAuthentication = provider.requestClientAuthentication(kind, url, realm, true);
     if (svnAuthentication != null) {
       configuration.acknowledge(kind, realm, svnAuthentication);
       configuration.getAuthenticationManager(svnVcs).acknowledgeAuthentication(kind, realm, null, svnAuthentication);

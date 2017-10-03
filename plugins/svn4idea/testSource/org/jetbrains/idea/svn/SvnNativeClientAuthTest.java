@@ -29,13 +29,16 @@ import com.intellij.vcsUtil.VcsUtil;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.auth.AcceptResult;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.junit.Before;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.*;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.auth.SVNAuthentication;
+import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
+import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
@@ -48,7 +51,7 @@ import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 
 public class SvnNativeClientAuthTest extends Svn17TestCase {
   private SvnVcs myVcs;
-  private int myCertificateAnswer = ISVNAuthenticationProvider.ACCEPTED_TEMPORARY;
+  private AcceptResult myCertificateAnswer = AcceptResult.ACCEPTED_TEMPORARILY;
   private boolean myCredentialsCorrect = true;
   private boolean mySaveCredentials = false;
   private boolean myCancelAuth = false;
@@ -81,20 +84,15 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     final SvnAuthenticationManager interactiveManager = configuration.getInteractiveManager(myVcs);
     final SvnTestInteractiveAuthentication authentication = new SvnTestInteractiveAuthentication() {
       @Override
-      public int acceptServerAuthentication(SVNURL url, String realm, Object certificate, boolean resultMayBeStored) {
+      public AcceptResult acceptServerAuthentication(SVNURL url, String realm, Object certificate, boolean canCache) {
         ++ myCertificateAskedInteractivelyCount;
         return myCertificateAnswer;
       }
 
       @Override
-      public SVNAuthentication requestClientAuthentication(String kind,
-                                                           SVNURL url,
-                                                           String realm,
-                                                           SVNErrorMessage errorMessage,
-                                                           SVNAuthentication previousAuth,
-                                                           boolean authMayBeStored) {
+      public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, boolean canCache) {
         if (myCancelAuth) return null;
-        return super.requestClientAuthentication(kind, url, realm, errorMessage, previousAuth, authMayBeStored);
+        return super.requestClientAuthentication(kind, url, realm, canCache);
       }
     };
     interactiveManager.setAuthenticationProvider(authentication);
@@ -291,7 +289,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     clearAuthCache(instance);
 
     mySaveCredentials = true;
-    myCertificateAnswer = ISVNAuthenticationProvider.ACCEPTED;
+    myCertificateAnswer = AcceptResult.ACCEPTED_PERMANENTLY;
 
     testCommitImpl(wc1);
 
@@ -320,7 +318,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     clearAuthCache(instance);
 
     mySaveCredentials = false;
-    myCertificateAnswer = ISVNAuthenticationProvider.ACCEPTED;
+    myCertificateAnswer = AcceptResult.ACCEPTED_PERMANENTLY;
 
     testCommitImpl(wc1);
 
@@ -335,7 +333,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     //------------
     clearAuthCache(instance);
     mySaveCredentials = true;
-    myCertificateAnswer = ISVNAuthenticationProvider.ACCEPTED_TEMPORARY;
+    myCertificateAnswer = AcceptResult.ACCEPTED_TEMPORARILY;
 
     testCommitImpl(wc1);
     //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
@@ -421,14 +419,14 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     clearAuthCache(instance);
 
     mySaveCredentials = false;
-    myCertificateAnswer = ISVNAuthenticationProvider.REJECTED;
+    myCertificateAnswer = AcceptResult.REJECTED;
 
     updateExpectAuthCanceled(wc1, "Authentication canceled");
 
     //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
     //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
-    myCertificateAnswer = ISVNAuthenticationProvider.ACCEPTED_TEMPORARY;
+    myCertificateAnswer = AcceptResult.ACCEPTED_TEMPORARILY;
     myCredentialsCorrect = false;
 
     updateSimple(wc1);
