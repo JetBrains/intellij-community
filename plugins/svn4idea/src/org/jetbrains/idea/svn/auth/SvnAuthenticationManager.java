@@ -23,11 +23,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.proxy.CommonProxy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.IdeaSVNConfigFile;
-import org.jetbrains.idea.svn.SSLExceptionsHelper;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
@@ -123,16 +121,8 @@ public class SvnAuthenticationManager {
   }
 
   public void acknowledgeAuthentication(String kind, String realm, SVNAuthentication authentication) {
-    acknowledgeAuthentication(kind, realm, authentication, null);
-  }
-
-  public void acknowledgeAuthentication(String kind, String realm, SVNAuthentication authentication, SVNURL url) {
-    SSLExceptionsHelper.removeInfo();
-    if (url != null) {
-      CommonProxy.getInstance().removeNoProxy(url.getProtocol(), url.getHost(), url.getPort());
-    }
-    final boolean authStorageEnabled = getHostOptions(authentication.getURL()).isAuthStorageEnabled();
-    final SVNAuthentication proxy = ProxySvnAuthentication.proxy(authentication, authStorageEnabled);
+    boolean authStorageEnabled = getHostOptions(authentication.getURL()).isAuthStorageEnabled();
+    SVNAuthentication proxy = ProxySvnAuthentication.proxy(authentication, authStorageEnabled);
     getConfig().acknowledge(kind, realm, proxy);
   }
 
