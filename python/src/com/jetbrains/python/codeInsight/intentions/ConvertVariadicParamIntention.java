@@ -17,15 +17,18 @@ package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,13 +105,11 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
   }
 
   @Nullable
-  private static PyParameter getKeywordContainer(@NotNull PyFunction function) {
-    return Arrays
-      .stream(function.getParameterList().getParameters())
-      .filter(PyNamedParameter.class::isInstance)
-      .map(PyNamedParameter.class::cast)
-      .filter(PyNamedParameter::isKeywordContainer)
-      .findFirst()
+  private static PyParameter getKeywordContainer(@NotNull PyParameterList parameterList) {
+    return StreamEx
+      .of(parameterList.getParameters())
+      .select(PyNamedParameter.class)
+      .findFirst(PyNamedParameter::isKeywordContainer)
       .orElse(null);
   }
 
@@ -142,15 +143,11 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
         .map(indexExpression -> PyUtil.as(indexExpression, PyStringLiteralExpression.class))
         .map(PyStringLiteralExpression::getStringValue)
         .filter(PyNames::isIdentifier)
-        .map(indexValue -> elementGenerator.createExpressionFromText(LanguageLevel.forElement(function), indexValue))
         .ifPresent(
-          parameter -> {
-            final int anchorIndex = function.getContainingClass() == null ? 0 : 1;
-            final PsiElement comma = (PsiElement)elementGenerator.createComma();
+          indexValue -> {
+            final PyExpression parameter = elementGenerator.createExpressionFromText(LanguageLevel.forElement(function), indexValue);
 
-            function.getParameterList().addBefore(parameter, function.getParameterList().getParameters()[anchorIndex]);
-            function.getParameterList().addBefore(comma, function.getParameterList().getParameters()[anchorIndex]);
-
+            insertParameter(function.getParameterList(), parameter, false, elementGenerator);
             subscription.replace(parameter);
           }
         );
@@ -169,21 +166,11 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
         .filter(PyNames::isIdentifier)
         .ifPresent(
           indexValue -> {
-            final PyNamedParameter parameterWithDefaultValue = createParameterWithDefaultValue(elementGenerator, call, indexValue);
-            final PyExpression parameter = elementGenerator.createExpressionFromText(LanguageLevel.forElement(function), indexValue);
-            final PyParameter keywordContainer = getKeywordContainer(function);
+            final PyNamedParameter parameter = createParameter(elementGenerator, call, indexValue);
+            final PyExpression parameterUsage = elementGenerator.createExpressionFromText(LanguageLevel.forElement(function), indexValue);
 
-            if (parameter != null) {
-              if (parameterWithDefaultValue != null) {
-                function.getParameterList().addBefore(parameterWithDefaultValue, keywordContainer);
-              }
-              else {
-                function.getParameterList().addBefore(parameter, keywordContainer);
-              }
-              function.getParameterList().addBefore((PsiElement)elementGenerator.createComma(), keywordContainer);
-
-              call.replace(parameter);
-            }
+            insertParameter(function.getParameterList(), parameter, parameter.hasDefaultValue(), elementGenerator);
+            call.replace(parameterUsage);
           }
         );
     }
@@ -192,7 +179,7 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
   @NotNull
   private static <T> List<T> findKeywordContainerUsages(@NotNull PyFunction function,
                                                         @NotNull BiPredicate<PsiElement, String> usagePredicate) {
-    final PyParameter keywordContainer = getKeywordContainer(function);
+    final PyParameter keywordContainer = getKeywordContainer(function.getParameterList());
     final String keywordContainerName = keywordContainer == null ? null : keywordContainer.getName();
 
     if (keywordContainerName != null) {
@@ -244,10 +231,20 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
       .isPresent();
   }
 
-  @Nullable
-  private static PyNamedParameter createParameterWithDefaultValue(@NotNull PyElementGenerator elementGenerator,
-                                                                  @NotNull PyCallExpression call,
-                                                                  @NotNull String parameterName) {
+  private static void insertParameter(@NotNull PyParameterList parameterList,
+                                      @NotNull PyElement parameter,
+                                      boolean hasDefaultValue,
+                                      @NotNull PyElementGenerator elementGenerator) {
+    final PyElement placeToInsertParameter = findCompatiblePlaceToInsertParameter(parameterList, hasDefaultValue);
+
+    parameterList.addBefore(parameter, placeToInsertParameter);
+    parameterList.addBefore((PsiElement)elementGenerator.createComma(), placeToInsertParameter);
+  }
+
+  @NotNull
+  private static PyNamedParameter createParameter(@NotNull PyElementGenerator elementGenerator,
+                                                  @NotNull PyCallExpression call,
+                                                  @NotNull String parameterName) {
     final PyExpression[] arguments = call.getArguments();
     if (arguments.length > 1) {
       return elementGenerator.createParameter(parameterName + "=" + arguments[1].getText());
@@ -258,6 +255,22 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
       return elementGenerator.createParameter(parameterName + "=" + PyNames.NONE);
     }
 
-    return null;
+    return elementGenerator.createParameter(parameterName);
+  }
+
+  @Nullable
+  private static PyElement findCompatiblePlaceToInsertParameter(@NotNull PyParameterList parameterList, boolean hasDefaultValue) {
+    if (hasDefaultValue) return getKeywordContainer(parameterList);
+
+    final List<PyParameter> parameters = Arrays.asList(parameterList.getParameters());
+    for (Pair<PyParameter, PyParameter> currentAndNext : ContainerUtil.zip(parameters, parameters.subList(1, parameters.size()))) {
+      final PyParameter current = currentAndNext.getFirst();
+      if (current instanceof PyNamedParameter && ((PyNamedParameter)current).isPositionalContainer()) {
+        return currentAndNext.getSecond();
+      }
+    }
+
+    return ContainerUtil.find(parameterList.getParameters(),
+                              p -> p.hasDefaultValue() || p instanceof PyNamedParameter && ((PyNamedParameter)p).isKeywordContainer());
   }
 }
