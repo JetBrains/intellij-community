@@ -490,7 +490,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     CommandProcessor.getInstance().executeCommand(myProject, () -> finishLookupInWritableFile(completionChar, item), null, null);
   }
 
-  void finishLookupInWritableFile(char completionChar, @Nullable LookupElement item) {
+  public void finishLookupInWritableFile(char completionChar, @Nullable LookupElement item) {
     //noinspection deprecation,unchecked
     if (item == null ||
         !item.isValid() ||
