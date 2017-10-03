@@ -112,26 +112,28 @@ betas.)
 
  8. Use data-binding prebuilt jar instead of depending on modules.
 
-    Build Android Studio and copy the data-binding jar from
+    Build Android Studio and copy the data-binding jar from the production build into the
+    plugin library prebuilts folder:
+
+    $ cp tools/idea/out/dist.all/plugins/android/lib/data-binding.jar tools/adt/idea/android/lib
+
     tools/idea/out/dist.all.ce/plugins/android/lib/data-binding.jar to tools/adt/idea/android/lib.
-    Edit the tools/idea/build/scripts/layouts.gant file to stop building
-    the data-binding modules.
+    Edit the tools/idea/build/groovy/org/jetbrains/intellij/build/AndroidStudioProperties.groovy
+    file to stop building the data-binding modules:
 
     ```
-    --- a/build/scripts/layouts.gant
-    +++ b/build/scripts/layouts.gant
-    @@ -815,11 +815,6 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
-           jar("android-rt.jar") {
-             module("android-rt")
-           }
-    -      jar("data-binding.jar") {
-    -        module("db-baseLibrary")
-    -        module("db-compilerCommon")
-    -        module("db-compiler")
-    -      }
-
-           jar("common.jar") {
-             module("common")
+    --- a/build/groovy/org/jetbrains/intellij/build/AndroidStudioProperties.groovy
+    +++ b/build/groovy/org/jetbrains/intellij/build/AndroidStudioProperties.groovy
+    @@ -129,9 +129,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
+           withModule("adt-ui", "adt-ui.jar")
+           withModule("adt-ui-model", "adt-ui.jar")
+           withModule("repository")
+    -      withModule("db-baseLibrary", "data-binding.jar")
+    -      withModule("db-compilerCommon", "data-binding.jar")
+    -      withModule("db-compiler", "data-binding.jar")
+           withModule("sherpa-solver", "constraint-layout.jar")
+           withModule("sherpa-ui", "constraint-layout.jar")
+           withModule("sdklib", "sdklib.jar")
     ```
 
     Also edit the tools/adt/idea/android/android.iml file to depend on the prebuilt instead of the module.
