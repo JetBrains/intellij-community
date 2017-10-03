@@ -21,7 +21,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
+import org.jetbrains.idea.svn.auth.AcceptResult;
 import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
 
 import javax.swing.*;
@@ -30,14 +30,11 @@ import java.awt.event.ActionEvent;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 
-/**
- * @author alex
- */
 public class ServerSSLDialog extends DialogWrapper {
 
   @NotNull private final String myCertificateInfo;
   private Action myTempAction;
-  private int myResult;
+  private AcceptResult myResult;
   @NonNls public static final String ALGORITHM_SHA1 = "SHA1";
 
   public ServerSSLDialog(final Project project, @NotNull X509Certificate cert, boolean store) {
@@ -47,7 +44,7 @@ public class ServerSSLDialog extends DialogWrapper {
   public ServerSSLDialog(final Project project, @NotNull String certificateInfo, boolean store) {
     super(project, true);
     myCertificateInfo = certificateInfo;
-    myResult = ISVNAuthenticationProvider.REJECTED;
+    myResult = AcceptResult.REJECTED;
     setOKButtonText(SvnBundle.message("button.text.ssl.accept"));
     setOKActionEnabled(store);
     setCancelButtonText(SvnBundle.message("button.text.ssl.reject"));
@@ -69,7 +66,7 @@ public class ServerSSLDialog extends DialogWrapper {
     if (myTempAction == null) {
       myTempAction = new AbstractAction(SvnBundle.message("server.ssl.accept.temporary.action.name")) {
         public void actionPerformed(ActionEvent e) {
-          myResult = ISVNAuthenticationProvider.ACCEPTED_TEMPORARY;
+          myResult = AcceptResult.ACCEPTED_TEMPORARILY;
           close(0);
         }
       };
@@ -78,16 +75,16 @@ public class ServerSSLDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
-    myResult = ISVNAuthenticationProvider.ACCEPTED;
+    myResult = AcceptResult.ACCEPTED_PERMANENTLY;
     super.doOKAction();
   }
 
   public void doCancelAction() {
-    myResult = ISVNAuthenticationProvider.REJECTED;
+    myResult = AcceptResult.REJECTED;
     super.doCancelAction();
   }
 
-  public int getResult() {
+  public AcceptResult getResult() {
     return myResult;
   }
 

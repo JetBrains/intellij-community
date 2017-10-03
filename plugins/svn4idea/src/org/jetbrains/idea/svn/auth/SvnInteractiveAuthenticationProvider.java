@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.WaitForProgressToShow;
@@ -124,7 +125,7 @@ public class SvnInteractiveAuthenticationProvider implements AuthenticationProvi
                                                  String realm,
                                                  final Object certificate,
                                                  final boolean canCache) {
-    final int[] result = new int[1];
+    Ref<AcceptResult> result = Ref.create(AcceptResult.REJECTED);
     Runnable command;
     if (certificate instanceof X509Certificate || certificate instanceof String) {
       command = () -> {
@@ -132,7 +133,7 @@ public class SvnInteractiveAuthenticationProvider implements AuthenticationProvi
                                  ? new ServerSSLDialog(myProject, (X509Certificate)certificate, canCache)
                                  : new ServerSSLDialog(myProject, (String)certificate, canCache);
         dialog.show();
-        result[0] = dialog.getResult();
+        result.set(dialog.getResult());
       };
     } else {
       VcsBalloonProblemNotifier.showOverChangesView(myProject, "Subversion: unknown certificate type from " + url.toDecodedString(),
@@ -141,7 +142,7 @@ public class SvnInteractiveAuthenticationProvider implements AuthenticationProvi
     }
 
     showAndWait(command);
-    return AcceptResult.from(result[0]);
+    return result.get();
   }
 
   private static void showAndWait(@NotNull Runnable command) {

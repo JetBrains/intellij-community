@@ -22,13 +22,13 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
+import org.jetbrains.idea.svn.auth.AcceptResult;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class ServerSSHDialog extends DialogWrapper {
-  private int myResult;
+  private AcceptResult myResult;
   private String myFingerprints;
   private JCheckBox myJCheckBox;
   private final boolean myStore;
@@ -46,7 +46,7 @@ public class ServerSSHDialog extends DialogWrapper {
     myAlgorithm = StringUtil.notNullize(algorithm);
     // todo ?
     myFingerprints = fingerprints;
-    myResult = ISVNAuthenticationProvider.REJECTED;
+    myResult = AcceptResult.REJECTED;
     setOKButtonText(SvnBundle.message("button.text.ssh.accept"));
     setCancelButtonText(SvnBundle.message("button.text.ssh.reject"));
     setTitle(SvnBundle.message("dialog.title.ssh.examine.server.fingerprints"));
@@ -64,16 +64,16 @@ public class ServerSSHDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
-    myResult = myJCheckBox.isSelected() ? ISVNAuthenticationProvider.ACCEPTED : ISVNAuthenticationProvider.ACCEPTED_TEMPORARY;
+    myResult = myJCheckBox.isSelected() ? AcceptResult.ACCEPTED_PERMANENTLY : AcceptResult.ACCEPTED_TEMPORARILY;
     super.doOKAction();
   }
 
   public void doCancelAction() {
-    myResult = ISVNAuthenticationProvider.REJECTED;
+    myResult = AcceptResult.REJECTED;
     super.doCancelAction();
   }
 
-  public int getResult() {
+  public AcceptResult getResult() {
     return myResult;
   }
 

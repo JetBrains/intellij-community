@@ -22,10 +22,10 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.auth.AcceptResult;
 import org.jetbrains.idea.svn.dialogs.ServerSSHDialog;
 import org.jetbrains.idea.svn.dialogs.SimpleCredentialsDialog;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -87,8 +87,8 @@ public class TerminalSshModule extends BaseTerminalModule {
   }
 
   private void handleUnknownHost() {
-    final Project project = myRuntime.getVcs().getProject();
-    final Ref<Integer> answer = new Ref<>();
+    Project project = myRuntime.getVcs().getProject();
+    Ref<AcceptResult> answer = new Ref<>();
 
     Runnable command = () -> {
       final ServerSSHDialog dialog = new ServerSSHDialog(project, true, unknownHost, fingerprintAlgorithm, hostFingerprint);
@@ -104,7 +104,7 @@ public class TerminalSshModule extends BaseTerminalModule {
     fingerprintAlgorithm = null;
     hostFingerprint = null;
 
-    sendData(answer.get() == ISVNAuthenticationProvider.REJECTED ? "no" : "yes");
+    sendData(answer.get() == AcceptResult.REJECTED ? "no" : "yes");
   }
 
   private boolean handleAuthPrompt(@NotNull final SimpleCredentialsDialog.Mode mode, @NotNull final String key) {
