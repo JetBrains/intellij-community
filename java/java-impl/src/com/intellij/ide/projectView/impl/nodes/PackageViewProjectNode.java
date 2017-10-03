@@ -32,7 +32,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 public class PackageViewProjectNode extends AbstractProjectNode {
@@ -97,15 +96,12 @@ public class PackageViewProjectNode extends AbstractProjectNode {
   }
 
   @Override
-  protected AbstractTreeNode createModuleGroup(final Module module) throws
-                                                                    InvocationTargetException,
-                                                                    NoSuchMethodException, InstantiationException, IllegalAccessException {
+  protected AbstractTreeNode createModuleGroup(final Module module) {
     return new PackageViewModuleNode(getProject(), module, getSettings());
   }
 
   @Override
-  protected AbstractTreeNode createModuleGroupNode(final ModuleGroup moduleGroup)
-    throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+  protected AbstractTreeNode createModuleGroupNode(final ModuleGroup moduleGroup) {
     return new PackageViewModuleGroupNode(getProject(),  moduleGroup, getSettings());
   }
 

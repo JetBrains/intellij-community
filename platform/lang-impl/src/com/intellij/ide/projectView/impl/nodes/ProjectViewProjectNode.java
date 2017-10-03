@@ -32,7 +32,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 public class ProjectViewProjectNode extends AbstractProjectNode {
@@ -49,7 +48,7 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
 
     Set<ModuleDescription> modules = new LinkedHashSet<>(topLevelContentRoots.size());
     for (VirtualFile root : topLevelContentRoots) {
-      final Module module = ModuleUtil.findModuleForFile(root, myProject);
+      final Module module = ModuleUtilCore.findModuleForFile(root, myProject);
       if (module != null) {
         modules.add(new LoadedModuleDescriptionImpl(module));
       }
@@ -88,8 +87,7 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
   }
 
   @Override
-  protected AbstractTreeNode createModuleGroup(final Module module)
-    throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+  protected AbstractTreeNode createModuleGroup(final Module module) {
     List<VirtualFile> roots = ProjectViewDirectoryHelper.getInstance(myProject).getTopLevelModuleRoots(module, getSettings());
     if (roots.size() == 1) {
       final PsiDirectory psi = PsiManager.getInstance(myProject).findDirectory(roots.get(0));
@@ -115,8 +113,7 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
   }
 
   @Override
-  protected AbstractTreeNode createModuleGroupNode(final ModuleGroup moduleGroup)
-    throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+  protected AbstractTreeNode createModuleGroupNode(final ModuleGroup moduleGroup) {
     return new ProjectViewModuleGroupNode(getProject(), moduleGroup, getSettings());
   }
 }
