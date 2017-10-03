@@ -63,6 +63,9 @@ public class AnsiEscapeDecoder {
         if (escSeqBeginInd < -1) {
           unhandledSuffixLength = decodeUnhandledSuffixLength(escSeqBeginInd);
         }
+        if (pos < text.length() - unhandledSuffixLength) {
+          chunks = processTextChunk(chunks, text.substring(pos, text.length() - unhandledSuffixLength), outputType, textAcceptor);
+        }
         break;
       }
       if (pos < escSeqBeginInd) {
@@ -91,9 +94,6 @@ public class AnsiEscapeDecoder {
       pos = escSeqEndInd + 1;
     }
     updateUnhandledSuffix(text, outputType, unhandledSuffixLength);
-    if (unhandledSuffixLength == 0 && pos < text.length()) {
-      chunks = processTextChunk(chunks, text.substring(pos), outputType, textAcceptor);
-    }
     if (chunks != null && textAcceptor instanceof ColoredChunksAcceptor) {
       ((ColoredChunksAcceptor)textAcceptor).coloredChunksAvailable(chunks);
     }

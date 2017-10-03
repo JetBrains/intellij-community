@@ -84,6 +84,13 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
         .addExpected(":abcd", "\u001B[1;33m")
         .addExpected(">", "\u001B[0;1;33m")
     ));
+    check(false, ContainerUtil.newArrayList(
+      new ColoredText("\u001B[1;31m red\u001B[0m normal\u001B[1;32m green\u001B", ProcessOutputTypes.STDOUT)
+        .addExpected(" red", "\u001B[1;31m")
+        .addExpected(" normal", STDOUT_KEY)
+        .addExpected(" green", "\u001B[1;32m"),
+      new ColoredText("[0m\n", ProcessOutputTypes.STDOUT).addExpected("\n", STDOUT_KEY)
+    ));
   }
 
   public void testStderr() {
