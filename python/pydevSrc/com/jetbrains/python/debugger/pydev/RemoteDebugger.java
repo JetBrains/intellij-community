@@ -407,7 +407,14 @@ public class RemoteDebugger implements ProcessDebugger {
                                @Nullable String functionName,
                                @NotNull PyDebugCallback<Pair<Boolean, String>> callback) {
     final SetNextStatementCommand command = new SetNextStatementCommand(this, threadId, sourcePosition, functionName, callback);
-    execute(command);
+    try {
+      command.execute();
+    }
+    catch (PyDebuggerException e) {
+      if (isConnected()) {
+        LOG.error(e);
+      }
+    }
   }
 
   @Override
