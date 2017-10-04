@@ -1482,6 +1482,8 @@ class XInternalError {}
     checkResult()
   }
 
+  void testExplicitTypeArgumentsWhenParameterTypesDoNotDependOnTypeParameters() { doTest() }
+
   void testNoFinalInAnonymousConstructor() { doTest() }
 
   void testListArrayListCast() { doTest('\n') }
