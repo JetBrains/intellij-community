@@ -85,7 +85,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
     init();
 
     updateDisplayedChangeLists();
-    setSelectedChangeList(myChangeList);
+    updateSelectedChangeList(myChangeList);
   }
 
   private void installChangeListListener() {
@@ -174,6 +174,10 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
   }
 
   public void setSelectedChangeList(@NotNull LocalChangeList list) {
+    myChangeListChooser.setSelectedChangeList(list);
+  }
+
+  private void updateSelectedChangeList(@NotNull LocalChangeList list) {
     myChangeList = list;
     myChangeListChooser.setToolTipText(list.getName());
     updateDisplayedChanges();
@@ -330,7 +334,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
           if (e.getStateChange() == ItemEvent.SELECTED) {
             LocalChangeList changeList = (LocalChangeList)myChooser.getSelectedItem();
             if (changeList != null) {
-              setSelectedChangeList(changeList);
+              updateSelectedChangeList(changeList);
             }
           }
         }
@@ -352,7 +356,19 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
       myChooser.setModel(new CollectionComboBoxModel<>(lists, currentList));
       myChooser.setEnabled(lists.size() > 1);
 
-      setSelectedChangeList(currentList);
+      updateSelectedChangeList(currentList);
+    }
+
+    public void setSelectedChangeList(@NotNull LocalChangeList list) {
+      ComboBoxModel<LocalChangeList> model = myChooser.getModel();
+      for (int i = 0; i < model.getSize(); i++) {
+        LocalChangeList element = model.getElementAt(i);
+        if (element.getName().equals(list.getName())) {
+          myChooser.setSelectedIndex(i);
+          updateSelectedChangeList(element);
+          return;
+        }
+      }
     }
   }
 
