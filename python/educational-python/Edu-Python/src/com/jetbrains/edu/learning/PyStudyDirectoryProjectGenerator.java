@@ -221,9 +221,9 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
   private static void patchRenderer(@NotNull ProjectJdkImpl fakeSdk, @NotNull PythonSdkChooserCombo combo) {
     combo.getComboBox().setRenderer(new PySdkListCellRenderer(null) {
       @Override
-      public void customize(JList list, Object item, int index, boolean selected, boolean hasFocus) {
-        super.customize(list, item, index, selected, hasFocus);
-        if (item == fakeSdk) {
+      protected void customizeCellRenderer(@NotNull JList<?> list, @Nullable Object value, int index, boolean selected, boolean hasFocus) {
+        super.customizeCellRenderer(list, value, index, selected, hasFocus);
+        if (value == fakeSdk) {
           setIcon(IconLoader.getTransparentIcon(PythonIcons.Python.Virtualenv));
         }
       }

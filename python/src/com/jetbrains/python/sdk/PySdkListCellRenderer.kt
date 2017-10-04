@@ -20,9 +20,11 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkModificator
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.ListCellRendererWrapper
+import com.intellij.ui.SimpleTextAttributes
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import java.awt.Component
 import javax.swing.Icon
@@ -42,32 +44,38 @@ open class PySdkListCellRenderer(private val sdkModifiers: Map<Sdk, SdkModificat
   override fun customizeCellRenderer(list: JList<out Any>, value: Any?, index: Int, selected: Boolean, hasFocus: Boolean) {
     when (value) {
       is Sdk -> {
-        val flavor = PythonSdkFlavor.getPlatformIndependentFlavor(value.homePath)
-        val icon = if (flavor != null) flavor.icon else (value.sdkType as SdkType).icon
-        icon?.let {
-          setIcon(customizeIcon(value, it))
-        }
-        val name = sdkModifiers?.get(value)?.name ?: value.name
-        append(customizeName(value, name))
-        setToolTipText(value.homePath)
+        appendName(value)
+        icon = customizeIcon(value)
       }
       is String -> append(value)
       null -> append("<No interpreter>")
     }
   }
 
+  private fun appendName(sdk: Sdk) {
+    val name = sdkModifiers?.get(sdk)?.name ?: sdk.name
+    when {
+      PythonSdkType.isInvalid(sdk) || PythonSdkType.hasInvalidRemoteCredentials(sdk) ->
+        append("[invalid] $name", SimpleTextAttributes.ERROR_ATTRIBUTES)
+      PythonSdkType.isIncompleteRemote(sdk) ->
+        append("[incomplete] $name", SimpleTextAttributes.ERROR_ATTRIBUTES)
+      else ->
+        append(name)
+    }
+    val homePath = sdk.homePath
+    val relHomePath = homePath?.let { FileUtil.getLocationRelativeToUserHome(it) }
+    if (relHomePath != null && homePath !in name && relHomePath !in name) {
+      append(" $relHomePath", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+    }
+  }
+
   companion object {
     const val SEPARATOR = "separator"
 
-    private fun customizeName(sdk: Sdk, name: String): String =
-      when {
-        PythonSdkType.isInvalid(sdk) || PythonSdkType.hasInvalidRemoteCredentials(sdk) -> "[invalid] $name"
-        PythonSdkType.isIncompleteRemote(sdk) -> "[incomplete] $name"
-        else -> name
-      }
-
-    private fun customizeIcon(sdk: Sdk, icon: Icon): Icon =
-      when {
+    private fun customizeIcon(sdk: Sdk): Icon? {
+      val flavor = PythonSdkFlavor.getPlatformIndependentFlavor(sdk.homePath)
+      val icon = if (flavor != null) flavor.icon else (sdk.sdkType as? SdkType)?.icon ?: return null
+      return when {
         PythonSdkType.isInvalid(sdk) || PythonSdkType.isIncompleteRemote(sdk) || PythonSdkType.hasInvalidRemoteCredentials(sdk) ->
           wrapIconWithWarningDecorator(icon)
         sdk is PyDetectedSdk ->
@@ -75,6 +83,7 @@ open class PySdkListCellRenderer(private val sdkModifiers: Map<Sdk, SdkModificat
         else ->
           icon
       }
+    }
 
     private fun wrapIconWithWarningDecorator(icon: Icon): LayeredIcon =
       LayeredIcon(2).apply {
