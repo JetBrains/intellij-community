@@ -22,8 +22,8 @@ import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.externalSystem.service.project.manage.FacetConfigurationImporter;
-import com.intellij.openapi.externalSystem.service.project.manage.RunConfigurationImporter;
+import com.intellij.openapi.externalSystem.service.project.settings.FacetConfigurationImporter;
+import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -41,7 +41,7 @@ import org.junit.runners.Parameterized;
 
 import java.util.*;
 
-import static com.intellij.openapi.externalSystem.service.project.manage.ConfigurationDataService.EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED;
+import static com.intellij.openapi.externalSystem.service.project.settings.ConfigurationDataService.EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED;
 
 /**
  * Created by Nikita.Skvortsov

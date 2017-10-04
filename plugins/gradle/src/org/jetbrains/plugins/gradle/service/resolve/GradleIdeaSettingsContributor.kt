@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.resolve
 
-import com.intellij.openapi.externalSystem.service.project.manage.ConfigurationDataService
+import com.intellij.openapi.externalSystem.service.project.settings.ConfigurationDataService
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.JavaPsiFacade

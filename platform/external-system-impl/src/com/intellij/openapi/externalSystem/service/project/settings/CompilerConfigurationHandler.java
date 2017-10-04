@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.externalSystem.service.project.manage;
+package com.intellij.openapi.externalSystem.service.project.settings;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
@@ -22,7 +22,7 @@ import com.intellij.compiler.options.CompilerUIConfigurable;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.model.project.ConfigurationData;
+import com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;

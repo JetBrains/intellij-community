@@ -17,7 +17,7 @@ package com.intellij.execution.junit
 
 import com.intellij.execution.RunManager
 import com.intellij.execution.configurations.ConfigurationTypeUtil
-import com.intellij.openapi.externalSystem.service.project.manage.RunConfigurationImporter
+import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter
 import com.intellij.openapi.module.Module
 import com.intellij.rt.execution.junit.RepeatCount
 import java.util.*

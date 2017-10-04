@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.externalSystem.service.project.manage
+package com.intellij.openapi.externalSystem.service.project.settings
 
 import com.intellij.facet.Facet
 import com.intellij.facet.FacetConfiguration
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
-import com.intellij.openapi.externalSystem.model.project.ConfigurationData
+import com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -39,7 +39,8 @@ class FacetConfigurationHandler : ConfigurationHandler {
   override fun apply(module: Module, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
     val modifiableModel = modelsProvider.getModifiableFacetModel(module)
     configuration.eachFacet { typeName, name, cfg ->
-      FacetHandlerExtensionManager.handlerForType(typeName)?.process(module, name, cfg, FacetManager.getInstance(module))
+      FacetHandlerExtensionManager.handlerForType(
+        typeName)?.process(module, name, cfg, FacetManager.getInstance(module))
     }.forEach {
       modifiableModel.addFacet(it)
     }

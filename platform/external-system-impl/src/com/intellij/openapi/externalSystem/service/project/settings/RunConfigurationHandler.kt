@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.externalSystem.service.project.manage
+package com.intellij.openapi.externalSystem.service.project.settings
 
 import com.intellij.execution.RunManager
 import com.intellij.execution.application.ApplicationConfiguration
@@ -21,7 +21,7 @@ import com.intellij.execution.application.ApplicationConfigurationType
 import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
-import com.intellij.openapi.externalSystem.model.project.ConfigurationData
+import com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -39,13 +39,15 @@ class RunConfigurationHandler: ConfigurationHandler {
 
   override fun apply(module: Module, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
     configuration.eachRunConfiguration { typeName, name, cfg ->
-      RunConfigHandlerExtensionManager.handlerForType(typeName)?.process(module, name, cfg )
+      RunConfigHandlerExtensionManager.handlerForType(
+        typeName)?.process(module, name, cfg )
     }
   }
 
   override fun apply(project: Project, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
     configuration.eachRunConfiguration { typeName, name, cfg ->
-      RunConfigHandlerExtensionManager.handlerForType(typeName)?.process(project, name, cfg)
+      RunConfigHandlerExtensionManager.handlerForType(
+        typeName)?.process(project, name, cfg)
     }
   }
 
@@ -56,25 +58,25 @@ class RunConfigurationHandler: ConfigurationHandler {
 
     runCfgMap.forEach { name, cfg ->
       if (name !is String) {
-        RunConfigurationHandler.LOG.warn("unexpected key type in runConfigurations map: ${name?.javaClass?.name}, skipping")
+        LOG.warn("unexpected key type in runConfigurations map: ${name?.javaClass?.name}, skipping")
         return@forEach
       }
       if (cfg !is Map<*, *>) {
-        RunConfigurationHandler.LOG.warn("unexpected value type in runConfigurations map: ${cfg?.javaClass?.name}, skipping")
+        LOG.warn("unexpected value type in runConfigurations map: ${cfg?.javaClass?.name}, skipping")
         return@forEach
       }
 
       val typeName = cfg["type"] as? String
 
       if (typeName == null) {
-        RunConfigurationHandler.LOG.warn("Missing type for run configuration: ${name}, skipping")
+        LOG.warn("Missing type for run configuration: ${name}, skipping")
         return@forEach
       }
 
       try {
         f(typeName, name, cfg as Map<String, *>)
       } catch (e: Exception) {
-        RunConfigurationHandler.LOG.warn("Error occurred when importing run configuration ${name}: ${e.message}", e)
+        LOG.warn("Error occurred when importing run configuration ${name}: ${e.message}", e)
       }
     }
   }

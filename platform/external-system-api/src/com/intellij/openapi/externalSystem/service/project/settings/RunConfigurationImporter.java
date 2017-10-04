@@ -13,32 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.externalSystem.service.project.manage;
+package com.intellij.openapi.externalSystem.service.project.settings;
 
-import com.intellij.facet.Facet;
-import com.intellij.facet.FacetManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 
-/**
- * Created by Nikita.Skvortsov
- * date: 12.09.2017.
- */
-public interface FacetConfigurationImporter<F extends Facet> {
-  ExtensionPointName<FacetConfigurationImporter> EP_NAME = ExtensionPointName.create("com.intellij.facetConfigurationImporter");
+@ApiStatus.Experimental
+public interface RunConfigurationImporter {
+  ExtensionPointName<RunConfigurationImporter> EP_NAME = ExtensionPointName.create("com.intellij.runConfigurationImporter");
 
-  @NotNull
-  default Collection<F> process(@NotNull Module module,
-                                @NotNull String name,
-                                @NotNull Map<String, Object> cfg,
-                                @NotNull FacetManager facetManager) {
-    return Collections.emptySet();
-  }
+  default void process(@NotNull Project project, @NotNull String name, @NotNull Map<String, Object> cfg) {}
+  default void process(@NotNull Module module, @NotNull  String name, @NotNull Map<String, Object> cfg) {}
   default boolean canHandle(@NotNull String typeName) {
     return false;
   }
