@@ -133,7 +133,7 @@ public class PySdkUtil {
 
       final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(commandLine.getExePath());
 
-      final CommandLinePatcher cmdLinePatcher = flavor.commandLinePatcher();
+      final CommandLinePatcher cmdLinePatcher = flavor != null ? flavor.commandLinePatcher() : null;
       if (cmdLinePatcher != null) {
         cmdLinePatcher.patchCommandLine(cmd);
       }
