@@ -33,7 +33,7 @@ class PySdkPathChoosingComboBox(sdks: List<Sdk>, suggestedFile: VirtualFile?) :
 
   init {
     childComponent.apply {
-      renderer = PySdkListCellRenderer("<No Interpreter>", null)
+      renderer = PySdkListCellRenderer(null)
       ComboboxSpeedSearch(this)
     }
     addActionListener {

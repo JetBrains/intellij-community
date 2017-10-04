@@ -329,7 +329,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     items.add(PySdkListCellRenderer.SEPARATOR);
     items.add(SHOW_ALL);
 
-    mySdkCombo.setRenderer(new PySdkListCellRenderer());
+    mySdkCombo.setRenderer(new PySdkListCellRenderer(null));
     mySdkCombo.setModel(new CollectionComboBoxModel<>(items, selection));
   }
 
