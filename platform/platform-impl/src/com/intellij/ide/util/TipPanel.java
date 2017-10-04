@@ -20,6 +20,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ui.DialogWrapper.DoNotAskOption;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBLabel;
@@ -34,6 +35,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class TipPanel extends JPanel implements DoNotAskOption {
+  private static final JBColor DIVIDER_COLOR = new JBColor(0xd9d9d9, 0x515151);
   private static final int DEFAULT_WIDTH = 400;
   private static final int DEFAULT_HEIGHT = 200;
 
@@ -44,7 +46,8 @@ public class TipPanel extends JPanel implements DoNotAskOption {
   public TipPanel() {
     setLayout(new BorderLayout());
     myBrowser = TipUIUtil.createTipBrowser();
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myBrowser);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myBrowser, true);
+    scrollPane.setBorder(JBUI.Borders.customLine(DIVIDER_COLOR, 1, 0, 1, 0));
     add(scrollPane, BorderLayout.CENTER);
 
     myPoweredByLabel = new JBLabel();
