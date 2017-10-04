@@ -97,10 +97,7 @@ open class GuiTestCase {
   /**
    * default timeout to find target component for fixture. Using seconds as time unit.
    */
-  var defaultTimeout = 120L
-
-  private val screenshotTaker = ScreenshotTaker()
-  private var pathToSaveScreenshots = getTestScreenshotDirPath()
+  val defaultTimeout = 120L
 
   val settingsTitle: String = if (isMac()) "Preferences" else "Settings"
   val defaultSettingsTitle: String = if (isMac()) "Default Preferences" else "Default Settings"
@@ -583,7 +580,7 @@ open class GuiTestCase {
   fun screenshot(component: Component, screenshotName: String) {
 
     val extension = "${getScaleSuffix()}.png"
-    val pathWithTestFolder = pathToSaveScreenshots.path + File.separator + this.guiTestRule.getTestName()
+    val pathWithTestFolder = getTestScreenshotDirPath().path + slash + this.guiTestRule.getTestName()
     val fileWithTestFolder = File(pathWithTestFolder)
     FileUtil.ensureExists(fileWithTestFolder)
     var screenshotFilePath = File(fileWithTestFolder, screenshotName + extension)
@@ -592,7 +589,7 @@ open class GuiTestCase {
       val now = format.format(GregorianCalendar().time)
       screenshotFilePath = File(fileWithTestFolder, screenshotName + "." + now + extension)
     }
-    screenshotTaker.saveComponentAsPng(component, screenshotFilePath.path)
+    ScreenshotTaker().saveComponentAsPng(component, screenshotFilePath.path)
     println(message = "Screenshot for a component \"$component\" taken and stored at ${screenshotFilePath.path}")
 
   }
