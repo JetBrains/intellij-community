@@ -30,10 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -154,7 +151,7 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
       }
       ExtractionContext context = ExtractionContext.from(ifStatement, myMayChangeSemantics);
       if (context == null) return;
-      List<ExtractionUnit> units = context.getStartingUnits();
+      List<ExtractionUnit> units = context.getHeadUnits();
 
       if (context.getImplicitElse() == null) {
         if (!tryCleanUpHead(ifStatement, units, factory)) return;
@@ -339,7 +336,7 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
   }
 
   private static class ExtractionContext {
-    private final List<ExtractionUnit> myStartingUnits;
+    private final List<ExtractionUnit> myHeadUnits;
     private final List<PsiStatement> myFinishingStatements; // In reversed order
     private final CommonPartType myType;
     private final @Nullable ImplicitElse myImplicitElse;
@@ -348,20 +345,20 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
                               List<PsiStatement> statements,
                               CommonPartType type,
                               @Nullable ImplicitElse implicitElse) {
-      myStartingUnits = units;
+      myHeadUnits = units;
       myFinishingStatements = statements;
       myType = type;
       myImplicitElse = implicitElse;
     }
 
     boolean mayChangeSemantics() {
-      return !myStartingUnits.isEmpty() && StreamEx.of(myStartingUnits)
+      return !myHeadUnits.isEmpty() && StreamEx.of(myHeadUnits)
         .anyMatch(unit -> unit.mayChangeSemantics() && !(unit.getThenStatement() instanceof PsiDeclarationStatement));
     }
 
 
-    public List<ExtractionUnit> getStartingUnits() {
-      return myStartingUnits;
+    public List<ExtractionUnit> getHeadUnits() {
+      return myHeadUnits;
     }
 
     public List<PsiStatement> getTailStatements() {
