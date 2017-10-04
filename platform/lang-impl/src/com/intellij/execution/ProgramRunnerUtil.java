@@ -16,11 +16,9 @@
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ExecutionUtil;
@@ -100,12 +98,11 @@ public class ProgramRunnerUtil {
         environment.assignNewExecutionId();
       }
 
-     /* if (callback != null) {
+      if (callback != null) {
         environment.getRunner().execute(environment, callback);
       } else {
         environment.getRunner().execute(environment);
-      }*/
-     throw new ProcessNotCreatedException("87", new GeneralCommandLine("zvewrgvewrvgbrtbnre"));
+      }
     }
     catch (ExecutionException e) {
       String name = runnerAndConfigurationSettings != null ? runnerAndConfigurationSettings.getName() : null;
