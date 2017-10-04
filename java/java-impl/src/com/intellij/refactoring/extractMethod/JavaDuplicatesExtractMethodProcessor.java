@@ -17,7 +17,6 @@ import com.intellij.refactoring.util.VariableData;
 import com.intellij.refactoring.util.duplicates.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +49,7 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
     for (int i = 0; i < from.myVariableDatum.length; i++) {
       VariableData fromData = from.myVariableDatum[i];
       PsiVariable mappedVariable = variablesMapping.get(fromData.variable);
-      if (isReferenced(mappedVariable)) {
+      if (isReferenced(mappedVariable, fromData.variable)) {
         VariableData newData = new VariableData(mappedVariable, fromData.type);
         newData.name = fromData.name;
         newData.originalName = fromData.originalName;
@@ -65,9 +64,9 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
     myVariableDatum = variableDatum.toArray(new VariableData[0]);
   }
 
-  @Contract("null -> false")
-  private boolean isReferenced(@Nullable PsiVariable variable) {
-    return variable != null && ReferencesSearch.search(variable, new LocalSearchScope(myElements)).findFirst() != null;
+  private boolean isReferenced(@Nullable PsiVariable variable, PsiVariable fromVariable) {
+    return variable == fromVariable || // it's a freshlyDeclaredParameter
+           (variable != null && ReferencesSearch.search(variable, new LocalSearchScope(myElements)).findFirst() != null);
   }
 
   public void applyDefaults(@NotNull String methodName, @PsiModifier.ModifierConstant @NotNull String visibility) {
