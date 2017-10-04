@@ -264,21 +264,32 @@ public abstract class StatusText {
   }
 
   private void doPaintStatusText(@NotNull Graphics g, @NotNull Rectangle bounds) {
-    paintComponentAtY(myComponent, g, bounds, 0);
-    if (hasSecondaryText()) paintComponentAtY(mySecondaryComponent, g, bounds, bounds.height / 2 + Y_GAP);
+    if (!hasSecondaryText()) {
+      paintComponentInBounds(myComponent, g, bounds);
+    }
+    else {
+      Rectangle primaryBounds = adjustComponentBounds(myComponent, bounds);
+      Rectangle secondaryBounds = adjustComponentBounds(mySecondaryComponent, bounds);
+      secondaryBounds.y += primaryBounds.height + Y_GAP;
+
+      paintComponentInBounds(myComponent, g, primaryBounds);
+      paintComponentInBounds(mySecondaryComponent, g, secondaryBounds);
+    }
+  }
+
+  @NotNull
+  private static Rectangle adjustComponentBounds(@NotNull JComponent component, @NotNull Rectangle bounds) {
+    Dimension size = component.getPreferredSize();
+    return new Rectangle(bounds.x + (bounds.width - size.width) / 2, bounds.y, size.width, size.height);
   }
 
   private boolean hasSecondaryText() {
     return mySecondaryComponent.getCharSequence(false).length() > 0;
   }
 
-  private static void paintComponentAtY(@NotNull SimpleColoredComponent component, @NotNull Graphics g,
-                                        @NotNull Rectangle bounds, int yCoord) {
-    Dimension size = component.getPreferredSize();
-    Graphics2D g2 = (Graphics2D)g.create(bounds.x + (bounds.width - size.width) / 2,
-                                         bounds.y + yCoord,
-                                         size.width, size.height);
-    component.setBounds(0, 0, size.width, size.height);
+  private static void paintComponentInBounds(@NotNull SimpleColoredComponent component, @NotNull Graphics g, @NotNull Rectangle bounds) {
+    Graphics2D g2 = (Graphics2D)g.create(bounds.x, bounds.y, bounds.width, bounds.height);
+    component.setBounds(0, 0, bounds.width, bounds.height);
     component.paint(g2);
     g2.dispose();
   }
