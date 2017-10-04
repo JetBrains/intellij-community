@@ -194,10 +194,10 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = new JavaParameters();
-    javaParameters.setUseClasspathJar(true);
+    Project project = getConfiguration().getProject();
+    javaParameters.setShortenClasspath(getConfiguration().getShortenClasspath(), project);
     final Module module = getConfiguration().getConfigurationModule().getModule();
 
-    Project project = getConfiguration().getProject();
     Sdk jdk = module == null ? ProjectRootManager.getInstance(project).getProjectSdk() : ModuleRootManager.getInstance(module).getSdk();
     javaParameters.setJdk(jdk);
     

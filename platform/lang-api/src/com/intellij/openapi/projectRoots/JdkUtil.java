@@ -35,15 +35,12 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.execution.ParametersListUtil;
-import com.intellij.util.lang.ClassPath;
 import com.intellij.util.lang.UrlClassLoader;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
@@ -175,7 +172,7 @@ public class JdkUtil {
         dynamicMainClass = dynamicParameters;
       }
       else if (!explicitClassPath(vmParameters) && javaParameters.getJarPath() == null && (commandLineWrapper = getCommandLineWrapperClass()) != null) {
-        if (canUseClasspathJar(javaParameters)) {
+        if (javaParameters.isUseClasspathJar()) {
           setClasspathJarParams(commandLine, javaParameters, vmParameters, commandLineWrapper, dynamicVMOptions, dynamicParameters);
         }
         else {
@@ -429,33 +426,6 @@ public class JdkUtil {
 
   private static void throwUnableToCreateTempFile(IOException cause) throws CantRunException {
     throw new CantRunException("Failed to a create temporary file in " + FileUtilRt.getTempDirectory(), cause);
-  }
-
-  private static boolean canUseClasspathJar(SimpleJavaParameters javaParameters) {
-    String currentPath = PathUtil.getJarPathForClass(ClassPath.class);
-    if (javaParameters.isUseClasspathJar() && useClasspathJar()) {
-      try {
-        final List<URL> urls = new ArrayList<>();
-        for (String path : javaParameters.getClassPath().getPathList()) {
-          if (!path.equals(currentPath)) {
-            try {
-              urls.add(new File(path).toURI().toURL());
-            }
-            catch (MalformedURLException ignore) {}
-          }
-        }
-        final Class<?> aClass = Class.forName("com.intellij.util.lang.ClassPath", false, UrlClassLoader.build().urls(urls).get());
-        try {
-          aClass.getDeclaredMethod("initLoaders", URL.class, boolean.class, int.class);
-        }
-        catch (NoSuchMethodException e) {
-          return false;
-        }
-      }
-      catch (Throwable ignore) {}
-      return true;
-    }
-    return false;
   }
 
   private static void appendParamsEncodingClasspath(SimpleJavaParameters javaParameters,
