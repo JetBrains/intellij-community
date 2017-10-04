@@ -20,30 +20,39 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkModificator
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.util.IconLoader
+import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.ListCellRendererWrapper
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import java.awt.Component
 import javax.swing.Icon
 import javax.swing.JList
 
 /**
  * @author vlan
  */
-open class PySdkListCellRenderer(private val sdkModifiers: Map<Sdk, SdkModificator>?) : ListCellRendererWrapper<Any>() {
-  override fun customize(list: JList<*>, item: Any?, index: Int, selected: Boolean, hasFocus: Boolean) {
-    when (item) {
+open class PySdkListCellRenderer(private val sdkModifiers: Map<Sdk, SdkModificator>?) : ColoredListCellRenderer<Any>() {
+  override fun getListCellRendererComponent(list: JList<out Any>?, value: Any?, index: Int, selected: Boolean,
+                                            hasFocus: Boolean): Component =
+    when (value) {
+      SEPARATOR -> ListCellRendererWrapper.createSeparator(null)
+      else -> super.getListCellRendererComponent(list, value, index, selected, hasFocus)
+    }
+
+  override fun customizeCellRenderer(list: JList<out Any>, value: Any?, index: Int, selected: Boolean, hasFocus: Boolean) {
+    when (value) {
       is Sdk -> {
-        val flavor = PythonSdkFlavor.getPlatformIndependentFlavor(item.homePath)
-        val icon = if (flavor != null) flavor.icon else (item.sdkType as SdkType).icon
+        val flavor = PythonSdkFlavor.getPlatformIndependentFlavor(value.homePath)
+        val icon = if (flavor != null) flavor.icon else (value.sdkType as SdkType).icon
         icon?.let {
-          setIcon(customizeIcon(item, it))
+          setIcon(customizeIcon(value, it))
         }
-        val name = sdkModifiers?.get(item)?.name ?: item.name
-        setText(customizeName(item, name))
-        setToolTipText(item.homePath)
+        val name = sdkModifiers?.get(value)?.name ?: value.name
+        append(customizeName(value, name))
+        setToolTipText(value.homePath)
       }
-      SEPARATOR -> setSeparator()
-      null -> setText("<No interpreter>")
+      is String -> append(value)
+      null -> append("<No interpreter>")
     }
   }
 
