@@ -414,18 +414,20 @@ open class GuiTestCase {
    * @throws ComponentLookupException if component has not been found or timeout exceeded
    */
   fun <S, C : Component> ComponentFixture<S, C>.table(cellText: String, timeout: Long = defaultTimeout): JTableFixture =
-    if (target() is Container)
-      waitUntilFoundFixture(target() as Container, JTable::class.java, timeout) {
+    if (target() is Container) {
+      val jTable = waitUntilFound(target() as Container, JTable::class.java, timeout) {
         val jTableFixture = JTableFixture(guiTestRule.robot(), it)
         jTableFixture.replaceCellReader(ExtendedJTableCellReader())
-        val hasCellWithText = try {
-          jTableFixture.cell(cellText); true
+        try {
+          jTableFixture.cell(cellText)
+          true
         }
         catch (e: ActionFailedException) {
           false
         }
-        Pair(hasCellWithText, jTableFixture)
       }
+      JTableFixture(guiTestRule.robot(), jTable)
+    }
     else throw UnableToFindComponent("""JTable with cell text "$cellText"""")
 
   /**
@@ -658,20 +660,6 @@ open class GuiTestCase {
                                                  timeout: Long,
                                                  matcher: (ComponentType) -> Boolean): ComponentType {
     return GuiTestUtil.waitUntilFound(guiTestRule.robot(), container, typeMatcher(componentClass) { matcher(it) }, timeout.toFestTimeout())
-  }
-
-  private fun <Fixture, ComponentType : Component> waitUntilFoundFixture(container: Container?,
-                                                                         componentClass: Class<ComponentType>,
-                                                                         timeout: Long,
-                                                                         matcher: (ComponentType) -> Pair<Boolean, Fixture>): Fixture {
-    val ref = Ref<Fixture>()
-    GuiTestUtil.waitUntilFound(guiTestRule.robot(), container, typeMatcher(componentClass)
-    {
-      val (matched, fixture) = matcher(it)
-      if (matched) ref.set(fixture)
-      matched
-    }, timeout.toFestTimeout())
-    return ref.get()
   }
 
   fun pause(condition: String = "Unspecified condition", timeoutSeconds: Long = 120, testFunction: () -> Boolean) {
