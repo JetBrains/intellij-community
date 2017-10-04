@@ -56,7 +56,7 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
     final Sdk initialSelection = ContainerUtil.find(sdks, acceptableSdkCondition);
     final JComboBox comboBox = getComboBox();
     comboBox.setModel(new CollectionComboBoxModel(sdks, initialSelection));
-    comboBox.setRenderer(new PySdkListCellRenderer());
+    comboBox.setRenderer(new PySdkListCellRenderer(null));
     addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         showOptions(project);
