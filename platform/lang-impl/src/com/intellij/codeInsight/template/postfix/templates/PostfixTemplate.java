@@ -1,26 +1,14 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplateMetaData;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
+import com.intellij.codeInsight.template.postfix.templates.editable.PostfixEditableTemplateProvider;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -29,12 +17,30 @@ public abstract class PostfixTemplate {
   @NotNull private final String myKey;
   @NotNull private final String myDescription;
   @NotNull private final String myExample;
+  @Nullable private final PostfixTemplateProvider myProvider;
 
+  /**
+   * @deprecated use {@link #PostfixTemplate(String, String, PostfixTemplateProvider)}
+   */
   protected PostfixTemplate(@NotNull String name, @NotNull String example) {
-    this(name, "." + name, example);
+    this(name, "." + name, example, null);
+  }
+  
+  protected PostfixTemplate(@NotNull String name, @NotNull String example, @Nullable PostfixTemplateProvider provider) {
+    this(name, "." + name, example, provider);
+  }
+  
+  /**
+   * @deprecated use {@link #PostfixTemplate(String, String, String, PostfixTemplateProvider)} 
+   */
+  protected PostfixTemplate(@NotNull String name, @NotNull String key, @NotNull String example) {
+    this(name, key, example, null);
   }
 
-  protected PostfixTemplate(@NotNull String name, @NotNull String key, @NotNull String example) {
+  protected PostfixTemplate(@NotNull String name,
+                            @NotNull String key,
+                            @NotNull String example,
+                            @Nullable PostfixTemplateProvider provider) {
     String tempDescription;
     myPresentableName = name;
     myKey = key;
@@ -47,6 +53,7 @@ public abstract class PostfixTemplate {
       tempDescription = "Under construction";
     }
     myDescription = tempDescription;
+    myProvider = provider;
   }
 
   @NotNull
@@ -81,4 +88,17 @@ public abstract class PostfixTemplate {
   public abstract boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset);
 
   public abstract void expand(@NotNull PsiElement context, @NotNull Editor editor);
+
+  @Nullable
+  public PostfixTemplateProvider getProvider() {
+    return myProvider;
+  }
+
+  public boolean isBuiltin() {
+    return true;
+  }
+
+  public boolean isEditable() {
+    return getProvider() instanceof PostfixEditableTemplateProvider;
+  }
 }
