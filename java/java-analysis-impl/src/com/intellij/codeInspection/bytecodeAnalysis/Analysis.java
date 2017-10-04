@@ -198,12 +198,18 @@ final class State {
   final boolean taken;
   final boolean hasCompanions;
 
-  State(int index, Conf conf, List<Conf> history, boolean taken, boolean hasCompanions) {
+  /**
+   * Whether this state was reached via an exceptional path (jump to catch block)
+   */
+  final boolean exceptional;
+
+  State(int index, Conf conf, List<Conf> history, boolean taken, boolean hasCompanions, boolean exceptional) {
     this.index = index;
     this.conf = conf;
     this.history = history;
     this.taken = taken;
     this.hasCompanions = hasCompanions;
+    this.exceptional = exceptional;
   }
 }
 
@@ -236,11 +242,14 @@ abstract class Analysis<Res> {
   }
 
   final State createStartState() {
-    return new State(0, new Conf(0, createStartFrame()), new ArrayList<>(), false, false);
+    return new State(0, new Conf(0, createStartFrame()), new ArrayList<>(), false, false, false);
   }
 
   static boolean stateEquiv(State curr, State prev) {
     if (curr.taken != prev.taken) {
+      return false;
+    }
+    if (curr.exceptional != prev.exceptional) {
       return false;
     }
     if (curr.conf.fastHashCode != prev.conf.fastHashCode) {

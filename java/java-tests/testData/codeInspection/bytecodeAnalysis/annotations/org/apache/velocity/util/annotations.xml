@@ -164,9 +164,6 @@
         </annotation>
     </item>
     <item name='org.apache.velocity.util.StringUtils java.lang.String stackTrace(java.lang.Throwable)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null-&gt;null&quot;"/>
-        </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.velocity.util.StringUtils java.lang.String sub(java.lang.String, java.lang.String, java.lang.String)'>
