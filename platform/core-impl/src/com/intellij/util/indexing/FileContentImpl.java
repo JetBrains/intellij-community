@@ -102,7 +102,7 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
     myLighterASTShouldBeThreadSafe = true;
   }
 
-  public PsiFile createFileFromText(@NotNull CharSequence text) {
+  private PsiFile createFileFromText(@NotNull CharSequence text) {
     Project project = getProject();
     if (project == null) {
       project = DefaultProjectFactory.getInstance().getDefaultProject();

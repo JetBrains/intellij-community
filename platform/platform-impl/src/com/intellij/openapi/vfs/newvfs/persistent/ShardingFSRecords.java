@@ -1,5 +1,9 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
+import com.intellij.cassandra.CassandraIndexTable;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
@@ -16,51 +20,51 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
+import java.util.Set;
 import java.util.function.IntPredicate;
-import java.util.function.Supplier;
 
 public class ShardingFSRecords implements IFSRecords {
 
-  private final Supplier<IFSRecords> myFactory;
+  private final Function<Integer, IFSRecords> myFactory;
 
   private PagedFileStorage.StorageLockContext myContext;
   private PersistentStringEnumerator myNames;
   private FileNameCache myCache;
   private VfsDependentEnum<String> myAttrsList;
-  private final Object lock = new Object();
 
   private TIntObjectHashMap<FSRecordsShard> myShards = new TIntObjectHashMap<>();
 
-  public ShardingFSRecords(Supplier<IFSRecords> shardFactory) {
+  private TIntObjectHashMap<FSRecordsSource.MountPoint> myMounts;
+  private Multimap<Integer, Integer> myMountsInverted = ArrayListMultimap.create();
+
+  public ShardingFSRecords(Function<Integer, IFSRecords> shardFactory) {
     myFactory = shardFactory;
   }
 
   public void dumpToCassandra() {
-    for (FSRecordsShard records : getShards()) {
-      records.dumpToCassandra();
+    getShards().forEach(FSRecordsShard::dumpToCassandra);
+  }
+
+  private FSRecordsShard getShard(int shardId) {
+    if (myConnectedShards.contains(shardId)) {
+      return myShards.get(shardId);
+    }
+
+    synchronized (myConnectedShards) {
+      FSRecordsShard shard = myShards.get(shardId);
+      if (myConnectedShards.contains(shardId)) {
+        return shard;
+      }
+      shard.connect(myContext, myNames, myCache, myAttrsList);
+      myConnectedShards.add(shardId);
+      return shard;
     }
   }
 
-  private FSRecordsShard getShard(int recordId) {
-    int shardId = ((recordId < 0 ? -recordId : recordId) << 24) >> 24;
-    FSRecordsShard shard = myShards.get(shardId);
-    if (shard != null) {
-      return shard;
-    }
-    synchronized (lock) {
-      shard = myShards.get(shardId);
-      if (shard != null) {
-        return shard;
-      }
-      shard = new FSRecordsShard(shardId, myFactory.get());
-      shard.connect(myContext, myNames, myCache, myAttrsList);
-      myShards.put(shardId, shard);
-      return shard;
-    }
+  private FSRecordsShard getShardForRecord(int recordId) {
+    return getShard(FSRecordsShard.getShardId(recordId));
   }
 
   public Collection<FSRecordsShard> getShards() {
@@ -73,8 +77,10 @@ public class ShardingFSRecords implements IFSRecords {
 
   @Override
   public void writeAttributesToRecord(int id, int parentId, @NotNull FileAttributes attributes, @NotNull String name) {
-    getShard(id).writeAttributesToRecord(id, parentId, attributes, name);
+    getShardForRecord(id).writeAttributesToRecord(id, parentId, attributes, name);
   }
+
+  private Set<Integer> myConnectedShards = ContainerUtil.newConcurrentSet();
 
   @Override
   public void connect(PagedFileStorage.StorageLockContext lockContext, PersistentStringEnumerator names, FileNameCache fileNameCache, VfsDependentEnum<String> attrsList) {
@@ -82,23 +88,29 @@ public class ShardingFSRecords implements IFSRecords {
     myNames = names;
     myCache = fileNameCache;
     myAttrsList = attrsList;
+    myMounts = CassandraIndexTable.getInstance().getMounts(0);
+    myMounts.forEach(id -> {
+      FSRecordsSource.MountPoint mp = myMounts.get(id);
+
+      myMountsInverted.put(FSRecordsShard.addShardId(mp.fileId, mp.shardId), id);
+
+      return true;
+    });
+    for(int shardId = 0; shardId <= 2254; ++shardId) { // TODO iterate shards properly
+      IFSRecords delegate = myFactory.fun(shardId);
+      FSRecordsShard shard = new FSRecordsShard(shardId, delegate);
+      myShards.put(shardId, shard);
+    }
   }
 
   @Override
   public void force() {
-    for (IFSRecords records : getShards()) {
-      records.force();
-    }
+    getShards().forEach(IFSRecords::force);
   }
 
   @Override
   public boolean isDirty() {
-    for (IFSRecords records : getShards()) {
-      if (records.isDirty()) {
-        return true;
-      }
-    }
-    return false;
+    return getShards().stream().anyMatch(IFSRecords::isDirty);
   }
 
   @Override
@@ -113,73 +125,84 @@ public class ShardingFSRecords implements IFSRecords {
 
   @Override
   public void requestRebuild(int fileId, @NotNull Throwable e) throws RuntimeException, Error {
-    getShard(fileId).requestRebuild(fileId, e);
-  }
-
-  @Override
-  public long getCreationTimestamp() {
-    return getShard(1).getCreationTimestamp();
+    getShardForRecord(fileId).requestRebuild(fileId, e);
   }
 
   @Override
   public int createChildRecord(int parentId) {
-    return getShard(parentId).createChildRecord(parentId);
+    return getShardForRecord(parentId).createChildRecord(parentId);
   }
 
   @Override
   public void deleteRecordRecursively(int id) {
-    getShard(id).deleteRecordRecursively(id);
+    getShardForRecord(id).deleteRecordRecursively(id);
   }
 
   @NotNull
   @Override
   public RootRecord[] listRoots() {
-    List<RootRecord> l = new ArrayList<>();
-    for (IFSRecords records : getShards()) {
-      l.addAll(Arrays.asList(records.listRoots()));
-    }
-    return l.toArray(new RootRecord[0]);
+    return getShards().stream()
+      .flatMap(shard -> Arrays.stream(shard.listRoots()))
+      .toArray(RootRecord[]::new);
   }
 
   @Override
   public int findRootRecord(@NotNull String rootUrl) {
-    // TODO!!!!!!!
-    for (IFSRecords records : getShards()) {
-      int record = records.findRootRecord(rootUrl);
-      if (record > 0) {
-        return record;
-      }
-    }
-    int record = getShard(1).findRootRecord(rootUrl);
-    assert record > 0 : record;
-    return record;
+    return Arrays.stream(listRoots())
+      .filter(record -> record.url.equals(rootUrl))
+      .findFirst()
+      .map(record -> record.id)
+      .orElseGet(() -> getAnyShard().findRootRecord(rootUrl));
   }
 
   @Override
   public void deleteRootRecord(int id) {
-    getShard(id).deleteRootRecord(id);
+    getShardForRecord(id).deleteRootRecord(id);
   }
 
   @NotNull
   @Override
   public int[] list(int id) {
-    return getShard(id).list(id);
+    int[] children = getShardForRecord(id).list(id);
+    Collection<Integer> shards = myMountsInverted.get(id);
+    if (shards == null) {
+      return children;
+    } else {
+      TIntArrayList ch = new TIntArrayList(children);
+      for (Integer shard : shards) {
+        ch.add(FSRecordsShard.addShardId(2, shard)); // TODO: ugly hack!
+      }
+      return ch.toNativeArray();
+    }
   }
 
   @NotNull
   @Override
   public NameId[] listAll(int parentId) {
-    return getShard(parentId).listAll(parentId);
+    int[] ids = list(parentId);
+    NameId[] result = new NameId[ids.length];
+    for (int i = 0; i < ids.length; i++) {
+      int id = ids[i];
+      result[i] = new NameId(id, getNameId(id), getName(id));
+    }
+    return result;
   }
 
   @Override
   public boolean wereChildrenAccessed(int id) {
-    return getShard(id).wereChildrenAccessed(id);
+    return getShardForRecord(id).wereChildrenAccessed(id);
   }
 
   @Override
   public void updateList(int id, @NotNull int[] childIds) {
-    getShard(id).updateList(id, childIds);
+    Collection<Integer> shards = myMountsInverted.get(id);
+    int[] filtered = ContainerUtil.filter(childIds, value -> !(FSRecordsShard.removeShardId(value) == 2 && shards.contains(FSRecordsShard.getShardId(value))));
+    getShardForRecord(id).updateList(id, filtered);
+  }
+
+  @Override
+  public long getCreationTimestamp() {
+    return getShard(1).getCreationTimestamp();
   }
 
   @Override
@@ -192,25 +215,44 @@ public class ShardingFSRecords implements IFSRecords {
     return getShard(1).getModCount();
   }
 
+
+
+
   @NotNull
   @Override
   public TIntArrayList getParents(int id, @NotNull IntPredicate cached) {
-    return getShard(id).getParents(id, cached);
+    FSRecordsShard shard = getShardForRecord(id);
+    TIntArrayList parents = shard.getParents(id, cached);
+    FSRecordsSource.MountPoint mp = myMounts.get(shard.getShardId());
+    if (mp != null) {
+      parents.add(getParents(FSRecordsShard.addShardId(mp.fileId, mp.shardId), cached).toNativeArray());
+    }
+    return parents;
   }
 
   @Override
   public void setParent(int id, int parentId) {
-    getShard(id).setParent(id, parentId);
+    getShardForRecord(id).setParent(id, parentId);
   }
 
   @Override
   public int getParent(int id) {
-    return getShard(id).getParent(id);
+    int parent = getShardForRecord(id).getParent(id);
+    if (parent == 0) {
+      FSRecordsSource.MountPoint mount = myMounts.get(FSRecordsShard.getShardId(id));
+      if (mount != null) {
+        return FSRecordsShard.addShardId(mount.fileId, mount.shardId);
+      } else {
+        return 0;
+      }
+    } else {
+      return parent;
+    }
   }
 
   @Override
   public int getNameId(int id) {
-    return getShard(id).getNameId(id);
+    return getShardForRecord(id).getNameId(id);
   }
 
   @Override
@@ -226,97 +268,97 @@ public class ShardingFSRecords implements IFSRecords {
 
   @Override
   public String getName(int id) {
-    return getShard(id).getName(id);
+    return getShardForRecord(id).getName(id);
   }
 
   @NotNull
   @Override
   public CharSequence getNameSequence(int id) {
-    return getShard(id).getNameSequence(id);
+    return getShardForRecord(id).getNameSequence(id);
   }
 
   @Override
   public void setName(int id, @NotNull String name) {
-    getShard(id).setName(id, name);
+    getShardForRecord(id).setName(id, name);
   }
 
   @Override
   public int getFlags(int id) {
-    return getShard(id).getFlags(id);
+    return getShardForRecord(id).getFlags(id);
   }
 
   @Override
   public void setFlags(int id, int flags, boolean markAsChange) {
-    getShard(id).setFlags(id, flags, markAsChange);
+    getShardForRecord(id).setFlags(id, flags, markAsChange);
   }
 
   @Override
   public long getLength(int id) {
-    return getShard(id).getLength(id);
+    return getShardForRecord(id).getLength(id);
   }
 
   @Override
   public void setLength(int id, long len) {
-    getShard(id).setLength(id, len);
+    getShardForRecord(id).setLength(id, len);
   }
 
   @Override
   public long getTimestamp(int id) {
-    return getShard(id).getTimestamp(id);
+    return getShardForRecord(id).getTimestamp(id);
   }
 
   @Override
   public void setTimestamp(int id, long value) {
-    getShard(id).setTimestamp(id, value);
+    getShardForRecord(id).setTimestamp(id, value);
   }
 
   @Override
   public int getModCount(int id) {
-    return getShard(id).getModCount(id);
+    return getShardForRecord(id).getModCount(id);
   }
 
   @Nullable
   @Override
   public DataInputStream readContent(int fileId) {
-    return getShard(fileId).readContent(fileId);
+    return getShardForRecord(fileId).readContent(fileId);
   }
 
   @Nullable
   @Override
   public DataInputStream readContentById(int contentId) {
-    return getShard(contentId).readContentById(contentId);
+    return getShardForRecord(contentId).readContentById(contentId);
   }
 
   @Nullable
   @Override
   public DataInputStream readAttribute(int fileId, FileAttribute att) {
-    return getShard(fileId).readAttribute(fileId, att);
+    return getShardForRecord(fileId).readAttribute(fileId, att);
   }
 
   @Override
   public int acquireFileContent(int fileId) {
-    return getShard(fileId).acquireFileContent(fileId);
+    return getShardForRecord(fileId).acquireFileContent(fileId);
   }
 
   @Override
   public void releaseContent(int contentId) {
-    getShard(contentId).releaseContent(contentId);
+    getShardForRecord(contentId).releaseContent(contentId);
   }
 
   @Override
   public int getContentId(int fileId) {
-    return getShard(fileId).getContentId(fileId);
+    return getShardForRecord(fileId).getContentId(fileId);
   }
 
   @NotNull
   @Override
   public DataOutputStream writeContent(int fileId, boolean readOnly) {
-    return getShard(fileId).writeContent(fileId, readOnly);
+    return getShardForRecord(fileId).writeContent(fileId, readOnly);
   }
 
   @Override
   public void writeContent(int fileId, ByteSequence bytes, boolean readOnly) {
-    getShard(fileId).writeContent(fileId, bytes, readOnly);
+    getShardForRecord(fileId).writeContent(fileId, bytes, readOnly);
   }
 
   @Override
@@ -327,25 +369,21 @@ public class ShardingFSRecords implements IFSRecords {
   @NotNull
   @Override
   public DataOutputStream writeAttribute(int fileId, @NotNull FileAttribute att) {
-    return getShard(fileId).writeAttribute(fileId, att);
+    return getShardForRecord(fileId).writeAttribute(fileId, att);
   }
 
   @Override
   public void writeBytes(int fileId, ByteSequence bytes, boolean preferFixedSize) throws IOException {
-    getShard(fileId).writeBytes(fileId, bytes, preferFixedSize);
+    getShardForRecord(fileId).writeBytes(fileId, bytes, preferFixedSize);
   }
 
   @Override
   public void dispose() {
-    for (IFSRecords records : getShards()) {
-      records.dispose();
-    }
+    getShards().forEach(IFSRecords::dispose);
   }
 
   @Override
   public void invalidateCaches() {
-    for (IFSRecords records : getShards()) {
-      records.invalidateCaches();
-    }
+    getShards().forEach(IFSRecords::invalidateCaches);
   }
 }

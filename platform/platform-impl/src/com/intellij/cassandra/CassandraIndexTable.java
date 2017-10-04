@@ -19,7 +19,9 @@ import com.datastax.driver.core.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsSource;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntHashSet;
+import gnu.trove.TIntObjectHashMap;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -35,16 +37,19 @@ public class CassandraIndexTable {
   private final PreparedStatement myForwardQueryStatement;
   private final PreparedStatement myMaxIdQueryStatement;
   private final PreparedStatement myRootsQueryStatement;
-  private final PreparedStatement myListQueryStatement;
-  private final PreparedStatement myAncestorsQueryStatement;
   private final PreparedStatement myLoadRecordsQueryStatement;
+  private final PreparedStatement myTreeQueryStatement;
+  private final PreparedStatement myMountsQueryStatement;
   private final PreparedStatement myContentsQueryStatement;
   private final PreparedStatement myAttrQueryStatement;
 
 
   public int getMaxId(int indexingSession, int shardId) {
-    ResultSet result = mySession.execute(myMaxIdQueryStatement.bind(shardId, indexingSession));
-    return result.one().getInt("result");
+    Row result = mySession.execute(myMaxIdQueryStatement.bind(shardId, indexingSession)).one();
+    if (result == null) {
+      return 2;
+    }
+    return result.getInt("result");
   }
 
   public Map<String, Integer> getRoots(int indexingSession, int shardId) {
@@ -57,31 +62,6 @@ public class CassandraIndexTable {
     return m;
   }
 
-  public int[] list(int shardId, int indexingSession, int fileId) {
-    ResultSet result = mySession.execute(myListQueryStatement.bind(shardId, fileId, indexingSession));
-    TIntHashSet children = new TIntHashSet();
-    TIntHashSet deleted = new TIntHashSet();
-    for (Row row : result) {
-      int childId = row.getInt("file_id");
-      if (row.getBool("deleted")){
-        children.remove(childId);
-        deleted.add(childId);
-      } else {
-        if (!deleted.contains(childId)){
-          children.add(childId);
-        }
-      }
-    }
-    return children.toArray();
-  }
-
-  public List<List<Integer>> getAllAncestors(int shardId, List<Integer> ids) {
-    return mySession.execute(myAncestorsQueryStatement.bind(shardId, ids))
-      .all().stream()
-      .map(r -> r.getList("parents", Integer.class))
-      .collect(Collectors.toList());
-  }
-
   public List<FSRecordsSource.RecordInfo> loadFSRecords(int shardId, int indexingSession, List<Integer> ids) {
     return mySession.execute(myLoadRecordsQueryStatement.bind(shardId, ids, indexingSession))
       .all().stream()
@@ -89,9 +69,7 @@ public class CassandraIndexTable {
                                                r.getString("name"),
                                                r.getLong("timestamp"),
                                                r.getLong("length"),
-                                               r.getInt("flags"),
-                                               r.getInt("parent_id"),
-                                               null))
+                                               r.getInt("flags")))
       .collect(Collectors.toList());
   }
 
@@ -103,6 +81,25 @@ public class CassandraIndexTable {
   public ByteBuffer readAttr(int shardId, int fileId, String attrId) {
     Row r = mySession.execute(myAttrQueryStatement.bind(shardId, fileId, attrId)).one();
     return r == null ? null : r.getBytes("value");
+  }
+
+  public List<Integer> getTree(int shardId, int indexingSession) {
+    Row one = mySession.execute(myTreeQueryStatement.bind(shardId, indexingSession)).one();
+    if (one == null) {
+      return ContainerUtil.emptyList();
+    }
+    return one.getList("tree", Integer.class);
+  }
+
+  public TIntObjectHashMap<FSRecordsSource.MountPoint> getMounts(int indexingSession) {
+    ResultSet mounts = mySession.execute(myMountsQueryStatement.bind(indexingSession));
+    TIntObjectHashMap<FSRecordsSource.MountPoint> result = new TIntObjectHashMap<>();
+    mounts.all().stream()
+      .map(row -> Pair.create(row.getInt("shard_id"),
+                              new FSRecordsSource.MountPoint(row.getInt("parent_file_id"),
+                                                             row.getInt("parent_shard_id"))))
+      .forEach(pair -> result.put(pair.first, pair.second));
+    return result;
   }
 
   public static CassandraIndexTable getInstance() {
@@ -132,94 +129,6 @@ public class CassandraIndexTable {
 
     mySession = cluster.connect();
 
-    mySession.execute("CREATE KEYSPACE IF NOT EXISTS indices WITH replication = {'class' : 'SimpleStrategy', 'replication_factor' : 1};");
-
-    mySession.execute("CREATE TABLE IF NOT EXISTS indices.indices(" +
-                      "index_id text, " +
-                      "key blob, " +
-                      "shard_id int, " +
-                      "indexing_session int, " +
-                      "values blob, " +
-                      "PRIMARY KEY ((index_id, key), indexing_session, shard_id)) " +
-                      "WITH CLUSTERING ORDER BY (indexing_session DESC)");
-
-    mySession.execute("CREATE TABLE IF NOT EXISTS indices.forward(" +
-                      "indexing_session int, " +
-                      "file_id int, " +
-                      "index_id text, " +
-                      "values blob, " +
-                      "PRIMARY KEY (file_id, index_id))");
-
-    mySession.execute("CREATE OR REPLACE FUNCTION indices.uniqueShards (state map<int, blob>, shard int, val blob) " +
-                      "CALLED ON NULL INPUT RETURNS map<int, blob> LANGUAGE java as " +
-                      "'" +
-                      "if (state == null) { " +
-                      "state = new java.util.HashMap<Integer, java.nio.ByteBuffer>(); " +
-                      "} " +
-                      "if (state.containsKey(shard)) { " +
-                      "  return state; " +
-                      "} " +
-                      "state.put(shard, val); " +
-                      " return state; " +
-                      "'");
-
-    mySession.execute("CREATE TABLE IF NOT EXISTS indices.fs(" +
-                      "shard_id int, " +
-                      "indexing_session int, " +
-                      "file_id int, " +
-                      "name text, " +
-                      "timestamp bigint, " +
-                      "length bigint, " +
-                      "flags int, " +
-                      "parent_id int, " +
-                      "deleted boolean, " +
-                      "parents frozen<list<int>>, " +
-                      "PRIMARY KEY (shard_id, file_id, indexing_session))" +
-                      "WITH CLUSTERING ORDER BY (file_id DESC, indexing_session DESC)");
-
-    mySession.execute("CREATE INDEX IF NOT EXISTS fs_parents ON indices.fs (parent_id)");
-
-    /*mySession.execute("CREATE TABLE IF NOT EXISTS indices.fs_children (" +
-                      "shard_id int, " +
-                      "file_id int, " +
-                      "indexing_session int, " +
-                      "children frozen<list<int>>, " +
-                      "PRIMARY KEY (shard_id, file_id, indexing_session)) " +
-                      "WITH CLUSTERING ORDER BY (file_id DESC, indexing_session DESC)");*/
-
-    mySession.execute("CREATE TABLE IF NOT EXISTS indices.indexing_sessions (" +
-                      "indexing_session int, " +
-                      "shard_id int, " +
-                      "max_file_id int, " +
-                      "PRIMARY KEY(shard_id, indexing_session)) " +
-                      "WITH CLUSTERING ORDER BY (indexing_session DESC)");
-
-
-    mySession.execute("CREATE TABLE IF NOT EXISTS indices.fs_roots( " +
-                      "shard_id int, " +
-                      "file_id int, " +
-                      "indexing_session int, " +
-                      "url text, " +
-                      "PRIMARY KEY (shard_id, indexing_session, file_id)) " +
-                      "WITH CLUSTERING ORDER BY (indexing_session DESC)");
-
-    mySession.execute("CREATE TABLE IF NOT EXISTS indices.contents(" +
-                      "shard_id int, " +
-                      "file_id int, " +
-                      "content blob," +
-                      "PRIMARY KEY (shard_id, file_id))");
-
-    mySession.execute("CREATE TABLE IF NOT EXISTS indices.attrs(" +
-                      "shard_id int, " +
-                      "file_id int, " +
-                      "attribute text, " +
-                      "value blob, " +
-                      "PRIMARY KEY (shard_id, file_id, attribute))");
-
-    mySession.execute("CREATE OR REPLACE AGGREGATE indices.queryIndex (int, blob) " +
-                      "SFUNC uniqueShards " +
-                      "STYPE map<int, blob>");
-
     myQueryStatement = mySession.prepare("SELECT queryIndex(shard_id, values) as result FROM indices.indices " +
                                          "WHERE indexing_session <= ? AND " +
                                          "index_id = ? AND " +
@@ -232,15 +141,11 @@ public class CassandraIndexTable {
 
     myRootsQueryStatement = mySession.prepare("SELECT url, file_id FROM indices.fs_roots WHERE shard_id = ? AND indexing_session = ?");
 
-    myListQueryStatement = mySession.prepare("SELECT file_id, deleted FROM indices.fs WHERE " +
-                                             "shard_id = ? AND " +
-                                             "parent_id = ? AND " +
-                                             "indexing_session <= ? " +
-                                             "ALLOW FILTERING");
-    myAncestorsQueryStatement = mySession.prepare("SELECT parents from indices.fs WHERE shard_id = ? AND file_id in ?");
+    myTreeQueryStatement = mySession.prepare("SELECT tree FROM indices.trees WHERE shard_id = ? AND indexing_session = ?");
 
-    myLoadRecordsQueryStatement =
-      mySession.prepare("SELECT * from indices.fs WHERE shard_id = ? AND file_id in ? and indexing_session <= ?");
+    myMountsQueryStatement = mySession.prepare("SELECT * FROM indices.mounts WHERE indexing_session = ?");
+
+    myLoadRecordsQueryStatement = mySession.prepare("SELECT * from indices.fs WHERE shard_id = ? AND file_id in ? and indexing_session <= ?");
 
     myContentsQueryStatement = mySession.prepare("SELECT content from indices.contents WHERE shard_id = ? AND file_id = ?");
 
@@ -284,12 +189,6 @@ public class CassandraIndexTable {
     }
   }
 
-  public void addFsRoot(String url, int shardId, int indexingSession, int fileId) {
-    mySession
-      .execute("INSERT INTO indices.fs_roots (shard_id, indexing_session, file_id, url) VALUES (?, ?, ?, ?)", shardId, indexingSession,
-               fileId, url);
-  }
-
   public void bulkInsert(String indexId, int shardId, int indexingSession, Stream<Pair<ByteBuffer, ByteBuffer>> s) {
     PreparedStatement insertStmt = getInvertedInsertStatement(indexId, shardId, indexingSession);
     bulks(s,
@@ -318,51 +217,21 @@ public class CassandraIndexTable {
           pair -> pair.second.limit() - pair.second.position() + 4);
   }
 
-  public void bulkInsertFs(int shardId, int indexingSession, Stream<Object> records) {
-    bulks(records,
-          chunk -> {
-            BatchStatement batch = new BatchStatement(BatchStatement.Type.UNLOGGED);
-            for (Object record : chunk) {
-              batch.add(getRecordStatement(shardId, indexingSession, record));
-            }
-            mySession.execute(batch);
-          },
-          record -> mySession.execute(getRecordStatement(shardId, indexingSession, record)),
-          r -> {
-            if (r instanceof FSRecordsSource.TombStone) {
-              return 9;
-            } else {
-              return 4 + ((FSRecordsSource.RecordInfo)r).name.length() * 2 + 8 + 8 + 4 + 4 + 4;
-            }
-          });
-  }
-
-
-  private Statement getRecordStatement(int shardId, int indexingSession, Object record){
-    if (record instanceof FSRecordsSource.RecordInfo) {
-      FSRecordsSource.RecordInfo info = (FSRecordsSource.RecordInfo)record;
-      ArrayList<Integer> ints = new ArrayList<>();
-      info.parents.forEach(value -> ints.add(value));
-      return getFsInsertStatement(shardId, indexingSession)
-        .bind(info.id, info.name, info.timestamp, info.length, info.flags, info.parentId, ints);
-    } else {
-      FSRecordsSource.TombStone stone = (FSRecordsSource.TombStone)record;
-      return getFsInsertTombStatement(shardId, indexingSession).bind(stone.id, stone.parentId);
-    }
-  }
-
   public static class AttrInfo {
     int fileId;
+
     String attribute;
     ByteBuffer value;
     public AttrInfo(int fileId, String attribute, ByteBuffer value) {
       this.fileId = fileId;
       this.attribute = attribute;
       this.value = value;
+
     }
   }
 
   public void bulkInsertAttrs(int shardId, Stream<AttrInfo> s) {
+
     PreparedStatement stmt = getAttributeInsertStatement(shardId);
     bulks(s,
           infos -> {
@@ -376,51 +245,13 @@ public class CassandraIndexTable {
           info -> 4 + info.attribute.length() + info.value.limit() - info.value.position());
   }
 
-  public void bulkInsertContents(int shardId, Stream<Pair<Integer, ByteBuffer>> s) {
-    PreparedStatement stmt = getContentInsertStatement(shardId);
-    bulks(s,
-          infos -> {
-            BatchStatement batch = new BatchStatement(BatchStatement.Type.UNLOGGED);
-            for (Pair<Integer, ByteBuffer> info : infos) {
-              batch.add(stmt.bind(info.first, info.second));
-            }
-            mySession.execute(batch);
-          },
-          info -> mySession.execute(stmt.bind(info.first, info.second)),
-          info -> 4 + info.second.limit() - info.second.position());
-  }
-
   private final Map<String, PreparedStatement> stmts = new HashMap<>();
-
-  private PreparedStatement getFsInsertStatement(int shardId, int session) {
-    return stmts.computeIfAbsent("fs_insert " + shardId + " " + session, s ->
-    mySession.prepare(new SimpleStatement("INSERT INTO indices.fs (shard_id, indexing_session, file_id, name, timestamp, length, flags, parent_id, parents) VALUES (" +
-                                          shardId + ", " +
-                                          session +
-                                          ", ?, ?, ?, ?, ?, ?, ?)")));
-  }
-
-  private PreparedStatement getFsInsertTombStatement(int shardId, int session) {
-    return stmts.computeIfAbsent("fs_insert_tomb " + shardId + " " + session, s ->
-    mySession.prepare(new SimpleStatement("INSERT INTO indices.fs (shard_id, indexing_session, file_id, parent_id, deleted) VALUES (" +
-                                          shardId + ", " +
-                                          session + ", " +
-                                          "?, ?, true")));
-  }
-
-  private PreparedStatement getContentInsertStatement(int shardId) {
-    return stmts.computeIfAbsent("content_insert " + shardId, s ->
-    mySession.prepare(new SimpleStatement("INSERT INTO indices.contents (shard_id, file_id, content) VALUES (" +
-                                          shardId + ", ?, ?)")));
-  }
 
   private PreparedStatement getAttributeInsertStatement(int shardId) {
     return stmts.computeIfAbsent("attr_insert " + shardId, s ->
     mySession.prepare(new SimpleStatement("INSERT INTO indices.attrs (shard_id, file_id, attribute, value) VALUES (" +
                                           shardId + ", ?, ?, ?)")));
   }
-
-
 
   private PreparedStatement getInvertedInsertStatement(String indexId, int shardId, int sessionId) {
     return stmts.computeIfAbsent("inverted_insert " + indexId + shardId + ":" + sessionId, s ->

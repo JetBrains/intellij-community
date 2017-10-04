@@ -1482,6 +1482,7 @@ public class FSRecords implements IFSRecords {
         }
       }
     }
+    result.remove(ourChildrenAttr.getId());
     return result;
   }
 

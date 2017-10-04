@@ -92,26 +92,26 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     LowMemoryWatcher.register(this::clearIdCache, this);
   }
 
-  public static boolean indexer = false;
+  public static boolean indexer = true;
 
   @Override
   public void initComponent() {
     final AtomicBoolean once = new AtomicBoolean();
     final String cachesDir = System.getProperty("caches_dir")  == null
                              ? PathManager.getSystemPath() + "/caches/" : System.getProperty("caches_dir");
-    File cachesDirFile = new File(cachesDir);
-    myRecords = new ShardingFSRecords(() -> {
+    FSRecords sink = new FSRecords(new File(cachesDir));
+    myRecords = new ShardingFSRecords((shardId) -> {
+      File shardDir = new File(cachesDir, "shard-" + shardId);
+      if (!shardDir.mkdir()) {
+//        throw new RuntimeException("couldn't create directory for shard " + shardDir);
+      }
       assert !once.get();
       once.set(true);
-      if (indexer) {
-        return new IndexerFSRecords(new FSRecords(new File(FSRecords.getCachesDir())));
-      } else {
-        FSRecordsSource source = new FSRecordsSource.CassandraFSRecordsSource(1, 1);
-        FSRecords sink = new FSRecords(cachesDirFile);
-        return new LazyFSRecords(cachesDirFile, sink, source);
-      }
+      FSRecordsSource source = new FSRecordsSource.CassandraFSRecordsSource(0, shardId);
+      return new LazyFSRecords(shardDir, sink, source);
     });
 
+    File cachesDirFile = new File(cachesDir);
     File namesFile = new File(cachesDirFile, "names" + FSRecords.VFS_FILES_EXTENSION);
     PagedFileStorage.StorageLockContext lockContext = new PagedFileStorage.StorageLockContext(false);
     try {
@@ -423,12 +423,20 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     int parentId = getFileId(parent);
     int[] children = myRecords.list(parentId);
 
+    if (parent.getName().equals(".git")) {
+      System.out.println("git");
+    }
+
     if (children.length > 0) {
       // fast path, check that some child has same nameId as given name, this avoid O(N) on retrieving names for processing non-cached children
       int nameId = myRecords.getNameId(childName);
       for (final int childId : children) {
-        if (nameId == myRecords.getNameId(childId)) {
-          return childId;
+        try {
+          if (nameId == myRecords.getNameId(childId)) {
+            return childId;
+          }
+        } catch (Throwable e) {
+          e.printStackTrace();
         }
       }
       // for case sensitive system the above check is exhaustive in consistent state of vfs
@@ -1162,6 +1170,10 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
                                   @NotNull VirtualFile delegateFile,
                                   int parentId,
                                   @NotNull FileAttributes attributes) {
+    if (delegateFile.getPath().contains("jgraphx-3.4.0.1.jar")) {
+      System.out.println("FUUUCK");
+    }
+    System.out.println("createAndFillRecord for " + delegateFile + " parentId " + parentId);
     final int childId = myRecords.createChildRecord(parentId);
     writeAttributesToRecord(childId, parentId, delegateFile, delegateSystem, attributes);
     return childId;

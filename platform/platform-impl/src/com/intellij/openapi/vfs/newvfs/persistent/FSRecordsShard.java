@@ -35,16 +35,36 @@ public class FSRecordsShard implements IFSRecords {
   }
 
   public void dumpToCassandra() {
-    ((IndexerFSRecords)myDelegate).dumpToCassandra(myShardId);
+    ((LazyFSRecords)myDelegate).dumpToCassandra(myShardId);
   }
 
-  private static int removeShardId(int id) {
-    return id >> 8;
+  // shard encoding
+
+  public static int removeShardId(int id) {
+    int s = id < 0 ? -1 : 1;
+    id = id < 0 ? -id : id;
+    return s * (id & 0b00000000000001111111111111111111);
   }
 
   private int addShardId(int id) {
-    return myShardId | (id << 8);
+    if (getShardId(id) != 0) {
+      return id;
+    }
+    return addShardId(id, myShardId);
   }
+
+  public static int addShardId(int id, int shardId) {
+    int s = id < 0 ? -1 : 1;
+    id = id < 0 ? -id : id;
+    return s * (id | (shardId << 19));
+  }
+
+  public static int getShardId(int id) {
+    id = id < 0 ? -id : id;
+    return id >> 19;
+  }
+
+  // --
 
   private int[] addShardId(int[] ids) {
     int[] res = new int[ids.length];
@@ -104,7 +124,11 @@ public class FSRecordsShard implements IFSRecords {
 
   @Override
   public int createChildRecord(int parentId) {
-    return addShardId(myDelegate.createChildRecord(removeShardId(parentId)));
+    int publicId = myDelegate.createChildRecord(removeShardId(parentId));
+    if (publicId >= 1 << 19) {
+      throw new AssertionError("big black id");
+    }
+    return addShardId(publicId);
   }
 
   @Override

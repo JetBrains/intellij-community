@@ -1,23 +1,31 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.cassandra.CassandraIndexTable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
+import com.twelvemonkeys.io.FileUtil;
 import gnu.trove.TIntArrayList;
+import gnu.trove.TIntIntHashMap;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.IntPredicate;
-import java.io.File;
 
 public class LazyFSRecords implements IFSRecords {
 
@@ -26,8 +34,10 @@ public class LazyFSRecords implements IFSRecords {
   private final File myFile;
   private final IFSRecords mySink;
   private final FSRecordsSource mySource;
+  private final Set<Pair<Integer, FileAttribute>> myDirtyAttrs = ContainerUtil.newConcurrentSet();
   private PersistentHashMap<Integer, Integer> myPublicToSink;
   private PersistentHashMap<Integer, Integer> mySinkToPublic;
+  private TIntIntHashMap myTreeStructure = new TIntIntHashMap();
   private VfsDependentEnum<String> myAttrsList;
   private Map<String, Integer> myRoots;
   private int mySourceMaxId;
@@ -36,6 +46,25 @@ public class LazyFSRecords implements IFSRecords {
     myFile = baseFile;
     mySink = sink;
     mySource = source;
+    FSRecordsSource.SourceInfo init = mySource.connect();
+    myRoots = init.roots;
+    mySourceMaxId = init.maxId;
+  }
+
+  public void dumpToCassandra(int shardId) {
+    CassandraIndexTable.getInstance().bulkInsertAttrs(
+      shardId,
+      myDirtyAttrs.stream().map(entry -> {
+        try {
+          return new CassandraIndexTable.AttrInfo(entry.first,
+                                                  entry.second.getId(),
+                                                  ByteBuffer.wrap(FileUtil.read(readAttribute(entry.first, entry.second))));
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }));
+    myDirtyAttrs.clear();
   }
 
   @Override
@@ -54,17 +83,28 @@ public class LazyFSRecords implements IFSRecords {
     }
     TIntArrayList recordsToLoad = new TIntArrayList();
     if (idsToLoad.isEmpty()) return false;
-    TIntArrayList ancestors = mySource.getAllAncestors(idsToLoad);
-    ancestors.forEach(p -> {
-      if (toSinkId(p) == -1) {
-        recordsToLoad.add(p);
+    idsToLoad.forEach(value -> {
+      Integer parent = myTreeStructure.containsKey(value) ? myTreeStructure.get(value) : null;
+      while (parent != null) {
+        if (toSinkId(parent) == -1) {
+          recordsToLoad.add(parent);
+        }
+        parent = myTreeStructure.containsKey(parent) ? myTreeStructure.get(parent) : null;
       }
       return true;
     });
+    recordsToLoad.reverse();
     recordsToLoad.add(idsToLoad.toNativeArray());
-
-    List<FSRecordsSource.RecordInfo> records = mySource.loadRecords(recordsToLoad);
-    for (FSRecordsSource.RecordInfo record : records) {
+    List<FSRecordsSource.RecordInfo> infos = mySource.loadRecords(recordsToLoad);
+    TIntObjectHashMap<FSRecordsSource.RecordInfo> loaded = new TIntObjectHashMap<>();
+    for (FSRecordsSource.RecordInfo info : infos) {
+      loaded.put(info.id, info);
+    }
+    recordsToLoad.forEach(id -> {
+      FSRecordsSource.RecordInfo record = loaded.get(id);
+      if (record == null) {
+        throw new AssertionError("not loaded: " + id + " ids: " + Arrays.toString(ids));
+      }
       synchronized (mySink) {
         if (toSinkId(record.id) == -1) {
           int newRecord = mySink.createChildRecord(-1);
@@ -72,11 +112,21 @@ public class LazyFSRecords implements IFSRecords {
           mySink.setTimestamp(newRecord, record.timestamp);
           mySink.setLength(newRecord, record.length);
           mySink.setFlags(newRecord, record.flags, false);
-          int parentSinkId = toSinkIdAsserting(record.parentId);
-          mySink.setParent(newRecord, parentSinkId);
+          Integer parentId = myTreeStructure.containsKey(record.id) ? myTreeStructure.get(record.id) : null;
+          if (parentId == null) {
+            mySink.setParent(newRecord, 0);
+          }
+          else {
+            int parentSinkId = toSinkIdAsserting(parentId);
+            mySink.setParent(newRecord, parentSinkId);
+          }
           addToMapping(record.id, newRecord);
         }
       }
+      return true;
+    });
+    for (int i : ids) {
+      toSinkIdAsserting(i);
     }
     return true;
   }
@@ -167,11 +217,14 @@ public class LazyFSRecords implements IFSRecords {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+    List<Integer> tree = mySource.getTree();
+    for (int i = 0; i < tree.size(); i+= 2) {
+      Integer child = tree.get(i);
+      Integer parent = tree.get(i+1);
+      myTreeStructure.put(child, parent);
+    }
     mySink.connect(lockContext, names, fileNameCache, myAttrsList);
-    FSRecordsSource.SourceInfo init = mySource.connect();
-    myRoots = init.roots;
-    System.out.println("CONNECTED <3" + myRoots);
-    mySourceMaxId = init.maxId;
+    System.out.println("CONNECTED " + ((FSRecordsSource.CassandraFSRecordsSource)mySource).getShard() + myRoots);
   }
 
   int toSinkId(int publicId) {
@@ -199,7 +252,9 @@ public class LazyFSRecords implements IFSRecords {
 
   int toSinkIdAsserting(int publicId) {
     int x = toSinkId(publicId);
-    if (x < 0) throw new AssertionError("x = " + x + " id: " + publicId);
+    if (x < 0){
+      throw new AssertionError("x = " + x + " id: " + publicId + "maxId: " + mySourceMaxId);
+    }
     return x;
   }
 
@@ -245,8 +300,6 @@ public class LazyFSRecords implements IFSRecords {
 
   @Override
   synchronized public int createChildRecord(int parentId) {
-    System.out.println("LazyFSRecords.createChildRecord");
-    System.out.println("parentId = [" + parentId + "]");
     ensureLoaded(new int [] { parentId });
     int recordId = mySink.createChildRecord(toSinkIdAsserting(parentId));
     int publicId = recordId + mySourceMaxId;
@@ -290,8 +343,6 @@ public class LazyFSRecords implements IFSRecords {
 
   @Override
   synchronized public void deleteRecordRecursively(int id) {
-    System.out.println("LazyFSRecords.deleteRecordRecursively");
-    System.out.println("id = [" + id + "]");
     ensureLoaded(new int[]{id});
     int sinkId = toSinkId(id);
     if (sinkId == DELETED) return;
@@ -309,13 +360,11 @@ public class LazyFSRecords implements IFSRecords {
   @NotNull
   @Override
   synchronized public RootRecord[] listRoots() {
-    throw new UnsupportedOperationException();
+    return myRoots.entrySet().stream().map(entry -> new RootRecord(entry.getValue(), entry.getKey())).toArray(RootRecord[]::new);
   }
 
   @Override
   synchronized public int findRootRecord(@NotNull String rootUrl) {
-    System.out.println("LazyFSRecords.findRootRecord");
-    System.out.println("rootUrl = [" + rootUrl + "]");
     Integer publicRootId = myRoots.get(rootUrl);
     int sinkId = mySink.findRootRecord(rootUrl);
     int publicId = publicRootId == null ? mySourceMaxId + sinkId : publicRootId;
@@ -328,8 +377,6 @@ public class LazyFSRecords implements IFSRecords {
 
   @Override
   synchronized public void deleteRootRecord(int id) {
-    System.out.println("LazyFSRecords.deleteRootRecord");
-    System.out.println("id = [" + id + "]");
     int sinkId = toSinkId(id);
     if (sinkId == DELETED) {
       throw new RuntimeException("trying to delete already deleted record");
@@ -358,8 +405,7 @@ public class LazyFSRecords implements IFSRecords {
   @NotNull
   @Override
   synchronized public int[] list(int id) {
-    System.out.println("LazyFSRecords.list");
-    System.out.println("id = [" + id + "]");
+    ensureLoaded(new int[]{id});
     int[] offline = listOffline(toSinkIdAsserting(id));
     if (offline != null){
       return offline;
@@ -367,8 +413,16 @@ public class LazyFSRecords implements IFSRecords {
     if (id > mySourceMaxId) {
       throw new IllegalStateException();
     }
-    int[] res = mySource.list(id);
-    //int[] survived = ContainerUtil.filter(res, rec -> toSinkId(rec) != DELETED);
+
+    TIntArrayList result = new TIntArrayList();
+    myTreeStructure.forEachEntry((child, parent) -> {
+      if (parent == id) {
+        result.add(child);
+      }
+      return true;
+    });
+
+    int[] res = result.toNativeArray();
     updateLocalList(toSinkId(id), res);
     return res;
   }
@@ -393,8 +447,11 @@ public class LazyFSRecords implements IFSRecords {
 
   @Override
   synchronized public void updateList(int id, @NotNull int[] childIds) {
-    System.out.println("LazyFSRecords.updateList");
-    System.out.println("id = [" + id + "], childIds = [" + childIds + "]");
+    for (int childId : childIds) {
+      if (childId == 2) {
+        System.out.println("problem");
+      }
+    }
     int sinkId = toSinkIdAsserting(id);
     updateLocalList(sinkId, childIds);
     int[] sinkChildren = new int[childIds.length];
@@ -425,8 +482,6 @@ public class LazyFSRecords implements IFSRecords {
 
   @Override
   synchronized public void setParent(int id, int parentId) {
-    System.out.println("LazyFSRecords.setParent");
-    System.out.println("id = [" + id + "], parentId = [" + parentId + "]");
     ensureLoaded(new int[]{id, parentId});
     mySink.setParent(toSinkIdAsserting(id), toSinkIdAsserting(parentId));
   }
@@ -458,7 +513,7 @@ public class LazyFSRecords implements IFSRecords {
   @Override
   synchronized public CharSequence getNameSequence(int id) {
     ensureLoaded(new int[] {id});
-    return mySink.getNameSequence(toSinkId(id));
+    return mySink.getNameSequence(toSinkIdAsserting(id));
   }
 
   @Override
@@ -572,6 +627,7 @@ public class LazyFSRecords implements IFSRecords {
   @Override
   synchronized public DataOutputStream writeAttribute(int fileId, @NotNull FileAttribute att) {
     ensureLoaded(new int[]{fileId});
+    myDirtyAttrs.add(Pair.create(fileId, att));
     return mySink.writeAttribute(toSinkIdAsserting(fileId), att);
   }
 
@@ -584,6 +640,13 @@ public class LazyFSRecords implements IFSRecords {
   @Override
   public void dispose() {
     mySink.dispose();
+    try {
+      myPublicToSink.close();
+      mySinkToPublic.close();
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
   @Override

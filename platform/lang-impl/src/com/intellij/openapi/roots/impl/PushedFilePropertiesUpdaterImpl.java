@@ -336,6 +336,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
       doApplyPushersToFile(fileOrDir, pushers, moduleValues);
     });
   }
+
   private void doApplyPushersToFile(VirtualFile fileOrDir, FilePropertyPusher[] pushers, Object[] moduleValues) {
     FilePropertyPusher<Object> pusher = null;
     try {

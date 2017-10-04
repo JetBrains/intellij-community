@@ -63,7 +63,7 @@
     <orderEntry type="module" module-name="ui-designer" />
     <orderEntry type="module" module-name="devkit" />
     <orderEntry type="module" module-name="eclipse" />
-    <orderEntry type="module" module-name="git4idea" />
+    <!--<orderEntry type="module" module-name="git4idea" />-->
     <orderEntry type="module" module-name="images" />
     <orderEntry type="module" module-name="jetgroovy" />
     <orderEntry type="module" module-name="junit" />
@@ -81,7 +81,7 @@
     <orderEntry type="module" module-name="tasks-api" />
     <orderEntry type="module" module-name="tasks-java" />
     <orderEntry type="module" module-name="tasks-tests" />
-    <orderEntry type="module" module-name="github" />
+    <!--<orderEntry type="module" module-name="github" />-->
     <orderEntry type="module" module-name="hg4idea" />
     <orderEntry type="module" module-name="relaxng" />
     <orderEntry type="module" module-name="gradle" />
