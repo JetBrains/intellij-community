@@ -741,10 +741,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return myProject == null ? null : new TestDataProvider(myProject).getData(dataId);
   }
 
+  @NotNull
   public static File createTempDir(@NonNls final String prefix) throws IOException {
     return createTempDir(prefix, true);
   }
 
+  @NotNull
   public static File createTempDir(@NonNls final String prefix, final boolean refresh) throws IOException {
     final File tempDirectory = FileUtilRt.createTempDirectory("idea_test_" + prefix, null, false);
     myFilesToDelete.add(tempDirectory);
@@ -758,10 +760,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
   }
 
+  @NotNull
   protected File createTempDirectory() throws IOException {
     return createTempDir("");
   }
 
+  @NotNull
   protected File createTempDirectory(final boolean refresh) throws IOException {
     return createTempDir("", refresh);
   }
@@ -789,6 +793,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
   }
 
+  @NotNull
   public static VirtualFile createTempFile(@NonNls @NotNull String ext, @Nullable byte[] bom, @NonNls @NotNull String content, @NotNull Charset charset) throws IOException {
     File temp = FileUtil.createTempFile("copy", "." + ext);
     setContentOnDisk(temp, bom, content, charset);
@@ -848,6 +853,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   public @interface WrapInCommand {
   }
 
+  @NotNull
   protected static VirtualFile createChildData(@NotNull final VirtualFile dir, @NotNull @NonNls final String name) {
     return new WriteAction<VirtualFile>() {
       @Override
@@ -857,6 +863,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }.execute().throwException().getResultObject();
   }
 
+  @NotNull
   protected static VirtualFile createChildDirectory(@NotNull final VirtualFile dir, @NotNull @NonNls final String name) {
     return new WriteAction<VirtualFile>() {
       @Override
@@ -887,7 +894,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       }
     }.execute().throwException();
   }
-
+  
+  @NotNull
   protected static VirtualFile copy(@NotNull final VirtualFile file, @NotNull final VirtualFile newParent, @NotNull final String copyName) {
     final VirtualFile[] copy = new VirtualFile[1];
 

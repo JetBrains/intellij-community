@@ -241,6 +241,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return ourPersistence.getLength(this);
   }
 
+  @NotNull
   @Override
   public VirtualFile copy(final Object requestor, @NotNull final VirtualFile newParent, @NotNull final String copyName) throws IOException {
     if (getFileSystem() != newParent.getFileSystem()) {

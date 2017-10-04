@@ -122,6 +122,7 @@ public class VcsTestUtil {
     }.execute();
   }
 
+  @NotNull
   public static VirtualFile copyFileInCommand(@NotNull Project project, @NotNull final VirtualFile file,
                                               @NotNull final VirtualFile newParent, @NotNull final String newName) {
     return new WriteCommandAction<VirtualFile>(project) {

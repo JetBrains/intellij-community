@@ -487,6 +487,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     });
   }
 
+  @NotNull
   public VirtualFile copy(final Object requestor, @NotNull final VirtualFile newParent, @NotNull final String copyName) throws IOException {
     if (getFileSystem() != newParent.getFileSystem()) {
       throw new IOException(VfsBundle.message("file.copy.error", newParent.getPresentableUrl()));

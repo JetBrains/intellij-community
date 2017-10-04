@@ -232,6 +232,7 @@ public abstract class GitChangeProviderTest extends GitSingleRepoTest {
     dirty(file);
   }
 
+  @NotNull
   protected VirtualFile copy(VirtualFile file, VirtualFile newParent) {
     dirty(file);
     VirtualFile newFile = copyFileInCommand(myProject, file, newParent, file.getName());

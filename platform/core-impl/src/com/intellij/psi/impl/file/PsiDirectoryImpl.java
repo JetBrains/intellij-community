@@ -364,7 +364,6 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
       else {
         copyVFile = VfsUtilCore.copyFile(this, vFile, parent, newName);
       }
-      if (copyVFile == null) throw new IncorrectOperationException("File was not copied: " + vFile);
 
       DumbService.getInstance(getProject()).completeJustSubmittedTasks();
 
