@@ -1815,6 +1815,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     StructureViewComponent component = null;
     try {
       component = (StructureViewComponent)builder.createStructureView(fileEditor, getProject());
+      PlatformTestUtil.waitForPromise(component.rebuildAndUpdate());
       consumer.consume(component);
     }
     finally {

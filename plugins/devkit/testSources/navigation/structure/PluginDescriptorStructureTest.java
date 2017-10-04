@@ -4,8 +4,8 @@
 package org.jetbrains.idea.devkit.navigation.structure;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.structureView.newStructureView.StructureViewComponent.StructureViewTreeElementWrapper;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.ide.util.treeView.smartTree.TreeElementWrapper;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestDataPath;
@@ -13,6 +13,7 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 
 import java.util.stream.Stream;
@@ -27,7 +28,7 @@ public class PluginDescriptorStructureTest extends JavaCodeInsightFixtureTestCas
   }
 
   @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.addLibrary("util", PathUtil.getJarPathForClass(Attribute.class));
     moduleBuilder.addLibrary("jblist", PathUtil.getJarPathForClass(JBList.class));
   }
@@ -47,7 +48,7 @@ public class PluginDescriptorStructureTest extends JavaCodeInsightFixtureTestCas
     myFixture.openFileInEditor(file);
 
     myFixture.testStructureView(component -> {
-      StructureViewTreeElementWrapper root = (StructureViewTreeElementWrapper)component.getTreeStructure().getRootElement();
+      TreeElementWrapper root = (TreeElementWrapper)TreeUtil.getUserObject(component.getTree().getModel().getRoot());
       TreeElement[] topLevelNodes = root.getValue().getChildren();
       assertSize(13, topLevelNodes);
 

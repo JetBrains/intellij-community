@@ -23,7 +23,6 @@ import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent
-import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
@@ -143,9 +142,7 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
     Disposer.register(myFixture.testRootDisposable, viewComponent)
     viewComponent.setActionActive(JavaAnonymousClassesNodeProvider.ID, true)
 
-    val treeStructure = viewComponent.treeStructure
-    PlatformTestUtil.updateRecursively(treeStructure.rootElement as AbstractTreeNode<*>)
-    PlatformTestUtil.assertTreeStructureEquals(treeStructure, """
+    PlatformTestUtil.assertTreeStructureEquals(viewComponent.tree.model, """
       StructureView.java
        StructureView
         B

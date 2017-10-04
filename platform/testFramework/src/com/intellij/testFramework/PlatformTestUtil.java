@@ -26,6 +26,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.idea.Bombed;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -66,15 +67,18 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.Equality;
 import junit.framework.AssertionFailedError;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.*;
+import org.jetbrains.concurrency.Promise;
 import org.junit.Assert;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InvocationEvent;
@@ -86,6 +90,7 @@ import java.nio.charset.Charset;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.jar.JarFile;
@@ -241,6 +246,28 @@ public class PlatformTestUtil {
   public static void assertTreeEqual(JTree tree, String expected, boolean checkSelected) {
     String treeStringPresentation = print(tree, checkSelected);
     Assert.assertEquals(expected, treeStringPresentation);
+  }
+
+  @TestOnly
+  public static void waitForPromise(@NotNull Promise<?> promise) {
+    Application app = ApplicationManager.getApplication();
+    assert !app.isWriteAccessAllowed() : "It's a bad idea to wait for a promise under the write action. Somebody creates an alarm which requires read action and you are deadlocked.";
+    assert app.isDispatchThread();
+    AtomicBoolean complete = new AtomicBoolean(false);
+    promise.processed(ignore -> complete.set(true));
+    long start = System.currentTimeMillis();
+    while (!complete.get()) {
+      UIUtil.dispatchAllInvocationEvents();
+      try {
+        promise.blockingGet(20, TimeUnit.MILLISECONDS);
+      }
+      catch (Exception ignore) {
+      }
+      if (System.currentTimeMillis() - start > 100 * 1000) {
+        throw new AssertionError("The promise takes too long... aborting");
+      }
+    }
+    UIUtil.dispatchAllInvocationEvents();
   }
 
   @TestOnly
@@ -437,15 +464,45 @@ public class PlatformTestUtil {
     return print(tree, false);
   }
 
-  public static void updateRecursively(@NotNull AbstractTreeNode<?> node) {
-    node.update();
-    for (AbstractTreeNode child : node.getChildren()) {
-      updateRecursively(child);
-    }
+  public static void assertTreeStructureEquals(@NotNull TreeModel treeModel, @NotNull String expected) {
+    Assert.assertEquals(expected.trim(), print(createStructure(treeModel), treeModel.getRoot(), 0, null, -1, ' ', (Queryable.PrintInfo)null).toString().trim());
   }
 
-  public static void assertTreeStructureEquals(@NotNull AbstractTreeStructure treeStructure, @NotNull String expected) {
-    Assert.assertEquals(expected.trim(), print(treeStructure, treeStructure.getRootElement(), 0, null, -1, ' ', (Queryable.PrintInfo)null).toString().trim());
+  @NotNull
+  protected static AbstractTreeStructure createStructure(@NotNull TreeModel treeModel) {
+    return new AbstractTreeStructure() {
+      @Override
+      public Object getRootElement() {
+        return treeModel.getRoot();
+      }
+
+      @Override
+      public Object[] getChildElements(Object element) {
+        return TreeUtil.nodeChildren(element, treeModel).toList().toArray();
+      }
+
+      @Nullable
+      @Override
+      public Object getParentElement(Object element) {
+        return ((AbstractTreeNode)element).getParent();
+      }
+
+      @NotNull
+      @Override
+      public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void commit() {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public boolean hasSomethingToCommit() {
+        throw new UnsupportedOperationException();
+      }
+    };
   }
 
   public static void invokeNamedAction(final String actionId) {
