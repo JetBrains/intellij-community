@@ -15,20 +15,30 @@
  */
 package com.intellij.openapi.externalSystem.service.project.manage;
 
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
-@ApiStatus.Experimental
-public interface RunConfigurationHandlerExtension {
-  ExtensionPointName<RunConfigurationHandlerExtension> EP_NAME = ExtensionPointName.create("com.intellij.runConfigurationHandlerExtension");
+/**
+ * Created by Nikita.Skvortsov
+ * date: 12.09.2017.
+ */
+public interface FacetConfigurationImporter<F extends Facet> {
+  ExtensionPointName<FacetConfigurationImporter> EP_NAME = ExtensionPointName.create("com.intellij.facetConfigurationImporter");
 
-  default void process(@NotNull Project project, @NotNull String name, @NotNull Map<String, Object> cfg) {}
-  default void process(@NotNull Module module, @NotNull  String name, @NotNull Map<String, Object> cfg) {}
+  @NotNull
+  default Collection<F> process(@NotNull Module module,
+                                @NotNull String name,
+                                @NotNull Map<String, Object> cfg,
+                                @NotNull FacetManager facetManager) {
+    return Collections.emptySet();
+  }
   default boolean canHandle(@NotNull String typeName) {
     return false;
   }

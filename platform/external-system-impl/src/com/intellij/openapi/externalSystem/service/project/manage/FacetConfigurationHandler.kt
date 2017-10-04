@@ -82,8 +82,8 @@ class FacetConfigurationHandler : ConfigurationHandler {
 
 class FacetHandlerExtensionManager {
   companion object {
-    fun handlerForType(typeName: String): FacetConfigurationHandlerExtension<out Facet<out FacetConfiguration>>? =
+    fun handlerForType(typeName: String): FacetConfigurationImporter<out Facet<out FacetConfiguration>>? =
       Extensions.getExtensions(
-        FacetConfigurationHandlerExtension.EP_NAME).firstOrNull { it.canHandle(typeName) }
+        FacetConfigurationImporter.EP_NAME).firstOrNull { it.canHandle(typeName) }
   }
 }

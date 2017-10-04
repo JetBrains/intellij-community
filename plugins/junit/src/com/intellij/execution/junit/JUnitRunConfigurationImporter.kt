@@ -17,7 +17,7 @@ package com.intellij.execution.junit
 
 import com.intellij.execution.RunManager
 import com.intellij.execution.configurations.ConfigurationTypeUtil
-import com.intellij.openapi.externalSystem.service.project.manage.RunConfigurationHandlerExtension
+import com.intellij.openapi.externalSystem.service.project.manage.RunConfigurationImporter
 import com.intellij.openapi.module.Module
 import com.intellij.rt.execution.junit.RepeatCount
 import java.util.*
@@ -26,7 +26,7 @@ import java.util.*
  * Created by Nikita.Skvortsov
  * date: 11.09.2017.
  */
-class JUnitRunConfigurationHandler : RunConfigurationHandlerExtension {
+class JUnitRunConfigurationImporter : RunConfigurationImporter {
   override fun canHandle(typeName: String): Boolean = "junit" == typeName
 
   override fun process(module: Module, name: String, cfg: MutableMap<String, *>) {
