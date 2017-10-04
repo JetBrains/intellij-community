@@ -37,17 +37,4 @@ public interface CommonJavaRunConfigurationParameters extends CommonProgramRunCo
 
   @Nullable
   String getPackage();
-
-  /**
-   * @return null if option was not selected explicitly, legacy user-local options to be used
-   */
-  @Nullable
-  default ShortenClasspath getShortenClasspath() {
-    return null;
-  }
-
-  /**
-   * Called from UI, when user explicitly selects method to be used to shorten the command line or from the deserialization
-   */
-  default void setShortenClasspath(ShortenClasspath mode) {}
 }

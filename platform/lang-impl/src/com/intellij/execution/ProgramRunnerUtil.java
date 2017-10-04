@@ -16,9 +16,11 @@
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ExecutionUtil;
@@ -27,6 +29,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -37,6 +40,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 
 public class ProgramRunnerUtil {
   private static final Logger LOG = Logger.getInstance(ProgramRunnerUtil.class);
@@ -95,11 +100,12 @@ public class ProgramRunnerUtil {
         environment.assignNewExecutionId();
       }
 
-      if (callback != null) {
+     /* if (callback != null) {
         environment.getRunner().execute(environment, callback);
       } else {
         environment.getRunner().execute(environment);
-      }
+      }*/
+     throw new ProcessNotCreatedException("87", new GeneralCommandLine("zvewrgvewrvgbrtbnre"));
     }
     catch (ExecutionException e) {
       String name = runnerAndConfigurationSettings != null ? runnerAndConfigurationSettings.getName() : null;
@@ -112,10 +118,50 @@ public class ProgramRunnerUtil {
       if (name == null) {
         name = "<Unknown>";
       }
-      ExecutionUtil.handleExecutionError(project,
-                                         ExecutionManager.getInstance(project).getContentManager().getToolWindowIdByEnvironment(environment),
-                                         name, e);
+      String windowId = ExecutionManager.getInstance(project).getContentManager().getToolWindowIdByEnvironment(environment);
+      RunConfiguration configuration = runnerAndConfigurationSettings != null ? runnerAndConfigurationSettings.getConfiguration() : null;
+      if (configuration instanceof ConfigurationWithClasspathShortener && ExecutionUtil.isProcessNotCreated(e)) {
+        handelProcessNotStartedError(runnerAndConfigurationSettings, e, name, windowId);
+      }
+      else {
+        ExecutionUtil.handleExecutionError(project, windowId, name, e);
+      }
+
+
     }
+  }
+
+  private static void handelProcessNotStartedError(RunnerAndConfigurationSettings runnerAndConfigurationSettings,
+                                                   ExecutionException e,
+                                                   String name,
+                                                   String windowId) {
+    String description = e.getMessage();
+    HyperlinkListener listener = null;
+    ConfigurationWithClasspathShortener configuration = (ConfigurationWithClasspathShortener)runnerAndConfigurationSettings.getConfiguration();
+    Project project = configuration.getProject();
+    if (configuration.getShortenClasspath() == null) {
+      ConfigurationFactory factory = runnerAndConfigurationSettings.getFactory();
+      RunnerAndConfigurationSettings configurationTemplate = RunManager.getInstance(project)
+        .getConfigurationTemplate(factory);
+      description = "Command line is too long. Shorten command line for <a href=\"current\">" + name + "</a>";
+      if (((ConfigurationWithClasspathShortener)configurationTemplate.getConfiguration()).getShortenClasspath() == null) {
+        description += " or also for " + factory.getName() + " <a href=\"default\">default</a> configuration";
+      }
+      description += ".";
+
+      listener = event -> {
+        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          boolean isDefaultConfigurationChosen = "default".equals(event.getDescription());
+          SingleConfigurableEditor dialog = RunDialog.editShortenClasspathSetting(isDefaultConfigurationChosen ? configurationTemplate : runnerAndConfigurationSettings,
+                                                                                  "Edit" + (isDefaultConfigurationChosen ? " Default" : "") + " Configuration");
+          if (dialog.showAndGet() && isDefaultConfigurationChosen) {
+            ((ConfigurationWithClasspathShortener)runnerAndConfigurationSettings.getConfiguration())
+              .setShortenClasspath(((ConfigurationWithClasspathShortener)configurationTemplate.getConfiguration()).getShortenClasspath());
+          }
+        }
+      };
+    }
+    ExecutionUtil.handleExecutionError(project, windowId, name, e, description, listener);
   }
 
   /**

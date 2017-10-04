@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration<JavaRunConfigurationModule>
-  implements CommonJavaRunConfigurationParameters, RefactoringListenerProvider, SMRunnerConsolePropertiesProvider {
+  implements CommonJavaRunConfigurationParameters, ConfigurationWithClasspathShortener, RefactoringListenerProvider, SMRunnerConsolePropertiesProvider {
   private ShortenClasspath myShortenClasspath = null;
 
   public JavaTestConfigurationBase(String name,

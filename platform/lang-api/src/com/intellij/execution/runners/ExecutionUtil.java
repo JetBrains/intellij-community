@@ -83,30 +83,45 @@ public class ExecutionUtil {
     LOG.debug(e);
 
     String description = e.getMessage();
+    HyperlinkListener listener = null;
+    if (isProcessNotCreated(e) && !PropertiesComponent.getInstance(project).isTrueValue("dynamic.classpath")) {
+      description = "Command line is too long. In order to reduce its length classpath file can be used.<br>" +
+                    "Would you like to enable classpath file mode for all run configurations of your project?<br>" +
+                    "<a href=\"\">Enable</a>";
+
+      listener = new HyperlinkListener() {
+        @Override
+        public void hyperlinkUpdate(HyperlinkEvent event) {
+          PropertiesComponent.getInstance(project).setValue("dynamic.classpath", "true");
+        }
+      };
+    }
+
+    handleExecutionError(project, toolWindowId, taskName, e, description, listener);
+  }
+
+  public static boolean isProcessNotCreated(@NotNull Throwable e) {
+    if (e instanceof ProcessNotCreatedException) {
+      String description = e.getMessage();
+      return (description.contains("87") || description.contains("111") || description.contains("206")) &&
+             ((ProcessNotCreatedException)e).getCommandLine().getCommandLineString().length() > 10/*24 * 32*/;
+    }
+    return false;
+  }
+
+  public static void handleExecutionError(@NotNull Project project,
+                                          @NotNull String toolWindowId,
+                                          @NotNull String taskName,
+                                          @NotNull Throwable e,
+                                          @Nullable String description,
+                                          @Nullable HyperlinkListener listener) {
+    final String title = ExecutionBundle.message("error.running.configuration.message", taskName);
+
     if (StringUtil.isEmptyOrSpaces(description)) {
       LOG.warn("Execution error without description", e);
       description = "Unknown error";
     }
 
-    HyperlinkListener listener = null;
-    if ((description.contains("87") || description.contains("111") || description.contains("206")) &&
-        e instanceof ProcessNotCreatedException &&
-        !PropertiesComponent.getInstance(project).isTrueValue("dynamic.classpath")) {
-      final String commandLineString = ((ProcessNotCreatedException)e).getCommandLine().getCommandLineString();
-      if (commandLineString.length() > 1024 * 32) {
-        description = "Command line is too long. In order to reduce its length classpath file can be used.<br>" +
-                      "Would you like to enable classpath file mode for all run configurations of your project?<br>" +
-                      "<a href=\"\">Enable</a>";
-
-        listener = new HyperlinkListener() {
-          @Override
-          public void hyperlinkUpdate(HyperlinkEvent event) {
-            PropertiesComponent.getInstance(project).setValue("dynamic.classpath", "true");
-          }
-        };
-      }
-    }
-    final String title = ExecutionBundle.message("error.running.configuration.message", taskName);
     final String fullMessage = title + ":<br>" + description;
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
