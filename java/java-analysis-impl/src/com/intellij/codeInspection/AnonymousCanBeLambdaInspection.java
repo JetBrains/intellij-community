@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -46,9 +32,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 import java.util.function.UnaryOperator;
 
-public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspectionTool {
+public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance(AnonymousCanBeLambdaInspection.class);
-  
+
   public boolean reportNotAnnotatedInterfaces = true;
 
   @Nls
@@ -91,7 +77,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
         super.visitAnonymousClass(aClass);
         final PsiElement parent = aClass.getParent();
         final PsiElement lambdaContext = parent != null ? parent.getParent() : null;
-        if (lambdaContext != null && 
+        if (lambdaContext != null &&
             (LambdaUtil.isValidLambdaContext(lambdaContext) || !(lambdaContext instanceof PsiExpressionStatement)) &&
             canBeConvertedToLambda(aClass, false, isOnTheFly || reportNotAnnotatedInterfaces, Collections.emptySet())) {
           final PsiElement lBrace = aClass.getLBrace();
@@ -475,7 +461,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
         return false;
       }
 
-      if (callExpression instanceof PsiMethodCallExpression && 
+      if (callExpression instanceof PsiMethodCallExpression &&
           ((PsiMethodCallExpression)callExpression).getMethodExpression().isQualified()) {
         return false;
       }
@@ -544,7 +530,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
     }
 
     @Override
-    public void visitVariable(PsiVariable variable) {       
+    public void visitVariable(PsiVariable variable) {
       if (myBodyContainsForbiddenRefs) return;
 
       super.visitVariable(variable);
@@ -575,7 +561,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
           final PsiMethod method = PsiTreeUtil.getParentOfType(myAnonymClass, PsiMethod.class);
           if (method != null && method.isConstructor()) {
             final PsiElement resolved = expression.resolve();
-            if (resolved instanceof PsiField && 
+            if (resolved instanceof PsiField &&
                 ((PsiField)resolved).hasModifierProperty(PsiModifier.FINAL) &&
                 ((PsiField)resolved).getInitializer() == null &&
                 ((PsiField)resolved).getContainingClass() == method.getContainingClass()) {

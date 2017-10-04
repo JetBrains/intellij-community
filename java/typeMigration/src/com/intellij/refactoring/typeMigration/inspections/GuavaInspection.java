@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration.inspections;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -34,7 +32,7 @@ import java.util.*;
  * @author Dmitry Batkovich
  */
 @SuppressWarnings("DialogTitleCapitalization")
-public class GuavaInspection extends BaseJavaLocalInspectionTool {
+public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
   private final static Logger LOG = Logger.getInstance(GuavaInspection.class);
   private final static Set<String> FLUENT_ITERABLE_STOP_METHODS = ContainerUtil.newHashSet("append", "cycle", "uniqueIndex", "index", "toMultiset");
 
