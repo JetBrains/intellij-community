@@ -1267,12 +1267,12 @@
     <option name="android" path="ActionManager" hit="Android Studio Help" />
     <option name="help" path="ActionManager" hit="Android Studio Help" />
     <option name="studio" path="ActionManager" hit="Android Studio Help" />
-    <option name="android" path="ActionManager" hit="Android resource directory" />
-    <option name="directory" path="ActionManager" hit="Android resource directory" />
-    <option name="resource" path="ActionManager" hit="Android resource directory" />
-    <option name="android" path="ActionManager" hit="Android resource file" />
-    <option name="file" path="ActionManager" hit="Android resource file" />
-    <option name="resource" path="ActionManager" hit="Android resource file" />
+    <option name="android" path="ActionManager" hit="Android Resource Directory" />
+    <option name="directory" path="ActionManager" hit="Android Resource Directory" />
+    <option name="resource" path="ActionManager" hit="Android Resource Directory" />
+    <option name="android" path="ActionManager" hit="Android Resource File" />
+    <option name="file" path="ActionManager" hit="Android Resource File" />
+    <option name="resource" path="ActionManager" hit="Android Resource File" />
     <option name="angular" path="ActionManager" hit="Angular CLI..." />
     <option name="cli" path="ActionManager" hit="Angular CLI..." />
     <option name="annotate" path="ActionManager" hit="Annotate" />
