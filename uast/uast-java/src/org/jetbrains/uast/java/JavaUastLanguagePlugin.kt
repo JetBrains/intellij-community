@@ -160,6 +160,7 @@ internal object JavaConverter {
         is PsiAnnotationParameterList -> unwrapElements(element.parent)
         is PsiModifierList -> unwrapElements(element.parent)
         is PsiExpressionList -> unwrapElements(element.parent)
+        is PsiPackageStatement -> unwrapElements(element.parent)
         else -> element
     }
 
