@@ -112,9 +112,9 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     Collection<AbstractTreeNode> children = getChildren();
     for (Filter filter : filters) {
       for (Iterator<AbstractTreeNode> eachNode = children.iterator(); eachNode.hasNext();) {
-        TreeElementWrapper eachChild = (TreeElementWrapper)eachNode.next();
-        TreeElement value = eachChild.getValue();
-        if (value == null || !filter.isVisible(value)) {
+        AbstractTreeNode eachChild = eachNode.next();
+        Object value = eachChild.getValue();
+        if (!(value instanceof TreeElement) || !filter.isVisible((TreeElement)value)) {
           eachNode.remove();
         }
       }
@@ -137,10 +137,10 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   private void groupElements(Grouper grouper) {
     ArrayList<AbstractTreeNode<TreeElement>> ungrouped = new ArrayList<>();
     Collection<AbstractTreeNode> children = getChildren();
-    for (final AbstractTreeNode child : children) {
-      CachingChildrenTreeNode<TreeElement> node = (CachingChildrenTreeNode<TreeElement>)child;
-      if (node instanceof TreeElementWrapper) {
-        ungrouped.add(node);
+    for (AbstractTreeNode child : children) {
+      if (child instanceof TreeElementWrapper) {
+        //noinspection unchecked
+        ungrouped.add(child);
       }
     }
 
