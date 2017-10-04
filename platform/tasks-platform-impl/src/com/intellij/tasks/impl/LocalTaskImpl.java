@@ -62,11 +62,11 @@ public class LocalTaskImpl extends LocalTask {
 
   private boolean myActive;
   private List<ChangeListInfo> myChangeLists = new ArrayList<>();
+  private String myShelfName;
   private boolean myRunning = false;
   private List<WorkItem> myWorkItems = new ArrayList<>();
   private Date myLastPost;
   private List<BranchInfo> myBranches = new ArrayList<>();
-
 
   /** for serialization */
   public LocalTaskImpl() {    
@@ -235,6 +235,7 @@ public class LocalTaskImpl extends LocalTask {
     myChangeLists.remove(info);
   }
 
+
   @NotNull
   @Override
   @Property(surroundWithTag = false)
@@ -255,6 +256,16 @@ public class LocalTaskImpl extends LocalTask {
   @Override
   public void removeBranch(BranchInfo info) {
     myBranches.add(info);
+  }
+
+  @Override
+  public String getShelfName() {
+    return myShelfName;
+  }
+
+  @Override
+  public void setShelfName(String shelfName) {
+    myShelfName = shelfName;
   }
 
   public boolean isClosed() {

@@ -52,6 +52,7 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
   private JBLabel myFromLabel;
   private JBCheckBox myUseBranch;
   private ComboBox<VcsTaskHandler.TaskInfo> myUseBranchCombo;
+  private JBCheckBox myShelveChanges;
 
   private VcsTaskHandler myVcsTaskHandler;
   private static final String START_FROM_BRANCH = "start.from.branch";
@@ -84,6 +85,7 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
       }
     });
     myCreateChangelist.setSelected(myTaskManager.getState().createChangelist);
+    myShelveChanges.setSelected(myTaskManager.getState().shelveChanges);
 
     VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(project);
     if (handlers.length == 0) {
@@ -167,10 +169,14 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
   @Override
   public void commit() {
     myTaskManager.getState().createChangelist = myCreateChangelist.isSelected();
+    myTaskManager.getState().shelveChanges = myShelveChanges.isSelected();
     myTaskManager.getState().createBranch = myCreateBranch.isSelected();
     myTaskManager.getState().useBranch = myUseBranch.isSelected();
 
     LocalTask localTask = myTaskManager.getActiveTask();
+    if (myShelveChanges.isSelected()) {
+      myTaskManager.shelveChanges(myPreviousTask, myPreviousTask.getSummary());
+    }
     if (myCreateChangelist.isSelected()) {
       myTaskManager.createChangeList(localTask, myChangelistName.getText());
     }

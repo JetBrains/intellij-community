@@ -105,7 +105,7 @@ public class OpenTaskDialog extends DialogWrapper {
     }
     
     myAdditionalPanel.setLayout(new BoxLayout(myAdditionalPanel, BoxLayout.Y_AXIS));
-    myPanels = TaskDialogPanelProvider.getOpenTaskPanels(project, task);
+    myPanels = TaskDialogPanelProvider.getOpenTaskPanels(project, myTask);
     for (TaskDialogPanel panel : myPanels) {
       myAdditionalPanel.add(panel.getPanel());
     }
