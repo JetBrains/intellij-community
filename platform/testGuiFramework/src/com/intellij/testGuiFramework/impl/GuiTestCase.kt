@@ -105,7 +105,6 @@ open class GuiTestCase {
 
   val settingsTitle: String = if (isMac()) "Preferences" else "Settings"
   val defaultSettingsTitle: String = if (isMac()) "Default Preferences" else "Default Settings"
-  val IS_UNDER_TEAMCITY = System.getenv("TEAMCITY_VERSION") != null
   val slash: String = File.separator
 
 
@@ -427,6 +426,7 @@ open class GuiTestCase {
     else throw UnableToFindComponent("Message")
   }
 
+  @Suppress("FunctionName")
   private fun <S, C : Component> ComponentFixture<S, C>.UnableToFindComponent(component: String): ComponentLookupException {
     return ComponentLookupException("""Sorry, unable to find $component component with ${target()} as a Container""")
   }
@@ -582,8 +582,6 @@ open class GuiTestCase {
     return comboboxFixture
   }
 
-  private fun editor(ideFrameFixture: IdeFrameFixture, timeout: Long): EditorFixture = EditorFixture(guiTestRule.robot(), ideFrameFixture)
-
   private fun textfield(container: Container, labelText: String?, timeout: Long): JTextComponentFixture {
     //if 'textfield()' goes without label
     if (labelText.isNullOrEmpty()) {
@@ -615,13 +613,13 @@ open class GuiTestCase {
   private fun jTreePath(container: Container, timeout: Long, vararg pathStrings: String): ExtendedTreeFixture {
     val myTree: JTree?
     val pathList = pathStrings.toList()
-    if (pathList.isEmpty()) {
-      myTree = waitUntilFound(guiTestRule.robot(), container, typeMatcher(JTree::class.java) { true }, timeout.toFestTimeout())
+    myTree = if (pathList.isEmpty()) {
+      waitUntilFound(guiTestRule.robot(), container, typeMatcher(JTree::class.java) { true }, timeout.toFestTimeout())
     }
     else {
-      myTree = waitUntilFound(guiTestRule.robot(), container,
-                              typeMatcher(JTree::class.java) { ExtendedTreeFixture(guiTestRule.robot(), it).hasPath(pathList) },
-                              timeout.toFestTimeout())
+      waitUntilFound(guiTestRule.robot(), container,
+                     typeMatcher(JTree::class.java) { ExtendedTreeFixture(guiTestRule.robot(), it).hasPath(pathList) },
+                     timeout.toFestTimeout())
     }
     return ExtendedTreeFixture(guiTestRule.robot(), myTree)
   }
@@ -684,7 +682,7 @@ open class GuiTestCase {
   }
 
   //necessary only for Windows
-  fun getScaleSuffix(): String? {
+  private fun getScaleSuffix(): String? {
     val scaleEnabled: Boolean = (GuiTestUtil.getSystemPropertyOrEnvironmentVariable("sun.java2d.uiScale.enabled")?.toLowerCase().equals(
       "true"))
     if (!scaleEnabled) return ""
@@ -699,10 +697,10 @@ open class GuiTestCase {
     return GuiTestUtil.waitUntilFound(guiTestRule.robot(), container, typeMatcher(componentClass) { matcher(it) }, timeout.toFestTimeout())
   }
 
-  fun <Fixture, ComponentType : Component> waitUntilFoundFixture(container: Container?,
-                                                                 componentClass: Class<ComponentType>,
-                                                                 timeout: Long,
-                                                                 matcher: (ComponentType) -> Pair<Boolean, Fixture>): Fixture {
+  private fun <Fixture, ComponentType : Component> waitUntilFoundFixture(container: Container?,
+                                                                         componentClass: Class<ComponentType>,
+                                                                         timeout: Long,
+                                                                         matcher: (ComponentType) -> Pair<Boolean, Fixture>): Fixture {
     val ref = Ref<Fixture>()
     GuiTestUtil.waitUntilFound(guiTestRule.robot(), container, typeMatcher(componentClass)
     {
