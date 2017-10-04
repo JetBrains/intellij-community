@@ -80,6 +80,7 @@ public class UnversionedDiffRequestProducer implements ChangeDiffRequestChain.Pr
   @Override
   public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
     throws DiffRequestProducerException, ProcessCanceledException {
+    if (!myFile.isValid()) throw new DiffRequestProducerException("Can't show diff - file not found");
     return createRequest(myProject, myFile);
   }
 
@@ -90,7 +91,7 @@ public class UnversionedDiffRequestProducer implements ChangeDiffRequestChain.Pr
   }
 
   @NotNull
-  public static DiffRequest createRequest(@Nullable Project project, @NotNull VirtualFile file) {
+  private static DiffRequest createRequest(@Nullable Project project, @NotNull VirtualFile file) {
     DiffContentFactory contentFactory = DiffContentFactory.getInstance();
     DiffContent content1 = contentFactory.createEmpty();
     DiffContent content2 = contentFactory.create(project, file);
