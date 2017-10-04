@@ -216,7 +216,7 @@ public class OutputChecker {
         // unquote extra params
         result = result.replaceAll("\"(-D.*?)\"", "$1");
 
-        result = result.replaceAll("-javaagent:.*props", "-javaagent:!AGENT_PATH!");
+        result = result.replaceAll(" -javaagent:.*props", "");
         result = result.replaceAll("-Didea.launcher.port=\\d*", "-Didea.launcher.port=!IDEA_LAUNCHER_PORT!");
         result = result.replaceAll("-Dfile.encoding=[\\w\\d-]*", "-Dfile.encoding=!FILE_ENCODING!");
         result = result.replaceAll("\\((.*)\\:\\d+\\)", "($1:!LINE_NUMBER!)");
