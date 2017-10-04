@@ -23,16 +23,14 @@ public class Main {
   }
 
   public void main(String[] args) {
-      Person person;
+      Person person = new Person(12, "aaa");
       renamePerson(person, "ccc");
       int x;
       if(true) {
-          person = new Person(12, "aaa");
           x = 12;
       } else {
-          person = new Person(12, "aaa");
           x = 1;
       }
-      work(x)
+      work(x);
   }
 }

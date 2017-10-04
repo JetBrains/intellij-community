@@ -60,7 +60,7 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
         if (context == null) return;
         CommonPartType type = context.getType();
         boolean mayChangeSemantics = context.mayChangeSemantics();
-        boolean warning = type == CommonPartType.WITHOUT_VARIABLES_EXTRACT && !mayChangeSemantics;
+        boolean warning = type != CommonPartType.WITH_VARIABLES_EXTRACT && type != CommonPartType.VARIABLES_ONLY && !mayChangeSemantics;
         ProblemHighlightType highlightType = warning ? ProblemHighlightType.WEAK_WARNING : ProblemHighlightType.INFORMATION;
         String message = getMessage(mayChangeSemantics, type);
         holder.registerProblem(ifStatement, message, highlightType, new ExtractCommonIfPartsFix(type, mayChangeSemantics));
@@ -160,17 +160,19 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
         if (!tryCleanUpHead(ifStatement, units, factory)) return;
         cleanUpTail(ifStatement, context);
         PsiStatement elseBranch = ifStatement.getElseBranch();
-        if (elseBranch != null && ControlFlowUtils.unwrapBlock(elseBranch).length == 0) {
-          elseBranch.delete();
-        }
         PsiStatement thenBranch = ifStatement.getThenBranch();
-        if (thenBranch != null && ControlFlowUtils.unwrapBlock(thenBranch).length == 0) {
-          if (ControlFlowUtils.unwrapBlock(elseBranch).length == 0) {
-            ifStatement.delete();
-          }
-          else {
-            thenBranch.delete();
-          }
+        boolean elseToDelete = elseBranch != null && ControlFlowUtils.unwrapBlock(elseBranch).length == 0;
+        boolean thenToDelete = thenBranch != null && ControlFlowUtils.unwrapBlock(thenBranch).length == 0;
+        if(thenToDelete && elseToDelete) {
+          ifStatement.delete();
+        } else if (elseToDelete) {
+          elseBranch.delete();
+        } else if (thenToDelete) {
+          PsiExpression condition = ifStatement.getCondition();
+          if(condition == null) return;
+          String negatedCondition = BoolUtils.getNegatedExpressionText(condition);
+          String newThenBranch = elseBranch == null ? "" : elseBranch.getText();
+          ifStatement.replace(factory.createStatementFromText("if(" + negatedCondition + ")" + newThenBranch, ifStatement));
         }
       }
       else {
@@ -204,7 +206,7 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
           if(!baseName.equals(varName)) {
             thenStatement = replaceName(ifStatement, factory, thenStatement, variable, varName);
           }
-          if (unit.mayChangeSemantics() || !unit.hasEquivalentStatements()) {
+          if (!unit.hasEquivalentStatements()) {
             String variableDeclaration = variable.getType().getCanonicalText() + " " + varName + ";";
             PsiStatement varDeclarationStmt = factory.createStatementFromText(variableDeclaration, parent);
             parent.addBefore(varDeclarationStmt, ifStatement);
@@ -497,7 +499,9 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
       }
 
       int extractedFromStart = headCommonParts.size();
-      int canBeExtractedFromEnd = Math.min(thenLen - extractedFromStart, elseLen - extractedFromStart);
+      int canBeExtractedFromThenTail = thenLen - extractedFromStart;
+      int canBeExtractedFromElseTail = elseLen - extractedFromStart;
+      int canBeExtractedFromEnd = Math.min(canBeExtractedFromThenTail, canBeExtractedFromElseTail);
       List<PsiStatement> tailCommonParts = new ArrayList<>();
       for (int i = 0; i < canBeExtractedFromEnd; i++) {
         PsiStatement thenStmt = thenBranch[thenLen - i - 1];
@@ -516,7 +520,7 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
           break;
         }
       }
-      if(canBeExtractedFromEnd == tailCommonParts.size()) {
+      if(canBeExtractedFromEnd == tailCommonParts.size() && canBeExtractedFromElseTail == canBeExtractedFromThenTail) {
         // trying to append to tail statements that may change semantics from head, because in tail they can't change semantics
         for (int i = headCommonParts.size() - 1; i >= 0; i--) {
           ExtractionUnit unit = headCommonParts.get(i);
@@ -593,6 +597,7 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
         while (count <= returnStmtIndex);
         PsiIfStatement nextIf = getEnclosingIfStmt(currentIf);
         if (nextIf == null) break;
+        if(nextIf.getElseBranch() != null) return null;
         currentIf = nextIf;
       }
       while (statements.size() != returnStmtIndex + 1);

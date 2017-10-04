@@ -27,12 +27,12 @@ public class Main {
       Person person = new Person(12, "aaa");
       renamePerson(person, "ccc");
       int x <caret>= 12;
-      work(x)
+      work(x);
     } else {
       Person person = new Person(12, "aaa");
       renamePerson(person, "ccc");
       int x = 1;
-      work(x)
+      work(x);
     }
   }
 }
