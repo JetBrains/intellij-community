@@ -206,9 +206,7 @@ open class GuiTestCase {
   fun <S, C : Component> ComponentFixture<S, C>.button(name: String, timeout: Long = defaultTimeout): ExtendedButtonFixture =
     if (target() is Container) {
       val jButton = waitUntilFound(target() as Container, JButton::class.java, timeout) {
-        it.flags {
-          isShowing && isVisible && text == name
-        }
+        it.isShowing && it.isVisible && it.text == name
       }
       ExtendedButtonFixture(guiTestRule.robot(), jButton)
     }
@@ -251,7 +249,7 @@ open class GuiTestCase {
   fun <S, C : Component> ComponentFixture<S, C>.checkbox(labelText: String, timeout: Long = defaultTimeout): CheckBoxFixture =
     if (target() is Container) {
       val jCheckBox = waitUntilFound(target() as Container, JCheckBox::class.java, timeout) {
-        it.flags { isShowing && isVisible && text == labelText }
+        it.isShowing && it.isVisible && it.text == labelText
       }
       CheckBoxFixture(guiTestRule.robot(), jCheckBox)
     }
@@ -573,8 +571,7 @@ open class GuiTestCase {
   private fun combobox(container: Container, text: String, timeout: Long): ComboBoxFixture {
     //wait until label has appeared
     try {
-      waitUntilFound(container, Component::class.java,
-                     timeout) { it.flags { isShowing && isTextComponent() && getComponentText() == text } }
+      waitUntilFound(container, Component::class.java, timeout) { it.isShowing && it.isTextComponent() && it.getComponentText() == text }
     }
     catch (e: WaitTimedOutError) {
       throw ComponentLookupException("Unable to find label for a combobox with text \"$text\" in $timeout seconds")
@@ -595,7 +592,7 @@ open class GuiTestCase {
     }
     //wait until label has appeared
     waitUntilFound(container, Component::class.java, timeout) {
-      it.flags { isShowing && isVisible && isTextComponent() && getComponentText() == labelText }
+      it.isShowing && it.isVisible && it.isTextComponent() && it.getComponentText() == labelText
     }
     val jTextComponent = findBoundedComponentByText(guiTestRule.robot(), container, labelText!!, JTextComponent::class.java)
     return JTextComponentFixture(guiTestRule.robot(), jTextComponent)
@@ -720,12 +717,6 @@ open class GuiTestCase {
     Pause.pause(object : Condition(condition) {
       override fun test() = testFunction()
     }, Timeout.timeout(timeoutSeconds, TimeUnit.SECONDS))
-  }
-
-  inline fun <ExtendingType> ExtendingType.flags(flagCheckFunction: ExtendingType.() -> Boolean): Boolean {
-    with(this) {
-      return flagCheckFunction()
-    }
   }
 }
 
