@@ -25,7 +25,6 @@ import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
-import com.intellij.ide.util.treeView.smartTree.CachingChildrenTreeNode;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.properties.IProperty;
@@ -76,12 +75,13 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -92,8 +92,6 @@ import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -228,10 +226,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   }
 
   public void updateTreeRoot() {
-    final Object element = myStructureViewComponent.getTreeStructure().getRootElement();
-    if (element instanceof CachingChildrenTreeNode) {
-      ((CachingChildrenTreeNode)element).rebuildChildren();
-    }
+    myStructureViewComponent.rebuild();
   }
 
   @NotNull
@@ -280,10 +275,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       return;
     }
     JTree tree = myStructureViewComponent.getTree();
-    if (tree == null) {
-      return;
-    }
-
     Object root = tree.getModel().getRoot();
     if (AbstractTreeUi.isLoadingChildrenFor(root)) {
       boolean isEditorVisible = false;
@@ -358,14 +349,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
         return;
       }
     }
-  }
-
-  @Nullable
-  private static ResourceBundleEditorViewElement getSelectedElement(@NotNull DefaultMutableTreeNode node) {
-    Object userObject = node.getUserObject();
-    if (!(userObject instanceof AbstractTreeNode)) return null;
-    Object value = ((AbstractTreeNode)userObject).getValue();
-    return value instanceof ResourceBundleEditorViewElement ? (ResourceBundleEditorViewElement) value : null;
   }
 
   private void writeEditorPropertyValue(final @Nullable String propertyName,
@@ -597,15 +580,13 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   }
 
   @NotNull
-  private Collection<DefaultMutableTreeNode> getSelectedNodes() {
+  private JBIterable<Object> getSelectedNodes() {
     if (!isValid()) {
-      return Collections.emptyList();
+      return JBIterable.empty();
     }
     JTree tree = myStructureViewComponent.getTree();
-    if (tree == null) return Collections.emptyList();
-    TreePath[] selected = tree.getSelectionModel().getSelectionPaths();
-    if (selected == null || selected.length == 0) return Collections.emptyList();
-    return ContainerUtil.map(selected, treePath -> (DefaultMutableTreeNode)treePath.getLastPathComponent());
+    return JBIterable.of(tree.getSelectionModel().getSelectionPaths())
+      .map(o -> TreeUtil.getUserObject(o.getLastPathComponent()));
   }
 
   @Nullable
@@ -616,25 +597,22 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
 
   @Nullable
   IProperty getSelectedProperty() {
-    final Collection<DefaultMutableTreeNode> selectedNode = getSelectedNodes();
-    if (selectedNode.isEmpty()) {
-      return null;
-    }
-    final ResourceBundleEditorViewElement element = getSelectedElement(ContainerUtil.getFirstItem(selectedNode));
-    return element instanceof ResourceBundlePropertyStructureViewElement ? ((ResourceBundlePropertyStructureViewElement)element).getProperty()
-                                                                       : null;
+    ResourceBundleEditorViewElement first = getSelectedNodes()
+      .filter(AbstractTreeNode.class)
+      .filterMap(AbstractTreeNode::getValue)
+      .filter(ResourceBundleEditorViewElement.class)
+      .first();
+    return first instanceof ResourceBundlePropertyStructureViewElement ?
+           ((ResourceBundlePropertyStructureViewElement)first).getProperty() : null;
   }
 
   @NotNull
   public Collection<ResourceBundleEditorViewElement> getSelectedElements() {
-    final Collection<DefaultMutableTreeNode> selectedNodes = getSelectedNodes();
-    return ContainerUtil.mapNotNull(selectedNodes,
-                                    (NullableFunction<DefaultMutableTreeNode, ResourceBundleEditorViewElement>)selectedNode -> {
-                                      Object userObject = selectedNode.getUserObject();
-                                      if (!(userObject instanceof AbstractTreeNode)) return null;
-                                      Object value = ((AbstractTreeNode)userObject).getValue();
-                                      return value instanceof ResourceBundleEditorViewElement ? (ResourceBundleEditorViewElement) value : null;
-                                    });
+    return getSelectedNodes()
+      .filter(AbstractTreeNode.class)
+      .filterMap(AbstractTreeNode::getValue)
+      .filter(ResourceBundleEditorViewElement.class)
+      .toList();
   }
 
   @Nullable

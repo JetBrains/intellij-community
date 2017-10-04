@@ -157,11 +157,9 @@ class NewPropertyAction extends AnAction {
       });
 
       resourceBundleEditor.updateTreeRoot();
-      resourceBundleEditor
-        .getStructureViewComponent()
-        .getTreeBuilder()
-        .queueUpdate()
-        .doWhenDone(() -> finalResourceBundleEditor.selectProperty(keyToInsert));
+      resourceBundleEditor.getStructureViewComponent()
+        .select(keyToInsert, false)
+        .processed(p -> finalResourceBundleEditor.selectProperty(keyToInsert));
     }
   }
 

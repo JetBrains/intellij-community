@@ -17,9 +17,12 @@ package com.intellij.ide.structureView.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.StructureViewWrapperImpl;
-import com.intellij.ide.structureView.*;
+import com.intellij.ide.structureView.StructureView;
+import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.structureView.StructureViewFactoryEx;
+import com.intellij.ide.structureView.StructureViewWrapper;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
-import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.PsiStructureViewFactory;
@@ -33,7 +36,10 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Alarm;
@@ -41,6 +47,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,7 +71,7 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
 
   private void updateAfterPsiChange() {
     if (myProject.isDisposed()) return;
-    if (myBaseStructureViewDescriptor != null && ((StructureViewComponent)myBaseStructureViewDescriptor.structureView).getTree() == null) return;
+    if (((StructureViewComponent)myBaseStructureViewDescriptor.structureView).isDisposed()) return;
     ApplicationManager.getApplication().runReadAction(() -> {
       if (!myVirtualFile.isValid() || getViewProvider() == null) return;
 
@@ -84,20 +91,10 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
   }
 
   private static boolean isPsiValid(@NotNull StructureViewComposite.StructureViewDescriptor baseStructureViewDescriptor) {
-    final StructureViewComponent view = (StructureViewComponent)baseStructureViewDescriptor.structureView;
+    StructureViewComponent view = (StructureViewComponent)baseStructureViewDescriptor.structureView;
     if (view.isDisposed()) return false;
-
-    final Object root = view.getTreeStructure().getRootElement();
-    if (root instanceof StructureViewComponent.StructureViewTreeElementWrapper) {
-      final TreeElement value = ((StructureViewComponent.StructureViewTreeElementWrapper)root).getValue();
-      if (value instanceof StructureViewTreeElement) {
-        final Object psi = ((StructureViewTreeElement)value).getValue();
-        if (psi instanceof PsiElement) {
-          return ((PsiElement)psi).isValid();
-        }
-      }
-    }
-    return true;
+    Object value = StructureViewComponent.unwrapValue(view.getTree().getModel().getRoot());
+    return !(value instanceof PsiElement && !((PsiElement)value).isValid());
   }
 
   @Nullable
@@ -117,37 +114,11 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
     final StructureViewComponent view = (StructureViewComponent)myBaseStructureViewDescriptor.structureView;
     if (view.isDisposed()) return;
 
-    StructureViewState state = view.getState();
-    List<PsiAnchor> expanded = collectAnchors(state.getExpandedElements());
-    List<PsiAnchor> selected = collectAnchors(state.getSelectedElements());
+    TreeState treeState = TreeState.createOn(view.getTree(), new TreePath(view.getTree().getModel().getRoot()));
     updateTemplateDataFileView();
 
     if (view.isDisposed()) return;
-
-    for (PsiAnchor pointer : expanded) {
-      PsiElement element = pointer.retrieve();
-      if (element != null) {
-        view.expandPathToElement(element);
-      }
-    }
-    for (PsiAnchor pointer : selected) {
-      PsiElement element = pointer.retrieve();
-      if (element != null) {
-        view.addSelectionPathTo(element);
-      }
-    }
-  }
-
-  private static List<PsiAnchor> collectAnchors(final Object[] expandedElements) {
-    List<PsiAnchor> expanded = new ArrayList<>(expandedElements == null ? 0 : expandedElements.length);
-    if (expandedElements != null) {
-      for (Object element : expandedElements) {
-        if (element instanceof PsiElement && ((PsiElement) element).isValid()) {
-          expanded.add(PsiAnchor.create((PsiElement)element));
-        }
-      }
-    }
-    return expanded;
+    treeState.applyTo(view.getTree());
   }
 
   @Override
