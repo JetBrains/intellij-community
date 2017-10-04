@@ -17,7 +17,7 @@ import org.jetbrains.idea.devkit.testAssistant.TestDataNavigationHandler;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+import static com.intellij.patterns.PsiJavaPatterns.literalExpression;
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 
 public class TestDataFilesReferencesContributor extends PsiReferenceContributor {
@@ -25,7 +25,7 @@ public class TestDataFilesReferencesContributor extends PsiReferenceContributor 
 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
-    PsiJavaElementPattern.Capture<PsiElement> capture = psiElement().methodCallParameter(psiMethod());
+    PsiJavaElementPattern.Capture<PsiLiteralExpression> capture = literalExpression().methodCallParameter(psiMethod());
     registrar.registerReferenceProvider(capture, new PsiReferenceProvider() {
       @NotNull
       @Override
