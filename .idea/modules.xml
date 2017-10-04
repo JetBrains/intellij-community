@@ -29,6 +29,7 @@
       <module fileurl="file://$PROJECT_DIR$/../vendor/google/android-apk/android-apk.iml" filepath="$PROJECT_DIR$/../vendor/google/android-apk/android-apk.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-common/android-common.iml" filepath="$PROJECT_DIR$/../adt/idea/android-common/android-common.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-debuggers/android-debuggers.iml" filepath="$PROJECT_DIR$/../adt/idea/android-debuggers/android-debuggers.iml" group="android" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-debuggers/android-debuggers-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-debuggers/android-debuggers-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-gradle-jps/android-gradle-jps.iml" filepath="$PROJECT_DIR$/../adt/idea/android-gradle-jps/android-gradle-jps.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/jps-plugin/android-jps-plugin.iml" filepath="$PROJECT_DIR$/../adt/idea/jps-plugin/android-jps-plugin.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-lang/android-lang.iml" filepath="$PROJECT_DIR$/../adt/idea/android-lang/android-lang.iml" group="android" />
