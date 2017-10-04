@@ -25,7 +25,7 @@ class AsyncStacksToggleAction : ToggleAction() {
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.isEnabledAndVisible = Registry.`is`("debugger.capture.points.agent") && DebuggerUtilsEx.isInJavaSession(e)
+    e.presentation.isEnabledAndVisible = DebuggerUtilsEx.isInJavaSession(e)
   }
 
   companion object {

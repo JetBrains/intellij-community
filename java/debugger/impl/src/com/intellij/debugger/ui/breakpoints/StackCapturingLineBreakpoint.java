@@ -150,7 +150,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (Registry.is("debugger.capture.points")) {
       StreamEx<CapturePoint> points = StreamEx.of(DebuggerSettings.getInstance().getCapturePoints()).filter(c -> c.myEnabled);
-      if (Registry.is("debugger.capture.points.agent")) {
+      if (isAgentEnabled()) {
         points = points.append(CaptureSettingsProvider.getIdeInsertPoints());
       }
       points.forEach(c -> track(debugProcess, c));
@@ -240,7 +240,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
                                                      boolean checkInProcessData) {
     DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
     Map<Object, List<StackFrameItem>> capturedStacks = debugProcess.getUserData(CAPTURED_STACKS);
-    if (ContainerUtil.isEmpty(capturedStacks) && !Registry.is("debugger.capture.points.agent")) {
+    if (ContainerUtil.isEmpty(capturedStacks) && !isAgentEnabled()) {
       return null;
     }
     List<StackCapturingLineBreakpoint> captureBreakpoints = debugProcess.getUserData(CAPTURE_BREAKPOINTS);
@@ -442,5 +442,9 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
       DebuggerManagerThreadImpl.assertIsManagerThread();
       myEvaluatorCache.clear();
     }
+  }
+
+  public static boolean isAgentEnabled() {
+    return Registry.is("debugger.capture.points.agent") && DebuggerSettings.getInstance().INSTRUMENTING_AGENT;
   }
 }

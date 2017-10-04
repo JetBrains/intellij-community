@@ -8,6 +8,7 @@ import com.intellij.debugger.settings.CaptureSettingsProvider;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.GetJPDADialog;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
+import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -499,7 +500,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   }
 
   private static void addDebuggerAgent(JavaParameters parameters) {
-    if (Registry.is("debugger.capture.points.agent")) {
+    if (StackCapturingLineBreakpoint.isAgentEnabled()) {
       String prefix = "-javaagent:";
       String agentName = "debugger-agent.jar";
       ParametersList parametersList = parameters.getVMParametersList();
