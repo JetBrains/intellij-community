@@ -52,6 +52,7 @@ class JavaUastApiTest : AbstractJavaUastTest() {
             val uLiteral = literal.toUElement()!!
             UsefulTestCase.assertInstanceOf(uLiteral, ULiteralExpression::class.java)
             UsefulTestCase.assertInstanceOf(uLiteral.uastParent, UQualifiedReferenceExpression::class.java)
+            UsefulTestCase.assertInstanceOf(uLiteral.getUCallExpression(), UCallExpression::class.java)
         }
     }
 
