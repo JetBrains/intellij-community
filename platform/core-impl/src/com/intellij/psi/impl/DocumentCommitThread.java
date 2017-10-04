@@ -848,8 +848,9 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
            oldDocumentText.charAt(prefix) == newDocumentText.charAt(prefix)) { prefix++; }
     while (suffix < shortestLength - prefix &&
            oldDocumentText.charAt(psiLength - suffix - 1) == newDocumentText.charAt(newDocumentText.length() - suffix - 1)) { suffix++; }
-    TextRange changedPsiRange = TextRange.create(prefix, Math.max(prefix, psiLength - suffix));
-    return changedPsiRange;
+    int length = Math.max(prefix, psiLength - suffix);
+    if (length == 0 && newDocumentText.length() == oldDocumentText.length()) return null;
+    return TextRange.create(prefix, length);
   }
 
   public static void doActualPsiChange(@NotNull final PsiFile file, @NotNull final DiffLog diffLog) {
