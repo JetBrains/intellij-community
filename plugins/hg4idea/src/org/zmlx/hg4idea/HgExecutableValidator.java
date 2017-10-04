@@ -30,7 +30,7 @@ public class HgExecutableValidator extends ExecutableValidator {
 
   @Override
   protected String getCurrentExecutable() {
-    return myVcs.getGlobalSettings().getHgExecutable();
+    return myVcs.getProjectSettings().getHgExecutable();
   }
 
   @NotNull

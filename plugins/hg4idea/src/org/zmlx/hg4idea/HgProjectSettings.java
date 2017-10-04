@@ -20,6 +20,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
 import com.intellij.util.xmlb.annotations.Property;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +50,8 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
     public boolean myIgnoreWhitespacesInAnnotations = true;
     public String RECENT_HG_ROOT_PATH = null;
     public Value ROOT_SYNC = Value.NOT_DECIDED;
-    
+    public String myHgExecutable = null;
+
     @Property(surroundWithTag = false, flat = true)
     public DvcsBranchSettings FAVORITE_BRANCH_SETTINGS = new DvcsBranchSettings();
   }
@@ -115,15 +117,18 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
   }
 
   public String getHgExecutable() {
-    return myAppSettings.getHgExecutable();
+    String executable = myState.myHgExecutable;
+    if (StringUtil.isEmpty(executable)) {
+      executable = myAppSettings.getHgExecutable();
+    }
+    return executable;
   }
 
   public void setHgExecutable(String text) {
-    myAppSettings.setHgExecutable(text);
-  }
-
-  @NotNull
-  public HgGlobalSettings getGlobalSettings() {
-    return myAppSettings;
+    if (myProject.isDefault()) {
+      myAppSettings.setHgExecutable(text);
+    } else {
+      myState.myHgExecutable = text;
+    }
   }
 }
