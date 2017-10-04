@@ -324,7 +324,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
   private List<Node> getEntryChildren(Object object) {
     Node node = getEntry(object);
     if (node == null) return emptyList();
-    promiseChildren(node);
+    if (node.isLoadingRequired()) promiseChildren(node);
     return node.getChildren();
   }
 
