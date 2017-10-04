@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.util.FileTypeUtils;
@@ -56,8 +54,9 @@ public class WrongPackageStatementInspectionBase extends BaseJavaBatchLocalInspe
       if (!Comparing.strEqual(packageName, "", true) && packageStatement == null) {
         String description = JavaErrorMessages.message("missing.package.statement", packageName);
 
-        return new ProblemDescriptor[]{manager.createProblemDescriptor(classes[0].getNameIdentifier(), description,
-                                                                       isValidPackageName(packageName, file.getProject()) ? new AdjustPackageNameFix(packageName) : null,
+        final LocalQuickFix fix =
+          PsiDirectoryFactory.getInstance(file.getProject()).isValidPackageName(packageName) ? new AdjustPackageNameFix(packageName) : null;
+        return new ProblemDescriptor[]{manager.createProblemDescriptor(classes[0].getNameIdentifier(), description, fix,
                                                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly)};
       }
       if (packageStatement != null) {
@@ -65,7 +64,7 @@ public class WrongPackageStatementInspectionBase extends BaseJavaBatchLocalInspe
         PsiPackage classPackage = (PsiPackage)packageReference.resolve();
         List<LocalQuickFix> availableFixes = new ArrayList<>();
         if (classPackage == null || !Comparing.equal(dirPackage.getQualifiedName(), packageReference.getQualifiedName(), true)) {
-          if (isValidPackageName(packageName, file.getProject())) {
+          if (PsiDirectoryFactory.getInstance(file.getProject()).isValidPackageName(packageName)) {
             availableFixes.add(new AdjustPackageNameFix(packageName));
           }
           String packName = classPackage != null ? classPackage.getQualifiedName() : packageReference.getQualifiedName();
@@ -85,15 +84,6 @@ public class WrongPackageStatementInspectionBase extends BaseJavaBatchLocalInspe
       }
     }
     return null;
-  }
-
-  private static boolean isValidPackageName(String packageName, final Project project) {
-    PsiDirectoryFactory factory = PsiDirectoryFactory.getInstance(project);
-    Iterable<String> shortNames = StringUtil.tokenize(packageName, ".");
-    for (String shortName : shortNames) {
-      if (!factory.isValidPackageName(shortName)) return false;
-    }
-    return true;
   }
 
   protected void addMoveToPackageFix(PsiFile file, String packName, List<LocalQuickFix> availableFixes) {

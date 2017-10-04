@@ -29,46 +29,44 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInspection.NamingConvention;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.naming.AbstractNamingConventionInspection;
+import com.intellij.codeInspection.naming.NamingConvention;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspectionVisitor;
+import com.intellij.psi.PsiElementVisitor;
+import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
 
 public class NewClassNamingConventionInspection extends AbstractNamingConventionInspection<PsiClass> {
   public static final ExtensionPointName<NamingConvention<PsiClass>> EP_NAME = ExtensionPointName.create("com.intellij.naming.convention.class");
 
   public NewClassNamingConventionInspection() {
-    super(EP_NAME.getExtensions(), ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME);
+    super(Arrays.asList(EP_NAME.getExtensions()), ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME);
   }
 
   @Override
-  public boolean shouldInspect(PsiFile file) {
-    return file instanceof PsiClassOwner;
+  protected LocalQuickFix createRenameFix() {
+    return new RenameFix();
   }
 
-  @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "class.naming.convention.display.name");
-  }
-
   @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new BaseInspectionVisitor() {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    if (!(holder.getFile() instanceof PsiClassOwner)) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
+    return new JavaElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
-        if (element instanceof PsiClass) {
-          PsiClass aClass = (PsiClass)element;
-          final String name = aClass.getName();
-          if (name == null) return;
-          checkName(aClass, name, shortName -> registerClassError(aClass, name, shortName));
-        }
+      public void visitClass(PsiClass aClass) {
+        final String name = aClass.getName();
+        if (name == null) return;
+        checkName(aClass, name, holder);
       }
     };
   }

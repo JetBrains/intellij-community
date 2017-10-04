@@ -26,7 +26,7 @@ public interface TreeVisitor {
    * @return an action that controls visiting a tree
    */
   @NotNull
-  Action accept(@NotNull TreePath path);
+  Action visit(@NotNull TreePath path);
 
   enum Action {
     /**
@@ -51,7 +51,7 @@ public interface TreeVisitor {
   abstract class Finder implements TreeVisitor {
     @NotNull
     @Override
-    public Action accept(@NotNull TreePath path) {
+    public Action visit(@NotNull TreePath path) {
       return found(path) ? Action.INTERRUPT : contains(path) ? Action.CONTINUE : Action.SKIP_CHILDREN;
     }
 
@@ -84,7 +84,7 @@ public interface TreeVisitor {
 
     @NotNull
     @Override
-    public Action accept(@NotNull TreePath path) {
+    public Action visit(@NotNull TreePath path) {
       Object component = converter.apply(path.getLastPathComponent());
       if (component == null) return Action.SKIP_CHILDREN;
 

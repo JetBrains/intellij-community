@@ -387,7 +387,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   private PythonConsoleView createConsoleView() {
-    PythonConsoleView consoleView = new PythonConsoleView(myProject, myTitle, mySdk);
+    PythonConsoleView consoleView = new PythonConsoleView(myProject, myTitle, mySdk, false);
     myPydevConsoleCommunication.setConsoleFile(consoleView.getVirtualFile());
     consoleView.addMessageFilter(new PythonTracebackFilter(myProject));
     return consoleView;

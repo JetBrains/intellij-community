@@ -21,8 +21,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.scratch.ScratchFileType;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -31,8 +30,9 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformIcons;
-import gnu.trove.THashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -42,24 +42,24 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
     super(project, value, viewSettings);
   }
 
-  protected Collection<AbstractTreeNode> modulesAndGroups(Module[] modules) {
-    Map<String, List<Module>> groups = new THashMap<>();
-    List<Module> nonGroupedModules = new ArrayList<>(Arrays.asList(modules));
-    for (final Module module : modules) {
-      final String[] path = ModuleManager.getInstance(getProject()).getModuleGroupPath(module);
-      if (path != null) {
-        final String topLevelGroupName = path[0];
-        groups.computeIfAbsent(topLevelGroupName, k -> new ArrayList<>()).add(module);
-        nonGroupedModules.remove(module);
+  protected Collection<AbstractTreeNode> modulesAndGroups(Collection<ModuleDescription> modules) {
+    Set<String> groups = new LinkedHashSet<>();
+    Set<ModuleDescription> nonGroupedModules = new LinkedHashSet<>(modules);
+    for (final ModuleDescription moduleDescription : modules) {
+      final List<String> path = ModuleGrouper.instanceFor(myProject).getGroupPath(moduleDescription);
+      if (!path.isEmpty()) {
+        final String topLevelGroupName = path.get(0);
+        groups.add(topLevelGroupName);
+        nonGroupedModules.remove(moduleDescription);
       }
     }
     List<AbstractTreeNode> result = new ArrayList<>();
     try {
-      for (String groupPath : groups.keySet()) {
+      for (String groupPath : groups) {
         result.add(createModuleGroupNode(new ModuleGroup(Collections.singletonList(groupPath))));
       }
-      for (Module module : nonGroupedModules) {
-        result.add(createModuleGroup(module));
+      for (ModuleDescription moduleDescription : nonGroupedModules) {
+        ContainerUtil.addIfNotNull(result, createModuleNode(moduleDescription));
       }
     }
     catch (ProcessCanceledException e) {
@@ -74,6 +74,22 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
 
   protected abstract AbstractTreeNode createModuleGroup(final Module module)
     throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException;
+
+  @Nullable
+  private AbstractTreeNode createModuleNode(final ModuleDescription moduleDescription)
+    throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+    if (moduleDescription instanceof LoadedModuleDescription) {
+      return createModuleGroup(((LoadedModuleDescription)moduleDescription).getModule());
+    }
+    else if (moduleDescription instanceof UnloadedModuleDescription) {
+      return createUnloadedModuleNode((UnloadedModuleDescription)moduleDescription);
+    }
+    return null;
+  }
+
+  protected AbstractTreeNode createUnloadedModuleNode(UnloadedModuleDescription moduleDescription) {
+    return null;
+  }
 
   protected abstract AbstractTreeNode createModuleGroupNode(final ModuleGroup moduleGroup)
     throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException;

@@ -17,5 +17,6 @@
     <orderEntry type="module" module-name="xdebugger-impl" />
     <orderEntry type="module" module-name="xdebugger-api" />
     <orderEntry type="library" name="http-client-3.1" level="project" />
+    <orderEntry type="module" module-name="vcs-impl" />
   </component>
 </module>

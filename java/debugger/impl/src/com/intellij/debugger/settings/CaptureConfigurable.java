@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -73,6 +59,7 @@ import java.util.List;
 public class CaptureConfigurable implements SearchableConfigurable {
   private static final Logger LOG = Logger.getInstance(CaptureConfigurable.class);
 
+  private JCheckBox myDebuggerAgent;
   private MyTableModel myTableModel;
   private JCheckBox myCaptureVariables;
 
@@ -251,10 +238,21 @@ public class CaptureConfigurable implements SearchableConfigurable {
     });
 
     BorderLayoutPanel panel = JBUI.Panels.simplePanel();
-    panel.addToCenter(decorator.createPanel());
+    myDebuggerAgent = new JCheckBox(DebuggerBundle.message("label.capture.configurable.debugger.agent"));
+    if (Registry.is("debugger.capture.points.agent")) {
+      panel.addToTop(myDebuggerAgent);
+    }
+
+    BorderLayoutPanel debuggerPanel = JBUI.Panels.simplePanel();
+    if (Registry.is("debugger.capture.points.agent")) {
+      debuggerPanel.setBorder(IdeBorderFactory.createTitledBorder("Breakpoints based", false));
+    }
+    debuggerPanel.addToCenter(decorator.createPanel());
 
     myCaptureVariables = new JCheckBox(DebuggerBundle.message("label.capture.configurable.capture.variables"));
-    panel.addToBottom(myCaptureVariables);
+    debuggerPanel.addToBottom(myCaptureVariables);
+
+    panel.addToCenter(debuggerPanel);
     return panel;
   }
 
@@ -494,6 +492,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
   @Override
   public boolean isModified() {
     return DebuggerSettings.getInstance().CAPTURE_VARIABLES != myCaptureVariables.isSelected() ||
+           DebuggerSettings.getInstance().INSTRUMENTING_AGENT != myDebuggerAgent.isSelected() ||
            !DebuggerSettings.getInstance().getCapturePoints().equals(myTableModel.myCapturePoints);
   }
 
@@ -501,11 +500,13 @@ public class CaptureConfigurable implements SearchableConfigurable {
   public void apply() throws ConfigurationException {
     DebuggerSettings.getInstance().setCapturePoints(myTableModel.myCapturePoints);
     DebuggerSettings.getInstance().CAPTURE_VARIABLES = myCaptureVariables.isSelected();
+    DebuggerSettings.getInstance().INSTRUMENTING_AGENT = myDebuggerAgent.isSelected();
   }
 
   @Override
   public void reset() {
     myCaptureVariables.setSelected(DebuggerSettings.getInstance().CAPTURE_VARIABLES);
+    myDebuggerAgent.setSelected(DebuggerSettings.getInstance().INSTRUMENTING_AGENT);
     myTableModel.myCapturePoints = DebuggerSettings.getInstance().cloneCapturePoints();
     myTableModel.scanPoints();
     myTableModel.fireTableDataChanged();

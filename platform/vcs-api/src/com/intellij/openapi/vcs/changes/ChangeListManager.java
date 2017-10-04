@@ -70,6 +70,11 @@ public abstract class ChangeListManager implements ChangeListModification {
   @NotNull
   public abstract Collection<Change> getAllChanges();
 
+  /**
+   *  Currently active change list.
+   *  @see #setDefaultChangeList(String)
+   *  @see #setDefaultChangeList(LocalChangeList)
+   */
   @NotNull
   public abstract LocalChangeList getDefaultChangeList();
 

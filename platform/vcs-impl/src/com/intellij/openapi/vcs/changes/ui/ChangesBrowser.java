@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.List;
 
-public class ChangesBrowser extends ChangesBrowserBase<Change> {
+public class ChangesBrowser extends OldChangesBrowserBase<Change> {
 
   public ChangesBrowser(@NotNull Project project,
                         @Nullable List<? extends ChangeList> changeLists,

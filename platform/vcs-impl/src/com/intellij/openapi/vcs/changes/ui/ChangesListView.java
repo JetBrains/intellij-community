@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.event.MouseEvent;
+import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -60,6 +61,7 @@ public class ChangesListView extends DnDAwareTree implements TypeSafeDataProvide
   private final CopyProvider myCopyProvider;
 
   @NonNls public static final String HELP_ID = "ideaInterface.changes";
+  @NonNls public static final DataKey<ChangesListView> DATA_KEY = DataKey.create("ChangeListView");
   @NonNls public static final DataKey<Stream<VirtualFile>> UNVERSIONED_FILES_DATA_KEY = DataKey.create("ChangeListView.UnversionedFiles");
   @NonNls public static final DataKey<Stream<VirtualFile>> IGNORED_FILES_DATA_KEY = DataKey.create("ChangeListView.IgnoredFiles");
   @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY = DataKey.create("ChangeListView.MissingFiles");
@@ -130,7 +132,10 @@ public class ChangesListView extends DnDAwareTree implements TypeSafeDataProvide
 
   @Override
   public void calcData(DataKey key, DataSink sink) {
-    if (key == VcsDataKeys.CHANGES) {
+    if (key == DATA_KEY) {
+      sink.put(DATA_KEY, this);
+    }
+    else if (key == VcsDataKeys.CHANGES) {
       sink.put(VcsDataKeys.CHANGES, getSelectedChanges().toArray(Change[]::new));
     }
     else if (key == VcsDataKeys.CHANGE_LEAD_SELECTION) {
@@ -201,7 +206,17 @@ public class ChangesListView extends DnDAwareTree implements TypeSafeDataProvide
   }
 
   @NotNull
-  private Stream<VirtualFile> getSelectedUnversionedFiles() {
+  public Stream<VirtualFile> getUnversionedFiles() {
+    //noinspection unchecked
+    Enumeration<ChangesBrowserNode> nodes = getRoot().children();
+    ChangesBrowserUnversionedFilesNode node = ContainerUtil.findInstance(ContainerUtil.iterate(nodes),
+                                                                         ChangesBrowserUnversionedFilesNode.class);
+    if (node == null) return Stream.empty();
+    return node.getFilesUnderStream();
+  }
+
+  @NotNull
+  public Stream<VirtualFile> getSelectedUnversionedFiles() {
     return getSelectedVirtualFiles(UNVERSIONED_FILES_TAG);
   }
 

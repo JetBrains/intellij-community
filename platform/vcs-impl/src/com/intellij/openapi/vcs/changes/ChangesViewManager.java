@@ -72,6 +72,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 
@@ -500,26 +501,31 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
     @NotNull
     @Override
-    protected List<Change> getSelectedChanges() {
-      List<Change> result = myView.getSelectedChanges().collect(toList());
-      if (result.isEmpty()) result = myView.getChanges().collect(toList());
+    protected List<Wrapper> getSelectedChanges() {
+      List<Wrapper> result = wrap(myView.getSelectedChanges(), myView.getSelectedUnversionedFiles());
+      if (result.isEmpty()) result = getAllChanges();
       return result;
     }
 
     @NotNull
     @Override
-    protected List<Change> getAllChanges() {
-      return myView.getChanges().collect(toList());
+    protected List<Wrapper> getAllChanges() {
+      return wrap(myView.getChanges(), myView.getUnversionedFiles());
     }
 
     @Override
-    protected void selectChange(@NotNull Change change) {
+    protected void selectChange(@NotNull Wrapper change) {
       DefaultMutableTreeNode root = (DefaultMutableTreeNode)myView.getModel().getRoot();
-      DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, change);
+      DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, change.getUserObject());
       if (node != null) {
         TreePath path = TreeUtil.getPathFromRoot(node);
         TreeUtil.selectPath(myView, path, false);
       }
+    }
+
+    @NotNull
+    private List<Wrapper> wrap(@NotNull Stream<Change> changes, @NotNull Stream<VirtualFile> unversioned) {
+      return Stream.concat(changes.map(ChangeWrapper::new), unversioned.map(UnversionedFileWrapper::new)).collect(toList());
     }
   }
 

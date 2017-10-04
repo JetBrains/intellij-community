@@ -955,25 +955,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
-  /**
-   * @deprecated better use normal comparison, with equals
-   */
-  @Override
-  @Nullable
-  public LocalChangeList getIdentityChangeList(@NotNull Change change) {
-    synchronized (myDataLock) {
-      final List<LocalChangeList> lists = myWorker.getChangeLists();
-      for (LocalChangeList list : lists) {
-        for (Change oldChange : list.getChanges()) {
-          if (oldChange == change) {
-            return list.copy();
-          }
-        }
-      }
-      return null;
-    }
-  }
-
   @Override
   public boolean isInUpdate() {
     synchronized (myDataLock) {

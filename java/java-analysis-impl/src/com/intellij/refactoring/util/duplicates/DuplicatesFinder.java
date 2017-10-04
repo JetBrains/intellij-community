@@ -49,20 +49,20 @@ public class DuplicatesFinder {
   private final List<PsiElement> myPatternAsList;
   private boolean myMultipleExitPoints;
   @Nullable private final ReturnValue myReturnValue;
-  private final boolean myWithAdditionalParameters;
+  private final boolean myWithExtractedParameters;
 
   public DuplicatesFinder(@NotNull PsiElement[] pattern,
                           InputVariables parameters,
                           @Nullable ReturnValue returnValue,
                           @NotNull List<? extends PsiVariable> outputParameters,
-                          boolean withAdditionalParameters) {
+                          boolean withExtractedParameters) {
     myReturnValue = returnValue;
     LOG.assertTrue(pattern.length > 0);
     myPattern = pattern;
     myPatternAsList = Arrays.asList(myPattern);
     myParameters = parameters;
     myOutputParameters = outputParameters;
-    myWithAdditionalParameters = withAdditionalParameters;
+    myWithExtractedParameters = withExtractedParameters;
 
     final PsiElement codeFragment = ControlFlowUtil.findCodeFragment(pattern[0]);
     try {
@@ -324,6 +324,9 @@ public class DuplicatesFinder {
       return match.putParameter(parameter, candidate);
     }
 
+    Boolean matchedExtractablePart = matchExtractableExpression(pattern, candidate, candidates, match);
+    if (matchedExtractablePart != null) return matchedExtractablePart;
+
     if (!canBeEquivalent(pattern, candidate)) return false; // Q : is it correct to check implementation classes?
 
     if (pattern instanceof PsiExpressionList && candidate instanceof PsiExpressionList) { //check varargs
@@ -372,10 +375,7 @@ public class DuplicatesFinder {
       }
       final PsiElement qualifier2 = ((PsiJavaCodeReferenceElement)candidate).getQualifier();
       if (!equivalentResolve(resolveResult1, resolveResult2, qualifier2)) {
-        if (myWithAdditionalParameters) {
-          return match.putAdditionalParameter(pattern, candidate);
-        }
-        return false;
+        return matchExtractableVariable(pattern, candidate, match);
       }
       PsiElement qualifier1 = ((PsiJavaCodeReferenceElement)pattern).getQualifier();
       if (qualifier1 instanceof PsiReferenceExpression && qualifier2 instanceof PsiReferenceExpression &&
@@ -552,6 +552,45 @@ public class DuplicatesFinder {
     return true;
   }
 
+  @Nullable
+  private Boolean matchExtractableExpression(PsiElement pattern, PsiElement candidate, List<PsiElement> candidates, Match match) {
+    if (!(pattern instanceof PsiExpression) || !(candidate instanceof PsiExpression)) {
+      return null;
+    }
+    ExtractableExpressionPart part1 = ExtractableExpressionPart.match((PsiExpression)pattern, myPatternAsList);
+    if (part1 == null) {
+      return null;
+    }
+    ExtractableExpressionPart part2 = ExtractableExpressionPart.match((PsiExpression)candidate, candidates);
+    if (part2 == null) {
+      return null;
+    }
+    if (part1.myValue != null && part2.myValue != null && part1.myValue.equals(part2.myValue)) {
+      return true;
+    }
+    if (part1.myVariable == null || part2.myVariable == null) {
+      return myWithExtractedParameters &&
+             match.putExtractedParameter(part1, part2);
+    }
+    return null;
+  }
+
+  private boolean matchExtractableVariable(PsiElement pattern, PsiElement candidate, Match match) {
+    if (!myWithExtractedParameters || !(pattern instanceof PsiReferenceExpression) || !(candidate instanceof PsiReferenceExpression)) {
+      return false;
+    }
+    ExtractableExpressionPart part1 = ExtractableExpressionPart.matchVariable((PsiReferenceExpression)pattern, null);
+    if (part1 == null || part1.myVariable == null) {
+      return false;
+    }
+    ExtractableExpressionPart part2 = ExtractableExpressionPart.matchVariable((PsiReferenceExpression)candidate, null);
+    if (part2 == null || part2.myVariable == null) {
+      return false;
+    }
+    return match.putExtractedParameter(part1, part2);
+  }
+
+
   private static boolean matchModifierList(PsiModifierList modifierList1, PsiModifierList modifierList2) {
     if (!(modifierList1.getParent() instanceof PsiLocalVariable)) {
       // local variables can only have a final modifier, and are considered equivalent with or without it.
@@ -676,7 +715,7 @@ public class DuplicatesFinder {
     }
   }
 
-  private static boolean isUnder(PsiElement element, List<PsiElement> parents) {
+  static boolean isUnder(@Nullable PsiElement element, @NotNull List<PsiElement> parents) {
     if (element == null) return false;
     for (final PsiElement parent : parents) {
       if (PsiTreeUtil.isAncestor(parent, element, false)) return true;

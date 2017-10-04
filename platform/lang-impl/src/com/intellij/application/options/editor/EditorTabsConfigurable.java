@@ -20,6 +20,7 @@ import com.intellij.ide.ui.UINumericRange;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ListCellRendererWrapper;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,7 @@ import java.awt.event.ItemListener;
  * @author yole
  */
 public class EditorTabsConfigurable implements EditorOptionsProvider {
-  private static final UINumericRange EDITOR_TABS_RANGE = new UINumericRange(10, 1, 100);
+  private static final UINumericRange EDITOR_TABS_RANGE = new UINumericRange(10, 1, Math.max(10, Registry.intValue("ide.max.editor.tabs", 100)));
   private JPanel myRootPanel;
   private JCheckBox myHideKnownExtensions;
   private JCheckBox myScrollTabLayoutInEditorCheckBox;

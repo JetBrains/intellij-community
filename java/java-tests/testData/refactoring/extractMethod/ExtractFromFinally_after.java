@@ -1,15 +1,14 @@
 public class Test {
     int method() {
         try {
-            System.out.println("Text");
-            return 0;
+            return newMethod("Text", 0);
         } finally {
-            return newMethod();
+            return newMethod("!!!", 1);
         }
     }
 
-    private int newMethod() {
-        System.out.println("!!!");
-        return 1;
+    private int newMethod(String s, int i) {
+        System.out.println(s);
+        return i;
     }
 }

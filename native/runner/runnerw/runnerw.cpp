@@ -297,7 +297,7 @@ int main(int argc, char * argv[]) {
 		ErrorMessage("CreateProcess");
 		CloseHandle(newstdin);
 		CloseHandle(write_stdin);
-		exit(0);
+		exit(2);
 	}
 	if (hasConsoleWindow || childParams.createNewConsole) {
 		attachChildConsole(pi);

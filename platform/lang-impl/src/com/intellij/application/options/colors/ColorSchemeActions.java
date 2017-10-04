@@ -199,10 +199,8 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
         schemeToExport = parent;
       }
     }
-    if (schemeToExport.getName().startsWith(SchemeManager.EDITABLE_COPY_PREFIX)) {
-      schemeToExport = (EditorColorsScheme)schemeToExport.clone();
-      schemeToExport.setName(SchemeManager.getDisplayName(schemeToExport));
-    }
+    schemeToExport = (EditorColorsScheme)schemeToExport.clone();
+    schemeToExport.setName(SchemeManager.getDisplayName(schemeToExport));
     super.exportScheme(schemeToExport, exporterName);
   }
 

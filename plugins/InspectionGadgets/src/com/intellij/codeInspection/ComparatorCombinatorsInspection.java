@@ -22,20 +22,30 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.PsiDiamondTypeUtil;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.siyeh.ig.psiutils.EquivalenceChecker;
-import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(ComparatorCombinatorsInspection.class);
+  private static final EquivalenceChecker ourEquivalence = EquivalenceChecker.getCanonicalPsiEquivalence();
+
 
   @NotNull
   @Override
@@ -96,29 +106,345 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
             methodName = getComparingMethodName(opType.getCanonicalText());
           }
         }
+        else if (lambda.getBody() instanceof PsiCodeBlock) {
+          PsiStatement[] statements = ((PsiCodeBlock)lambda.getBody()).getStatements();
+          if (extractComparisonChain(statements, parameters[0], parameters[1]) == null) return;
+          holder
+            .registerProblem(lambda, "Can be replaced with Comparator chain",
+                             ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithComparatorFix("Comparator chain"));
+        }
         if (methodName != null) {
           holder
             .registerProblem(lambda, "Can be replaced with Comparator." + methodName,
-                             ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithComparatorFix(methodName));
+                             ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithComparatorFix("Comparator." + methodName));
         }
       }
     };
   }
 
+
+  @Nullable("when failed to extract")
+  private static List<ComparisonBlock> extractComparisonChain(@NotNull PsiStatement[] statements,
+                                                              @NotNull PsiVariable first,
+                                                              @NotNull PsiVariable second) {
+    if (statements.length == 0) return null;
+    ComparisonBlock firstBlock = ComparisonBlock.extractBlock(statements[0], first, second, null);
+    if (firstBlock == null) return null;
+    List<ComparisonBlock> blocks = new ArrayList<>();
+    blocks.add(firstBlock);
+    PsiVariable lastResult = firstBlock.getResult();
+    int index = 1;
+    while (index < statements.length - 1) {
+      PsiStatement current = statements[index];
+      if (isNotZeroCheck(current, lastResult)) {
+        if (index + 1 >= statements.length) return null;
+        PsiStatement next = statements[index + 1];
+        ComparisonBlock block = ComparisonBlock.extractBlock(next, first, second, lastResult);
+        if (block == null) return null;
+        blocks.add(block);
+        index += 2;
+        continue;
+      }
+      PsiStatement nextComparisonStmt = extractZeroCheckedWay(current, lastResult);
+      if (nextComparisonStmt != null) {
+        ComparisonBlock block = ComparisonBlock.extractBlock(nextComparisonStmt, first, second, lastResult);
+        if (block == null) return null;
+        blocks.add(block);
+        if(block.getResult() != lastResult) lastResult = block.getResult();
+        index++;
+        continue;
+      }
+      return null;
+    }
+    PsiStatement lastStmt = statements[statements.length - 1];
+    if (lastStmt instanceof PsiReturnStatement) {
+      PsiExpression returnExpr = ((PsiReturnStatement)lastStmt).getReturnValue();
+      if (returnExpr == null) return null;
+      if (ExpressionUtils.isReferenceTo(returnExpr, lastResult)) {
+        return blocks;
+      }
+      ComparisonBlock lastBlock = extractTernaryComparison(first, second, lastResult, returnExpr);
+      if (lastBlock == null) return null;
+      blocks.add(lastBlock);
+      return blocks;
+    }
+    return null;
+  }
+
+  //res == 0 ? first.compareTo(second) : res
+  @Nullable
+  private static ComparisonBlock extractTernaryComparison(@NotNull PsiVariable first,
+                                                          @NotNull PsiVariable second,
+                                                          PsiVariable lastResult,
+                                                          PsiExpression returnExpr) {
+    PsiConditionalExpression ternary = tryCast(returnExpr, PsiConditionalExpression.class);
+    if (ternary == null) return null;
+    PsiExpression elseExpression = ternary.getElseExpression();
+    PsiExpression thenExpression = ternary.getThenExpression();
+    if (elseExpression == null || thenExpression == null) return null;
+    PsiBinaryExpression binOp = tryCast(ternary.getCondition(), PsiBinaryExpression.class);
+    if (binOp == null) return null;
+    PsiExpression finalResult = ExpressionUtils.getValueComparedWithZero(binOp);
+    boolean inverted = false;
+    if (finalResult == null) {
+      finalResult = ExpressionUtils.getValueComparedWithZero(binOp, JavaTokenType.NE);
+      inverted = true;
+    }
+    if (!ExpressionUtils.isReferenceTo(finalResult, lastResult)) return null;
+    if (!ExpressionUtils.isReferenceTo(inverted ? thenExpression : elseExpression, lastResult)) return null;
+    PsiMethodCallExpression lastComparison = tryCast(inverted ? elseExpression : thenExpression, PsiMethodCallExpression.class);
+    ComparisonBlock lastBlock = ComparisonBlock.extractBlock(lastComparison, first, second, lastResult);
+    if (lastBlock == null) return null;
+    return lastBlock;
+  }
+
+  /**
+   * @param statement statement like:
+   *                  if(res == 0) res = o1.second.compareTo(o2.second);
+   *                  if(res == 0) {int res = o1.second.compareTo(o2.second);}
+   * @return statement of then branch
+   */
+  @Nullable
+  private static PsiStatement extractZeroCheckedWay(@Nullable PsiStatement statement, @NotNull PsiVariable last) {
+    PsiIfStatement ifStatement = tryCast(statement, PsiIfStatement.class);
+    if (ifStatement == null || ifStatement.getElseBranch() != null) return null;
+    PsiBinaryExpression binOp = tryCast(ifStatement.getCondition(), PsiBinaryExpression.class);
+    if (binOp == null) return null;
+    PsiExpression maybeResult = ExpressionUtils.getValueComparedWithZero(binOp);
+    if (!ExpressionUtils.isReferenceTo(maybeResult, last)) return null;
+    return ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
+  }
+
+  /**
+   * @param statement like if(res != 0) return res;
+   * @param last      result of last comparison
+   */
+  private static boolean isNotZeroCheck(@NotNull PsiStatement statement, @NotNull PsiVariable last) {
+    PsiIfStatement ifStatement = tryCast(statement, PsiIfStatement.class);
+    if (ifStatement == null || ifStatement.getElseBranch() != null) return false;
+    PsiBinaryExpression binaryExpression = tryCast(ifStatement.getCondition(), PsiBinaryExpression.class);
+    if (binaryExpression == null) return false;
+    if (!ExpressionUtils.isReferenceTo(ExpressionUtils.getValueComparedWithZero(binaryExpression, JavaTokenType.NE), last)) return false;
+    PsiStatement thenStmt = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
+    if (!(thenStmt instanceof PsiReturnStatement)) return false;
+    return ExpressionUtils.isReferenceTo(((PsiReturnStatement)thenStmt).getReturnValue(), last);
+  }
+
+  private static class ComparisonBlock {
+    private final PsiExpression myKey; // second operand expression
+    private final PsiVariable myResult;
+
+    private ComparisonBlock(PsiExpression key, PsiVariable result) {
+      myKey = key;
+      myResult = result;
+    }
+
+    public PsiExpression getKey() {
+      return myKey;
+    }
+
+    public PsiVariable getResult() {
+      return myResult;
+    }
+
+    /**
+     * extracts comparison block from statement
+     * int res = o1.first.compareTo(o2.first);
+     * or
+     * res = o1.first.compareTo(o2.first);
+     */
+    @Nullable
+    static ComparisonBlock extractBlock(@NotNull PsiStatement statement,
+                                        @NotNull PsiVariable firstParam,
+                                        @NotNull PsiVariable secondParam,
+                                        @Nullable PsiVariable previousResult) {
+      if (statement instanceof PsiDeclarationStatement) {
+        PsiDeclarationStatement declaration = (PsiDeclarationStatement)statement;
+        PsiElement[] elements = declaration.getDeclaredElements();
+        if (elements.length == 0) return null;
+        PsiLocalVariable variable = tryCast(elements[0], PsiLocalVariable.class);
+        if (variable == null) return null;
+        PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
+        return extractBlock(initializer, firstParam, secondParam, variable);
+      }
+      else if (previousResult != null && statement instanceof PsiExpressionStatement) {
+        PsiExpression expr = ExpressionUtils.getAssignmentTo(((PsiExpressionStatement)statement).getExpression(), previousResult);
+        return extractBlock(expr, firstParam, secondParam, previousResult);
+      }
+      return null;
+    }
+
+    @Contract("null, _, _, _ -> null")
+    @Nullable
+    private static ComparisonBlock extractBlock(@Nullable PsiExpression expr,
+                                                @NotNull PsiVariable firstParam,
+                                                @NotNull PsiVariable secondParam,
+                                                @NotNull PsiVariable variable) {
+      PsiExpression first = null;
+      PsiExpression second = null;
+      if (expr instanceof PsiMethodCallExpression) {
+        PsiMethodCallExpression call = (PsiMethodCallExpression)expr;
+        PsiExpression[] parameters = call.getArgumentList().getExpressions();
+        if (PrimitiveComparison.from(call) != null) {
+          first = parameters[0];
+          second = parameters[1];
+        } else if (MethodCallUtils.isCompareToCall(call)) {
+          first = call.getMethodExpression().getQualifierExpression();
+          second = call.getArgumentList().getExpressions()[0];
+        }
+      }
+      else if (expr instanceof PsiBinaryExpression) {
+        PsiBinaryExpression binOp = (PsiBinaryExpression)expr;
+        if(binOp.getOperationTokenType() != JavaTokenType.MINUS) return null;
+        first = binOp.getLOperand();
+        if(getComparingMethodName(first.getType(), true) == null) return null;
+        second = binOp.getROperand();
+      }
+      if(first == null || second == null) return null;
+      if (!usagesAreAllowed(firstParam, secondParam, first, second)) return null;
+      if (!keyAccessEquivalent(firstParam, secondParam, first, second)) return null;
+      return new ComparisonBlock(second, variable);
+    }
+
+    private static boolean keyAccessEquivalent(@NotNull PsiVariable firstParam,
+                                               @NotNull PsiVariable secondParam,
+                                               PsiExpression first,
+                                               PsiExpression second) {
+      String secondParamName = secondParam.getName();
+      if (secondParamName == null) return false;
+      PsiExpression firstCopy = replaceVariableInExpression(firstParam, first, secondParamName);
+      return ourEquivalence.expressionsAreEquivalent(firstCopy, second);
+    }
+
+    @NotNull
+    private static PsiExpression replaceVariableInExpression(@NotNull PsiVariable variable,
+                                                             PsiExpression expression,
+                                                             String newName) {
+      PsiExpression qualifierCopy = (PsiExpression)expression.copy();
+      for (PsiReference ref : ReferencesSearch.search(variable, new LocalSearchScope(qualifierCopy))) {
+        if (ref instanceof PsiReferenceExpression) {
+          ExpressionUtils.bindReferenceTo((PsiReferenceExpression)ref, newName);
+        }
+      }
+      return qualifierCopy;
+    }
+
+    private static boolean usagesAreAllowed(@NotNull PsiVariable firstParam,
+                                            @NotNull PsiVariable secondParam,
+                                            @Nullable PsiExpression firstExpr,
+                                            @Nullable PsiExpression secondExpr) {
+      return VariableAccessUtils.variableIsUsed(firstParam, firstExpr) &&
+             VariableAccessUtils.variableIsUsed(secondParam, secondExpr) &&
+             !VariableAccessUtils.variableIsUsed(firstParam, secondExpr) &&
+             !VariableAccessUtils.variableIsUsed(secondParam, firstExpr);
+    }
+  }
+
+  @NotNull
+  private static String generateComparison(@NotNull String methodName,
+                                           @Nullable PsiType type,
+                                           @NotNull String varName,
+                                           @NotNull PsiExpression expression,
+                                           @NotNull PsiVariable exprVariable) {
+    String lambdaExpr = getExpressionReplacingReferences(expression, varName, exprVariable);
+    String parameter = type == null ? varName : "(" + type.getCanonicalText() + " " + varName + ")";
+    return methodName + "(" + parameter + "->" + lambdaExpr + ")";
+  }
+
+  @Nullable
+  private static String generateCode(@NotNull List<ComparisonBlock> blocks,
+                                     @NotNull PsiVariable firstVar,
+                                     @NotNull PsiVariable secondVar) {
+    if (blocks.size() < 2) return null;
+    ComparisonBlock first = blocks.get(0);
+    StringBuilder builder = new StringBuilder();
+    PsiType type = secondVar.getType();
+    String name = suggestVarName(firstVar);
+    if(name == null) return null;
+
+    PsiExpression firstKey = first.getKey();
+    String firstMethodName = getComparingMethodName(firstKey.getType(), true);
+    if(firstMethodName == null) return null;
+    builder.append(CommonClassNames.JAVA_UTIL_COMPARATOR).append(".")
+      .append(generateComparison(firstMethodName, type, name, firstKey, secondVar));
+    for (int i = 1; i < blocks.size(); i++) {
+      ComparisonBlock block = blocks.get(i);
+      PsiExpression blockKey = block.getKey();
+      String comparatorMethodName = getComparingMethodName(blockKey.getType(), false);
+      if(comparatorMethodName == null) return null;
+      builder.append(".").append(generateComparison(comparatorMethodName, null, name, blockKey, secondVar));
+    }
+    return builder.toString();
+  }
+
+  @Contract("null, _ -> null")
+  @Nullable
+  private static String getComparingMethodName(@Nullable PsiType exprType, boolean first) {
+    if(exprType == null) return null;
+    String name = getComparingMethodName(exprType.getCanonicalText(), first);
+    if(name != null) return name;
+    if (InheritanceUtil.isInheritor(exprType, CommonClassNames.JAVA_LANG_COMPARABLE)) {
+      return first ?  "comparing" : "thenComparing";
+    }
+    return null;
+  }
+
+  @Nullable
+  private static String suggestVarName(@NotNull PsiVariable variable) {
+    String name = variable.getName();
+    JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(variable.getProject());
+    SuggestedNameInfo nameCandidate = null;
+    if (name != null) {
+      if (name.length() > 1 && name.endsWith("1")) {
+        nameCandidate = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, name.substring(0, name.length() - 1),
+                                                             null, variable.getType(), true);
+      } else if (name.equals("first")) {
+        nameCandidate =
+          codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, variable.getType(), true);
+      }
+    }
+    if(nameCandidate != null) {
+      String[] names = codeStyleManager.suggestUniqueVariableName(nameCandidate, variable, true).names;
+      if (names.length > 0) {
+        return names[0];
+      }
+    }
+    return name;
+  }
+
+  private static String getExpressionReplacingReferences(@NotNull PsiExpression expression,
+                                                         @NotNull String varName,
+                                                         @NotNull PsiVariable exprVariable) {
+    PsiExpression copy = (PsiExpression)expression.copy();
+    ReferencesSearch.search(exprVariable, new LocalSearchScope(copy))
+      .forEach(reference ->{
+        PsiReferenceExpression ref = tryCast(reference.getElement(), PsiReferenceExpression.class);
+        if(ref == null) return;
+        ExpressionUtils.bindReferenceTo(ref, varName);
+      });
+    return copy.getText();
+  }
+
   @Contract(value = "null -> null", pure = true)
   @Nullable
   private static String getComparingMethodName(String type) {
+    return getComparingMethodName(type, true);
+  }
+
+  @Contract(value = "null, _ -> null", pure = true)
+  @Nullable
+  private static String getComparingMethodName(String type, boolean first) {
     if(type == null) return null;
     switch(PsiTypesUtil.unboxIfPossible(type)) {
       case "int":
       case "short":
       case "byte":
       case "char":
-        return "comparingInt";
+        return first ? "comparingInt" : "thenComparingInt";
       case "long":
-        return "comparingLong";
+        return first ? "comparingLong" : "thenComparingLong";
       case "double":
-        return "comparingDouble";
+        return first ? "comparingDouble" : "thenComparingDouble";
     }
     return null;
   }
@@ -146,18 +472,58 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
     return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(left, copy);
   }
 
-  static class ReplaceWithComparatorFix implements LocalQuickFix {
-    private final String myMethodName;
+  private static class PrimitiveComparison {
+    private final @NotNull PsiExpression myKeyExtractor;
+    private final @NotNull String myMethodName;
 
-    public ReplaceWithComparatorFix(String methodName) {
-      myMethodName = methodName;
+    private PrimitiveComparison(@NotNull PsiExpression extractor, @NotNull String name) {
+      myKeyExtractor = extractor;
+      myMethodName = name;
+    }
+
+    @NotNull
+    public PsiExpression getKeyExtractor() {
+      return myKeyExtractor;
+    }
+
+    @NotNull
+    public String getMethodName() {
+      return myMethodName;
+    }
+
+    @Nullable
+    static private PrimitiveComparison from(PsiMethodCallExpression methodCall) {
+      PsiMethod method = methodCall.resolveMethod();
+      if (method != null && method.getName().equals("compare")) {
+        PsiClass containingClass = method.getContainingClass();
+        if (containingClass != null) {
+          String className = containingClass.getQualifiedName();
+          if (className != null) {
+            PsiExpression[] args = methodCall.getArgumentList().getExpressions();
+            if (args.length != 2) return null;
+            PsiExpression keyExtractor = args[0];
+            String methodName = getComparingMethodName(className);
+            if(methodName == null) return null;
+            return new PrimitiveComparison(keyExtractor, methodName);
+          }
+        }
+      }
+      return null;
+    }
+  }
+
+  static class ReplaceWithComparatorFix implements LocalQuickFix {
+    private final String myMessage;
+
+    public ReplaceWithComparatorFix(String message) {
+      myMessage = message;
     }
 
     @Nls
     @NotNull
     @Override
     public String getName() {
-      return "Replace with Comparator." + myMethodName;
+      return "Replace with " + myMessage;
     }
 
     @Nls
@@ -174,6 +540,20 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
       PsiLambdaExpression lambda = (PsiLambdaExpression)element;
       PsiParameter[] parameters = lambda.getParameterList().getParameters();
       if (parameters.length != 2) return;
+      if (lambda.getBody() instanceof PsiCodeBlock ) {
+        PsiStatement[] statements = ((PsiCodeBlock)lambda.getBody()).getStatements();
+        if(statements.length > 1) {
+          List<ComparisonBlock> chain = extractComparisonChain(statements, parameters[0], parameters[1]);
+          if (chain == null) return;
+          String code = generateCode(chain, parameters[0], parameters[1]);
+          if (code == null) return;
+          PsiElement result = new CommentTracker().replaceAndRestoreComments(lambda, code);
+          PsiDiamondTypeUtil.removeRedundantTypeArguments(result);
+          LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
+          CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(result));
+          return;
+        }
+      }
       PsiElement body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
       PsiExpression keyExtractor = null;
       String methodName = null;
@@ -193,19 +573,10 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
           }
         }
         else {
-          PsiMethod method = methodCall.resolveMethod();
-          if (method != null && method.getName().equals("compare")) {
-            PsiClass containingClass = method.getContainingClass();
-            if (containingClass != null) {
-              String className = containingClass.getQualifiedName();
-              if (className != null) {
-                PsiExpression[] args = methodCall.getArgumentList().getExpressions();
-                if (args.length != 2) return;
-                keyExtractor = args[0];
-                methodName = getComparingMethodName(className);
-              }
-            }
-          }
+          PrimitiveComparison comparison = PrimitiveComparison.from(methodCall);
+          if(comparison == null) return;
+          methodName = comparison.getMethodName();
+          keyExtractor = comparison.getKeyExtractor();
         }
       } else if(body instanceof PsiBinaryExpression) {
         PsiBinaryExpression binOp = (PsiBinaryExpression)body;
@@ -239,28 +610,13 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
       if (body == null) return;
       if (LambdaCanBeMethodReferenceInspection.replaceLambdaWithMethodReference(lambda) == lambda) {
         PsiParameter parameter = parameters[0];
-        String name = parameter.getName();
-        SuggestedNameInfo nameCandidate = null;
-        JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
+        String name = suggestVarName(parameter);
         if (name != null) {
-          if (name.length() > 1 && name.endsWith("1")) {
-            nameCandidate = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, name.substring(0, name.length() - 1),
-                                                                 null, parameter.getType(), true);
-          } else if (name.equals("first")) {
-            nameCandidate =
-              codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, parameter.getType(), true);
-          }
-        }
-        if (nameCandidate != null) {
-          String[] names = codeStyleManager.suggestUniqueVariableName(nameCandidate, lambda, true).names;
-          if (names.length > 0) {
-            String newName = names[0];
             Collection<PsiReferenceExpression> references = PsiTreeUtil.collectElementsOfType(body, PsiReferenceExpression.class);
-            StreamEx.of(references).filter(ref -> ref.resolve() == parameter).map(PsiJavaCodeReferenceElement::getReferenceNameElement)
-              .nonNull().forEach(nameElement -> nameElement.replace(factory.createIdentifier(newName)));
-            parameter.setName(newName);
+            StreamEx.of(references).filter(ref -> ref.isReferenceTo(parameter)).map(PsiJavaCodeReferenceElement::getReferenceNameElement)
+              .nonNull().forEach(nameElement -> nameElement.replace(factory.createIdentifier(name)));
+            parameter.setName(name);
           }
-        }
       }
     }
   }

@@ -50,10 +50,4 @@ public interface RemoteCredentials {
   boolean isStorePassword();
 
   boolean isStorePassphrase();
-
-  /**
-   * @deprecated known_hosts file location is going to be a global setting
-   */
-  @Deprecated
-  String getKnownHostsFile();
 }

@@ -40,7 +40,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
   private static final String BUTTONS = "BUTTONS";
   private static final String NO_BUTTONS = "NO_BUTTONS";
 
-  private final JButton mySkipButton = new JButton("Skip All and Set Defaults");
+  private final JButton mySkipButton = new JButton("Skip Remaining and Set Defaults");
   private final JButton myBackButton = new JButton("Back");
   private final JButton myNextButton = new JButton("Next");
 
@@ -198,7 +198,6 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     if (myIndex > 0) {
       myBackButton.setText("Back to " + mySteps.get(myIndex - 1).getTitle());
     }
-    mySkipButton.setText("Skip " + (myIndex > 0 ? "Remaining" : "All") + " and Set Defaults");
 
     myNextButton.setText(myIndex < mySteps.size() - 1
                          ? "Next: " + mySteps.get(myIndex + 1).getTitle()

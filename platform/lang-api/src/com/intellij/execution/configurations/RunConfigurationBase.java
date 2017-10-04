@@ -304,8 +304,7 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   }
 
   /**
-   * @return true if "Make" Before Launch task should be added automatically on run configuration creation
-   * @see RunProfileWithCompileBeforeLaunchOption
+   * @deprecated use {@link RunProfileWithCompileBeforeLaunchOption#isBuildBeforeLaunchAddedByDefault()} instead
    */
   public boolean isCompileBeforeLaunchAddedByDefault() {
     return true;

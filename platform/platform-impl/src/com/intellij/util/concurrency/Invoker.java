@@ -156,12 +156,8 @@ public abstract class Invoker implements Disposable {
     private final TransferToEDTQueue<Runnable> queue;
 
     public EDT(@NotNull Disposable parent) {
-      this(parent, 200);
-    }
-
-    public EDT(@NotNull Disposable parent, int maxUnitOfWorkThresholdMs) {
       super("EDT", parent);
-      queue = TransferToEDTQueue.createRunnableMerger(toString(), maxUnitOfWorkThresholdMs);
+      queue = TransferToEDTQueue.createRunnableMerger(toString());
     }
 
     @Override

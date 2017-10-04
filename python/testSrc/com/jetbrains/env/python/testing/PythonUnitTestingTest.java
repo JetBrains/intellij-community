@@ -16,18 +16,25 @@
 package com.jetbrains.env.python.testing;
 
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
+import com.intellij.execution.filters.ConsoleInputFilterProvider;
+import com.intellij.execution.filters.InputFilter;
+import com.intellij.execution.testframework.sm.ServiceMessageBuilder;
+import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.env.EnvTestTagsRequired;
+import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.sdk.InvalidSdkException;
-import com.jetbrains.python.testing.PyUnitTestConfiguration;
-import com.jetbrains.python.testing.PyUnitTestFactory;
-import com.jetbrains.python.testing.PythonTestConfigurationsModel;
-import com.jetbrains.python.testing.TestTargetType;
+import com.jetbrains.python.testing.*;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
@@ -46,6 +53,55 @@ import static org.junit.Assert.assertEquals;
  */
 public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUnitTestProcessRunner> {
 
+  @Test(expected = RuntimeConfigurationWarning.class)
+  public void testEmptyValidation() {
+    new ConfigurationTarget("", TestTargetType.PATH).checkValid();
+  }
+
+  @Test(expected = RuntimeConfigurationWarning.class)
+  public void testPythonValidation() {
+    new ConfigurationTarget("c:/bad/", TestTargetType.PYTHON).checkValid();
+  }
+
+  @Test
+  public void testValidationOk() {
+    new ConfigurationTarget("foo.bar", TestTargetType.PYTHON).checkValid();
+  }
+
+  @Test
+  public void testTcMessageEscaped() {
+    final String[] messages = {
+      "Hello\n",
+      ServiceMessageBuilder.testStarted("myTest").toString(),
+      ServiceMessageBuilder.testStdOut("myTest").addAttribute("out", "I am\n").toString(),
+      ServiceMessageBuilder.testFinished("myTest").toString(),
+      "PyCharm"
+    };
+
+    final Ref<String> result = new Ref<>();
+    runPythonTest(new PyExecutionFixtureTestTask(null) {
+      @Override
+      public void runTestOn(String sdkHome) throws Exception {
+        Project project = myFixture.getProject();
+        result.set(StringUtil.join(Arrays.stream(messages).map(s -> processStringThroughFilters(project, s)).toArray(String[]::new), ""));
+      }
+    });
+
+    Assert.assertFalse("No TC message filtered", result.isNull());
+    Assert.assertEquals("TC messages filtered in wrong way", "Hello\nI am\nPyCharm", result.get());
+  }
+
+  private static String processStringThroughFilters(@NotNull final Project project, @NotNull final String inputString) {
+    for (final ConsoleInputFilterProvider provider : Extensions.getExtensions(ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS)) {
+      for (final InputFilter filter : provider.getDefaultFilters(project)) {
+        final List<Pair<String, ConsoleViewContentType>> result = filter.applyFilter(inputString, ConsoleViewContentType.SYSTEM_OUTPUT);
+        if (result != null) {
+          return StringUtil.join(result.stream().map(o -> o.first).toArray(String[]::new), "");
+        }
+      }
+    }
+    return inputString;
+  }
 
   @Override
   PyUnitTestProcessRunner createTestRunner(@NotNull final TestRunnerConfig config) {

@@ -64,37 +64,43 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
     mySdkType = sdkType;
     myName = name;
 
-    VirtualFilePointerListener listener = new VirtualFilePointerListener() {
-      @Override
-      public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
-        //todo check if this sdk is really used in the project
-        for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-          VirtualFilePointerListener listener = ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).getRootsValidityChangedListener();
-          listener.beforeValidityChanged(pointers);
-        }
-      }
-
-      @Override
-      public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
-        //todo check if this sdk is really used in the project
-        for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-          VirtualFilePointerListener listener = ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).getRootsValidityChangedListener();
-          listener.validityChanged(pointers);
-        }
-      }
-    };
-    myRoots = new RootsAsVirtualFilePointers(true, listener, this);
+    myRoots = new RootsAsVirtualFilePointers(true, tellAllProjectsTheirRootsAreGoingToChange, this);
     Disposer.register(ApplicationManager.getApplication(), this);
-  }
-
-  @Override
-  public void dispose() {
   }
 
   public ProjectJdkImpl(String name, SdkTypeId sdkType, String homePath, String version) {
     this(name, sdkType);
     myHomePath = homePath;
     myVersionString = version;
+  }
+
+  private static final VirtualFilePointerListener tellAllProjectsTheirRootsAreGoingToChange = new VirtualFilePointerListener() {
+    @Override
+    public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
+      //todo check if this sdk is really used in the project
+      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        VirtualFilePointerListener listener = ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).getRootsValidityChangedListener();
+        listener.beforeValidityChanged(pointers);
+      }
+    }
+
+    @Override
+    public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
+      //todo check if this sdk is really used in the project
+      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        VirtualFilePointerListener listener = ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).getRootsValidityChangedListener();
+        listener.validityChanged(pointers);
+      }
+    }
+  };
+
+  @NotNull
+  public static VirtualFilePointerListener getGlobalVirtualFilePointerListener() {
+    return tellAllProjectsTheirRootsAreGoingToChange;
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @Override

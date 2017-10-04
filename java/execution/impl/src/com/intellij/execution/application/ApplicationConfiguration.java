@@ -61,6 +61,8 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   public String ALTERNATIVE_JRE_PATH;
   public boolean ENABLE_SWING_INSPECTOR;
 
+  private ShortenClasspath myShortenClasspath = null;
+
   public String ENV_VARIABLES;
   private final Map<String,String> myEnvs = new LinkedHashMap<>();
   public boolean PASS_PARENT_ENVS = true;
@@ -243,6 +245,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     DefaultJDOMExternalizer.readExternal(this, element);
     readModule(element);
     EnvironmentVariablesComponent.readExternal(element, getEnvs());
+    setShortenClasspath(ShortenClasspath.readShortenClasspathMethod(element));
   }
 
   @Override
@@ -257,6 +260,19 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     //if (!envs.isEmpty()) {
       EnvironmentVariablesComponent.writeExternal(element, envs);
     //}
+
+    ShortenClasspath.writeShortenClasspathMethod(element, myShortenClasspath);
+  }
+
+  @Nullable
+  @Override
+  public ShortenClasspath getShortenClasspath() {
+    return myShortenClasspath;
+  }
+
+  @Override
+  public void setShortenClasspath(ShortenClasspath mode) {
+    myShortenClasspath = mode;
   }
 
   public static class JavaApplicationCommandLineState<T extends ApplicationConfiguration> extends BaseJavaApplicationCommandLineState<T> {
@@ -267,7 +283,8 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     @Override
     protected JavaParameters createJavaParameters() throws ExecutionException {
       final JavaParameters params = new JavaParameters();
-      params.setUseClasspathJar(true);
+      T configuration = getConfiguration();
+      params.setShortenClasspath(configuration.getShortenClasspath(), configuration.getProject());
 
       final JavaRunConfigurationModule module = myConfiguration.getConfigurationModule();
       final String jreHome = myConfiguration.ALTERNATIVE_JRE_PATH_ENABLED ? myConfiguration.ALTERNATIVE_JRE_PATH : null;

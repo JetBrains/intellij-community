@@ -233,18 +233,6 @@ public class CollectionUtils {
     return ConstructionUtils.isEmptyArrayInitializer(initializer);
   }
 
-  public static boolean isArrayOrCollectionField(@NotNull PsiField field) {
-    final PsiType type = field.getType();
-    if (isCollectionClassOrInterface(type)) {
-      return true;
-    }
-    if (!(type instanceof PsiArrayType)) {
-      return false;
-    }
-    // constant empty arrays are ignored.
-    return !isConstantEmptyArray(field);
-  }
-
   public static String getInterfaceForClass(String name) {
     final int parameterStart = name.indexOf((int)'<');
     final String baseName;

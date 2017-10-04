@@ -387,7 +387,7 @@ public class PyDebugRunner extends GenericProgramRunner {
         final Sdk sdk = runConfiguration.getSdk();
         if (sdk != null) {
           List<String> roots = Lists.newArrayList();
-          for (VirtualFile contentRoot : sdk.getSdkModificator().getRoots(OrderRootType.CLASSES)) {
+          for (VirtualFile contentRoot : sdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
             roots.add(contentRoot.getPath());
           }
           environment.put(LIBRARY_ROOTS, StringUtil.join(roots, File.pathSeparator));

@@ -23,6 +23,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -64,6 +65,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,6 +83,10 @@ import static com.intellij.util.ui.update.MergingUpdateQueue.ANY_COMPONENT;
  */
 public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotificationListenerAdapter
   implements ExternalSystemProjectsWatcher {
+
+  private static final ExtensionPointName<Contributor> EP_NAME =
+    ExtensionPointName.create("com.intellij.externalProjectWatcherContributor");
+
   private static final Key<Long> CRC_WITHOUT_SPACES_CURRENT =
     Key.create("ExternalSystemProjectsWatcher.CRC_WITHOUT_SPACES_CURRENT");
   private static final Key<Long> CRC_WITHOUT_SPACES_BEFORE_LAST_IMPORT =
@@ -137,11 +143,17 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
   @Override
   public void markDirtyAllExternalProjects() {
     findLinkedProjectsSettings().forEach(this::scheduleUpdate);
+    for (Contributor contributor : EP_NAME.getExtensions()) {
+      contributor.markDirtyAllExternalProjects(myProject);
+    }
   }
 
   @Override
   public void markDirty(Module module) {
     scheduleUpdate(ExternalSystemApiUtil.getExternalProjectPath(module));
+    for (Contributor contributor : EP_NAME.getExtensions()) {
+      contributor.markDirty(module);
+    }
   }
 
   @Override
@@ -708,5 +720,13 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
       newCrc = file.getModificationStamp();
     }
     return newCrc;
+  }
+
+  @ApiStatus.Experimental
+  public interface Contributor {
+
+    void markDirtyAllExternalProjects(@NotNull Project project);
+
+    void markDirty(@NotNull Module module);
   }
 }

@@ -1090,13 +1090,9 @@ public class PluginManagerCore {
 
     int pluginsCount = countPlugins(PathManager.getPluginsPath()) + countPlugins(PathManager.getPreInstalledPluginsPath());
     loadDescriptors(new File(PathManager.getPluginsPath()), result, progress, pluginsCount);
-    Application application = ApplicationManager.getApplication();
-    boolean fromSources = false;
-    if (application == null || !application.isUnitTestMode()) {
-      int size = result.size();
-      loadDescriptors(new File(PathManager.getPreInstalledPluginsPath()), result, progress, pluginsCount);
-      fromSources = size == result.size();
-    }
+    int descriptorsCount = result.size();
+    loadDescriptors(new File(PathManager.getPreInstalledPluginsPath()), result, progress, pluginsCount);
+    boolean fromSources = descriptorsCount == result.size();
 
     loadDescriptorsFromProperty(result);
 
@@ -1516,7 +1512,8 @@ public class PluginManagerCore {
   static class EssentialPluginMissingException extends RuntimeException {
     final Set<String> pluginIds;
 
-    public EssentialPluginMissingException(@NotNull Set<String> ids) {
+    EssentialPluginMissingException(@NotNull Set<String> ids) {
+      super("Missing essential plugins: " + StringUtil.join(ids, ", "));
       this.pluginIds = ids;
     }
   }

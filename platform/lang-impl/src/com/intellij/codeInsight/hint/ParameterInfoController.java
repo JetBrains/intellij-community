@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.hint;
 
@@ -47,6 +45,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +67,7 @@ public class ParameterInfoController implements Disposable {
   @NotNull private final Editor myEditor;
 
   private final RangeMarker myLbraceMarker;
-  private final LightweightHint myHint;
+  private LightweightHint myHint;
   private final ParameterInfoComponent myComponent;
   private boolean myKeepOnHintHidden;
 
@@ -138,7 +137,7 @@ public class ParameterInfoController implements Disposable {
     myProvider = new MyBestLocationPointProvider(editor);
     myLbraceMarker = editor.getDocument().createRangeMarker(lbraceOffset, lbraceOffset);
     myComponent = new ParameterInfoComponent(descriptors, editor, handler, requestFocus, true);
-    myHint = new LightweightHint(myComponent);
+    myHint = createHint();
     myKeepOnHintHidden = !showHint;
     mySingleParameterInfo = !showHint;
 
@@ -193,6 +192,12 @@ public class ParameterInfoController implements Disposable {
     updateComponent();
   }
 
+  private LightweightHint createHint() {
+    JPanel wrapper = new WrapperPanel();
+    wrapper.add(myComponent);
+    return new LightweightHint(wrapper);
+  }
+
   @Override
   public void dispose(){
     if (myDisposed) return;
@@ -205,17 +210,27 @@ public class ParameterInfoController implements Disposable {
   }
 
   public void showHint(boolean requestFocus, boolean singleParameterInfo) {
-    mySingleParameterInfo = singleParameterInfo;
+    if (myHint.isVisible()) {
+      myHint.getComponent().remove(myComponent);
+      myHint.hide();
+      myHint = createHint();
+    }
+
+    mySingleParameterInfo = singleParameterInfo && myKeepOnHintHidden;
     
-    Pair<Point, Short> pos = myProvider.getBestPointPosition(myHint, myComponent.getParameterOwner(), myLbraceMarker.getStartOffset(), true, HintManager.ABOVE);
+    Pair<Point, Short> pos = myProvider.getBestPointPosition(myHint, myComponent.getParameterOwner(), myLbraceMarker.getStartOffset(), 
+                                                             null, true, HintManager.ABOVE);
     HintHint hintHint = HintManagerImpl.createHintHint(myEditor, pos.getFirst(), myHint, pos.getSecond());
     hintHint.setExplicitClose(true);
     hintHint.setRequestFocus(requestFocus);
 
+    int flags = HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING;
+    if (!singleParameterInfo && myKeepOnHintHidden) flags |= HintManager.HIDE_BY_TEXT_CHANGE;
+
     Editor editorToShow = myEditor instanceof EditorWindow ? ((EditorWindow)myEditor).getDelegate() : myEditor;
     // is case of injection we need to calculate position for EditorWindow
     // also we need to show the hint in the main editor because of intention bulb
-    HintManagerImpl.getInstanceImpl().showEditorHint(myHint, editorToShow, pos.getFirst(), HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING, 0, false, hintHint);
+    HintManagerImpl.getInstanceImpl().showEditorHint(myHint, editorToShow, pos.getFirst(), flags, 0, false, hintHint);
 
     updateComponent();
   }
@@ -291,13 +306,11 @@ public class ParameterInfoController implements Disposable {
 
     if (elementForUpdating != null) {
       myHandler.updateParameterInfo(elementForUpdating, context);
-      if (mySingleParameterInfo) {
-        if (myComponent.getCurrentParameterIndex() == -1 && myHint.isVisible()) {
-          myHint.hide();
-        }
-        else if (myComponent.getCurrentParameterIndex() != -1 && !myHint.isVisible()) {
-          AutoPopupController.getInstance(myProject).autoPopupParameterInfo(myEditor, null);
-        }
+      if (mySingleParameterInfo && myComponent.getCurrentParameterIndex() == -1 && myHint.isVisible()) {
+        myHint.hide();
+      }
+      if (myKeepOnHintHidden && myComponent.getCurrentParameterIndex() != -1 && !myHint.isVisible()) {
+        AutoPopupController.getInstance(myProject).autoPopupParameterInfo(myEditor, null);
       }
       if (!myDisposed && myHint.isVisible() && !myEditor.isDisposed() &&
           (myEditor.getComponent().getRootPane() != null || ApplicationManager.getApplication().isUnitTestMode())) {
@@ -308,7 +321,7 @@ public class ParameterInfoController implements Disposable {
                          : HintManager.ABOVE;
         Pair<Point, Short> pos = myProvider.getBestPointPosition(
           myHint, elementForUpdating instanceof PsiElement ? (PsiElement)elementForUpdating : null,
-          caretOffset, true, position);
+          caretOffset, myEditor.getCaretModel().getVisualPosition(), true, position);
         HintManagerImpl.adjustEditorHintPosition(myHint, myEditor, pos.getFirst(), pos.getSecond());
       }
     }
@@ -479,7 +492,7 @@ public class ParameterInfoController implements Disposable {
    */
   static Pair<Point, Short> chooseBestHintPosition(Project project,
                                                    Editor editor,
-                                                   LogicalPosition pos,
+                                                   VisualPosition pos,
                                                    LightweightHint hint,
                                                    boolean awtTooltip, short preferredPosition) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return Pair.pair(new Point(), HintManager.DEFAULT);
@@ -660,21 +673,23 @@ public class ParameterInfoController implements Disposable {
     }
 
     @NotNull
-    public Pair<Point, Short> getBestPointPosition(LightweightHint hint,
+    private Pair<Point, Short> getBestPointPosition(LightweightHint hint,
                                                    final PsiElement list,
                                                    int offset,
+                                                   VisualPosition pos,
                                                    final boolean awtTooltip,
                                                    short preferredPosition) {
       if (list != null) {
         TextRange range = list.getTextRange();
         if (!range.contains(offset)) {
           offset = range.getStartOffset() + 1;
+          pos = null;
         }
       }
       if (previousOffset == offset) return Pair.create(previousBestPoint, previousBestPosition);
 
       final boolean isMultiline = list != null && StringUtil.containsAnyChar(list.getText(), "\n\r");
-      final LogicalPosition pos = myEditor.offsetToLogicalPosition(offset).leanForward(true);
+      if (pos == null) pos = myEditor.logicalToVisualPosition(myEditor.offsetToLogicalPosition(offset).leanForward(true));
       Pair<Point, Short> position;
 
       if (!isMultiline) {
@@ -688,6 +703,35 @@ public class ParameterInfoController implements Disposable {
       previousBestPosition = position.getSecond();
       previousOffset = offset;
       return position;
+    }
+  }
+
+  private static class WrapperPanel extends JPanel {
+    public WrapperPanel() {
+      super(new BorderLayout());
+      setBorder(JBUI.Borders.empty());
+    }
+
+    // foreground/background/font are used to style the popup (HintManagerImpl.createHintHint) 
+    @Override
+    public Color getForeground() {
+      return getComponentCount() == 0 ? super.getForeground() : getComponent(0).getForeground();
+    }
+
+    @Override
+    public Color getBackground() {
+      return getComponentCount() == 0 ? super.getBackground() : getComponent(0).getBackground();
+    }
+
+    @Override
+    public Font getFont() {
+      return getComponentCount() == 0 ? super.getFont() : getComponent(0).getFont();
+    }
+
+    // for test purposes
+    @Override
+    public String toString() {
+      return getComponentCount() == 0 ? "<empty>" : getComponent(0).toString();
     }
   }
 }

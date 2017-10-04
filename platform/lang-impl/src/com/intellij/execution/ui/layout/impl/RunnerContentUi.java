@@ -240,7 +240,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     myTabs.getPresentation().setPaintBorder(0, 0, 0, 0).setPaintFocus(false)
       .setRequestFocusOnLastFocusedComponent(true);
     myTabs.getComponent().setBackground(myToolbar.getBackground());
-    myTabs.getComponent().setBorder(JBUI.Borders.emptyLeft(1));
+    //noinspection UseDPIAwareBorders
+    myTabs.getComponent().setBorder(new EmptyBorder(0, 1, 0, 0));
 
     myToolbar.setBorder(JBUI.Borders.emptyTop(1)); // Compensate negative insets below
 

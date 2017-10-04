@@ -545,6 +545,16 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON35);
   }
 
+  // PY-17017
+  public void testTrailingBlockCommentsAtEndOfFile() {
+    doTest();
+  }
+
+  // PY-17017
+  public void testTrailingBlockCommentsFollowedByStatement() {
+    doTest();
+  }
+
   public void doTest(LanguageLevel languageLevel) {
     LanguageLevel prev = myLanguageLevel;
     myLanguageLevel = languageLevel;

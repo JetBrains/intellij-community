@@ -19,6 +19,7 @@ package com.intellij.execution.junit2.configuration;
 import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.MethodBrowser;
+import com.intellij.execution.ShortenClasspath;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitConfigurationType;
@@ -37,7 +38,9 @@ import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
@@ -49,8 +52,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.execution.junit.RepeatCount;
 import com.intellij.ui.*;
-import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
@@ -101,6 +104,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   private JRadioButton myModuleWDScope;
   private TextFieldWithBrowseButton myPatternTextField;
   private JrePathEditor myJrePathEditor;
+  private LabeledComponent<ShortenClasspathModeCombo> myShortenClasspathModeCombo;
   private JComboBox myForkCb;
   private JBLabel myTestLabel;
   private JComboBox myTypeChooser;
@@ -264,6 +268,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     setAnchor(mySearchForTestsLabel);
     myJrePathEditor.setAnchor(myModule.getLabel());
     myCommonJavaParameters.setAnchor(myModule.getLabel());
+    myShortenClasspathModeCombo.setAnchor(myModule.getLabel());
 
     final DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
     myChangeListLabeledComponent.getComponent().setModel(model);
@@ -310,6 +315,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
 
     myCommonJavaParameters.applyTo(configuration);
     configuration.setForkMode((String)myForkCb.getSelectedItem());
+    configuration.setShortenClasspath((ShortenClasspath)myShortenClasspathModeCombo.getComponent().getSelectedItem());
   }
 
   public void resetEditorFrom(@NotNull final JUnitConfiguration configuration) {
@@ -335,6 +341,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myJrePathEditor
       .setPathOrName(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
     myForkCb.setSelectedItem(configuration.getForkMode());
+    myShortenClasspathModeCombo.getComponent().setSelectedItem(configuration.getShortenClasspath());
   }
 
   private void changePanel () {
@@ -516,6 +523,9 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
                                                                                                           JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE,
                                                                                                           PlainTextLanguage.INSTANCE.getAssociatedFileType());
     myMethod.setComponent(textFieldWithBrowseButton);
+
+    myShortenClasspathModeCombo = new LabeledComponent<>();
+    myShortenClasspathModeCombo.setComponent(new ShortenClasspathModeCombo(myProject));
   }
 
   @Override

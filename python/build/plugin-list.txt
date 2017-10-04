@@ -16,3 +16,4 @@ ipnb
 editorconfig
 settings-repository
 yaml
+properties

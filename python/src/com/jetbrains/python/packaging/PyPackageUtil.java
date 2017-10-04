@@ -308,6 +308,7 @@ public class PyPackageUtil {
         packagesRef.set(manager.refreshAndGetPackages(false));
       }
       catch (ExecutionException e) {
+        packagesRef.set(Collections.emptyList());
         if (LOG.isDebugEnabled()) {
           e.initCause(callStacktrace);
           LOG.debug(e);

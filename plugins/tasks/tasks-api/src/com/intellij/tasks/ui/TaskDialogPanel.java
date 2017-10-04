@@ -16,6 +16,7 @@
 package com.intellij.tasks.ui;
 
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.tasks.Task;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,10 +27,6 @@ import javax.swing.*;
  */
 public abstract class TaskDialogPanel {
   
-  //@NotNull
-  //@Nls(capitalization = Nls.Capitalization.Title)
-  //public abstract String getName();
-  //
   @NotNull
   public abstract JComponent getPanel();
   
@@ -40,4 +37,6 @@ public abstract class TaskDialogPanel {
   public ValidationInfo validate() { return null; }
   
   public abstract void commit();
+
+  public void taskNameChanged(Task oldTask, Task newTask) {}
 }

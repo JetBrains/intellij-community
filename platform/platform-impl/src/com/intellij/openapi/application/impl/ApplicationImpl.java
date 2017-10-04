@@ -396,7 +396,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition expired) {
-    myInvokator.invokeLater(myTransactionGuard.wrapLaterInvocation(runnable, state), state, expired);
+    LaterInvocator.invokeLaterWithCallback(myTransactionGuard.wrapLaterInvocation(runnable, state), state, expired, null);
   }
 
   @Override
@@ -1482,11 +1482,4 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myDispatcher.getListeners().removeAll(listeners);
     Disposer.register(disposable, () -> myDispatcher.getListeners().addAll(listeners));
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated duplicate parameters; use {@link #exit(boolean, boolean, boolean)} instead (to be removed in IDEA 17) */
-  public void exit(boolean force, boolean exitConfirmed, boolean allowListenersToCancel, boolean restart) {
-    exit(force, exitConfirmed, restart);
-  }
-  //</editor-fold>
 }

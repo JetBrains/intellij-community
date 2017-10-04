@@ -200,6 +200,7 @@ public class DfaValueFactory {
     return false;
   }
 
+  @NotNull
   public DfaControlTransferValue controlTransfer(TransferTarget kind, FList<Trap> traps) {
     return myControlTransfers.get(Pair.create(kind, traps));
   }

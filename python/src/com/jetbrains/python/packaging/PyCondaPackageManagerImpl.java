@@ -185,8 +185,21 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     final String condaName = "conda-meta";
     final VirtualFile homeDirectory = sdk.getHomeDirectory();
     if (homeDirectory == null) return false;
-    final VirtualFile condaMeta = SystemInfo.isWindows ? homeDirectory.getParent().findChild(condaName) :
-                                  homeDirectory.getParent().getParent().findChild(condaName);
+    final VirtualFile condaParent = SystemInfo.isWindows ? homeDirectory.getParent()
+                                                         : homeDirectory.getParent().getParent();
+    final VirtualFile condaMeta = condaParent.findChild(condaName);
+    final VirtualFile envs = condaParent.findChild("envs");
+    return condaMeta != null && envs == null;
+  }
+
+  // Conda virtual environment and system conda
+  public static boolean isConda(@NotNull final Sdk sdk) {
+    final String condaName = "conda-meta";
+    final VirtualFile homeDirectory = sdk.getHomeDirectory();
+    if (homeDirectory == null) return false;
+    final VirtualFile condaParent = SystemInfo.isWindows ? homeDirectory.getParent()
+                                                         : homeDirectory.getParent().getParent();
+    final VirtualFile condaMeta = condaParent.findChild(condaName);
     return condaMeta != null;
   }
 

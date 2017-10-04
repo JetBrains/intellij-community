@@ -572,7 +572,8 @@ public class PyNames {
   }
 
   // NOTE: includes unicode only good for py3k
-  private final static Pattern IDENTIFIER_PATTERN = Pattern.compile("\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*");
+  public static final String IDENTIFIER_RE = "\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*";
+  private final static Pattern IDENTIFIER_PATTERN = Pattern.compile(IDENTIFIER_RE);
 
   /**
    * TODO: dependency on language level.

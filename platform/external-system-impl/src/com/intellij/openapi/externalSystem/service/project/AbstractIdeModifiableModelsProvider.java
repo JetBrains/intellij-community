@@ -454,7 +454,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
       Disposer.dispose(each);
     }
 
-    if(myModifiableModuleModel != null) {
+    if(myModifiableModuleModel != null && myModifiableModuleModel.isChanged()) {
       myModifiableModuleModel.dispose();
     }
     if (myModifiableArtifactModel != null) {

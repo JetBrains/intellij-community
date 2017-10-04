@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiJavaModuleReference;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
+import com.intellij.psi.util.PointersKt;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,20 +36,19 @@ import java.util.Set;
  * @since 20.11.2012
  */
 class AddModuleDependencyFix extends OrderEntryFix {
-  @SuppressWarnings("StatefulEp") private final PsiReference myReference;
   private final Module myCurrentModule;
   private final Set<Module> myModules;
   private final DependencyScope myScope;
   private final boolean myExported;
-  private final List<PsiClass> myClasses;
+  private final List<SmartPsiElementPointer<PsiClass>> myClasses;
 
   public AddModuleDependencyFix(PsiReference reference, Module currentModule, DependencyScope scope, List<PsiClass> classes) {
-    myReference = reference;
+    super(reference);
     myCurrentModule = currentModule;
     myModules = new LinkedHashSet<>();
     myScope = scope;
     myExported = false;
-    myClasses = classes;
+    myClasses = ContainerUtil.map(classes, PointersKt::createSmartPointer);
 
     PsiElement psiElement = reference.getElement();
     Project project = psiElement.getProject();
@@ -76,7 +76,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
                                 Set<Module> modules,
                                 DependencyScope scope,
                                 boolean exported) {
-    myReference = reference;
+    super(reference);
     myCurrentModule = currentModule;
     myModules = modules;
     myScope = scope;
@@ -140,10 +140,14 @@ class AddModuleDependencyFix extends OrderEntryFix {
 
       if (editor != null && !myClasses.isEmpty()) {
         PsiClass[] targetClasses = myClasses.stream()
-          .filter(c -> ModuleUtilCore.findModuleForPsiElement(c) == module)
+          .map(SmartPsiElementPointer::getElement)
+          .filter(c -> c != null && ModuleUtilCore.findModuleForPsiElement(c) == module)
           .toArray(PsiClass[]::new);
         if (targetClasses.length > 0) {
-          new AddImportAction(project, myReference, editor, targetClasses).execute();
+          PsiReference ref = restoreReference();
+          if (ref != null) {
+            new AddImportAction(project, ref, editor, targetClasses).execute();
+          }
         }
       }
     }

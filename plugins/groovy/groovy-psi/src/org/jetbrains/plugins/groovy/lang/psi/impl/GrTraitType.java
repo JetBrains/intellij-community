@@ -1,33 +1,16 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeVisitor;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -104,21 +87,6 @@ public class GrTraitType extends PsiType {
   @Override
   public PsiType[] getSuperTypes() {
     return myDelegate.getSuperTypes();
-  }
-
-  // todo move this method to org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.GrSafeCastExpressionImpl
-  @Nullable
-  public static PsiType createTraitType(@NotNull GrSafeCastExpression safeCastExpression) {
-    GrExpression operand = safeCastExpression.getOperand();
-    PsiType exprType = operand.getType();
-    if (!(exprType instanceof PsiClassType) && !(exprType instanceof GrTraitType)) return null;
-
-    GrTypeElement typeElement = safeCastExpression.getCastTypeElement();
-    if (typeElement == null) return null;
-    PsiType type = typeElement.getType();
-    if (!GrTraitUtil.isTrait(PsiTypesUtil.getPsiClass(type))) return null;
-
-    return createTraitType(exprType, ContainerUtil.newSmartList(type));
   }
 
   @NotNull

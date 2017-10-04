@@ -73,4 +73,5 @@ public interface VcsDataKeys {
   DataKey<VcsRevisionNumber[]> VCS_REVISION_NUMBERS = DataKey.create("VCS_REVISION_NUMBERS");
   DataKey<VcsHistoryProvider> HISTORY_PROVIDER = DataKey.create("VCS_HISTORY_PROVIDER");
   DataKey<Stream<VirtualFile>> VIRTUAL_FILE_STREAM = DataKey.create("virtualFileStream");
+  DataKey<VirtualFile> CURRENT_UNVERSIONED = DataKey.create("ChangeListView.CurrentUnversionedFile");
 }

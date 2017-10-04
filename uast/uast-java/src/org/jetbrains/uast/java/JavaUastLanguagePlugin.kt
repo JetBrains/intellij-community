@@ -238,7 +238,7 @@ internal object JavaConverter {
                             receiver = convertOrEmpty(el.methodExpression.qualifierExpression!!, this)
                             selector = JavaUCallExpression(el, this)
                         }
-                        if (requiredType?.isAssignableFrom(UCallExpression::class.java) != false)
+                        if (requiredType?.isAssignableFrom(UCallExpression::class.java) == true)
                             expr.selector
                         else
                             expr

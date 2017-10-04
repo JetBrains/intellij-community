@@ -62,17 +62,21 @@ class JUnitServerImpl: JUnitServer {
   }
 
   override fun start() {
-    connection = serverSocket.accept()
-    LOG.info("Server accepted client on port: ${connection.port}")
+    //run server socket acceptance on a parallel thread to avoid hanging in this point. It is also necessary for restarting, when JUnitClient
+    //could be started after JUnitServer start.
+    execOnParallelThread {
+      connection = serverSocket.accept()
+      LOG.info("Server accepted client on port: ${connection.port}")
 
-    objectOutputStream = ObjectOutputStream(connection.getOutputStream())
-    serverSendThread = ServerSendThread(connection, objectOutputStream)
-    serverSendThread.start()
+      objectOutputStream = ObjectOutputStream(connection.getOutputStream())
+      serverSendThread = ServerSendThread(connection, objectOutputStream)
+      serverSendThread.start()
 
-    objectInputStream = ObjectInputStream(connection.getInputStream())
-    serverReceiveThread = ServerReceiveThread(connection, objectInputStream)
-    serverReceiveThread.start()
-    isStarted = true
+      objectInputStream = ObjectInputStream(connection.getInputStream())
+      serverReceiveThread = ServerReceiveThread(connection, objectInputStream)
+      serverReceiveThread.start()
+      isStarted = true
+    }
   }
 
   override fun isStarted(): Boolean = isStarted

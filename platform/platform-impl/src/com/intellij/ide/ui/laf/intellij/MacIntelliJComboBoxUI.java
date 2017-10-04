@@ -54,11 +54,12 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
   }
 
   @Override
-  public void installUI(final JComponent c) {
+  public void installUI(JComponent c) {
     super.installUI(c);
 
     DEFAULT_ICON = EmptyIcon.create(MacIntelliJIconCache.getIcon("comboRight", comboBox.isEditable(), false, false, true));
     comboBox.setOpaque(false);
+    comboBox.setBorder(new MacComboBoxBorder());
 
     myEditorBorderChangeListener = (evt) -> {
       Object value = evt.getNewValue();

@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
+import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,6 +60,10 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   }
 
   protected void addSubElement(CachingChildrenTreeNode node) {
+    JBIterable<AbstractTreeNode> parents = JBIterable.generate(this, o -> o.getParent());
+    if (parents.map(o -> o.getValue()).contains(node.getValue())) {
+      return;
+    }
     ensureChildrenAreInitialized();
     myChildren.add(node);
     node.setParent(this);

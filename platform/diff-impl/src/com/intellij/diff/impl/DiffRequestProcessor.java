@@ -341,7 +341,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     return window != null && window.isFocused();
   }
 
-  private boolean isFocused() {
+  protected boolean isFocused() {
     return DiffUtil.isFocusedComponent(myProject, myContentPanel) ||
            DiffUtil.isFocusedComponent(myProject, myToolbar.getComponent());
   }

@@ -407,11 +407,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
           myModel.setSelectedIndex(index);
         }
       }
-
-      @Override
-      public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-        rebuildAndSelectTail(false);
-      }
     });
   }
 

@@ -30,9 +30,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBus;
@@ -201,6 +201,10 @@ public class BackgroundTaskUtil {
    *
    * This allows to stop a lengthy background activity by calling {@link ProgressManager#checkCanceled()}
    * and avoid Already Disposed exceptions (in particular, because checkCanceled() is called in {@link ServiceManager#getService(Class)}.
+   * <br/><br/>
+   *
+   * The parent disposable should be disposed in the EDT, otherwise it is responsibility of the caller
+   * to synchronize the parent disposal and the call to this method.
    */
   @NotNull
   @CalledInAny
@@ -264,17 +268,17 @@ public class BackgroundTaskUtil {
   }
 
   private static boolean registerIfParentNotDisposed(@NotNull Disposable parent, @NotNull Disposable disposable) {
-    return ReadAction.compute(() -> {
-      if (Disposer.isDisposed(parent)) return false;
-      try {
-        Disposer.register(parent, disposable);
-        return true;
+    Ref<Boolean> result = Ref.create(false);
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      if (Disposer.isDisposed(parent)) {
+        result.set(false);
       }
-      catch(IncorrectOperationException ioe) {
-        LOG.error(ioe);
-        return false;
+      else {
+        Disposer.register(parent, disposable);
+        result.set(true);
       }
     });
+    return result.get();
   }
 
   @CalledInAny

@@ -56,7 +56,7 @@ public abstract class TextFieldValueEditor<T> extends AbstractValueEditor<T> {
   }
 
   private void highlightState(boolean isValid) {
-    myField.putClientProperty("JComponent.error.outline", isValid ? null : true);
+    myField.putClientProperty("JComponent.outline", isValid ? null : "error");
   }
 
   @SuppressWarnings("unused")

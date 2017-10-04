@@ -30,6 +30,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
@@ -531,6 +532,17 @@ public abstract class MavenTestCase extends UsefulTestCase {
     List<T> actualCopy = new ArrayList<>(actual);
     actualCopy.removeAll(Arrays.asList(expected));
     assertEquals(actual.toString(), actualCopy.size(), actual.size());
+  }
+
+  protected static void assertUnorderedLinesWithFile(String filePath, String expectedText) {
+    try {
+      assertSameLinesWithFile(filePath, expectedText);
+    }
+    catch (FileComparisonFailure e) {
+      String expected = e.getExpected();
+      String actual = e.getActual();
+      assertUnorderedElementsAreEqual(expected.split("\n"), actual.split("\n"));
+    }
   }
 
   protected boolean ignore() {

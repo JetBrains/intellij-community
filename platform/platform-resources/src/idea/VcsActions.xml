@@ -103,8 +103,6 @@
       <action id="ChangesView.Diff" class="com.intellij.diff.actions.ShowDiffAction" icon="AllIcons.Actions.Diff" use-shortcut-of="Diff.ShowDiff"/>
     </group>
 
-    <group id="AlienCommitChangesDialog.AdditionalActions"/>
-
     <group id="ChangesViewPopupMenu">
       <reference ref="CheckinProject"/>
       <reference ref="ChangesView.Revert"/>

@@ -21,15 +21,21 @@ import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RefactoringListenerProvider;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration<JavaRunConfigurationModule>
   implements CommonJavaRunConfigurationParameters, RefactoringListenerProvider, SMRunnerConsolePropertiesProvider {
+  private ShortenClasspath myShortenClasspath = null;
+
   public JavaTestConfigurationBase(String name,
                                    @NotNull JavaRunConfigurationModule configurationModule,
                                    @NotNull ConfigurationFactory factory) {
@@ -57,4 +63,27 @@ public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration
   }
 
   public abstract TestSearchScope getTestSearchScope();
+
+  @Nullable
+  @Override
+  public ShortenClasspath getShortenClasspath() {
+    return myShortenClasspath;
+  }
+
+  @Override
+  public void setShortenClasspath(ShortenClasspath shortenClasspath) {
+    myShortenClasspath = shortenClasspath;
+  }
+
+  @Override
+  public void readExternal(Element element) throws InvalidDataException {
+    super.readExternal(element);
+    setShortenClasspath(ShortenClasspath.readShortenClasspathMethod(element));
+  }
+
+  @Override
+  public void writeExternal(Element element) throws WriteExternalException {
+    super.writeExternal(element);
+    ShortenClasspath.writeShortenClasspathMethod(element, myShortenClasspath);
+  }
 }

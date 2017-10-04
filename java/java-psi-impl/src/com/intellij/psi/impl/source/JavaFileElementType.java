@@ -113,6 +113,5 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
   }
 
   @Override
-  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public void indexStub(@NotNull PsiJavaFileStub stub, @NotNull IndexSink sink) { }
 }

@@ -160,7 +160,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myPreselectedChanges = preselectedChanges;
     myErrorNotificationPanel = new EditorNotificationPanel(LightColors.RED);
     cleanNotifications();
-    myChangesTreeList = new MyChangeTreeList(project, Collections.emptyList(),
+    myChangesTreeList = new MyChangeTreeList(project,
                                              new Runnable() {
                                                @Override
                                                public void run() {
@@ -570,33 +570,21 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
   }
 
-  private class MyChangeTreeList extends ChangesTreeList<AbstractFilePatchInProgress.PatchChange> {
+  private class MyChangeTreeList extends ChangesTreeImpl<AbstractFilePatchInProgress.PatchChange> {
+    @Nullable private final ChangeNodeDecorator myChangeNodeDecorator;
+
     private MyChangeTreeList(Project project,
-                             Collection<AbstractFilePatchInProgress.PatchChange> initiallyIncluded,
                              @Nullable Runnable inclusionListener,
                              @Nullable ChangeNodeDecorator decorator) {
-      super(project, initiallyIncluded, true, false, inclusionListener, decorator);
+      super(project, true, false, AbstractFilePatchInProgress.PatchChange.class);
+      setInclusionListener(inclusionListener);
+      myChangeNodeDecorator = decorator;
     }
 
+    @NotNull
     @Override
-    protected DefaultTreeModel buildTreeModel(List<AbstractFilePatchInProgress.PatchChange> changes,
-                                              ChangeNodeDecorator changeNodeDecorator) {
-      return TreeModelBuilder.buildFromChanges(myProject, isShowFlatten(), changes, changeNodeDecorator);
-    }
-
-    @Override
-    protected List<AbstractFilePatchInProgress.PatchChange> getSelectedObjects(ChangesBrowserNode<?> node) {
-      final List<Change> under = node.getAllChangesUnder();
-      return map(under, AbstractFilePatchInProgress.PatchChange.class::cast);
-    }
-
-    @Override
-    protected AbstractFilePatchInProgress.PatchChange getLeadSelectedObject(ChangesBrowserNode<?> node) {
-      final Object o = node.getUserObject();
-      if (o instanceof AbstractFilePatchInProgress.PatchChange) {
-        return (AbstractFilePatchInProgress.PatchChange)o;
-      }
-      return null;
+    protected DefaultTreeModel buildTreeModel(@NotNull List<AbstractFilePatchInProgress.PatchChange> changes) {
+      return TreeModelBuilder.buildFromChanges(myProject, isShowFlatten(), changes, myChangeNodeDecorator);
     }
 
     @Override
@@ -615,12 +603,15 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @Override
-    protected void toggleChanges(Collection<AbstractFilePatchInProgress.PatchChange> changes) {
-      if (changes.size() == 1 && !changes.iterator().next().isValid()) {
+    protected void toggleChanges(Collection<?> changes) {
+      List<AbstractFilePatchInProgress.PatchChange> patchChanges =
+        ContainerUtil.findAll(changes, AbstractFilePatchInProgress.PatchChange.class);
+
+      if (patchChanges.size() == 1 && !patchChanges.get(0).isValid()) {
         handleInvalidChangesAndToggle();
       }
       else {
-        super.toggleChanges(getOnlyValidChanges(changes));
+        super.toggleChanges(getOnlyValidChanges(patchChanges));
       }
     }
 
@@ -682,8 +673,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     final List<AbstractFilePatchInProgress.PatchChange> changes = getAllChanges();
     final Collection<AbstractFilePatchInProgress.PatchChange> included = getIncluded(doInitCheck, changes);
 
-    myChangesTreeList.setChangesToDisplay(changes);
     myChangesTreeList.setIncludedChanges(included);
+    myChangesTreeList.setChangesToDisplay(changes);
     if (doInitCheck) {
       myChangesTreeList.expandAll();
     }
@@ -696,7 +687,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
           toSelect.add(change);
         }
       }
-      myChangesTreeList.select(toSelect);
+      myChangesTreeList.setSelectedChanges(toSelect);
     }
 
     myContainBasedChanges = false;
@@ -1137,27 +1128,23 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       Collections.sort(changes, myMyChangeComparator);
       List<AbstractFilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
 
+      if (changes.isEmpty()) return;
+      final AbstractFilePatchInProgress.PatchChange selectedChange = !selectedChanges.isEmpty() ? selectedChanges.get(0) : changes.get(0);
+
       int selectedIdx = 0;
       final List<DiffRequestProducer> diffRequestPresentableList = new ArrayList<>(changes.size());
-      if (selectedChanges.isEmpty()) {
-        selectedChanges = changes;
-      }
-      if (!selectedChanges.isEmpty()) {
-        final AbstractFilePatchInProgress.PatchChange c = selectedChanges.get(0);
-        for (AbstractFilePatchInProgress.PatchChange change : changes) {
-          final AbstractFilePatchInProgress patchInProgress = change.getPatchInProgress();
-          if (!patchInProgress.baseExistsOrAdded()) {
-            diffRequestPresentableList.add(createBaseNotFoundErrorRequest(patchInProgress));
-          }
-          else {
-            diffRequestPresentableList.add(patchInProgress.getDiffRequestProducers(myProject, myReader));
-          }
-          if (change.equals(c)) {
-            selectedIdx = diffRequestPresentableList.size() - 1;
-          }
+      for (AbstractFilePatchInProgress.PatchChange change : changes) {
+        final AbstractFilePatchInProgress patchInProgress = change.getPatchInProgress();
+        if (!patchInProgress.baseExistsOrAdded()) {
+          diffRequestPresentableList.add(createBaseNotFoundErrorRequest(patchInProgress));
+        }
+        else {
+          diffRequestPresentableList.add(patchInProgress.getDiffRequestProducers(myProject, myReader));
+        }
+        if (change.equals(selectedChange)) {
+          selectedIdx = diffRequestPresentableList.size() - 1;
         }
       }
-      if (diffRequestPresentableList.isEmpty()) return;
       MyDiffRequestChain chain = new MyDiffRequestChain(diffRequestPresentableList, changes, selectedIdx);
       DiffManager.getInstance().showDiff(myProject, chain, DiffDialogHints.DEFAULT);
     }
@@ -1190,6 +1177,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     private int myIndex;
 
     public MyDiffRequestChain(@NotNull List<DiffRequestProducer> requests, @NotNull List<? extends Change> changes, int index) {
+      assert requests.size() == changes.size();
       myRequests = requests;
       myChanges = changes;
 
@@ -1216,17 +1204,26 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     @NotNull
     @Override
     public AnAction createGoToChangeAction(@NotNull Consumer<Integer> onSelected) {
-      return new ChangeGoToChangePopupAction.Fake<MyDiffRequestChain>(this, myIndex, onSelected) {
+      return new ChangeGoToChangePopupAction<MyDiffRequestChain>(this, myIndex) {
         @NotNull
         @Override
-        protected FilePath getFilePath(int index) {
-          return ChangesUtil.getFilePath(myChanges.get(index));
+        protected DefaultTreeModel buildTreeModel(@NotNull Project project, boolean showFlatten) {
+          List<TreeModelBuilder.GenericNodeData> nodesData = new ArrayList<>();
+          for (int i = 0; i < myChanges.size(); i++) {
+            Change change = myChanges.get(i);
+            FilePath filePath = ChangesUtil.getFilePath(change);
+            FileStatus fileStatus = change.getFileStatus();
+            nodesData.add(new TreeModelBuilder.GenericNodeData(filePath, fileStatus, myIndex));
+          }
+
+          TreeModelBuilder builder = new TreeModelBuilder(project, showFlatten);
+          builder.setGenericNodes(nodesData, null);
+          return builder.build();
         }
 
-        @NotNull
         @Override
-        protected FileStatus getFileStatus(int index) {
-          return myChanges.get(index).getFileStatus();
+        protected void onSelected(@Nullable Object object) {
+          onSelected.consume((Integer)object);
         }
       };
     }

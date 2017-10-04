@@ -232,9 +232,14 @@ public class LibraryTest extends ModuleRootManagerTestCase {
 
     assertThat(serialize(library)).isEqualTo("<root>\n" +
                                              "  <library name=\"jarDirs\">\n" +
-                                             "    <CLASSES />\n" +
+                                             "    <CLASSES>\n" +
+                                             "      <root url=\"file://jar-dir\" />\n" +
+                                             "      <root url=\"file://jar-dir-rec\" />\n" +
+                                             "    </CLASSES>\n" +
                                              "    <JAVADOC />\n" +
-                                             "    <SOURCES />\n" +
+                                             "    <SOURCES>\n" +
+                                             "      <root url=\"file://jar-dir-src\" />\n" +
+                                             "    </SOURCES>\n" +
                                              "    <jarDirectory url=\"file://jar-dir\" recursive=\"false\" />\n" +
                                              "    <jarDirectory url=\"file://jar-dir-rec\" recursive=\"true\" />\n" +
                                              "    <jarDirectory url=\"file://jar-dir-src\" recursive=\"false\" type=\"SOURCES\" />\n" +

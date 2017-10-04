@@ -76,7 +76,7 @@ public class MethodRefCanBeReplacedWithLambdaFixTest extends IGQuickFixesTestCas
   }
 
   public void testNewRefsInference() {
-    doTest(myDefaultHint + " (side effects)");
+    doTest(myDefaultHint);
   }
 
   public void testNewRefsInference1() {
@@ -108,7 +108,7 @@ public class MethodRefCanBeReplacedWithLambdaFixTest extends IGQuickFixesTestCas
   }
 
   public void testArrayMethodRef() {
-    doTest(myDefaultHint + " (side effects)");
+    doTest(myDefaultHint  );
   }
 
   public void testArrayConstructorRefUniqueParamName() {

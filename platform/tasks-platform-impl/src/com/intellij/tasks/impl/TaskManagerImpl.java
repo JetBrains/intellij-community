@@ -33,6 +33,8 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsTaskHandler;
 import com.intellij.openapi.vcs.VcsType;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
+import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.tasks.*;
 import com.intellij.tasks.context.WorkingContextManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -347,6 +349,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       myChangeListManager.setDefaultChangeList(changeList);
     }
 
+    unshelveChanges(task);
     List<BranchInfo> branches = task.getBranches(false);
     // we should have exactly one branch per repo
     MultiMap<String, BranchInfo> multiMap = new MultiMap<>();
@@ -374,6 +377,31 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
     switchBranch(info);
     return task;
+  }
+
+  public void shelveChanges(LocalTask task, @NotNull String shelfName) {
+    Collection<Change> changes = ChangeListManager.getInstance(myProject).getDefaultChangeList().getChanges();
+    if (changes.isEmpty()) return;
+    try {
+      ShelveChangesManager.getInstance(myProject).shelveChanges(changes, shelfName, true);
+      task.setShelfName(shelfName);
+    }
+    catch (Exception e) {
+      LOG.warn("Can't shelve changes", e);
+    }
+  }
+
+  private void unshelveChanges(LocalTask task) {
+    String name = task.getShelfName();
+    if (name != null) {
+      ShelveChangesManager manager = ShelveChangesManager.getInstance(myProject);
+      for (ShelvedChangeList list : manager.getShelvedChangeLists()) {
+        if (name.equals(list.DESCRIPTION)) {
+          manager.unshelveChangeList(list, list.getChanges(myProject), list.getBinaryFiles(), myChangeListManager.getDefaultChangeList(), true);
+          return;
+        }
+      }
+    }
   }
 
   private List<BranchInfo> getAllBranches(final String repo) {
@@ -442,6 +470,10 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   private void saveActiveTask() {
     myContextManager.saveContext(myActiveTask);
     myActiveTask.setUpdated(new Date());
+    String shelfName = myActiveTask.getShelfName();
+    if (shelfName != null) {
+      shelveChanges(myActiveTask, shelfName);
+    }
   }
 
   private LocalTask doActivate(Task origin, boolean explicitly) {
@@ -952,6 +984,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     public boolean createChangelist = true;
     public boolean createBranch = true;
     public boolean useBranch = false;
+    public boolean shelveChanges = false;
 
     // close task options
     public boolean commitChanges = true;

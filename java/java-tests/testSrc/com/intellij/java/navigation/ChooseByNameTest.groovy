@@ -18,13 +18,13 @@ package com.intellij.java.navigation
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings
 import com.intellij.ide.util.gotoByName.*
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.util.Disposer
 import com.intellij.psi.CommonClassNames
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
@@ -41,6 +41,7 @@ class ChooseByNameTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected void tearDown() throws Exception {
+    myPopup?.close(false)
     myPopup = null
     super.tearDown()
   }
@@ -398,6 +399,18 @@ class Intf {
     assert gotoFile("somefb\\index.html") == [someFbFile]
   }
 
+  void "test show matches from different suffixes"() {
+    def enumControl = addEmptyFile("sample/EnumControl.java")
+    def control = addEmptyFile("sample/ControlSmth.java")
+    assert gotoFile('samplecontrol', false) == [enumControl, control]
+  }
+
+  void "test show longer suffix matches from jdk and shorter from project"() {
+    def seq = addEmptyFile("langc/Sequence.java")
+    def charSeq = JavaPsiFacade.getInstance(project).findClass(CharSequence.name, GlobalSearchScope.allScope(project))
+    assert gotoFile('langcsequence', false) == [charSeq.containingFile, seq]
+  }
+
   void "test fix keyboard layout"() {
     assert (gotoClass('Ыекштп')[0] as PsiClass).name == 'String'
     assert (gotoSymbol('Ыекштп')[0] as PsiClass).name == 'String'
@@ -431,7 +444,7 @@ class Intf {
   static ArrayList<Object> calcPopupElements(ChooseByNamePopup popup, String text, boolean checkboxState = false) {
     List<Object> elements = ['empty']
     def semaphore = new Semaphore(1)
-    popup.scheduleCalcElements(text, checkboxState, ModalityState.NON_MODAL, { set ->
+    popup.scheduleCalcElements(text, checkboxState, ModalityState.NON_MODAL, SelectMostRelevant.INSTANCE, { set ->
       elements = set as List<Object>
       semaphore.up()
     } as Consumer<Set<?>>)
@@ -451,11 +464,7 @@ class Intf {
       myPopup.close(false)
     }
 
-    runInEdtAndWait {
-      def popup = myPopup = ChooseByNamePopup.createPopup(project, model, (PsiElement)context, "")
-      Disposer.register(myFixture.testRootDisposable, { popup.close(false) } as Disposable)
-    }
-    myPopup
+    return myPopup = ChooseByNamePopup.createPopup(project, model, (PsiElement)context, "")
   }
 
 }

@@ -33,9 +33,7 @@ import java.util.function.Supplier;
 
 import static com.intellij.util.ArrayUtil.EMPTY_OBJECT_ARRAY;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public final class AsyncTreeModelTest {
   private static final boolean PRINT = false;
@@ -424,7 +422,7 @@ public final class AsyncTreeModelTest {
 
     private void visit(@NotNull TreeVisitor visitor, boolean allowLoading, @NotNull Consumer<TreePath> consumer) {
       AsyncTreeModel model = (AsyncTreeModel)tree.getModel();
-      model.visit(visitor, allowLoading).rejected(promise::setError).done(consumer::accept);
+      model.accept(visitor, allowLoading).rejected(promise::setError).done(consumer::accept);
     }
 
     @Override

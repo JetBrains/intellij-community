@@ -269,7 +269,7 @@ public class IdeTestApplication {
 
     IdeEventQueue.getInstance().flushQueue();
     final Application application = ApplicationManager.getApplication();
-    ((ApplicationImpl)application).exit(true, true, false, false);
+    ((ApplicationImpl)application).exit(true, true, false);
 
     ourInstance = null;
   }

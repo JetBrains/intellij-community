@@ -75,6 +75,18 @@ class CompilationTasksImpl extends CompilationTasks {
   }
 
   @Override
+  void buildProjectArtifacts(Collection<String> artifactNames) {
+    if (!artifactNames.isEmpty()) {
+      try {
+        new JpsCompilationRunner(context).buildArtifacts(artifactNames)
+      }
+      catch (Throwable e) {
+        context.messages.error("Building project artifacts failed with exception: $e", e)
+      }
+    }
+  }
+
+  @Override
   void resolveProjectDependencies() {
     new JpsCompilationRunner(context).resolveProjectDependencies()
   }

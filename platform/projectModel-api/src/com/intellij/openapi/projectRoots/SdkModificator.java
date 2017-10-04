@@ -20,6 +20,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * The way to modify the {@link Sdk} roots, home path etc.<br>
+ * First you call {@link Sdk#getSdkModificator()}<br>
+ * Then you modify things via SdkModificator setters, e.g. {@link #setHomePath(String)}<br>
+ * Last, you must call {@link #commitChanges()}
+ */
 public interface SdkModificator {
   String getName();
 

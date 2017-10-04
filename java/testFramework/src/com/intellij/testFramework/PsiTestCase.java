@@ -84,11 +84,17 @@ public abstract class PsiTestCase extends ModuleTestCase {
 
   @NotNull
   protected PsiFile createFile(@NotNull Module module, @NotNull String fileName, @NotNull String text) throws Exception {
+    VirtualFile vDir = createTempVfsDirectory();
+    return createFile(module, vDir, fileName, text);
+  }
+
+  @NotNull
+  protected VirtualFile createTempVfsDirectory() throws IOException {
     File dir = createTempDirectory();
     VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
 
     assert vDir != null : dir;
-    return createFile(module, vDir, fileName, text);
+    return vDir;
   }
 
   @NotNull

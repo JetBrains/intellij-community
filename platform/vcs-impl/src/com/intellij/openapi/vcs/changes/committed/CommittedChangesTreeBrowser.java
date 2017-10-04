@@ -85,7 +85,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
   private final Project myProject;
   @NotNull private final ChangesBrowserTree myChangesTree;
-  private final RepositoryChangesBrowser myDetailsView;
+  private final MyRepositoryChangesViewer myDetailsView;
   private List<CommittedChangeList> myChangeLists;
   private List<CommittedChangeList> mySelectedChangeLists;
   @NotNull private ChangeListGroupingStrategy myGroupingStrategy = new DateChangeListGroupingStrategy();
@@ -121,7 +121,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     TreeUtil.expandAll(myChangesTree);
     myChangesTree.setExpandableItemsEnabled(false);
 
-    myDetailsView = new RepositoryChangesBrowser(project);
+    myDetailsView = new MyRepositoryChangesViewer(project);
     myDetailsView.getViewerScrollPane().setBorder(RIGHT_BORDER);
 
     myChangesTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
@@ -230,18 +230,13 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
   public void setToolBar(JComponent toolBar) {
     myLeftPanel.add(toolBar, BorderLayout.NORTH);
-    Dimension prefSize = myDetailsView.getHeaderPanel().getPreferredSize();
-    if (prefSize.height < toolBar.getPreferredSize().height) {
-      prefSize.height = toolBar.getPreferredSize().height;
-      myDetailsView.getHeaderPanel().setPreferredSize(prefSize);
-    }
+    myDetailsView.syncSizeWithToolbar(toolBar);
   }
 
   public void dispose() {
     myConnection.disconnect();
     mySplitterProportionsData.saveSplitterProportions(this);
     mySplitterProportionsData.externalizeToDimensionService("CommittedChanges.SplitterProportions");
-    Disposer.dispose(myDetailsView);
   }
 
   public void setItems(@NotNull List<CommittedChangeList> items, final CommittedChangesBrowserUseCase useCase) {
@@ -581,5 +576,23 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
   public void setLoading(final boolean value) {
     runOrInvokeLaterAboveProgress(() -> myChangesTree.setPaintBusy(value), ModalityState.NON_MODAL, myProject);
+  }
+
+  private static class MyRepositoryChangesViewer extends CommittedChangesBrowser {
+    private final JComponent myHeaderPanel = new JPanel();
+
+    public MyRepositoryChangesViewer(Project project) {
+      super(project);
+    }
+
+    @Nullable
+    @Override
+    protected JComponent createHeaderPanel() {
+      return myHeaderPanel;
+    }
+
+    public void syncSizeWithToolbar(@NotNull JComponent toolbar) {
+      myHeaderPanel.setPreferredSize(new Dimension(0, toolbar.getPreferredSize().height));
+    }
   }
 }

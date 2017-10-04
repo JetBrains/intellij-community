@@ -515,19 +515,20 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   void closeFile(VirtualFile file, boolean moveFocus) {
     final List<EditorWindow> windows = findWindows(file);
+    boolean isProjectOpen = myManager.getProject().isOpen();
     if (!windows.isEmpty()) {
       final VirtualFile nextFile = findNextFile(file);
       for (final EditorWindow window : windows) {
         LOG.assertTrue(window.getSelectedEditor() != null);
         window.closeFile(file, false, moveFocus);
-        if (window.getTabCount() == 0 && nextFile != null && myManager.getProject().isOpen()) {
+        if (window.getTabCount() == 0 && nextFile != null && isProjectOpen) {
           EditorWithProviderComposite newComposite = myManager.newEditorComposite(nextFile);
           window.setEditor(newComposite, moveFocus); // newComposite can be null
         }
       }
       // cleanup windows with no tabs
       for (final EditorWindow window : windows) {
-        if (window.isDisposed()) {
+        if (!isProjectOpen || window.isDisposed()) {
           // call to window.unsplit() which might make its sibling disposed
           continue;
         }

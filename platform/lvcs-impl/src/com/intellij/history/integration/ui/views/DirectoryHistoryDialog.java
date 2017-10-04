@@ -28,10 +28,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffContext;
-import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
-import com.intellij.openapi.vcs.changes.ui.ChangesTreeList;
-import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
+import com.intellij.openapi.vcs.changes.ui.ChangesTreeImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -41,7 +38,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
-import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +46,7 @@ import java.util.Set;
 import static com.intellij.history.integration.LocalHistoryBundle.message;
 
 public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialogModel> {
-  private ChangesTreeList<Change> myChangesTree;
+  private ChangesTreeImpl<Change> myChangesTree;
   private JScrollPane myChangesTreeScrollPane;
   private ActionToolbar myToolBar;
 
@@ -86,7 +82,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     p.add(toolBarPanel, BorderLayout.NORTH);
     p.add(myChangesTreeScrollPane = ScrollPaneFactory.createScrollPane(myChangesTree), BorderLayout.CENTER);
 
-    return Pair.create((JComponent)p, toolBarPanel.getPreferredSize());
+    return Pair.create(p, toolBarPanel.getPreferredSize());
   }
 
   protected boolean showSearchField() {
@@ -121,31 +117,9 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   }
 
   private void initChangesTree(JComponent root) {
-    myChangesTree = createChangesTree();
+    myChangesTree = new ChangesTreeImpl.Changes(myProject, false, false);
     myChangesTree.setDoubleClickHandler(() -> new ShowDifferenceAction().performIfEnabled());
     myChangesTree.installPopupHandler(createChangesTreeActions(root));
-  }
-
-  private ChangesTreeList<Change> createChangesTree() {
-    return new ChangesTreeList<Change>(myProject, false, false) {
-      @Override
-      protected DefaultTreeModel buildTreeModel(List<Change> cc, ChangeNodeDecorator changeNodeDecorator) {
-        return TreeModelBuilder.buildFromChanges(myProject, isShowFlatten(), cc, changeNodeDecorator);
-      }
-
-      @Override
-      protected List<Change> getSelectedObjects(ChangesBrowserNode<?> node) {
-        return node.getAllChangesUnder();
-      }
-
-      protected Change getLeadSelectedObject(final ChangesBrowserNode<?> node) {
-        final Object o = node.getUserObject();
-        if (o instanceof Change) {
-          return (Change)o;
-        }
-        return null;
-      }
-    };
   }
 
   private ActionGroup createChangesTreeActions(JComponent root) {

@@ -69,10 +69,10 @@ public class FuseStreamOperationsInspection extends BaseJavaBatchLocalInspection
     private static PsiClass resolveClassCreatedByFunction(PsiExpression function) {
       function = PsiUtil.skipParenthesizedExprDown(function);
       if (function instanceof PsiMethodReferenceExpression && ((PsiMethodReferenceExpression)function).isConstructor()) {
-        PsiMethod constructor = tryCast(((PsiMethodReferenceExpression)function).resolve(), PsiMethod.class);
-        if (constructor != null) {
-          return constructor.getContainingClass();
-        }
+        PsiElement target = ((PsiMethodReferenceExpression)function).resolve();
+        return target instanceof PsiClass ? ((PsiClass)target) :
+               target instanceof PsiMethod ? ((PsiMethod)target).getContainingClass() :
+               null;
       }
       if (function instanceof PsiLambdaExpression) {
         PsiExpression body = LambdaUtil.extractSingleExpressionFromBody(((PsiLambdaExpression)function).getBody());

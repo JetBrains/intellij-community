@@ -25,10 +25,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Path2D;
 
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.ACTIVE_ERROR_COLOR;
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.INACTIVE_ERROR_COLOR;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.Outline;
 import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.HOVER_PROPERTY;
-import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.adjustInWrapperRect;
 
 /**
  * @author Konstantin Bulenkov
@@ -53,11 +51,12 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
     try {
       Rectangle r = new Rectangle(x, y, width, height);
 
-      adjustInWrapperRect(r, c);
+      WinIntelliJTextFieldUI.adjustInWrapperRect(r, c);
 
       int bw = 1;
-      if (jc.getClientProperty("JComponent.error.outline") == Boolean.TRUE) {
-        g2.setColor(c.hasFocus() ? ACTIVE_ERROR_COLOR : INACTIVE_ERROR_COLOR);
+      Object op = jc.getClientProperty("JComponent.outline");
+      if (op != null) {
+        Outline.valueOf(op.toString()).setGraphicsColor(g2, c.hasFocus());
         bw = 2;
       } else {
         //boolean editable = !(c instanceof JTextComponent) || ((JTextComponent)c).isEditable();

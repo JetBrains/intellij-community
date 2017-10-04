@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -23,6 +11,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -842,13 +831,26 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
     if (!file.getViewProvider().supportsIncrementalReparse(file.getLanguage())) {
       return new TextRange(0, psiLength);
     }
-    final TextRange changedPsiRange =
-      ((PsiDocumentManagerBase)PsiDocumentManagerBase.getInstance(file.getProject()))
-        .getChangedRangeSinceCommit(task.document, newDocumentText.length() - oldDocumentText.length());
-    if (changedPsiRange == null || changedPsiRange.getStartOffset() == newDocumentText.length() && newDocumentText.length() == psiLength) {
+    List<DocumentEvent> events = ((PsiDocumentManagerBase)PsiDocumentManagerBase.getInstance(file.getProject())).getEventsSinceCommit(task.document);
+    int prefix = Integer.MAX_VALUE, suffix = Integer.MAX_VALUE;
+    int lengthBeforeEvent = psiLength;
+    for (DocumentEvent event : events) {
+      prefix = Math.min(prefix, event.getOffset());
+      suffix = Math.min(suffix, lengthBeforeEvent - event.getOffset() - event.getOldLength());
+      lengthBeforeEvent = lengthBeforeEvent - event.getOldLength() + event.getNewLength();
+    }
+    if ((prefix == psiLength || suffix == psiLength) && newDocumentText.length() == psiLength) {
       return null;
     }
-    return changedPsiRange;
+    //Important! delete+insert sequence can give some of same chars back, lets grow affixes to include them.
+    int shortestLength = Math.min(psiLength, newDocumentText.length());
+    while (prefix < shortestLength &&
+           oldDocumentText.charAt(prefix) == newDocumentText.charAt(prefix)) { prefix++; }
+    while (suffix < shortestLength - prefix &&
+           oldDocumentText.charAt(psiLength - suffix - 1) == newDocumentText.charAt(newDocumentText.length() - suffix - 1)) { suffix++; }
+    int length = Math.max(prefix, psiLength - suffix);
+    if (length == 0 && newDocumentText.length() == oldDocumentText.length()) return null;
+    return TextRange.create(prefix, length);
   }
 
   public static void doActualPsiChange(@NotNull final PsiFile file, @NotNull final DiffLog diffLog) {

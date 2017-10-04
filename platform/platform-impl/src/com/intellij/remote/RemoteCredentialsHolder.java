@@ -42,7 +42,6 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   public static final String USE_KEY_PAIR = "USE_KEY_PAIR";
   public static final String USE_AUTH_AGENT = "USE_AUTH_AGENT";
   public static final String PRIVATE_KEY_FILE = "PRIVATE_KEY_FILE";
-  public static final String KNOWN_HOSTS_FILE = "MY_KNOWN_HOSTS_FILE";
   public static final String PASSPHRASE = "PASSPHRASE";
 
   public static final String SSH_PREFIX = "ssh://";
@@ -150,23 +149,6 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
 
   public void setPrivateKeyFile(String privateKeyFile) {
     myPrivateKeyFile = privateKeyFile;
-  }
-
-  /**
-   * @deprecated see {@link RemoteCredentials#getKnownHostsFile()}
-   */
-  @Deprecated
-  @Override
-  public String getKnownHostsFile() {
-    return myKnownHostsFile;
-  }
-
-  /**
-   * @deprecated see {@link MutableRemoteCredentials#setKnownHostsFile(String)}
-   */
-  @Deprecated
-  public void setKnownHostsFile(String knownHostsFile) {
-    myKnownHostsFile = knownHostsFile;
   }
 
   @Override
@@ -284,7 +266,6 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     to.setPassword(from.getPassword());
     to.setAuthType(from.getAuthType());
     to.setPrivateKeyFile(from.getPrivateKeyFile());
-    to.setKnownHostsFile(from.getKnownHostsFile());
     to.setStorePassword(from.isStorePassword());
     to.setStorePassphrase(from.isStorePassphrase());
   }
@@ -295,7 +276,6 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     setSerializedUserName(element.getAttributeValue(USERNAME));
     setSerializedPassword(element.getAttributeValue(PASSWORD));
     setPrivateKeyFile(StringUtil.nullize(element.getAttributeValue(PRIVATE_KEY_FILE)));
-    setKnownHostsFile(StringUtil.nullize(element.getAttributeValue(KNOWN_HOSTS_FILE)));
     setSerializedPassphrase(element.getAttributeValue(PASSPHRASE));
     boolean useKeyPair = StringUtil.parseBoolean(element.getAttributeValue(USE_KEY_PAIR), false);
     boolean useAuthAgent = StringUtil.parseBoolean(element.getAttributeValue(USE_AUTH_AGENT), false);
@@ -351,7 +331,6 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     rootElement.setAttribute(PORT, StringUtil.notNullize(getLiteralPort()));
     rootElement.setAttribute(USERNAME, getSerializedUserName());
     rootElement.setAttribute(PRIVATE_KEY_FILE, StringUtil.notNullize(getPrivateKeyFile()));
-    rootElement.setAttribute(KNOWN_HOSTS_FILE, StringUtil.notNullize(getKnownHostsFile()));
     rootElement.setAttribute(USE_KEY_PAIR, Boolean.toString(myAuthType == AuthType.KEY_PAIR));
     rootElement.setAttribute(USE_AUTH_AGENT, Boolean.toString(myAuthType == AuthType.AUTH_AGENT));
 

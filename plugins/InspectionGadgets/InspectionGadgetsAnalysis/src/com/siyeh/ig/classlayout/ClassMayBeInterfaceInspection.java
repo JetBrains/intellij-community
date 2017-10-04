@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,8 +135,7 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
         return;
       }
       final PsiKeyword classKeyword = PsiTreeUtil.getPrevSiblingOfType(nameIdentifier, PsiKeyword.class);
-      final PsiManager manager = aClass.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
       final PsiKeyword interfaceKeyword = factory.createKeyword(PsiKeyword.INTERFACE);
       if (classKeyword == null) {
         return;
@@ -164,7 +163,7 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
 
     private static void moveSubClassExtendsToImplements(List<PsiClass> inheritors) {
       final PsiClass oldClass = inheritors.get(0);
-      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(oldClass.getProject()).getElementFactory();
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(oldClass.getProject());
       final PsiJavaCodeReferenceElement classReference = elementFactory.createClassReferenceElement(oldClass);
       for (int i = 1; i < inheritors.size(); i++) {
         final PsiClass inheritor = inheritors.get(i);

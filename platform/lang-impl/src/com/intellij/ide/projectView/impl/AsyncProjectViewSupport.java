@@ -31,11 +31,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.tree.TreeVisitor;
@@ -45,10 +47,9 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JTree;
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
@@ -162,18 +163,18 @@ class AsyncProjectViewSupport {
     PsiElement element = object instanceof PsiElement ? (PsiElement)object : null;
     TreeVisitor visitor = createVisitor(element, file, null);
     if (visitor != null) {
-      expand(tree, promise -> myAsyncTreeModel.visit(visitor).processed(path -> {
+      expand(tree, promise -> myAsyncTreeModel.accept(visitor).processed(path -> {
         if (path != null) {
           TreeUtil.selectPath(tree, path);
           promise.setResult(null);
         }
-        else if (element == null || file == null) {
+        else if (element == null || file == null || Registry.is("async.project.view.support.extra.select.disabled")) {
           promise.setResult(null);
         }
         else {
           // try to search the specified file instead of element,
           // because Kotlin files cannot represent containing functions
-          myAsyncTreeModel.visit(createVisitor(null, file, null)).processed(path2 -> {
+          myAsyncTreeModel.accept(createVisitor(null, file, null)).processed(path2 -> {
             if (path2 != null) TreeUtil.selectPath(tree, path2);
             promise.setResult(null);
           });
@@ -206,7 +207,7 @@ class AsyncProjectViewSupport {
   private void update(PsiElement element, VirtualFile file, Consumer<List<TreePath>> consumer) {
     SmartList<TreePath> list = new SmartList<>();
     TreeVisitor visitor = createVisitor(element, file, path -> !list.add(path));
-    if (visitor != null) myAsyncTreeModel.visit(visitor).done(path -> consumer.consume(list));
+    if (visitor != null) myAsyncTreeModel.accept(visitor).done(path -> consumer.consume(list));
   }
 
   private static TreeVisitor createVisitor(PsiElement element, VirtualFile file, Predicate<TreePath> predicate) {
@@ -218,7 +219,7 @@ class AsyncProjectViewSupport {
 
   private static void setModel(@NotNull JTree tree, @NotNull AsyncTreeModel model) {
     tree.setModel(model);
-    putClientProperty(tree, VISIT, visitor -> model.visit(visitor, true));
+    putClientProperty(tree, VISIT, visitor -> model.accept(visitor, true));
     Disposer.register(model, () -> {
       putClientProperty(tree, VISIT, null);
       tree.setModel(null);

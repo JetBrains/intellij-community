@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -161,7 +162,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
   }
 
   private Collection<PyElement> getElementChildren(final PyElement element) {
-    final Collection<PyElement> children = new ArrayList<>();
+    Collection<PyElement> children = ContainerUtil.newLinkedHashSet();
     PyPsiUtils.assertValid(element);
     element.acceptChildren(new PyElementVisitor() {
       @Override

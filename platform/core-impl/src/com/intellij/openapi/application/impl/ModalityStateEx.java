@@ -32,11 +32,11 @@ public class ModalityStateEx extends ModalityState {
   @SuppressWarnings("unused")
   public ModalityStateEx() { } // used by reflection to initialize NON_MODAL
 
-  public ModalityStateEx(Object... modalEntities) {
+  ModalityStateEx(@NotNull Object... modalEntities) {
     Collections.addAll(myModalEntities, modalEntities);
   }
 
-  private List<Object> getModalEntities() {
+  List<Object> getModalEntities() {
     return myModalEntities.toStrongList();
   }
 
@@ -57,6 +57,7 @@ public class ModalityStateEx extends ModalityState {
   @Override
   public boolean dominates(@NotNull ModalityState anotherState){
     if (anotherState == ModalityState.any()) return false;
+    if (myModalEntities.isEmpty()) return false;
 
     List<Object> otherEntities = ((ModalityStateEx)anotherState).getModalEntities();
     for (Object entity : getModalEntities()) {

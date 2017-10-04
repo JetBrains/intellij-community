@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference;
 
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -1638,6 +1639,11 @@ public class InferenceSession {
 
           psiSubstitutor = receiverSubstitutor;
         }
+      }
+
+      //no additional constraints for array creation
+      if (PsiEquivalenceUtil.areElementsEquivalent(containingClass, JavaPsiFacade.getElementFactory(reference.getProject()).getArrayClass(PsiUtil.getLanguageLevel(reference)))) {
+        return null;
       }
 
       final PsiType qType = JavaPsiFacade.getElementFactory(method.getProject()).createType(containingClass, psiSubstitutor);

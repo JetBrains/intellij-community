@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -171,6 +169,9 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
                           "  void m() { some(<HINT text=\"from:\"/><caret>, <hint text=\"to:\"/>, <hint text=\"other:\"/>) }\n" +
                           "}");
     showParameterInfo();
+    checkHintContents("<html><b>int from</b>, int to</html>\n" +
+                      "-\n" +
+                      "[<html><b>int from</b>, int to, int other</html>]");
     methodOverloadDown();
     waitForAllAsyncStuff();
     checkResultWithInlays("class C {\n" +
@@ -178,6 +179,9 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
                           "  int some(int from, int to, int other) { return 0; }\n" +
                           "  void m() { some(<HINT text=\"from:\"/><caret>, <hint text=\"to:\"/>) }\n" +
                           "}");
+    checkHintContents("[<html><b>int from</b>, int to</html>]\n" +
+                      "-\n" +
+                      "<html><b>int from</b>, int to, int other</html>");
   }
 
   public void testNoHintsForMethodReference() {
@@ -360,20 +364,26 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
   public void testVarargWithNoMandatoryArguments() throws Exception {
     configureJava("class C { int vararg(int... args){ return 0; } void m() { varar<caret> } }");
     complete();
+    waitForAllAsyncStuff();
     checkResultWithInlays("class C { int vararg(int... args){ return 0; } void m() { vararg(<HINT text=\"args:\"/><caret>) } }");
+    checkHintContents("<html><b>int...</b></html>");
     type("1");
     next();
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { int vararg(int... args){ return 0; } void m() { vararg(<hint text=\"args:\"/>1, <caret>) } }");
+    checkHintContents("<html><b>int...</b></html>");
     next();
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { int vararg(int... args){ return 0; } void m() { vararg(<hint text=\"args:\"/>1)<caret> } }");
+    checkHintContents(null);
     prev();
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { int vararg(int... args){ return 0; } void m() { vararg(<hint text=\"args:\"/>1, <caret>) } }");
+    checkHintContents("<html><b>int...</b></html>");
     prev();
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { int vararg(int... args){ return 0; } void m() { vararg(<HINT text=\"args:\"/>1<caret>) } }");
+    checkHintContents("<html><b>int...</b></html>");
   }
 
   public void testVarargWithTwoMandatoryArguments() throws Exception {
@@ -645,6 +655,59 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
                           "}");
   }
 
+  public void testShortHintIsShownAfterFullHint() throws Exception {
+    configureJava("class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key, String def)");
+    waitForAllAsyncStuff();
+    showParameterInfo();
+    checkHintContents("<html><b>@NotNull String key</b></html>\n" +
+                      "-\n" +
+                      "[<html><b>@NotNull String key</b>, String def</html>]");
+    escape();
+    checkHintContents(null);
+    right();
+    waitForAllAsyncStuff();
+    checkHintContents("<html><b>String</b>&nbsp;&nbsp;<i>a default value.  </i></html>");
+  }
+
+  public void testAutopopupIsShownWithCompletionHintsDisabled() throws Exception {
+    CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION = false;
+    configureJava("class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key, String def)");
+    checkResultWithInlays("class C { void m() { System.getProperty(<caret>) } }");
+    waitForAllAsyncStuff();
+    checkHintContents("<html><b>@NotNull String key</b></html>\n" +
+                      "-\n" +
+                      "[<html><b>@NotNull String key</b>, String def</html>]");
+  }
+
+  public void testFullPopupIsHiddenOnTyping() {
+    configureJava("class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key, String def)");
+    showParameterInfo();
+    type(' ');
+    checkHintContents(null);
+  }
+
+  public void testFullPopupIsHiddenOnTypingAfterOverloadSwitch() {
+    configureJava("class C { void m() { System.getProperty(\"a\"<caret>) } }");
+    showParameterInfo();
+    methodOverloadDown();
+    type("\"b");
+    checkHintContents(null);
+  }
+
+  public void testNextParameterWorksWhenTabCompletionDoesntChangeAnything() throws Exception {
+    configureJava("class C { void m() { String local = \"a\"; String local2 = \"b\"; System.getPro<caret> } }");
+    complete("getProperty(String key, String def)");
+    type("local");
+    complete();
+    assertEquals("local", myFixture.getLookupElements()[0].getLookupString());
+    myFixture.performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE);
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { String local = \"a\"; String local2 = \"b\"; System.getProperty(<hint text=\"key:\"/>local, <HINT text=\"def:\"/><caret>) } }");
+  }
+
   private void checkResult(String text) {
     myFixture.checkResult(text);
   }
@@ -687,6 +750,10 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
 
   private void backspace() {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
+  }
+
+  private void escape() {
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
   }
 
   private void configureJava(String text) {

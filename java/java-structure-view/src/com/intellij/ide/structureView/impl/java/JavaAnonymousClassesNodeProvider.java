@@ -27,10 +27,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.PropertyOwner;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiAnonymousClass;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -56,7 +54,7 @@ public class JavaAnonymousClassesNodeProvider implements FileStructureNodeProvid
           if (elements.length > 0) {
             List<JavaAnonymousClassTreeElement> result = new ArrayList<>(elements.length);
             for (PsiElement element : elements) {
-              result.add(new JavaAnonymousClassTreeElement((PsiAnonymousClass)element, new HashSet<>()));
+              result.add(new JavaAnonymousClassTreeElement((PsiAnonymousClass)element));
             }
             return result;
           }

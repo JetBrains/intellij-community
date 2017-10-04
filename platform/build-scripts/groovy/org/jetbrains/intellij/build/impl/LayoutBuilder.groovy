@@ -22,10 +22,10 @@ import com.intellij.openapi.util.MultiValuesMap
 import com.intellij.util.PathUtilRt
 import org.apache.tools.ant.AntClassLoader
 import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
-
 /**
  * Use this class to pack output of modules and libraries into JARs and lay out them by directories. It delegates the actual work to
  * {@link jetbrains.antlayout.tasks.LayoutTask}.
@@ -164,6 +164,23 @@ class LayoutBuilder {
         throw new IllegalArgumentException("Cannot find library $libraryName in the project")
       }
       jpsLibrary(library)
+    }
+
+    /**
+     * Include output of a project artifact {@code artifactName} to the current place in the layout
+     */
+    def artifact(String artifactName) {
+      def artifact = JpsArtifactService.instance.getArtifacts(project).find {it.name == artifactName}
+      if (artifact == null) {
+        throw new IllegalArgumentException("Cannot find artifact $artifactName in the project")
+      }
+
+      if (artifact.outputFilePath != artifact.outputPath) {
+        ant.fileset(file: artifact.outputFilePath)
+      }
+      else {
+        ant.fileset(dir: artifact.outputPath)
+      }
     }
 
     /**

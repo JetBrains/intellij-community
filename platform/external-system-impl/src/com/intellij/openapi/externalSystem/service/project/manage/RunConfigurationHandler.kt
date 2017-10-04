@@ -49,7 +49,7 @@ class RunConfigurationHandler: ConfigurationHandler {
     }
   }
 
-  private fun ConfigurationData.eachRunConfiguration(f: (String, String, Map<String, String>) -> Unit) {
+  private fun ConfigurationData.eachRunConfiguration(f: (String, String, Map<String, *>) -> Unit) {
     val runCfgMap = find("runConfigurations")
 
     if (runCfgMap !is Map<*,*>) return
@@ -72,7 +72,7 @@ class RunConfigurationHandler: ConfigurationHandler {
       }
 
       try {
-        f(typeName, name, cfg as Map<String, String>)
+        f(typeName, name, cfg as Map<String, *>)
       } catch (e: Exception) {
         RunConfigurationHandler.LOG.warn("Error occurred when importing run configuration ${name}: ${e.message}", e)
       }
@@ -83,12 +83,13 @@ class RunConfigurationHandler: ConfigurationHandler {
 
 class RunConfigHandlerExtensionManager {
   companion object {
-    fun handlerForType(typeName: String): RunConfigHandlerExtension? =
-      Extensions.getExtensions(RunConfigHandlerExtension.EP_NAME).firstOrNull { it.canHandle(typeName) }
+    fun handlerForType(typeName: String): RunConfigurationHandlerExtension? =
+      Extensions.getExtensions(
+        RunConfigurationHandlerExtension.EP_NAME).firstOrNull { it.canHandle(typeName) }
   }
 }
 
-class ApplicationRunConfigHandler: RunConfigHandlerExtension {
+class ApplicationRunConfigurationHandler : RunConfigurationHandlerExtension {
   override fun process(module: Module, name: String, cfg: Map<String, *>) {
     val cfgType = ConfigurationTypeUtil.findConfigurationType<ApplicationConfigurationType>(
       ApplicationConfigurationType::class.java)

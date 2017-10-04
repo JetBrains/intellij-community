@@ -935,9 +935,8 @@ public abstract class ChooseByNameBase {
     }
     MatcherHolder.associateMatcher(myList, matcher);
 
-    scheduleCalcElements(text, myCheckBox.isSelected(), modalityState, elements -> {
+    scheduleCalcElements(text, myCheckBox.isSelected(), modalityState, pos, elements -> {
       ApplicationManager.getApplication().assertIsDispatchThread();
-      backgroundCalculationFinished(elements, pos);
 
       if (postRunnable != null) {
         postRunnable.run();
@@ -959,8 +958,9 @@ public abstract class ChooseByNameBase {
   public void scheduleCalcElements(String text,
                                    boolean checkboxState,
                                    ModalityState modalityState,
+                                   SelectionPolicy policy,
                                    Consumer<Set<?>> callback) {
-    new CalcElementsThread(text, checkboxState, callback, modalityState).scheduleThread();
+    new CalcElementsThread(text, checkboxState, callback, modalityState, policy).scheduleThread();
   }
 
   private boolean isShowListAfterCompletionKeyStroke() {
@@ -1128,7 +1128,7 @@ public abstract class ChooseByNameBase {
   }
 
   protected List<Object> getChosenElements() {
-    return ContainerUtil.filter(myList.getSelectedValuesList(), o -> !isSpecialElement(o));
+    return ContainerUtil.filter(myList.getSelectedValuesList(), o -> o != null && !isSpecialElement(o));
   }
 
   protected void chosenElementMightChange() {
@@ -1359,20 +1359,24 @@ public abstract class ChooseByNameBase {
     private final boolean myCheckboxState;
     private final Consumer<Set<?>> myCallback;
     private final ModalityState myModalityState;
+    @NotNull private SelectionPolicy mySelectionPolicy;
 
     private final ProgressIndicator myProgress = new ProgressIndicatorBase();
 
     CalcElementsThread(String pattern,
                        boolean checkboxState,
                        Consumer<Set<?>> callback,
-                       @NotNull ModalityState modalityState) {
+                       @NotNull ModalityState modalityState,
+                       @NotNull SelectionPolicy policy) {
       myPattern = pattern;
       myCheckboxState = checkboxState;
       myCallback = callback;
       myModalityState = modalityState;
+      mySelectionPolicy = policy;
     }
 
     private final Alarm myShowCardAlarm = new Alarm();
+    private final Alarm myUpdateListAlarm = new Alarm();
 
     void scheduleThread() {
       ApplicationManager.getApplication().assertIsDispatchThread();
@@ -1393,7 +1397,9 @@ public abstract class ChooseByNameBase {
     public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
       if (myProject != null && myProject.isDisposed()) return null;
 
-      final Set<Object> elements = new LinkedHashSet<>();
+      Set<Object> elements = Collections.synchronizedSet(new LinkedHashSet<>());
+      scheduleIncrementalListUpdate(elements, 0);
+
       boolean scopeExpanded = populateElements(elements);
       final String cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : scopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
 
@@ -1404,10 +1410,26 @@ public abstract class ChooseByNameBase {
           LOG.assertTrue(currentBgProcess == this, currentBgProcess);
 
           showCard(cardToShow, 0);
+          backgroundCalculationFinished(elements, mySelectionPolicy);
 
           myCallback.consume(filtered);
         }
       }, myModalityState);
+    }
+
+    private void scheduleIncrementalListUpdate(Set<Object> elements, int lastCount) {
+      myUpdateListAlarm.addRequest(() -> {
+        if (myCalcElementsThread != this) return;
+
+        int count = elements.size();
+        if (count > lastCount) {
+          setElementsToList(mySelectionPolicy, ContainerUtil.newArrayList(elements));
+          if (myCurrentChosenInfo != null) {
+            mySelectionPolicy = myCurrentChosenInfo;
+          }
+        }
+        scheduleIncrementalListUpdate(elements, count);
+      }, 200);
     }
 
     private boolean populateElements(Set<Object> elements) {
@@ -1446,7 +1468,7 @@ public abstract class ChooseByNameBase {
       LOG.assertTrue(myCalcElementsThread == this, myCalcElementsThread);
 
       if (!myProject.isDisposed()) {
-        new CalcElementsThread(myPattern, myCheckboxState, myCallback, myModalityState).scheduleThread();
+        new CalcElementsThread(myPattern, myCheckboxState, myCallback, myModalityState, mySelectionPolicy).scheduleThread();
       }
     }
 
@@ -1583,7 +1605,7 @@ public abstract class ChooseByNameBase {
             ensureNamesLoaded(everywhere);
             indicator.setIndeterminate(true);
             final TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.createFor(indicator);
-            myCalcUsagesThread = new CalcElementsThread(text, everywhere, null, ModalityState.NON_MODAL) {
+            myCalcUsagesThread = new CalcElementsThread(text, everywhere, null, ModalityState.NON_MODAL, myCurrentChosenInfo) {
               @Override
               protected boolean isOverflow(@NotNull Set<Object> elementsArray) {
                 tooManyUsagesStatus.pauseProcessingIfTooManyUsages();

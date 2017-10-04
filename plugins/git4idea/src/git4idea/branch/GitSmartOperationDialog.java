@@ -15,10 +15,12 @@
  */
 package git4idea.branch;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
@@ -78,6 +80,7 @@ public class GitSmartOperationDialog extends DialogWrapper {
                              ? new ChangesBrowserWithRollback(project, changes)
                              : new GitSimplePathsBrowser(project, paths);
     GitSmartOperationDialog dialog = new GitSmartOperationDialog(project, fileBrowser, operationTitle, forceButtonTitle);
+    if (fileBrowser instanceof Disposable) Disposer.register(dialog.getDisposable(), (Disposable)fileBrowser);
     DialogManager.show(dialog);
     return Choice.fromDialogExitCode(dialog.getExitCode());
   }

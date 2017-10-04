@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -88,7 +89,7 @@ public final class ScriptRunnerUtil {
                                          @Nullable String workingDirectory,
                                          @Nullable VirtualFile scriptFile,
                                          String[] parameters) throws ExecutionException {
-    return execute(exePath, workingDirectory, scriptFile, parameters, null);
+    return execute(exePath, workingDirectory, scriptFile, parameters, null, commandLine -> new ColoredProcessHandler(commandLine));
   }
 
   @NotNull
@@ -96,7 +97,9 @@ public final class ScriptRunnerUtil {
                                          @Nullable String workingDirectory,
                                          @Nullable VirtualFile scriptFile,
                                          String[] parameters,
-                                         @Nullable Charset charset) throws ExecutionException {
+                                         @Nullable Charset charset,
+                                         @NotNull ThrowableNotNullFunction<GeneralCommandLine, OSProcessHandler, ExecutionException> creator)
+    throws ExecutionException {
     GeneralCommandLine commandLine = getBasicCommandLine(exePath);
     if (scriptFile != null) {
       commandLine.addParameter(scriptFile.getPresentableUrl());
@@ -114,7 +117,7 @@ public final class ScriptRunnerUtil {
       charset = EncodingManager.getInstance().getDefaultCharset();
     }
     commandLine.setCharset(charset);
-    final OSProcessHandler processHandler = new ColoredProcessHandler(commandLine);
+    final OSProcessHandler processHandler = creator.fun(commandLine);
     if (LOG.isDebugEnabled()) {
       processHandler.addProcessListener(new ProcessAdapter() {
         @Override

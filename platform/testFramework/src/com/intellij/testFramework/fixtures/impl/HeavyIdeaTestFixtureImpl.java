@@ -34,8 +34,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -79,7 +77,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
   private EditorListenerTracker myEditorListenerTracker;
   private ThreadTracker myThreadTracker;
   private final String myName;
-  private Sdk[] myOldSdks;
+  private SdkLeakTracker myOldSdks;
 
   HeavyIdeaTestFixtureImpl(@NotNull String name) {
     myName = name;
@@ -100,7 +98,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     myEditorListenerTracker = new EditorListenerTracker();
     myThreadTracker = new ThreadTracker();
     InjectedLanguageManagerImpl.pushInjectors(getProject());
-    myOldSdks = ProjectJdkTable.getInstance().getAllJdks();
+    myOldSdks = new SdkLeakTracker();
   }
 
   @Override
@@ -143,7 +141,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       .append(() -> myEditorListenerTracker.checkListenersLeak())
       .append(() -> myThreadTracker.checkLeak())
       .append(LightPlatformTestCase::checkEditorsReleased)
-      .append(() -> UsefulTestCase.checkForJdkTableLeaks(myOldSdks))
+      .append(() -> myOldSdks.checkForJdkTableLeaks())
       .append(() -> PlatformTestCase.cleanupApplicationCaches(null))  // project is disposed by now, no point in passing it
       .run();
   }

@@ -27,9 +27,9 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
+import com.intellij.openapi.vcs.changes.ui.OldChangesBrowserBase;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
@@ -109,7 +109,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     final DefaultActionGroup group = new DefaultActionGroup();
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("SPECIFIC_FILES_DIALOG", group, true);
 
-    addCustomActions(group, actionToolbar);
+    addCustomActions(group);
 
     final CommonActionsManager cam = CommonActionsManager.getInstance();
     final Expander expander = new Expander();
@@ -123,7 +123,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     myView.setShowFlatten(false);
   }
 
-  protected void addCustomActions(@NotNull DefaultActionGroup group, @NotNull ActionToolbar actionToolbar) {
+  protected void addCustomActions(@NotNull DefaultActionGroup group) {
   }
 
   @Override
@@ -179,11 +179,11 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
   @NotNull
   protected abstract List<VirtualFile> getFiles();
 
-  protected static ChangesBrowserBase getBrowserBase(@NotNull ChangesListView view) {
-    return ChangesBrowserBase.DATA_KEY.getData(DataManager.getInstance().getDataContext(view));
+  protected static OldChangesBrowserBase getBrowserBase(@NotNull ChangesListView view) {
+    return OldChangesBrowserBase.DATA_KEY.getData(DataManager.getInstance().getDataContext(view));
   }
 
-  public static void refreshChanges(@NotNull Project project, @Nullable ChangesBrowserBase browser) {
+  public static void refreshChanges(@NotNull Project project, @Nullable OldChangesBrowserBase browser) {
     if (browser != null) {
       ChangeListManager.getInstance(project)
         .invokeAfterUpdate(browser::rebuildList, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, "Delete files", null);

@@ -15,7 +15,10 @@
  */
 package com.intellij.build;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
+
+import javax.swing.*;
 
 /**
  * @author Vladislav.Soroka
@@ -28,5 +31,10 @@ public class DebugTasksViewManager extends TasksViewManager   {
   @Override
   public String getViewName() {
     return "Debug";
+  }
+
+  @Override
+  protected Icon getContentIcon() {
+    return AllIcons.General.Debug;
   }
 }

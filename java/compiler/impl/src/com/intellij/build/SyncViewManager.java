@@ -16,7 +16,11 @@
 package com.intellij.build;
 
 import com.intellij.build.events.FailureResult;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author Vladislav.Soroka
@@ -29,6 +33,12 @@ public class SyncViewManager extends AbstractViewManager {
   @Override
   public String getViewName() {
     return "Sync";
+  }
+
+  @Nullable
+  @Override
+  protected Icon getContentIcon() {
+    return AllIcons.Actions.Refresh;
   }
 
   @Override

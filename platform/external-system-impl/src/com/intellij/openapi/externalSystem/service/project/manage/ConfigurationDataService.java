@@ -28,6 +28,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +44,7 @@ import static com.intellij.openapi.externalSystem.service.project.manage.Abstrac
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public class ConfigurationDataService extends AbstractProjectDataService<ConfigurationData, Void> {
   private static final Logger LOG = Logger.getInstance(ConfigurationDataService.class);
+  public static final String EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED = "external.system.configuration.import.enabled";
 
   @NotNull
   @Override
@@ -55,7 +57,7 @@ public class ConfigurationDataService extends AbstractProjectDataService<Configu
                          @Nullable ProjectData projectData,
                          @NotNull Project project,
                          @NotNull IdeModifiableModelsProvider modelsProvider) {
-    if (toImport.isEmpty()) {
+    if (toImport.isEmpty() || !Registry.is(EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED)) {
       return;
     }
 

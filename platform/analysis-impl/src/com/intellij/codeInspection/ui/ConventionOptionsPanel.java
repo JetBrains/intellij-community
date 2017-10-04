@@ -38,7 +38,6 @@ import java.util.regex.Pattern;
 public class ConventionOptionsPanel extends JPanel {
 
   private static final Logger LOG = Logger.getInstance(ConventionOptionsPanel.class);
-  @Deprecated
   public ConventionOptionsPanel(@NotNull final InspectionProfileEntry owner,
                                 @NonNls final String minLengthProperty, @NonNls final String maxLengthProperty,
                                 @NonNls final String regexProperty, @NonNls final String regexPatternProperty,

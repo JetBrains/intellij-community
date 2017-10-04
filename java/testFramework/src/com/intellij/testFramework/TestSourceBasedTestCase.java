@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -36,15 +37,19 @@ import java.io.File;
     super.setUp();
     myTempDirectory = FileUtil.createTempDirectory(getTestName(true), "test",false);
     myFilesToDelete.add(myTempDirectory);
-    final File testRoot = new File(getTestDataPath(), getTestPath());
-    assertTrue(testRoot.getAbsolutePath(), testRoot.isDirectory());
+    String testPath = getTestPath();
+    if (testPath != null) {
+      final File testRoot = new File(getTestDataPath(), testPath);
+      assertTrue(testRoot.getAbsolutePath(), testRoot.isDirectory());
 
-    final File currentTestRoot = new File(testRoot, getTestDirectoryName());
-    assertTrue(currentTestRoot.getAbsolutePath(), currentTestRoot.isDirectory());
+      final File currentTestRoot = new File(testRoot, getTestDirectoryName());
+      assertTrue(currentTestRoot.getAbsolutePath(), currentTestRoot.isDirectory());
 
-    FileUtil.copyDir(currentTestRoot, new File(myTempDirectory, getTestDirectoryName()));
+      FileUtil.copyDir(currentTestRoot, new File(myTempDirectory, getTestDirectoryName()));
 
-    ApplicationManager.getApplication().runWriteAction(this::setupContentRoot);
+      ApplicationManager.getApplication().runWriteAction(this::setupContentRoot);
+    }
+
     ProjectViewTestUtil.setupImpl(getProject(), true);
   }
 
@@ -58,6 +63,7 @@ import java.io.File;
     return PathManagerEx.getTestDataPath(getClass());
   }
 
+  @Nullable
   protected abstract String getTestPath();
 
   private File getTestContentFile() {

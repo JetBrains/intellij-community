@@ -222,7 +222,7 @@ inline fun <R> Path.directoryStreamIfExists(task: (stream: DirectoryStream<Path>
 
 inline fun <R> Path.directoryStreamIfExists(noinline filter: ((path: Path) -> Boolean), task: (stream: DirectoryStream<Path>) -> R): R? {
   try {
-    return Files.newDirectoryStream(this, filter).use(task)
+    return Files.newDirectoryStream(this, DirectoryStream.Filter { filter(it) }).use(task)
   }
   catch (ignored: NoSuchFileException) {
   }
