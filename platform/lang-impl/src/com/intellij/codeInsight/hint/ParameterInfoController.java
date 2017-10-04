@@ -218,7 +218,8 @@ public class ParameterInfoController implements Disposable {
 
     mySingleParameterInfo = singleParameterInfo && myKeepOnHintHidden;
     
-    Pair<Point, Short> pos = myProvider.getBestPointPosition(myHint, myComponent.getParameterOwner(), myLbraceMarker.getStartOffset(), true, HintManager.ABOVE);
+    Pair<Point, Short> pos = myProvider.getBestPointPosition(myHint, myComponent.getParameterOwner(), myLbraceMarker.getStartOffset(), 
+                                                             null, true, HintManager.ABOVE);
     HintHint hintHint = HintManagerImpl.createHintHint(myEditor, pos.getFirst(), myHint, pos.getSecond());
     hintHint.setExplicitClose(true);
     hintHint.setRequestFocus(requestFocus);
@@ -320,7 +321,7 @@ public class ParameterInfoController implements Disposable {
                          : HintManager.ABOVE;
         Pair<Point, Short> pos = myProvider.getBestPointPosition(
           myHint, elementForUpdating instanceof PsiElement ? (PsiElement)elementForUpdating : null,
-          caretOffset, true, position);
+          caretOffset, myEditor.getCaretModel().getVisualPosition(), true, position);
         HintManagerImpl.adjustEditorHintPosition(myHint, myEditor, pos.getFirst(), pos.getSecond());
       }
     }
@@ -491,7 +492,7 @@ public class ParameterInfoController implements Disposable {
    */
   static Pair<Point, Short> chooseBestHintPosition(Project project,
                                                    Editor editor,
-                                                   LogicalPosition pos,
+                                                   VisualPosition pos,
                                                    LightweightHint hint,
                                                    boolean awtTooltip, short preferredPosition) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return Pair.pair(new Point(), HintManager.DEFAULT);
@@ -672,21 +673,23 @@ public class ParameterInfoController implements Disposable {
     }
 
     @NotNull
-    public Pair<Point, Short> getBestPointPosition(LightweightHint hint,
+    private Pair<Point, Short> getBestPointPosition(LightweightHint hint,
                                                    final PsiElement list,
                                                    int offset,
+                                                   VisualPosition pos,
                                                    final boolean awtTooltip,
                                                    short preferredPosition) {
       if (list != null) {
         TextRange range = list.getTextRange();
         if (!range.contains(offset)) {
           offset = range.getStartOffset() + 1;
+          pos = null;
         }
       }
       if (previousOffset == offset) return Pair.create(previousBestPoint, previousBestPosition);
 
       final boolean isMultiline = list != null && StringUtil.containsAnyChar(list.getText(), "\n\r");
-      final LogicalPosition pos = myEditor.offsetToLogicalPosition(offset).leanForward(true);
+      if (pos == null) pos = myEditor.logicalToVisualPosition(myEditor.offsetToLogicalPosition(offset).leanForward(true));
       Pair<Point, Short> position;
 
       if (!isMultiline) {
