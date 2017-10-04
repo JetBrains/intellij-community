@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.ide.DeleteProvider;
@@ -135,14 +121,23 @@ public class DynamicToolWindowWrapper {
 
     panel.add(myTreeTablePanel);
     myBigPanel.setPreferredSize(new Dimension(200, myBigPanel.getHeight()));
-
-    final ActionManager actionManager = ActionManager.getInstance();
-    final ActionGroup actionGroup = (ActionGroup)actionManager.getAction("Groovy.Dynamic.Toolbar");
-    ActionToolbar actionToolbar = actionManager.createActionToolbar("Groovy.Dynamic.Toolbar", actionGroup, true);
-    myBigPanel.setToolbar(actionToolbar.getComponent());
+    myBigPanel.setToolbar(createToolbar().getComponent());
 
     myBigPanel.revalidate();
     return myBigPanel;
+  }
+
+  private static ActionToolbar createToolbar() {
+    return ActionManager.getInstance().createActionToolbar("Groovy.Dynamic.Toolbar", createActions(), true);
+  }
+
+  private static ActionGroup createActions() {
+    final DefaultActionGroup group = new DefaultActionGroup();
+    group.add(new RemoveDynamicAction());
+    group.add(Separator.getInstance());
+    group.add(new ExpandAllAction());
+    group.add(new CollapseAllAction());
+    return group;
   }
 
   public void rebuildTreePanel() {
@@ -221,9 +216,11 @@ public class DynamicToolWindowWrapper {
       return "";
     });
 
-    DefaultActionGroup group = new DefaultActionGroup();
-    group.add(ActionManager.getInstance().getAction(RemoveDynamicAction.GROOVY_DYNAMIC_REMOVE));
-    PopupHandler.installUnknownPopupHandler(myTreeTable, group, ActionManager.getInstance());
+    PopupHandler.installUnknownPopupHandler(
+      myTreeTable,
+      new DefaultActionGroup(new RemoveDynamicAction()),
+      ActionManager.getInstance()
+    );
 
     final MyColoredTreeCellRenderer treeCellRenderer = new MyColoredTreeCellRenderer();
 
