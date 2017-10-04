@@ -93,10 +93,8 @@ public class DynamicToolWindowWrapper {
 
   public ToolWindow getToolWindow() {
     if (myToolWindow == null) {
-      myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(GroovyBundle.message("dynamic.tool.window.id"), true, ToolWindowAnchor.RIGHT);
-      myToolWindow.setIcon(JetgroovyIcons.Groovy.DynamicProperty_13);
-      myToolWindow.setTitle(GroovyBundle.message("dynamic.window"));
-      myToolWindow.setToHideOnEmptyContent(true);
+      myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(GroovyBundle.message("dynamic.tool.window.id"), false, ToolWindowAnchor.RIGHT);
+      myToolWindow.setIcon(JetgroovyIcons.Groovy.Groovy_13x13);
 
       final JPanel panel = buildBigPanel();
       final ContentManager contentManager = myToolWindow.getContentManager();
