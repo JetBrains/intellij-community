@@ -39,4 +39,11 @@ class OverwrittenKey {
     put(<warning descr="Duplicating Map key">Test.C</warning>, "d");
     put(Test.E, "e");
   }};
+
+  void java9() {
+    Set<String> set = Set.of(<warning descr="Duplicating Set element">"a"</warning>, "b", "c", <warning descr="Duplicating Set element">"a"</warning>);
+    Map<String, String> map = Map.of("a", "a", <warning descr="Duplicating Map key">"b"</warning>, "b", "c", "b", <warning descr="Duplicating Map key">"b"</warning>, "d");
+    Map<String, String> map2 = Map.ofEntries(Map.entry("a", "a"), Map.entry(<warning descr="Duplicating Map key">"b"</warning>, "b"),
+                                             Map.entry("c", "b"), Map.entry(<warning descr="Duplicating Map key">"b"</warning>, "d"));
+  }
 }

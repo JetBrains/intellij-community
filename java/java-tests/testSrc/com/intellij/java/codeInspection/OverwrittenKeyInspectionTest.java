@@ -28,6 +28,6 @@ public class OverwrittenKeyInspectionTest extends LightInspectionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+    return JAVA_9;
   }
 }
