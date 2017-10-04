@@ -58,6 +58,13 @@ class UnknownElementWriter internal constructor(private val unknownElements: Map
       }
     }
   }
+
+  fun clone(): UnknownElementWriter {
+    return if (unknownElements.isEmpty())
+      EMPTY
+    else
+      UnknownElementWriter(unknownElements.mapValues {(_,v) -> v.clone()})
+  }
 }
 
 class UnknownElementCollector {
