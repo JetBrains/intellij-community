@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint.api.impls;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -563,13 +561,15 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       buffer.append("(");
     }
 
-    final int currentParameter = context.getCurrentParameterIndex();
+    int currentParameter = context.getCurrentParameterIndex();
 
     PsiParameter[] parms = method.getParameterList().getParameters();
     int numParams = parms.length;
     int highlightStartOffset = -1;
     int highlightEndOffset = -1;
     if (numParams > 0) {
+      if (context.isSingleParameterInfo() && method.isVarArgs() && currentParameter >= numParams) currentParameter = numParams - 1;
+
       for (int j = 0; j < numParams; j++) {
         if (context.isSingleParameterInfo() && j != currentParameter) continue;
         

@@ -364,20 +364,26 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
   public void testVarargWithNoMandatoryArguments() throws Exception {
     configureJava("class C { int vararg(int... args){ return 0; } void m() { varar<caret> } }");
     complete();
+    waitForAllAsyncStuff();
     checkResultWithInlays("class C { int vararg(int... args){ return 0; } void m() { vararg(<HINT text=\"args:\"/><caret>) } }");
+    checkHintContents("<html><b>int...</b></html>");
     type("1");
     next();
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { int vararg(int... args){ return 0; } void m() { vararg(<hint text=\"args:\"/>1, <caret>) } }");
+    checkHintContents("<html><b>int...</b></html>");
     next();
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { int vararg(int... args){ return 0; } void m() { vararg(<hint text=\"args:\"/>1)<caret> } }");
+    checkHintContents(null);
     prev();
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { int vararg(int... args){ return 0; } void m() { vararg(<hint text=\"args:\"/>1, <caret>) } }");
+    checkHintContents("<html><b>int...</b></html>");
     prev();
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { int vararg(int... args){ return 0; } void m() { vararg(<HINT text=\"args:\"/>1<caret>) } }");
+    checkHintContents("<html><b>int...</b></html>");
   }
 
   public void testVarargWithTwoMandatoryArguments() throws Exception {
