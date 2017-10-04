@@ -1008,6 +1008,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='javax.swing.JTable.GenericEditor java.awt.Component getTableCellEditorComponent(javax.swing.JTable, java.lang.Object, boolean, int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;null,_,_,_,_-&gt;null&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='javax.swing.JTable.GenericEditor java.lang.Object getCellEditorValue()'>

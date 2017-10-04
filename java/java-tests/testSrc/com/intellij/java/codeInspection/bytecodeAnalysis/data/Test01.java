@@ -18,9 +18,11 @@ package com.intellij.java.codeInspection.bytecodeAnalysis.data;
 import com.intellij.java.codeInspection.bytecodeAnalysis.ExpectContract;
 import com.intellij.java.codeInspection.bytecodeAnalysis.ExpectNotNull;
 
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.nio.file.Files;
 
 /**
  * @author lambdamix
@@ -242,6 +244,16 @@ public class Test01 {
     }
   }
 
+  @ExpectContract("null->null")
+  String getStringTryNPECatched(String s) {
+    try {
+      return String.valueOf(new FileReader(s.trim()).read());
+    }
+    catch (Exception ex) {
+      return null;
+    }
+  }
+
   @ExpectContract(pure = true)
   void testThrow(@ExpectNotNull String s) {
     if(s.isEmpty()) {
@@ -258,5 +270,28 @@ public class Test01 {
       System.out.println("exception!");
     }
     return s;
+  }
+
+  boolean testCatchBool(File file) {
+    try {
+      Files.createDirectories(file.toPath());
+      return true;
+    }
+    catch (IOException ignored) {
+
+    }
+    return false;
+  }
+
+  @ExpectContract("null->false")
+  boolean testCatchBool2(File file) {
+    try {
+      Files.createDirectories(file.toPath());
+      return true;
+    }
+    catch (Throwable ignored) {
+
+    }
+    return false;
   }
 }

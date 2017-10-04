@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
+import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.DFSTree;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.RichControlFlow;
@@ -199,17 +200,18 @@ final class State {
   final boolean hasCompanions;
 
   /**
-   * Whether this state was reached via an exceptional path (jump to catch block)
+   * Whether we are unsure that this state can be reached at all (e.g.
+   * it goes via exceptional path and we don't known whether this exception may actually happen).
    */
-  final boolean exceptional;
+  final boolean unsure;
 
-  State(int index, Conf conf, List<Conf> history, boolean taken, boolean hasCompanions, boolean exceptional) {
+  State(int index, Conf conf, List<Conf> history, boolean taken, boolean hasCompanions, boolean unsure) {
     this.index = index;
     this.conf = conf;
     this.history = history;
     this.taken = taken;
     this.hasCompanions = hasCompanions;
-    this.exceptional = exceptional;
+    this.unsure = unsure;
   }
 }
 
@@ -249,7 +251,7 @@ abstract class Analysis<Res> {
     if (curr.taken != prev.taken) {
       return false;
     }
-    if (curr.exceptional != prev.exceptional) {
+    if (curr.unsure != prev.unsure) {
       return false;
     }
     if (curr.conf.fastHashCode != prev.conf.fastHashCode) {
@@ -302,6 +304,14 @@ abstract class Analysis<Res> {
       frame.setLocal(local++, BasicValue.UNINITIALIZED_VALUE);
     }
     return frame;
+  }
+
+  @NotNull
+  static Frame<BasicValue> createCatchFrame(Frame<BasicValue> frame) {
+    Frame<BasicValue> catchFrame = new Frame<>(frame);
+    catchFrame.clearStack();
+    catchFrame.push(ASMUtils.THROWABLE_VALUE);
+    return catchFrame;
   }
 
   static BasicValue popValue(Frame<BasicValue> frame) {

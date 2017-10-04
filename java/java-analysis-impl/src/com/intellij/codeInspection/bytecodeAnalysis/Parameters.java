@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph.Edge;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.RichControlFlow;
 import org.jetbrains.annotations.NotNull;
@@ -323,7 +322,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
 
     if (opcode == IFNONNULL && popValue(frame) instanceof ParamValue) {
       int nextInsnIndex = insnIndex + 1;
-      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, hasCompanions || notEmptySubResult, state.exceptional);
+      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, hasCompanions || notEmptySubResult, state.unsure);
       pendingPush(new MakeResult(state, subResult, new int[]{nextState.index}));
       pendingPush(new ProceedState(nextState));
       return;
@@ -331,7 +330,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
 
     if (opcode == IFNULL && popValue(frame) instanceof ParamValue) {
       int nextInsnIndex = methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
-      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, hasCompanions || notEmptySubResult, state.exceptional);
+      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, hasCompanions || notEmptySubResult, state.unsure);
       pendingPush(new MakeResult(state, subResult, new int[]{nextState.index}));
       pendingPush(new ProceedState(nextState));
       return;
@@ -339,7 +338,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
 
     if (opcode == IFEQ && popValue(frame) == InstanceOfCheckValue) {
       int nextInsnIndex = methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
-      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, hasCompanions || notEmptySubResult, state.exceptional);
+      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, hasCompanions || notEmptySubResult, state.unsure);
       pendingPush(new MakeResult(state, subResult, new int[]{nextState.index}));
       pendingPush(new ProceedState(nextState));
       return;
@@ -347,7 +346,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
 
     if (opcode == IFNE && popValue(frame) == InstanceOfCheckValue) {
       int nextInsnIndex = insnIndex + 1;
-      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, hasCompanions || notEmptySubResult, state.exceptional);
+      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, hasCompanions || notEmptySubResult, state.unsure);
       pendingPush(new MakeResult(state, subResult, new int[]{nextState.index}));
       pendingPush(new ProceedState(nextState));
       return;
@@ -363,11 +362,9 @@ class NonNullInAnalysis extends Analysis<PResult> {
     for (int i = 0; i < nextInsnIndices.length; i++) {
       int nextInsnIndex = nextInsnIndices[i];
       Frame<BasicValue> nextFrame1 = nextFrame;
-      boolean exceptional = state.exceptional;
+      boolean exceptional = state.unsure;
       if (controlFlow.errors[nextInsnIndex] && controlFlow.errorTransitions.contains(new Edge(insnIndex, nextInsnIndex))) {
-        nextFrame1 = new Frame<>(frame);
-        nextFrame1.clearStack();
-        nextFrame1.push(ASMUtils.THROWABLE_VALUE);
+        nextFrame1 = createCatchFrame(frame);
         exceptional = true;
       }
       pendingPush(new ProceedState(new State(subIndices[i], new Conf(nextInsnIndex, nextFrame1), nextHistory, taken, hasCompanions || notEmptySubResult,
@@ -550,9 +547,7 @@ class NullableInAnalysis extends Analysis<PResult> {
     for (int nextInsnIndex : controlFlow.transitions[insnIndex]) {
       Frame<BasicValue> nextFrame1 = nextFrame;
       if (controlFlow.errors[nextInsnIndex] && controlFlow.errorTransitions.contains(new Edge(insnIndex, nextInsnIndex))) {
-        nextFrame1 = new Frame<>(frame);
-        nextFrame1.clearStack();
-        nextFrame1.push(ASMUtils.THROWABLE_VALUE);
+        nextFrame1 = createCatchFrame(frame);
       }
       pendingPush(new State(++id, new Conf(nextInsnIndex, nextFrame1), nextHistory, taken, false, false));
     }
