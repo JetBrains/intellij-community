@@ -36,7 +36,7 @@ public class PostfixTemplatesSettings implements PersistentStateComponent<Elemen
     return isTemplateEnabled(template, langForProvider);
   }
 
-  public boolean isTemplateEnabled(PostfixTemplate template, @NotNull String strictLangForProvider) {
+  public boolean isTemplateEnabled(@NotNull PostfixTemplate template, @NotNull String strictLangForProvider) {
     Set<String> result = myLangToDisabledTemplates.get(strictLangForProvider);
     return result == null || !result.contains(template.getKey());
   }
