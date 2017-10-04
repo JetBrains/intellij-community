@@ -315,6 +315,9 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     boolean remoteSeparator = true;
     boolean separator = true;
     for (Sdk sdk : sdkList) {
+      if (PythonSdkType.isInvalid(sdk) && !sdk.equals(selection)) {
+        continue;
+      }
       if (!PythonSdkType.isVirtualEnv(sdk) && !PythonSdkType.isRemote(sdk) && separator) {
         items.add(PySdkListCellRenderer.SEPARATOR);
         separator = false;
