@@ -45,7 +45,6 @@ import com.intellij.ui.components.labels.LinkLabel
 import org.fest.swing.exception.ActionFailedException
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
-import org.fest.swing.fixture.AbstractComponentFixture
 import org.fest.swing.fixture.JListFixture
 import org.fest.swing.fixture.JTableFixture
 import org.fest.swing.fixture.JTextComponentFixture
@@ -508,7 +507,7 @@ open class GuiTestCase {
   fun screenshot(component: Component, screenshotName: String) {
 
     val extension = "${getScaleSuffix()}.png"
-    val pathWithTestFolder = pathToSaveScreenshots.path / this.guiTestRule.getTestName()
+    val pathWithTestFolder = pathToSaveScreenshots.path + File.separator + this.guiTestRule.getTestName()
     val fileWithTestFolder = File(pathWithTestFolder)
     FileUtil.ensureExists(fileWithTestFolder)
     var screenshotFilePath = File(fileWithTestFolder, screenshotName + extension)
@@ -655,26 +654,6 @@ open class GuiTestCase {
     }
   }
 
-  fun exists(fixture: () -> AbstractComponentFixture<*, *, *>): Boolean {
-    val tmp = defaultTimeout
-    defaultTimeout = 0
-    try {
-      fixture.invoke()
-      defaultTimeout = tmp
-    }
-    catch (ex: Exception) {
-      when (ex) {
-        is ComponentLookupException,
-        is WaitTimedOutError -> {
-          defaultTimeout = tmp; return false
-        }
-        else -> throw ex
-      }
-    }
-    return true
-  }
-
-
   //*********SOME EXTENSION FUNCTIONS FOR FIXTURES
 
   fun JListFixture.doubleClickItem(itemName: String) {
@@ -716,8 +695,4 @@ open class GuiTestCase {
       override fun test() = testFunction()
     }, Timeout.timeout(timeoutSeconds, TimeUnit.SECONDS))
   }
-}
-
-private operator fun String.div(path: String): String {
-  return "$this${File.separator}$path"
 }
