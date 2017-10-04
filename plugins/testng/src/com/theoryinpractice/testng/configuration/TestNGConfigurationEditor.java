@@ -203,6 +203,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
 
     commonJavaParameters.setProgramParametersLabel(ExecutionBundle.message("junit.configuration.test.runner.parameters.label"));
 
+    myShortenCommandLineCombo.setComponent(new ShortenClasspathModeCombo(project, alternateJDK));
     setAnchor(outputDirectory.getLabel());
     alternateJDK.setAnchor(moduleClasspath.getLabel());
     commonJavaParameters.setAnchor(moduleClasspath.getLabel());
@@ -370,7 +371,6 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
 
   private void createUIComponents() {
     myShortenCommandLineCombo = new LabeledComponent<>();
-    myShortenCommandLineCombo.setComponent(new ShortenClasspathModeCombo(project));
   }
 
   private static void registerListener(JRadioButton[] buttons, ChangeListener changelistener) {

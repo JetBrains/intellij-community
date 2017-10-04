@@ -278,6 +278,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     for (LocalChangeList changeList : changeLists) {
       model.addElement(changeList.getName());
     }
+
+    myShortenClasspathModeCombo.setComponent(new ShortenClasspathModeCombo(myProject, myJrePathEditor));
   }
 
   private static void addRadioButtonsListeners(final JRadioButton[] radioButtons, ChangeListener listener) {
@@ -525,7 +527,6 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myMethod.setComponent(textFieldWithBrowseButton);
 
     myShortenClasspathModeCombo = new LabeledComponent<>();
-    myShortenClasspathModeCombo.setComponent(new ShortenClasspathModeCombo(myProject));
   }
 
   @Override

@@ -26,7 +26,13 @@ import org.jetbrains.annotations.NotNull;
 public enum ShortenClasspath {
   NONE("none", "java [options] classname [args]"),
   MANIFEST("JAR manifest", "java -cp classpath.jar classname [args]"),
-  CLASSPATH_FILE("classpath file", "java WrapperClass classpathFile [args]");
+  CLASSPATH_FILE("classpath file", "java WrapperClass classpathFile [args]"),
+  ARGS_FILE("@argFiles", "java @argFile [args], applicable for java 9+") {
+    @Override
+    public boolean isApplicable(String jreRoot) {
+      return jreRoot != null && JdkUtil.isModularRuntime(jreRoot);
+    }
+  };
 
   private final String myPresentableName;
   private final String myDescription;
@@ -34,6 +40,10 @@ public enum ShortenClasspath {
   ShortenClasspath(String presentableName, String description) {
     myPresentableName = presentableName;
     myDescription = description;
+  }
+
+  public boolean isApplicable(String jreRoot) {
+    return true;
   }
 
   public String getDescription() {
@@ -44,8 +54,9 @@ public enum ShortenClasspath {
     return myPresentableName;
   }
 
-  public static ShortenClasspath getDefaultMethod(Project project) {
+  public static ShortenClasspath getDefaultMethod(Project project, String rootPath) {
     if (!JdkUtil.useDynamicClasspath(project)) return NONE;
+    if (rootPath != null && JdkUtil.isModularRuntime(rootPath)) return ARGS_FILE;
     if (JdkUtil.useClasspathJar()) return MANIFEST;
     return CLASSPATH_FILE;
   }

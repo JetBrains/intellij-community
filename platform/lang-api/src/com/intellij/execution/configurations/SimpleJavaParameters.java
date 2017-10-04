@@ -48,6 +48,7 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
   private boolean myUseDynamicVMOptions;
   private boolean myUseDynamicParameters;
   private boolean myUseClasspathJar;
+  private boolean myArgFile;
   private String myJarPath;
 
   @Nullable
@@ -130,6 +131,17 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
     return myUseClasspathJar;
   }
 
+  public boolean isArgFile() {
+    return myArgFile;
+  }
+
+  /**
+   * Option to use java 9 @argFile
+   */
+  public void setArgFile(boolean argFile) {
+    myArgFile = argFile;
+  }
+
   /**
    * Allows to use a specially crafted .jar file instead of a custom class loader to pass classpath/properties/parameters.
    * Would have no effect if user explicitly disabled idea.dynamic.classpath.jar
@@ -139,9 +151,13 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
   }
 
   public void setShortenClasspath(@Nullable ShortenClasspath mode, Project project) {
-    if (mode == null) mode = ShortenClasspath.getDefaultMethod(project);
+    if (mode == null) {
+      Sdk jdk = getJdk();
+      mode = ShortenClasspath.getDefaultMethod(project, jdk != null ? jdk.getHomePath() : null);
+    }
     myUseDynamicClasspath = mode != ShortenClasspath.NONE;
     myUseClasspathJar = mode == ShortenClasspath.MANIFEST;
+    setArgFile(mode == ShortenClasspath.ARGS_FILE);
   }
 
   public String getJarPath() {
