@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -80,7 +66,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Apache XML Graphics Commons", libraryName: "xmlgraphics-commons-1.3.1.jar", version: "1.3.1",
                        license: "Apache 2.0", url: "http://xmlgraphics.apache.org/commons/",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
-    new LibraryLicense(name: "ASM Bytecode Manipulation Framework", libraryName: "ASM", version: "6.0-ALPHA (with patches by JetBrains)",
+    new LibraryLicense(name: "ASM Bytecode Manipulation Framework", libraryName: "ASM", version: "6.0 (with patches by JetBrains)",
                        license: "BSD", url: "http://asm.objectweb.org/", licenseUrl: "http://asm.objectweb.org/license.html"),
     new LibraryLicense(name: "ASM Tools", libraryName: "asm-tools",
                        license: "BSD", url: "http://asm.objectweb.org/", licenseUrl: "http://asm.objectweb.org/license.html"),
