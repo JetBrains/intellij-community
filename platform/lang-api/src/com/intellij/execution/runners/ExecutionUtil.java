@@ -104,7 +104,7 @@ public class ExecutionUtil {
     if (e instanceof ProcessNotCreatedException) {
       String description = e.getMessage();
       return (description.contains("87") || description.contains("111") || description.contains("206")) &&
-             ((ProcessNotCreatedException)e).getCommandLine().getCommandLineString().length() > 10/*24 * 32*/;
+             ((ProcessNotCreatedException)e).getCommandLine().getCommandLineString().length() > 1024 * 32;
     }
     return false;
   }
