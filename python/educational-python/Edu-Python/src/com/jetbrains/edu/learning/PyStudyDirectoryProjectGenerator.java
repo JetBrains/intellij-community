@@ -219,7 +219,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
   }
 
   private static void patchRenderer(@NotNull ProjectJdkImpl fakeSdk, @NotNull PythonSdkChooserCombo combo) {
-    combo.getComboBox().setRenderer(new PySdkListCellRenderer(true) {
+    combo.getComboBox().setRenderer(new PySdkListCellRenderer() {
       @Override
       public void customize(JList list, Object item, int index, boolean selected, boolean hasFocus) {
         super.customize(list, item, index, selected, hasFocus);
