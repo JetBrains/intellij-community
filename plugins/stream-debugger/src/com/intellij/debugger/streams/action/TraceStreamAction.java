@@ -31,6 +31,7 @@ import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -41,10 +42,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -57,12 +60,26 @@ public class TraceStreamAction extends AnAction {
   private final DebuggerPositionResolver myPositionResolver = new DebuggerPositionResolverImpl();
   private final List<SupportedLibrary> mySupportedLibraries =
     LibrarySupportProvider.getList().stream().map(SupportedLibrary::new).collect(Collectors.toList());
+  private final Set<String> mySupportedLanguages = StreamEx.of(mySupportedLibraries).map(x -> x.languageId).toSet();
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     final XDebugSession session = getCurrentSession(e);
     final PsiElement element = session == null ? null : myPositionResolver.getNearestElementToBreakpoint(session);
-    e.getPresentation().setEnabled(element != null && isChainExists(element));
+    final Presentation presentation = e.getPresentation();
+    if (element == null) {
+      presentation.setVisible(true);
+      presentation.setEnabled(false);
+    }
+    else {
+      if (mySupportedLanguages.contains(element.getLanguage().getID())) {
+        presentation.setVisible(true);
+        presentation.setEnabled(isChainExists(element));
+      }
+      else {
+        presentation.setEnabledAndVisible(false);
+      }
+    }
   }
 
   @Override
