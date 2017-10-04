@@ -18,13 +18,9 @@ package com.intellij.openapi.options;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.Key;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,15 +31,12 @@ import java.util.List;
  * {@link #getComponent()} should be called before {@link #resetFrom(Object)}
  */
 public abstract class SettingsEditor<Settings> implements Disposable {
-  public static final Key<Boolean> MERGE_EVENTS = Key.create("MERGE_EVENTS");
-
   private final List<SettingsEditorListener<Settings>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private UserActivityWatcher myWatcher;
   private boolean myIsInUpdate = false;
   private final Factory<Settings> mySettingsFactory;
   private CompositeSettingsEditor<Settings> myOwner;
   private JComponent myEditorComponent;
-  private MergingUpdateQueue myUpdateQueue;
 
   protected abstract void resetEditorFrom(@NotNull Settings s);
   protected abstract void applyEditorTo(@NotNull Settings s) throws ConfigurationException;
@@ -126,34 +119,16 @@ public abstract class SettingsEditor<Settings> implements Disposable {
   }
 
   protected void installWatcher(JComponent c) {
-    final Update myUpdate;
-    if (UIUtil.isClientPropertyTrue(c, MERGE_EVENTS)) {
-      myUpdateQueue = new MergingUpdateQueue("SettingsEditor.fireEditorStateChanged()", 100, true, MergingUpdateQueue.ANY_COMPONENT, this);
-      myUpdate = new Update(SettingsEditor.this) {
-        @Override
-        public void run() {
-          fireEditorStateChanged();
-        }
-      };
-    } else {
-      myUpdate = null;
-    }
-
     myWatcher = new UserActivityWatcher();
     myWatcher.register(c);
     UserActivityListener userActivityListener = new UserActivityListener() {
       @Override
       public void stateChanged() {
-        if (myUpdateQueue != null && myUpdate != null) {
-          myUpdateQueue.queue(myUpdate);
-        } else {
-          fireEditorStateChanged();
-        }
+        fireEditorStateChanged();
       }
     };
     myWatcher.addUserActivityListener(userActivityListener, this);
   }
-
 
   public final void addSettingsEditorListener(SettingsEditorListener<Settings> listener) {
     myListeners.add(listener);
