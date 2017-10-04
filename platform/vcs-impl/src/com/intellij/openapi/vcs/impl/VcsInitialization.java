@@ -15,10 +15,8 @@
  */
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -156,9 +154,9 @@ public class VcsInitialization implements Disposable {
       }
       TimeoutUtil.sleep(10);
     }
-    if (status == Status.RUNNING) {
-      LOG.error("Failed to wait for completion of VCS initialization for project " + myProject,
-                new Attachment("thread dump", ThreadDumper.dumpThreadsToString()));
-    }
+    //if (status == Status.RUNNING) {
+    //  LOG.error("Failed to wait for completion of VCS initialization for project " + myProject,
+    //            new Attachment("thread dump", ThreadDumper.dumpThreadsToString()));
+    //}
   }
 }
