@@ -598,7 +598,13 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         if (context.isSingleParameterInfo()) {
           String javaDoc = new JavaDocInfoGenerator(param.getProject(), param).generateMethodParameterJavaDoc();
           if (javaDoc != null) {
-            buffer.append("&nbsp;&nbsp;<i>").append(javaDoc).append("</i>");
+            if (javaDoc.length() < 100) {
+              buffer.append("&nbsp;&nbsp;<i>").append(javaDoc).append("</i>");
+            }
+            else {
+              buffer.insert(0, "<table><tr><td valign='top'>")
+                .append("</td><td style='width:400px'>&nbsp;&nbsp;<i>").append(javaDoc).append("</i></td></tr></table>");              
+            }
           }
         }
         else {
