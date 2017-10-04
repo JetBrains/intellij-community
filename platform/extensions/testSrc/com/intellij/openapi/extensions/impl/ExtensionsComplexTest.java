@@ -115,7 +115,7 @@ public class ExtensionsComplexTest {
     final Element element = ExtensionComponentAdapterTest.readElement(data);
     for (final Object o : element.getChildren()) {
       Element child = (Element)o;
-      Extensions.getArea(instance).registerExtensionPoint(pluginName, child);
+      ((ExtensionsAreaImpl)Extensions.getArea(instance)).registerExtensionPoint(pluginName, child);
     }
   }
 
@@ -123,7 +123,7 @@ public class ExtensionsComplexTest {
     final Element element = ExtensionComponentAdapterTest.readElement(data);
     for (final Object o : element.getChildren()) {
       Element child = (Element)o;
-      Extensions.getArea(instance).registerExtension(element.getNamespaceURI(), child);
+      ((ExtensionsAreaImpl)Extensions.getArea(instance)).registerExtension(element.getNamespaceURI(), child);
     }
   }
 
