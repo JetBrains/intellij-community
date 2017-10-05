@@ -23,8 +23,10 @@ class JavaUCompositeQualifiedExpression(
     override val psi: PsiElement,
     override val uastParent: UElement?
 ) : JavaAbstractUExpression(), UQualifiedReferenceExpression {
-    override lateinit var receiver: UExpression
-        internal set
+
+    internal lateinit var receiverInitializer: () -> UExpression
+
+    override val receiver: UExpression by lazy { receiverInitializer() }
 
     override lateinit var selector: UExpression
         internal set

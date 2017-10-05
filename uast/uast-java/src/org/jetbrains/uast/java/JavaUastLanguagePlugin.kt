@@ -18,7 +18,13 @@ package org.jetbrains.uast.java
 
 import com.intellij.lang.Language
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.*
+import com.intellij.psi.util.CachedValue
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.expressions.JavaUNamedExpression
 import org.jetbrains.uast.java.expressions.JavaUSynchronizedExpression
@@ -91,14 +97,15 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
     override fun convertElementWithParent(element: PsiElement, requiredType: Class<out UElement>?): UElement? {
         if (element !is PsiElement) return null
         if (element is PsiJavaFile) return requiredType.el<UFile> { JavaUFile(element, this) }
-        JavaConverter.getCached<UElement>(element)?.let { return it }
+        return JavaConverter.getCached<UElement>(element, requiredType, fun(): UElement? {
 
-        val parentCallback = fun(): UElement? {
-            val parent = JavaConverter.unwrapElements(element.parent) ?: return null
-            return convertElementWithParent(parent, null) ?: return null
-        }
-        return convertDeclaration(element, parentCallback, requiredType) ?:
-                JavaConverter.convertPsiElement(element, parentCallback, requiredType)
+            val parentCallback = fun(): UElement? {
+                val parent = JavaConverter.unwrapElements(element.parent) ?: return null
+                return convertElementWithParent(parent, null) ?: return null
+            }
+            return convertDeclaration(element, parentCallback, requiredType) ?:
+                   JavaConverter.convertPsiElement(element, parentCallback, requiredType)
+        })
     }
     
     private fun convertDeclaration(element: PsiElement,
@@ -148,10 +155,24 @@ internal inline fun <reified ActualT : UElement> Class<out UElement>?.expr(f: ()
 
 private fun UElement?.toCallback() = if (this != null) fun(): UElement? { return this } else null
 
+private val UAST_CACHED_ELEMENT = Key.create<CachedValue<UElement>>("JavaUastLanguagePlugin.cachedElement")
+private val UAST_CACHED_ELEMENT_CLASS = Key.create<Class<out UElement>>("JavaUastLanguagePlugin.cachedElementRequestedClass")
+
 internal object JavaConverter {
-    internal inline fun <reified T : UElement> getCached(element: PsiElement): T? {
-        return null
-        //todo
+
+    private val recursionGuard = RecursionManager.createGuard("JavaUastLanguagePlugin.cache")
+
+    internal fun <T : UElement> getCached(element: PsiElement, requiredType: Class<out UElement>?, provider: () -> T?): T? {
+        if (element.getUserData(UAST_CACHED_ELEMENT) != null && element.getUserData(UAST_CACHED_ELEMENT_CLASS) != requiredType)
+            element.putUserData(UAST_CACHED_ELEMENT, null)
+        element.putUserData(UAST_CACHED_ELEMENT_CLASS, requiredType)
+        val lazyComputedValue = lz(provider)
+        return recursionGuard.doPreventingRecursion(element, false, {
+            CachedValuesManager.getManager(element.project)
+              .getCachedValue<UElement, PsiElement>(element, UAST_CACHED_ELEMENT, CachedValueProvider {
+                  CachedValueProvider.Result.create(lazyComputedValue.value as UElement?, PsiModificationTracker.MODIFICATION_COUNT)
+              }, false)  as? T
+        }) ?: lazyComputedValue.value
     }
 
     internal tailrec fun unwrapElements(element: PsiElement?): PsiElement? = when (element) {
@@ -166,8 +187,7 @@ internal object JavaConverter {
 
     internal fun convertPsiElement(el: PsiElement,
                                    parentCallback: (() -> UElement?)?,
-                                   requiredType: Class<out UElement>? = null): UElement? {
-        getCached<UElement>(el)?.let { return it }
+                                   requiredType: Class<out UElement>? = null): UElement? = getCached(el, requiredType, fun(): UElement? {
 
         fun <P : PsiElement> build(ctor: (P, UElement?) -> UElement): () -> UElement? {
             return fun(): UElement? {
@@ -191,10 +211,10 @@ internal object JavaConverter {
             is PsiJavaCodeReferenceElement -> convertReference(el, parentCallback, requiredType)
             else -> null
         }}
-    }
+    })
     
     internal fun convertBlock(block: PsiCodeBlock, parent: UElement?): UBlockExpression =
-        getCached(block) ?: JavaUCodeBlockExpression(block, parent)
+      getCached(block, null) { JavaUCodeBlockExpression(block, parent) }!!
 
     internal fun convertReference(reference: PsiJavaCodeReferenceElement, parentCallback: (() -> UElement?)?, requiredType: Class<out UElement>?): UExpression? {
         return with (requiredType) {
@@ -210,8 +230,8 @@ internal object JavaConverter {
 
     internal fun convertExpression(el: PsiExpression,
                                    parentCallback: (() -> UElement?)?,
-                                   requiredType: Class<out UElement>? = null): UExpression? {
-        getCached<UExpression>(el)?.let { return it }
+                                   requiredType: Class<out UElement>? = null): UExpression? = getCached(el, requiredType,
+                                                                                                        fun(): UExpression? {
 
         fun <P : PsiElement> build(ctor: (P, UElement?) -> UExpression): () -> UExpression? {
             return fun(): UExpression? {
@@ -236,7 +256,7 @@ internal object JavaConverter {
                         requiredType.isAssignableFrom(UCallExpression::class.java)) {
                         val parent = if (parentCallback == null) null else (parentCallback() ?: return null)
                         val expr = JavaUCompositeQualifiedExpression(el, parent).apply {
-                            receiver = convertOrEmpty(el.methodExpression.qualifierExpression!!, this)
+                            receiverInitializer = { convertOrEmpty(el.methodExpression.qualifierExpression!!, this) }
                             selector = JavaUCallExpression(el, this)
                         }
                         if (requiredType?.isAssignableFrom(UCallExpression::class.java) == true)
@@ -269,12 +289,12 @@ internal object JavaConverter {
             is PsiLambdaExpression -> expr<ULambdaExpression>(build(::JavaULambdaExpression))
             else -> expr<UExpression>(build(::UnknownJavaExpression))
         }}
-    }
+                                                                                                        })
 
     internal fun convertStatement(el: PsiStatement,
                                   parentCallback: (() -> UElement?)?,
-                                  requiredType: Class<out UElement>? = null): UExpression? {
-        getCached<UExpression>(el)?.let { return it }
+                                  requiredType: Class<out UElement>? = null): UExpression? = getCached(el, requiredType,
+                                                                                                       fun(): UExpression? {
 
         fun <P : PsiElement> build(ctor: (P, UElement?) -> UExpression): () -> UExpression? {
             return fun(): UExpression? {
@@ -311,7 +331,7 @@ internal object JavaConverter {
             is PsiEmptyStatement -> expr<UExpression> { UastEmptyExpression }
             else -> expr<UExpression>(build(::UnknownJavaExpression))
         }}
-    }
+                                                                                                       })
 
     private fun convertDeclarations(elements: Array<out PsiElement>, parent: UElement): UDeclarationsExpression {
         return JavaUDeclarationsExpression(parent).apply {
