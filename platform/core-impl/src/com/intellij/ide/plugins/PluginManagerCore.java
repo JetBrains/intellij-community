@@ -462,7 +462,7 @@ public class PluginManagerCore {
     PluginId pluginId = pluginDescriptor.getPluginId();
     File pluginRoot = pluginDescriptor.getPath();
 
-    if (isRunningFromSources()) return null;
+    if (isUnitTestMode() && isRunningFromSources()) return null;
 
     try {
       final List<URL> urls = new ArrayList<>(classPath.length);
@@ -520,7 +520,7 @@ public class PluginManagerCore {
 
   @NotNull
   private static ClassLoader[] getParentLoaders(@NotNull Map<PluginId, ? extends IdeaPluginDescriptor> idToDescriptorMap, @NotNull PluginId[] pluginIds) {
-    if (isRunningFromSources()) return new ClassLoader[0];
+    if (isUnitTestMode() && isRunningFromSources()) return new ClassLoader[0];
 
     LinkedHashSet<ClassLoader> loaders = new LinkedHashSet<>(pluginIds.length);
     for (final PluginId id : pluginIds) {
