@@ -295,8 +295,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   public static boolean isInjectedWithoutValidation(PsiElement element) {
-    PsiElement context = InjectedLanguageManager.getInstance(element.getProject()).getInjectionHost(element.getContainingFile());
-    return context != null && skipValidation(context);
+    return InjectedLanguageManager.FRANKENSTEIN_INJECTION.get(element.getContainingFile()) == Boolean.TRUE;
   }
 
   public static boolean skipValidation(PsiElement context) {
