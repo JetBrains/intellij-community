@@ -154,5 +154,6 @@ class JdkUtilTest : BareTestFixtureTestCase() {
     parameters.modulePath.addAll(parameters.classPath.pathList)
     parameters.classPath.clear()
     parameters.moduleName = "hello"
+    parameters.isArgFile = true
   }
 }
