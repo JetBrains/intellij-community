@@ -53,7 +53,7 @@ public interface ParserDefinition {
    */
   @NotNull
   default TokenSet getWhitespaceTokens() {
-    return TokenSet.WS;
+    return TokenSet.WHITE_SPACE;
   }
 
   /**
