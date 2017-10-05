@@ -150,6 +150,9 @@
 
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.singleton.SingletonTransformationSupport"/>
 
+    <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.immutable.ImmutableTransformationSupport"/>
+    <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.transformations.immutable.CopyWithNamedArgumentProvider"/>
+
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
 
     <methodDescriptor lightMethodKey="SwingBuilder_builder_method"
