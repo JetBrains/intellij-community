@@ -17,59 +17,64 @@ public class CaptureSettingsProvider {
   private static final List<CapturePoint> IDE_INSERT_POINTS;
 
   private static final KeyProvider THIS_KEY = new StringKeyProvider("this");
+  private static final KeyProvider FIRST_PARAM = param(0);
 
   static {
-    CAPTURE_POINTS.add(new AgentCapturePoint("javax/swing/SwingUtilities", "invokeLater", new StringKeyProvider("0")));
-    INSERT_POINTS.add(new AgentInsertPoint("java/awt/event/InvocationEvent", "dispatch",
-                                           new FieldKeyProvider("java/awt/event/InvocationEvent", "runnable", "Ljava/lang/Runnable;")));
+    addCapture("javax/swing/SwingUtilities", "invokeLater", FIRST_PARAM);
+    addInsert("java/awt/event/InvocationEvent",
+              "dispatch",
+              new FieldKeyProvider("java/awt/event/InvocationEvent", "runnable", "Ljava/lang/Runnable;"));
 
-    CAPTURE_POINTS.add(new AgentCapturePoint("java/lang/Thread", "start", THIS_KEY));
-    INSERT_POINTS.add(new AgentInsertPoint("java/lang/Thread", "run", THIS_KEY));
+    addCapture("java/lang/Thread", "start", THIS_KEY);
+    addInsert("java/lang/Thread", "run", THIS_KEY);
 
-    CAPTURE_POINTS.add(new AgentCapturePoint("java/util/concurrent/ExecutorService", "submit", new StringKeyProvider("1")));
-    INSERT_POINTS.add(new AgentInsertPoint("java/util/concurrent/Executors$RunnableAdapter", "call",
-                                           new FieldKeyProvider("java/util/concurrent/Executors$RunnableAdapter",
-                                                                "task",
-                                                                "Ljava/lang/Runnable;")));
+    addCapture("java/util/concurrent/ExecutorService", "submit", FIRST_PARAM);
+    addInsert("java/util/concurrent/Executors$RunnableAdapter",
+              "call",
+              new FieldKeyProvider("java/util/concurrent/Executors$RunnableAdapter",
+                                   "task",
+                                   "Ljava/lang/Runnable;"));
 
-    CAPTURE_POINTS.add(new AgentCapturePoint("java/util/concurrent/ThreadPoolExecutor", "execute", new StringKeyProvider("1")));
-    INSERT_POINTS.add(new AgentInsertPoint("java/util/concurrent/FutureTask", "run", THIS_KEY));
+    addCapture("java/util/concurrent/ThreadPoolExecutor", "execute", FIRST_PARAM);
+    addInsert("java/util/concurrent/FutureTask", "run", THIS_KEY);
 
-    CAPTURE_POINTS.add(new AgentCapturePoint("java/util/concurrent/CompletableFuture", "supplyAsync", new StringKeyProvider("0")));
+    addCapture("java/util/concurrent/CompletableFuture", "supplyAsync", FIRST_PARAM);
+    AgentInsertPoint point = new AgentInsertPoint("java/util/concurrent/CompletableFuture$AsyncSupply",
+                                                  "run",
+                                                  new FieldKeyProvider("java/util/concurrent/CompletableFuture$AsyncSupply",
+                                                                       "fn",
+                                                                       "Ljava/util/function/Supplier;"));
+    point.myInsertPoint.myInsertMethodName = "run$$$capture";
+    point.myInsertPoint.myInsertKeyExpression = "f";
+    INSERT_POINTS.add(point);
 
-    CapturePoint ideInsertPoint = new CapturePoint();
-    ideInsertPoint.myInsertClassName = "java.util.concurrent.CompletableFuture$AsyncSupply";
-    ideInsertPoint.myInsertMethodName = "run$$$capture";
-    ideInsertPoint.myInsertKeyExpression = "f";
-    INSERT_POINTS.add(new AgentInsertPoint("java/util/concurrent/CompletableFuture$AsyncSupply", "run",
-                                           new FieldKeyProvider("java/util/concurrent/CompletableFuture$AsyncSupply",
-                                                                "fn",
-                                                                "Ljava/util/function/Supplier;"),
-                                           ideInsertPoint));
+    addCapture("java/util/concurrent/CompletableFuture", "runAsync", FIRST_PARAM);
+    point = new AgentInsertPoint("java/util/concurrent/CompletableFuture$AsyncRun",
+                                 "run",
+                                 new FieldKeyProvider("java/util/concurrent/CompletableFuture$AsyncRun",
+                                                      "fn",
+                                                      "Ljava/lang/Runnable;"));
+    point.myInsertPoint.myInsertMethodName = "run$$$capture";
+    point.myInsertPoint.myInsertKeyExpression = "f";
+    INSERT_POINTS.add(point);
 
-    CAPTURE_POINTS.add(new AgentCapturePoint("java/util/concurrent/CompletableFuture", "runAsync", new StringKeyProvider("0")));
-    ideInsertPoint = new CapturePoint();
-    ideInsertPoint.myInsertClassName = "java.util.concurrent.CompletableFuture$AsyncRun";
-    ideInsertPoint.myInsertMethodName = "run$$$capture";
-    ideInsertPoint.myInsertKeyExpression = "f";
-    INSERT_POINTS.add(new AgentInsertPoint("java/util/concurrent/CompletableFuture$AsyncRun",
-                                           "run",
-                                           new FieldKeyProvider("java/util/concurrent/CompletableFuture$AsyncRun",
-                                                                "fn",
-                                                                "Ljava/lang/Runnable;"),
-                                           ideInsertPoint));
+    addCapture("java/util/concurrent/CompletableFuture", "thenAcceptAsync", FIRST_PARAM);
+    addInsert("java/util/concurrent/CompletableFuture$UniAccept",
+              "tryFire",
+              new FieldKeyProvider("java/util/concurrent/CompletableFuture$UniAccept",
+                                   "fn",
+                                   "Ljava/util/function/Consumer;"));
 
-    CAPTURE_POINTS.add(new AgentCapturePoint("java/util/concurrent/CompletableFuture", "thenAcceptAsync", new StringKeyProvider("1")));
-    INSERT_POINTS.add(new AgentInsertPoint("java/util/concurrent/CompletableFuture$UniAccept", "tryFire",
-                                           new FieldKeyProvider("java/util/concurrent/CompletableFuture$UniAccept",
-                                                                "fn",
-                                                                "Ljava/util/function/Consumer;")));
+    addCapture("java/util/concurrent/CompletableFuture", "thenRunAsync", FIRST_PARAM);
+    addInsert("java/util/concurrent/CompletableFuture$UniRun",
+              "tryFire",
+              new FieldKeyProvider("java/util/concurrent/CompletableFuture$UniRun",
+                                   "fn",
+                                   "Ljava/lang/Runnable;"));
 
-    CAPTURE_POINTS.add(new AgentCapturePoint("java/util/concurrent/CompletableFuture", "thenRunAsync", new StringKeyProvider("1")));
-    INSERT_POINTS.add(new AgentInsertPoint("java/util/concurrent/CompletableFuture$UniRun", "tryFire",
-                                           new FieldKeyProvider("java/util/concurrent/CompletableFuture$UniRun",
-                                                                "fn",
-                                                                "Ljava/lang/Runnable;")));
+    // netty
+    addCapture("io/netty/util/concurrent/SingleThreadEventExecutor", "addTask", FIRST_PARAM);
+    addInsert("io/netty/util/concurrent/AbstractEventExecutor", "safeExecute", FIRST_PARAM);
 
     IDE_INSERT_POINTS = StreamEx.of(INSERT_POINTS).map(p -> p.myInsertPoint).nonNull().toList();
   }
@@ -127,15 +132,14 @@ public class CaptureSettingsProvider {
         }
       }
     }
-
-    public AgentInsertPoint(String className, String methodName, KeyProvider key, CapturePoint point) {
-      super(className, methodName, key);
-      this.myInsertPoint = point;
-    }
   }
 
   public interface KeyProvider {
     String asString();
+  }
+ 
+  private static KeyProvider param(int idx) {
+    return new StringKeyProvider(Integer.toString(idx));
   }
 
   private static class StringKeyProvider implements KeyProvider {
@@ -166,5 +170,13 @@ public class CaptureSettingsProvider {
     public String asString() {
       return myClassName + AgentPoint.SEPARATOR + myFieldName + AgentPoint.SEPARATOR + myFieldDesc;
     }
+  }
+
+  private static void addCapture(String className, String methodName, KeyProvider key) {
+    CAPTURE_POINTS.add(new AgentCapturePoint(className, methodName, key));
+  }
+
+  private static void addInsert(String className, String methodName, KeyProvider key) {
+    INSERT_POINTS.add(new AgentInsertPoint(className, methodName, key));
   }
 }

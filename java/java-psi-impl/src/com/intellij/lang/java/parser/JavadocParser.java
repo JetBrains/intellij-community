@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.parser;
 
 import com.intellij.lang.PsiBuilder;
@@ -25,6 +11,10 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
+
+import static com.intellij.util.containers.ContainerUtil.newTroveSet;
 
 public class JavadocParser {
   private static final TokenSet TAG_VALUES_SET = TokenSet.create(
@@ -40,10 +30,9 @@ public class JavadocParser {
   private static final String SEE_TAG = "@see";
   private static final String LINK_TAG = "@link";
   private static final String LINK_PLAIN_TAG = "@linkplain";
-  private static final String THROWS_TAG = "@throws";
-  private static final String EXCEPTION_TAG = "@exception";
   private static final String PARAM_TAG = "@param";
   private static final String VALUE_TAG = "@value";
+  private static final Set<String> REFERENCE_TAGS = newTroveSet("@throws", "@exception", "@provides", "@uses");
 
   private static Key<Integer> BRACE_SCOPE_KEY = Key.create("Javadoc.Parser.Brace.Scope");
 
@@ -139,7 +128,7 @@ public class JavadocParser {
           JavaParserUtil.getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_1_4) && LINK_PLAIN_TAG.equals(tagName) && isInline) {
         parseSeeTagValue(builder, false);
       }
-      else if (!isInline && (THROWS_TAG.equals(tagName) || EXCEPTION_TAG.equals(tagName))) {
+      else if (!isInline && REFERENCE_TAGS.contains(tagName)) {
         PsiBuilder.Marker tagValue = builder.mark();
         builder.remapCurrentToken(JavaDocElementType.DOC_REFERENCE_HOLDER);
         builder.advanceLexer();

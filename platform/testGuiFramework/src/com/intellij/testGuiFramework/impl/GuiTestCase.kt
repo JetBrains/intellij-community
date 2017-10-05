@@ -44,6 +44,7 @@ import com.intellij.ui.components.labels.LinkLabel
 import org.fest.swing.exception.ActionFailedException
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
+import org.fest.swing.fixture.AbstractComponentFixture
 import org.fest.swing.fixture.JListFixture
 import org.fest.swing.fixture.JTableFixture
 import org.fest.swing.fixture.JTextComponentFixture
@@ -96,7 +97,7 @@ open class GuiTestCase {
   /**
    * default timeout to find target component for fixture. Using seconds as time unit.
    */
-  val defaultTimeout = 120L
+  var defaultTimeout = 120L
 
   val settingsTitle: String = if (isMac()) "Preferences" else "Settings"
   val defaultSettingsTitle: String = if (isMac()) "Default Preferences" else "Default Settings"
@@ -637,6 +638,25 @@ open class GuiTestCase {
                      timeout.toFestTimeout())
     }
     return ExtendedTreeFixture(guiTestRule.robot(), myTree)
+  }
+
+  fun exists(fixture: () -> AbstractComponentFixture<*, *, *>): Boolean {
+    val tmp = defaultTimeout
+    defaultTimeout = 0
+    try {
+      fixture.invoke()
+      defaultTimeout = tmp
+    }
+    catch (ex: Exception) {
+      when (ex) {
+        is ComponentLookupException,
+        is WaitTimedOutError -> {
+          defaultTimeout = tmp; return false
+        }
+        else -> throw ex
+      }
+    }
+    return true
   }
 
   //*********SOME EXTENSION FUNCTIONS FOR FIXTURES

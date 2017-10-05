@@ -31,6 +31,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,23 +44,45 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
   }
 
   protected Collection<AbstractTreeNode> modulesAndGroups(Collection<ModuleDescription> modules) {
-    Set<String> groups = new LinkedHashSet<>();
+    Set<String> topLevelGroups = new LinkedHashSet<>();
     Set<ModuleDescription> nonGroupedModules = new LinkedHashSet<>(modules);
+    List<String> commonGroupsPath = null;
     for (final ModuleDescription moduleDescription : modules) {
       final List<String> path = ModuleGrouper.instanceFor(myProject).getGroupPath(moduleDescription);
       if (!path.isEmpty()) {
         final String topLevelGroupName = path.get(0);
-        groups.add(topLevelGroupName);
+        topLevelGroups.add(topLevelGroupName);
         nonGroupedModules.remove(moduleDescription);
+        if (commonGroupsPath == null) {
+          commonGroupsPath = path;
+        }
+        else {
+          int commonPartLen = Math.min(commonGroupsPath.size(), path.size());
+          OptionalLong firstDifference = StreamEx.zip(commonGroupsPath.subList(0, commonPartLen), path.subList(0, commonPartLen), String::equals).indexOf(false);
+          if (firstDifference.isPresent()) {
+            commonGroupsPath = commonGroupsPath.subList(0, (int)firstDifference.getAsLong());
+          }
+        }
       }
     }
+    
     List<AbstractTreeNode> result = new ArrayList<>();
     try {
-      for (String groupPath : groups) {
-        result.add(createModuleGroupNode(new ModuleGroup(Collections.singletonList(groupPath))));
+      if (modules.size() > 1) {
+        if (commonGroupsPath != null && !commonGroupsPath.isEmpty()) {
+          result.add(createModuleGroupNode(new ModuleGroup(commonGroupsPath)));
+        }
+        else {
+          for (String groupPath : topLevelGroups) {
+            result.add(createModuleGroupNode(new ModuleGroup(Collections.singletonList(groupPath))));
+          }
+        }
+        for (ModuleDescription moduleDescription : nonGroupedModules) {
+          ContainerUtil.addIfNotNull(result, createModuleNode(moduleDescription));
+        }
       }
-      for (ModuleDescription moduleDescription : nonGroupedModules) {
-        ContainerUtil.addIfNotNull(result, createModuleNode(moduleDescription));
+      else {
+        ContainerUtil.addIfNotNull(result, createModuleNode(ContainerUtil.getFirstItem(modules)));
       }
     }
     catch (ProcessCanceledException e) {

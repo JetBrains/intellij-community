@@ -21,7 +21,7 @@ public class TokenSet {
   public static final TokenSet ANY = new TokenSet(Short.MAX_VALUE, (short)0) {
     @Override public boolean contains(IElementType t) { return true; }
   };
-  public static final TokenSet WS = doCreate(TokenType.WHITE_SPACE);
+  public static final TokenSet WHITE_SPACE = doCreate(TokenType.WHITE_SPACE);
 
   private final short myShift;
   private final short myMax;
@@ -97,7 +97,7 @@ public class TokenSet {
   public static TokenSet create(@NotNull IElementType... types) {
     if (types.length == 0) return EMPTY;
     if (types.length == 1 && types[0] == TokenType.WHITE_SPACE) {
-      return WS;
+      return WHITE_SPACE;
     }
     return doCreate(types);
   }

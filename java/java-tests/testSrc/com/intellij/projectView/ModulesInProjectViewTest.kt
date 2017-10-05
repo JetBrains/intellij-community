@@ -10,11 +10,16 @@ import com.intellij.util.io.generateInVirtualTempDir
 /**
  * @author nik
  */
-class ProjectViewStructureTest : BaseProjectViewTestCase() {
+class ModulesInProjectViewTest : BaseProjectViewTestCase() {
   init {
     myPrintInfo = Queryable.PrintInfo()
   }
-  
+
+  override fun setUp() {
+    super.setUp()
+    myStructure.isShowLibraryContents = false
+  }
+
   fun `test unloaded modules`() {
     val root = directoryContent {
       dir("loaded") {
@@ -34,7 +39,6 @@ class ProjectViewStructureTest : BaseProjectViewTestCase() {
     PsiTestUtil.addContentRoot(createModule("unloaded-inner"), root.findFileByRelativePath("loaded/unloaded-inner"))
     PsiTestUtil.addContentRoot(createModule("unloaded"), root.findChild("unloaded"))
     PsiTestUtil.addContentRoot(createModule("loaded-inner"), root.findFileByRelativePath("unloaded/loaded-inner"))
-    myStructure.isShowLibraryContents = false
     val expected = """
           |Project
           | loaded
@@ -61,28 +65,77 @@ class ProjectViewStructureTest : BaseProjectViewTestCase() {
   fun `test unloaded module with qualified name`() {
     val root = directoryContent {
       dir("unloaded") {
-        dir("subdir") { }
+        dir("subdir") {}
         file("y.txt")
+      }
+      dir("unloaded2") {
+        dir("subdir") {}
       }
     }.generateInVirtualTempDir()
     PsiTestUtil.addContentRoot(createModule("foo.bar.unloaded"), root.findChild("unloaded"))
+    PsiTestUtil.addContentRoot(createModule("unloaded2"), root.findChild("unloaded2"))
 
-    myStructure.isShowLibraryContents = false
     val expected = """
           |Project
-          | Group: foo
-          |  Group: bar
-          |   unloaded
-          |    subdir
-          |    y.txt
+          | Group: foo.bar
+          |  unloaded
+          |   subdir
+          |   y.txt
           | foo.bar.unloaded.iml
           | test unloaded module with qualified name.iml
+          | unloaded2
+          |  subdir
+          | unloaded2.iml
           |
           """.trimMargin()
     assertStructureEqual(expected)
 
     ModuleManager.getInstance(myProject).setUnloadedModules(listOf("unloaded"))
     assertStructureEqual(expected)
+  }
+
+  fun `test do not show parent groups for single module`() {
+    val root = directoryContent {
+      dir("module") {
+        dir("subdir") {}
+      }
+    }.generateInVirtualTempDir()
+    PsiTestUtil.addContentRoot(createModule("foo.bar.module"), root.findChild("module"))
+    assertStructureEqual("""
+          |Project
+          | foo.bar.module.iml
+          | module
+          |  subdir
+          | test do not show parent groups for single module.iml
+          |
+          """.trimMargin())
+  }
+
+  fun `test modules with common parent group`() {
+    val root = directoryContent {
+      dir("module1") {
+        dir("subdir") {}
+      }
+      dir("module2") {
+        dir("subdir") {}
+      }
+    }.generateInVirtualTempDir()
+    PsiTestUtil.addContentRoot(createModule("foo.bar.module1"), root.findChild("module1"))
+    PsiTestUtil.addContentRoot(createModule("foo.baz.module2"), root.findChild("module2"))
+    assertStructureEqual("""
+          |Project
+          | Group: foo
+          |  Group: bar
+          |   module1
+          |    subdir
+          |  Group: baz
+          |   module2
+          |    subdir
+          | foo.bar.module1.iml
+          | foo.baz.module2.iml
+          | test modules with common parent group.iml
+          |
+          """.trimMargin())
   }
 
   override fun getTestPath() = null

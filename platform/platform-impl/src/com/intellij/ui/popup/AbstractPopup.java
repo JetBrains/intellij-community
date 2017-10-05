@@ -467,8 +467,9 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public void show(@NotNull RelativePoint aPoint) {
-    if (Registry.is("ide.helptooltip.enabled")) {
-      HelpTooltip.onShowMasterPopup((JComponent)aPoint.getOriginalComponent(), this);
+    Component c = aPoint.getOriginalComponent();
+    if (Registry.is("ide.helptooltip.enabled") && c instanceof JComponent) {
+      HelpTooltip.onShowMasterPopup((JComponent)c, this);
     }
 
     Point screenPoint = aPoint.getScreenPoint();

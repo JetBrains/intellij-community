@@ -25,6 +25,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.JarUtil;
@@ -34,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import gnu.trove.THashMap;
@@ -53,6 +55,8 @@ import java.util.jar.Manifest;
  * @author max
  */
 public class JdkUtil {
+  public static Key<Map<String, String>> COMMAND_LINE_CONTENT = Key.create("command.line.content");
+
   /**
    * The VM property is needed to workaround incorrect escaped URLs handling in WebSphere,
    * see <a href="https://youtrack.jetbrains.com/issue/IDEA-126859#comment=27-778948">IDEA-126859</a> for additional details
@@ -250,6 +254,8 @@ public class JdkUtil {
         }
       }
 
+      commandLine.putUserData(COMMAND_LINE_CONTENT, ContainerUtil.stringMap(argFile.getAbsolutePath(), FileUtil.loadFile(argFile)));
+
       appendEncoding(javaParameters, commandLine, vmParameters);
 
       commandLine.addParameter("@" + argFile.getAbsolutePath());
@@ -325,11 +331,15 @@ public class JdkUtil {
       }
 
       File classpathFile = FileUtil.createTempFile("idea_classpath", null);
+      PathsList classPath = javaParameters.getClassPath();
       try (PrintWriter writer = new PrintWriter(classpathFile)) {
-        for (String path : javaParameters.getClassPath().getPathList()) {
+        for (String path : classPath.getPathList()) {
           writer.println(path);
         }
       }
+
+      Map<String, String> map = ContainerUtil.stringMap(classpathFile.getAbsolutePath(), classPath.getPathsString());
+      commandLine.putUserData(COMMAND_LINE_CONTENT, map);
 
       Set<String> classpath = new LinkedHashSet<>();
       classpath.add(PathUtil.getJarPathForClass(commandLineWrapper));
@@ -348,12 +358,14 @@ public class JdkUtil {
       if (vmParamsFile != null) {
         commandLine.addParameter("@vm_params");
         commandLine.addParameter(vmParamsFile.getAbsolutePath());
+        map.put(vmParamsFile.getAbsolutePath(), FileUtil.loadFile(vmParamsFile));
         OSProcessHandler.deleteFileOnTermination(commandLine, vmParamsFile);
       }
 
       if (appParamsFile != null) {
         commandLine.addParameter("@app_params");
         commandLine.addParameter(appParamsFile.getAbsolutePath());
+        map.put(appParamsFile.getAbsolutePath(), FileUtil.loadFile(appParamsFile));
         OSProcessHandler.deleteFileOnTermination(commandLine, appParamsFile);
       }
     }
@@ -372,6 +384,7 @@ public class JdkUtil {
       Manifest manifest = new Manifest();
       manifest.getMainAttributes().putValue("Created-By", ApplicationNamesInfo.getInstance().getFullProductName());
 
+      String manifestText = "Manifest.MF";
       if (dynamicVMOptions) {
         List<String> properties = new ArrayList<>();
         for (String param : vmParameters.getList()) {
@@ -383,6 +396,7 @@ public class JdkUtil {
           }
         }
         manifest.getMainAttributes().putValue("VM-Options", ParametersListUtil.join(properties));
+        manifestText += "VM-Options: " + ParametersListUtil.join(properties) + "\n";
       }
       else {
         commandLine.addParameters(vmParameters.getList());
@@ -392,12 +406,12 @@ public class JdkUtil {
 
       if (dynamicParameters) {
         manifest.getMainAttributes().putValue("Program-Parameters", ParametersListUtil.join(javaParameters.getProgramParametersList().getList()));
+        manifestText += "Program-Parameters: " + ParametersListUtil.join(javaParameters.getProgramParametersList().getList()) + "\n";
       }
 
       boolean notEscape = vmParameters.hasParameter(PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL);
-      List<String> classPathList = javaParameters.getClassPath().getPathList();
-
-      File classpathJarFile = CommandLineWrapperUtil.createClasspathJarFile(manifest, classPathList, notEscape);
+      PathsList path = javaParameters.getClassPath();
+      File classpathJarFile = CommandLineWrapperUtil.createClasspathJarFile(manifest, path.getPathList(), notEscape);
 
       String jarFilePath = classpathJarFile.getAbsolutePath();
       commandLine.addParameter("-classpath");
@@ -406,6 +420,8 @@ public class JdkUtil {
         commandLine.addParameter(commandLineWrapper.getName());
       }
       commandLine.addParameter(jarFilePath);
+
+      commandLine.putUserData(COMMAND_LINE_CONTENT, ContainerUtil.stringMap(jarFilePath, manifestText + "Class-Path: " + path.getPathsString()));
 
       OSProcessHandler.deleteFileOnTermination(commandLine, classpathJarFile);
     }

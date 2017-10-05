@@ -21,6 +21,7 @@ import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.filters.ArgumentFileFilter;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.process.KillableProcessHandler;
@@ -34,6 +35,7 @@ import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.psi.PsiClass;
@@ -305,6 +307,16 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
       setupModulePath(params, module);
 
       return params;
+    }
+
+    @Override
+    protected GeneralCommandLine createCommandLine() throws ExecutionException {
+      GeneralCommandLine line = super.createCommandLine();
+      Map<String, String> content = line.getUserData(JdkUtil.COMMAND_LINE_CONTENT);
+      if (content != null) {
+        content.forEach((key, value) -> addConsoleFilters(new ArgumentFileFilter(key, value)));
+      }
+      return line;
     }
 
     @NotNull

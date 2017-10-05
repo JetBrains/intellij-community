@@ -19,6 +19,7 @@ import com.intellij.ExtensionPoints;
 import com.intellij.debugger.impl.GenericDebuggerRunnerSettings;
 import com.intellij.diagnostic.logging.OutputFileUtil;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.filters.ArgumentFileFilter;
 import com.intellij.execution.impl.ConsoleBuffer;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
@@ -66,10 +67,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 public abstract class JavaTestFrameworkRunnableState<T extends
   ModuleBasedConfiguration<JavaRunConfigurationModule>
@@ -82,6 +80,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   protected File myWorkingDirsFile = null;
 
   private RemoteConnectionCreator remoteConnectionCreator;
+  private final List<ArgumentFileFilter> myArgumentFileFilters = new ArrayList<>();
 
   public void setRemoteConnectionCreator(RemoteConnectionCreator remoteConnectionCreator) {
     this.remoteConnectionCreator = remoteConnectionCreator;
@@ -128,6 +127,16 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     return false;
   }
 
+  @Override
+  protected GeneralCommandLine createCommandLine() throws ExecutionException {
+    GeneralCommandLine commandLine = super.createCommandLine();
+    Map<String, String> content = commandLine.getUserData(JdkUtil.COMMAND_LINE_CONTENT);
+    if (content != null) {
+      content.forEach((key, value) -> myArgumentFileFilters.add(new ArgumentFileFilter(key, value)));
+    }
+    return commandLine;
+  }
+
   @NotNull
   @Override
   public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
@@ -142,6 +151,10 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     Disposer.register(getConfiguration().getProject(), consoleView);
 
     final OSProcessHandler handler = createHandler(executor);
+
+    for (ArgumentFileFilter filter : myArgumentFileFilters) {
+      consoleView.addMessageFilter(filter);
+    }
 
     consoleView.attachToProcess(handler);
     final AbstractTestProxy root = viewer.getRoot();
