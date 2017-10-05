@@ -83,6 +83,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.switcher.QuickActionProvider;
+import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PlatformIcons;
@@ -1719,6 +1720,18 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     public void apply(final AbstractProjectViewPane viewPane) {
       if (viewPane == null) {
+        return;
+      }
+      AsyncProjectViewSupport support = viewPane.getAsyncSupport();
+      if (support != null) {
+        List<TreeVisitor> visitors = AsyncProjectViewSupport.createVisitors(Arrays.asList(myElements));
+        if (!visitors.isEmpty()) {
+          // TODO: start visiting after updating
+          support.accept(visitors, array -> {
+            for (TreePath path : array) viewPane.myTree.makeVisible(path);
+            viewPane.myTree.setSelectionPaths(array);
+          });
+        }
         return;
       }
       AbstractTreeBuilder treeBuilder = viewPane.getTreeBuilder();

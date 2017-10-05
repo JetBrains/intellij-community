@@ -319,4 +319,9 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
       }
     }
   }
+
+  @Override
+  AsyncProjectViewSupport getAsyncSupport() {
+    return myAsyncSupport;
+  }
 }
