@@ -31,12 +31,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Obsolescent;
 import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
 
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
+
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.IntFunction;
@@ -47,6 +47,7 @@ import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
 /**
  * @author Sergey.Malenkov
@@ -131,19 +132,22 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
   @NotNull
   @Override
   public Promise<TreePath> getTreePath(Object object) {
-    return !disposed && model instanceof Searchable ? resolve(((Searchable)model).getTreePath(object)) : rejectedPromise();
+    if (disposed) return rejectedPromise();
+    return resolve(model instanceof Searchable ? ((Searchable)model).getTreePath(object) : null);
   }
 
   @NotNull
   @Override
   public Promise<TreePath> nextTreePath(@NotNull TreePath path, Object object) {
-    return !disposed && model instanceof Navigatable ? resolve(((Navigatable)model).nextTreePath(path, object)) : rejectedPromise();
+    if (disposed) return rejectedPromise();
+    return resolve(model instanceof Navigatable ? ((Navigatable)model).nextTreePath(path, object) : null);
   }
 
   @NotNull
   @Override
   public Promise<TreePath> prevTreePath(@NotNull TreePath path, Object object) {
-    return !disposed && model instanceof Navigatable ? resolve(((Navigatable)model).prevTreePath(path, object)) : rejectedPromise();
+    if (disposed) return rejectedPromise();
+    return resolve(model instanceof Navigatable ? ((Navigatable)model).prevTreePath(path, object) : null);
   }
 
   @NotNull
@@ -154,9 +158,17 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
   }
 
   private Promise<TreePath> resolve(Promise<TreePath> promise) {
+    if (promise == null && isValidThread()) {
+      return rejectedPromise();
+    }
     AsyncPromise<TreePath> async = new AsyncPromise<>();
-    promise.rejected(onValidThread(async::setError));
-    promise.done(onValidThread(path -> resolve(async, path, entry -> async.setResult(path))));
+    if (promise == null) {
+      onValidThread(() -> async.setError("rejected"));
+    }
+    else {
+      promise.rejected(onValidThread(async::setError));
+      promise.done(onValidThread(path -> resolve(async, path, entry -> async.setResult(path))));
+    }
     return async;
   }
 
@@ -283,13 +295,6 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
     if (processor.foreground.isValidThread()) return true;
     LOG.warn("AsyncTreeModel is used from unexpected thread");
     return false;
-  }
-
-  @NotNull
-  private <T> Promise<T> rejectedPromise() {
-    AsyncPromise<T> promise = new AsyncPromise<>();
-    onValidThread(() -> promise.setError(Promises.createError("rejected")));
-    return promise;
   }
 
   private void onValidThread(Runnable runnable) {
