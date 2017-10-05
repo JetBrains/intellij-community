@@ -66,6 +66,12 @@ public class CaptureConfigurable implements SearchableConfigurable {
   @NotNull
   @Override
   public String getId() {
+    return getHelpTopic();
+  }
+
+  @NotNull
+  @Override
+  public String getHelpTopic() {
     return "reference.idesettings.debugger.capture";
   }
 
