@@ -30,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.remote.*;
 import com.jetbrains.python.sdk.PyLazySdk;
 import com.jetbrains.python.sdk.PySdkUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -256,6 +257,11 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     return null;
   }
 
+  /**
+   * @deprecated This method no longer has any effect. The standard interpreter chooser UI is always shown.
+   */
+  @Deprecated
+  @Contract(" -> false")
   public boolean hideInterpreter() {
     return false;
   }
