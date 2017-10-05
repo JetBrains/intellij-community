@@ -181,7 +181,7 @@ open class FileBasedStorage(file: Path,
   override fun toString() = file.systemIndependentPath
 }
 
-fun writeFile(file: Path?, requestor: Any, virtualFile: VirtualFile?, element: Element, lineSeparator: LineSeparator, prependXmlProlog: Boolean): VirtualFile {
+internal fun writeFile(file: Path?, requestor: Any, virtualFile: VirtualFile?, element: Element, lineSeparator: LineSeparator, prependXmlProlog: Boolean): VirtualFile {
   val result = if (file != null && (virtualFile == null || !virtualFile.isValid)) {
     getOrCreateVirtualFile(requestor, file)
   }

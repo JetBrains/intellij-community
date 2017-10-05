@@ -58,6 +58,7 @@ import gnu.trove.THashSet
 import org.jdom.Element
 import java.io.File
 import java.io.IOException
+import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -490,10 +491,19 @@ private fun writeConfigFile(elements: List<Element>, file: Path) {
   }
   elements.forEach { wrapper.addContent(it) }
   // .idea component configuration files uses XML prolog due to historical reasons
-  file.outputStream().use {
-    it.write(XML_PROLOG)
-    it.write(LineSeparator.LF.separatorBytes)
-    wrapper.write(it)
+  if (file.fileSystem == FileSystems.getDefault()) {
+    // VFS must be used to write workspace.xml and misc.xml to ensure that project files will be not reloaded on external file change event
+    writeFile(file, object : StateStorage.SaveSession {
+      override fun save() {
+      }
+    }, null, wrapper, LineSeparator.LF, true)
+  }
+  else {
+    file.outputStream().use {
+      it.write(XML_PROLOG)
+      it.write(LineSeparator.LF.separatorBytes)
+      wrapper.write(it)
+    }
   }
 }
 
