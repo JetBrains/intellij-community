@@ -37,5 +37,5 @@ class StreamExLibrarySupportProvider : LibrarySupportProvider {
   override fun getExpressionBuilder(project: Project): TraceExpressionBuilder =
     JavaTraceExpressionBuilder(project, librarySupport.createHandlerFactory(DslImpl(JavaStatementFactory())))
 
-  override fun getChainBuilder(): StreamChainBuilder = JavaStreamChainBuilder(JavaChainTransformerImpl())
+  override fun getChainBuilder(): StreamChainBuilder = JavaStreamChainBuilder(JavaChainTransformerImpl(), "one.util.streamex")
 }

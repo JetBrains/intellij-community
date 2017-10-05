@@ -37,7 +37,7 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public abstract class StreamChainBuilderTestCase extends LightCodeInsightTestCase {
-  private final StreamChainBuilder myBuilder = new JavaStreamChainBuilder(new JavaChainTransformerImpl());
+  private final StreamChainBuilder myBuilder = new JavaStreamChainBuilder(new JavaChainTransformerImpl(), "java.util.stream");
 
   @NotNull
   @Override

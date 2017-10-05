@@ -28,9 +28,6 @@ public interface MethodCall {
   String getName();
 
   @NotNull
-  String getPackageName();
-
-  @NotNull
   List<CallArgument> getArguments();
 
   @NotNull

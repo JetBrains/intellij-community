@@ -20,6 +20,7 @@ import com.intellij.debugger.streams.psi.PsiUtil;
 import com.intellij.debugger.streams.psi.StreamApiUtil;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -32,12 +33,14 @@ import java.util.stream.Collectors;
  * @author Vitaliy.Bibaev
  */
 public class JavaStreamChainBuilder implements StreamChainBuilder {
-  private static final MyStreamChainExistenceChecker myExistenceChecker = new MyStreamChainExistenceChecker();
+  private final MyStreamChainExistenceChecker myExistenceChecker = new MyStreamChainExistenceChecker();
 
   private final ChainTransformer.Java myChainTransformer;
+  @NotNull private final String mySupportedPackage;
 
-  public JavaStreamChainBuilder(@NotNull ChainTransformer.Java transformer) {
+  public JavaStreamChainBuilder(@NotNull ChainTransformer.Java transformer, @NotNull String supportedPackage) {
     myChainTransformer = transformer;
+    mySupportedPackage = supportedPackage;
   }
 
   @Override
@@ -102,14 +105,18 @@ public class JavaStreamChainBuilder implements StreamChainBuilder {
     return chains.stream().map(x -> myChainTransformer.transform(x, context)).collect(Collectors.toList());
   }
 
-  private static class MyStreamChainExistenceChecker extends MyVisitorBase {
+  private boolean isPackageSupported(@NotNull String packageName) {
+    return packageName.startsWith(mySupportedPackage);
+  }
+
+  private class MyStreamChainExistenceChecker extends MyVisitorBase {
     private boolean myFound = false;
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       if (myFound) return;
       super.visitMethodCallExpression(expression);
-      if (!myFound && StreamApiUtil.isTerminationStreamCall(expression)) {
+      if (!myFound && StreamApiUtil.isTerminationStreamCall(expression) && isPackageSupported(getPackageName(expression))) {
         myFound = true;
       }
     }
@@ -121,6 +128,19 @@ public class JavaStreamChainBuilder implements StreamChainBuilder {
     boolean found() {
       return myFound;
     }
+  }
+
+  @NotNull
+  private static String getPackageName(@NotNull PsiMethodCallExpression expression) {
+    final PsiMethod psiMethod = expression.resolveMethod();
+    if (psiMethod != null) {
+      final PsiClass psiClass = (PsiClass)psiMethod.getParent();
+      final String className = psiClass.getQualifiedName();
+      if (className != null) {
+        return StringUtil.getPackageName(className);
+      }
+    }
+    return "";
   }
 
   private static class MyChainCollectorVisitor extends MyVisitorBase {

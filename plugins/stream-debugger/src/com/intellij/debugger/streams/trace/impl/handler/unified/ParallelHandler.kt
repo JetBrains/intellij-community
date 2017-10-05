@@ -28,10 +28,10 @@ class ParallelHandler(num: Int, private val call: IntermediateStreamCall, dsl: D
   : PeekTraceHandler(num, call.name, call.typeBefore, call.typeAfter, dsl) {
   override fun additionalCallsAfter(): List<IntermediateStreamCall> {
     val calls = ArrayList(super.additionalCallsAfter())
-    calls.add(0, SequentialCall(call.packageName, call.typeBefore))
+    calls.add(0, SequentialCall(call.typeBefore))
     return calls
   }
 
-  private class SequentialCall(packageName: String, elementsType: GenericType)
-    : IntermediateStreamCallImpl("sequential", emptyList(), elementsType, elementsType, TextRange.EMPTY_RANGE, packageName)
+  private class SequentialCall(elementsType: GenericType)
+    : IntermediateStreamCallImpl("sequential", emptyList(), elementsType, elementsType, TextRange.EMPTY_RANGE)
 }

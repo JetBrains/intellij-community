@@ -32,7 +32,7 @@ import com.intellij.openapi.project.Project
  */
 class StandardLibrarySupportProvider : LibrarySupportProvider {
   private companion object {
-    val builder: StreamChainBuilder = JavaStreamChainBuilder(JavaChainTransformerImpl())
+    val builder: StreamChainBuilder = JavaStreamChainBuilder(JavaChainTransformerImpl(), "java.util.stream")
     val support: LibrarySupport = StandardLibrarySupport()
     val dsl: Dsl = DslImpl(JavaStatementFactory())
   }

@@ -35,9 +35,8 @@ public class TerminatorStreamCallImpl extends StreamCallImpl implements Terminat
                                   @NotNull List<CallArgument> args,
                                   @NotNull GenericType typeBefore,
                                   @NotNull GenericType resultType,
-                                  @NotNull TextRange range,
-                                  @NotNull String packageName) {
-    super(name, args, StreamCallType.TERMINATOR, range, packageName);
+                                  @NotNull TextRange range) {
+    super(name, args, StreamCallType.TERMINATOR, range);
     myTypeBefore = typeBefore;
     myReturnType = resultType;
   }

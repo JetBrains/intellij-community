@@ -24,7 +24,6 @@ import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.TerminatorStreamCall;
 import com.intellij.debugger.streams.wrapper.impl.*;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.siyeh.ig.psiutils.ClassUtils;
 import one.util.streamex.StreamEx;
@@ -85,8 +84,7 @@ public class JavaChainTransformerImpl implements ChainTransformer.Java {
       final String name = resolveMethodName(callExpression);
       final List<CallArgument> args = resolveArguments(callExpression);
       final GenericType type = resolveType(callExpression);
-      final String packageName = resolvePackageName(callExpression);
-      result.add(new IntermediateStreamCallImpl(name, args, typeBefore, type, callExpression.getTextRange(), packageName));
+      result.add(new IntermediateStreamCallImpl(name, args, typeBefore, type, callExpression.getTextRange()));
       typeBefore = type;
     }
 
@@ -98,21 +96,7 @@ public class JavaChainTransformerImpl implements ChainTransformer.Java {
     final String name = resolveMethodName(expression);
     final List<CallArgument> args = resolveArguments(expression);
     final GenericType resultType = resolveTerminationCallType(expression);
-    final String packageName = resolvePackageName(expression);
-    return new TerminatorStreamCallImpl(name, args, typeBefore, resultType, expression.getTextRange(), packageName);
-  }
-
-  @NotNull
-  private static String resolvePackageName(@NotNull PsiMethodCallExpression expression) {
-    final PsiMethod psiMethod = expression.resolveMethod();
-    if (psiMethod != null) {
-      final PsiClass psiClass = (PsiClass)psiMethod.getParent();
-      final String className = psiClass.getQualifiedName();
-      if (className != null) {
-        return StringUtil.getPackageName(className);
-      }
-    }
-    return "";
+    return new TerminatorStreamCallImpl(name, args, typeBefore, resultType, expression.getTextRange());
   }
 
   @NotNull
