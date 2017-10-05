@@ -115,7 +115,7 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
         }
         if (manager != null && remoteSdkCredentials != null) {
           if (askForSudo) {
-            askForSudo = !manager.ensureCanWrite(null, remoteSdkCredentials, remoteSdkCredentials.getInterpreterPath());
+            askForSudo = !manager.ensureCanWrite(remoteSdkCredentials, remoteSdkCredentials.getInterpreterPath());
           }
         }
         else {

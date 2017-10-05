@@ -85,7 +85,7 @@ public abstract class PythonRemoteInterpreterManager {
                                                                     @NotNull Sdk sdk,
                                                                     String path) throws ExecutionException;
 
-  public abstract boolean ensureCanWrite(@Nullable Object projectOrComponent, RemoteSdkCredentials data, String path);
+  public abstract boolean ensureCanWrite(RemoteSdkCredentials data, String path);
 
   /**
    * @param sdk current sdk
