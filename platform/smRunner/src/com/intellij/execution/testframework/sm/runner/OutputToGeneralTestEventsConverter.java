@@ -343,7 +343,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
   public void onStartTesting() {}
 
-  public void startTesting() {
+  public synchronized void startTesting() {
     myTestingStartedHandler.run();
     onStartTesting();
     GeneralTestEventsProcessor processor = myProcessor;
