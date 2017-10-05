@@ -40,6 +40,100 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
   }
 
   protected volatile int offset = 0;
+
+  @Override
+  protected void installDefaults() {
+    super.installDefaults();
+    UIManager.put("ProgressBar.repaintInterval", new Integer(25));
+    UIManager.put("ProgressBar.cycleTime", new Integer(300));
+  }
+
+  class IndeterminateProgressCache {
+    private Area containingRoundRect = null;
+    private Area insetArea = null;
+    private Area outerInnerBorderRoundRectArea = null;
+    private Area outlineArea = null;
+    private Path2D path = null;
+
+    private int barRectWidth = -1;
+    private int barRectHeight = -1;
+    private int w = -1;
+    private int h = -1;
+    private int cHeight = -1;
+    private float off = 0;
+
+    synchronized void validateAndRender(Graphics2D g,
+                                        JComponent c,
+                                        int barRectWidth,
+                                        int barRectHeight,
+                                        int w,
+                                        int h,
+                                        double progressOffset) {
+      final float newOff = JBUI.scale(1f);
+      if (path == null || barRectWidth != this.barRectWidth ||
+          barRectHeight != this.barRectHeight ||
+          w != this.w || h != this.h || c.getHeight() != this.cHeight ||
+          off != newOff)
+      {
+        this.cHeight = c.getHeight();
+        path = new Path2D.Double();
+        int x = 0;
+        while (x < Math.max(w, cHeight) + getPeriodLength()) {
+          float ww = getPeriodLength() / 2f;
+          path.moveTo(x, 0);
+          path.lineTo(x + ww, 0);
+          path.lineTo(x + ww - h / 2, h);
+          path.lineTo(x - h / 2, h);
+          path.lineTo(x, 0);
+          path.closePath();
+          x += getPeriodLength();
+        }
+
+        this.barRectWidth = barRectWidth;
+        this.barRectHeight = barRectHeight;
+        this.w = w;
+        this.h = h;
+        final float R = JBUI.scale(8f);
+        final float R2 = JBUI.scale(9f);
+
+        off = newOff;
+
+        Area cachedInnerBorderRoundRect = new Area(new RoundRectangle2D.Float(off, off, w - 2f * off, h - 2f * off, R, R));
+        containingRoundRect = new Area(new RoundRectangle2D.Float(2f * off, 2f * off, w - 4f * off, h - 4f * off, R, R));
+        insetArea = new Area(cachedInnerBorderRoundRect);
+        insetArea.subtract(containingRoundRect);
+        outerInnerBorderRoundRectArea = new Area(new Rectangle2D.Float(0, 0, w, h));
+        outerInnerBorderRoundRectArea.subtract(cachedInnerBorderRoundRect);
+        outlineArea = new Area(outerInnerBorderRoundRectArea);
+        outlineArea.subtract(new Area(new RoundRectangle2D.Float(0, 0, w, h, R2, R2)));
+      }
+
+      g.translate(0, (c.getHeight() - h) / 2);
+
+      Area area = new Area(path);
+      area.transform(AffineTransform.getTranslateInstance(-progressOffset, 0));
+      area.intersect(containingRoundRect);
+      g.setColor(new JBColor(Gray._165, Gray._88));
+      g.fill(area);
+
+      g.setColor(Gray._128);
+      if (c.isOpaque()) {
+        g.fill(outerInnerBorderRoundRectArea);
+      }
+
+      g.setColor(c.getParent().getBackground());
+      if (c.isOpaque()) {
+        g.fill(outlineArea);
+      }
+
+      g.fill(insetArea);
+
+      g.translate(0, -(c.getHeight() - h) / 2);
+    }
+  }
+
+  final private IndeterminateProgressCache indeterminateProgressCache = new IndeterminateProgressCache();
+
   @Override
   protected void paintIndeterminate(Graphics g2d, JComponent c) {
     if (!(g2d instanceof Graphics2D)) {
@@ -54,59 +148,18 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
     if (barRectWidth <= 0 || barRectHeight <= 0) {
       return;
     }
-    //boxRect = getBox(boxRect);
-    g.setColor(new JBColor(Gray._240, Gray._128));
+    double progressOffset = ((double)getAnimationIndex()*getPeriodLength())/getFrameCount();
     int w = c.getWidth();
     int h = c.getPreferredSize().height;
     if (!isEven(c.getHeight() - h)) h++;
 
     if (c.isOpaque()) {
+      g.setColor(new JBColor(Gray._240, Gray._128));
       g.fillRect(0, (c.getHeight() - h)/2, w, h);
     }
-    g.setColor(new JBColor(Gray._165, Gray._88));
     final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-    g.translate(0, (c.getHeight() - h) / 2);
-    int x = -offset;
-    final float R = JBUI.scale(8f);
-    final float R2 = JBUI.scale(9f);
-    final float off = JBUI.scale(1f);
 
-    final Area innerBorderRoundRect = new Area(new RoundRectangle2D.Float(off, off, w - 2f * off, h - 2f * off, R, R));
-    final Area containingRoundRect = new Area(new RoundRectangle2D.Float(2f * off, 2f * off, w - 4f * off, h - 4f * off, R, R));
-
-    while (x < Math.max(c.getWidth(), c.getHeight())) {
-      Path2D.Double path = new Path2D.Double();
-      float ww = getPeriodLength() / 2f;
-      path.moveTo(x, 0);
-      path.lineTo(x+ww, 0);
-      path.lineTo(x+ww - h / 2, h);
-      path.lineTo(x-h / 2, h);
-      path.lineTo(x, 0);
-      path.closePath();
-
-      final Area area = new Area(path);
-      area.intersect(containingRoundRect);
-      g.fill(area);
-      x+= getPeriodLength();
-    }
-    offset = (offset + 1) % getPeriodLength();
-    Area area = new Area(new Rectangle2D.Float(0, 0, w, h));
-    area.subtract(innerBorderRoundRect);
-    g.setColor(Gray._128);
-    if (c.isOpaque()) {
-      g.fill(area);
-    }
-    area.subtract(new Area(new RoundRectangle2D.Float(0, 0, w, h, R2, R2)));
-    g.setColor(c.getParent().getBackground());
-    if (c.isOpaque()) {
-      g.fill(area);
-    }
-
-    Area insetArea = new Area(innerBorderRoundRect);
-    insetArea.subtract(containingRoundRect);
-    g.fill(insetArea);
-
-    g.translate(0, -(c.getHeight() - h) / 2);
+    indeterminateProgressCache.validateAndRender(g, c, barRectWidth, barRectHeight, w, h, progressOffset);
 
     // Deal with possible text painting
     if (progressBar.isStringPainted()) {
