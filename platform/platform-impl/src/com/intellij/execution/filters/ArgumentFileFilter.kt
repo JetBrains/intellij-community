@@ -6,10 +6,16 @@ import java.io.File
 /**
  * A console filter which looks for a given path in an output and creates a link for viewing a content of that file.
  */
-class ArgumentFileFilter : Filter {
+class ArgumentFileFilter() : Filter {
   @Volatile private var filePath: String? = null
   @Volatile private var fileText: String? = null
   private var triggered = false
+
+  constructor(filePath: String?, fileText: String?) : this() {
+    this.filePath = filePath
+    this.fileText = fileText
+  }
+
 
   fun setPath(path: String) {
     filePath = path
