@@ -16,7 +16,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,17 +76,17 @@ public class WSLUtil {
   }
 
   private static final Pattern WIN_BUILD_VER = Pattern.compile(".*(?:\\[Version \\d+\\.\\d+\\.(\\d+)\\])");
+  private static final int READ_VERSION_TIMEOUT = 10000;
   /*
    * WSL version equals Windows build number
    * (https://github.com/Microsoft/BashOnWindows/issues/1728)
    */
   private static final AtomicNullableLazyValue<String> ourWSLVersion = AtomicNullableLazyValue.createValue(() -> {
-    final GeneralCommandLine cl = new GeneralCommandLine("cmd", "/c", "ver");
-    cl.setCharset(CharsetToolkit.getDefaultSystemCharset());
+    final GeneralCommandLine cl = new GeneralCommandLine(ExecUtil.getWindowsShellName(), "/c", "ver");
 
     try {
       final CapturingProcessHandler handler = new CapturingProcessHandler(cl);
-      final ProcessOutput result = handler.runProcess(1000);
+      final ProcessOutput result = handler.runProcess(READ_VERSION_TIMEOUT);
       if (result.isTimeout()) return null;
 
       final String out = result.getStdout().trim();
@@ -96,8 +95,8 @@ public class WSLUtil {
         return dependency.group(1);
       }
     }
-    catch (ExecutionException ignored) {
-      ignored.printStackTrace();
+    catch (ExecutionException e) {
+      LOG.warn(e);
     }
     return null;
   });
@@ -105,6 +104,7 @@ public class WSLUtil {
   /**
    * @return WSL build number or null if it cannot be determined
    */
+  @Nullable
   public static String getWslVersion() {
     if (hasWSL()) {
       return ourWSLVersion.getValue();
@@ -205,7 +205,7 @@ public class WSLUtil {
 
       SUDO_LISTENER_KEY.set(commandLine, new ProcessAdapter() {
         @Override
-        public void startNotified(ProcessEvent event) {
+        public void startNotified(@NotNull ProcessEvent event) {
           OutputStream input = event.getProcessHandler().getProcessInput();
           if (input == null) {
             return;
@@ -267,7 +267,7 @@ public class WSLUtil {
   }
 
   @NotNull
-  public static String resolveSymlink(@NotNull String path) {
+  public static String resolveSymlink(@NotNull String path, int timeoutInMillisecondss) {
     final GeneralCommandLine cl = new GeneralCommandLine();
     cl.setExePath("readlink");
     cl.addParameter("-f");
@@ -277,7 +277,7 @@ public class WSLUtil {
 
     try {
       final CapturingProcessHandler process = new CapturingProcessHandler(cmd);
-      final ProcessOutput output = process.runProcess(1000);
+      final ProcessOutput output = process.runProcess(timeoutInMillisecondss);
       if (output.getExitCode() == 0) {
         return output.getStdout().trim();
       }
