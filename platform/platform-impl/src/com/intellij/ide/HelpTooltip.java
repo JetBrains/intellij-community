@@ -53,16 +53,18 @@ import java.util.Collection;
 import java.util.Map;
 
 public class HelpTooltip {
-  private static Color BACKGROUND_COLOR = new JBColor(Gray.xF7, new Color(0x46484a));
-  private static Color FONT_COLOR = new JBColor(Gray.x33, Gray.xBF);
+  private static Color BACKGROUND_COLOR = new JBColor(Gray.xF7, new Color(0x474a4c));
+  private static Color FONT_COLOR = new JBColor(() -> UIUtil.isUnderDarcula() ? Gray.xBF : SystemInfo.isMac ? Gray.x33 : Gray.x1A);
   private static Color SHORTCUT_COLOR = new JBColor(Gray.x78, Gray.x87);
-  private static Color BORDER_COLOR = new JBColor(Gray.xAD, new Color(0x616366));
+  private static Color BORDER_COLOR = new JBColor(Gray.xAD, new Color(0x636569));
 
-  private static Border DEFAULT_BORDER = JBUI.Borders.empty(SystemInfo.isWindows ? 7 : 10, 10, 10, 16);
-  private static Border SMALL_BORDER = JBUI.Borders.empty(SystemInfo.isMac ? 3 : (SystemInfo.isWindows ? 2 : 5),
-                                                          8,
-                                                          SystemInfo.isMac ? 5 : 4,
-                                                          8);
+  private static Border DEFAULT_BORDER = SystemInfo.isMac ?     JBUI.Borders.empty(9, 10, 11, 16) :
+                                         SystemInfo.isWindows ? JBUI.Borders.empty(7, 10, 10, 16):
+                                                                JBUI.Borders.empty(10, 10, 10, 16);
+
+  private static Border SMALL_BORDER = SystemInfo.isMac ? JBUI.Borders.empty(4, 8, 5, 8) :
+                                       SystemInfo.isWindows ? JBUI.Borders.empty(4, 8, 6, 8) :
+                                       JBUI.Borders.empty(5, 8, 4, 8);
 
   private static final int VGAP = JBUI.scale(UIUtil.DEFAULT_VGAP);
   private static final int HGAP = JBUI.scale(UIUtil.DEFAULT_HGAP);
@@ -70,6 +72,8 @@ public class HelpTooltip {
 
   private static final String DOTS = "...";
   private static final String PARAGRAPH_SPLITTER = "<p/?>";
+
+  private static final String TOOLTIP_PROPERTY = "JComponent.helpTooltip";
 
   private String title;
   private String shortcut;
@@ -79,6 +83,7 @@ public class HelpTooltip {
   private Alignment alignment = Alignment.BOTTOM;
 
   private JComponent owner;
+  private Object masterPopup; // can be JPopupMenu or JBPopup which don't belong to one hierarchy
   private ComponentPopupBuilder myPopupBuilder;
   private JBPopup myPopup;
   private Alarm popupAlarm = new Alarm();
@@ -198,6 +203,8 @@ public class HelpTooltip {
     neverHide = neverHide || DarculaButtonUI.isHelpButton(component);
 
     owner = component;
+    owner.putClientProperty(TOOLTIP_PROPERTY, this);
+
     myPopupBuilder = JBPopupFactory.getInstance().
       createComponentPopupBuilder(tipPanel, null).
       setBorderColor(BORDER_COLOR).setShowShadow(false);
@@ -228,7 +235,9 @@ public class HelpTooltip {
           owner.removeMouseListener(myMouseListener);
           owner.removeMouseMotionListener(myMouseListener);
           owner.removePropertyChangeListener(myPropertyChangeListener);
+          owner.putClientProperty(TOOLTIP_PROPERTY, null);
           owner = null;
+          masterPopup = null;
         }
       }
     };
@@ -238,15 +247,35 @@ public class HelpTooltip {
     owner.addPropertyChangeListener("ancestor", myPropertyChangeListener);
   }
 
+  public static void onShowMasterPopup(@NotNull JComponent owner, @NotNull Object master) {
+    HelpTooltip instance = (HelpTooltip)owner.getClientProperty(TOOLTIP_PROPERTY);
+    if (instance != null) {
+      instance.hidePopup(true);
+      instance.masterPopup = master;
+    }
+  }
+
   private void scheduleShow(int delay) {
     popupAlarm.cancelAllRequests();
-    popupAlarm.addRequest(() -> {
-      myPopup = myPopupBuilder.createPopup();
-      myPopup.show(new RelativePoint(owner, alignment.getPointFor(owner)));
-      if (!neverHide) {
-        scheduleHide(true, myDismissDelay);
-      }
-    }, delay);
+      popupAlarm.addRequest(() -> {
+        if (canShow()) {
+          myPopup = myPopupBuilder.createPopup();
+          myPopup.show(new RelativePoint(owner, alignment.getPointFor(owner)));
+          if (!neverHide) {
+            scheduleHide(true, myDismissDelay);
+          }
+        }
+      }, delay);
+  }
+
+  private boolean canShow() {
+    if (masterPopup instanceof JPopupMenu) {
+      return !((JPopupMenu)masterPopup).isVisible();
+    } else if (masterPopup instanceof JBPopup) {
+      return !((JBPopup)masterPopup).isVisible();
+    } else {
+      return true;
+    }
   }
 
   private void scheduleHide(boolean force, int delay) {

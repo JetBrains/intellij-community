@@ -177,6 +177,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         }
       });
       popupMenu.setDataContextProvider(() -> this.getDataContext());
+
+      if (Registry.is("ide.helptooltip.enabled")) {
+        HelpTooltip.onShowMasterPopup(this, popupMenu.getComponent());
+      }
+
       if (event.isFromActionToolbar()) {
         popupMenu.getComponent().show(this, 0, getHeight());
       }

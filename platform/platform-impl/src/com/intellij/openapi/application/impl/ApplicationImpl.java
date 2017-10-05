@@ -304,13 +304,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return myCommandLineMode;
   }
 
-  private static class Holder {
-    private static final boolean ourIsRunningFromSources = new File(PathManager.getHomePath(), ".idea").isDirectory();
-  }
-  public static boolean isRunningFromSources() {
-    return Holder.ourIsRunningFromSources;
-  }
-
   @NotNull
   @Override
   public Future<?> executeOnPooledThread(@NotNull final Runnable action) {
