@@ -191,16 +191,12 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
     FileEditor[] fileEditors = fileEditorManager.openFile(virtualFile, false);
     FileEditor fileEditor = fileEditors[0];
-    try {
-      StructureViewComponent svc =
-        (StructureViewComponent)fileEditor.getStructureViewBuilder().createStructureView(fileEditor, myProject);
-
-      checkAction.testClassStructure(svc);
-      Disposer.dispose(svc);
-    }
-    finally {
-      fileEditorManager.closeFile(virtualFile);
-    }
+    StructureViewComponent svc = (StructureViewComponent)fileEditor.getStructureViewBuilder()
+      .createStructureView(fileEditor, myProject);
+    Disposer.register(getTestRootDisposable(), svc);
+    fileEditorManager.closeFile(virtualFile);
+    PlatformTestUtil.waitForPromise(svc.rebuildAndUpdate());
+    checkAction.testClassStructure(svc);
   }
 
   @Override
