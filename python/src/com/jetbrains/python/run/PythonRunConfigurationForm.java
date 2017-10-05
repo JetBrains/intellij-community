@@ -15,12 +15,15 @@
  */
 package com.jetbrains.python.run;
 
+import com.google.common.collect.Lists;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -29,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBComboBoxLabel;
 import com.intellij.ui.components.JBLabel;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import org.jetbrains.annotations.NotNull;
@@ -36,11 +40,15 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  * @author yole
  */
 public class PythonRunConfigurationForm implements PythonRunConfigurationParams, PanelWithAnchor {
+  public static final String SCRIPT_PATH = "Script path:";
+  public static final String MODULE_NAME = "Module name:";
   private JPanel myRootPanel;
   private TextFieldWithBrowseButton myScriptTextField;
   private RawCommandLineEditor myScriptParametersTextField;
@@ -52,7 +60,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   private JBCheckBox myShowCommandLineCheckbox;
   private JBCheckBox myEmulateTerminalCheckbox;
   private RawCommandLineEditor myModuleField;
-  private ComboBox myTargetComboBox;
+  private JBComboBoxLabel myTargetComboBox;
   private boolean myModuleMode;
 
   public PythonRunConfigurationForm(PythonRunConfiguration configuration) {
@@ -90,7 +98,8 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
       emulateTerminalEnabled(false);
     }
 
-    myTargetComboBox.setSelectedIndex(0);
+
+    //myTargetComboBox.setSelectedIndex(0);
     myEmulateTerminalCheckbox.setSelected(false);
 
     myEmulateTerminalCheckbox.addChangeListener(
@@ -98,22 +107,22 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
     setAnchor(myCommonOptionsForm.getAnchor());
 
-    myTargetComboBox.addActionListener(e -> updateRunModuleMode());
+    //myTargetComboBox.addActionListener(e -> updateRunModuleMode());
   }
 
   private void updateRunModuleMode() {
-    boolean mode = myTargetComboBox.getSelectedIndex() == 1;
+    boolean mode = MODULE_NAME.equals(myTargetComboBox.getText());
     checkTargetComboConsistency(mode);
     setModuleModeInternal(mode);
   }
 
   private void checkTargetComboConsistency(boolean mode) {
-    Object item = myTargetComboBox.getSelectedItem();
+    String item = myTargetComboBox.getText();
     if (item == null) {
       throw new IllegalArgumentException("item is null");
     }
     else //noinspection StringToUpperCaseOrToLowerCaseWithoutLocale
-      if (mode && !item.toString().toLowerCase().contains("module")) {
+      if (mode && !item.toLowerCase().contains("module")) {
         throw new IllegalArgumentException("This option should refer to a module");
       }
   }
@@ -212,7 +221,8 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
   @Override
   public void setModuleMode(boolean moduleMode) {
-    myTargetComboBox.setSelectedIndex(moduleMode ? 1 : 0);
+    myTargetComboBox.setText(moduleMode ? MODULE_NAME : SCRIPT_PATH);
+    updateRunModuleMode();
     checkTargetComboConsistency(moduleMode);
   }
 
@@ -221,5 +231,23 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
     myScriptTextField.setVisible(!moduleMode);
     myModuleField.setVisible(moduleMode);
+  }
+
+  private void createUIComponents() {
+    myTargetComboBox = new JBComboBoxLabel();
+    myTargetComboBox.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        JBPopupFactory.getInstance().createListPopup(
+          new BaseListPopupStep<String>("Choose target to run", Lists.newArrayList(SCRIPT_PATH, MODULE_NAME)) {
+            @Override
+            public PopupStep onChosen(String selectedValue, boolean finalChoice) {
+              myTargetComboBox.setText(selectedValue);
+              updateRunModuleMode();
+              return FINAL_CHOICE;
+            }
+          }).showUnderneathOf(myTargetComboBox);
+      }
+    });
   }
 }
