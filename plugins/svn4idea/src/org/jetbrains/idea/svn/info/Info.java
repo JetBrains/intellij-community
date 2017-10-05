@@ -17,21 +17,26 @@ package org.jetbrains.idea.svn.info;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.BaseNodeDescription;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.lock.Lock;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
+import java.time.Instant;
 import java.util.Date;
+
+import static com.intellij.util.ObjectUtils.notNull;
 
 public class Info extends BaseNodeDescription {
 
   public static final String SCHEDULE_ADD = "add";
+
+  private static final Date DEFAULT_COMMITTED_DATE = Date.from(Instant.EPOCH);
 
   private final File myFile;
   private final String myPath;
@@ -81,7 +86,7 @@ public class Info extends BaseNodeDescription {
     myRepositoryRootURL = rootURL;
 
     myCommittedRevision = SVNRevision.create(committedRevision);
-    myCommittedDate = committedDate != null ? SVNDate.parseDate(committedDate) : null;
+    myCommittedDate = committedDate != null ? notNull(SvnUtil.parseDate(committedDate), DEFAULT_COMMITTED_DATE) : null;
     myAuthor = author;
 
     mySchedule = schedule;

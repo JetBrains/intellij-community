@@ -68,10 +68,9 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -103,6 +102,19 @@ public class SvnUtil {
     Matcher matcher = WARNING_PATTERN.matcher(text);
     // currently treating only first warning
     return matcher.find() ? matcher.group() : null;
+  }
+
+  @Nullable
+  public static Date parseDate(@Nullable String value) {
+    if (value == null) return null;
+
+    try {
+      return Date.from(Instant.parse(value));
+    }
+    catch (DateTimeParseException | ArithmeticException e) {
+      LOG.error("Could not parse date " + value, e);
+      return null;
+    }
   }
 
   public static boolean isSvnVersioned(@NotNull SvnVcs vcs, @NotNull File file) {

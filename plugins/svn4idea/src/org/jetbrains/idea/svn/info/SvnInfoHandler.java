@@ -24,7 +24,6 @@ import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.lock.Lock;
-import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -694,7 +693,7 @@ public class SvnInfoHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, SvnInfoStructure structure) {
-      structure.myLockBuilder.setCreationDate(SVNDate.parseDate(s));
+      structure.myLockBuilder.setCreationDate(SvnUtil.parseDate(s));
     }
   }
 

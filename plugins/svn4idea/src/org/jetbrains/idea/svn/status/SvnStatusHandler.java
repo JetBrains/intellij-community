@@ -26,7 +26,6 @@ import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.lock.Lock;
-import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -416,8 +415,7 @@ public class SvnStatusHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, PortableStatus pending, Lock.Builder lock) {
-      final SVNDate date = SVNDate.parseDate(s);
-      lock.setCreationDate(date);
+      lock.setCreationDate(SvnUtil.parseDate(s));
     }
   }
 
