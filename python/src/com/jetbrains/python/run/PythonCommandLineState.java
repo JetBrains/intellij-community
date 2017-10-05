@@ -36,6 +36,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -54,7 +55,6 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.remote.RemoteProcessControl;
 import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.PythonHelpersLocator;
-import com.jetbrains.python.actions.PySciProjectComponent;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
@@ -325,10 +325,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
     if (myConfig.getEnvs() != null) {
       env.putAll(myConfig.getEnvs());
     }
-    if (PySciProjectComponent.getInstance(project).matplotlibInToolwindow() &&
-        PySciProjectComponent.getInstance(project).getPort() != -1) {
-      env.put("PYCHARM_MATPLOTLIB_PORT", String.valueOf(PySciProjectComponent.getInstance(project).getPort()));
-    }
     addCommonEnvironmentVariables(getInterpreterPath(project, myConfig), env);
 
     setupVirtualEnvVariables(myConfig, env, myConfig.getSdkHome());
@@ -337,8 +333,11 @@ public abstract class PythonCommandLineState extends CommandLineState {
     commandLine.getEnvironment().putAll(env);
     commandLine.withParentEnvironmentType(myConfig.isPassParentEnvs() ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
 
-
     buildPythonPath(project, commandLine, myConfig, isDebug);
+
+    for (PythonCommandLineEnvironmentProvider envProvider : Extensions.getExtensions(PythonCommandLineEnvironmentProvider.EP_NAME)) {
+      envProvider.extendEnvironment(project, commandLine);
+    }
   }
 
   private static void setupVirtualEnvVariables(PythonRunParams myConfig, Map<String, String> env, String sdkHome) {
@@ -385,10 +384,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
     Sdk pythonSdk = PythonSdkType.findSdkByPath(config.getSdkHome());
     if (pythonSdk != null) {
       List<String> pathList = Lists.newArrayList();
-      if (PySciProjectComponent.getInstance(project).matplotlibInToolwindow() &&
-          PySciProjectComponent.getInstance(project).getPort() != -1) {
-        pathList.add(PythonHelpersLocator.getHelperPath("pycharm_matplotlib_backend"));
-      }
       pathList.addAll(getAddedPaths(pythonSdk));
       pathList.addAll(collectPythonPath(project, config, isDebug));
       initPythonPath(commandLine, config.isPassParentEnvs(), pathList, config.getSdkHome());

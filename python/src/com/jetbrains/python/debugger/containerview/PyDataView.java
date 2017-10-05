@@ -65,7 +65,19 @@ public class PyDataView implements DumbAware {
     myProject = project;
   }
 
-  public void show(@NotNull PyDebugValue value) {
+  public void show(@NotNull PyDebugValue value, boolean inToolwindow) {
+    if (inToolwindow) {
+      showInToolwindow(value);
+    }
+    else {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        final PyDataViewDialog dialog = new PyDataViewDialog(myProject, value);
+        dialog.show();
+      });
+    }
+  }
+
+  private void showInToolwindow(@NotNull PyDebugValue value) {
     ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(DATA_VIEWER_ID);
     if (window == null) {
       LOG.error("Tool window '" + DATA_VIEWER_ID + "' is not found");

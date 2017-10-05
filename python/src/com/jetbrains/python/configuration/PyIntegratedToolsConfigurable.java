@@ -41,7 +41,6 @@ import com.intellij.util.FileContentUtilCore;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.ReSTService;
-import com.jetbrains.python.actions.PySciProjectComponent;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.packaging.PyPackageManagerUI;
@@ -79,7 +78,6 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   private JPanel myDocStringsPanel;
   private JPanel myRestPanel;
   private JCheckBox renderExternal;
-  private JCheckBox myShowPlots;
 
   public PyIntegratedToolsConfigurable(@NotNull Module module) {
     myModule = module;
@@ -102,7 +100,6 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     txtIsRst.setSelected(service.txtIsRst());
     analyzeDoctest.setSelected(myDocumentationSettings.isAnalyzeDoctest());
     renderExternal.setSelected(myDocumentationSettings.isRenderExternalDocumentation());
-    myShowPlots.setSelected(PySciProjectComponent.getInstance(myProject).matplotlibInToolwindow());
     myRequirementsPathField.addBrowseFolderListener("Choose path to the package requirements file:", null, myProject,
                                                     FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
     myRequirementsPathField.setText(getRequirementsPath());
@@ -214,9 +211,6 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     if (renderExternal.isSelected() != myDocumentationSettings.isRenderExternalDocumentation()) {
       return true;
     }
-    if (myShowPlots.isSelected() != PySciProjectComponent.getInstance(myProject).matplotlibInToolwindow()) {
-      return true;
-    }
     if (!ReSTService.getInstance(myModule).getWorkdir().equals(myWorkDir.getText())) {
       return true;
     }
@@ -246,7 +240,6 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     }
     myModel.apply();
     myDocumentationSettings.setRenderExternalDocumentation(renderExternal.isSelected());
-    PySciProjectComponent.getInstance(myProject).matplotlibInToolwindow(myShowPlots.isSelected());
     myDocumentationSettings.setFormat((DocStringFormat)myDocstringFormatComboBox.getSelectedItem());
     final ReSTService reSTService = ReSTService.getInstance(myModule);
     reSTService.setWorkdir(myWorkDir.getText());
@@ -284,7 +277,6 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     txtIsRst.setSelected(ReSTService.getInstance(myModule).txtIsRst());
     analyzeDoctest.setSelected(myDocumentationSettings.isAnalyzeDoctest());
     renderExternal.setSelected(myDocumentationSettings.isRenderExternalDocumentation());
-    myShowPlots.setSelected(PySciProjectComponent.getInstance(myProject).matplotlibInToolwindow());
     myRequirementsPathField.setText(getRequirementsPath());
   }
 
