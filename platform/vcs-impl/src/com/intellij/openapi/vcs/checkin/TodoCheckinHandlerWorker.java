@@ -164,7 +164,6 @@ public class TodoCheckinHandlerWorker {
     private List<TodoItem> myOldItems;
     private LineFragment myCurrentLineFragment;
     private HashSet<String> myOldTodoTexts;
-    private PsiFile myBeforeFile;
     @NotNull private final FilePath myAfterFile;
     @Nullable private final TodoFilter myTodoFilter;
 
@@ -181,10 +180,6 @@ public class TodoCheckinHandlerWorker {
     }
 
     public void process(final List<TodoItem> newTodoItems) throws DiffTooBigException {
-      myBeforeFile = null;
-      myOldItems = null;
-      myOldTodoTexts = null;
-
       List<LineFragment> lineFragments = getLineFragments(myBeforeContent, myAfterContent);
       lineFragments = ContainerUtil.filter(lineFragments, it -> DiffUtil.getLineDiffType(it) != TextDiffType.DELETED);
 
@@ -208,15 +203,14 @@ public class TodoCheckinHandlerWorker {
     }
 
     private void checkEditedFragment(TodoItem newTodoItem) {
-      if (myBeforeFile == null) {
-        myBeforeFile = ReadAction.compute(() -> {
+      if (myOldItems == null) {
+        PsiFile beforePsiFile = ReadAction.compute(() -> {
           return PsiFileFactory.getInstance(myProject)
             .createFileFromText("old" + myAfterFile.getName(), myAfterFile.getFileType(), myBeforeContent);
         });
-      }
-      if (myOldItems == null)  {
+
         final Collection<IndexPatternOccurrence> all =
-          LightIndexPatternSearch.SEARCH.createQuery(new IndexPatternSearch.SearchParameters(myBeforeFile, TodoIndexPatternProvider
+          LightIndexPatternSearch.SEARCH.createQuery(new IndexPatternSearch.SearchParameters(beforePsiFile, TodoIndexPatternProvider
             .getInstance())).findAll();
 
         final TodoItemsCreator todoItemsCreator = new TodoItemsCreator();
