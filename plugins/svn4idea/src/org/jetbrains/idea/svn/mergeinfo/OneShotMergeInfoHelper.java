@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.history.LogEntry;
@@ -35,7 +36,6 @@ import org.jetbrains.idea.svn.properties.PropertyData;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.*;
@@ -71,7 +71,7 @@ public class OneShotMergeInfoHelper implements MergeChecker {
     File file = myMergeContext.getWcInfo().getRootInfo().getIoFile();
 
     myMergeContext.getVcs().getFactory(file).createPropertyClient()
-      .getProperty(Target.on(file), SvnPropertyKeys.MERGE_INFO, SVNRevision.WORKING, depth, createPropertyHandler());
+      .getProperty(Target.on(file), SvnPropertyKeys.MERGE_INFO, Revision.WORKING, depth, createPropertyHandler());
   }
 
   @Nullable

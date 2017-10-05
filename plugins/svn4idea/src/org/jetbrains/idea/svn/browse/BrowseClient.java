@@ -19,13 +19,13 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.SvnClient;
 import org.jetbrains.idea.svn.api.Target;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 public interface BrowseClient extends SvnClient {
 
-  void list(@NotNull Target target, @Nullable SVNRevision revision, @Nullable Depth depth, @Nullable DirectoryEntryConsumer handler)
+  void list(@NotNull Target target, @Nullable Revision revision, @Nullable Depth depth, @Nullable DirectoryEntryConsumer handler)
     throws VcsException;
 
   long createDirectory(@NotNull Target target, @NotNull String message, boolean makeParents) throws VcsException;

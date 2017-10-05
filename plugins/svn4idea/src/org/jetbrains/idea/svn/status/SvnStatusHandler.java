@@ -24,9 +24,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.NodeKind;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.lock.Lock;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -353,7 +353,7 @@ public class SvnStatusHandler extends DefaultHandler {
     protected void updateStatus(Attributes attributes, PortableStatus status, Lock.Builder lock) {
       final String revision = attributes.getValue("revision");
       if (!StringUtil.isEmpty(revision)) {
-        status.setCommittedRevision(SVNRevision.create(Long.valueOf(revision)));
+        status.setCommittedRevision(Revision.of(Long.valueOf(revision)));
       }
     }
 
@@ -600,7 +600,7 @@ public class SvnStatusHandler extends DefaultHandler {
       if (!StringUtil.isEmptyOrSpaces(revision)) {
         try {
           final long number = Long.parseLong(revision);
-          status.setRevision(SVNRevision.create(number));
+          status.setRevision(Revision.of(number));
         }
         catch (NumberFormatException e) {
           throw new SAXException(e);

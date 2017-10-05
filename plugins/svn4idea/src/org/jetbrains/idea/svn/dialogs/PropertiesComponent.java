@@ -36,12 +36,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -158,7 +158,7 @@ public class PropertiesComponent extends JPanel {
         public void handleProperty(long revision, PropertyData property) {
         }
       };
-      vcs.getFactory(file).createPropertyClient().list(Target.on(file, SVNRevision.UNDEFINED), SVNRevision.WORKING, Depth.EMPTY,
+      vcs.getFactory(file).createPropertyClient().list(Target.on(file, Revision.UNDEFINED), Revision.WORKING, Depth.EMPTY,
                                                        handler);
     }
     catch (VcsException e) {
@@ -295,7 +295,7 @@ public class PropertiesComponent extends JPanel {
       PropertyValue propValue = null;
       try {
         propValue = myVcs.getFactory(myFile).createPropertyClient()
-          .getProperty(Target.on(myFile), SvnPropertyKeys.SVN_KEYWORDS, false, SVNRevision.WORKING);
+          .getProperty(Target.on(myFile), SvnPropertyKeys.SVN_KEYWORDS, false, Revision.WORKING);
       }
       catch (VcsException e1) {
         // show erorr message

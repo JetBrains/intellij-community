@@ -31,6 +31,7 @@ import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.api.NodeKind;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
@@ -38,7 +39,6 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.history.SvnRepositoryContentRevision;
 import org.jetbrains.idea.svn.status.SvnStatusHandler;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.*;
@@ -116,7 +116,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
   @NotNull
   private ContentRevision createRevision(@NotNull FilePath path,
                                          @NotNull FilePath localPath,
-                                         @NotNull SVNRevision revision,
+                                         @NotNull Revision revision,
                                          @NotNull FileStatus status) {
     ContentRevision result;
 

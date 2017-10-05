@@ -86,7 +86,6 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.*;
@@ -528,7 +527,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     }
 
     PropertyClient client = getFactory(ioFile).createPropertyClient();
-    final PropertyValue value = client.getProperty(Target.on(ioFile, SVNRevision.WORKING), propName, false, SVNRevision.WORKING);
+    final PropertyValue value = client.getProperty(Target.on(ioFile, Revision.WORKING), propName, false, Revision.WORKING);
 
     if (cachedMap == null) {
       cachedMap = new HashMap<>();
@@ -564,13 +563,13 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @Nullable
-  public Info getInfo(@NotNull SVNURL url, SVNRevision pegRevision, SVNRevision revision) throws SvnBindException {
+  public Info getInfo(@NotNull SVNURL url, Revision pegRevision, Revision revision) throws SvnBindException {
     return getFactory().createInfoClient().doInfo(Target.on(url, pegRevision), revision);
   }
 
   @Nullable
-  public Info getInfo(@NotNull SVNURL url, SVNRevision revision) throws SvnBindException {
-    return getInfo(url, SVNRevision.UNDEFINED, revision);
+  public Info getInfo(@NotNull SVNURL url, Revision revision) throws SvnBindException {
+    return getInfo(url, Revision.UNDEFINED, revision);
   }
 
   @Nullable
@@ -585,7 +584,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @Nullable
   public Info getInfo(@NotNull File ioFile) {
-    return getInfo(ioFile, SVNRevision.UNDEFINED);
+    return getInfo(ioFile, Revision.UNDEFINED);
   }
 
   public void collectInfo(@NotNull Collection<File> files, @Nullable InfoConsumer handler) {
@@ -616,7 +615,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @Nullable
-  public Info getInfo(@NotNull File ioFile, @NotNull SVNRevision revision) {
+  public Info getInfo(@NotNull File ioFile, @NotNull Revision revision) {
     Info result = null;
 
     try {
@@ -689,8 +688,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   @Nullable
   @Override
   public VcsRevisionNumber parseRevisionNumber(final String revisionNumberString) {
-    final SVNRevision revision = SVNRevision.parse(revisionNumberString);
-    if (revision.equals(SVNRevision.UNDEFINED)) {
+    final Revision revision = Revision.parse(revisionNumberString);
+    if (revision.equals(Revision.UNDEFINED)) {
       return null;
     }
     return new SvnRevisionNumber(revision);

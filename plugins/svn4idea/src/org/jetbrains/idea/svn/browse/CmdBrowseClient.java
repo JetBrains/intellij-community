@@ -20,10 +20,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.api.BaseSvnClient;
-import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.api.NodeKind;
-import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.*;
 import org.jetbrains.idea.svn.checkin.CmdCheckinClient;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
@@ -33,7 +30,6 @@ import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.lock.Lock;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.XmlAttribute;
@@ -51,7 +47,7 @@ public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
 
   @Override
   public void list(@NotNull Target target,
-                   @Nullable SVNRevision revision,
+                   @Nullable Revision revision,
                    @Nullable Depth depth,
                    @Nullable DirectoryEntryConsumer handler) throws VcsException {
     assertUrl(target);

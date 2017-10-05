@@ -23,11 +23,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.browse.BrowseClient;
 import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.util.Collections;
 import java.util.LinkedList;
@@ -75,7 +75,7 @@ public class BranchesLoader implements Runnable {
     Target target = Target.on(branchesUrl);
     DirectoryEntryConsumer handler = createConsumer(result);
 
-    vcs.getFactory(target).create(BrowseClient.class, !myPassive).list(target, SVNRevision.HEAD, Depth.IMMEDIATES, handler);
+    vcs.getFactory(target).create(BrowseClient.class, !myPassive).list(target, Revision.HEAD, Depth.IMMEDIATES, handler);
 
     Collections.sort(result);
     return result;

@@ -23,7 +23,6 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.auth.AuthenticationService;
 import org.jetbrains.idea.svn.commandLine.*;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.Collection;
@@ -145,7 +144,7 @@ public abstract class BaseSvnClient implements SvnClient {
   }
 
   @NotNull
-  protected static SVNRevision notNullize(@Nullable SVNRevision revision) {
-    return revision != null ? revision : SVNRevision.UNDEFINED;
+  protected static Revision notNullize(@Nullable Revision revision) {
+    return revision != null ? revision : Revision.UNDEFINED;
   }
 }

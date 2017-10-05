@@ -24,9 +24,9 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +44,7 @@ public class SvnLogUtil implements SvnLogLoader {
     myRepositoryRoot = repositoryRoot;
   }
 
-  public List<CommittedChangeList> loadInterval(final SVNRevision fromIncluding, final SVNRevision toIncluding,
+  public List<CommittedChangeList> loadInterval(final Revision fromIncluding, final Revision toIncluding,
                                                 final int maxCount, final boolean includingYoungest, final boolean includeOldest)
     throws VcsException {
     final List<CommittedChangeList> result = new ArrayList<>();
@@ -57,8 +57,8 @@ public class SvnLogUtil implements SvnLogLoader {
   }
 
   @NotNull
-  private LogEntryConsumer createLogHandler(final SVNRevision fromIncluding,
-                                               final SVNRevision toIncluding,
+  private LogEntryConsumer createLogHandler(final Revision fromIncluding,
+                                               final Revision toIncluding,
                                                final boolean includingYoungest,
                                                final boolean includeOldest, final List<CommittedChangeList> result) {
     return logEntry -> {

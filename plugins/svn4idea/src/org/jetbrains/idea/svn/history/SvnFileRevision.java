@@ -25,10 +25,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.IOException;
 import java.util.Date;
@@ -50,14 +50,14 @@ public class SvnFileRevision implements VcsFileRevision {
   @NotNull private final SvnRevisionNumber myRevisionNumber;
   @NotNull private final SvnVcs myVCS;
   @NotNull private final SVNURL myURL;
-  private final SVNRevision myPegRevision;
+  private final Revision myPegRevision;
   private final String myCopyFromPath;
   @NotNull private final List<SvnFileRevision> myMergeSources = newArrayList();
 
   @Deprecated // Required for compatibility with external plugins.
   public SvnFileRevision(@NotNull SvnVcs vcs,
-                         SVNRevision pegRevision,
-                         @NotNull SVNRevision revision,
+                         Revision pegRevision,
+                         @NotNull Revision revision,
                          @NotNull String url,
                          String author,
                          Date date,
@@ -67,8 +67,8 @@ public class SvnFileRevision implements VcsFileRevision {
   }
 
   public SvnFileRevision(@NotNull SvnVcs vcs,
-                         SVNRevision pegRevision,
-                         @NotNull SVNRevision revision,
+                         Revision pegRevision,
+                         @NotNull Revision revision,
                          @NotNull SVNURL url,
                          String author,
                          Date date,
@@ -85,11 +85,11 @@ public class SvnFileRevision implements VcsFileRevision {
   }
 
   public SvnFileRevision(@NotNull SvnVcs vcs,
-                         SVNRevision pegRevision,
+                         Revision pegRevision,
                          LogEntry logEntry,
                          @NotNull SVNURL url,
                          String copyFromPath) {
-    myRevisionNumber = new SvnRevisionNumber(SVNRevision.create(logEntry.getRevision()));
+    myRevisionNumber = new SvnRevisionNumber(Revision.of(logEntry.getRevision()));
     myPegRevision = pegRevision;
     myAuthor = logEntry.getAuthor();
     myDate = logEntry.getDate();
@@ -109,7 +109,7 @@ public class SvnFileRevision implements VcsFileRevision {
     return myURL;
   }
 
-  public SVNRevision getPegRevision() {
+  public Revision getPegRevision() {
     return myPegRevision;
   }
 
@@ -176,7 +176,7 @@ public class SvnFileRevision implements VcsFileRevision {
   public byte[] getContent() throws IOException, VcsException {
     byte[] result;
 
-    if (SVNRevision.HEAD.equals(getRevision())) {
+    if (Revision.HEAD.equals(getRevision())) {
       result = loadContent();
     }
     else {
@@ -222,7 +222,7 @@ public class SvnFileRevision implements VcsFileRevision {
   }
 
   @NotNull
-  public SVNRevision getRevision() {
+  public Revision getRevision() {
     return myRevisionNumber.getRevision();
   }
 }

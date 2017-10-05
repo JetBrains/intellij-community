@@ -46,6 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.api.ClientFactory;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
@@ -54,7 +55,6 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
 import java.awt.*;
@@ -245,7 +245,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     Info info = null;
 
     try {
-      info = factory.create(InfoClient.class, false).doInfo(Target.on(url), SVNRevision.UNDEFINED);
+      info = factory.create(InfoClient.class, false).doInfo(Target.on(url), Revision.UNDEFINED);
     }
     catch (SvnBindException ignore) {
     }
@@ -373,7 +373,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     SvnInteractiveAuthenticationProvider.clearCallState();
     Target target = Target.on(url);
     try {
-      SvnVcs.getInstance(project).getFactory(target).create(InfoClient.class, interactive).doInfo(target, SVNRevision.HEAD);
+      SvnVcs.getInstance(project).getFactory(target).create(InfoClient.class, interactive).doInfo(target, Revision.HEAD);
     }
     catch (ProcessCanceledException e) {
       return false;

@@ -16,11 +16,10 @@
 package org.jetbrains.idea.svn.api
 
 import org.tmatesoft.svn.core.SVNURL
-import org.tmatesoft.svn.core.wc.SVNRevision
 import java.io.File
 
-class Target private constructor(val url: SVNURL?, val file: File?, pegRevision: SVNRevision?) {
-  val pegRevision: SVNRevision = pegRevision ?: SVNRevision.UNDEFINED
+class Target private constructor(val url: SVNURL?, val file: File?, pegRevision: Revision?) {
+  val pegRevision = pegRevision ?: Revision.UNDEFINED
 
   val path: String get() = if (isFile()) file!!.path else url!!.toString()
   fun isFile() = file != null
@@ -31,10 +30,10 @@ class Target private constructor(val url: SVNURL?, val file: File?, pegRevision:
   companion object {
     @JvmStatic
     @JvmOverloads
-    fun on(url: SVNURL, pegRevision: SVNRevision? = null) = Target(url, null, pegRevision)
+    fun on(url: SVNURL, pegRevision: Revision? = null) = Target(url, null, pegRevision)
 
     @JvmStatic
     @JvmOverloads
-    fun on(file: File, pegRevision: SVNRevision? = null) = Target(null, file, pegRevision)
+    fun on(file: File, pegRevision: Revision? = null) = Target(null, file, pegRevision)
   }
 }

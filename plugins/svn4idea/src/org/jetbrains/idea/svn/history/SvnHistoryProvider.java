@@ -49,12 +49,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -205,8 +205,8 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
   }
 
   public void reportAppendableHistory(FilePath path, final VcsAppendableHistorySessionPartner partner,
-                                      @Nullable final SVNRevision from, @Nullable final SVNRevision to, final int limit,
-                                      SVNRevision peg, final boolean forceBackwards) throws VcsException {
+                                      @Nullable final Revision from, @Nullable final Revision to, final int limit,
+                                      Revision peg, final boolean forceBackwards) throws VcsException {
     FilePath committedPath = path;
     Change change = ChangeListManager.getInstance(myVcs.getProject()).getChange(path);
     if (change != null) {
@@ -265,15 +265,15 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     protected boolean mySupport15;
     protected final SvnVcs myVcs;
     protected final FilePath myFile;
-    protected final SVNRevision myFrom;
-    protected final SVNRevision myTo;
+    protected final Revision myFrom;
+    protected final Revision myTo;
     protected final int myLimit;
-    protected final SVNRevision myPeg;
+    protected final Revision myPeg;
     protected Consumer<VcsFileRevision> myConsumer;
     protected final ProgressIndicator myPI;
     protected VcsException myException;
 
-    protected LogLoader(SvnVcs vcs, FilePath file, SVNRevision from, SVNRevision to, int limit, SVNRevision peg, boolean showMergeSources) {
+    protected LogLoader(SvnVcs vcs, FilePath file, Revision from, Revision to, int limit, Revision peg, boolean showMergeSources) {
       myVcs = vcs;
       myFile = file;
       myFrom = from;
@@ -305,7 +305,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
   private static class LocalLoader extends LogLoader {
     private Info myInfo;
 
-    private LocalLoader(SvnVcs vcs, FilePath file, SVNRevision from, SVNRevision to, int limit, SVNRevision peg, boolean showMergeSources) {
+    private LocalLoader(SvnVcs vcs, FilePath file, Revision from, Revision to, int limit, Revision peg, boolean showMergeSources) {
       super(vcs, file, from, to, limit, peg, showMergeSources);
     }
 
@@ -331,13 +331,13 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       if (myPI != null) {
         myPI.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", myUrl.toDecodedString()));
       }
-      final SVNRevision pegRevision = myInfo.getRevision();
+      final Revision pegRevision = myInfo.getRevision();
       final Target target = Target.on(myFile.getIOFile(), myPeg);
       try {
         myVcs.getFactory(target).createHistoryClient().doLog(
           target,
-          myFrom == null ? SVNRevision.HEAD : myFrom,
-          myTo == null ? SVNRevision.create(1) : myTo,
+          myFrom == null ? Revision.HEAD : myFrom,
+          myTo == null ? Revision.of(1) : myTo,
           false, true, myShowMergeSources && mySupport15, myLimit, null,
           new MyLogEntryHandler(myVcs, myUrl, pegRevision, relativeUrl, myConsumer::consume, repoRootURL));
       }
@@ -352,10 +352,10 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
 
     private RepositoryLoader(SvnVcs vcs,
                              FilePath file,
-                             SVNRevision from,
-                             SVNRevision to,
+                             Revision from,
+                             Revision to,
                              int limit,
-                             SVNRevision peg,
+                             Revision peg,
                              boolean forceBackwards, boolean showMergeSources) {
       super(vcs, file, from, to, limit, peg, showMergeSources);
       myForceBackwards = forceBackwards;
@@ -380,7 +380,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
           }
         }
 
-        SVNRevision operationalFrom = myFrom == null ? SVNRevision.HEAD : myFrom;
+        Revision operationalFrom = myFrom == null ? Revision.HEAD : myFrom;
         // TODO: try to rewrite without separately retrieving repository url by item url - as this command could require authentication
         // TODO: and it is not "clear enough/easy to implement" with current design (for some cases) how to cache credentials (if in
         // TODO: non-interactive mode)
@@ -391,10 +391,10 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
         String relativeUrl = getRelativeUrl(rootURL, myUrl);
         Target target = Target.on(myUrl, myPeg == null ? myFrom : myPeg);
         RepositoryLogEntryHandler handler =
-          new RepositoryLogEntryHandler(myVcs, myUrl, SVNRevision.UNDEFINED, relativeUrl, myConsumer::consume, rootURL);
+          new RepositoryLogEntryHandler(myVcs, myUrl, Revision.UNDEFINED, relativeUrl, myConsumer::consume, rootURL);
 
         myVcs.getFactory(target).createHistoryClient()
-          .doLog(target, operationalFrom, myTo == null ? SVNRevision.create(1) : myTo, false, true, myShowMergeSources && mySupport15,
+          .doLog(target, operationalFrom, myTo == null ? Revision.of(1) : myTo, false, true, myShowMergeSources && mySupport15,
                  myLimit, null, handler);
       }
       catch (VcsException e) {
@@ -413,19 +413,19 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       SVNURL rootURL = info.getRepositoryRootURL();
       String relativeUrl = getRelativeUrl(rootURL, myUrl);
       final RepositoryLogEntryHandler repositoryLogEntryHandler =
-        new RepositoryLogEntryHandler(myVcs, myUrl, SVNRevision.UNDEFINED, relativeUrl, revision -> myConsumer.consume(revision), rootURL);
+        new RepositoryLogEntryHandler(myVcs, myUrl, Revision.UNDEFINED, relativeUrl, revision -> myConsumer.consume(revision), rootURL);
       repositoryLogEntryHandler.setThrowCancelOnMeetPathCreation(true);
 
       Target target = Target.on(rootURL, myFrom);
       myVcs.getFactory(target).createHistoryClient()
-        .doLog(target, myFrom, myTo == null ? SVNRevision.create(1) : myTo, false, true, myShowMergeSources && mySupport15, 1, null,
+        .doLog(target, myFrom, myTo == null ? Revision.of(1) : myTo, false, true, myShowMergeSources && mySupport15, 1, null,
                repositoryLogEntryHandler);
     }
 
     private boolean existsNow(SVNURL svnurl) {
       final Info info;
       try {
-        info = myVcs.getInfo(svnurl, SVNRevision.HEAD, SVNRevision.HEAD);
+        info = myVcs.getInfo(svnurl, Revision.HEAD, Revision.HEAD);
       }
       catch (SvnBindException e) {
         return false;
@@ -458,7 +458,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     protected final ThrowableConsumer<VcsFileRevision, SvnBindException> myResult;
     private final String myLastPath;
     private VcsFileRevision myPrevious;
-    private final SVNRevision myPegRevision;
+    private final Revision myPegRevision;
     protected final SVNURL myUrl;
     private final SvnMergeSourceTracker myTracker;
     protected SVNURL myRepositoryRoot;
@@ -469,7 +469,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     }
 
     public MyLogEntryHandler(SvnVcs vcs, SVNURL url,
-                             final SVNRevision pegRevision,
+                             final Revision pegRevision,
                              String lastPath,
                              final ThrowableConsumer<VcsFileRevision, SvnBindException> result,
                              SVNURL repoRootURL) {
@@ -583,7 +583,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       Date date = logEntry.getDate();
       String author = logEntry.getAuthor();
       String message = logEntry.getMessage();
-      SVNRevision rev = SVNRevision.create(logEntry.getRevision());
+      Revision rev = Revision.of(logEntry.getRevision());
       SVNURL url = append(myRepositoryRoot, myLastPath, true);
 
       return new SvnFileRevision(myVcs, myPegRevision, rev, url, author, date, message, copyPath);
@@ -592,7 +592,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
 
   private static class RepositoryLogEntryHandler extends MyLogEntryHandler {
     public RepositoryLogEntryHandler(final SvnVcs vcs, SVNURL url,
-                                     final SVNRevision pegRevision,
+                                     final Revision pegRevision,
                                      String lastPath,
                                      final ThrowableConsumer<VcsFileRevision, SvnBindException> result,
                                      SVNURL repoRootURL) {
@@ -605,7 +605,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       SVNURL url =
         entryPath == null ? append(myRepositoryRoot, myLastPathCorrector.getBefore()) : append(myRepositoryRoot, entryPath.getPath(), true);
 
-      return new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, url, copyPath);
+      return new SvnFileRevision(myVcs, Revision.UNDEFINED, logEntry, url, copyPath);
     }
   }
 

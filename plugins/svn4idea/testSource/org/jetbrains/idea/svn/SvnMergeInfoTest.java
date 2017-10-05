@@ -25,6 +25,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
@@ -40,7 +41,6 @@ import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.io.IOException;
@@ -359,7 +359,7 @@ public class SvnMergeInfoTest extends Svn17TestCase {
   private void assertMergeInfo(@NotNull File file, @NotNull String... values) throws SvnBindException {
     SvnVcs vcs = SvnVcs.getInstance(myProject);
     PropertyValue propertyValue =
-      vcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), MERGE_INFO, false, SVNRevision.WORKING);
+      vcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), MERGE_INFO, false, Revision.WORKING);
     assert propertyValue != null;
 
     boolean result = false;

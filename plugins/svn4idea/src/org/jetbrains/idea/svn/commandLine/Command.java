@@ -22,10 +22,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -62,7 +62,7 @@ public class Command {
     CommandUtil.put(myParameters, target);
   }
 
-  public void put(@Nullable SVNRevision revision) {
+  public void put(@Nullable Revision revision) {
     CommandUtil.put(myParameters, revision);
   }
 
@@ -218,10 +218,10 @@ public class Command {
   }
 
   @Nullable
-  private SVNRevision getRevision() {
+  private Revision getRevision() {
     int index = myParameters.indexOf("--revision");
 
-    return index >= 0 && index + 1 < myParameters.size() ? SVNRevision.parse(myParameters.get(index + 1)) : null;
+    return index >= 0 && index + 1 < myParameters.size() ? Revision.parse(myParameters.get(index + 1)) : null;
   }
 
   public boolean is(@NotNull SvnCommandName name) {
@@ -232,10 +232,10 @@ public class Command {
     return myTarget.isFile() && isLocal(myTarget.getPegRevision());
   }
 
-  private static boolean isLocal(@Nullable SVNRevision revision) {
+  private static boolean isLocal(@Nullable Revision revision) {
     return revision == null ||
-           SVNRevision.UNDEFINED.equals(revision) ||
-           SVNRevision.BASE.equals(revision) ||
-           SVNRevision.WORKING.equals(revision);
+           Revision.UNDEFINED.equals(revision) ||
+           Revision.BASE.equals(revision) ||
+           Revision.WORKING.equals(revision);
   }
 }

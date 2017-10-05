@@ -19,10 +19,10 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.SvnClient;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.checkin.CommitEventHandler;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 
@@ -32,7 +32,7 @@ public interface CopyMoveClient extends SvnClient {
 
   long copy(@NotNull Target source,
             @NotNull Target destination,
-            @Nullable SVNRevision revision,
+            @Nullable Revision revision,
             boolean makeParents,
             boolean isMove,
             @NotNull String message,
@@ -40,7 +40,7 @@ public interface CopyMoveClient extends SvnClient {
 
   void copy(@NotNull Target source,
             @NotNull File destination,
-            @Nullable SVNRevision revision,
+            @Nullable Revision revision,
             boolean makeParents,
             @Nullable ProgressTracker handler) throws VcsException;
 }

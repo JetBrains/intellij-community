@@ -22,12 +22,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.*;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.XmlAttribute;
@@ -48,7 +48,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
   public PropertyValue getProperty(@NotNull Target target,
                                    @NotNull String property,
                                    boolean revisionProperty,
-                                   @Nullable SVNRevision revision)
+                                   @Nullable Revision revision)
     throws SvnBindException {
     List<String> parameters = new ArrayList<>();
 
@@ -87,7 +87,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
   @Override
   public void getProperty(@NotNull Target target,
                           @NotNull String property,
-                          @Nullable SVNRevision revision,
+                          @Nullable Revision revision,
                           @Nullable Depth depth,
                           @Nullable PropertyConsumer handler) throws SvnBindException {
     List<String> parameters = new ArrayList<>();
@@ -108,7 +108,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
 
   @Override
   public void list(@NotNull Target target,
-                   @Nullable SVNRevision revision,
+                   @Nullable Revision revision,
                    @Nullable Depth depth,
                    @Nullable PropertyConsumer handler) throws SvnBindException {
     List<String> parameters = new ArrayList<>();
@@ -170,7 +170,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
   @Override
   public void setRevisionProperty(@NotNull Target target,
                                   @NotNull String property,
-                                  @NotNull SVNRevision revision,
+                                  @NotNull Revision revision,
                                   @Nullable PropertyValue value,
                                   boolean force) throws SvnBindException {
     runSetProperty(target, property, revision, null, value, force);
@@ -178,7 +178,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
 
   private void runSetProperty(@NotNull Target target,
                               @NotNull String property,
-                              @Nullable SVNRevision revision,
+                              @Nullable Revision revision,
                               @Nullable Depth depth,
                               @Nullable PropertyValue value,
                               boolean force) throws SvnBindException {
@@ -202,7 +202,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
   }
 
   private void fillListParameters(@NotNull Target target,
-                                  @Nullable SVNRevision revision,
+                                  @Nullable Revision revision,
                                   @Nullable Depth depth,
                                   @NotNull List<String> parameters,
                                   boolean verbose) {
@@ -295,12 +295,12 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     return result;
   }
 
-  private SVNRevision resolveRevisionNumber(@NotNull File path, @Nullable SVNRevision revision) throws SvnBindException {
+  private Revision resolveRevisionNumber(@NotNull File path, @Nullable Revision revision) throws SvnBindException {
     long result = revision != null ? revision.getNumber() : -1;
 
     // base should be resolved manually - could not set revision to BASE to get revision property
-    if (SVNRevision.BASE.equals(revision)) {
-      Info info = myVcs.getInfo(path, SVNRevision.BASE);
+    if (Revision.BASE.equals(revision)) {
+      Info info = myVcs.getInfo(path, Revision.BASE);
 
       result = info != null ? info.getRevision().getNumber() : -1;
     }
@@ -309,7 +309,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
       throw new SvnBindException("Could not determine revision number for file " + path + " and revision " + revision);
     }
 
-    return SVNRevision.create(result);
+    return Revision.of(result);
   }
 
   @XmlRootElement(name = "properties")

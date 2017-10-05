@@ -34,13 +34,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
 import org.jetbrains.idea.svn.status.StatusConsumer;
 import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.LinkedList;
@@ -103,7 +103,7 @@ public class SvnRecursiveStatusWalker {
     File ioFile = item.getPath().getIOFile();
 
     myHandler.setCurrentItem(item);
-    item.getClient().doStatus(ioFile, SVNRevision.WORKING, item.getDepth(), false, false, true, true, myHandler);
+    item.getClient().doStatus(ioFile, Revision.WORKING, item.getDepth(), false, false, true, true, myHandler);
 
     // check if current item was already processed - not to request its status once again
     if (!myHandler.myMetCurrentItem) {

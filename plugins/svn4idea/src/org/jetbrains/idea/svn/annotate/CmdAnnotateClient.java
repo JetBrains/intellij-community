@@ -19,13 +19,13 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.diff.DiffOptions;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.XmlAttribute;
@@ -38,8 +38,8 @@ public class CmdAnnotateClient extends BaseSvnClient implements AnnotateClient {
 
   @Override
   public void annotate(@NotNull Target target,
-                       @NotNull SVNRevision startRevision,
-                       @NotNull SVNRevision endRevision,
+                       @NotNull Revision startRevision,
+                       @NotNull Revision endRevision,
                        boolean includeMergedRevisions,
                        @Nullable DiffOptions diffOptions,
                        @Nullable final AnnotationConsumer handler) throws VcsException {

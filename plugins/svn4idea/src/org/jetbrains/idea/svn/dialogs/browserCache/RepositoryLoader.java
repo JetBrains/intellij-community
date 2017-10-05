@@ -25,11 +25,11 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationProvider;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
 import java.util.List;
@@ -115,7 +115,7 @@ class RepositoryLoader extends Loader {
 
       try {
         Target target = Target.on(node.getURL());
-        vcs.getFactoryFromSettings().createBrowseClient().list(target, SVNRevision.HEAD, Depth.IMMEDIATES, entries::add);
+        vcs.getFactoryFromSettings().createBrowseClient().list(target, Revision.HEAD, Depth.IMMEDIATES, entries::add);
       }
       catch (final VcsException e) {
         SwingUtilities.invokeLater(() -> {

@@ -29,9 +29,9 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -91,7 +91,7 @@ public class SvnRepositoryContentRevision extends SvnBaseContentRevision impleme
 
   @NotNull
   public SvnRevisionNumber getRevisionNumber() {
-    return new SvnRevisionNumber(SVNRevision.create(myRevision));
+    return new SvnRevisionNumber(Revision.of(myRevision));
   }
 
   public static SvnRepositoryContentRevision create(@NotNull SvnVcs vcs,
@@ -160,7 +160,7 @@ public class SvnRepositoryContentRevision extends SvnBaseContentRevision impleme
 
       try {
         // TODO: Local path could also be used here
-        SVNRevision revision = SVNRevision.create(myRevision);
+        Revision revision = Revision.of(myRevision);
         byte[] contents = SvnUtil.getFileContents(myVcs, Target.on(SvnUtil.parseUrl(getFullPath())), revision, revision);
         myDst.write(contents);
       }

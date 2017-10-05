@@ -22,13 +22,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.RevisionRange;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 
 import java.io.File;
 
@@ -44,7 +44,7 @@ public class BranchMerger implements IMerger {
   private final String myBranchName;
   private final long mySourceCopyRevision;
   private boolean myAtStart;
-  private SVNRevision mySourceLatestRevision;
+  private Revision mySourceLatestRevision;
   private final boolean mySupportsMergeInfo;
 
   public BranchMerger(final SvnVcs vcs,
@@ -87,7 +87,7 @@ public class BranchMerger implements IMerger {
       client.merge(source, destination, false, myReintegrate, createDiffOptions(), myHandler);
     } else {
       mySourceLatestRevision = resolveSourceLatestRevision();
-      SVNRevisionRange range = new SVNRevisionRange(SVNRevision.create(mySourceCopyRevision), mySourceLatestRevision);
+      RevisionRange range = new RevisionRange(Revision.of(mySourceCopyRevision), mySourceLatestRevision);
 
       client.merge(source, range, destination, Depth.UNKNOWN, false, false, true, createDiffOptions(), myHandler);
     }
@@ -116,8 +116,8 @@ public class BranchMerger implements IMerger {
   }
 
   @NotNull
-  public SVNRevision resolveSourceLatestRevision() {
-    SVNRevision result = SVNRevision.HEAD;
+  public Revision resolveSourceLatestRevision() {
+    Revision result = Revision.HEAD;
 
     try {
       result = SvnUtil.getHeadRevision(myVcs, mySourceUrl);

@@ -24,9 +24,9 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -52,8 +52,8 @@ public class FirstInBranch {
 
   @Nullable
   public CopyData run() throws VcsException {
-    Target trunk = Target.on(createUrl(myAbsoluteTrunkUrl), SVNRevision.HEAD);
-    Target branch = Target.on(createUrl(myAbsoluteBranchUrl), SVNRevision.HEAD);
+    Target trunk = Target.on(createUrl(myAbsoluteTrunkUrl), Revision.HEAD);
+    Target branch = Target.on(createUrl(myAbsoluteBranchUrl), Revision.HEAD);
     CopyData result = find(new BranchPoint(trunk), new BranchPoint(branch), true);
 
     debug(result);
@@ -128,7 +128,7 @@ public class FirstInBranch {
         .add("target", myTarget)
         .add("revision", myEntry != null ? myEntry.getRevision() : -1)
         .add("path", myPath != null && myPath.getCopyPath() != null
-                     ? format(myPath.getCopyPath(), SVNRevision.create(myPath.getCopyRevision()))
+                     ? format(myPath.getCopyPath(), Revision.of(myPath.getCopyRevision()))
                      : null)
         .toString();
     }
@@ -147,7 +147,7 @@ public class FirstInBranch {
       HistoryClient client = myVcs.getFactory(myTarget).createHistoryClient();
       Ref<LogEntry> entry = Ref.create();
 
-      client.doLog(myTarget, SVNRevision.create(1), myTarget.getPegRevision(), true, true, false, 1, null, entry::set);
+      client.doLog(myTarget, Revision.of(1), myTarget.getPegRevision(), true, true, false, 1, null, entry::set);
 
       if (entry.isNull()) {
         throw new VcsException("No branch point found for " + myTarget);
@@ -180,7 +180,7 @@ public class FirstInBranch {
 
     @NotNull
     private Target copyTarget() throws VcsException {
-      return Target.on(append(myRepositoryRoot, copyPath()), SVNRevision.create(copyRevision()));
+      return Target.on(append(myRepositoryRoot, copyPath()), Revision.of(copyRevision()));
     }
 
     @NotNull

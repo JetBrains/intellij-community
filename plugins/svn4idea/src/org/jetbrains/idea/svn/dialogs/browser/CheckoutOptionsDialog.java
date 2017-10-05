@@ -31,9 +31,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.DepthCombo;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.revision.SvnSelectRevisionPanel;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
 import java.awt.*;
@@ -147,7 +147,7 @@ public class CheckoutOptionsDialog extends DialogWrapper {
   }
 
   @NotNull
-  public SVNRevision getRevision() throws ConfigurationException {
+  public Revision getRevision() throws ConfigurationException {
       return svnSelectRevisionPanel.getRevision();
   }
 

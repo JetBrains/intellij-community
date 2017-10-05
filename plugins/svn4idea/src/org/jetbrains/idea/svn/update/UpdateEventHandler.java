@@ -32,10 +32,10 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.EventAction;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.HashMap;
@@ -256,7 +256,7 @@ public class UpdateEventHandler implements ProgressTracker {
   }
 
   private void setRevisionForWaitingFiles(long revisionNumber) {
-    SvnRevisionNumber revision = new SvnRevisionNumber(SVNRevision.create(revisionNumber));
+    SvnRevisionNumber revision = new SvnRevisionNumber(Revision.of(revisionNumber));
 
     for (Pair<String, String> pair : myFilesWaitingForRevision.pop()) {
       FileGroup fileGroup = myUpdatedFiles.getGroupById(pair.getFirst());

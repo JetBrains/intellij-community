@@ -33,6 +33,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.BasicAction;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.checkin.CommitEventHandler;
 import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
@@ -41,7 +42,6 @@ import org.jetbrains.idea.svn.update.AutoSvnUpdater;
 import org.jetbrains.idea.svn.update.SingleRootSwitcher;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 
@@ -67,7 +67,7 @@ public class CreateBranchOrTagAction extends BasicAction {
     CreateBranchOrTagDialog dialog = new CreateBranchOrTagDialog(vcs.getProject(), true, virtualToIoFile(file));
     if (dialog.showAndGet()) {
       String dstURL = dialog.getToURL();
-      SVNRevision revision = dialog.getRevision();
+      Revision revision = dialog.getRevision();
       String comment = dialog.getComment();
       Ref<Exception> exception = new Ref<>();
       boolean isSrcFile = dialog.isCopyFromWorkingCopy();
@@ -133,7 +133,7 @@ public class CreateBranchOrTagAction extends BasicAction {
     Ref<Boolean> resultRef = new Ref<>(Boolean.TRUE);
     Runnable taskImpl = () -> {
       try {
-        vcs.getInfo(url, SVNRevision.HEAD);
+        vcs.getInfo(url, Revision.HEAD);
       }
       catch (SvnBindException e) {
         if (e.contains(SVNErrorCode.RA_ILLEGAL_URL)) {

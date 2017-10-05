@@ -31,6 +31,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.NodeKind;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.history.SimplePropertyRevision;
@@ -38,7 +39,6 @@ import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.List;
@@ -360,7 +360,7 @@ class SvnChangeProviderContext implements StatusReceiver {
 
     // TODO: There are cases when status output is like (on newly added file with some properties that is locally deleted)
     // <entry path="some_path"> <wc-status item="missing" revision="-1" props="modified"> </wc-status> </entry>
-    // TODO: For such cases in current logic we'll have Change with before revision containing SVNRevision.UNDEFINED
+    // TODO: For such cases in current logic we'll have Change with before revision containing Revision.UNDEFINED
     // TODO: Analyze if this logic is OK or we should update flow somehow (for instance, to have null before revision)
     ContentRevision beforeRevision =
       !svnStatus.isProperty(StatusType.STATUS_ADDED) || deletedStatus != null ? createPropertyRevision(change, beforeFile, true) : null;
@@ -376,7 +376,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     throws SvnBindException {
     FilePath path = ChangesUtil.getFilePath(change);
     ContentRevision contentRevision = isBeforeRevision ? change.getBeforeRevision() : change.getAfterRevision();
-    SVNRevision revision = isBeforeRevision ? SVNRevision.BASE : SVNRevision.WORKING;
+    Revision revision = isBeforeRevision ? Revision.BASE : Revision.WORKING;
 
     return new SimplePropertyRevision(getPropertyList(myVcs, file, revision), path, getRevisionNumber(contentRevision));
   }

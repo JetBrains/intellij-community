@@ -42,16 +42,12 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.actions.ExclusiveBackgroundVcsAction;
 import org.jetbrains.idea.svn.actions.SvnExcludingIgnoredOperation;
-import org.jetbrains.idea.svn.api.ClientFactory;
-import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.api.ProgressTracker;
-import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.*;
 import org.jetbrains.idea.svn.checkin.CommitEventHandler;
 import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
 import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
 import org.jetbrains.idea.svn.dialogs.UpgradeFormatDialog;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.List;
@@ -76,7 +72,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
   }
 
   @Deprecated // Required for compatibility with external plugins.
-  public static void doCheckout(@NotNull Project project, @NotNull File target, final String url, final SVNRevision revision,
+  public static void doCheckout(@NotNull Project project, @NotNull File target, final String url, final Revision revision,
                                 final Depth depth, final boolean ignoreExternals, @Nullable final Listener listener) {
     doCheckout(project, target, parseUrl(url), revision, depth, ignoreExternals, listener);
   }
@@ -84,7 +80,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
   public static void doCheckout(@NotNull Project project,
                                 @NotNull File target,
                                 @NotNull SVNURL url,
-                                SVNRevision revision,
+                                Revision revision,
                                 Depth depth,
                                 boolean ignoreExternals,
                                 @Nullable Listener listener) {
@@ -109,7 +105,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
   public static void checkout(final Project project,
                               final File target,
                               final String url,
-                              final SVNRevision revision,
+                              final Revision revision,
                               final Depth depth,
                               final boolean ignoreExternals,
                               final Listener listener, final WorkingCopyFormat selectedFormat) {
@@ -119,7 +115,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
   public static void checkout(Project project,
                               File target,
                               @NotNull SVNURL url,
-                              SVNRevision revision,
+                              Revision revision,
                               Depth depth,
                               boolean ignoreExternals,
                               Listener listener,
@@ -211,7 +207,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
           Target from = Target.on(url);
           ExportClient client = vcs.getFactoryFromSettings().createExportClient();
-          client.export(from, target, SVNRevision.HEAD, depth, eolStyle, force, ignoreExternals, handler);
+          client.export(from, target, Revision.HEAD, depth, eolStyle, force, ignoreExternals, handler);
         }
         catch (VcsException e) {
           exception[0] = e;

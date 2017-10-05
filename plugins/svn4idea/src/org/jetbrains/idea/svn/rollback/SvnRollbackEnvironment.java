@@ -28,9 +28,9 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.Collection;
@@ -115,7 +115,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
       }
       else {
         // do update to restore missing directory.
-        mySvnVcs.getFactory(file).createUpdateClient().doUpdate(file, SVNRevision.HEAD, Depth.INFINITY, false, false);
+        mySvnVcs.getFactory(file).createUpdateClient().doUpdate(file, Revision.HEAD, Depth.INFINITY, false, false);
       }
     }
     else {

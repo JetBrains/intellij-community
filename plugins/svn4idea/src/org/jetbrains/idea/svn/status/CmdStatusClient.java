@@ -23,11 +23,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.*;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -52,7 +52,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
 
   @Override
   public long doStatus(@NotNull File path,
-                       @Nullable SVNRevision revision,
+                       @Nullable Revision revision,
                        @NotNull Depth depth,
                        boolean remote,
                        boolean reportAll,
@@ -71,7 +71,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
   }
 
   private void parseResult(@NotNull File path,
-                           @Nullable SVNRevision revision,
+                           @Nullable Revision revision,
                            @NotNull StatusConsumer handler,
                            @NotNull File base,
                            @Nullable Info infoBase,
@@ -136,7 +136,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
   }
 
   @NotNull
-  public SvnStatusHandler createStatusHandler(@Nullable SVNRevision revision,
+  public SvnStatusHandler createStatusHandler(@Nullable Revision revision,
                                               @NotNull StatusConsumer handler,
                                               @NotNull File base,
                                               @Nullable Info infoBase,
@@ -147,7 +147,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
   }
 
   @NotNull
-  private Convertor<File, Info> createInfoGetter(@Nullable SVNRevision revision) {
+  private Convertor<File, Info> createInfoGetter(@Nullable Revision revision) {
     return file -> {
       try {
         return myFactory.createInfoClient().doInfo(file, revision);
@@ -202,7 +202,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
   @Override
   public Status doStatus(@NotNull File path, boolean remote) throws SvnBindException {
     Ref<Status> status = Ref.create();
-    doStatus(path, SVNRevision.UNDEFINED, Depth.EMPTY, remote, false, false, false, status::set);
+    doStatus(path, Revision.UNDEFINED, Depth.EMPTY, remote, false, false, false, status::set);
     return status.get();
   }
 }

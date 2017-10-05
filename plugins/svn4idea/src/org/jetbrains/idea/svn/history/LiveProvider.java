@@ -25,10 +25,10 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.util.Iterator;
 import java.util.List;
@@ -74,7 +74,7 @@ public class LiveProvider implements BunchProvider {
     if ((myEarliestRevisionWasAccessed) || ((oldestRevision == myYoungestRevision) && ((! includeYoungest) || (! includeOldest)))) {
       return null;
     }
-    final SVNRevision youngRevision = (earliestRevision == -1) ? SVNRevision.HEAD : SVNRevision.create(earliestRevision);
+    final Revision youngRevision = (earliestRevision == -1) ? Revision.HEAD : Revision.of(earliestRevision);
 
     final Ref<List<CommittedChangeList>> refToList = new Ref<>();
     final Ref<VcsException> exceptionRef = new Ref<>();
@@ -82,7 +82,7 @@ public class LiveProvider implements BunchProvider {
     final Runnable loader = () -> {
       try {
         refToList
-          .set(myLoader.loadInterval(youngRevision, SVNRevision.create(oldestRevision), desirableSize, includeYoungest, includeOldest));
+          .set(myLoader.loadInterval(youngRevision, Revision.of(oldestRevision), desirableSize, includeYoungest, includeOldest));
       }
       catch (VcsException e) {
         exceptionRef.set(e);

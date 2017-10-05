@@ -28,13 +28,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.api.ProgressTracker;
-import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.*;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 
 import java.io.File;
 import java.util.List;
@@ -298,11 +294,11 @@ public class Merger implements IMerger {
     }
 
     @NotNull
-    public SVNRevisionRange revisionRange() {
-      SVNRevision startRevision = SVNRevision.create(lowestNumber() - 1);
-      SVNRevision endRevision = SVNRevision.create(highestNumber());
+    public RevisionRange revisionRange() {
+      Revision startRevision = Revision.of(lowestNumber() - 1);
+      Revision endRevision = Revision.of(highestNumber());
 
-      return myInvertRange ? new SVNRevisionRange(endRevision, startRevision) : new SVNRevisionRange(startRevision, endRevision);
+      return myInvertRange ? new RevisionRange(endRevision, startRevision) : new RevisionRange(startRevision, endRevision);
     }
 
     @Override

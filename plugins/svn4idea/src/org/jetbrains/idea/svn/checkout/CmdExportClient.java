@@ -19,14 +19,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.api.BaseSvnClient;
-import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.api.ProgressTracker;
-import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.*;
 import org.jetbrains.idea.svn.commandLine.BaseUpdateCommandListener;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -37,7 +33,7 @@ public class CmdExportClient extends BaseSvnClient implements ExportClient {
   @Override
   public void export(@NotNull Target from,
                      @NotNull File to,
-                     @Nullable SVNRevision revision,
+                     @Nullable Revision revision,
                      @Nullable Depth depth,
                      @Nullable String nativeLineEnd,
                      boolean force,

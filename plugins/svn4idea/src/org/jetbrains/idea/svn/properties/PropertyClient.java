@@ -18,26 +18,26 @@ package org.jetbrains.idea.svn.properties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.SvnClient;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 
 public interface PropertyClient extends SvnClient {
 
   @Nullable
-  PropertyValue getProperty(@NotNull Target target, @NotNull String property, boolean revisionProperty, @Nullable SVNRevision revision)
+  PropertyValue getProperty(@NotNull Target target, @NotNull String property, boolean revisionProperty, @Nullable Revision revision)
     throws SvnBindException;
 
   void getProperty(@NotNull Target target,
                    @NotNull String property,
-                   @Nullable SVNRevision revision,
+                   @Nullable Revision revision,
                    @Nullable Depth depth,
                    @Nullable PropertyConsumer handler) throws SvnBindException;
 
-  void list(@NotNull Target target, @Nullable SVNRevision revision, @Nullable Depth depth, @Nullable PropertyConsumer handler)
+  void list(@NotNull Target target, @Nullable Revision revision, @Nullable Depth depth, @Nullable PropertyConsumer handler)
     throws SvnBindException;
 
   void setProperty(@NotNull File file, @NotNull String property, @Nullable PropertyValue value, @Nullable Depth depth, boolean force)
@@ -47,7 +47,7 @@ public interface PropertyClient extends SvnClient {
 
   void setRevisionProperty(@NotNull Target target,
                            @NotNull String property,
-                           @NotNull SVNRevision revision,
+                           @NotNull Revision revision,
                            @Nullable PropertyValue value,
                            boolean force) throws SvnBindException;
 }

@@ -24,11 +24,11 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -113,15 +113,15 @@ public class SvnRevisionPanel extends JPanel {
   }
 
   public String getRevisionText() {
-    return myHead.isSelected() ? SVNRevision.HEAD.toString() : myRevisionField.getText();
+    return myHead.isSelected() ? Revision.HEAD.toString() : myRevisionField.getText();
   }
 
   @NotNull
-  public SVNRevision getRevision() throws ConfigurationException {
+  public Revision getRevision() throws ConfigurationException {
 
-    if (myHead.isSelected()) return SVNRevision.HEAD;
+    if (myHead.isSelected()) return Revision.HEAD;
 
-    final SVNRevision result = SVNRevision.parse(myRevisionField.getText());
+    final Revision result = Revision.parse(myRevisionField.getText());
     if (!result.isValid()) {
       throw new ConfigurationException(message("invalid.svn.revision.error.message", myRevisionField.getText()));
     }
@@ -133,8 +133,8 @@ public class SvnRevisionPanel extends JPanel {
     myRevisionField.setText(text);
   }
 
-  public void setRevision(final SVNRevision revision) {
-    if (revision == SVNRevision.HEAD) {
+  public void setRevision(final Revision revision) {
+    if (revision == Revision.HEAD) {
       myHead.setSelected(true);
       myRevisionField.setEnabled(false);
     } else {

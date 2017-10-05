@@ -52,7 +52,7 @@ import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static java.util.stream.Collectors.toList;
 import static org.jetbrains.idea.svn.SvnPropertyKeys.MERGE_INFO;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
-import static org.tmatesoft.svn.core.wc.SVNRevision.WORKING;
+import static org.jetbrains.idea.svn.api.Revision.WORKING;
 
 public class SvnQuickMergeTest extends Svn17TestCase {
   private SvnVcs myVcs;

@@ -60,7 +60,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.net.URI;
@@ -106,13 +105,20 @@ public class SvnUtil {
 
   @Nullable
   public static Date parseDate(@Nullable String value) {
+    return parseDate(value, true);
+  }
+
+  @Nullable
+  public static Date parseDate(@Nullable String value, boolean logError) {
     if (value == null) return null;
 
     try {
       return Date.from(Instant.parse(value));
     }
     catch (DateTimeParseException | ArithmeticException e) {
-      LOG.error("Could not parse date " + value, e);
+      if (logError) {
+        LOG.error("Could not parse date " + value, e);
+      }
       return null;
     }
   }
@@ -377,7 +383,7 @@ public class SvnUtil {
   @Nullable
   public static String getRepositoryUUID(final SvnVcs vcs, final SVNURL url) {
     try {
-      final Info info = vcs.getInfo(url, SVNRevision.UNDEFINED);
+      final Info info = vcs.getInfo(url, Revision.UNDEFINED);
 
       return (info == null) ? null : info.getRepositoryUUID();
     }
@@ -404,7 +410,7 @@ public class SvnUtil {
 
   @Nullable
   public static SVNURL getRepositoryRoot(final SvnVcs vcs, final SVNURL url) throws SvnBindException {
-    Info info = vcs.getInfo(url, SVNRevision.HEAD);
+    Info info = vcs.getInfo(url, Revision.HEAD);
 
     return (info == null) ? null : info.getRepositoryRootURL();
   }
@@ -623,8 +629,8 @@ public class SvnUtil {
   }
 
   @NotNull
-  public static SVNRevision getHeadRevision(@NotNull SvnVcs vcs, @NotNull SVNURL url) throws SvnBindException {
-    Info info = vcs.getInfo(url, SVNRevision.HEAD);
+  public static Revision getHeadRevision(@NotNull SvnVcs vcs, @NotNull SVNURL url) throws SvnBindException {
+    Info info = vcs.getInfo(url, Revision.HEAD);
 
     if (info == null) {
       throw new SvnBindException("Could not get info for " + url);
@@ -638,8 +644,8 @@ public class SvnUtil {
 
   public static byte[] getFileContents(@NotNull final SvnVcs vcs,
                                        @NotNull final Target target,
-                                       @Nullable final SVNRevision revision,
-                                       @Nullable final SVNRevision pegRevision)
+                                       @Nullable final Revision revision,
+                                       @Nullable final Revision pegRevision)
     throws VcsException {
     return vcs.getFactory(target).createContentClient().getContent(target, revision, pegRevision);
   }

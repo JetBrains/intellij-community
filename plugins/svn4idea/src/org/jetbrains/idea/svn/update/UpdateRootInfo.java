@@ -18,19 +18,19 @@ package org.jetbrains.idea.svn.update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 
 public class UpdateRootInfo {
   @Nullable private SVNURL myUrl;
-  private SVNRevision myRevision;
+  private Revision myRevision;
   private boolean myUpdateToSpecifiedRevision = false;
 
   public UpdateRootInfo(File file, SvnVcs vcs) {
-    myRevision = SVNRevision.HEAD;
+    myRevision = Revision.HEAD;
 
     Info info = vcs.getInfo(file);
     myUrl = info != null ? info.getURL() : null;
@@ -41,7 +41,7 @@ public class UpdateRootInfo {
     return myUrl;
   }
 
-  public SVNRevision getRevision() {
+  public Revision getRevision() {
     return myRevision;
   }
 
@@ -57,7 +57,7 @@ public class UpdateRootInfo {
     myUpdateToSpecifiedRevision = value;
   }
 
-  public void setRevision(final SVNRevision svnRevision) {
-    myRevision =svnRevision;
+  public void setRevision(final Revision revision) {
+    myRevision = revision;
   }
 }

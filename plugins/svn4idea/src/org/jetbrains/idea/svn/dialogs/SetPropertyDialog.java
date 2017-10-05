@@ -28,6 +28,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.properties.PropertyClient;
@@ -35,7 +36,6 @@ import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -164,7 +164,7 @@ public class SetPropertyDialog extends DialogWrapper {
 
     try {
       PropertyClient client = myVCS.getFactory(file).createPropertyClient();
-      result = client.getProperty(Target.on(file, SVNRevision.WORKING), name, false, SVNRevision.WORKING);
+      result = client.getProperty(Target.on(file, Revision.WORKING), name, false, Revision.WORKING);
     }
     catch (SvnBindException e) {
       LOG.info(e);
@@ -213,7 +213,7 @@ public class SetPropertyDialog extends DialogWrapper {
         };
 
         PropertyClient client = myVCS.getFactory(file).createPropertyClient();
-        client.list(Target.on(file, SVNRevision.WORKING), SVNRevision.WORKING, Depth.EMPTY, handler);
+        client.list(Target.on(file, Revision.WORKING), Revision.WORKING, Depth.EMPTY, handler);
       }
       catch (SvnBindException e) {
         LOG.info(e);

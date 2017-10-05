@@ -6,9 +6,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.changes.committed.ChangesBunch;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.history.*;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.util.*;
 
@@ -50,7 +50,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
     }
 
     @Override
-    public List<CommittedChangeList> loadInterval(final SVNRevision fromIncluding, final SVNRevision toIncluding, final int maxCount,
+    public List<CommittedChangeList> loadInterval(final Revision fromIncluding, final Revision toIncluding, final int maxCount,
                                                   final boolean includingYoungest, final boolean includeOldest) {
       long young = fromIncluding.getNumber();
       young = (young == -1) ? myRevisions.get(myRevisions.size() - 1) : young;

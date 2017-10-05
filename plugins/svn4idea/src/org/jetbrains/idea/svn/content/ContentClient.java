@@ -18,12 +18,12 @@ package org.jetbrains.idea.svn.content;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.SvnClient;
 import org.jetbrains.idea.svn.api.Target;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 public interface ContentClient extends SvnClient {
 
-  byte[] getContent(@NotNull Target target, @Nullable SVNRevision revision, @Nullable SVNRevision pegRevision)
+  byte[] getContent(@NotNull Target target, @Nullable Revision revision, @Nullable Revision pegRevision)
     throws VcsException, FileTooBigRuntimeException;
 }

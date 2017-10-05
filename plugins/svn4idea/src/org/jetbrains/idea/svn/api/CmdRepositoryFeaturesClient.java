@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 public class CmdRepositoryFeaturesClient extends BaseSvnClient implements RepositoryFeaturesClient {
 
@@ -30,7 +29,7 @@ public class CmdRepositoryFeaturesClient extends BaseSvnClient implements Reposi
 
     try {
       myFactory.createHistoryClient()
-        .doLog(Target.on(url), SVNRevision.HEAD, SVNRevision.create(1), false, false, true, 1, null, null);
+        .doLog(Target.on(url), Revision.HEAD, Revision.of(1), false, false, true, 1, null, null);
       result = true;
     }
     catch (SvnBindException e) {

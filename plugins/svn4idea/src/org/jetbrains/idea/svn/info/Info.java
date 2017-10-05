@@ -21,10 +21,10 @@ import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.BaseNodeDescription;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.NodeKind;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.lock.Lock;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.time.Instant;
@@ -41,17 +41,17 @@ public class Info extends BaseNodeDescription {
   private final File myFile;
   private final String myPath;
   private final SVNURL myURL;
-  @NotNull private final SVNRevision myRevision;
+  @NotNull private final Revision myRevision;
   private final SVNURL myRepositoryRootURL;
   private final String myRepositoryUUID;
-  private final SVNRevision myCommittedRevision;
+  private final Revision myCommittedRevision;
   private final Date myCommittedDate;
   private final String myAuthor;
   @Nullable private final Lock myLock;
   private final boolean myIsRemote;
   private final String mySchedule;
   private final SVNURL myCopyFromURL;
-  private final SVNRevision myCopyFromRevision;
+  private final Revision myCopyFromRevision;
   @Nullable private final File myConflictOldFile;
   @Nullable private final File myConflictNewFile;
   @Nullable private final File myConflictWrkFile;
@@ -81,18 +81,18 @@ public class Info extends BaseNodeDescription {
     super(kind);
     myFile = file;
     myURL = url;
-    myRevision = SVNRevision.create(revision);
+    myRevision = Revision.of(revision);
     myRepositoryUUID = uuid;
     myRepositoryRootURL = rootURL;
 
-    myCommittedRevision = SVNRevision.create(committedRevision);
+    myCommittedRevision = Revision.of(committedRevision);
     myCommittedDate = committedDate != null ? notNull(SvnUtil.parseDate(committedDate), DEFAULT_COMMITTED_DATE) : null;
     myAuthor = author;
 
     mySchedule = schedule;
 
     myCopyFromURL = copyFromURL;
-    myCopyFromRevision = SVNRevision.create(copyFromRevision);
+    myCopyFromRevision = Revision.of(copyFromRevision);
 
     myLock = lock;
     myTreeConflict = treeConflict;
@@ -110,7 +110,7 @@ public class Info extends BaseNodeDescription {
 
   public Info(String path,
               SVNURL url,
-              @NotNull SVNRevision revision,
+              @NotNull Revision revision,
               @NotNull NodeKind kind,
               String uuid,
               SVNURL reposRootURL,
@@ -127,7 +127,7 @@ public class Info extends BaseNodeDescription {
     myRepositoryUUID = uuid;
 
     myCommittedDate = date;
-    myCommittedRevision = SVNRevision.create(committedRevision);
+    myCommittedRevision = Revision.of(committedRevision);
     myAuthor = author;
 
     myLock = lock;
@@ -153,7 +153,7 @@ public class Info extends BaseNodeDescription {
     return myCommittedDate;
   }
 
-  public SVNRevision getCommittedRevision() {
+  public Revision getCommittedRevision() {
     return myCommittedRevision;
   }
 
@@ -177,7 +177,7 @@ public class Info extends BaseNodeDescription {
     return myTreeConflict;
   }
 
-  public SVNRevision getCopyFromRevision() {
+  public Revision getCopyFromRevision() {
     return myCopyFromRevision;
   }
 
@@ -221,7 +221,7 @@ public class Info extends BaseNodeDescription {
   }
 
   @NotNull
-  public SVNRevision getRevision() {
+  public Revision getRevision() {
     return myRevision;
   }
 

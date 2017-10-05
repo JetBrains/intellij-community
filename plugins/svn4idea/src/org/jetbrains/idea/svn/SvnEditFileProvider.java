@@ -18,10 +18,10 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.vcs.EditFileProvider;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.jetbrains.idea.svn.properties.PropertyValue;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 
@@ -41,8 +41,8 @@ public class SvnEditFileProvider implements EditFileProvider {
       ioFiles[i] = virtualToIoFile(files[i]);
 
       PropertyClient client = myVCS.getFactory(ioFiles[i]).createPropertyClient();
-      PropertyValue property = client.getProperty(Target.on(ioFiles[i], SVNRevision.WORKING), SvnPropertyKeys.SVN_NEEDS_LOCK,
-                                                  false, SVNRevision.WORKING);
+      PropertyValue property = client.getProperty(Target.on(ioFiles[i], Revision.WORKING), SvnPropertyKeys.SVN_NEEDS_LOCK,
+                                                  false, Revision.WORKING);
 
       if (property == null) {
         throw new VcsException(SvnBundle.message("exception.text.file.miss.svn", ioFiles[i].getName()));

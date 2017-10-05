@@ -35,13 +35,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.update.SvnRevisionPanel;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -257,16 +257,16 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     return myCommentText.getText();
   }
 
-  public SVNRevision getRevision() {
+  public Revision getRevision() {
     if (myWorkingCopyRadioButton.isSelected()) {
-      return SVNRevision.WORKING;
+      return Revision.WORKING;
     }
     else {
       try {
         return myRevisionPanel.getRevision();
       }
       catch (ConfigurationException e) {
-        return SVNRevision.UNDEFINED;
+        return Revision.UNDEFINED;
       }
     }
   }
@@ -306,12 +306,12 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     String url = getToURL();
     if (url != null && url.trim().length() > 0) {
       if (myRepositoryRadioButton.isSelected()) {
-        SVNRevision revision;
+        Revision revision;
         try {
           revision = myRevisionPanel.getRevision();
         }
         catch (ConfigurationException e) {
-          revision = SVNRevision.UNDEFINED;
+          revision = Revision.UNDEFINED;
         }
         if (!revision.isValid() || revision.isLocal()) {
           myErrorLabel.setText(message("create.branch.invalid.revision.error", myRevisionPanel.getRevisionText()));

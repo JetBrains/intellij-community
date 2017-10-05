@@ -23,10 +23,10 @@ import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.jetbrains.idea.svn.status.StatusType;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -53,7 +53,7 @@ public class CommandUtil {
   }
 
   public static void put(@NotNull List<String> parameters, @NotNull File path) {
-    put(parameters, path.getAbsolutePath(), SVNRevision.UNDEFINED);
+    put(parameters, path.getAbsolutePath(), Revision.UNDEFINED);
   }
 
   public static void put(@NotNull List<String> parameters, @NotNull File path, boolean usePegRevision) {
@@ -64,22 +64,22 @@ public class CommandUtil {
     }
   }
 
-  public static void put(@NotNull List<String> parameters, @NotNull File path, @Nullable SVNRevision pegRevision) {
+  public static void put(@NotNull List<String> parameters, @NotNull File path, @Nullable Revision pegRevision) {
     put(parameters, path.getAbsolutePath(), pegRevision);
   }
 
-  public static void put(@NotNull List<String> parameters, @NotNull String path, @Nullable SVNRevision pegRevision) {
+  public static void put(@NotNull List<String> parameters, @NotNull String path, @Nullable Revision pegRevision) {
     parameters.add(format(path, pegRevision));
   }
 
   @NotNull
-  public static String format(@NotNull String path, @Nullable SVNRevision pegRevision) {
+  public static String format(@NotNull String path, @Nullable Revision pegRevision) {
     StringBuilder builder = new StringBuilder(path);
 
     boolean hasAtSymbol = path.contains("@");
     boolean hasPegRevision = pegRevision != null &&
-                             !SVNRevision.UNDEFINED.equals(pegRevision) &&
-                             !SVNRevision.WORKING.equals(pegRevision) &&
+                             !Revision.UNDEFINED.equals(pegRevision) &&
+                             !Revision.WORKING.equals(pegRevision) &&
                              pegRevision.isValid();
 
     if (hasPegRevision || hasAtSymbol) {
@@ -121,20 +121,20 @@ public class CommandUtil {
     }
   }
 
-  public static void put(@NotNull List<String> parameters, @Nullable SVNRevision revision) {
-    if (revision != null && !SVNRevision.UNDEFINED.equals(revision) && !SVNRevision.WORKING.equals(revision) && revision.isValid()) {
+  public static void put(@NotNull List<String> parameters, @Nullable Revision revision) {
+    if (revision != null && !Revision.UNDEFINED.equals(revision) && !Revision.WORKING.equals(revision) && revision.isValid()) {
       parameters.add("--revision");
       parameters.add(format(revision));
     }
   }
 
-  public static void put(@NotNull List<String> parameters, @NotNull SVNRevision startRevision, @NotNull SVNRevision endRevision) {
+  public static void put(@NotNull List<String> parameters, @NotNull Revision startRevision, @NotNull Revision endRevision) {
     parameters.add("--revision");
     parameters.add(format(startRevision) + ":" + format(endRevision));
   }
 
   @NotNull
-  public static String format(@NotNull SVNRevision revision) {
+  public static String format(@NotNull Revision revision) {
     return revision.getDate() != null ? "{" + DateFormatUtil.getIso8601Format().format(revision.getDate()) + "}" : revision.toString();
   }
 

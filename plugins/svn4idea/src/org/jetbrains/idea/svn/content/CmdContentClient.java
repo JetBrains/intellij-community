@@ -23,12 +23,12 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +40,7 @@ public class CmdContentClient extends BaseSvnClient implements ContentClient {
   private static final String NO_PRISTINE_VERSION_FOR_FILE = "has no pristine version until it is committed";
 
   @Override
-  public byte[] getContent(@NotNull Target target, @Nullable SVNRevision revision, @Nullable SVNRevision pegRevision)
+  public byte[] getContent(@NotNull Target target, @Nullable Revision revision, @Nullable Revision pegRevision)
     throws VcsException, FileTooBigRuntimeException {
     // TODO: rewrite this to provide output as Stream
     // TODO: Also implement max size constraint like in SvnKitContentClient

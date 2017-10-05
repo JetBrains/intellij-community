@@ -16,10 +16,10 @@
 package org.jetbrains.idea.svn.update;
 
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 
@@ -27,13 +27,13 @@ import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class MergeRootInfo {
   private String myUrl1;
-  private SVNRevision myRevision1;
+  private Revision myRevision1;
   private String myUrl2;
-  private SVNRevision myRevision2;
+  private Revision myRevision2;
 
   public MergeRootInfo(File file, SvnVcs vcs) {
-    myRevision1 = SVNRevision.HEAD;
-    myRevision2 = SVNRevision.HEAD;
+    myRevision1 = Revision.HEAD;
+    myRevision2 = Revision.HEAD;
 
     Info info = vcs.getInfo(file);
     myUrl1 = info != null && info.getURL() != null ? info.getURL().toDecodedString() : "";
@@ -58,11 +58,11 @@ public class MergeRootInfo {
     }
   }
 
-  public SVNRevision getRevision2() {
+  public Revision getRevision2() {
     return myRevision2;
   }
 
-  public SVNRevision getRevision1() {
+  public Revision getRevision1() {
     return myRevision1;
   }
 
@@ -78,11 +78,11 @@ public class MergeRootInfo {
     myUrl2 = text;
   }
 
-  public void setRevision1(final SVNRevision rev) {
+  public void setRevision1(final Revision rev) {
     myRevision1 = rev;
   }
 
-  public void setRevision2(final SVNRevision rev) {
+  public void setRevision2(final Revision rev) {
     myRevision2 = rev;
   }
 

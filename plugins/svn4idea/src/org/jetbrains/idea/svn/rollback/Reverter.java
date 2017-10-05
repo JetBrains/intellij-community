@@ -31,7 +31,6 @@ import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.io.IOException;
@@ -87,7 +86,7 @@ public class Reverter {
         final File source = entry.getKey();
         final ThroughRenameInfo info = entry.getValue();
         if (info.isVersioned()) {
-          myVcs.getFactory(source).createPropertyClient().list(Target.on(source), SVNRevision.WORKING, Depth.EMPTY, handler);
+          myVcs.getFactory(source).createPropertyClient().list(Target.on(source), Revision.WORKING, Depth.EMPTY, handler);
         }
         if (source.isDirectory()) {
           if (!FileUtil.filesEqual(info.getTo(), info.getFirstTo())) {

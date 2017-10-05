@@ -24,6 +24,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
@@ -36,7 +37,6 @@ import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.*;
@@ -229,7 +229,7 @@ public class BranchInfo {
     else {
       Target target = Target.on(branchUrl);
       PropertyValue mergeinfoProperty = myVcs.getFactory(target).createPropertyClient()
-        .getProperty(target, SvnPropertyKeys.MERGE_INFO, false, SVNRevision.create(targetRevision));
+        .getProperty(target, SvnPropertyKeys.MERGE_INFO, false, Revision.of(targetRevision));
 
       if (mergeinfoProperty == null) {
         final String newTrunkUrl = SVNPathUtil.removeTail(trunkUrl).trim();
@@ -292,16 +292,16 @@ public class BranchInfo {
           }
 
           Target target;
-          SVNRevision revision;
+          Revision revision;
           if (actualRevision == targetRevisionCorrected) {
             // look in WC
-            target = Target.on(pathFile, SVNRevision.WORKING);
-            revision = SVNRevision.WORKING;
+            target = Target.on(pathFile, Revision.WORKING);
+            revision = Revision.WORKING;
           }
           else {
             // in repo
             target = Target.on(svnInfo.getURL());
-            revision = SVNRevision.create(targetRevisionCorrected);
+            revision = Revision.of(targetRevisionCorrected);
           }
 
           PropertyValue mergeinfoProperty =

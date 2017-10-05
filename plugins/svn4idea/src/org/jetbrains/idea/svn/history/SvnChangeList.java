@@ -37,12 +37,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -188,7 +188,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
 
   private void setRevision(long revision) {
     myRevision = revision;
-    myRevisionNumber = new SvnRevisionNumber(SVNRevision.create(revision));
+    myRevisionNumber = new SvnRevisionNumber(Revision.of(revision));
   }
 
   public Collection<Change> getChanges() {
@@ -420,7 +420,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
         }
         // TODO: Logic with detecting "isDirectory" status is not clear enough. Why we can't just collect this info from logEntry and
         // TODO: if loading from disk - use cached values? Not to invoke separate call here.
-        SVNRevision beforeRevision = SVNRevision.create(getRevision(idxData.second.booleanValue()));
+        Revision beforeRevision = Revision.of(getRevision(idxData.second.booleanValue()));
         Info info = myVcs.getInfo(createUrl(revision.getFullPath()), beforeRevision, beforeRevision);
         boolean isDirectory = info != null && info.isDirectory();
         Change replacingChange = new Change(createRevision((SvnRepositoryContentRevision)sourceChange.getBeforeRevision(), isDirectory),
@@ -502,7 +502,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
 
       final String path = getRelativePath(contentRevision);
       SVNURL fullPath = createUrl(((SvnRepositoryContentRevision)contentRevision).getFullPath());
-      SVNRevision revisionNumber = SVNRevision.create(getRevision(isBefore));
+      Revision revisionNumber = Revision.of(getRevision(isBefore));
       Target target = Target.on(fullPath, revisionNumber);
 
       myVcs.getFactory(target).createBrowseClient().list(target, revisionNumber, Depth.INFINITY, entry -> {

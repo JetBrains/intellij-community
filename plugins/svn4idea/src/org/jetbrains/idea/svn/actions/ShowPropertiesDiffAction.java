@@ -39,6 +39,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.difftool.properties.SvnPropertiesDiffRequest;
@@ -48,7 +49,6 @@ import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -92,8 +92,8 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
     private final Change myChange;
     private List<PropertyData> myBeforeContent;
     private List<PropertyData> myAfterContent;
-    private SVNRevision myBeforeRevisionValue;
-    private SVNRevision myAfterRevision;
+    private Revision myBeforeRevisionValue;
+    private Revision myAfterRevision;
     private SvnBindException myException;
     private final String myErrorTitle;
 
@@ -144,27 +144,27 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  private static SVNRevision getBeforeRevisionValue(@NotNull Change change) {
+  private static Revision getBeforeRevisionValue(@NotNull Change change) {
     ContentRevision beforeRevision = change.getBeforeRevision();
     if (beforeRevision != null) {
       return ((SvnRevisionNumber)beforeRevision.getRevisionNumber()).getRevision();
     }
     else {
-      return SVNRevision.create(((SvnRevisionNumber)notNull(change.getAfterRevision()).getRevisionNumber()).getRevision().getNumber() - 1);
+      return Revision.of(((SvnRevisionNumber)notNull(change.getAfterRevision()).getRevisionNumber()).getRevision().getNumber() - 1);
     }
   }
 
   @NotNull
-  private static SVNRevision getAfterRevisionValue(@NotNull Change change) {
+  private static Revision getAfterRevisionValue(@NotNull Change change) {
     ContentRevision afterRevision = change.getAfterRevision();
     if (afterRevision != null) {
       // CurrentContentRevision will be here, for instance, if invoked from changes dialog for "Compare with Branch" action
       return afterRevision instanceof CurrentContentRevision
-             ? SVNRevision.WORKING
+             ? Revision.WORKING
              : ((SvnRevisionNumber)afterRevision.getRevisionNumber()).getRevision();
     }
     else {
-      return SVNRevision.create(((SvnRevisionNumber)notNull(change.getBeforeRevision()).getRevisionNumber()).getRevision().getNumber() + 1);
+      return Revision.of(((SvnRevisionNumber)notNull(change.getBeforeRevision()).getRevisionNumber()).getRevision().getNumber() + 1);
     }
   }
 
@@ -182,28 +182,28 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
     }
   }
 
-  private static int compareRevisions(@NotNull SVNRevision revision1, @NotNull SVNRevision revision2) {
+  private static int compareRevisions(@NotNull Revision revision1, @NotNull Revision revision2) {
     if (revision1.equals(revision2)) {
       return 0;
     }
     // working(local) ahead of head
-    if (SVNRevision.WORKING.equals(revision1)) {
+    if (Revision.WORKING.equals(revision1)) {
       return 1;
     }
-    if (SVNRevision.WORKING.equals(revision2)) {
+    if (Revision.WORKING.equals(revision2)) {
       return -1;
     }
-    if (SVNRevision.HEAD.equals(revision1)) {
+    if (Revision.HEAD.equals(revision1)) {
       return 1;
     }
-    if (SVNRevision.HEAD.equals(revision2)) {
+    if (Revision.HEAD.equals(revision2)) {
       return -1;
     }
     return revision1.getNumber() > revision2.getNumber() ? 1 : -1;
   }
 
   @NotNull
-  private static String revisionToString(@Nullable SVNRevision revision) {
+  private static String revisionToString(@Nullable Revision revision) {
     return revision == null ? "not exists" : revision.toString();
   }
 
@@ -212,7 +212,7 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
   @NotNull
   private static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs,
                                                     @Nullable ContentRevision contentRevision,
-                                                    @Nullable SVNRevision revision) throws SvnBindException {
+                                                    @Nullable Revision revision) throws SvnBindException {
     if (contentRevision == null) {
       return Collections.emptyList();
     }
@@ -230,19 +230,19 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  public static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs, @NotNull SVNURL url, @Nullable SVNRevision revision)
+  public static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs, @NotNull SVNURL url, @Nullable Revision revision)
     throws SvnBindException {
     return getPropertyList(vcs, Target.on(url, revision), revision);
   }
 
   @NotNull
-  public static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs, @NotNull File ioFile, @Nullable SVNRevision revision)
+  public static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs, @NotNull File ioFile, @Nullable Revision revision)
     throws SvnBindException {
     return getPropertyList(vcs, Target.on(ioFile, revision), revision);
   }
 
   @NotNull
-  private static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs, @NotNull Target target, @Nullable SVNRevision revision)
+  private static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs, @NotNull Target target, @Nullable Revision revision)
     throws SvnBindException {
     List<PropertyData> lines = new ArrayList<>();
     PropertyConsumer propertyHandler = createHandler(revision, lines);
@@ -253,7 +253,7 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  private static PropertyConsumer createHandler(SVNRevision revision, @NotNull List<PropertyData> lines) {
+  private static PropertyConsumer createHandler(Revision revision, @NotNull List<PropertyData> lines) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.checkCanceled();

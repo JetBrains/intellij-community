@@ -27,7 +27,6 @@ import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -54,7 +53,7 @@ public class CmdUpdateClient extends BaseSvnClient implements UpdateClient {
   }
 
   private void checkWorkingCopy(@NotNull File path) throws SvnBindException {
-    final Info info = myFactory.createInfoClient().doInfo(path, SVNRevision.UNDEFINED);
+    final Info info = myFactory.createInfoClient().doInfo(path, Revision.UNDEFINED);
 
     if (info == null || info.getURL() == null) {
       throw new SvnBindException(SVNErrorCode.WC_NOT_WORKING_COPY, path.getPath());
@@ -104,7 +103,7 @@ public class CmdUpdateClient extends BaseSvnClient implements UpdateClient {
   }
 
   private static void fillParameters(@NotNull List<String> parameters,
-                                     @Nullable SVNRevision revision,
+                                     @Nullable Revision revision,
                                      @Nullable Depth depth,
                                      boolean depthIsSticky,
                                      boolean allowUnversionedObstructions) {
@@ -117,7 +116,7 @@ public class CmdUpdateClient extends BaseSvnClient implements UpdateClient {
   }
 
   @Override
-  public long doUpdate(File path, SVNRevision revision, Depth depth, boolean allowUnversionedObstructions, boolean depthIsSticky)
+  public long doUpdate(File path, Revision revision, Depth depth, boolean allowUnversionedObstructions, boolean depthIsSticky)
     throws SvnBindException {
     checkWorkingCopy(path);
 
@@ -134,8 +133,8 @@ public class CmdUpdateClient extends BaseSvnClient implements UpdateClient {
   @Override
   public long doSwitch(File path,
                        SVNURL url,
-                       SVNRevision pegRevision,
-                       SVNRevision revision,
+                       Revision pegRevision,
+                       Revision revision,
                        Depth depth,
                        boolean allowUnversionedObstructions,
                        boolean depthIsSticky) throws SvnBindException {

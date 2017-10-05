@@ -23,11 +23,14 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnConfiguration;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -78,11 +81,11 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
 
       final SVNURL sourceUrl = getSourceUrl(myVcs, root);
       final boolean isSwitch = rootInfo != null && rootInfo.getUrl() != null && ! rootInfo.getUrl().equals(sourceUrl);
-      final SVNRevision updateTo = rootInfo != null && rootInfo.isUpdateToRevision() ? rootInfo.getRevision() : SVNRevision.HEAD;
+      final Revision updateTo = rootInfo != null && rootInfo.isUpdateToRevision() ? rootInfo.getRevision() : Revision.HEAD;
       if (isSwitch) {
         final UpdateClient updateClient = createUpdateClient(configuration, root, true, sourceUrl);
         myHandler.addToSwitch(root, sourceUrl);
-        rev = updateClient.doSwitch(root, rootInfo.getUrl(), SVNRevision.UNDEFINED, updateTo, configuration.getUpdateDepth(),
+        rev = updateClient.doSwitch(root, rootInfo.getUrl(), Revision.UNDEFINED, updateTo, configuration.getUpdateDepth(),
                                     configuration.isForceUpdate(), false);
       } else {
         final UpdateClient updateClient = createUpdateClient(configuration, root, false, sourceUrl);
@@ -131,7 +134,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
         final SVNURL url = value.getUrl();
         if (url != null && (! url.equals(getSourceUrl(myVcs, root.getIOFile())))) {
           // switch
-          final SVNRevision updateRevision = correctRevision(value);
+          final Revision updateRevision = correctRevision(value);
           return true;
           // should be turned on after bugfix with copy url
           //return checkAncestry(ioFile, url, updateRevision);
@@ -146,8 +149,8 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
     return true;
   }
 
-  private SVNRevision correctRevision(@NotNull UpdateRootInfo value) throws SvnBindException {
-    if (SVNRevision.HEAD.equals(value.getRevision())) {
+  private Revision correctRevision(@NotNull UpdateRootInfo value) throws SvnBindException {
+    if (Revision.HEAD.equals(value.getRevision())) {
       // find acual revision to update to (a bug if just say head in switch)
       value.setRevision(SvnUtil.getHeadRevision(myVcs, value.getUrl()));
     }
@@ -155,7 +158,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
   }
 
   // false - do not do update
-  private boolean checkAncestry(final File sourceFile, final SVNURL targetUrl, final SVNRevision targetRevision) throws SvnBindException {
+  private boolean checkAncestry(final File sourceFile, final SVNURL targetUrl, final Revision targetRevision) throws SvnBindException {
     final Info sourceSvnInfo = myVcs.getInfo(sourceFile);
     final Info targetSvnInfo = myVcs.getInfo(targetUrl, targetRevision);
 

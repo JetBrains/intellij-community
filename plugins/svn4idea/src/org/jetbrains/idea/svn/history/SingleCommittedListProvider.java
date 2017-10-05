@@ -31,12 +31,12 @@ import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
@@ -49,7 +49,7 @@ public class SingleCommittedListProvider {
   @NotNull private final VirtualFile file;
   @NotNull private final VcsRevisionNumber number;
   private SvnChangeList[] changeList;
-  private SVNRevision revisionBefore;
+  private Revision revisionBefore;
   private SVNURL repositoryUrl;
   private SVNURL svnRootUrl;
   private SvnRepositoryLocation svnRootLocation;
@@ -126,7 +126,7 @@ public class SingleCommittedListProvider {
     Target target = Target.on(url);
 
     myVcs.getFactory(target).createHistoryClient()
-      .doLog(target, SVNRevision.HEAD, revisionBefore, false, true, false, 0, null, logEntry -> {
+      .doLog(target, Revision.HEAD, revisionBefore, false, true, false, 0, null, logEntry -> {
         checkDisposed();
         // date could be null for lists where there are paths that user has no rights to observe
         if (logEntry.getDate() != null) {

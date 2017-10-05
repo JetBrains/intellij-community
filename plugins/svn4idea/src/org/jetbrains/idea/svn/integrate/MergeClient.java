@@ -18,12 +18,8 @@ package org.jetbrains.idea.svn.integrate;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.api.ProgressTracker;
-import org.jetbrains.idea.svn.api.SvnClient;
-import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.*;
 import org.jetbrains.idea.svn.diff.DiffOptions;
-import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 
 import java.io.File;
 
@@ -37,7 +33,7 @@ public interface MergeClient extends SvnClient {
              @Nullable ProgressTracker handler) throws VcsException;
 
   void merge(@NotNull Target source,
-             @NotNull SVNRevisionRange range,
+             @NotNull RevisionRange range,
              @NotNull File destination,
              @Nullable Depth depth,
              boolean dryRun,

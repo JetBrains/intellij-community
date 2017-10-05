@@ -47,12 +47,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.ConflictedSvnChange;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.conflict.ConflictAction;
 import org.jetbrains.idea.svn.conflict.ConflictReason;
 import org.jetbrains.idea.svn.conflict.ConflictVersion;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
 import java.awt.*;
@@ -158,8 +158,8 @@ public class TreeConflictRefreshablePanel implements Disposable {
   }
 
   @Nullable
-  private SVNRevision getPegRevisionFromLeftSide(@NotNull TreeConflictDescription description) {
-    SVNRevision result = null;
+  private Revision getPegRevisionFromLeftSide(@NotNull TreeConflictDescription description) {
+    Revision result = null;
     if (description.getSourceLeftVersion() != null) {
       long committed = description.getSourceLeftVersion().getPegRevision();
       if (myCommittedRevision != null &&
@@ -167,7 +167,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
           myCommittedRevision.getRevision().isValid()) {
         committed = myCommittedRevision.getRevision().getNumber();
       }
-      result = SVNRevision.create(committed);
+      result = Revision.of(committed);
     }
     return result;
   }
@@ -178,7 +178,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
   }
 
   @NotNull
-  private ConflictSidePresentation createSide(@Nullable ConflictVersion version, @Nullable SVNRevision untilThisOther, boolean isLeft)
+  private ConflictSidePresentation createSide(@Nullable ConflictVersion version, @Nullable Revision untilThisOther, boolean isLeft)
     throws VcsException {
     ConflictSidePresentation result = EmptyConflictSide.getInstance();
     if (version != null &&
@@ -474,11 +474,11 @@ public class TreeConflictRefreshablePanel implements Disposable {
     private final SvnHistoryProvider myProvider;
     private final FilePath myPath;
     private final SvnVcs myVcs;
-    private final SVNRevision myPeg;
+    private final Revision myPeg;
     private FileHistoryPanelImpl myFileHistoryPanel;
     private TLongArrayList myListToReportLoaded;
 
-    private HistoryConflictSide(SvnVcs vcs, ConflictVersion version, final SVNRevision peg) throws VcsException {
+    private HistoryConflictSide(SvnVcs vcs, ConflictVersion version, final Revision peg) throws VcsException {
       super(vcs.getProject(), version);
       myVcs = vcs;
       myPeg = peg;
@@ -502,7 +502,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
 
     @Override
     public void load() throws VcsException {
-      SVNRevision from = SVNRevision.create(myVersion.getPegRevision());
+      Revision from = Revision.of(myVersion.getPegRevision());
       myProvider.reportAppendableHistory(myPath, mySessionAdapter, from, myPeg, myPeg == null ? LIMIT : 0, myPeg, true);
       VcsAbstractHistorySession session = mySessionAdapter.getSession();
       if (myListToReportLoaded != null && session != null) {

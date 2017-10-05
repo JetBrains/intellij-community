@@ -27,12 +27,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.util.ArrayList;
 
@@ -99,7 +99,7 @@ public class DefaultBranchConfigInitializer implements Runnable {
     if (branchLocationsParent != null) {
       Target target = Target.on(branchLocationsParent);
 
-      vcs.getFactory(target).createBrowseClient().list(target, SVNRevision.HEAD, Depth.IMMEDIATES, createHandler(result, target.getUrl()));
+      vcs.getFactory(target).createBrowseClient().list(target, Revision.HEAD, Depth.IMMEDIATES, createHandler(result, target.getUrl()));
     }
 
     return result;

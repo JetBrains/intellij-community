@@ -33,11 +33,11 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.api.ClientFactory;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.dialogs.ShareDialog;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import static com.intellij.openapi.progress.ProgressManager.progress;
 import static com.intellij.openapi.ui.Messages.*;
@@ -152,7 +152,7 @@ public class ShareProjectAction extends BasicAction {
                                               @NotNull String commitText) throws VcsException {
     switch (shareTarget) {
       case useSelected:
-        return Target.on(parentUrl, SVNRevision.HEAD);
+        return Target.on(parentUrl, Revision.HEAD);
       case useProjectName:
         return createRemoteFolder(vcs, parentUrl, file.getName(), commitText);
       default:
@@ -185,7 +185,7 @@ public class ShareProjectAction extends BasicAction {
     progress(message("share.directory.create.dir.progress.text", url.toDecodedString()));
 
     long revision = vcs.getFactoryFromSettings().createBrowseClient().createDirectory(target, message, false);
-    return Target.on(url, SVNRevision.create(revision));
+    return Target.on(url, Revision.of(revision));
   }
 
   @Override

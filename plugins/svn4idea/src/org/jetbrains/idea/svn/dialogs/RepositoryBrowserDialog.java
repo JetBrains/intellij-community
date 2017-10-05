@@ -40,6 +40,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.BrowseRepositoryAction;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
@@ -52,7 +53,6 @@ import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
 import javax.swing.tree.TreeNode;
@@ -977,7 +977,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       }
       SvnVcs vcs = SvnVcs.getInstance(myProject);
       try {
-        vcs.getFactoryFromSettings().createCopyMoveClient().copy(Target.on(src), Target.on(dst), SVNRevision.HEAD, true,
+        vcs.getFactoryFromSettings().createCopyMoveClient().copy(Target.on(src), Target.on(dst), Revision.HEAD, true,
                                                                  move, comment, null);
       }
       catch (VcsException e) {
@@ -1022,7 +1022,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     dialog.show();
     dir = dialog.getTarget();
     if (dialog.isOK() && dir != null) {
-      final SVNRevision revision;
+      final Revision revision;
         try {
           revision =  dialog.getRevision();
         } catch (ConfigurationException e) {
@@ -1065,8 +1065,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     OutputStream os = null;
     try {
       os = new BufferedOutputStream(new FileOutputStream(targetFile));
-      myVCS.getFactoryFromSettings().createDiffClient().unifiedDiff(Target.on(sourceURL, SVNRevision.HEAD),
-                                                                    Target.on(targetURL, SVNRevision.HEAD), os);
+      myVCS.getFactoryFromSettings().createDiffClient().unifiedDiff(Target.on(sourceURL, Revision.HEAD),
+                                                                    Target.on(targetURL, Revision.HEAD), os);
     }
     catch (IOException | VcsException e) {
       LOG.info(e);

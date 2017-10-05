@@ -22,11 +22,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.LinkedList;
@@ -101,7 +101,7 @@ public class ForNestedRootChecker {
     private void runInfo() {
       if (isRoot() || hasChildAdminDirectory()) {
         try {
-          myInfo = myVcs.getFactory(myIoFile, false).createInfoClient().doInfo(myIoFile, SVNRevision.UNDEFINED);
+          myInfo = myVcs.getFactory(myIoFile, false).createInfoClient().doInfo(myIoFile, Revision.UNDEFINED);
         }
         catch (SvnBindException e) {
           myError = e;

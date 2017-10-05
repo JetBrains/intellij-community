@@ -23,9 +23,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.ClientFactory;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.diff.DirectoryWithBranchComparer;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.List;
@@ -54,7 +54,7 @@ public class SvnDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<SvnFil
   @Override
   protected List<Change> getAffectedChanges(@NotNull FilePath path, @NotNull SvnFileRevision rev) throws VcsException {
     // Diff with zero revision is used here to get just affected changes under the path, and not all affected changes of the revision.
-    Target target1 = Target.on(rev.getURL(), SVNRevision.create(0));
+    Target target1 = Target.on(rev.getURL(), Revision.of(0));
     Target target2 = Target.on(rev.getURL(), rev.getRevision());
 
     return executeDiff(path, target1, target2);

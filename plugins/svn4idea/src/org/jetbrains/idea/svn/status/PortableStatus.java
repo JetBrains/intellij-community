@@ -19,11 +19,11 @@ import com.intellij.openapi.util.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.NodeKind;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.lock.Lock;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.Date;
@@ -83,8 +83,8 @@ public class PortableStatus extends Status {
   public PortableStatus(SVNURL url,
                         File file,
                         @NotNull NodeKind kind,
-                        SVNRevision revision,
-                        SVNRevision committedRevision,
+                        Revision revision,
+                        Revision committedRevision,
                         Date committedDate,
                         String author,
                         StatusType contentsStatus,
@@ -111,7 +111,7 @@ public class PortableStatus extends Status {
 
   public PortableStatus() {
     myInfoGetter = () -> null;
-    setCommittedRevision(SVNRevision.UNDEFINED);
+    setCommittedRevision(Revision.UNDEFINED);
   }
 
   @Override
@@ -207,8 +207,8 @@ public class PortableStatus extends Status {
 
   @NotNull
   @Override
-  public SVNRevision getRevision() {
-    final SVNRevision revision = super.getRevision();
+  public Revision getRevision() {
+    final Revision revision = super.getRevision();
     if (revision.isValid()) return revision;
 
     final StatusType status = getContentsStatus();

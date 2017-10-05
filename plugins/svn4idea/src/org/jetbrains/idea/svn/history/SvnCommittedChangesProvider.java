@@ -28,12 +28,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.branchConfig.ConfigureBranchesAction;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -178,8 +178,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
              message("progress.text2.changes.establishing.connection", target.getPath()));
 
     String author = settings.getUserFilter();
-    SVNRevision revisionBefore = createBeforeRevision(settings);
-    SVNRevision revisionAfter = createAfterRevision(settings);
+    Revision revisionBefore = createBeforeRevision(settings);
+    Revision revisionAfter = createAfterRevision(settings);
 
     myVcs.getFactory(target).createHistoryClient()
       .doLog(target, revisionBefore, revisionAfter, settings.STOP_ON_COPY, true, includeMergedRevisions, maxCount, null,
@@ -187,24 +187,24 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   @NotNull
-  private static SVNRevision createBeforeRevision(@NotNull ChangeBrowserSettings settings) {
-    return createRevision(settings.getDateBeforeFilter(), settings.getChangeBeforeFilter(), SVNRevision.HEAD);
+  private static Revision createBeforeRevision(@NotNull ChangeBrowserSettings settings) {
+    return createRevision(settings.getDateBeforeFilter(), settings.getChangeBeforeFilter(), Revision.HEAD);
   }
 
   @NotNull
-  private static SVNRevision createAfterRevision(@NotNull ChangeBrowserSettings settings) {
-    return createRevision(settings.getDateAfterFilter(), settings.getChangeAfterFilter(), SVNRevision.create(1));
+  private static Revision createAfterRevision(@NotNull ChangeBrowserSettings settings) {
+    return createRevision(settings.getDateAfterFilter(), settings.getChangeAfterFilter(), Revision.of(1));
   }
 
   @NotNull
-  private static SVNRevision createRevision(@Nullable Date date, @Nullable Long change, @NotNull SVNRevision defaultValue) {
-    SVNRevision result;
+  private static Revision createRevision(@Nullable Date date, @Nullable Long change, @NotNull Revision defaultValue) {
+    Revision result;
 
     if (date != null) {
-      result = SVNRevision.create(date);
+      result = Revision.of(date);
     }
     else if (change != null) {
-      result = SVNRevision.create(change.longValue());
+      result = Revision.of(change.longValue());
     }
     else {
       result = defaultValue;
@@ -342,7 +342,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     File rootFile = root.getIOFile();
 
     myVcs.getFactory(rootFile).createStatusClient()
-      .doStatus(rootFile, SVNRevision.UNDEFINED, Depth.INFINITY, true, false, false, false, status -> {
+      .doStatus(rootFile, Revision.UNDEFINED, Depth.INFINITY, true, false, false, false, status -> {
         File file = status.getFile();
         boolean changedOnServer = isNotNone(status.getRemoteContentsStatus()) ||
                                   isNotNone(status.getRemoteNodeStatus()) ||

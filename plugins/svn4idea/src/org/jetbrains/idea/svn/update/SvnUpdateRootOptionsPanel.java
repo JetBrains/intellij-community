@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.branchConfig.SelectBranchPopup;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
@@ -32,7 +33,6 @@ import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
 import java.awt.*;
@@ -107,7 +107,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
       }
     });
 
-    myRevisionText.setText(SVNRevision.HEAD.toString());
+    myRevisionText.setText(Revision.HEAD.toString());
     myRevisionText.getTextField().selectAll();
     myRevisionText.setEnabled(myRevisionBox.isSelected());
     myURLText.setEnabled(myUpdateToSpecificUrl.isSelected());
@@ -219,7 +219,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     }
 
     rootInfo.setUpdateToRevision(myRevisionBox.isSelected());
-    final SVNRevision revision = SVNRevision.parse(myRevisionText.getText());
+    final Revision revision = Revision.parse(myRevisionText.getText());
      if (!revision.isValid()) {
        throw new ConfigurationException(message("invalid.svn.revision.error.message", myRevisionText.getText()));
     }

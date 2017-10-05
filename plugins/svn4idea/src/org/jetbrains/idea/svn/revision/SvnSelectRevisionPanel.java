@@ -21,10 +21,10 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.update.SvnRevisionPanel;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
 import java.awt.*;
@@ -50,7 +50,7 @@ public class SvnSelectRevisionPanel extends JPanel {
   }
 
   @NotNull
-  public SVNRevision getRevision() throws ConfigurationException {
+  public Revision getRevision() throws ConfigurationException {
     return mySvnRevisionPanel.getRevision();
   }
 }
