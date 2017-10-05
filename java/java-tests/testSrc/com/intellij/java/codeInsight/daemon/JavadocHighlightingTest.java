@@ -6,10 +6,12 @@ import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.openapi.paths.WebReference;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.openapi.vcs.IssueNavigationLink;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiReferenceBase;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +31,11 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
     myInspection.IGNORE_DEPRECATED = true;
     myInspection.setPackageOption("public", "@author");
     enableInspectionTools(myInspection, new JavaDocReferenceInspection());
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk9();
   }
 
   @NotNull
@@ -78,6 +85,8 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testPackageInfo4() { doTest("packageInfo/p4/package-info.java"); }
   public void testJava18Tags() { doTest(); }
   public void testJava19Tags() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest(); }
+  public void testModuleInfoTags() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest("moduleInfo/m1/module-info.java"); }
+  public void testDeprecatedModule() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest("moduleInfo/m2/module-info.java"); }
   public void testUnknownInlineTag() { doTest(); }
   public void testUnknownTags() { doTest(); }
   public void testBadCharacters() { doTest(); }

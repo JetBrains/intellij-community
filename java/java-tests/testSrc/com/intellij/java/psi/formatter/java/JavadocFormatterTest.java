@@ -1,20 +1,5 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.formatter.java;
-
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
@@ -24,10 +9,9 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
 /**
  * @author Denis Zhdanov
- * @since 1/18/11 3:11 PM
  */
+@SuppressWarnings("SpellCheckingInspection")
 public class JavadocFormatterTest extends AbstractJavaFormatterTest {
-
   public void testRightMargin() {
     getSettings().WRAP_LONG_LINES = true;
     getSettings().RIGHT_MARGIN = 35;
@@ -41,7 +25,6 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
       " */\n" +
       "class Foo {\n" +
       "}");
-
   }
 
   public void test_NoFormatting_IfStartsWithLotsOfAsterisks() {
@@ -63,7 +46,6 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
-  
 
   public void testDoNotWrapLink() {
     getSettings().WRAP_LONG_LINES = true;
@@ -82,7 +64,6 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
-
 
   public void testDoNot() {
     getSettings().WRAP_LONG_LINES = true;
@@ -103,7 +84,6 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     );
   }
 
-
   public void testPackageJavadoc() {
     doTextTest(
       "/**\n" +
@@ -119,56 +99,56 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
 
   public void test_do_wrap_on_asterisks() {
     doTextTest(
-        "/***********\n" +
-        " *\n" +
-        " *********************/\n" +
-        "\n" +
-        "\n" +
-        "   public class Test {\n" +
-        "}\n",
-        "/***********\n" +
-        " *\n" +
-        " *********************/\n" +
-        "\n" +
-        "\n" +
-        "public class Test {\n" +
-        "}\n"
+      "/***********\n" +
+      " *\n" +
+      " *********************/\n" +
+      "\n" +
+      "\n" +
+      "   public class Test {\n" +
+      "}\n",
+      "/***********\n" +
+      " *\n" +
+      " *********************/\n" +
+      "\n" +
+      "\n" +
+      "public class Test {\n" +
+      "}\n"
     );
   }
 
   public void test_wrap_after_asterisks() {
     doTextTest(
-        "/** hollla la\n" +
-        " * I am javadoc comment\n" +
-        " * heey ***********/\n" +
-        "   class T {   }\n",
-        "/**\n" +
-        " * hollla la\n" +
-        " * I am javadoc comment\n" +
-        " * heey\n" +
-        " ***********/\n" +
-        "class T {\n" +
-        "}\n"
+      "/** hollla la\n" +
+      " * I am javadoc comment\n" +
+      " * heey ***********/\n" +
+      "   class T {   }\n",
+      "/**\n" +
+      " * hollla la\n" +
+      " * I am javadoc comment\n" +
+      " * heey\n" +
+      " ***********/\n" +
+      "class T {\n" +
+      "}\n"
     );
   }
 
   public void test_strange_comment() {
     doTextTest(
-        "/**F*****/\n" +
-        "public class T {\n" +
-        "}",
-        "/**\n" +
-        " * F\n" +
-        " *****/\n" +
-        "public class T {\n" +
-        "}"
+      "/**F*****/\n" +
+      "public class T {\n" +
+      "}",
+      "/**\n" +
+      " * F\n" +
+      " *****/\n" +
+      "public class T {\n" +
+      "}"
     );
   }
 
   public void test_incomplete_javadoc() {
     doTextTest(
-        "/**\n",
-        "/**\n"
+      "/**\n",
+      "/**\n"
     );
   }
 
@@ -217,7 +197,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     getSettings().getRootSettings().WRAP_COMMENTS = true;
     getJavaSettings().JD_PRESERVE_LINE_FEEDS = true;
     getSettings().RIGHT_MARGIN = 48;
-    
+
     doTextTest(
       "/**\n" +
       " * This is a long comment that spans more than one\n" +
@@ -234,7 +214,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
-  
+
   public void testSCR11296() {
     final CommonCodeStyleSettings settings = getSettings();
     settings.RIGHT_MARGIN = 50;
@@ -249,10 +229,10 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
     getSettings().getRootSettings().WRAP_COMMENTS = true;
     getSettings().RIGHT_MARGIN = 20;
-    doTextTest("/**\n" + 
-               " * <p />\n" + 
-               " * Another paragraph of the description placed after blank line.\n" + 
-               " */\n" + 
+    doTextTest("/**\n" +
+               " * <p />\n" +
+               " * Another paragraph of the description placed after blank line.\n" +
+               " */\n" +
                "class A{}",
                "/**\n" +
                " * <p/>\n" +
@@ -264,7 +244,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
                "class A {\n" +
                "}");
   }
-  
+
   public void test_PreserveExistingSelfClosingTags_AndGenerateOnlyPTag() {
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
     LanguageLevel before = LanguageLevelProjectExtension.getInstance(getProject()).getLanguageLevel();
@@ -293,7 +273,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
       LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(before);
     }
   }
-  
+
   public void testParagraphTagGeneration() {
     // Inspired by IDEA-61811
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true;
@@ -337,7 +317,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
       " @param protocolId protocol id\n" +
       " @param connectedUserIdHandlerFromServer user id\n" +
       " @return\n" +
-      
+
       " */\n" +
       "public void register(int protocolId, int connectedUserIdHandlerFromServer) {\n" +
       "}",
@@ -563,7 +543,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
       " */\n" +
       "     public class TestCase {\n" +
       "}",
-      
+
       "/**\n" +
       " * Some comment\n" +
       " * 2016\n" +
@@ -781,39 +761,39 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
                     "    }\n" +
                     "}";
 
-   String after = "public class Outer {\n" +
-                  "class Inner {\n" +
-                  "    /**\n" +
-                  "     * Password from wild forest big\n" +
-                  "     * house\n" +
-                  "     */\n" +
-                  "    public int getMagic() {\n" +
-                  "        return 312;\n" +
-                  "    }\n" +
-                  "\n" +
-                  "    class InnerInner {\n" +
-                  "        /**\n" +
-                  "         * Special magic needs special\n" +
-                  "         * rules\n" +
-                  "         */\n" +
-                  "        public int innerMagic() {\n" +
-                  "            return 1;\n" +
-                  "        }\n" +
-                  "\n" +
-                  "        class InnerInnerInner {\n" +
-                  "            int iii;\n" +
-                  "\n" +
-                  "            class TripleInner {\n" +
-                  "                int ti;\n" +
-                  "            }\n" +
-                  "        }\n" +
-                  "    }\n" +
-                  "}\n" +
-                  "\n" +
-                  "public static void main(String[] args) {\n" +
-                  "    System.out.println(\"AAA!\");\n" +
-                  "}\n" +
-                  "}";
+    String after = "public class Outer {\n" +
+                   "class Inner {\n" +
+                   "    /**\n" +
+                   "     * Password from wild forest big\n" +
+                   "     * house\n" +
+                   "     */\n" +
+                   "    public int getMagic() {\n" +
+                   "        return 312;\n" +
+                   "    }\n" +
+                   "\n" +
+                   "    class InnerInner {\n" +
+                   "        /**\n" +
+                   "         * Special magic needs special\n" +
+                   "         * rules\n" +
+                   "         */\n" +
+                   "        public int innerMagic() {\n" +
+                   "            return 1;\n" +
+                   "        }\n" +
+                   "\n" +
+                   "        class InnerInnerInner {\n" +
+                   "            int iii;\n" +
+                   "\n" +
+                   "            class TripleInner {\n" +
+                   "                int ti;\n" +
+                   "            }\n" +
+                   "        }\n" +
+                   "    }\n" +
+                   "}\n" +
+                   "\n" +
+                   "public static void main(String[] args) {\n" +
+                   "    System.out.println(\"AAA!\");\n" +
+                   "}\n" +
+                   "}";
 
     doTextTest(before, after);
   }
@@ -843,12 +823,12 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
                     "public void voo() {\n" +
                     "}\n";
     String after = "/**\n" +
-                    " * Super method\n" +
-                    " * <p>\n" +
-                    " * Super multiple times\n" +
-                    " */\n" +
-                    "public void voo() {\n" +
-                    "}\n";
+                   " * Super method\n" +
+                   " * <p>\n" +
+                   " * Super multiple times\n" +
+                   " */\n" +
+                   "public void voo() {\n" +
+                   "}\n";
     doClassTest(before, after);
   }
 
@@ -1004,17 +984,18 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testMultipleSince() {
-    doTextTest("/**\n" +
-               " * @since 1.7\n" +
-               " * @since 2.0\n" +
-               " */\n" +
-               "public class C {\n" +
-               "}",
-               "/**\n" +
-               " * @since 1.7\n" +
-               " * @since 2.0\n" +
-               " */\n" +
-               "public class C {\n" +
-               "}");
+    doTextTest(
+      "/**\n" +
+      " * @since 1.7\n" +
+      " * @since 2.0\n" +
+      " */\n" +
+      "public class C {\n" +
+      "}",
+      "/**\n" +
+      " * @since 1.7\n" +
+      " * @since 2.0\n" +
+      " */\n" +
+      "public class C {\n" +
+      "}");
   }
 }

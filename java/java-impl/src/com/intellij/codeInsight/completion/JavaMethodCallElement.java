@@ -111,7 +111,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
 
   public void setInferenceSubstitutorFromExpectedType(@NotNull PsiElement place, @NotNull PsiType expectedType) {
     myInferenceSubstitutor = SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor(myMethod, expectedType);
-    myNeedExplicitTypeParameters = mayNeedTypeParameters(place) && !myInferenceSubstitutor.equals(PsiSubstitutor.EMPTY) && SmartCompletionDecorator.hasUnboundTypeParams(myMethod, expectedType);
+    myNeedExplicitTypeParameters = mayNeedTypeParameters(place) && SmartCompletionDecorator.hasUnboundTypeParams(myMethod, expectedType);
     myPresentableTypeArgs = myNeedExplicitTypeParameters ? getTypeParamsText(true, myMethod, myInferenceSubstitutor) : null;
     if (myPresentableTypeArgs != null && myPresentableTypeArgs.length() > 10) {
       myPresentableTypeArgs = myPresentableTypeArgs.substring(0, 10) + "...>";

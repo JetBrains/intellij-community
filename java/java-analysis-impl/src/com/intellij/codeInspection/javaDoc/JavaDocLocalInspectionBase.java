@@ -58,6 +58,7 @@ public class JavaDocLocalInspectionBase extends LocalInspectionTool {
   }
 
   protected final Options PACKAGE_OPTIONS = new Options("none", "");
+  protected final Options MODULE_OPTIONS = new Options("none", "");
 
   public Options TOP_LEVEL_CLASS_OPTIONS = new Options("none", "");
   public Options INNER_CLASS_OPTIONS = new Options("none", "");
@@ -154,6 +155,11 @@ public class JavaDocLocalInspectionBase extends LocalInspectionTool {
       }
 
       @Override
+      public void visitModule(PsiJavaModule module) {
+        checkModule(module, holder, isOnTheFly);
+      }
+
+      @Override
       public void visitClass(PsiClass aClass) {
         checkClass(aClass, holder, isOnTheFly);
       }
@@ -191,8 +197,21 @@ public class JavaDocLocalInspectionBase extends LocalInspectionTool {
     }
   }
 
-  private static boolean isDeprecated(PsiPackage pkg, PsiDocComment docComment) {
-    return PsiImplUtil.isDeprecatedByAnnotation(pkg) || docComment != null && docComment.findTagByName("deprecated") != null;
+  private void checkModule(PsiJavaModule module, ProblemsHolder delegate, boolean isOnTheFly) {
+    PsiDocComment docComment = module.getDocComment();
+    if (IGNORE_DEPRECATED && isDeprecated(module, docComment)) {
+      return;
+    }
+
+    boolean required = JavadocHighlightUtil.isJavaDocRequired(this, module);
+    ProblemHolderImpl holder = new ProblemHolderImpl(delegate, isOnTheFly);
+
+    if (docComment != null) {
+      checkBasics(docComment, docComment.getTags(), module, required, holder);
+    }
+    else if (required) {
+      JavadocHighlightUtil.reportMissingTag(module.getNameIdentifier(), holder);
+    }
   }
 
   private void checkClass(PsiClass aClass, ProblemsHolder delegate, boolean isOnTheFly) {
@@ -232,8 +251,7 @@ public class JavaDocLocalInspectionBase extends LocalInspectionTool {
     ProblemHolderImpl holder = new ProblemHolderImpl(delegate, isOnTheFly);
 
     if (docComment != null) {
-      PsiDocTag[] tags = docComment.getTags();
-      checkBasics(docComment, tags, field, required, holder);
+      checkBasics(docComment, docComment.getTags(), field, required, holder);
     }
     else if (required) {
       JavadocHighlightUtil.reportMissingTag(field.getNameIdentifier(), holder);
@@ -309,6 +327,10 @@ public class JavaDocLocalInspectionBase extends LocalInspectionTool {
     JavadocHighlightUtil.checkForBadCharacters(docComment, holder);
 
     JavadocHighlightUtil.checkDuplicateTags(tags, holder);
+  }
+
+  private static boolean isDeprecated(PsiModifierListOwner element, PsiDocComment docComment) {
+    return PsiImplUtil.isDeprecatedByAnnotation(element) || docComment != null && docComment.findTagByName("deprecated") != null;
   }
 
   private boolean isTagRequired(PsiElement context, String tag) {
