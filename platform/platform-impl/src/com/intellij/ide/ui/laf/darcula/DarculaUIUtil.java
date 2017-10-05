@@ -64,7 +64,15 @@ public class DarculaUIUtil {
   public static final Color INACTIVE_ERROR_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_INACTIVE_ERROR_COLOR : DEFAULT_INACTIVE_ERROR_COLOR);
 
   @SuppressWarnings("UseJBColor")
-  public static final Color WARNING_COLOR = new Color(0xf6ebbc, true);
+  private static final Color MAC_ACTIVE_WARNING_COLOR = new Color(0x80e9ad43, true);
+  private static final Color DEFAULT_ACTIVE_WARNING_COLOR = new JBColor(0xe2a53a, 0xac7920);
+
+  @SuppressWarnings("UseJBColor")
+  private static final Color MAC_INACTIVE_WARNING_COLOR = new Color(0x80ffda99, true);
+  private static final Color DEFAULT_INACTIVE_WARNING_COLOR = new JBColor(0xffd385, 0x6e5324);
+
+  public static final Color ACTIVE_WARNING_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_ACTIVE_WARNING_COLOR : DEFAULT_ACTIVE_WARNING_COLOR);
+  public static final Color INACTIVE_WARNING_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_INACTIVE_WARNING_COLOR : DEFAULT_INACTIVE_WARNING_COLOR);
 
   @SuppressWarnings("UseJBColor")
   private static final Color MAC_REGULAR_COLOR = new Color(0x80479cfc, true);
@@ -81,8 +89,7 @@ public class DarculaUIUtil {
 
     warning {
       public void setGraphicsColor(Graphics2D g, boolean focused) {
-        g.setColor(WARNING_COLOR);
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, focused ? 1f : 0.5f));
+        g.setColor(focused ? ACTIVE_WARNING_COLOR: INACTIVE_WARNING_COLOR);
       }
     };
 

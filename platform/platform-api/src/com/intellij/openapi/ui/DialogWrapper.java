@@ -202,8 +202,8 @@ public abstract class DialogWrapper {
 
   private final Alarm myErrorTextAlarm = new Alarm();
 
-  private static final Color BALLOON_BORDER = new JBColor(new Color(0xe0a8a9), new Color(0x73454b));
-  private static final Color BALLOON_BACKGROUND = new JBColor(new Color(0xf5e6e7), new Color(0x593d41));
+  private static final Color BALLOON_ERROR_BORDER = new JBColor(new Color(0xe0a8a9), new Color(0x73454b));
+  private static final Color BALLOON_ERROR_BACKGROUND = new JBColor(new Color(0xf5e6e7), new Color(0x593d41));
 
   /**
    * Creates modal {@code DialogWrapper}. The currently active window will be the dialog's parent.
@@ -2002,8 +2002,8 @@ public abstract class DialogWrapper {
               .setHideOnKeyOutside(false)
               .setHideOnClickOutside(false)
               .setHideOnAction(false)
-              .setBorderColor(BALLOON_BORDER)
-              .setFillColor(BALLOON_BACKGROUND)
+              .setBorderColor(BALLOON_ERROR_BORDER)
+              .setFillColor(BALLOON_ERROR_BACKGROUND)
               .setHideOnFrameResize(false)
               .setRequestFocus(false)
               .setAnimationCycle(100)
