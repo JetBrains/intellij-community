@@ -31,6 +31,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBComboBoxLabel;
 import com.intellij.ui.components.JBLabel;
@@ -40,9 +41,11 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.List;
 
 /**
  * @author yole
@@ -235,24 +238,54 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   }
 
   private void createUIComponents() {
-    myTargetComboBox = new JBComboBoxLabel();
-    myTargetComboBox.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        JBPopupFactory.getInstance().createListPopup(
-          new BaseListPopupStep<String>("Choose target to run", Lists.newArrayList(SCRIPT_PATH, MODULE_NAME)) {
-            @Override
-            public PopupStep onChosen(String selectedValue, boolean finalChoice) {
-              setTargetComboBoxValue(selectedValue);
-              updateRunModuleMode();
-              return FINAL_CHOICE;
-            }
-          }).showUnderneathOf(myTargetComboBox);
-      }
-    });
+    myTargetComboBox = new MyComboBox();
   }
 
   private void setTargetComboBoxValue(String text) {
     myTargetComboBox.setText(text + ":");
+  }
+
+  private class MyComboBox extends JBComboBoxLabel implements UserActivityProviderComponent {
+    private List<ChangeListener> myListeners = Lists.newArrayList();
+
+    public MyComboBox() {
+      this.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+          JBPopupFactory.getInstance().createListPopup(
+            new BaseListPopupStep<String>("Choose target to run", Lists.newArrayList(SCRIPT_PATH, MODULE_NAME)) {
+              @Override
+              public PopupStep onChosen(String selectedValue, boolean finalChoice) {
+                setTargetComboBoxValue(selectedValue);
+                updateRunModuleMode();
+                return FINAL_CHOICE;
+              }
+            }).showUnderneathOf(MyComboBox.this);
+        }
+      });
+    }
+
+    @Override
+    public void addChangeListener(ChangeListener changeListener) {
+      myListeners.add(changeListener);
+    }
+
+    @Override
+    public void removeChangeListener(ChangeListener changeListener) {
+      myListeners.remove(changeListener);
+    }
+
+    void fireChangeEvent() {
+      for (ChangeListener l : myListeners) {
+        l.stateChanged(new ChangeEvent(this));
+      }
+    }
+
+    @Override
+    public void setText(String text) {
+      super.setText(text);
+
+      fireChangeEvent();
+    }
   }
 }
