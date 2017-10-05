@@ -34,6 +34,7 @@ import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBComboBoxLabel;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBTextField;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,8 +48,8 @@ import java.awt.event.MouseEvent;
  * @author yole
  */
 public class PythonRunConfigurationForm implements PythonRunConfigurationParams, PanelWithAnchor {
-  public static final String SCRIPT_PATH = "Script path:";
-  public static final String MODULE_NAME = "Module name:";
+  public static final String SCRIPT_PATH = "Script path";
+  public static final String MODULE_NAME = "Module name";
   private JPanel myRootPanel;
   private TextFieldWithBrowseButton myScriptTextField;
   private RawCommandLineEditor myScriptParametersTextField;
@@ -59,7 +60,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   private final Project myProject;
   private JBCheckBox myShowCommandLineCheckbox;
   private JBCheckBox myEmulateTerminalCheckbox;
-  private RawCommandLineEditor myModuleField;
+  private JBTextField myModuleField;
   private JBComboBoxLabel myTargetComboBox;
   private boolean myModuleMode;
 
@@ -111,7 +112,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   }
 
   private void updateRunModuleMode() {
-    boolean mode = MODULE_NAME.equals(myTargetComboBox.getText());
+    boolean mode = (MODULE_NAME + ":").equals(myTargetComboBox.getText());
     checkTargetComboConsistency(mode);
     setModuleModeInternal(mode);
   }
@@ -221,7 +222,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
   @Override
   public void setModuleMode(boolean moduleMode) {
-    myTargetComboBox.setText(moduleMode ? MODULE_NAME : SCRIPT_PATH);
+    setTargetComboBoxValue(moduleMode ? MODULE_NAME : SCRIPT_PATH);
     updateRunModuleMode();
     checkTargetComboConsistency(moduleMode);
   }
@@ -242,12 +243,16 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
           new BaseListPopupStep<String>("Choose target to run", Lists.newArrayList(SCRIPT_PATH, MODULE_NAME)) {
             @Override
             public PopupStep onChosen(String selectedValue, boolean finalChoice) {
-              myTargetComboBox.setText(selectedValue);
+              setTargetComboBoxValue(selectedValue);
               updateRunModuleMode();
               return FINAL_CHOICE;
             }
           }).showUnderneathOf(myTargetComboBox);
       }
     });
+  }
+
+  private void setTargetComboBoxValue(String text) {
+    myTargetComboBox.setText(text + ":");
   }
 }
