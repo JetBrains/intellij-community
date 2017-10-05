@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeInspection.InspectionsBundle;
@@ -30,6 +16,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -61,11 +48,15 @@ public class JavadocHighlightUtil {
   }
 
   static boolean isJavaDocRequired(@NotNull JavaDocLocalInspectionBase inspection, @NotNull PsiModifierListOwner element) {
-    int actualAccess = getAccessNumber(RefJavaUtil.getInstance().getAccessModifier(element));
-
     if (element instanceof PsiPackage) {
       return 1 <= getAccessNumber(inspection.PACKAGE_OPTIONS);
     }
+
+    if (element instanceof PsiJavaModule) {
+      return 1 <= getAccessNumber(inspection.MODULE_OPTIONS);
+    }
+
+    int actualAccess = getAccessNumber(RefJavaUtil.getInstance().getAccessModifier(element));
 
     if (element instanceof PsiClass) {
       boolean isInner = PsiTreeUtil.getParentOfType(element, PsiClass.class) != null;
@@ -100,11 +91,11 @@ public class JavadocHighlightUtil {
   }
 
   private static int getAccessNumber(String accessModifier) {
-    if (accessModifier.startsWith("none")) return 0;
-    if (accessModifier.startsWith("public")) return 1;
-    if (accessModifier.startsWith("protected")) return 2;
-    if (accessModifier.startsWith("package")) return 3;
-    if (accessModifier.startsWith("private")) return 4;
+    if (accessModifier.startsWith(JavaDocLocalInspectionBase.NONE)) return 0;
+    if (accessModifier.startsWith(JavaDocLocalInspectionBase.PUBLIC)) return 1;
+    if (accessModifier.startsWith(JavaDocLocalInspectionBase.PROTECTED)) return 2;
+    if (accessModifier.startsWith(JavaDocLocalInspectionBase.PACKAGE_LOCAL)) return 3;
+    if (accessModifier.startsWith(JavaDocLocalInspectionBase.PRIVATE)) return 4;
 
     return 5;
   }
@@ -159,7 +150,7 @@ public class JavadocHighlightUtil {
       JavadocTagInfo tagInfo = docManager.getTagInfo(tagName);
 
       if (tagInfo == null || !tagInfo.isValidInContext(context)) {
-        if (checkTagInfo(tag, tagInfo, holder)) continue;
+        if (checkTagInfo(tag, tagName, tagInfo, holder)) continue;
       }
 
       PsiDocTagValue value = tag.getValueElement();
@@ -178,14 +169,8 @@ public class JavadocHighlightUtil {
       }
 
       if (message != null) {
-        PsiDocTagValue valueElement = tag.getValueElement();
-        if (valueElement == null) {
-          String tagText = "<code>" + tag.getName() + "</code>";
-          holder.problem(tag, InspectionsBundle.message("inspection.javadoc.method.problem.missing.tag.description", tagText), null);
-        }
-        else {
-          holder.problem(valueElement, message, null);
-        }
+        PsiElement toHighlight = ObjectUtils.notNull(tag.getValueElement(), tag.getNameElement());
+        holder.problem(toHighlight, message, null);
       }
 
       PsiElement[] dataElements = tag.getDataElements();
@@ -219,8 +204,9 @@ public class JavadocHighlightUtil {
     for (PsiElement element : elements) {
       if (element instanceof PsiInlineDocTag) {
         PsiInlineDocTag tag = (PsiInlineDocTag)element;
-        if (docManager.getTagInfo(tag.getName()) == null) {
-          checkTagInfo(tag, null, holder);
+        String tagName = tag.getName();
+        if (docManager.getTagInfo(tagName) == null) {
+          checkTagInfo(tag, tagName, null, holder);
         }
         if (!holder.inspection().IGNORE_POINT_TO_ITSELF) {
           PsiDocTagValue value = tag.getValueElement();
@@ -244,9 +230,7 @@ public class JavadocHighlightUtil {
     }
   }
 
-  private static boolean checkTagInfo(PsiDocTag tag, JavadocTagInfo tagInfo, ProblemHolder holder) {
-    String tagName = tag.getName();
-
+  private static boolean checkTagInfo(PsiDocTag tag, String tagName, JavadocTagInfo tagInfo, ProblemHolder holder) {
     StringTokenizer tokenizer = new StringTokenizer(holder.inspection().myAdditionalJavadocTags, ", ");
     while (tokenizer.hasMoreTokens()) {
       if (Comparing.strEqual(tagName, tokenizer.nextToken())) return true;
