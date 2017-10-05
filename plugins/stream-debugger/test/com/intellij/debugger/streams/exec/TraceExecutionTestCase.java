@@ -32,6 +32,7 @@ import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.xdebugger.XDebugSession;
@@ -66,7 +67,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
 
   @Override
   protected String getTestAppPath() {
-    return new File("testData/debug/").getAbsolutePath();
+    return new File(PluginPathManager.getPluginHomePath("stream-debugger") + "/testData/debug/").getAbsolutePath();
   }
 
   protected void doTest(boolean isResultNull) {

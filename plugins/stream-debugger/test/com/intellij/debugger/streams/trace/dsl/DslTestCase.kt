@@ -16,6 +16,7 @@
 package com.intellij.debugger.streams.trace.dsl
 
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
+import com.intellij.openapi.application.PluginPathManager
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
@@ -434,6 +435,7 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
 
   private fun check(actualText: String) {
     val testName = getTestName(true)
-    UsefulTestCase.assertSameLinesWithFile("testData/dsl/$directoryName/$testName.out", actualText, false)
+    UsefulTestCase.assertSameLinesWithFile(
+      PluginPathManager.getPluginHomePath("stream-debugger") + "/testData/dsl/$directoryName/$testName.out", actualText, false)
   }
 }

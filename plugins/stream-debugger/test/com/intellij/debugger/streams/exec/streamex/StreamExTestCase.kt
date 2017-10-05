@@ -15,45 +15,24 @@
  */
 package com.intellij.debugger.streams.exec.streamex
 
-import com.intellij.debugger.streams.exec.TraceExecutionTestCase
+import com.intellij.debugger.streams.exec.LibraryTraceExecutionTestCase
 import com.intellij.debugger.streams.lib.LibrarySupportProvider
 import com.intellij.debugger.streams.lib.impl.StreamExLibrarySupportProvider
-import com.intellij.execution.configurations.JavaParameters
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
-import com.intellij.testFramework.PsiTestUtil
-import java.io.File
 
 /**
  * @author Vitaliy.Bibaev
  */
-abstract class StreamExTestCase : TraceExecutionTestCase() {
+abstract class StreamExTestCase : LibraryTraceExecutionTestCase("streamex-0.6.5.jar") {
   abstract protected val packageName: String
 
   override fun getLibrarySupportProvider(): LibrarySupportProvider {
     return StreamExLibrarySupportProvider()
   }
 
-  override fun setUpModule() {
-    super.setUpModule()
-    ApplicationManager.getApplication().runWriteAction {
-      VfsRootAccess.allowRootAccess(File("java/lib/").absolutePath)
-      PsiTestUtil.addLibrary(myModule, "java/lib/streamex-0.6.5.jar")
-    }
-  }
-
-  override fun createJavaParameters(mainClass: String?): JavaParameters {
-    val parameters = super.createJavaParameters(mainClass)
-    parameters.classPath.add(File("java/lib/streamex-0.6.5.jar").absolutePath)
-    return parameters
-  }
-
   private val className: String
     get() = packageName + "." + getTestName(false)
 
-  override fun getTestAppPath(): String {
-    return File("testData/streamex/").absolutePath
-  }
+  final override fun getTestAppRelativePath(): String = "streamex"
 
   protected fun doStreamExVoidTest() = doTest(true, className)
   protected fun doStreamExWithResultTest() = doTest(false, className)
