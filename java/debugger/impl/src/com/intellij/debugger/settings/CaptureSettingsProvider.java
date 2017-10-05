@@ -71,6 +71,10 @@ public class CaptureSettingsProvider {
                                    "fn",
                                    "Ljava/lang/Runnable;"));
 
+    // netty
+    addCapture("io/netty/util/concurrent/SingleThreadEventExecutor", "addTask", new StringKeyProvider("1"));
+    addInsert("io/netty/util/concurrent/AbstractEventExecutor", "safeExecute", new StringKeyProvider("0"));
+
     IDE_INSERT_POINTS = StreamEx.of(INSERT_POINTS).map(p -> p.myInsertPoint).nonNull().toList();
   }
 
