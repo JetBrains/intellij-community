@@ -226,13 +226,15 @@ public class CaptureAgent {
       // this
       mv.visitVarInsn(Opcodes.ALOAD, 0);
       // params
-      int index = (access & Opcodes.ACC_STATIC) == 0 ? 1 : 0;
+      boolean isStatic = (access & Opcodes.ACC_STATIC) != 0;
+      int index = isStatic ? 0 : 1;
       for (Type t : Type.getMethodType(desc).getArgumentTypes()) {
         mv.visitVarInsn(t.getOpcode(Opcodes.ILOAD), index);
         index += t.getSize();
       }
       // original call
-      mv.visitMethodInsn(Opcodes.INVOKESPECIAL, insertPoint.myClassName, getNewName(insertPoint.myMethodName), desc, false);
+      mv.visitMethodInsn(isStatic ? Opcodes.INVOKESTATIC : Opcodes.INVOKESPECIAL,
+                         insertPoint.myClassName, getNewName(insertPoint.myMethodName), desc, false);
 
       Label end = new Label();
       mv.visitLabel(end);
