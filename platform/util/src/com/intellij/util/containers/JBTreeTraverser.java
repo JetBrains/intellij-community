@@ -16,9 +16,20 @@
 package com.intellij.util.containers;
 
 import com.intellij.util.Function;
+import com.intellij.util.Functions;
 import org.jetbrains.annotations.NotNull;
 
 public class JBTreeTraverser<T> extends FilteredTraverserBase<T, JBTreeTraverser<T>> {
+
+  @NotNull
+  public static <T> JBTreeTraverser<T> from(@NotNull Function<T, ? extends Iterable<? extends T>> treeStructure) {
+    return new JBTreeTraverser<T>(treeStructure);
+  }
+
+  @NotNull
+  public static <T> JBTreeTraverser<T> of(@NotNull Function<T, T[]> treeStructure) {
+    return new JBTreeTraverser<T>(Functions.compose(treeStructure, Functions.<T>wrapArray()));
+  }
 
   public JBTreeTraverser(Function<T, ? extends Iterable<? extends T>> treeStructure) {
     super(null, treeStructure);
