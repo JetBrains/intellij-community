@@ -54,7 +54,8 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
     List<String> fileNames = null;
     String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(method.getContainingClass());
     if (testDataPath != null) {
-      fileNames = new TestDataReferenceCollector(testDataPath, method.getName().substring(4)).collectTestDataReferences(method);
+      fileNames = new TestDataReferenceCollector(testDataPath, method.getName().substring(4))
+        .collectTestDataReferences(method, collectByExistingFiles);
     }
 
     if (collectByExistingFiles && (fileNames == null || fileNames.isEmpty())) {

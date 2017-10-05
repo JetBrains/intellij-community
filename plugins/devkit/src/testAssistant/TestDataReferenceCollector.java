@@ -56,13 +56,18 @@ public class TestDataReferenceCollector {
 
   @NotNull
   List<String> collectTestDataReferences(@NotNull final PsiMethod method) {
+    return collectTestDataReferences(method, true);
+  }
+
+  @NotNull
+  List<String> collectTestDataReferences(@NotNull final PsiMethod method, boolean collectByExistingFiles) {
     myContainingClass = method.getContainingClass();
     List<String> result = collectTestDataReferences(method, new HashMap<>(), new HashSet<>());
     if (!myFoundTestDataParameters) {
       myLogMessages.add("Found no parameters annotated with @TestDataFile");
     }
 
-    if (result.isEmpty()) {
+    if (collectByExistingFiles && result.isEmpty()) {
       result = TestDataGuessByExistingFilesUtil.collectTestDataByExistingFiles(method);
     }
     return result;
