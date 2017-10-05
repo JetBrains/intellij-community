@@ -57,7 +57,7 @@ public final class TreeUtil {
     TreeModel model = tree.getModel();
     Object root = model.getRoot();
     TreePath rootPath = root == null ? null : new TreePath(root);
-    return new JBTreeTraverser<TreePath>(path -> nodeChildren(path.getLastPathComponent(), model)
+    return JBTreeTraverser.<TreePath>from(path -> nodeChildren(path.getLastPathComponent(), model)
       .map(o -> path.pathByAddingChild(o)))
       .withRoot(rootPath);
   }

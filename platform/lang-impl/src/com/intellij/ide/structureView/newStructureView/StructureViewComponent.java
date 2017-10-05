@@ -296,7 +296,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   @NotNull
   private static JBTreeTraverser<Object> traverser() {
-    return new JBTreeTraverser<>(o -> (o instanceof Group ? JBIterable.from(((Group)o).getChildren()) : JBIterable.empty()));
+    return JBTreeTraverser.from(o -> o instanceof Group ? ((Group)o).getChildren() : null);
   }
 
   private JBIterable<Object> getSelectedElements() {

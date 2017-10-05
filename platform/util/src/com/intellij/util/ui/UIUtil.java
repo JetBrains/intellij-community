@@ -3156,12 +3156,12 @@ public class UIUtil {
 
   @NotNull
   public static JBTreeTraverser<Component> uiTraverser(@Nullable Component component) {
-    return new JBTreeTraverser<Component>(COMPONENT_CHILDREN).withRoot(component);
+    return UI_TRAVERSER.withRoot(component);
   }
 
   public static final Key<Iterable<? extends Component>> NOT_IN_HIERARCHY_COMPONENTS = Key.create("NOT_IN_HIERARCHY_COMPONENTS");
 
-  private static final Function<Component, JBIterable<Component>> COMPONENT_CHILDREN = new Function<Component, JBIterable<Component>>() {
+  private static final JBTreeTraverser<Component> UI_TRAVERSER = JBTreeTraverser.from(new Function<Component, JBIterable<Component>>() {
     @Override
     public JBIterable<Component> fun(@NotNull Component c) {
       JBIterable<Component> result;
@@ -3189,7 +3189,7 @@ public class UIUtil {
       }
       return result;
     }
-  };
+  });
 
   private static final Function.Mono<Component> COMPONENT_PARENT = new Function.Mono<Component>() {
     @Override
