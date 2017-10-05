@@ -17,10 +17,7 @@ package com.intellij.ui.popup;
 
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.UiActivity;
-import com.intellij.ide.UiActivityMonitor;
+import com.intellij.ide.*;
 import com.intellij.ide.actions.WindowAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -470,7 +467,11 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public void show(@NotNull RelativePoint aPoint) {
-    final Point screenPoint = aPoint.getScreenPoint();
+    if (Registry.is("ide.helptooltip.enabled")) {
+      HelpTooltip.onShowMasterPopup((JComponent)aPoint.getOriginalComponent(), this);
+    }
+
+    Point screenPoint = aPoint.getScreenPoint();
     show(aPoint.getComponent(), screenPoint.x, screenPoint.y, false);
   }
 

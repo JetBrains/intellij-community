@@ -60,19 +60,11 @@ public class DarculaUIUtil {
   private static final Color MAC_INACTIVE_ERROR_COLOR = new Color(0x80f7bcbc, true);
   private static final Color DEFAULT_INACTIVE_ERROR_COLOR = new JBColor(0xebbcbc, 0x725252);
 
-  @SuppressWarnings("UseJBColor")
-  private static final Color MAC_ACTIVE_WARNING_COLOR = new Color(0x80f5f510, true);
-  private static final Color DEFAULT_ACTIVE_WARNING_COLOR = JBColor.YELLOW;
-
-  @SuppressWarnings("UseJBColor")
-  private static final Color MAC_INACTIVE_WARNING_COLOR = new Color(0x80f7f770, true);
-  private static final Color DEFAULT_INACTIVE_WARNING_COLOR = JBColor.YELLOW.brighter();
-
   public static final Color ACTIVE_ERROR_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_ACTIVE_ERROR_COLOR : DEFAULT_ACTIVE_ERROR_COLOR);
   public static final Color INACTIVE_ERROR_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_INACTIVE_ERROR_COLOR : DEFAULT_INACTIVE_ERROR_COLOR);
 
-  public static final Color ACTIVE_WARNING_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_ACTIVE_WARNING_COLOR : DEFAULT_ACTIVE_WARNING_COLOR);
-  public static final Color INACTIVE_WARNING_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_INACTIVE_WARNING_COLOR : DEFAULT_INACTIVE_WARNING_COLOR);
+  @SuppressWarnings("UseJBColor")
+  public static final Color WARNING_COLOR = new Color(0xf6ebbc, true);
 
   @SuppressWarnings("UseJBColor")
   private static final Color MAC_REGULAR_COLOR = new Color(0x80479cfc, true);
@@ -89,7 +81,8 @@ public class DarculaUIUtil {
 
     warning {
       public void setGraphicsColor(Graphics2D g, boolean focused) {
-        g.setColor(focused ? ACTIVE_WARNING_COLOR : INACTIVE_WARNING_COLOR);
+        g.setColor(WARNING_COLOR);
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, focused ? 1f : 0.5f));
       }
     };
 
