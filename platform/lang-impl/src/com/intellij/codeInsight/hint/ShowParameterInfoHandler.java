@@ -149,7 +149,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     final LightweightHint hint = new LightweightHint(component);
     hint.setSelectingHint(true);
     final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
-    final Pair<Point, Short> pos = ParameterInfoController.chooseBestHintPosition(project, editor, null, hint, true, HintManager.DEFAULT);
+    final Pair<Point, Short> pos = ParameterInfoController.chooseBestHintPosition(project, editor, null, hint, true, HintManager.DEFAULT, true);
     ApplicationManager.getApplication().invokeLater(() -> {
       if (!editor.getComponent().isShowing()) return;
       hintManager.showEditorHint(hint, editor, pos.getFirst(),
