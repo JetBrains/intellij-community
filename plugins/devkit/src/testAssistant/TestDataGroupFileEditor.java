@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -61,7 +62,7 @@ public class TestDataGroupFileEditor extends UserDataHolderBase implements FileE
   }
 
   private JComponent createComponent() {
-    Splitter splitter = new Splitter(false);
+    Splitter splitter = new OnePixelSplitter(false, 0.5f, 0.1f, 0.9f);
     splitter.setFirstComponent(wrapWithTitle(myFile.getBeforeFile().getName(), myBeforeEditor));
     splitter.setSecondComponent(wrapWithTitle(myFile.getAfterFile().getName(), myAfterEditor));
     return splitter;
