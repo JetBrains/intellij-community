@@ -1,16 +1,3 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
 package com.intellij.icons;
 
 import com.intellij.openapi.util.IconLoader;
@@ -167,6 +154,7 @@ public class AllIcons {
     public static final Icon SplitHorizontally = IconLoader.getIcon("/actions/splitHorizontally.png"); // 16x16
     public static final Icon SplitVertically = IconLoader.getIcon("/actions/splitVertically.png"); // 16x16
     public static final Icon StartDebugger = IconLoader.getIcon("/actions/startDebugger.png"); // 16x16
+    public static final Icon StartMemoryProfile = IconLoader.getIcon("/actions/startMemoryProfile.png"); // 16x16
     public static final Icon StepOut = IconLoader.getIcon("/actions/stepOut.png"); // 16x16
     public static final Icon Stub = IconLoader.getIcon("/actions/stub.png"); // 16x16
     public static final Icon Submit1 = IconLoader.getIcon("/actions/submit1.png"); // 11x11
