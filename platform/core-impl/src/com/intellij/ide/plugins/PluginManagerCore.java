@@ -100,6 +100,7 @@ public class PluginManagerCore {
 
   private static class Holder {
     private static final BuildNumber ourBuildNumber = calcBuildNumber();
+    private static final boolean ourIsRunningFromSources = new File(PathManager.getHomePath(), ".idea").isDirectory();
 
     private static BuildNumber calcBuildNumber() {
       BuildNumber ourBuildNumber = BuildNumber.fromString(System.getProperty("idea.plugins.compatible.build"));
@@ -461,7 +462,7 @@ public class PluginManagerCore {
     PluginId pluginId = pluginDescriptor.getPluginId();
     File pluginRoot = pluginDescriptor.getPath();
 
-    if (isUnitTestMode()) return null;
+    if (isRunningFromSources()) return null;
 
     try {
       final List<URL> urls = new ArrayList<>(classPath.length);
@@ -519,7 +520,8 @@ public class PluginManagerCore {
 
   @NotNull
   private static ClassLoader[] getParentLoaders(@NotNull Map<PluginId, ? extends IdeaPluginDescriptor> idToDescriptorMap, @NotNull PluginId[] pluginIds) {
-    if (isUnitTestMode()) return new ClassLoader[0];
+    if (isRunningFromSources()) return new ClassLoader[0];
+
     LinkedHashSet<ClassLoader> loaders = new LinkedHashSet<>(pluginIds.length);
     for (final PluginId id : pluginIds) {
       IdeaPluginDescriptor pluginDescriptor = idToDescriptorMap.get(id);
@@ -534,6 +536,10 @@ public class PluginManagerCore {
       loaders.add(loader);
     }
     return loaders.toArray(new ClassLoader[loaders.size()]);
+  }
+
+  public static boolean isRunningFromSources() {
+    return Holder.ourIsRunningFromSources;
   }
 
   private static int countPlugins(@NotNull String pluginsPath) {
