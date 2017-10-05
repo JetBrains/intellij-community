@@ -4,4 +4,5 @@ package com.intellij.codeInspection;
 /**
  * @deprecated superfluous, extend {@link AbstractBaseJavaLocalInspectionTool} instead (to be removed in IDEA 2019).
  */
+@Deprecated
 public abstract class BaseJavaBatchLocalInspectionTool extends AbstractBaseJavaLocalInspectionTool { }
