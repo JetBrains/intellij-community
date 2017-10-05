@@ -312,11 +312,6 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
     return myGenerator;
   }
 
-  @Override
-  public boolean hideInterpreter() {
-    return true;
-  }
-
   @Nullable
   @Override
   public BooleanFunction<PythonProjectGenerator> beforeProjectGenerated(@Nullable Sdk sdk) {
