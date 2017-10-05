@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.testAssistant.vfs;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,6 +44,19 @@ public class TestDataGroupFileSystem extends DummyCachingFileSystem<VirtualFile>
     return beforeFile.getPath() + GROUP_FILES_SEPARATOR + afterFile.getPath();
   }
 
+  @NotNull
+  @Override
+  public String extractPresentableUrl(@NotNull String path) {
+    String[] parts = path.split(GROUP_FILES_SEPARATOR);
+    if (parts.length != 2) {
+      return super.extractPresentableUrl(path);
+    }
+
+    // extractPresentableUrl is called from PsiAwareFileEditorManagerImpl#getFileTooltipText  and  CopyPathsAction#getPaths.
+    // First one wraps the return value with FileUtil#getLocationRelativeToUserHome so we have to wrap the second path with it too.
+    // But this causes copying first path as absolute and second one as user home-relative. So need to wrap both paths.
+    return FileUtil.getLocationRelativeToUserHome(parts[0]) + "\n" + FileUtil.getLocationRelativeToUserHome(parts[1]);
+  }
 
   @Override
   protected VirtualFile findFileByPathInner(@NotNull String path) {
