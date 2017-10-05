@@ -25,6 +25,8 @@ import com.intellij.ide.todo.TodoFilter;
 import com.intellij.ide.todo.TodoIndexPatternProvider;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -85,45 +87,48 @@ public class TodoCheckinHandlerWorker {
       if (change.getAfterRevision() == null) continue;
       FilePath afterFilePath = change.getAfterRevision().getFile();
 
-      final VirtualFile afterFile = getFileWithRefresh(afterFilePath);
-      if (afterFile == null || afterFile.isDirectory() || afterFile.getFileType().isBinary()) continue;
+      MyEditedFileProcessor fileProcessor = ReadAction.compute(() -> {
+        final VirtualFile afterFile = getFileWithRefresh(afterFilePath);
+        if (afterFile == null || afterFile.isDirectory() || afterFile.getFileType().isBinary()) {
+          return null; // skip detection
+        }
 
-      List<TodoItem> newTodoItems = ReadAction.compute(() -> {
-        if (!afterFile.isValid()) return null;
-        PsiFile psiFile = PsiManager.getInstance(myProject).findFile(afterFile);
-        if (psiFile == null) return null;
+        PsiFile afterPsiFile = afterFile.isValid() ? PsiManager.getInstance(myProject).findFile(afterFile) : null;
+        if (afterPsiFile == null) {
+          mySkipped.add(Pair.create(afterFilePath, ourInvalidFile));
+          return null;
+        }
 
         PsiTodoSearchHelper searchHelper = PsiTodoSearchHelper.SERVICE.getInstance(myProject);
-        return ContainerUtil.newArrayList(searchHelper.findTodoItems(psiFile));
+        List<TodoItem> newTodoItems = ContainerUtil.newArrayList(searchHelper.findTodoItems(afterPsiFile));
+        applyFilterAndRemoveDuplicates(newTodoItems, myTodoFilter);
+
+        if (change.getBeforeRevision() == null) {
+          // take just all todos
+          myAddedOrEditedTodos.addAll(newTodoItems);
+          return null;
+        }
+
+        String rawBeforeContent = getRevisionContent(change.getBeforeRevision());
+        if (rawBeforeContent == null) {
+          mySkipped.add(Pair.create(afterFilePath, ourCannotLoadPreviousRevision));
+          return null;
+        }
+
+        Document afterDocument = FileDocumentManager.getInstance().getDocument(afterFile);
+        if (afterDocument == null) {
+          mySkipped.add(Pair.create(afterFilePath, ourCannotLoadCurrentRevision));
+          return null;
+        }
+
+        String beforeContent = StringUtil.convertLineSeparators(rawBeforeContent);
+        String afterContent = afterDocument.getText();
+
+        return new MyEditedFileProcessor(myProject, afterFilePath, beforeContent, afterContent, newTodoItems, myTodoFilter);
       });
-      if (newTodoItems == null) {
-        mySkipped.add(Pair.create(afterFilePath, ourInvalidFile));
-        continue;
-      }
-
-      applyFilterAndRemoveDuplicates(newTodoItems, myTodoFilter);
-
-      if (change.getBeforeRevision() == null) {
-        // take just all todos
-        myAddedOrEditedTodos.addAll(newTodoItems);
-        continue;
-      }
-
-      String beforeContent = getRevisionContent(change.getBeforeRevision());
-      if (beforeContent == null) {
-        mySkipped.add(Pair.create(afterFilePath, ourCannotLoadPreviousRevision));
-        continue;
-      }
-
-      String afterContent = getRevisionContent(change.getAfterRevision());
-      if (afterContent == null) {
-        mySkipped.add(Pair.create(afterFilePath, ourCannotLoadCurrentRevision));
-        continue;
-      }
 
       try {
-        new MyEditedFileProcessor(myProject, afterFilePath, beforeContent, afterContent, myTodoFilter)
-          .process(newTodoItems);
+        if (fileProcessor != null) fileProcessor.process();
       }
       catch (DiffTooBigException e) {
         LOG.info("File " + afterFilePath.getPath() + " is too big and there are too many changes to build a diff");
@@ -165,26 +170,29 @@ public class TodoCheckinHandlerWorker {
     private LineFragment myCurrentLineFragment;
     private HashSet<String> myOldTodoTexts;
     @NotNull private final FilePath myAfterFile;
+    @NotNull private final List<TodoItem> myNewTodoItems;
     @Nullable private final TodoFilter myTodoFilter;
 
     private MyEditedFileProcessor(@NotNull Project project,
                                   @NotNull FilePath afterFilePath,
                                   @NotNull String beforeContent,
                                   @NotNull String afterContent,
+                                  @NotNull List<TodoItem> newTodoItems,
                                   @Nullable TodoFilter todoFilter) {
       myProject = project;
       myAfterFile = afterFilePath;
       myBeforeContent = beforeContent;
       myAfterContent = afterContent;
+      myNewTodoItems = newTodoItems;
       myTodoFilter = todoFilter;
     }
 
-    public void process(final List<TodoItem> newTodoItems) throws DiffTooBigException {
+    public void process() throws DiffTooBigException {
       List<LineFragment> lineFragments = getLineFragments(myBeforeContent, myAfterContent);
       lineFragments = ContainerUtil.filter(lineFragments, it -> DiffUtil.getLineDiffType(it) != TextDiffType.DELETED);
 
       StepIntersection.processIntersections(
-        newTodoItems, lineFragments,
+        myNewTodoItems, lineFragments,
           TODO_ITEM_CONVERTOR, LINE_FRAGMENT_CONVERTOR,
         (todoItem, lineFragment) -> {
           ProgressManager.checkCanceled();
