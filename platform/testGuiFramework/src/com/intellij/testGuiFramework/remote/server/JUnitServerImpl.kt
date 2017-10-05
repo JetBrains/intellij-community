@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit
  * @author Sergey Karashevich
  */
 
-class JUnitServerImpl: JUnitServer {
+class JUnitServerImpl : JUnitServer {
 
   private val SEND_THREAD = "JUnit Server Send Thread"
   private val RECEIVE_THREAD = "JUnit Server Receive Thread"
@@ -62,21 +62,17 @@ class JUnitServerImpl: JUnitServer {
   }
 
   override fun start() {
-    //run server socket acceptance on a parallel thread to avoid hanging in this point. It is also necessary for restarting, when JUnitClient
-    //could be started after JUnitServer start.
-    execOnParallelThread {
-      connection = serverSocket.accept()
-      LOG.info("Server accepted client on port: ${connection.port}")
+    connection = serverSocket.accept()
+    LOG.info("Server accepted client on port: ${connection.port}")
 
-      objectOutputStream = ObjectOutputStream(connection.getOutputStream())
-      serverSendThread = ServerSendThread(connection, objectOutputStream)
-      serverSendThread.start()
+    objectOutputStream = ObjectOutputStream(connection.getOutputStream())
+    serverSendThread = ServerSendThread(connection, objectOutputStream)
+    serverSendThread.start()
 
-      objectInputStream = ObjectInputStream(connection.getInputStream())
-      serverReceiveThread = ServerReceiveThread(connection, objectInputStream)
-      serverReceiveThread.start()
-      isStarted = true
-    }
+    objectInputStream = ObjectInputStream(connection.getInputStream())
+    serverReceiveThread = ServerReceiveThread(connection, objectInputStream)
+    serverReceiveThread.start()
+    isStarted = true
   }
 
   override fun isStarted(): Boolean = isStarted
@@ -128,7 +124,8 @@ class JUnitServerImpl: JUnitServer {
   override fun isConnected(): Boolean {
     try {
       return connection.isConnected
-    } catch (lateInitException: UninitializedPropertyAccessException) {
+    }
+    catch (lateInitException: UninitializedPropertyAccessException) {
       return false
     }
   }
@@ -149,14 +146,20 @@ class JUnitServerImpl: JUnitServer {
 
 
   private fun execOnParallelThread(body: () -> Unit) {
-    (object: Thread("JUnitServer: Exec On Parallel Thread") { override fun run() { body(); Thread.currentThread().join() } }).start()
+    (object : Thread("JUnitServer: Exec On Parallel Thread") {
+      override fun run() {
+        body(); Thread.currentThread().join()
+      }
+    }).start()
   }
 
   private fun createCallbackServerHandler(handler: (TransportMessage) -> Unit, id: Long)
     = object : ServerHandler() {
-      override fun acceptObject(message: TransportMessage) = message.id == id
-      override fun handleObject(message: TransportMessage) { handler(message) }
+    override fun acceptObject(message: TransportMessage) = message.id == id
+    override fun handleObject(message: TransportMessage) {
+      handler(message)
     }
+  }
 
   inner class ServerSendThread(val connection: Socket, val objectOutputStream: ObjectOutputStream) : Thread(SEND_THREAD) {
 
@@ -169,7 +172,7 @@ class JUnitServerImpl: JUnitServer {
           objectOutputStream.writeObject(message)
         }
       }
-      catch(e: InterruptedException) {
+      catch (e: InterruptedException) {
         Thread.currentThread().interrupt()
       }
       catch (e: Exception) {
@@ -196,7 +199,8 @@ class JUnitServerImpl: JUnitServer {
           receivingMessages.put(message)
           handlers.filter { it.acceptObject(message) }.forEach { it.handleObject(message) }
         }
-      } catch (e: Exception) {
+      }
+      catch (e: Exception) {
         if (e is InvalidClassException) LOG.error("Probably serialization error:", e)
         failHandler?.invoke(e)
       }

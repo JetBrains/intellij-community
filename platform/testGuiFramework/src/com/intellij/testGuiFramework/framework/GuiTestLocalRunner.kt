@@ -75,10 +75,10 @@ class GuiTestLocalRunner @Throws(InitializationError::class)
 
     try {
       if (!server.isConnected()) {
-        if (!server.isStarted())
-          server.start()
         val localIde = ide ?: getIdeFromAnnotation(this@GuiTestLocalRunner.testClass.javaClass)
         runIdeLocally(port = server.getPort(), ide = localIde)
+        if (!server.isStarted())
+          server.start()
       }
       val jUnitTestContainer = JUnitTestContainer(method.declaringClass, method.name)
       server.send(TransportMessage(MessageType.RUN_TEST, jUnitTestContainer))
@@ -122,12 +122,10 @@ class GuiTestLocalRunner @Throws(InitializationError::class)
     GuiTestLocalLauncher.process?.waitFor(2, TimeUnit.MINUTES)
     //restart JUnitServer to let accept a new connection
     server.stopServer()
-    server.start()
     //start a new one IDE
     val localIde = ide ?: getIdeFromAnnotation(this@GuiTestLocalRunner.testClass.javaClass)
     runIdeLocally(port = server.getPort(), ide = localIde)
-    //check connection
-    //start test if needed
+    server.start()
   }
 
   private fun sendRunTestCommand(method: FrameworkMethod,
