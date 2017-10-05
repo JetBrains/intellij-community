@@ -35,6 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -72,7 +73,7 @@ public class TodoCheckinHandlerWorker {
   private final List<TodoItem> myInChangedTodos = new ArrayList<>();
   private final List<Pair<FilePath, String>> mySkipped = new SmartList<>();
 
-  public TodoCheckinHandlerWorker(final Project project, final Collection<Change> changes, final TodoFilter todoFilter) {
+  public TodoCheckinHandlerWorker(@NotNull Project project, @NotNull Collection<Change> changes, @Nullable TodoFilter todoFilter) {
     myProject = project;
     myChanges = changes;
     myTodoFilter = todoFilter;
@@ -82,7 +83,9 @@ public class TodoCheckinHandlerWorker {
     for (Change change : myChanges) {
       ProgressManager.checkCanceled();
       if (change.getAfterRevision() == null) continue;
-      final VirtualFile afterFile = getFileWithRefresh(change.getAfterRevision().getFile());
+      FilePath afterFilePath = change.getAfterRevision().getFile();
+
+      final VirtualFile afterFile = getFileWithRefresh(afterFilePath);
       if (afterFile == null || afterFile.isDirectory() || afterFile.getFileType().isBinary()) continue;
 
       List<TodoItem> newTodoItems = ReadAction.compute(() -> {
@@ -94,19 +97,37 @@ public class TodoCheckinHandlerWorker {
         return ContainerUtil.newArrayList(searchHelper.findTodoItems(psiFile));
       });
       if (newTodoItems == null) {
-        mySkipped.add(Pair.create(change.getAfterRevision().getFile(), ourInvalidFile));
+        mySkipped.add(Pair.create(afterFilePath, ourInvalidFile));
         continue;
       }
 
       applyFilterAndRemoveDuplicates(newTodoItems, myTodoFilter);
+
       if (change.getBeforeRevision() == null) {
         // take just all todos
-        if (newTodoItems.isEmpty()) continue;
         myAddedOrEditedTodos.addAll(newTodoItems);
+        continue;
       }
-      else {
-        new MyEditedFileProcessor(myProject, myTodoFilter)
-          .process(change, newTodoItems);
+
+      String beforeContent = getRevisionContent(change.getBeforeRevision());
+      if (beforeContent == null) {
+        mySkipped.add(Pair.create(afterFilePath, ourCannotLoadPreviousRevision));
+        continue;
+      }
+
+      String afterContent = getRevisionContent(change.getAfterRevision());
+      if (afterContent == null) {
+        mySkipped.add(Pair.create(afterFilePath, ourCannotLoadCurrentRevision));
+        continue;
+      }
+
+      try {
+        new MyEditedFileProcessor(myProject, afterFilePath, beforeContent, afterContent, myTodoFilter)
+          .process(newTodoItems);
+      }
+      catch (DiffTooBigException e) {
+        LOG.info("File " + afterFilePath.getPath() + " is too big and there are too many changes to build a diff");
+        mySkipped.add(Pair.create(afterFilePath, ourCannotLoadPreviousRevision));
       }
     }
   }
@@ -124,83 +145,74 @@ public class TodoCheckinHandlerWorker {
     TodoItem previous = null;
     for (Iterator<TodoItem> iterator = todoItems.iterator(); iterator.hasNext(); ) {
       final TodoItem next = iterator.next();
-      if (filter != null && ! filter.contains(next.getPattern())) {
+      if (filter != null && !filter.contains(next.getPattern())) {
         iterator.remove();
         continue;
       }
       if (previous != null && next.getTextRange().equals(previous.getTextRange())) {
         iterator.remove();
-      } else {
-        previous = next;
+        continue;
       }
+      previous = next;
     }
   }
 
   private class MyEditedFileProcessor {
-    //private String myFileText;
-    private String myBeforeContent;
-    private String myAfterContent;
+    @NotNull private final Project myProject;
+    @NotNull private final String myBeforeContent;
+    @NotNull private final String myAfterContent;
     private List<TodoItem> myOldItems;
     private LineFragment myCurrentLineFragment;
     private HashSet<String> myOldTodoTexts;
     private PsiFile myBeforeFile;
-    private final PsiFileFactory myPsiFileFactory;
-    private FilePath myAfterFile;
-    private final TodoFilter myTodoFilter;
+    @NotNull private final FilePath myAfterFile;
+    @Nullable private final TodoFilter myTodoFilter;
 
-    private MyEditedFileProcessor(final Project project, final TodoFilter todoFilter) {
+    private MyEditedFileProcessor(@NotNull Project project,
+                                  @NotNull FilePath afterFilePath,
+                                  @NotNull String beforeContent,
+                                  @NotNull String afterContent,
+                                  @Nullable TodoFilter todoFilter) {
+      myProject = project;
+      myAfterFile = afterFilePath;
+      myBeforeContent = beforeContent;
+      myAfterContent = afterContent;
       myTodoFilter = todoFilter;
-      myPsiFileFactory = PsiFileFactory.getInstance(project);
     }
 
-    public void process(final Change change, final List<TodoItem> newTodoItems) {
+    public void process(final List<TodoItem> newTodoItems) throws DiffTooBigException {
       myBeforeFile = null;
-      //myFileText = null;
       myOldItems = null;
       myOldTodoTexts = null;
 
-      myAfterFile = change.getAfterRevision().getFile();
-      try {
-        myBeforeContent = change.getBeforeRevision().getContent();
-        myAfterContent = change.getAfterRevision().getContent();
-        if (myAfterContent == null) {
-          mySkipped.add(Pair.create(myAfterFile, ourCannotLoadCurrentRevision));
-          return;
-        }
-        if (myBeforeContent == null) {
-          mySkipped.add(Pair.create(myAfterFile, ourCannotLoadPreviousRevision));
-          return;
-        }
-        List<LineFragment> lineFragments = getLineFragments(myAfterFile.getPath(), myBeforeContent, myAfterContent);
-        lineFragments = ContainerUtil.filter(lineFragments, it -> DiffUtil.getLineDiffType(it) != TextDiffType.DELETED);
+      List<LineFragment> lineFragments = getLineFragments(myBeforeContent, myAfterContent);
+      lineFragments = ContainerUtil.filter(lineFragments, it -> DiffUtil.getLineDiffType(it) != TextDiffType.DELETED);
 
-        StepIntersection.processIntersections(
-          newTodoItems, lineFragments,
+      StepIntersection.processIntersections(
+        newTodoItems, lineFragments,
           TODO_ITEM_CONVERTOR, LINE_FRAGMENT_CONVERTOR,
-          (todoItem, lineFragment) -> {
-            ProgressManager.checkCanceled();
-            if (myCurrentLineFragment == null || myCurrentLineFragment != lineFragment) {
-              myCurrentLineFragment = lineFragment;
-              myOldTodoTexts = null;
-            }
-            if (DiffUtil.getLineDiffType(lineFragment) == TextDiffType.INSERTED) {
-              myAddedOrEditedTodos.add(todoItem);
-            }
-            else {
-              // change
-              checkEditedFragment(todoItem);
-            }
-          });
-      } catch (VcsException e) {
-        LOG.info(e);
-        mySkipped.add(Pair.create(myAfterFile, ourCannotLoadPreviousRevision));
-      }
+        (todoItem, lineFragment) -> {
+          ProgressManager.checkCanceled();
+          if (myCurrentLineFragment == null || myCurrentLineFragment != lineFragment) {
+            myCurrentLineFragment = lineFragment;
+            myOldTodoTexts = null;
+          }
+          if (DiffUtil.getLineDiffType(lineFragment) == TextDiffType.INSERTED) {
+            myAddedOrEditedTodos.add(todoItem);
+          }
+          else {
+            // change
+            checkEditedFragment(todoItem);
+          }
+        });
     }
 
     private void checkEditedFragment(TodoItem newTodoItem) {
       if (myBeforeFile == null) {
-        myBeforeFile = ReadAction
-          .compute(() -> myPsiFileFactory.createFileFromText("old" + myAfterFile.getName(), myAfterFile.getFileType(), myBeforeContent));
+        myBeforeFile = ReadAction.compute(() -> {
+          return PsiFileFactory.getInstance(myProject)
+            .createFileFromText("old" + myAfterFile.getName(), myAfterFile.getFileType(), myBeforeContent);
+        });
       }
       if (myOldItems == null)  {
         final Collection<IndexPatternOccurrence> all =
@@ -251,14 +263,20 @@ public class TodoCheckinHandlerWorker {
     return StringUtil.join(fragment.split("\\s"), " ");
   }
 
-  private static List<LineFragment> getLineFragments(@NotNull String fileName, @NotNull String beforeContent, @NotNull String afterContent)
-    throws VcsException {
+  private static List<LineFragment> getLineFragments(@NotNull String beforeContent, @NotNull String afterContent)
+    throws DiffTooBigException {
+    ProgressIndicator indicator = notNull(ProgressManager.getInstance().getProgressIndicator(), DumbProgressIndicator.INSTANCE);
+    return ComparisonManager.getInstance().compareLines(beforeContent, afterContent, ComparisonPolicy.IGNORE_WHITESPACES, indicator);
+  }
+
+  @Nullable
+  private static String getRevisionContent(@NotNull ContentRevision revision) {
     try {
-      ProgressIndicator indicator = notNull(ProgressManager.getInstance().getProgressIndicator(), DumbProgressIndicator.INSTANCE);
-      return ComparisonManager.getInstance().compareLines(beforeContent, afterContent, ComparisonPolicy.IGNORE_WHITESPACES, indicator);
+      return revision.getContent();
     }
-    catch (DiffTooBigException e) {
-      throw new VcsException("File " + fileName + " is too big and there are too many changes to build a diff", e);
+    catch (VcsException e) {
+      LOG.info(e);
+      return null;
     }
   }
 
