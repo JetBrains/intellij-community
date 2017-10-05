@@ -47,11 +47,13 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   public static final String MULTIPROCESS = "MULTIPROCESS";
   public static final String SHOW_COMMAND_LINE = "SHOW_COMMAND_LINE";
   public static final String EMULATE_TERMINAL = "EMULATE_TERMINAL";
+  public static final String MODULE_MODE = "MODULE_MODE";
 
   private String myScriptName;
   private String myScriptParameters;
   private boolean myShowCommandLineAfterwards = false;
   private boolean myEmulateTerminal = false;
+  private boolean myModuleMode = false;
 
   protected PythonRunConfiguration(Project project, ConfigurationFactory configurationFactory) {
     super(project, configurationFactory);
@@ -71,7 +73,8 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     super.checkConfiguration();
 
     if (StringUtil.isEmptyOrSpaces(myScriptName)) {
-      throw new RuntimeConfigurationException(PyBundle.message("runcfg.unittest.no_script_name"));
+      throw new RuntimeConfigurationException(
+        PyBundle.message(isModuleMode() ? "runcfg.unittest.no_module_name" : "runcfg.unittest.no_script_name"));
     }
   }
 
@@ -125,6 +128,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     myScriptParameters = JDOMExternalizerUtil.readField(element, PARAMETERS);
     myShowCommandLineAfterwards = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, SHOW_COMMAND_LINE, "false"));
     myEmulateTerminal = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, EMULATE_TERMINAL, "false"));
+    myModuleMode = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, MODULE_MODE, "false"));
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -133,6 +137,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     JDOMExternalizerUtil.writeField(element, PARAMETERS, myScriptParameters);
     JDOMExternalizerUtil.writeField(element, SHOW_COMMAND_LINE, Boolean.toString(myShowCommandLineAfterwards));
     JDOMExternalizerUtil.writeField(element, EMULATE_TERMINAL, Boolean.toString(myEmulateTerminal));
+    JDOMExternalizerUtil.writeField(element, MODULE_MODE, Boolean.toString(myModuleMode));
   }
 
   public AbstractPythonRunConfigurationParams getBaseParams() {
@@ -141,6 +146,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
 
   public static void copyParams(PythonRunConfigurationParams source, PythonRunConfigurationParams target) {
     AbstractPythonRunConfiguration.copyParams(source.getBaseParams(), target.getBaseParams());
+    target.setModuleMode(source.isModuleMode());
     target.setScriptName(source.getScriptName());
     target.setScriptParameters(source.getScriptParameters());
     target.setShowCommandLineAfterwards(source.showCommandLineAfterwards());
@@ -174,5 +180,15 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
       }
     }
     return null;
+  }
+
+  @Override
+  public boolean isModuleMode() {
+    return myModuleMode;
+  }
+
+  @Override
+  public void setModuleMode(boolean moduleMode) {
+    myModuleMode = moduleMode;
   }
 }

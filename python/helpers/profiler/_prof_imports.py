@@ -1,5 +1,5 @@
-import sys
 import os
+import sys
 
 IS_PY3K = False
 
@@ -34,3 +34,8 @@ def deserialize(base,
     base.read(protocol)
     return base
 
+
+if IS_PY3K:
+    pass
+else:
+    pass

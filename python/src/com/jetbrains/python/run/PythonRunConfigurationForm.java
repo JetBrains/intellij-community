@@ -17,12 +17,14 @@ package com.jetbrains.python.run;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
@@ -33,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 
 /**
@@ -50,6 +51,9 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   private final Project myProject;
   private JBCheckBox myShowCommandLineCheckbox;
   private JBCheckBox myEmulateTerminalCheckbox;
+  private RawCommandLineEditor myModuleField;
+  private ComboBox myTargetComboBox;
+  private boolean myModuleMode;
 
   public PythonRunConfigurationForm(PythonRunConfiguration configuration) {
     myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(configuration.getCommonOptionsFormData());
@@ -86,16 +90,32 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
       emulateTerminalEnabled(false);
     }
 
+    myTargetComboBox.setSelectedIndex(0);
     myEmulateTerminalCheckbox.setSelected(false);
 
-    myEmulateTerminalCheckbox.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        updateShowCommandLineEnabled();
-      }
-    });
+    myEmulateTerminalCheckbox.addChangeListener(
+      (ChangeEvent e) -> updateShowCommandLineEnabled());
 
     setAnchor(myCommonOptionsForm.getAnchor());
+
+    myTargetComboBox.addActionListener(e -> updateRunModuleMode());
+  }
+
+  private void updateRunModuleMode() {
+    boolean mode = myTargetComboBox.getSelectedIndex() == 1;
+    checkTargetComboConsistency(mode);
+    setModuleModeInternal(mode);
+  }
+
+  private void checkTargetComboConsistency(boolean mode) {
+    Object item = myTargetComboBox.getSelectedItem();
+    if (item == null) {
+      throw new IllegalArgumentException("item is null");
+    }
+    else //noinspection StringToUpperCaseOrToLowerCaseWithoutLocale
+      if (mode && !item.toString().toLowerCase().contains("module")) {
+        throw new IllegalArgumentException("This option should refer to a module");
+      }
   }
 
   private void updateShowCommandLineEnabled() {
@@ -118,12 +138,22 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
   @Override
   public String getScriptName() {
-    return FileUtil.toSystemIndependentName(myScriptTextField.getText().trim());
+    if (isModuleMode()) {
+      return myModuleField.getText().trim();
+    }
+    else {
+      return FileUtil.toSystemIndependentName(myScriptTextField.getText().trim());
+    }
   }
 
   @Override
   public void setScriptName(String scriptName) {
-    myScriptTextField.setText(scriptName == null ? "" : FileUtil.toSystemDependentName(scriptName));
+    if (isModuleMode()) {
+      myModuleField.setText(StringUtil.notNullize(scriptName));
+    }
+    else {
+      myScriptTextField.setText(scriptName == null ? "" : FileUtil.toSystemDependentName(scriptName));
+    }
   }
 
   @Override
@@ -157,6 +187,11 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   }
 
   @Override
+  public boolean isModuleMode() {
+    return myModuleMode;
+  }
+
+  @Override
   public JComponent getAnchor() {
     return anchor;
   }
@@ -173,5 +208,18 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     this.anchor = anchor;
     myScriptParametersLabel.setAnchor(anchor);
     myCommonOptionsForm.setAnchor(anchor);
+  }
+
+  @Override
+  public void setModuleMode(boolean moduleMode) {
+    myTargetComboBox.setSelectedIndex(moduleMode ? 1 : 0);
+    checkTargetComboConsistency(moduleMode);
+  }
+
+  private void setModuleModeInternal(boolean moduleMode) {
+    myModuleMode = moduleMode;
+
+    myScriptTextField.setVisible(!moduleMode);
+    myModuleField.setVisible(moduleMode);
   }
 }
