@@ -1,5 +1,5 @@
 LineBreakpoint created at Greater.java:10
-!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!IDEA_HOME!\community\plugins\stream-debugger\java\lib\streamex-0.6.5.jar;!RT_JAR! filtering.Greater
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!IDEA_HOME!\community\plugins\stream-debugger\lib\streamex-0.6.5.jar;!RT_JAR! filtering.Greater
 Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 Greater.java:10
 DoubleStreamEx.of(1., 2., 3., 4.)
