@@ -64,41 +64,18 @@ import static com.intellij.util.ObjectUtils.notNull;
 public class TodoCheckinHandlerWorker {
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.checkin.TodoCheckinHandler");
 
+  private final Project myProject;
   private final Collection<Change> myChanges;
   private final TodoFilter myTodoFilter;
-  private final PsiManager myPsiManager;
-  private final PsiTodoSearchHelper mySearchHelper;
 
-  private final List<TodoItem> myAddedOrEditedTodos;
-  private final List<TodoItem> myInChangedTodos;
-  private final List<Pair<FilePath, String>> mySkipped;
-  private final MyEditedFileProcessor myEditedFileProcessor;
-
+  private final List<TodoItem> myAddedOrEditedTodos = new ArrayList<>();
+  private final List<TodoItem> myInChangedTodos = new ArrayList<>();
+  private final List<Pair<FilePath, String>> mySkipped = new SmartList<>();
 
   public TodoCheckinHandlerWorker(final Project project, final Collection<Change> changes, final TodoFilter todoFilter) {
+    myProject = project;
     myChanges = changes;
     myTodoFilter = todoFilter;
-    myPsiManager = PsiManager.getInstance(project);
-    mySearchHelper = PsiTodoSearchHelper.SERVICE.getInstance(project);
-    myAddedOrEditedTodos = new ArrayList<>();
-    myInChangedTodos = new ArrayList<>();
-    mySkipped = new SmartList<>();
-    myEditedFileProcessor = new MyEditedFileProcessor(project, new Acceptor() {
-      @Override
-      public void skipped(Pair<FilePath, String> pair) {
-        mySkipped.add(pair);
-      }
-
-      @Override
-      public void addedOrEdited(TodoItem todoItem) {
-        myAddedOrEditedTodos.add(todoItem);
-      }
-
-      @Override
-      public void inChanged(TodoItem todoItem) {
-        myInChangedTodos.add(todoItem);
-      }
-    }, myTodoFilter);
   }
 
   public void execute() {
@@ -110,10 +87,11 @@ public class TodoCheckinHandlerWorker {
 
       List<TodoItem> newTodoItems = ReadAction.compute(() -> {
         if (!afterFile.isValid()) return null;
-        PsiFile psiFile = myPsiManager.findFile(afterFile);
+        PsiFile psiFile = PsiManager.getInstance(myProject).findFile(afterFile);
         if (psiFile == null) return null;
 
-        return ContainerUtil.newArrayList(mySearchHelper.findTodoItems(psiFile));
+        PsiTodoSearchHelper searchHelper = PsiTodoSearchHelper.SERVICE.getInstance(myProject);
+        return ContainerUtil.newArrayList(searchHelper.findTodoItems(psiFile));
       });
       if (newTodoItems == null) {
         mySkipped.add(Pair.create(change.getAfterRevision().getFile(), ourInvalidFile));
@@ -127,7 +105,24 @@ public class TodoCheckinHandlerWorker {
         myAddedOrEditedTodos.addAll(newTodoItems);
       }
       else {
-        myEditedFileProcessor.process(change, newTodoItems);
+        Acceptor acceptor = new Acceptor() {
+          @Override
+          public void skipped(Pair<FilePath, String> pair) {
+            mySkipped.add(pair);
+          }
+
+          @Override
+          public void addedOrEdited(TodoItem todoItem) {
+            myAddedOrEditedTodos.add(todoItem);
+          }
+
+          @Override
+          public void inChanged(TodoItem todoItem) {
+            myInChangedTodos.add(todoItem);
+          }
+        };
+        new MyEditedFileProcessor(myProject, acceptor, myTodoFilter)
+          .process(change, newTodoItems);
       }
     }
   }
