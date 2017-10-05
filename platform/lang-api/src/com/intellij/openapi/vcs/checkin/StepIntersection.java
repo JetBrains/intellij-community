@@ -18,18 +18,11 @@ package com.intellij.openapi.vcs.checkin;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.Convertor;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * @author irengrig
- *         Date: 2/18/11
- *         Time: 12:04 AM
- *
- *         keeps state (position in areas) between invocations
- */
 public class StepIntersection<Data, Area> {
   private final Convertor<Data,TextRange> myDataConvertor;
   private final Convertor<Area,TextRange> myAreasConvertor;
@@ -42,9 +35,17 @@ public class StepIntersection<Data, Area> {
   private final List<Area> myAreas;
   private final HackSearch<Data,Area,TextRange> myHackSearch;
 
-  public StepIntersection(Convertor<Data, TextRange> dataConvertor,
-                          Convertor<Area, TextRange> areasConvertor,
-                          final List<Area> areas) {
+  public static <Data, Area> void processIntersections(@NotNull List<Data> elements1,
+                                                       @NotNull List<Area> elements2,
+                                                       @NotNull Convertor<Data, TextRange> convertor1,
+                                                       @NotNull Convertor<Area, TextRange> convertor2,
+                                                       @NotNull PairConsumer<Data, Area> intersectionConsumer) {
+    new StepIntersection<>(convertor1, convertor2, elements2).process(elements1, intersectionConsumer);
+  }
+
+  private StepIntersection(Convertor<Data, TextRange> dataConvertor,
+                           Convertor<Area, TextRange> areasConvertor,
+                           final List<Area> areas) {
     myAreas = areas;
     myAreaIndex = 0;
     myDataConvertor = dataConvertor;
@@ -53,13 +54,7 @@ public class StepIntersection<Data, Area> {
                                     (o1, o2) -> o1.intersects(o2) ? 0 : o1.getStartOffset() < o2.getStartOffset() ? -1 : 1);
   }
 
-  public List<Data> process(final Iterable<Data> data) {
-    final List<Data> result = new ArrayList<>();
-    process(data, (data1, area) -> result.add(data1));
-    return result;
-  }
-
-  public void process(final Iterable<Data> data, final PairConsumer<Data, Area> consumer) {
+  private void process(final Iterable<Data> data, final PairConsumer<Data, Area> consumer) {
     myDataIterator = data.iterator();
 
     if (! myDataIterator.hasNext() || noMoreAreas()) return;

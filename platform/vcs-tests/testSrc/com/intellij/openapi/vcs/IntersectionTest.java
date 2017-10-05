@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.checkin.StepIntersection;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -32,10 +33,9 @@ public class IntersectionTest extends TestCase {
   public void testSimple() {
     final Data second = new Data("second", 20, 21);
     final Data third = new Data("third", 22, 30);
-    final Data[] data = {new Data("first", 10,19), second, third};
+    final Data[] datas = {new Data("first", 10, 19), second, third};
     final Area[] areas = {new Area("Afirst", 1,1), new Area("Asecond", 2,2), new Area("Athird", 21,21)};
-    final StepIntersection<Data, Area> intersection = createIntersection(areas);
-    final List<Data> result = intersection.process(Arrays.asList(data));
+    final List<Data> result = processIntersections(areas, datas);
     Assert.assertTrue(result.size() == 1);
     Assert.assertTrue(result.contains(second));
   }
@@ -43,31 +43,28 @@ public class IntersectionTest extends TestCase {
   public void testAllBefore() {
     final Data second = new Data("second", 20, 21);
     final Data third = new Data("third", 22, 30);
-    final Data[] data = {new Data("first", 10,19), second, third};
+    final Data[] datas = {new Data("first", 10, 19), second, third};
     final Area[] areas = {new Area("Afirst", 100,100), new Area("Asecond", 101,102), new Area("Athird", 210,210)};
-    final StepIntersection<Data, Area> intersection = createIntersection(areas);
-    final List<Data> result = intersection.process(Arrays.asList(data));
+    final List<Data> result = processIntersections(areas, datas);
     Assert.assertTrue(result.size() == 0);
   }
 
   public void testAllAfter() {
     final Data second = new Data("second", 20, 21);
     final Data third = new Data("third", 22, 30);
-    final Data[] data = {new Data("first", 10,19), second, third};
+    final Data[] datas = {new Data("first", 10, 19), second, third};
     final Area[] areas = {new Area("Afirst", 1,1), new Area("Asecond", 2,2), new Area("Athird", 3,3)};
-    final StepIntersection<Data, Area> intersection = createIntersection(areas);
-    final List<Data> result = intersection.process(Arrays.asList(data));
+    final List<Data> result = processIntersections(areas, datas);
     Assert.assertTrue(result.size() == 0);
   }
 
   public void testChangeIterators() {
     final Data first = new Data("first", 10, 20);
     final Data fourth = new Data("fourth", 70, 80);
-    final Data[] data = {first, new Data("second", 30,40), new Data("third", 50,60), fourth, new Data("fifth", 90,100)};
+    final Data[] datas = {first, new Data("second", 30, 40), new Data("third", 50, 60), fourth, new Data("fifth", 90, 100)};
     final Area[] areas = {new Area("Afirst", 1,1), new Area("Asecond", 11,12), new Area("Athird", 21,21),
       new Area("Afourth", 41,41), new Area("Afifth", 61,61), new Area("Asixth", 71,71)};
-    final StepIntersection<Data, Area> intersection = createIntersection(areas);
-    final List<Data> result = intersection.process(Arrays.asList(data));
+    final List<Data> result = processIntersections(areas, datas);
     Assert.assertTrue(result.size() == 2);
     Assert.assertTrue(result.contains(first));
     Assert.assertTrue(result.contains(fourth));
@@ -78,10 +75,9 @@ public class IntersectionTest extends TestCase {
     final Data fourth = new Data("fourth", 140, 158);
     final Data third = new Data("third", 225, 238);
     final Data fifth = new Data("fifth", 449, 456);
-    final Data[] data = {first, fourth, third, fifth};
+    final Data[] datas = {first, fourth, third, fifth};
     final Area[] areas = {new Area("Afirst", 0,204), new Area("Asecond", 205,238), new Area("Athird", 239,457)};
-    final StepIntersection<Data, Area> intersection = createIntersection(areas);
-    final List<Data> result = intersection.process(Arrays.asList(data));
+    final List<Data> result = processIntersections(areas, datas);
     Assert.assertEquals(4, result.size());
     Assert.assertTrue(result.contains(third));
     Assert.assertTrue(result.contains(first));
@@ -89,8 +85,12 @@ public class IntersectionTest extends TestCase {
     Assert.assertTrue(result.contains(fifth));
   }
 
-  private StepIntersection<Data, Area> createIntersection(Area[] areas) {
-    return new StepIntersection<>(o -> o.getTextRange(), o -> o.getTextRange(), Arrays.asList(areas));
+  private static List<Data> processIntersections(Area[] areas, Data[] datas) {
+    List<Data> result = new ArrayList<>();
+    StepIntersection.processIntersections(Arrays.asList(datas), Arrays.asList(areas),
+                                          it -> it.getTextRange(), it -> it.getTextRange(),
+                                          (data, area) -> result.add(data));
+    return result;
   }
 
   private static class Data {

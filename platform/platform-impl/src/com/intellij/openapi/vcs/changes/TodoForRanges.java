@@ -26,7 +26,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
-import com.intellij.util.containers.Convertor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,15 +58,11 @@ public abstract class TodoForRanges {
 
   public List<Pair<TextRange, TextAttributes>> execute() {
     final TodoItemData[] todoItems = getTodoItems();
-    
-    final StepIntersection<TodoItemData, TextRange> stepIntersection =
-      new StepIntersection<>(new Convertor<TodoItemData, TextRange>() {
-        @Override
-        public TextRange convert(TodoItemData o) {
-          return o.getTextRange();
-        }
-      }, Convertor.SELF, myRanges);
-    final List<TodoItemData> filtered = stepIntersection.process(Arrays.asList(todoItems));
+
+    List<TodoItemData> filtered = new ArrayList<>();
+    StepIntersection.processIntersections(Arrays.asList(todoItems), myRanges, TodoItemData::getTextRange, it -> it,
+                                          (data, area) -> filtered.add(data));
+
     final List<Pair<TextRange, TextAttributes>> result = new ArrayList<>(filtered.size());
     int offset = 0;
     for (TextRange range : myRanges) {

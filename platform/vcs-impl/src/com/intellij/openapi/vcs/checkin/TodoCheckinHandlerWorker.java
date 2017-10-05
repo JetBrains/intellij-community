@@ -207,23 +207,24 @@ public class TodoCheckinHandlerWorker {
         }
         List<LineFragment> lineFragments = getLineFragments(myAfterFile.getPath(), myBeforeContent, myAfterContent);
         lineFragments = ContainerUtil.filter(lineFragments, it -> DiffUtil.getLineDiffType(it) != TextDiffType.DELETED);
-        final StepIntersection<TodoItem, LineFragment> intersection = new StepIntersection<>(
-          TODO_ITEM_CONVERTOR, LINE_FRAGMENT_CONVERTOR, lineFragments);
 
-        intersection.process(newTodoItems, (todoItem, lineFragment) -> {
-          ProgressManager.checkCanceled();
-          if (myCurrentLineFragment == null || myCurrentLineFragment != lineFragment) {
-            myCurrentLineFragment = lineFragment;
-            myOldTodoTexts = null;
-          }
-          if (DiffUtil.getLineDiffType(lineFragment) == TextDiffType.INSERTED) {
-            myAcceptor.addedOrEdited(todoItem);
-          }
-          else {
-            // change
-            checkEditedFragment(todoItem);
-          }
-        });
+        StepIntersection.processIntersections(
+          newTodoItems, lineFragments,
+          TODO_ITEM_CONVERTOR, LINE_FRAGMENT_CONVERTOR,
+          (todoItem, lineFragment) -> {
+            ProgressManager.checkCanceled();
+            if (myCurrentLineFragment == null || myCurrentLineFragment != lineFragment) {
+              myCurrentLineFragment = lineFragment;
+              myOldTodoTexts = null;
+            }
+            if (DiffUtil.getLineDiffType(lineFragment) == TextDiffType.INSERTED) {
+              myAcceptor.addedOrEdited(todoItem);
+            }
+            else {
+              // change
+              checkEditedFragment(todoItem);
+            }
+          });
       } catch (VcsException e) {
         LOG.info(e);
         myAcceptor.skipped(Pair.create(myAfterFile, ourCannotLoadPreviousRevision));
@@ -252,11 +253,11 @@ public class TodoCheckinHandlerWorker {
         applyFilterAndRemoveDuplicates(myOldItems, myTodoFilter);
       }
       if (myOldTodoTexts == null) {
-        final StepIntersection<LineFragment, TodoItem> intersection = new StepIntersection<>(
-          LINE_FRAGMENT_CONVERTOR, TODO_ITEM_CONVERTOR, myOldItems);
         myOldTodoTexts = new HashSet<>();
-        intersection.process(Collections.singletonList(myCurrentLineFragment),
-                             (lineFragment, todoItem) -> myOldTodoTexts.add(getTodoText(todoItem, myBeforeContent)));
+        StepIntersection.processIntersections(
+          Collections.singletonList(myCurrentLineFragment), myOldItems,
+          LINE_FRAGMENT_CONVERTOR, TODO_ITEM_CONVERTOR,
+          (lineFragment, todoItem) -> myOldTodoTexts.add(getTodoText(todoItem, myBeforeContent)));
       }
       final String text = getTodoText(newTodoItem, myAfterContent);
       if (! myOldTodoTexts.contains(text)) {
