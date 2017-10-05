@@ -17,7 +17,7 @@ package com.intellij.execution.configurations;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ShortenClasspath;
+import com.intellij.execution.ShortenCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.openapi.diagnostic.Logger;
@@ -150,14 +150,14 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
     myUseClasspathJar = useClasspathJar && JdkUtil.useClasspathJar();
   }
 
-  public void setShortenClasspath(@Nullable ShortenClasspath mode, Project project) {
+  public void setShortenCommandLine(@Nullable ShortenCommandLine mode, Project project) {
     if (mode == null) {
       Sdk jdk = getJdk();
-      mode = ShortenClasspath.getDefaultMethod(project, jdk != null ? jdk.getHomePath() : null);
+      mode = ShortenCommandLine.getDefaultMethod(project, jdk != null ? jdk.getHomePath() : null);
     }
-    myUseDynamicClasspath = mode != ShortenClasspath.NONE;
-    myUseClasspathJar = mode == ShortenClasspath.MANIFEST;
-    setArgFile(mode == ShortenClasspath.ARGS_FILE);
+    myUseDynamicClasspath = mode != ShortenCommandLine.NONE;
+    myUseClasspathJar = mode == ShortenCommandLine.MANIFEST;
+    setArgFile(mode == ShortenCommandLine.ARGS_FILE);
   }
 
   public String getJarPath() {

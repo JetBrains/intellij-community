@@ -4,17 +4,17 @@ package com.intellij.execution;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
-public interface ConfigurationWithClasspathShortener {
+public interface ConfigurationWithCommandLineShortener {
   /**
    * @return null if option was not selected explicitly, legacy user-local options to be used
    */
   @Nullable
-  ShortenClasspath getShortenClasspath();
+  ShortenCommandLine getShortenCommandLine();
 
   /**
    * Called from UI, when user explicitly selects method to be used to shorten the command line or from the deserialization
    */
-  void setShortenClasspath(ShortenClasspath mode);
+  void setShortenCommandLine(ShortenCommandLine mode);
 
   Project getProject();
 }

@@ -117,7 +117,7 @@ public class ProgramRunnerUtil {
       }
       String windowId = ExecutionManager.getInstance(project).getContentManager().getToolWindowIdByEnvironment(environment);
       RunConfiguration configuration = runnerAndConfigurationSettings != null ? runnerAndConfigurationSettings.getConfiguration() : null;
-      if (configuration instanceof ConfigurationWithClasspathShortener && ExecutionUtil.isProcessNotCreated(e)) {
+      if (configuration instanceof ConfigurationWithCommandLineShortener && ExecutionUtil.isProcessNotCreated(e)) {
         handelProcessNotStartedError(runnerAndConfigurationSettings, e, name, windowId);
       }
       else {
@@ -134,14 +134,14 @@ public class ProgramRunnerUtil {
                                                    String windowId) {
     String description = e.getMessage();
     HyperlinkListener listener = null;
-    ConfigurationWithClasspathShortener configuration = (ConfigurationWithClasspathShortener)runnerAndConfigurationSettings.getConfiguration();
+    ConfigurationWithCommandLineShortener configuration = (ConfigurationWithCommandLineShortener)runnerAndConfigurationSettings.getConfiguration();
     Project project = configuration.getProject();
-    if (configuration.getShortenClasspath() == null) {
+    if (configuration.getShortenCommandLine() == null) {
       ConfigurationFactory factory = runnerAndConfigurationSettings.getFactory();
       RunnerAndConfigurationSettings configurationTemplate = RunManager.getInstance(project)
         .getConfigurationTemplate(factory);
       description = "Command line is too long. Shorten command line for <a href=\"current\">" + name + "</a>";
-      if (((ConfigurationWithClasspathShortener)configurationTemplate.getConfiguration()).getShortenClasspath() == null) {
+      if (((ConfigurationWithCommandLineShortener)configurationTemplate.getConfiguration()).getShortenCommandLine() == null) {
         description += " or also for " + factory.getName() + " <a href=\"default\">default</a> configuration";
       }
       description += ".";
@@ -152,8 +152,8 @@ public class ProgramRunnerUtil {
           SingleConfigurableEditor dialog = RunDialog.editShortenClasspathSetting(isDefaultConfigurationChosen ? configurationTemplate : runnerAndConfigurationSettings,
                                                                                   "Edit" + (isDefaultConfigurationChosen ? " Default" : "") + " Configuration");
           if (dialog.showAndGet() && isDefaultConfigurationChosen) {
-            ((ConfigurationWithClasspathShortener)runnerAndConfigurationSettings.getConfiguration())
-              .setShortenClasspath(((ConfigurationWithClasspathShortener)configurationTemplate.getConfiguration()).getShortenClasspath());
+            ((ConfigurationWithCommandLineShortener)runnerAndConfigurationSettings.getConfiguration())
+              .setShortenCommandLine(((ConfigurationWithCommandLineShortener)configurationTemplate.getConfiguration()).getShortenCommandLine());
           }
         }
       };

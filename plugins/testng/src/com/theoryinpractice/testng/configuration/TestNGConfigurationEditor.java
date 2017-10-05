@@ -20,7 +20,7 @@ import com.intellij.application.options.ModulesComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.MethodBrowser;
-import com.intellij.execution.ShortenClasspath;
+import com.intellij.execution.ShortenCommandLine;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.*;
@@ -101,7 +101,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
   private LabeledComponent<JPanel> myPattern;
   private JPanel myPropertiesPanel;
   private JPanel myListenersPanel;
-  private LabeledComponent<ShortenClasspathModeCombo> myShortenCommandLineCombo;
+  private LabeledComponent<ShortenCommandLineModeCombo> myShortenCommandLineCombo;
   TextFieldWithBrowseButton myPatternTextField;
   private final CommonJavaParametersPanel commonJavaParameters = new CommonJavaParametersPanel();
   private final ArrayList<Map.Entry<String, String>> propertiesList = new ArrayList<>();
@@ -203,7 +203,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
 
     commonJavaParameters.setProgramParametersLabel(ExecutionBundle.message("junit.configuration.test.runner.parameters.label"));
 
-    myShortenCommandLineCombo.setComponent(new ShortenClasspathModeCombo(project, alternateJDK));
+    myShortenCommandLineCombo.setComponent(new ShortenCommandLineModeCombo(project, alternateJDK));
     setAnchor(outputDirectory.getLabel());
     alternateJDK.setAnchor(moduleClasspath.getLabel());
     commonJavaParameters.setAnchor(moduleClasspath.getLabel());
@@ -304,7 +304,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
 
     listenerModel.setListenerList(data.TEST_LISTENERS);
     myUseDefaultReportersCheckBox.setSelected(data.USE_DEFAULT_REPORTERS);
-    myShortenCommandLineCombo.getComponent().setSelectedItem(config.getShortenClasspath());
+    myShortenCommandLineCombo.getComponent().setSelectedItem(config.getShortenCommandLine());
   }
 
   @Override
@@ -338,7 +338,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     data.TEST_LISTENERS.addAll(listenerModel.getListenerList());
 
     data.USE_DEFAULT_REPORTERS = myUseDefaultReportersCheckBox.isSelected();
-    config.setShortenClasspath((ShortenClasspath)myShortenCommandLineCombo.getComponent().getSelectedItem());
+    config.setShortenCommandLine((ShortenCommandLine)myShortenCommandLineCombo.getComponent().getSelectedItem());
   }
 
   public ConfigurationModuleSelector getModuleSelector() {

@@ -33,8 +33,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration<JavaRunConfigurationModule>
-  implements CommonJavaRunConfigurationParameters, ConfigurationWithClasspathShortener, RefactoringListenerProvider, SMRunnerConsolePropertiesProvider {
-  private ShortenClasspath myShortenClasspath = null;
+  implements CommonJavaRunConfigurationParameters, ConfigurationWithCommandLineShortener, RefactoringListenerProvider, SMRunnerConsolePropertiesProvider {
+  private ShortenCommandLine myShortenCommandLine = null;
 
   public JavaTestConfigurationBase(String name,
                                    @NotNull JavaRunConfigurationModule configurationModule,
@@ -66,24 +66,24 @@ public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration
 
   @Nullable
   @Override
-  public ShortenClasspath getShortenClasspath() {
-    return myShortenClasspath;
+  public ShortenCommandLine getShortenCommandLine() {
+    return myShortenCommandLine;
   }
 
   @Override
-  public void setShortenClasspath(ShortenClasspath shortenClasspath) {
-    myShortenClasspath = shortenClasspath;
+  public void setShortenCommandLine(ShortenCommandLine shortenCommandLine) {
+    myShortenCommandLine = shortenCommandLine;
   }
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
-    setShortenClasspath(ShortenClasspath.readShortenClasspathMethod(element));
+    setShortenCommandLine(ShortenCommandLine.readShortenClasspathMethod(element));
   }
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
-    ShortenClasspath.writeShortenClasspathMethod(element, myShortenClasspath);
+    ShortenCommandLine.writeShortenClasspathMethod(element, myShortenCommandLine);
   }
 }
