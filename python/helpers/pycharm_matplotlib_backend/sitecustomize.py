@@ -1,6 +1,6 @@
 try:
     import sys
-
+    modules_list = list(sys.modules.keys())
     old_getfilesystemencoding = None
     if not sys.getfilesystemencoding():
         old_getfilesystemencoding = sys.getfilesystemencoding
@@ -35,6 +35,7 @@ except:
     # fallback in case matplotlib is not loaded correctly
     import sys
 
-    for key in sys.modules.keys():
-        if key.startswith("matplotlib"):
+    keys = list(sys.modules.keys())
+    for key in keys:
+        if modules_list and key not in modules_list:
             sys.modules.pop(key)
