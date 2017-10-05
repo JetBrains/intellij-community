@@ -30,6 +30,7 @@ import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacerUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.siyeh.ig.psiutils.ImportUtils;
 import com.siyeh.ig.psiutils.PsiElementOrderComparator;
@@ -133,14 +134,12 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
    * Copy all comments, doc comments, modifier lists and method bodies
    * that are present in matched nodes but not present in searched & replaced nodes
    */
-  private void copyUnmatchedElements(final PsiElement original, final PsiElement replacement) {
-    Map<String, String> newNameToSearchPatternNameMap = myContext.getNewName2PatternNameMap();
-
+  private void copyUnmatchedElements(PsiElement original, PsiElement replacement, ReplacementInfo info) {
     Map<String, PsiNamedElement> originalNamedElements = Collector.collectNamedElements(original);
     Map<String, PsiNamedElement> replacedNamedElements = Collector.collectNamedElements(replacement);
 
     if (originalNamedElements.size() == 0 && replacedNamedElements.size() == 0) {
-      Replacer.handleComments(original, replacement, myContext);
+      Replacer.handleComments(original, replacement, info);
       return;
     }
 
@@ -149,8 +148,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     for (String name : originalNamedElements.keySet()) {
       PsiNamedElement originalNamedElement = originalNamedElements.get(name);
       PsiNamedElement replacementNamedElement = replacedNamedElements.get(name);
-      String key = newNameToSearchPatternNameMap.get(name);
-      if (key == null) key = name;
+      String key = ObjectUtils.notNull(info.getSearchPatternName(name), name);
       PsiNamedElement patternNamedElement = patternNamedElements.get(key);
 
       if (replacementNamedElement == null && originalNamedElements.size() == 1 && replacedNamedElements.size() == 1) {
@@ -173,7 +171,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
       }
 
       if (replacementNamedElement != null && patternNamedElement != null) {
-        Replacer.handleComments(originalNamedElement, replacementNamedElement, myContext);
+        Replacer.handleComments(originalNamedElement, replacementNamedElement, info);
       }
 
       if (comment != null && replacementNamedElement instanceof PsiDocCommentOwner &&
@@ -380,7 +378,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     if (listContext) {
       if (replacements.length > 1) {
         final PsiElement replacement = elementParent.addRangeBefore(replacements[0], replacements[replacements.length - 1], elementToReplace);
-        copyUnmatchedElements(elementToReplace, replacement);
+        copyUnmatchedElements(elementToReplace, replacement, info);
       }
       else if (replacements.length == 1) {
         PsiElement replacement = getMatchExpr(replacements[0], elementToReplace);
@@ -395,7 +393,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
           replacement = JavaPsiFacade.getElementFactory(variable.getProject()).createParameterFromText(parameterText, variable);
         }
 
-        copyUnmatchedElements(elementToReplace, replacement);
+        copyUnmatchedElements(elementToReplace, replacement, info);
         replacement = handleSymbolReplacement(replacement, elementToReplace);
 
         if (replacement instanceof PsiTryStatement) {
@@ -459,7 +457,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
         elementToReplace.getNode().getTreeParent().removeChild(elementToReplace.getNode());
       }
       else {
-        copyUnmatchedElements(elementToReplace, replacement);
+        copyUnmatchedElements(elementToReplace, replacement, info);
 
         replacement = handleSymbolReplacement(replacement, elementToReplace);
         elementToReplace.replace(replacement);

@@ -41,6 +41,7 @@ import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisito
 import com.intellij.structuralsearch.impl.matcher.compiler.JavaCompilingVisitor;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
+import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ParameterInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementBuilder;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
@@ -182,6 +183,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   @NotNull
   @Override
   public PsiElement getPresentableElement(PsiElement element) {
+    element = super.getPresentableElement(element);
     if (element instanceof PsiReferenceExpression) {
       final PsiElement parent = element.getParent();
       if (parent instanceof PsiMethodCallExpression) {
@@ -586,14 +588,14 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
                                 MatchResult match,
                                 StringBuilder result,
                                 int offset,
-                                HashMap<String, MatchResult> matchMap) {
+                                ReplacementInfo replacementInfo) {
     if (info.getName().equals(match.getName())) {
       final String replacementString;
       boolean forceAddingNewLine = false;
 
       if (info.isMethodParameterContext()) {
         final StringBuilder buf = new StringBuilder();
-        handleMethodParameter(buf, info, matchMap);
+        handleMethodParameter(buf, info, replacementInfo);
         replacementString = buf.toString();
       }
       else if (match.hasSons() && !match.isScopeMatch()) {
@@ -758,7 +760,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return match instanceof PsiMember;
   }
 
-  private static void handleMethodParameter(StringBuilder buf, ParameterInfo info, HashMap<String, MatchResult> matchMap) {
+  private static void handleMethodParameter(StringBuilder buf, ParameterInfo info, ReplacementInfo replacementInfo) {
     if(!(info.getElement() instanceof PsiTypeElement)) {
       // no specific handling for name of method parameter since it is handled with type
       return;
@@ -767,7 +769,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     String name = ((PsiParameter)info.getElement().getParent()).getName();
     name = StructuralSearchUtil.isTypedVariable(name) ? Replacer.stripTypedVariableDecoration(name):name;
 
-    final MatchResult matchResult = matchMap.get(name);
+    final MatchResult matchResult = replacementInfo.getNamedMatchResult(name);
     if (matchResult == null) return;
 
     if (matchResult.isMultipleMatch()) {
