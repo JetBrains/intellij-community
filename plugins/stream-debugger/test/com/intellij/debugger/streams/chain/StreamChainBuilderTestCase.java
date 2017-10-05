@@ -16,15 +16,14 @@
 package com.intellij.debugger.streams.chain;
 
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.streams.JdkManager;
-import com.intellij.debugger.streams.psi.impl.JavaStreamChainBuilder;
 import com.intellij.debugger.streams.psi.impl.JavaChainTransformerImpl;
+import com.intellij.debugger.streams.psi.impl.JavaStreamChainBuilder;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -43,12 +42,7 @@ public abstract class StreamChainBuilderTestCase extends LightCodeInsightTestCas
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return new File("testData/" + getRelativeTestPath()).getAbsolutePath();
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return JdkManager.getMockJdk18();
+    return new File(PluginPathManager.getPluginHomePath("stream-debugger") + "/testData/" + getRelativeTestPath()).getAbsolutePath();
   }
 
   @NotNull
