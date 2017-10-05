@@ -23,7 +23,4 @@ separately:
 In the latter mode, you can switch between operations manually using the tabs on top.
 
 Watch the following short animation to see these features in action:
-![](https://raw.githubusercontent.com/Roenke/static/master/screen_shot_2017-05-11_at_15.07.27.gif)
-
-The plugin is still under development, so expect a couple of glitches here and there, and, of course, we really appreciate your
-feedback, including error reports, and we have set up an [issue tracker](https://youtrack.jetbrains.com/issues?q=Subsystem:%20%7BDebugger.%20Streams%7D) just for that.
+![](https://raw.githubusercontent.com/bibaev/static/master/screen_shot_2017-05-11_at_15.07.27.gif)
