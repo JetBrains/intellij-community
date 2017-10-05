@@ -113,7 +113,7 @@
     <membersContributor implementation="org.jetbrains.plugins.groovy.builder.StreamingJsonBuilderContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.builder.StreamingJsonBuilderDelegateContributor"/>
 
-    <membersContributor implementation="com.intellij.structuralsearch.IdeaOpenApiNonCodeMembersContributor"/>
+    <!--<membersContributor implementation="com.intellij.structuralsearch.IdeaOpenApiNonCodeMembersContributor"/>-->
 
     <closureMissingMethodContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.PluginXmlClosureMemberContributor"/>
 
