@@ -23,7 +23,6 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicArrowButton;
 import java.awt.*;
@@ -206,10 +205,10 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
     button.setOpaque(false);
     if (direction == SwingConstants.NORTH) {
       installNextButtonListeners(button);
-      button.setBorder(new EmptyBorder(2, 1, 1, 2));
+      button.setBorder(JBUI.Borders.empty(2, 1, 1, 2));
     } else {
       installPreviousButtonListeners(button);
-      button.setBorder(new EmptyBorder(1, 1, 2, 2));
+      button.setBorder(JBUI.Borders.empty(1, 1, 2, 2));
     }
     return button;
   }
@@ -278,7 +277,7 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
     Rectangle bounds = editor.getBounds();
     Insets i = spinner.getInsets();
 
-    int offset = JBUI.scale(EDITOR_OFFSET - i.left);
+    int offset = JBUI.scale(EDITOR_OFFSET) - i.left;
     editor.setBounds(bounds.x + offset,
                      bounds.y,
                      bounds.width - offset,
