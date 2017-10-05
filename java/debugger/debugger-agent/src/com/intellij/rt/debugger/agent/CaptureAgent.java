@@ -83,17 +83,19 @@ public class CaptureAgent {
 
       instrumentation.addTransformer(new CaptureTransformer());
 
-      for (Class aClass : instrumentation.getAllLoadedClasses()) {
-        String name = aClass.getName().replaceAll("\\.", "/");
-        if (myCapturePoints.containsKey(name) || myInsertPoints.containsKey(name)) {
-          try {
-            instrumentation.retransformClasses(aClass);
-          }
-          catch (UnmodifiableClassException e) {
-            e.printStackTrace();
-          }
-        }
-      }
+      // Trying to reinstrument java.lang.Thread
+      // fails with dcevm, does not work with other vms :(
+      //for (Class aClass : instrumentation.getAllLoadedClasses()) {
+      //  String name = aClass.getName().replaceAll("\\.", "/");
+      //  if (myCapturePoints.containsKey(name) || myInsertPoints.containsKey(name)) {
+      //    try {
+      //      instrumentation.retransformClasses(aClass);
+      //    }
+      //    catch (UnmodifiableClassException e) {
+      //      e.printStackTrace();
+      //    }
+      //  }
+      //}
       if (DEBUG) {
         System.out.println("Capture agent: ready");
       }
