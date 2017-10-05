@@ -166,12 +166,9 @@ public class TodoCheckinHandlerWorker {
     @NotNull private final Project myProject;
     @NotNull private final String myBeforeContent;
     @NotNull private final String myAfterContent;
-    private List<TodoItem> myOldItems;
-    private LineFragment myCurrentLineFragment;
-    private HashSet<String> myOldTodoTexts;
     @NotNull private final FilePath myAfterFile;
     @NotNull private final List<TodoItem> myNewTodoItems;
-    @Nullable private final TodoFilter myTodoFilter;
+    private final TodoFilter myTodoFilter;
 
     private MyEditedFileProcessor(@NotNull Project project,
                                   @NotNull FilePath afterFilePath,
@@ -191,59 +188,75 @@ public class TodoCheckinHandlerWorker {
       List<LineFragment> lineFragments = getLineFragments(myBeforeContent, myAfterContent);
       lineFragments = ContainerUtil.filter(lineFragments, it -> DiffUtil.getLineDiffType(it) != TextDiffType.DELETED);
 
+      List<Pair<TodoItem, LineFragment>> changedTodoItems = new ArrayList<>();
       StepIntersection.processIntersections(
         myNewTodoItems, lineFragments,
         TODO_ITEM_CONVERTOR, RIGHT_LINE_FRAGMENT_CONVERTOR,
         (todoItem, lineFragment) -> {
-          ProgressManager.checkCanceled();
-          if (myCurrentLineFragment == null || myCurrentLineFragment != lineFragment) {
-            myCurrentLineFragment = lineFragment;
-            myOldTodoTexts = null;
-          }
-          if (DiffUtil.getLineDiffType(lineFragment) == TextDiffType.INSERTED) {
-            myAddedOrEditedTodos.add(todoItem);
-          }
-          else {
-            // change
-            checkEditedFragment(todoItem);
-          }
-        });
-    }
-
-    private void checkEditedFragment(TodoItem newTodoItem) {
-      if (myOldItems == null) {
-        PsiFile beforePsiFile = ReadAction.compute(() -> {
-          return PsiFileFactory.getInstance(myProject)
-            .createFileFromText("old" + myAfterFile.getName(), myAfterFile.getFileType(), myBeforeContent);
+          // TODO: we might actually get duplicated todo items here. But this should not happen until IDEA-62161 is implemented.
+          changedTodoItems.add(Pair.create(todoItem, lineFragment));
         });
 
-        final Collection<IndexPatternOccurrence> all =
-          LightIndexPatternSearch.SEARCH.createQuery(new IndexPatternSearch.SearchParameters(beforePsiFile, TodoIndexPatternProvider
-            .getInstance())).findAll();
+      boolean allAreInserted = ContainerUtil.and(changedTodoItems, pair -> DiffUtil.getLineDiffType(pair.second) == TextDiffType.INSERTED);
+      if (allAreInserted) {
+        for (Pair<TodoItem, LineFragment> pair : changedTodoItems) {
+          myAddedOrEditedTodos.add(pair.first);
+        }
+        return;
+      }
 
-        final TodoItemsCreator todoItemsCreator = new TodoItemsCreator();
-        myOldItems = new ArrayList<>();
-        if (all.isEmpty()) {
-          myAddedOrEditedTodos.add(newTodoItem);
-          return;
+
+      final PsiFile beforePsiFile = ReadAction.compute(() -> {
+        return PsiFileFactory.getInstance(myProject)
+          .createFileFromText("old" + myAfterFile.getName(), myAfterFile.getFileType(), myBeforeContent);
+      });
+
+      final IndexPatternSearch.SearchParameters searchParameters =
+        new IndexPatternSearch.SearchParameters(beforePsiFile, TodoIndexPatternProvider.getInstance());
+      final Collection<IndexPatternOccurrence> patternOccurrences = LightIndexPatternSearch.SEARCH.createQuery(searchParameters).findAll();
+
+      if (patternOccurrences.isEmpty()) {
+        for (Pair<TodoItem, LineFragment> pair : changedTodoItems) {
+          myAddedOrEditedTodos.add(pair.first);
         }
-        for (IndexPatternOccurrence occurrence : all) {
-          myOldItems.add(todoItemsCreator.createTodo(occurrence));
+        return;
+      }
+
+      final List<TodoItem> oldTodoItems = new ArrayList<>();
+      final TodoItemsCreator todoItemsCreator = new TodoItemsCreator();
+      for (IndexPatternOccurrence occurrence : patternOccurrences) {
+        oldTodoItems.add(todoItemsCreator.createTodo(occurrence));
+      }
+      applyFilterAndRemoveDuplicates(oldTodoItems, myTodoFilter);
+
+
+      LineFragment lastLineFragment = null;
+      HashSet<String> oldTodoTexts = new HashSet<>();
+      for (Pair<TodoItem, LineFragment> pair : changedTodoItems) {
+        TodoItem todoItem = pair.first;
+        LineFragment lineFragment = pair.second;
+
+        if (DiffUtil.getLineDiffType(lineFragment) == TextDiffType.INSERTED) {
+          myAddedOrEditedTodos.add(todoItem);
+          continue;
         }
-        applyFilterAndRemoveDuplicates(myOldItems, myTodoFilter);
-      }
-      if (myOldTodoTexts == null) {
-        myOldTodoTexts = new HashSet<>();
-        StepIntersection.processElementIntersections(
-          myCurrentLineFragment, myOldItems,
-          LEFT_LINE_FRAGMENT_CONVERTOR, TODO_ITEM_CONVERTOR,
-          (lineFragment, todoItem) -> myOldTodoTexts.add(getTodoText(todoItem, myBeforeContent)));
-      }
-      final String text = getTodoText(newTodoItem, myAfterContent);
-      if (! myOldTodoTexts.contains(text)) {
-        myAddedOrEditedTodos.add(newTodoItem);
-      } else {
-        myInChangedTodos.add(newTodoItem);
+
+        if (lineFragment != lastLineFragment) {
+          oldTodoTexts.clear();
+          StepIntersection.processElementIntersections(
+            lineFragment, oldTodoItems,
+            LEFT_LINE_FRAGMENT_CONVERTOR, TODO_ITEM_CONVERTOR,
+            (fragment, oldTodoItem) -> oldTodoTexts.add(getTodoText(oldTodoItem, myBeforeContent)));
+          lastLineFragment = lineFragment;
+        }
+
+        final String text = getTodoText(todoItem, myAfterContent);
+        if (!oldTodoTexts.contains(text)) {
+          myAddedOrEditedTodos.add(todoItem);
+        }
+        else {
+          myInChangedTodos.add(todoItem);
+        }
       }
     }
   }
