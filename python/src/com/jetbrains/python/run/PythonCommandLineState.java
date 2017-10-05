@@ -325,7 +325,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
     if (myConfig.getEnvs() != null) {
       env.putAll(myConfig.getEnvs());
     }
-
+    if (PySciProjectComponent.getInstance(project).matplotlibInToolwindow() &&
+        PySciProjectComponent.getInstance(project).getPort() != -1) {
+      env.put("PYCHARM_MATPLOTLIB_PORT", String.valueOf(PySciProjectComponent.getInstance(project).getPort()));
+    }
     addCommonEnvironmentVariables(getInterpreterPath(project, myConfig), env);
 
     setupVirtualEnvVariables(myConfig, env, myConfig.getSdkHome());
@@ -372,10 +375,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   public void customizeEnvironmentVars(Map<String, String> envs, boolean passParentEnvs) {
-    if (PySciProjectComponent.getInstance(myConfig.getProject()).matplotlibInToolwindow() &&
-        PySciProjectComponent.getInstance(myConfig.getProject()).getPort() != -1) {
-      envs.put("PYCHARM_MATPLOTLIB_PORT", String.valueOf(PySciProjectComponent.getInstance(myConfig.getProject()).getPort()));
-    }
   }
 
   private static void setupEncodingEnvs(Map<String, String> envs, Charset charset) {
@@ -386,7 +385,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
     Sdk pythonSdk = PythonSdkType.findSdkByPath(config.getSdkHome());
     if (pythonSdk != null) {
       List<String> pathList = Lists.newArrayList();
-      if (PySciProjectComponent.getInstance(project).matplotlibInToolwindow()) {
+      if (PySciProjectComponent.getInstance(project).matplotlibInToolwindow() &&
+          PySciProjectComponent.getInstance(project).getPort() != -1) {
         pathList.add(PythonHelpersLocator.getHelperPath("pycharm_matplotlib_backend"));
       }
       pathList.addAll(getAddedPaths(pythonSdk));
