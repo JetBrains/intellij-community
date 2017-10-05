@@ -27,12 +27,15 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.fields.CommaSeparatedIntegersField;
 import com.intellij.ui.components.fields.IntegerField;
+import com.intellij.ui.components.fields.valueEditors.CommaSeparatedIntegersValueEditor;
 import com.intellij.ui.components.fields.valueEditors.ValueEditor;
 import com.intellij.ui.components.labels.ActionLink;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.List;
 
 /**
@@ -88,12 +91,13 @@ public class RightMarginForm {
     });
     myRightMarginField.setCanBeEmpty(true);
     myRightMarginField.setDefaultValue(-1);
+    myRightMarginField.setMinimumSize(new Dimension(JBUI.scale(120), myRightMarginField.getMinimumSize().height));
     myVisualGuidesField = new CommaSeparatedIntegersField(ApplicationBundle.message("settings.code.style.visual.guides"), 0, CodeStyleConstraints.MAX_RIGHT_MARGIN, "Optional");
     myVisualGuidesField.getValueEditor().addListener(new ValueEditor.Listener<List<Integer>>() {
       @Override
       public void valueChanged(@NotNull List<Integer> newValue) {
         myResetGuidesLink.setVisible(!myVisualGuidesField.isEmpty());
-        myVisualGuidesField.getEmptyText().setText(MarginOptionsUtil.getDefaultVisualGuidesText(mySettings));
+        myVisualGuidesField.getEmptyText().setText(getDefaultVisualGuidesText(mySettings));
       }
     });
     myResetLink = new ActionLink("Reset", new ResetRightMarginAction());
@@ -128,7 +132,7 @@ public class RightMarginForm {
     myResetLink.setVisible(langSettings.RIGHT_MARGIN >= 0);
     myResetGuidesLink.setVisible(!langSettings.getSoftMargins().isEmpty());
     myRightMarginField.getEmptyText().setText(MarginOptionsUtil.getDefaultRightMarginText(settings));
-    myVisualGuidesField.getEmptyText().setText(MarginOptionsUtil.getDefaultVisualGuidesText(settings));
+    myVisualGuidesField.getEmptyText().setText(getDefaultVisualGuidesText(settings));
   }
 
   public void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException {
@@ -160,6 +164,15 @@ public class RightMarginForm {
 
   public JPanel getTopPanel() {
     return myTopPanel;
+  }
+
+  private static String getDefaultVisualGuidesText(@NotNull CodeStyleSettings settings) {
+    List<Integer> margins = settings.getDefaultSoftMargins();
+    String marginsString =
+      margins.size() <= 2 ?
+      CommaSeparatedIntegersValueEditor.intListToString(margins) :
+      CommaSeparatedIntegersValueEditor.intListToString(margins.subList(0, 2)) + ",...";
+    return MarginOptionsUtil.getDefaultValueText(marginsString);
   }
 
 }
