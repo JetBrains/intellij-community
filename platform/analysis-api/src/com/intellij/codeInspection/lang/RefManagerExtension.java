@@ -32,7 +32,7 @@ public interface RefManagerExtension<T> {
 
   /**
    * The method finds problem container (ex: method, class, file) that used to be shown as inspection view tree node.
-   * If method returns not null value then {@link LocalInspectionTool#getProblemElement(PsiElement)} will be ignored.
+   * This method will be called if  {@link LocalInspectionTool#getProblemElement(PsiElement)} returns null or PsiFile instance for specific inspection tool.
    *
    * @param psiElement
    * @return container element for given psiElement
