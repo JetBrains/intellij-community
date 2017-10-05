@@ -138,12 +138,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       if (childCount == 0) {
         return true;
       }
-      if (childCount == 1) {
-        Object node = model.getChild(model.getRoot(), 0);
-        if (node instanceof LoadingNode) {
-          return true;
-        }
-      }
     }
     return false;
   }

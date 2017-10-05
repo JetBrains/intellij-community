@@ -17,28 +17,26 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
-import com.intellij.openapi.vcs.changes.ui.OldChangesBrowserBase;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.GuiUtils;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -51,7 +49,6 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
   protected JPanel myPanel;
   protected final ChangesListView myView;
   protected final ChangeListManager myChangeListManager;
-  protected boolean myInRefresh;
   protected final Project myProject;
 
   protected SpecificFilesViewDialog(@NotNull Project project,
@@ -84,6 +81,16 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     init();
     initData(initDataFiles);
     myView.setMinimumSize(new JBDimension(100, 100));
+
+
+    ChangeListAdapter changeListListener = new ChangeListAdapter() {
+      @Override
+      public void changeListUpdateDone() {
+        refreshView();
+      }
+    };
+    ChangeListManager.getInstance(myProject).addChangeListListener(changeListListener);
+    Disposer.register(myDisposable, () -> ChangeListManager.getInstance(myProject).removeChangeListListener(changeListListener));
   }
 
 
@@ -161,34 +168,15 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
   }
 
   protected void refreshView() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    if (myInRefresh) return;
-    myInRefresh = true;
-
-    myChangeListManager.invokeAfterUpdate(() -> {
-      try {
+    GuiUtils.invokeLaterIfNeeded(() -> {
+      if (isVisible()) {
         initData(getFiles());
       }
-      finally {
-        myInRefresh = false;
-      }
-    }, InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE, "", ModalityState.current());
+    }, ModalityState.stateForComponent(myView));
   }
 
   @NotNull
   protected abstract List<VirtualFile> getFiles();
-
-  protected static OldChangesBrowserBase getBrowserBase(@NotNull ChangesListView view) {
-    return OldChangesBrowserBase.DATA_KEY.getData(DataManager.getInstance().getDataContext(view));
-  }
-
-  public static void refreshChanges(@NotNull Project project, @Nullable OldChangesBrowserBase browser) {
-    if (browser != null) {
-      ChangeListManager.getInstance(project)
-        .invokeAfterUpdate(browser::rebuildList, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, "Delete files", null);
-    }
-  }
 
   public class ToggleShowFlattenAction extends ToggleAction implements DumbAware {
     public ToggleShowFlattenAction() {

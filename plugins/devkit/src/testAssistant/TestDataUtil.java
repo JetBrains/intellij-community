@@ -168,7 +168,8 @@ public class TestDataUtil {
       new OpenFileDescriptor(project, file).navigate(true);
     }
     else {
-      int rc = Messages.showYesNoDialog(project, DevKitBundle.message("testdata.file.doesn.not.exist", path),
+      String displayPath = getHtmlDisplayPathForMissingFile(project, path);
+      int rc = Messages.showYesNoDialog(project, DevKitBundle.message("testdata.file.doesn.not.exist", displayPath),
                                         DevKitBundle.message("testdata.create.dialog.title"), Messages.getQuestionIcon());
       if (rc == Messages.YES) {
         VirtualFile vFile = createFileByName(project, path);
@@ -193,6 +194,37 @@ public class TestDataUtil {
   }
 
   @Nullable
+  private static Pair<String, String> getModuleOrProjectRelativePath(Project project, String filePath) {
+    String currentPath = PathUtil.getParentPath(filePath);
+    if (currentPath.isEmpty()) {
+      return null;
+    }
+
+    LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+    VirtualFile dir;
+    while ((dir = fileSystem.refreshAndFindFileByPath(currentPath)) == null) {
+      currentPath = PathUtil.getParentPath(currentPath);
+      if (currentPath.isEmpty()) {
+        break;
+      }
+    }
+    if (dir == null) {
+      return null;
+    }
+
+    Pair<String, String> relativeParentPath = getModuleOrProjectRelativePath(project, dir);
+    if (relativeParentPath != null) {
+      String dirPath = dir.getPath();
+      if (!filePath.startsWith(dirPath)) {
+        // shouldn't happen
+        return null;
+      }
+      return new Pair<>(relativeParentPath.first, relativeParentPath.second + filePath.substring(dirPath.length()));
+    }
+    return null;
+  }
+
+  @Nullable
   static Pair<String, String> getModuleOrProjectRelativeParentPath(Project project, VirtualFile file) {
     VirtualFile parent = file.getParent();
     if (parent == null) {
@@ -200,13 +232,18 @@ public class TestDataUtil {
       return null;
     }
 
-    Module module = ModuleUtilCore.findModuleForFile(parent, project);
+    return getModuleOrProjectRelativePath(project, parent);
+  }
+
+  @Nullable
+  private static Pair<String, String> getModuleOrProjectRelativePath(Project project, VirtualFile file) {
+    Module module = ModuleUtilCore.findModuleForFile(file, project);
     if (module != null) {
       VirtualFile moduleFile = module.getModuleFile();
       if (moduleFile != null) {
         VirtualFile moduleFileDir = moduleFile.getParent();
         if (moduleFileDir != null) {
-          String moduleRelativePath = VfsUtilCore.getRelativePath(parent, moduleFileDir);
+          String moduleRelativePath = VfsUtilCore.getRelativePath(file, moduleFileDir);
           if (moduleRelativePath != null) {
             return new Pair<>(module.getName(), moduleRelativePath);
           }
@@ -216,12 +253,45 @@ public class TestDataUtil {
 
     VirtualFile projectDir = project.getBaseDir();
     if (projectDir != null) {
-      String projectRelativePath = VfsUtilCore.getRelativePath(parent, projectDir);
+      String projectRelativePath = VfsUtilCore.getRelativePath(file, projectDir);
       if (projectRelativePath != null) {
         return new Pair<>(project.getName(), projectRelativePath);
       }
     }
 
     return null;
+  }
+
+
+  @NotNull
+  static String getHtmlDisplayPathForMissingFile(Project project, String path) {
+    return getHtmlDisplayPathForRelativePathPair(getRelativePathPairForMissingFile(project, path));
+  }
+
+  /**
+   * @return pair of module/project name (or null if cannot be determined) and relative (or absolute) path.
+   */
+  @NotNull
+  static Pair<String, String> getRelativePathPairForMissingFile(Project project, String path) {
+    Pair<String, String> relativePath = getModuleOrProjectRelativePath(project, path);
+    if (relativePath == null) {
+      return new Pair<>(null, path);
+    }
+    return relativePath;
+  }
+
+  /**
+   * Returns the presentable path for passed pair of module/project name (or null) and relative (or absolute) path. HTML is used.
+   * @see #getRelativePathPairForMissingFile(Project, String)
+   */
+  @NotNull
+  static String getHtmlDisplayPathForRelativePathPair(Pair<String, String> relativePathPair) {
+    String base = relativePathPair.getFirst();
+    if (base == null) {
+      return relativePathPair.getSecond();
+    }
+    else {
+      return "<b>" + base + "</b>/" + relativePathPair.getSecond();
+    }
   }
 }

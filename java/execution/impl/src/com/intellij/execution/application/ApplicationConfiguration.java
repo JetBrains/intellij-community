@@ -51,7 +51,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule>
-  implements CommonJavaRunConfigurationParameters, SingleClassConfiguration, RefactoringListenerProvider {
+  implements CommonJavaRunConfigurationParameters, ConfigurationWithCommandLineShortener, SingleClassConfiguration, RefactoringListenerProvider {
 
   public String MAIN_CLASS_NAME;
   public String VM_PARAMETERS;
@@ -61,7 +61,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   public String ALTERNATIVE_JRE_PATH;
   public boolean ENABLE_SWING_INSPECTOR;
 
-  private ShortenClasspath myShortenClasspath = null;
+  private ShortenCommandLine myShortenCommandLine = null;
 
   public String ENV_VARIABLES;
   private final Map<String,String> myEnvs = new LinkedHashMap<>();
@@ -245,7 +245,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     DefaultJDOMExternalizer.readExternal(this, element);
     readModule(element);
     EnvironmentVariablesComponent.readExternal(element, getEnvs());
-    setShortenClasspath(ShortenClasspath.readShortenClasspathMethod(element));
+    setShortenCommandLine(ShortenCommandLine.readShortenClasspathMethod(element));
   }
 
   @Override
@@ -261,18 +261,18 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
       EnvironmentVariablesComponent.writeExternal(element, envs);
     //}
 
-    ShortenClasspath.writeShortenClasspathMethod(element, myShortenClasspath);
+    ShortenCommandLine.writeShortenClasspathMethod(element, myShortenCommandLine);
   }
 
   @Nullable
   @Override
-  public ShortenClasspath getShortenClasspath() {
-    return myShortenClasspath;
+  public ShortenCommandLine getShortenCommandLine() {
+    return myShortenCommandLine;
   }
 
   @Override
-  public void setShortenClasspath(ShortenClasspath mode) {
-    myShortenClasspath = mode;
+  public void setShortenCommandLine(ShortenCommandLine mode) {
+    myShortenCommandLine = mode;
   }
 
   public static class JavaApplicationCommandLineState<T extends ApplicationConfiguration> extends BaseJavaApplicationCommandLineState<T> {
@@ -284,7 +284,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     protected JavaParameters createJavaParameters() throws ExecutionException {
       final JavaParameters params = new JavaParameters();
       T configuration = getConfiguration();
-      params.setShortenClasspath(configuration.getShortenClasspath(), configuration.getProject());
+      params.setShortenCommandLine(configuration.getShortenCommandLine(), configuration.getProject());
 
       final JavaRunConfigurationModule module = myConfiguration.getConfigurationModule();
       final String jreHome = myConfiguration.ALTERNATIVE_JRE_PATH_ENABLED ? myConfiguration.ALTERNATIVE_JRE_PATH : null;

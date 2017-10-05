@@ -163,11 +163,8 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    * @return problem container element
    */
   @Nullable
-  public PsiNamedElement getProblemElement(PsiElement psiElement) {
-    while (psiElement!=null && !(psiElement instanceof PsiFile)) {
-      psiElement = psiElement.getParent();
-    }
-    return (PsiFile)psiElement;
+  public PsiNamedElement getProblemElement(@NotNull PsiElement psiElement) {
+    return psiElement.getContainingFile();
   }
 
   public void inspectionStarted(@NotNull LocalInspectionToolSession session, boolean isOnTheFly) {}

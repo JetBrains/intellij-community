@@ -74,6 +74,7 @@ import java.util.Map;
 public abstract class JavaTestFrameworkRunnableState<T extends
   ModuleBasedConfiguration<JavaRunConfigurationModule>
   & CommonJavaRunConfigurationParameters
+  & ConfigurationWithCommandLineShortener
   & SMRunnerConsolePropertiesProvider> extends JavaCommandLineState implements RemoteConnectionCreator {
   private static final Logger LOG = Logger.getInstance(JavaTestFrameworkRunnableState.class);
   protected ServerSocket myServerSocket;
@@ -195,7 +196,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = new JavaParameters();
     Project project = getConfiguration().getProject();
-    javaParameters.setShortenClasspath(getConfiguration().getShortenClasspath(), project);
+    javaParameters.setShortenCommandLine(getConfiguration().getShortenCommandLine(), project);
     final Module module = getConfiguration().getConfigurationModule().getModule();
 
     Sdk jdk = module == null ? ProjectRootManager.getInstance(project).getProjectSdk() : ModuleRootManager.getInstance(module).getSdk();

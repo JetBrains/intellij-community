@@ -608,7 +608,13 @@ public class PsiVFSListener implements VirtualFileListener, BulkFileListener {
           assert depthCounter >= 0 : depthCounter;
           if (depthCounter > 0) return;
 
-          myFileManager.removeInvalidFilesAndDirs(true);
+          DebugUtil.startPsiModification("rootsChanged");
+          try {
+            myFileManager.invalidateAllPsi();
+          }
+          catch (Exception e) {
+            DebugUtil.finishPsiModification();
+          }
 
           PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
           treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_ROOTS);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.gradle;
 
 import com.intellij.execution.RunManager;
@@ -29,14 +15,17 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
+import com.intellij.openapi.externalSystem.model.project.ProjectId;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableModelsProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -51,6 +40,8 @@ import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigur
 import javax.swing.*;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -92,7 +83,8 @@ public class GradleIntellijPluginFrameworkSupportProvider extends GradleFramewor
   }
 
   @Override
-  public void addSupport(@NotNull Module module,
+  public void addSupport(@NotNull ProjectId projectId,
+                         @NotNull Module module,
                          @NotNull ModifiableRootModel rootModel,
                          @NotNull ModifiableModelsProvider modifiableModelsProvider,
                          @NotNull BuildScriptDataBuilder buildScriptData) {
@@ -110,21 +102,17 @@ public class GradleIntellijPluginFrameworkSupportProvider extends GradleFramewor
       .addPluginDefinitionInPluginsGroup("id 'org.jetbrains.intellij' version '" + pluginVersion + "'")
       .addOther("intellij {\n    version '" + ideVersion + "'\n}\n")
       .addOther("patchPluginXml {\n" +
-                "    pluginId \"${group}.${project.name}\"\n" +
                 "    changeNotes \"\"\"\n" +
                 "      Add change notes here.<br>\n" +
-                "      <em>most HTML tags may be used</em>\"\"\"\n" +
-                "    description \"\"\"\n" +
-                "      Enter short description for your plugin here.<br>\n" +
                 "      <em>most HTML tags may be used</em>\"\"\"\n" +
                 "}");
     VirtualFile contentRoot = ArrayUtil.getFirstElement(rootModel.getContentRoots());
     if (contentRoot == null) return;
-    if (!createPluginXml(module, contentRoot.getPath())) return;
-    createRunConfiguration(module, contentRoot.getPath());
-    StartupManager.getInstance(module.getProject())
-      .runWhenProjectIsInitialized(
-        () -> FileEditorManager.getInstance(module.getProject()).openFile(buildScriptData.getBuildScriptFile(), true));
+    if (!createPluginXml(projectId, module, contentRoot.getPath())) return;
+    StartupManager.getInstance(module.getProject()).runWhenProjectIsInitialized(() -> {
+      FileEditorManager.getInstance(module.getProject()).openFile(buildScriptData.getBuildScriptFile(), true);
+      createRunConfiguration(module, contentRoot.getPath());
+    });
   }
 
   @Override
@@ -155,7 +143,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends GradleFramewor
     return null;
   }
 
-  private boolean createPluginXml(@NotNull Module module, @NotNull String contentRootPath) {
+  private boolean createPluginXml(@NotNull ProjectId projectId, @NotNull Module module, @NotNull String contentRootPath) {
     try {
       VirtualFile metaInf = VfsUtil.createDirectoryIfMissing(contentRootPath + "/src/main/resources/META-INF");
       if (metaInf == null) {
@@ -164,15 +152,26 @@ public class GradleIntellijPluginFrameworkSupportProvider extends GradleFramewor
       if (metaInf.findChild("plugin.xml") != null) {
         return true;
       }
+      Project project = module.getProject();
       VirtualFile pluginXml = metaInf.createChildData(this, "plugin.xml");
-      FileTemplateManager templateManager = FileTemplateManager.getInstance(module.getProject());
+      FileTemplateManager templateManager = FileTemplateManager.getInstance(project);
       FileTemplate template = templateManager.getJ2eeTemplate("gradleBasedPlugin.xml");
       if (template == null) {
         return false;
       }
-      VfsUtil.saveText(pluginXml, template.getText(templateManager.getDefaultProperties()));
-      StartupManager.getInstance(module.getProject())
-        .runWhenProjectIsInitialized(() -> FileEditorManager.getInstance(module.getProject()).openFile(pluginXml, true));
+      Map<String, String> attributes = new HashMap<>();
+      String groupId = projectId.getGroupId();
+      String artifactId = projectId.getArtifactId();
+      if (StringUtil.isNotEmpty(artifactId)) {
+        attributes.put("PLUGIN_ID", StringUtil.isNotEmpty(groupId) ? groupId + "." + artifactId : artifactId);
+      }
+      else {
+        attributes.put("PLUGIN_ID", project.getName());
+      }
+
+      VfsUtil.saveText(pluginXml, template.getText(attributes));
+      StartupManager.getInstance(project)
+        .runWhenProjectIsInitialized(() -> FileEditorManager.getInstance(project).openFile(pluginXml, true));
       return true;
     }
     catch (IOException e) {

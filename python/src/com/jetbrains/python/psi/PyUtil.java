@@ -96,6 +96,9 @@ import static com.jetbrains.python.psi.PyFunction.Modifier.CLASSMETHOD;
 import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
 
 public class PyUtil {
+
+  private static final boolean VERBOSE_MODE = System.getenv().get("_PYCHARM_VERBOSE_MODE") != null;
+
   private PyUtil() {
   }
 
@@ -919,7 +922,7 @@ public class PyUtil {
    * @param runnable code to call
    */
   public static void verboseOnly(@NotNull final Runnable runnable) {
-    if (System.getenv().get("_PYCHARM_VERBOSE_MODE") != null) {
+    if (VERBOSE_MODE) {
       runnable.run();
     }
   }

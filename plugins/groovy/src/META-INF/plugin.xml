@@ -113,6 +113,8 @@
     <membersContributor implementation="org.jetbrains.plugins.groovy.builder.StreamingJsonBuilderContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.builder.StreamingJsonBuilderDelegateContributor"/>
 
+    <membersContributor implementation="com.intellij.structuralsearch.IdeaOpenApiNonCodeMembersContributor"/>
+
     <closureMissingMethodContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.PluginXmlClosureMemberContributor"/>
 
     <astTransformationSupport id="groovyObjectTransformation" order="first"
@@ -1824,6 +1826,10 @@
       <implementation-class>org.jetbrains.plugins.groovy.mvc.MvcModuleStructureSynchronizer</implementation-class>
     </component>
   </project-components>
+
+  <extensions defaultExtensionNs="org.jetbrains.uast">
+    <uastLanguagePlugin implementation="org.jetbrains.plugins.groovy.lang.psi.uast.GroovyDummyUastPlugin"/>
+  </extensions>
 
   <xi:include href="groovy-console.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="groovy-templates.xml" xpointer="xpointer(/idea-plugin/*)"/>

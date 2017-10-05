@@ -25,20 +25,16 @@ import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.ui.tree.AbstractTreeModel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
-import static java.util.Collections.emptyList;
-import static java.util.Collections.enumeration;
-import static java.util.Collections.unmodifiableList;
+import static java.util.Collections.*;
 
 /**
  * @author Sergey.Malenkov
@@ -95,14 +91,22 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
     return false;
   }
 
-  public final void invalidate() {
+  @NotNull
+  public final Promise<?> invalidate() {
+    AsyncPromise<Object> promise = new AsyncPromise<>();
     invoker.invokeLaterIfNeeded(() -> {
-      if (disposed) return;
+      if (disposed) {
+        promise.setError("rejected");
+        return;
+      }
       root.invalidate();
       Node node = root.get();
+      LOG.debug("root invalidated: ", node);
       if (node != null) node.invalidate();
       treeStructureChanged(null, null, null);
+      promise.setResult(null);
     });
+    return promise;
   }
 
   public final void invalidate(@NotNull TreePath path, boolean structure) {
@@ -127,7 +131,11 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   public final Object getRoot() {
     if (disposed || !isValidThread()) return null;
     if (!root.isValid()) {
-      root.set(getValidRoot());
+      Node validRoot = getValidRoot();
+      LOG.debug("old root: " + root.get());
+      LOG.debug("new root: " + validRoot);
+      LOG.debug(new IllegalStateException());
+      root.set(validRoot);
     }
     return root.get();
   }

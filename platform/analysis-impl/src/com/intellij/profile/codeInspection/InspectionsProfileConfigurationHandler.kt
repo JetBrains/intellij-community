@@ -17,9 +17,9 @@ package com.intellij.profile.codeInspection
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
-import com.intellij.openapi.externalSystem.model.project.ConfigurationData
+import com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
-import com.intellij.openapi.externalSystem.service.project.manage.ConfigurationHandler
+import com.intellij.openapi.externalSystem.service.project.settings.ConfigurationHandler
 import com.intellij.openapi.project.Project
 
 /**

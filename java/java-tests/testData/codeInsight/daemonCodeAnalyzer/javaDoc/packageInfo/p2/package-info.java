@@ -1,2 +1,2 @@
 @Deprecated
-package a.b;
+package p2;

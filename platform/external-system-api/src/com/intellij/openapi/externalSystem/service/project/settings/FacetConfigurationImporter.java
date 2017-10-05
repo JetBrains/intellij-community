@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.externalSystem.service.project.manage;
+package com.intellij.openapi.externalSystem.service.project.settings;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
@@ -29,8 +29,8 @@ import java.util.Map;
  * Created by Nikita.Skvortsov
  * date: 12.09.2017.
  */
-public interface FacetConfigurationHandlerExtension<F extends Facet> {
-  ExtensionPointName<FacetConfigurationHandlerExtension> EP_NAME = ExtensionPointName.create("com.intellij.facetHandlerExtension");
+public interface FacetConfigurationImporter<F extends Facet> {
+  ExtensionPointName<FacetConfigurationImporter> EP_NAME = ExtensionPointName.create("com.intellij.facetConfigurationImporter");
 
   @NotNull
   default Collection<F> process(@NotNull Module module,

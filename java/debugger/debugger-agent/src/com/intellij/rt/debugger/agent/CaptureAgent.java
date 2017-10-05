@@ -66,20 +66,36 @@ public class CaptureAgent {
         }
       }
 
-      instrumentation.appendToSystemClassLoaderSearch(new JarFile(asmPath));
-
-      instrumentation.addTransformer(new CaptureTransformer());
-      for (Class aClass : instrumentation.getAllLoadedClasses()) {
-        String name = aClass.getName().replaceAll("\\.", "/");
-        if (myCapturePoints.containsKey(name) || myInsertPoints.containsKey(name)) {
-          try {
-            instrumentation.retransformClasses(aClass);
-          }
-          catch (UnmodifiableClassException e) {
-            e.printStackTrace();
-          }
+      try {
+        instrumentation.appendToSystemClassLoaderSearch(new JarFile(asmPath));
+      }
+      catch (Exception e) {
+        String report = "Capture agent: unable to use the provided asm lib";
+        try {
+          Class.forName("org.jetbrains.org.objectweb.asm.MethodVisitor");
+          System.out.println(report + ", will use asm from the classpath");
+        }
+        catch (ClassNotFoundException e1) {
+          System.out.println(report + ", exiting");
+          return;
         }
       }
+
+      instrumentation.addTransformer(new CaptureTransformer());
+
+      // Trying to reinstrument java.lang.Thread
+      // fails with dcevm, does not work with other vms :(
+      //for (Class aClass : instrumentation.getAllLoadedClasses()) {
+      //  String name = aClass.getName().replaceAll("\\.", "/");
+      //  if (myCapturePoints.containsKey(name) || myInsertPoints.containsKey(name)) {
+      //    try {
+      //      instrumentation.retransformClasses(aClass);
+      //    }
+      //    catch (UnmodifiableClassException e) {
+      //      e.printStackTrace();
+      //    }
+      //  }
+      //}
       if (DEBUG) {
         System.out.println("Capture agent: ready");
       }

@@ -271,7 +271,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   private static int countFiles(Element element) {
     Integer value = new ConfigTreeReader<Integer>() {
       @Override
-      protected Integer processFiles(@NotNull List<Element> fileElements, @Nullable Integer context) {
+      protected Integer processFiles(@NotNull List<Element> fileElements, Element parent, @Nullable Integer context) {
         return fileElements.size();
       }
 
@@ -813,19 +813,19 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         }
       }
 
-      return processFiles(children, context);
+      return processFiles(children, leaf, context);
     }
 
     @Nullable
-    protected abstract T processFiles(@NotNull List<Element> fileElements, @Nullable T context);
+    abstract T processFiles(@NotNull List<Element> fileElements, Element parent, @Nullable T context);
     @Nullable
-    protected abstract T processSplitter(@NotNull Element element, @Nullable Element firstChild, @Nullable Element secondChild, @Nullable T context);
+    abstract T processSplitter(@NotNull Element element, @Nullable Element firstChild, @Nullable Element secondChild, @Nullable T context);
   }
 
   private class UIBuilder extends ConfigTreeReader<JPanel> {
 
     @Override
-    protected JPanel processFiles(@NotNull List<Element> fileElements, final JPanel context) {
+    protected JPanel processFiles(@NotNull List<Element> fileElements, Element parent, final JPanel context) {
       final Ref<EditorWindow> windowRef = new Ref<>();
       UIUtil.invokeAndWaitIfNeeded((Runnable)() -> windowRef.set(context == null ? createEditorWindow() : findWindowWith(context)));
       final EditorWindow window = windowRef.get();
@@ -839,7 +839,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
           if (tabbedPane != null) {
             try {
               int limit =
-                Integer.parseInt(file.getParentElement().getAttributeValue(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString(),
+                Integer.parseInt(parent.getAttributeValue(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString(),
                                                                            String.valueOf(JBTabsImpl.DEFAULT_MAX_TAB_WIDTH)));
               UIUtil.putClientProperty(tabbedPane.getComponent(), JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, limit);
             }

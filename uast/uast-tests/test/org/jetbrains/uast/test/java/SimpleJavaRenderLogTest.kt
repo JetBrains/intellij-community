@@ -39,4 +39,6 @@ class SimpleJavaRenderLogTest : AbstractJavaRenderLogTest() {
     @Test fun testAnonymousClassWithParameters() = doTest("Simple/AnonymousClassWithParameters.java")
 
     @Test fun testVariableAnnotation() = doTest("Simple/VariableAnnotation.java")
+
+    @Test fun testPackageInfo() = doTest("Simple/package-info.java")
 }

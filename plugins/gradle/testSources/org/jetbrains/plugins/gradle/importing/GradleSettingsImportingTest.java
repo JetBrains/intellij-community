@@ -22,8 +22,8 @@ import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.externalSystem.service.project.manage.FacetConfigurationHandlerExtension;
-import com.intellij.openapi.externalSystem.service.project.manage.RunConfigurationHandlerExtension;
+import com.intellij.openapi.externalSystem.service.project.settings.FacetConfigurationImporter;
+import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -41,7 +41,7 @@ import org.junit.runners.Parameterized;
 
 import java.util.*;
 
-import static com.intellij.openapi.externalSystem.service.project.manage.ConfigurationDataService.EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED;
+import static com.intellij.openapi.externalSystem.service.project.settings.ConfigurationDataService.EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED;
 
 /**
  * Created by Nikita.Skvortsov
@@ -151,8 +151,8 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
   public void testApplicationRunConfigurationSettingsImport() throws Exception {
     final String typeName = "testRunConfig";
 
-    TestRunConfigurationHandlerExtension testExtension = new TestRunConfigurationHandlerExtension(typeName);
-    Extensions.getRootArea().getExtensionPoint(RunConfigurationHandlerExtension.EP_NAME).registerExtension(testExtension);
+    TestRunConfigurationImporter testExtension = new TestRunConfigurationImporter(typeName);
+    Extensions.getRootArea().getExtensionPoint(RunConfigurationImporter.EP_NAME).registerExtension(testExtension);
 
     importProject(
       withGradleIdeaExtPlugin(
@@ -188,8 +188,8 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
   @Test
   public void testFacetSettingsImport() throws Exception {
 
-    TestFacetConfigurationHandlerExtension testExtension = new TestFacetConfigurationHandlerExtension("testFacet");
-    Extensions.getRootArea().getExtensionPoint(FacetConfigurationHandlerExtension.EP_NAME).registerExtension(testExtension);
+    TestFacetConfigurationImporter testExtension = new TestFacetConfigurationImporter("testFacet");
+    Extensions.getRootArea().getExtensionPoint(FacetConfigurationImporter.EP_NAME).registerExtension(testExtension);
 
 
     importProject(
@@ -237,12 +237,12 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
 }
 
 
-class TestRunConfigurationHandlerExtension implements RunConfigurationHandlerExtension {
+class TestRunConfigurationImporter implements RunConfigurationImporter {
 
   private final String myTypeName;
   private final Map<String, Map<String, Object>> myConfigs = new HashMap<>();
 
-  public TestRunConfigurationHandlerExtension(@NotNull String typeName) {
+  public TestRunConfigurationImporter(@NotNull String typeName) {
     myTypeName = typeName;
   }
 
@@ -267,13 +267,13 @@ class TestRunConfigurationHandlerExtension implements RunConfigurationHandlerExt
 }
 
 
-class TestFacetConfigurationHandlerExtension implements FacetConfigurationHandlerExtension<Facet> {
+class TestFacetConfigurationImporter implements FacetConfigurationImporter<Facet> {
 
   private final String myTypeName;
 
   private final Map<String, Map<String, Object>> myConfigs = new HashMap<>();
 
-  TestFacetConfigurationHandlerExtension(@NotNull String typeName) {
+  TestFacetConfigurationImporter(@NotNull String typeName) {
     myTypeName = typeName;
   }
 

@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.externalSystem.model.project;
+package com.intellij.openapi.externalSystem.model.project.settings;
 
+import com.intellij.openapi.externalSystem.model.project.ExternalEntityData;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 

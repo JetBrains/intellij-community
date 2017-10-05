@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.OrderRootType;
@@ -33,6 +32,7 @@ import com.intellij.ui.TextFieldWithStoredHistory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
@@ -62,7 +62,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
   private boolean myFreeze;
   private final SdkModel.Listener myListener;
 
-  IdeaJdkConfigurable(final SdkModel sdkModel, final SdkModificator sdkModificator) {
+  IdeaJdkConfigurable(@NotNull SdkModel sdkModel, @NotNull SdkModificator sdkModificator) {
     mySdkModel = sdkModel;
     mySdkModificator = sdkModificator;
     myListener = new SdkModel.Listener() {
@@ -154,7 +154,8 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
         for (VirtualFile file : internalRoots) {
           if (e.getStateChange() == ItemEvent.DESELECTED) {
             mySdkModificator.removeRoot(file, type);
-          } else {
+          }
+          else {
             if (ArrayUtil.find(configuredRoots, file) == -1) {
               mySdkModificator.addRoot(file, type);
             }
@@ -179,7 +180,8 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
     final Sdk javaSdk = ((Sandbox)sdk.getSdkAdditionalData()).getJavaSdk();
     if (myJdksModel.getIndexOf(javaSdk) == -1) {
       myJdksModel.addElement(javaSdk);
-    } else {
+    }
+    else {
       myJdksModel.setSelectedItem(javaSdk);
     }
   }
@@ -190,10 +192,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
   }
 
   @Override
-  public void apply() throws ConfigurationException {
-    /*if (mySandboxHome.getText() == null || mySandboxHome.getText().length() == 0) {
-      throw new ConfigurationException(DevKitBundle.message("sandbox.specification"));
-    }*/
+  public void apply() {
     mySandboxHome.addCurrentTextToHistory();
     final Sandbox additionalData = (Sandbox)myIdeaJdk.getSdkAdditionalData();
     if (additionalData != null) {
@@ -228,7 +227,8 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
         }
       }
       myModified = false;
-    } else {
+    }
+    else {
       mySandboxHome.setText(IdeaJdk.getDefaultSandbox());
     }
   }

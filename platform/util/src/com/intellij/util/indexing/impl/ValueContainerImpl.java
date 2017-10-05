@@ -22,7 +22,6 @@ import com.intellij.util.containers.EmptyIterator;
 import com.intellij.util.indexing.IndexId;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.containers.ChangeBufferingList;
-import com.intellij.util.indexing.containers.IdSet;
 import com.intellij.util.indexing.containers.IntIdsIterator;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -304,7 +303,18 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     try {
       final ValueContainerImpl clone = (ValueContainerImpl)super.clone();
       if (myInputIdMapping instanceof THashMap) {
-        clone.myInputIdMapping = mapCopy((THashMap<Value, Object>)myInputIdMapping);
+        final THashMap<Value, Object> cloned = ((THashMap<Value, Object>)myInputIdMapping).clone();
+        cloned.forEachEntry(new TObjectObjectProcedure<Value, Object>() {
+          @Override
+          public boolean execute(Value key, Object val) {
+            if (val instanceof ChangeBufferingList) {
+              cloned.put(key, ((ChangeBufferingList)val).clone());
+            }
+            return true;
+          }
+        });
+
+        clone.myInputIdMapping = cloned;
       } else if (myInputIdMappingValue instanceof ChangeBufferingList) {
         clone.myInputIdMappingValue = ((ChangeBufferingList)myInputIdMappingValue).clone();
       }
@@ -341,35 +351,6 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       return this;
     }
   };
-
-  @NotNull
-  public ValueContainerImpl<Value> copy() {
-    ValueContainerImpl<Value> container = new ValueContainerImpl<Value>();
-
-    if (myInputIdMapping instanceof THashMap) {
-      final THashMap<Value, Object> mapping = (THashMap<Value, Object>)myInputIdMapping;
-      final THashMap<Value, Object> newMapping = new THashMap<Value, Object>(mapping.size());
-      container.myInputIdMapping = newMapping;
-
-      mapping.forEachEntry(new TObjectObjectProcedure<Value, Object>() {
-        @Override
-        public boolean execute(Value key, Object val) {
-          if (val instanceof ChangeBufferingList) {
-            newMapping.put(key, ((ChangeBufferingList)val).clone());
-          } else {
-            newMapping.put(key, val);
-          }
-          return true;
-        }
-      });
-    } else {
-      container.myInputIdMapping = myInputIdMapping;
-      container.myInputIdMappingValue = myInputIdMappingValue instanceof ChangeBufferingList ?
-                                        ((ChangeBufferingList)myInputIdMappingValue).clone():
-                                        myInputIdMappingValue;
-    }
-    return container;
-  }
 
   private @Nullable ChangeBufferingList ensureFileSetCapacityForValue(Value value, int count) {
     if (count <= 1) return null;
@@ -431,18 +412,10 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
           DataInputOutputUtil.writeINT(out, intIterator.next());
         } else {
           DataInputOutputUtil.writeINT(out, -intIterator.size());
-          IdSet checkSet = originalInput.getCheckSet();
-          if (checkSet != null && checkSet.size() != intIterator.size()) {  // debug code
-            int a = 1; assert false;
-          }
           int prev = 0;
 
           while (intIterator.hasNext()) {
             int fileId = intIterator.next();
-            if (checkSet != null && !checkSet.contains(fileId)) { // debug code
-              int a = 1;
-              assert false;
-            }
             DataInputOutputUtil.writeINT(out, fileId - prev);
             prev = fileId;
           }
@@ -536,24 +509,6 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     public IntIdsIterator createCopyInInitialState() {
       return new SingleValueIterator(myValue);
     }
-  }
-
-  private THashMap<Value, Object> mapCopy(final THashMap<Value, Object> map) {
-    if (map == null) {
-      return null;
-    }
-    final THashMap<Value, Object> cloned = map.clone();
-    cloned.forEachEntry(new TObjectObjectProcedure<Value, Object>() {
-      @Override
-      public boolean execute(Value key, Object val) {
-        if (val instanceof ChangeBufferingList) {
-          cloned.put(key, ((ChangeBufferingList)val).clone());
-        }
-        return true;
-      }
-    });
-
-    return cloned;
   }
 
   private static final IntPredicate EMPTY_PREDICATE = new IntPredicate() {

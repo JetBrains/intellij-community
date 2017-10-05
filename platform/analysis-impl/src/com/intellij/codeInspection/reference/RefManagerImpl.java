@@ -13,13 +13,17 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.util.Computable;
@@ -533,7 +537,15 @@ public class RefManagerImpl extends RefManager {
       final FileViewProvider viewProvider = file.getViewProvider();
       final Set<Language> relevantLanguages = viewProvider.getLanguages();
       for (Language language : relevantLanguages) {
-        visitElement(viewProvider.getPsi(language));
+        try {
+          visitElement(viewProvider.getPsi(language));
+        }
+        catch (ProcessCanceledException | IndexNotReadyException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          LOG.error(new RuntimeExceptionWithAttachments(e, new Attachment("diagnostics.txt", file.getName())));
+        }
       }
       myPsiManager.dropResolveCaches();
       InjectedLanguageManager.getInstance(myProject).dropFileCaches(file);

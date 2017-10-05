@@ -32,6 +32,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PointersKt;
 import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
@@ -81,32 +82,26 @@ public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
   public void testMethodUsageOnGetter() {
     configureByFiles(getName(), getName() + "/Foo.java", getName() + "/FooFactory.java", getName() + "/Bar.java");
     PsiMethod methodToSearch = findClass("Foo").findMethodsByName("someMethod", false)[0];
-    assertOneElement(searchMethodReferences(methodToSearch));
-    myCompilerTester.rebuild();
-    assertOneElement(searchMethodReferences(methodToSearch));
+    assertSameUsageAfterRebuild(methodToSearch);
   }
 
   public void testMethodUsageInClassHierarchy() {
     configureByFiles(getName(), getName() + "/Bar.java", getName() + "/Foo.java");
     PsiMethod methodToSearch = findClass("Foo").findMethodsByName("someMethod", false)[0];
-    assertOneElement(searchMethodReferences(methodToSearch));
-    myCompilerTester.rebuild();
-    assertOneElement(searchMethodReferences(methodToSearch));
+    assertSameUsageAfterRebuild(methodToSearch);
   }
 
   public void testMethodUsageInClassHierarchy2() {
     configureByFiles(getName(), getName() + "/Bar.java", getName() + "/Foo.java");
     PsiMethod methodToSearch = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_RUNNABLE).findMethodsByName("run", false)[0];
-    assertOneElement(searchMethodReferences(methodToSearch));
-    myCompilerTester.rebuild();
-    assertOneElement(searchMethodReferences(methodToSearch));
+    assertSameUsageAfterRebuild(methodToSearch);
   }
 
   public void testLibMethodUsage() throws Exception {
     configureByFile(getName() + "/Foo.java");
     myCompilerTester.rebuild();
     PsiMethod methodToSearch = myJavaFacade.findClass(CommonClassNames.JAVA_UTIL_COLLECTIONS).findMethodsByName("emptyList", false)[0];
-    assertOneElement(searchMethodReferences(methodToSearch));
+    assertOneElement(searchReferences(methodToSearch));
   }
 
   public void testLibClassUsage() throws Exception {
@@ -126,10 +121,18 @@ public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
   public void testCompileTimeConstFindUsages() {
     configureByFiles(getName(), getName() + "/Bar.java", getName() + "/Foo.java");
     PsiField classForSearch = findClass("Foo").findFieldByName("CONST", false);
-    PsiElement referenceBefore = assertOneElement(searchReferences(classForSearch)).getElement();
+    assertSameUsageAfterRebuild(classForSearch);
+  }
+
+  private void assertSameUsageAfterRebuild(PsiElement target) {
+    PsiReference ref1 = assertOneElement(searchReferences(target));
+
+    SmartPsiElementPointer<PsiElement> pRef = PointersKt.createSmartPointer(ref1.getElement());
+    SmartPsiElementPointer<PsiElement> pTarget = PointersKt.createSmartPointer(target);
     myCompilerTester.rebuild();
-    PsiElement referenceAfter = assertOneElement(searchReferences(classForSearch)).getElement();
-    assertTrue(referenceBefore == referenceAfter);
+
+    PsiReference ref2 = assertOneElement(searchReferences(pTarget.getElement()));
+    assertEquals(pRef.getElement(), ref2.getElement());
   }
 
   public void testFindUsagesInInjectedCode() throws Exception {
@@ -164,10 +167,9 @@ public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
 
   public void testOverloadedMethods() {
     configureByFiles(getName(), getName() + "/Foo.java", getName() + "/A.java", getName() + "/B.java");
-    PsiMethod[] methodsToSearch = findClass("Foo").findMethodsByName("bar", false);
-    Arrays.stream(methodsToSearch).forEach((m) -> assertSize(2, searchMethodReferences(m)));
+    Arrays.stream(findClass("Foo").findMethodsByName("bar", false)).forEach((m) -> assertSize(2, searchReferences(m)));
     myCompilerTester.rebuild();
-    Arrays.stream(methodsToSearch).forEach((m) -> assertSize(2, searchMethodReferences(m)));
+    Arrays.stream(findClass("Foo").findMethodsByName("bar", false)).forEach((m) -> assertSize(2, searchReferences(m)));
   }
 
   private void doTestRunnableFindUsagesWithExcludesConfiguration(@NotNull Consumer<ExcludesConfiguration> excludesConfigurationPatcher,
@@ -185,11 +187,10 @@ public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  private Collection<PsiReference> searchMethodReferences(@NotNull PsiMethod method) {
-    return MethodReferencesSearch.search(method, GlobalSearchScope.projectScope(getProject()), false).findAll();
-  }
-
   private Collection<PsiReference> searchReferences(@NotNull PsiElement element) {
+    if (element instanceof PsiMethod) {
+      return MethodReferencesSearch.search((PsiMethod)element, GlobalSearchScope.projectScope(getProject()), false).findAll();
+    }
     return ReferencesSearch.search(element, GlobalSearchScope.projectScope(getProject())).findAll();
   }
 }

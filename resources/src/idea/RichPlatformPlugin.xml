@@ -387,6 +387,9 @@
     <experimentalFeature id="project.view.async.tree.model" internalFeature="true" percentOfUsers="10" requireRestart="true">
       <description>New implementation based on AsyncTreeModel + StructureTreeModel</description>
     </experimentalFeature>
+    <experimentalFeature id="structure.view.async.tree.model" internalFeature="true" percentOfUsers="10" requireRestart="false">
+      <description>New implementation based on AsyncTreeModel + StructureTreeModel</description>
+    </experimentalFeature>
 
     <editorActionHandler action="EditorChooseLookupItemReplace" 
                          implementationClass="com.intellij.codeInsight.hint.NextParameterAfterCompletionHandler"/>

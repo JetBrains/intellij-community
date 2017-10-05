@@ -19,6 +19,7 @@ package com.intellij.psi.impl.source.xml;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
@@ -26,10 +27,13 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.xml.util.XmlPsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -147,5 +151,39 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
     }
 
     return false;
+  }
+
+  @Override
+  public boolean skipValidation() {
+    Boolean doNotValidate = DO_NOT_VALIDATE.get(this);
+    if (doNotValidate != null) return doNotValidate;
+
+    OuterLanguageElement element = PsiTreeUtil.getChildOfType(this, OuterLanguageElement.class);
+
+    if (element == null) {
+      // JspOuterLanguageElement is located under XmlText
+      for (PsiElement child = this.getFirstChild(); child != null; child = child.getNextSibling()) {
+        if (child instanceof XmlText) {
+          element = PsiTreeUtil.getChildOfType(child, OuterLanguageElement.class);
+          if (element != null) {
+            break;
+          }
+        }
+      }
+    }
+    if (element == null) {
+      doNotValidate = false;
+    } else {
+      PsiFile containingFile = this.getContainingFile();
+      doNotValidate = containingFile.getViewProvider().getBaseLanguage() != containingFile.getLanguage();
+    }
+    putUserData(DO_NOT_VALIDATE, doNotValidate);
+    return doNotValidate;
+  }
+
+  @Override
+  public void clearCaches() {
+    super.clearCaches();
+    putUserData(DO_NOT_VALIDATE, null);
   }
 }

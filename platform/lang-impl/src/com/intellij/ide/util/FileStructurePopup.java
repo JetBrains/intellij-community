@@ -25,7 +25,6 @@ import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.structureView.ModelListener;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewModel;
-import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.StructureViewComposite;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
@@ -34,8 +33,8 @@ import com.intellij.ide.structureView.newStructureView.TreeActionsOwner;
 import com.intellij.ide.structureView.newStructureView.TreeModelWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.ide.util.treeView.ValidateableNode;
 import com.intellij.ide.util.treeView.smartTree.*;
-import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.LocationPresentation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
@@ -181,7 +180,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
       @Override
       protected TreeElementWrapper createTree() {
-        return new StructureViewComponent.StructureViewTreeElementWrapper(myProject, myModel.getRoot(), myModel);
+        return StructureViewComponent.createWrapper(myProject, myModel.getRoot(), myModel);
       }
 
       @NonNls
@@ -260,7 +259,9 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
       @Override
       protected boolean validateNode(Object child) {
-        return StructureViewComponent.isValid(child);
+        Object o = child instanceof FilteringTreeStructure.FilteringNode ?
+                   ((FilteringTreeStructure.FilteringNode)child).getDelegate() : child;
+        return !(o instanceof ValidateableNode) || ((ValidateableNode)o).isValid();
       }
 
       @Override
@@ -504,17 +505,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
   @Nullable
   private PsiElement getPsi(FilteringTreeStructure.FilteringNode n) {
-    final Object delegate = n.getDelegate();
-    if (delegate instanceof StructureViewComponent.StructureViewTreeElementWrapper) {
-      final TreeElement value = ((StructureViewComponent.StructureViewTreeElementWrapper)delegate).getValue();
-      if (value instanceof StructureViewTreeElement) {
-        final Object element = ((StructureViewTreeElement)value).getValue();
-        if (element instanceof PsiElement) {
-          return (PsiElement)element;
-        }
-      }
-    }
-    return null;
+    return ObjectUtils.tryCast(StructureViewComponent.unwrapValue(n.getDelegate()), PsiElement.class);
   }
 
   @Override
@@ -924,38 +915,32 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   }
 
   @Nullable
-  public static String getSpeedSearchText(final Object userObject) {
+  public static String getSpeedSearchText(Object userObject) {
     String text = String.valueOf(userObject);
+    TreeElement unwrapped = (TreeElement)StructureViewComponent.unwrapWrapper(userObject);
     if (text != null) {
-      if (userObject instanceof StructureViewComponent.StructureViewTreeElementWrapper) {
-        final TreeElement value = ((StructureViewComponent.StructureViewTreeElementWrapper)userObject).getValue();
-        if (value instanceof PsiTreeElementBase && ((PsiTreeElementBase)value).isSearchInLocationString()) {
-          final String locationString = ((PsiTreeElementBase)value).getLocationString();
-          if (!StringUtil.isEmpty(locationString)) {
-            String locationPrefix = null;
-            String locationSuffix = null;
-            if (value instanceof LocationPresentation) {
-              locationPrefix = ((LocationPresentation)value).getLocationPrefix();
-              locationSuffix = ((LocationPresentation)value).getLocationSuffix();
-            }
-
-            return text +
-                   StringUtil.notNullize(locationPrefix, LocationPresentation.DEFAULT_LOCATION_PREFIX) +
-                   locationString +
-                   StringUtil.notNullize(locationSuffix, LocationPresentation.DEFAULT_LOCATION_SUFFIX);
+      if (unwrapped instanceof PsiTreeElementBase && ((PsiTreeElementBase)unwrapped).isSearchInLocationString()) {
+        String locationString = ((PsiTreeElementBase)unwrapped).getLocationString();
+        if (!StringUtil.isEmpty(locationString)) {
+          String locationPrefix = null;
+          String locationSuffix = null;
+          if (unwrapped instanceof LocationPresentation) {
+            locationPrefix = ((LocationPresentation)unwrapped).getLocationPrefix();
+            locationSuffix = ((LocationPresentation)unwrapped).getLocationSuffix();
           }
+
+          return text +
+                 StringUtil.notNullize(locationPrefix, LocationPresentation.DEFAULT_LOCATION_PREFIX) +
+                 locationString +
+                 StringUtil.notNullize(locationSuffix, LocationPresentation.DEFAULT_LOCATION_SUFFIX);
         }
       }
       return text;
     }
     // NB!: this point is achievable if the following method returns null
     // see com.intellij.ide.util.treeView.NodeDescriptor.toString
-    if (userObject instanceof StructureViewComponent.StructureViewTreeElementWrapper) {
-      return ReadAction.compute(() -> {
-        final ItemPresentation presentation =
-          ((StructureViewComponent.StructureViewTreeElementWrapper)userObject).getValue().getPresentation();
-        return presentation.getPresentableText();
-      });
+    if (unwrapped != null) {
+      return ReadAction.compute(() -> unwrapped.getPresentation().getPresentableText());
     }
 
     return null;

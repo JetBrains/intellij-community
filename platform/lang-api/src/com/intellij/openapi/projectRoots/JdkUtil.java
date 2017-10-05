@@ -167,7 +167,7 @@ public class JdkUtil {
 
     if (dynamicClasspath) {
       Class commandLineWrapper;
-      if (canUseArgFile(commandLine, javaParameters)) {
+      if (javaParameters.isArgFile()) {
         setArgFileParams(commandLine, javaParameters, vmParameters, dynamicVMOptions, dynamicParameters);
         dynamicMainClass = dynamicParameters;
       }
@@ -195,11 +195,6 @@ public class JdkUtil {
     if (!dynamicParameters) {
       commandLine.addParameters(javaParameters.getProgramParametersList().getList());
     }
-  }
-
-  private static boolean canUseArgFile(GeneralCommandLine commandLine, SimpleJavaParameters javaParameters) {
-    return javaParameters.getModuleName() != null ||
-           isModularRuntime(new File(commandLine.getExePath()).getParentFile().getParentFile());
   }
 
   private static boolean explicitClassPath(ParametersList vmParameters) {

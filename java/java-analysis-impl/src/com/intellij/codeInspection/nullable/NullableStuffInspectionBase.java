@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -52,7 +38,7 @@ import java.util.*;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 
-public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionTool {
+public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspectionTool {
   // deprecated fields remain to minimize changes to users inspection profiles (which are often located in version control).
   @Deprecated @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NULLABLE_METHOD_OVERRIDES_NOTNULL = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL = true;
@@ -104,7 +90,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
         JavaResolveResult result = expression.advancedResolve(false);
         PsiElement target = result.getElement();
         if (target instanceof PsiMethod) {
-          checkCollectionNullityOnAssignment(expression, 
+          checkCollectionNullityOnAssignment(expression,
                                              LambdaUtil.getFunctionalInterfaceReturnType(expression),
                                              result.getSubstitutor().substitute(((PsiMethod)target).getReturnType()));
         }
@@ -273,7 +259,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
       }
 
       private void checkCollectionNullityOnAssignment(@NotNull PsiElement errorElement,
-                                                      @Nullable PsiType expectedType, 
+                                                      @Nullable PsiType expectedType,
                                                       @Nullable PsiExpression assignedExpression) {
         if (assignedExpression == null) return;
 
@@ -310,7 +296,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
             return true;
           }
         }
-        
+
         return false;
       }
 
@@ -462,7 +448,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
                                           String anno, List<String> annoToRemove, @NotNull ProblemsHolder holder) {
     List<PsiExpression> initializers = DfaPsiUtil.findAllConstructorInitializers(field);
     if (initializers.isEmpty()) return;
-    
+
     List<PsiParameter> notNullParams = ContainerUtil.newArrayList();
 
     boolean isFinal = field.hasModifierProperty(PsiModifier.FINAL);
@@ -500,7 +486,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
 
     PsiIdentifier nameIdentifier = field.getNameIdentifier();
     if (nameIdentifier.isPhysical()) {
-      holder.registerProblem(nameIdentifier, "@" + getPresentableAnnoName(field) + " field is always initialized not-null", 
+      holder.registerProblem(nameIdentifier, "@" + getPresentableAnnoName(field) + " field is always initialized not-null",
                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new AddNotNullAnnotationFix(field));
     }
   }
@@ -517,7 +503,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
 
     PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(owner, names);
     if (annotation != null) return getPresentableAnnoName(annotation);
-    
+
     String anno = manager.getNotNull(owner);
     return StringUtil.getShortName(anno != null ? anno : StringUtil.notNullize(manager.getNullable(owner), "???"));
   }
@@ -657,7 +643,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
            !(method.getReturnType() instanceof PsiPrimitiveType) &&
            !method.isConstructor() &&
            !getNullityManager(method).hasNullability(method) &&
-           isNotNullNotInferred(superMethod, true, IGNORE_EXTERNAL_SUPER_NOTNULL) && 
+           isNotNullNotInferred(superMethod, true, IGNORE_EXTERNAL_SUPER_NOTNULL) &&
            !hasInheritableNotNull(superMethod);
   }
 
@@ -873,7 +859,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
 
   private static void reportNullableNotNullConflict(final ProblemsHolder holder, final PsiModifierListOwner listOwner, final PsiAnnotation declaredNullable,
                                                     final PsiAnnotation declaredNotNull) {
-    final String bothNullableNotNullMessage = InspectionsBundle.message("inspection.nullable.problems.Nullable.NotNull.conflict", 
+    final String bothNullableNotNullMessage = InspectionsBundle.message("inspection.nullable.problems.Nullable.NotNull.conflict",
                                                                         getPresentableAnnoName(declaredNullable),
                                                                         getPresentableAnnoName(declaredNotNull));
     holder.registerProblem(declaredNotNull.isPhysical() ? declaredNotNull : listOwner.getNavigationElement(),

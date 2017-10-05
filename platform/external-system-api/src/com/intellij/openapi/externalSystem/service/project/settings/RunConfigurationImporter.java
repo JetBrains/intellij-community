@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.externalSystem.service.project.manage;
+package com.intellij.openapi.externalSystem.service.project.settings;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
@@ -24,8 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 
 @ApiStatus.Experimental
-public interface RunConfigurationHandlerExtension {
-  ExtensionPointName<RunConfigurationHandlerExtension> EP_NAME = ExtensionPointName.create("com.intellij.runConfigurationHandlerExtension");
+public interface RunConfigurationImporter {
+  ExtensionPointName<RunConfigurationImporter> EP_NAME = ExtensionPointName.create("com.intellij.runConfigurationImporter");
 
   default void process(@NotNull Project project, @NotNull String name, @NotNull Map<String, Object> cfg) {}
   default void process(@NotNull Module module, @NotNull  String name, @NotNull Map<String, Object> cfg) {}

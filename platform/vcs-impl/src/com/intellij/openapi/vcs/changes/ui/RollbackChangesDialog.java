@@ -45,8 +45,6 @@ import java.util.List;
 public class RollbackChangesDialog extends DialogWrapper {
   public static final String DELETE_LOCALLY_ADDED_FILES_KEY = "delete.locally.added.files";
   private final Project myProject;
-  private final boolean myRefreshSynchronously;
-  private final Runnable myAfterVcsRefreshInAwt;
   private final LocalChangesBrowser myBrowser;
   private final boolean myInvokedFromModalContext;
   private final JCheckBox myDeleteLocallyAddedFiles;
@@ -56,11 +54,6 @@ public class RollbackChangesDialog extends DialogWrapper {
   private String myOperationName;
 
   public static void rollbackChanges(final Project project, final Collection<Change> changes) {
-    rollbackChanges(project, changes, true, null);
-  }
-
-  public static void rollbackChanges(final Project project, final Collection<Change> changes, boolean refreshSynchronously,
-                                     final Runnable afterVcsRefreshInAwt) {
     final ChangeListManagerEx manager = (ChangeListManagerEx) ChangeListManager.getInstance(project);
 
     if (changes.isEmpty()) {
@@ -72,7 +65,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     final Set<LocalChangeList> lists = new THashSet<>();
     lists.addAll(manager.getInvolvedListsFilterChanges(changes, validChanges));
 
-    new RollbackChangesDialog(project, ContainerUtil.newArrayList(lists), validChanges, refreshSynchronously, afterVcsRefreshInAwt).show();
+    new RollbackChangesDialog(project, ContainerUtil.newArrayList(lists), validChanges).show();
   }
 
   public static void rollbackChanges(final Project project, final LocalChangeList changeList) {
@@ -83,7 +76,7 @@ public class RollbackChangesDialog extends DialogWrapper {
       return;
     }
 
-    new RollbackChangesDialog(project, Collections.singletonList(changeList), Collections.emptyList(), true, null).show();
+    new RollbackChangesDialog(project, Collections.singletonList(changeList), Collections.emptyList()).show();
   }
 
   private static void showNoChangesDialog(Project project) {
@@ -94,13 +87,10 @@ public class RollbackChangesDialog extends DialogWrapper {
 
   public RollbackChangesDialog(final Project project,
                                final List<LocalChangeList> changeLists,
-                               final List<Change> changes,
-                               final boolean refreshSynchronously, final Runnable afterVcsRefreshInAwt) {
+                               final List<Change> changes) {
     super(project, true);
 
     myProject = project;
-    myRefreshSynchronously = refreshSynchronously;
-    myAfterVcsRefreshInAwt = afterVcsRefreshInAwt;
     myInvokedFromModalContext = LaterInvocator.isInModalContext();
 
     myInfoCalculator = new ChangeInfoCalculator();
@@ -157,7 +147,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     super.doOKAction();
     RollbackWorker worker = new RollbackWorker(myProject, myOperationName, myInvokedFromModalContext);
     worker.doRollback(myBrowser.getIncludedChanges(), myDeleteLocallyAddedFiles.isSelected(),
-                      myAfterVcsRefreshInAwt, null);
+                      null, null);
   }
 
   @Nullable

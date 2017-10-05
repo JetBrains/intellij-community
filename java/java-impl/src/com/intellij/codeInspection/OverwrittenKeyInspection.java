@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -22,7 +20,7 @@ import java.util.function.Function;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class OverwrittenKeyInspection extends BaseJavaBatchLocalInspectionTool {
+public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher SET_ADD =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_SET, "add").parameterCount(1);
   private static final CallMatcher MAP_PUT =

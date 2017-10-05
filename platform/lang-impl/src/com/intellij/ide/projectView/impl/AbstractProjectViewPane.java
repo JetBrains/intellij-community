@@ -738,4 +738,8 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     if (myTreeBuilder == null || myTreeBuilder.isDisposed()) return ActionCallback.REJECTED;
     return myTreeBuilder.getUi().getReady(requestor);
   }
+
+  AsyncProjectViewSupport getAsyncSupport() {
+    return null;
+  }
 }

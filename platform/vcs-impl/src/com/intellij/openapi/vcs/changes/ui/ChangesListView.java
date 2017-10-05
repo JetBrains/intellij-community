@@ -16,7 +16,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.CopyProvider;
-import com.intellij.ide.dnd.aware.DnDAwareTree;
+import com.intellij.ide.dnd.DnDAware;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SmartExpander;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,8 +41,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -55,7 +58,8 @@ import static com.intellij.util.containers.UtilKt.getIfSingle;
 import static com.intellij.util.containers.UtilKt.stream;
 import static java.util.stream.Collectors.toList;
 
-public class ChangesListView extends DnDAwareTree implements TypeSafeDataProvider {
+// TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
+public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAware {
   private final Project myProject;
   private boolean myShowFlatten = false;
   private final CopyProvider myCopyProvider;
@@ -74,6 +78,7 @@ public class ChangesListView extends DnDAwareTree implements TypeSafeDataProvide
 
     setShowsRootHandles(true);
     setRootVisible(false);
+    setDragEnabled(true);
 
     myCopyProvider = new ChangesBrowserNodeCopyProvider(this);
 
@@ -368,6 +373,12 @@ public class ChangesListView extends DnDAwareTree implements TypeSafeDataProvide
   }
 
   @Override
+  @NotNull
+  public JComponent getComponent() {
+    return this;
+  }
+
+  @Override
   public void processMouseEvent(final MouseEvent e) {
     if (MouseEvent.MOUSE_RELEASED == e.getID() && !isSelectionEmpty() && !e.isShiftDown() && !e.isControlDown()  &&
         !e.isMetaDown() && !e.isPopupTrigger()) {
@@ -380,7 +391,17 @@ public class ChangesListView extends DnDAwareTree implements TypeSafeDataProvide
       }
     }
 
+
     super.processMouseEvent(e);
   }
 
+  @Override
+  public boolean isOverSelection(final Point point) {
+    return TreeUtil.isOverSelection(this, point);
+  }
+
+  @Override
+  public void dropSelectionButUnderPoint(final Point point) {
+    TreeUtil.dropSelectionButUnderPoint(this, point);
+  }
 }

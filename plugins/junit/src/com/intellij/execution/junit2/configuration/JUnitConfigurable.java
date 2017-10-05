@@ -19,7 +19,7 @@ package com.intellij.execution.junit2.configuration;
 import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.MethodBrowser;
-import com.intellij.execution.ShortenClasspath;
+import com.intellij.execution.ShortenCommandLine;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitConfigurationType;
@@ -104,7 +104,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   private JRadioButton myModuleWDScope;
   private TextFieldWithBrowseButton myPatternTextField;
   private JrePathEditor myJrePathEditor;
-  private LabeledComponent<ShortenClasspathModeCombo> myShortenClasspathModeCombo;
+  private LabeledComponent<ShortenCommandLineModeCombo> myShortenClasspathModeCombo;
   private JComboBox myForkCb;
   private JBLabel myTestLabel;
   private JComboBox myTypeChooser;
@@ -278,6 +278,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     for (LocalChangeList changeList : changeLists) {
       model.addElement(changeList.getName());
     }
+
+    myShortenClasspathModeCombo.setComponent(new ShortenCommandLineModeCombo(myProject, myJrePathEditor));
   }
 
   private static void addRadioButtonsListeners(final JRadioButton[] radioButtons, ChangeListener listener) {
@@ -315,7 +317,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
 
     myCommonJavaParameters.applyTo(configuration);
     configuration.setForkMode((String)myForkCb.getSelectedItem());
-    configuration.setShortenClasspath((ShortenClasspath)myShortenClasspathModeCombo.getComponent().getSelectedItem());
+    configuration.setShortenCommandLine((ShortenCommandLine)myShortenClasspathModeCombo.getComponent().getSelectedItem());
   }
 
   public void resetEditorFrom(@NotNull final JUnitConfiguration configuration) {
@@ -341,7 +343,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myJrePathEditor
       .setPathOrName(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
     myForkCb.setSelectedItem(configuration.getForkMode());
-    myShortenClasspathModeCombo.getComponent().setSelectedItem(configuration.getShortenClasspath());
+    myShortenClasspathModeCombo.getComponent().setSelectedItem(configuration.getShortenCommandLine());
   }
 
   private void changePanel () {
@@ -525,7 +527,6 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myMethod.setComponent(textFieldWithBrowseButton);
 
     myShortenClasspathModeCombo = new LabeledComponent<>();
-    myShortenClasspathModeCombo.setComponent(new ShortenClasspathModeCombo(myProject));
   }
 
   @Override

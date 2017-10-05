@@ -11,12 +11,16 @@ import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ProjectViewTestUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.concurrency.Promise;
+
+import javax.swing.tree.TreePath;
 
 public class ProjectTreeBuilderTest extends BaseProjectViewTestCase {
+
   public void testStandardProviders() {
     getProjectTreeStructure().setProviders();
 
@@ -51,30 +55,30 @@ public class ProjectTreeBuilderTest extends BaseProjectViewTestCase {
 
     myStructure.checkNavigateFromSourceBehaviour(innerClass2Field, innerClass2Field.getContainingFile().getVirtualFile(), pane);
 
-    IdeaTestUtil.assertTreeEqual(pane.getTree(), "-Project\n" +
-                                                 " -PsiDirectory: showClassMembers\n" +
-                                                 "  -PsiDirectory: src\n" +
-                                                 "   -PsiDirectory: com\n" +
-                                                 "    -PsiDirectory: package1\n" +
-                                                 "     +Class1\n" +
-                                                 "     -Class2\n" +
-                                                 "      +InnerClass1\n" +
-                                                 "      -InnerClass2\n" +
-                                                 "       -InnerClass22\n" +
-                                                 "        -InnerClass23\n" +
-                                                 "         -InnerClass24\n" +
-                                                 "          +InnerClass25\n" +
-                                                 "          myFieldToSelect:int\n" +
-                                                 "         myInnerClassField:int\n" +
-                                                 "        myInnerClassField:int\n" +
-                                                 "       myInnerClassField:int\n" +
-                                                 "      getValue():int\n" +
-                                                 "      myField1:boolean\n" +
-                                                 "      myField2:boolean\n" +
-                                                 "      myField3:boolean\n" +
-                                                 "      myField4:boolean\n" +
-                                                 getRootFiles() +
-                                                 " +External Libraries\n"
+    PlatformTestUtil.assertTreeEqual(pane.getTree(), "-Project\n" +
+                                                     " -PsiDirectory: showClassMembers\n" +
+                                                     "  -PsiDirectory: src\n" +
+                                                     "   -PsiDirectory: com\n" +
+                                                     "    -PsiDirectory: package1\n" +
+                                                     "     +Class1\n" +
+                                                     "     -Class2\n" +
+                                                     "      +InnerClass1\n" +
+                                                     "      -InnerClass2\n" +
+                                                     "       -InnerClass22\n" +
+                                                     "        -InnerClass23\n" +
+                                                     "         -InnerClass24\n" +
+                                                     "          +InnerClass25\n" +
+                                                     "          myFieldToSelect:int\n" +
+                                                     "         myInnerClassField:int\n" +
+                                                     "        myInnerClassField:int\n" +
+                                                     "       myInnerClassField:int\n" +
+                                                     "      getValue():int\n" +
+                                                     "      myField1:boolean\n" +
+                                                     "      myField2:boolean\n" +
+                                                     "      myField3:boolean\n" +
+                                                     "      myField4:boolean\n" +
+                                                     getRootFiles() +
+                                                     " +External Libraries\n"
     );
 
     assertFalse(ProjectViewTestUtil.isExpanded(innerClass15.getFields()[0], pane));
@@ -84,49 +88,40 @@ public class ProjectTreeBuilderTest extends BaseProjectViewTestCase {
     VirtualFile virtualFile = aClass.getContainingFile().getVirtualFile();
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
     FileEditor[] fileEditors = fileEditorManager.openFile(virtualFile, false);
-    StructureViewComponent structureViewComponent2 = null;
-    StructureViewComponent structureViewComponent = null;
+    StructureViewComponent svc = (StructureViewComponent)fileEditors[0].getStructureViewBuilder()
+      .createStructureView(fileEditors[0], myProject);
+    Disposer.register(getTestRootDisposable(), svc);
+    TreeUtil.collapseAll(svc.getTree(), -1);
+    fileEditorManager.closeFile(virtualFile);
 
-    try {
-      structureViewComponent = (StructureViewComponent)fileEditors[0].getStructureViewBuilder().createStructureView(fileEditors[0], myProject);
-      TreeUtil.collapseAll(structureViewComponent.getTree(), -1);
+    Promise<TreePath> select = svc.select(innerClass2Field, true);
+    PlatformTestUtil.waitForPromise(select);
 
-      structureViewComponent.select(innerClass2Field, true);
+    String expected = "-Class2.java\n" +
+                      " -Class2\n" +
+                      "  +InnerClass1\n" +
+                      "  -InnerClass2\n" +
+                      "   -InnerClass22\n" +
+                      "    -InnerClass23\n" +
+                      "     -InnerClass24\n" +
+                      "      +InnerClass25\n" +
+                      "      myFieldToSelect: int\n" +
+                      "     myInnerClassField: int\n" +
+                      "    myInnerClassField: int\n" +
+                      "   myInnerClassField: int\n" +
+                      "  getValue(): int\n" +
+                      "  myField1: boolean\n" +
+                      "  myField2: boolean\n" +
+                      "  myField3: boolean\n" +
+                      "  myField4: boolean\n";
 
-      String expected = "-Class2.java\n" +
-                  " -Class2\n" +
-                  "  +InnerClass1\n" +
-                  "  -InnerClass2\n" +
-                  "   -InnerClass22\n" +
-                  "    -InnerClass23\n" +
-                  "     -InnerClass24\n" +
-                  "      +InnerClass25\n" +
-                  "      myFieldToSelect: int\n" +
-                  "     myInnerClassField: int\n" +
-                  "    myInnerClassField: int\n" +
-                  "   myInnerClassField: int\n" +
-                  "  getValue(): int\n" +
-                  "  myField1: boolean\n" +
-                  "  myField2: boolean\n" +
-                  "  myField3: boolean\n" +
-                  "  myField4: boolean\n";
+    PlatformTestUtil.assertTreeEqual(svc.getTree(), expected);
+    Disposer.dispose(svc);
 
-      IdeaTestUtil.assertTreeEqual(structureViewComponent.getTree(),
-                                   expected);
-
-
-      Disposer.dispose(structureViewComponent);
-
-      final FileEditor fileEditor = fileEditors[0];
-      structureViewComponent2 = (StructureViewComponent)fileEditor.getStructureViewBuilder().createStructureView(fileEditor, myProject);
-      structureViewComponent2.setActionActive(JavaInheritedMembersNodeProvider.ID, false);
-      IdeaTestUtil.assertTreeEqual(structureViewComponent2.getTree(), expected);
-    }
-    finally {
-      fileEditorManager.closeFile(virtualFile);
-      if (structureViewComponent2 != null) {
-        Disposer.dispose(structureViewComponent2);
-      }
-    }
+    FileEditor fileEditor = fileEditors[0];
+    StructureViewComponent svc2 = (StructureViewComponent)fileEditor.getStructureViewBuilder().createStructureView(fileEditor, myProject);
+    Disposer.register(getTestRootDisposable(), svc2);
+    svc2.setActionActive(JavaInheritedMembersNodeProvider.ID, false);
+    PlatformTestUtil.assertTreeEqual(svc2.getTree(), expected);
   }
 }

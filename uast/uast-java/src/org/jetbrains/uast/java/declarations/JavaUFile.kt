@@ -33,7 +33,7 @@ class JavaUFile(override val psi: PsiJavaFile, override val languagePlugin: Uast
     }
 
     override val annotations: List<UAnnotation>
-        get() = emptyList()
+        get() = psi.packageStatement?.annotationList?.annotations?.map { JavaUAnnotation(it, this) } ?: emptyList()
 
     override val classes by lz { psi.classes.map { JavaUClass.create(it, this) } }
 

@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 
 public class NewGroovyClassNamingConventionInspection extends AbstractNamingConventionInspection<PsiClass> {
   public NewGroovyClassNamingConventionInspection() {
-    super(wrapClassExtensions(), ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME);
+    super(wrapClassExtensions(), "Groovy" + ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME);
   }
 
   private static List<NamingConvention<PsiClass>> wrapClassExtensions() {

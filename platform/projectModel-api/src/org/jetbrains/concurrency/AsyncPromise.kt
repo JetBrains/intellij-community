@@ -78,21 +78,8 @@ open class AsyncPromise<T> : Promise<T>, Getter<T> {
   override fun notify(child: AsyncPromise<in T>) {
     LOG.assertTrue(child !== this)
 
-    if (child.state != State.PENDING) {
-      return
-    }
-
-    when (state) {
-      State.PENDING -> {
-        addHandlers(Consumer({ child.catchError { child.setResult(it) } }), Consumer({ child.setError(it) }))
-      }
-      State.FULFILLED -> {
-        @Suppress("UNCHECKED_CAST")
-        child.setResult(result as T)
-      }
-      State.REJECTED -> {
-        child.setError((result as Throwable?)!!)
-      }
+    if (child.state == State.PENDING) {
+      processed(child)
     }
   }
 
@@ -117,17 +104,17 @@ open class AsyncPromise<T> : Promise<T>, Getter<T> {
     return promise
   }
 
-  override fun processed(fulfilled: AsyncPromise<in T>): Promise<T> {
+  override fun processed(child: AsyncPromise<in T>): Promise<T> {
     when (state) {
       State.PENDING -> {
-        addHandlers(Consumer({ result -> fulfilled.catchError { fulfilled.setResult(result) } }), Consumer({ fulfilled.setError(it) }))
+        addHandlers(Consumer({ child.catchError { child.setResult(it) } }), Consumer({ child.setError(it) }))
       }
       State.FULFILLED -> {
         @Suppress("UNCHECKED_CAST")
-        fulfilled.setResult(result as T)
+        child.setResult(result as T)
       }
       State.REJECTED -> {
-        fulfilled.setError((result as Throwable?)!!)
+        child.setError((result as Throwable?)!!)
       }
     }
     return this

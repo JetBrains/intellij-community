@@ -15,10 +15,13 @@
  */
 package com.intellij.codeInspection.dataFlow.rangeSet;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -397,6 +400,15 @@ public abstract class LongRangeSet {
       }
     }
     return null;
+  }
+
+  @NotNull
+  public static LongRangeSet fromAnnotation(PsiModifierListOwner owner) {
+    if (owner == null) return all();
+    if (AnnotationUtil.isAnnotated(owner, "javax.annotation.Nonnegative", false)) {
+      return range(0, Long.MAX_VALUE);
+    }
+    return all();
   }
 
   static LongRangeSet fromRanges(long[] ranges, int bound) {

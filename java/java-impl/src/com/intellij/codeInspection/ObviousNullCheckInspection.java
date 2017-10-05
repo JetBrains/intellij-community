@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
@@ -35,7 +21,7 @@ import java.util.List;
 /**
  * @author Tagir Valeev
  */
-public class ObviousNullCheckInspection extends BaseJavaBatchLocalInspectionTool {
+public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionTool {
   // Methods which are known to return the null-checked argument,
   // so calling them is useless even if return value is used
   private static final CallMatcher REQUIRE_NON_NULL_METHOD = CallMatcher.anyOf(

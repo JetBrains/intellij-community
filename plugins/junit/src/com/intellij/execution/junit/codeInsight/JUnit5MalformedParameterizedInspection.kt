@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit.codeInsight
 
 import com.intellij.codeInsight.AnnotationUtil
@@ -22,7 +8,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodQuickFix
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix
 import com.intellij.codeInsight.daemon.quickFix.FileReferenceQuickFixProvider
 import com.intellij.codeInsight.intention.QuickFixFactory
-import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
@@ -45,7 +31,7 @@ import com.siyeh.ig.junit.JUnitCommonClassNames
 import org.jetbrains.annotations.Nls
 import java.util.*
 
-class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool() {
+class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTool() {
 
   @Nls
   override fun getDisplayName(): String {
@@ -251,9 +237,9 @@ class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool(
           return collectionItemType
         }
 
-        if (InheritanceUtil.isInheritor(returnType, CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM)) return PsiType.INT;
-        if (InheritanceUtil.isInheritor(returnType, CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM)) return PsiType.LONG;
-        if (InheritanceUtil.isInheritor(returnType, CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM)) return PsiType.DOUBLE;
+        if (InheritanceUtil.isInheritor(returnType, CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM)) return PsiType.INT
+        if (InheritanceUtil.isInheritor(returnType, CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM)) return PsiType.LONG
+        if (InheritanceUtil.isInheritor(returnType, CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM)) return PsiType.DOUBLE
 
         val streamItemType = PsiUtil.substituteTypeParameter(returnType, CommonClassNames.JAVA_UTIL_STREAM_STREAM, 0, false)
         if (streamItemType != null) {

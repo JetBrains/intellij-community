@@ -17,6 +17,8 @@ package com.intellij.util;
 
 import com.intellij.openapi.util.Pair;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -92,5 +94,15 @@ public class Functions {
 
   public static <B> Function<Pair<?, B>, B> pairSecond() {
     return (Function<Pair<?, B>, B>)PAIR_SECOND;
+  }
+
+  private static final Function WRAP_ARRAY = new Function<Object[], Iterable<Object>>() {
+    public Iterable<Object> fun(Object[] t) {
+      return t == null ? Collections.emptyList() : Arrays.asList(t);
+    }
+  };
+
+  public static <T> Function<T[], Iterable<T>> wrapArray() {
+    return (Function<T[], Iterable<T>>)WRAP_ARRAY;
   }
 }

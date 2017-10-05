@@ -956,18 +956,11 @@ public class SMTestProxy extends AbstractTestProxy {
       return super.determineSuiteStateOnFinished();
     }
 
-    public void testingRestarted(@Nullable ConsoleView consoleView) {
+    public void testingRestarted() {
       if (!getChildren().isEmpty()) {
         getChildren().clear();
       }
       clear();
-      if (consoleView != null) {
-        consoleView.clear();
-      }
-      ProcessHandler handler = getHandler();
-      if (handler instanceof BaseOSProcessHandler) {
-        handler.notifyTextAvailable(((BaseOSProcessHandler)handler).getCommandLine() + "\n", ProcessOutputTypes.SYSTEM);
-      }
     }
   }
 }

@@ -35,7 +35,7 @@ import java.util.List;
 
 public abstract class ChangeListManager implements ChangeListModification {
   @NotNull
-  public static ChangeListManager getInstance(Project project) {
+  public static ChangeListManager getInstance(@NotNull Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ChangeListManager.class);
   }
 

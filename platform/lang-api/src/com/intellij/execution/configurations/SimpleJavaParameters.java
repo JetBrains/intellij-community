@@ -17,7 +17,7 @@ package com.intellij.execution.configurations;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ShortenClasspath;
+import com.intellij.execution.ShortenCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,6 +48,7 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
   private boolean myUseDynamicVMOptions;
   private boolean myUseDynamicParameters;
   private boolean myUseClasspathJar;
+  private boolean myArgFile;
   private String myJarPath;
 
   @Nullable
@@ -130,6 +131,17 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
     return myUseClasspathJar;
   }
 
+  public boolean isArgFile() {
+    return myArgFile;
+  }
+
+  /**
+   * Option to use java 9 @argFile
+   */
+  public void setArgFile(boolean argFile) {
+    myArgFile = argFile;
+  }
+
   /**
    * Allows to use a specially crafted .jar file instead of a custom class loader to pass classpath/properties/parameters.
    * Would have no effect if user explicitly disabled idea.dynamic.classpath.jar
@@ -138,10 +150,14 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
     myUseClasspathJar = useClasspathJar && JdkUtil.useClasspathJar();
   }
 
-  public void setShortenClasspath(@Nullable ShortenClasspath mode, Project project) {
-    if (mode == null) mode = ShortenClasspath.getDefaultMethod(project);
-    myUseDynamicClasspath = mode != ShortenClasspath.NONE;
-    myUseClasspathJar = mode == ShortenClasspath.MANIFEST;
+  public void setShortenCommandLine(@Nullable ShortenCommandLine mode, Project project) {
+    if (mode == null) {
+      Sdk jdk = getJdk();
+      mode = ShortenCommandLine.getDefaultMethod(project, jdk != null ? jdk.getHomePath() : null);
+    }
+    myUseDynamicClasspath = mode != ShortenCommandLine.NONE;
+    myUseClasspathJar = mode == ShortenCommandLine.MANIFEST;
+    setArgFile(mode == ShortenCommandLine.ARGS_FILE);
   }
 
   public String getJarPath() {

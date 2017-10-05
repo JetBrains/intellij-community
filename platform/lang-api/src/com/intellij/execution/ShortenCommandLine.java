@@ -23,17 +23,27 @@ import org.jetbrains.annotations.NotNull;
  *
  * Since 2017.3, it's possible to setup shortening command line method per run configuration, e.g. {@link com.intellij.execution.CommonJavaRunConfigurationParameters#getShortenClasspath}
  */
-public enum ShortenClasspath {
+public enum ShortenCommandLine {
   NONE("none", "java [options] classname [args]"),
   MANIFEST("JAR manifest", "java -cp classpath.jar classname [args]"),
-  CLASSPATH_FILE("classpath file", "java WrapperClass classpathFile [args]");
+  CLASSPATH_FILE("classpath file", "java WrapperClass classpathFile [args]"),
+  ARGS_FILE("@argFiles", "java @argFile [args], applicable for java 9+") {
+    @Override
+    public boolean isApplicable(String jreRoot) {
+      return jreRoot != null && JdkUtil.isModularRuntime(jreRoot);
+    }
+  };
 
   private final String myPresentableName;
   private final String myDescription;
 
-  ShortenClasspath(String presentableName, String description) {
+  ShortenCommandLine(String presentableName, String description) {
     myPresentableName = presentableName;
     myDescription = description;
+  }
+
+  public boolean isApplicable(String jreRoot) {
+    return true;
   }
 
   public String getDescription() {
@@ -44,13 +54,14 @@ public enum ShortenClasspath {
     return myPresentableName;
   }
 
-  public static ShortenClasspath getDefaultMethod(Project project) {
+  public static ShortenCommandLine getDefaultMethod(Project project, String rootPath) {
     if (!JdkUtil.useDynamicClasspath(project)) return NONE;
+    if (rootPath != null && JdkUtil.isModularRuntime(rootPath)) return ARGS_FILE;
     if (JdkUtil.useClasspathJar()) return MANIFEST;
     return CLASSPATH_FILE;
   }
 
-  public static ShortenClasspath readShortenClasspathMethod(@NotNull Element element) {
+  public static ShortenCommandLine readShortenClasspathMethod(@NotNull Element element) {
     Element mode = element.getChild("shortenClasspath");
     if (mode != null) {
       return valueOf(mode.getAttributeValue("name"));
@@ -58,9 +69,9 @@ public enum ShortenClasspath {
     return null;
   }
 
-  public static void writeShortenClasspathMethod(@NotNull Element element, ShortenClasspath shortenClasspath) {
-    if (shortenClasspath != null) {
-      element.addContent(new Element("shortenClasspath").setAttribute("name", shortenClasspath.name()));
+  public static void writeShortenClasspathMethod(@NotNull Element element, ShortenCommandLine shortenCommandLine) {
+    if (shortenCommandLine != null) {
+      element.addContent(new Element("shortenClasspath").setAttribute("name", shortenCommandLine.name()));
     }
   }
 }
