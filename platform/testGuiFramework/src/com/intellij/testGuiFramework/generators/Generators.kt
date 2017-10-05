@@ -160,12 +160,12 @@ class CheckboxTreeGenerator : ComponentCodeGenerator<CheckboxTree> {
   override fun accept(cmp: Component) = cmp is CheckboxTree
   private fun JTree.getPath(cp: Point): TreePath = this.getClosestPathForLocation(cp.x, cp.y)
   private fun wasClickOnCheckBox(cmp: CheckboxTree, cp: Point): Boolean {
-    val checkboxTree = cmp
     val treePath = cmp.getPath(cp)
-    val pathArray: List<String> = getJTreePathArray(checkboxTree, treePath)
+    val pathArray: List<String> = getJTreePathArray(cmp, treePath)
     return withRobot {
-      val checkboxComponent = CheckboxTreeDriver(it).getCheckboxComponent(checkboxTree, pathArray) ?: throw Exception("Checkbox component from cell renderer is null")
-      val pathBounds = checkboxTree.getPathBounds(treePath)
+      val checkboxComponent = CheckboxTreeDriver(it).getCheckboxComponent(cmp, pathArray) ?: throw Exception(
+        "Checkbox component from cell renderer is null")
+      val pathBounds = cmp.getPathBounds(treePath)
       val checkboxTreeBounds = Rectangle(pathBounds.x + checkboxComponent.x, pathBounds.y + checkboxComponent.y, checkboxComponent.width, checkboxComponent.height)
       checkboxTreeBounds.contains(cp)
     }
@@ -293,10 +293,10 @@ class EditorComponentGenerator : ComponentCodeGenerator<EditorComponentImpl> {
     val editor = cmp.editor
     val logicalPos = editor.xyToLogicalPosition(cp)
     val offset = editor.logicalPositionToOffset(logicalPos)
-    when (me.button) {
-      leftButton -> return "moveTo($offset)"
-      rightButton -> return "rightClick($offset)"
-      else -> return "//not implemented editor action"
+    return when (me.button) {
+      leftButton -> "moveTo($offset)"
+      rightButton -> "rightClick($offset)"
+      else -> "//not implemented editor action"
     }
   }
 }
@@ -319,7 +319,7 @@ class ActionMenuItemGenerator : ComponentCodeGenerator<ActionMenuItem> {
     path.add(actionItemName)
     var window = activatedActionMenuItem.getNextPopupSHeavyWeightWindow()
     while (window?.getNextPopupSHeavyWeightWindow() != null) {
-      window = window!!.getNextPopupSHeavyWeightWindow()
+      window = window.getNextPopupSHeavyWeightWindow()
       actionItemName = window!!.findJBPopupMenu(jbPopupMenuSet).findParentActionMenu(jbPopupMenuSet)
       path.add(0, actionItemName)
     }
@@ -351,7 +351,6 @@ class ActionMenuItemGenerator : ComponentCodeGenerator<ActionMenuItem> {
   private fun JBPopupMenu.findParentActionMenu(jbPopupHashSet: MutableSet<Int>): String {
     val actionMenu: ActionMenu = this.subElements
                                    .filterIsInstance(ActionMenu::class.java)
-                                   .filterNotNull()
                                    .find { actionMenu ->
                                      (actionMenu.subElements != null
                                       && actionMenu.subElements.isNotEmpty()
@@ -389,7 +388,7 @@ class JDialogGenerator : GlobalContextCodeGenerator<JDialog>() {
 class IdeFrameGenerator : GlobalContextCodeGenerator<JFrame>() {
   override fun accept(cmp: Component): Boolean {
     if (cmp !is JComponent) return false
-    val parent = (cmp as JComponent).rootPane.parent
+    val parent = cmp.rootPane.parent
     return (parent is JFrame) && parent.title != "GUI Script Editor"
   }
 
@@ -431,10 +430,7 @@ class ToolWindowGenerator : LocalContextCodeGenerator<Component>() {
     val visibleToolWindows = toolWindowManager.toolWindowIds
       .map { toolWindowId -> toolWindowManager.getToolWindow(toolWindowId) }
       .filter { toolwindow -> toolwindow.isVisible }
-    val toolwindow: ToolWindowImpl = visibleToolWindows
-                                       .filterIsInstance<ToolWindowImpl>()
-                                       .find { it.component.containsLocationOnScreen(pointOnScreen) } ?: return null
-    return toolwindow
+    return visibleToolWindows.filterIsInstance<ToolWindowImpl>().find { it.component.containsLocationOnScreen(pointOnScreen) }
   }
 
   override fun acceptor(): (Component) -> Boolean = { component ->
@@ -477,10 +473,7 @@ class ToolWindowContextGenerator : LocalContextCodeGenerator<Component>() {
     val visibleToolWindows = toolWindowManager.toolWindowIds
       .map { toolWindowId -> toolWindowManager.getToolWindow(toolWindowId) }
       .filter { toolwindow -> toolwindow.isVisible }
-    val toolwindow: ToolWindowImpl = visibleToolWindows
-                                       .filterIsInstance<ToolWindowImpl>()
-                                       .find { it.component.containsLocationOnScreen(pointOnScreen) } ?: return null
-    return toolwindow
+    return visibleToolWindows.filterIsInstance<ToolWindowImpl>().find { it.component.containsLocationOnScreen(pointOnScreen) }
   }
 
   override fun acceptor(): (Component) -> Boolean = { component ->
@@ -601,7 +594,7 @@ object Generators {
       .filterIsInstance(LocalContextCodeGenerator::class.java)
   }
 
-  fun getSiblingsList(): List<String> {
+  private fun getSiblingsList(): List<String> {
     val path = "/${Generators.javaClass.`package`.name.replace(".", "/")}"
     val url = Generators.javaClass.getResource(path)
     if (url.path.contains(".jar!")) {
@@ -654,13 +647,13 @@ object Utils {
     searchableNode = searchableNodeRef.get()
     val path = TreeUtil.getPathFromRoot(searchableNode!!)
 
-    return (0..path.pathCount - 1).map { path.getPathComponent(it).toString() }.filter(String::isNotEmpty).joinToString("/")
+    return (0 until path.pathCount).map { path.getPathComponent(it).toString() }.filter(String::isNotEmpty).joinToString("/")
   }
 
   /**
    * @hierarchyLevel: started from 1 to see bounded label for a component itself
    */
-  fun getBoundedLabel(hierarchyLevel: Int, component: Component): JLabel {
+  private fun getBoundedLabel(hierarchyLevel: Int, component: Component): JLabel {
 
     var currentComponentParent = component.parent
     if (hierarchyLevel < 1) throw Exception(
@@ -745,8 +738,7 @@ object Utils {
 
   fun <ReturnType> withRobot(robotFunction: (Robot) -> ReturnType): ReturnType {
     val robot = BasicRobot.robotWithCurrentAwtHierarchyWithoutScreenLock()
-    val result = robotFunction(robot)
-    return result
+    return robotFunction(robot)
   }
 
 }
