@@ -39,16 +39,10 @@ abstract class UastReferenceProvider {
 
 private val cachedUElement = Key.create<UElement>("UastReferenceRegistrar.cachedUElement")
 
-@Deprecated("this is a workaround for unability of getting physical origin for Uast, use another way if it is possible")
-val sourcePsiElement = Key.create<PsiElement>("UastReferenceRegistrar.sourcePsiElement")
-
 private fun getOrCreateCachedElement(element: PsiElement, context: ProcessingContext?): UElement? =
   element as? UElement ?:
   context?.get(cachedUElement) ?:
-  element.toUElement()?.also {
-    context?.put(cachedUElement, it)
-    context?.put(sourcePsiElement, element)
-  }
+  element.toUElement()?.also { context?.put(cachedUElement, it) }
 
 private class UastPatternAdapter(val predicate: (UElement, ProcessingContext) -> Boolean) : ElementPattern<PsiElement> {
 
