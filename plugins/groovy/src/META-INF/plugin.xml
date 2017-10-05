@@ -1460,6 +1460,11 @@
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
       <categoryKey>intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.RenameClassToFileNameIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.conversions</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.conversions.MoveClassToNewFileIntention</className>
     </intentionAction>
     <intentionAction>
