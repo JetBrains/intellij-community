@@ -65,19 +65,19 @@ fun QualifiedName.getRelativeNameTo(root: QualifiedName): QualifiedName? {
  * Shortcut for [getElementAndResolvableName]
  * @see [getElementAndResolvableName]
  */
-fun QualifiedName.resolveToElement(context: QNameResolveContext): PsiElement? {
-  return getElementAndResolvableName(context)?.element
+fun QualifiedName.resolveToElement(context: QNameResolveContext, stopOnFirstFail: Boolean = false): PsiElement? {
+  return getElementAndResolvableName(context, stopOnFirstFail)?.element
 }
 
 
 data class NameAndElement(val name:QualifiedName, val element:PsiElement)
 
 /**
- * Resolves qname of any symbol to PSI element popping tail until element becomes resolved.
+ * Resolves qname of any symbol to PSI element popping tail until element becomes resolved or only one time if stopOnFirstFail
  * @return element and longest name that was resolved successfully.
  * @see [resolveToElement]
  */
-fun QualifiedName.getElementAndResolvableName(context: QNameResolveContext): NameAndElement? {
+fun QualifiedName.getElementAndResolvableName(context: QNameResolveContext, stopOnFirstFail: Boolean = false): NameAndElement? {
   var currentName = QualifiedName.fromComponents(this.components)
 
 
@@ -107,7 +107,7 @@ fun QualifiedName.getElementAndResolvableName(context: QNameResolveContext): Nam
       element = resolveQualifiedName(currentName, resolveContext).firstOrNull()
     }
 
-    if (element != null) {
+    if (element != null || stopOnFirstFail) {
       break
     }
     lastElement = currentName.lastComponent!!

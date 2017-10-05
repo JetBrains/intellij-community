@@ -27,12 +27,9 @@ import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.RefactoringListenerProvider
 import com.intellij.execution.configurations.RuntimeConfigurationWarning
-import com.intellij.execution.filters.ConsoleInputFilterProvider
-import com.intellij.execution.filters.InputFilter
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.execution.testframework.sm.runner.SMTestLocator
-import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope
 import com.intellij.openapi.options.SettingsEditor
@@ -408,6 +405,18 @@ abstract class PyAbstractTestConfiguration(project: Project,
 
   val testFrameworkName = configurationFactory.name!!
 
+
+  /**
+   * @see [RunnersThatRequireTestCaseClass]
+   */
+  fun isTestClassRequired() = if (RunnersThatRequireTestCaseClass.contains(runnerName)) {
+    ThreeState.YES
+  }
+  else {
+    ThreeState.NO
+  }
+
+
   @Suppress("LeakingThis") // Legacy adapter is used to support legacy configs. Leak is ok here since everything takes place in one thread
   @DelegationProperty
   val legacyConfigurationAdapter = PyTestLegacyConfigurationAdapter(this)
@@ -639,13 +648,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
     // TODO: PythonUnitTestUtil logic is weak. We should give user ability to launch test on symbol since user knows better if folder
     // contains tests etc
     val context = TypeEvalContext.userInitiated(element.project, element.containingFile)
-    val testCaseClassRequired: ThreeState = if (RunnersThatRequireTestCaseClass.contains(runnerName)) {
-      ThreeState.YES
-    }
-    else {
-      ThreeState.NO
-    }
-    return isTestElement(element, testCaseClassRequired, context)
+    return isTestElement(element,isTestClassRequired(), context)
   }
 
   /**
