@@ -495,12 +495,20 @@ public class LazyFSRecords implements IFSRecords {
   @Override
   synchronized public int getNameId(int id) {
     ensureLoaded(new int[]{id});
-    return mySink.getNameId(toSinkId(id));
+    int nameId = mySink.getNameId(toSinkId(id));
+    if (nameId == -1) {
+      throw new AssertionError("nameId = -1 id: " + id);
+    }
+    return nameId;
   }
 
   @Override
   synchronized public int getNameId(String name) {
-    return mySink.getNameId(name);
+    int nameId = mySink.getNameId(name);
+    if (nameId == -1) {
+      throw new AssertionError("nameId = -1");
+    }
+    return nameId;
   }
 
   @Override

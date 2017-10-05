@@ -1170,7 +1170,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
                                   @NotNull VirtualFile delegateFile,
                                   int parentId,
                                   @NotNull FileAttributes attributes) {
-    if (delegateFile.getPath().contains("jgraphx-3.4.0.1.jar")) {
+    if (delegateFile.getPath().contains("jar!")) {
       System.out.println("FUUUCK");
     }
     System.out.println("createAndFillRecord for " + delegateFile + " parentId " + parentId);
