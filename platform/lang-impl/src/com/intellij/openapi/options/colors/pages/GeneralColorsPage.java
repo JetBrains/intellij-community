@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
@@ -36,13 +37,15 @@ import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
+import com.intellij.ui.EditorCustomization;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSettingsPage, DisplayPrioritySortable {
+public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSettingsPage, DisplayPrioritySortable, EditorCustomization {
   private static final String ADDITIONAL_DEMO_TEXT =
     "\n" +
     "<todo>//TODO: Visit JB Web resources:</todo>\n"+
@@ -218,6 +221,11 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
   @Override
   public DisplayPriority getPriority() {
     return DisplayPriority.GENERAL_SETTINGS;
+  }
+
+  @Override
+  public void customize(@NotNull EditorEx editor) {
+    editor.getSettings().setSoftMargins(Arrays.asList(50,70));
   }
 
   private static String getCustomSeveritiesDemoText() {
