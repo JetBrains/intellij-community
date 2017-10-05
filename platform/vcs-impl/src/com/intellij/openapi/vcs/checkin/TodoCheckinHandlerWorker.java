@@ -105,23 +105,7 @@ public class TodoCheckinHandlerWorker {
         myAddedOrEditedTodos.addAll(newTodoItems);
       }
       else {
-        Acceptor acceptor = new Acceptor() {
-          @Override
-          public void skipped(Pair<FilePath, String> pair) {
-            mySkipped.add(pair);
-          }
-
-          @Override
-          public void addedOrEdited(TodoItem todoItem) {
-            myAddedOrEditedTodos.add(todoItem);
-          }
-
-          @Override
-          public void inChanged(TodoItem todoItem) {
-            myInChangedTodos.add(todoItem);
-          }
-        };
-        new MyEditedFileProcessor(myProject, acceptor, myTodoFilter)
+        new MyEditedFileProcessor(myProject, myTodoFilter)
           .process(change, newTodoItems);
       }
     }
@@ -152,7 +136,7 @@ public class TodoCheckinHandlerWorker {
     }
   }
 
-  private static class MyEditedFileProcessor {
+  private class MyEditedFileProcessor {
     //private String myFileText;
     private String myBeforeContent;
     private String myAfterContent;
@@ -162,11 +146,9 @@ public class TodoCheckinHandlerWorker {
     private PsiFile myBeforeFile;
     private final PsiFileFactory myPsiFileFactory;
     private FilePath myAfterFile;
-    private final Acceptor myAcceptor;
     private final TodoFilter myTodoFilter;
 
-    private MyEditedFileProcessor(final Project project, Acceptor acceptor, final TodoFilter todoFilter) {
-      myAcceptor = acceptor;
+    private MyEditedFileProcessor(final Project project, final TodoFilter todoFilter) {
       myTodoFilter = todoFilter;
       myPsiFileFactory = PsiFileFactory.getInstance(project);
     }
@@ -182,11 +164,11 @@ public class TodoCheckinHandlerWorker {
         myBeforeContent = change.getBeforeRevision().getContent();
         myAfterContent = change.getAfterRevision().getContent();
         if (myAfterContent == null) {
-          myAcceptor.skipped(Pair.create(myAfterFile, ourCannotLoadCurrentRevision));
+          mySkipped.add(Pair.create(myAfterFile, ourCannotLoadCurrentRevision));
           return;
         }
         if (myBeforeContent == null) {
-          myAcceptor.skipped(Pair.create(myAfterFile, ourCannotLoadPreviousRevision));
+          mySkipped.add(Pair.create(myAfterFile, ourCannotLoadPreviousRevision));
           return;
         }
         List<LineFragment> lineFragments = getLineFragments(myAfterFile.getPath(), myBeforeContent, myAfterContent);
@@ -202,7 +184,7 @@ public class TodoCheckinHandlerWorker {
               myOldTodoTexts = null;
             }
             if (DiffUtil.getLineDiffType(lineFragment) == TextDiffType.INSERTED) {
-              myAcceptor.addedOrEdited(todoItem);
+              myAddedOrEditedTodos.add(todoItem);
             }
             else {
               // change
@@ -211,7 +193,7 @@ public class TodoCheckinHandlerWorker {
           });
       } catch (VcsException e) {
         LOG.info(e);
-        myAcceptor.skipped(Pair.create(myAfterFile, ourCannotLoadPreviousRevision));
+        mySkipped.add(Pair.create(myAfterFile, ourCannotLoadPreviousRevision));
       }
     }
 
@@ -228,7 +210,7 @@ public class TodoCheckinHandlerWorker {
         final TodoItemsCreator todoItemsCreator = new TodoItemsCreator();
         myOldItems = new ArrayList<>();
         if (all.isEmpty()) {
-          myAcceptor.addedOrEdited(newTodoItem);
+          myAddedOrEditedTodos.add(newTodoItem);
           return;
         }
         for (IndexPatternOccurrence occurrence : all) {
@@ -245,17 +227,11 @@ public class TodoCheckinHandlerWorker {
       }
       final String text = getTodoText(newTodoItem, myAfterContent);
       if (! myOldTodoTexts.contains(text)) {
-        myAcceptor.addedOrEdited(newTodoItem);
+        myAddedOrEditedTodos.add(newTodoItem);
       } else {
-        myAcceptor.inChanged(newTodoItem);
+        myInChangedTodos.add(newTodoItem);
       }
     }
-  }
-
-  interface Acceptor {
-    void skipped(Pair<FilePath, String> pair);
-    void addedOrEdited(final TodoItem todoItem);
-    void inChanged(final TodoItem todoItem);
   }
 
   public List<TodoItem> getAddedOrEditedTodos() {
