@@ -541,8 +541,8 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return myContext.myModulesConfigurator.getFacetsConfigurator();
   }
 
-  private void addModule(boolean anImport) {
-    final List<Module> modules = myContext.myModulesConfigurator.addModule(myTree, anImport);
+  private void addModule(boolean anImport, String defaultModuleName) {
+    final List<Module> modules = myContext.myModulesConfigurator.addModule(myTree, anImport, defaultModuleName);
     if (modules != null) {
       for (Module module : modules) {
         addModuleNode(module);
@@ -1006,7 +1006,15 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
     @Override
     public void actionPerformed(final AnActionEvent e) {
-      addModule(myImport);
+      String defaultModuleName = "untitled";
+      MyNode selectedNode = getSelectedNode();
+      if (ModuleGrouperKt.isQualifiedModuleNamesEnabled(myProject) && selectedNode instanceof ModuleGroupNodeImpl) {
+        ModuleGroup group = ((ModuleGroupNode)selectedNode).getModuleGroup();
+        if (group != null && !group.getGroupPathList().isEmpty()) {
+          defaultModuleName = StringUtil.join(group.getGroupPathList(), ".") + ".untitled";
+        }
+      }
+      addModule(myImport, defaultModuleName);
     }
   }
 

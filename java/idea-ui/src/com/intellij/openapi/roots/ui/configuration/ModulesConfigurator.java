@@ -370,9 +370,9 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
 
   @Nullable
-  public List<Module> addModule(Component parent, boolean anImport) {
+  public List<Module> addModule(Component parent, boolean anImport, String defaultModuleName) {
     if (myProject.isDefault()) return null;
-    final ProjectBuilder builder = runModuleWizard(parent, anImport);
+    final ProjectBuilder builder = runModuleWizard(parent, anImport, defaultModuleName);
     if (builder != null ) {
       final List<Module> modules = new ArrayList<>();
       final List<Module> committedModules;
@@ -426,7 +426,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   @Nullable
-  ProjectBuilder runModuleWizard(Component dialogParent, boolean anImport) {
+  private ProjectBuilder runModuleWizard(Component dialogParent, boolean anImport, String defaultModuleName) {
     AbstractProjectWizard wizard;
     if (anImport) {
       wizard = ImportModuleAction.selectFileAndCreateWizard(myProject, dialogParent);
@@ -438,7 +438,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       }
     }
     else {
-      wizard = new NewProjectWizard(myProject, dialogParent, this);
+      wizard = new NewProjectWizard(myProject, dialogParent, this, defaultModuleName);
     }
     if (!wizard.showAndGet()) {
       return null;
