@@ -52,7 +52,10 @@ import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.remote.PyProjectSynchronizer;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
-import com.jetbrains.python.sdk.*;
+import com.jetbrains.python.sdk.PreferredSdkComparator;
+import com.jetbrains.python.sdk.PyLazySdk;
+import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.add.PyAddNewVirtualEnvPanel;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
@@ -61,8 +64,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.io.File;
 import java.util.*;
@@ -137,7 +138,6 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
   public Sdk getSdk() {
     if (!(myProjectGenerator instanceof PythonProjectGenerator)) return null;
     if (mySdk != null) return mySdk;
-    if (((PythonProjectGenerator)myProjectGenerator).hideInterpreter()) return null;
     if (mySelectedInterpretersPanel != null && mySelectedInterpretersPanel == myNewVirtualEnvPanel) {
       return new PyLazySdk("Uninitialized virtual environment at " + myNewVirtualEnvPanel.getPath(),
                            () -> myNewVirtualEnvPanel != null ? myNewVirtualEnvPanel.getOrCreateSdk() : null);
@@ -156,7 +156,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
   @Override
   protected void registerValidators() {
     super.registerValidators();
-    if (myProjectGenerator instanceof PythonProjectGenerator && !((PythonProjectGenerator)myProjectGenerator).hideInterpreter()) {
+    if (myProjectGenerator instanceof PythonProjectGenerator) {
       myLocationField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
         protected void textChanged(DocumentEvent e) {
@@ -237,11 +237,8 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     if (myProjectGenerator instanceof PythonProjectGenerator) {
       final Sdk sdk = getSdk();
       if (sdk == null) {
-        if (!((PythonProjectGenerator)myProjectGenerator).hideInterpreter()) {
-          setErrorText("No Python interpreter selected");
-          return false;
-        }
-        return true;
+        setErrorText("No Python interpreter selected");
+        return false;
       }
       if (!(sdk instanceof PyLazySdk) && PythonSdkType.isInvalid(sdk)) {
         setErrorText("Choose valid python interpreter");
@@ -322,12 +319,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
 
       locationPanel.add(location, BorderLayout.CENTER);
       panel.add(locationPanel);
-      if (((PythonProjectGenerator)myProjectGenerator).hideInterpreter()) {
-        addInterpreterButton(locationPanel, location);
-      }
-      else {
-        panel.add(createInterpretersPanel());
-      }
+      panel.add(createInterpretersPanel());
 
       final PythonRemoteInterpreterManager remoteInterpreterManager = PythonRemoteInterpreterManager.getInstance();
 
@@ -468,33 +460,6 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
       return null;
     }
     return manager.getSynchronizer(sdk);
-  }
-
-  private void addInterpreterButton(final JPanel locationPanel, final LabeledComponent<TextFieldWithBrowseButton> location) {
-    final JButton interpreterButton = new FixedSizeButton(location);
-    if (SystemInfo.isMac && !UIUtil.isUnderDarcula()) {
-      interpreterButton.putClientProperty("JButton.buttonType", null);
-    }
-    interpreterButton.setIcon(PythonIcons.Python.Python);
-    interpreterButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final DialogBuilder builder = new DialogBuilder();
-        final JPanel panel = new JPanel();
-        final LabeledComponent<PythonSdkChooserCombo> interpreterCombo = LabeledComponent.create(createInterpreterCombo(),
-                                                                                                 "Interpreter", BorderLayout.WEST);
-        if (mySdk != null) {
-          mySdkCombo.getComboBox().setSelectedItem(mySdk);
-        }
-        panel.add(interpreterCombo);
-        builder.setCenterPanel(panel);
-        builder.setTitle("Select Python Interpreter");
-        if (builder.showAndGet()) {
-          mySdk = (Sdk)mySdkCombo.getComboBox().getSelectedItem();
-        }
-      }
-    });
-    locationPanel.add(interpreterButton, BorderLayout.EAST);
   }
 
   @NotNull
