@@ -33,4 +33,5 @@ envs {
 
   python "python27", "2.7.13"
   python "python36", "3.6.2"
+  python "python35", "3.5.0"
 }
