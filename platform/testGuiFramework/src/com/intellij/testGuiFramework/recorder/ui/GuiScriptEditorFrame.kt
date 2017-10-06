@@ -52,7 +52,7 @@ class GuiScriptEditorFrame : Disposable {
     myFrame.pack()
     myFrame.isVisible = true
 
-    GuiRecorderComponent.registerFrame(this)
+    GuiRecorderComponent.frame = this
     myFrame.addWindowListener(object : WindowAdapter() {
       override fun windowClosing(e: WindowEvent?) {
         dispose()

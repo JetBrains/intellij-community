@@ -76,7 +76,7 @@ class LocalCompiler {
                                                                                    LOG.error(ce.message)
                                                                                  }
                                                                                })
-    GuiRecorderComponent.setCurrentTask(taskFuture)
+    GuiRecorderComponent.currentTask = taskFuture
 
   }
 
@@ -99,14 +99,14 @@ class LocalCompiler {
       "Unable to load by pluginClassLoader $TEST_CLASS_NAME.class file")
     val testCase = currentTest.newInstance()
     val testMethod = currentTest.getMethod(ScriptWrapper.TEST_METHOD_NAME)
-    GuiRecorderComponent.setState(GuiRecorderComponent.States.RUNNING)
+    GuiRecorderComponent.state = GuiRecorderComponent.States.RUNNING
     try {
       testMethod.invoke(testCase)
       Notifier.updateStatus("Script stopped")
-      GuiRecorderComponent.setState(GuiRecorderComponent.States.IDLE)
+      GuiRecorderComponent.state = GuiRecorderComponent.States.IDLE
     }
     catch (throwable: Throwable) {
-      GuiRecorderComponent.setState(GuiRecorderComponent.States.RUNNING_ERROR)
+      GuiRecorderComponent.state = GuiRecorderComponent.States.RUNNING_ERROR
       Notifier.updateStatus("Running error, please see idea.log")
       throw throwable
     }
@@ -132,15 +132,15 @@ class LocalCompiler {
     val setUpMethod = currentTest.getMethod("setUp")
     val testMethod = currentTest.getMethod(ScriptWrapper.TEST_METHOD_NAME)
     Notifier.updateStatus("${Notifier.LONG_OPERATION_PREFIX}Script running...")
-    GuiRecorderComponent.setState(GuiRecorderComponent.States.RUNNING)
+    GuiRecorderComponent.state = GuiRecorderComponent.States.RUNNING
     try {
       setUpMethod.invoke(testCase)
       testMethod.invoke(testCase)
       Notifier.updateStatus("Script stopped")
-      GuiRecorderComponent.setState(GuiRecorderComponent.States.IDLE)
+      GuiRecorderComponent.state = GuiRecorderComponent.States.IDLE
     }
     catch (throwable: Throwable) {
-      GuiRecorderComponent.setState(GuiRecorderComponent.States.RUNNING_ERROR)
+      GuiRecorderComponent.state = GuiRecorderComponent.States.RUNNING_ERROR
       Notifier.updateStatus("Running error, please see idea.log")
       throw throwable
     }
@@ -164,7 +164,7 @@ class LocalCompiler {
     val libDirLocation = getApplicationLibDir().parentFile
 
     Notifier.updateStatus("${Notifier.LONG_OPERATION_PREFIX}Compiling...")
-    GuiRecorderComponent.setState(GuiRecorderComponent.States.COMPILING)
+    GuiRecorderComponent.state = GuiRecorderComponent.States.COMPILING
 
 
     val compilationProcessBuilder = if (SystemInfo.isWindows)
@@ -182,12 +182,12 @@ class LocalCompiler {
     if (process.exitValue() == 1) {
       LOG.error(BufferedReader(InputStreamReader(process.errorStream)).lines().collect(Collectors.joining("\n")))
       Notifier.updateStatus("Compilation error (see idea.log)")
-      GuiRecorderComponent.setState(GuiRecorderComponent.States.COMPILATION_ERROR)
+      GuiRecorderComponent.state = GuiRecorderComponent.States.COMPILATION_ERROR
       throw CompilationException("Compilation error (see idea.log)")
     }
     else {
       Notifier.updateStatus("Compilation is done")
-      GuiRecorderComponent.setState(GuiRecorderComponent.States.COMPILATION_DONE)
+      GuiRecorderComponent.state = GuiRecorderComponent.States.COMPILATION_DONE
     }
     return wait
   }

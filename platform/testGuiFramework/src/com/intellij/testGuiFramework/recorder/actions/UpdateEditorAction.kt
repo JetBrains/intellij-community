@@ -14,7 +14,7 @@ import com.intellij.testGuiFramework.recorder.ui.Notifier
 class UpdateEditorAction : AnAction(null, "Update GUI Script Editor (get recorded from buffer)", AllIcons.Actions.NextOccurence) {
 
   override fun actionPerformed(actionEvent: AnActionEvent?) {
-    val editor = GuiRecorderComponent.getFrame()!!.getEditor()
+    val editor = GuiRecorderComponent.frame!!.getEditor()
     ApplicationManager.getApplication().runWriteAction { editor.document.setText(getGuiScriptBuffer()) }
     Notifier.updateStatus("GUI script updated")
   }

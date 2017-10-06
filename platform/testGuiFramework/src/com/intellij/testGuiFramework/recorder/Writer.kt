@@ -38,15 +38,15 @@ object Writer {
 
   private fun write(str: String) {
     print(str)
-    if (GuiRecorderComponent.getFrame() != null && GuiRecorderComponent.getFrame()!!.isSyncToEditor())
+    if (GuiRecorderComponent.frame != null && GuiRecorderComponent.frame!!.isSyncToEditor())
       writeToEditor(str)
     else
       scriptBuffer.append(str)
   }
 
   private fun writeToEditor(str: String) {
-    if (GuiRecorderComponent.getFrame() != null && GuiRecorderComponent.getFrame()!!.getEditor() != null) {
-      val editor = GuiRecorderComponent.getFrame()!!.getEditor()
+    if (GuiRecorderComponent.frame != null && GuiRecorderComponent.frame!!.getEditor() != null) {
+      val editor = GuiRecorderComponent.frame!!.getEditor()
       val document = editor.document
       WriteCommandAction.runWriteCommandAction(null, { document.insertString(document.textLength, str) })
     }
