@@ -97,6 +97,18 @@ class JButtonGenerator : ComponentCodeGenerator<JButton> {
   override fun generate(cmp: JButton, me: MouseEvent, cp: Point) = "button(\"${cmp.text}\").click()"
 }
 
+class JSpinnerGenerator : ComponentCodeGenerator<JButton> {
+  override fun accept(cmp: Component) = cmp.parent is JSpinner
+  override fun priority(): Int = 1
+  override fun generate(cmp: JButton, me: MouseEvent, cp: Point): String {
+    val labelText = Utils.getBoundedLabel(10, cmp.parent).text
+    return if (cmp.name.contains("nextButton"))
+      """spinner("$labelText").increment()"""
+    else
+      """spinner("$labelText").decrement()"""
+  }
+}
+
 class ComponentWithBrowseButtonGenerator : ComponentCodeGenerator<FixedSizeButton> {
   override fun accept(cmp: Component): Boolean {
     return cmp.parent.parent is ComponentWithBrowseButton<*>
@@ -653,7 +665,7 @@ object Utils {
   /**
    * @hierarchyLevel: started from 1 to see bounded label for a component itself
    */
-  private fun getBoundedLabel(hierarchyLevel: Int, component: Component): JLabel {
+  fun getBoundedLabel(hierarchyLevel: Int, component: Component): JLabel {
 
     var currentComponentParent = component.parent
     if (hierarchyLevel < 1) throw Exception(

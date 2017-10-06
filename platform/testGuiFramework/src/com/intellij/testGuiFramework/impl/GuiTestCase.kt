@@ -44,10 +44,7 @@ import com.intellij.ui.components.labels.LinkLabel
 import org.fest.swing.exception.ActionFailedException
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
-import org.fest.swing.fixture.AbstractComponentFixture
-import org.fest.swing.fixture.JListFixture
-import org.fest.swing.fixture.JTableFixture
-import org.fest.swing.fixture.JTextComponentFixture
+import org.fest.swing.fixture.*
 import org.fest.swing.image.ScreenshotTaker
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
@@ -262,6 +259,16 @@ open class GuiTestCase {
       return ComponentWithBrowseButtonFixture(component, guiTestRule.robot())
     }
     else throw UnableToFindComponent("ComponentWithBrowseButton")
+  }
+
+  fun <S, C : Component> ComponentFixture<S, C>.spinner(boundedLabelText: String, timeout: Long = defaultTimeout): JSpinnerFixture {
+    if (target() is Container) {
+      val boundedLabel = waitUntilFound(target() as Container, JLabel::class.java, timeout) { it.text == boundedLabelText }
+      val component = boundedLabel.labelFor
+      if (component is JSpinner)
+        return JSpinnerFixture(guiTestRule.robot(), component)
+    }
+    throw UnableToFindComponent("""JSpinner with $boundedLabelText bounded label""")
   }
 
   /**
