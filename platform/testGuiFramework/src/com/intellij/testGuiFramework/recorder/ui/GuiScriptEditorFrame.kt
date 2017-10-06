@@ -17,11 +17,8 @@ package com.intellij.testGuiFramework.recorder.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.testGuiFramework.recorder.actions.StartPauseRecAction
-import com.intellij.testGuiFramework.recorder.components.GuiRecorderComponent
 import java.awt.Container
 import java.awt.Dimension
-import java.awt.event.WindowAdapter
-import java.awt.event.WindowEvent
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
 
@@ -32,7 +29,7 @@ class GuiScriptEditorFrame : Disposable {
   }
 
   override fun dispose() {
-    guiScriptEditorPanel.releaseEditor()
+    guiScriptEditorPanel.dispose()
   }
 
   val frameName = "GUI Script Editor"
@@ -49,12 +46,6 @@ class GuiScriptEditorFrame : Disposable {
 
     myFrame.contentPane = myContentPanel
     myFrame.pack()
-
-    myFrame.addWindowListener(object : WindowAdapter() {
-      override fun windowClosing(e: WindowEvent?) {
-        dispose()
-      }
-    })
   }
 
   fun isShowing() = myFrame.isShowing

@@ -15,6 +15,7 @@
  */
 package com.intellij.testGuiFramework.recorder.ui
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -29,7 +30,7 @@ import kotlin.with
 /**
  * @author Sergey Karashevich
  */
-class GuiScriptEditor {
+class GuiScriptEditor : Disposable {
 
   val myEditor: EditorEx
 
@@ -57,9 +58,7 @@ class GuiScriptEditor {
     myEditor.highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(LightVirtualFile("a.kt"), myEditor.colorsScheme, null)
   }
 
-  //Editor should be realised before Application is closed
-  fun releaseEditor() {
+  override fun dispose() {
     EditorFactory.getInstance().releaseEditor(myEditor)
   }
-
 }

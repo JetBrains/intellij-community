@@ -15,10 +15,12 @@
  */
 package com.intellij.testGuiFramework.recorder.ui;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.status.TextPanel;
 import com.intellij.testGuiFramework.recorder.actions.*;
@@ -32,7 +34,7 @@ import java.awt.*;
 /**
  * @author Sergey Karashevich
  */
-public class GuiScriptEditorPanel {
+public class GuiScriptEditorPanel implements Disposable {
     private JButton runButton;
     private JPanel editorPanel;
     private JPanel myPanel;
@@ -66,8 +68,9 @@ public class GuiScriptEditorPanel {
         return myEditor.getMyEditor();
     }
 
-    public void releaseEditor(){
-        myEditor.releaseEditor();
+    @Override
+    public void dispose() {
+        Disposer.dispose(myEditor);
     }
 
     private void installActionToolbar() {
