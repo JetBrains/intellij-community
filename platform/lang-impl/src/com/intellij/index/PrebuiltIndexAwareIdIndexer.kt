@@ -18,9 +18,9 @@ abstract class PrebuiltIndexAwareIdIndexer : PrebuiltIndexProviderBase<Map<IdInd
     val ID_INDEX_FILE_NAME = "id-index"
   }
 
-  override val indexName = ID_INDEX_FILE_NAME
+  override val indexName get() = ID_INDEX_FILE_NAME
 
-  override val indexExternalizer = IdIndexMapDataExternalizer()
+  override val indexExternalizer get() = IdIndexMapDataExternalizer()
 
   override fun map(inputData: FileContent): Map<IdIndexEntry, Int> {
     val map = get(inputData)
@@ -47,9 +47,9 @@ class IdIndexMapDataExternalizer : DataExternalizer<Map<IdIndexEntry, Int>> {
   override fun read(`in`: DataInput): Map<IdIndexEntry, Int> {
     val size = DataInputOutputUtil.readINT(`in`)
     val map = HashMap<IdIndexEntry, Int>()
-    for (i in 0..size) {
+    for (i in 0 until size) {
       val wordHash = DataInputOutputUtil.readINT(`in`)
-      val value= DataInputOutputUtil.readINT(`in`)
+      val value = DataInputOutputUtil.readINT(`in`)
       map.put(IdIndexEntry(wordHash), value)
     }
     return map
