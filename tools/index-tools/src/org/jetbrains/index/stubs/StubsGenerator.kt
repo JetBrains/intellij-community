@@ -21,6 +21,8 @@ package org.jetbrains.index.stubs
 
 import com.google.common.hash.HashCode
 import com.intellij.idea.IdeaTestApplication
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.project.ProjectManager
@@ -32,7 +34,6 @@ import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.stubs.*
 import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.io.PersistentHashMap
-import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
 import org.jetbrains.index.IndexGenerator
 import java.io.ByteArrayInputStream
@@ -190,13 +191,13 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
     }
   }
   finally {
-    UIUtil.invokeAndWaitIfNeeded(Runnable {
+    ApplicationManager.getApplication().invokeAndWait(Runnable {
       ProjectManager.getInstance().closeProject(project)
       WriteAction.run<Throwable> {
         Disposer.dispose(project)
         Disposer.dispose(app)
       }
-    })
+    }, ModalityState.NON_MODAL)
 
   }
 
