@@ -142,8 +142,7 @@ class ActionLinkGenerator : ComponentCodeGenerator<ActionLink> {
 
 class JTextFieldGenerator : ComponentCodeGenerator<JTextField> {
   override fun accept(cmp: Component) = cmp is JTextField
-  override fun generate(cmp: JTextField, me: MouseEvent, cp: Point) = """textfield("${findBoundedText(cmp).orEmpty()}").${clicks(
-    me)}"""
+  override fun generate(cmp: JTextField, me: MouseEvent, cp: Point) = """textfield("${findBoundedText(cmp).orEmpty()}").${clicks(me)}"""
 }
 
 class JBListGenerator : ComponentCodeGenerator<JBList<*>> {
@@ -232,8 +231,8 @@ class JComboBoxGenerator : ComponentCodeGenerator<JComboBox<*>> {
 class BasicArrowButtonDelegatedGenerator : ComponentCodeGenerator<BasicArrowButton> {
   override fun priority() = 1 //make sense if we challenge with simple jbutton
   override fun accept(cmp: Component) = (cmp is BasicArrowButton) && (cmp.parent is JComboBox<*>)
-  override fun generate(cmp: BasicArrowButton, me: MouseEvent, cp: Point) = JComboBoxGenerator().generate(cmp.parent as JComboBox<*>, me,
-                                                                                                          cp)
+  override fun generate(cmp: BasicArrowButton, me: MouseEvent, cp: Point) =
+    JComboBoxGenerator().generate(cmp.parent as JComboBox<*>, me, cp)
 }
 
 class JRadioButtonGenerator : ComponentCodeGenerator<JRadioButton> {
@@ -361,16 +360,13 @@ class ActionMenuItemGenerator : ComponentCodeGenerator<ActionMenuItem> {
   }
 
   private fun JBPopupMenu.findParentActionMenu(jbPopupHashSet: MutableSet<Int>): String {
-    val actionMenu: ActionMenu = this.subElements
-                                   .filterIsInstance(ActionMenu::class.java)
-                                   .find { actionMenu ->
-                                     (actionMenu.subElements != null
-                                      && actionMenu.subElements.isNotEmpty()
-                                      && actionMenu.subElements
-                                        .any { menuElement ->
-                                          (menuElement is JBPopupMenu && jbPopupHashSet.contains(menuElement.hashCode()))
-                                        })
-                                   } ?: throw Exception("Unable to find a proper ActionMenu")
+    val actionMenu = this.subElements
+                       .filterIsInstance(ActionMenu::class.java)
+                       .find { actionMenu ->
+                         actionMenu.subElements != null && actionMenu.subElements.isNotEmpty() && actionMenu.subElements.any { menuElement ->
+                           menuElement is JBPopupMenu && jbPopupHashSet.contains(menuElement.hashCode())
+                         }
+                       } ?: throw Exception("Unable to find a proper ActionMenu")
     return actionMenu.text
   }
 }
@@ -713,8 +709,9 @@ object Utils {
 
   private fun findBoundedText(target: Component, container: Component): String? {
     val textComponents = withRobot { robot ->
-      robot.finder().findAll(container as Container,
-                             ComponentMatcher { component -> component!!.isShowing && component.isTextComponent() && target.onHeightCenter(component, true) })
+      robot.finder().findAll(container as Container, ComponentMatcher { component ->
+        component!!.isShowing && component.isTextComponent() && target.onHeightCenter(component, true)
+      })
     }
     if (textComponents.isEmpty()) return null
     //if  more than one component is found let's take the righter one
