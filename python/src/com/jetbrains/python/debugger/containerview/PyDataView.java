@@ -196,7 +196,7 @@ public class PyDataView implements DumbAware {
     });
   }
 
-  private TabInfo addTab(@NotNull PyFrameAccessor frameAccessor) {
+  public TabInfo addTab(@NotNull PyFrameAccessor frameAccessor) {
     if (hasOnlyEmptyTab()) {
       myTabs.removeTab(myTabs.getSelectedInfo());
     }
@@ -232,7 +232,7 @@ public class PyDataView implements DumbAware {
     return getPanel(info).getSliceTextField().getText().isEmpty();
   }
 
-  private List<TabInfo> getVisibleTabs() {
+  public List<TabInfo> getVisibleTabs() {
     return myTabs.getTabs().stream().filter(tabInfo -> !tabInfo.isHidden()).collect(Collectors.toList());
   }
 
