@@ -391,7 +391,8 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
 
   @NotNull
   public SearchScope getUseScope() {
-    return GlobalSearchScope.projectScope(getProject());
+    // property ref can occur in any file
+    return GlobalSearchScope.allScope(getProject());
   }
 
   public ItemPresentation getPresentation() {
