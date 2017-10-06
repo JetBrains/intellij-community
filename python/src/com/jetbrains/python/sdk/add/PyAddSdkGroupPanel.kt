@@ -34,7 +34,7 @@ class PyAddSdkGroupPanel(name: String,
                          defaultPanel: PyAddSdkPanel) : PyAddSdkPanel() {
   override val panelName = name
   override val icon = panelIcon
-  var selectedPanel: PyAddSdkPanel? = null
+  var selectedPanel: PyAddSdkPanel = defaultPanel
   private val changeListeners: MutableList<Runnable> = mutableListOf()
 
   init {
@@ -49,9 +49,9 @@ class PyAddSdkGroupPanel(name: String,
   override fun validateAll() = panels.filter { it.isEnabled }.flatMap { it.validateAll() }
 
   override val sdk: Sdk?
-    get() = selectedPanel?.sdk
+    get() = selectedPanel.sdk
 
-  override fun getOrCreateSdk() = selectedPanel?.getOrCreateSdk()
+  override fun getOrCreateSdk() = selectedPanel.getOrCreateSdk()
 
   fun addChangeListener(listener: Runnable) {
     changeListeners += listener
@@ -81,7 +81,6 @@ class PyAddSdkGroupPanel(name: String,
         }
       }
     }
-    selectedPanel = defaultPanel
     buttonMap.filterValues { it == defaultPanel }.keys.first().isSelected = true
     return formBuilder.panel
   }

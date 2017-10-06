@@ -300,12 +300,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
 
     final List<PyAddSdkPanel> panels = Arrays.asList(newVirtualEnvPanel, existingSdkPanel);
     myInterpreterPanel = new PyAddSdkGroupPanel("New project interpreter", getIcon(), panels, newVirtualEnvPanel);
-    myInterpreterPanel.addChangeListener(() -> {
-      PyAddSdkGroupPanel panel = myInterpreterPanel;
-      if (panel != null) {
-        decorator.setTitle(getProjectInterpreterTitle(panel.getSelectedPanel()));
-      }
-    });
+    myInterpreterPanel.addChangeListener(() -> decorator.setTitle(getProjectInterpreterTitle(myInterpreterPanel.getSelectedPanel())));
 
     newVirtualEnvPanel.addChangeListener(this::checkValid);
     existingSdkPanel.addChangeListener(this::checkValid);
