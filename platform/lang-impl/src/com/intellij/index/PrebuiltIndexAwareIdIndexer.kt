@@ -29,7 +29,7 @@ abstract class PrebuiltIndexAwareIdIndexer : PrebuiltIndexProviderBase<Map<IdInd
     return if (map != null) {
       if (PREBUILT_INDICES_DEBUG) {
         if (!map.equals(idIndexMap(inputData))) {
-          LOG.error("Prebuilt id index differs from actual value")
+          LOG.error("Prebuilt id index differs from actual value for ${inputData.file.path}")
         }
       }
       map
