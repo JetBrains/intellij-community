@@ -69,7 +69,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
 
       if (!mySuppressParentheses &&
           element instanceof PyFunction && ((PyFunction)element).getProperty() == null &&
-          !PyKnownDecoratorUtil.hasNonBuiltinDecorator((PyFunction)element, context) &&
+          !PyKnownDecoratorUtil.hasUnknownDecorator((PyFunction)element, context) &&
           !isSingleArgDecoratorCall(myContext, (PyFunction)element)) {
         item = item.withInsertHandler(PyFunctionInsertHandler.INSTANCE);
         final List<PyCallableParameter> parameters = ((PyFunction)element).getParameters(context);
