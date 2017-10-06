@@ -101,7 +101,7 @@ class JSpinnerGenerator : ComponentCodeGenerator<JButton> {
   override fun accept(cmp: Component) = cmp.parent is JSpinner
   override fun priority(): Int = 1
   override fun generate(cmp: JButton, me: MouseEvent, cp: Point): String {
-    val labelText = Utils.getBoundedLabel(10, cmp.parent).text
+    val labelText = Utils.getBoundedLabel(cmp.parent).text
     return if (cmp.name.contains("nextButton"))
       """spinner("$labelText").increment()"""
     else
@@ -662,26 +662,17 @@ object Utils {
     return (0 until path.pathCount).map { path.getPathComponent(it).toString() }.filter(String::isNotEmpty).joinToString("/")
   }
 
-  /**
-   * @hierarchyLevel: started from 1 to see bounded label for a component itself
-   */
-  fun getBoundedLabel(hierarchyLevel: Int, component: Component): JLabel {
+  fun getBoundedLabel(component: Component): JLabel {
+    return getBoundedLabelRecursive(component, component.parent)
+  }
 
-    var currentComponentParent = component.parent
-    if (hierarchyLevel < 1) throw Exception(
-      "Hierarchy level (actual is $hierarchyLevel) should starts from 1 to see bounded label for a component itself")
-
-    for (i in 1..hierarchyLevel) {
-      val boundedLabel = findBoundedLabel(component, currentComponentParent.parent)
-      if (boundedLabel != null) return boundedLabel
-      else {
-        if (currentComponentParent.parent == null) break
-        currentComponentParent = currentComponentParent.parent
-      }
+  private fun getBoundedLabelRecursive(component: Component, parent: Component): JLabel {
+    val boundedLabel = findBoundedLabel(component, parent)
+    if (boundedLabel != null) return boundedLabel
+    else {
+      if (parent.parent == null) throw ComponentLookupException("Unable to find bounded label")
+      return getBoundedLabelRecursive(component, parent)
     }
-
-    throw ComponentLookupException("Unable to find bounded label in ${hierarchyLevel - 1} level(s) from $component")
-
   }
 
   private fun findBoundedLabel(component: Component, componentParent: Component): JLabel? {
@@ -706,7 +697,7 @@ object Utils {
   fun findBoundedText(hierarchyLevel: Int, target: Component): String? {
     //let's try to find bounded label firstly
     try {
-      return getBoundedLabel(hierarchyLevel, target).text
+      return getBoundedLabel(target).text
     }
     catch (e: ComponentLookupException) {
       //do nothing
