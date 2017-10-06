@@ -123,6 +123,7 @@ public class GrHighlightUtil {
     return new TextRange(startOffset, endOffset);
   }
 
+  @Deprecated // to be removed
   @NotNull
   public static PsiElement getElementToHighlight(@NotNull GrReferenceElement refElement) {
     final PsiElement refNameElement = refElement.getReferenceNameElement();
