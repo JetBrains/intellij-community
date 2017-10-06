@@ -1012,4 +1012,22 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
       "public class C {\n" +
       "}");
   }
+
+  public void testModuleComment() {
+    doTextTest(
+      "/**\n" +
+      " * A module.\n" +
+      " * @uses SomeService\n" +
+      " */\n" +
+      "module M {\n" +
+      "}",
+
+      "/**\n" +
+      " * A module.\n" +
+      " *\n" +
+      " * @uses SomeService\n" +
+      " */\n" +
+      "module M {\n" +
+      "}");
+  }
 }
