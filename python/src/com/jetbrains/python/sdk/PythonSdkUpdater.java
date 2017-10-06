@@ -64,7 +64,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class PythonSdkUpdater implements StartupActivity {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.PythonSdkUpdater");
-  public static final int INITIAL_ACTIVITY_DELAY = 7000;
+  public static final int INITIAL_ACTIVITY_DELAY = 3000;
 
   private static final Object ourLock = new Object();
   private static final Set<String> ourScheduledToRefresh = Sets.newHashSet();
