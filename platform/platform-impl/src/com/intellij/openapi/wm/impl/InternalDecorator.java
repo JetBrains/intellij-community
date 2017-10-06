@@ -63,7 +63,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   /**
    * Catches all event from tool window and modifies decorator's appearance.
    */
-  @NonNls private static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
+  @NonNls static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
   @NonNls public static final String TOGGLE_PINNED_MODE_ACTION_ID = "TogglePinnedMode";
   @NonNls public static final String TOGGLE_DOCK_MODE_ACTION_ID = "ToggleDockMode";
   @NonNls public static final String TOGGLE_FLOATING_MODE_ACTION_ID = "ToggleFloatingMode";

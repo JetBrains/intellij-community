@@ -480,7 +480,7 @@ public class ScrollingUtil {
     if (size == 0) return;
     int index = selectionModel.getLeadSelectionIndex();
     int indexToSelect = index + direction;
-    if (indexToSelect < 0 || indexToSelect == size) {
+    if (indexToSelect < 0 || indexToSelect >= size) {
       if (cycleScrolling) {
         indexToSelect = indexToSelect < 0 ? size - 1 : 0;
       } else {

@@ -19,6 +19,9 @@ import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.EditorWindow;
+import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.impl.ShadowPainter;
@@ -92,8 +95,31 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     setSize(size);
     setLocationRelativeTo(null);
 
-    LayoutFocusTraversalPolicyExt layoutFocusTraversalPolicy = new LayoutFocusTraversalPolicyExt();
-    setFocusTraversalPolicy(layoutFocusTraversalPolicy);
+    //LayoutFocusTraversalPolicyExt layoutFocusTraversalPolicy = new LayoutFocusTraversalPolicyExt();
+    setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt() {
+      @Override
+      public Component getComponentAfter(Container focusCycleRoot, Component aComponent) {
+        // Every time a component is removed, AWT asks focus layout policy
+        // who is supposed to be the next focus owner.
+        // Looks like for IdeFrame, the selected editor of the frame is a good candidate
+        if (myProject != null) {
+          final FileEditorManagerEx fileEditorManagerEx = FileEditorManagerEx.getInstanceEx(myProject);
+          if (fileEditorManagerEx != null) {
+            final EditorWindow window = fileEditorManagerEx.getCurrentWindow();
+            if (window != null) {
+              final EditorWithProviderComposite editor = window.getSelectedEditor();
+              if (editor != null) {
+                final JComponent component = editor.getPreferredFocusedComponent();
+                if (component != null) {
+                  return component;
+                }
+              }
+            }
+          }
+        }
+        return super.getComponentAfter(focusCycleRoot, aComponent);
+      }
+    });
 
     setupCloseAction();
     MnemonicHelper.init(this);
@@ -321,8 +347,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       if (myRootPane != null) { //already disposed
         myRootPane.deinstallNorthComponents();
       }
-
-      FocusTrackback.release(this);
     }
 
     if (myRestoreFullScreen && isVisible()) {
@@ -415,8 +439,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       myFrameDecorator = null;
     }
     if (myLafListener != null) LafManager.getInstance().removeLafManagerListener(myLafListener);
-
-    FocusTrackback.release(this);
 
     super.dispose();
   }
