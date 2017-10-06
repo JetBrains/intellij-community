@@ -51,12 +51,12 @@ public class ParametrizedDuplicates {
 
   private final PsiElement[] myElements;
   private List<Match> myMatches;
-  private List<Occurrences> myOccurrencesList;
+  private List<ClusterOfUsages> myUsagesList;
   private PsiMethod myParametrizedMethod;
   private PsiMethodCallExpression myParametrizedCall;
   private VariableData[] myVariableData;
 
-  private ParametrizedDuplicates(PsiElement[] pattern) {
+  private ParametrizedDuplicates(@NotNull PsiElement[] pattern) {
     LOG.assertTrue(pattern.length != 0, "pattern length");
     if (pattern[0] instanceof PsiStatement) {
       PsiElement[] copy = copyElements(pattern);
@@ -142,56 +142,56 @@ public class ParametrizedDuplicates {
     if (myElements.length == 0) {
       return false;
     }
-    myOccurrencesList = new ArrayList<>();
-    Map<PsiExpression, Occurrences> occurrencesMap = new THashMap<>();
+    myUsagesList = new ArrayList<>();
+    Map<PsiExpression, ClusterOfUsages> usagesMap = new THashMap<>();
     Set<Match> badMatches = new THashSet<>();
     for (Match match : matches) {
-      List<Occurrences> occurrencesInMatch = getOccurrencesInMatch(occurrencesMap, match);
-      if (occurrencesInMatch == null) {
+      List<ClusterOfUsages> usagesInMatch = getUsagesInMatch(usagesMap, match);
+      if (usagesInMatch == null) {
         badMatches.add(match);
         continue;
       }
-      for (Occurrences occurrences : occurrencesInMatch) {
-        myOccurrencesList.add(occurrences);
-        for (PsiExpression expression : occurrences.myPatterns) {
-          occurrencesMap.put(expression, occurrences);
+      for (ClusterOfUsages usages : usagesInMatch) {
+        myUsagesList.add(usages);
+        for (PsiExpression expression : usages.myPatterns) {
+          usagesMap.put(expression, usages);
         }
       }
     }
-    myOccurrencesList.sort(Comparator.comparing(occurrences -> occurrences.myFirstOffset));
+    myUsagesList.sort(Comparator.comparing(usages -> usages.myFirstOffset));
 
     if (!badMatches.isEmpty()) {
       matches = new ArrayList<>(matches);
       matches.removeAll(badMatches);
     }
     myMatches = matches;
-    return !myMatches.isEmpty() && !myOccurrencesList.isEmpty();
+    return !myMatches.isEmpty() && !myUsagesList.isEmpty();
   }
 
   @Nullable
-  private static List<Occurrences> getOccurrencesInMatch(@NotNull Map<PsiExpression, Occurrences> occurrencesMap, @NotNull Match match) {
-    List<Occurrences> matchOccurrences = new ArrayList<>();
+  private static List<ClusterOfUsages> getUsagesInMatch(@NotNull Map<PsiExpression, ClusterOfUsages> usagesMap, @NotNull Match match) {
+    List<ClusterOfUsages> result = new ArrayList<>();
     List<ExtractedParameter> parameters = match.getExtractedParameters();
     for (ExtractedParameter parameter : parameters) {
-      Occurrences occurrences = occurrencesMap.get(parameter.myPattern.getUsage());
-      if (occurrences != null && !occurrences.isEquivalent(parameter) ||
-          occurrences == null && Occurrences.isPresent(occurrencesMap, parameter)) {
+      ClusterOfUsages usages = usagesMap.get(parameter.myPattern.getUsage());
+      if (usages != null && !usages.isEquivalent(parameter) ||
+          usages == null && ClusterOfUsages.isPresent(usagesMap, parameter)) {
         return null;
       }
-      if (occurrences == null) {
-        matchOccurrences.add(occurrences = new Occurrences(parameter));
+      if (usages == null) {
+        result.add(usages = new ClusterOfUsages(parameter));
       }
-      occurrences.add(parameter);
+      usages.add(parameter);
     }
-    return matchOccurrences;
+    return result;
   }
 
   private boolean extract(@NotNull ExtractMethodProcessor originalProcessor) {
     Map<PsiExpression, PsiExpression> expressionsMapping = new THashMap<>();
     Map<PsiVariable, PsiVariable> variablesMapping = new THashMap<>();
-    collectCopyMapping(originalProcessor.myElements, myElements, myOccurrencesList, expressionsMapping, variablesMapping);
+    collectCopyMapping(originalProcessor.myElements, myElements, myUsagesList, expressionsMapping, variablesMapping);
 
-    Map<PsiLocalVariable, Occurrences> parameterDeclarations = createParameterDeclarations(originalProcessor, expressionsMapping);
+    Map<PsiLocalVariable, ClusterOfUsages> parameterDeclarations = createParameterDeclarations(originalProcessor, expressionsMapping);
     putMatchParameters(parameterDeclarations);
 
     JavaDuplicatesExtractMethodProcessor parametrizedProcessor = new JavaDuplicatesExtractMethodProcessor(myElements, REFACTORING_NAME) {
@@ -214,7 +214,8 @@ public class ParametrizedDuplicates {
     return true;
   }
 
-  private static void replaceArguments(Map<PsiLocalVariable, Occurrences> parameterDeclarations, PsiMethodCallExpression parametrizedCall) {
+  private static void replaceArguments(@NotNull Map<PsiLocalVariable, ClusterOfUsages> parameterDeclarations,
+                                       @NotNull PsiMethodCallExpression parametrizedCall) {
     PsiExpression[] arguments = parametrizedCall.getArgumentList().getExpressions();
     for (PsiExpression argument : arguments) {
       if (argument instanceof PsiReferenceExpression) {
@@ -229,9 +230,9 @@ public class ParametrizedDuplicates {
     }
   }
 
-  private void putMatchParameters(Map<PsiLocalVariable, Occurrences> parameterDeclarations) {
+  private void putMatchParameters(@NotNull Map<PsiLocalVariable, ClusterOfUsages> parameterDeclarations) {
     Map<PsiExpression, PsiLocalVariable> patternUsageToParameter = new THashMap<>();
-    for (Map.Entry<PsiLocalVariable, Occurrences> entry : parameterDeclarations.entrySet()) {
+    for (Map.Entry<PsiLocalVariable, ClusterOfUsages> entry : parameterDeclarations.entrySet()) {
       PsiExpression usage = entry.getValue().myParameters.get(0).myPattern.getUsage();
       patternUsageToParameter.put(usage, entry.getKey());
     }
@@ -332,11 +333,11 @@ public class ParametrizedDuplicates {
   }
 
   @NotNull
-  private Map<PsiLocalVariable, Occurrences> createParameterDeclarations(@NotNull ExtractMethodProcessor originalProcessor,
-                                                                    @NotNull Map<PsiExpression, PsiExpression> expressionsMapping) {
+  private Map<PsiLocalVariable, ClusterOfUsages> createParameterDeclarations(@NotNull ExtractMethodProcessor originalProcessor,
+                                                                             @NotNull Map<PsiExpression, PsiExpression> expressionsMapping) {
 
     Project project = myElements[0].getProject();
-    Map<PsiLocalVariable, Occurrences> parameterDeclarations = new THashMap<>();
+    Map<PsiLocalVariable, ClusterOfUsages> parameterDeclarations = new THashMap<>();
     UniqueNameGenerator generator = originalProcessor.getParameterNameGenerator(myElements[0]);
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiStatement statement =
@@ -345,20 +346,20 @@ public class ParametrizedDuplicates {
     PsiElement parent = statement.getParent();
     LOG.assertTrue(parent instanceof PsiCodeBlock, "first statement's parent isn't a code block");
 
-    for (Occurrences occurrences : myOccurrencesList) {
-      ExtractedParameter parameter = occurrences.myParameters.get(0);
+    for (ClusterOfUsages usages : myUsagesList) {
+      ExtractedParameter parameter = usages.myParameters.get(0);
       PsiExpression patternUsage = parameter.myPattern.getUsage();
-      String usageText = patternUsage.getText();
-      PsiExpression exprInCopy = factory.createExpressionFromText(usageText, parent);
+      String initializerText = patternUsage.getText();
+      PsiExpression initializer = factory.createExpressionFromText(initializerText, parent);
       final SuggestedNameInfo info =
-        JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.PARAMETER, null, exprInCopy, null);
+        JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.PARAMETER, null, initializer, null);
       final String parameterName = generator.generateUniqueName(info.names.length > 0 ? info.names[0] : "p");
 
-      String declarationText = parameter.myType.getCanonicalText() + " " + parameterName + " = " + usageText + ";";
+      String declarationText = parameter.myType.getCanonicalText() + " " + parameterName + " = " + initializerText + ";";
       PsiDeclarationStatement paramDeclaration = (PsiDeclarationStatement)factory.createStatementFromText(declarationText, parent);
       paramDeclaration = (PsiDeclarationStatement)parent.addBefore(paramDeclaration, statement);
       PsiLocalVariable localVariable = (PsiLocalVariable)paramDeclaration.getDeclaredElements()[0];
-      parameterDeclarations.put(localVariable, occurrences);
+      parameterDeclarations.put(localVariable, usages);
 
       for (PsiExpression expression : parameter.myUsages.keySet()) {
         PsiExpression mapped = expressionsMapping.get(expression);
@@ -374,12 +375,12 @@ public class ParametrizedDuplicates {
 
   private static void collectCopyMapping(@NotNull PsiElement[] pattern,
                                          @NotNull PsiElement[] copy,
-                                         @NotNull List<Occurrences> patternUsages,
+                                         @NotNull List<ClusterOfUsages> patternUsages,
                                          @NotNull Map<PsiExpression, PsiExpression> expressions,
                                          @NotNull Map<PsiVariable, PsiVariable> variables) {
     Set<PsiExpression> patternExpressions = new THashSet<>();
-    for (Occurrences occurrences : patternUsages) {
-      patternExpressions.addAll(occurrences.myPatterns);
+    for (ClusterOfUsages usages : patternUsages) {
+      patternExpressions.addAll(usages.myPatterns);
     }
 
     collectCopyMapping(pattern, copy, patternExpressions, expressions, variables);
@@ -441,12 +442,12 @@ public class ParametrizedDuplicates {
     return result.toArray(PsiElement.EMPTY_ARRAY);
   }
 
-  private static class Occurrences {
+  private static class ClusterOfUsages {
     @NotNull private final Set<PsiExpression> myPatterns;
     @NotNull private final List<ExtractedParameter> myParameters;
     private final int myFirstOffset;
 
-    public Occurrences(ExtractedParameter parameter) {
+    public ClusterOfUsages(@NotNull ExtractedParameter parameter) {
       myPatterns = parameter.myUsages.keySet();
       myParameters = new ArrayList<>();
       myFirstOffset = myPatterns.stream().mapToInt(PsiElement::getTextOffset).min().orElse(0);
@@ -460,7 +461,7 @@ public class ParametrizedDuplicates {
       return myPatterns.equals(parameter.myUsages.keySet());
     }
 
-    public static boolean isPresent(Map<PsiExpression, Occurrences> usagesMap, @NotNull ExtractedParameter parameter) {
+    public static boolean isPresent(Map<PsiExpression, ClusterOfUsages> usagesMap, @NotNull ExtractedParameter parameter) {
       return parameter.myUsages.keySet().stream().anyMatch(expression -> usagesMap.get(expression) != null);
     }
   }

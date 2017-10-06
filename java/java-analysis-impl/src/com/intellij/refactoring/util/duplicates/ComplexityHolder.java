@@ -11,16 +11,16 @@ import java.util.List;
 /**
  * @author Pavel.Dolgov
  */
-class ParameterFolding {
+class ComplexityHolder {
   static final int MAX_ACCEPTABLE = 9;
   static final int TOO_COMPLEX = 100;
 
   private final ObjectIntHashMap<PsiExpression> myCache = new ObjectIntHashMap<>();
   private final List<PsiElement> myScope;
 
-  ParameterFolding(List<PsiElement> scope) {myScope = scope;}
+  ComplexityHolder(List<PsiElement> scope) {myScope = scope;}
 
-  boolean isAcceptableComplexity(PsiExpression expression) {
+  boolean isAcceptableExpression(PsiExpression expression) {
     return getComplexity(expression) <= MAX_ACCEPTABLE;
   }
 

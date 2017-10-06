@@ -50,8 +50,8 @@ public class DuplicatesFinder {
   private boolean myMultipleExitPoints;
   @Nullable private final ReturnValue myReturnValue;
   private final boolean myWithExtractedParameters;
-  private ParameterFolding myPatternParameterFolding;
-  private ParameterFolding myCandidateParameterFolding;
+  private ComplexityHolder myPatternComplexityHolder;
+  private ComplexityHolder myCandidateComplexityHolder;
 
   public DuplicatesFinder(@NotNull PsiElement[] pattern,
                           InputVariables parameters,
@@ -567,31 +567,31 @@ public class DuplicatesFinder {
       return null;
     }
 
-    ParameterFolding patternFolding = null;
+    ComplexityHolder patternComplexity = null;
     if (withFolding) {
-      if (myPatternParameterFolding == null) {
-        myPatternParameterFolding = new ParameterFolding(myPatternAsList);
+      if (myPatternComplexityHolder == null) {
+        myPatternComplexityHolder = new ComplexityHolder(myPatternAsList);
       }
-      patternFolding = myPatternParameterFolding;
+      patternComplexity = myPatternComplexityHolder;
     }
-    ExtractableExpressionPart patternPart = ExtractableExpressionPart.match((PsiExpression)pattern, myPatternAsList, patternFolding);
+    ExtractableExpressionPart patternPart = ExtractableExpressionPart.match((PsiExpression)pattern, myPatternAsList, patternComplexity);
     if (patternPart == null) {
       return null;
     }
 
-    ParameterFolding candidatesFolding = null;
+    ComplexityHolder candidatesComplexity = null;
     if (withFolding) {
-      if (myCandidateParameterFolding == null || myCandidateParameterFolding.getScope() != candidates) {
-        myCandidateParameterFolding = new ParameterFolding(candidates);
+      if (myCandidateComplexityHolder == null || myCandidateComplexityHolder.getScope() != candidates) {
+        myCandidateComplexityHolder = new ComplexityHolder(candidates);
       }
-      candidatesFolding = myCandidateParameterFolding;
+      candidatesComplexity = myCandidateComplexityHolder;
     }
-    ExtractableExpressionPart candidatePart = ExtractableExpressionPart.match((PsiExpression)candidate, candidates, candidatesFolding);
+    ExtractableExpressionPart candidatePart = ExtractableExpressionPart.match((PsiExpression)candidate, candidates, candidatesComplexity);
     if (candidatePart == null) {
       return null;
     }
 
-    if (patternPart.myValue != null && candidatePart.myValue != null && patternPart.myValue.equals(candidatePart.myValue)) {
+    if (patternPart.myValue != null && patternPart.myValue.equals(candidatePart.myValue)) {
       return true;
     }
     if (patternPart.myVariable == null || candidatePart.myVariable == null) {
