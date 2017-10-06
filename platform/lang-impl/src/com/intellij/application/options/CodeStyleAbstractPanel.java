@@ -192,14 +192,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
       CommandProcessor.getInstance().executeCommand(project, () -> replaceText(project), null, null);
 
       myEditor.getSettings().setRightMargin(getAdjustedRightMargin());
-      myEditor.getSettings().setSoftMargins(getCurrentSoftMargins());
       myLastDocumentModificationStamp = myEditor.getDocument().getModificationStamp();
       myEditor.getScrollingModel().scrollVertically(currOffs);
     });
-  }
-
-  private List<Integer> getCurrentSoftMargins() {
-    return getSettings().getSoftMargins(getDefaultLanguage());
   }
 
   private int getAdjustedRightMargin() {
