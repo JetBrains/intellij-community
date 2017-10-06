@@ -117,6 +117,9 @@ public class PythonSdkUpdater implements StartupActivity {
       return false;
     }
 
+    if (project == null) {
+      return true;
+    }
 
     final Application application = ApplicationManager.getApplication();
 
@@ -134,7 +137,7 @@ public class PythonSdkUpdater implements StartupActivity {
         }
         ourScheduledToRefresh.remove(key);
       }
-      if (project != null && project.isDisposed()) {
+      if (project.isDisposed()) {
         return;
       }
       if (PythonSdkType.findSdkByKey(key) == null) {
