@@ -667,7 +667,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   private Object getData(final String dataId) {
     if (SelectInContext.DATA_KEY.is(dataId)) {
       VirtualFile file = getSelectedPropertiesFile();
-      return file == null ? null : new FileSelectInContext(myProject, file, true);
+      return file == null ? null : new FileSelectInContext(myProject, file);
     }
     else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       for (Map.Entry<VirtualFile, EditorEx> entry : myEditors.entrySet()) {

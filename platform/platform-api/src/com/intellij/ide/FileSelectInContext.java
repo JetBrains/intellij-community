@@ -32,11 +32,7 @@ public class FileSelectInContext implements SelectInContext {
   private final FileEditorProvider myProvider;
 
   public FileSelectInContext(@NotNull Project project, @NotNull VirtualFile file) {
-    this(project, file, null);
-  }
-
-  public FileSelectInContext(@NotNull Project project, @NotNull VirtualFile file, boolean provideFileEditor) {
-    this(project, file, !provideFileEditor ? null : getFileEditorProvider(project, file));
+    this(project, file, getFileEditorProvider(project, file));
   }
 
   public FileSelectInContext(@NotNull Project project, @NotNull VirtualFile file, FileEditorProvider provider) {

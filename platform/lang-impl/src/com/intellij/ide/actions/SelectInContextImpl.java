@@ -49,8 +49,8 @@ public class SelectInContextImpl extends FileSelectInContext {
   private final Object mySelector;
 
   private SelectInContextImpl(@NotNull PsiFile psiFile, @NotNull Object selector) {
-    super(psiFile.getProject(), psiFile.getViewProvider().getVirtualFile(), true);
-    assert selector instanceof PsiElement : "use SmartSelectInContext instead";
+    super(psiFile.getProject(), psiFile.getViewProvider().getVirtualFile());
+    assert !(selector instanceof PsiElement) : "use SmartSelectInContext instead";
     mySelector = selector;
   }
 
@@ -92,7 +92,7 @@ public class SelectInContextImpl extends FileSelectInContext {
     }
 
     if (virtualFile != null && project != null) {
-      return new FileSelectInContext(project, virtualFile);
+      return new FileSelectInContext(project, virtualFile, null);
     }
 
     return null;

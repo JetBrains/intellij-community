@@ -30,8 +30,11 @@ import org.jetbrains.annotations.Nullable;
  * @author Sergey Malenkov
  */
 public class FileEditorSelectInContext extends SmartSelectInContext {
+  private final TextEditor editor;
+
   public FileEditorSelectInContext(@NotNull FileEditor fileEditor, @NotNull PsiFile psiFile) {
     super(psiFile, psiFile, () -> fileEditor);
+    editor = fileEditor instanceof TextEditor ? (TextEditor)fileEditor : null;
   }
 
   @Nullable
@@ -62,14 +65,6 @@ public class FileEditorSelectInContext extends SmartSelectInContext {
 
   @Nullable
   public Editor getEditor() {
-    FileEditorProvider provider = getFileEditorProvider();
-    if (provider != null) {
-      FileEditor fileEditor = provider.openFileEditor();
-      if (fileEditor instanceof TextEditor) {
-        TextEditor textEditor = (TextEditor)fileEditor;
-        return textEditor.getEditor();
-      }
-    }
-    return null;
+    return editor == null ? null : editor.getEditor();
   }
 }

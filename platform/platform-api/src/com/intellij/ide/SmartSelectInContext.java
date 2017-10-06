@@ -26,7 +26,7 @@ public class SmartSelectInContext extends FileSelectInContext {
   private final SmartPsiElementPointer<PsiElement> pointer;
 
   public SmartSelectInContext(@NotNull PsiFile file, @NotNull PsiElement element) {
-    super(file.getProject(), file.getViewProvider().getVirtualFile(), true);
+    super(file.getProject(), file.getViewProvider().getVirtualFile());
     pointer = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
   }
 
