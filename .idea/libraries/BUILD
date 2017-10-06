@@ -254,8 +254,16 @@ java_library(
     name = "KotlinJavaRuntime",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/base/bazel:kotlin-runtime"],
-    runtime_deps = ["//tools/base/bazel:kotlin-runtime"],
+    # do not sort: must match IML order
+    exports = [
+        "//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-runtime",
+        "//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-reflect",
+    ],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-runtime",
+        "//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-reflect",
+    ],
 )
 
 java_library(
@@ -714,8 +722,8 @@ java_library(
     name = "KotlinTest",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/base/bazel:kotlin-test"],
-    runtime_deps = ["//tools/base/bazel:kotlin-test"],
+    exports = ["//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-test"],
+    runtime_deps = ["//prebuilts/tools/common/kotlin-plugin-ij:Kotlin/kotlinc/lib/kotlin-test"],
 )
 
 java_library(
