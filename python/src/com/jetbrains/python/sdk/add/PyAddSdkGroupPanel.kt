@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.sdk.add
 
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.JBUI
@@ -33,7 +34,8 @@ class PyAddSdkGroupPanel(name: String,
                          defaultPanel: PyAddSdkPanel) : PyAddSdkPanel() {
   override val panelName = name
   override val icon = panelIcon
-  private var selectedPanel: PyAddSdkPanel? = null
+  var selectedPanel: PyAddSdkPanel? = null
+  private val changeListeners: MutableList<Runnable> = mutableListOf()
 
   init {
     layout = BorderLayout()
@@ -46,29 +48,41 @@ class PyAddSdkGroupPanel(name: String,
 
   override fun validateAll() = panels.filter { it.isEnabled }.flatMap { it.validateAll() }
 
+  override val sdk: Sdk?
+    get() = selectedPanel?.sdk
+
   override fun getOrCreateSdk() = selectedPanel?.getOrCreateSdk()
 
+  fun addChangeListener(listener: Runnable) {
+    changeListeners += listener
+  }
+
   private fun createRadioButtonPanel(panels: List<PyAddSdkPanel>, defaultPanel: PyAddSdkPanel): JPanel? {
-    val radioButtons = panels.map { JBRadioButton(it.panelName) to it }.toMap(linkedMapOf())
+    val buttonMap = panels.map { JBRadioButton(it.panelName) to it }.toMap(linkedMapOf())
     ButtonGroup().apply {
-      for (button in radioButtons.keys) {
+      for (button in buttonMap.keys) {
         add(button)
       }
     }
     val formBuilder = FormBuilder.createFormBuilder()
-    for ((button, panel) in radioButtons) {
+    for ((button, panel) in buttonMap) {
       panel.border = JBUI.Borders.emptyLeft(30)
       formBuilder.addComponent(button)
       formBuilder.addComponent(panel)
       button.addItemListener {
-        selectedPanel = panel
         for (c in panels) {
           UIUtil.setEnabled(c, c == panel, true)
+        }
+        if (button.isSelected) {
+          selectedPanel = panel
+          for (listener in changeListeners) {
+            listener.run()
+          }
         }
       }
     }
     selectedPanel = defaultPanel
-    radioButtons.filterValues { it == defaultPanel }.keys.first().isSelected = true
+    buttonMap.filterValues { it == defaultPanel }.keys.first().isSelected = true
     return formBuilder.panel
   }
 }
