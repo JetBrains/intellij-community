@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
 import com.intellij.psi.impl.cache.impl.id.IdIndexer
 import com.intellij.util.indexing.FileContent
+import com.intellij.util.indexing.impl.DebugAssertions
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.DataInputOutputUtil
 import java.io.DataInput
@@ -27,8 +28,8 @@ abstract class PrebuiltIndexAwareIdIndexer : PrebuiltIndexProviderBase<Map<IdInd
   override fun map(inputData: FileContent): Map<IdIndexEntry, Int> {
     val map = get(inputData)
     return if (map != null) {
-      if (PREBUILT_INDICES_DEBUG) {
-        if (!map.equals(idIndexMap(inputData))) {
+      if (DebugAssertions.DEBUG) {
+        if (map != idIndexMap(inputData)) {
           LOG.error("Prebuilt id index differs from actual value for ${inputData.file.path}")
         }
       }
