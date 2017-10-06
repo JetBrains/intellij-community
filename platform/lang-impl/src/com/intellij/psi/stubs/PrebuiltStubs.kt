@@ -93,9 +93,9 @@ abstract class PrebuiltStubsProviderBase : PrebuiltIndexProviderBase<SerializedS
 
   protected abstract val stubVersion: Int
 
-  override val indexName = SDK_STUBS_STORAGE_NAME
+  override val indexName get() = SDK_STUBS_STORAGE_NAME
 
-  override val indexExternalizer = StubTreeExternalizer()
+  override val indexExternalizer get() = StubTreeExternalizer()
 
   companion object {
     val PREBUILT_INDICES_PATH_PROPERTY = "prebuilt_indices_path"

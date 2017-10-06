@@ -16,7 +16,7 @@ import com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider
 class PyIdIndexer : PrebuiltIndexAwareIdIndexer() {
   private val myIndexer = MyPyIdIndexer()
 
-  override val dirName: String = PyPrebuiltStubsProvider.NAME
+  override val dirName: String get() = PyPrebuiltStubsProvider.NAME
 
   override fun idIndexMap(inputData: FileContent): Map<IdIndexEntry, Int> {
     return myIndexer.map(inputData)

@@ -39,7 +39,7 @@ abstract class PrebuiltIndexProviderBase<Value> : Disposable {
   internal fun init() {
     var indexesRoot = findPrebuiltIndicesRoot()
     try {
-      if (indexesRoot != null) {
+      if (indexesRoot != null && indexesRoot.exists()) {
         // we should copy prebuilt indexes to a writable folder
         indexesRoot = copyPrebuiltIndicesToIndexRoot(indexesRoot)
         // otherwise we can get access denied error, because persistent hash map opens file for read and write
@@ -47,6 +47,8 @@ abstract class PrebuiltIndexProviderBase<Value> : Disposable {
         myPrebuiltIndexStorage = openIndexStorage(indexesRoot)
 
         LOG.info("Using prebuilt $indexName from " + myPrebuiltIndexStorage!!.baseFile.absolutePath)
+      } else {
+        LOG.info("Prebuilt $indexName indices are missing for $dirName")
       }
     }
     catch (e: Exception) {
@@ -84,7 +86,7 @@ abstract class PrebuiltIndexProviderBase<Value> : Disposable {
   private fun copyPrebuiltIndicesToIndexRoot(prebuiltIndicesRoot: File): File {
     val indexRoot = File(IndexInfrastructure.getPersistentIndexRoot(), "prebuilt/" + dirName)
 
-    FileUtil.copyDir(prebuiltIndicesRoot, indexRoot, FileFilter { f -> f.nameWithoutExtension == indexName })
+    FileUtil.copyDir(prebuiltIndicesRoot, indexRoot, FileFilter { f -> f.name.startsWith(indexName) })
 
     return indexRoot
   }
@@ -92,7 +94,7 @@ abstract class PrebuiltIndexProviderBase<Value> : Disposable {
   private fun findPrebuiltIndicesRoot(): File? {
     val path: String? = System.getProperty(PrebuiltStubsProviderBase.PREBUILT_INDICES_PATH_PROPERTY)
     if (path != null && File(path).exists()) {
-      return File(path)
+      return File(path, dirName)
     }
     val f = indexRoot()
     return if (f.exists()) f else null
