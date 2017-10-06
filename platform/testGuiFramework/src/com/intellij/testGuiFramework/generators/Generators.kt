@@ -142,7 +142,7 @@ class ActionLinkGenerator : ComponentCodeGenerator<ActionLink> {
 
 class JTextFieldGenerator : ComponentCodeGenerator<JTextField> {
   override fun accept(cmp: Component) = cmp is JTextField
-  override fun generate(cmp: JTextField, me: MouseEvent, cp: Point) = "textfield(\"${findBoundedText(3, cmp).orEmpty()}\").${clicks(
+  override fun generate(cmp: JTextField, me: MouseEvent, cp: Point) = "textfield(\"${findBoundedText(cmp).orEmpty()}\").${clicks(
     me)}"
 }
 
@@ -226,7 +226,7 @@ class JCheckBoxGenerator : ComponentCodeGenerator<JCheckBox> {
 
 class JComboBoxGenerator : ComponentCodeGenerator<JComboBox<*>> {
   override fun accept(cmp: Component) = cmp is JComboBox<*>
-  override fun generate(cmp: JComboBox<*>, me: MouseEvent, cp: Point) = "combobox(\"${findBoundedText(3, cmp).orEmpty()}\")"
+  override fun generate(cmp: JComboBox<*>, me: MouseEvent, cp: Point) = "combobox(\"${findBoundedText(cmp).orEmpty()}\")"
 }
 
 class BasicArrowButtonDelegatedGenerator : ComponentCodeGenerator<BasicArrowButton> {
@@ -693,29 +693,25 @@ object Utils {
     }
   }
 
-
-  fun findBoundedText(hierarchyLevel: Int, target: Component): String? {
+  fun findBoundedText(target: Component): String? {
     //let's try to find bounded label firstly
     try {
       return getBoundedLabel(target).text
     }
-    catch (e: ComponentLookupException) {
-      //do nothing
-    }
-
-    var container = target.parent
-    for (i in 1..hierarchyLevel) {
-      val boundedText = findBoundedText(target, container)
-      if (boundedText != null)
-        return boundedText
-      else
-        container = container.parent ?: break
-    }
-    return null
-//    throw ComponentLookupException("Unable to find any bounded label (JLabel or JRadioButton) in $hierarchyLevel level(s) from $target component")
+    catch (_: ComponentLookupException) {}
+    return findBoundedTextRecursive(target, target.parent)
   }
 
-  fun findBoundedText(target: Component, container: Component): String? {
+  private fun findBoundedTextRecursive(target: Component, parent: Component): String? {
+    val boundedText = findBoundedText(target, parent)
+    if (boundedText != null)
+      return boundedText
+    else
+      if (parent.parent != null) return findBoundedTextRecursive(target, parent.parent)
+      else return null
+  }
+
+  private fun findBoundedText(target: Component, container: Component): String? {
     val textComponents = withRobot { robot ->
       robot.finder().findAll(container as Container,
                              ComponentMatcher { component -> component!!.isShowing && component.isTextComponent() && target.onHeightCenter(component, true) })
