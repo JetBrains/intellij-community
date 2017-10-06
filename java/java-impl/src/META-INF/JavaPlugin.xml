@@ -156,6 +156,7 @@
     <applicationService serviceInterface="org.jetbrains.java.generate.template.toString.ToStringTemplatesManager"
                         serviceImplementation="org.jetbrains.java.generate.template.toString.ToStringTemplatesManager"/>
     <gotoDeclarationHandler implementation="com.intellij.codeInsight.navigation.actions.GotoLambdaParameterHandler"/>
+    <gotoDeclarationHandler implementation="com.intellij.codeInsight.navigation.actions.GotoVarTypeHandler"/>
     <annotator language="SPI" implementationClass="com.intellij.spi.SPIAnnotator"/>
     <lang.commenter language="SPI" implementationClass="com.intellij.spi.SPICommenter"/>
     <lang.parserDefinition language="SPI" implementationClass="com.intellij.spi.parsing.SPIParserDefinition"/>
