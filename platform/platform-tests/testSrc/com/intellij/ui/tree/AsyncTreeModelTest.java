@@ -31,11 +31,19 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import static com.intellij.diagnostic.ThreadDumper.dumpThreadsToString;
 import static com.intellij.util.ArrayUtil.EMPTY_OBJECT_ARRAY;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.*;
 
 public final class AsyncTreeModelTest {
+  /**
+   * A bigger threshold increases a probability of restarting current task.
+   */
+  private static final double THRESHOLD = .001;
+  /**
+   * Set to true to print some debugging information.
+   */
   private static final boolean PRINT = false;
 
   @Test
@@ -273,9 +281,9 @@ public final class AsyncTreeModelTest {
     if (consumer != null) new AsyncTest(showLoadingNode, new BackgroundPoolModel(delay, root)).start(consumer, getSecondsToWait(delay));
   }
 
-  private static void printTime(long time, String postfix) {
+  private static void printTime(String prefix, long time) {
     time = System.currentTimeMillis() - time;
-    if (PRINT) System.out.println(time + postfix);
+    if (PRINT) System.out.println(prefix + time + " ms");
   }
 
   private static void invokeWhenProcessingDone(@NotNull Runnable task, @NotNull AsyncTreeModel model, long time, int count) {
@@ -288,7 +296,7 @@ public final class AsyncTreeModelTest {
         invokeWhenProcessingDone(task, model, time, count + 1);
       }
       else {
-        printTime(time, "ms to wait");
+        printTime("wait for ", time);
         task.run();
       }
     });
@@ -334,6 +342,7 @@ public final class AsyncTreeModelTest {
       catch (Exception exception) {
         //noinspection InstanceofCatchParameter because of Kotlin
         if (exception instanceof TimeoutException) {
+          System.err.println(dumpThreadsToString());
           fail(seconds + " seconds is not enough for " + toString());
         }
         throw exception;
@@ -341,7 +350,7 @@ public final class AsyncTreeModelTest {
       finally {
         TreeModel model = tree.getModel();
         if (model instanceof Disposable) Disposer.dispose((Disposable)model);
-        printTime(time, "ms to done");
+        printTime("done in ", time);
         if (PRINT) System.out.println();
       }
     }
@@ -461,7 +470,7 @@ public final class AsyncTreeModelTest {
     }
 
     private void pause() {
-      if (this instanceof InvokerSupplier && .95 < Math.random()) {
+      if (this instanceof InvokerSupplier && THRESHOLD > Math.random()) {
         // sometimes throw an exception to cancel current operation
         if (PRINT) System.out.println("interrupt access to model:" + toString());
         throw new ProcessCanceledException();
