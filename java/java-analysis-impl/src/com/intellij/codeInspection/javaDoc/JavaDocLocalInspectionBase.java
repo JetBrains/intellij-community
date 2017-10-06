@@ -33,6 +33,7 @@ public class JavaDocLocalInspectionBase extends LocalInspectionTool {
 
   private static final String IGNORE_ACCESSORS_ATTR_NAME = "IGNORE_ACCESSORS";
   private static final String IGNORE_DUPLICATED_THROWS_TAGS_ATTR_NAME = "IGNORE_DUPLICATED_THROWS_TAGS";
+  private static final String MODULE_OPTIONS_TAG_NAME = "MODULE_OPTIONS";
 
   @SuppressWarnings("deprecation")
   public static class Options implements JDOMExternalizable {
@@ -54,6 +55,10 @@ public class JavaDocLocalInspectionBase extends LocalInspectionTool {
     @Override
     public void writeExternal(Element element) throws WriteExternalException {
       DefaultJDOMExternalizer.writeExternal(this, element);
+    }
+
+    private boolean isModified() {
+      return !(ACCESS_JAVADOC_REQUIRED_FOR.equals(NONE) && REQUIRED_TAGS.isEmpty());
     }
   }
 
@@ -118,13 +123,20 @@ public class JavaDocLocalInspectionBase extends LocalInspectionTool {
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
     super.writeSettings(node);
+
     if (myIgnoreSimpleAccessors) {
-      node.addContent(new Element(IGNORE_ACCESSORS_ATTR_NAME).setAttribute("value", String.valueOf(true)));
+      JDOMExternalizerUtil.writeCustomField(node, IGNORE_ACCESSORS_ATTR_NAME, String.valueOf(true));
     }
+
     if (!myIgnoreDuplicatedThrows) {
-      node.addContent(new Element(IGNORE_DUPLICATED_THROWS_TAGS_ATTR_NAME).setAttribute("value", String.valueOf(false)));
+      JDOMExternalizerUtil.writeCustomField(node, IGNORE_DUPLICATED_THROWS_TAGS_ATTR_NAME, String.valueOf(false));
     }
-    if (!PACKAGE_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR.equals("none") || !PACKAGE_OPTIONS.REQUIRED_TAGS.isEmpty()) {
+
+    if (MODULE_OPTIONS.isModified()) {
+      MODULE_OPTIONS.writeExternal(JDOMExternalizerUtil.writeOption(node, MODULE_OPTIONS_TAG_NAME));
+    }
+
+    if (PACKAGE_OPTIONS.isModified()) {
       PACKAGE_OPTIONS.writeExternal(node);
     }
   }
@@ -132,14 +144,22 @@ public class JavaDocLocalInspectionBase extends LocalInspectionTool {
   @Override
   public void readSettings(@NotNull Element node) throws InvalidDataException {
     super.readSettings(node);
-    Element ignoreAccessorsTag = node.getChild(IGNORE_ACCESSORS_ATTR_NAME);
-    if (ignoreAccessorsTag != null) {
-      myIgnoreSimpleAccessors = Boolean.parseBoolean(ignoreAccessorsTag.getAttributeValue("value"));
+
+    String ignoreAccessors = JDOMExternalizerUtil.readCustomField(node, IGNORE_ACCESSORS_ATTR_NAME);
+    if (ignoreAccessors != null) {
+      myIgnoreSimpleAccessors = Boolean.parseBoolean(ignoreAccessors);
     }
-    Element ignoreDupThrowsTag = node.getChild(IGNORE_DUPLICATED_THROWS_TAGS_ATTR_NAME);
-    if (ignoreDupThrowsTag != null) {
-      myIgnoreDuplicatedThrows = Boolean.parseBoolean(ignoreDupThrowsTag.getAttributeValue("value"));
+
+    String ignoreDuplicatedThrows = JDOMExternalizerUtil.readCustomField(node, IGNORE_DUPLICATED_THROWS_TAGS_ATTR_NAME);
+    if (ignoreDuplicatedThrows != null) {
+      myIgnoreDuplicatedThrows = Boolean.parseBoolean(ignoreDuplicatedThrows);
     }
+
+    Element moduleOptions = JDOMExternalizerUtil.readOption(node, MODULE_OPTIONS_TAG_NAME);
+    if (moduleOptions != null) {
+      MODULE_OPTIONS.readExternal(moduleOptions);
+    }
+
     PACKAGE_OPTIONS.readExternal(node);
   }
 
@@ -336,6 +356,10 @@ public class JavaDocLocalInspectionBase extends LocalInspectionTool {
   private boolean isTagRequired(PsiElement context, String tag) {
     if (context instanceof PsiPackage) {
       return isTagRequired(PACKAGE_OPTIONS, tag);
+    }
+
+    if (context instanceof PsiJavaModule) {
+      return isTagRequired(MODULE_OPTIONS, tag);
     }
 
     if (context instanceof PsiClass) {
