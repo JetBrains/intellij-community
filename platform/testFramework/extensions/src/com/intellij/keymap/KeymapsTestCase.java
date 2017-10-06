@@ -79,7 +79,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift F7",                 "PreviousDiff", "SmartStepInto"},
     { "shift TAB",                "PreviousTemplateVariable", "PrevParameter", "EditorUnindentSelection", "PrevTemplateParameter"},
     { "shift alt L",              "org.jetbrains.plugins.ruby.console.LoadInIrbConsoleAction", "context.load"},
-    { "shift control D",          "TagDocumentationNavigation", "Diff.ShowSettingsPopup", "Uml.ShowDiff"},
+    { "shift control D",          "TagDocumentationNavigation", "Diff.ShowSettingsPopup", "Uml.ShowDiff", "Console.TableResult.CompareCells"},
     { "shift control DOWN",       "ResizeToolWindowDown", "MoveStatementDown"},
     { "shift control ENTER",      "EditorCompleteStatement", "Console.Jpa.GenerateSql"},
     { "shift control F10",        "Console.Open", "RunClass", "RunTargetAction"},
