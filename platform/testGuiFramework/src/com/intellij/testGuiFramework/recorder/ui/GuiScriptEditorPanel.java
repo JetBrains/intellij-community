@@ -42,7 +42,7 @@ public class GuiScriptEditorPanel implements Disposable {
 
     public static final String GUI_SCRIPT_EDITOR_PLACE = "GUI_SCRIPT_EDITOR_PLACE";
 
-    private GuiScriptEditor myEditor;
+    private final GuiScriptEditor myEditor;
 
     public GuiScriptEditorPanel() {
         super();

@@ -31,14 +31,13 @@ class StartPauseRecAction : ToggleAction(null, "Start/Stop GUI Script Recording"
   override fun isSelected(actionEvent: AnActionEvent?): Boolean = GlobalActionRecorder.isActive
 
   override fun setSelected(actionEvent: AnActionEvent?, toStart: Boolean) {
+    val presentation = actionEvent?.presentation ?: templatePresentation
     if (toStart) {
-      val presentation = if (actionEvent != null) actionEvent.presentation else templatePresentation
       presentation.description = "Stop GUI Script Recording"
       Notifier.updateStatus("Recording started")
       GlobalActionRecorder.activate()
     }
     else {
-      val presentation = if (actionEvent != null) actionEvent.presentation else templatePresentation
       presentation.description = "Start GUI Script Recording"
       Notifier.updateStatus("Recording paused")
       GlobalActionRecorder.deactivate()
