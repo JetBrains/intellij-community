@@ -225,7 +225,7 @@ public class JUnitUtil {
         }
 
         //default runners do not implicitly run inner classes
-        if (!isRunnerWithRequiredAnnotationOnTestMethod(annotation, KNOWN_RUNNERS)) {
+        if (annotation != null && !isRunnerWithRequiredAnnotationOnTestMethod(annotation, KNOWN_RUNNERS)) {
           return true;
         }
       }
