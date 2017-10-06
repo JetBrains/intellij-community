@@ -17,7 +17,6 @@ package com.jetbrains.python.newProject.steps;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
@@ -79,8 +78,7 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
   }
 
   private void showOptions(@Nullable final Project project) {
-    final Project existingProject = project != null ? project : DefaultProjectFactory.getInstance().getDefaultProject();
-    final PyConfigurableInterpreterList interpreterList = PyConfigurableInterpreterList.getInstance(existingProject);
+    final PyConfigurableInterpreterList interpreterList = PyConfigurableInterpreterList.getInstance(project);
     final Sdk[] sdks = interpreterList.getModel().getSdks();
     //noinspection unchecked
     final JComboBox<Sdk> comboBox = getComboBox();

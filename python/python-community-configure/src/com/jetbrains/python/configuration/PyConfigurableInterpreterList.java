@@ -17,6 +17,7 @@ package com.jetbrains.python.configuration;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.util.Comparing;
@@ -40,8 +41,13 @@ import java.util.List;
 public class PyConfigurableInterpreterList {
   private ProjectSdksModel myModel;
 
-  public static PyConfigurableInterpreterList getInstance(Project project) {
-    return ServiceManager.getService(project, PyConfigurableInterpreterList.class);
+  public static PyConfigurableInterpreterList getInstance(@Nullable Project project) {
+    final Project effectiveProject = project != null ? project : ProjectManager.getInstance().getDefaultProject();
+    final PyConfigurableInterpreterList instance = ServiceManager.getService(effectiveProject, PyConfigurableInterpreterList.class);
+    if (effectiveProject != project) {
+      instance.disposeModel();
+    }
+    return instance;
   }
 
   public ProjectSdksModel getModel() {
