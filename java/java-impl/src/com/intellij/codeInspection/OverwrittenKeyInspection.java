@@ -37,17 +37,15 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new OverwrittenKeyVisitor(holder, isOnTheFly);
+    return new OverwrittenKeyVisitor(holder);
   }
 
   private static class OverwrittenKeyVisitor extends JavaElementVisitor {
     private final ProblemsHolder myHolder;
-    private final boolean myIsOnTheFly;
     private final Set<PsiMethodCallExpression> analyzed = new HashSet<>();
 
-    public OverwrittenKeyVisitor(ProblemsHolder holder, boolean isOnTheFly) {
+    public OverwrittenKeyVisitor(ProblemsHolder holder) {
       myHolder = holder;
-      myIsOnTheFly = isOnTheFly;
     }
 
     @Override
@@ -122,7 +120,7 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
         for (int i = 0; i < args.size(); i++) {
           PsiExpression arg = args.get(i);
           LocalQuickFix fix = null;
-          if (myIsOnTheFly) {
+          if (myHolder.isOnTheFly()) {
             PsiExpression nextArg = args.get((i + 1) % args.size());
             fix = new NavigateToDuplicateFix(nextArg);
           }
