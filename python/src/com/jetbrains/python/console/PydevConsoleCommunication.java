@@ -19,11 +19,13 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -340,7 +342,14 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     if (waitingForInput) {
       return "Unable to get description: waiting for input.";
     }
-    return myClient.execute(GET_DESCRIPTION, new Object[]{text}, 5000).toString();
+
+    ThrowableComputable<String, Exception> doGetDesc = () -> myClient.execute(GET_DESCRIPTION, new Object[]{text}, 5000).toString();
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      return ProgressManager.getInstance().runProcessWithProgressSynchronously(doGetDesc, "Getting Description", true, myProject);
+    }
+    else {
+      return doGetDesc.compute();
+    }
   }
 
   /**
@@ -418,6 +427,9 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
             boolean more = executed.second;
 
             nextResponse = new InterpreterResponse(more, needInput);
+          }
+          catch (ProcessCanceledException e) {
+            //ignore
           }
           catch (Exception e) {
             nextResponse = new InterpreterResponse(false, needInput);
