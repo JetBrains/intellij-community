@@ -18,8 +18,10 @@ package org.jetbrains.idea.devkit.testAssistant;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -62,6 +64,7 @@ import java.util.*;
  */
 @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
 public class TestDataGuessByExistingFilesUtil {
+  private static final Logger LOG = Logger.getInstance(TestDataGuessByExistingFilesUtil.class);
 
   private TestDataGuessByExistingFilesUtil() {
   }
@@ -70,12 +73,18 @@ public class TestDataGuessByExistingFilesUtil {
    * Tries to guess what test data files match to the given method if it's test method and there are existing test data
    * files for the target test class.
    *
-   * @param psiMethod      test method candidate
-   * @return            collection of paths to the test data files for the given test if it's possible to guess them;
-   *                    {@code null} otherwise
+   * @param psiMethod test method candidate
+   * @return List of paths to the test data files for the given test if it's possible to guess them; empty List otherwise
    */
   @NotNull
   static List<String> collectTestDataByExistingFiles(@NotNull PsiMethod psiMethod) {
+    Application application = ApplicationManager.getApplication();
+    if (!application.isUnitTestMode() && application.isHeadlessEnvironment()) {
+      // shouldn't be invoked under these conditions anyway, just for additional safety
+      LOG.warn("Collecting testdata by existing files called in headless environment and not-unit testing mode");
+      return Collections.emptyList();
+    }
+
     TestDataDescriptor descriptor = buildDescriptorFromExistingTestData(psiMethod);
     if (descriptor == null || !descriptor.isComplete()) {
       return Collections.emptyList();
