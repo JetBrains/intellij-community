@@ -27,8 +27,8 @@ class ShowGuiEditorWindowAction() : AnAction() {
 
   override fun actionPerformed(p0: AnActionEvent?) {
     val frame = GuiRecorderComponent.frame
-    if (frame == null) {
-      GuiScriptEditorFrame()
+    if (!frame.isShowing()) {
+      frame.show()
     }
     else {
       frame.toFront()

@@ -38,18 +38,16 @@ object Writer {
 
   private fun write(str: String) {
     print(str)
-    if (GuiRecorderComponent.frame != null && GuiRecorderComponent.frame!!.isSyncToEditor())
+    if (GuiRecorderComponent.syncEditor)
       writeToEditor(str)
     else
       scriptBuffer.append(str)
   }
 
   private fun writeToEditor(str: String) {
-    if (GuiRecorderComponent.frame != null && GuiRecorderComponent.frame!!.getEditor() != null) {
-      val editor = GuiRecorderComponent.frame!!.getEditor()
-      val document = editor.document
-      WriteCommandAction.runWriteCommandAction(null, { document.insertString(document.textLength, str) })
-    }
+    val editor = GuiRecorderComponent.frame.getEditor()
+    val document = editor.document
+    WriteCommandAction.runWriteCommandAction(null, { document.insertString(document.textLength, str) })
   }
 
   fun writeWithIndent(code: String){

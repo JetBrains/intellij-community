@@ -114,18 +114,10 @@ public class GuiScriptEditorPanel {
         progressIcon = new AsyncProcessIcon("Progress");
     }
 
-    public boolean getSyncToEditor() {
-        return myEditor.getSyncEditor();
-    }
 
     private class MyTextPanel extends TextPanel {
         MyTextPanel(){
             super();
         }
     }
-
-    public void setSyncToEditor(boolean toSync){
-        myEditor.setSyncEditor(toSync);
-    }
-
 }

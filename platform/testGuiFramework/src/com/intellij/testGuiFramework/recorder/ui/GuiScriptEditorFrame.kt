@@ -49,15 +49,17 @@ class GuiScriptEditorFrame : Disposable {
 
     myFrame.contentPane = myContentPanel
     myFrame.pack()
-    myFrame.isVisible = true
 
-    GuiRecorderComponent.frame = this
     myFrame.addWindowListener(object : WindowAdapter() {
       override fun windowClosing(e: WindowEvent?) {
         dispose()
       }
     })
+  }
 
+  fun isShowing() = myFrame.isShowing
+  fun show() {
+    myFrame.isVisible = true
     val recAction = StartPauseRecAction()
     recAction.setSelected(null, true)
   }
@@ -69,10 +71,4 @@ class GuiScriptEditorFrame : Disposable {
   fun getGuiScriptEditorPanel() = guiScriptEditorPanel
 
   fun getEditor() = guiScriptEditorPanel.editor
-
-  fun setSyncToEditor(toSync: Boolean) {
-    guiScriptEditorPanel.syncToEditor = toSync
-  }
-
-  fun isSyncToEditor() = guiScriptEditorPanel.syncToEditor
 }

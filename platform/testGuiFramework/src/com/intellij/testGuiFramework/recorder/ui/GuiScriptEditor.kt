@@ -32,8 +32,6 @@ import kotlin.with
 class GuiScriptEditor {
 
   val myEditor: EditorEx
-  //let editor be synchronised by default
-  var syncEditor = true
 
   fun getPanel() = myEditor.component
 

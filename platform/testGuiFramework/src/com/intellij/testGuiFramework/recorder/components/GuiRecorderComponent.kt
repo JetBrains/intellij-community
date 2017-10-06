@@ -29,12 +29,17 @@ object GuiRecorderComponent : ApplicationComponent, Disposable {
   enum class States {IDLE, COMPILING, COMPILATION_ERROR, COMPILATION_DONE, RUNNING, RUNNING_ERROR, TEST_INIT }
 
   var state: States = States.IDLE
-  var frame: GuiScriptEditorFrame? = null
+  lateinit var frame: GuiScriptEditorFrame
   var currentTask: Future<*>? = null
+  //let editor be synchronised by default
+  var syncEditor = true
+
+  override fun initComponent() {
+    frame = GuiScriptEditorFrame()
+  }
 
   override fun dispose() {
-    frame?.dispose()
-    frame = null
+    frame.dispose()
   }
 
   override fun getComponentName() = "GuiRecorderComponent"
@@ -43,7 +48,7 @@ object GuiRecorderComponent : ApplicationComponent, Disposable {
     if (currentTask != null && !currentTask!!.isDone) currentTask!!.cancel(true)
   }
 
-  fun getEditor() = frame!!.getGuiScriptEditorPanel().editor
+  fun getEditor() = frame.getGuiScriptEditorPanel().editor
 
   fun placeCaretToEnd() {
     val caretModel = getEditor().caretModel
