@@ -10,6 +10,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.javadoc.*;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jdom.Element;
@@ -17,7 +18,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -209,7 +209,7 @@ public class JavaDocLocalInspectionBase extends LocalInspectionTool {
     ProblemHolderImpl holder = new ProblemHolderImpl(delegate, isOnTheFly);
     if (docComment != null) {
       PsiDocTag[] tags = docComment.getTags();
-      checkBasics(docComment, tags, pkg, required, holder);
+      checkBasics(docComment, tags, pkg, required, PACKAGE_OPTIONS, holder);
     }
     else if (required) {
       PsiElement toHighlight = notNull(file.getPackageStatement(), file);
@@ -227,7 +227,7 @@ public class JavaDocLocalInspectionBase extends LocalInspectionTool {
     ProblemHolderImpl holder = new ProblemHolderImpl(delegate, isOnTheFly);
 
     if (docComment != null) {
-      checkBasics(docComment, docComment.getTags(), module, required, holder);
+      checkBasics(docComment, docComment.getTags(), module, required, MODULE_OPTIONS, holder);
     }
     else if (required) {
       JavadocHighlightUtil.reportMissingTag(module.getNameIdentifier(), holder);
@@ -249,9 +249,10 @@ public class JavaDocLocalInspectionBase extends LocalInspectionTool {
     if (docComment != null) {
       PsiDocTag[] tags = docComment.getTags();
 
-      checkBasics(docComment, tags, aClass, required, holder);
+      Options options = ClassUtil.isTopLevelClass(aClass) ? TOP_LEVEL_CLASS_OPTIONS : INNER_CLASS_OPTIONS;
+      checkBasics(docComment, tags, aClass, required, options, holder);
 
-      if (required && isTagRequired(aClass, "param")) {
+      if (required && isTagRequired(options, "param")) {
         JavadocHighlightUtil.checkMissingTypeParamTags(aClass, tags, docComment.getFirstChild(), holder);
       }
     }
@@ -271,7 +272,7 @@ public class JavaDocLocalInspectionBase extends LocalInspectionTool {
     ProblemHolderImpl holder = new ProblemHolderImpl(delegate, isOnTheFly);
 
     if (docComment != null) {
-      checkBasics(docComment, docComment.getTags(), field, required, holder);
+      checkBasics(docComment, docComment.getTags(), field, required, FIELD_OPTIONS, holder);
     }
     else if (required) {
       JavadocHighlightUtil.reportMissingTag(field.getNameIdentifier(), holder);
@@ -299,13 +300,13 @@ public class JavaDocLocalInspectionBase extends LocalInspectionTool {
         PsiDocTag[] tags = docComment.getTags();
 
         if (required && !hasSupers) {
-          if (isTagRequired(method, "return")) {
+          if (isTagRequired(METHOD_OPTIONS, "return")) {
             JavadocHighlightUtil.checkMissingReturnTag(tags, method, docComment.getFirstChild(), holder);
           }
-          if (isTagRequired(method, "param")) {
+          if (isTagRequired(METHOD_OPTIONS, "param")) {
             JavadocHighlightUtil.checkMissingParamTags(tags, method, docComment.getFirstChild(), holder);
           }
-          if (isTagRequired(method, "throws")) {
+          if (isTagRequired(METHOD_OPTIONS, "throws")) {
             JavadocHighlightUtil.checkMissingThrowsTags(tags, method, docComment.getFirstChild(), holder);
           }
         }
@@ -314,7 +315,7 @@ public class JavaDocLocalInspectionBase extends LocalInspectionTool {
           JavadocHighlightUtil.checkEmptyMethodTagsDescription(tags, holder);
         }
 
-        checkBasics(docComment, tags, method, false, holder);
+        checkBasics(docComment, tags, method, false, METHOD_OPTIONS, holder);
       }
     }
     else if (required && !hasSupers) {
@@ -328,10 +329,9 @@ public class JavaDocLocalInspectionBase extends LocalInspectionTool {
     }
   }
 
-  private void checkBasics(PsiDocComment docComment, PsiDocTag[] tags, PsiElement context, boolean required, ProblemHolderImpl holder) {
+  private void checkBasics(PsiDocComment docComment, PsiDocTag[] tags, PsiElement context, boolean required, Options options, ProblemHolderImpl holder) {
     if (required) {
-      Predicate<String> tagChecker = tag -> isTagRequired(context, tag);
-      JavadocHighlightUtil.checkRequiredTags(tags, tagChecker, docComment.getFirstChild(), holder);
+      JavadocHighlightUtil.checkRequiredTags(tags, options, docComment.getFirstChild(), holder);
     }
 
     JavadocHighlightUtil.checkRequiredTagDescriptions(tags, holder);
@@ -351,31 +351,6 @@ public class JavaDocLocalInspectionBase extends LocalInspectionTool {
 
   private static boolean isDeprecated(PsiModifierListOwner element, PsiDocComment docComment) {
     return PsiImplUtil.isDeprecatedByAnnotation(element) || docComment != null && docComment.findTagByName("deprecated") != null;
-  }
-
-  private boolean isTagRequired(PsiElement context, String tag) {
-    if (context instanceof PsiPackage) {
-      return isTagRequired(PACKAGE_OPTIONS, tag);
-    }
-
-    if (context instanceof PsiJavaModule) {
-      return isTagRequired(MODULE_OPTIONS, tag);
-    }
-
-    if (context instanceof PsiClass) {
-      boolean isInner = PsiTreeUtil.getParentOfType(context, PsiClass.class) != null;
-      return isTagRequired(isInner ? INNER_CLASS_OPTIONS : TOP_LEVEL_CLASS_OPTIONS, tag);
-    }
-
-    if (context instanceof PsiMethod) {
-      return isTagRequired(METHOD_OPTIONS, tag);
-    }
-
-    if (context instanceof PsiField) {
-      return isTagRequired(FIELD_OPTIONS, tag);
-    }
-
-    return false;
   }
 
   protected static boolean isTagRequired(Options options, String tag) {
