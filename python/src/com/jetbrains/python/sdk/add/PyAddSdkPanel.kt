@@ -33,8 +33,9 @@ import javax.swing.JPanel
 abstract class PyAddSdkPanel : JPanel() {
   abstract val panelName: String
   open val icon: Icon = PythonIcons.Python.Python
+  open val sdk: Sdk? = null
 
-  open fun getOrCreateSdk(): Sdk? = null
+  open fun getOrCreateSdk(): Sdk? = sdk
 
   open fun validateAll(): List<ValidationInfo> = emptyList()
 
@@ -47,9 +48,9 @@ abstract class PyAddSdkPanel : JPanel() {
         StringUtil.isEmptyOrSpaces(text) -> "Location field is empty"
         file.exists() && !file.isDirectory -> "Location field path is not a directory"
         file.isNotEmptyDirectory -> "Location directory is not empty"
-        else -> null
+        else -> return null
       }
-      return message?.let { ValidationInfo(it, field) }
+      return ValidationInfo(message, field)
     }
 
     @JvmStatic protected fun validateAnacondaPresense(component: JComponent?): ValidationInfo? =
