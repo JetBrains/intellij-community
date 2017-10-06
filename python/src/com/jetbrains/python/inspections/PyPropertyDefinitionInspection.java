@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
 import com.google.common.collect.ImmutableList;
@@ -294,7 +292,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       if (callable instanceof PyFunction) {
         final PyFunction function = (PyFunction)callable;
 
-        if (PyUtil.isDecoratedAsAbstract(function)) {
+        if (PyKnownDecoratorUtil.hasAbstractDecorator(function, myTypeEvalContext)) {
           return;
         }
 
