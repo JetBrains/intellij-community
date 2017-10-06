@@ -979,7 +979,7 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
     if (selectedNode != null && typeNode.isNodeDescendant(selectedNode)) {
       node = selectedNode
       if (getKind(node).isConfiguration) {
-        node = node.parent as? DefaultMutableTreeNode
+        node = node.parent as DefaultMutableTreeNode
       }
     }
     val settings = runManager.createConfiguration(createUniqueName(typeNode, null, CONFIGURATION, TEMPORARY_CONFIGURATION), factory)
