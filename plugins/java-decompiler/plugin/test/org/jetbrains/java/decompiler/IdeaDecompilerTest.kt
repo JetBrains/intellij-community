@@ -39,6 +39,7 @@ import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.io.URLUtil
+import com.intellij.util.ui.tree.TreeUtil
 
 class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
   override fun setUp() {
@@ -138,11 +139,11 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
 
     val editor = FileEditorManager.getInstance(project).openFile(file, false)[0]
     val builder = StructureViewBuilder.PROVIDER.getStructureViewBuilder(StdFileTypes.CLASS, file, project)!!
-    val viewComponent = builder.createStructureView(editor, project) as StructureViewComponent
-    Disposer.register(myFixture.testRootDisposable, viewComponent)
-    viewComponent.setActionActive(JavaAnonymousClassesNodeProvider.ID, true)
-
-    PlatformTestUtil.assertTreeStructureEquals(viewComponent.tree.model, """
+    val svc = builder.createStructureView(editor, project) as StructureViewComponent
+    Disposer.register(myFixture.testRootDisposable, svc)
+    svc.setActionActive(JavaAnonymousClassesNodeProvider.ID, true)
+    TreeUtil.expandAll(svc.tree)
+    PlatformTestUtil.assertTreeStructureEquals(svc.tree.model, """
       StructureView.java
        StructureView
         B
