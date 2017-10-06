@@ -177,6 +177,7 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
         }
         Arrays.stream(Frame.getFrames()).
           filter(frame -> frame instanceof IdeFrame).
+          filter(f -> ((JFrame)f).getGlassPane() != null).
           map(frame -> ((JFrame)frame).getGlassPane()).
           map(jGlassPane -> jGlassPane.getGraphics()).
           filter(g -> g != null).
@@ -192,6 +193,7 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
         Arrays.stream(Window.getOwnerlessWindows()).
           filter(window -> window != null && window instanceof RootPaneContainer).
           map(window -> (RootPaneContainer)window).
+          filter(f -> ((JFrame)f).getGlassPane() != null).
           filter(window -> window.getRootPane() != null).
           map(window -> (window).getGlassPane()).
           map(jGlassPane -> jGlassPane.getGraphics()).
@@ -228,6 +230,38 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
           default:
             break;
         }
+        Arrays.stream(Frame.getFrames()).
+          filter(frame -> frame instanceof IdeFrame).
+          filter(f -> ((JFrame)f).getGlassPane() != null).
+          map(frame -> ((JFrame)frame).getGlassPane()).
+          map(jGlassPane -> jGlassPane.getGraphics()).
+          filter(g -> g != null).
+          forEach(graphics -> {
+            Graphics glassPaneGraphics = graphics.create();
+            try {
+              glassPaneGraphics.setColor(myApplicationState.getColor());
+              glassPaneGraphics.fillOval(5,5, 10, 10);
+            } finally {
+              glassPaneGraphics.dispose();
+            }
+          });
+        Arrays.stream(Window.getOwnerlessWindows()).
+          filter(window -> window != null && window instanceof RootPaneContainer).
+          map(window -> (RootPaneContainer)window).
+          filter(window -> window.getRootPane() != null).
+          map(window -> (window).getGlassPane()).
+          map(jGlassPane -> jGlassPane.getGraphics()).
+          filter(g -> g != null).
+          forEach(graphics -> {
+            Graphics2D glassPaneGraphics = ((Graphics2D)graphics.create());
+            try {
+              glassPaneGraphics.setColor(JBColor.black);
+              glassPaneGraphics.setStroke(new BasicStroke(2));
+              glassPaneGraphics.drawOval(5,5, 10, 10);
+            } finally {
+              glassPaneGraphics.dispose();
+            }
+          });
       }
     }
   }

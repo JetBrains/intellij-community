@@ -661,7 +661,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                       @NotNull List<FinalizableCommand> commandList,
                                       boolean forced,
                                       boolean autoFocusContents) {
-    autoFocusContents &= forced || FocusManagerImpl.getInstance().isUnforcedRequestAllowed();
+    autoFocusContents &= forced;
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: activateToolWindowImpl(" + id + ")");
@@ -2260,22 +2260,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return IdeFocusManager.getInstance(myProject).requestFocus(c, forced);
   }
 
-  @NotNull
-  public ActionCallback requestFocus(@NotNull FocusCommand command, boolean forced) {
-    return IdeFocusManager.getInstance(myProject).requestFocus(command, forced);
-  }
-
   public void doWhenFocusSettlesDown(@NotNull Runnable runnable) {
     IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(runnable);
-  }
-
-  public boolean dispatch(@NotNull KeyEvent e) {
-    return IdeFocusManager.getInstance(myProject).dispatch(e);
-  }
-
-  @NotNull
-  public Expirable getTimestamp(boolean trackOnlyForcedCommands) {
-    return IdeFocusManager.getInstance(myProject).getTimestamp(trackOnlyForcedCommands);
   }
 
   void setShowStripeButton(@NotNull String id, boolean visibleOnPanel) {

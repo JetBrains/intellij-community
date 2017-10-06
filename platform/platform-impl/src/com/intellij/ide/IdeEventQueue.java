@@ -23,7 +23,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,6 +44,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AppContext;
@@ -61,6 +61,8 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * @author Vladimir Kondratyev
@@ -124,6 +126,32 @@ public class IdeEventQueue extends EventQueue {
   private int myInputMethodLock;
   private final com.intellij.util.EventDispatcher<PostEventHook>
     myPostEventListeners = com.intellij.util.EventDispatcher.create(PostEventHook.class);
+
+  private LinkedHashMap <AWTEvent, Runnable> myRunnablesWaitingFocusChange = new LinkedHashMap<>();
+
+  public void executeWhenAllFocusEventsLeftTheQueue(Runnable runnable) {
+    ifFocusEventsInTheQueue(e -> myRunnablesWaitingFocusChange.put(e, runnable), runnable);
+  }
+
+  private void ifFocusEventsInTheQueue(Consumer<AWTEvent> yes, Runnable no) {
+    if (!timestampsToFocusEvents.isEmpty()) {
+      // find the latest focus gained
+      Set<Map.Entry<Long, AWTEvent>> focusEvents = timestampsToFocusEvents.entrySet();
+      Optional<AWTEvent> first = focusEvents.stream().
+        map(entry -> entry.getValue()).
+        filter(e ->
+                 e.getID() == FocusEvent.FOCUS_GAINED).
+          findFirst();
+
+      if (first.isPresent()) {
+        yes.accept(first.get());
+      } else {
+        no.run();
+      }
+    } else {
+      no.run();
+    }
+  }
 
   private static class IdeEventQueueHolder {
     private static final IdeEventQueue INSTANCE = new IdeEventQueue();
@@ -342,6 +370,7 @@ public class IdeEventQueue extends EventQueue {
   @Override
   public void dispatchEvent(@NotNull AWTEvent e) {
     checkForTimeJump();
+
     if (!appIsLoaded()) {
       try {
         super.dispatchEvent(e);
@@ -382,6 +411,23 @@ public class IdeEventQueue extends EventQueue {
       if (e instanceof KeyEvent) {
         maybeReady();
       }
+    }
+
+    if (isFocusEvent(e)) {
+      AWTEvent finalEvent = e;
+     // System.err.println("GOT: " + e.paramString());
+      StreamEx.of(timestampsToFocusEvents.entrySet()).
+        takeWhile(entry -> entry.getValue().equals(finalEvent)).
+        collect(Collectors.toList()).forEach(entry -> {
+        AWTEvent awtEvent = timestampsToFocusEvents.remove(entry.getKey());
+        Runnable runnable = myRunnablesWaitingFocusChange.remove(awtEvent);
+        if (runnable != null) {
+        //  System.err.println("     processed (" + entry.getKey() + ") : " + awtEvent.paramString());
+          runnable.run();
+        }
+      });
+
+
     }
   }
 
@@ -551,11 +597,6 @@ public class IdeEventQueue extends EventQueue {
       if (e.getID() == KeyEvent.KEY_RELEASED && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_SHIFT) {
         myMouseEventDispatcher.resetHorScrollingTracker();
       }
-    }
-
-    if (!typeAheadFlushing && typeAheadDispatchToFocusManager(e)) {
-      LOG.debug("Typeahead dispatch for event ", e);
-      return;
     }
 
     if (e instanceof WindowEvent) {
@@ -772,22 +813,6 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
-  public boolean isDispatchingFocusEvent() {
-    return myDispatchingFocusEvent;
-  }
-
-  private static boolean typeAheadDispatchToFocusManager(@NotNull AWTEvent e) {
-    if (e instanceof KeyEvent) {
-      final KeyEvent event = (KeyEvent)e;
-      if (!event.isConsumed()) {
-        final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(event.getComponent());
-        return focusManager.dispatch(event);
-      }
-    }
-
-    return false;
-  }
-
   public void flushQueue() {
     while (true) {
       AWTEvent event = peekEvent();
@@ -923,9 +948,6 @@ public class IdeEventQueue extends EventQueue {
     return mySuspendMode;
   }
 
-  public boolean hasFocusEventsPending() {
-    return peekEvent(FocusEvent.FOCUS_GAINED) != null || peekEvent(FocusEvent.FOCUS_LOST) != null;
-  }
 
   private boolean isReady() {
     return !myKeyboardBusy && myKeyEventDispatcher.isReady();
@@ -1081,6 +1103,18 @@ public class IdeEventQueue extends EventQueue {
     doPostEvent(event);
   }
 
+  private static boolean isFocusEvent (AWTEvent e) {
+    return
+      e.getID() == FocusEvent.FOCUS_GAINED ||
+      e.getID() == FocusEvent.FOCUS_LOST ||
+      e.getID() == WindowEvent.WINDOW_ACTIVATED ||
+      e.getID() == WindowEvent.WINDOW_DEACTIVATED ||
+      e.getID() == WindowEvent.WINDOW_LOST_FOCUS ||
+      e.getID() == WindowEvent.WINDOW_GAINED_FOCUS;
+  }
+
+  private Map <Long, AWTEvent> timestampsToFocusEvents = new TreeMap<>();
+
   // return true if posted, false if consumed immediately
   boolean doPostEvent(@NotNull AWTEvent event) {
     for (PostEventHook listener : myPostEventListeners.getListeners()) {
@@ -1096,6 +1130,11 @@ public class IdeEventQueue extends EventQueue {
     if (isKeyboardEvent(event)) {
       myKeyboardEventsPosted.incrementAndGet();
     }
+
+    if (isFocusEvent(event)) {
+      timestampsToFocusEvents.put(System.currentTimeMillis(), event);
+    }
+
     super.postEvent(event);
     return true;
   }

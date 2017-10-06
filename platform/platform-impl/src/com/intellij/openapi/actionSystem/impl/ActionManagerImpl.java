@@ -1375,8 +1375,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         return;
       }
 
-      if (IdeFocusManager.getInstance(null).isFocusBeingTransferred()) return;
-
       final int lastEventCount = myLastTimePerformed;
       myLastTimePerformed = ActivityTracker.getInstance().getCount();
 
