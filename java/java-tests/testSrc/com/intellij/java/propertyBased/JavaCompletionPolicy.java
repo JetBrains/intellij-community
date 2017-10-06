@@ -34,7 +34,12 @@ class JavaCompletionPolicy extends CompletionPolicy {
 
   @Override
   protected boolean isAfterError(@NotNull PsiFile file, @NotNull PsiElement leaf) {
-    return super.isAfterError(file, leaf) || isAdoptedOrphanPsiAfterClassEnd(leaf);
+    return super.isAfterError(file, leaf) || isAdoptedOrphanPsiAfterClassEnd(leaf) || isInsideAnnotationWithErrors(leaf);
+  }
+
+  private static boolean isInsideAnnotationWithErrors(PsiElement leaf) {
+    PsiAnnotationParameterList list = PsiTreeUtil.getParentOfType(leaf, PsiAnnotationParameterList.class);
+    return list != null && PsiTreeUtil.findChildOfType(list, PsiErrorElement.class) != null;
   }
 
   @Override
