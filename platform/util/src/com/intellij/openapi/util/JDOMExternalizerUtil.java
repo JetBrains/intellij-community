@@ -27,16 +27,22 @@ public class JDOMExternalizerUtil {
   private static final String NAME_ATTR = "name";
   private static final String VALUE_ATTR = "value";
 
-  public static void writeField(@NotNull Element root, @NotNull String fieldName, String value) {
+  /**
+   * Adds {@code <option name="{fieldName}" value="{value}"/>} element to the parent.
+   */
+  public static void writeField(@NotNull Element parent, @NotNull String fieldName, @Nullable String value) {
     Element element = new Element(OPTION_TAG);
     element.setAttribute(NAME_ATTR, fieldName);
     element.setAttribute(VALUE_ATTR, value == null ? "" : value);
-    root.addContent(element);
+    parent.addContent(element);
   }
 
-  public static void writeField(@NotNull Element root, @NotNull String fieldName, @Nullable String value, @NotNull String defaultValue) {
+  /**
+   * Adds {@code <option name="{fieldName}" value="{value}"/>} element to the parent when the value differs from the default.
+   */
+  public static void writeField(@NotNull Element parent, @NotNull String fieldName, @Nullable String value, @NotNull String defaultValue) {
     if (!defaultValue.equals(value)) {
-      writeField(root, fieldName, value);
+      writeField(parent, fieldName, value);
     }
   }
 
@@ -56,8 +62,19 @@ public class JDOMExternalizerUtil {
     return null;
   }
 
+  /**
+   * Adds {@code <option name="{fieldName}"/>} element to the parent and returns the created element.
+   */
+  @NotNull
+  public static Element writeOption(@NotNull Element parent, @NotNull String fieldName) {
+    Element element = new Element(OPTION_TAG);
+    element.setAttribute(NAME_ATTR, fieldName);
+    parent.addContent(element);
+    return element;
+  }
+
   @Nullable
-  public static Element getOption(@NotNull Element parent, @NotNull String fieldName) {
+  public static Element readOption(@NotNull Element parent, @NotNull String fieldName) {
     for (Element element : parent.getChildren(OPTION_TAG)) {
       if (fieldName.equals(element.getAttributeValue(NAME_ATTR))) {
         return element;
@@ -66,31 +83,21 @@ public class JDOMExternalizerUtil {
     return null;
   }
 
-  @NotNull
-  public static Element writeOption(@NotNull Element root, @NotNull String fieldName) {
-    Element element = new Element(OPTION_TAG);
-    element.setAttribute(NAME_ATTR, fieldName);
-    root.addContent(element);
-    return element;
-  }
-
-  @NotNull
-  public static Element addElementWithValueAttribute(@NotNull Element parent, @NotNull String childTagName, @Nullable String attrValue) {
-    Element element = new Element(childTagName);
-    if (attrValue != null) {
-      element.setAttribute(VALUE_ATTR, attrValue);
+  /**
+   * Adds {@code <{tagName} value="{value}"/>} element to the parent (or just {@code <{tagName}"/>} if the value is {@code null}).
+   */
+  public static void writeCustomField(@NotNull Element parent, @NotNull String tagName, @Nullable String value) {
+    Element element = new Element(tagName);
+    if (value != null) {
+      element.setAttribute(VALUE_ATTR, value);
     }
     parent.addContent(element);
-    return element;
   }
 
   @Nullable
-  public static String getFirstChildValueAttribute(@NotNull Element parent, @NotNull String childTagName) {
-    Element first = parent.getChild(childTagName);
-    if (first != null) {
-      return first.getAttributeValue(VALUE_ATTR);
-    }
-    return null;
+  public static String readCustomField(@NotNull Element parent, @NotNull String tagName) {
+    Element element = parent.getChild(tagName);
+    return element != null ? element.getAttributeValue(VALUE_ATTR) : null;
   }
 
   @NotNull
@@ -137,4 +144,22 @@ public class JDOMExternalizerUtil {
       }
     }
   }
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated use {@link #readOption(Element, String)} (to be removed in IDEA 2019) */
+  public static Element getOption(@NotNull Element parent, @NotNull String fieldName) {
+    return readOption(parent, fieldName);
+  }
+
+  /** @deprecated use {@link #writeCustomField(Element, String, String)} (to be removed in IDEA 2019) */
+  public static Element addElementWithValueAttribute(@NotNull Element parent, @NotNull String childTagName, @Nullable String attrValue) {
+    writeCustomField(parent, childTagName, attrValue);
+    return parent.getChild(childTagName);
+  }
+
+  /** @deprecated use {@link #readCustomField(Element, String)} (to be removed in IDEA 2019) */
+  public static String getFirstChildValueAttribute(@NotNull Element parent, @NotNull String childTagName) {
+    return readCustomField(parent, childTagName);
+  }
+  //</editor-fold>
 }
