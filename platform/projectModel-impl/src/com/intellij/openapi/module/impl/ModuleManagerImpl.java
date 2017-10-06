@@ -60,6 +60,7 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -165,8 +166,17 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
   @Override
   public void loadState(Element state) {
+    loadState(getPathsToModuleFiles(state));
+  }
+
+  @TestOnly
+  public void loadStateFromModulePaths(LinkedHashSet<ModulePath> modulePaths) {
+    loadState(modulePaths);
+  }
+
+  private void loadState(LinkedHashSet<ModulePath> modulePaths) {
     boolean isFirstLoadState = myModulePathsToLoad == null;
-    myModulePathsToLoad = getPathsToModuleFiles(state);
+    myModulePathsToLoad = modulePaths;
     Set<String> unloadedModuleNames = new HashSet<>(UnloadedModulesListStorage.getInstance(myProject).getUnloadedModuleNames());
     Iterator<ModulePath> iterator = myModulePathsToLoad.iterator();
     List<ModulePath> unloadedModulePaths = new ArrayList<>();
@@ -177,9 +187,12 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
         iterator.remove();
       }
     }
-    List<UnloadedModuleDescriptionImpl> descriptions = UnloadedModuleDescriptionImpl.createFromPaths(unloadedModulePaths, this);
+    List<UnloadedModuleDescriptionImpl> unloaded = new ArrayList<>(UnloadedModuleDescriptionImpl.createFromPaths(unloadedModulePaths, this));
+    if (!unloaded.isEmpty()) {
+      unloadNewlyAddedModulesIfPossible(myModulePathsToLoad, unloaded);
+    }
     myUnloadedModules.clear();
-    for (UnloadedModuleDescriptionImpl description : descriptions) {
+    for (UnloadedModuleDescriptionImpl description : unloaded) {
       myUnloadedModules.put(description.getName(), description);
     }
 
@@ -217,6 +230,9 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     ApplicationManager.getApplication().runWriteAction(model::commit);
     // clear only if successfully loaded
     myModulePathsToLoad.clear();
+  }
+
+  protected void unloadNewlyAddedModulesIfPossible(Set<ModulePath> modulesToLoad, List<UnloadedModuleDescriptionImpl> modulesToUnload) {
   }
 
   @NotNull
@@ -964,7 +980,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       fireModulesRenamed(modules, oldNames);
       cleanCachedStuff();
       UnloadedModulesListStorage unloadedModulesListStorage = UnloadedModulesListStorage.getInstance(myProject);
-      unloadedModulesListStorage.setUnloadedModuleNames(ContainerUtil.filter(unloadedModulesListStorage.getUnloadedModuleNames(), myUnloadedModules::containsKey));
+      setUnloadedModuleNames(ContainerUtil.filter(unloadedModulesListStorage.getUnloadedModuleNames(), myUnloadedModules::containsKey));
     }, false, true);
   }
 
@@ -1016,8 +1032,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       return;
     }
 
-    UnloadedModulesListStorage.getInstance(myProject).setUnloadedModuleNames(unloadedModuleNames);
-    
+    setUnloadedModuleNames(unloadedModuleNames);
+
     final ModifiableModuleModel model = getModifiableModel();
     Map<String, UnloadedModuleDescriptionImpl> toLoad = new LinkedHashMap<>(myUnloadedModules);
     myUnloadedModules.clear();
@@ -1047,6 +1063,10 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     ApplicationManager.getApplication().runWriteAction(model::commit);
     myFailedModulePaths.addAll(oldFailedPaths);
     myModulePathsToLoad.clear();
+  }
+
+  protected void setUnloadedModuleNames(@NotNull List<String> unloadedModuleNames) {
+    UnloadedModulesListStorage.getInstance(myProject).setUnloadedModuleNames(unloadedModuleNames);
   }
 
   public void setModuleGroupPath(Module module, String[] groupPath) {
