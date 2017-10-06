@@ -493,10 +493,7 @@ private fun writeConfigFile(elements: List<Element>, file: Path) {
   // .idea component configuration files uses XML prolog due to historical reasons
   if (file.fileSystem == FileSystems.getDefault()) {
     // VFS must be used to write workspace.xml and misc.xml to ensure that project files will be not reloaded on external file change event
-    writeFile(file, object : StateStorage.SaveSession {
-      override fun save() {
-      }
-    }, null, wrapper, LineSeparator.LF, true)
+    writeFile(file, SaveSession { }, null, wrapper, LineSeparator.LF, true)
   }
   else {
     file.outputStream().use {
@@ -524,7 +521,17 @@ fun normalizeDefaultProjectElement(defaultProject: Project, element: Element, pr
           val wrapper = Element("component").attribute("name", componentName)
           component.name = "settings"
           wrapper.addContent(component)
-          JDOMUtil.write(wrapper, schemeDir.resolve("profiles_settings.xml").outputStream(), "\n")
+
+          val file = schemeDir.resolve("profiles_settings.xml")
+          if (file.fileSystem == FileSystems.getDefault()) {
+            // VFS must be used to write workspace.xml and misc.xml to ensure that project files will be not reloaded on external file change event
+            writeFile(file, SaveSession { }, null, wrapper, LineSeparator.LF, prependXmlProlog = false)
+          }
+          else {
+            file.outputStream().use {
+              wrapper.write(it)
+            }
+          }
         }
       }
 
