@@ -45,7 +45,7 @@ object Writer {
   }
 
   private fun writeToEditor(str: String) {
-    val editor = GuiRecorderComponent.frame.getEditor()
+    val editor = GuiRecorderComponent.getEditor()
     val document = editor.document
     WriteCommandAction.runWriteCommandAction(null, { document.insertString(document.textLength, str) })
   }

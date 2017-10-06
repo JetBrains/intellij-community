@@ -48,7 +48,7 @@ object GuiRecorderComponent : ApplicationComponent, Disposable {
     if (currentTask != null && !currentTask!!.isDone) currentTask!!.cancel(true)
   }
 
-  fun getEditor() = frame.getGuiScriptEditorPanel().editor
+  fun getEditor() = frame.guiScriptEditorPanel.editor
 
   fun placeCaretToEnd() {
     val caretModel = getEditor().caretModel

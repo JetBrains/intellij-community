@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.impl.status.TextPanel;
 import com.intellij.testGuiFramework.recorder.actions.*;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
@@ -35,11 +34,9 @@ import java.awt.*;
  * @author Sergey Karashevich
  */
 public class GuiScriptEditorPanel implements Disposable {
-    private JButton runButton;
     private JPanel editorPanel;
     private JPanel myPanel;
     private JLabel myStatusLabel;
-    private JPanel myStatusBarPanel;
     private AsyncProcessIcon progressIcon;
     private JPanel iconButtonRow;
 
@@ -52,16 +49,12 @@ public class GuiScriptEditorPanel implements Disposable {
         myStatusLabel.setFont(SystemInfo.isMac ? JBUI.Fonts.label(11) : JBUI.Fonts.label());
         progressIcon.setVisible(false);
 
-        createAndAddGuiScriptEditor();
-
-        installActionToolbar();
-    }
-
-    public void createAndAddGuiScriptEditor() {
         myEditor = new GuiScriptEditor();
         progressIcon.suspend();
         editorPanel.removeAll();
         editorPanel.add(myEditor.getPanel(), BorderLayout.CENTER);
+
+        installActionToolbar();
     }
 
     public @NotNull Editor getEditor(){
@@ -84,12 +77,6 @@ public class GuiScriptEditorPanel implements Disposable {
 
         iconButtonRow.add(toolbar.getComponent(), BorderLayout.CENTER);
     }
-
-    public void setRunButtonAction(Action action) {
-        runButton.setAction(action);
-    }
-
-    public void setUpdateButtonAction(Action action) { runButton.setAction(action); }
 
     public Component getPanel(){
         return myPanel;
@@ -115,12 +102,5 @@ public class GuiScriptEditorPanel implements Disposable {
 
     private void createUIComponents() {
         progressIcon = new AsyncProcessIcon("Progress");
-    }
-
-
-    private class MyTextPanel extends TextPanel {
-        MyTextPanel(){
-            super();
-        }
     }
 }

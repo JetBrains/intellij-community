@@ -27,7 +27,7 @@ object Notifier {
 
   fun updateStatus(statusMessage: String) {
 
-    val guiScriptEditorPanel = GuiRecorderComponent.frame.getGuiScriptEditorPanel()
+    val guiScriptEditorPanel = GuiRecorderComponent.frame.guiScriptEditorPanel
 
     val statusHandler: (String) -> Unit = { status ->
       if (status.startsWith(LONG_OPERATION_PREFIX)) {

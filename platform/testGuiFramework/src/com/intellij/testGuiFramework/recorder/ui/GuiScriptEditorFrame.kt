@@ -28,38 +28,31 @@ class GuiScriptEditorFrame : Disposable {
     val GUI_SCRIPT_FRAME_TITLE = "GUI Script Editor"
   }
 
-  override fun dispose() {
-    guiScriptEditorPanel.dispose()
-  }
-
-  val frameName = "GUI Script Editor"
-  val myFrame: JFrame
-  private val guiScriptEditorPanel: GuiScriptEditorPanel
+  private val myFrame: JFrame
+  val guiScriptEditorPanel: GuiScriptEditorPanel
 
   init {
-    myFrame = JFrame(frameName)
+    myFrame = JFrame(GUI_SCRIPT_FRAME_TITLE)
     myFrame.preferredSize = Dimension(500, 800)
 
-    //create editor if needed
     guiScriptEditorPanel = GuiScriptEditorPanel()
-    val myContentPanel = guiScriptEditorPanel.panel as Container
 
-    myFrame.contentPane = myContentPanel
+    myFrame.contentPane = guiScriptEditorPanel.panel as Container
     myFrame.pack()
   }
 
   fun isShowing() = myFrame.isShowing
+
   fun show() {
     myFrame.isVisible = true
-    val recAction = StartPauseRecAction()
-    recAction.setSelected(null, true)
+    StartPauseRecAction().setSelected(null, true)
   }
 
   fun toFront() {
     SwingUtilities.invokeLater { myFrame.toFront(); myFrame.repaint() }
   }
 
-  fun getGuiScriptEditorPanel() = guiScriptEditorPanel
-
-  fun getEditor() = guiScriptEditorPanel.editor
+  override fun dispose() {
+    guiScriptEditorPanel.dispose()
+  }
 }
