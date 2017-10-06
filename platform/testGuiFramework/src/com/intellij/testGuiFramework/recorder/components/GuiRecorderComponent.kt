@@ -17,6 +17,7 @@ package com.intellij.testGuiFramework.recorder.components
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ApplicationComponent
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.testGuiFramework.recorder.ui.GuiScriptEditorFrame
 import java.util.concurrent.Future
 
@@ -53,6 +54,12 @@ object GuiRecorderComponent : ApplicationComponent, Disposable {
   fun getFrame() = myFrame
 
   fun getEditor() = myFrame!!.getGuiScriptEditorPanel().editor
+
+  fun placeCaretToEnd() {
+    val caretModel = getEditor().caretModel
+    val lineCount = getEditor().document.lineCount
+    caretModel.moveToLogicalPosition(LogicalPosition(lineCount + 1, 0))
+  }
 
   fun registerFrame(frame: GuiScriptEditorFrame) {
     myFrame = frame
