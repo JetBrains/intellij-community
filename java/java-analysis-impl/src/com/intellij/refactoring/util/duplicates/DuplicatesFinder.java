@@ -313,7 +313,14 @@ public class DuplicatesFinder {
     final ASTNode node1 = pattern.getNode();
     final ASTNode node2 = candidate.getNode();
     if (node1 == null || node2 == null) return false;
-    return node1.getElementType() == node2.getElementType();
+    if (node1.getElementType() != node2.getElementType()) return false;
+    if (pattern instanceof PsiUnaryExpression) {
+      return ((PsiUnaryExpression)pattern).getOperationTokenType() == ((PsiUnaryExpression)candidate).getOperationTokenType();
+    }
+    if (pattern instanceof PsiPolyadicExpression) {
+      return ((PsiPolyadicExpression)pattern).getOperationTokenType() == ((PsiPolyadicExpression)candidate).getOperationTokenType();
+    }
+    return true;
   }
 
   private boolean matchPattern(PsiElement pattern,

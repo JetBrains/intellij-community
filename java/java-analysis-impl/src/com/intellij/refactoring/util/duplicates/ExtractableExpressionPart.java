@@ -72,18 +72,18 @@ public class ExtractableExpressionPart {
   static ExtractableExpressionPart match(@NotNull PsiExpression expression,
                                          @NotNull List<PsiElement> scope,
                                          @Nullable ComplexityHolder complexityHolder) {
-    if (PsiUtil.isConstantExpression(expression)) {
-      if (PsiTreeUtil.findChildOfType(expression, PsiJavaCodeReferenceElement.class) != null) {
-        // Avoid coincidental replacement of equal expressions containing different constant fields
-        // E.g. don't count as equal (Foo.A + 1) and (Bar.B - 2) because most likely it's not what the users expect
-        return null;
-      }
-      return matchConstant(expression);
-    }
     if (expression instanceof PsiReferenceExpression) {
       return matchVariable((PsiReferenceExpression)expression, scope);
     }
-    if (complexityHolder != null && complexityHolder.isAcceptableExpression(expression)) {
+    boolean isConstant = PsiUtil.isConstantExpression(expression);
+    if (isConstant) {
+      // Avoid replacement of coincidentally equal expressions containing different constant fields
+      // E.g. don't count as equal values expressions like (Foo.A + 1) and (Bar.B - 2)
+      if (PsiTreeUtil.findChildOfType(expression, PsiJavaCodeReferenceElement.class) == null) {
+        return matchConstant(expression);
+      }
+    }
+    if (complexityHolder != null && (isConstant || complexityHolder.isAcceptableExpression(expression))) {
       PsiType type = expression.getType();
       if (type != null && !PsiType.VOID.equals(type)) {
         return new ExtractableExpressionPart(expression, null, null, type);
