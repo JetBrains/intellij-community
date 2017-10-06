@@ -431,9 +431,6 @@
   <xi:include href="/META-INF/SpellCheckerPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/SSH.xml" xpointer="xpointer(/idea-plugin/*)">
-    <xi:fallback/>
-  </xi:include>
 
   <xi:include href="/META-INF/built-in-server.xml" xpointer="xpointer(/idea-plugin/*)"/>
 </idea-plugin>
