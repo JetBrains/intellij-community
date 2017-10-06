@@ -94,7 +94,7 @@ private fun MouseEvent.isRightButton() = (this.button == rightButton)
 
 class JButtonGenerator : ComponentCodeGenerator<JButton> {
   override fun accept(cmp: Component) = cmp is JButton
-  override fun generate(cmp: JButton, me: MouseEvent, cp: Point) = "button(\"${cmp.text}\").click()"
+  override fun generate(cmp: JButton, me: MouseEvent, cp: Point) = """button("${cmp.text}").click()"""
 }
 
 class JSpinnerGenerator : ComponentCodeGenerator<JButton> {
@@ -127,9 +127,9 @@ class ActionButtonGenerator : ComponentCodeGenerator<ActionButton> {
     val text = cmp.action.templatePresentation.text
     val simpleClassName = cmp.action.javaClass.simpleName
     val result: String = if (text.isNullOrEmpty())
-      "actionButtonByClass(\"$simpleClassName\").click()"
+      """actionButtonByClass("$simpleClassName").click()"""
     else
-      "actionButton(\"$text\").click()"
+      """actionButton("$text").click()"""
     return result
   }
 }
@@ -137,13 +137,13 @@ class ActionButtonGenerator : ComponentCodeGenerator<ActionButton> {
 class ActionLinkGenerator : ComponentCodeGenerator<ActionLink> {
   override fun priority(): Int = 1
   override fun accept(cmp: Component) = cmp is ActionLink
-  override fun generate(cmp: ActionLink, me: MouseEvent, cp: Point) = "actionLink(\"${cmp.text}\").click()"
+  override fun generate(cmp: ActionLink, me: MouseEvent, cp: Point) = """actionLink("${cmp.text}").click()"""
 }
 
 class JTextFieldGenerator : ComponentCodeGenerator<JTextField> {
   override fun accept(cmp: Component) = cmp is JTextField
-  override fun generate(cmp: JTextField, me: MouseEvent, cp: Point) = "textfield(\"${findBoundedText(cmp).orEmpty()}\").${clicks(
-    me)}"
+  override fun generate(cmp: JTextField, me: MouseEvent, cp: Point) = """textfield("${findBoundedText(cmp).orEmpty()}").${clicks(
+    me)}"""
 }
 
 class JBListGenerator : ComponentCodeGenerator<JBList<*>> {
@@ -153,10 +153,10 @@ class JBListGenerator : ComponentCodeGenerator<JBList<*>> {
   private fun JBList<*>.isFrameworksTree() = this.javaClass.name.toLowerCase().contains("AddSupportForFrameworksPanel".toLowerCase())
   override fun generate(cmp: JBList<*>, me: MouseEvent, cp: Point): String {
     val cellText = getCellText(cmp, cp).orEmpty()
-    if (cmp.isPopupList()) return "popupClick(\"$cellText\")"
-    if (me.button == MouseEvent.BUTTON2) return "jList(\"$cellText\").item(\"$cellText\").rightClick()"
-    if (me.clickCount == 2) return "jList(\"$cellText\").doubleClickItem(\"$cellText\")"
-    return "jList(\"$cellText\").clickItem(\"$cellText\")"
+    if (cmp.isPopupList()) return """popupClick("$cellText")"""
+    if (me.button == MouseEvent.BUTTON2) return """jList("$cellText").item("$cellText").rightClick()"""
+    if (me.clickCount == 2) return """jList("$cellText").doubleClickItem("$cellText")"""
+    return """jList("$cellText").clickItem("$cellText")"""
   }
 }
 
@@ -164,7 +164,7 @@ class BasicComboPopupGenerator : ComponentCodeGenerator<JList<*>> {
   override fun accept(cmp: Component) = cmp is JList<*> && cmp.javaClass.name.contains("BasicComboPopup")
   override fun generate(cmp: JList<*>, me: MouseEvent, cp: Point): String {
     val cellText = getCellText(cmp, cp).orEmpty()
-    return ".selectItem(\"$cellText\")" // check that combobox is open
+    return """.selectItem("$cellText")""" // check that combobox is open
   }
 }
 
@@ -197,8 +197,8 @@ class SimpleTreeGenerator : ComponentCodeGenerator<SimpleTree> {
   private fun SimpleTree.getPath(cp: Point) = convertSimpleTreeItemToPath(this, this.getDeepestRendererComponentAt(cp.x, cp.y).toString())
   override fun generate(cmp: SimpleTree, me: MouseEvent, cp: Point): String {
     val path = cmp.getPath(cp)
-    if (me.isRightButton()) return "jTree(\"$path\").rightClickPath(\"$path\")"
-    return "jTree(\"$path\").selectPath(\"$path\")"
+    if (me.isRightButton()) return """jTree("$path").rightClickPath("$path")"""
+    return """jTree("$path").selectPath("$path")"""
   }
 }
 
@@ -209,24 +209,24 @@ class JTableGenerator : ComponentCodeGenerator<JTable> {
     val row = cmp.rowAtPoint(cp)
     val col = cmp.columnAtPoint(cp)
     val cellText = ExtendedJTableCellReader().valueAt(cmp, row, col)
-    return "table(\"$cellText\").cell(\"$cellText\")".addClick(me)
+    return """table("$cellText").cell("$cellText")""".addClick(me)
   }
 }
 
 class JBCheckBoxGenerator : ComponentCodeGenerator<JBCheckBox> {
   override fun priority() = 1
   override fun accept(cmp: Component) = cmp is JBCheckBox
-  override fun generate(cmp: JBCheckBox, me: MouseEvent, cp: Point) = "checkbox(\"${cmp.text}\").click()"
+  override fun generate(cmp: JBCheckBox, me: MouseEvent, cp: Point) = """checkbox("${cmp.text}").click()"""
 }
 
 class JCheckBoxGenerator : ComponentCodeGenerator<JCheckBox> {
   override fun accept(cmp: Component) = cmp is JCheckBox
-  override fun generate(cmp: JCheckBox, me: MouseEvent, cp: Point) = "checkbox(\"${cmp.text}\").click()"
+  override fun generate(cmp: JCheckBox, me: MouseEvent, cp: Point) = """checkbox("${cmp.text}").click()"""
 }
 
 class JComboBoxGenerator : ComponentCodeGenerator<JComboBox<*>> {
   override fun accept(cmp: Component) = cmp is JComboBox<*>
-  override fun generate(cmp: JComboBox<*>, me: MouseEvent, cp: Point) = "combobox(\"${findBoundedText(cmp).orEmpty()}\")"
+  override fun generate(cmp: JComboBox<*>, me: MouseEvent, cp: Point) = """combobox("${findBoundedText(cmp).orEmpty()}")"""
 }
 
 class BasicArrowButtonDelegatedGenerator : ComponentCodeGenerator<BasicArrowButton> {
@@ -238,12 +238,12 @@ class BasicArrowButtonDelegatedGenerator : ComponentCodeGenerator<BasicArrowButt
 
 class JRadioButtonGenerator : ComponentCodeGenerator<JRadioButton> {
   override fun accept(cmp: Component) = cmp is JRadioButton
-  override fun generate(cmp: JRadioButton, me: MouseEvent, cp: Point) = "radioButton(\"${cmp.text}\").select()"
+  override fun generate(cmp: JRadioButton, me: MouseEvent, cp: Point) = """radioButton("${cmp.text}").select()"""
 }
 
 class LinkLabelGenerator : ComponentCodeGenerator<LinkLabel<*>> {
   override fun accept(cmp: Component) = cmp is LinkLabel<*>
-  override fun generate(cmp: LinkLabel<*>, me: MouseEvent, cp: Point) = "linkLabel(\"${cmp.text}\").click()"
+  override fun generate(cmp: LinkLabel<*>, me: MouseEvent, cp: Point) = """linkLabel("${cmp.text}").click()"""
 }
 
 
@@ -252,7 +252,7 @@ class HyperlinkLabelGenerator : ComponentCodeGenerator<HyperlinkLabel> {
   override fun generate(cmp: HyperlinkLabel, me: MouseEvent, cp: Point): String {
     //we assume, that hyperlink label has only one highlighted region
     val linkText = cmp.hightlightedRegionsBoundsMap.keys.toList().firstOrNull() ?: "null"
-    return "hyperlinkLabel(\"${cmp.text}\").clickLink(\"$linkText\")"
+    return """hyperlinkLabel("${cmp.text}").clickLink("$linkText")"""
   }
 }
 
@@ -262,7 +262,7 @@ class HyperlinkLabelInNotificationPanelGenerator : ComponentCodeGenerator<Hyperl
   override fun generate(cmp: HyperlinkLabel, me: MouseEvent, cp: Point): String {
     //we assume, that hyperlink label has only one highlighted region
     val linkText = cmp.hightlightedRegionsBoundsMap.keys.toList().firstOrNull() ?: "null"
-    return "editor { notificationPanel().clickLink(\"$linkText\") }"
+    return """editor { notificationPanel().clickLink("$linkText") }"""
   }
 }
 
@@ -294,7 +294,7 @@ class PluginTableGenerator : ComponentCodeGenerator<PluginTable> {
   override fun generate(cmp: PluginTable, me: MouseEvent, cp: Point): String {
     val row = cmp.rowAtPoint(cp)
     val ideaPluginDescriptor = cmp.getObjectAt(row)
-    return "pluginTable().selectPlugin(\"${ideaPluginDescriptor.name}\")"
+    return """pluginTable().selectPlugin("${ideaPluginDescriptor.name}")"""
   }
 }
 
@@ -394,7 +394,7 @@ class JDialogGenerator : GlobalContextCodeGenerator<JDialog>() {
 
   }
 
-  override fun generate(cmp: JDialog) = "dialog(\"${cmp.title}\") {"
+  override fun generate(cmp: JDialog) = """dialog("${cmp.title}") {"""
 }
 
 class IdeFrameGenerator : GlobalContextCodeGenerator<JFrame>() {
@@ -451,7 +451,7 @@ class ToolWindowGenerator : LocalContextCodeGenerator<Component>() {
 
   override fun generate(cmp: Component): String {
     val toolWindow: ToolWindowImpl = getToolWindow(cmp.centerOnScreen())!!
-    return "toolwindow(id = \"${toolWindow.id}\") {"
+    return """toolwindow(id = "${toolWindow.id}") {"""
   }
 
 }
@@ -495,7 +495,7 @@ class ToolWindowContextGenerator : LocalContextCodeGenerator<Component>() {
   override fun generate(cmp: Component): String {
     val toolWindow: ToolWindowImpl = getToolWindow(cmp.centerOnScreen())!!
     val tabName = toolWindow.contentManager.selectedContent?.tabName
-    return if (tabName != null) "content(tabName = \"${tabName}\") {"
+    return if (tabName != null) """content(tabName = "${tabName}") {"""
     else "content {"
   }
 
@@ -525,7 +525,7 @@ class MacMessageGenerator : LocalContextCodeGenerator<JButton>() {
   override fun generate(cmp: JButton): String {
     val panel = cmp.rootPane.contentPane as JPanel
     val title = withRobot { robot -> MessagesFixture.getTitle(panel, robot) }
-    return "message(\"$title\") {"
+    return """message("$title") {"""
   }
 }
 
@@ -538,7 +538,7 @@ class MessageGenerator : LocalContextCodeGenerator<JDialog>() {
   }
 
   override fun generate(cmp: JDialog): String {
-    return "message(\"${cmp.title}\") {"
+    return """message("${cmp.title}") {"""
   }
 }
 
