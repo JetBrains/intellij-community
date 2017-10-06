@@ -493,7 +493,9 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
 
     doClassTest(
       "    /**\n" +
-      "     * @return this is a return value documentation with a very long description that is longer than the right margin. It is more than 200 characters long, not including the comment indent and the asterisk characters, which should be greater than any sane right margin.\n" +
+      "     * @return this is a return value documentation with a very long description that is longer than the right margin." +
+      " It is more than 200 characters long, not including the comment indent and the asterisk characters," +
+      " which should be greater than any sane right margin.\n" +
       "     */\n" +
       "    public int method(int parameter) {\n" +
       "        return 0;\n" +
@@ -569,7 +571,9 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
 
     doClassTest(
       "    /**\n" +
-      "     * @see this is an additional documentation with a very long description that is longer than the right margin. It is more than 200 characters long, not including the comment indent and the asterisk characters which should be greater than any sane right margin\n" +
+      "     * @see this is an additional documentation with a very long description that is longer than the right margin." +
+      " It is more than 200 characters long, not including the comment indent and the asterisk characters" +
+      " which should be greater than any sane right margin\n" +
       "     */\n" +
       "    public int method(int parameter) {\n" +
       "        return 0;\n" +
@@ -813,7 +817,8 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
       "public class JiraIssue {\n" +
       "\n" +
       "    public static void main(String[] args) {\n" +
-      "// AAAMIIGgIBADANBgkqhkiG9w0BAQEFAASCBugwgsdfssdflkldkflskdfsdkfjskdlfjdskjfksdjfksdjfkjsdkfjsdkfjgbkAgEAAoIBgQCZfKds4XjFWIU8D4OqCYJ0TkAkKPVV96v2l6PuMBNbON3ndHCVvwoJOJnopfbtFro9eCTCUC9MlAUZBAVdCbPVi3ioqaEN\n" +
+      "// AAAMIIGgIBADANBgkqhkiG9w0BAQEFAASCBugwgsdfssdflkldkflskdfsdkfjskdlfjdskjfksdjfksdjfkjsdkfjsdkfjgbkAg" +
+      "EAAoIBgQCZfKds4XjFWIU8D4OqCYJ0TkAkKPVV96v2l6PuMBNbON3ndHCVvwoJOJnopfbtFro9eCTCUC9MlAUZBAVdCbPVi3ioqaEN\n" +
       "    }\n" +
       "}";
     doTextTest(test, test);
