@@ -38,6 +38,7 @@ from IPython.core import release
 from _pydev_bundle.pydev_imports import xmlrpclib
 from _pydevd_bundle.pydevd_constants import dict_keys
 
+DISABLE_JEDI = os.environ.get("IPYTHONNOJEDI", "False") == "True"
 default_pydev_banner_parts = default_banner_parts
 
 default_pydev_banner = ''.join(default_pydev_banner_parts)
@@ -252,6 +253,9 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
             self.Completer = self._new_completer_012()
         else:
             self.Completer = self._new_completer_011()
+
+        if DISABLE_JEDI and hasattr(self.Completer, 'use_jedi'):
+            self.Completer.use_jedi = False
 
         self.add_completer_hooks()
 
