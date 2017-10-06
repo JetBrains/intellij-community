@@ -34,7 +34,7 @@ public class PyPrebuiltStubsProvider extends PrebuiltStubsProviderBase {
 
   @NotNull
   @Override
-  protected String getName() {
+  protected String getDirName() {
     return NAME;
   }
 }

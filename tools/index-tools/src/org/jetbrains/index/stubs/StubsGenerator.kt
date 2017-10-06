@@ -27,102 +27,60 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileFilter
-import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.stubs.*
 import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.io.PersistentHashMap
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
+import org.jetbrains.index.IndexGenerator
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.util.*
-import java.util.concurrent.atomic.AtomicInteger
 
-
-val CHECK_COLLISIONS = false
 
 /**
  * Generates stubs and stores them in one persistent hash map
  */
-open class StubsGenerator(private val stubsVersion: String) {
+open class StubsGenerator(private val stubsVersion: String, private val stubsStorageFilePath: String) :
+  IndexGenerator<SerializedStubTree>(stubsStorageFilePath) {
 
-  open val fileFilter
-    get() = VirtualFileFilter { true }
+  private val serializationManager = SerializationManagerImpl(File(stubsStorageFilePath + ".names"))
 
-  fun buildStubsForRoots(stubsStorageFilePath: String,
-                         roots: List<VirtualFile>) {
-    val hashing = FileContentHashing()
-
-    val stubExternalizer = StubTreeExternalizer()
-    val storage = PersistentHashMap<HashCode, SerializedStubTree>(File(stubsStorageFilePath + ".input"),
-                                                                  HashCodeDescriptor.instance, stubExternalizer)
-
-    println("Writing stubs to ${storage.baseFile.absolutePath}")
-
-    val serializationManager = SerializationManagerImpl(File(stubsStorageFilePath + ".names"))
-
+  fun buildStubsForRoots(roots: List<VirtualFile>) {
     try {
-      val map = HashMap<HashCode, Pair<String, SerializedStubTree>>()
-
-      for (file in roots) {
-        println("Processing files in root ${file.path}")
-        val cnt = AtomicInteger()
-        VfsUtilCore.visitChildrenRecursively(file, object : VirtualFileVisitor<Boolean>() {
-          override fun visitFile(file: VirtualFile): Boolean {
-            try {
-              if (fileFilter.accept(file)) {
-                val fileContent = FileContentImpl(file, file.contentsToByteArray())
-                val stub = buildStubForFile(fileContent, serializationManager)
-                val hashCode = hashing.hashString(fileContent)
-
-                val bytes = BufferExposingByteArrayOutputStream()
-                serializationManager.serialize(stub, bytes)
-
-                val contentLength =
-                  if (file.fileType.isBinary) {
-                    -1
-                  }
-                  else {
-                    fileContent.psiFileForPsiDependentIndex.textLength
-                  }
-
-                val stubTree = SerializedStubTree(bytes.internalBuffer, bytes.size(), stub, file.length, contentLength)
-                val item = map.get(hashCode)
-                if (item == null) {
-                  storage.put(hashCode, stubTree)
-                  cnt.incrementAndGet()
-
-                  if (CHECK_COLLISIONS) {
-                    map.put(hashCode, Pair(fileContent.contentAsText.toString(), stubTree))
-                  }
-                }
-                else {
-                  TestCase.assertEquals(item.first, fileContent.contentAsText.toString())
-                  TestCase.assertTrue(stubTree == item.second)
-                }
-              }
-            }
-            catch (e: NoSuchElementException) {
-              return false
-            }
-
-            return true
-          }
-        })
-
-        println("${cnt.get()} entries written")
-      }
+      buildIndexForRoots(roots)
     }
     finally {
-      storage.close()
       Disposer.dispose(serializationManager)
 
       writeStubsVersionFile(stubsStorageFilePath, stubsVersion)
     }
+  }
+
+  override fun getIndexValue(fileContent: FileContentImpl): SerializedStubTree {
+    val stub = buildStubForFile(fileContent, serializationManager)
+
+    val bytes = BufferExposingByteArrayOutputStream()
+    serializationManager.serialize(stub, bytes)
+
+    val file = fileContent.file
+
+    val contentLength =
+      if (file.fileType.isBinary) {
+        -1
+      }
+      else {
+        fileContent.psiFileForPsiDependentIndex.textLength
+      }
+
+    return SerializedStubTree(bytes.internalBuffer, bytes.size(), stub, file.length, contentLength)
+  }
+
+  override fun createStorage(stubsStorageFilePath: String): PersistentHashMap<HashCode, SerializedStubTree> {
+    return PersistentHashMap(File(stubsStorageFilePath + ".input"),
+                             HashCodeDescriptor.instance, StubTreeExternalizer())
   }
 
   open fun buildStubForFile(fileContent: FileContentImpl,
@@ -250,7 +208,8 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
  * Generates stubs for file content for different language levels returned by languageLevelIterator
  * and checks that they are all equal.
  */
-abstract class LanguageLevelAwareStubsGenerator<T>(stubsVersion: String) : StubsGenerator(stubsVersion) {
+abstract class LanguageLevelAwareStubsGenerator<T>(stubsVersion: String, stubsStorageFilePath: String) : StubsGenerator(stubsVersion,
+                                                                                                                        stubsStorageFilePath) {
   abstract fun languageLevelIterator(): Iterator<T>
 
   abstract fun applyLanguageLevel(level: T)

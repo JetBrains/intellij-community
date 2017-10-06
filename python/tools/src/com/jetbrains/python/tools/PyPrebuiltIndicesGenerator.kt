@@ -2,6 +2,7 @@
 package com.jetbrains.python.tools
 
 import com.intellij.idea.IdeaTestApplication
+import com.intellij.index.PrebuiltIndexAwareIdIndexer
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.util.io.FileUtil
@@ -12,21 +13,25 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.util.io.ZipUtil
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider
+import org.jetbrains.index.id.IdIndexGenerator
 import java.io.File
 
 fun main(args: Array<String>) {
-  buildStubs(args[0], "${args[1]}/${PyPrebuiltStubsProvider.NAME}")
+  buildIndices(args[0], "${args[1]}/${PyPrebuiltStubsProvider.NAME}")
 }
 
-fun buildStubs(root: String, outputPath: String) {
+fun buildIndices(root: String, outputPath: String) {
   val app = createApp()
   try {
     FileUtil.delete(File(outputPath))
 
     val roots = unzipArchivesToRoots(root)
 
-    PyStubsGenerator().buildStubsForRoots("$outputPath/${PrebuiltStubsProviderBase.SDK_STUBS_STORAGE_NAME}",
-                                          ArrayList(roots.map { it -> LocalFileSystem.getInstance().findFileByIoFile(it)!! }))
+    val rootFiles = ArrayList(roots.map { it -> LocalFileSystem.getInstance().findFileByIoFile(it)!! })
+
+    PyStubsGenerator("$outputPath/${PrebuiltStubsProviderBase.SDK_STUBS_STORAGE_NAME}").buildStubsForRoots(rootFiles)
+
+    IdIndexGenerator("$outputPath/${PrebuiltIndexAwareIdIndexer.ID_INDEX_FILE_NAME}").buildIdIndexForRoots(rootFiles)
   }
   catch (e: Throwable) {
     e.printStackTrace()

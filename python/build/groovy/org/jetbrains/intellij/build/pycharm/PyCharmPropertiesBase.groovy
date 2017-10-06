@@ -43,7 +43,7 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
       }
     }
 
-    new PyPrebuiltStubsGenerator().generateResources(context)
+    new PyPrebuiltIndicesGenerator().generateResources(context)
 
     context.ant.copy(todir: "$targetDirectory/index", failonerror: true) {
       fileset(dir: "$context.paths.temp/index", erroronmissingdir: true) {
@@ -58,7 +58,7 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
   }
 }
 
-class PyPrebuiltStubsGenerator implements ResourcesGenerator {
+class PyPrebuiltIndicesGenerator implements ResourcesGenerator {
   @Override
   File generateResources(BuildContext context) {
     CompilationTasks.create(context).compileModules(["python-community-tools"])
@@ -77,8 +77,8 @@ class PyPrebuiltStubsGenerator implements ResourcesGenerator {
 
     def outputPath = "$context.paths.temp/index"
 
-    context.ant.java(classname: "com.jetbrains.python.tools.PyPrebuiltStubsGeneratorKt", fork: true) {
-      jvmarg(line: "-ea -Xmx1500m")
+    context.ant.java(classname: "com.jetbrains.python.tools.PyPrebuiltIndicesGeneratorKt", fork: true) {
+      jvmarg(line: "-ea -Xmx1000m")
       arg(value: zipPath)
       arg(value: outputPath)
       classpath {
