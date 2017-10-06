@@ -124,12 +124,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
       String finalInitializerText = initializerText;
       WriteAction.run(() -> {
         PsiExpression initializer = JavaPsiFacade.getElementFactory(var.getProject()).createExpressionFromText(finalInitializerText, var);
-        if (var instanceof PsiLocalVariable) {
-          ((PsiLocalVariable)var).setInitializer(initializer);
-        }
-        else if (var instanceof PsiField) {
-          ((PsiField)var).setInitializer(initializer);
-        }
+        var.setInitializer(initializer);
       });
     }
   }
@@ -142,12 +137,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
       WriteAction.run(() -> {
         if (var.getInitializer() == null) {
           final PsiExpression newInitializer = JavaPsiFacade.getElementFactory(project).createExpressionFromText("new " + toType + "()", var);
-          if (var instanceof PsiLocalVariable) {
-            ((PsiLocalVariable)var).setInitializer(newInitializer);
-          }
-          else if (var instanceof PsiField) {
-            ((PsiField)var).setInitializer(newInitializer);
-          }
+          var.setInitializer(newInitializer);
         }
 
         modifierList.setModifierProperty(PsiModifier.FINAL, true);
