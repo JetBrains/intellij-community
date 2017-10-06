@@ -21,6 +21,7 @@ import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.externalSystem.service.project.settings.FacetConfigurationImporter;
 import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter;
@@ -40,6 +41,7 @@ import org.junit.Test;
 import org.junit.runners.Parameterized;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.externalSystem.service.project.settings.ConfigurationDataService.EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED;
 
@@ -53,7 +55,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   @Parameterized.Parameters(name = "with Gradle-{0}")
   public static Collection<Object[]> data() {
-    return Arrays.asList(new Object[][]{{BASE_GRADLE_VERSION}});
+    return Arrays.asList(new Object[][]{{"4.2"}});
   }
 
   @Before
@@ -149,23 +151,22 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testApplicationRunConfigurationSettingsImport() throws Exception {
-    final String typeName = "testRunConfig";
-
-    TestRunConfigurationImporter testExtension = new TestRunConfigurationImporter(typeName);
-    Extensions.getRootArea().getExtensionPoint(RunConfigurationImporter.EP_NAME).registerExtension(testExtension);
+    TestRunConfigurationImporter testExtension = new TestRunConfigurationImporter("application");
+    ExtensionPoint<RunConfigurationImporter> ep = Extensions.getRootArea().getExtensionPoint(RunConfigurationImporter.EP_NAME);
+    ep.reset();
+    ep.registerExtension(testExtension);
 
     importProject(
       withGradleIdeaExtPlugin(
+      "import org.jetbrains.gradle.ext.runConfigurations.*\n" +
       "idea {\n" +
       "  module.settings {\n" +
       "    runConfigurations {\n" +
-      "       app1 {\n" +
-      "           type = '" + typeName + "'\n" +
+      "       app1(Application) {\n" +
       "           mainClass = 'my.app.Class'\n" +
       "           jvmArgs =   '-Xmx1g'\n" +
       "       }\n" +
-      "       app2 {\n" +
-      "           type = '" + typeName + "'\n" +
+      "       app2(Application) {\n" +
       "           mainClass = 'my.app.Class2'\n" +
       "       }\n" +
       "    }\n" +
@@ -188,21 +189,27 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
   @Test
   public void testFacetSettingsImport() throws Exception {
 
-    TestFacetConfigurationImporter testExtension = new TestFacetConfigurationImporter("testFacet");
-    Extensions.getRootArea().getExtensionPoint(FacetConfigurationImporter.EP_NAME).registerExtension(testExtension);
-
+    TestFacetConfigurationImporter testExtension = new TestFacetConfigurationImporter("spring");
+    ExtensionPoint<FacetConfigurationImporter> ep = Extensions.getRootArea().getExtensionPoint(FacetConfigurationImporter.EP_NAME);
+    ep.reset();
+    ep.registerExtension(testExtension);
 
     importProject(
       withGradleIdeaExtPlugin(
+        "import org.jetbrains.gradle.ext.facets.*\n" +
       "idea {\n" +
       "  module.settings {\n" +
       "    facets {\n" +
-      "       testFacet {\n" +
-      "           testField 'Test Value 1'\n" +
-      "       }\n" +
-      "       namedFacet {\n" +
-      "           type 'testFacet'\n" +
-      "           testField 'Test Value 2'\n" +
+      "       spring(SpringFacet) {\n" +
+      "         contexts {\n" +
+      "            myParent {\n" +
+      "              file = 'parent_ctx.xml'\n" +
+      "            }\n" +
+      "            myChild {\n" +
+      "              file = 'child_ctx.xml'\n" +
+      "              parent = 'myParent'" +
+      "            }\n" +
+      "         }\n" +
       "       }\n" +
       "    }\n" +
       "  }\n" +
@@ -211,12 +218,23 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
 
     final Map<String, Map<String, Object>> facetConfigs = testExtension.getConfigs();
 
-    assertContain(new ArrayList<>(facetConfigs.keySet()), "testFacet", "namedFacet");
-    Map<String, Object> unnamedSettings = facetConfigs.get("testFacet");
-    Map<String, Object> namedSettings = facetConfigs.get("namedFacet");
+    assertContain(new ArrayList<>(facetConfigs.keySet()), "spring");
+    List<Map<String, Object>> springCtxConfigs = (List<Map<String, Object>>)facetConfigs.get("spring").get("contexts");
 
-    assertEquals("Test Value 1", unnamedSettings.get("testField"));
-    assertEquals("Test Value 2", namedSettings.get("testField"));
+    assertContain(springCtxConfigs.stream().map((Map m) -> m.get("name")).collect(Collectors.toList()), "myParent", "myChild");
+
+    Map<String, Object> parentSettings = springCtxConfigs.stream()
+      .filter((Map m) -> m.get("name").equals("myParent"))
+      .findFirst()
+      .get();
+    Map<String, Object> childSettings = springCtxConfigs.stream()
+      .filter((Map m) -> m.get("name").equals("myChild"))
+      .findFirst()
+      .get();
+
+    assertEquals("parent_ctx.xml", parentSettings.get("file"));
+    assertEquals("child_ctx.xml", childSettings.get("file"));
+    assertEquals("myParent", childSettings.get("parent"));
   }
 
   private String getGradlePluginPath() {
