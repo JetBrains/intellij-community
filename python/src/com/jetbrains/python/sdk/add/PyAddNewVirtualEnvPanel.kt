@@ -44,6 +44,8 @@ import com.jetbrains.python.sdk.createSdkByGenerateTask
 import com.jetbrains.python.sdk.findBaseSdks
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import icons.PythonIcons
+import org.jetbrains.annotations.SystemDependent
+import org.jetbrains.annotations.SystemIndependent
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.awt.BorderLayout
 import java.io.File
@@ -60,7 +62,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
     private const val VIRTUALENV_ROOT_DIR_MACRO_NAME = "VIRTUALENV_ROOT_DIR"
   }
 
-  var newProjectPath: String? = newProjectPath
+  private var newProjectPath: String? = newProjectPath
     set(value) {
       field = value
       pathField.text = defaultBasePath
@@ -146,7 +148,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
   private fun findProjectFromFocus(): Project? =
     CommonDataKeys.PROJECT.getData(DataManager.getInstance().dataContextFromFocus.resultSync)
 
-  private var defaultBasePath: String
+  private var defaultBasePath: @SystemDependent String
     get() {
       val pathMap = ExpandMacroToPathMap().apply {
         addMacroExpand(PathMacroUtil.PROJECT_DIR_MACRO_NAME, projectBasePath)
@@ -156,31 +158,34 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
         defaultVirtualEnvRoot != userHome -> defaultVirtualEnvRoot
         else -> "$${PathMacroUtil.PROJECT_DIR_MACRO_NAME}$/venv"
       }
-      val rawSavedPath = PyPackageService.getInstance().virtualEnvBasePath ?: defaultPath
+      val rawSavedPath = PyPackageService.getInstance().getVirtualEnvBasePath() ?: defaultPath
       val savedPath = pathMap.substitute(rawSavedPath, true)
-      return when {
+      val path = when {
         FileUtil.isAncestor(projectBasePath, savedPath, true) -> savedPath
         else -> "$savedPath/${PathUtil.getFileName(projectBasePath)}"
       }
+      return FileUtil.toSystemDependentName(path)
     }
     set(value) {
+      val path = FileUtil.toSystemIndependentName(value)
       val pathMap = ReplacePathToMacroMap().apply {
         addMacroReplacement(projectBasePath, PathMacroUtil.PROJECT_DIR_MACRO_NAME)
         addMacroReplacement(defaultVirtualEnvRoot, VIRTUALENV_ROOT_DIR_MACRO_NAME)
       }
       val pathToSave = when {
-        FileUtil.isAncestor(projectBasePath, value, true) -> value.trimEnd { !it.isLetter() }
-        else -> PathUtil.getParentPath(value)
+        FileUtil.isAncestor(projectBasePath, path, true) -> path.trimEnd { !it.isLetter() }
+        else -> PathUtil.getParentPath(path)
       }
-      PyPackageService.getInstance().virtualEnvBasePath = pathMap.substitute(pathToSave, true)
+      val substituted = pathMap.substitute(pathToSave, true)
+      PyPackageService.getInstance().setVirtualEnvBasePath(substituted)
     }
 
-  private val defaultVirtualEnvRoot: String
+  private val defaultVirtualEnvRoot: @SystemIndependent String
     get() = VirtualEnvSdkFlavor.getDefaultLocation()?.path ?: userHome
 
-  private val projectBasePath: String
+  private val projectBasePath: @SystemIndependent String
     get() = newProjectPath ?: project?.basePath ?: userHome
 
-  private val userHome: String
+  private val userHome: @SystemIndependent String
     get() = FileUtil.toSystemIndependentName(SystemProperties.getUserHome())
 }
