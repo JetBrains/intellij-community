@@ -38,6 +38,7 @@ import com.intellij.structuralsearch.impl.matcher.*;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler;
+import com.intellij.structuralsearch.impl.matcher.iterators.SingleNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
@@ -480,7 +481,7 @@ public class Matcher {
 
     final Language elementLanguage = element.getLanguage();
     if (strategy.continueMatching(element) && elementLanguage.isKindOf(language)) {
-      visitor.matchContext(new ArrayBackedNodeIterator(new PsiElement[] {element}));
+      visitor.matchContext(new SingleNodeIterator(element));
       return;
     }
     for(PsiElement el=element.getFirstChild();el!=null;el=el.getNextSibling()) {
@@ -551,8 +552,7 @@ public class Matcher {
 
     assert targetNode != null : "Could not match down up when no target node";
 
-    final LanguageFileType fileType = (LanguageFileType)options.getFileType();
-    match(elementToStartMatching, fileType.getLanguage());
+    visitor.matchContext(new SingleNodeIterator(elementToStartMatching));
     matchContext.getSink().matchingFinished();
     return sink.getMatches();
   }
