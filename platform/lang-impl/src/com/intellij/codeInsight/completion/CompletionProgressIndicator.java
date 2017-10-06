@@ -105,7 +105,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final Update myUpdate = new Update("update") {
     @Override
     public void run() {
-      updateLookup();
+      updateLookup(myIsUpdateSuppressed);
       myQueue.setMergingTimeSpan(ourShowPopupGroupingTime);
     }
   };
@@ -342,7 +342,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public boolean showLookup() {
-    return updateLookup();
+    return updateLookup(myIsUpdateSuppressed);
   }
 
   public CompletionParameters getParameters() {
@@ -367,9 +367,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   }
 
-  private boolean updateLookup() {
+  private boolean updateLookup(boolean isUpdateSuppressed) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (isOutdated() || !shouldShowLookup() || myIsUpdateSuppressed) return false;
+    if (isOutdated() || !shouldShowLookup() || isUpdateSuppressed) return false;
 
     while (true) {
       Runnable action = myAdvertiserChanges.poll();
@@ -591,7 +591,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
       else {
         CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(this));
-        updateLookup();
+        updateLookup(myIsUpdateSuppressed);
       }
     }, myQueue.getModalityState());
   }
@@ -873,18 +873,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private void showIfSuppressed() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if(!myIsUpdateSuppressed)
-      return;
 
     if(myLookup.isShown())
       return;
 
-    try {
-      myIsUpdateSuppressed = false;
-      showLookup();
-    } finally {
-      myIsUpdateSuppressed = true;
-    }
+    updateLookup(false);
   }
 
   private static class ModifierTracker extends KeyAdapter {
