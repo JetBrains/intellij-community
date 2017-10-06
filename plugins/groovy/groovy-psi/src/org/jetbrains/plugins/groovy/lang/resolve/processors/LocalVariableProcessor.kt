@@ -1,19 +1,5 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package org.jetbrains.plugins.groovy.lang.resolve
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.plugins.groovy.lang.resolve.processors
 
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
@@ -30,31 +16,30 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.DECLARATION_SCOPE_PASSED
-import org.jetbrains.plugins.groovy.lang.resolve.processors.DynamicMembersHint
 
-class VariableProcessor(private val myName: String) : PsiScopeProcessor, NameHint, ElementClassHint, DynamicMembersHint {
+class LocalVariableProcessor(private val name: String) : PsiScopeProcessor, NameHint, ElementClassHint {
 
-  private var myStop: Boolean = false
-  private var myResult: GroovyResolveResult? = null
-  val result: GroovyResolveResult? get() = myResult
+  private var stopped: Boolean = false
+  var resolveResult: GroovyResolveResult? = null
+    private set
 
   override fun <T : Any?> getHint(hintKey: Key<T>): T? {
-    if (hintKey == NameHint.KEY || hintKey == ElementClassHint.KEY || hintKey == DynamicMembersHint.KEY) {
+    if (hintKey == NameHint.KEY || hintKey == ElementClassHint.KEY) {
       @Suppress("UNCHECKED_CAST")
       return this as? T
     }
     return null
   }
 
-  override fun getName(state: ResolveState) = myName
+  override fun getName(state: ResolveState) = name
 
-  override fun shouldProcess(kind: ElementClassHint.DeclarationKind?) = !myStop && kind == VARIABLE
+  override fun shouldProcess(kind: ElementClassHint.DeclarationKind?) = !stopped && kind == VARIABLE
 
   override fun execute(element: PsiElement, state: ResolveState): Boolean {
-    if (myStop) return false
+    if (stopped) return false
     assert(element !is GrBindingVariable)
     if (element is GrVariable && element !is GrField) {
-      myResult = GroovyResolveResultImpl(element, true)
+      resolveResult = GroovyResolveResultImpl(element, true)
       return false
     }
     else {
@@ -67,6 +52,6 @@ class VariableProcessor(private val myName: String) : PsiScopeProcessor, NameHin
    */
   override fun handleEvent(event: PsiScopeProcessor.Event, associated: Any?) {
     if (event != DECLARATION_SCOPE_PASSED) return
-    if (associated is GrMember || associated is GroovyFile) myStop = true
+    if (associated is GrMember || associated is GroovyFile) stopped = true
   }
 }
