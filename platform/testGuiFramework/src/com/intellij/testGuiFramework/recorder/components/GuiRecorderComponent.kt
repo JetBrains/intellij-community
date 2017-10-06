@@ -32,7 +32,10 @@ object GuiRecorderComponent : ApplicationComponent, Disposable {
   var frame: GuiScriptEditorFrame? = null
   var currentTask: Future<*>? = null
 
-  override fun dispose() {}
+  override fun dispose() {
+    frame?.dispose()
+    frame = null
+  }
 
   override fun getComponentName() = "GuiRecorderComponent"
 
@@ -46,9 +49,5 @@ object GuiRecorderComponent : ApplicationComponent, Disposable {
     val caretModel = getEditor().caretModel
     val lineCount = getEditor().document.lineCount
     caretModel.moveToLogicalPosition(LogicalPosition(lineCount + 1, 0))
-  }
-
-  fun disposeFrame() {
-    frame = null
   }
 }

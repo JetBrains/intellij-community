@@ -33,7 +33,6 @@ class GuiScriptEditorFrame : Disposable {
 
   override fun dispose() {
     guiScriptEditorPanel.releaseEditor()
-    GuiRecorderComponent.disposeFrame()
   }
 
   val frameName = "GUI Script Editor"

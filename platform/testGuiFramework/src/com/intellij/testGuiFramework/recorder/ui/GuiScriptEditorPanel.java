@@ -24,6 +24,7 @@ import com.intellij.openapi.wm.impl.status.TextPanel;
 import com.intellij.testGuiFramework.recorder.actions.*;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -61,7 +62,7 @@ public class GuiScriptEditorPanel {
         editorPanel.add(myEditor.getPanel(), BorderLayout.CENTER);
     }
 
-    public Editor getEditor(){
+    public @NotNull Editor getEditor(){
         return myEditor.getMyEditor();
     }
 
