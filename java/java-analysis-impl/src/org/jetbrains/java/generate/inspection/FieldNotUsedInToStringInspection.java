@@ -18,7 +18,6 @@ package org.jetbrains.java.generate.inspection;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -106,13 +105,13 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
       for (PsiField field : visitor.getUnusedFields()) {
         final String fieldName = field.getName();
         myHolder.registerProblem(field.getNameIdentifier(), "Field '" + fieldName + "' is not used in 'toString()' method",
-                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, GenerateToStringQuickFix.getInstance());
+                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, createFixes(myHolder));
       }
       for (PsiMethod unusedMethod : visitor.getUnusedMethods()) {
         final PsiIdentifier identifier = unusedMethod.getNameIdentifier();
         final PsiElement target = identifier == null ? unusedMethod : identifier;
         myHolder.registerProblem(target, "Method '" + unusedMethod.getName() + "' is not used in 'toString()' method",
-                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, GenerateToStringQuickFix.getInstance());
+                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, createFixes(myHolder));
       }
     }
   }
