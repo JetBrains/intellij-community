@@ -118,7 +118,7 @@ public class PyArgumentListInspection extends PyInspection {
           final PyFunction function = (PyFunction)callable;
 
           // Decorate functions may have different parameter lists. We don't match arguments with parameters of decorators yet
-          if (PyKnownDecoratorUtil.hasNonBuiltinDecorator(function, context) ||
+          if (PyKnownDecoratorUtil.hasUnknownOrChangingSignatureDecorator(function, context) ||
               decoratedClassInitCall(call.getCallee(), function, context)) {
             return;
           }
@@ -144,7 +144,9 @@ public class PyArgumentListInspection extends PyInspection {
       return Arrays
         .stream(classReference.multiResolve(false))
         .map(ResolveResult::getElement)
-        .anyMatch(element -> element instanceof PyClass && PyKnownDecoratorUtil.hasNonBuiltinDecorator((PyClass)element, context));
+        .anyMatch(
+          element -> element instanceof PyClass && PyKnownDecoratorUtil.hasUnknownOrChangingReturnTypeDecorator((PyClass)element, context)
+        );
     }
 
     return false;
