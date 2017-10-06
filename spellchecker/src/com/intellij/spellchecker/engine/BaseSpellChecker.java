@@ -38,6 +38,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.openapi.util.io.FileUtil.isAncestor;
+
 public class BaseSpellChecker implements SpellCheckerEngine {
   static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.engine.BaseSpellChecker");
 
@@ -234,6 +236,14 @@ public class BaseSpellChecker implements SpellCheckerEngine {
     if (dictionaryByName != null) {
       bundledDictionaries.remove(dictionaryByName);
     }
+  }
+
+  @Override
+  public void removeDictionariesRecursively(@NotNull String directory) {
+    bundledDictionaries.stream()
+      .map(Dictionary::getName)
+      .filter(dict -> isAncestor(directory, dict, true) && isDictionaryLoad(dict))
+      .forEach(this::removeDictionary);
   }
 
   @Nullable

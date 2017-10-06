@@ -493,7 +493,7 @@ private fun writeConfigFile(elements: List<Element>, file: Path) {
   // .idea component configuration files uses XML prolog due to historical reasons
   if (file.fileSystem == FileSystems.getDefault()) {
     // VFS must be used to write workspace.xml and misc.xml to ensure that project files will be not reloaded on external file change event
-    writeFile(file, SaveSession { }, null, wrapper, LineSeparator.LF, true)
+    writeFile(file, SaveSession { }, null, wrapper, LineSeparator.LF, prependXmlProlog = true)
   }
   else {
     file.outputStream().use {

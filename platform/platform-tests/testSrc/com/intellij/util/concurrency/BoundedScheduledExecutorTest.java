@@ -310,4 +310,16 @@ public class BoundedScheduledExecutorTest extends TestCase {
     assertTrue(future.isDone());
     assertFalse(future.isCancelled());
   }
+
+  public void testAwaitTerminationOfScheduledTask() throws InterruptedException {
+    ScheduledExecutorService executor = createBoundedScheduledExecutor(PooledThreadExecutor.INSTANCE, 1);
+    Future<?> future = executor.schedule(() -> TimeoutUtil.sleep(10000), 100, TimeUnit.MILLISECONDS);
+    executor.shutdown();
+    assertFalse(executor.awaitTermination(1, TimeUnit.SECONDS));
+    assertFalse(future.isDone());
+    assertFalse(future.isCancelled());
+    assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
+    assertTrue(future.isDone());
+    assertTrue(future.isCancelled());
+  }
 }

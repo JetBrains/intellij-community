@@ -36,6 +36,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -324,7 +325,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
     if (myConfig.getEnvs() != null) {
       env.putAll(myConfig.getEnvs());
     }
-
     addCommonEnvironmentVariables(getInterpreterPath(project, myConfig), env);
 
     setupVirtualEnvVariables(myConfig, env, myConfig.getSdkHome());
@@ -333,8 +333,11 @@ public abstract class PythonCommandLineState extends CommandLineState {
     commandLine.getEnvironment().putAll(env);
     commandLine.withParentEnvironmentType(myConfig.isPassParentEnvs() ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
 
-
     buildPythonPath(project, commandLine, myConfig, isDebug);
+
+    for (PythonCommandLineEnvironmentProvider envProvider : Extensions.getExtensions(PythonCommandLineEnvironmentProvider.EP_NAME)) {
+      envProvider.extendEnvironment(project, commandLine);
+    }
   }
 
   private static void setupVirtualEnvVariables(PythonRunParams myConfig, Map<String, String> env, String sdkHome) {
@@ -380,7 +383,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
   private static void buildPythonPath(Project project, GeneralCommandLine commandLine, PythonRunParams config, boolean isDebug) {
     Sdk pythonSdk = PythonSdkType.findSdkByPath(config.getSdkHome());
     if (pythonSdk != null) {
-      List<String> pathList = Lists.newArrayList(getAddedPaths(pythonSdk));
+      List<String> pathList = Lists.newArrayList();
+      pathList.addAll(getAddedPaths(pythonSdk));
       pathList.addAll(collectPythonPath(project, config, isDebug));
       initPythonPath(commandLine, config.isPassParentEnvs(), pathList, config.getSdkHome());
     }

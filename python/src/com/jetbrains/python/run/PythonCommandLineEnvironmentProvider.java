@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang;
+package com.jetbrains.python.run;
 
-import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter;
 
+public interface PythonCommandLineEnvironmentProvider {
+  ExtensionPointName<PythonCommandLineEnvironmentProvider> EP_NAME =
+    ExtensionPointName.create("Pythonid.pythonCommandLineEnvironmentProvider");
 
-public class GroovySyntaxHighlighterFactory extends SingleLazyInstanceSyntaxHighlighterFactory {
-   @NotNull
-  @Override
-  protected SyntaxHighlighter createHighlighter() {
-    return new GroovySyntaxHighlighter();
-   }
+  void extendEnvironment(@NotNull Project project, @NotNull GeneralCommandLine cmdLine);
 }

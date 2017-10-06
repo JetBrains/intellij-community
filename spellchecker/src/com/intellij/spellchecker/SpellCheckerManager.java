@@ -24,10 +24,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFileListener;
+
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.spellchecker.dictionary.AggregatedDictionary;
@@ -45,11 +43,14 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.InputStream;
 import java.util.*;
 
 import static com.intellij.openapi.util.io.FileUtil.isAncestor;
+import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
 import static com.intellij.openapi.util.io.FileUtilRt.toSystemDependentName;
+import static com.intellij.openapi.vfs.VfsUtilCore.visitChildrenRecursively;
 
 public class SpellCheckerManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.SpellCheckerManager");
@@ -62,7 +63,7 @@ public class SpellCheckerManager implements Disposable {
   private AggregatedDictionary userDictionary;
   private final SuggestionProvider suggestionProvider = new BaseSuggestionProvider(this);
   private final SpellCheckerSettings settings;
-  private final VirtualFileListener myVirtualFileListener;
+  private final VirtualFileListener myCustomDictFileListener;
 
   public static SpellCheckerManager getInstance(Project project) {
     return ServiceManager.getService(project, SpellCheckerManager.class);
@@ -74,41 +75,9 @@ public class SpellCheckerManager implements Disposable {
     fullConfigurationReload();
     
     Disposer.register(project, this);
-    
-    myVirtualFileListener = new VirtualFileListener() {
-      @Override
-      public void fileDeleted(@NotNull VirtualFileEvent event) {
-        final String path = toSystemDependentName(event.getFile().getPath());
-        if (spellChecker.isDictionaryLoad(path)) {
-          spellChecker.removeDictionary(path);
-          restartInspections();
-        }
-      }
 
-      @Override
-      public void fileCreated(@NotNull VirtualFileEvent event) {
-        final String path = toSystemDependentName(event.getFile().getPath());
-        boolean customDic = FileUtilRt.extensionEquals(path, "dic") &&
-                            settings.getDictionaryFoldersPaths().stream().anyMatch(dicFolderPath -> isAncestor(dicFolderPath, path, true));
-        if (customDic) {
-          spellChecker.loadDictionary(new FileLoader(path));
-          restartInspections();
-        }
-      }
-
-      @Override
-      public void contentsChanged(@NotNull VirtualFileEvent event) {
-        final String path = toSystemDependentName(event.getFile().getPath());
-        if (settings.getDisabledDictionariesPaths().contains(path)) return;
-
-        if (spellChecker.isDictionaryLoad(path)) {
-          spellChecker.removeDictionary(path);
-          spellChecker.loadDictionary(new FileLoader(path));
-          restartInspections();
-        }
-      }
-    };
-    LocalFileSystem.getInstance().addVirtualFileListener(myVirtualFileListener);
+    myCustomDictFileListener = new CustomDictFileListener(settings);
+    LocalFileSystem.getInstance().addVirtualFileListener(myCustomDictFileListener);
   }
 
   public void fullConfigurationReload() {
@@ -272,6 +241,113 @@ public class SpellCheckerManager implements Disposable {
 
   @Override
   public void dispose() {
-    LocalFileSystem.getInstance().removeVirtualFileListener(myVirtualFileListener);
+    LocalFileSystem.getInstance().removeVirtualFileListener(myCustomDictFileListener);
+  }
+
+  private class CustomDictFileListener implements VirtualFileListener {
+    private final SpellCheckerSettings mySettings;
+
+    public CustomDictFileListener(@NotNull SpellCheckerSettings settings) {mySettings = settings;}
+
+    @Override
+    public void fileDeleted(@NotNull VirtualFileEvent event) {
+      removeCustomDictionaries(event.getFile().getPath());
+    }
+
+    @Override
+    public void fileCreated(@NotNull VirtualFileEvent event) {
+      loadCustomDictionaries(event.getFile());
+    }
+
+    @Override
+    public void fileMoved(@NotNull VirtualFileMoveEvent event) {
+      final String oldPath = event.getOldParent().getPath();
+      if (!locatedInDictFolders(oldPath)) {
+        loadCustomDictionaries(event.getFile());
+      }
+      else {
+        final String newPath = event.getNewParent().getPath();
+        if (!locatedInDictFolders(newPath)) {
+          removeCustomDictionaries(oldPath + File.separator + event.getFileName());
+        }
+      }
+    }
+
+    @Override
+    public void contentsChanged(@NotNull VirtualFileEvent event) {
+      final String path = toSystemDependentName(event.getFile().getPath());
+
+      if (!spellChecker.isDictionaryLoad(path) || mySettings.getDisabledDictionariesPaths().contains(path)) return;
+
+      spellChecker.removeDictionary(path);
+      spellChecker.loadDictionary(new FileLoader(path));
+      restartInspections();
+    }
+
+    @Override
+    public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
+      final VirtualFile file = event.getFile();
+      if (file.isDirectory()) return;
+
+      if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
+        final String oldName = (String)event.getOldValue();
+        if (!isDic(oldName)) {
+          loadCustomDictionaries(file);
+        }
+        else {
+          final String newName = (String)event.getNewValue();
+          if (!isDic(newName)) {
+            removeCustomDictionaries(file.getParent().getPath() + File.separator + oldName);
+          }
+        }
+      }
+    }
+
+    private void removeCustomDictionaries(@NotNull String path) {
+      path = toSystemDependentName(path);
+      if (spellChecker.isDictionaryLoad(path)) {
+        spellChecker.removeDictionary(path);
+        restartInspections();
+      }
+      else if (locatedInDictFolders(path)) {
+        spellChecker.removeDictionariesRecursively(path);
+        restartInspections();
+      }
+      if (mySettings.getDictionaryFoldersPaths().contains(path)) {
+        mySettings.getDictionaryFoldersPaths().remove(path);
+      }
+    }
+
+    private void loadCustomDictionaries(@NotNull VirtualFile file) {
+      final String path = toSystemDependentName(file.getPath());
+      if (!locatedInDictFolders(path)) return;
+
+      if (file.isDirectory()) {
+        visitChildrenRecursively(file, new VirtualFileVisitor() {
+          @Override
+          public boolean visitFile(@NotNull VirtualFile file) {
+            final boolean isDirectory = file.isDirectory();
+            final String path = file.getPath();
+            if (!isDirectory && isDic(path)) {
+              spellChecker.loadDictionary(new FileLoader(path));
+              restartInspections();
+            }
+            return isDirectory;
+          }
+        });
+      }
+      else if (isDic(path)) {
+        spellChecker.loadDictionary(new FileLoader(path));
+        restartInspections();
+      }
+    }
+
+    private boolean isDic(String path) {
+      return extensionEquals(path, "dic");
+    }
+    
+    private boolean locatedInDictFolders(@NotNull String path) {
+      return mySettings.getDictionaryFoldersPaths().stream().anyMatch(dicFolderPath -> isAncestor(dicFolderPath, path, false));
+    }
   }
 }

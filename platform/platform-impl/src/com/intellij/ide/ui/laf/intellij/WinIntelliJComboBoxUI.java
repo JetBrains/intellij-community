@@ -17,7 +17,9 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.util.ui.JBDimension;
@@ -48,6 +50,8 @@ import java.beans.PropertyChangeListener;
  * @author Konstantin Bulenkov
  */
 public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
+  private static final Logger LOG = Logger.getInstance(WinIntelliJComboBoxUI.class);
+
   private static final String HOVER_PROPERTY = "JComboBox.mouseHover";
   private static final String PRESSED_PROPERTY = "JComboBox.mousePressed";
   private static final Border DEFAULT_EDITOR_BORDER = JBUI.Borders.empty(1, 0);
@@ -254,10 +258,15 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
           }
 
           Icon icon = MacIntelliJIconCache.getIcon("comboDropTriangle", false, false, isEnabled());
-          int x = JBUI.scale(5);
-          int y = (getHeight() - icon.getIconHeight()) / 2;
-          icon.paintIcon(this, g2, x, y);
-
+          if (icon != null) {
+            int x = JBUI.scale(5);
+            int y = (getHeight() - icon.getIconHeight()) / 2;
+            icon.paintIcon(this, g2, x, y);
+          } else { // TODO: remove log below when the reason icon is null is detected
+            LOG.error("Can't load comboDropTriangle icon isEnabled = " + isEnabled() +
+                      " laf = " + UIManager.getLookAndFeel().getName() +
+                      " OS name = " + SystemInfo.OS_NAME);
+          }
         } finally {
           g2.dispose();
         }
@@ -453,23 +462,13 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
            JBUI.insets(2, 5, 2, 2).asUIResource() : JBUI.insets(2, 2, 2, 5).asUIResource();
   }
 
-  private Dimension  getSizeWithButton(Dimension d) {
+  protected Dimension  getSizeWithButton(Dimension d) {
     ARROW_BUTTON_SIZE.update();
-    Insets i = comboBox.getInsets();
+    Insets i = getInsets();
     int width = ARROW_BUTTON_SIZE.width + i.left;
     int editorHeight = editor != null ? editor.getPreferredSize().height + i.top + i.bottom : 0;
-    return new Dimension(Math.max(d.width + JBUI.scale(10), width),
+    return new Dimension(Math.max(d.width, width + JBUI.scale(10)),
                          Math.max(editorHeight, Math.max(ARROW_BUTTON_SIZE.height, d.height)));
-  }
-
-  @Override
-  public Dimension getPreferredSize(JComponent c) {
-    return getSizeWithButton(super.getPreferredSize(c));
-  }
-
-  @Override
-  public Dimension getMinimumSize(JComponent c) {
-    return getSizeWithButton(super.getMinimumSize(c));
   }
 
   @Override

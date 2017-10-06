@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -106,7 +105,7 @@ public class JavadocHighlightUtil {
   }
 
   static void checkRequiredTags(@NotNull PsiDocTag[] tags,
-                                @NotNull Predicate<String> tagRequired,
+                                @NotNull JavaDocLocalInspectionBase.Options options,
                                 @NotNull PsiElement toHighlight,
                                 @NotNull ProblemHolder holder) {
     boolean[] isTagRequired = new boolean[TAGS_TO_CHECK.length];
@@ -114,7 +113,7 @@ public class JavadocHighlightUtil {
     boolean someTagsAreRequired = false;
 
     for (int i = 0; i < TAGS_TO_CHECK.length; i++) {
-      someTagsAreRequired |= (isTagRequired[i] = tagRequired.test(TAGS_TO_CHECK[i]));
+      someTagsAreRequired |= (isTagRequired[i] = JavaDocLocalInspectionBase.isTagRequired(options, TAGS_TO_CHECK[i]));
     }
 
     if (!someTagsAreRequired) return;

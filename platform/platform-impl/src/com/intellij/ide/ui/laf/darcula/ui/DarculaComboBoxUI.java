@@ -418,6 +418,25 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     return false;
   }
 
+  protected Dimension getSizeWithButton(Dimension d) {
+    Insets i = getInsets();
+    Dimension abSize = arrowButton.getPreferredSize();
+    int editorHeight = editor != null ? editor.getPreferredSize().height + i.top + i.bottom : 0;
+
+    return new Dimension(Math.max(d.width, abSize.width + i.left + JBUI.scale(10)),
+                         Math.max(editorHeight, Math.max(abSize.height, d.height)));
+  }
+
+  @Override
+  public Dimension getPreferredSize(JComponent c) {
+    return getSizeWithButton(super.getPreferredSize(c));
+  }
+
+  @Override
+  public Dimension getMinimumSize(JComponent c) {
+    return getSizeWithButton(super.getMinimumSize(c));
+  }
+
   @Override
   protected void configureEditor() {
     super.configureEditor();

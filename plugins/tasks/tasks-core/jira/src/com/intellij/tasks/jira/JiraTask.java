@@ -90,13 +90,7 @@ public abstract class JiraTask extends Task {
     if (StringUtil.isEmpty(iconUrl)) {
       return TasksCoreIcons.Jira;
     }
-    Icon icon;
-    if (isClosed()) {
-      icon = CachedIconLoader.getDisabledIcon(iconUrl);
-    }
-    else {
-      icon = CachedIconLoader.getIcon(iconUrl);
-    }
+    Icon icon = CachedIconLoader.getIcon(iconUrl);
     return icon != null ? icon : TasksIcons.Other;
   }
 

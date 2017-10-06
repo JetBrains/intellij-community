@@ -18,6 +18,7 @@ package com.intellij.refactoring.extractMethod;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -56,14 +57,24 @@ public class ParametrizedDuplicates {
   private VariableData[] myVariableData;
 
   private ParametrizedDuplicates(PsiElement[] pattern) {
+    LOG.assertTrue(pattern.length != 0, "pattern length");
     if (pattern[0] instanceof PsiStatement) {
-      Project project = pattern[0].getProject();
-      PsiElement[] copy = IntroduceParameterHandler.getElementsInCopy(project, pattern[0].getContainingFile(), pattern);
+      PsiElement[] copy = copyElements(pattern);
       myElements = wrapWithCodeBlock(copy);
+    }
+    else if (pattern[0] instanceof PsiExpression) {
+      PsiElement[] copy = copyElements(pattern);
+      PsiExpression wrapped = wrapExpressionWithCodeBlock(copy);
+      myElements = wrapped != null ? new PsiElement[]{wrapped} : PsiElement.EMPTY_ARRAY;
     }
     else {
       myElements = PsiElement.EMPTY_ARRAY;
     }
+  }
+
+  private static PsiElement[] copyElements(@NotNull PsiElement[] pattern) {
+    Project project = pattern[0].getProject();
+    return IntroduceParameterHandler.getElementsInCopy(project, pattern[0].getContainingFile(), pattern);
   }
 
   @Nullable
@@ -128,6 +139,9 @@ public class ParametrizedDuplicates {
   }
 
   private boolean initMatches(@NotNull List<Match> matches) {
+    if (myElements.length == 0) {
+      return false;
+    }
     myOccurrencesList = new ArrayList<>();
     Map<PsiExpression, Occurrences> occurrencesMap = new THashMap<>();
     Set<Match> badMatches = new THashSet<>();
@@ -144,6 +158,7 @@ public class ParametrizedDuplicates {
         }
       }
     }
+    myOccurrencesList.sort(Comparator.comparing(occurrences -> occurrences.myFirstOffset));
 
     if (!badMatches.isEmpty()) {
       matches = new ArrayList<>(matches);
@@ -267,6 +282,55 @@ public class ParametrizedDuplicates {
     return Arrays.copyOfRange(elementsInCopy, 1, elementsInCopy.length - 1);
   }
 
+  @Nullable
+  private static PsiExpression wrapExpressionWithCodeBlock(@NotNull PsiElement[] copy) {
+    if (copy.length != 1 || !(copy[0] instanceof PsiExpression)) return null;
+
+    PsiExpression expression = (PsiExpression)copy[0];
+    PsiType type = expression.getType();
+    if (type == null || PsiType.NULL.equals(type)) return null;
+
+    PsiElement parent = expression.getParent();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
+    PsiClass parentClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+    if (parentClass == null) return null;
+
+    PsiElement parentClassStart = parentClass.getLBrace();
+    if (parentClassStart == null) return null;
+
+    // It's syntactically correct to write "new Object() {void foo(){}}.foo()" - see JLS 15.9.5
+    String wrapperBodyText = (PsiType.VOID.equals(type) ? "" : "return ") + expression.getText() + ";";
+    String wrapperClassImmediateCallText = "new " + CommonClassNames.JAVA_LANG_OBJECT + "() { " +
+                                           type.getCanonicalText() + " wrapperMethod() {" + wrapperBodyText + "} " +
+                                           "}.wrapperMethod()";
+    PsiExpression wrapperClassImmediateCall = factory.createExpressionFromText(wrapperClassImmediateCallText, parent);
+    wrapperClassImmediateCall = (PsiExpression)expression.replace(wrapperClassImmediateCall);
+    PsiMethod method = PsiTreeUtil.findChildOfType(wrapperClassImmediateCall, PsiMethod.class);
+    LOG.assertTrue(method != null, "wrapper class method is null");
+
+    PsiCodeBlock body = method.getBody();
+    LOG.assertTrue(body != null, "wrapper class method's body is null");
+
+    PsiStatement[] statements = body.getStatements();
+    LOG.assertTrue(statements.length == 1, "wrapper class method's body statement count");
+    PsiStatement bodyStatement = statements[0];
+
+    PsiExpression wrapped = null;
+    if (PsiType.VOID.equals(type) && bodyStatement instanceof PsiExpressionStatement) {
+      wrapped = ((PsiExpressionStatement)bodyStatement).getExpression();
+    }
+    else if (bodyStatement instanceof PsiReturnStatement) {
+      wrapped = ((PsiReturnStatement)bodyStatement).getReturnValue();
+    }
+    else {
+      LOG.error("Unexpected statement in expression code block " + bodyStatement);
+    }
+    if (expression instanceof UserDataHolderBase && wrapped instanceof UserDataHolderBase) {
+      ((UserDataHolderBase)expression).copyUserDataTo((UserDataHolderBase)wrapped);
+    }
+    return wrapped;
+  }
+
   @NotNull
   private Map<PsiLocalVariable, Occurrences> createParameterDeclarations(@NotNull ExtractMethodProcessor originalProcessor,
                                                                     @NotNull Map<PsiExpression, PsiExpression> expressionsMapping) {
@@ -275,7 +339,12 @@ public class ParametrizedDuplicates {
     Map<PsiLocalVariable, Occurrences> parameterDeclarations = new THashMap<>();
     UniqueNameGenerator generator = originalProcessor.getParameterNameGenerator(myElements[0]);
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    PsiElement parent = myElements[0].getParent();
+    PsiStatement statement =
+      myElements[0] instanceof PsiStatement ? (PsiStatement)myElements[0] : PsiTreeUtil.getParentOfType(myElements[0], PsiStatement.class);
+    LOG.assertTrue(statement != null, "first statement is null");
+    PsiElement parent = statement.getParent();
+    LOG.assertTrue(parent instanceof PsiCodeBlock, "first statement's parent isn't a code block");
+
     for (Occurrences occurrences : myOccurrencesList) {
       ExtractedParameter parameter = occurrences.myParameters.get(0);
       PsiExpression patternUsage = parameter.myPattern.getUsage();
@@ -287,7 +356,7 @@ public class ParametrizedDuplicates {
 
       String declarationText = parameter.myType.getCanonicalText() + " " + parameterName + " = " + usageText + ";";
       PsiDeclarationStatement paramDeclaration = (PsiDeclarationStatement)factory.createStatementFromText(declarationText, parent);
-      paramDeclaration = (PsiDeclarationStatement)parent.addBefore(paramDeclaration, myElements[0]);
+      paramDeclaration = (PsiDeclarationStatement)parent.addBefore(paramDeclaration, statement);
       PsiLocalVariable localVariable = (PsiLocalVariable)paramDeclaration.getDeclaredElements()[0];
       parameterDeclarations.put(localVariable, occurrences);
 
@@ -375,10 +444,12 @@ public class ParametrizedDuplicates {
   private static class Occurrences {
     @NotNull private final Set<PsiExpression> myPatterns;
     @NotNull private final List<ExtractedParameter> myParameters;
+    private final int myFirstOffset;
 
     public Occurrences(ExtractedParameter parameter) {
       myPatterns = parameter.myUsages.keySet();
       myParameters = new ArrayList<>();
+      myFirstOffset = myPatterns.stream().mapToInt(PsiElement::getTextOffset).min().orElse(0);
     }
 
     public void add(ExtractedParameter parameter) {

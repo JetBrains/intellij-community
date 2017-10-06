@@ -244,21 +244,18 @@ open class GuiTestCase {
     }
     else throw UnableToFindComponent("""JButton named by $name""")
 
-  /**
-   * Finds a ComponentWithBrowseButton component in hierarchy of context component with a name and returns ComponentWithBrowseButtonFixture.
-   *
-   * @timeout in seconds to find ComponentWithBrowseButton component
-   * @throws ComponentLookupException if component has not been found or timeout exceeded
-   */
-  fun <S, C : Component> ComponentFixture<S, C>.componentWithBrowseButton(comboboxClass: Class<out ComponentWithBrowseButton<out JComponent>>,
+  fun <S, C : Component> ComponentFixture<S, C>.componentWithBrowseButton(boundedLabelText: String,
                                                                           timeout: Long = defaultTimeout): ComponentWithBrowseButtonFixture {
     if (target() is Container) {
-      val component = waitUntilFound(target() as Container, ComponentWithBrowseButton::class.java, timeout) {
-        it.isShowing && comboboxClass.isInstance(it)
+      val boundedLabel = waitUntilFound(target() as Container, JLabel::class.java, timeout) {
+        it.text == boundedLabelText
       }
-      return ComponentWithBrowseButtonFixture(component, guiTestRule.robot())
+      val component = boundedLabel.labelFor
+      if (component is ComponentWithBrowseButton<*>) {
+        return ComponentWithBrowseButtonFixture(component, guiTestRule.robot())
+      }
     }
-    else throw UnableToFindComponent("ComponentWithBrowseButton")
+    throw UnableToFindComponent("ComponentWithBrowseButton with labelFor=$boundedLabelText")
   }
 
   fun <S, C : Component> ComponentFixture<S, C>.spinner(boundedLabelText: String, timeout: Long = defaultTimeout): JSpinnerFixture {

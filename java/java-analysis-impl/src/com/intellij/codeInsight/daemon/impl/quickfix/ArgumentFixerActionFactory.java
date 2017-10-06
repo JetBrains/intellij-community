@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -119,5 +120,5 @@ public abstract class ArgumentFixerActionFactory {
 
   public abstract boolean areTypesConvertible(@NotNull PsiType exprType, @NotNull PsiType parameterType, @NotNull PsiElement context);
 
-  public abstract MethodArgumentFix createFix(PsiExpressionList list, int i, PsiType parameterType);
+  public abstract IntentionAction createFix(PsiExpressionList list, int i, PsiType parameterType);
 }
