@@ -36,7 +36,10 @@ import com.intellij.util.messages.MessageHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author yole
@@ -81,6 +84,13 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
   }
 
   @Override
+  protected void unloadNewlyAddedModulesIfPossible(Set<ModulePath> modulesToLoad, List<UnloadedModuleDescriptionImpl> modulesToUnload) {
+    UnloadedModulesListChange change = AutomaticModuleUnloader.getInstance(myProject).processNewModules(modulesToLoad, modulesToUnload);
+    modulesToLoad.removeAll(change.getToUnload());
+    modulesToUnload.addAll(change.getToUnloadDescriptions());
+  }
+
+  @Override
   protected void showUnknownModuleTypeNotification(@NotNull List<Module> modulesWithUnknownTypes) {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !modulesWithUnknownTypes.isEmpty()) {
       String message;
@@ -118,6 +128,16 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
   @Override
   protected ModuleEx createAndLoadModule(@NotNull String filePath) {
     return createModule(filePath);
+  }
+
+  @Override
+  protected void setUnloadedModuleNames(@NotNull List<String> unloadedModuleNames) {
+    super.setUnloadedModuleNames(unloadedModuleNames);
+    if (!unloadedModuleNames.isEmpty()) {
+      List<String> loadedModules = new ArrayList<>(myModuleModel.myModules.keySet());
+      loadedModules.removeAll(new HashSet<>(unloadedModuleNames));
+      AutomaticModuleUnloader.getInstance(myProject).setLoadedModules(loadedModules);
+    }
   }
 
   @Override
