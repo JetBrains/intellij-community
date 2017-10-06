@@ -266,7 +266,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       List<GitRepository> preselectedRepositories = newArrayList(repositories);
       GuiUtils.invokeLaterIfNeeded(
         () -> new VcsPushDialog(myProject, preselectedRepositories, GitBranchUtil.getCurrentRepository(myProject)).show(),
-        modality);
+        modality, myProject.getDisposed());
     }
     return exceptions;
   }
