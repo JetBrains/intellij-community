@@ -92,7 +92,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   private static final Key<TreeState> STRUCTURE_VIEW_STATE_KEY = Key.create("STRUCTURE_VIEW_STATE");
   private static AtomicInteger ourSettingsModificationCount = new AtomicInteger();
-  private final boolean myUseATM = ApplicationManager.getApplication().isUnitTestMode() ||
+  private final boolean myUseATM = !ApplicationManager.getApplication().isUnitTestMode() &&
     Experiments.isFeatureEnabled("structure.view.async.tree.model");
 
   private FileEditor myFileEditor;
@@ -747,6 +747,10 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   @TestOnly
   public AsyncPromise<Void> rebuildAndUpdate() {
     AsyncPromise<Void> result = new AsyncPromise<>();
+    if (!myUseATM) {
+      myTreeBuilder.queueUpdate().doWhenDone(() -> result.setResult(null)).doWhenRejected(() -> result.setError("rejected"));
+      return result;
+    }
     rebuild();
     TreeVisitor visitor = path -> {
       Object o = TreeUtil.getUserObject(path.getLastPathComponent());
