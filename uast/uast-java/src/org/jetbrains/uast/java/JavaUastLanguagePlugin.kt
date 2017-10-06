@@ -172,7 +172,7 @@ internal object JavaConverter {
               .getCachedValue<UElement, PsiElement>(element, UAST_CACHED_ELEMENT, CachedValueProvider {
                   CachedValueProvider.Result.create(lazyComputedValue.value as UElement?, PsiModificationTracker.MODIFICATION_COUNT)
               }, false)  as? T
-        }) ?: lazyComputedValue.value
+        })?.takeIf { requiredType?.isAssignableFrom(it.javaClass) ?: true } ?: lazyComputedValue.value
     }
 
     internal tailrec fun unwrapElements(element: PsiElement?): PsiElement? = when (element) {
