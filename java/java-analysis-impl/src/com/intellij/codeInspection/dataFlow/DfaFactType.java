@@ -114,9 +114,8 @@ public abstract class DfaFactType<T> extends Key<T> {
         }
       }
       PsiModifierListOwner psiVariable = var.getPsiVariable();
-      LongRangeSet fromAnnotation = LongRangeSet.fromAnnotation(psiVariable);
       LongRangeSet fromType = LongRangeSet.fromType(var.getVariableType());
-      return fromType == null ? fromAnnotation : fromAnnotation.intersect(fromType);
+      return fromType == null ? null : LongRangeSet.fromAnnotation(psiVariable).intersect(fromType);
     }
 
     @Nullable
