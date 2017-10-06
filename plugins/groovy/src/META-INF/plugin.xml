@@ -26,6 +26,7 @@
   <depends optional="true" config-file="ant.xml">AntSupport</depends>
   <depends optional="true" config-file="groovy-byte-code-viewer.xml">ByteCodeViewer</depends>
   <depends optional="true" config-file="duplicates-groovy.xml">com.intellij.modules.ultimate</depends>
+  <depends optional="true" config-file="groovy-structural-search.xml">com.intellij.modules.structuralsearch</depends>
 
   <resource-bundle>org.jetbrains.plugins.groovy.GroovyBundle</resource-bundle>
 
@@ -112,8 +113,6 @@
     <membersContributor implementation="org.jetbrains.plugins.groovy.builder.JsonDelegateContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.builder.StreamingJsonBuilderContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.builder.StreamingJsonBuilderDelegateContributor"/>
-
-    <!--<membersContributor implementation="com.intellij.structuralsearch.IdeaOpenApiNonCodeMembersContributor"/>-->
 
     <closureMissingMethodContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.PluginXmlClosureMemberContributor"/>
 
@@ -1663,8 +1662,7 @@
                                      implementationClass="org.jetbrains.plugins.groovy.refactoring.memberPullUp.GrPullUpHelperFactory"/>
     <classTypePointerFactory implementation="org.jetbrains.plugins.groovy.lang.psi.impl.smartPointers.GrClassReferenceTypePointerFactory"/>
     <hierarchy.referenceProcessor implementation="org.jetbrains.plugins.groovy.hierarchy.call.GrCallReferenceProcessor"/>
-    <structuralsearch.profile implementation="com.intellij.structuralsearch.GroovyStructuralSearchProfile"/>
-    <equivalenceDescriptorProvider implementation="com.intellij.structuralsearch.GroovyEquivalenceDescriptorProvider"/>
+
 
     <applicationService serviceImplementation="org.jetbrains.plugins.groovy.dsl.DslActivationStatus"/>
 
