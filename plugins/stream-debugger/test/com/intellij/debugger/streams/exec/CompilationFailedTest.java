@@ -16,6 +16,8 @@
 package com.intellij.debugger.streams.exec;
 
 import com.intellij.debugger.streams.trace.TraceExpressionBuilder;
+import com.intellij.debugger.streams.wrapper.StreamChain;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vitaliy.Bibaev
@@ -29,5 +31,11 @@ public class CompilationFailedTest extends FailEvaluationTestCase {
   protected TraceExpressionBuilder getExpressionBuilder() {
     final TraceExpressionBuilder builder = super.getExpressionBuilder();
     return chain -> "float a = 0.;\n" + builder.createTraceExpression(chain);
+  }
+
+  @Override
+  protected void handleError(@NotNull StreamChain chain, @NotNull String error, @NotNull FailureReason reason) {
+    assertEquals(FailureReason.COMPILATION, reason);
+    super.handleError(chain, error, reason);
   }
 }
