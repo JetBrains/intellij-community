@@ -30,6 +30,7 @@ import org.fest.swing.core.Robot
 import org.fest.swing.core.SmartWaitRobot
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
+import org.fest.swing.fixture.AbstractComponentFixture
 import org.fest.swing.fixture.JButtonFixture
 import org.fest.swing.fixture.JCheckBoxFixture
 import org.fest.swing.fixture.JRadioButtonFixture
@@ -260,6 +261,10 @@ abstract class FirstStart(val ideType: IdeType) {
       }, timeout)
 
       return reference.get()
+    }
+
+    fun exists(fixture: () -> AbstractComponentFixture<*, *, *>): Boolean {
+      return GuiTestCase().exists(fixture)
     }
   }
 
