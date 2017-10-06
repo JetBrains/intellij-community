@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.index
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
 import com.intellij.psi.impl.cache.impl.id.IdIndexer
 import com.intellij.util.indexing.FileContent
@@ -15,6 +16,7 @@ import java.io.DataOutput
 
 abstract class PrebuiltIndexAwareIdIndexer : PrebuiltIndexProviderBase<Map<IdIndexEntry, Int>>(), IdIndexer {
   companion object {
+    private val LOG = Logger.getInstance("#com.intellij.index.PrebuiltIndexAwareIdIndexer")
     val ID_INDEX_FILE_NAME = "id-index"
   }
 
@@ -25,6 +27,11 @@ abstract class PrebuiltIndexAwareIdIndexer : PrebuiltIndexProviderBase<Map<IdInd
   override fun map(inputData: FileContent): Map<IdIndexEntry, Int> {
     val map = get(inputData)
     return if (map != null) {
+      if (PREBUILT_INDICES_DEBUG) {
+        if (!map.equals(idIndexMap(inputData))) {
+          LOG.error("Prebuilt id index differs from actual value")
+        }
+      }
       map
     }
     else {
