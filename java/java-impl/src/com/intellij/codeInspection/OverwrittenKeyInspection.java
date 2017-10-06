@@ -15,7 +15,10 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -42,23 +45,28 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
 
   private static class OverwrittenKeyVisitor extends JavaElementVisitor {
     private final ProblemsHolder myHolder;
-    private final Set<PsiMethodCallExpression> analyzed = new HashSet<>();
 
     public OverwrittenKeyVisitor(ProblemsHolder holder) {
       myHolder = holder;
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression call) {
-      PsiExpressionStatement statement = tryCast(call.getParent(), PsiExpressionStatement.class);
-      if (statement != null) {
+    public void visitCodeBlock(PsiCodeBlock block) {
+      PsiExpressionStatement statement = PsiTreeUtil.getChildOfType(block, PsiExpressionStatement.class);
+      while (statement != null) {
+        PsiMethodCallExpression call = tryCast(statement.getExpression(), PsiMethodCallExpression.class);
         if (SET_ADD.test(call)) {
-          processCallSequence(call, statement, SET_ADD, InspectionsBundle.message("inspection.overwritten.key.set.message"));
+          statement = processCallSequence(call, statement, SET_ADD, InspectionsBundle.message("inspection.overwritten.key.set.message"));
         }
         else if (MAP_PUT.test(call)) {
-          processCallSequence(call, statement, MAP_PUT, InspectionsBundle.message("inspection.overwritten.key.map.message"));
+          statement = processCallSequence(call, statement, MAP_PUT, InspectionsBundle.message("inspection.overwritten.key.map.message"));
         }
+        statement = PsiTreeUtil.getNextSiblingOfType(statement, PsiExpressionStatement.class);
       }
+    }
+
+    @Override
+    public void visitMethodCallExpression(PsiMethodCallExpression call) {
       if(SET_OF.test(call)) {
         findDuplicates(call.getArgumentList().getExpressions(), InspectionsBundle.message("inspection.overwritten.key.set.message"));
       }
@@ -81,14 +89,22 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
       registerDuplicates(message, groups);
     }
 
-    private void processCallSequence(PsiMethodCallExpression call, PsiExpressionStatement statement, CallMatcher myMatcher, String message) {
-      if (!analyzed.add(call)) return;
-
+    /**
+     * @param call      a starting method call
+     * @param statement a statement containing the call
+     * @param myMatcher a matcher to use to match subsequent calls
+     * @param message   a message to use in warning
+     * @return last processed statement
+     */
+    private PsiExpressionStatement processCallSequence(PsiMethodCallExpression call,
+                                                       PsiExpressionStatement statement,
+                                                       CallMatcher myMatcher,
+                                                       String message) {
       PsiExpression arg = call.getArgumentList().getExpressions()[0];
       Object key = getKey(arg);
-      if (key == null) return;
+      if (key == null) return statement;
       PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getQualifierOrThis(call.getMethodExpression()));
-      if (qualifier == null) return;
+      if (qualifier == null) return statement;
       PsiVariable qualifierVar =
         qualifier instanceof PsiReferenceExpression ? tryCast(((PsiReferenceExpression)qualifier).resolve(), PsiVariable.class) : null;
       Map<Object, List<PsiExpression>> map = new HashMap<>();
@@ -102,7 +118,6 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
         PsiExpression nextQualifier =
           PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getQualifierOrThis(nextCall.getMethodExpression()));
         if (nextQualifier == null || !PsiEquivalenceUtil.areElementsEquivalent(qualifier, nextQualifier)) break;
-        analyzed.add(nextCall);
         if (qualifierVar != null && VariableAccessUtils.variableIsUsed(qualifierVar, nextCall.getArgumentList())) break;
         PsiExpression nextArg = nextCall.getArgumentList().getExpressions()[0];
         Object nextKey = getKey(nextArg);
@@ -112,6 +127,7 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
         statement = nextStatement;
       }
       registerDuplicates(message, map);
+      return statement;
     }
 
     private void registerDuplicates(String message, Map<Object, List<PsiExpression>> map) {

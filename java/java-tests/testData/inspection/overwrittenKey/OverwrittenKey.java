@@ -26,6 +26,9 @@ class OverwrittenKey {
     set.add(<warning descr="Duplicating Set element">5235</warning>);
     set.add(2145);
     set2.add(2145);
+    set2.add(<warning descr="Duplicating Set element">2</warning>);
+    set2.add(345);
+    set2.add(<warning descr="Duplicating Set element">2</warning>);
   }
 
   enum Test {
