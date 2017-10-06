@@ -115,9 +115,9 @@ class ComponentWithBrowseButtonGenerator : ComponentCodeGenerator<FixedSizeButto
   }
 
   override fun generate(cmp: FixedSizeButton, me: MouseEvent, cp: Point): String {
-    var className = cmp.parent.parent.javaClass.simpleName
-    if (className.isEmpty()) className = cmp.parent.parent.javaClass.genericSuperclass.typeName
-    return "componentWithBrowseButton($className::class.java).clickButton()"
+    val componentWithBrowseButton= cmp.parent.parent
+    val labelText = Utils.getBoundedLabel(componentWithBrowseButton).text
+    return """componentWithBrowseButton("$labelText").clickButton()"""
   }
 }
 
