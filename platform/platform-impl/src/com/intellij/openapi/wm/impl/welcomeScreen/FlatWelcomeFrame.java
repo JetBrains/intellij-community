@@ -140,9 +140,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     }
     Disposer.dispose(myScreen);
     WelcomeFrame.resetInstance();
-
-    // open project from welcome screen show progress dialog and call FocusTrackback.register()
-    FocusTrackback.release(this);
   }
 
   private static void saveLocation(Rectangle location) {

@@ -141,7 +141,7 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
     }
     projectFrame.toFront();
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(projectFrame, true);
+      IdeFocusManager.getGlobalInstance().requestFocus(projectFrame.getMostRecentFocusOwner(), true);
     });
     //ProjectUtil.focusProjectWindow(project, true);
   }
