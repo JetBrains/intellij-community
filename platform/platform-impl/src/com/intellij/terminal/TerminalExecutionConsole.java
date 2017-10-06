@@ -25,6 +25,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.jediterm.terminal.HyperlinkStyle;
@@ -82,6 +83,7 @@ public class TerminalExecutionConsole implements ConsoleView {
         };
       }
     };
+    Disposer.register(myTerminalWidget, provider);
 
     TerminalSession session = myTerminalWidget
       .createTerminalSession(
