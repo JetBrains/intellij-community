@@ -497,9 +497,9 @@ public class Matcher {
    * @throws UnsupportedPatternException
    */
   @NotNull
-  public List<MatchResult> matchByDownUp(PsiElement element, MatchOptions options)
-    throws MalformedPatternException, UnsupportedPatternException {
+  public List<MatchResult> matchByDownUp(PsiElement element) throws MalformedPatternException, UnsupportedPatternException {
     final CollectingMatchResultSink sink = new CollectingMatchResultSink();
+    final MatchOptions options = matchContext.getOptions();
     final CompiledPattern compiledPattern = prepareMatching(sink, options);
     matchContext.setShouldRecursivelyMatch(false);
 
@@ -551,7 +551,7 @@ public class Matcher {
 
     assert targetNode != null : "Could not match down up when no target node";
 
-    final LanguageFileType fileType = (LanguageFileType)matchContext.getOptions().getFileType();
+    final LanguageFileType fileType = (LanguageFileType)options.getFileType();
     match(elementToStartMatching, fileType.getLanguage());
     matchContext.getSink().matchingFinished();
     return sink.getMatches();

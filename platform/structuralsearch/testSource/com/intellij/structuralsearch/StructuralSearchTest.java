@@ -1932,14 +1932,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     assertEquals(7, vars.size());
 
-    Matcher testMatcher = new Matcher(getProject());
     MatchOptions options = new MatchOptions();
     options.fillSearchCriteria("try  { '_st*; } catch('_Type 't+) { '_st2*; }");
     options.setFileType(StdFileTypes.JAVA);
+    Matcher testMatcher = new Matcher(getProject(), options);
 
     List<MatchResult> results = new ArrayList<>();
     for(PsiVariable var:vars) {
-      final List<MatchResult> matchResult = testMatcher.matchByDownUp(var, options);
+      final List<MatchResult> matchResult = testMatcher.matchByDownUp(var);
       results.addAll(matchResult);
       assertTrue((var instanceof PsiParameter && var.getParent() instanceof PsiCatchSection && !matchResult.isEmpty()) ||
                  matchResult.isEmpty());
@@ -1959,7 +1959,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     for(PsiVariable var:vars) {
       final PsiTypeElement typeElement = var.getTypeElement();
-      final List<MatchResult> matchResult = testMatcher.matchByDownUp(typeElement, options);
+      final List<MatchResult> matchResult = testMatcher.matchByDownUp(typeElement);
       results.addAll(matchResult);
       assertTrue((var instanceof PsiParameter && var.getParent() instanceof PsiCatchSection && !matchResult.isEmpty()) ||
                  matchResult.isEmpty());
