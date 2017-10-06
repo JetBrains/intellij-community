@@ -28,6 +28,7 @@ import com.intellij.debugger.streams.wrapper.TraceUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.JBTabsPaneImpl;
 import com.intellij.ui.components.JBLabel;
@@ -176,7 +177,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
   }
 
   @NotNull
-  private static List<TraceControllerImpl> createControllers(@NotNull ResolvedTracingResult resolvedResult) {
+  private List<TraceControllerImpl> createControllers(@NotNull ResolvedTracingResult resolvedResult) {
     List<TraceControllerImpl> controllers = new ArrayList<>();
     final ResolvedStreamChain chain = resolvedResult.getResolvedChain();
 
@@ -210,6 +211,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       controllers.add(terminationController);
     }
 
+    controllers.forEach(x -> Disposer.register(myDisposable, x));
     return controllers;
   }
 

@@ -100,7 +100,9 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
     if (controllers.size == 1) {
       val controller = controllers[0]
       val tree = CollectionTree(controller.values, controller.trace, evaluationContext)
-      add(CollectionView("", tree))
+      val view = CollectionView("", tree)
+      add(view)
+      controller.register(view)
     }
   }
 

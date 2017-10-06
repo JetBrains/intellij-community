@@ -16,6 +16,7 @@
 package com.intellij.debugger.streams.ui;
 
 import com.intellij.debugger.streams.trace.TraceElement;
+import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -23,7 +24,7 @@ import java.util.List;
 /**
  * @author Vitaliy.Bibaev
  */
-public interface TraceContainer {
+public interface TraceContainer extends Disposable {
   void highlight(@NotNull List<TraceElement> elements);
 
   void select(@NotNull List<TraceElement> elements);
