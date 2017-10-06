@@ -671,7 +671,7 @@ object Utils {
     if (boundedLabel != null) return boundedLabel
     else {
       if (parent.parent == null) throw ComponentLookupException("Unable to find bounded label")
-      return getBoundedLabelRecursive(component, parent)
+      return getBoundedLabelRecursive(component, parent.parent)
     }
   }
 
