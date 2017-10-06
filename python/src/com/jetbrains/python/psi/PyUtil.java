@@ -560,14 +560,6 @@ public class PyUtil {
     return !isListComprehension || isAtLeast30;
   }
 
-  public static boolean hasCustomDecorators(@NotNull PyDecoratable decoratable) {
-    return PyKnownDecoratorUtil.hasNonBuiltinDecorator(decoratable, TypeEvalContext.codeInsightFallback(null));
-  }
-
-  public static boolean isDecoratedAsAbstract(@NotNull final PyDecoratable decoratable) {
-    return PyKnownDecoratorUtil.hasAbstractDecorator(decoratable, TypeEvalContext.codeInsightFallback(null));
-  }
-
   public static ASTNode createNewName(PyElement element, String name) {
     return PyElementGenerator.getInstance(element.getProject()).createNameIdentifier(name, LanguageLevel.forElement(element));
   }
