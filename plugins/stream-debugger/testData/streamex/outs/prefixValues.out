@@ -1,5 +1,5 @@
 LineBreakpoint created at PrefixValues.java:8
-!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!IDEA_HOME!\community\plugins\stream-debugger\lib\streamex-0.6.5.jar;!RT_JAR! misc.PrefixValues
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!LIBRARY_JAR!;!RT_JAR! misc.PrefixValues
 Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 PrefixValues.java:8
 EntryStream.of(1, 1, 2, 4, 3, 9)

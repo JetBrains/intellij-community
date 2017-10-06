@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.streams.exec
 
+import com.intellij.debugger.impl.OutputChecker
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PluginPathManager
@@ -26,18 +27,26 @@ import java.io.File
  * @author Vitaliy.Bibaev
  */
 abstract class LibraryTraceExecutionTestCase(private val jarName: String) : TraceExecutionTestCase() {
-  private val libraryDirectory = PluginPathManager.getPluginHomePath("stream-debugger") + "/lib"
+  private val libraryDirectory = File(PluginPathManager.getPluginHomePath("stream-debugger") + "/lib").absolutePath
   override fun setUpModule() {
     super.setUpModule()
     ApplicationManager.getApplication().runWriteAction {
-      VfsRootAccess.allowRootAccess(File(libraryDirectory).absolutePath)
+      VfsRootAccess.allowRootAccess(libraryDirectory)
       PsiTestUtil.addLibrary(myModule, "$libraryDirectory/$jarName")
+    }
+  }
+
+  override fun initOutputChecker(): OutputChecker {
+    return object : OutputChecker(testAppPath, appOutputPath) {
+      override fun replaceAdditionalInOutput(str: String): String {
+        return str.replaceFirst("$libraryDirectory/$jarName", "!LIBRARY_JAR!")
+      }
     }
   }
 
   override fun createJavaParameters(mainClass: String?): JavaParameters {
     val parameters = super.createJavaParameters(mainClass)
-    parameters.classPath.add(File("$libraryDirectory/$jarName").absolutePath)
+    parameters.classPath.add("$libraryDirectory/$jarName")
     return parameters
   }
 
