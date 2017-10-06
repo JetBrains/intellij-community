@@ -26,10 +26,10 @@ import com.intellij.testGuiFramework.recorder.ui.Notifier
  */
 class SyncEditorAction : ToggleAction(null, "Synchronize Editor with Generated GUI Script", AllIcons.Actions.Refresh) {
 
-  override fun isSelected(e: AnActionEvent?): Boolean = if (GuiRecorderComponent.getFrame() != null) GuiRecorderComponent.getFrame()!!.isSyncToEditor() else false
+  override fun isSelected(e: AnActionEvent?): Boolean = if (GuiRecorderComponent.frame != null) GuiRecorderComponent.frame!!.isSyncToEditor() else false
 
   override fun setSelected(e: AnActionEvent?, toSync: Boolean) {
-    val frame = GuiRecorderComponent.getFrame() ?: return
+    val frame = GuiRecorderComponent.frame ?: return
     frame.setSyncToEditor(toSync)
     if (toSync)
       Notifier.updateStatus("Synchronization is on")

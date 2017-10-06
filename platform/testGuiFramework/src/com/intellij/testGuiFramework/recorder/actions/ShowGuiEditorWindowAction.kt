@@ -26,7 +26,7 @@ import com.intellij.testGuiFramework.recorder.ui.GuiScriptEditorFrame
 class ShowGuiEditorWindowAction() : AnAction() {
 
   override fun actionPerformed(p0: AnActionEvent?) {
-    val frame = GuiRecorderComponent.getFrame()
+    val frame = GuiRecorderComponent.frame
     if (frame == null) {
       GuiScriptEditorFrame()
     }
