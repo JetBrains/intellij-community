@@ -21,11 +21,8 @@ import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
@@ -287,7 +284,7 @@ public class FormatterUtil {
    * This method allows such 'inner element modifications', i.e. it receives information on what new text should be used
    * at the target inner element range and performs corresponding replacement by generating new leaf with adjusted text
    * and replacing the old one by it.
-   * 
+   *
    * @param newWhiteSpaceText  new text to use at the target inner element range
    * @param holder             target range holder
    * @param whiteSpaceRange    target range which text should be replaced by the given one
@@ -303,7 +300,7 @@ public class FormatterUtil {
 
     holder.getTreeParent().replaceChild(holder, newElement);
   }
-  
+
   public static void replaceWhiteSpace(final String whiteSpace,
                                        final ASTNode leafElement,
                                        final IElementType whiteSpaceToken,
@@ -492,15 +489,4 @@ public class FormatterUtil {
   public static boolean isFormatterCalledExplicitly() {
     return FORMATTER_ACTION_NAMES.contains(CommandProcessor.getInstance().getCurrentCommandName());
   }
-
-  @Nullable
-  public static Document getFileDocument(@NotNull PsiFile file) {
-    if (file.isValid()) {
-      Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
-      if (document != null) return document;
-      return file.getViewProvider().getDocument();
-    }
-    return null;
-  }
-
 }
