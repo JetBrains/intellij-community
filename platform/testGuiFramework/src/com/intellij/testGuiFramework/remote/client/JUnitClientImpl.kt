@@ -20,9 +20,7 @@ import com.intellij.testGuiFramework.remote.transport.MessageType
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
-import java.net.InetSocketAddress
-import java.net.Socket
-import java.net.SocketException
+import java.net.*
 import java.util.*
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.Executors
@@ -56,7 +54,7 @@ class JUnitClientImpl(val host: String, val port: Int, initHandlers: Array<Clien
 
     LOG.info("Client connecting to Server($host, $port) ...")
     connection = Socket()
-    connection.connect(InetSocketAddress.createUnresolved(host, port), clientConnectionTimeout)
+    connection.connect(InetSocketAddress(InetAddress.getByName(host), port), clientConnectionTimeout)
     LOG.info("Client connected to Server($host, $port) successfully")
 
     objectOutputStream = ObjectOutputStream(connection.getOutputStream())
