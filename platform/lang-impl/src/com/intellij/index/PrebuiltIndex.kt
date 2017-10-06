@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.stubs.FileContentHashing
 import com.intellij.psi.stubs.HashCodeDescriptor
 import com.intellij.psi.stubs.PrebuiltStubsProviderBase
@@ -49,7 +50,8 @@ abstract class PrebuiltIndexProviderBase<Value> : Disposable {
         myPrebuiltIndexStorage = openIndexStorage(indexesRoot)
 
         LOG.info("Using prebuilt $indexName from " + myPrebuiltIndexStorage!!.baseFile.absolutePath)
-      } else {
+      }
+      else {
         LOG.info("Prebuilt $indexName indices are missing for $dirName")
       }
     }
@@ -60,14 +62,16 @@ abstract class PrebuiltIndexProviderBase<Value> : Disposable {
   }
 
   fun get(fileContent: FileContent): Value? {
-    if (myPrebuiltIndexStorage != null) {
-      val hashCode = myFileContentHashing.hashString(fileContent)
-      try {
-        return myPrebuiltIndexStorage!!.get(hashCode)
-      }
-      catch (e: Exception) {
-        LOG.error("Error reading prebuilt stubs from " + myPrebuiltIndexStorage!!.baseFile.path, e)
-        myPrebuiltIndexStorage = null
+    if (Registry.`is`("use.prebuilt.indices")) {
+      if (myPrebuiltIndexStorage != null) {
+        val hashCode = myFileContentHashing.hashString(fileContent)
+        try {
+          return myPrebuiltIndexStorage!!.get(hashCode)
+        }
+        catch (e: Exception) {
+          LOG.error("Error reading prebuilt stubs from " + myPrebuiltIndexStorage!!.baseFile.path, e)
+          myPrebuiltIndexStorage = null
+        }
       }
     }
     return null

@@ -212,7 +212,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         ApplicationManager.getApplication().runReadAction(() -> {
           Stub rootStub = null;
 
-          if (Registry.is("use.prebuilt.stubs")) {
+          if (Registry.is("use.prebuilt.indices")) {
             final PrebuiltStubsProvider prebuiltStubsProvider =
               PrebuiltStubsProviders.INSTANCE.forFileType(inputData.getFileType());
             if (prebuiltStubsProvider != null) {
