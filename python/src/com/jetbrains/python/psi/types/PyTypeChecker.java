@@ -371,7 +371,8 @@ public class PyTypeChecker {
     }
     if (type instanceof PyFunctionType) {
       final PyCallable callable = ((PyFunctionType)type).getCallable();
-      if (callable instanceof PyDecoratable && PyKnownDecoratorUtil.hasUnknownDecorator((PyDecoratable)callable, context)){
+      if (callable instanceof PyDecoratable &&
+          PyKnownDecoratorUtil.hasUnknownOrChangingReturnTypeDecorator((PyDecoratable)callable, context)){
         return true;
       }
     }
