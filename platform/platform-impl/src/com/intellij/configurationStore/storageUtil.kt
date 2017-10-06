@@ -139,7 +139,10 @@ fun getOrCreateVirtualFile(requestor: Any?, file: Path): VirtualFile {
   val absoluteFile = file.toAbsolutePath()
 
   val parentFile = absoluteFile.parent
-  parentFile.createDirectories()
+  if (!parentFile.isDirectory()) {
+    // it's neither a directory nor a symbolic link to an existing directory
+    parentFile.createDirectories()
+  }
 
   // need refresh if the directory has just been created
   val parentVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(parentFile.systemIndependentPath) ?: throw IOException(
