@@ -926,6 +926,7 @@ public class AbstractPopup implements JBPopup {
     window.addWindowListener(myWindowListener);
 
     if (myFocusable) {
+      window.setAutoRequestFocus(true);
       window.setFocusableWindowState(true);
       window.setFocusable(true);
     }
@@ -962,55 +963,7 @@ public class AbstractPopup implements JBPopup {
     if (myRequestFocus) {
       getPopupWindow().setFocusableWindowState(true);
       getPopupWindow().setFocusable(true);
-      getFocusManager().requestFocus(new FocusCommand() {
-        @NotNull
-        @Override
-        public ActionCallback run() {
-          if (isDisposed()) {
-            removeActivity();
-            return ActionCallback.DONE;
-          }
-
-          _requestFocus();
-
-          final ActionCallback result = new ActionCallback();
-
-          final Runnable afterShowRunnable = () -> {
-            afterShow.run();
-            result.setDone();
-          };
-          if (myNativePopup) {
-            final FocusRequestor furtherRequestor = getFocusManager().getFurtherRequestor();
-            //noinspection SSBasedInspection
-            SwingUtilities.invokeLater(() -> {
-              if (isDisposed()) {
-                result.setRejected();
-                return;
-              }
-
-              furtherRequestor.requestFocus(new FocusCommand() {
-                @NotNull
-                @Override
-                public ActionCallback run() {
-                  if (isDisposed()) {
-                    return ActionCallback.REJECTED;
-                  }
-
-                  _requestFocus();
-
-                  afterShowRunnable.run();
-
-                  return ActionCallback.DONE;
-                }
-              }, true).notify(result).doWhenProcessed(() -> removeActivity());
-            });
-          } else {
-            afterShowRunnable.run();
-          }
-
-          return result;
-        }
-      }, true).doWhenRejected(afterShow);
+      getFocusManager().doWhenFocusSettlesDown(() -> _requestFocus());
 
       delayKeyEventsUntilFocusSettlesDown();
     } else {
@@ -1192,14 +1145,7 @@ public class AbstractPopup implements JBPopup {
   protected final boolean requestFocus() {
     if (!myFocusable) return false;
 
-    getFocusManager().requestFocus(new FocusCommand() {
-      @NotNull
-      @Override
-      public ActionCallback run() {
-        _requestFocus();
-        return ActionCallback.DONE;
-      }
-    }, true);
+    getFocusManager().doWhenFocusSettlesDown(() -> _requestFocus());
 
     return true;
   }
