@@ -30,7 +30,7 @@ abstract class IndexGenerator<Value>(private val indexStorageFilePath: String) {
 
     val storage = createStorage(indexStorageFilePath)
 
-    println("Writing indicesls to ${storage.baseFile.absolutePath}")
+    println("Writing indices to ${storage.baseFile.absolutePath}")
 
     try {
       val map = HashMap<HashCode, Pair<String, Value>>()
