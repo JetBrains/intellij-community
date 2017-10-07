@@ -247,6 +247,10 @@ public class ConstExprent extends Exprent {
     throw new RuntimeException("invalid constant type: " + constType);
   }
 
+  public boolean isNull() {
+    return CodeConstants.TYPE_NULL == constType.type;
+  }
+
   private static String convertStringToJava(String value, boolean ascii) {
     char[] arr = value.toCharArray();
     StringBuilder buffer = new StringBuilder(arr.length);
