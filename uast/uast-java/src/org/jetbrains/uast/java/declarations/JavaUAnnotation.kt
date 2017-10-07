@@ -22,13 +22,12 @@ import org.jetbrains.uast.java.expressions.JavaUNamedExpression
 
 class JavaUAnnotation(
         override val psi: PsiAnnotation,
-        override val uastParent: UElement?
-) : UAnnotation {
+        givenParent: UElement?
+) : JavaLazyParentUElement(givenParent),  UAnnotation {
     override val qualifiedName: String?
         get() = psi.qualifiedName
 
     override val attributeValues: List<UNamedExpression> by lz {
-        val context = getUastContext()
         val attributes = psi.parameterList.attributes
 
         attributes.map { attribute -> JavaUNamedExpression(attribute, this) }

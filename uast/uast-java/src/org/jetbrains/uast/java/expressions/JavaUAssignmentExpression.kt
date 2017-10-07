@@ -22,8 +22,8 @@ import org.jetbrains.uast.UIdentifier
 
 class JavaUAssignmentExpression(
         override val psi: PsiAssignmentExpression,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UBinaryExpression {
+        givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UBinaryExpression {
     override val leftOperand by lz { JavaConverter.convertOrEmpty(psi.lExpression, this) }
     override val rightOperand by lz { JavaConverter.convertOrEmpty(psi.rExpression, this) }
     override val operator by lz { psi.operationTokenType.getOperatorType() }

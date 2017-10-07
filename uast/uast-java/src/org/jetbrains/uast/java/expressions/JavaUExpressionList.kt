@@ -25,8 +25,8 @@ import org.jetbrains.uast.java.JavaAbstractUExpression
 open class JavaUExpressionList(
         override val psi: PsiElement,
         override val kind: UastSpecialExpressionKind, // original element
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UExpressionList {
+        givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UExpressionList {
     override lateinit var expressions: List<UExpression>
         internal set
 }

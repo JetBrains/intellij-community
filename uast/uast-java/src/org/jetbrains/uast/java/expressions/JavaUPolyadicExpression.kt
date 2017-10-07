@@ -21,8 +21,8 @@ import org.jetbrains.uast.*
 
 class JavaUPolyadicExpression(
         override val psi: PsiPolyadicExpression,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UPolyadicExpression {
+        givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UPolyadicExpression {
     override val operands: List<UExpression> by lz {
         psi.operands.map { JavaConverter.convertOrEmpty(it, this) }
     }

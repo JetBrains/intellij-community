@@ -16,15 +16,28 @@
 
 package org.jetbrains.uast.java
 
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiExpression
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
+import org.jetbrains.uast.toUElement
 
-abstract class JavaAbstractUElement : JavaUElementWithComments {
+abstract class JavaLazyParentUElement(private val givenParent: UElement?) : UElement {
+
+    override val uastParent: UElement? by lz { givenParent ?: convertParent() }
+
+    protected open fun convertParent(): UElement? =
+      getPsiParentForLazyConversion()?.let { JavaConverter.unwrapElements(it).toUElement() }?.also {
+          if (it === this) throw IllegalStateException("lazy parent loop for $this")
+          if (it.psi != null && it.psi === this.psi) throw IllegalStateException(
+            "lazy parent loop: psi ${this.psi}(${this.psi?.javaClass}) for $this of ${this.javaClass}")
+      }
+
+    protected open fun getPsiParentForLazyConversion() = this.psi?.parent
+}
+
+abstract class JavaAbstractUElement(givenParent: UElement?) : JavaLazyParentUElement(givenParent), JavaUElementWithComments {
     override fun equals(other: Any?): Boolean {
         if (other !is UElement || other.javaClass != this.javaClass) return false
         return if (this.psi != null) this.psi == other.psi else this === other
@@ -39,7 +52,7 @@ abstract class JavaAbstractUElement : JavaUElementWithComments {
     override fun toString() = asRenderString()
 }
 
-abstract class JavaAbstractUExpression : JavaAbstractUElement(), UExpression {
+abstract class JavaAbstractUExpression(givenParent: UElement?)  : JavaAbstractUElement(givenParent), UExpression {
     override fun evaluate(): Any? {
         val project = psi?.project ?: return null
         return JavaPsiFacade.getInstance(project).constantEvaluationHelper.computeConstantExpression(psi)
@@ -51,5 +64,12 @@ abstract class JavaAbstractUExpression : JavaAbstractUElement(), UExpression {
     override fun getExpressionType(): PsiType? {
         val expression = psi as? PsiExpression ?: return null
         return expression.type
+    }
+
+    override fun getPsiParentForLazyConversion(): PsiElement? = super.getPsiParentForLazyConversion()?.let {
+        when (it) {
+            is PsiResourceExpression -> it.parent
+            else -> it
+        }
     }
 }
