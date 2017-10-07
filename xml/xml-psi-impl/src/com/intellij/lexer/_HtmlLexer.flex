@@ -44,7 +44,7 @@ DIGIT=[0-9]
 WHITE_SPACE_CHARS=[ \n\r\t\f\u2028\u2029\u0085]+
 
 TAG_NAME=({ALPHA}|"_"|":")({ALPHA}|{DIGIT}|"_"|":"|"."|"-")*
-TAG_NAME_FWT=("#")({ALPHA}|{DIGIT}|"_"|":"|"."|"-")*
+TAG_NAME_FWT=("#")({ALPHA}|"_"|":")({ALPHA}|{DIGIT}|"_"|":"|"."|"-")*
 /* see http://www.w3.org/TR/html5/syntax.html#syntax-attribute-name */
 ATTRIBUTE_NAME=([^ \n\r\t\f\"\'<>/=])+
 
