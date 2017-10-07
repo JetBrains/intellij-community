@@ -28,7 +28,7 @@ class PluginInstallTest : PluginTestCase() {
 
   @Test
   fun testPluginByPath() {
-    installPluginAndRestart { installPluginFromDisk("/Users/jetbrains/Downloads/Dart-172.4155.35.zip") }
+    installPluginAndRestart { installPluginFromDisk("/Users/jetbrains/Downloads/Dart-172.4155.35.zip", "Dart") }
     checkPluginsFunctionality("Dart")
   }
 
