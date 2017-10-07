@@ -24,8 +24,8 @@ import org.jetbrains.uast.UParameter
 
 class JavaUForEachExpression(
         override val psi: PsiForeachStatement,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UForEachExpression {
+        givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UForEachExpression {
     override val variable: UParameter
         get() = JavaUParameter(psi.iterationParameter, this)
 

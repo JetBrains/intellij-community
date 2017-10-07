@@ -27,8 +27,8 @@ import org.jetbrains.uast.visitor.UastVisitor
 
 class JavaUSynchronizedExpression(
         override val psi: PsiSynchronizedStatement,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UBlockExpression {
+        givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UBlockExpression {
     override val expressions by lz { psi.body?.statements?.map { JavaConverter.convertOrEmpty(it, this) } ?: listOf() }
     val lockExpression by lz { JavaConverter.convertOrEmpty(psi.lockExpression, this) }
 

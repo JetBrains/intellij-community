@@ -20,7 +20,12 @@ import com.intellij.psi.*
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
-abstract class AbstractJavaUVariable : PsiVariable, UVariable, JavaUElementWithComments {
+abstract class AbstractJavaUVariable(givenParent: UElement?) : JavaAbstractUElement(givenParent), PsiVariable, UVariable, JavaUElementWithComments {
+
+    @Suppress("unused") // Used in Kotlin 1.1.4, to be removed in 2018.1
+    @Deprecated("use AbstractJavaUVariable(givenParent) instead", ReplaceWith("AbstractJavaUVariable(givenParent)"))
+    constructor() : this(null)
+
     override val uastInitializer by lz {
         val initializer = psi.initializer ?: return@lz null
         getLanguagePlugin().convertElement(initializer, this) as? UExpression
@@ -38,8 +43,8 @@ abstract class AbstractJavaUVariable : PsiVariable, UVariable, JavaUElementWithC
 
 open class JavaUVariable(
         psi: PsiVariable,
-        override val uastParent: UElement?
-) : AbstractJavaUVariable(), UVariable, PsiVariable by psi {
+        givenParent: UElement?
+) : AbstractJavaUVariable(givenParent), UVariable, PsiVariable by psi {
     override val psi = unwrap<UVariable, PsiVariable>(psi)
     
     companion object {
@@ -57,29 +62,29 @@ open class JavaUVariable(
 
 open class JavaUParameter(
         psi: PsiParameter,
-        override val uastParent: UElement?
-) : AbstractJavaUVariable(), UParameter, PsiParameter by psi {
+        givenParent: UElement?
+) : AbstractJavaUVariable(givenParent), UParameter, PsiParameter by psi {
     override val psi = unwrap<UParameter, PsiParameter>(psi)
 }
 
 open class JavaUField(
         psi: PsiField,
-        override val uastParent: UElement?
-) : AbstractJavaUVariable(), UField, PsiField by psi {
+        givenParent: UElement?
+) : AbstractJavaUVariable(givenParent), UField, PsiField by psi {
     override val psi = unwrap<UField, PsiField>(psi)
 }
 
 open class JavaULocalVariable(
         psi: PsiLocalVariable,
-        override val uastParent: UElement?
-) : AbstractJavaUVariable(), ULocalVariable, PsiLocalVariable by psi {
+        givenParent: UElement?
+) : AbstractJavaUVariable(givenParent), ULocalVariable, PsiLocalVariable by psi {
     override val psi = unwrap<ULocalVariable, PsiLocalVariable>(psi)
 }
 
 open class JavaUEnumConstant(
         psi: PsiEnumConstant,
-        override val uastParent: UElement?
-) : AbstractJavaUVariable(), UEnumConstant, PsiEnumConstant by psi {
+        givenParent: UElement?
+) : AbstractJavaUVariable(givenParent), UEnumConstant, PsiEnumConstant by psi {
     override val initializingClass: UClass? by lz { getLanguagePlugin().convertOpt<UClass>(psi.initializingClass, this) }
 
     override val psi = unwrap<UEnumConstant, PsiEnumConstant>(psi)
@@ -117,8 +122,8 @@ open class JavaUEnumConstant(
 
     private class JavaEnumConstantClassReference(
             override val psi: PsiEnumConstant,
-            override val uastParent: UElement?
-    ) : JavaAbstractUExpression(), USimpleNameReferenceExpression {
+            givenParent: UElement?
+    ) : JavaAbstractUExpression(givenParent), USimpleNameReferenceExpression {
         override fun resolve() = psi.containingClass
         override val resolvedName: String?
             get() = psi.containingClass?.name

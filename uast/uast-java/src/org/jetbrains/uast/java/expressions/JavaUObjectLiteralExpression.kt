@@ -23,13 +23,13 @@ import org.jetbrains.uast.UReferenceExpression
 
 class JavaUObjectLiteralExpression(
         override val psi: PsiNewExpression,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UObjectLiteralExpression {
+        givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UObjectLiteralExpression {
     override val declaration by lz { JavaUClass.create(psi.anonymousClass!!, this) }
 
     override val classReference by lz {
         psi.classReference?.let { ref ->
-            JavaConverter.convertReference(ref, { this }, null) as? UReferenceExpression
+            JavaConverter.convertReference(ref, this, null) as? UReferenceExpression
         }
     }
 

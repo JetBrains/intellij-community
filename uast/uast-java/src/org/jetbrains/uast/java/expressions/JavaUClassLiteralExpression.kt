@@ -22,8 +22,8 @@ import org.jetbrains.uast.UElement
 
 class JavaUClassLiteralExpression(
         override val psi: PsiClassObjectAccessExpression,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UClassLiteralExpression {
+        givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UClassLiteralExpression {
     override val type: PsiType
         get() = psi.operand.type
 
