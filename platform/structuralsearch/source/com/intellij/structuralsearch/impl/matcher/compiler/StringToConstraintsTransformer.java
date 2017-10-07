@@ -352,11 +352,9 @@ public class StringToConstraintsTransformer {
                                    boolean invert) {
     argument = argument.trim();
     if (option.equalsIgnoreCase(REF)) {
-      constraint.setReference(true);
+      if (argument.isEmpty()) throw new MalformedPatternException(SSRBundle.message("error.pattern.argument.expected", option));
+      constraint.setReferenceConstraint(argument);
       constraint.setInvertReference(invert);
-      if (argument.isEmpty() || argument.charAt(0) != '\'')
-        throw new MalformedPatternException(SSRBundle.message("error.reference.variable.name.expected", option));
-      constraint.setNameOfReferenceVar(argument.substring(1));
     }
     else if (option.equalsIgnoreCase(REGEX) || option.equalsIgnoreCase(REGEXW)) {
       if (argument.isEmpty()) throw new MalformedPatternException(SSRBundle.message("error.regular.expression.argument.expected", option));
