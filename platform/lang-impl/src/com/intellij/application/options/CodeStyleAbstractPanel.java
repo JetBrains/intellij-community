@@ -308,8 +308,16 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   protected PsiFile createFileFromText(Project project, String text) {
     Language language = getDefaultLanguage();
     if (language != null) {
-      final PsiFile file = LanguageCodeStyleSettingsProvider.createFileFromText(language, project, text);
-      if (file != null) return file;
+      LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(language);
+      if (provider != null) {
+        final PsiFile file = provider.createFileFromText(project, text);
+        if (file != null) {
+          if (file.isPhysical()) {
+            LOG.error(provider.getClass() + " creates a physical file with PSI events enabled");
+          }
+          return file;
+        }
+      }
     }
     return PsiFileFactory.getInstance(project).createFileFromText(
       "a." + getFileExt(), getFileType(), text, LocalTimeCounter.currentTime(), false
