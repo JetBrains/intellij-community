@@ -193,7 +193,7 @@ class JUnitServerImpl : JUnitServer {
         LOG.info("Server Receive Thread started")
         while (connection.isConnected) {
           val obj = objectInputStream.readObject()
-          LOG.info("Receiving message: $obj")
+          LOG.debug("Receiving message: $obj")
           assert(obj is TransportMessage)
           val message = obj as TransportMessage
           receivingMessages.put(message)
