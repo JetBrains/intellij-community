@@ -601,12 +601,16 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     return null;
   }
 
+  public final MyNode getSelectedNode() {
+    TreePath path = myTree.getSelectionPath();
+    return path != null ? (MyNode)path.getLastPathComponent() : null;
+  }
+
   @Nullable
   public NamedConfigurable getSelectedConfigurable() {
-    final TreePath selectionPath = myTree.getSelectionPath();
-    if (selectionPath != null) {
-      MyNode node = (MyNode)selectionPath.getLastPathComponent();
-      final NamedConfigurable configurable = node.getConfigurable();
+    MyNode selectedNode = getSelectedNode();
+    if (selectedNode != null) {
+      final NamedConfigurable configurable = selectedNode.getConfigurable();
       LOG.assertTrue(configurable != null, "already disposed");
       return configurable;
     }

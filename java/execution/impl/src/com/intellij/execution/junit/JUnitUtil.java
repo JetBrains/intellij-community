@@ -98,6 +98,7 @@ public class JUnitUtil {
   @NonNls public static final String PARAMETERIZED_CLASS_NAME = "org.junit.runners.Parameterized";
   @NonNls public static final String SUITE_CLASS_NAME = "org.junit.runners.Suite";
   public static final String JUNIT5_NESTED = "org.junit.jupiter.api.Nested";
+  private static final String[] KNOWN_RUNNERS = {"org.junit.runners.Parameterized", "org.junit.runners.BlockJUnit4ClassRunner", "org.junit.runners.JUnit4"};
 
   public static boolean isSuiteMethod(@NotNull PsiMethod psiMethod) {
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
@@ -135,7 +136,7 @@ public class JUnitUtil {
     if (checkClass && checkRunWith) {
       PsiAnnotation annotation = getRunWithAnnotation(aClass);
       if (annotation != null) {
-        return !isRunnerWithRequiredAnnotationOnTestMethod(annotation, "org.junit.runners.Parameterized", "org.junit.runners.BlockJUnit4ClassRunner");
+        return !isRunnerWithRequiredAnnotationOnTestMethod(annotation, KNOWN_RUNNERS);
       }
     }
     if (psiMethod.getParameterList().getParametersCount() > 0) return false;
@@ -216,7 +217,19 @@ public class JUnitUtil {
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null) return false;
     final PsiClass topLevelClass = PsiTreeUtil.getTopmostParentOfType(modifierList, PsiClass.class);
-    if (topLevelClass != null && AnnotationUtil.isAnnotated(topLevelClass, RUN_WITH, true)) return true;
+    if (topLevelClass != null) {
+      if (AnnotationUtil.isAnnotated(topLevelClass, RUN_WITH, true)) {
+        PsiAnnotation annotation = getRunWithAnnotation(topLevelClass);
+        if (topLevelClass == psiClass) {
+          return true;
+        }
+
+        //default runners do not implicitly run inner classes
+        if (annotation != null && !isRunnerWithRequiredAnnotationOnTestMethod(annotation, KNOWN_RUNNERS)) {
+          return true;
+        }
+      }
+    }
 
     if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
 

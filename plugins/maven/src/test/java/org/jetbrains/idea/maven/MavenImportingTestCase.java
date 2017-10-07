@@ -74,6 +74,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
+      JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
       Messages.setTestDialog(TestDialog.DEFAULT);
       removeFromLocalRepository("test");
       ExternalSystemTestCase.deleteBuildSystemDirectory();

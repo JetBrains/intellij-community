@@ -21,12 +21,18 @@ import com.intellij.testGuiFramework.impl.GuiTestThread
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitProgressDialogUntilGone
 import com.intellij.testGuiFramework.launcher.GuiTestOptions
+import com.intellij.testGuiFramework.launcher.system.SystemInfo
 import com.intellij.testGuiFramework.remote.transport.MessageType
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
 import org.fest.swing.exception.WaitTimedOutError
 import javax.swing.JDialog
 
 open class PluginTestCase : GuiTestCase() {
+
+
+  private val MAC_PLUGIN_HOME = "/Users/jetbrains/Documents/plugins/"
+  private val WIN_PLUGIN_HOME = "/Users/jetbrains/Documents/plugins/"
+  private val LINUX_PLUGIN_HOME = "/Users/jetbrains/Documents/plugins/"
 
   fun installPluginAndRestart(installPluginsFunction: () -> Unit) {
     val PLUGINS_INSTALLED = "PLUGINS_INSTALLED"
@@ -63,15 +69,37 @@ open class PluginTestCase : GuiTestCase() {
     }
   }
 
-  fun installPluginFromDisk(pluginPath: String) {
+  fun installPluginFromDisk(pluginDir: String, pluginName: String) {
+    var pluginPath: String = when {
+                               SystemInfo.isMac() -> MAC_PLUGIN_HOME
+                               SystemInfo.isWin() -> WIN_PLUGIN_HOME
+                               else -> {
+                                 LINUX_PLUGIN_HOME
+                               }
+                             } + pluginDir
     welcomeFrame {
       actionLink("Configure").click()
       popupClick("Plugins")
       dialog("Plugins") {
-        button("Install plugin from disk...").click()
-        chooseFileInFileChooser(pluginPath)
-        button("OK").click()
-        ensureButtonOkHasPressed(this@PluginTestCase)
+        //Check if plugin has already been installed
+        try {
+          table(pluginName, timeout = 1L).cell(pluginName).click()
+          button("OK").click()
+          ensureButtonOkHasPressed(this@PluginTestCase)
+        }
+        catch (e: Exception) {
+          button("Install plugin from disk...").click()
+          chooseFileInFileChooser(pluginPath)
+          button("OK").click()
+          ensureButtonOkHasPressed(this@PluginTestCase)
+        }
+      }
+      try {
+        message("IDE and Plugin Updates", timeout = 5L) {
+          button("Shutdown").click()
+        }
+      }
+      catch (e: Exception) {
       }
     }
   }
@@ -82,7 +110,7 @@ open class PluginTestCase : GuiTestCase() {
       GuiTestUtilKt.waitUntilGone(robot = guiTestCase.robot(),
                                   timeoutInSeconds = 2,
                                   matcher = GuiTestUtilKt.typeMatcher(
-                                                                       JDialog::class.java) { it.isShowing && it.title == dialogTitle })
+                                    JDialog::class.java) { it.isShowing && it.title == dialogTitle })
     }
     catch (timeoutError: WaitTimedOutError) {
       with(guiTestCase) {

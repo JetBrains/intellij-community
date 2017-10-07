@@ -68,6 +68,8 @@ import java.util.List;
  * @author Eugene Belyaev
  */
 public class StructureViewWrapperImpl implements StructureViewWrapper, Disposable {
+  private static final DataKey<StructureViewWrapper> WRAPPER_DATA_KEY = DataKey.create("WRAPPER_DATA_KEY");
+
   private final Project myProject;
   private final ToolWindowEx myToolWindow;
 
@@ -79,7 +81,6 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
   private JPanel[] myPanels = new JPanel[0];
   private final MergingUpdateQueue myUpdateQueue;
-  private final String myKey = "DATA_SELECTOR";
 
   // -------------------------------------------------------------------------
   // Constructor
@@ -149,7 +150,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     }
 
     final DataContext dataContext = DataManager.getInstance().getDataContext(owner);
-    if (dataContext.getData(myKey) == this) return;
+    if (WRAPPER_DATA_KEY.getData(dataContext) == this) return;
     if (CommonDataKeys.PROJECT.getData(dataContext) != myProject) return;
 
     final VirtualFile[] files = hasFocus() ? null : CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
@@ -343,12 +344,14 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     }
 
     if (myModuleStructureComponent == null && myStructureView == null) {
-      createSinglePanel(new JBPanelWithEmptyText() {
+      JBPanelWithEmptyText panel = new JBPanelWithEmptyText() {
         @Override
         public Color getBackground() {
           return UIUtil.getTreeBackground();
         }
-      });
+      };
+      panel.getEmptyText().setText("No structure");
+      createSinglePanel(panel);
     }
 
     for (int i = 0; i < myPanels.length; i++) {
@@ -414,7 +417,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
     @Override
     public Object getData(@NonNls String dataId) {
-      if (dataId.equals(myKey)) return StructureViewWrapperImpl.this;
+      if (WRAPPER_DATA_KEY.is(dataId)) return StructureViewWrapperImpl.this;
       return null;
     }
   }

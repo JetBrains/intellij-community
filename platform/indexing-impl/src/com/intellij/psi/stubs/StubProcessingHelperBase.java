@@ -44,6 +44,7 @@ public abstract class StubProcessingHelperBase {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (psiFile == null) {
       LOG.error("Stub index points to a file without PSI: " + file.getFileType());
+      onInternalError(file);
       return true;
     }
 
@@ -100,16 +101,19 @@ public abstract class StubProcessingHelperBase {
     if (BinaryFileStubBuilders.INSTANCE.forFileType(psiFile.getFileType()) == null) {
       LOG.error("unable to get stub builder for " + psiFile.getFileType() + ", " +
                 StubTreeLoader.getFileViewProviderMismatchDiagnostics(psiFile.getViewProvider()));
+      onInternalError(file);
       return true;
     }
 
     ObjectStubTree objectStubTree = StubTreeLoader.getInstance().readFromVFile(psiFile.getProject(), file);
     if (objectStubTree == null) {
       LOG.error("Stub index points to a file without indexed stubs: " + psiFile.getFileType());
+      onInternalError(file);
       return true;
     }
     if (objectStubTree instanceof StubTree) {
       LOG.error("Stub index points to a file with PSI stubs (instead of non-PSI ones): " + psiFile.getFileType());
+      onInternalError(file);
       return true;
     }
     if (!requiredClass.isInstance(psiFile)) {

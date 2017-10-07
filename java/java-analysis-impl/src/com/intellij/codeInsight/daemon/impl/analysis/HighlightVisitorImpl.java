@@ -320,7 +320,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitLambdaExpression(PsiLambdaExpression expression) {
     myHolder.add(checkFeature(expression, Feature.LAMBDA_EXPRESSIONS));
     final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    if (parent instanceof PsiExpressionStatement) return;
+    if (toReportFunctionalExpressionProblemOnParent(parent)) return;
     if (!myHolder.hasErrorResults() && !LambdaUtil.isValidLambdaContext(parent)) {
       myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
                      .descriptionAndTooltip("Lambda expression not expected here").create());
@@ -1311,7 +1311,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
     myHolder.add(checkFeature(expression, Feature.METHOD_REFERENCES));
     final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    if (parent instanceof PsiExpressionStatement) return;
+    if (toReportFunctionalExpressionProblemOnParent(parent)) return;
 
     final JavaResolveResult result;
     final JavaResolveResult[] results;
@@ -1458,6 +1458,16 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         }
       }
     }
+  }
+
+  /**
+   * @return true for {@code functional_expression;} or {@code var l = functional_expression;}
+   */
+  private static boolean toReportFunctionalExpressionProblemOnParent(PsiElement parent) {
+    if (parent instanceof PsiLocalVariable) {
+      return ((PsiLocalVariable)parent).getTypeElement().isInferredType();
+    }
+    return parent instanceof PsiExpressionStatement;
   }
 
   // 15.13 | 15.27

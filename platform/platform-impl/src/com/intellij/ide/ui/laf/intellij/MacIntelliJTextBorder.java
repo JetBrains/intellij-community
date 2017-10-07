@@ -82,8 +82,10 @@ public class MacIntelliJTextBorder implements Border, UIResource, ErrorBorderCap
   public void paint(Component c, Graphics2D g2, int width, int height, float arc) {
     clipForBorder(c, g2, width, height);
 
-    if (((JComponent)c).getClientProperty("JComponent.error.outline") == Boolean.TRUE) {
-      DarculaUIUtil.paintErrorBorder(g2, width, height, arc, isSymmetric(), isFocused(c));
+    Object op = ((JComponent)c).getClientProperty("JComponent.outline");
+    if (op != null) {
+      DarculaUIUtil.paintOutlineBorder(g2, width, height, arc, isSymmetric(), isFocused(c),
+                                       DarculaUIUtil.Outline.valueOf(op.toString()));
     } else if (isFocused(c)) {
       DarculaUIUtil.paintFocusBorder(g2, width, height, arc, isSymmetric());
     }

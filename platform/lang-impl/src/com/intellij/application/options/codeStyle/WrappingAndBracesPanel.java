@@ -27,6 +27,7 @@ import com.intellij.ui.components.fields.CommaSeparatedIntegersField;
 import com.intellij.ui.components.fields.valueEditors.CommaSeparatedIntegersValueEditor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +47,8 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     super(settings);
     MarginOptionsUtil.customizeWrapOnTypingCombo(myWrapOnTypingCombo, settings);
     init();
+    UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, mySoftMarginsEditor);
+    UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myWrapOnTypingCombo);
   }
 
   @Override
@@ -188,11 +191,15 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
   @Override
   protected JComponent getCustomValueRenderer(@NotNull String optionName, @NotNull Object value) {
     if (CodeStyleSoftMarginsPresentation.OPTION_NAME.equals(optionName)) {
-      return new JLabel(getSoftMarginsString(castToIntList(value)));
+      JLabel softMarginsLabel = new JLabel(getSoftMarginsString(castToIntList(value)));
+      UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, softMarginsLabel);
+      return softMarginsLabel;
     }
     else if ("WRAP_ON_TYPING".equals(optionName)) {
       if (value.equals(ApplicationBundle.message("wrapping.wrap.on.typing.default"))) {
-        return new JLabel(MarginOptionsUtil.getDefaultWrapOnTypingText(getSettings()));
+        JLabel wrapLabel = new JLabel(MarginOptionsUtil.getDefaultWrapOnTypingText(getSettings()));
+        UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, wrapLabel);
+        return wrapLabel;
       }
     }
     return super.getCustomValueRenderer(optionName, value);

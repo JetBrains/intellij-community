@@ -71,9 +71,7 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
       g.fillRect(0, 0, size.width, size.height);
     }
 
-    final boolean selected = b.isSelected();
-    final boolean enabled = b.isEnabled();
-    drawCheckIcon(c, g, b, iconRect, selected, enabled);
+    drawCheckIcon(c, g, b, iconRect, b.isSelected(), b.isEnabled());
     drawText(c, g, b, fm, textRect, text);
   }
 
@@ -153,14 +151,13 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
     g.setStroke(new BasicStroke(1 * JBUI.scale(2.0f), BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND));
 
     int off = JBUI.scale(4);
-    int x1 = off;
     int y1 = h / 2;
     g.setColor(getShadowColor(enabled, true));
     GraphicsConfig c = new GraphicsConfig(g).paintWithAlpha(.8f);
-    g.drawLine(x1, y1 + JBUI.scale(1), w - off + JBUI.scale(1), y1 + JBUI.scale(1));
+    g.drawLine(off, y1 + JBUI.scale(1), w - off + JBUI.scale(1), y1 + JBUI.scale(1));
     c.restore();
     g.setColor(getCheckSignColor(enabled, true));
-    g.drawLine(x1, y1, w - off + JBUI.scale(1), y1);
+    g.drawLine(off, y1, w - off + JBUI.scale(1), y1);
   }
 
   protected void drawText(JComponent c, Graphics2D g, JCheckBox b, FontMetrics fm, Rectangle textRect, String text) {
@@ -187,20 +184,23 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
   protected void paintCheckSign(Graphics2D g, boolean enabled, int w, int h) {
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
     g.setStroke(new BasicStroke(1 * JBUI.scale(2.0f), BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND));
-    g.setPaint(getShadowColor(enabled, true));
-    final int x1 = JBUI.scale(4);
-    final int y1 = JBUI.scale(7);
-    final int x2 = JBUI.scale(7);
-    final int y2 = JBUI.scale(11);
-    final int x3 = w;
-    final int y3 = JBUI.scale(2);
 
-    g.drawLine(x1, y1, x2, y2);
-    g.drawLine(x2, y2, x3, y3);
+    int x1 = JBUI.scale(4);
+    int y1 = JBUI.scale(7);
+    int x2 = JBUI.scale(7);
+    int y2 = JBUI.scale(11);
+    int y3 = JBUI.scale(2);
+
+    if (enabled) {
+      g.setPaint(getShadowColor(true, true));
+      g.drawLine(x1, y1, x2, y2);
+      g.drawLine(x2, y2, w, y3);
+    }
+
     g.setPaint(getCheckSignColor(enabled, true));
     g.translate(0, -2);
     g.drawLine(x1, y1, x2, y2);
-    g.drawLine(x2, y2, x3, y3);
+    g.drawLine(x2, y2, w, y3);
     g.translate(0, 2);
   }
 

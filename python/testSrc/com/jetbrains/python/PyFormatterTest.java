@@ -852,6 +852,11 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-15051
+  public void testTrailingBlockCommentsIndentationPreserved() {
+    doTest();
+  }
+
   public void testVariableAnnotations() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }

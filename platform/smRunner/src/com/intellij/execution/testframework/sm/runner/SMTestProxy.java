@@ -16,7 +16,9 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.SMStacktraceParser;
 import com.intellij.execution.testframework.sm.SMStacktraceParserEx;
@@ -24,6 +26,7 @@ import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
 import com.intellij.execution.testframework.sm.runner.states.*;
 import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -951,6 +954,13 @@ public class SMTestProxy extends AbstractTestProxy {
         return SuiteFinishedState.TESTS_REPORTER_NOT_ATTACHED;
       }
       return super.determineSuiteStateOnFinished();
+    }
+
+    public void testingRestarted() {
+      if (!getChildren().isEmpty()) {
+        getChildren().clear();
+      }
+      clear();
     }
   }
 }

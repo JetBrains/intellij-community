@@ -17,15 +17,13 @@ package com.intellij.psi.stubs
 
 import com.google.common.hash.HashCode
 import com.google.common.hash.Hashing
-import com.intellij.openapi.Disposable
+import com.intellij.index.PrebuiltIndexProviderBase
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileTypeExtension
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.indexing.FileContent
-import com.intellij.util.indexing.IndexInfrastructure
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.KeyDescriptor
@@ -35,7 +33,6 @@ import org.jetbrains.annotations.TestOnly
 import java.io.DataInput
 import java.io.DataOutput
 import java.io.File
-import java.io.IOException
 
 /**
  * @author traff
@@ -53,7 +50,7 @@ interface PrebuiltStubsProvider {
 class FileContentHashing {
   private val hashing = Hashing.sha256()
 
-  fun hashString(fileContent: FileContent) = hashing.hashBytes(fileContent.content)
+  fun hashString(fileContent: FileContent) = hashing.hashBytes(fileContent.content)!!
 }
 
 
@@ -90,17 +87,15 @@ class StubTreeExternalizer : DataExternalizer<SerializedStubTree> {
   override fun read(`in`: DataInput) = SerializedStubTree(`in`)
 }
 
-abstract class PrebuiltStubsProviderBase : PrebuiltStubsProvider, Disposable {
-  private val myFileContentHashing = FileContentHashing()
-  private var myPrebuiltStubsStorage: PersistentHashMap<HashCode, SerializedStubTree>? = null
+abstract class PrebuiltStubsProviderBase : PrebuiltIndexProviderBase<SerializedStubTree>(), PrebuiltStubsProvider {
+
   private var mySerializationManager: SerializationManagerImpl? = null
 
   protected abstract val stubVersion: Int
-  protected abstract val name: String
 
-  init {
-    init()
-  }
+  override val indexName get() = SDK_STUBS_STORAGE_NAME
+
+  override val indexExternalizer get() = StubTreeExternalizer()
 
   companion object {
     val PREBUILT_INDICES_PATH_PROPERTY = "prebuilt_indices_path"
@@ -108,100 +103,39 @@ abstract class PrebuiltStubsProviderBase : PrebuiltStubsProvider, Disposable {
     private val LOG = Logger.getInstance("#com.intellij.psi.stubs.PrebuiltStubsProviderBase")
   }
 
-  internal fun init() {
-    var indexesRoot = findPrebuiltIndicesRoot()
-    try {
-      if (indexesRoot != null) {
-        // we should copy prebuilt indexes to a writable folder
-        indexesRoot = copyPrebuiltIndicesToIndexRoot(indexesRoot)
-        // otherwise we can get access denied error, because persistent hash map opens file for read and write
+  override fun openIndexStorage(indexesRoot: File): PersistentHashMap<HashCode, SerializedStubTree>? {
+    val versionInFile = FileUtil.loadFile(File(indexesRoot, indexName + ".version"))
 
-        val versionInFile = FileUtil.loadFile(File(indexesRoot, SDK_STUBS_STORAGE_NAME + ".version"))
+    if (Integer.parseInt(versionInFile) == stubVersion) {
+      mySerializationManager = SerializationManagerImpl(File(indexesRoot, indexName + ".names"))
 
-        if (Integer.parseInt(versionInFile) == stubVersion) {
-          myPrebuiltStubsStorage = object : PersistentHashMap<HashCode, SerializedStubTree>(
-            File(indexesRoot, SDK_STUBS_STORAGE_NAME + ".input"),
-            HashCodeDescriptor.instance,
-            StubTreeExternalizer()) {
-            override fun isReadOnly(): Boolean {
-              return true
-            }
-          }
+      Disposer.register(ApplicationManager.getApplication(), mySerializationManager!!)
 
-          mySerializationManager = SerializationManagerImpl(File(indexesRoot, SDK_STUBS_STORAGE_NAME + ".names"))
-
-          Disposer.register(ApplicationManager.getApplication(), mySerializationManager!!)
-
-          LOG.info("Using prebuilt stubs from " + myPrebuiltStubsStorage!!.baseFile.absolutePath)
-        }
-        else {
-          LOG.error("Prebuilt stubs version mismatch: $versionInFile, current version is $stubVersion")
-        }
-      }
+      return super.openIndexStorage(indexesRoot)
     }
-    catch (e: Exception) {
-      myPrebuiltStubsStorage = null
-      LOG.warn("Prebuilt stubs can't be loaded at " + indexesRoot!!, e)
+    else {
+      LOG.error("Prebuilt stubs version mismatch: $versionInFile, current version is $stubVersion")
+      return null
     }
-
   }
 
   override fun findStub(fileContent: FileContent): Stub? {
-    if (myPrebuiltStubsStorage != null) {
-      val hashCode = myFileContentHashing.hashString(fileContent)
-      var stub: Stub? = null
-      try {
-        val stubTree = myPrebuiltStubsStorage!!.get(hashCode)
-        if (stubTree != null) {
-          stub = stubTree.getStub(false, mySerializationManager!!)
-        }
+    var stub: Stub? = null
+    try {
+      val stubTree = get(fileContent)
+      if (stubTree != null) {
+        stub = stubTree.getStub(false, mySerializationManager!!)
       }
-      catch (e: SerializerNotFoundException) {
-        LOG.error("Can't deserialize stub tree", e)
-      }
-      catch (e: Exception) {
-        LOG.error("Error reading prebuilt stubs from " + myPrebuiltStubsStorage!!.baseFile.path, e)
-        myPrebuiltStubsStorage = null
-        stub = null
-      }
+    }
+    catch (e: SerializerNotFoundException) {
+      LOG.error("Can't deserialize stub tree", e)
+    }
 
-      if (stub != null) {
-        return stub
-      }
+    if (stub != null) {
+      return stub
     }
     return null
   }
-
-  override fun dispose() {
-    if (myPrebuiltStubsStorage != null) {
-      try {
-        myPrebuiltStubsStorage!!.close()
-      }
-      catch (e: IOException) {
-        LOG.error(e)
-      }
-    }
-  }
-
-  @Throws(IOException::class)
-  private fun copyPrebuiltIndicesToIndexRoot(prebuiltIndicesRoot: File): File {
-    val indexRoot = File(IndexInfrastructure.getPersistentIndexRoot(), "prebuilt/" + name)
-
-    FileUtil.copyDir(prebuiltIndicesRoot, indexRoot)
-
-    return indexRoot
-  }
-
-  private fun findPrebuiltIndicesRoot(): File? {
-    val path: String? = System.getProperty(PREBUILT_INDICES_PATH_PROPERTY)
-    if (path != null && File(path).exists()) {
-      return File(path)
-    }
-    val f = indexRoot()
-    return if (f.exists()) f else null
-  }
-
-  open fun indexRoot():File = File(PathManager.getHomePath(), "index/$name") // compiled binary
 }
 
 @TestOnly

@@ -83,6 +83,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.switcher.QuickActionProvider;
+import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PlatformIcons;
@@ -486,29 +487,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (selectedPsiElement != null && newSubId != null) {
       final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(selectedPsiElement);
       ProjectViewSelectInTarget target = virtualFile == null ? null : getProjectViewSelectInTarget(newPane);
-      if (target != null && target.isSubIdSelectable(newSubId, new SelectInContext() {
-        @Override
-        @NotNull
-        public Project getProject() {
-          return myProject;
-        }
-
-        @Override
-        @NotNull
-        public VirtualFile getVirtualFile() {
-          return virtualFile;
-        }
-
-        @Override
-        public Object getSelectorInFile() {
-          return null;
-        }
-
-        @Override
-        public FileEditorProvider getFileEditorProvider() {
-          return null;
-        }
-      })) {
+      if (target != null && target.isSubIdSelectable(newSubId, new FileSelectInContext(myProject, virtualFile, null))) {
         newPane.select(selectedPsiElement, virtualFile, true);
       }
     }
@@ -1743,6 +1722,18 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       if (viewPane == null) {
         return;
       }
+      AsyncProjectViewSupport support = viewPane.getAsyncSupport();
+      if (support != null) {
+        List<TreeVisitor> visitors = AsyncProjectViewSupport.createVisitors(Arrays.asList(myElements));
+        if (!visitors.isEmpty()) {
+          // TODO: start visiting after updating
+          support.accept(visitors, array -> {
+            for (TreePath path : array) viewPane.myTree.makeVisible(path);
+            viewPane.myTree.setSelectionPaths(array);
+          });
+        }
+        return;
+      }
       AbstractTreeBuilder treeBuilder = viewPane.getTreeBuilder();
       JTree tree = viewPane.myTree;
       DefaultTreeModel treeModel = (DefaultTreeModel)tree.getModel();
@@ -1891,24 +1882,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       createToolbarActions();
     }
 
-    private class MySelectInContext implements SelectInContext {
-      @NotNull private final PsiFile myPsiFile;
+    private class MySelectInContext extends SmartSelectInContext {
       @Nullable private final Editor myEditor;
 
       private MySelectInContext(@NotNull PsiFile psiFile, @Nullable Editor editor) {
-        myPsiFile = psiFile;
+        super(psiFile, psiFile);
         myEditor = editor;
-      }
-
-      @Override
-      @NotNull
-      public Project getProject() {
-        return myProject;
-      }
-
-      @NotNull
-      private PsiFile getPsiFile() {
-        return myPsiFile;
       }
 
       @Override
@@ -1917,36 +1896,22 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         return new FileEditorProvider() {
           @Override
           public FileEditor openFileEditor() {
-            return myFileEditorManager.openFile(myPsiFile.getContainingFile().getVirtualFile(), false)[0];
+            return ArrayUtil.getFirstElement(myFileEditorManager.openFile(getVirtualFile(), false));
           }
         };
       }
 
-      @NotNull
-      private PsiElement getPsiElement() {
-        PsiElement e = null;
-        if (myEditor != null) {
-          final int offset = myEditor.getCaretModel().getOffset();
-          if (PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments()) {
-            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-          }
-          e = getPsiFile().findElementAt(offset);
-        }
-        if (e == null) {
-          e = getPsiFile();
-        }
-        return e;
-      }
-
-      @Override
-      @NotNull
-      public VirtualFile getVirtualFile() {
-        return getPsiFile().getVirtualFile();
-      }
-
       @Override
       public Object getSelectorInFile() {
-        return getPsiElement();
+        PsiFile file = getPsiFile();
+        if (file != null && myEditor != null) {
+          final int offset = myEditor.getCaretModel().getOffset();
+          PsiDocumentManager manager = PsiDocumentManager.getInstance(getProject());
+          if (manager.hasUncommitedDocuments()) manager.commitAllDocuments();
+          PsiElement element = file.findElementAt(offset);
+          if (element != null) return element;
+        }
+        return file;
       }
     }
   }

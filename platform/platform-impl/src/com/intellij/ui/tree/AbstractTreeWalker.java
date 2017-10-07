@@ -117,7 +117,7 @@ abstract class AbstractTreeWalker<N> {
     if (node != null) {
       try {
         TreePath path = TreePathUtil.createTreePath(parent, converter.apply(node));
-        switch (visitor.accept(path)) {
+        switch (visitor.visit(path)) {
           case CONTINUE:
             update(null, State.REQUESTED);
             if (processChildren(path, node)) processNextPath();
@@ -172,7 +172,7 @@ abstract class AbstractTreeWalker<N> {
         }
         else {
           TreePath path = TreePathUtil.createTreePath(current, converter.apply(node));
-          switch (visitor.accept(path)) {
+          switch (visitor.visit(path)) {
             case CONTINUE:
               update(State.STARTED, State.REQUESTED);
               if (processChildren(path, node)) break;

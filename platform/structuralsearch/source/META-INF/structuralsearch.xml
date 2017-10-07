@@ -1,4 +1,6 @@
 <idea-plugin>
+  <module value="com.intellij.modules.structuralsearch"/>
+
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.structuralsearch.profile"
                     interface="com.intellij.structuralsearch.StructuralSearchProfile"/>

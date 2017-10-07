@@ -61,6 +61,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
@@ -305,7 +306,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
                                       @NotNull final IntentionsInfo intentions,
                                       int passIdToShowIntentionsFor) {
     final PsiElement psiElement = hostFile.findElementAt(hostEditor.getCaretModel().getOffset());
-    LOG.assertTrue(psiElement == null || psiElement.isValid(), psiElement);
+    if (psiElement != null) PsiUtilCore.ensureValid(psiElement);
 
     int offset = hostEditor.getCaretModel().getOffset();
     final Project project = hostFile.getProject();

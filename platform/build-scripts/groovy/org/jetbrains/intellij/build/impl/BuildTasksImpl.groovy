@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
@@ -270,20 +256,20 @@ idea.fatal.error.notification=disabled
   void compileModulesFromProduct() {
     checkProductProperties()
     def patchedApplicationInfo = patchApplicationInfo()
-    def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, patchedApplicationInfo)
-    compileModulesForDistribution(distributionJARsBuilder)
+    compileModulesForDistribution(patchedApplicationInfo)
   }
 
-  private compileModulesForDistribution(DistributionJARsBuilder distributionJARsBuilder) {
+  private DistributionJARsBuilder compileModulesForDistribution(File patchedApplicationInfo) {
     def productLayout = buildContext.productProperties.productLayout
     def bundledPlugins = productLayout.bundledPluginModules as Set<String>
     def moduleNames = productLayout.getIncludedPluginModules(bundledPlugins) +
-                      distributionJARsBuilder.platformModules +
-                      buildContext.productProperties.additionalModulesToCompile
+                      productLayout.platformApiModules + productLayout.platformImplementationModules +
+                      productLayout.additionalPlatformJars.values() +
+                      DistributionJARsBuilder.toolModules + buildContext.productProperties.additionalModulesToCompile
     compileModules(moduleNames + (buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: []) +
                    productLayout.mainModules, buildContext.productProperties.modulesToCompileTests)
 
-    def pluginsToPublish = distributionJARsBuilder.getPluginsByModules(buildContext.productProperties.productLayout.pluginModulesToPublish) 
+    def pluginsToPublish = DistributionJARsBuilder.getPluginsByModules(buildContext, buildContext.productProperties.productLayout.pluginModulesToPublish)
     if (buildContext.shouldBuildDistributions()) {
       def providedModulesFilePath = "${buildContext.paths.artifacts}/${buildContext.productProperties.productCode}-builtinModules.json"
       buildProvidedModulesList(providedModulesFilePath, moduleNames, productLayout.licenseFilesToBuildSearchableOptions)
@@ -296,13 +282,13 @@ idea.fatal.error.notification=disabled
         }
       }
     }
-    compileModules(pluginsToPublish.collect { it.moduleJars.values()  }.flatten() as List<String>)
-    distributionJARsBuilder.pluginsToPublish.addAll(pluginsToPublish)
+    def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, patchedApplicationInfo, pluginsToPublish)
+    compileModules(distributionJARsBuilder.platformModules + (pluginsToPublish.collect { it.moduleJars.values()  }.flatten() as List<String>))
 
     //we need this to ensure that all libraries which may be used in the distribution are resolved, even if product modules don't depend on them (e.g. JUnit5)
     CompilationTasks.create(buildContext).resolveProjectDependencies()
-
     CompilationTasks.create(buildContext).buildProjectArtifacts(distributionJARsBuilder.includedProjectArtifacts)
+    return distributionJARsBuilder
   }
 
   @Override
@@ -311,8 +297,7 @@ idea.fatal.error.notification=disabled
     copyDependenciesFile()
 
     def patchedApplicationInfo = patchApplicationInfo()
-    def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, patchedApplicationInfo)
-    compileModulesForDistribution(distributionJARsBuilder)
+    def distributionJARsBuilder = compileModulesForDistribution(patchedApplicationInfo)
     buildContext.messages.block("Build platform and plugin JARs") {
       if (buildContext.shouldBuildDistributions()) {
         distributionJARsBuilder.buildJARs()
@@ -559,7 +544,7 @@ idea.fatal.error.notification=disabled
   @Override
   void buildUnpackedDistribution(String targetDirectory) {
     buildContext.paths.distAll = targetDirectory
-    def jarsBuilder = new DistributionJARsBuilder(buildContext, patchApplicationInfo())
+    def jarsBuilder = new DistributionJARsBuilder(buildContext, patchApplicationInfo(), [])
     CompilationTasks.create(buildContext).buildProjectArtifacts(jarsBuilder.includedProjectArtifacts)
     jarsBuilder.buildJARs()
     layoutShared()

@@ -16,8 +16,10 @@
 package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.wrongPackageStatement.WrongPackageStatementInspectionBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -104,7 +106,7 @@ public class PackageInfoWithoutPackageInspection extends BaseInspection {
         return;
       }
       final String packageName = aPackage.getQualifiedName();
-      if (packageName.isEmpty()) {
+      if (packageName.isEmpty() || !PsiDirectoryFactory.getInstance(file.getProject()).isValidPackageName(packageName)) {
         return;
       }
       registerError(file, packageName);

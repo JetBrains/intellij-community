@@ -67,8 +67,7 @@ public class ObjectEqualityInspection extends BaseInspection {
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "object.comparison.problem.description");
+    return InspectionGadgetsBundle.message("object.comparison.problem.description");
   }
 
   @Override
@@ -109,7 +108,7 @@ public class ObjectEqualityInspection extends BaseInspection {
         return;
       }
       final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
-      if (method != null && MethodUtils.isEquals(method) &&
+      if (MethodUtils.isEquals(method) &&
           (isThisReference(lhs, method.getContainingClass()) || isThisReference(rhs, method.getContainingClass()))) {
         return;
       }
@@ -135,12 +134,9 @@ public class ObjectEqualityInspection extends BaseInspection {
         return false;
       }
       final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
-      if (aClass != null && aClass.isInterface()) {
-        return implementersHaveOnlyPrivateConstructors(aClass);
-      }
-      else {
-        return ClassUtils.hasOnlyPrivateConstructors(aClass);
-      }
+      return (aClass != null && aClass.isInterface())
+             ? implementersHaveOnlyPrivateConstructors(aClass)
+             : ClassUtils.hasOnlyPrivateConstructors(aClass);
     }
 
     private boolean implementersHaveOnlyPrivateConstructors(final PsiClass aClass) {

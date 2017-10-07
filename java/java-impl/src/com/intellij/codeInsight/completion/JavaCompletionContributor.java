@@ -475,7 +475,7 @@ public class JavaCompletionContributor extends CompletionContributor {
                                                 ? null
                                                 : ContainerUtil.find(expectedTypes, type -> type.isAssignableFrom(returned));
                   if (matchingExpectation != null) {
-                    call.setInferenceSubstitutor(SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor(method, matchingExpectation), position);
+                    call.setInferenceSubstitutorFromExpectedType(position, matchingExpectation);
                   }
                 }
               }

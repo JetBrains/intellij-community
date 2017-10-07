@@ -34,6 +34,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.ClosableByLeftArrow;
 import com.intellij.ui.popup.HintUpdateSupply;
+import com.intellij.ui.popup.NextStepHandler;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +48,7 @@ import java.awt.event.*;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class ListPopupImpl extends WizardPopup implements ListPopup {
+public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.list.ListPopupImpl");
 
   private MyList myList;
@@ -421,7 +422,11 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     }
   }
 
-  private boolean handleNextStep(final PopupStep nextStep, Object parentValue, InputEvent e) {
+  public void handleNextStep(final PopupStep nextStep, Object parentValue) {
+    handleNextStep(nextStep, parentValue, null);
+  }
+
+  public boolean handleNextStep(final PopupStep nextStep, Object parentValue, InputEvent e) {
     if (nextStep != PopupStep.FINAL_CHOICE) {
       final Point point = myList.indexToLocation(myList.getSelectedIndex());
       SwingUtilities.convertPointToScreen(point, myList);

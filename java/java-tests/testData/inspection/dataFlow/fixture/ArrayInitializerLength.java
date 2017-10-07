@@ -41,7 +41,7 @@ class ArrayInitializerLength {
   }
 
   void testMultiDimensional() {
-    int[][][] arr = new int[1][2][3];
+    int[][][] arr = (new int[1][2][3]);
     if(<warning descr="Condition 'arr.length == 1' is always 'true'">arr.length == 1</warning>) {
       System.out.println("ok");
     }

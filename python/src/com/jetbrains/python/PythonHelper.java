@@ -36,6 +36,8 @@ import static com.jetbrains.python.PythonHelpersLocator.getHelpersRoot;
  * @author traff
  */
 public enum PythonHelper implements HelperPackage {
+  GENERATOR3("generator3.py"),
+
   COVERAGEPY("coveragepy", ""),
   COVERAGE("coverage_runner", "run_coverage"),
   DEBUGGER("pydev", "pydevd"),

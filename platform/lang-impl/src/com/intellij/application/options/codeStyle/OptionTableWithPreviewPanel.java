@@ -713,6 +713,12 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     private final JPanel myEmptyLabel = new JPanel();
     private final JLabel myIntLabel = new JLabel();
 
+    public MyValueRenderer() {
+      UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myComboBox);
+      UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myCheckBox);
+      UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myIntLabel);
+    }
+
     @NotNull
     @Override
     public Component getTableCellRendererComponent(@NotNull JTable table,
@@ -764,9 +770,6 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
         }
         return myIntLabel;
       }
-
-      UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myCheckBox);
-      UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myComboBox);
 
       myEmptyLabel.setBackground(background);
       return myEmptyLabel;
@@ -856,6 +859,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
       myOptionsEditor.addActionListener(itemChoosen);
       UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myBooleanEditor);
       UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myOptionsEditor);
+      UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, myIntOptionsEditor);
     }
 
     @Override

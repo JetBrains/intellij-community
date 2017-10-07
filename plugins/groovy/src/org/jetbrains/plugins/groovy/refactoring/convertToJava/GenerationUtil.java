@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,11 +31,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -60,8 +43,6 @@ import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidat
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
@@ -342,48 +323,10 @@ public class GenerationUtil {
     }
   }
 
-  static Set<String> getVarTypes(GrVariableDeclaration variableDeclaration) {
-    GrVariable[] variables = variableDeclaration.getVariables();
-    final GrTypeElement typeElement = variableDeclaration.getTypeElementGroovy();
-    Set<String> types = new HashSet<>(variables.length);
-    if (typeElement == null) {
-      if (variables.length > 1) {
-        for (GrVariable variable : variables) {
-          final GrExpression initializer = variable.getInitializerGroovy();
-          if (initializer != null) {
-            final PsiType varType = initializer.getType();
-            if (varType != null) {
-              types.add(getTypeText(varType, variableDeclaration));
-            }
-          }
-        }
-      }
-    }
-    return types;
-  }
-
   static String getTypeText(PsiType varType, PsiElement context) {
     final StringBuilder builder = new StringBuilder();
     TypeWriter.writeType(builder, varType, context);
     return builder.toString();
-  }
-
-  static ArrayList<GrParameter> getActualParams(GrMethod constructor, int skipOptional) {
-    GrParameter[] parameterList = constructor.getParameters();
-    return getActualParams(parameterList, skipOptional);
-  }
-
-  public static ArrayList<GrParameter> getActualParams(GrParameter[] parameters, int skipOptional) {
-    final ArrayList<GrParameter> actual = new ArrayList<>(Arrays.asList(parameters));
-    if (skipOptional == 0) return actual;
-    for (int i = parameters.length - 1; i >= 0; i--) {
-      if (!actual.get(i).isOptional()) continue;
-
-      actual.remove(i);
-      skipOptional--;
-      if (skipOptional == 0) break;
-    }
-    return actual;
   }
 
   public static void writeSimpleVarDeclaration(GrVariableDeclaration variableDeclaration,

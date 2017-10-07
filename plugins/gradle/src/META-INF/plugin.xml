@@ -77,6 +77,7 @@
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleJavaContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleMiscContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleExtensionsContributor"/>
+    <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleIdeaSettingsContributor"/>
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.BaseGradleProjectResolverExtension"/>
     <frameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.GradleJavaFrameworkSupportProvider"/>
     <frameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.GradleGroovyFrameworkSupportProvider"/>

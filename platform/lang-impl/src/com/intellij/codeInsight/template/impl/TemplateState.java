@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -283,14 +271,14 @@ public class TemplateState implements Disposable {
         return new TextResult(text);
       }
     }
-    CharSequence text = myDocument.getCharsSequence();
     int segmentNumber = myTemplate.getVariableSegmentNumber(variableName);
     if (segmentNumber < 0 || mySegments.getSegmentsCount() <= segmentNumber) {
       return null;
     }
+    CharSequence text = myDocument.getImmutableCharSequence();
     int start = mySegments.getSegmentStart(segmentNumber);
     int end = mySegments.getSegmentEnd(segmentNumber);
-    int length = myDocument.getTextLength();
+    int length = text.length();
     if (start > length || end > length) {
       return null;
     }

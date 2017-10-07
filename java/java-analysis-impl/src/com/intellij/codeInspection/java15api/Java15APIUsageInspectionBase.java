@@ -1,28 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.java15api;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
@@ -61,7 +44,7 @@ import java.util.Set;
 /**
  * @author max
  */
-public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTool {
+public class Java15APIUsageInspectionBase extends AbstractBaseJavaLocalInspectionTool {
   public static final String SHORT_NAME = "Since15";
 
   private static final String EFFECTIVE_LL = "effectiveLL";
@@ -89,7 +72,7 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
     ourGenerifiedClasses.add("javax.swing.ListModel");
     ourGenerifiedClasses.add("javax.swing.JList");
   }
-  
+
   private static final Set<String> ourDefaultMethods = new HashSet<>();
   static {
     ourDefaultMethods.add("java.util.Iterator#remove()");
@@ -207,14 +190,14 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
                 methods.add(method);
               }
             }
-  
+
             if (!methods.isEmpty()) {
               PsiElement element2Highlight = aClass.getNameIdentifier();
               if (element2Highlight == null) {
                 element2Highlight = aClass;
               }
               myHolder.registerProblem(element2Highlight,
-                                       methods.size() == 1 ? InspectionsBundle.message("inspection.1.8.problem.single.descriptor", methods.get(0).getName(), getJdkName(effectiveLanguageLevel)) 
+                                       methods.size() == 1 ? InspectionsBundle.message("inspection.1.8.problem.single.descriptor", methods.get(0).getName(), getJdkName(effectiveLanguageLevel))
                                                            : InspectionsBundle.message("inspection.1.8.problem.descriptor", methods.size(), getJdkName(effectiveLanguageLevel)),
                                        QuickFixFactory.getInstance().createImplementMethodsFix(aClass));
             }
@@ -277,7 +260,7 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
             final PsiReferenceParameterList parameterList = reference.getParameterList();
             if (parameterList != null && parameterList.getTypeParameterElements().length > 0) {
               for (String generifiedClass : ourGenerifiedClasses) {
-                if (InheritanceUtil.isInheritor((PsiClass)resolved, generifiedClass) && 
+                if (InheritanceUtil.isInheritor((PsiClass)resolved, generifiedClass) &&
                     !isRawInheritance(generifiedClass, (PsiClass)resolved, new HashSet<>())) {
                   String message = InspectionsBundle.message("inspection.1.7.problem.descriptor", getJdkName(languageLevel));
                   myHolder.registerProblem(reference, message);

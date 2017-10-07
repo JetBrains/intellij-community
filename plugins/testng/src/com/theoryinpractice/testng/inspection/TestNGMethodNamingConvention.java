@@ -26,7 +26,7 @@ import com.theoryinpractice.testng.util.TestNGUtil;
 public class TestNGMethodNamingConvention extends NamingConvention<PsiMethod> {
   @Override
   public String getElementDescription() {
-    return "TestNG test method";
+    return "TestNG test";
   }
 
 

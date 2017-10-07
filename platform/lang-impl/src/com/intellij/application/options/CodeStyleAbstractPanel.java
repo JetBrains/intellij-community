@@ -192,14 +192,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
       CommandProcessor.getInstance().executeCommand(project, () -> replaceText(project), null, null);
 
       myEditor.getSettings().setRightMargin(getAdjustedRightMargin());
-      myEditor.getSettings().setSoftMargins(getCurrentSoftMargins());
       myLastDocumentModificationStamp = myEditor.getDocument().getModificationStamp();
       myEditor.getScrollingModel().scrollVertically(currOffs);
     });
-  }
-
-  private List<Integer> getCurrentSoftMargins() {
-    return getSettings().getSoftMargins(getDefaultLanguage());
   }
 
   private int getAdjustedRightMargin() {
@@ -218,6 +213,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
         }
 
         //important not mark as generated not to get the classes before setting language level
+        @SuppressWarnings("deprecation")
         PsiFile psiFile = createFileFromText(project, myTextToReformat);
         prepareForReformat(psiFile);
 
@@ -267,6 +263,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
    */
   @Nullable
   private Document collectChangesBeforeCurrentSettingsAppliance(Project project) {
+    @SuppressWarnings("deprecation")
     PsiFile psiFile = createFileFromText(project, myTextToReformat);
     prepareForReformat(psiFile);
     CodeStyleSettings clone = mySettings.clone();
@@ -303,7 +300,25 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     return getFileTypeExtension(getFileType());
   }
 
+  /**
+   * @deprecated Do not override this method. Use LanguageCodeStyleSettingsProvider.createFileFromText() instead.
+   * @see LanguageCodeStyleSettingsProvider#createFileFromText(Project, String)
+   */
+  @Deprecated
   protected PsiFile createFileFromText(Project project, String text) {
+    Language language = getDefaultLanguage();
+    if (language != null) {
+      LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(language);
+      if (provider != null) {
+        final PsiFile file = provider.createFileFromText(project, text);
+        if (file != null) {
+          if (file.isPhysical()) {
+            LOG.error(provider.getClass() + " creates a physical file with PSI events enabled");
+          }
+          return file;
+        }
+      }
+    }
     return PsiFileFactory.getInstance(project).createFileFromText(
       "a." + getFileExt(), getFileType(), text, LocalTimeCounter.currentTime(), false
     );

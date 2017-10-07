@@ -38,7 +38,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
+@TestOnly
 public class MockSdk implements Sdk, SdkModificator {
   private String myName;
   private String myHomePath;
@@ -125,6 +127,7 @@ public class MockSdk implements Sdk, SdkModificator {
     return null;
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getRoots(@NotNull OrderRootType rootType) {
     return myRoots.get(rootType).toArray(VirtualFile.EMPTY_ARRAY);
@@ -210,7 +213,7 @@ public class MockSdk implements Sdk, SdkModificator {
     };
   }
 
-  private void throwReadOnly() {
+  private static void throwReadOnly() {
     throw new IncorrectOperationException("Can't modify, MockJDK is read-only, consider calling .clone() first");
   }
 

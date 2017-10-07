@@ -27,12 +27,9 @@ import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.RefactoringListenerProvider
 import com.intellij.execution.configurations.RuntimeConfigurationWarning
-import com.intellij.execution.filters.ConsoleInputFilterProvider
-import com.intellij.execution.filters.InputFilter
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.execution.testframework.sm.runner.SMTestLocator
-import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope
 import com.intellij.openapi.options.SettingsEditor
@@ -84,6 +81,19 @@ val factories: Array<PythonConfigurationFactoryBase> = arrayOf(
   PyTestFactory,
   PyNoseTestFactory,
   PyTrialTestFactory)
+
+/**
+ * Accepts text that may be wrapped in TC message. Unwarps it and removes TC escape code.
+ * Regular text is unchanged
+ */
+fun processTCMessage(text: String): String {
+  val parsedMessage = ServiceMessage.parse(text.trim()) ?: return text // Not a TC message
+  return when (parsedMessage) {
+    is TestStdOut  -> parsedMessage.stdOut // TC with stdout
+    is TestStdErr -> parsedMessage.stdErr // TC with stderr
+    else -> "" // TC with out of any output
+  }
+}
 
 internal fun getAdditionalArgumentsPropertyName() = com.jetbrains.python.testing.PyAbstractTestConfiguration::additionalArguments.name
 
@@ -253,7 +263,10 @@ data class ConfigurationTarget(@ConfigField var target: String,
    */
   fun checkValid() {
     if (targetType != TestTargetType.CUSTOM && target.isEmpty()) {
-      throw RuntimeConfigurationWarning("Target should be set for anything but custom")
+      throw RuntimeConfigurationWarning("Target not provided")
+    }
+    if (targetType == TestTargetType.PYTHON && !Regex("^[a-zA-Z0-9._]+[a-zA-Z0-9_]$").matches(target)) {
+      throw RuntimeConfigurationWarning("Provide a qualified name of function, class or a module")
     }
   }
 
@@ -391,6 +404,18 @@ abstract class PyAbstractTestConfiguration(project: Project,
   var additionalArguments = ""
 
   val testFrameworkName = configurationFactory.name!!
+
+
+  /**
+   * @see [RunnersThatRequireTestCaseClass]
+   */
+  fun isTestClassRequired() = if (RunnersThatRequireTestCaseClass.contains(runnerName)) {
+    ThreeState.YES
+  }
+  else {
+    ThreeState.NO
+  }
+
 
   @Suppress("LeakingThis") // Legacy adapter is used to support legacy configs. Leak is ok here since everything takes place in one thread
   @DelegationProperty
@@ -623,13 +648,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
     // TODO: PythonUnitTestUtil logic is weak. We should give user ability to launch test on symbol since user knows better if folder
     // contains tests etc
     val context = TypeEvalContext.userInitiated(element.project, element.containingFile)
-    val testCaseClassRequired: ThreeState = if (RunnersThatRequireTestCaseClass.contains(runnerName)) {
-      ThreeState.YES
-    }
-    else {
-      ThreeState.NO
-    }
-    return isTestElement(element, testCaseClassRequired, context)
+    return isTestElement(element,isTestClassRequired(), context)
   }
 
   /**
@@ -784,21 +803,6 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
                                                                           psiElement) ?: return false
     return configuration.target == targetForConfig.first
   }
-}
-
-private object PyTestInputFilter : InputFilter {
-  override fun applyFilter(text: String, contentType: ConsoleViewContentType?): List<Pair<String, ConsoleViewContentType>>? {
-    val parsedMessage = ServiceMessage.parse(text.trim()) ?: return null // Not a TC message
-    return when (parsedMessage) {
-      is TestStdOut -> listOf(Pair(parsedMessage.stdOut, contentType!!)) // TC with stdout
-      is TestStdErr -> listOf(Pair(parsedMessage.stdErr, contentType!!)) // TC with stderr
-      else -> emptyList() // TC with out of any output
-    }
-  }
-}
-
-object PyTestConsoleInputFilterProvider : ConsoleInputFilterProvider {
-  override fun getDefaultFilters(project: Project): Array<InputFilter> = arrayOf(PyTestInputFilter)
 }
 
 @Retention(AnnotationRetention.RUNTIME)

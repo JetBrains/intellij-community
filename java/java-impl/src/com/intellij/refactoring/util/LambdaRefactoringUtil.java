@@ -407,14 +407,6 @@ public class LambdaRefactoringUtil {
    */
   public static boolean canConvertToLambdaWithoutSideEffects(PsiMethodReferenceExpression methodReferenceExpression) {
     final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
-    if (qualifierExpression == null) {
-      PsiElement resolved = methodReferenceExpression.resolve();
-      if (resolved == null) return false;
-      PsiClass arrayClass = JavaPsiFacade.getInstance(methodReferenceExpression.getProject())
-        .getElementFactory()
-        .getArrayClass(PsiUtil.getLanguageLevel(methodReferenceExpression));
-      return resolved == arrayClass;
-    }
-    return !SideEffectChecker.mayHaveSideEffects(qualifierExpression);
+    return qualifierExpression == null || !SideEffectChecker.mayHaveSideEffects(qualifierExpression);
   }
 }

@@ -254,6 +254,7 @@
                     serviceImplementation="com.intellij.facet.impl.invalid.InvalidFacetManagerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.module.ProjectLoadingErrorsNotifier"
                     serviceImplementation="com.intellij.openapi.module.impl.ProjectLoadingErrorsNotifierImpl"/>
+    <projectService serviceImplementation="com.intellij.openapi.module.impl.AutomaticModuleUnloader"/>
 
     <moduleService serviceInterface="com.intellij.facet.FacetModificationTrackingService"
                    serviceImplementation="com.intellij.facet.impl.FacetModificationTrackingServiceImpl"/>
@@ -1011,6 +1012,10 @@
       name="Intellij IDEA color scheme (.icls)"
       schemeClass="com.intellij.openapi.editor.colors.EditorColorsScheme"
       implementationClass="com.intellij.application.options.colors.ColorSchemeExporter"/>
+    <schemeExporter
+        name="Color scheme plug-in .jar"
+        schemeClass="com.intellij.openapi.editor.colors.EditorColorsScheme"
+        implementationClass="com.intellij.application.options.colors.pluginExport.ColorSchemePluginExporter"/>
     <schemeImporter
       name="Intellij IDEA code style XML"
       schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
@@ -1039,6 +1044,7 @@
     <applicationService serviceInterface="com.intellij.ide.projectView.impl.ProjectViewFileNestingService"
                         serviceImplementation="com.intellij.ide.projectView.impl.ProjectViewFileNestingService"/>
     <treeStructureProvider implementation="com.intellij.ide.projectView.impl.NestingTreeStructureProvider" order="last"/>
+    <applicationService serviceImplementation="com.intellij.ide.projectView.impl.FileNestingBuilder" />
     <refactoring.safeDeleteProcessor implementation="com.intellij.refactoring.safeDelete.RelatedFilesSafeDeleteProcessorDelegate"/>
     <automaticRenamerFactory implementation="com.intellij.refactoring.rename.RelatedFilesRenamerFactory"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.MoveRelatedFilesHandler"

@@ -25,6 +25,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.PopupBorder;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.popup.async.AsyncPopupImpl;
+import com.intellij.ui.popup.async.AsyncPopupStep;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.MnemonicsSearch;
@@ -300,7 +302,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     return false;
   }
 
-  private class MyContainer extends MyContentPanel {
+  private static class MyContainer extends MyContentPanel {
     private MyContainer(final boolean resizable, final PopupBorder border, final boolean drawMacCorner) {
       super(resizable, border, drawMacCorner);
       setOpaque(true);
@@ -347,7 +349,9 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   public final boolean dispatch(KeyEvent event) {
-    if (event.getID() != KeyEvent.KEY_PRESSED && event.getID() != KeyEvent.KEY_RELEASED) {
+    if (event.getID() != KeyEvent.KEY_PRESSED &&
+        event.getID() != KeyEvent.KEY_RELEASED &&
+        event.getID() != KeyEvent.KEY_TYPED) {
       // do not dispatch these events to Swing
       event.consume();
       return true;
@@ -355,7 +359,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
     if (event.getID() == KeyEvent.KEY_PRESSED) {
       final KeyStroke stroke = KeyStroke.getKeyStroke(event.getKeyCode(), event.getModifiers(), false);
-      if (proceedKeyEvent(event, stroke)) return false;
+      if (proceedKeyEvent(event, stroke)) return true;
     }
 
     if (event.getID() == KeyEvent.KEY_RELEASED) {
@@ -376,6 +380,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
       final Action action = myActionMap.get(myInputMap.get(stroke));
       if (action != null && action.isEnabled()) {
         action.actionPerformed(new ActionEvent(getContent(), event.getID(), "", event.getWhen(), event.getModifiers()));
+        event.consume();
         return true;
       }
     }
@@ -391,6 +396,9 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
+    if (step instanceof AsyncPopupStep) {
+      return new AsyncPopupImpl(parent, (AsyncPopupStep)step, parentValue);
+    }
     if (step instanceof ListPopupStep) {
       return new ListPopupImpl(parent, (ListPopupStep)step, parentValue);
     }
@@ -431,6 +439,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   public boolean shouldBeShowing(Object value) {
     if (!myStep.isSpeedSearchEnabled()) return true;
     SpeedSearchFilter<Object> filter = myStep.getSpeedSearchFilter();
+    if (filter == null) return true;
     if (!filter.canBeHidden(value)) return true;
     String text = filter.getIndexedString(value);
     return mySpeedSearch.shouldBeShowing(text);

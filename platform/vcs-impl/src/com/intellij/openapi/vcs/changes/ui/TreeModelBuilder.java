@@ -158,6 +158,7 @@ public class TreeModelBuilder {
                                                      @NotNull ChangesBrowserSpecificFilesNode node) {
     myModel.insertNodeInto(node, myRoot, myRoot.getChildCount());
     if (!node.isManyFiles()) {
+      node.markAsHelperNode();
       insertFilesIntoNode(specificFiles, node);
     }
     return this;
@@ -170,6 +171,8 @@ public class TreeModelBuilder {
       List<Change> changes = ContainerUtil.sorted(list.getChanges(), PATH_LENGTH_COMPARATOR);
       ChangeListRemoteState listRemoteState = new ChangeListRemoteState(changes.size());
       ChangesBrowserChangeListNode listNode = new ChangesBrowserChangeListNode(myProject, list, listRemoteState);
+      listNode.markAsHelperNode();
+
       myModel.insertNodeInto(listNode, myRoot, 0);
 
       for (int i = 0; i < changes.size(); i++) {
@@ -203,10 +206,12 @@ public class TreeModelBuilder {
   }
 
   @NotNull
-  private ChangesBrowserNode createTagNode(@Nullable Object tag) {
+  protected ChangesBrowserNode createTagNode(@Nullable Object tag) {
     if (tag == null) return myRoot;
 
     ChangesBrowserNode subtreeRoot = ChangesBrowserNode.create(myProject, tag);
+    subtreeRoot.markAsHelperNode();
+
     myModel.insertNodeInto(subtreeRoot, myRoot, myRoot.getChildCount());
     return subtreeRoot;
   }
@@ -263,6 +268,15 @@ public class TreeModelBuilder {
     return this;
   }
 
+  public void setGenericNodes(@NotNull Collection<GenericNodeData> nodesData, @Nullable Object tag) {
+    ChangesBrowserNode<?> parentNode = createTagNode(tag);
+
+    for (GenericNodeData data : nodesData) {
+      ChangesBrowserNode node = ChangesBrowserNode.createGeneric(data.myFilePath, data.myStatus, data.myUserData);
+      insertChangeNode(data.myFilePath, parentNode, node);
+    }
+  }
+
   @NotNull
   public TreeModelBuilder setSwitchedRoots(@Nullable Map<VirtualFile, String> switchedRoots) {
     if (ContainerUtil.isEmpty(switchedRoots)) return this;
@@ -298,6 +312,8 @@ public class TreeModelBuilder {
                                                                 VirtualFileHierarchicalComparator.getInstance());
       if (switchedFileList.size() > 0) {
         ChangesBrowserNode branchNode = ChangesBrowserNode.create(myProject, branchName);
+        branchNode.markAsHelperNode();
+
         myModel.insertNodeInto(branchNode, subtreeRoot, subtreeRoot.getChildCount());
 
         for (VirtualFile file : switchedFileList) {
@@ -453,6 +469,7 @@ public class TreeModelBuilder {
     if (policy != null) {
       ChangesBrowserNode nodeFromPolicy = policy.getParentNodeFor(nodePath, subtreeRoot);
       if (nodeFromPolicy != null) {
+        nodeFromPolicy.markAsHelperNode();
         return nodeFromPolicy;
       }
     }
@@ -464,6 +481,8 @@ public class TreeModelBuilder {
 
       ChangesBrowserNode parentNode = nodeBuilder.convert(parentPath);
       if (parentNode != null) {
+        parentNode.markAsHelperNode();
+
         ChangesBrowserNode grandPa = getParentNodeFor(parentPath, subtreeRoot, nodeBuilder);
         myModel.insertNodeInto(parentNode, grandPa, grandPa.getChildCount());
         getFolderCache(subtreeRoot).put(parentPath.getKey(), parentNode);
@@ -495,5 +514,17 @@ public class TreeModelBuilder {
   @Deprecated
   public DefaultTreeModel buildModel(@NotNull List<Change> changes, @Nullable ChangeNodeDecorator changeNodeDecorator) {
     return setChanges(changes, changeNodeDecorator).build();
+  }
+
+  public static class GenericNodeData {
+    @NotNull private final FilePath myFilePath;
+    @NotNull private final FileStatus myStatus;
+    @NotNull private final Object myUserData;
+
+    public GenericNodeData(@NotNull FilePath filePath, @NotNull FileStatus status, @NotNull Object userData) {
+      myFilePath = filePath;
+      myStatus = status;
+      myUserData = userData;
+    }
   }
 }

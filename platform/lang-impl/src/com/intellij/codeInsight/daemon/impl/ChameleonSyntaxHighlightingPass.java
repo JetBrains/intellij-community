@@ -171,4 +171,10 @@ class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
   @Override
   protected void applyInformationWithProgress() {
   }
+
+  @Nullable
+  @Override
+  protected String getPresentableName() {
+    return null; // do not show progress for
+  }
 }

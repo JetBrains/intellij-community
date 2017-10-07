@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.testAssistant.TestDataUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,7 +43,7 @@ public class TestDataGroupVirtualFile extends VirtualFile {
   @NotNull
   @Override
   public String getName() {
-    return myBeforeFile.getName() + " | " + myAfterFile.getName();
+    return TestDataUtil.getGroupDisplayName(myBeforeFile.getName(), myAfterFile.getName());
   }
 
   @NotNull

@@ -58,6 +58,6 @@ public class RestStructureViewTest extends RestFixtureTestCase {
 
   private void doTest(final String expected) {
     myFixture.configureByFile("/structureView/" + getTestName(true) + ".rst");
-    myFixture.testStructureView(component -> assertTreeEqual(component.getTree(), expected));
+    myFixture.testStructureView(svc -> assertTreeEqual(svc.getTree(), expected));
   }
 }

@@ -1,7 +1,7 @@
 <html>
 <body>
-Warns if <code>Map</code> key or <code>Set</code> element was overwritten in the sequence of add/put calls. This usually
-occurs due to copy-paste error. Example:
+Warns if <code>Map</code> key or <code>Set</code> element was overwritten in the sequence of add/put calls or using a Java 9 factory method
+like <code>Set.of</code> (which will result in runtime exception). This usually occurs due to copy-paste error. Example:
 <pre>
   map.put("A", 1);
   map.put("B", 2);

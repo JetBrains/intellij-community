@@ -429,15 +429,19 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
    */
   public void updateSelectedPath(Object... pathToSelect) {
     if (!myUpdateSelectedPathModeActive.compareAndSet(false, true)) return;
-
     try {
       FinderRecursivePanel panel = this;
       for (int i = 0; i < pathToSelect.length; i++) {
         Object selectedValue = pathToSelect[i];
         panel.setSelectedValue(selectedValue);
+
         if (i < pathToSelect.length - 1) {
           final JComponent component = panel.getSecondComponent();
-          assert component instanceof FinderRecursivePanel : Arrays.toString(pathToSelect);
+          if (!(component instanceof FinderRecursivePanel)) {
+            throw new IllegalStateException("failed to select idx=" + (i + 1) + ": " +
+                                            "component=" + component + ", " +
+                                            "pathToSelect=" + Arrays.toString(pathToSelect));
+          }
           panel = (FinderRecursivePanel)component;
         }
       }

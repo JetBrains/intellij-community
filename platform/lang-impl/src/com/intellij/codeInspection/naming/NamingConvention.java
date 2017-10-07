@@ -29,6 +29,13 @@ public abstract class NamingConvention<T extends PsiNameIdentifierOwner> {
    */
   public abstract NamingConventionBean createDefaultBean();
 
+  /**
+   * @return true, if newly created inspection should contain this convention on.
+   *         false, if convention should be disabled for newly created inspection or if inspection is merged from inspections, disabled by default.
+   */
+  public boolean isEnabledByDefault() {
+    return false;
+  }
 
   public String createErrorMessage(String name, NamingConventionBean bean) {
     final int length = name.length();
@@ -43,6 +50,8 @@ public abstract class NamingConvention<T extends PsiNameIdentifierOwner> {
     return InspectionsBundle.message("naming.convention.problem.descriptor.regex.mismatch", getElementDescription(), bean.m_regex);
   }
 
-  
-  
+  public boolean isValid(T member, NamingConventionBean bean) {
+    String name = member.getName();
+    return name != null && bean.isValid(name);
+  }
 }

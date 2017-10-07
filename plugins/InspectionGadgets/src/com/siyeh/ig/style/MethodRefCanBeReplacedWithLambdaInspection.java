@@ -26,7 +26,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AsyncResult;
-import com.intellij.openapi.util.Factory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiMethodReferenceExpression;
@@ -63,11 +62,13 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
   @Nullable
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    if (infos.length == 1) {
-      final Object info = infos[0];
-      if (info instanceof FixFactory) {
-        return ((FixFactory)info).create();
-      }
+    final PsiMethodReferenceExpression methodReferenceExpression = (PsiMethodReferenceExpression)infos[0];
+    final boolean onTheFly = ((Boolean)infos[1]).booleanValue();
+    if (LambdaRefactoringUtil.canConvertToLambdaWithoutSideEffects(methodReferenceExpression)) {
+      return new MethodRefToLambdaFix();
+    }
+    else if (onTheFly) {
+      return new SideEffectsMethodRefToLambdaFix();
     }
     return null;
   }
@@ -77,15 +78,8 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
     public void visitMethodReferenceExpression(PsiMethodReferenceExpression methodReferenceExpression) {
       super.visitMethodReferenceExpression(methodReferenceExpression);
       if (LambdaRefactoringUtil.canConvertToLambda(methodReferenceExpression)) {
-        registerError(methodReferenceExpression,
-                      getFixFactory(LambdaRefactoringUtil.canConvertToLambdaWithoutSideEffects(methodReferenceExpression), isOnTheFly()));
+        registerError(methodReferenceExpression, methodReferenceExpression, isOnTheFly());
       }
-    }
-
-    private static FixFactory getFixFactory(boolean canConvert, boolean onTheFly) {
-      if (canConvert) return MethodRefToLambdaFix::new;
-      if (onTheFly) return SideEffectsMethodRefToLambdaFix::new;
-      return null;
     }
   }
 
@@ -115,8 +109,7 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      String familyName = super.getFamilyName();
-      return ApplicationManager.getApplication().isUnitTestMode() ? (familyName + " (side effects)") :familyName;
+      return ApplicationManager.getApplication().isUnitTestMode() ? (super.getFamilyName() + " (side effects)") : super.getFamilyName();
     }
 
     @Override
@@ -144,8 +137,5 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
         LambdaRefactoringUtil.removeSideEffectsFromLambdaBody(editor, lambdaExpression);
       }
     }
-  }
-
-  private interface FixFactory extends Factory<InspectionGadgetsFix> {
   }
 }

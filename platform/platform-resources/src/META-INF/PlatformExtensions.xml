@@ -364,6 +364,8 @@
                          id="delete.for.selection"/>
     <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.openapi.editor.actions.DeleteSelectionHandler"
                          id="backspace.for.selection" order="after backspace.lookup"/>
+    <editorActionHandler action="EditorDelete" implementationClass="com.intellij.openapi.editor.actions.DeleteInColumnModeHandler"
+                         id="delete.in.column.mode"/>
 
     <projectConfigurable groupId="language" groupWeight="110" instance="com.intellij.javaee.ExternalResourceConfigurable" key="display.name.edit.external.resource"
                          bundle="messages.XmlBundle" id="preferences.externalResources">

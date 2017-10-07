@@ -339,7 +339,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   @Override
   public void makeRootsChange(@NotNull Runnable runnable, boolean fileTypes, boolean fireEvents) {
-    if (myProject.isDisposed()) return;
+    if (myProject.isDisposed() || Disposer.isDisposing(myProject)) return;
     BatchSession session = getBatchSession(fileTypes);
     try {
       if (fireEvents) session.beforeRootsChanged();
@@ -381,7 +381,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   }
 
   private boolean fireRootsChanged(boolean fileTypes) {
-    if (myProject.isDisposed()) return false;
+    if (myProject.isDisposed() || Disposer.isDisposing(myProject)) return false;
 
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 

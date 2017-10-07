@@ -110,7 +110,7 @@ class ReadMostlyRWLock {
       status.blocked = true;
       try {
         throwIfImpatient(status);
-        LockSupport.parkNanos(this, 1000000);  // unparked by writeUnlock
+        LockSupport.parkNanos(this, 1_000_000);  // unparked by writeUnlock
       }
       finally {
         status.blocked = false;
@@ -190,7 +190,7 @@ class ReadMostlyRWLock {
       }
 
       if (iter > SPIN_TO_WAIT_FOR_LOCK) {
-        LockSupport.parkNanos(this, 1000000);  // unparked by readUnlock
+        LockSupport.parkNanos(this, 1_000_000);  // unparked by readUnlock
       }
       else {
         Thread.yield();

@@ -25,6 +25,6 @@ import com.intellij.psi.impl.cache.impl.todo.LexerBasedTodoIndexer;
 public class PyTodoIndexer extends LexerBasedTodoIndexer {
   @Override
   public Lexer createLexer(OccurrenceConsumer consumer) {
-    return PyIdIndexer.createIndexingLexer(consumer);
+    return PyIdIndexer.Companion.createIndexingLexer(consumer);
   }
 }

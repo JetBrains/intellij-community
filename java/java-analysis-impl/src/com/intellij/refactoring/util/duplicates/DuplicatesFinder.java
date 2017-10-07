@@ -49,20 +49,22 @@ public class DuplicatesFinder {
   private final List<PsiElement> myPatternAsList;
   private boolean myMultipleExitPoints;
   @Nullable private final ReturnValue myReturnValue;
-  private final boolean myWithAdditionalParameters;
+  private final boolean myWithExtractedParameters;
+  private ParameterFolding myPatternParameterFolding;
+  private ParameterFolding myCandidateParameterFolding;
 
   public DuplicatesFinder(@NotNull PsiElement[] pattern,
                           InputVariables parameters,
                           @Nullable ReturnValue returnValue,
                           @NotNull List<? extends PsiVariable> outputParameters,
-                          boolean withAdditionalParameters) {
+                          boolean withExtractedParameters) {
     myReturnValue = returnValue;
     LOG.assertTrue(pattern.length > 0);
     myPattern = pattern;
     myPatternAsList = Arrays.asList(myPattern);
     myParameters = parameters;
     myOutputParameters = outputParameters;
-    myWithAdditionalParameters = withAdditionalParameters;
+    myWithExtractedParameters = withExtractedParameters;
 
     final PsiElement codeFragment = ControlFlowUtil.findCodeFragment(pattern[0]);
     try {
@@ -321,8 +323,13 @@ public class DuplicatesFinder {
     if (pattern == null || candidate == null) return pattern == candidate;
     if (pattern.getUserData(PARAMETER) != null) {
       final Pair<PsiVariable, PsiType> parameter = pattern.getUserData(PARAMETER);
-      return match.putParameter(parameter, candidate);
+      if(!myWithExtractedParameters || parameter.second.equals(parameter.first.getType())) {
+        return match.putParameter(parameter, candidate);
+      }
     }
+
+    Boolean matchedExtractablePart = matchExtractableExpression(pattern, candidate, candidates, match, false);
+    if (matchedExtractablePart != null) return matchedExtractablePart;
 
     if (!canBeEquivalent(pattern, candidate)) return false; // Q : is it correct to check implementation classes?
 
@@ -372,10 +379,7 @@ public class DuplicatesFinder {
       }
       final PsiElement qualifier2 = ((PsiJavaCodeReferenceElement)candidate).getQualifier();
       if (!equivalentResolve(resolveResult1, resolveResult2, qualifier2)) {
-        if (myWithAdditionalParameters) {
-          return match.putAdditionalParameter(pattern, candidate);
-        }
-        return false;
+        return matchExtractableVariable(pattern, candidate, match);
       }
       PsiElement qualifier1 = ((PsiJavaCodeReferenceElement)pattern).getQualifier();
       if (qualifier1 instanceof PsiReferenceExpression && qualifier2 instanceof PsiReferenceExpression &&
@@ -539,7 +543,10 @@ public class DuplicatesFinder {
     for (int i = 0; i < children1.length; i++) {
       PsiElement child1 = children1[i];
       PsiElement child2 = children2[i];
-      if (!matchPattern(child1, child2, candidates, match)) return false;
+      if (!matchPattern(child1, child2, candidates, match)) {
+        matchedExtractablePart = matchExtractableExpression(child1, child2, candidates, match, true);
+        return matchedExtractablePart != null && matchedExtractablePart;
+      }
     }
 
     if (children1.length == 0) {
@@ -551,6 +558,64 @@ public class DuplicatesFinder {
 
     return true;
   }
+
+  @Nullable
+  private Boolean matchExtractableExpression(PsiElement pattern, PsiElement candidate,
+                                             List<PsiElement> candidates, Match match,
+                                             boolean withFolding) {
+    if (!(pattern instanceof PsiExpression) || !(candidate instanceof PsiExpression) || withFolding && !myWithExtractedParameters) {
+      return null;
+    }
+
+    ParameterFolding patternFolding = null;
+    if (withFolding) {
+      if (myPatternParameterFolding == null) {
+        myPatternParameterFolding = new ParameterFolding(myPatternAsList);
+      }
+      patternFolding = myPatternParameterFolding;
+    }
+    ExtractableExpressionPart patternPart = ExtractableExpressionPart.match((PsiExpression)pattern, myPatternAsList, patternFolding);
+    if (patternPart == null) {
+      return null;
+    }
+
+    ParameterFolding candidatesFolding = null;
+    if (withFolding) {
+      if (myCandidateParameterFolding == null || myCandidateParameterFolding.getScope() != candidates) {
+        myCandidateParameterFolding = new ParameterFolding(candidates);
+      }
+      candidatesFolding = myCandidateParameterFolding;
+    }
+    ExtractableExpressionPart candidatePart = ExtractableExpressionPart.match((PsiExpression)candidate, candidates, candidatesFolding);
+    if (candidatePart == null) {
+      return null;
+    }
+
+    if (patternPart.myValue != null && candidatePart.myValue != null && patternPart.myValue.equals(candidatePart.myValue)) {
+      return true;
+    }
+    if (patternPart.myVariable == null || candidatePart.myVariable == null) {
+      return myWithExtractedParameters &&
+             match.putExtractedParameter(patternPart, candidatePart);
+    }
+    return null;
+  }
+
+  private boolean matchExtractableVariable(PsiElement pattern, PsiElement candidate, Match match) {
+    if (!myWithExtractedParameters || !(pattern instanceof PsiReferenceExpression) || !(candidate instanceof PsiReferenceExpression)) {
+      return false;
+    }
+    ExtractableExpressionPart part1 = ExtractableExpressionPart.matchVariable((PsiReferenceExpression)pattern, null);
+    if (part1 == null || part1.myVariable == null) {
+      return false;
+    }
+    ExtractableExpressionPart part2 = ExtractableExpressionPart.matchVariable((PsiReferenceExpression)candidate, null);
+    if (part2 == null || part2.myVariable == null) {
+      return false;
+    }
+    return match.putExtractedParameter(part1, part2);
+  }
+
 
   private static boolean matchModifierList(PsiModifierList modifierList1, PsiModifierList modifierList2) {
     if (!(modifierList1.getParent() instanceof PsiLocalVariable)) {
@@ -676,7 +741,7 @@ public class DuplicatesFinder {
     }
   }
 
-  private static boolean isUnder(PsiElement element, List<PsiElement> parents) {
+  static boolean isUnder(@Nullable PsiElement element, @NotNull List<PsiElement> parents) {
     if (element == null) return false;
     for (final PsiElement parent : parents) {
       if (PsiTreeUtil.isAncestor(parent, element, false)) return true;

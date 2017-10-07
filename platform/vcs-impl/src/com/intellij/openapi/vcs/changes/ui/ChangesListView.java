@@ -16,7 +16,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.CopyProvider;
-import com.intellij.ide.dnd.aware.DnDAwareTree;
+import com.intellij.ide.dnd.DnDAware;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SmartExpander;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,9 +41,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -54,12 +58,14 @@ import static com.intellij.util.containers.UtilKt.getIfSingle;
 import static com.intellij.util.containers.UtilKt.stream;
 import static java.util.stream.Collectors.toList;
 
-public class ChangesListView extends DnDAwareTree implements TypeSafeDataProvider {
+// TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
+public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAware {
   private final Project myProject;
   private boolean myShowFlatten = false;
   private final CopyProvider myCopyProvider;
 
   @NonNls public static final String HELP_ID = "ideaInterface.changes";
+  @NonNls public static final DataKey<ChangesListView> DATA_KEY = DataKey.create("ChangeListView");
   @NonNls public static final DataKey<Stream<VirtualFile>> UNVERSIONED_FILES_DATA_KEY = DataKey.create("ChangeListView.UnversionedFiles");
   @NonNls public static final DataKey<Stream<VirtualFile>> IGNORED_FILES_DATA_KEY = DataKey.create("ChangeListView.IgnoredFiles");
   @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY = DataKey.create("ChangeListView.MissingFiles");
@@ -72,6 +78,7 @@ public class ChangesListView extends DnDAwareTree implements TypeSafeDataProvide
 
     setShowsRootHandles(true);
     setRootVisible(false);
+    setDragEnabled(true);
 
     myCopyProvider = new ChangesBrowserNodeCopyProvider(this);
 
@@ -130,7 +137,10 @@ public class ChangesListView extends DnDAwareTree implements TypeSafeDataProvide
 
   @Override
   public void calcData(DataKey key, DataSink sink) {
-    if (key == VcsDataKeys.CHANGES) {
+    if (key == DATA_KEY) {
+      sink.put(DATA_KEY, this);
+    }
+    else if (key == VcsDataKeys.CHANGES) {
       sink.put(VcsDataKeys.CHANGES, getSelectedChanges().toArray(Change[]::new));
     }
     else if (key == VcsDataKeys.CHANGE_LEAD_SELECTION) {
@@ -201,7 +211,17 @@ public class ChangesListView extends DnDAwareTree implements TypeSafeDataProvide
   }
 
   @NotNull
-  private Stream<VirtualFile> getSelectedUnversionedFiles() {
+  public Stream<VirtualFile> getUnversionedFiles() {
+    //noinspection unchecked
+    Enumeration<ChangesBrowserNode> nodes = getRoot().children();
+    ChangesBrowserUnversionedFilesNode node = ContainerUtil.findInstance(ContainerUtil.iterate(nodes),
+                                                                         ChangesBrowserUnversionedFilesNode.class);
+    if (node == null) return Stream.empty();
+    return node.getFilesUnderStream();
+  }
+
+  @NotNull
+  public Stream<VirtualFile> getSelectedUnversionedFiles() {
     return getSelectedVirtualFiles(UNVERSIONED_FILES_TAG);
   }
 
@@ -353,6 +373,12 @@ public class ChangesListView extends DnDAwareTree implements TypeSafeDataProvide
   }
 
   @Override
+  @NotNull
+  public JComponent getComponent() {
+    return this;
+  }
+
+  @Override
   public void processMouseEvent(final MouseEvent e) {
     if (MouseEvent.MOUSE_RELEASED == e.getID() && !isSelectionEmpty() && !e.isShiftDown() && !e.isControlDown()  &&
         !e.isMetaDown() && !e.isPopupTrigger()) {
@@ -365,7 +391,17 @@ public class ChangesListView extends DnDAwareTree implements TypeSafeDataProvide
       }
     }
 
+
     super.processMouseEvent(e);
   }
 
+  @Override
+  public boolean isOverSelection(final Point point) {
+    return TreeUtil.isOverSelection(this, point);
+  }
+
+  @Override
+  public void dropSelectionButUnderPoint(final Point point) {
+    TreeUtil.dropSelectionButUnderPoint(this, point);
+  }
 }

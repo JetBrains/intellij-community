@@ -1952,6 +1952,7 @@
     <annotator language="SPI" implementationClass="com.intellij.spi.SPIAnnotator"/>
 
     <gotoDeclarationHandler implementation="com.intellij.codeInsight.navigation.actions.GotoLambdaParameterHandler"/>
+    <gotoDeclarationHandler implementation="com.intellij.codeInsight.navigation.actions.GotoVarTypeHandler"/>
 
     <completion.contributor language="JAVA" id="methodsChainsCompletionContributor" order="first"
                             implementationClass="com.intellij.compiler.chainsSearch.completion.MethodChainCompletionContributor"/>

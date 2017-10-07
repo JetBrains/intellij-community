@@ -46,7 +46,7 @@
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyAnnotatingVisitor"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyDumbAwareAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.inspections.PyCompatibilityInspectionAdvertiser"/>
-    <annotator language="Python" implementationClass="com.jetbrains.python.inspections.PySciViewAdvertiser"/>
+
     <quoteHandler fileType="Python" className="com.jetbrains.python.editor.PythonQuoteHandler"/>
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PythonEnterHandler"/>
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PyEnterAtIndentHandler" order="first"/>
@@ -169,7 +169,6 @@
     <runConfigurationProducer implementation="com.jetbrains.python.testing.tox.PyToxConfigurationProducer"/>
     <runConfigurationProducer implementation="com.jetbrains.python.testing.nosetestLegacy.PythonNoseTestConfigurationProducer"/>
     <runConfigurationProducer implementation="com.jetbrains.python.testing.PyTestsConfigurationProducer"/>
-    <consoleInputFilterProvider implementation="com.jetbrains.python.testing.PyTestConsoleInputFilterProvider"/>
 
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyLineMarkerProvider"/>
     <codeInsight.typeInfo language="Python" implementationClass="com.jetbrains.python.actions.PythonExpressionTypeProvider"/>
@@ -625,14 +624,14 @@
     <breadcrumbsInfoProvider implementation="com.jetbrains.python.breadcrumbs.PyBreadcrumbsInfoProvider"/>
     <highlightVisitor implementation="com.jetbrains.python.highlighting.PyRainbowVisitor"/>
 
-    <toolWindow id="Data View" factoryClass="com.jetbrains.python.debugger.containerview.PyDataViewToolWindowFactory" anchor="right" icon="PythonIcons.Python.DataView"/>
     <projectService serviceInterface="com.jetbrains.python.debugger.containerview.PyDataView" serviceImplementation="com.jetbrains.python.debugger.containerview.PyDataView"/>
-
     <createFromTemplateHandler implementation="com.jetbrains.python.packaging.setupPy.PyCreateSetupPyFromTemplateHandler"/>
+    <consoleHistoryModelProvider implementation="com.jetbrains.python.console.PyConsoleHistoryModelProvider"/>
   </extensions>
 
   <extensionPoints>
     <extensionPoint qualifiedName="Pythonid.pythonDocumentationQuickInfoProvider" interface="com.jetbrains.python.documentation.PythonDocumentationQuickInfoProvider"/>
+    <extensionPoint qualifiedName="Pythonid.pythonCommandLineEnvironmentProvider" interface="com.jetbrains.python.run.PythonCommandLineEnvironmentProvider"/>
     <extensionPoint qualifiedName="Pythonid.importResolver" interface="com.jetbrains.python.psi.impl.PyImportResolver"/>
     <extensionPoint qualifiedName="Pythonid.magicLiteral" interface="com.jetbrains.python.magicLiteral.PyMagicLiteralExtensionPoint"/>
     <extensionPoint qualifiedName="Pythonid.unresolvedReferenceSkipper" interface="com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferenceSkipperExtPoint"/>
@@ -880,22 +879,12 @@
       <add-to-group group-id="DebugMainMenu" relative-to-action="ForceRunToCursor" anchor="after"/>
       <add-to-group group-id="EditorPopupMenuDebug" relative-to-action="ForceRunToCursor" anchor="after"/>
     </action>
-
-    <action id="PySciView" class="com.jetbrains.python.actions.PySciViewAction">
-      <add-to-group group-id="ViewMenu" anchor="before" relative-to-action="ToggleFullScreenGroup"/>
-    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">
     <support language="Python" implementationClass="com.jetbrains.python.spellchecker.PythonSpellcheckerStrategy"/>
     <bundledDictionaryProvider implementation="com.jetbrains.python.spellchecker.PythonBundledDictionaryProvider"/>
   </extensions>
-
-  <project-components>
-    <component>
-      <implementation-class>com.jetbrains.python.actions.PySciProjectComponent</implementation-class>
-    </component>
-  </project-components>
 
   <application-components>
     <component>

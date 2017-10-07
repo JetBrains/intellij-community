@@ -83,8 +83,9 @@ public interface VirtualFilePointerContainer {
 
   /**
    * Adds {@code directory} as a root of jar files.
-   * After that the {@link #getFiles()} and {@link #getUrls()} etc will return jar files in this directory
+   * After this call the {@link #getFiles()} will additionally return jar files in this directory
    * (and, if {@code recursively} was set, the jar files in all-subdirectories).
+   * {@link #getUrls()} will additionally return the {@code directoryUrl}.
    */
   void addJarDirectory(@NotNull String directoryUrl, boolean recursively);
   /**

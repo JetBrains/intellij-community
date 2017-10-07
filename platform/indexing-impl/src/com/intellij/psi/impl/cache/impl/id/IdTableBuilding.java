@@ -47,10 +47,10 @@ public class IdTableBuilding {
     void run(CharSequence chars, @Nullable char[] charsArray, int start, int end);
   }
 
-  private static final Map<FileType, FileTypeIdIndexer> ourIdIndexers = new HashMap<>();
+  private static final Map<FileType, IdIndexer> ourIdIndexers = new HashMap<>();
 
   @Deprecated
-  public static void registerIdIndexer(@NotNull FileType fileType, FileTypeIdIndexer indexer) {
+  public static void registerIdIndexer(@NotNull FileType fileType, IdIndexer indexer) {
     ourIdIndexers.put(fileType, indexer);
   }
 
@@ -60,14 +60,14 @@ public class IdTableBuilding {
 
 
   @Nullable
-  public static FileTypeIdIndexer getFileTypeIndexer(FileType fileType) {
-    final FileTypeIdIndexer idIndexer = ourIdIndexers.get(fileType);
+  public static IdIndexer getFileTypeIndexer(FileType fileType) {
+    final IdIndexer idIndexer = ourIdIndexers.get(fileType);
 
     if (idIndexer != null) {
       return idIndexer;
     }
 
-    final FileTypeIdIndexer extIndexer = IdIndexers.INSTANCE.forFileType(fileType);
+    final IdIndexer extIndexer = IdIndexers.INSTANCE.forFileType(fileType);
     if (extIndexer != null) {
       return extIndexer;
     }

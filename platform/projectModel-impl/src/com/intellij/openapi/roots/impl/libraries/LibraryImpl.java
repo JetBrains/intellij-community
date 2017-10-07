@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtilCore;
+import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.impl.RootModelImpl;
@@ -258,11 +259,11 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     return result;
   }
 
-  @Nullable
+  @NotNull
   private VirtualFilePointerListener getListener() {
     Project project = myLibraryTable instanceof ProjectLibraryTable ? ((ProjectLibraryTable)myLibraryTable).getProject() : null;
     return myRootModel != null ? ((RootModelImpl)myRootModel).getRootsChangedListener() : project != null ? ProjectRootManagerImpl
-      .getInstanceImpl(project).getRootsValidityChangedListener() : null;
+      .getInstanceImpl(project).getRootsValidityChangedListener() : ProjectJdkImpl.getGlobalVirtualFilePointerListener();
   }
 
   @Nullable

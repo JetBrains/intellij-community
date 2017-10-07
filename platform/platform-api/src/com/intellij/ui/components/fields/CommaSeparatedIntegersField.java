@@ -22,6 +22,7 @@ import com.intellij.ui.components.fields.valueEditors.ValueEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -66,6 +67,14 @@ public class CommaSeparatedIntegersField extends JBTextField {
 
   public void validateContent() throws ConfigurationException {
     myValueEditor.validateContent();
+  }
+
+  public boolean isEmpty() {
+    return getValue().isEmpty();
+  }
+
+  public void clear() {
+    setValue(Collections.emptyList());
   }
 
   public ValueEditor<List<Integer>> getValueEditor() {

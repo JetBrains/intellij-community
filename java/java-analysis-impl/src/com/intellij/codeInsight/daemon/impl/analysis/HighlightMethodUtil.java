@@ -856,6 +856,7 @@ public class HighlightMethodUtil {
     PermuteArgumentsFix.registerFix(highlightInfo, methodCall, methodCandidates, fixRange);
     AddTypeArgumentsFix.REGISTRAR.registerCastActions(methodCandidates, methodCall, highlightInfo, fixRange);
     WrapObjectWithOptionalOfNullableFix.REGISTAR.registerCastActions(methodCandidates, methodCall, highlightInfo, fixRange);
+    MethodReturnFixFactory.INSTANCE.registerCastActions(methodCandidates, methodCall, highlightInfo, fixRange);
     WrapWithAdapterMethodCallFix.registerCastActions(methodCandidates, methodCall, highlightInfo, fixRange);
     registerMethodAccessLevelIntentions(methodCandidates, methodCall, list, highlightInfo);
     registerChangeMethodSignatureFromUsageIntentions(methodCandidates, list, highlightInfo, fixRange);

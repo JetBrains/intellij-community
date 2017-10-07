@@ -64,37 +64,43 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
     mySdkType = sdkType;
     myName = name;
 
-    VirtualFilePointerListener listener = new VirtualFilePointerListener() {
-      @Override
-      public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
-        //todo check if this sdk is really used in the project
-        for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-          VirtualFilePointerListener listener = ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).getRootsValidityChangedListener();
-          listener.beforeValidityChanged(pointers);
-        }
-      }
-
-      @Override
-      public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
-        //todo check if this sdk is really used in the project
-        for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-          VirtualFilePointerListener listener = ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).getRootsValidityChangedListener();
-          listener.validityChanged(pointers);
-        }
-      }
-    };
-    myRoots = new RootsAsVirtualFilePointers(true, listener, this);
+    myRoots = new RootsAsVirtualFilePointers(true, tellAllProjectsTheirRootsAreGoingToChange, this);
     Disposer.register(ApplicationManager.getApplication(), this);
-  }
-
-  @Override
-  public void dispose() {
   }
 
   public ProjectJdkImpl(String name, SdkTypeId sdkType, String homePath, String version) {
     this(name, sdkType);
     myHomePath = homePath;
     myVersionString = version;
+  }
+
+  private static final VirtualFilePointerListener tellAllProjectsTheirRootsAreGoingToChange = new VirtualFilePointerListener() {
+    @Override
+    public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
+      //todo check if this sdk is really used in the project
+      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        VirtualFilePointerListener listener = ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).getRootsValidityChangedListener();
+        listener.beforeValidityChanged(pointers);
+      }
+    }
+
+    @Override
+    public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
+      //todo check if this sdk is really used in the project
+      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        VirtualFilePointerListener listener = ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).getRootsValidityChangedListener();
+        listener.validityChanged(pointers);
+      }
+    }
+  };
+
+  @NotNull
+  public static VirtualFilePointerListener getGlobalVirtualFilePointerListener() {
+    return tellAllProjectsTheirRootsAreGoingToChange;
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @Override
@@ -157,7 +163,8 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
   }
 
   public void readExternal(@NotNull Element element, @Nullable ProjectJdkTable projectJdkTable) throws InvalidDataException {
-    myName = element.getChild(ELEMENT_NAME).getAttributeValue(ATTRIBUTE_VALUE);
+    Element elementName = assertNotMissing(element, ELEMENT_NAME);
+    myName = elementName.getAttributeValue(ATTRIBUTE_VALUE);
     final Element typeChild = element.getChild(ELEMENT_TYPE);
     final String sdkTypeName = typeChild != null ? typeChild.getAttributeValue(ATTRIBUTE_VALUE) : null;
     if (sdkTypeName != null) {
@@ -181,8 +188,10 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
     if (versionValue.isEmpty() || !"2".equals(versionValue)) {
       throw new InvalidDataException("Too old version is not supported: " + versionValue);
     }
-    myHomePath = element.getChild(ELEMENT_HOMEPATH).getAttributeValue(ATTRIBUTE_VALUE);
-    myRoots.readExternal(element.getChild(ELEMENT_ROOTS));
+    Element homePath = assertNotMissing(element, ELEMENT_HOMEPATH);
+    myHomePath = homePath.getAttributeValue(ATTRIBUTE_VALUE);
+    Element elementRoots = assertNotMissing(element, ELEMENT_ROOTS);
+    myRoots.readExternal(elementRoots);
 
     final Element additional = element.getChild(ELEMENT_ADDITIONAL);
     if (additional != null) {
@@ -192,6 +201,13 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
     else {
       myAdditionalData = null;
     }
+  }
+
+  @NotNull
+  private static Element assertNotMissing(@NotNull Element parent, @NotNull String childName) {
+    Element child = parent.getChild(childName);
+    if (child == null) throw new InvalidDataException("mandatory element '" + childName + "' is missing: " + parent);
+    return child;
   }
 
   public void writeExternal(@NotNull Element element) {
@@ -260,12 +276,8 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
     dest.myVersionDefined = myVersionDefined;
     dest.myVersionString = myVersionString;
     dest.setSdkAdditionalData(getSdkAdditionalData());
-    dest.copyRootsFrom(myRoots);
+    dest.myRoots.copyRootsFrom(myRoots);
     dest.myRootProvider.rootsChanged();
-  }
-
-  private void copyRootsFrom(@NotNull RootProvider rootContainer) {
-    myRoots.copyRootsFrom(rootContainer);
   }
 
   private class MyRootProvider extends RootProviderBaseImpl implements ProjectRootListener {

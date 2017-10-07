@@ -20,6 +20,9 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.process.BaseOSProcessHandler;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.export.TestResultsXmlFormatter;
@@ -30,8 +33,11 @@ import com.intellij.execution.testframework.sm.runner.history.ImportedTestConsol
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -232,8 +238,9 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myMentionedCategories.clear();
 
     myAnimator.setCurrentTestCase(myTestsRootNode);
-    if (!myTestsRootNode.getChildren().isEmpty()) {
-      myTestsRootNode.getChildren().clear();
+    if (myEndTime != 0) { // no need to reset when running for the first time
+      resetTreeAndConsoleOnSubsequentTestingStarted();
+      myEndTime = 0;
     }
     myTreeBuilder.updateFromRoot();
 
@@ -256,6 +263,18 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     updateStatusLabel(false);
 
     fireOnTestingStarted();
+  }
+
+  private void resetTreeAndConsoleOnSubsequentTestingStarted() {
+    myTestsRootNode.testingRestarted();
+    ConsoleView consoleView = DataManager.getInstance().getDataContext(myConsole).getData(LangDataKeys.CONSOLE_VIEW);
+    if (consoleView != null) {
+      consoleView.clear();
+    }
+    ProcessHandler handler = myTestsRootNode.getHandler();
+    if (handler instanceof BaseOSProcessHandler) {
+      handler.notifyTextAvailable(((BaseOSProcessHandler)handler).getCommandLine() + "\n", ProcessOutputTypes.SYSTEM);
+    }
   }
 
   public void onTestingFinished(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
@@ -304,7 +323,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     final TestsUIUtil.TestResultPresentation presentation = new TestsUIUtil.TestResultPresentation(testsRoot, myStartTime > 0, null)
       .getPresentation(myFailedTestCount, 
                        Math.max(0, myFinishedTestCount - myFailedTestCount - myIgnoredTestCount), 
-                       myTotalTestCount - (myFinishedTestCount - myIgnoredTestCount),
+                       myTotalTestCount - myStartedTestCount,
                        myIgnoredTestCount);
     TestsUIUtil.notifyByBalloon(myProperties.getProject(), testsRoot, myProperties, presentation);
     addToHistory(testsRoot, myProperties, this);
@@ -421,6 +440,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     //Do nothing
   }
 
+  @NotNull
   public SMTestProxy.SMRootTestProxy getTestsRootNode() {
     return myTestsRootNode;
   }

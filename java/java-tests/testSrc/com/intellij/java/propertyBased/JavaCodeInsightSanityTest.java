@@ -16,14 +16,15 @@
 package com.intellij.java.propertyBased;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.testFramework.propertyBased.*;
-import org.jetbrains.annotations.NotNull;
 import jetCheck.Generator;
 import jetCheck.PropertyChecker;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 
@@ -32,6 +33,13 @@ import java.util.function.Function;
  */
 @SkipSlowTestLocally
 public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
+
+  @Override
+  protected void tearDown() throws Exception {
+    // remove jdk if it was created during highlighting to avoid leaks
+    JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
+    super.tearDown();
+  }
 
   @NotNull
   @Override

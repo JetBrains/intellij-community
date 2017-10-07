@@ -1,10 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.booleanIsAlwaysInverted;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
-import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.reference.RefUtil;
@@ -15,7 +13,7 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class BooleanMethodIsAlwaysInvertedLocalInspection extends BaseJavaBatchLocalInspectionTool {
+public class BooleanMethodIsAlwaysInvertedLocalInspection extends AbstractBaseJavaLocalInspectionTool {
   private final BooleanMethodIsAlwaysInvertedInspectionBase myGlobalTool;
 
   BooleanMethodIsAlwaysInvertedLocalInspection(BooleanMethodIsAlwaysInvertedInspectionBase globalTool) {

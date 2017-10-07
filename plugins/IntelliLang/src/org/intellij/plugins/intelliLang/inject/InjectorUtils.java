@@ -27,8 +27,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.MultiHostRegistrarImpl;
-import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -227,13 +227,11 @@ public class InjectorUtils {
   }
 
   public static <T> void putInjectedFileUserData(MultiHostRegistrar registrar, Key<T> key, T value) {
-    PsiFile psiFile = getInjectedFile(registrar);
-    if (psiFile != null) psiFile.putUserData(key, value);
+    InjectedLanguageUtil.putInjectedFileUserData(registrar, key, value);
   }
 
   public static PsiFile getInjectedFile(MultiHostRegistrar registrar) {
-    final List<Pair<Place,PsiFile>> result = ((MultiHostRegistrarImpl)registrar).getResult();
-    return result == null || result.isEmpty() ? null : result.get(result.size() - 1).second;
+    return InjectedLanguageUtil.getInjectedFile(registrar);
   }
 
   @SuppressWarnings("UnusedParameters")

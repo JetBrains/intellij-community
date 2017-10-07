@@ -20,6 +20,24 @@ public class NamingConventionWithFallbackBean extends NamingConventionBean {
   }
 
   @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof NamingConventionWithFallbackBean)) return false;
+    if (!super.equals(o)) return false;
+
+    NamingConventionWithFallbackBean bean = (NamingConventionWithFallbackBean)o;
+
+    if (inheritDefaultSettings != bean.inheritDefaultSettings) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return 31 * super.hashCode() + (inheritDefaultSettings ? 1 : 0);
+  }
+
+  @Override
   public JComponent createOptionsPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     JComponent selfOptions = super.createOptionsPanel();

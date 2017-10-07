@@ -167,7 +167,6 @@ public class ExternalJavacManager {
           processDescriptor.cancelBuild();
         }
       }
-      System.out.println(processHandler.isProcessTerminated());
       return rh.isTerminatedSuccessfully();
     }
     catch (Throwable e) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -40,16 +26,14 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Consumer;
-import com.intellij.xdebugger.Obsolescent;
-import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.XExpression;
+import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueModifier;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
@@ -200,6 +184,7 @@ public class DebuggerUIUtil {
       if (!balloonRef.isNull()) {
         balloonRef.get().hide();
       }
+      propertiesPanel.dispose();
       showXBreakpointEditorBalloon(project, point, component, true, breakpoint);
       moreOptionsRequested.set(true);
     });
@@ -454,5 +439,19 @@ public class DebuggerUIUtil {
 
   public static boolean isInDetachedTree(AnActionEvent event) {
     return event.getData(XDebugSessionTab.TAB_KEY) == null;
+  }
+
+  public static XDebugSessionData getSessionData(AnActionEvent e) {
+    XDebugSessionData data = e.getData(XDebugSessionData.DATA_KEY);
+    if (data == null) {
+      Project project = e.getProject();
+      if (project != null) {
+        XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
+        if (session != null) {
+          data = ((XDebugSessionImpl)session).getSessionData();
+        }
+      }
+    }
+    return data;
   }
 }

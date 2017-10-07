@@ -426,11 +426,17 @@ public class HighlightUtil extends HighlightUtilBase {
         if (initializer == null) {
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
             .descriptionAndTooltip("Cannot infer type: 'var' on variable without initializer")
-            .range(variable).create();
+            .range(typeElement).create();
         }
 
-        PsiLocalVariable[] localVariables = PsiTreeUtil.getChildrenOfType(parent, PsiLocalVariable.class);
-        if (localVariables != null && localVariables.length > 1) {
+        if (initializer instanceof PsiFunctionalExpression) {
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+            .descriptionAndTooltip("Cannot infer type: " + (initializer instanceof PsiLambdaExpression ? "lambda expression" : "method reference") +
+                                   " requires an explicit target type")
+            .range(typeElement).create();
+        }
+
+        if (parent instanceof PsiDeclarationStatement && ((PsiDeclarationStatement)parent).getDeclaredElements().length > 1) {
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
             .descriptionAndTooltip("'var' is not allowed in a compound declaration")
             .range(variable).create();
@@ -440,14 +446,14 @@ public class HighlightUtil extends HighlightUtilBase {
         if (lType instanceof PsiArrayType && !lType.equals(typeElement.getType())) {
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
             .descriptionAndTooltip("'var' is not allowed as an element type of an array")
-            .range(variable)
+            .range(typeElement)
             .create();
         }
 
         if (PsiType.NULL.equals(lType)) {
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
             .descriptionAndTooltip("Cannot infer type: variable initializer is 'null'")
-            .range(variable).create();
+            .range(typeElement).create();
         }
       }
     }

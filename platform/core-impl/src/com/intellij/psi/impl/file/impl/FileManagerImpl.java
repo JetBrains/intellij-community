@@ -275,11 +275,7 @@ public class FileManagerImpl implements FileManager {
         event.setPropertyName(PsiTreeChangeEvent.PROP_FILE_TYPES);
         myManager.beforePropertyChange(event);
 
-        removeInvalidDirs(false);
-        for (final FileViewProvider provider : myVFileToViewProviderMap.values()) {
-          markInvalidated(provider);
-        }
-        myVFileToViewProviderMap.clear();
+        invalidateAllPsi();
 
         myManager.propertyChanged(event);
       });
@@ -288,6 +284,14 @@ public class FileManagerImpl implements FileManager {
       DebugUtil.finishPsiModification();
       myProcessingFileTypesChange = false;
     }
+  }
+
+  void invalidateAllPsi() {
+    myVFileToPsiDirMap.clear();
+    for (final FileViewProvider provider : myVFileToViewProviderMap.values()) {
+      markInvalidated(provider);
+    }
+    myVFileToViewProviderMap.clear();
   }
 
   void dispatchPendingEvents() {

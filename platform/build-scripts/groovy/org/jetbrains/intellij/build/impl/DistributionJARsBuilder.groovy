@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.MultiValuesMap
@@ -46,11 +32,12 @@ class DistributionJARsBuilder {
   private final Set<String> usedModules = new LinkedHashSet<>()
   private final PlatformLayout platform
   private final File patchedApplicationInfo
-  private final List<PluginLayout> pluginsToPublish = []
+  private final List<PluginLayout> pluginsToPublish
 
-  DistributionJARsBuilder(BuildContext buildContext, File patchedApplicationInfo) {
+  DistributionJARsBuilder(BuildContext buildContext, File patchedApplicationInfo, List<PluginLayout> pluginsToPublish) {
     this.patchedApplicationInfo = patchedApplicationInfo
     this.buildContext = buildContext
+    this.pluginsToPublish = pluginsToPublish
     buildContext.ant.patternset(id: RESOURCES_INCLUDED) {
       include(name: "**/*Bundle*.properties")
       include(name: "**/*Messages.properties")
@@ -79,9 +66,8 @@ class DistributionJARsBuilder {
     }
 
     def productLayout = buildContext.productProperties.productLayout
-
     def enabledPluginModules = getEnabledPluginModules()
-    List<JpsLibrary> projectLibrariesUsedByPlugins = getPluginsByModules(enabledPluginModules).collectMany { plugin ->
+    List<JpsLibrary> projectLibrariesUsedByPlugins = getPluginsByModules(buildContext, enabledPluginModules).collectMany { plugin ->
       plugin.getActualModules(enabledPluginModules).values().collectMany {
         def module = buildContext.findRequiredModule(it)
         JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll {
@@ -143,7 +129,13 @@ class DistributionJARsBuilder {
   }
 
   List<String> getPlatformModules() {
-    (platform.moduleJars.values() as List<String>) +
+    (platform.moduleJars.values() as List<String>) + toolModules
+  }
+
+  /**
+   * @return module names which are required to run necessary tools from build scripts
+   */
+  static List<String> getToolModules() {
     ["java-runtime", "platform-main", /*required to build searchable options index*/ "updater"]
   }
 
@@ -247,14 +239,10 @@ class DistributionJARsBuilder {
     usedModules.addAll(layoutBuilder.usedModules)
   }
 
-  List<PluginLayout> getPluginsToPublish() {
-    return pluginsToPublish
-  }
-
   private void buildBundledPlugins() {
     def productLayout = buildContext.productProperties.productLayout
     def layoutBuilder = createLayoutBuilder()
-    buildPlugins(layoutBuilder, getPluginsByModules(productLayout.bundledPluginModules), "$buildContext.paths.distAll/plugins")
+    buildPlugins(layoutBuilder, getPluginsByModules(buildContext, productLayout.bundledPluginModules), "$buildContext.paths.distAll/plugins")
     usedModules.addAll(layoutBuilder.usedModules)
   }
 
@@ -304,7 +292,7 @@ class DistributionJARsBuilder {
     return plugin.versionEvaluator.apply(buildContext)
   }
 
-  List<PluginLayout> getPluginsByModules(Collection<String> modules) {
+  static List<PluginLayout> getPluginsByModules(BuildContext buildContext, Collection<String> modules) {
     def allNonTrivialPlugins = buildContext.productProperties.productLayout.allNonTrivialPlugins
     def allOptionalModules = allNonTrivialPlugins.collectMany {it.optionalModules}
     def nonTrivialPlugins = allNonTrivialPlugins.groupBy { it.mainModule }

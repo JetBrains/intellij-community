@@ -18,6 +18,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,7 +113,9 @@ public abstract class DfaFactType<T> extends Key<T> {
           }
         }
       }
-      return LongRangeSet.fromType(var.getVariableType());
+      PsiModifierListOwner psiVariable = var.getPsiVariable();
+      LongRangeSet fromType = LongRangeSet.fromType(var.getVariableType());
+      return fromType == null ? null : LongRangeSet.fromAnnotation(psiVariable).intersect(fromType);
     }
 
     @Nullable

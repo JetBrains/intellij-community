@@ -48,7 +48,7 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
   private final StructureViewModel myStructureModel;
 
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
-  
+
   public StructureTreeBuilder(Project project,
                               JTree tree,
                               DefaultTreeModel treeModel,
@@ -93,20 +93,16 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
   protected final boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
     StructureViewModel model = myStructureModel;
     if (model instanceof TreeModelWrapper) {
-      model = ((TreeModelWrapper) model).getModel();
+      model = ((TreeModelWrapper)model).getModel();
     }
     if (model instanceof StructureViewModel.ExpandInfoProvider) {
       StructureViewModel.ExpandInfoProvider provider = (StructureViewModel.ExpandInfoProvider)model;
       Object element = nodeDescriptor.getElement();
-      if (element instanceof StructureViewComponent.StructureViewTreeElementWrapper) {
-        StructureViewComponent.StructureViewTreeElementWrapper wrapper = (StructureViewComponent.StructureViewTreeElementWrapper)element;
-        if (wrapper.getValue() instanceof StructureViewTreeElement) {
-          final StructureViewTreeElement value = (StructureViewTreeElement)wrapper.getValue();
-          if (value != null) {
-            return provider.isAutoExpand(value);
-          }
-        }
-      } else if (element instanceof GroupWrapper) {
+      Object value = StructureViewComponent.unwrapValue(element);
+      if (value instanceof StructureViewTreeElement) {
+        return provider.isAutoExpand((StructureViewTreeElement)value);
+      }
+      else if (element instanceof GroupWrapper) {
         final Group group = ((GroupWrapper)element).getValue();
         for (TreeElement treeElement : group.getChildren()) {
           if (treeElement instanceof StructureViewTreeElement && !provider.isAutoExpand((StructureViewTreeElement)treeElement)) {
@@ -124,7 +120,7 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
   protected final boolean isSmartExpand() {
     StructureViewModel model = myStructureModel;
     if (model instanceof TreeModelWrapper) {
-      model = ((TreeModelWrapper) model).getModel();
+      model = ((TreeModelWrapper)model).getModel();
     }
     if (model instanceof StructureViewModel.ExpandInfoProvider) {
       return ((StructureViewModel.ExpandInfoProvider)model).isSmartExpand();
@@ -215,6 +211,6 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
   @Override
   @NotNull
   protected final AbstractTreeNode createSearchingTreeNodeWrapper() {
-    return new StructureViewComponent.StructureViewTreeElementWrapper(null,null, null);
+    return StructureViewComponent.createWrapper(null, null, null);
   }
 }

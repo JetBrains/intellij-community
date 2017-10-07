@@ -58,6 +58,7 @@ import gnu.trove.THashSet
 import org.jdom.Element
 import java.io.File
 import java.io.IOException
+import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -490,10 +491,16 @@ private fun writeConfigFile(elements: List<Element>, file: Path) {
   }
   elements.forEach { wrapper.addContent(it) }
   // .idea component configuration files uses XML prolog due to historical reasons
-  file.outputStream().use {
-    it.write(XML_PROLOG)
-    it.write(LineSeparator.LF.separatorBytes)
-    wrapper.write(it)
+  if (file.fileSystem == FileSystems.getDefault()) {
+    // VFS must be used to write workspace.xml and misc.xml to ensure that project files will be not reloaded on external file change event
+    writeFile(file, SaveSession { }, null, wrapper, LineSeparator.LF, prependXmlProlog = true)
+  }
+  else {
+    file.outputStream().use {
+      it.write(XML_PROLOG)
+      it.write(LineSeparator.LF.separatorBytes)
+      wrapper.write(it)
+    }
   }
 }
 
@@ -514,7 +521,17 @@ fun normalizeDefaultProjectElement(defaultProject: Project, element: Element, pr
           val wrapper = Element("component").attribute("name", componentName)
           component.name = "settings"
           wrapper.addContent(component)
-          JDOMUtil.write(wrapper, schemeDir.resolve("profiles_settings.xml").outputStream(), "\n")
+
+          val file = schemeDir.resolve("profiles_settings.xml")
+          if (file.fileSystem == FileSystems.getDefault()) {
+            // VFS must be used to write workspace.xml and misc.xml to ensure that project files will be not reloaded on external file change event
+            writeFile(file, SaveSession { }, null, wrapper, LineSeparator.LF, prependXmlProlog = false)
+          }
+          else {
+            file.outputStream().use {
+              wrapper.write(it)
+            }
+          }
         }
       }
 

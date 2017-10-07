@@ -800,7 +800,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       }
       myIsInheritedInitial = scheme.isInherited(key);
       setInherited(myIsInheritedInitial);
-      if (myIsInheritedInitial) {
+      if (myIsInheritedInitial && myFallbackAttributes != null) {
         getTextAttributes().copyFrom(myFallbackAttributes);
       }
       initCheckedStatus();

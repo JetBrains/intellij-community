@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.model;
 
 import com.intellij.openapi.externalSystem.model.project.*;
+import com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import org.jetbrains.annotations.NotNull;
 

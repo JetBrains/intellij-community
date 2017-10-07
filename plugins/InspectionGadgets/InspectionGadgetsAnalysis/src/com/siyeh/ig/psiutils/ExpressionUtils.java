@@ -690,6 +690,29 @@ public class ExpressionUtils {
     return null;
   }
 
+
+  /**
+   * Returns the expression compared with zero if the supplied {@link PsiBinaryExpression} is zero check (with {@code ==}). Returns null otherwise.
+   *
+   * @param binOp binary expression to extract the value compared with zero from
+   * @return value compared with zero
+   */
+  @Nullable
+  public static PsiExpression getValueComparedWithZero(@NotNull PsiBinaryExpression binOp) {
+    return getValueComparedWithZero(binOp, JavaTokenType.EQEQ);
+  }
+
+  @Nullable
+  public static PsiExpression getValueComparedWithZero(@NotNull PsiBinaryExpression binOp, IElementType opType) {
+    if (!binOp.getOperationTokenType().equals(opType)) return null;
+    PsiExpression rOperand = binOp.getROperand();
+    if (rOperand == null) return null;
+    PsiExpression lOperand = binOp.getLOperand();
+    if (isZero(lOperand)) return rOperand;
+    if (isZero(rOperand)) return lOperand;
+    return null;
+  }
+
   public static boolean isConcatenation(PsiElement element) {
     if (!(element instanceof PsiPolyadicExpression)) {
       return false;

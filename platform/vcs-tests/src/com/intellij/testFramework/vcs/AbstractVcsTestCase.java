@@ -229,7 +229,8 @@ public abstract class AbstractVcsTestCase {
     VcsTestUtil.editFileInCommand(myProject, file, newContent);
   }
 
-  protected VirtualFile copyFileInCommand(final VirtualFile file, final String toName) {
+  @NotNull
+  protected VirtualFile copyFileInCommand(@NotNull VirtualFile file, final String toName) {
     final AtomicReference<VirtualFile> res = new AtomicReference<>();
     new WriteCommandAction.Simple(myProject) {
       @Override

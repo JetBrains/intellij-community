@@ -212,6 +212,10 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
     }
 
     @Override
+    public void onShowChangesFromParentsChanged() {
+    }
+
+    @Override
     public void onTextFilterSettingsChanged() {
       applyFiltersAndUpdateUi(myMainFrame.getFilterUi().getFilters());
     }

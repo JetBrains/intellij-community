@@ -16,7 +16,9 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListOwner;
@@ -56,11 +58,12 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   protected static final int MODULE_SORT_WEIGHT = 3;
   protected static final int DIRECTORY_PATH_SORT_WEIGHT = 4;
   protected static final int FILE_PATH_SORT_WEIGHT = 5;
-  protected static final int CHANGE_SORT_WEIGHT = 6;
-  protected static final int VIRTUAL_FILE_SORT_WEIGHT = 7;
-  protected static final int UNVERSIONED_SORT_WEIGHT = 8;
-  protected static final int DEFAULT_SORT_WEIGHT = 9;
-  protected static final int IGNORED_SORT_WEIGHT = 10;
+  protected static final int GENERIC_FILE_PATH_SORT_WEIGHT = 6;
+  protected static final int CHANGE_SORT_WEIGHT = 7;
+  protected static final int VIRTUAL_FILE_SORT_WEIGHT = 8;
+  protected static final int UNVERSIONED_SORT_WEIGHT = 9;
+  protected static final int DEFAULT_SORT_WEIGHT = 10;
+  protected static final int IGNORED_SORT_WEIGHT = 11;
 
   public static final Convertor<TreePath, String> TO_TEXT_CONVERTER =
     path -> ((ChangesBrowserNode)path.getLastPathComponent()).getTextPresentation();
@@ -69,6 +72,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
 
   private int myFileCount = -1;
   private int myDirectoryCount = -1;
+  private boolean myHelper;
 
   protected ChangesBrowserNode(Object userObject) {
     super(userObject);
@@ -77,12 +81,19 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
 
   @NotNull
   public static ChangesBrowserNode createRoot(@NotNull Project project) {
-    return create(project, ROOT_NODE_VALUE);
+    ChangesBrowserNode root = create(project, ROOT_NODE_VALUE);
+    root.markAsHelperNode();
+    return root;
   }
 
   @NotNull
   public static ChangesBrowserNode create(@NotNull LocallyDeletedChange change) {
     return new ChangesBrowserLocallyDeletedNode(change);
+  }
+
+  @NotNull
+  public static ChangesBrowserNode createGeneric(@NotNull FilePath filePath, @NotNull FileStatus fileStatus, @NotNull Object userObject) {
+    return new ChangesBrowserGenericNode(filePath, fileStatus, userObject);
   }
 
   @NotNull
@@ -125,6 +136,14 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     return false;
   }
 
+  public void markAsHelperNode() {
+    myHelper = true;
+  }
+
+  public boolean isMeaningfulNode() {
+    return !myHelper;
+  }
+
   public int getFileCount() {
     if (myFileCount == -1) {
       myFileCount = (isFile() ? 1 : 0) + toStream(children()).mapToInt(ChangesBrowserNode::getFileCount).sum();
@@ -142,6 +161,11 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   private void resetFileCounters() {
     myFileCount = -1;
     myDirectoryCount = -1;
+  }
+
+  @NotNull
+  public Stream<ChangesBrowserNode> getNodesUnderStream() {
+    return toStream(preorderEnumeration());
   }
 
   @NotNull
@@ -254,6 +278,11 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
 
   public void setAttributes(@NotNull SimpleTextAttributes attributes) {
     myAttributes = attributes;
+  }
+
+  protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @NotNull String parentPath) {
+    renderer.append(spaceAndThinSpace() + FileUtil.getLocationRelativeToUserHome(parentPath),
+                    SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 
   protected void appendUpdatingState(@NotNull ChangesBrowserNodeRenderer renderer) {

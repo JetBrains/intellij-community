@@ -12,8 +12,10 @@ class BuiltInServerConfigurableUi implements ConfigurableUi<BuiltInServerOptions
   private PortField builtInServerPort;
   private JCheckBox builtInServerAvailableExternallyCheckBox;
   private JCheckBox allowUnsignedRequestsCheckBox;
+  private JLabel portLabel;
 
   public BuiltInServerConfigurableUi() {
+    portLabel.setLabelFor(builtInServerPort);
     builtInServerPort.setMin(1024);
   }
 

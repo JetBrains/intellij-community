@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -73,8 +74,16 @@ public class TestDataNavigationElementFactory {
       }
 
       if (filePathsToCreate.size() > CREATE_MISSING_FILES_WITHOUT_CONFIRMATION_LIMIT) {
+        List<String> displayPaths = new ArrayList<>();
+        for (String path : filePathsToCreate) {
+          displayPaths.add(TestDataUtil.getHtmlDisplayPathForMissingFile(project, path));
+        }
+
+        displayPaths.sort(String.CASE_INSENSITIVE_ORDER);
+        String filePathsDisplayStr = StringUtil.join(displayPaths, "\n");
+
         int code = Messages.showOkCancelDialog(
-          project, DevKitBundle.message("testdata.confirm.create.missing.files.dialog.message", StringUtil.join(filePathsToCreate, "\n")),
+          project, DevKitBundle.message("testdata.confirm.create.missing.files.dialog.message", filePathsDisplayStr),
           DevKitBundle.message("testdata.create.missing.files"), Messages.getQuestionIcon());
         if (code != Messages.OK) {
           return;
@@ -129,7 +138,7 @@ public class TestDataNavigationElementFactory {
       String afterName = afterFile.getName();
 
       List<Pair<String, SimpleTextAttributes>> result = new ArrayList<>();
-      result.add(new Pair<>("<" + beforeName + ", " + afterName + "> (", SimpleTextAttributes.REGULAR_ATTRIBUTES));
+      result.add(new Pair<>(TestDataUtil.getGroupDisplayName(beforeName, afterName) + " (", SimpleTextAttributes.REGULAR_ATTRIBUTES));
 
       Pair<String, String> beforeRelativePath = TestDataUtil.getModuleOrProjectRelativeParentPath(myProject, beforeFile);
       Pair<String, String> afterRelativePath = TestDataUtil.getModuleOrProjectRelativeParentPath(myProject, afterFile);
@@ -192,9 +201,12 @@ public class TestDataNavigationElementFactory {
     public List<Pair<String, SimpleTextAttributes>> getTitleFragments() {
       VirtualFile file = TestDataUtil.getFileByPath(myPath);
       if (file == null) {
-        return Collections.singletonList(new Pair<>(
-          String.format("%s (%s)", PathUtil.getFileName(myPath), PathUtil.getParentPath(myPath)),
-          SimpleTextAttributes.GRAYED_ATTRIBUTES));
+        Pair<String, String> relativePath = TestDataUtil.getRelativePathPairForMissingFile(myProject, myPath);
+        return ContainerUtil.list(
+          new Pair<>(PathUtil.getFileName(myPath) + " (", SimpleTextAttributes.GRAYED_ATTRIBUTES),
+          new Pair<>(relativePath.first == null ? "" : relativePath.first, SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES),
+          new Pair<>(relativePath.first == null ? "" : "/" + relativePath.second + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+        );
       }
 
       Pair<String, String> relativePath = TestDataUtil.getModuleOrProjectRelativeParentPath(myProject, file);

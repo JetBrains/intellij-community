@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
+import com.intellij.openapi.vcs.changes.ui.CommitDialogChangesBrowser;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -73,13 +74,20 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
 
       @SuppressWarnings("unchecked")
       Consumer<List<Change>> consumer = browser == null ? null : changes -> {
-        browser.rebuildList();
-        browser.getViewer().excludeChanges((List)files);
+        if (browser instanceof CommitDialogChangesBrowser) {
+          ((CommitDialogChangesBrowser)browser).updateDisplayedChangeLists();
+        }
         browser.getViewer().includeChanges((List)changes);
       };
       ChangeListManagerImpl manager = ChangeListManagerImpl.getInstanceImpl(project);
-      LocalChangeList targetChangeList =
-        browser == null ? manager.getDefaultChangeList() : (LocalChangeList)browser.getSelectedChangeList();
+
+      LocalChangeList targetChangeList;
+      if (browser instanceof CommitDialogChangesBrowser) {
+        targetChangeList = ((CommitDialogChangesBrowser)browser).getSelectedChangeList();
+      }
+      else {
+        targetChangeList = manager.getDefaultChangeList();
+      }
       List<VcsException> exceptions = manager.addUnversionedFiles(targetChangeList, files, unversionedFileCondition, consumer);
 
       result = exceptions.isEmpty();

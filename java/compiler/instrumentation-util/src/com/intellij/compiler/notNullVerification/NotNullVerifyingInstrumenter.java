@@ -212,7 +212,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
       }
 
       private AnnotationVisitor checkNotNullParameter(int parameter, String anno, AnnotationVisitor av) {
-        if (isReferenceType(args[parameter]) && myNotNullAnnos.contains(anno)) {
+        if (parameter >= 0 && parameter < args.length && isReferenceType(args[parameter]) && myNotNullAnnos.contains(anno)) {
           NotNullState state = new NotNullState(anno, IAE_CLASS_NAME);
           myNotNullParams.put(parameter, state);
           return collectNotNullArgs(av, state);

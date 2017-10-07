@@ -25,9 +25,6 @@ import java.util.List;
 public abstract class ChangeListManagerEx extends ChangeListManager {
   public abstract boolean isInUpdate();
 
-  @Nullable
-  public abstract LocalChangeList getIdentityChangeList(@NotNull Change change);
-
   @NotNull
   public abstract Collection<LocalChangeList> getInvolvedListsFilterChanges(@NotNull Collection<Change> changes, @NotNull List<Change> validChanges);
 

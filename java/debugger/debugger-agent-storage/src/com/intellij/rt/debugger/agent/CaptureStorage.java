@@ -1,58 +1,67 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.rt.debugger.agent;
 
 import sun.misc.JavaLangAccess;
 import sun.misc.SharedSecrets;
 
+import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author egor
  */
+@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class CaptureStorage {
   private static final int MAX_STORED_STACKS = 1000;
+  private static final Map<WeakReference, CapturedStack> STORAGE = new ConcurrentHashMap<WeakReference, CapturedStack>();
+  private static final Deque<WeakReference> HISTORY = new ArrayDeque<WeakReference>(MAX_STORED_STACKS);
 
-  private static final Map<Object, CapturedStack> STORAGE = Collections.synchronizedMap(new LinkedHashMap<Object, CapturedStack>() {
+  @SuppressWarnings("SSBasedInspection")
+  private static final ThreadLocal<Deque<InsertMatch>> CURRENT_STACKS = new ThreadLocal<Deque<InsertMatch>>() {
     @Override
-    protected boolean removeEldestEntry(Map.Entry eldest) {
-      return size() > MAX_STORED_STACKS;
+    protected Deque<InsertMatch> initialValue() {
+      return new LinkedList<InsertMatch>();
     }
-  });
-  private static final ThreadLocal<Deque<InsertMatch>> CURRENT_STACKS = ThreadLocal.withInitial(LinkedList::new);
-  private static final JavaLangAccess ourJavaLangAccess = SharedSecrets.getJavaLangAccess();
+  };
 
   private static boolean DEBUG = false;
+  private static boolean ENABLED = true;
 
   @SuppressWarnings("unused")
   public static void capture(Object key) {
+    if (!ENABLED) {
+      return;
+    }
     if (DEBUG) {
       System.out.println("capture - " + key);
     }
     Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
     CapturedStack stack = createCapturedStack(new Throwable(), currentStacks.isEmpty() ? null : currentStacks.getLast());
-    STORAGE.put(key, stack);
+    WeakKey keyRef = new WeakKey(key);
+    synchronized (HISTORY) {
+      CapturedStack old = STORAGE.put(keyRef, stack);
+      if (old == null) {
+        if (HISTORY.size() >= MAX_STORED_STACKS) {
+          STORAGE.remove(HISTORY.removeFirst());
+        }
+      }
+      else {
+        HISTORY.removeFirstOccurrence(keyRef); // must not happen often
+      }
+      HISTORY.addLast(keyRef);
+    }
   }
 
   @SuppressWarnings("unused")
   public static void insertEnter(Object key) {
-    CapturedStack stack = STORAGE.get(key);
+    if (!ENABLED) {
+      return;
+    }
+    CapturedStack stack = STORAGE.get(new WeakKey(key));
     Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
     if (stack != null) {
-      currentStacks.add(new InsertMatch(stack, ourJavaLangAccess.getStackTraceDepth(new Throwable())));
+      currentStacks.add(new InsertMatch(stack, getStackTraceDepth(new Throwable())));
       if (DEBUG) {
         System.out.println("insert -> " + key + ", stack saved (" + currentStacks.size() + ")");
       }
@@ -65,8 +74,30 @@ public class CaptureStorage {
     }
   }
 
+  private static class WeakKey extends WeakReference {
+    private final int myHashCode;
+
+    public WeakKey(Object referent) {
+      super(referent);
+      myHashCode = System.identityHashCode(referent);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      return this == o || (o instanceof WeakKey && ((WeakKey)o).get() == get());
+    }
+
+    @Override
+    public int hashCode() {
+      return myHashCode;
+    }
+  }
+
   @SuppressWarnings("unused")
   public static void insertExit(Object key) {
+    if (!ENABLED) {
+      return;
+    }
     Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
     currentStacks.removeLast();
     if (DEBUG) {
@@ -110,7 +141,7 @@ public class CaptureStorage {
       else {
         List<StackTraceElement> insertStack = myInsertMatch.myStack.getStackTrace();
         int insertPos = stackTrace.length - myInsertMatch.myDepth + 2;
-        ArrayList<StackTraceElement> res = new ArrayList<>(insertPos + insertStack.size() + 1);
+        ArrayList<StackTraceElement> res = new ArrayList<StackTraceElement>(insertPos + insertStack.size() + 1);
         res.addAll(Arrays.asList(stackTrace).subList(1, insertPos));
         res.add(null);
         res.addAll(insertStack);
@@ -134,7 +165,7 @@ public class CaptureStorage {
   // to be run from the debugger
   @SuppressWarnings("unused")
   public static Object[][] getRelatedStack(Object key) {
-    CapturedStack stack = STORAGE.get(key);
+    CapturedStack stack = STORAGE.get(new WeakKey(key));
     if (stack == null) {
       return null;
     }
@@ -154,5 +185,25 @@ public class CaptureStorage {
 
   public static void setDebug(boolean debug) {
     DEBUG = debug;
+  }
+
+  public static void setEnabled(boolean enabled) {
+    ENABLED = enabled;
+  }
+
+  private static final JavaLangAccess ourJavaLangAccess;
+  static {
+    JavaLangAccess access = null;
+    try {
+      access = SharedSecrets.getJavaLangAccess();
+    }
+    catch (Throwable e) {
+      // java 9
+    }
+    ourJavaLangAccess = access;
+  }
+  // TODO: this is a workaround for java 9 where SharedSecrets are not available
+  private static int getStackTraceDepth(Throwable exception) {
+    return ourJavaLangAccess != null ? ourJavaLangAccess.getStackTraceDepth(exception) : exception.getStackTrace().length;
   }
 }

@@ -172,6 +172,7 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
 
     @Override
     public void customizeEnvironmentVars(Map<String, String> envs, boolean passParentEnvs) {
+      super.customizeEnvironmentVars(envs, passParentEnvs);
       myState.customizeEnvironmentVars(envs, passParentEnvs);
     }
   }

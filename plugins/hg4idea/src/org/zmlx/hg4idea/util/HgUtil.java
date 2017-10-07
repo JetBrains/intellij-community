@@ -395,6 +395,14 @@ public abstract class HgUtil {
     }
 
     Collection<HgChange> hgChanges = statusCommand.executeInCurrentThread(root, Collections.singleton(path));
+    return createChanges(project, root, revNum1, revNum2, hgChanges);
+  }
+
+  @NotNull
+  public static List<Change> createChanges(@NotNull Project project,
+                                           @NotNull VirtualFile root,
+                                           @Nullable HgRevisionNumber revNum1,
+                                           @Nullable HgRevisionNumber revNum2, Collection<HgChange> hgChanges) {
     List<Change> changes = new ArrayList<>();
     //convert output changes to standard Change class
     for (HgChange hgChange : hgChanges) {

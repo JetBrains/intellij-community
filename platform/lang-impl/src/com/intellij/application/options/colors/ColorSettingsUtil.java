@@ -19,7 +19,6 @@ package com.intellij.application.options.colors;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.OptionsBundle;
@@ -52,7 +51,7 @@ public class ColorSettingsUtil {
     return displayText;
   }
 
-  public static List<AttributesDescriptor> getAllAttributeDescriptors(ColorAndFontDescriptorsProvider provider) {
+  public static List<AttributesDescriptor> getAllAttributeDescriptors(@NotNull ColorAndFontDescriptorsProvider provider) {
     List<AttributesDescriptor> result = new ArrayList<>();
     Collections.addAll(result, provider.getAttributeDescriptors());
     if (isInspectionColorsPage(provider)) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.signatures;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -336,10 +322,6 @@ public class GrClosureSignatureUtil {
 
   public enum ApplicabilityResult {
     applicable, inapplicable, canBeApplicable, ambiguous;
-
-    public static boolean isApplicable(ApplicabilityResult r) {
-      return r != inapplicable && r!= ambiguous;
-    }
   }
 
   @Nullable
@@ -896,16 +878,10 @@ public class GrClosureSignatureUtil {
 
 
   public static class MapResultWithError<Arg> {
-    private final ArgInfo<Arg>[] mapping;
     private final List<Pair<Integer, PsiType>> errorsAndExpectedType;
 
-    public MapResultWithError(ArgInfo<Arg>[] mapping, List<Pair<Integer, PsiType>> errorsAndExpectedType) {
-      this.mapping = mapping;
+    public MapResultWithError(List<Pair<Integer, PsiType>> errorsAndExpectedType) {
       this.errorsAndExpectedType = errorsAndExpectedType;
-    }
-
-    public ArgInfo<Arg>[] getMapping() {
-      return mapping;
     }
 
     public List<Pair<Integer, PsiType>> getErrors() {
@@ -925,16 +901,12 @@ public class GrClosureSignatureUtil {
     if (args.length > params.length && !signature.isVarargs()) return null;
 
     int errorCount = 0;
-    ArgInfo<Arg>[] map = new ArgInfo[params.length];
-
     List<Pair<Integer, PsiType>> errors = new ArrayList<>(maxErrorCount);
 
     for (int i = 0; i < params.length; i++) {
       final PsiType type = typeComputer.fun(args[i]);
-      if (isAssignableByConversion(params[i].getType(), type, context)) {
-        map[i] = new ArgInfo<>(args[i], type);
-      }
-      else if (params[i].getType() instanceof PsiArrayType && i == params.length - 1) {
+      if (isAssignableByConversion(params[i].getType(), type, context)) continue;
+      if (params[i].getType() instanceof PsiArrayType && i == params.length - 1) {
         if (i + 1 == args.length) {
           errors.add(new Pair<>(i, params[i].getType()));
         }
@@ -945,7 +917,6 @@ public class GrClosureSignatureUtil {
             if (errorCount > maxErrorCount) return null;
             errors.add(new Pair<>(i, ellipsis));
           }
-          map[i] = new ArgInfo<>(args[i], type);
         }
       }
       else {
@@ -954,7 +925,7 @@ public class GrClosureSignatureUtil {
         errors.add(new Pair<>(i, params[i].getType()));
       }
     }
-    return new MapResultWithError<>(map, errors);
+    return new MapResultWithError<>(errors);
   }
 
   public static List<GrClosureSignature> generateSimpleSignatures(@NotNull GrSignature signature) {

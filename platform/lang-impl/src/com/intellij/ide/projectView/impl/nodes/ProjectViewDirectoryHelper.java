@@ -25,6 +25,8 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
@@ -35,6 +37,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtilCore;
@@ -47,6 +50,7 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ProjectViewDirectoryHelper {
   protected static final Logger LOG = Logger.getInstance(ProjectViewDirectoryHelper.class);
@@ -207,12 +211,24 @@ public class ProjectViewDirectoryHelper {
   public List<VirtualFile> getTopLevelRoots() {
     List<VirtualFile> topLevelContentRoots = new ArrayList<>();
     ProjectRootManager prm = ProjectRootManager.getInstance(myProject);
-    ProjectFileIndex index = prm.getFileIndex();
+    DirectoryIndex index = DirectoryIndex.getInstance(myProject);
 
     for (VirtualFile root : prm.getContentRoots()) {
       VirtualFile parent = root.getParent();
-      if (!isFileInContent(index, parent)) {
+      if (!isFileUnderContentRoot(index, parent)) {
         topLevelContentRoots.add(root);
+      }
+    }
+    Collection<UnloadedModuleDescription> descriptions = ModuleManager.getInstance(myProject).getUnloadedModuleDescriptions();
+    for (UnloadedModuleDescription description : descriptions) {
+      for (VirtualFilePointer pointer : description.getContentRoots()) {
+        VirtualFile root = pointer.getFile();
+        if (root != null) {
+          VirtualFile parent = root.getParent();
+          if (!isFileUnderContentRoot(index, parent)) {
+            topLevelContentRoots.add(root);
+          }
+        }
       }
     }
     return topLevelContentRoots;
@@ -230,15 +246,16 @@ public class ProjectViewDirectoryHelper {
     });
   }
 
+  public List<VirtualFile> getTopLevelUnloadedModuleRoots(UnloadedModuleDescription module, ViewSettings settings) {
+    return module.getContentRoots().stream()
+      .map(VirtualFilePointer::getFile)
+      .filter(root -> root != null && shouldBeShown(root, settings))
+      .collect(Collectors.toList());
+  }
 
-  private static boolean isFileInContent(ProjectFileIndex index, VirtualFile file) {
-    while (file != null) {
-      if (index.isInContent(file)) {
-        return true;
-      }
-      file = file.getParent();
-    }
-    return false;
+
+  private static boolean isFileUnderContentRoot(DirectoryIndex index, VirtualFile file) {
+    return index.getInfoForFile(file).getContentRoot() != null;
   }
 
   private PsiElement[] directoryChildrenInProject(PsiDirectory psiDirectory, final ViewSettings settings) {
@@ -359,5 +376,26 @@ public class ProjectViewDirectoryHelper {
       }
       addAllSubpackages(container, subdir, moduleFileIndex, viewSettings, filter);
     }
+  }
+
+  @NotNull
+  public Collection<AbstractTreeNode> createFileAndDirectoryNodes(@NotNull List<VirtualFile> files, @Nullable ViewSettings viewSettings) {
+    final List<AbstractTreeNode> children = new ArrayList<>(files.size());
+    final PsiManager psiManager = PsiManager.getInstance(myProject);
+    for (final VirtualFile virtualFile : files) {
+      if (virtualFile.isDirectory()) {
+        PsiDirectory directory = psiManager.findDirectory(virtualFile);
+        if (directory != null) {
+          children.add(new PsiDirectoryNode(myProject, directory, viewSettings));
+        }
+      }
+      else {
+        PsiFile file = psiManager.findFile(virtualFile);
+        if (file != null) {
+          children.add(new PsiFileNode(myProject, file, viewSettings));
+        }
+      }
+    }
+    return children;
   }
 }

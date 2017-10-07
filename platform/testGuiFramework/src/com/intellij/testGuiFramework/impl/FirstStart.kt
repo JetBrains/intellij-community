@@ -30,6 +30,7 @@ import org.fest.swing.core.Robot
 import org.fest.swing.core.SmartWaitRobot
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
+import org.fest.swing.fixture.AbstractComponentFixture
 import org.fest.swing.fixture.JButtonFixture
 import org.fest.swing.fixture.JCheckBoxFixture
 import org.fest.swing.fixture.JRadioButtonFixture
@@ -180,7 +181,7 @@ abstract class FirstStart(val ideType: IdeType) {
       val title = "Customize $ideName"
       LOG.info("Waiting for '$title' dialog")
       dialog(title)
-      val buttonText = "Skip All and Set Defaults"
+      val buttonText = "Skip Remaining and Set Defaults"
       LOG.info("Click '$buttonText'")
       button(buttonText).click()
     }
@@ -260,6 +261,10 @@ abstract class FirstStart(val ideType: IdeType) {
       }, timeout)
 
       return reference.get()
+    }
+
+    fun exists(fixture: () -> AbstractComponentFixture<*, *, *>): Boolean {
+      return GuiTestCase().exists(fixture)
     }
   }
 

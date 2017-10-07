@@ -63,7 +63,7 @@ public class InputVariables {
   /**
    * copy use only
    */
-  public InputVariables(List<VariableData> inputVariables,
+  private InputVariables(List<VariableData> inputVariables,
                         Project project,
                         LocalSearchScope scope) {
     myProject = project;

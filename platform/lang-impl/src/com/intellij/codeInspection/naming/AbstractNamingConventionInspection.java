@@ -61,7 +61,11 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
 
   private void initDisabledState() {
     myDisabledShortNames.clear();
-    myDisabledShortNames.addAll(myNamingConventions.keySet());
+    for (NamingConvention<T> convention : myNamingConventions.values()) {
+      if (!convention.isEnabledByDefault()) {
+        myDisabledShortNames.add(convention.getShortName());
+      }
+    }
   }
 
   public NamingConventionBean getNamingConventionBean(String shortName) {
@@ -122,7 +126,7 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
   }
 
   protected void checkName(@NotNull T member, @NotNull String name, @NotNull ProblemsHolder holder) {
-    checkName(member, name, shortName -> {
+    checkName(member, shortName -> {
       LocalQuickFix[] fixes;
       if (holder.isOnTheFly()) {
         LocalQuickFix fix = createRenameFix();
@@ -139,7 +143,7 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
     });
   }
 
-  protected void checkName(@NotNull T member, @NotNull String name, @NotNull Consumer<String> errorRegister) {
+  protected void checkName(@NotNull T member, @NotNull Consumer<String> errorRegister) {
     for (NamingConvention<T> namingConvention : myNamingConventions.values()) {
       if (namingConvention.isApplicable(member)) {
         String shortName = namingConvention.getShortName();
@@ -149,13 +153,16 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
         NamingConventionBean activeBean = myNamingConventionBeans.get(shortName);
         if (activeBean instanceof NamingConventionWithFallbackBean && ((NamingConventionWithFallbackBean)activeBean).isInheritDefaultSettings()) {
           LOG.assertTrue(myDefaultConventionShortName != null, activeBean + " expects that default conversion is configured");
+          shortName = myDefaultConventionShortName;
           //disabled when fallback is disabled
-          if (myDisabledShortNames.contains(myDefaultConventionShortName)) {
+          if (myDisabledShortNames.contains(shortName)) {
             break;
           }
-          activeBean = myNamingConventionBeans.get(myDefaultConventionShortName);
+
+          activeBean = myNamingConventionBeans.get(shortName);
+          namingConvention = myNamingConventions.get(shortName);
         }
-        if (!activeBean.isValid(name)) {
+        if (!namingConvention.isValid(member, activeBean)) {
           errorRegister.accept(shortName);
         }
         break;

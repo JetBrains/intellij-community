@@ -251,7 +251,10 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < passes.size(); i++) {
       TextEditorHighlightingPass tepass = passes.get(i);
-      if (!(tepass instanceof ProgressableTextEditorHighlightingPass)) continue;
+      if (!(tepass instanceof ProgressableTextEditorHighlightingPass) ||
+          StringUtil.isEmpty(((ProgressableTextEditorHighlightingPass)tepass).getPresentableName())) {
+        continue;
+      }
       ProgressableTextEditorHighlightingPass pass = (ProgressableTextEditorHighlightingPass)tepass;
 
       if (pass.getProgress() < 0) continue;

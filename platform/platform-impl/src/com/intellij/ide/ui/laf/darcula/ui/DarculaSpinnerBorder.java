@@ -16,15 +16,14 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
-import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.openapi.ui.ErrorBorderCapable;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.plaf.InsetsUIResource;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.awt.geom.Area;
@@ -33,55 +32,67 @@ import java.awt.geom.RoundRectangle2D;
 /**
  * @author Konstantin Bulenkov
  */
-public class DarculaSpinnerBorder implements Border, UIResource {
+public class DarculaSpinnerBorder implements Border, UIResource, ErrorBorderCapable {
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-    final JSpinner spinner = (JSpinner)c;
-    final JFormattedTextField editor = UIUtil.findComponentOfType(spinner, JFormattedTextField.class);
-    final int x1 = x + 1;
-    final int y1 = y + 3;
-    final int width1 = width - 2;
-    final int height1 = height - 6;
-    final boolean focused = c.isEnabled() && c.isVisible() && editor != null && editor.hasFocus();
-    final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+    JSpinner spinner = (JSpinner)c;
+    JFormattedTextField editor = UIUtil.findComponentOfType(spinner, JFormattedTextField.class);
+    int x1 = x + JBUI.scale(1);
+    int y1 = y + JBUI.scale(3);
+    int width1 = width - JBUI.scale(2);
+    int height1 = height - JBUI.scale(6);
+    boolean focused = c.isEnabled() && c.isVisible() && editor != null && editor.hasFocus();
 
-    if (c.isOpaque()) {
-      g.setColor(UIUtil.getPanelBackground());
-      g.fillRect(x, y, width, height);
-    }
+    Graphics2D g2 = (Graphics2D)g.create();
+    try {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
-    g.setColor(UIUtil.getTextFieldBackground());
-    g.fillRoundRect(x1, y1, width1, height1, 5, 5);
-    g.setColor(UIManager.getColor(spinner.isEnabled() ? "Spinner.darcula.enabledButtonColor" : "Spinner.darcula.disabledButtonColor"));
-    if (editor != null) {
-      final int off = editor.getBounds().x + editor.getWidth() + ((JSpinner)c).getInsets().left + 1;
-      final Area rect = new Area(new RoundRectangle2D.Double(x1, y1, width1, height1, 5, 5));
-      final Area blueRect = new Area(new Rectangle(off, y1, 22, height1));
-      rect.intersect(blueRect);
-      ((Graphics2D)g).fill(rect);
-      if (UIUtil.isUnderDarcula()) {
-        g.setColor(Gray._100);
-        g.drawLine(off, y1, off, height1 + 2);
+      if (c.isOpaque()) {
+        g2.setColor(UIUtil.getPanelBackground());
+        g2.fillRect(x, y, width, height);
       }
-    }
 
-    if (!c.isEnabled()) {
-      ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
-    }
+      g2.setColor(UIUtil.getTextFieldBackground());
+      g2.fillRoundRect(x1, y1, width1, height1, JBUI.scale(5), JBUI.scale(5));
+      g2.setColor(UIManager.getColor(spinner.isEnabled() ? "Spinner.darcula.enabledButtonColor" : "Spinner.darcula.disabledButtonColor"));
+      if (editor != null) {
+        int off = editor.getBounds().x + editor.getWidth() + ((JSpinner)c).getInsets().left + JBUI.scale(1);
+        Area rect = new Area(new RoundRectangle2D.Double(x1, y1, width1, height1, JBUI.scale(5), JBUI.scale(5)));
+        Area blueRect = new Area(new Rectangle(off, y1, JBUI.scale(22), height1));
+        rect.intersect(blueRect);
+        g2.fill(rect);
 
-    if (focused) {
-      DarculaUIUtil.paintFocusRing(g, new Rectangle(x1 + 2, y1, width1 - 3, height1));
-    } else {
-      g.setColor(new JBColor(Gray._149,Gray._100));
-      g.drawRoundRect(x1, y1, width1, height1, 5, 5);
+        if (UIUtil.isUnderDarcula()) {
+          g2.setColor(Gray._100);
+          g2.drawLine(off, y1, off, height1 + JBUI.scale(2));
+        }
+      }
+
+      if (!c.isEnabled()) {
+        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
+      }
+
+      Object op = ((JComponent)c).getClientProperty("JComponent.outline");
+      if (op != null) {
+        g2.translate(x, y + JBUI.scale(1));
+        DarculaUIUtil.paintOutlineBorder(g2, width, height - JBUI.scale(1)*2, JBUI.scale(5), true, focused,
+                                         DarculaUIUtil.Outline.valueOf(op.toString()));
+      } else if (focused) {
+        DarculaUIUtil.paintFocusRing(g2, new Rectangle(x1 + JBUI.scale(2), y1, width1 - JBUI.scale(3), height1));
+      } else {
+        g2.setColor(new JBColor(Gray._149,Gray._100));
+        g2.drawRoundRect(x1, y1, width1, height1, JBUI.scale(5), JBUI.scale(5));
+      }
+    } finally {
+      g2.dispose();
     }
-    config.restore();
   }
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return new InsetsUIResource(5, 7, 5, 7);
+    return JBUI.insets(5, 7, 5, 7).asUIResource();
   }
 
   @Override

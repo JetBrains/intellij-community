@@ -177,6 +177,7 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testConstructorRefOnClassWithRecursiveTypeParameter() { doTest(); }
   public void testWildcardInCheckedCompatibilityConstraints() { doTest(); }
   public void testConstructorReferenceWithVarargsParameters() { doTest(); }
+  public void testMethodReferenceSwallowedErrors() { doTest(); }
 
   public void testPreferErrorOnTopLevelToFailedSubstitutorOnNestedLevel() { doTest(); }
 

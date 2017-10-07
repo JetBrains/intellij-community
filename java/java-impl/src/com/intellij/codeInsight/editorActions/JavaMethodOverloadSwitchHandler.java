@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -149,10 +147,9 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
 
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     CompletionMemory.registerChosenMethod(targetMethod, methodCall);
-    controller.resetHighlighted();
-    controller.updateComponent(); // update popup immediately (otherwise, it will be updated only after delay)
     controller.setPreservedOnHintHidden(true);
     ParameterHintsPass.syncUpdate(call, editor);
+    controller.showHint(false, false);
   }
 
   private static String getParameterKey(PsiMethod method, int parameterIndex) {

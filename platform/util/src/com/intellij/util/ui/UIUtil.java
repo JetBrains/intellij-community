@@ -1,18 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
@@ -2657,7 +2655,7 @@ public class UIUtil {
     return getFontWithFallback(font.getFamily(), font.getStyle(), font.getSize());
   }
 
-  public static FontUIResource getFontWithFallback(@NotNull String familyName, @JdkConstants.FontStyle int style, int size) {
+  public static FontUIResource getFontWithFallback(@Nullable String familyName, @JdkConstants.FontStyle int style, int size) {
     Font fontWithFallback = new StyleContext().getFont(familyName, style, size);
     return fontWithFallback instanceof FontUIResource ? (FontUIResource)fontWithFallback : new FontUIResource(fontWithFallback);
   }
@@ -3158,12 +3156,12 @@ public class UIUtil {
 
   @NotNull
   public static JBTreeTraverser<Component> uiTraverser(@Nullable Component component) {
-    return new JBTreeTraverser<Component>(COMPONENT_CHILDREN).withRoot(component);
+    return UI_TRAVERSER.withRoot(component);
   }
 
   public static final Key<Iterable<? extends Component>> NOT_IN_HIERARCHY_COMPONENTS = Key.create("NOT_IN_HIERARCHY_COMPONENTS");
 
-  private static final Function<Component, JBIterable<Component>> COMPONENT_CHILDREN = new Function<Component, JBIterable<Component>>() {
+  private static final JBTreeTraverser<Component> UI_TRAVERSER = JBTreeTraverser.from(new Function<Component, JBIterable<Component>>() {
     @Override
     public JBIterable<Component> fun(@NotNull Component c) {
       JBIterable<Component> result;
@@ -3191,7 +3189,7 @@ public class UIUtil {
       }
       return result;
     }
-  };
+  });
 
   private static final Function.Mono<Component> COMPONENT_PARENT = new Function.Mono<Component>() {
     @Override

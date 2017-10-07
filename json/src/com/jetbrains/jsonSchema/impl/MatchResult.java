@@ -15,7 +15,6 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,24 +33,25 @@ public class MatchResult {
   }
 
   public static MatchResult create(@NotNull JsonSchemaTreeNode root) {
-    final List<JsonSchemaObject> schemas = new ArrayList<>();
-    final Map<Integer, Set<JsonSchemaObject>> oneOfGroups = new HashMap<>();
-    ContainerUtil.process(new JBTreeTraverser<JsonSchemaTreeNode>(node -> node.getChildren()).withRoot(root).preOrderDfsTraversal(),
-                          node -> {
-                            if (node.getChildren().isEmpty() && !node.isAny() && !node.isNothing() &&
-                                SchemaResolveState.normal.equals(node.getResolveState())) {
-                              final int groupNumber = node.getExcludingGroupNumber();
-                              if (groupNumber < 0) {
-                                schemas.add(node.getSchema());
-                              }
-                              else {
-                                Set<JsonSchemaObject> set = oneOfGroups.get(groupNumber);
-                                if (set == null) oneOfGroups.put(groupNumber, (set = new HashSet<>()));
-                                set.add(node.getSchema());
-                              }
-                            }
-                            return true;
-                          });
+    List<JsonSchemaObject> schemas = new ArrayList<>();
+    Map<Integer, Set<JsonSchemaObject>> oneOfGroups = new HashMap<>();
+    JBTreeTraverser.<JsonSchemaTreeNode>from(node -> node.getChildren())
+      .withRoot(root)
+      .preOrderDfsTraversal()
+      .consumeEach(node -> {
+        if (node.getChildren().isEmpty() && !node.isAny() && !node.isNothing() &&
+            SchemaResolveState.normal.equals(node.getResolveState())) {
+          int groupNumber = node.getExcludingGroupNumber();
+          if (groupNumber < 0) {
+            schemas.add(node.getSchema());
+          }
+          else {
+            Set<JsonSchemaObject> set = oneOfGroups.get(groupNumber);
+            if (set == null) oneOfGroups.put(groupNumber, (set = new HashSet<>()));
+            set.add(node.getSchema());
+          }
+        }
+      });
     return new MatchResult(schemas, new ArrayList<>(oneOfGroups.values()));
   }
 }

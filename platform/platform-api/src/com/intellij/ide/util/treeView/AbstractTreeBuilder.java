@@ -48,7 +48,7 @@ public class AbstractTreeBuilder implements Disposable {
     myLaterInvocator = new TransferToEDTQueue<>("Tree later invocator", runnable -> {
     runnable.run();
     return true;
-  }, o -> isDisposed(), 200);
+  }, o -> isDisposed());
 
 
   public AbstractTreeBuilder(@NotNull JTree tree,

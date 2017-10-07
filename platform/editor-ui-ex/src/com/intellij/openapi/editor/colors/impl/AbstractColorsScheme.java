@@ -61,7 +61,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   public static final Color INHERITED_COLOR_MARKER = ColorUtil.marker("INHERITED_COLOR_MARKER");
   public static final Color NULL_COLOR_MARKER = ColorUtil.marker("NULL_COLOR_MARKER");
 
-  private static final int CURR_VERSION = 142;
+  public static final int CURR_VERSION = 142;
 
   // todo: unify with UIUtil.DEF_SYSTEM_FONT_SIZE
   private static final FontSize DEFAULT_FONT_SIZE = FontSize.SMALL;
@@ -698,7 +698,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
       key -> {
         TextAttributes attrs = myAttributesMap.get(key);
         if (attrs == INHERITED_ATTRS_MARKER) {
-          return key.getFallbackAttributeKey() == null;
+          return !hasExplicitlyDefinedAttributes(parentScheme, key);
         }
         TextAttributes parent = parentScheme instanceof DefaultColorsScheme ?
                                 ((DefaultColorsScheme)parentScheme).getAttributes(key, false) : parentScheme.getAttributes(key);
@@ -709,7 +709,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
       key -> {
         Color color = myColorsMap.get(key);
         if (color == INHERITED_COLOR_MARKER) {
-          return key.getFallbackColorKey() == null;
+          return !hasExplicitlyDefinedColors(parentScheme, key);
         }
 
         Color parent = parentScheme instanceof DefaultColorsScheme ?
@@ -718,6 +718,20 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
       }
     ).toList());
   }
+
+  private static boolean hasExplicitlyDefinedAttributes(@NotNull EditorColorsScheme scheme, @NotNull TextAttributesKey key) {
+    TextAttributes directAttrs =
+      scheme instanceof DefaultColorsScheme ? ((DefaultColorsScheme)scheme).getDirectlyDefinedAttributes(key) : null;
+    return directAttrs != null && directAttrs != INHERITED_ATTRS_MARKER;
+  }
+
+  private static boolean hasExplicitlyDefinedColors(@NotNull EditorColorsScheme scheme, @NotNull ColorKey key) {
+    Color directColor =
+      scheme instanceof DefaultColorsScheme ? ((DefaultColorsScheme)scheme).getDirectlyDefinedColor(key) : null;
+    return directColor != null && directColor != INHERITED_COLOR_MARKER;
+  }
+
+
   
   @NotNull
   private Element metaInfoToElement() {

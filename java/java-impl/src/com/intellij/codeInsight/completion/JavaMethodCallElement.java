@@ -69,7 +69,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   private final MemberLookupHelper myHelper;
   private PsiSubstitutor myQualifierSubstitutor = PsiSubstitutor.EMPTY;
   private PsiSubstitutor myInferenceSubstitutor = PsiSubstitutor.EMPTY;
-  private boolean myMayNeedExplicitTypeParameters;
+  private boolean myNeedExplicitTypeParameters;
   private String myForcedQualifier = "";
   @Nullable private String myPresentableTypeArgs;
 
@@ -109,10 +109,10 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     return getSubstitutor().substitute(getInferenceSubstitutor().substitute(getObject().getReturnType()));
   }
 
-  public void setInferenceSubstitutor(@NotNull final PsiSubstitutor substitutor, PsiElement place) {
-    myInferenceSubstitutor = substitutor;
-    myMayNeedExplicitTypeParameters = mayNeedTypeParameters(place);
-    myPresentableTypeArgs = shouldInsertTypeParameters() ? getTypeParamsText(true, myMethod, substitutor) : null;
+  public void setInferenceSubstitutorFromExpectedType(@NotNull PsiElement place, @NotNull PsiType expectedType) {
+    myInferenceSubstitutor = SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor(myMethod, expectedType);
+    myNeedExplicitTypeParameters = mayNeedTypeParameters(place) && SmartCompletionDecorator.hasUnboundTypeParams(myMethod, expectedType);
+    myPresentableTypeArgs = myNeedExplicitTypeParameters ? getTypeParamsText(true, myMethod, myInferenceSubstitutor) : null;
     if (myPresentableTypeArgs != null && myPresentableTypeArgs.length() > 10) {
       myPresentableTypeArgs = myPresentableTypeArgs.substring(0, 10) + "...>";
     }
@@ -179,7 +179,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
 
     final int startOffset = context.getStartOffset();
     final OffsetKey refStart = context.trackOffset(startOffset, true);
-    if (shouldInsertTypeParameters() && mayNeedTypeParameters(context.getFile().findElementAt(context.getStartOffset()))) {
+    if (myNeedExplicitTypeParameters) {
       qualifyMethodCall(file, startOffset, document);
       insertExplicitTypeParameters(context, refStart);
     }
@@ -387,11 +387,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     });
   }
 
-  private boolean shouldInsertTypeParameters() {
-    return myMayNeedExplicitTypeParameters && !getInferenceSubstitutor().equals(PsiSubstitutor.EMPTY) && myMethod.getParameterList().getParametersCount() == 0;
-  }
-
-  public static boolean mayNeedTypeParameters(@Nullable final PsiElement leaf) {
+  private static boolean mayNeedTypeParameters(@NotNull final PsiElement leaf) {
     if (PsiTreeUtil.getParentOfType(leaf, PsiExpressionList.class, true, PsiCodeBlock.class, PsiModifierListOwner.class) == null) {
       if (PsiTreeUtil.getParentOfType(leaf, PsiConditionalExpression.class, true, PsiCodeBlock.class, PsiModifierListOwner.class) == null) {
         return false;

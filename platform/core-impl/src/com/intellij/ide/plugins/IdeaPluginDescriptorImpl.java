@@ -29,9 +29,11 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.xmlb.JDOMXIncluder;
@@ -81,14 +83,14 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private PluginId[] myOptionalDependencies = PluginId.EMPTY_ARRAY;
   private Map<PluginId, String> myOptionalConfigs;
   private Map<PluginId, IdeaPluginDescriptorImpl> myOptionalDescriptors;
-  @Nullable private List<Element> myActionsElements;
+  @Nullable private List<Element> myActionElements;
   private ComponentConfig[] myAppComponents;
   private ComponentConfig[] myProjectComponents;
   private ComponentConfig[] myModuleComponents;
   private boolean myDeleted;
   private ClassLoader myLoader;
   private HelpSetPath[] myHelpSets;
-  @Nullable private MultiMap<String, Element> myExtensions;
+  @Nullable private MultiMap<String, Pair<String, Element>> myExtensions; // extension point name -> list of (extension default NS, extension element)
   @Nullable private MultiMap<String, Element> myExtensionsPoints;
   private String myDescriptionChildText;
   private String myDownloadCounter;
@@ -116,26 +118,35 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return s;
   }
 
-  /**
-   * @deprecated 
-   * use {@link JDOMUtil#internElement(Element, StringInterner)}
-   */
-  @Deprecated
-  public static void internJDOMElement(@NotNull Element rootElement) {
-  }
-
   @Nullable
-  private static List<Element> copyElements(@Nullable Element[] elements, StringInterner interner) {
+  private static List<Element> copyChildren(@Nullable Element[] elements, @NotNull StringInterner interner) {
     if (elements == null || elements.length == 0) {
       return null;
     }
 
     List<Element> result = new SmartList<>();
     for (Element extensionsRoot : elements) {
-      for (Element element : extensionsRoot.getChildren()) {
-        JDOMUtil.internElement(element, interner);
-        result.add(element);
+      List<Element> children = extensionsRoot.getChildren();
+      for (Element child : children) {
+        JDOMUtil.internElement(child, interner);
+        result.add(child);
       }
+    }
+    return result;
+  }
+  @Nullable
+  private static List<Pair<String, Element>> copyChildrenAndNs(@Nullable Element[] elements, @NotNull StringInterner interner) {
+    if (elements == null || elements.length == 0) {
+      return null;
+    }
+
+    List<Pair<String, Element>> result = new SmartList<>();
+    for (Element extensionsRoot : elements) {
+      String ns = extensionsRoot.getAttributeValue("defaultExtensionNs");
+      result.addAll(ContainerUtil.map(extensionsRoot.getChildren(), e-> {
+        JDOMUtil.internElement(e, interner);
+        return Pair.create(ns, e);
+      }));
     }
     return result;
   }
@@ -164,12 +175,12 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myPath = path;
   }
 
-  public void readExternal(@NotNull Document document, @NotNull URL url, @NotNull JDOMXIncluder.PathResolver pathResolver) throws InvalidDataException, FileNotFoundException {
+  public void readExternal(@NotNull Document document, @NotNull URL url, @NotNull JDOMXIncluder.PathResolver pathResolver) throws InvalidDataException {
     Application application = ApplicationManager.getApplication();
     readExternal(document, url, application != null && application.isUnitTestMode(), pathResolver);
   }
 
-  public void readExternal(@NotNull Document document, @NotNull URL url, boolean ignoreMissingInclude, @NotNull JDOMXIncluder.PathResolver pathResolver) throws InvalidDataException, FileNotFoundException {
+  public void readExternal(@NotNull Document document, @NotNull URL url, boolean ignoreMissingInclude, @NotNull JDOMXIncluder.PathResolver pathResolver) throws InvalidDataException {
     document = JDOMXIncluder.resolve(document, url.toExternalForm(), ignoreMissingInclude, pathResolver);
     Element rootElement = document.getRootElement();
     JDOMUtil.internElement(rootElement, new StringInterner());
@@ -280,15 +291,17 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (myModuleComponents == null) myModuleComponents = ComponentConfig.EMPTY_ARRAY;
 
     StringInterner interner = new StringInterner();
-    List<Element> extensions = copyElements(pluginBean.extensions, interner);
+    List<Pair<String, Element>> extensions = copyChildrenAndNs(pluginBean.extensions, interner);
     if (extensions != null) {
       myExtensions = MultiMap.createSmart();
-      for (Element extension : extensions) {
-        myExtensions.putValue(ExtensionsAreaImpl.extractEPName(extension), extension);
+      for (Pair<String, Element> pair : extensions) {
+        String ns = pair.first;
+        Element extension = pair.second;
+        myExtensions.putValue(ExtensionsAreaImpl.extractEPName(extension, ns), Pair.create(ns, extension));
       }
     }
 
-    List<Element> extensionPoints = copyElements(pluginBean.extensionPoints, interner);
+    List<Element> extensionPoints = copyChildren(pluginBean.extensionPoints, interner);
     if (extensionPoints != null) {
       myExtensionsPoints = MultiMap.createSmart();
       for (Element extensionPoint : extensionPoints) {
@@ -296,7 +309,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       }
     }
 
-    myActionsElements = copyElements(pluginBean.actions, interner);
+    myActionElements = copyChildren(pluginBean.actions, interner);
 
     if (pluginBean.modules != null && !pluginBean.modules.isEmpty()) {
       myModules = pluginBean.modules;
@@ -330,8 +343,10 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   // made public for Upsource
   public void registerExtensions(@NotNull ExtensionsArea area, @NotNull String epName) {
     if (myExtensions != null) {
-      for (Element element : myExtensions.get(epName)) {
-        area.registerExtension(this, element);
+      for (Pair<String, Element> pair : myExtensions.get(epName)) {
+        Element element = pair.second;
+        String ns = pair.first;
+        area.registerExtension(this, element, ns);
       }
     }
   }
@@ -408,7 +423,13 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @SuppressWarnings("UnusedDeclaration") // Used in Upsource
   @Nullable
   public MultiMap<String, Element> getExtensions() {
-    return myExtensions;
+    if (myExtensions == null) return null;
+    MultiMap<String, Element> result = MultiMap.create();
+
+    for (Map.Entry<String, Collection<Pair<String, Element>>> entry : myExtensions.entrySet()) {
+      result.put(entry.getKey(), ContainerUtil.map(entry.getValue(), p->p.second));
+    }
+    return result;
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
@@ -447,7 +468,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @Override
   @Nullable
   public List<Element> getActionsDescriptionElements() {
-    return myActionsElements;
+    return myActionElements;
   }
 
   @Override
@@ -665,11 +686,11 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       myExtensionsPoints.putAllValues(descriptor.myExtensionsPoints);
     }
 
-    if (myActionsElements == null) {
-      myActionsElements = descriptor.myActionsElements;
+    if (myActionElements == null) {
+      myActionElements = descriptor.myActionElements;
     }
-    else if (descriptor.myActionsElements != null) {
-      myActionsElements.addAll(descriptor.myActionsElements);
+    else if (descriptor.myActionElements != null) {
+      myActionElements.addAll(descriptor.myActionElements);
     }
 
     myAppComponents = mergeComponents(myAppComponents, descriptor.myAppComponents);

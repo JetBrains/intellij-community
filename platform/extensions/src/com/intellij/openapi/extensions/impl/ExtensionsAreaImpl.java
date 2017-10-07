@@ -26,6 +26,7 @@ import org.jdom.Element;
 import org.jdom.Namespace;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
@@ -43,7 +44,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     ourDefaultEPs.put(EPAvailabilityListenerExtension.EXTENSION_POINT_NAME, EPAvailabilityListenerExtension.class.getName());
   }
 
-  private static final boolean DEBUG_REGISTRATION = false;
+  private static final boolean DEBUG_REGISTRATION = Boolean.FALSE.booleanValue(); // not compile-time constant to avoid yellow code
 
   private final AreaPicoContainer myPicoContainer;
   private final Throwable myCreationTrace;
@@ -88,7 +89,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     return myAreaClass;
   }
 
-  @Override
   public void registerExtensionPoint(@NotNull String pluginName, @NotNull Element extensionPointElement) {
     registerExtensionPoint(new DefaultPluginDescriptor(PluginId.getId(pluginName)), extensionPointElement);
   }
@@ -128,20 +128,19 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     registerExtensionPoint(epName, className, pluginDescriptor, kind);
   }
 
-  @Override
   public void registerExtension(@NotNull final String pluginName, @NotNull final Element extensionElement) {
-    registerExtension(new DefaultPluginDescriptor(PluginId.getId(pluginName)), extensionElement);
+    registerExtension(new DefaultPluginDescriptor(PluginId.getId(pluginName)), extensionElement, null);
   }
 
   @Override
-  public void registerExtension(@NotNull final PluginDescriptor pluginDescriptor, @NotNull final Element extensionElement) {
+  public void registerExtension(@NotNull final PluginDescriptor pluginDescriptor, @NotNull final Element extensionElement, String ns) {
     final PluginId pluginId = pluginDescriptor.getPluginId();
 
     if (!Extensions.isComponentSuitableForOs(extensionElement.getAttributeValue("os"))) {
       return;
     }
 
-    String epName = extractEPName(extensionElement);
+    String epName = extractEPName(extensionElement, ns);
 
     ExtensionComponentAdapter adapter;
     final ExtensionPointImpl extensionPoint = getExtensionPoint(epName);
@@ -172,27 +171,20 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     return false;
   }
 
-  public static String extractEPName(final Element extensionElement) {
+  @NotNull
+  public static String extractEPName(@NotNull Element extensionElement, @Nullable String ns) {
     String epName = extensionElement.getAttributeValue("point");
 
     if (epName == null) {
-      final Element parentElement = extensionElement.getParentElement();
-      final String ns = parentElement != null ? parentElement.getAttributeValue("defaultExtensionNs"):null;
-
-      if (ns != null) {
-        epName = ns + '.' + extensionElement.getName();
-      } else {
+      if (ns == null) {
         Namespace namespace = extensionElement.getNamespace();
         epName = namespace.getURI() + '.' + extensionElement.getName();
       }
+      else {
+        epName = ns + '.' + extensionElement.getName();
+      }
     }
     return epName;
-  }
-
-  @NotNull
-  @Override
-  public PicoContainer getPluginContainer(@NotNull String pluginName) {
-    return internalGetPluginContainer();
   }
 
   private MutablePicoContainer internalGetPluginContainer() {
@@ -265,11 +257,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   @Override
   public void registerExtensionPoint(@NotNull @NonNls String extensionPointName, @NotNull String extensionPointBeanClass, @NotNull ExtensionPoint.Kind kind) {
     registerExtensionPoint(extensionPointName, extensionPointBeanClass, new UndefinedPluginDescriptor(), kind);
-  }
-
-  @Override
-  public void registerExtensionPoint(@NotNull final String extensionPointName, @NotNull String extensionPointBeanClass, @NotNull PluginDescriptor descriptor) {
-    registerExtensionPoint(extensionPointName, extensionPointBeanClass, descriptor, ExtensionPoint.Kind.INTERFACE);
   }
 
   private void registerExtensionPoint(@NotNull String extensionPointName,
@@ -369,12 +356,10 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     return myExtensionPoints.containsKey(extensionPointName);
   }
 
-  @Override
   public void suspendInteractions() {
     myAvailabilityNotificationsActive = false;
   }
 
-  @Override
   public void resumeInteractions() {
     myAvailabilityNotificationsActive = true;
     ExtensionPoint[] extensionPoints = getExtensionPoints();
@@ -392,7 +377,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     mySuspendedListenerActions.clear();
   }
 
-  @Override
   public void killPendingInteractions() {
     mySuspendedListenerActions.clear();
   }

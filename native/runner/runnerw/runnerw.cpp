@@ -294,10 +294,12 @@ int main(int argc, char * argv[]) {
 			NULL,
 			&si,
 			&pi)) {
+		DWORD exitCode = GetLastError();
+		if (exitCode == 0) exitCode = 1;
 		ErrorMessage("CreateProcess");
 		CloseHandle(newstdin);
 		CloseHandle(write_stdin);
-		exit(0);
+		exit(exitCode);
 	}
 	if (hasConsoleWindow || childParams.createNewConsole) {
 		attachChildConsole(pi);
@@ -308,7 +310,7 @@ int main(int argc, char * argv[]) {
 
 	CreateThread(NULL, 0, &scanStdinThread, &write_stdin, 0, NULL);
 
-	unsigned long exitCode = 0;
+	DWORD exitCode = 0;
 
 	while (true) {
 		int rc = WaitForSingleObject(pi.hProcess, INFINITE);

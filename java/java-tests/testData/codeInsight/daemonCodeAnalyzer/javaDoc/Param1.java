@@ -1,6 +1,6 @@
 class Test {
     /**
-     *  <warning descr="'param' tag description is missing">@param</warning>
+     *  <warning descr="Parameter name expected">@param</warning>
      */
     public void foo() {
     }

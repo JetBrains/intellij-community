@@ -16,7 +16,7 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <id>org.intellij.groovy</id>
   <name>Groovy</name>
-  <description>Plugin for Groovy language support, including Groovy++, Grape, Gant and Griffon</description>
+  <description>Plugin for Groovy language support, including, Grape, Gant and Griffon</description>
   <version>9.0</version>
   <vendor>JetBrains</vendor>
   <depends>com.intellij.properties</depends>
@@ -26,6 +26,7 @@
   <depends optional="true" config-file="ant.xml">AntSupport</depends>
   <depends optional="true" config-file="groovy-byte-code-viewer.xml">ByteCodeViewer</depends>
   <depends optional="true" config-file="duplicates-groovy.xml">com.intellij.modules.ultimate</depends>
+  <depends optional="true" config-file="groovy-structural-search.xml">com.intellij.modules.structuralsearch</depends>
 
   <resource-bundle>org.jetbrains.plugins.groovy.GroovyBundle</resource-bundle>
 
@@ -148,6 +149,9 @@
 
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.singleton.SingletonTransformationSupport"/>
 
+    <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.immutable.ImmutableTransformationSupport"/>
+    <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.transformations.immutable.CopyWithNamedArgumentProvider"/>
+
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
 
     <methodDescriptor lightMethodKey="SwingBuilder_builder_method"
@@ -181,6 +185,10 @@
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.ReferenceExpressionTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall" order="last"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.MethodCallTypeCalculator"/>
+    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBuiltinTypeClassExpression" order="last"
+                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultBuiltinTypeClassTypeCalculator"/>
+    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression" order="last"
+                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultSafeCaseTypeCalculator"/>
 
     <scriptTypeDetector implementation="org.jetbrains.plugins.groovy.gant.GantScriptTypeDetector"/>
 
@@ -1454,6 +1462,11 @@
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
       <categoryKey>intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.RenameClassToFileNameIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.conversions</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.conversions.MoveClassToNewFileIntention</className>
     </intentionAction>
     <intentionAction>
@@ -1649,8 +1662,7 @@
                                      implementationClass="org.jetbrains.plugins.groovy.refactoring.memberPullUp.GrPullUpHelperFactory"/>
     <classTypePointerFactory implementation="org.jetbrains.plugins.groovy.lang.psi.impl.smartPointers.GrClassReferenceTypePointerFactory"/>
     <hierarchy.referenceProcessor implementation="org.jetbrains.plugins.groovy.hierarchy.call.GrCallReferenceProcessor"/>
-    <structuralsearch.profile implementation="com.intellij.structuralsearch.GroovyStructuralSearchProfile"/>
-    <equivalenceDescriptorProvider implementation="com.intellij.structuralsearch.GroovyEquivalenceDescriptorProvider"/>
+
 
     <applicationService serviceImplementation="org.jetbrains.plugins.groovy.dsl.DslActivationStatus"/>
 
@@ -1820,6 +1832,10 @@
       <implementation-class>org.jetbrains.plugins.groovy.mvc.MvcModuleStructureSynchronizer</implementation-class>
     </component>
   </project-components>
+
+  <extensions defaultExtensionNs="org.jetbrains.uast">
+    <uastLanguagePlugin implementation="org.jetbrains.plugins.groovy.lang.psi.uast.GroovyDummyUastPlugin"/>
+  </extensions>
 
   <xi:include href="groovy-console.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="groovy-templates.xml" xpointer="xpointer(/idea-plugin/*)"/>

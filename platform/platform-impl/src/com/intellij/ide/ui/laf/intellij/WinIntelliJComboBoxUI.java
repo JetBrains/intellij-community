@@ -17,7 +17,9 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.util.ui.JBDimension;
@@ -37,18 +39,19 @@ import javax.swing.plaf.basic.BasicComboPopup;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.geom.Path2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.ACTIVE_ERROR_COLOR;
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.INACTIVE_ERROR_COLOR;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
+  private static final Logger LOG = Logger.getInstance(WinIntelliJComboBoxUI.class);
+
   private static final String HOVER_PROPERTY = "JComboBox.mouseHover";
   private static final String PRESSED_PROPERTY = "JComboBox.mousePressed";
   private static final Border DEFAULT_EDITOR_BORDER = JBUI.Borders.empty(1, 0);
@@ -255,10 +258,15 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
           }
 
           Icon icon = MacIntelliJIconCache.getIcon("comboDropTriangle", false, false, isEnabled());
-          int x = JBUI.scale(5);
-          int y = (getHeight() - icon.getIconHeight()) / 2;
-          icon.paintIcon(this, g2, x, y);
-
+          if (icon != null) {
+            int x = JBUI.scale(5);
+            int y = (getHeight() - icon.getIconHeight()) / 2;
+            icon.paintIcon(this, g2, x, y);
+          } else { // TODO: remove log below when the reason icon is null is detected
+            LOG.error("Can't load comboDropTriangle icon isEnabled = " + isEnabled() +
+                      " laf = " + UIManager.getLookAndFeel().getName() +
+                      " OS name = " + SystemInfo.OS_NAME);
+          }
         } finally {
           g2.dispose();
         }
@@ -349,8 +357,6 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
         if (etf != null) {
           etf.addMouseListener(editorHoverListener);
           etf.setBackground(getComboBackground(true));
-
-          jEditor.setBorder(JBUI.Borders.emptyTop(1));
         }
       }
     }
@@ -388,8 +394,9 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
       Rectangle innerRect = new Rectangle(outerRect);
       JBInsets.removeFrom(innerRect, JBUI.insets(2));
 
-      if (comboBox.getClientProperty("JComponent.error.outline") == Boolean.TRUE) {
-        g2.setColor(hasFocus ? ACTIVE_ERROR_COLOR : INACTIVE_ERROR_COLOR);
+      Object op = comboBox.getClientProperty("JComponent.outline");
+      if (op != null) {
+        DarculaUIUtil.Outline.valueOf(op.toString()).setGraphicsColor(g2, hasFocus);
       } else if (comboBox.isEnabled()) {
         if (comboBox.isEditable()) {
           if (hasFocus) {
@@ -455,22 +462,13 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
            JBUI.insets(2, 5, 2, 2).asUIResource() : JBUI.insets(2, 2, 2, 5).asUIResource();
   }
 
-  private Dimension  getSizeWithButton(Dimension d) {
+  protected Dimension  getSizeWithButton(Dimension d) {
     ARROW_BUTTON_SIZE.update();
-    Insets i = comboBox.getInsets();
+    Insets i = getInsets();
     int width = ARROW_BUTTON_SIZE.width + i.left;
-    return new Dimension(Math.max(d.width + JBUI.scale(10), width),
-                         Math.max(ARROW_BUTTON_SIZE.height, d.height));
-  }
-
-  @Override
-  public Dimension getPreferredSize(JComponent c) {
-    return getSizeWithButton(super.getPreferredSize(c));
-  }
-
-  @Override
-  public Dimension getMinimumSize(JComponent c) {
-    return getSizeWithButton(super.getMinimumSize(c));
+    int editorHeight = editor != null ? editor.getPreferredSize().height + i.top + i.bottom : 0;
+    return new Dimension(Math.max(d.width, width + JBUI.scale(10)),
+                         Math.max(editorHeight, Math.max(ARROW_BUTTON_SIZE.height, d.height)));
   }
 
   @Override
@@ -480,14 +478,11 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
       public void layoutContainer(Container parent) {
         JComboBox cb = (JComboBox)parent;
 
-        int buttonHeight = cb.getHeight();
-        int buttonWidth = ARROW_BUTTON_SIZE.width;
-
         if (arrowButton != null) {
           if (cb.getComponentOrientation().isLeftToRight()) {
-            arrowButton.setBounds(cb.getWidth() - buttonWidth, 0, buttonWidth, buttonHeight);
+            arrowButton.setBounds(cb.getWidth() - ARROW_BUTTON_SIZE.width, 0, ARROW_BUTTON_SIZE.width, cb.getHeight());
           } else {
-            arrowButton.setBounds(0, 0, buttonWidth, buttonHeight);
+            arrowButton.setBounds(0, 0, ARROW_BUTTON_SIZE.width, cb.getHeight());
           }
         }
 

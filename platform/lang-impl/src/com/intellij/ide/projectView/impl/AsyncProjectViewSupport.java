@@ -31,11 +31,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.tree.TreeVisitor;
@@ -44,18 +46,23 @@ import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static com.intellij.ide.util.treeView.TreeState.VISIT;
 import static com.intellij.ide.util.treeView.TreeState.expand;
 import static com.intellij.util.ui.UIUtil.putClientProperty;
+import static org.jetbrains.concurrency.Promises.collectResults;
 
 class AsyncProjectViewSupport {
   private static final Logger LOG = Logger.getInstance(AsyncProjectViewSupport.class);
@@ -162,18 +169,18 @@ class AsyncProjectViewSupport {
     PsiElement element = object instanceof PsiElement ? (PsiElement)object : null;
     TreeVisitor visitor = createVisitor(element, file, null);
     if (visitor != null) {
-      expand(tree, promise -> myAsyncTreeModel.visit(visitor).processed(path -> {
+      expand(tree, promise -> myAsyncTreeModel.accept(visitor).processed(path -> {
         if (path != null) {
           TreeUtil.selectPath(tree, path);
           promise.setResult(null);
         }
-        else if (element == null || file == null) {
+        else if (element == null || file == null || Registry.is("async.project.view.support.extra.select.disabled")) {
           promise.setResult(null);
         }
         else {
           // try to search the specified file instead of element,
           // because Kotlin files cannot represent containing functions
-          myAsyncTreeModel.visit(createVisitor(null, file, null)).processed(path2 -> {
+          myAsyncTreeModel.accept(createVisitor(null, file, null)).processed(path2 -> {
             if (path2 != null) TreeUtil.selectPath(tree, path2);
             promise.setResult(null);
           });
@@ -206,7 +213,49 @@ class AsyncProjectViewSupport {
   private void update(PsiElement element, VirtualFile file, Consumer<List<TreePath>> consumer) {
     SmartList<TreePath> list = new SmartList<>();
     TreeVisitor visitor = createVisitor(element, file, path -> !list.add(path));
-    if (visitor != null) myAsyncTreeModel.visit(visitor).done(path -> consumer.consume(list));
+    if (visitor != null) myAsyncTreeModel.accept(visitor).done(path -> consumer.consume(list));
+  }
+
+  void accept(List<TreeVisitor> visitors, Consumer<TreePath[]> consumer) {
+    int size = visitors == null ? 0 : visitors.size();
+    if (size == 1) {
+      myAsyncTreeModel.accept(visitors.get(0)).done(path -> {
+        if (path != null) consumer.consume(new TreePath[]{path});
+      });
+    }
+    else if (size > 1) {
+      List<Promise<TreePath>> promises = visitors.stream().map(visitor -> myAsyncTreeModel.accept(visitor)).collect(Collectors.toList());
+      collectResults(promises, true).done(list -> {
+        TreePath[] array = list.toArray(new TreePath[list.size()]);
+        int count = 0;
+        for (int i = 0; i < array.length; i++) {
+          if (array[i] != null) array[count++] = array[i];
+        }
+        if (count > 0) {
+          consumer.consume(count == array.length ? array : Arrays.copyOf(array, count));
+        }
+      });
+    }
+  }
+
+  static TreeVisitor createVisitor(Object object) {
+    if (object instanceof AbstractTreeNode) {
+      AbstractTreeNode node = (AbstractTreeNode)object;
+      object = node.getValue();
+    }
+    return object instanceof PsiElement
+           ? createVisitor((PsiElement)object, null, null)
+           : null;
+  }
+
+  static List<TreeVisitor> createVisitors(Iterable<Object> iterable) {
+    if (iterable == null) return Collections.emptyList();
+    List<TreeVisitor> visitors = new SmartList<>();
+    for (Object object : iterable) {
+      TreeVisitor visitor = createVisitor(object);
+      if (visitor != null) visitors.add(visitor);
+    }
+    return visitors;
   }
 
   private static TreeVisitor createVisitor(PsiElement element, VirtualFile file, Predicate<TreePath> predicate) {
@@ -218,7 +267,7 @@ class AsyncProjectViewSupport {
 
   private static void setModel(@NotNull JTree tree, @NotNull AsyncTreeModel model) {
     tree.setModel(model);
-    putClientProperty(tree, VISIT, visitor -> model.visit(visitor, true));
+    putClientProperty(tree, VISIT, visitor -> model.accept(visitor, true));
     Disposer.register(model, () -> {
       putClientProperty(tree, VISIT, null);
       tree.setModel(null);

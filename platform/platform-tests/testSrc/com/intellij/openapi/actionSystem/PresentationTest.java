@@ -28,7 +28,7 @@ public class PresentationTest extends PlatformTestCase {
 
   private final String[] inputTextsUnderscores = new String[]{"No mnemonic", "_First char",
     "S_econd char", "Pre-last and not unique ch_ar", "Last cha_r", "Too late_", "Do__uble", "Dou_&ble",
-    "Complete double__", "Complete double_&", "Repea_te_d", "Re_peate&d"
+    "Complete double__", "Complete double_&", "Repea_te_d", "Re_peate&d", "Run 'test__1' with Co&verage"
     /*,
     "Alphanumeric only _! _@ _# _$ _% _^ _& _* _( _) _- __ _= _+ _| _\\ _/ _0"*/};
   private final String[] inputTextsAmpersands = new String[]{"No mnemonic", "&First char", "S&econd char",
@@ -38,12 +38,12 @@ public class PresentationTest extends PlatformTestCase {
     "Alphanumeric only &! &@ &# &$ &% &^ && &* &( &) &- &_ &= &+ &| &\\ &/ &0"*/};
   private final String[] menuTexts = new String[]{"No mnemonic", "First char", "Second char",
     "Pre-last and not unique char", "Last char", "Too late", "Do_uble", "Dou&ble", "Complete double_",
-    "Complete double&", "Repeate_d", "Repeate&d"};
-  private final int[] mnemonics = new int[]{0, 'F', 'E', 'A', 'R', 0, 0, 0, 0, 0, 'T', 'P'};
-  private final int[] indeces = new int[]{-1, 0, 1, 26, 8, -1, -1, -1, -1, -1, 5, 2};
+    "Complete double&", "Repeate_d", "Repeate&d", "Run 'test_1' with Coverage"};
+  private final int[] mnemonics = new int[]{0, 'F', 'E', 'A', 'R', 0, 0, 0, 0, 0, 'T', 'P', 'V'};
+  private final int[] indeces = new int[]{-1, 0, 1, 26, 8, -1, -1, -1, -1, -1, 5, 2, 20};
   private final String[] fullMenuTexts = new String[]{"No mnemonic", "_First char", "S_econd char",
     "Pre-last and not unique ch_ar", "Last cha_r", "Too late", "Do_uble", "Dou&ble", "Complete double_",
-    "Complete double&", "Repea_te_d", "Re_peate&d"};
+    "Complete double&", "Repea_te_d", "Re_peate&d", "Run 'test_1' with Co_verage"};
 
   public void testPresentationSetText() {
     for (int i = 0; i < inputTextsUnderscores.length; i++) {
@@ -53,7 +53,9 @@ public class PresentationTest extends PlatformTestCase {
       Assert.assertEquals(mnemonics[i], p.getMnemonic());
       Assert.assertEquals(indeces[i], p.getDisplayedMnemonicIndex());
       Assert.assertEquals(fullMenuTexts[i], p.getTextWithMnemonic());
-
+    }
+    for (int i = 0; i < inputTextsAmpersands.length; i++) {
+      Presentation p = new Presentation();
       p.setText(inputTextsAmpersands[i]);
       Assert.assertEquals(menuTexts[i], p.getText());
       Assert.assertEquals(mnemonics[i], p.getMnemonic());

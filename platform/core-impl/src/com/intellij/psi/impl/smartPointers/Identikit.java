@@ -94,7 +94,7 @@ public abstract class Identikit {
 
       PsiElement result = findParent(startOffset, endOffset, anchor);
       if (endOffset == startOffset) {
-        while (result == null && anchor.getTextRange().getStartOffset() == endOffset) {
+        while ((result == null || result.getTextRange().getStartOffset() != startOffset) && anchor.getTextRange().getStartOffset() == endOffset) {
           anchor = PsiTreeUtil.prevLeaf(anchor, false);
           if (anchor == null) break;
 
