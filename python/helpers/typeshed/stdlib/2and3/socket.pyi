@@ -6,21 +6,21 @@
 # see: http://nullege.com/codes/search/socket
 # adapted for Python 2.7 by Michal Pokorny
 import sys
-from typing import Any, Tuple, List, Optional, Union, overload, TypeVar
+from typing import Any, Iterable, Tuple, List, Optional, Union, overload, TypeVar
 
 
 # ----- variables and constants -----
 
-AF_UNIX: int
-AF_INET: int
-AF_INET6: int
-SOCK_STREAM: int
-SOCK_DGRAM: int
-SOCK_RAW: int
-SOCK_RDM: int
-SOCK_SEQPACKET: int
-SOCK_CLOEXEC: int
-SOCK_NONBLOCK: int
+AF_UNIX: AddressFamily
+AF_INET: AddressFamily
+AF_INET6: AddressFamily
+SOCK_STREAM: SocketKind
+SOCK_DGRAM: SocketKind
+SOCK_RAW: SocketKind
+SOCK_RDM: SocketKind
+SOCK_SEQPACKET: SocketKind
+SOCK_CLOEXEC: SocketKind
+SOCK_NONBLOCK: SocketKind
 SOMAXCONN: int
 has_ipv6: bool
 _GLOBAL_DEFAULT_TIMEOUT: Any
@@ -28,46 +28,46 @@ SocketType: Any
 SocketIO: Any
 
 # These are flags that may exist on Python 3.6. Many don't exist on all platforms.
-AF_AAL5: int
-AF_APPLETALK: int
-AF_ASH: int
-AF_ATMPVC: int
-AF_ATMSVC: int
-AF_AX25: int
-AF_BLUETOOTH: int
-AF_BRIDGE: int
-AF_CAN: int
-AF_DECnet: int
-AF_ECONET: int
-AF_IPX: int
-AF_IRDA: int
-AF_KEY: int
-AF_LLC: int
-AF_NETBEUI: int
-AF_NETLINK: int
-AF_NETROM: int
-AF_PACKET: int
-AF_PPPOX: int
-AF_RDS: int
-AF_ROSE: int
-AF_ROUTE: int
-AF_SECURITY: int
-AF_SNA: int
-AF_SYSTEM: int
-AF_TIPC: int
-AF_UNSPEC: int
-AF_WANPIPE: int
-AF_X25: int
-AI_ADDRCONFIG: int
-AI_ALL: int
-AI_CANONNAME: int
-AI_DEFAULT: int
-AI_MASK: int
-AI_NUMERICHOST: int
-AI_NUMERICSERV: int
-AI_PASSIVE: int
-AI_V4MAPPED: int
-AI_V4MAPPED_CFG: int
+AF_AAL5: AddressFamily
+AF_APPLETALK: AddressFamily
+AF_ASH: AddressFamily
+AF_ATMPVC: AddressFamily
+AF_ATMSVC: AddressFamily
+AF_AX25: AddressFamily
+AF_BLUETOOTH: AddressFamily
+AF_BRIDGE: AddressFamily
+AF_CAN: AddressFamily
+AF_DECnet: AddressFamily
+AF_ECONET: AddressFamily
+AF_IPX: AddressFamily
+AF_IRDA: AddressFamily
+AF_KEY: AddressFamily
+AF_LLC: AddressFamily
+AF_NETBEUI: AddressFamily
+AF_NETLINK: AddressFamily
+AF_NETROM: AddressFamily
+AF_PACKET: AddressFamily
+AF_PPPOX: AddressFamily
+AF_RDS: AddressFamily
+AF_ROSE: AddressFamily
+AF_ROUTE: AddressFamily
+AF_SECURITY: AddressFamily
+AF_SNA: AddressFamily
+AF_SYSTEM: AddressFamily
+AF_TIPC: AddressFamily
+AF_UNSPEC: AddressFamily
+AF_WANPIPE: AddressFamily
+AF_X25: AddressFamily
+AI_ADDRCONFIG: AddressInfo
+AI_ALL: AddressInfo
+AI_CANONNAME: AddressInfo
+AI_DEFAULT: AddressInfo
+AI_MASK: AddressInfo
+AI_NUMERICHOST: AddressInfo
+AI_NUMERICSERV: AddressInfo
+AI_PASSIVE: AddressInfo
+AI_V4MAPPED: AddressInfo
+AI_V4MAPPED_CFG: AddressInfo
 BDADDR_ANY: str
 BDADDR_LOCAL: str
 BTPROTO_HCI: int
@@ -198,26 +198,26 @@ IP_TRANSPARENT: int
 IP_TTL: int
 IPX_TYPE: int
 LOCAL_PEERCRED: int
-MSG_BCAST: int
-MSG_BTAG: int
-MSG_CMSG_CLOEXEC: int
-MSG_CONFIRM: int
-MSG_CTRUNC: int
-MSG_DONTROUTE: int
-MSG_DONTWAIT: int
-MSG_EOF: int
-MSG_EOR: int
-MSG_ERRQUEUE: int
-MSG_ETAG: int
-MSG_FASTOPEN: int
-MSG_MCAST: int
-MSG_MORE: int
-MSG_NOSIGNAL: int
-MSG_NOTIFICATION: int
-MSG_OOB: int
-MSG_PEEK: int
-MSG_TRUNC: int
-MSG_WAITALL: int
+MSG_BCAST: MsgFlag
+MSG_BTAG: MsgFlag
+MSG_CMSG_CLOEXEC: MsgFlag
+MSG_CONFIRM: MsgFlag
+MSG_CTRUNC: MsgFlag
+MSG_DONTROUTE: MsgFlag
+MSG_DONTWAIT: MsgFlag
+MSG_EOF: MsgFlag
+MSG_EOR: MsgFlag
+MSG_ERRQUEUE: MsgFlag
+MSG_ETAG: MsgFlag
+MSG_FASTOPEN: MsgFlag
+MSG_MCAST: MsgFlag
+MSG_MORE: MsgFlag
+MSG_NOSIGNAL: MsgFlag
+MSG_NOTIFICATION: MsgFlag
+MSG_OOB: MsgFlag
+MSG_PEEK: MsgFlag
+MSG_TRUNC: MsgFlag
+MSG_WAITALL: MsgFlag
 NETLINK_ARPD: int
 NETLINK_CRYPTO: int
 NETLINK_DNRTMSG: int
@@ -368,7 +368,7 @@ if sys.version_info >= (3, 4):
     CAN_BCM_RX_STATUS: int
     CAN_BCM_RX_TIMEOUT: int
     CAN_BCM_RX_CHANGED: int
-    AF_LINK: int
+    AF_LINK: AddressFamily
 
 if sys.version_info >= (3, 5):
     CAN_RAW_FD_FRAMES: int
@@ -380,7 +380,7 @@ if sys.version_info >= (3, 6):
     SO_PASSSEC: int
     TCP_USER_TIMEOUT: int
     TCP_CONGESTION: int
-    AF_ALG: int
+    AF_ALG: AddressFamily
     SOL_ALG: int
     ALG_SET_KEY: int
     ALG_SET_IV: int
@@ -449,6 +449,9 @@ if sys.version_info >= (3, 4):
         SOCK_SEQPACKET = ...
         SOCK_CLOEXEC = ...
         SOCK_NONBLOCK = ...
+else:
+    AddressFamily = int
+    SocketKind = int
 
 if sys.version_info >= (3, 6):
     from enum import IntFlag
@@ -471,6 +474,9 @@ if sys.version_info >= (3, 6):
         MSG_PEEK = ...
         MSG_TRUNC = ...
         MSG_WAITALL = ...
+else:
+    AddressInfo = int
+    MsgFlag = int
 
 
 # ----- exceptions -----
@@ -492,6 +498,7 @@ class timeout(error):
 
 # TODO AF_PACKET and AF_BLUETOOTH address objects
 
+_CMSG = Tuple[int, int, bytes]
 _SelfT = TypeVar('_SelfT', bound=socket)
 
 # ----- classes -----
@@ -543,9 +550,9 @@ class socket:
 
     # return type is an address
     def recvfrom(self, bufsize: int, flags: int = ...) -> Any: ...
-    def recvfrom_into(self, buffer: bytes, nbytes: int,
+    def recvfrom_into(self, buffer: bytearray, nbytes: int,
                       flags: int = ...) -> Any: ...
-    def recv_into(self, buffer: bytes, nbytes: int,
+    def recv_into(self, buffer: bytearray, nbytes: int,
                   flags: int = ...) -> Any: ...
     def send(self, data: bytes, flags: int = ...) -> int: ...
     def sendall(self, data: bytes, flags: int =...) -> None:
@@ -558,6 +565,14 @@ class socket:
     def settimeout(self, value: Optional[float]) -> None: ...
     def setsockopt(self, level: int, optname: int, value: Union[int, bytes]) -> None: ...
     def shutdown(self, how: int) -> None: ...
+
+    if sys.version_info >= (3, 3):
+        def recvmsg(self, __bufsize: int, __ancbufsize: int = ...,
+                    __flags: int = ...) -> Tuple[bytes, List[_CMSG], int, Any]: ...
+        def recvmsg_into(self, __buffers: Iterable[bytearray], __ancbufsize: int = ...,
+                         __flags: int = ...) -> Tuple[int, List[_CMSG], int, Any]: ...
+        def sendmsg(self, __buffers: Iterable[bytes], __ancdata: Iterable[_CMSG] = ...,
+                    __flags: int = ..., __address: Any = ...) -> int: ...
 
 
 # ----- functions -----
@@ -597,3 +612,11 @@ def inet_pton(address_family: int, ip_string: str) -> bytes: ...
 def inet_ntop(address_family: int, packed_ip: bytes) -> str: ...
 def getdefaulttimeout() -> Optional[float]: ...
 def setdefaulttimeout(timeout: Optional[float]) -> None: ...
+
+if sys.version_info >= (3, 3):
+    def CMSG_LEN(length: int) -> int: ...
+    def CMSG_SPACE(length: int) -> int: ...
+    def sethostname(name: str) -> None: ...
+    def if_nameindex() -> List[Tuple[int, str]]: ...
+    def if_nametoindex(name: str) -> int: ...
+    def if_indextoname(index: int) -> str: ...

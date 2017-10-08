@@ -343,7 +343,6 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     if (processor != null) {
       processor.onFinishTesting();
       Disposer.dispose(processor);
-      myProcessor = null;
     }
   }
 

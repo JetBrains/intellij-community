@@ -7,9 +7,10 @@ from typing import (Iterator, TypeVar, Iterable, overload, Any, Callable, Tuple,
 
 _T = TypeVar('_T')
 _S = TypeVar('_S')
+_N = TypeVar('_N', int, float)
 
-def count(start: int = ...,
-          step: int = ...) -> Iterator[int]: ...  # more general types?
+def count(start: _N = ...,
+          step: _N = ...) -> Iterator[_N]: ...  # more general types?
 def cycle(iterable: Iterable[_T]) -> Iterator[_T]: ...
 
 @overload

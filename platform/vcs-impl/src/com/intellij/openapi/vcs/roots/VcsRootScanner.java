@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.roots;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -89,6 +90,8 @@ public class VcsRootScanner implements BulkFileListener, ModuleRootListener, Vcs
     }
 
     myAlarm.cancelAllRequests(); // one scan is enough, no need to queue, they all do the same
-    myAlarm.addRequest(() -> myRootProblemNotifier.rescanAndNotifyIfNeeded(), WAIT_BEFORE_SCAN);
+    myAlarm.addRequest(() ->
+      BackgroundTaskUtil.runUnderDisposeAwareIndicator(myAlarm, () ->
+        myRootProblemNotifier.rescanAndNotifyIfNeeded()), WAIT_BEFORE_SCAN);
   }
 }

@@ -40,7 +40,7 @@ class MappingPane(name: String,
     val DARCULA_LINE_COLOR = LineColor(regular = JBColor.GRAY,
                                        selected = JBColor.BLUE,
                                        inactive = JBColor({ Color(92, 92, 92) }))
-    val INTELLIJ_LINE_COLOR = LineColor(regular = JBColor.GRAY,
+    val INTELLIJ_LINE_COLOR = LineColor(regular = JBColor({ Color(168, 168, 168) }),
                                         selected = JBColor({ Color(0, 96, 229) }),
                                         inactive = JBColor({ Color(204, 204, 204) }))
 

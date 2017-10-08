@@ -151,7 +151,9 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     Map<PsiFileSystemItem, Integer> dirCloseness = new HashMap<>();
     Map<PsiFileSystemItem, Integer> nesting = new HashMap<>();
     for (String fileName : fileNames) {
+      ProgressManager.checkCanceled();
       for (Object o : myModel.getElementsByName(fileName, parameters, new ProgressIndicatorBase())) {
+        ProgressManager.checkCanceled();
         String fullName = myModel.getFullName(o);
         if (o instanceof PsiFileSystemItem && fullName != null) {
           fullName = FileUtilRt.toSystemIndependentName(fullName);

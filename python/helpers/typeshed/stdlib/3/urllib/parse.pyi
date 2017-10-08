@@ -4,23 +4,7 @@ import sys
 
 _Str = Union[bytes, str]
 
-__all__ = (
-    'urlparse',
-    'urlunparse',
-    'urljoin',
-    'urldefrag',
-    'urlsplit',
-    'urlunsplit',
-    'urlencode',
-    'parse_qs',
-    'parse_qsl',
-    'quote',
-    'quote_plus',
-    'quote_from_bytes',
-    'unquote',
-    'unquote_plus',
-    'unquote_to_bytes'
-)
+__all__ = ...  # type: Tuple[str]
 
 uses_relative = ...  # type: List[str]
 uses_netloc = ...  # type: List[str]
