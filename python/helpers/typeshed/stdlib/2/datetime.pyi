@@ -141,10 +141,10 @@ class datetime(object):
     resolution = ...  # type: timedelta
 
     def __init__(self, year: int, month: int, day: int, hour: int = ...,
-                 minute: int = ..., second: int = ..., microseconds: int = ...,
+                 minute: int = ..., second: int = ..., microsecond: int = ...,
                  tzinfo: tzinfo = ...) -> None: ...
     def __new__(cls, year: int, month: int, day: int, hour: int = ...,
-                minute: int = ..., second: int = ..., microseconds: int = ...,
+                minute: int = ..., second: int = ..., microsecond: int = ...,
                 tzinfo: tzinfo = ...) -> datetime: ...
 
     @property

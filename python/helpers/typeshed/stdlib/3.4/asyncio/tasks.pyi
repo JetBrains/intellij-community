@@ -32,6 +32,9 @@ def gather(coro_or_future1: _FutureT[_T1], coro_or_future2: _FutureT[_T2],
            *, loop: AbstractEventLoop = ..., return_exceptions: bool = False) -> Future[Tuple[_T1, _T2]]: ...
 @overload
 def gather(coro_or_future1: _FutureT[_T1], coro_or_future2: _FutureT[_T2], coro_or_future3: _FutureT[_T3],
+           *, loop: AbstractEventLoop = ..., return_exceptions: bool = False) -> Future[Tuple[_T1, _T2, _T3]]: ...
+@overload
+def gather(coro_or_future1: _FutureT[_T1], coro_or_future2: _FutureT[_T2], coro_or_future3: _FutureT[_T3],
            coro_or_future4: _FutureT[_T4],
            *, loop: AbstractEventLoop = ..., return_exceptions: bool = False) -> Future[Tuple[_T1, _T2, _T3, _T4]]: ...
 @overload

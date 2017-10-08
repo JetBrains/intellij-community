@@ -8,9 +8,6 @@ stdlib/2/typing.pyi
 stdlib/3/builtins.pyi
 stdlib/3/typing.pyi
 
-# Because of 'class ForkProcess(Any):  # type: ignore'
-stdlib/3/multiprocessing/context.pyi
-
 # Because of 'from . import path':
 stdlib/2/os/__init__.pyi
 stdlib/3/os/__init__.pyi
@@ -23,25 +20,17 @@ stdlib/3/concurrent/futures/__init__.pyi
 stdlib/3/concurrent/futures/_base.pyi
 stdlib/3/concurrent/futures/process.pyi
 stdlib/3/concurrent/futures/thread.pyi
-stdlib/3/email/policy.pyi
-stdlib/3/fileinput.pyi
-stdlib/3/gzip.pyi
 stdlib/3/http/__init__.pyi
 stdlib/3/http/cookiejar.pyi
 stdlib/3/inspect.pyi
 stdlib/3/json/__init__.pyi
-stdlib/3/json/decoder.pyi
-stdlib/3/json/encoder.pyi
 stdlib/3/ssl.pyi
 stdlib/3/subprocess.pyi
 stdlib/3/sys.pyi
 stdlib/3/textwrap.pyi
 stdlib/3/time.pyi
-stdlib/3/tkinter/__init__.pyi
 stdlib/3/types.pyi
 stdlib/3/unittest/__init__.pyi
-stdlib/3/unittest/mock.pyi
-stdlib/3/urllib/parse.pyi
 stdlib/3/wsgiref/types.pyi
 stdlib/3.4/asyncio/events.pyi
 stdlib/3.4/asyncio/futures.pyi
@@ -50,4 +39,3 @@ stdlib/3.4/asyncio/queues.pyi
 stdlib/3.4/asyncio/streams.pyi
 stdlib/3.4/asyncio/subprocess.pyi
 stdlib/3.4/asyncio/tasks.pyi
-stdlib/3.4/enum.pyi

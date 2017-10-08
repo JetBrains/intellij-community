@@ -91,4 +91,4 @@ if sys.version_info >= (3, 3):
     if sys.platform != 'win32':
         def clock_getres(clk_id: int) -> float: ...  # Unix only
         def clock_gettime(clk_id: int) -> float: ...  # Unix only
-        def clock_settime(clk_id: int, time: struct_time) -> float: ...  # Unix only
+        def clock_settime(clk_id: int, time: float) -> None: ...  # Unix only
