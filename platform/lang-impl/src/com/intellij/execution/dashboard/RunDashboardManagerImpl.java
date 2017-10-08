@@ -24,7 +24,6 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -123,10 +122,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   }
 
   private static boolean isDashboardEnabled() {
-    return Registry.is("ide.run.dashboard") &&
-           (Registry.is("ide.run.dashboard.types.configuration") ||
-            ApplicationManager.getApplication().isInternal() ||
-            RunDashboardContributor.EP_NAME.getExtensions().length > 0);
+    return Registry.is("ide.run.dashboard");
   }
 
   private void initToolWindowContentListeners() {
@@ -210,12 +206,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     List<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>> result = new ArrayList<>();
 
     Predicate<? super RunnerAndConfigurationSettings> filter;
-    if (Registry.is("ide.run.dashboard.types.configuration") || ApplicationManager.getApplication().isInternal()) {
-      filter = settings -> myTypes.contains(settings.getType().getId());
-    }
-    else {
-      filter = settings -> getContributor(settings.getType()) != null;
-    }
+    filter = settings -> myTypes.contains(settings.getType().getId());
 
     List<RunnerAndConfigurationSettings> configurations = RunManager.getInstance(myProject).getAllSettings().stream()
       .filter(filter)
@@ -282,18 +273,12 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
 
   @Override
   public boolean isShowInDashboard(@NotNull RunConfiguration runConfiguration) {
-    if (Registry.is("ide.run.dashboard.types.configuration") || ApplicationManager.getApplication().isInternal()) {
-      if (myTypes.contains(runConfiguration.getType().getId())) {
-        RunDashboardContributor contributor = getContributor(runConfiguration.getType());
-        return contributor == null || contributor.isShowInDashboard(runConfiguration);
-      }
-
-      return false;
-    }
-    else {
+    if (myTypes.contains(runConfiguration.getType().getId())) {
       RunDashboardContributor contributor = getContributor(runConfiguration.getType());
-      return contributor != null && contributor.isShowInDashboard(runConfiguration);
+      return contributor == null || contributor.isShowInDashboard(runConfiguration);
     }
+
+    return false;
   }
 
   @Override
