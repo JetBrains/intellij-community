@@ -26,7 +26,7 @@ import org.jetbrains.uast.UastEmptyExpression
 class JavaULambdaExpression(
         override val psi: PsiLambdaExpression,
         givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), ULambdaExpression {
+) : JavaAbstractLazyParentUExpression(givenParent), ULambdaExpression {
     override val functionalInterfaceType: PsiType?
         get() = psi.functionalInterfaceType
 

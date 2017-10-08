@@ -22,7 +22,7 @@ import org.jetbrains.uast.ULiteralExpression
 class JavaULiteralExpression(
         override val psi: PsiLiteralExpression,
         givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), ULiteralExpression {
+) : JavaAbstractLazyParentUExpression(givenParent), ULiteralExpression {
     override fun evaluate() = psi.value
     override val value by lz { evaluate() }
 }

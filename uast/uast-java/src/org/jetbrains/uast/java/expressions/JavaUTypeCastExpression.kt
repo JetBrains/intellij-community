@@ -25,7 +25,7 @@ import org.jetbrains.uast.UastErrorType
 class JavaUTypeCastExpression(
         override val psi: PsiTypeCastExpression,
         givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UBinaryExpressionWithType {
+) : JavaAbstractLazyParentUExpression(givenParent), UBinaryExpressionWithType {
     override val operand by lz { JavaConverter.convertOrEmpty(psi.operand, this) }
     
     override val type: PsiType

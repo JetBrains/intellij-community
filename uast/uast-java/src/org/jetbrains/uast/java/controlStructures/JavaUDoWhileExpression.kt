@@ -24,7 +24,7 @@ import org.jetbrains.uast.UIdentifier
 class JavaUDoWhileExpression(
         override val psi: PsiDoWhileStatement,
         givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UDoWhileExpression {
+) : JavaAbstractLazyParentUExpression(givenParent), UDoWhileExpression {
     override val condition by lz { JavaConverter.convertOrEmpty(psi.condition, this) }
     override val body by lz { JavaConverter.convertOrEmpty(psi.body, this) }
 

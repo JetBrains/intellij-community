@@ -37,7 +37,7 @@ abstract class JavaLazyParentUElement(private val givenParent: UElement?) : UEle
     protected open fun getPsiParentForLazyConversion() = this.psi?.parent
 }
 
-abstract class JavaAbstractUElement(givenParent: UElement?) : JavaLazyParentUElement(givenParent), JavaUElementWithComments {
+abstract class JavaAbstractLazyParentUElement(givenParent: UElement?) : JavaLazyParentUElement(givenParent), JavaUElementWithComments {
     override fun equals(other: Any?): Boolean {
         if (other !is UElement || other.javaClass != this.javaClass) return false
         return if (this.psi != null) this.psi == other.psi else this === other
@@ -52,7 +52,7 @@ abstract class JavaAbstractUElement(givenParent: UElement?) : JavaLazyParentUEle
     override fun toString() = asRenderString()
 }
 
-abstract class JavaAbstractUExpression(givenParent: UElement?)  : JavaAbstractUElement(givenParent), UExpression {
+abstract class JavaAbstractLazyParentUExpression(givenParent: UElement?)  : JavaAbstractLazyParentUElement(givenParent), UExpression {
     override fun evaluate(): Any? {
         val project = psi?.project ?: return null
         return JavaPsiFacade.getInstance(project).constantEvaluationHelper.computeConstantExpression(psi)
@@ -71,5 +71,40 @@ abstract class JavaAbstractUExpression(givenParent: UElement?)  : JavaAbstractUE
             is PsiResourceExpression -> it.parent
             else -> it
         }
+    }
+}
+
+@Suppress("unused") // Used in Kotlin 1.2, to be removed in 2018.1
+@Deprecated("use JavaAbstractLazyParentUElement instead", ReplaceWith("JavaAbstractLazyParentUElement"))
+abstract class JavaAbstractUElement : JavaUElementWithComments {
+    override fun equals(other: Any?): Boolean {
+        if (other !is UElement || other.javaClass != this.javaClass) return false
+        return if (this.psi != null) this.psi == other.psi else this === other
+    }
+
+    override fun hashCode() = psi?.hashCode() ?: System.identityHashCode(this)
+
+    override fun asSourceString(): String {
+        return this.psi?.text ?: super<JavaUElementWithComments>.asSourceString()
+    }
+
+    override fun toString() = asRenderString()
+}
+
+
+@Suppress("unused") // Used in Kotlin 1.2, to be removed in 2018.1
+@Deprecated("use JavaAbstractLazyParentUExpression instead", ReplaceWith("JavaAbstractLazyParentUExpression"))
+abstract class JavaAbstractUExpression : JavaAbstractUElement(), UExpression {
+    override fun evaluate(): Any? {
+        val project = psi?.project ?: return null
+        return JavaPsiFacade.getInstance(project).constantEvaluationHelper.computeConstantExpression(psi)
+    }
+
+    override val annotations: List<UAnnotation>
+        get() = emptyList()
+
+    override fun getExpressionType(): PsiType? {
+        val expression = psi as? PsiExpression ?: return null
+        return expression.type
     }
 }

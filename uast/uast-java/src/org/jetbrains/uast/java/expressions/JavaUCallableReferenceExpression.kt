@@ -24,7 +24,7 @@ import org.jetbrains.uast.UElement
 class JavaUCallableReferenceExpression(
         override val psi: PsiMethodReferenceExpression,
         givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UCallableReferenceExpression {
+) : JavaAbstractLazyParentUExpression(givenParent), UCallableReferenceExpression {
     override val qualifierExpression by lz { JavaConverter.convertOrNull(psi.qualifierExpression, this) }
     
     override val qualifierType: PsiType?

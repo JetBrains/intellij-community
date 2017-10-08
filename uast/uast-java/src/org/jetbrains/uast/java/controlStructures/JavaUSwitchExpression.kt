@@ -24,7 +24,7 @@ import org.jetbrains.uast.java.kinds.JavaSpecialExpressionKinds
 class JavaUSwitchExpression(
         override val psi: PsiSwitchStatement,
         givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), USwitchExpression {
+) : JavaAbstractLazyParentUExpression(givenParent), USwitchExpression {
     override val expression by lz { JavaConverter.convertOrEmpty(psi.expression, this) }
 
     override val body: UExpressionList by lz {
@@ -71,7 +71,7 @@ class JavaUSwitchEntry(
         val labels: List<PsiSwitchLabelStatement>,
         val statements: List<PsiStatement>,
         givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), USwitchClauseExpressionWithBody {
+) : JavaAbstractLazyParentUExpression(givenParent), USwitchClauseExpressionWithBody {
     override val psi: PsiSwitchLabelStatement = labels.first()
 
     override val caseValues by lz {

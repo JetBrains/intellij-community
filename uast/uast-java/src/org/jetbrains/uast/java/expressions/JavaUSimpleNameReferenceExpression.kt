@@ -25,7 +25,7 @@ class JavaUSimpleNameReferenceExpression(
         override val identifier: String,
         givenParent: UElement?,
         val reference: PsiReference? = null 
-) : JavaAbstractUExpression(givenParent), USimpleNameReferenceExpression {
+) : JavaAbstractLazyParentUExpression(givenParent), USimpleNameReferenceExpression {
     override fun resolve() = (reference ?: psi as? PsiReference)?.resolve()
     override val resolvedName: String?
         get() = ((reference ?: psi as? PsiReference)?.resolve() as? PsiNamedElement)?.name
@@ -34,7 +34,7 @@ class JavaUSimpleNameReferenceExpression(
 class JavaUTypeReferenceExpression(
         override val psi: PsiTypeElement,
         givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UTypeReferenceExpression {
+) : JavaAbstractLazyParentUExpression(givenParent), UTypeReferenceExpression {
     override val type: PsiType
         get() = psi.type
 }
@@ -43,7 +43,7 @@ class LazyJavaUTypeReferenceExpression(
         override val psi: PsiElement,
         givenParent: UElement?,
         private val typeSupplier: () -> PsiType
-) : JavaAbstractUExpression(givenParent), UTypeReferenceExpression {
+) : JavaAbstractLazyParentUExpression(givenParent), UTypeReferenceExpression {
     override val type: PsiType by lz { typeSupplier() }
 }
 
@@ -52,7 +52,7 @@ class JavaClassUSimpleNameReferenceExpression(
         val ref: PsiJavaReference,
         override val psi: PsiElement,
         givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), USimpleNameReferenceExpression {
+) : JavaAbstractLazyParentUExpression(givenParent), USimpleNameReferenceExpression {
     override fun resolve() = ref.resolve()
     override val resolvedName: String?
         get() = (ref.resolve() as? PsiNamedElement)?.name

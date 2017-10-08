@@ -23,7 +23,7 @@ import org.jetbrains.uast.UIfExpression
 class JavaUTernaryIfExpression(
         override val psi: PsiConditionalExpression,
         givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UIfExpression {
+) : JavaAbstractLazyParentUExpression(givenParent), UIfExpression {
     override val condition by lz { JavaConverter.convertOrEmpty(psi.condition, this) }
     override val thenExpression by lz { JavaConverter.convertOrEmpty(psi.thenExpression, this) }
     override val elseExpression by lz { JavaConverter.convertOrEmpty(psi.elseExpression, this) }

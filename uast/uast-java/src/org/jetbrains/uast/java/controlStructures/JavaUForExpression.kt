@@ -24,7 +24,7 @@ import org.jetbrains.uast.UIdentifier
 class JavaUForExpression(
         override val psi: PsiForStatement,
         givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UForExpression {
+) : JavaAbstractLazyParentUExpression(givenParent), UForExpression {
     override val declaration by lz { psi.initialization?.let { JavaConverter.convertStatement(it, this) } }
     override val condition by lz { psi.condition?.let { JavaConverter.convertExpression(it, this) } }
     override val update by lz { psi.update?.let { JavaConverter.convertStatement(it, this) } }

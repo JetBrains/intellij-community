@@ -20,7 +20,25 @@ import com.intellij.psi.*
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
-abstract class AbstractJavaUVariable(givenParent: UElement?) : JavaLazyParentUElement(givenParent), PsiVariable, UVariable, JavaUElementWithComments {
+abstract class AbstractJavaLazyParentUVariable(givenParent: UElement?) : JavaLazyParentUElement(givenParent), PsiVariable, UVariable, JavaUElementWithComments {
+    override val uastInitializer by lz {
+        val initializer = psi.initializer ?: return@lz null
+        getLanguagePlugin().convertElement(initializer, this) as? UExpression
+    }
+
+    override val annotations by lz { psi.annotations.map { JavaUAnnotation(it, this) } }
+    override val typeReference by lz { getLanguagePlugin().convertOpt<UTypeReferenceExpression>(psi.typeElement, this) }
+
+    override val uastAnchor: UElement
+        get() = UIdentifier(psi.nameIdentifier, this)
+
+    override fun equals(other: Any?) = other is AbstractJavaLazyParentUVariable && psi == other.psi
+    override fun hashCode() = psi.hashCode()
+}
+
+@Suppress("unused") // Used in Kotlin 1.1.4, to be removed in 2018.1
+@Deprecated("use AbstractJavaLazyParentUVariable instead", ReplaceWith("AbstractJavaLazyParentUVariable"))
+abstract class AbstractJavaUVariable : PsiVariable, UVariable, JavaUElementWithComments {
     override val uastInitializer by lz {
         val initializer = psi.initializer ?: return@lz null
         getLanguagePlugin().convertElement(initializer, this) as? UExpression
@@ -39,7 +57,7 @@ abstract class AbstractJavaUVariable(givenParent: UElement?) : JavaLazyParentUEl
 open class JavaUVariable(
         psi: PsiVariable,
         givenParent: UElement?
-) : AbstractJavaUVariable(givenParent), UVariable, PsiVariable by psi {
+) : AbstractJavaLazyParentUVariable(givenParent), UVariable, PsiVariable by psi {
     override val psi = unwrap<UVariable, PsiVariable>(psi)
     
     companion object {
@@ -58,28 +76,28 @@ open class JavaUVariable(
 open class JavaUParameter(
         psi: PsiParameter,
         givenParent: UElement?
-) : AbstractJavaUVariable(givenParent), UParameter, PsiParameter by psi {
+) : AbstractJavaLazyParentUVariable(givenParent), UParameter, PsiParameter by psi {
     override val psi = unwrap<UParameter, PsiParameter>(psi)
 }
 
 open class JavaUField(
         psi: PsiField,
         givenParent: UElement?
-) : AbstractJavaUVariable(givenParent), UField, PsiField by psi {
+) : AbstractJavaLazyParentUVariable(givenParent), UField, PsiField by psi {
     override val psi = unwrap<UField, PsiField>(psi)
 }
 
 open class JavaULocalVariable(
         psi: PsiLocalVariable,
         givenParent: UElement?
-) : AbstractJavaUVariable(givenParent), ULocalVariable, PsiLocalVariable by psi {
+) : AbstractJavaLazyParentUVariable(givenParent), ULocalVariable, PsiLocalVariable by psi {
     override val psi = unwrap<ULocalVariable, PsiLocalVariable>(psi)
 }
 
 open class JavaUEnumConstant(
         psi: PsiEnumConstant,
         givenParent: UElement?
-) : AbstractJavaUVariable(givenParent), UEnumConstant, PsiEnumConstant by psi {
+) : AbstractJavaLazyParentUVariable(givenParent), UEnumConstant, PsiEnumConstant by psi {
     override val initializingClass: UClass? by lz { getLanguagePlugin().convertOpt<UClass>(psi.initializingClass, this) }
 
     override val psi = unwrap<UEnumConstant, PsiEnumConstant>(psi)
@@ -118,7 +136,7 @@ open class JavaUEnumConstant(
     private class JavaEnumConstantClassReference(
             override val psi: PsiEnumConstant,
             givenParent: UElement?
-    ) : JavaAbstractUExpression(givenParent), USimpleNameReferenceExpression {
+    ) : JavaAbstractLazyParentUExpression(givenParent), USimpleNameReferenceExpression {
         override fun resolve() = psi.containingClass
         override val resolvedName: String?
             get() = psi.containingClass?.name

@@ -23,7 +23,7 @@ import org.jetbrains.uast.UElement
 class JavaUBreakExpression(
         override val psi: PsiBreakStatement,
         givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UBreakExpression {
+) : JavaAbstractLazyParentUExpression(givenParent), UBreakExpression {
     override val label: String?
         get() = psi.labelIdentifier?.text
 }

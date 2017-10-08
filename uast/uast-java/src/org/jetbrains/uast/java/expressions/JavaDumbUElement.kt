@@ -23,7 +23,7 @@ class JavaDumbUElement(
         override val psi: PsiElement,
         givenParent: UElement?,
         private val customRenderString: String? = null
-) : JavaAbstractUElement(givenParent), UElement {
+) : JavaAbstractLazyParentUElement(givenParent), UElement {
     override fun asLogString() = log()
     override fun asRenderString() = customRenderString ?: "<stub@$psi>"
 }

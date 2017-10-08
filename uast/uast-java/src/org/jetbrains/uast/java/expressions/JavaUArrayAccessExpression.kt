@@ -22,7 +22,7 @@ import org.jetbrains.uast.UElement
 class JavaUArrayAccessExpression(
         override val psi: PsiArrayAccessExpression,
         givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UArrayAccessExpression {
+) : JavaAbstractLazyParentUExpression(givenParent), UArrayAccessExpression {
     override val receiver by lz { JavaConverter.convertOrEmpty(psi.arrayExpression, this) }
     override val indices by lz { singletonListOrEmpty(JavaConverter.convertOrNull(psi.indexExpression, this)) }
 }
