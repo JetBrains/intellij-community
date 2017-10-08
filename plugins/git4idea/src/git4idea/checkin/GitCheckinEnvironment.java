@@ -25,6 +25,9 @@ import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.BalloonBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -41,6 +44,7 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.GuiUtils;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.FunctionUtil;
@@ -70,19 +74,22 @@ import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
+import static com.intellij.openapi.ui.DialogWrapper.BALLOON_WARNING_BACKGROUND;
+import static com.intellij.openapi.ui.DialogWrapper.BALLOON_WARNING_BORDER;
 import static com.intellij.openapi.util.text.StringUtil.escapeXml;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterPath;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getBeforePath;
@@ -711,6 +718,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   public class GitCheckinOptions implements CheckinChangeListSpecificComponent, RefreshableOnComponent  {
+    
     @NotNull private final GitVcs myVcs;
     @NotNull private final CheckinProjectPanel myCheckinProjectPanel;
     @NotNull private JPanel myPanel;
@@ -718,12 +726,38 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     @Nullable private Date myAuthorDate;
     @NotNull private AmendComponent myAmendComponent;
     @NotNull private final JCheckBox mySignOffCheckbox;
+    @NotNull private final BalloonBuilder myAuthorNotificationBuilder;
+    @Nullable private Balloon myAuthorBalloon; 
+    
 
     GitCheckinOptions(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
       myVcs = assertNotNull(GitVcs.getInstance(project));
       myCheckinProjectPanel = panel;
       myAuthorField = createTextField(project, getAuthors(project));
-      myAuthorField.setToolTipText(GitBundle.getString("commit.author.tooltip"));
+      myAuthorField.addFocusListener(new FocusAdapter() {
+        @Override
+        public void focusLost(FocusEvent e) {
+          clearAuthorWarn();
+        }
+      });
+      myAuthorNotificationBuilder = JBPopupFactory.getInstance().
+        createBalloonBuilder(new JLabel(GitBundle.getString("commit.author.diffs"))).
+        setBorderInsets(UIManager.getInsets("Balloon.error.textInsets")).
+        setBorderColor(BALLOON_WARNING_BORDER).
+        setFillColor(BALLOON_WARNING_BACKGROUND).
+        setHideOnClickOutside(true).
+        setHideOnFrameResize(false);
+      myAuthorField.addHierarchyListener(new HierarchyListener() {
+        @Override
+        public void hierarchyChanged(HierarchyEvent e) {
+          if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && myAuthorField.isShowing()) {
+            if (!StringUtil.isEmptyOrSpaces(myAuthorField.getText())) {
+              showAuthorBalloonNotification();
+              myAuthorField.removeHierarchyListener(this);
+            }
+          }
+        }
+      });
       JLabel authorLabel = new JBLabel(GitBundle.message("commit.author"));
       authorLabel.setLabelFor(myAuthorField);
 
@@ -752,6 +786,15 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       String signature = user != null ? escapeXml(VcsUserUtil.toExactString(user)) : "";
       return "<html>Adds the following line at the end of the commit message:<br/>" +
              "Signed-off by: " + signature + "</html>";
+    }
+
+    @CalledInAwt
+    private void showAuthorBalloonNotification() {
+      if (myAuthorBalloon == null || myAuthorBalloon.isDisposed()) {
+        myAuthorBalloon = myAuthorNotificationBuilder.createBalloon();
+        myAuthorBalloon.show(new RelativePoint(myAuthorField, new Point(myAuthorField.getWidth() / 2, myAuthorField.getHeight())),
+                             Balloon.Position.below);
+      }
     }
 
     @NotNull
@@ -811,7 +854,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     public void refresh() {
       myAmendComponent.refresh();
       myAuthorField.setText(null);
-      myAuthorField.putClientProperty("JComponent.outline", null);
+      clearAuthorWarn();
       myAuthorDate = null;
       reset();
     }
@@ -840,18 +883,31 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     @Override
     public void onChangeListSelected(LocalChangeList list) {
       Object data = list.getData();
-      myAuthorField.putClientProperty("JComponent.outline", null);
+      clearAuthorWarn();
       if (data instanceof ChangeListData) {
         VcsUser author = ((ChangeListData)data).getAuthor();
         if (author != null && !isDefaultAuthor(author)) {
           myAuthorField.setText(VcsUserUtil.toExactString(author));
           myAuthorField.putClientProperty("JComponent.outline", "warning");
+          if(myAuthorField.isShowing()) {
+            showAuthorBalloonNotification();
+          }
         }
         myAuthorDate = ((ChangeListData)data).getDate();
       }
       else {
         myAuthorField.setText(null);
         myAuthorDate = null;
+      }
+      myPanel.revalidate();
+      myPanel.repaint();
+    }
+
+    private void clearAuthorWarn() {
+      myAuthorField.putClientProperty("JComponent.outline", null);
+      if (myAuthorBalloon != null) {
+        myAuthorBalloon.hide();
+        myAuthorBalloon = null;
       }
     }
 
