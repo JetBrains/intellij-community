@@ -19,6 +19,7 @@ package com.intellij.lang.folding;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
+import com.intellij.lang.MetaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiElement;
@@ -46,6 +47,15 @@ public class LanguageFolding extends LanguageExtension<FoldingBuilder> {
 
     List<FoldingBuilder> extensions = forKey(l);
     FoldingBuilder result;
+
+    if (!(l instanceof MetaLanguage)) {
+      for (MetaLanguage metaLanguage : MetaLanguage.all()) {
+        if (metaLanguage.getMatchingLanguages().contains(l)) {
+          extensions.addAll(allForLanguage(metaLanguage));
+        }
+      }
+    }
+
     if (extensions.isEmpty()) {
 
       Language base = l.getBaseLanguage();
