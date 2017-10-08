@@ -55,7 +55,7 @@ public class GitVcsPanel {
   private static final String IDEA_SSH = GitBundle.getString("git.vcs.config.ssh.mode.idea"); // IDEA ssh value
   private static final String NATIVE_SSH = GitBundle.getString("git.vcs.config.ssh.mode.native"); // Native SSH value
 
-  private final GitVcsApplicationSettings myAppSettings;
+  private final GitVcsSettings myProjectSettings;
   private final GitVcs myVcs;
 
   private JButton myTestButton; // Test git executable
@@ -74,7 +74,7 @@ public class GitVcsPanel {
 
   public GitVcsPanel(@NotNull Project project) {
     myVcs = GitVcs.getInstance(project);
-    myAppSettings = GitVcsApplicationSettings.getInstance();
+    myProjectSettings = GitVcsSettings.getInstance(project);
     mySSHExecutableComboBox.addItem(IDEA_SSH);
     mySSHExecutableComboBox.addItem(NATIVE_SSH);
     mySSHExecutableComboBox.setSelectedItem(IDEA_SSH);
@@ -110,8 +110,8 @@ public class GitVcsPanel {
    */
   private void testConnection() {
     final String executable = getCurrentExecutablePath();
-    if (myAppSettings != null) {
-      myAppSettings.setPathToGit(executable);
+    if (myProjectSettings != null) {
+      myProjectSettings.setPathToGit(executable);
     }
     GitVersion version;
     try {
@@ -158,7 +158,7 @@ public class GitVcsPanel {
    * @param settings the settings to load
    */
   public void load(@NotNull GitVcsSettings settings, @NotNull GitSharedSettings sharedSettings) {
-    myGitField.setText(settings.getAppSettings().getPathToGit());
+    myGitField.setText(settings.getPathToGit());
     mySSHExecutableComboBox.setSelectedItem(settings.isIdeaSsh() ? IDEA_SSH : NATIVE_SSH);
     myAutoUpdateIfPushRejected.setSelected(settings.autoUpdateIfPushRejected());
     mySyncControl.setSelected(settings.getSyncSetting() == DvcsSyncSettings.Value.SYNC);
@@ -176,7 +176,7 @@ public class GitVcsPanel {
    * @param settings the settings to load
    */
   public boolean isModified(@NotNull GitVcsSettings settings, @NotNull GitSharedSettings sharedSettings) {
-    return !settings.getAppSettings().getPathToGit().equals(getCurrentExecutablePath()) ||
+    return !settings.getPathToGit().equals(getCurrentExecutablePath()) ||
            (settings.isIdeaSsh() != IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem())) ||
            !settings.autoUpdateIfPushRejected() == myAutoUpdateIfPushRejected.isSelected() ||
            ((settings.getSyncSetting() == DvcsSyncSettings.Value.SYNC) != mySyncControl.isSelected() ||
@@ -195,9 +195,9 @@ public class GitVcsPanel {
    * @param settings the settings object
    */
   public void save(@NotNull GitVcsSettings settings, GitSharedSettings sharedSettings) {
-    settings.getAppSettings().setPathToGit(getCurrentExecutablePath());
+    settings.setPathToGit(getCurrentExecutablePath());
     myVcs.checkVersion();
-    settings.getAppSettings().setIdeaSsh(IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem()) ?
+    settings.setIdeaSsh(IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem()) ?
                                          GitVcsApplicationSettings.SshExecutable.IDEA_SSH :
                                          GitVcsApplicationSettings.SshExecutable.NATIVE_SSH);
     settings.setAutoUpdateIfPushRejected(myAutoUpdateIfPushRejected.isSelected());

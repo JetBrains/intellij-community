@@ -24,6 +24,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,6 +54,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
   private static final int PREVIOUS_COMMIT_AUTHORS_LIMIT = 16; // Limit for previous commit authors
 
   private final GitVcsApplicationSettings myAppSettings;
+  private final Project myProject;
   private State myState = new State();
 
   /**
@@ -67,6 +69,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     // The previously entered authors of the commit (up to {@value #PREVIOUS_COMMIT_AUTHORS_LIMIT})
     public List<String> PREVIOUS_COMMIT_AUTHORS = new ArrayList<>();
     public GitVcsApplicationSettings.SshExecutable SSH_EXECUTABLE = GitVcsApplicationSettings.SshExecutable.IDEA_SSH;
+    public String PATH_TO_GIT = null;
     // The policy that specifies how files are saved before update or rebase
     public UpdateChangesPolicy UPDATE_CHANGES_POLICY = UpdateChangesPolicy.STASH;
     public UpdateMethod UPDATE_TYPE = UpdateMethod.BRANCH_DEFAULT;
@@ -95,8 +98,9 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public DvcsBranchSettings FAVORITE_BRANCH_SETTINGS = new DvcsBranchSettings();
   }
 
-  public GitVcsSettings(GitVcsApplicationSettings appSettings) {
+  public GitVcsSettings(GitVcsApplicationSettings appSettings, Project project) {
     myAppSettings = appSettings;
+    myProject = project;
   }
 
   public GitVcsApplicationSettings getAppSettings() {
@@ -268,16 +272,36 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     myState.SIGN_OFF_COMMIT = state;
   }
 
-  /**
-   * Provides migration from project settings.
-   * This method is to be removed in IDEA 13: it should be moved to {@link GitVcsApplicationSettings}
-   */
-  @Deprecated
   public boolean isIdeaSsh() {
-    if (getAppSettings().getIdeaSsh() == null) { // app setting has not been initialized yet => migrate the project setting there
-      getAppSettings().setIdeaSsh(myState.SSH_EXECUTABLE);
+    GitVcsApplicationSettings.SshExecutable sshExecutable = myState.SSH_EXECUTABLE;
+    if (myProject.isDefault() || sshExecutable == null) {
+      sshExecutable = getAppSettings().getIdeaSsh();
     }
-    return getAppSettings().getIdeaSsh() == GitVcsApplicationSettings.SshExecutable.IDEA_SSH;
+    return sshExecutable == GitVcsApplicationSettings.SshExecutable.IDEA_SSH;
+  }
+
+  public void setIdeaSsh(GitVcsApplicationSettings.SshExecutable sshExecutable) {
+    if (myProject.isDefault()) {
+      getAppSettings().setIdeaSsh(sshExecutable);
+    } else {
+      myState.SSH_EXECUTABLE = sshExecutable;
+    }
+  }
+
+  public String getPathToGit() {
+    String pathToGit = myState.PATH_TO_GIT;
+    if (myProject.isDefault() || StringUtil.isEmpty(pathToGit)) {
+      pathToGit = getAppSettings().getPathToGit();
+    }
+    return pathToGit;
+  }
+
+  public void setPathToGit(String pathToGit) {
+    if (myProject.isDefault()) {
+      getAppSettings().setPathToGit(pathToGit);
+    } else {
+      myState.PATH_TO_GIT = pathToGit;
+    }
   }
 
   @Nullable
