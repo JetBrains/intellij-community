@@ -70,6 +70,23 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
     return new File(PluginPathManager.getPluginHomePath("stream-debugger") + "/testData/debug/").getAbsolutePath();
   }
 
+  /**
+   *
+   * @throws Exception
+   */
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      //noinspection SuperTearDownInFinally
+      super.tearDown();
+    }
+    catch (Throwable t) {
+      if (!t.getMessage().startsWith("Thread leaked: Thread[Javac server event loop")) {
+        throw t;
+      }
+    }
+  }
+
   protected void doTest(boolean isResultNull) {
     doTest(isResultNull, DEFAULT_CHAIN_SELECTOR);
   }
