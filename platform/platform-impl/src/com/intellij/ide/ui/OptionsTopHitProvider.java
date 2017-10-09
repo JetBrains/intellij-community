@@ -20,9 +20,13 @@ import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.PreloadingActivity;
 import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeyMapBundle;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -44,12 +48,14 @@ import static java.util.Collections.emptyList;
  * @author Konstantin Bulenkov
  */
 public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
+  private static final Logger LOG = Logger.getInstance(OptionsTopHitProvider.class);
+
   @NotNull
   public abstract Collection<OptionDescription> getOptions(@Nullable Project project);
 
   private Collection<OptionDescription> getCachedOptions(@Nullable Project project) {
     ComponentManager manager = project != null ? project : getApplication();
-    if (manager == null) return emptyList();
+    if (manager == null || manager.isDisposed()) return emptyList();
 
     CachedOptions cache = manager.getUserData(CachedOptions.KEY);
     if (cache == null) cache = new CachedOptions(manager);
@@ -132,6 +138,30 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
 
     private static void dispose(OptionDescription option) {
       if (option instanceof Disposable) Disposer.dispose((Disposable)option);
+    }
+  }
+
+  public static final class Activity extends PreloadingActivity implements StartupActivity {
+    @Override
+    public void preload(@NotNull ProgressIndicator indicator) {
+      cacheAll(indicator, null); // for application
+    }
+
+    @Override
+    public void runActivity(@NotNull Project project) {
+      cacheAll(null, project); // for given project
+    }
+
+    private static void cacheAll(@Nullable ProgressIndicator indicator, @Nullable Project project) {
+      long time = System.currentTimeMillis();
+      for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
+        if (indicator != null) indicator.checkCanceled();
+        if (provider instanceof OptionsTopHitProvider) {
+          OptionsTopHitProvider options = (OptionsTopHitProvider)provider;
+          if (options.isEnabled(project)) options.getCachedOptions(project);
+        }
+      }
+      LOG.debug((System.currentTimeMillis() - time) + " ms spent to cache options in " + (project == null ? "application" : "project"));
     }
   }
 }
