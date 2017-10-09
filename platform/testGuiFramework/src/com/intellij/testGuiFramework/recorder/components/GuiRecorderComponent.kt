@@ -41,7 +41,8 @@ object GuiRecorderComponent : ApplicationComponent, Disposable {
   }
 
   override fun dispose() {
-    frame.dispose()
+    if(!ApplicationManager.getApplication().isHeadlessEnvironment)
+      frame.dispose()
   }
 
   override fun getComponentName() = "GuiRecorderComponent"
