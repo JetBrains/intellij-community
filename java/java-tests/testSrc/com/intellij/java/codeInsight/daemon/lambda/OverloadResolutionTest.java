@@ -262,6 +262,8 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
 
   public void testAdaptReturnTypesOfSiblingMethods() { doTest(false);}
 
+  public void testUnqualifiedStaticInterfaceMethodCallsOnInnerClasses() { doTest(false);}
+
   private void doTest() {
     doTest(true);
   }
