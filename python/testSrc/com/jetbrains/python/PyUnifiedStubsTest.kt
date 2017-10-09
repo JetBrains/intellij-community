@@ -55,7 +55,7 @@ class PyUnifiedStubsTest : PyTestCase() {
   }
 
   private fun getFile(): PyFile {
-    val vf = myFixture.copyFileToProject("psi/${getTestName(false)}.py")
+    val vf = myFixture.copyFileToProject("psi/unified/${getTestName(false)}.py")
     val file = myFixture.psiManager.findFile(vf) as PyFile
     return file
   }
