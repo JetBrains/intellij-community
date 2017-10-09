@@ -95,11 +95,11 @@ public class BuildNumber implements Comparable<BuildNumber> {
     return fromString(version, null, productCode);
   }
 
-  public static BuildNumber fromString(String version, @Nullable String pluginName, @Nullable String productCodeOverride) {
+  public static BuildNumber fromString(String version, @Nullable String pluginName, @Nullable String productCodeIfAbsentInVersion) {
     if (StringUtil.isEmptyOrSpaces(version)) return null;
 
     if (BUILD_NUMBER.equals(version) || SNAPSHOT.equals(version)) {
-      return new BuildNumber(productCodeOverride != null ? productCodeOverride : "", currentVersion().myComponents);
+      return new BuildNumber(productCodeIfAbsentInVersion != null ? productCodeIfAbsentInVersion : "", currentVersion().myComponents);
     }
 
     String code = version;
@@ -112,7 +112,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
     else {
       productCode = "";
     }
-    productCode = productCodeOverride != null ? productCodeOverride : productCode;
+    productCode = productCode == "" && productCodeIfAbsentInVersion != null ? productCodeIfAbsentInVersion : productCode;
 
     int baselineVersionSeparator = code.indexOf('.');
     int baselineVersion;
