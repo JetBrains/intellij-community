@@ -32,12 +32,10 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.MultiMap;
-import git4idea.GitUtil;
 import git4idea.branch.GitRebaseParams;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
@@ -60,10 +58,7 @@ import javax.swing.event.HyperlinkEvent;
 import java.util.*;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
-import static com.intellij.openapi.vfs.VfsUtilCore.toVirtualFileArray;
-import static com.intellij.util.ObjectUtils.assertNotNull;
-import static com.intellij.util.ObjectUtils.coalesce;
-import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.ObjectUtils.*;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.util.containers.ContainerUtilRt.newArrayList;
 import static git4idea.GitUtil.*;
@@ -93,7 +88,7 @@ public class GitRebaseProcess {
     myGit = Git.getInstance();
     myChangeListManager = ChangeListManager.getInstance(myProject);
     myNotifier = VcsNotifier.getInstance(myProject);
-    myRepositoryManager = GitUtil.getRepositoryManager(myProject);
+    myRepositoryManager = getRepositoryManager(myProject);
     myProgressManager = ProgressManager.getInstance();
   }
 
@@ -317,12 +312,6 @@ public class GitRebaseProcess {
 
   protected boolean shouldRefreshOnSuccess(@NotNull SuccessType successType) {
     return successType != SuccessType.UP_TO_DATE;
-  }
-
-  private static void refresh(@NotNull Collection<GitRepository> repositories) {
-    GitUtil.updateRepositories(repositories);
-    // TODO use --diff-stat, and refresh only what's needed
-    VfsUtil.markDirtyAndRefresh(false, true, false, toVirtualFileArray(getRootsFromRepositories(repositories)));
   }
 
   private boolean saveDirtyRootsInitially(@NotNull List<GitRepository> repositories) {
@@ -574,7 +563,7 @@ public class GitRebaseProcess {
   private void handlePossibleCommitLinks(@NotNull String href, @NotNull MultiMap<GitRepository, GitRebaseUtils.CommitInfo> skippedCommits) {
     GitRepository repository = findRootBySkippedCommit(href, skippedCommits);
     if (repository != null) {
-      GitUtil.showSubmittedFiles(myProject, href, repository.getRoot(), true, false);
+      showSubmittedFiles(myProject, href, repository.getRoot(), true, false);
     }
   }
 
