@@ -1245,12 +1245,12 @@ public class PluginManagerCore {
                                        @Nullable String descriptorName,
                                        @Nullable String descriptorDebugString) {
     JBIterable<String> messages = JBIterable.empty();
-    BuildNumber sinceBuildNumber = StringUtil.isEmpty(sinceBuild) ? null : BuildNumber.fromString(sinceBuild, descriptorName);
+    BuildNumber sinceBuildNumber = StringUtil.isEmpty(sinceBuild) ? null : BuildNumber.fromString(sinceBuild, descriptorName, null);
     if (sinceBuildNumber != null && sinceBuildNumber.compareTo(buildNumber) > 0) {
       messages = messages.append("since build " + sinceBuildNumber + " > " + buildNumber);
     }
 
-    BuildNumber untilBuildNumber = StringUtil.isEmpty(untilBuild) ? null : BuildNumber.fromString(untilBuild, descriptorName);
+    BuildNumber untilBuildNumber = StringUtil.isEmpty(untilBuild) ? null : BuildNumber.fromString(untilBuild, descriptorName, null);
     if (untilBuildNumber != null && untilBuildNumber.compareTo(buildNumber) < 0) {
       messages = messages.append("until build " + untilBuildNumber + " < " + buildNumber);
     }
