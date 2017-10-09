@@ -972,6 +972,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
       else if (resource instanceof PsiResourceExpression) {
         ((PsiResourceExpression)resource).getExpression().accept(this);
+        addInstruction(new PopInstruction());
       }
 
       final List<PsiClassType> closerExceptions = ExceptionUtil.getCloserExceptions(resource);
