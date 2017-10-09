@@ -23,6 +23,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.impl.jar.BasicJarHandler;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.openapi.vfs.impl.jar.JarHandler;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
@@ -40,7 +41,11 @@ import org.junit.Test;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
 
@@ -131,6 +136,45 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     assertEquals("some text", VfsUtilCore.loadText(newEntry));
   }
 
+  @Test
+  public void testBasicJarHandlerConcurrency() throws Exception {
+    int number = 40;
+    List<BasicJarHandler> handlers = new ArrayList<>();
+    for(int i = 0; i < number; ++i) {
+      File jar = IoTestUtil.createTestJar(tempDir.newFile("test" + i + ".jar"));
+      handlers.add(new BasicJarHandler(jar.getPath()));
+    }
+
+    int N = Math.max(2, Runtime.getRuntime().availableProcessors());
+    for(int iteration = 0 ; iteration < 200; ++iteration) {
+      if (iteration % 10 == 0) System.out.println(iteration);
+      List<Future> futuresToWait = new ArrayList<>();
+      CountDownLatch sameStartCondition = new CountDownLatch(N);
+
+      for(int i = 0; i < N; ++i) {
+        futuresToWait.add(ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          try {
+            sameStartCondition.countDown();
+            sameStartCondition.await();
+            Random random = new Random();
+            for (int j = 0; j < 1000; ++j) {
+              BasicJarHandler handler = handlers.get(random.nextInt(handlers.size()));
+
+              int op = random.nextInt(2);
+              if (op == 0) assertNotNull(handler.getAttributes(JarFile.MANIFEST_NAME));
+              else if (op == 1) assertNotNull(handler.contentsToByteArray(JarFile.MANIFEST_NAME));
+            }
+          }
+          catch (Throwable ignore) {
+            ignore.printStackTrace();
+          }
+        }));
+      }
+
+      for(Future future:futuresToWait) future.get();
+    }
+  }
+  
   @Test
   public void testJarHandlerDoNotCreateCopyWhenListingArchive() throws Exception {
     File jar = IoTestUtil.createTestJar(tempDir.newFile("test.jar"));
