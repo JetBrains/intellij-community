@@ -48,6 +48,7 @@ import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -205,7 +206,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * Patches the command line parameters applying patchers from first to last, and then runs it.
    *
    * @param processStarter
-   * @param patchers any number of patchers; any patcher may be null, and the whole argument may be null.
+   * @param patchers       any number of patchers; any patcher may be null, and the whole argument may be null.
    * @return handler of the started process
    * @throws ExecutionException
    */
@@ -342,12 +343,14 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   private static void setupVirtualEnvVariables(PythonRunParams myConfig, Map<String, String> env, String sdkHome) {
     Sdk sdk = PythonSdkType.findSdkByPath(sdkHome);
-    if (PythonSdkType.isVirtualEnv(sdkHome) || (sdk != null && PythonSdkType.isCondaVirtualEnv(sdk))) {
+    if (Registry.is("python.activate.virtualenv.on.run") &&
+        (PythonSdkType.isVirtualEnv(sdkHome) || (sdk != null && PythonSdkType.isCondaVirtualEnv(sdk)))) {
       PyVirtualEnvReader reader = new PyVirtualEnvReader(sdkHome);
       if (reader.getActivate() != null) {
         try {
-          env.putAll(reader.readShellEnv().entrySet().stream().filter((entry) -> PyVirtualEnvReader.Companion.getVirtualEnvVars().contains(entry.getKey())
-          ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+          env.putAll(reader.readShellEnv().entrySet().stream()
+                       .filter((entry) -> PyVirtualEnvReader.Companion.getVirtualEnvVars().contains(entry.getKey())
+                       ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
 
           for (Map.Entry<String, String> e : myConfig.getEnvs().entrySet()) {
             if ("PATH".equals(e.getKey())) {
