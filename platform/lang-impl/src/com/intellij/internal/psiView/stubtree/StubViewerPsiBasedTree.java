@@ -85,7 +85,7 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
   }
 
   @Override
-  public void reloadTree(PsiElement rootRootElement, @NotNull String text) {
+  public void reloadTree(@Nullable PsiElement rootRootElement, @NotNull String text) {
     resetStubTree();
     buildStubTree(rootRootElement, text);
   }
@@ -124,7 +124,11 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
     IdeFocusManager.getInstance(myProject).requestFocus(myStubTree, true);
   }
 
-  private synchronized void buildStubTree(@NotNull PsiElement rootElement, @NotNull String textToParse) {
+  private synchronized void buildStubTree(@Nullable PsiElement rootElement, @NotNull String textToParse) {
+    if (rootElement == null) {
+      myStubTree.setRootVisible(false);
+      return;
+    }
     if (!(rootElement instanceof PsiFileWithStubSupport)) {
       myStubTree.setRootVisible(false);
       StatusText text = myStubTree.getEmptyText();
@@ -286,7 +290,7 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
     myNodeToStubs.put(ast, root);
 
     findTreeForStub(builder, ast, stubs);
-    
+
     if (stubs.hasNext()) {
       LOG.error("Stub mismatch, unprocessed stubs " + stubs.next());
     }
