@@ -58,7 +58,7 @@ interface SchemeContentChangedHandler<MUTABLE_SCHEME> {
   fun schemeContentChanged(scheme: MUTABLE_SCHEME, name: String, dataHolder: SchemeDataHolder<MUTABLE_SCHEME>)
 }
 
-abstract class LazySchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME>(private val nameAttribute: String = "name") : SchemeProcessor<SCHEME, MUTABLE_SCHEME>() {
+abstract class LazySchemeProcessor<SCHEME, MUTABLE_SCHEME : SCHEME>(private val nameAttribute: String = "name") : SchemeProcessor<SCHEME, MUTABLE_SCHEME>() {
   open fun getName(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String): String? {
     return attributeProvider.apply(nameAttribute)
   }
@@ -95,7 +95,7 @@ fun Element.digest(): ByteArray {
   return digest.digest()
 }
 
-abstract class SchemeWrapper<out T : Scheme>(name: String) : ExternalizableSchemeAdapter(), SerializableScheme {
+abstract class SchemeWrapper<out T>(name: String) : ExternalizableSchemeAdapter(), SerializableScheme {
   protected abstract val lazyScheme: Lazy<T>
 
   val scheme: T
@@ -108,7 +108,7 @@ abstract class SchemeWrapper<out T : Scheme>(name: String) : ExternalizableSchem
   }
 }
 
-abstract class LazySchemeWrapper<T : Scheme>(name: String, dataHolder: SchemeDataHolder<SchemeWrapper<T>>, protected val writer: (scheme: T) -> Element) : SchemeWrapper<T>(name) {
+abstract class LazySchemeWrapper<T>(name: String, dataHolder: SchemeDataHolder<SchemeWrapper<T>>, protected val writer: (scheme: T) -> Element) : SchemeWrapper<T>(name) {
   protected val dataHolder = AtomicReference(dataHolder)
 
   override final fun writeScheme(): Element {

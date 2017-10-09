@@ -40,14 +40,14 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
   protected open val componentManager: ComponentManager? = null
 
-  override final fun <T : Scheme, MutableT : T> create(directoryName: String,
-                                                       processor: SchemeProcessor<T, MutableT>,
-                                                       presentableName: String?,
-                                                       roamingType: RoamingType,
-                                                       schemeNameToFileName: SchemeNameToFileName,
-                                                       streamProvider: StreamProvider?,
-                                                       directoryPath: Path?,
-                                                       autoSave: Boolean): SchemeManager<T> {
+  override final fun <T : Any, MutableT : T> create(directoryName: String,
+                                                    processor: SchemeProcessor<T, MutableT>,
+                                                    presentableName: String?,
+                                                    roamingType: RoamingType,
+                                                    schemeNameToFileName: SchemeNameToFileName,
+                                                    streamProvider: StreamProvider?,
+                                                    directoryPath: Path?,
+                                                    autoSave: Boolean): SchemeManager<T> {
     val path = checkPath(directoryName)
     val manager = SchemeManagerImpl(path,
                                     processor,
