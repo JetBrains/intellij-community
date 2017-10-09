@@ -7,9 +7,11 @@ import com.intellij.lang.jvm.types.JvmSubstitutor;
 import com.intellij.lang.jvm.types.JvmType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@Experimental
 public interface JvmPsiConversionHelper {
 
   @NotNull
