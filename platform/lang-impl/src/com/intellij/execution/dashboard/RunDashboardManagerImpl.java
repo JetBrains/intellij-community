@@ -257,6 +257,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   public void setShowConfigurations(boolean value) {
     myShowConfigurations = value;
     updateToolWindowContent();
+    updateDashboard(false);
   }
 
   @Override
