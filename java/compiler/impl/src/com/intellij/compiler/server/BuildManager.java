@@ -522,7 +522,8 @@ public class BuildManager implements Disposable {
     final List<TargetTypeBuildScope> scopes = CmdlineProtoUtil.createAllModulesScopes(false);
     final AutoMakeMessageHandler handler = new AutoMakeMessageHandler(project);
     final TaskFuture future = scheduleBuild(
-      project, false, true, false, scopes, Collections.emptyList(), Collections.emptyMap(), handler
+      project, false, true, false, scopes, Collections.emptyList(), Collections.emptyMap(),
+      handler
     );
     if (future != null) {
       myAutomakeFutures.put(future, project);
