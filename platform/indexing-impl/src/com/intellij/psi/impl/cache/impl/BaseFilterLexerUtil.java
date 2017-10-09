@@ -19,7 +19,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
-import com.intellij.psi.impl.cache.impl.id.LexerBasedIdIndexer;
+import com.intellij.psi.impl.cache.impl.id.LexingIdIndexer;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.util.indexing.FileContent;
@@ -40,7 +40,7 @@ public class BaseFilterLexerUtil {
     }
 
     final boolean needTodo = content.getFile().isInLocalFileSystem(); // same as TodoIndex.getFilter().isAcceptable
-    final boolean needIdIndex = IdTableBuilding.getFileTypeIndexer(content.getFileType()) instanceof LexerBasedIdIndexer;
+    final boolean needIdIndex = IdTableBuilding.getFileTypeIndexer(content.getFileType()) instanceof LexingIdIndexer;
 
     final IdDataConsumer consumer = needIdIndex? new IdDataConsumer():null;
     final OccurrenceConsumer todoOccurrenceConsumer = new OccurrenceConsumer(consumer, needTodo);

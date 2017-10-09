@@ -3,7 +3,7 @@ package com.intellij.index
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
-import com.intellij.psi.impl.cache.impl.id.IdIndexer
+import com.intellij.psi.impl.cache.impl.id.LexingIdIndexer
 import com.intellij.util.indexing.FileContent
 import com.intellij.util.indexing.impl.DebugAssertions
 import com.intellij.util.io.DataExternalizer
@@ -15,7 +15,7 @@ import java.io.DataOutput
  * @author traff
  */
 
-abstract class PrebuiltIndexAwareIdIndexer : PrebuiltIndexProviderBase<Map<IdIndexEntry, Int>>(), IdIndexer {
+abstract class PrebuiltIndexAwareIdIndexer : PrebuiltIndexProviderBase<Map<IdIndexEntry, Int>>(), LexingIdIndexer {
   companion object {
     private val LOG = Logger.getInstance("#com.intellij.index.PrebuiltIndexAwareIdIndexer")
     val ID_INDEX_FILE_NAME = "id-index"
