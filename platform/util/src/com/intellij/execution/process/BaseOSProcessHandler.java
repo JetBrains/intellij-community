@@ -315,9 +315,11 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
 
   @Override
   public boolean waitFor(long timeoutInMilliseconds) {
+    long start = System.currentTimeMillis();
     boolean result = super.waitFor(timeoutInMilliseconds);
+    long elapsed = System.currentTimeMillis() - start;
     try {
-      result = result && myWaitFor.waitFor(timeoutInMilliseconds, TimeUnit.MILLISECONDS);
+      result &= myWaitFor.waitFor(Math.max(0, timeoutInMilliseconds-elapsed), TimeUnit.MILLISECONDS);
     }
     catch (InterruptedException e) {
       throw new RuntimeException(e);
