@@ -26,6 +26,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -45,7 +46,7 @@ public class LanguageFolding extends LanguageExtension<FoldingBuilder> {
     FoldingBuilder cached = l.getUserData(getLanguageCache());
     if (cached != null) return cached;
 
-    List<FoldingBuilder> extensions = forKey(l);
+    List<FoldingBuilder> extensions = new ArrayList<>(forKey(l));
     FoldingBuilder result;
 
     if (!(l instanceof MetaLanguage)) {
