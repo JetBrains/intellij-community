@@ -20,7 +20,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
 public interface RegExpElementTypes {
-    IFileElementType REGEXP_FILE = new IFileElementType("REGEXP_FILE", RegExpLanguage.INSTANCE);
+    IFileElementType REGEXP_FILE = new RegExpFileElementType();
     IElementType PATTERN = new RegExpElementType("PATTERN");
     IElementType BRANCH = new RegExpElementType("BRANCH");
     IElementType CLOSURE = new RegExpElementType("COUNTED_CLOSURE");
