@@ -16,6 +16,7 @@
 package com.intellij.testGuiFramework.recorder.components
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.testGuiFramework.recorder.ui.GuiScriptEditorFrame
@@ -35,7 +36,8 @@ object GuiRecorderComponent : ApplicationComponent, Disposable {
   var syncEditor = true
 
   override fun initComponent() {
-    frame = GuiScriptEditorFrame()
+    if(!ApplicationManager.getApplication().isHeadlessEnvironment)
+      frame = GuiScriptEditorFrame()
   }
 
   override fun dispose() {
