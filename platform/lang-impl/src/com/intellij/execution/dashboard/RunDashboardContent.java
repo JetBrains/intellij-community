@@ -357,7 +357,6 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
 
     DefaultActionGroup treeGroup = new DefaultActionGroup();
 
-    treeGroup.addAction(new ShowConfigurationsAction());
     treeGroup.addAction(new PreviousConfigurationAction());
     treeGroup.addAction(new NextConfigurationAction());
     treeGroup.addSeparator();
@@ -462,45 +461,6 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     public void setSelected(AnActionEvent e, boolean state) {
       myGrouper.setEnabled(state);
       updateContent(true);
-    }
-  }
-
-  private class ShowConfigurationsAction extends ToggleAction implements DumbAware {
-    ShowConfigurationsAction() {
-      super(ExecutionBundle.message("run.dashboard.show.configurations.action.name"), null, AllIcons.Actions.ShowAsTree);
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      boolean enabled = true;
-      if (isSelected(e)) {
-        if (myLastSelection instanceof RunDashboardNode) {
-          Content content = ((RunDashboardNode)myLastSelection).getContent();
-          enabled = content != null && content.getManager() == myContentManager;
-        }
-        else {
-          enabled = false;
-        }
-      }
-      e.getPresentation().setEnabled(enabled);
-    }
-
-    @Override
-    public boolean isSelected(AnActionEvent e) {
-      Project project = e.getProject();
-      if (project == null) return true;
-
-      return RunDashboardManager.getInstance(project).isShowConfigurations();
-    }
-
-    @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      Project project = e.getProject();
-      if (project == null) return;
-
-      RunDashboardManager.getInstance(project).setShowConfigurations(state);
-      updateContent(false);
     }
   }
 

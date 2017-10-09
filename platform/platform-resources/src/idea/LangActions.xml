@@ -1058,6 +1058,9 @@
       <action id="RunDashboard.Stop" class="com.intellij.execution.dashboard.actions.StopAction"/>
     </group>
 
+    <action id="RunDashboard.ShowConfigurations" class="com.intellij.execution.dashboard.actions.ShowConfigurationsAction">
+      <add-to-group group-id="Runner.Layout" anchor="after" relative-to-action="Runner.RestoreLayout"/>
+    </action>
     <group id="RunDashboardTreeToolbar"/>
     <group id="RunDashboardPopup">
       <action id="RunDashboard.EditConfiguration" class="com.intellij.execution.dashboard.actions.EditConfigurationAction"
