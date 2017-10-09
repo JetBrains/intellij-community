@@ -33,9 +33,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.InputEvent;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -44,7 +41,6 @@ import java.util.concurrent.locks.LockSupport;
 
 public class ProgressManagerImpl extends CoreProgressManager implements Disposable {
   private final Set<CheckCanceledHook> myHooks = ContainerUtil.newConcurrentSet();
-  private final List<PotemkinProgress> myPotemkins = ContainerUtil.createEmptyCOWList();
 
   public ProgressManagerImpl() {
     HeavyProcessLatch.INSTANCE.addUIActivityListener(new HeavyProcessLatch.HeavyProcessListener() {
@@ -89,10 +85,6 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   public void executeProcessUnderProgress(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
     if (progress instanceof ProgressWindow) myCurrentUnsafeProgressCount.incrementAndGet();
 
-    if (progress instanceof PotemkinProgress) {
-      myPotemkins.add((PotemkinProgress)progress);
-    }
-    
     CheckCanceledHook hook = progress instanceof PingProgress && ApplicationManager.getApplication().isDispatchThread() 
                              ? p -> { ((PingProgress)progress).interact(); return true; } 
                              : null;
@@ -104,21 +96,7 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
     finally {
       if (progress instanceof ProgressWindow) myCurrentUnsafeProgressCount.decrementAndGet();
       if (hook != null) removeCheckCanceledHook(hook);
-      if (progress instanceof PotemkinProgress) {
-        myPotemkins.remove((PotemkinProgress)progress);
-      }
     }
-  }
-
-  public boolean consumeEvent(@NotNull AWTEvent event) {
-    if (event instanceof InputEvent && !myPotemkins.isEmpty()) {
-      Iterator<PotemkinProgress> iterator = myPotemkins.iterator();
-      if (iterator.hasNext()) {
-        iterator.next().addEvent((InputEvent)event);
-        return true;
-      }
-    }
-    return false;
   }
 
   @TestOnly
