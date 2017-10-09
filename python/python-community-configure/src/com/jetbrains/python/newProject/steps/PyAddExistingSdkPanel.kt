@@ -39,6 +39,12 @@ class PyAddExistingSdkPanel(project: Project?,
   val remotePath: String?
     get() = if (remotePathField.mainPanel.isVisible) remotePathField.textField.text else null
 
+  var newProjectPath: String? = newProjectPath
+    set(value) {
+      field = value
+      sdkChooserCombo.setNewProjectPath(value)
+    }
+
   private val sdkChooserCombo: PythonSdkChooserCombo
   private val remotePathField = PyRemotePathField().apply {
     addActionListener {
