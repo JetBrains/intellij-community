@@ -61,7 +61,7 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Function
 
-class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
+class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
                                                         processor: SchemeProcessor<T, MUTABLE_SCHEME>,
                                                         private val provider: StreamProvider?,
                                                         private val ioDirectory: Path,
@@ -86,7 +86,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
   private val filesToDelete = ContainerUtil.newConcurrentSet<String>()
 
   // scheme could be changed - so, hashcode will be changed - we must use identity hashing strategy
-  private val schemeToInfo = ConcurrentCollectionFactory.createMap<T, ExternalInfo>(ContainerUtil.identityStrategy())
+  internal val schemeToInfo = ConcurrentCollectionFactory.createMap<T, ExternalInfo>(ContainerUtil.identityStrategy())
 
   private val useVfs = messageBus != null
 
@@ -107,6 +107,12 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
 
   override val allSchemeNames: Collection<String>
     get() = schemes.let { if (it.isEmpty()) emptyList() else it.map { processor.getSchemeKey(it) } }
+
+  override val allSchemes: List<T>
+    get() = Collections.unmodifiableList(schemes)
+
+  override val isEmpty: Boolean
+    get() = schemes.isEmpty()
 
   private inner class SchemeFileTracker : BulkFileListener {
     private fun isMy(file: VirtualFile) = canRead(file.nameSequence)
@@ -439,11 +445,11 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       schemes.firstOrNull({ processor.getSchemeKey(it) == schemeName})?.let { existingScheme ->
         if (schemeListManager.readOnlyExternalizableSchemes.get(processor.getSchemeKey(existingScheme)) === existingScheme) {
           // so, bundled scheme is shadowed
-          removeFirstScheme(schemes, scheduleDelete = false) { it === existingScheme }
+          schemeListManager.removeFirstScheme(schemes, scheduleDelete = false) { it === existingScheme }
           return true
         }
         else if (processor.isExternalizable(existingScheme) && isOverwriteOnLoad(existingScheme)) {
-          removeFirstScheme(schemes) { it === existingScheme }
+          schemeListManager.removeFirstScheme(schemes) { it === existingScheme }
         }
         else {
           if (schemeExtension != extension && schemeToInfo.get(existingScheme)?.fileNameWithoutExtension == fileNameWithoutExtension) {
@@ -752,6 +758,10 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     filesToDelete.add(fileName)
   }
 
+  internal fun scheduleDelete(info: ExternalInfo) {
+    info.scheduleDelete()
+  }
+
   private fun isRenamed(scheme: T): Boolean {
     val info = schemeToInfo.get(scheme)
     return info != null && processor.getSchemeKey(scheme) != info.schemeName
@@ -880,51 +890,15 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     processPendingCurrentSchemeName(scheme)
   }
 
-  override fun clearAllSchemes() {
-    for (it in schemeToInfo.values) {
-      it.scheduleDelete()
-    }
-
-    currentScheme = null
-    schemes.clear()
-    schemeToInfo.clear()
-  }
-
-  override val allSchemes: List<T>
-    get() = Collections.unmodifiableList(schemes)
-
-  override val isEmpty: Boolean
-    get() = schemes.isEmpty()
-
   override fun findSchemeByName(schemeName: String) = schemes.firstOrNull { processor.getSchemeKey(it) == schemeName }
 
-  override fun removeScheme(name: String) = removeFirstScheme(schemes) {processor.getSchemeKey(it) == name }
+  override fun removeScheme(name: String) = schemeListManager.removeFirstScheme(schemes) {processor.getSchemeKey(it) == name }
 
-  override fun removeScheme(scheme: T) = removeFirstScheme(schemes) { it == scheme } != null
-
-  private fun removeFirstScheme(schemes: MutableList<T>, scheduleDelete: Boolean = true, condition: (T) -> Boolean): T? {
-    val iterator = schemes.iterator()
-    for (scheme in iterator) {
-      if (!condition(scheme)) {
-        continue
-      }
-
-      if (currentScheme === scheme) {
-        currentScheme = null
-      }
-
-      iterator.remove()
-
-      if (scheduleDelete && processor.isExternalizable(scheme)) {
-        schemeToInfo.remove(scheme)?.scheduleDelete()
-      }
-      return scheme
-    }
-
-    return null
-  }
+  override fun removeScheme(scheme: T) = schemeListManager.removeFirstScheme(schemes) { it == scheme } != null
 
   override fun isMetadataEditable(scheme: T) = !schemeListManager.readOnlyExternalizableSchemes.containsKey(processor.getSchemeKey(scheme))
+
+  override fun clearAllSchemes() = schemeListManager.clearAllSchemes()
 
   override fun toString() = fileSpec
 }

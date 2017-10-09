@@ -9,7 +9,7 @@ import gnu.trove.THashSet
 import java.util.concurrent.atomic.AtomicReference
 
 internal class SchemeListManager<T : Any>(private val schemeManager: SchemeManagerImpl<T, *>) {
-  val schemesRef = AtomicReference(ContainerUtil.createLockFreeCopyOnWriteList<T>() as ConcurrentList<T>)
+  private val schemesRef = AtomicReference(ContainerUtil.createLockFreeCopyOnWriteList<T>() as ConcurrentList<T>)
 
   val readOnlyExternalizableSchemes = ContainerUtil.newConcurrentMap<String, T>()
 
@@ -58,9 +58,41 @@ internal class SchemeListManager<T : Any>(private val schemeManager: SchemeManag
     }
   }
 
+  fun clearAllSchemes() {
+    for (it in schemeManager.schemeToInfo.values) {
+      schemeManager.scheduleDelete(it)
+    }
+
+    schemeManager.currentScheme = null
+    schemes.clear()
+    schemeManager.schemeToInfo.clear()
+  }
+
   fun collectExistingNames(schemes: Collection<T>): Collection<String> {
     val result = THashSet<String>(schemes.size)
     schemes.mapTo(result) { schemeManager.processor.getSchemeKey(it) }
     return result
+  }
+
+  fun removeFirstScheme(schemes: MutableList<T>, scheduleDelete: Boolean = true, condition: (T) -> Boolean): T? {
+    val iterator = schemes.iterator()
+    for (scheme in iterator) {
+      if (!condition(scheme)) {
+        continue
+      }
+
+      if (schemeManager.currentScheme === scheme) {
+        schemeManager.currentScheme = null
+      }
+
+      iterator.remove()
+
+      if (scheduleDelete && schemeManager.processor.isExternalizable(scheme)) {
+        schemeManager.schemeToInfo.remove(scheme)?.let(schemeManager::scheduleDelete)
+      }
+      return scheme
+    }
+
+    return null
   }
 }
