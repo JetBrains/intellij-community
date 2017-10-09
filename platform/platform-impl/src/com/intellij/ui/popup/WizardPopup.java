@@ -367,8 +367,8 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
       return proceedKeyEvent(event, stroke);
     }
 
-    myMnemonicsSearch.process(event);
-    mySpeedSearch.process(event);
+    myMnemonicsSearch.processKeyEvent(event);
+    mySpeedSearch.processKeyEvent(event);
 
     if (event.isConsumed()) return true;
     process(event);

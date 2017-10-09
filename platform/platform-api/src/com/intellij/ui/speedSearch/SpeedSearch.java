@@ -21,6 +21,7 @@ import com.intellij.psi.codeStyle.FixingLayoutMatcher;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.text.Matcher;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,21 +63,24 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
            myString.length() == 0 || (myMatcher != null && myMatcher.matches(string));
   }
 
-  public void process(KeyEvent e) {
+  public void processKeyEvent(KeyEvent e) {
     if (e.isConsumed()) return;
 
     String old = myString;
-    if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
-      backspace();
-      e.consume();
-    }
-    else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
-      if (isHoldingFilter()) {
-        updatePattern("");
+    if (e.getID() == KeyEvent.KEY_PRESSED) {
+      if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
+        backspace();
         e.consume();
+      }
+      else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+        if (isHoldingFilter()) {
+          updatePattern("");
+          e.consume();
+        }
       }
     }
     else if (e.getID() == KeyEvent.KEY_TYPED) {
+      if (!UIUtil.isReallyTypedEvent(e)) return;
       // key-char is good only on KEY_TYPED
       // for example: key-char on ctrl-J PRESSED is \n
       // see https://en.wikipedia.org/wiki/Control_character
@@ -187,16 +191,16 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
 
   @Override
   public void keyTyped(KeyEvent e) {
-    process(e);
+    processKeyEvent(e);
   }
 
   @Override
   public void keyPressed(KeyEvent e) {
-    process(e);
+    processKeyEvent(e);
   }
 
   @Override
   public void keyReleased(KeyEvent e) {
-    process(e);
+    processKeyEvent(e);
   }
 }
