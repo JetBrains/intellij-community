@@ -131,7 +131,7 @@ public class FTManager {
   }
 
   @NotNull
-  public FileTemplateBase addTemplate(String name, String extension) {
+  public FileTemplateBase addTemplate(@NotNull String name, @NotNull String extension) {
     final String qName = FileTemplateBase.getQualifiedName(name, extension);
     FileTemplateBase template = getTemplate(qName);
     if (template == null) {
@@ -238,7 +238,7 @@ public class FTManager {
     }
   }
 
-  private void addTemplateFromFile(String fileName, File file) {
+  private void addTemplateFromFile(@NotNull String fileName, @NotNull File file) {
     Pair<String,String> nameExt = decodeFileName(fileName);
     final String extension = nameExt.second;
     final String templateQName = nameExt.first;
@@ -365,7 +365,8 @@ public class FTManager {
     return myName + " file template manager";
   }
 
-  static String encodeFileName(String templateName, String extension) {
+  @NotNull
+  static String encodeFileName(@NotNull String templateName, @NotNull String extension) {
     String nameExtDelimiter = extension.contains(".") ? ENCODED_NAME_EXT_DELIMITER : ".";
     return templateName + nameExtDelimiter + extension;
   }

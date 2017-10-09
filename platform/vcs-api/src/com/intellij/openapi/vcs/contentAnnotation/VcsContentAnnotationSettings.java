@@ -18,6 +18,8 @@ package com.intellij.openapi.vcs.contentAnnotation;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * @author Irina.Chernushina
  * @since 3.08.2011
@@ -27,9 +29,8 @@ import com.intellij.openapi.project.Project;
   storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)}
 )
 public class VcsContentAnnotationSettings implements PersistentStateComponent<VcsContentAnnotationSettings.State> {
-  public static final long ourMillisecondsInDay = 24 * 60 * 60 * 1000L;
   public static final int ourMaxDays = 31; // approx
-  public static final long ourAbsoluteLimit = ourMillisecondsInDay * ourMaxDays;
+  public static final long ourAbsoluteLimit = TimeUnit.DAYS.toMillis(ourMaxDays);
 
   private State myState = new State();
   {
@@ -41,7 +42,7 @@ public class VcsContentAnnotationSettings implements PersistentStateComponent<Vc
   }
   
   public static class State {
-    public boolean myShow1 = false;
+    public boolean myShow1;
     public long myLimit;
   }
 
@@ -60,11 +61,11 @@ public class VcsContentAnnotationSettings implements PersistentStateComponent<Vc
   }
 
   public int getLimitDays() {
-    return (int) (myState.myLimit / ourMillisecondsInDay);
+    return (int)TimeUnit.MILLISECONDS.toDays(myState.myLimit);
   }
 
-  public void setLimit(int limit) {
-    myState.myLimit = ourMillisecondsInDay * limit;
+  public void setLimit(int days) {
+    myState.myLimit = TimeUnit.DAYS.toMillis(days);
   }
 
   public boolean isShow() {
