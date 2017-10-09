@@ -9,15 +9,15 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class EmptySchemesManager extends SchemeManager<Scheme> {
+public class EmptySchemesManager extends SchemeManager<Object> {
   @Override
   @NotNull
-  public Collection<Scheme> loadSchemes() {
+  public Collection<Object> loadSchemes() {
     return Collections.emptySet();
   }
 
   @Override
-  public void addNewScheme(@NotNull final Scheme scheme, final boolean replaceExisting) {
+  public void addNewScheme(@NotNull final Object scheme, final boolean replaceExisting) {
   }
 
   @Override
@@ -26,12 +26,12 @@ public class EmptySchemesManager extends SchemeManager<Scheme> {
 
   @Override
   @NotNull
-  public List<Scheme> getAllSchemes() {
+  public List<Object> getAllSchemes() {
     return Collections.emptyList();
   }
 
   @Override
-  public Scheme findSchemeByName(@NotNull String schemeName) {
+  public Object findSchemeByName(@NotNull String schemeName) {
     return null;
   }
 
@@ -42,7 +42,7 @@ public class EmptySchemesManager extends SchemeManager<Scheme> {
   }
 
   @Override
-  public boolean removeScheme(@NotNull Scheme scheme) {
+  public boolean removeScheme(@NotNull Object scheme) {
     return false;
   }
 
@@ -69,11 +69,7 @@ public class EmptySchemesManager extends SchemeManager<Scheme> {
 
   @Nullable
   @Override
-  public Scheme getCurrentScheme() {
+  public Object getCurrentScheme() {
     return null;
-  }
-
-  @Override
-  public void setCurrentScheme(@Nullable Scheme scheme) {
   }
 }
