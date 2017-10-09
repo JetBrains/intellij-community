@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.ide.util.TreeChooser
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
@@ -50,7 +51,7 @@ class PySymbolFieldWithBrowseButton(module: Module,
   TextFieldWithCompletion(module.project, PyNameCompletionProvider(module, filter, startFromDirectory), "", true, true, true), null) {
   init {
     addActionListener {
-      val dialog = PySymbolChooserDialog(module, filter)
+      val dialog = PySymbolChooserDialog(module.project, module.moduleContentScope, filter)
       dialog.showDialog()
       val element = dialog.selected
       if (element is PyQualifiedNameOwner) {
@@ -114,10 +115,10 @@ private class PyNameCompletionProvider(private val module: Module,
   }
 }
 
-private class PySymbolChooserDialog(module: Module, private val filter: ((PsiElement) -> Boolean)?)
+private class PySymbolChooserDialog(project: Project, scope: GlobalSearchScope, private val filter: ((PsiElement) -> Boolean)?)
   : PyTreeChooserDialog<PsiNamedElement>("Choose Symbol", PsiNamedElement::class.java,
-                                         module.project,
-                                         module.moduleContentScope,
+                                         project,
+                                         scope,
                                          TreeChooser.Filter { filter?.invoke(it) ?: true }, null) {
   override fun findElements(name: String, searchScope: GlobalSearchScope): Collection<PsiNamedElement> {
     return PyClassNameIndex.find(name, project, searchScope) + PyFunctionNameIndex.find(name, project, searchScope)
