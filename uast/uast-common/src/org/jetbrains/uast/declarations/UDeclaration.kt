@@ -28,7 +28,10 @@ interface UDeclaration : UElement, PsiModifierListOwner, UAnnotated {
      * Returns the original declaration (which is *always* unwrapped, never a [UDeclaration]).
      */
     override val psi: PsiModifierListOwner
-    
+
+    override val javaPsi: PsiModifierListOwner
+        get() = psi
+
     override fun getOriginalElement(): PsiElement? = psi.originalElement
 
     /**
