@@ -15,6 +15,7 @@ import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider
 import org.jetbrains.index.id.IdIndexGenerator
 import java.io.File
+import java.util.*
 
 fun main(args: Array<String>) {
   buildIndices(args[0], "${args[1]}/${PyPrebuiltStubsProvider.NAME}")

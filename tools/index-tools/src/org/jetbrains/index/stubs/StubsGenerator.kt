@@ -36,7 +36,6 @@ import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.io.PersistentHashMap
 import junit.framework.TestCase
 import org.jetbrains.index.IndexGenerator
-import java.io.ByteArrayInputStream
 import java.io.File
 import java.util.*
 
@@ -226,21 +225,24 @@ abstract class LanguageLevelAwareStubsGenerator<T>(stubsVersion: String, stubsSt
 
       applyLanguageLevel(languageLevel)
 
+      // create new FileContentImpl, because it caches stub in user data
+      val content = FileContentImpl(fileContent.file, fileContent.content)
 
-      val stub = super.buildStubForFile(fileContent, serializationManager)
+      val stub = super.buildStubForFile(content, serializationManager)
 
       val bytes = BufferExposingByteArrayOutputStream()
       serializationManager.serialize(stub, bytes)
 
-      if (prevLanguageLevelBytes != null) {
-        if (!Arrays.equals(bytes.toByteArray(), prevLanguageLevelBytes)) {
-          val stub2 = serializationManager.deserialize(ByteArrayInputStream(prevLanguageLevelBytes))
-          val msg = "Stubs are different for ${fileContent.file.path} between Python versions $prevLanguageLevel and $languageLevel.\n"
-          TestCase.assertEquals(msg, DebugUtil.stubTreeToString(stub), DebugUtil.stubTreeToString(stub2))
+      if (prevStub != null) {
+        try {
+          check(stub, prevStub)
+        } catch (e: AssertionError) {
+          val msg = "Stubs are different for ${content.file.path} between Python versions $prevLanguageLevel and $languageLevel.\n"
+          TestCase.assertEquals(msg, DebugUtil.stubTreeToString(stub), DebugUtil.stubTreeToString(prevStub))
           TestCase.fail(msg + "But DebugUtil.stubTreeToString values of stubs are unfortunately equal.")
         }
       }
-      prevLanguageLevelBytes = bytes.toByteArray()
+
       prevLanguageLevel = languageLevel
       prevStub = stub
     }
@@ -248,6 +250,19 @@ abstract class LanguageLevelAwareStubsGenerator<T>(stubsVersion: String, stubsSt
     applyLanguageLevel(defaultLanguageLevel())
 
     return prevStub!!
+  }
+}
+
+private fun check(stub: Stub, stub2: Stub) {
+  TestCase.assertEquals(stub.stubType, stub2.stubType)
+  val stubs = stub.childrenStubs
+  val stubs2 = stub2.childrenStubs
+  TestCase.assertEquals(stubs.size, stubs2.size)
+  var i = 0
+  val len = stubs.size
+  while (i < len) {
+    check(stubs[i], stubs2[i])
+    ++i
   }
 }
 

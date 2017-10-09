@@ -22,7 +22,7 @@ async = 1
         <info descr="null">async</info> for x in xs:
             pass
 
-    async<error descr="End of statement expected"> </error>with <info descr="PY.PARAMETER">xs</info>:
+    <error descr="'async' keyword is not expected here">async</error> with <info descr="PY.PARAMETER">xs</info>:
         pass
 
     return async
