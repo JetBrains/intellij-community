@@ -105,7 +105,7 @@ interface UElement {
  * This is transitional type, all its content will be moved to `UElement` as soon as all implementation will implement it,
  * and someday this interface will be dropped.
  */
-interface SeparatedPsiUElement : UElement {
+interface JvmDeclarationUElement : UElement {
 
     /**
      * Returns the PSI element in original (physical) tree to which this UElement corresponds.

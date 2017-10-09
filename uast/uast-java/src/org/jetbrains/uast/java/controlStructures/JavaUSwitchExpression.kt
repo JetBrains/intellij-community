@@ -100,7 +100,7 @@ class JavaUSwitchEntry(
     }
 }
 
-object JavaUDefaultCaseExpression : UExpression, SeparatedPsiUElement {
+object JavaUDefaultCaseExpression : UExpression, JvmDeclarationUElement {
     override val uastParent: UElement?
         get() = null
 

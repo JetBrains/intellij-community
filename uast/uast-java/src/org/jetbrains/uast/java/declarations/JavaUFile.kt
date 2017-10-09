@@ -21,7 +21,7 @@ import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import org.jetbrains.uast.*
 import java.util.*
 
-class JavaUFile(override val psi: PsiJavaFile, override val languagePlugin: UastLanguagePlugin) : UFile, SeparatedPsiUElement {
+class JavaUFile(override val psi: PsiJavaFile, override val languagePlugin: UastLanguagePlugin) : UFile, JvmDeclarationUElement {
     override val packageName: String
         get() = psi.packageName
     

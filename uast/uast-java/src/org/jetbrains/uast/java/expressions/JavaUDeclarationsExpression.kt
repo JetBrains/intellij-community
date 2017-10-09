@@ -20,7 +20,7 @@ import org.jetbrains.uast.*
 
 class JavaUDeclarationsExpression(
         override val uastParent: UElement?
-) : UDeclarationsExpression, SeparatedPsiUElement {
+) : UDeclarationsExpression, JvmDeclarationUElement {
     override lateinit var declarations: List<UDeclaration>
         internal set
 
