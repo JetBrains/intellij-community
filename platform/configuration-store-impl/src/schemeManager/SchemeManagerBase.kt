@@ -1,0 +1,49 @@
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.configurationStore.schemeManager
+
+import com.intellij.openapi.options.SchemeProcessor
+import com.intellij.openapi.options.SchemesManager
+
+abstract class SchemeManagerBase<T : Any, in MUTABLE_SCHEME : T>(internal val processor: SchemeProcessor<T, MUTABLE_SCHEME>) : SchemesManager<T>() {
+  /**
+   * Schemes can be lazy loaded, so, client should be able to set current scheme by name, not only by instance.
+   */
+  @Volatile
+  protected var currentPendingSchemeName: String? = null
+
+  override var currentScheme: T? = null
+    set(value) {
+      field = value
+      currentSchemeName = value?.let { processor.getSchemeKey(it) }
+    }
+
+  override var currentSchemeName: String?
+    get() = currentScheme?.let { processor.getSchemeKey(it) } ?: currentPendingSchemeName
+    set(schemeName) = setCurrentSchemeName(schemeName, true)
+
+  protected fun processPendingCurrentSchemeName(newScheme: T) {
+    if (processor.getSchemeKey(newScheme) == currentPendingSchemeName) {
+      setCurrent(newScheme, false)
+    }
+  }
+
+  override fun setCurrent(scheme: T?, notify: Boolean) {
+    currentPendingSchemeName = null
+
+    val oldCurrent = currentScheme
+    currentScheme = scheme
+    if (notify && oldCurrent !== scheme) {
+      processor.onCurrentSchemeSwitched(oldCurrent, scheme)
+    }
+  }
+
+  override fun setCurrentSchemeName(schemeName: String?, notify: Boolean) {
+    currentPendingSchemeName = schemeName
+
+    val scheme = schemeName?.let { findSchemeByName(it) }
+    // don't set current scheme if no scheme by name - pending resolution (see currentSchemeName field comment)
+    if (scheme != null || schemeName == null) {
+      setCurrent(scheme, notify)
+    }
+  }
+}

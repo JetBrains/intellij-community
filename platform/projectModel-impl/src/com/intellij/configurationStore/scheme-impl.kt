@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.extensions.AbstractExtensionPointBean
@@ -33,7 +31,7 @@ val MODERN_NAME_CONVERTER = object : SchemeNameToFileName {
   override fun schemeNameToFileName(name: String) = sanitizeFileName(name)
 }
 
-interface SchemeDataHolder<in T : Scheme> {
+interface SchemeDataHolder<in T> {
   /**
    * You should call updateDigest() after read on init.
    */
@@ -56,7 +54,7 @@ interface SchemeExtensionProvider {
 }
 
 // applicable only for LazySchemeProcessor
-interface SchemeContentChangedHandler<MUTABLE_SCHEME : Scheme> {
+interface SchemeContentChangedHandler<MUTABLE_SCHEME> {
   fun schemeContentChanged(scheme: MUTABLE_SCHEME, name: String, dataHolder: SchemeDataHolder<MUTABLE_SCHEME>)
 }
 
