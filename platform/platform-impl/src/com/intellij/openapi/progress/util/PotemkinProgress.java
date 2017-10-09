@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.progress.util;
 
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -46,17 +45,10 @@ public class PotemkinProgress extends ProgressWindow implements PingProgress {
     super(cancelText != null,false, project, parentComponent, cancelText);
     setTitle(title);
     ApplicationManager.getApplication().assertIsDispatchThread();
-    startStealingInputEvents();
   }
 
-  private void startStealingInputEvents() {
-    IdeEventQueue.getInstance().addPostEventListener(event -> {
-      if (event instanceof InputEvent) {
-        myEventQueue.offer((InputEvent)event);
-        return true;
-      }
-      return false;
-    }, this);
+  public void addEvent(InputEvent event) {
+    myEventQueue.offer(event);
   }
 
   @NotNull

@@ -29,6 +29,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.keymap.impl.KeyState;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -61,8 +64,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static java.awt.event.MouseEvent.MOUSE_MOVED;
-import static java.awt.event.MouseEvent.MOUSE_PRESSED;
+import static java.awt.event.MouseEvent.*;
 
 /**
  * @author Vladimir Kondratyev
@@ -124,8 +126,6 @@ public class IdeEventQueue extends EventQueue {
   private boolean myDispatchingFocusEvent;
   private boolean myWinMetaPressed;
   private int myInputMethodLock;
-  private final com.intellij.util.EventDispatcher<PostEventHook>
-    myPostEventListeners = com.intellij.util.EventDispatcher.create(PostEventHook.class);
 
   private static class IdeEventQueueHolder {
     private static final IdeEventQueue INSTANCE = new IdeEventQueue();
@@ -469,7 +469,7 @@ public class IdeEventQueue extends EventQueue {
       MouseEvent src = (MouseEvent)e;
       if (src.getButton() < 6) {
         // Convert these events(buttons 4&5 in are produced by touchpad, they must be converted to horizontal scrolling events
-        e = new MouseWheelEvent(src.getComponent(), MouseEvent.MOUSE_WHEEL, src.getWhen(),
+        e = new MouseWheelEvent(src.getComponent(), MOUSE_WHEEL, src.getWhen(),
                                 src.getModifiers() | InputEvent.SHIFT_DOWN_MASK, src.getX(), src.getY(),
                                 0, false, MouseWheelEvent.WHEEL_UNIT_SCROLL, src.getClickCount(), src.getButton() == 4 ? -1 : 1);
       }
@@ -521,7 +521,7 @@ public class IdeEventQueue extends EventQueue {
   }
 
   public void _dispatchEvent(@NotNull AWTEvent e, boolean typeAheadFlushing) {
-    if (e.getID() == MouseEvent.MOUSE_DRAGGED) {
+    if (e.getID() == MOUSE_DRAGGED) {
       DnDManagerImpl dndManager = (DnDManagerImpl)DnDManager.getInstance();
       if (dndManager != null) {
         dndManager.setLastDropHandler(null);
@@ -587,9 +587,9 @@ public class IdeEventQueue extends EventQueue {
         }
         if (KeyEvent.KEY_PRESSED == e.getID() ||
             KeyEvent.KEY_TYPED == e.getID() ||
-            MouseEvent.MOUSE_PRESSED == e.getID() ||
-            MouseEvent.MOUSE_RELEASED == e.getID() ||
-            MouseEvent.MOUSE_CLICKED == e.getID()) {
+           MOUSE_PRESSED == e.getID() ||
+           MOUSE_RELEASED == e.getID() ||
+           MOUSE_CLICKED == e.getID()) {
           addIdleTimeCounterRequest();
           for (Runnable activityListener : myActivityListeners) {
             activityListener.run();
@@ -635,7 +635,7 @@ public class IdeEventQueue extends EventQueue {
         // So we have to reset this WeakReference with synthetic event just before processing of actual event
         super.dispatchEvent(new MouseEvent(me.getComponent(), MOUSE_MOVED, me.getWhen(), 0, me.getX(), me.getY(), 0, false, 0));
       }
-      if (IdeMouseEventDispatcher.patchClickCount(me) && me.getID() == MouseEvent.MOUSE_CLICKED) {
+      if (IdeMouseEventDispatcher.patchClickCount(me) && me.getID() == MOUSE_CLICKED) {
         final MouseEvent toDispatch =
           new MouseEvent(me.getComponent(), me.getID(), System.currentTimeMillis(), me.getModifiers(), me.getX(), me.getY(), 1,
                          me.isPopupTrigger(), me.getButton());
@@ -761,9 +761,9 @@ public class IdeEventQueue extends EventQueue {
   public static boolean isMouseEventAhead(@Nullable AWTEvent e) {
     IdeEventQueue queue = getInstance();
     return e instanceof MouseEvent ||
-           queue.peekEvent(MouseEvent.MOUSE_PRESSED) != null ||
-           queue.peekEvent(MouseEvent.MOUSE_RELEASED) != null ||
-           queue.peekEvent(MouseEvent.MOUSE_CLICKED) != null;
+           queue.peekEvent(MOUSE_PRESSED) != null ||
+           queue.peekEvent(MOUSE_RELEASED) != null ||
+           queue.peekEvent(MOUSE_CLICKED) != null;
   }
 
   private void enterSuspendModeIfNeeded(@NotNull AWTEvent e) {
@@ -1150,10 +1150,10 @@ public class IdeEventQueue extends EventQueue {
 
   // return true if posted, false if consumed immediately
   boolean doPostEvent(@NotNull AWTEvent event) {
-    for (PostEventHook listener : myPostEventListeners.getListeners()) {
-      if (listener.consumePostedEvent(event)) return false;
+    if (appIsLoaded() && ((ProgressManagerImpl)ProgressManager.getInstance()).consumeEvent(event)) {
+      return false;
     }
-
+    
     String message = myFrequentEventDetector.getMessageOnEvent(event);
     if (message != null) {
       // we can't log right here, because logging has locks inside, and postEvents can deadlock if it's blocked by anything (IDEA-161322)
@@ -1201,21 +1201,6 @@ public class IdeEventQueue extends EventQueue {
    */
   public enum BlockMode {
     COMPLETE, ACTIONS
-  }
-
-  /**
-   * An absolutely guru API, please avoid using it at all cost.
-   */
-  @FunctionalInterface
-  public interface PostEventHook extends EventListener {
-    /**
-     * @return true if event is handled by the listener and should't be added to event queue at all
-     */
-    boolean consumePostedEvent(@NotNull AWTEvent event);
-  }
-
-  public void addPostEventListener(@NotNull PostEventHook listener, @NotNull Disposable parentDisposable) {
-    myPostEventListeners.addListener(listener, parentDisposable);
   }
 
   private static Ref<Method> unsafeNonBlockingExecuteRef;

@@ -59,10 +59,6 @@ public class IdeEventQueueTest extends PlatformTestCase {
       LOG.debug("post dispatch: "+e);
       return false;
     }, getTestRootDisposable());
-    ideEventQueue.addPostEventListener(e -> {
-      LOG.debug("post event hook: "+e);
-      return false;
-    }, getTestRootDisposable());
 
     int posted = ideEventQueue.myKeyboardEventsPosted.get();
     int dispatched = ideEventQueue.myKeyboardEventsDispatched.get();
