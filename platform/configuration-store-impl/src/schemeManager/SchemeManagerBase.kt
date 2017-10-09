@@ -21,7 +21,7 @@ abstract class SchemeManagerBase<T : Any, in MUTABLE_SCHEME : T>(internal val pr
     get() = currentScheme?.let { processor.getSchemeKey(it) } ?: currentPendingSchemeName
     set(schemeName) = setCurrentSchemeName(schemeName, true)
 
-  protected fun processPendingCurrentSchemeName(newScheme: T) {
+  internal fun processPendingCurrentSchemeName(newScheme: T) {
     if (processor.getSchemeKey(newScheme) == currentPendingSchemeName) {
       setCurrent(newScheme, false)
     }
