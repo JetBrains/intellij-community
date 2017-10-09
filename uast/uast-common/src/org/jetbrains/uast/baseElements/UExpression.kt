@@ -84,7 +84,7 @@ interface ULabeled : UElement {
  *
  * Use [UastEmptyExpression] in this case.
  */
-object UastEmptyExpression : UExpression {
+object UastEmptyExpression : UExpression, SeparatedPsiUElement {
     override val uastParent: UElement?
         get() = null
 

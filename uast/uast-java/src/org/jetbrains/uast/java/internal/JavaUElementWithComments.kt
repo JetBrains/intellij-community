@@ -18,11 +18,11 @@ package org.jetbrains.uast.java.internal
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import org.jetbrains.uast.SeparatedPsiUElement
 import org.jetbrains.uast.UComment
-import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 
-interface JavaUElementWithComments : UElement {
+interface JavaUElementWithComments : SeparatedPsiUElement {
     override val comments: List<UComment>
         get() {
             val psi = psi ?: return emptyList()

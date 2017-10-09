@@ -26,7 +26,10 @@ open class JavaUMethod(
         psi: PsiMethod,
         override val uastParent: UElement?
 ) : UMethod, JavaUElementWithComments, PsiMethod by psi {
-    override val psi = unwrap<UMethod, PsiMethod>(psi)
+    override val psi
+        get() = javaPsi
+
+    override val javaPsi = unwrap<UMethod, PsiMethod>(psi)
     
     override val uastBody by lz {
         val body = psi.body ?: return@lz null
@@ -61,6 +64,10 @@ class JavaUAnnotationMethod(
         languagePlugin: UastLanguagePlugin,
         containingElement: UElement?
 ) : JavaUMethod(psi, containingElement), UAnnotationMethod {
+
+    override val javaPsi: PsiAnnotationMethod
+        get() = psi
+
     override val uastDefaultValue by lz {
         val defaultValue = psi.defaultValue ?: return@lz null
         languagePlugin.convertElement(defaultValue, this, null) as? UExpression
