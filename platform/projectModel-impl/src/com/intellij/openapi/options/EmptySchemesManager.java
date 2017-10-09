@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
 import org.jetbrains.annotations.NotNull;
@@ -23,10 +9,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class EmptySchemesManager extends SchemeManager {
+public class EmptySchemesManager extends SchemeManager<Scheme> {
   @Override
   @NotNull
-  public Collection loadSchemes() {
+  public Collection<Scheme> loadSchemes() {
     return Collections.emptySet();
   }
 
@@ -40,7 +26,7 @@ public class EmptySchemesManager extends SchemeManager {
 
   @Override
   @NotNull
-  public List getAllSchemes() {
+  public List<Scheme> getAllSchemes() {
     return Collections.emptyList();
   }
 
@@ -49,8 +35,9 @@ public class EmptySchemesManager extends SchemeManager {
     return null;
   }
 
+  @Nullable
   @Override
-  public Scheme getCurrentScheme() {
+  public String getCurrentSchemeName() {
     return null;
   }
 
@@ -61,16 +48,36 @@ public class EmptySchemesManager extends SchemeManager {
 
   @Override
   @NotNull
-  public Collection getAllSchemeNames() {
+  public Collection<String> getAllSchemeNames() {
     return Collections.emptySet();
   }
 
+  @NotNull
   @Override
   public File getRootDirectory() {
+    //noinspection ConstantConditions
     return null;
   }
 
   @Override
   public void setCurrentSchemeName(@Nullable String schemeName, boolean notify) {
+  }
+
+  @Override
+  public void setCurrent(@Nullable Scheme scheme, boolean notify) {
+  }
+
+  @Override
+  public void setCurrentSchemeName(@Nullable String s) {
+  }
+
+  @Nullable
+  @Override
+  public Scheme getCurrentScheme() {
+    return null;
+  }
+
+  @Override
+  public void setCurrentScheme(@Nullable Scheme scheme) {
   }
 }
