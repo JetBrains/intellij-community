@@ -41,7 +41,9 @@ import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.util.StructuralSearchScriptScope;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.TextAccessor;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -67,31 +69,31 @@ import java.util.regex.PatternSyntaxException;
 class EditVarConstraintsDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.structuralsearch.plugin.ui.EditVarConstraintsDialog");
 
-  JTextField maxoccurs;
-  JCheckBox applyWithinTypeHierarchy;
+  private JTextField maxoccurs;
+  private JCheckBox applyWithinTypeHierarchy;
   private JCheckBox notRegexp;
   private EditorTextField regexp;
-  JTextField minoccurs;
+  private JTextField minoccurs;
   private JPanel mainForm;
-  JList<Variable> parameterList;
+  private JList<Variable> parameterList;
   private JCheckBox partOfSearchResults;
   private JCheckBox notExprType;
   private EditorTextField regexprForExprType;
-  final Configuration myConfiguration;
+  private final Configuration myConfiguration;
   private JCheckBox exprTypeWithinHierarchy;
 
-  final List<Variable> variables;
-  Variable current;
+  private final List<Variable> variables;
+  private Variable current;
   private JCheckBox wholeWordsOnly;
   private JCheckBox formalArgTypeWithinHierarchy;
   private JCheckBox invertFormalArgType;
   private EditorTextField formalArgType;
-  ComponentWithBrowseButton<EditorTextField> customScriptCode;
-  JCheckBox maxoccursUnlimited;
+  private ComponentWithBrowseButton<EditorTextField> customScriptCode;
+  private JCheckBox maxoccursUnlimited;
 
-  TextFieldWithAutoCompletionWithBrowseButton withinTextField;
+  private TextFieldWithAutoCompletionWithBrowseButton withinTextField;
   private JPanel containedInConstraints;
-  private JCheckBox invertWithinIn;
+  private JCheckBox invertWithin;
   private JPanel expressionConstraints;
   private JPanel occurencePanel;
   private JPanel textConstraintsPanel;
@@ -101,6 +103,9 @@ class EditVarConstraintsDialog extends DialogWrapper {
   private JButton myZeroInfinityButton;
   private JButton myOneInfinityButton;
   private JButton myZeroOneButton;
+  private TextFieldWithAutoCompletionWithBrowseButton refererenceTargetTextField;
+  private JPanel referenceTargetConstraints;
+  private JBCheckBox invertReferenceTarget;
 
   private final Project myProject;
 
@@ -164,20 +169,9 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
     final List<String> names = ConfigurationManager.getInstance(project).getAllConfigurationNames();
     withinTextField.setAutoCompletionItems(names);
-    withinTextField.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(@NotNull final ActionEvent e) {
-        final SelectTemplateDialog dialog = new SelectTemplateDialog(project, false, false);
-        dialog.selectConfiguration(withinTextField.getText().trim());
-        dialog.show();
-        if (dialog.getExitCode() == OK_EXIT_CODE) {
-          final Configuration[] selectedConfigurations = dialog.getSelectedConfigurations();
-          if (selectedConfigurations.length == 1) {
-            withinTextField.setText(selectedConfigurations[0].getName());
-          }
-        }
-      }
-    });
+    withinTextField.addActionListener(new SelectTemplateListener(project, withinTextField));
+    refererenceTargetTextField.setAutoCompletionItems(names);
+    refererenceTargetTextField.addActionListener(new SelectTemplateListener(project, refererenceTargetTextField));
 
     boolean hasContextVar = false;
     for (Variable var : variables) {
@@ -356,8 +350,16 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
     final String withinConstraint = withinTextField.getText().trim();
     final Configuration configuration = ConfigurationManager.getInstance(myProject).findConfigurationByName(withinConstraint);
-    varInfo.setWithinConstraint(configuration == null && withinConstraint.length() > 0 ? '"' + withinConstraint + '"' : withinConstraint);
-    varInfo.setInvertWithinConstraint(invertWithinIn.isSelected());
+    varInfo.setWithinConstraint(configuration != null || withinConstraint.isEmpty() ? withinConstraint : '"' + withinConstraint + '"');
+    varInfo.setInvertWithinConstraint(invertWithin.isSelected());
+
+    final String referenceTargetConstraint = refererenceTargetTextField.getText().trim();
+    final Configuration configuration2 = ConfigurationManager.getInstance(myProject).findConfigurationByName(referenceTargetConstraint);
+    varInfo.setReferenceConstraint((configuration2 != null || referenceTargetConstraint.isEmpty())
+                                   ? referenceTargetConstraint
+                                   : '"' + referenceTargetConstraint + '"');
+    varInfo.setInvertReference(invertReferenceTarget.isSelected());
+
   }
 
   private static ReplacementVariableDefinition getOrAddReplacementVariableDefinition(String varName, Configuration configuration) {
@@ -415,7 +417,9 @@ class EditVarConstraintsDialog extends DialogWrapper {
       customScriptCode.getChildComponent().setText("");
 
       withinTextField.setText("");
-      invertWithinIn.setSelected(false);
+      invertWithin.setSelected(false);
+      refererenceTargetTextField.setText("");
+      invertReferenceTarget.setSelected(false);
     } else {
       applyWithinTypeHierarchy.setSelected(varInfo.isWithinHierarchy());
       regexp.getDocument().setText(varInfo.getRegExp());
@@ -445,7 +449,9 @@ class EditVarConstraintsDialog extends DialogWrapper {
       restoreScriptCode(varInfo);
 
       withinTextField.setText(StringUtil.unquoteString(varInfo.getWithinConstraint()));
-      invertWithinIn.setSelected(varInfo.isInvertWithinConstraint());
+      invertWithin.setSelected(varInfo.isInvertWithinConstraint());
+      refererenceTargetTextField.setText(StringUtil.unquoteString(varInfo.getReferenceConstraint()));
+      invertReferenceTarget.setSelected(varInfo.isInvertReference());
     }
 
     final boolean contextVar = Configuration.CONTEXT_VAR_NAME.equals(var.getName());
@@ -453,6 +459,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     textConstraintsPanel.setVisible(!contextVar);
     partOfSearchResults.setEnabled(!contextVar);
     occurencePanel.setVisible(!contextVar);
+    referenceTargetConstraints.setVisible(!contextVar);
   }
 
   private void setSearchConstraintsVisible(boolean b) {
@@ -559,6 +566,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     myRegExHelpLabel = RegExHelpPopup.createRegExLink(SSRBundle.message("regular.expression.help.label"), regexp, LOG);
     myRegExHelpLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
     withinTextField = new TextFieldWithAutoCompletionWithBrowseButton(myProject);
+    refererenceTargetTextField = new TextFieldWithAutoCompletionWithBrowseButton(myProject);
   }
 
   private EditorTextField createRegexComponent() {
@@ -691,6 +699,29 @@ class EditVarConstraintsDialog extends DialogWrapper {
     protected void dispose() {
       EditorFactory.getInstance().releaseEditor(editor);
       super.dispose();
+    }
+  }
+
+  private static class SelectTemplateListener implements ActionListener {
+    private final Project myProject;
+    private final TextAccessor myTextField;
+
+    public SelectTemplateListener(Project project, TextAccessor textField) {
+      myProject = project;
+      myTextField = textField;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull final ActionEvent e) {
+      final SelectTemplateDialog dialog = new SelectTemplateDialog(myProject, false, false);
+      dialog.selectConfiguration(myTextField.getText().trim());
+      dialog.show();
+      if (dialog.getExitCode() == OK_EXIT_CODE) {
+        final Configuration[] selectedConfigurations = dialog.getSelectedConfigurations();
+        if (selectedConfigurations.length == 1) {
+          myTextField.setText(selectedConfigurations[0].getName());
+        }
+      }
     }
   }
 }
