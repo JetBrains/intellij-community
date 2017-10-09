@@ -134,8 +134,6 @@ public abstract class ChooseByNameBase {
 
   protected final Alarm myAlarm = new Alarm();
 
-  private final ListUpdater myListUpdater = new ListUpdater();
-
   private boolean myDisposedFlag = false;
 
   private final String[][] myNames = new String[2][];
@@ -762,7 +760,6 @@ public abstract class ChooseByNameBase {
       calcElementsThread.cancel();
       myCalcElementsThread = null;
     }
-    myListUpdater.cancelAll();
   }
 
   @NotNull public String getTrimmedText() {
@@ -908,8 +905,6 @@ public abstract class ChooseByNameBase {
       return;
     }
 
-    myListUpdater.cancelAll();
-
     final CalcElementsThread calcElementsThread = myCalcElementsThread;
     if (calcElementsThread != null) {
       calcElementsThread.cancel();
@@ -968,7 +963,6 @@ public abstract class ChooseByNameBase {
   }
 
   private void setElementsToList(SelectionPolicy pos, @NotNull Collection<?> elements) {
-    myListUpdater.cancelAll();
     if (checkDisposed()) return;
     if (isCloseByFocusLost() && Registry.is("focus.follows.mouse.workarounds")) {
       PointerInfo pointerInfo = MouseInfo.getPointerInfo();
@@ -979,7 +973,6 @@ public abstract class ChooseByNameBase {
     if (elements.isEmpty()) {
       myListModel.removeAll();
       myTextField.setForeground(JBColor.red);
-      myListUpdater.cancelAll();
       hideList();
       return;
     }
@@ -1000,7 +993,7 @@ public abstract class ChooseByNameBase {
     }
     else {
       showList();
-      myListUpdater.appendToModel(commands, pos);
+      appendToModel(commands, pos);
     }
   }
 
@@ -1053,53 +1046,19 @@ public abstract class ChooseByNameBase {
     return "choose_by_name#" + myModel.getPromptText() + "#" + myCheckBox.isSelected() + "#" + getTrimmedText();
   }
 
-  private class ListUpdater {
-    private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-    private static final int DELAY = 10;
-    private static final int MAX_BLOCKING_TIME = 30;
-    private final List<ModelDiff.Cmd> myCommands = Collections.synchronizedList(new ArrayList<ModelDiff.Cmd>());
-
-    public void cancelAll() {
-      myCommands.clear();
-      myAlarm.cancelAllRequests();
+  private void appendToModel(@NotNull List<ModelDiff.Cmd> commands, @NotNull SelectionPolicy selection) {
+    for (ModelDiff.Cmd command : commands) {
+      command.apply();
     }
 
-    public void appendToModel(@NotNull List<ModelDiff.Cmd> commands, SelectionPolicy selection) {
-      myAlarm.cancelAllRequests();
-      myCommands.addAll(commands);
+    myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
+    showList();
 
-      if (myCommands.isEmpty() || checkDisposed()) {
-        return;
-      }
-      myAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          if (checkDisposed()) {
-            return;
-          }
-          final long startTime = System.currentTimeMillis();
-          while (!myCommands.isEmpty() && System.currentTimeMillis() - startTime < MAX_BLOCKING_TIME) {
-            final ModelDiff.Cmd cmd = myCommands.remove(0);
-            cmd.apply();
-          }
+    myTextFieldPanel.repositionHint();
 
-          myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
-
-          if (!myCommands.isEmpty()) {
-            myAlarm.addRequest(this, DELAY);
-          }
-          if (!checkDisposed()) {
-            showList();
-            myTextFieldPanel.repositionHint();
-
-            if (!myListModel.isEmpty()) {
-              applySelection(selection);
-            }
-          }
-        }
-      }, DELAY);
+    if (!myListModel.isEmpty()) {
+      applySelection(selection);
     }
-
   }
 
   private void applySelection(SelectionPolicy selection) {
