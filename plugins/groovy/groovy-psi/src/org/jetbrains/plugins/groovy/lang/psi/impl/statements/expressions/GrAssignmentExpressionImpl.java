@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
@@ -40,12 +26,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrOperatorExpressio
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.resolve.DependentResolver;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.DynamicMembersHint;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentMap;
+
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessDynamicProperties;
 
 /**
  * @author ilyas
@@ -116,8 +103,7 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
                                        @NotNull PsiElement place) {
     final ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
     if (!ResolveUtil.shouldProcessProperties(classHint)) return false;
-    final DynamicMembersHint dynamicMembersHint = processor.getHint(DynamicMembersHint.KEY);
-    if (dynamicMembersHint != null && !dynamicMembersHint.shouldProcessProperties()) return false;
+    if (!shouldProcessDynamicProperties(processor)) return false;
 
     PsiElement parent = owner.getParent();
     if (!(parent instanceof GroovyFileImpl)) return false;
