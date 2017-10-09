@@ -50,7 +50,7 @@ interface UElement {
      * **Node for implementors**: please implement both [sourcePsi] and [javaPsi] fields or make them return `null` explicitly
      * if implementing is not possible. Redirect `psi` to one of them keeping existing behavior, use [sourcePsi] if nothing else is specified.
      */
-    @Deprecated("ambiguous psi element, use `sourcePsi` or less likely `lightPsi`", ReplaceWith("sourcePsi"))
+    @Deprecated("ambiguous psi element, use `sourcePsi` or less likely `javaPsi`", ReplaceWith("sourcePsi"))
     val psi: PsiElement?
 
     /**
