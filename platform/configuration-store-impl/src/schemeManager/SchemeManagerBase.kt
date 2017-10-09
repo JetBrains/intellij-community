@@ -12,10 +12,7 @@ abstract class SchemeManagerBase<T : Any, in MUTABLE_SCHEME : T>(internal val pr
   protected var currentPendingSchemeName: String? = null
 
   override var currentScheme: T? = null
-    set(value) {
-      field = value
-      currentSchemeName = value?.let { processor.getSchemeKey(it) }
-    }
+    internal set
 
   override var currentSchemeName: String?
     get() = currentScheme?.let { processor.getSchemeKey(it) } ?: currentPendingSchemeName
