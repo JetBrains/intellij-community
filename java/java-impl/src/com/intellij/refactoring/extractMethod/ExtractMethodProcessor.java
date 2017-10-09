@@ -1972,7 +1972,7 @@ public class ExtractMethodProcessor implements MatchProvider {
           myExtractedMethod = myParametrizedDuplicates.replaceMethod(myExtractedMethod);
           myMethodCall = myParametrizedDuplicates.replaceCall(myMethodCall);
         });
-        myVariableDatum = myParametrizedDuplicates.getVariableData();
+        myVariableDatum = myParametrizedDuplicates.getVariableDatum();
         return null;
       }
     }
