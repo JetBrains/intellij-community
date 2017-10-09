@@ -314,7 +314,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   }
 
   private void doPostponedFormattingInner(@NotNull FileViewProvider key) {
-    final List<ASTNode> astNodes = getContext().myReformatElements.remove(key);
+    List<ASTNode> astNodes = getContext().myReformatElements.remove(key);
     final Document document = key.getDocument();
     // Sort ranges by end offsets so that we won't need any offset adjustment after reformat or reindent
     if (document == null) return;
@@ -330,6 +330,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
         if (viewProvider == null) viewProvider = fileManager.findViewProvider(virtualFile);
         if (viewProvider != null) {
           key = viewProvider;
+          astNodes = getContext().myReformatElements.remove(key);
         }
       }
     }
