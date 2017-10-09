@@ -62,7 +62,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
     private const val VIRTUALENV_ROOT_DIR_MACRO_NAME = "VIRTUALENV_ROOT_DIR"
   }
 
-  private var newProjectPath: String? = newProjectPath
+  var newProjectPath: String? = newProjectPath
     set(value) {
       field = value
       pathField.text = defaultBasePath
