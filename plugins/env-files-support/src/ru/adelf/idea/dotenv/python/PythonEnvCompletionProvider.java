@@ -1,0 +1,106 @@
+package ru.adelf.idea.dotenv.python;
+
+import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.patterns.PlatformPatterns;
+import com.intellij.psi.PsiElement;
+import com.intellij.util.ProcessingContext;
+import com.jetbrains.python.psi.*;
+import org.apache.commons.lang.StringUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi;
+
+import java.util.Map;
+
+public class PythonEnvCompletionProvider extends CompletionContributor implements GotoDeclarationHandler {
+    public PythonEnvCompletionProvider() {
+        extend(CompletionType.BASIC, PlatformPatterns.psiElement(), new CompletionProvider<CompletionParameters>() {
+            @Override
+            protected void addCompletions(@NotNull CompletionParameters completionParameters, ProcessingContext processingContext, @NotNull CompletionResultSet completionResultSet) {
+
+                PsiElement psiElement = completionParameters.getOriginalPosition();
+                if(psiElement == null || getStringLiteral(psiElement) == null) {
+                    return;
+                }
+
+                for(Map.Entry<String, String> entry : EnvironmentVariablesApi.getAllKeyValues(psiElement.getProject()).entrySet()) {
+                    LookupElementBuilder lockup = LookupElementBuilder.create(entry.getKey());
+
+                    if(StringUtils.isNotEmpty(entry.getValue())) {
+                        completionResultSet.addElement(lockup.withTailText(" = " + entry.getValue(), true));
+                    } else {
+                        completionResultSet.addElement(lockup);
+                    }
+                }
+            }
+        });
+    }
+
+    @Nullable
+    @Override
+    public PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
+
+        if(psiElement == null) {
+            return new PsiElement[0];
+        }
+
+        PyStringLiteralExpression stringLiteral = getStringLiteral(psiElement);
+
+        if(stringLiteral == null) {
+            return new PsiElement[0];
+        }
+
+        return EnvironmentVariablesApi.getKeyDeclarations(psiElement.getProject(), stringLiteral.getStringValue());
+    }
+
+    @Nullable
+    private PyStringLiteralExpression getStringLiteral(@NotNull PsiElement psiElement) {
+        PsiElement parent = psiElement.getParent();
+
+        if(!(parent instanceof PyStringLiteralExpression)) {
+            return null;
+        }
+
+        if(parent.getParent() == null) {
+            return null;
+        }
+
+        PsiElement candidate = parent.getParent().getParent();
+
+        if(candidate instanceof PyCallExpression) {
+            PyCallExpression callExpression = (PyCallExpression) candidate;
+            if(PythonPsiHelper.checkGetMethodCall(callExpression)
+                    && callExpression.getArgumentList() != null
+                    && callExpression.getArgumentList().getArguments().length > 0
+                    && callExpression.getArgumentList().getArguments()[0].isEquivalentTo(parent)) {
+
+                return (PyStringLiteralExpression) parent;
+            }
+
+            return null;
+        }
+
+        if(candidate instanceof PyAssignmentStatement) {
+            PyExpression assignedValue = ((PyAssignmentStatement) candidate).getAssignedValue();
+            if(assignedValue instanceof PySubscriptionExpression) {
+                if(PythonPsiHelper.checkIndexCall((PySubscriptionExpression) assignedValue)) {
+                    return (PyStringLiteralExpression) parent;
+                }
+
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    @Nullable
+    @Override
+    public String getActionText(DataContext dataContext) {
+        return null;
+    }
+}

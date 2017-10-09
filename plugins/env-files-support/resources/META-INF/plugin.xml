@@ -48,6 +48,7 @@
 
   <depends optional="true" config-file="php.xml">com.jetbrains.php</depends>
   <depends optional="true" config-file="ruby.xml">com.intellij.modules.ruby</depends>
+  <depends optional="true" config-file="python.xml">com.intellij.modules.python</depends>
 
   <depends optional="true" config-file="docker.xml">Docker</depends>
   <depends optional="true" config-file="yaml.xml">org.jetbrains.plugins.yaml</depends>
