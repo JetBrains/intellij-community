@@ -1,10 +1,8 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl
 
-import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.impl.quickfix.AddConstructorFix
 import com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix
-import com.intellij.codeInsight.intention.AbstractIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.java.actions.*
@@ -17,15 +15,9 @@ import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.JvmElementActionsFactory
 import com.intellij.lang.jvm.actions.MemberRequest
 import com.intellij.lang.jvm.types.JvmType
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
 import com.intellij.psi.*
-import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.impl.beanProperties.CreateJavaBeanPropertyFix
-import com.intellij.psi.util.PsiFormatUtil
-import com.intellij.psi.util.PsiFormatUtilBase
 
 class JavaElementActionsFactory(private val renderer: JavaElementRenderer) : JvmElementActionsFactory() {
 
@@ -44,12 +36,6 @@ class JavaElementActionsFactory(private val renderer: JavaElementRenderer) : Jvm
       listOf(AddConstructorFix(targetClass, request.parameters.mapIndexed { i, it ->
         factory.createParameter(it.name ?: "arg$i", conversionHelper.convertType(it.type), targetClass)
       }))
-    }
-
-  override fun createAddMethodActions(targetClass: JvmClass, request: MemberRequest.Method): List<IntentionAction> =
-    with(request) {
-      createAddMethodAction(targetClass, request)
-        ?.let { listOf(it) } ?: emptyList()
     }
 
   override fun createAddPropertyActions(targetClass: JvmClass, request: MemberRequest.Property): List<IntentionAction> {
@@ -73,47 +59,6 @@ class JavaElementActionsFactory(private val renderer: JavaElementRenderer) : Jvm
 
       return listOf<IntentionAction>(
         CreateJavaBeanPropertyFix(psiClass, propertyName, propertyType, getterRequired, setterRequired, true))
-    }
-  }
-
-
-  private fun createAddMethodAction(psiClass: JvmClass, request: MemberRequest.Method): IntentionAction? {
-    with(request) {
-      val psiClass = psiClass.toJavaClassOrNull() ?: return null
-      val signatureString = with(renderer) {
-        val paramsString = parameters.mapIndexed { i, t -> "${render(t.type)} ${t.name ?: "arg$i"}" }.joinToString()
-        val modifiersString = (annotations.map { render(it) } + modifiers.map { render(it) }).joinToString(" ")
-        "${modifiersString} ${render(returnType)} $name($paramsString){}"
-      }
-      val targetClassPointer = SmartPointerManager.getInstance(psiClass.project).createSmartPsiElementPointer(psiClass)
-      return object : AbstractIntentionAction() {
-
-        private val text = targetClassPointer.element?.let { psiClass ->
-          QuickFixBundle.message("create.method.from.usage.text",
-                                 PsiFormatUtil.formatMethod(createMethod(psiClass), PsiSubstitutor.EMPTY,
-                                                            PsiFormatUtilBase.SHOW_NAME or
-                                                              PsiFormatUtilBase.SHOW_TYPE or
-                                                              PsiFormatUtilBase.SHOW_PARAMETERS or
-                                                              PsiFormatUtilBase.SHOW_RAW_TYPE,
-                                                            PsiFormatUtilBase.SHOW_TYPE or PsiFormatUtilBase.SHOW_RAW_TYPE, 2))
-        } ?: ""
-
-        override fun getText(): String = text
-
-        override fun invoke(project: Project, editor: Editor?, file: PsiFile) {
-          val targetClass = targetClassPointer.element ?: return
-          runWriteAction {
-            val addedMethod = targetClass.add(createMethod(targetClass))
-            JavaCodeStyleManager.getInstance(project).shortenClassReferences(addedMethod)
-          }
-        }
-
-        private fun createMethod(targetClass: PsiClass): PsiMethod {
-          val elementFactory = JVMElementFactories.getFactory(targetClass.language, targetClass.project) // it could be Groovy
-                               ?: JavaPsiFacade.getElementFactory(targetClass.project)
-          return elementFactory.createMethodFromText(signatureString, targetClass)
-        }
-      }
     }
   }
 
