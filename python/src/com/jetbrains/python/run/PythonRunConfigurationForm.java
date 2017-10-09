@@ -17,6 +17,7 @@ package com.jetbrains.python.run;
 
 import com.google.common.collect.Lists;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextComponentAccessor;
@@ -28,6 +29,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
@@ -35,8 +37,9 @@ import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBComboBoxLabel;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBTextField;
+import com.jetbrains.PySymbolFieldWithBrowseButton;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
+import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -63,8 +66,9 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   private final Project myProject;
   private JBCheckBox myShowCommandLineCheckbox;
   private JBCheckBox myEmulateTerminalCheckbox;
-  private JBTextField myModuleField;
+  private PySymbolFieldWithBrowseButton myModuleField;
   private JBComboBoxLabel myTargetComboBox;
+  private JPanel myModuleFieldPanel;
   private boolean myModuleMode;
 
   public PythonRunConfigurationForm(PythonRunConfiguration configuration) {
@@ -110,6 +114,17 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
       (ChangeEvent e) -> updateShowCommandLineEnabled());
 
     setAnchor(myCommonOptionsForm.getAnchor());
+
+    myModuleField = new PySymbolFieldWithBrowseButton(ModuleManager.getInstance(myProject).getModules()[0], //TODO: remove module dependency
+                                                      element -> element instanceof PyFile, () -> {
+      final String workingDirectory = myCommonOptionsForm.getWorkingDirectory();
+      if (StringUtil.isEmpty(workingDirectory)) {
+        return null;
+      }
+      return LocalFileSystem.getInstance().findFileByPath(workingDirectory);
+    });
+
+    myModuleFieldPanel.add(myModuleField, BorderLayout.CENTER);
 
     //myTargetComboBox.addActionListener(e -> updateRunModuleMode());
   }
@@ -234,7 +249,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     myModuleMode = moduleMode;
 
     myScriptTextField.setVisible(!moduleMode);
-    myModuleField.setVisible(moduleMode);
+    myModuleFieldPanel.setVisible(moduleMode);
   }
 
   private void createUIComponents() {

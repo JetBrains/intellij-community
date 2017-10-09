@@ -76,14 +76,14 @@
             </constraints>
             <properties/>
           </component>
-          <component id="8c19d" class="com.intellij.ui.components.JBTextField" binding="myModuleField">
+          <grid id="bd473" binding="myModuleFieldPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
             <constraints>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
-            <properties>
-              <visible value="false"/>
-            </properties>
-          </component>
+            <properties/>
+            <border type="none"/>
+            <children/>
+          </grid>
         </children>
       </grid>
       <component id="9c0aa" class="com.intellij.ui.RawCommandLineEditor" binding="myScriptParametersTextField">
