@@ -28,9 +28,6 @@ import org.jetbrains.uast.visitor.UastVisitor
 interface UMethod : UDeclaration, PsiMethod {
     override val psi: PsiMethod
 
-    override val javaPsi: PsiMethod
-        get() = psi
-
     /**
      * Returns the body expression (which can be also a [UBlockExpression]).
      */
@@ -90,9 +87,6 @@ interface UMethod : UDeclaration, PsiMethod {
 
 interface UAnnotationMethod : UMethod, PsiAnnotationMethod {
     override val psi: PsiAnnotationMethod
-
-    override val javaPsi: PsiAnnotationMethod
-        get() = psi
 
     /**
      * Returns the default value of this annotation method.
