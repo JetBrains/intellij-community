@@ -999,7 +999,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
           UsageInfo2UsageAdapter recentAdapter =
             recent instanceof UsageInfo2UsageAdapter ? (UsageInfo2UsageAdapter)recent : null;
           UsageInfo2UsageAdapter currentAdapter = usage instanceof UsageInfo2UsageAdapter ? (UsageInfo2UsageAdapter)usage : null;
-          final boolean merged = currentAdapter != null && recentAdapter != null && recentAdapter.merge(currentAdapter);
+          final boolean merged = !myHelper.isReplaceState() && currentAdapter != null && recentAdapter != null && recentAdapter.merge(currentAdapter);
           if (!merged) {
             recentUsageRef.set(usage);
           }
