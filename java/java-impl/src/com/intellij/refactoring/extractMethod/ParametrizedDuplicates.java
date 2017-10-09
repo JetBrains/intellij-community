@@ -36,6 +36,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +55,7 @@ public class ParametrizedDuplicates {
   private List<ClusterOfUsages> myUsagesList;
   private PsiMethod myParametrizedMethod;
   private PsiMethodCallExpression myParametrizedCall;
-  private VariableData[] myVariableData;
+  private VariableData[] myVariableDatum;
 
   private ParametrizedDuplicates(@NotNull PsiElement[] pattern) {
     LOG.assertTrue(pattern.length != 0, "pattern length");
@@ -158,14 +159,28 @@ public class ParametrizedDuplicates {
         }
       }
     }
-    myUsagesList.sort(Comparator.comparing(usages -> usages.myFirstOffset));
 
     if (!badMatches.isEmpty()) {
       matches = new ArrayList<>(matches);
       matches.removeAll(badMatches);
     }
     myMatches = matches;
-    return !myMatches.isEmpty() && !myUsagesList.isEmpty();
+    if (myMatches.isEmpty() || myUsagesList.isEmpty()) {
+      return false;
+    }
+
+    for (ClusterOfUsages usages : myUsagesList) {
+      for (Match match : myMatches) {
+        ExtractedParameter parameter = usages.myParameters.get(match);
+        if (parameter == null) {
+          parameter = usages.myParameter.mapPatternToItself(match);
+          usages.putParameter(match, parameter);
+        }
+      }
+    }
+
+    myUsagesList.sort(Comparator.comparing(usages -> usages.myFirstOffset));
+    return true;
   }
 
   @Nullable
@@ -181,7 +196,7 @@ public class ParametrizedDuplicates {
       if (usages == null) {
         result.add(usages = new ClusterOfUsages(parameter));
       }
-      usages.add(parameter);
+      usages.putParameter(match, parameter);
     }
     return result;
   }
@@ -208,10 +223,19 @@ public class ParametrizedDuplicates {
     parametrizedProcessor.setDataFromInputVariables();
     myParametrizedMethod = parametrizedProcessor.getExtractedMethod();
     myParametrizedCall = parametrizedProcessor.getMethodCall();
-    myVariableData = parametrizedProcessor.myVariableDatum;
+    myVariableDatum = unmapVariableData(parametrizedProcessor.myVariableDatum, variablesMapping);
     replaceArguments(parameterDeclarations, myParametrizedCall);
 
     return true;
+  }
+
+  @NotNull
+  private static VariableData[] unmapVariableData(@NotNull VariableData[] variableDatum,
+                                                  @NotNull Map<PsiVariable, PsiVariable> variablesMapping) {
+    Map<PsiVariable, PsiVariable> reverseMapping = ContainerUtil.reverseMap(variablesMapping);
+    return StreamEx.of(variableDatum)
+      .map(data -> data.substitute(reverseMapping.get(data.variable)))
+      .toArray(VariableData[]::new);
   }
 
   private static void replaceArguments(@NotNull Map<PsiLocalVariable, ClusterOfUsages> parameterDeclarations,
@@ -233,7 +257,7 @@ public class ParametrizedDuplicates {
   private void putMatchParameters(@NotNull Map<PsiLocalVariable, ClusterOfUsages> parameterDeclarations) {
     Map<PsiExpression, PsiLocalVariable> patternUsageToParameter = new THashMap<>();
     for (Map.Entry<PsiLocalVariable, ClusterOfUsages> entry : parameterDeclarations.entrySet()) {
-      PsiExpression usage = entry.getValue().myParameters.get(0).myPattern.getUsage();
+      PsiExpression usage = entry.getValue().myParameter.myPattern.getUsage();
       patternUsageToParameter.put(usage, entry.getKey());
     }
 
@@ -257,8 +281,8 @@ public class ParametrizedDuplicates {
     return myParametrizedCall;
   }
 
-  public VariableData[] getVariableData() {
-    return myVariableData;
+  public VariableData[] getVariableDatum() {
+    return myVariableDatum;
   }
 
   public int getSize() {
@@ -347,7 +371,7 @@ public class ParametrizedDuplicates {
     LOG.assertTrue(parent instanceof PsiCodeBlock, "first statement's parent isn't a code block");
 
     for (ClusterOfUsages usages : myUsagesList) {
-      ExtractedParameter parameter = usages.myParameters.get(0);
+      ExtractedParameter parameter = usages.myParameter;
       PsiExpression patternUsage = parameter.myPattern.getUsage();
       String initializerText = patternUsage.getText();
       PsiExpression initializer = factory.createExpressionFromText(initializerText, parent);
@@ -361,7 +385,7 @@ public class ParametrizedDuplicates {
       PsiLocalVariable localVariable = (PsiLocalVariable)paramDeclaration.getDeclaredElements()[0];
       parameterDeclarations.put(localVariable, usages);
 
-      for (PsiExpression expression : parameter.myUsages.keySet()) {
+      for (PsiExpression expression : parameter.myPatternUsages) {
         PsiExpression mapped = expressionsMapping.get(expression);
         if (mapped != null) {
           PsiExpression replacement = factory.createExpressionFromText(parameterName, expression);
@@ -444,25 +468,27 @@ public class ParametrizedDuplicates {
 
   private static class ClusterOfUsages {
     @NotNull private final Set<PsiExpression> myPatterns;
-    @NotNull private final List<ExtractedParameter> myParameters;
+    @NotNull private final Map<Match, ExtractedParameter> myParameters;
+    @NotNull private final ExtractedParameter myParameter;
     private final int myFirstOffset;
 
     public ClusterOfUsages(@NotNull ExtractedParameter parameter) {
-      myPatterns = parameter.myUsages.keySet();
-      myParameters = new ArrayList<>();
+      myPatterns = parameter.myPatternUsages;
+      myParameters = new THashMap<>();
+      myParameter = parameter;
       myFirstOffset = myPatterns.stream().mapToInt(PsiElement::getTextOffset).min().orElse(0);
     }
 
-    public void add(ExtractedParameter parameter) {
-      myParameters.add(parameter);
+    public void putParameter(Match match, ExtractedParameter parameter) {
+      myParameters.put(match, parameter);
     }
 
     public boolean isEquivalent(ExtractedParameter parameter) {
-      return myPatterns.equals(parameter.myUsages.keySet());
+      return myPatterns.equals(parameter.myPatternUsages);
     }
 
     public static boolean isPresent(Map<PsiExpression, ClusterOfUsages> usagesMap, @NotNull ExtractedParameter parameter) {
-      return parameter.myUsages.keySet().stream().anyMatch(expression -> usagesMap.get(expression) != null);
+      return parameter.myPatternUsages.stream().anyMatch(usagesMap::containsKey);
     }
   }
 }

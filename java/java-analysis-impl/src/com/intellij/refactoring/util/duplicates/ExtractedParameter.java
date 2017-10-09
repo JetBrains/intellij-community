@@ -32,7 +32,7 @@ public class ExtractedParameter {
   @NotNull public final PsiType myType;
   @NotNull public final ExtractableExpressionPart myPattern;
   @NotNull public final ExtractableExpressionPart myCandidate;
-  @NotNull public final Map<PsiExpression, PsiExpression> myUsages = new HashMap<>();
+  @NotNull public final Set<PsiExpression> myPatternUsages = new HashSet<>();
 
   public ExtractedParameter(@NotNull ExtractableExpressionPart patternPart,
                             @NotNull ExtractableExpressionPart candidatePart,
@@ -40,7 +40,7 @@ public class ExtractedParameter {
     myType = type;
     myPattern = patternPart;
     myCandidate = candidatePart;
-    addUsages(patternPart, candidatePart);
+    addUsages(patternPart);
   }
 
   public static boolean match(@NotNull ExtractableExpressionPart patternPart,
@@ -60,7 +60,7 @@ public class ExtractedParameter {
       boolean samePattern = parameter.samePattern(patternPart);
       boolean sameCandidate = parameter.sameCandidate(candidatePart);
       if (samePattern && sameCandidate) {
-        parameter.addUsages(patternPart, candidatePart);
+        parameter.addUsages(patternPart);
         return true;
       }
       if (samePattern || sameCandidate) {
@@ -71,8 +71,20 @@ public class ExtractedParameter {
     return true;
   }
 
-  private void addUsages(ExtractableExpressionPart patternPart, ExtractableExpressionPart candidatePart) {
-    myUsages.put(patternPart.getUsage(), candidatePart.getUsage());
+  @NotNull
+  public ExtractedParameter mapPatternToItself(@NotNull Match match) {
+    ExtractableExpressionPart copy = myPattern.copy();
+    ExtractableExpressionPart deepCopy = myPattern.deepCopy();
+
+    ExtractedParameter parameter = new ExtractedParameter(copy, deepCopy, copy.myType);
+    parameter.myPatternUsages.addAll(myPatternUsages);
+
+    match.getExtractedParameters().add(parameter);
+    return parameter;
+  }
+
+  private void addUsages(ExtractableExpressionPart patternPart) {
+    myPatternUsages.add(patternPart.getUsage());
   }
 
   private boolean sameCandidate(ExtractableExpressionPart part) {
