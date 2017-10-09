@@ -1,0 +1,68 @@
+<idea-plugin>
+    <id>org.toml.lang</id>
+    <name>Toml</name>
+    <version>0.0.1</version>
+
+    <vendor url="https://github.com/intellij-rust/intellij-rust"/>
+
+    <description><![CDATA[
+      TOML language support
+    ]]></description>
+
+    <!--<change-notes><![CDATA[-->
+    <!--Add change notes here.<br>-->
+    <!--<em>most HTML tags may be used</em>-->
+    <!--]]>-->
+    <!--</change-notes>-->
+
+    <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
+    <idea-version since-build="162" until-build="173.*"/>
+
+    <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
+         on how to target different products -->
+
+    <depends>com.intellij.modules.lang</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+
+        <!-- Toml -->
+
+        <fileTypeFactory implementation="org.toml.lang.TomlFileTypeFactory"/>
+
+        <lang.parserDefinition language="TOML" implementationClass="org.toml.lang.core.parser.TomlParserDefinition"/>
+
+        <!-- Syntax Highlighter -->
+
+        <lang.syntaxHighlighterFactory language="TOML" implementationClass="org.toml.ide.TomlHighlighterFactory"/>
+
+        <!-- Commenter -->
+
+        <lang.commenter language="TOML" implementationClass="org.toml.ide.TomlCommenter"/>
+
+        <!-- Brace Matcher -->
+
+        <lang.braceMatcher language="TOML" implementationClass="org.toml.ide.TomlBraceMatcher"/>
+
+        <!-- Quote Handlers -->
+
+        <lang.quoteHandler language="TOML" implementationClass="org.toml.ide.TomlQuoteHandler"/>
+
+        <!-- Annotator -->
+
+        <annotator language="TOML" implementationClass="org.toml.ide.annotator.TomlAnnotator"/>
+
+    </extensions>
+
+    <application-components>
+        <!-- Add your project components here -->
+    </application-components>
+
+    <project-components>
+        <!-- Add your project components here -->
+    </project-components>
+
+    <module-components>
+        <!-- Add your modules components here -->
+    </module-components>
+
+</idea-plugin>

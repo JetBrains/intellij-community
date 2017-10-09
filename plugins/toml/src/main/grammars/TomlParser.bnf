@@ -1,0 +1,56 @@
+// There is no official grammar for TOML as of 02/09/2015
+// Work on the grammar is done here https://github.com/toml-lang/toml/pull/236/
+{
+    parserClass="org.toml.lang.core.parser.TomlParser"
+
+    extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
+
+    psiClassPrefix="Toml"
+    psiImplClassSuffix="Impl"
+    psiPackage="org.toml.lang.core.psi"
+    psiImplPackage="org.toml.lang.core.psi.impl"
+
+    elementTypeHolderClass="org.toml.lang.core.psi.TomlTypes"
+    elementTypeClass="org.toml.lang.core.psi.TomlElementType"
+    tokenTypeClass="org.toml.lang.core.lexer.TomlTokenType"
+
+    tokens=[
+      comment='regexp:#[^\n\r]*'
+      string='regexp:("[^"]*")'
+      number='regexp:(\d|_)+'
+      simple_number='regexp:(\d|_)+'
+      boolean='regexp:true|false'
+      simple_key='regexp:[0-9_\-a-zA-Z]+'
+      space='regexp:\s+'
+      date='date'
+      dot='.'
+      comma=','
+      eq='='
+      lbracket='['
+      rbracket=']'
+      lbrace='{'
+      rbrace='}'
+    ]
+}
+
+tomlFile ::= expression *
+
+expression ::= key_value | table | table_array
+
+table ::= table_header table_entries
+table_header ::= '[' path ']'
+
+table_array ::= table_array_header table_entries
+table_array_header ::= '[' '[' path ']' ']'
+
+key ::= simple_key | simple_number | string
+path ::= key ('.' key) *
+table_entries ::= key_value *
+
+key_value ::= key '=' value
+
+//TODO inline_table should be on the single line
+inline_table ::= '{' (key_value (',' key_value)* ','?)? '}'
+
+value ::= string | simple_number | number | boolean | date | array | inline_table
+array ::= '[' (value (',' value)* ','?)? ']'
