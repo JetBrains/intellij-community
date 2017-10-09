@@ -357,7 +357,6 @@ public class JsonSchemaVariantsTreeBuilder {
     object.mergeValues(other);
     object.mergeValues(base);
     object.setRef(other.getRef());
-    object.setDefinitions(base.getDefinitions());
     return object;
   }
 
