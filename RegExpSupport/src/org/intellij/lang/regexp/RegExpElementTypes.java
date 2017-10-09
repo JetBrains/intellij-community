@@ -40,6 +40,8 @@ public interface RegExpElementTypes {
     IElementType NAMED_GROUP_REF = new RegExpElementType("NAMED_GROUP_REF");
     IElementType PY_COND_REF = new RegExpElementType("PY_COND_REF");
     IElementType POSIX_BRACKET_EXPRESSION = new RegExpElementType("POSIX_BRACKET_EXPRESSION");
+    IElementType MYSQL_CHAR_EXPRESSION = new RegExpElementType("MYSQL_CHAR_EXPRESSION");
+    IElementType MYSQL_CHAR_EQ_EXPRESSION = new RegExpElementType("MYSQL_CHAR_EQ_EXPRESSION");
     IElementType NUMBER = new RegExpElementType("NUMBER");
 
     TokenSet ATOMS = TokenSet.create(CLOSURE, BOUNDARY, SIMPLE_CLASS, CLASS, CHAR, GROUP, PROPERTY, BACKREF, NAMED_GROUP_REF,
