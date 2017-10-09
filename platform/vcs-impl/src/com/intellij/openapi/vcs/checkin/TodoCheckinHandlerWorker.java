@@ -234,8 +234,8 @@ public class TodoCheckinHandlerWorker {
       }
       if (myOldTodoTexts == null) {
         myOldTodoTexts = new HashSet<>();
-        StepIntersection.processIntersections(
-          Collections.singletonList(myCurrentLineFragment), myOldItems,
+        StepIntersection.processElementIntersections(
+          myCurrentLineFragment, myOldItems,
           LEFT_LINE_FRAGMENT_CONVERTOR, TODO_ITEM_CONVERTOR,
           (lineFragment, todoItem) -> myOldTodoTexts.add(getTodoText(todoItem, myBeforeContent)));
       }

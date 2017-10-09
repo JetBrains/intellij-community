@@ -186,7 +186,7 @@ public class IntersectionTest extends TestCase {
         32, 46, // 3
         66, 69  // 4
       ),
-      // 0, 2, - skipped
+      0, 2,
       0, 3,
       1, 3
     );

@@ -21,17 +21,34 @@ class IntersectionAutoTest : DiffTestCase() {
       dumbProcessIntersections(list1, list2, { it }, { it }, { it1, it2 -> result2.add(Pair(it1, it2)) })
 
       if (result1 != result2) {
-        val x1 = result1.map { it.first }.toSet()
-        val x2 = result2.map { it.first }.toSet()
+        println(list1.joinToString { "${it.startOffset}, ${it.endOffset}" })
+        println(list2.joinToString { "${it.startOffset}, ${it.endOffset}" })
+        println(result1)
+        println(result2)
 
-        if (x1 != x2) { // TODO: some <Data, Area> can be ignored
-          println(list1.joinToString { "${it.startOffset}, ${it.endOffset}" })
-          println(list2.joinToString { "${it.startOffset}, ${it.endOffset}" })
-          println(result1)
-          println(result2)
+        assertEquals(result1, result2)
+      }
+    }
+  }
 
-          assertEquals(x1, x2)
-        }
+  fun testSingleElementIntersection() {
+    doAutoTest(System.currentTimeMillis(), RUNS) {
+      val element1 = generateRange(0, RANGE_SIZE * LIST_SIZE, RANGE_SIZE * LIST_SIZE * 2)
+      val list1 = listOf(element1)
+      val list2 = generateList(LIST_SIZE)
+
+      val result1 = mutableListOf<Pair<TextRange, TextRange>>()
+      val result2 = mutableListOf<Pair<TextRange, TextRange>>()
+      StepIntersection.processElementIntersections(element1, list2, { it }, { it }, { it1, it2 -> result1.add(Pair(it1, it2)) })
+      dumbProcessIntersections(list1, list2, { it }, { it }, { it1, it2 -> result2.add(Pair(it1, it2)) })
+
+      if (result1 != result2) {
+        println(list1.joinToString { "${it.startOffset}, ${it.endOffset}" })
+        println(list2.joinToString { "${it.startOffset}, ${it.endOffset}" })
+        println(result1)
+        println(result2)
+
+        assertEquals(result1, result2)
       }
     }
   }
