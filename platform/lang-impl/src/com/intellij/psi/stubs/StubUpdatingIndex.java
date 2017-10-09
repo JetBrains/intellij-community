@@ -261,6 +261,9 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
           final int key = Math.abs(FileBasedIndex.getFileId(file));
           SerializedStubTree serializedStubTree =
             new SerializedStubTree(bytes.getInternalBuffer(), bytes.size(), rootStub, file.getLength(), contentLength);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Indexing " + file + "; lengths=" + serializedStubTree.dumpLengths());
+          }
           result.put(key, serializedStubTree);
           try {
             ((StubUpdatingIndexKeys)result.keySet()).myStubIndicesValueMap = calcStubIndicesValueMap(serializedStubTree, key);
