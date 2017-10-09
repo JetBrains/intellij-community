@@ -114,9 +114,6 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     mouseListener.installOn(myTree);
     RowsDnDSupport.install(myTree, myTreeModel);
 
-    myToolbar = createToolbar();
-    add(myToolbar, BorderLayout.WEST);
-
     final RunDashboardManager dashboardManager = RunDashboardManager.getInstance(myProject);
 
     mySplitter = new OnePixelSplitter(false, dashboardManager.getContentProportion());
@@ -129,6 +126,11 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     myDetailsPanel.add(MESSAGE_CARD, myMessagePanel);
     mySplitter.setSecondComponent(myDetailsPanel);
     add(mySplitter, BorderLayout.CENTER);
+
+    myToolbar = createToolbar();
+    add(myToolbar, BorderLayout.WEST);
+    JComponent treeToolbar = createTreeToolBar();
+    myTreePanel.add(treeToolbar, BorderLayout.NORTH);
 
     myContentManager = contentManager;
     myContentManagerListener = new ContentManagerAdapter() {
@@ -355,6 +357,13 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     toolBarPanel.add(contentActionsToolBar.getComponent(), BorderLayout.CENTER);
     contentActionsToolBar.setTargetComponent(this);
 
+    return toolBarPanel;
+  }
+
+  private JComponent createTreeToolBar() {
+    JPanel toolBarPanel = new JPanel(new BorderLayout());
+    toolBarPanel.setBorder( BorderFactory.createMatteBorder(0, 1, 1, 0, CONTRAST_BORDER_COLOR));
+
     DefaultActionGroup treeGroup = new DefaultActionGroup();
 
     treeGroup.addAction(new PreviousConfigurationAction());
@@ -376,9 +385,9 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     treeActions.registerCustomShortcutSet(this, null);
     treeGroup.add(treeActions);
 
-    ActionToolbar treeActionsToolBar = ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR, treeGroup, false);
-    toolBarPanel.add(treeActionsToolBar.getComponent(), BorderLayout.EAST);
-    treeActionsToolBar.setTargetComponent(this);
+    ActionToolbar treeActionsToolBar = ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR, treeGroup, true);
+    toolBarPanel.add(treeActionsToolBar.getComponent(), BorderLayout.CENTER);
+    treeActionsToolBar.setTargetComponent(myTree);
 
     return toolBarPanel;
   }
