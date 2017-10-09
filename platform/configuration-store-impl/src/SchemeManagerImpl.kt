@@ -68,7 +68,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
                                                         val presentableName: String? = null,
                                                         private val schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
                                                         private val messageBus: MessageBus? = null) : SchemesManager<T>(), SafeWriteRequestor {
-  private val isOldShemeNaming = schemeNameToFileName == OLD_NAME_CONVERTER
+  private val isOldSchemeNaming = schemeNameToFileName == OLD_NAME_CONVERTER
 
   private val isLoadingSchemes = AtomicBoolean()
 
@@ -198,7 +198,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
       catchAndLog(fileName) {
         val bytes = file.contentsToByteArray()
-        lazyPreloadScheme(bytes, isOldShemeNaming) { name, parser ->
+        lazyPreloadScheme(bytes, isOldSchemeNaming) { name, parser ->
           val attributeProvider = Function<String, String?> { parser.getAttributeValue(null, it) }
           val schemeName = name
                            ?: processor.getName(attributeProvider, FileUtilRt.getNameWithoutExtension(fileName))
@@ -275,7 +275,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       }
 
       val bytes = URLUtil.openStream(url).readBytes()
-      lazyPreloadScheme(bytes, isOldShemeNaming) { name, parser ->
+      lazyPreloadScheme(bytes, isOldSchemeNaming) { name, parser ->
         val attributeProvider = Function<String, String?> { parser.getAttributeValue(null, it) }
         val fileName = PathUtilRt.getFileName(url.path)
         val extension = getFileExtension(fileName, true)
@@ -489,7 +489,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     var scheme: MUTABLE_SCHEME? = null
     if (processor is LazySchemeProcessor) {
       val bytes = input.readBytes()
-      lazyPreloadScheme(bytes, isOldShemeNaming) { name, parser ->
+      lazyPreloadScheme(bytes, isOldSchemeNaming) { name, parser ->
         val attributeProvider = Function<String, String?> { parser.getAttributeValue(null, it) }
         val schemeName = name ?: processor.getName(attributeProvider, fileNameWithoutExtension)
         if (schemeName == null) {
