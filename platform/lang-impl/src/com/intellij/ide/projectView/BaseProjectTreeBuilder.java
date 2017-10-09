@@ -180,8 +180,9 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     final AbstractTreeNode alreadySelected = alreadySelectedNode(element);
 
     final Runnable onDone = () -> {
-      if (requestFocus && virtualSelectTarget == null && getUi().isReady()) {
-        focusRequestor.requestFocus(getTree(), true);
+      JTree tree = getTree();
+      if (tree != null && requestFocus && virtualSelectTarget == null && getUi().isReady()) {
+        tree.requestFocus();
       }
 
       result.setDone();
