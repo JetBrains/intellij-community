@@ -885,15 +885,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       Object data = list.getData();
       clearAuthorWarn();
       if (data instanceof ChangeListData) {
-        VcsUser author = ((ChangeListData)data).getAuthor();
-        if (author != null && !isDefaultAuthor(author)) {
-          myAuthorField.setText(VcsUserUtil.toExactString(author));
-          myAuthorField.putClientProperty("JComponent.outline", "warning");
-          if(myAuthorField.isShowing()) {
-            showAuthorBalloonNotification();
-          }
-        }
-        myAuthorDate = ((ChangeListData)data).getDate();
+        fillAuthorAndDateFromData((ChangeListData)data);
       }
       else {
         myAuthorField.setText(null);
@@ -901,6 +893,21 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
       myPanel.revalidate();
       myPanel.repaint();
+    }
+
+    private void fillAuthorAndDateFromData(@NotNull ChangeListData data) {
+      VcsUser author = data.getAuthor();
+      if (author != null && !isDefaultAuthor(author)) {
+        myAuthorField.setText(VcsUserUtil.toExactString(author));
+        myAuthorField.putClientProperty("JComponent.outline", "warning");
+        if (myAuthorField.isShowing()) {
+          showAuthorBalloonNotification();
+        }
+      }
+      else {
+        myAuthorField.setText(null);
+      }
+      myAuthorDate = data.getDate();
     }
 
     private void clearAuthorWarn() {
