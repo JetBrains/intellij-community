@@ -17,14 +17,11 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.*
-import org.jetbrains.uast.UAnnotation
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
-import org.jetbrains.uast.toUElement
 
 
-abstract class JavaAbstractUElement(givenParent: UElement?) : JavaUElementWithComments {
+abstract class JavaAbstractUElement(givenParent: UElement?) : JavaUElementWithComments, JvmDeclarationUElement {
 
     @Suppress("unused") // Used in Kotlin 1.2, to be removed in 2018.1
     @Deprecated("use JavaAbstractUElement(givenParent)", ReplaceWith("JavaAbstractUElement(givenParent)"))
@@ -53,7 +50,16 @@ abstract class JavaAbstractUElement(givenParent: UElement?) : JavaUElementWithCo
       }
 
     protected open fun getPsiParentForLazyConversion() = this.psi?.parent
-}
+
+    //explicitly overridden in abstract class to be binary compatible with Kotlin
+    override val comments: List<UComment>
+        get() = super<JavaUElementWithComments>.comments
+    override val sourcePsi: PsiElement?
+        get() = super.sourcePsi
+    override val javaPsi: PsiElement?
+        get() = super.javaPsi
+
+   }
 
 abstract class JavaAbstractUExpression(givenParent: UElement?) : JavaAbstractUElement(givenParent), UExpression {
 

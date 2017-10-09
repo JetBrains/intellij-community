@@ -61,7 +61,11 @@ abstract class AbstractJavaUClass(givenParent: UElement?) : JavaAbstractUElement
 
 class JavaUClass private constructor(psi: PsiClass, override val uastParent: UElement?) :
         AbstractJavaUClass(uastParent), PsiClass by psi {
-    override val psi = unwrap<UClass, PsiClass>(psi)
+
+    override val psi: PsiClass
+        get() = javaPsi
+
+    override val javaPsi: PsiClass = unwrap<UClass, PsiClass>(psi)
 
     override fun getSuperClass(): UClass? = super.getSuperClass()
     override fun getFields(): Array<UField> = super.getFields()
@@ -83,7 +87,10 @@ class JavaUAnonymousClass(
         psi: PsiAnonymousClass,
         uastParent: UElement?
 ) : AbstractJavaUClass(uastParent), UAnonymousClass, PsiAnonymousClass by psi {
-    override val psi: PsiAnonymousClass = unwrap<UAnonymousClass, PsiAnonymousClass>(psi)
+    override val psi
+        get() = javaPsi
+
+    override val javaPsi: PsiAnonymousClass = unwrap<UAnonymousClass, PsiAnonymousClass>(psi)
 
     override fun getSuperClass(): UClass? = super<AbstractJavaUClass>.getSuperClass()
     override fun getFields(): Array<UField> = super<AbstractJavaUClass>.getFields()
