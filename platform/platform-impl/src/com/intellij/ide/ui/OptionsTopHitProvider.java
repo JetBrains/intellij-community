@@ -149,7 +149,7 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
 
     @Override
     public void runActivity(@NotNull Project project) {
-      cacheAll(null, project); // for given project
+      if (!getApplication().isUnitTestMode()) cacheAll(null, project); // for given project
     }
 
     private static void cacheAll(@Nullable ProgressIndicator indicator, @Nullable Project project) {
