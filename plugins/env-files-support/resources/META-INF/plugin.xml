@@ -1,7 +1,7 @@
 <idea-plugin>
   <id>ru.adelf.idea.dotenv</id>
   <name>.env files support</name>
-  <version>0.4</version>
+  <version>0.5</version>
   <vendor email="adel.faiz@gmail.com" url="http://adelf.ru">Adel Fayzrakhmanov</vendor>
 
   <description><![CDATA[
@@ -11,14 +11,22 @@
       <br/>
       <h4>Features</h4>
       <ul>
-        <li>PHP: getenv() and env() parameters completion, based on .env file keys</li>
-        <li>Ruby: ENV[] parameters completion, based on .env file keys</li>
+        <li>PHP: getenv() and env() parameters completion</li>
+        <li>Ruby: ENV[] parameters completion</li>
+        <li>Python: os.environ[] and os.environ.get() parameters completion</li>
         <li>Dockerfile and docker-compose.yml files support. Requires Docker integration and YAML support plugins</li>
-        <li>Go to declaration(in .env file) and usages(in code), by Ctrl+click or hot key(Ctrl-B, etc.)</li>
+        <li>Go to declaration(in .env file) and usages(in code), by Ctrl(Cmd)+click or hot key(Ctrl(Cmd)-B, etc.)</li>
+        <li>.env file commenter</li>
       </ul>
     ]]></description>
 
   <change-notes><![CDATA[
+      <h4>0.5</h4>
+      <ul>
+        <li>Commenting .env files by Ctrl(Cmd) - /</li>
+        <li>PyCharm support</li>
+      </ul>
+
       <h4>0.4</h4>
       <ul>
         <li>RubyMine support</li>
