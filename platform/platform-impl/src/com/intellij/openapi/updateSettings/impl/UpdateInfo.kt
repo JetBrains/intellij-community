@@ -56,7 +56,7 @@ class UpdateChannel(node: Element) {
 
 class BuildInfo(node: Element) {
   val number: BuildNumber = parseBuildNumber(node)
-  val apiVersion: BuildNumber = BuildNumber.fromString(node.getAttributeValue("apiVersion"), number.productCode) ?: number
+  val apiVersion: BuildNumber = BuildNumber.fromStringWithProductCode(node.getAttributeValue("apiVersion"), number.productCode) ?: number
   val version: String = node.getAttributeValue("version") ?: ""
   val message: String = node.getChild("message")?.value ?: ""
   val releaseDate: Date? = parseDate(node.getAttributeValue("releaseDate"))
