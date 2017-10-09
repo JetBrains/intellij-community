@@ -11,6 +11,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -113,13 +114,16 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
           result.set(Boolean.FALSE);
           return;
         }
-        if (resolved instanceof PsiMember && ((PsiMember)resolved).getContainingClass() == aClass) {
+        if (resolved instanceof PsiMethod) {
+          resolved = PropertyUtil.getFieldOfGetter((PsiMethod)resolved);
+        }
+        if (resolved instanceof PsiField && ((PsiField)resolved).getContainingClass() == aClass) {
           // refers to another field/method of the same class (except referring from non-static member to static and
           // referring to initialized field which is probably ok)
           boolean nonStaticRefersToStatic =
-            !field.hasModifierProperty(PsiModifier.STATIC) && ((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC);
+            !field.hasModifierProperty(PsiModifier.STATIC) && ((PsiField)resolved).hasModifierProperty(PsiModifier.STATIC);
           if (nonStaticRefersToStatic) return;
-          boolean initializedField = resolved instanceof PsiField && ((PsiField)resolved).getInitializer() != null;
+          boolean initializedField = ((PsiField)resolved).getInitializer() != null;
           if (initializedField) {
             PsiField[] fields = aClass.getFields();
             int indexSource = ArrayUtil.indexOf(fields, field);
