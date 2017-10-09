@@ -317,7 +317,7 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
   public boolean waitFor(long timeoutInMilliseconds) {
     boolean result = super.waitFor(timeoutInMilliseconds);
     try {
-      result &= myWaitFor.waitFor(timeoutInMilliseconds, TimeUnit.MILLISECONDS);
+      result = result && myWaitFor.waitFor(timeoutInMilliseconds, TimeUnit.MILLISECONDS);
     }
     catch (InterruptedException e) {
       throw new RuntimeException(e);
