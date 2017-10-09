@@ -22,8 +22,8 @@ import org.jetbrains.uast.UDeclarationsExpression
 import org.jetbrains.uast.UElement
 
 class JavaUDeclarationsExpression(
-        override val uastParent: UElement?
-) : UDeclarationsExpression {
+        uastParent: UElement?
+) : JavaAbstractUElement(uastParent), UDeclarationsExpression {
     override lateinit var declarations: List<UDeclaration>
         internal set
 

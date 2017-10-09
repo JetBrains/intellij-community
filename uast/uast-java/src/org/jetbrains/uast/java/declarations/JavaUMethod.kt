@@ -24,8 +24,8 @@ import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
 open class JavaUMethod(
         psi: PsiMethod,
-        override val uastParent: UElement?
-) : UMethod, JavaUElementWithComments, PsiMethod by psi {
+        uastParent: UElement?
+) : JavaAbstractUElement(uastParent), UMethod, JavaUElementWithComments, PsiMethod by psi {
     override val psi = unwrap<UMethod, PsiMethod>(psi)
     
     override val uastBody by lz {

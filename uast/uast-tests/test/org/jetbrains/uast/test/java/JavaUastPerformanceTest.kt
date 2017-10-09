@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import junit.framework.TestCase
+import org.jetbrains.uast.UQualifiedReferenceExpression
 import org.jetbrains.uast.toUElement
 import org.junit.Test
 
@@ -19,6 +20,10 @@ class JavaUastPerformanceTest : LightCodeInsightFixtureTestCase() {
       if (uElement != null) {
         totalCount++
         identityChecksum = 31 * identityChecksum + System.identityHashCode(uElement)
+      }
+
+      when (uElement) {
+        is UQualifiedReferenceExpression -> uElement.receiver // force lazy evaluation
       }
 
       element.acceptChildren(this)
@@ -38,7 +43,7 @@ class JavaUastPerformanceTest : LightCodeInsightFixtureTestCase() {
       }
     """.trimIndent())
     val nonCachedWalk = EachPsiToUastWalker().apply {
-      PlatformTestUtil.startPerformanceTest("convert each element to uast first time", 4000) {
+      PlatformTestUtil.startPerformanceTest("convert each element to uast first time", 2000) {
         clazz.accept(this)
         TestCase.assertEquals(expectedUElementsCount, totalCount)
       }.attempts(1).assertTiming()

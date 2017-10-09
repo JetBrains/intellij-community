@@ -23,7 +23,12 @@ import com.intellij.psi.PsiJavaCodeReferenceElement
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
-abstract class AbstractJavaUClass : UClass, JavaUElementWithComments {
+abstract class AbstractJavaUClass(givenParent: UElement?) : JavaAbstractUElement(givenParent), UClass, JavaUElementWithComments {
+
+    @Suppress("unused") // Used in Kotlin, to be removed in 2018.1
+    @Deprecated("use AbstractJavaUClass(givenParent)", ReplaceWith("AbstractJavaUClass(givenParent)"))
+    constructor() : this(null)
+
     override val uastDeclarations by lz {
         mutableListOf<UDeclaration>().apply {
             addAll(fields)
@@ -55,7 +60,7 @@ abstract class AbstractJavaUClass : UClass, JavaUElementWithComments {
 }
 
 class JavaUClass private constructor(psi: PsiClass, override val uastParent: UElement?) :
-        AbstractJavaUClass(), PsiClass by psi {
+        AbstractJavaUClass(uastParent), PsiClass by psi {
     override val psi = unwrap<UClass, PsiClass>(psi)
 
     override fun getSuperClass(): UClass? = super.getSuperClass()
@@ -76,8 +81,8 @@ class JavaUClass private constructor(psi: PsiClass, override val uastParent: UEl
 
 class JavaUAnonymousClass(
         psi: PsiAnonymousClass,
-        override val uastParent: UElement?
-) : AbstractJavaUClass(), UAnonymousClass, PsiAnonymousClass by psi {
+        uastParent: UElement?
+) : AbstractJavaUClass(uastParent), UAnonymousClass, PsiAnonymousClass by psi {
     override val psi: PsiAnonymousClass = unwrap<UAnonymousClass, PsiAnonymousClass>(psi)
 
     override fun getSuperClass(): UClass? = super<AbstractJavaUClass>.getSuperClass()

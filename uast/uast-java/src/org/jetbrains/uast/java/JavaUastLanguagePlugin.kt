@@ -223,7 +223,7 @@ internal object JavaConverter {
                         requiredType.isAssignableFrom(UQualifiedReferenceExpression::class.java) ||
                         requiredType.isAssignableFrom(UCallExpression::class.java)) {
                         val expr = JavaUCompositeQualifiedExpression(el, givenParent).apply {
-                            receiver = convertOrEmpty(el.methodExpression.qualifierExpression!!, this)
+                            receiverInitializer = { convertOrEmpty(el.methodExpression.qualifierExpression!!, this) }
                             selector = JavaUCallExpression(el, this)
                         }
                         if (requiredType?.isAssignableFrom(UCallExpression::class.java) == true)

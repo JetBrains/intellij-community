@@ -21,8 +21,8 @@ import org.jetbrains.uast.UImportStatement
 
 class JavaUImportStatement(
         override val psi: PsiImportStatementBase, 
-        override val uastParent: UElement?
-) : UImportStatement {
+        uastParent: UElement?
+) : JavaAbstractUElement(uastParent), UImportStatement {
     override val isOnDemand: Boolean
         get() = psi.isOnDemand
     override val importReference by lz { psi.importReference?.let { JavaDumbUElement(it, this, it.qualifiedName) } }
