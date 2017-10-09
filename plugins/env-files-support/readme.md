@@ -1,4 +1,4 @@
-IntelliJ IDEA / PhpStorm .env files support plugin
+IntelliJ IDEA .env files support plugin
 -------------
 
 [![Version](http://phpstorm.espend.de/badge/9525/version)](https://plugins.jetbrains.com/plugin/9525)
@@ -7,7 +7,18 @@ IntelliJ IDEA / PhpStorm .env files support plugin
 
 Plugin url: https://plugins.jetbrains.com/plugin/9525
 
+## Main features
++ .env files support for PhpStorm, RubyMine and PyCharm. 
++ docker-compose.yml and Dockerfile environment variables fetching
++ Go to declaration and Find usages of environment variables
+
+## Language packages
+
 PHP dotenv package: https://github.com/vlucas/phpdotenv
+
+Ruby dotenv gem: https://github.com/bkeepers/dotenv
+
+Python dotenv package: https://github.com/theskumar/python-dotenv
 
 ## Screenshots
 
