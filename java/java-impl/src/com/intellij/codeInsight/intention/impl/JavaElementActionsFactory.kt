@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
@@ -21,10 +7,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix
 import com.intellij.codeInsight.intention.AbstractIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.lang.java.actions.CreateEnumConstantAction
-import com.intellij.lang.java.actions.CreateFieldAction
-import com.intellij.lang.java.actions.CreateMethodAction
-import com.intellij.lang.java.actions.toJavaClassOrNull
+import com.intellij.lang.java.actions.*
 import com.intellij.lang.jvm.*
 import com.intellij.lang.jvm.actions.CreateFieldRequest
 import com.intellij.lang.jvm.actions.CreateMethodRequest
@@ -169,22 +152,7 @@ class JavaElementRenderer {
     "@" + (jvmAnnotation as PsiAnnotation).qualifiedName!!
 
   @PsiModifier.ModifierConstant
-  fun render(modifier: JvmModifier): String = when (modifier) {
-    JvmModifier.PUBLIC -> PsiModifier.PUBLIC
-    JvmModifier.PROTECTED -> PsiModifier.PROTECTED
-    JvmModifier.PRIVATE -> PsiModifier.PRIVATE
-    JvmModifier.PACKAGE_LOCAL -> ""
-    JvmModifier.STATIC -> PsiModifier.STATIC
-    JvmModifier.ABSTRACT -> PsiModifier.ABSTRACT
-    JvmModifier.FINAL -> PsiModifier.FINAL
-    JvmModifier.DEFAULT -> PsiModifier.DEFAULT
-    JvmModifier.NATIVE -> PsiModifier.NATIVE
-    JvmModifier.SYNCHRONIZED -> PsiModifier.NATIVE
-    JvmModifier.STRICTFP -> PsiModifier.STRICTFP
-    JvmModifier.TRANSIENT -> PsiModifier.TRANSIENT
-    JvmModifier.VOLATILE -> PsiModifier.VOLATILE
-    JvmModifier.TRANSITIVE -> PsiModifier.TRANSITIVE
-  }
+  fun render(modifier: JvmModifier): String = modifier.toPsiModifier()
 
 }
 
