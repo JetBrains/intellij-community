@@ -276,7 +276,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myDisposeCompleted = true;
 
     if (myMessageBus != null) {
-      myMessageBus.dispose();
+      Disposer.dispose(myMessageBus);
       myMessageBus = null;
     }
 
