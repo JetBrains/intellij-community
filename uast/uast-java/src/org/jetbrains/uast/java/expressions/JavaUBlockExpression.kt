@@ -22,6 +22,6 @@ import org.jetbrains.uast.UElement
 class JavaUBlockExpression(
         override val psi: PsiBlockStatement,
         givenParent: UElement?
-) : JavaAbstractLazyParentUExpression(givenParent), UBlockExpression {
+) : JavaAbstractUExpression(givenParent), UBlockExpression {
     override val expressions by lz { psi.codeBlock.statements.map { JavaConverter.convertOrEmpty(it, this) } }
 }

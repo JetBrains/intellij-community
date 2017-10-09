@@ -7,7 +7,6 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import junit.framework.TestCase
 import org.jetbrains.uast.toUElement
-import org.junit.Test
 
 class JavaUastPerformanceTest : LightCodeInsightFixtureTestCase() {
 
@@ -25,7 +24,6 @@ class JavaUastPerformanceTest : LightCodeInsightFixtureTestCase() {
     }
   }
 
-  @Test
   fun testVeryLongQualifiedReferenceExpression() {
     val expectedUElementsCount = 4019
     val clazz = myFixture.addClass("""

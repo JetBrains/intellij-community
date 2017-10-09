@@ -23,7 +23,7 @@ import org.jetbrains.uast.java.expressions.JavaUNamedExpression
 class JavaUAnnotation(
         override val psi: PsiAnnotation,
         givenParent: UElement?
-) : JavaLazyParentUElement(givenParent),  UAnnotation {
+) : JavaAbstractUElement(givenParent),  UAnnotation {
     override val qualifiedName: String?
         get() = psi.qualifiedName
 

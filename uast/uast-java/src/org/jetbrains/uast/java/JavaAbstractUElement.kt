@@ -23,7 +23,25 @@ import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 import org.jetbrains.uast.toUElement
 
-abstract class JavaLazyParentUElement(private val givenParent: UElement?) : UElement {
+
+abstract class JavaAbstractUElement(givenParent: UElement?) : JavaUElementWithComments {
+
+    @Suppress("unused") // Used in Kotlin 1.2, to be removed in 2018.1
+    @Deprecated("use JavaAbstractUElement(givenParent)", ReplaceWith("JavaAbstractUElement(givenParent)"))
+    constructor() : this(null)
+
+    override fun equals(other: Any?): Boolean {
+        if (other !is UElement || other.javaClass != this.javaClass) return false
+        return if (this.psi != null) this.psi == other.psi else this === other
+    }
+
+    override fun hashCode() = psi?.hashCode() ?: System.identityHashCode(this)
+
+    override fun asSourceString(): String {
+        return this.psi?.text ?: super<JavaUElementWithComments>.asSourceString()
+    }
+
+    override fun toString() = asRenderString()
 
     override val uastParent: UElement? by lz { givenParent ?: convertParent() }
 
@@ -37,22 +55,12 @@ abstract class JavaLazyParentUElement(private val givenParent: UElement?) : UEle
     protected open fun getPsiParentForLazyConversion() = this.psi?.parent
 }
 
-abstract class JavaAbstractLazyParentUElement(givenParent: UElement?) : JavaLazyParentUElement(givenParent), JavaUElementWithComments {
-    override fun equals(other: Any?): Boolean {
-        if (other !is UElement || other.javaClass != this.javaClass) return false
-        return if (this.psi != null) this.psi == other.psi else this === other
-    }
+abstract class JavaAbstractUExpression(givenParent: UElement?) : JavaAbstractUElement(givenParent), UExpression {
 
-    override fun hashCode() = psi?.hashCode() ?: System.identityHashCode(this)
+    @Suppress("unused") // Used in Kotlin 1.2, to be removed in 2018.1
+    @Deprecated("use JavaAbstractUExpression(givenParent)", ReplaceWith("JavaAbstractUExpression(givenParent)"))
+    constructor() : this(null)
 
-    override fun asSourceString(): String {
-        return this.psi?.text ?: super<JavaUElementWithComments>.asSourceString()
-    }
-
-    override fun toString() = asRenderString()
-}
-
-abstract class JavaAbstractLazyParentUExpression(givenParent: UElement?)  : JavaAbstractLazyParentUElement(givenParent), UExpression {
     override fun evaluate(): Any? {
         val project = psi?.project ?: return null
         return JavaPsiFacade.getInstance(project).constantEvaluationHelper.computeConstantExpression(psi)
@@ -71,40 +79,5 @@ abstract class JavaAbstractLazyParentUExpression(givenParent: UElement?)  : Java
             is PsiResourceExpression -> it.parent
             else -> it
         }
-    }
-}
-
-@Suppress("unused") // Used in Kotlin 1.2, to be removed in 2018.1
-@Deprecated("use JavaAbstractLazyParentUElement instead", ReplaceWith("JavaAbstractLazyParentUElement"))
-abstract class JavaAbstractUElement : JavaUElementWithComments {
-    override fun equals(other: Any?): Boolean {
-        if (other !is UElement || other.javaClass != this.javaClass) return false
-        return if (this.psi != null) this.psi == other.psi else this === other
-    }
-
-    override fun hashCode() = psi?.hashCode() ?: System.identityHashCode(this)
-
-    override fun asSourceString(): String {
-        return this.psi?.text ?: super<JavaUElementWithComments>.asSourceString()
-    }
-
-    override fun toString() = asRenderString()
-}
-
-
-@Suppress("unused") // Used in Kotlin 1.2, to be removed in 2018.1
-@Deprecated("use JavaAbstractLazyParentUExpression instead", ReplaceWith("JavaAbstractLazyParentUExpression"))
-abstract class JavaAbstractUExpression : JavaAbstractUElement(), UExpression {
-    override fun evaluate(): Any? {
-        val project = psi?.project ?: return null
-        return JavaPsiFacade.getInstance(project).constantEvaluationHelper.computeConstantExpression(psi)
-    }
-
-    override val annotations: List<UAnnotation>
-        get() = emptyList()
-
-    override fun getExpressionType(): PsiType? {
-        val expression = psi as? PsiExpression ?: return null
-        return expression.type
     }
 }

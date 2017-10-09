@@ -24,7 +24,7 @@ import org.jetbrains.uast.UWhileExpression
 class JavaUWhileExpression(
         override val psi: PsiWhileStatement,
         givenParent: UElement?
-) : JavaAbstractLazyParentUExpression(givenParent), UWhileExpression {
+) : JavaAbstractUExpression(givenParent), UWhileExpression {
     override val condition by lz { JavaConverter.convertOrEmpty(psi.condition, this) }
     override val body by lz { JavaConverter.convertOrEmpty(psi.body, this) }
 

@@ -22,7 +22,7 @@ import org.jetbrains.uast.*
 class JavaUCompositeQualifiedExpression(
     override val psi: PsiElement,
     givenParent: UElement?
-) : JavaAbstractLazyParentUExpression(givenParent), UQualifiedReferenceExpression {
+) : JavaAbstractUExpression(givenParent), UQualifiedReferenceExpression {
     override lateinit var receiver: UExpression
         internal set
 

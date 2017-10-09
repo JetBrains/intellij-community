@@ -23,6 +23,6 @@ import org.jetbrains.uast.UReturnExpression
 class JavaUReturnExpression(
         override val psi: PsiReturnStatement,
         givenParent: UElement?
-) : JavaAbstractLazyParentUExpression(givenParent), UReturnExpression {
+) : JavaAbstractUExpression(givenParent), UReturnExpression {
     override val returnExpression by lz { JavaConverter.convertOrNull(psi.returnValue, this) }
 }

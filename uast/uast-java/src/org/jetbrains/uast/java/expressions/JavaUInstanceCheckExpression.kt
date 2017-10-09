@@ -25,7 +25,7 @@ import org.jetbrains.uast.UastErrorType
 class JavaUInstanceCheckExpression(
         override val psi: PsiInstanceOfExpression,
         givenParent: UElement?
-) : JavaAbstractLazyParentUExpression(givenParent), UBinaryExpressionWithType {
+) : JavaAbstractUExpression(givenParent), UBinaryExpressionWithType {
     override val operand by lz { JavaConverter.convertOrEmpty(psi.operand, this) }
     override val typeReference by lz { psi.checkType?.let { JavaUTypeReferenceExpression(it, this) } }
     

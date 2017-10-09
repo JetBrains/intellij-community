@@ -24,7 +24,7 @@ import org.jetbrains.uast.UReferenceExpression
 class JavaUObjectLiteralExpression(
         override val psi: PsiNewExpression,
         givenParent: UElement?
-) : JavaAbstractLazyParentUExpression(givenParent), UObjectLiteralExpression {
+) : JavaAbstractUExpression(givenParent), UObjectLiteralExpression {
     override val declaration by lz { JavaUClass.create(psi.anonymousClass!!, this) }
 
     override val classReference by lz {

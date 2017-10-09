@@ -23,7 +23,7 @@ import org.jetbrains.uast.UIdentifier
 class JavaUBinaryExpression(
         override val psi: PsiBinaryExpression,
         givenParent: UElement?
-) : JavaAbstractLazyParentUExpression(givenParent), UBinaryExpression {
+) : JavaAbstractUExpression(givenParent), UBinaryExpression {
     override val leftOperand by lz { JavaConverter.convertOrEmpty(psi.lOperand, this) }
     override val rightOperand by lz { JavaConverter.convertOrEmpty(psi.rOperand, this) }
     override val operator by lz { psi.operationTokenType.getOperatorType() }

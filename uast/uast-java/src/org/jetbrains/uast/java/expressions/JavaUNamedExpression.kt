@@ -20,14 +20,14 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UNamedExpression
 import org.jetbrains.uast.UastEmptyExpression
-import org.jetbrains.uast.java.JavaAbstractLazyParentUExpression
+import org.jetbrains.uast.java.JavaAbstractUExpression
 import org.jetbrains.uast.java.JavaConverter
 import org.jetbrains.uast.java.lz
 
 class JavaUNamedExpression(
         override val psi: PsiNameValuePair,
         givenParent: UElement?
-) : JavaAbstractLazyParentUExpression(givenParent), UNamedExpression {
+) : JavaAbstractUExpression(givenParent), UNamedExpression {
     override fun evaluate(): Any? = expression.evaluate()
 
     override val name: String?

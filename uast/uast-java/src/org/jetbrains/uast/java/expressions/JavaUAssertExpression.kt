@@ -24,7 +24,7 @@ import org.jetbrains.uast.*
 class JavaUAssertExpression(
         override val psi: PsiAssertStatement,
         givenParent: UElement?
-) : JavaAbstractLazyParentUExpression(givenParent), UCallExpression {
+) : JavaAbstractUExpression(givenParent), UCallExpression {
     val condition: UExpression by lz { JavaConverter.convertOrEmpty(psi.assertCondition, this) }
     val message: UExpression? by lz { JavaConverter.convertOrNull(psi.assertDescription, this) }
     
