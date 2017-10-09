@@ -67,7 +67,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     ClassBrowser.createApplicationClassBrowser(project, myModuleSelector).setField(getMainClassField());
     myVersionDetector = new JreVersionDetector();
 
-    myShortenClasspathModeCombo.setComponent(new ShortenCommandLineModeCombo(myProject, myJrePathEditor));
+    myShortenClasspathModeCombo.setComponent(new ShortenCommandLineModeCombo(myProject, myJrePathEditor, myModule.getComponent()));
     myAnchor = UIUtil.mergeComponentsWithAnchor(myMainClass, myCommonProgramParameters, myJrePathEditor, myModule,
                                                 myShortenClasspathModeCombo);
   }

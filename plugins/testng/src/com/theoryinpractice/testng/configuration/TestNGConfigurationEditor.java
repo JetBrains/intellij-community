@@ -16,7 +16,7 @@
 
 package com.theoryinpractice.testng.configuration;
 
-import com.intellij.application.options.ModulesComboBox;
+import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.MethodBrowser;
@@ -76,7 +76,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
   private JPanel panel;
 
   private LabeledComponent<EditorTextFieldWithBrowseButton> classField;
-  private LabeledComponent<ModulesComboBox> moduleClasspath;
+  private LabeledComponent<ModuleDescriptionsComboBox> moduleClasspath;
   private JrePathEditor alternateJDK;
   private final ConfigurationModuleSelector moduleSelector;
   private JComboBox<TestType> myTestKind;
@@ -203,7 +203,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
 
     commonJavaParameters.setProgramParametersLabel(ExecutionBundle.message("junit.configuration.test.runner.parameters.label"));
 
-    myShortenCommandLineCombo.setComponent(new ShortenCommandLineModeCombo(project, alternateJDK));
+    myShortenCommandLineCombo.setComponent(new ShortenCommandLineModeCombo(project, alternateJDK, getModulesComponent()));
     setAnchor(outputDirectory.getLabel());
     alternateJDK.setAnchor(moduleClasspath.getLabel());
     commonJavaParameters.setAnchor(moduleClasspath.getLabel());
@@ -275,7 +275,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     return classField.getComponent().getText();
   }
 
-  public ModulesComboBox getModulesComponent() {
+  public ModuleDescriptionsComboBox getModulesComponent() {
     return moduleClasspath.getComponent();
   }
 
@@ -421,7 +421,6 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     outputDirectoryButton.addBrowseFolderListener("TestNG", "Select test output directory", project,
                                                   FileChooserDescriptorFactory.createSingleFolderDescriptor());
     moduleClasspath.setEnabled(true);
-    moduleClasspath.setComponent(new ModulesComboBox());
 
     propertiesTableModel = new TestNGParametersTableModel();
     listenerModel = new TestNGListenersTableModel();

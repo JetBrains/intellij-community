@@ -279,7 +279,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       model.addElement(changeList.getName());
     }
 
-    myShortenClasspathModeCombo.setComponent(new ShortenCommandLineModeCombo(myProject, myJrePathEditor));
+    myShortenClasspathModeCombo.setComponent(new ShortenCommandLineModeCombo(myProject, myJrePathEditor, myModule.getComponent()));
   }
 
   private static void addRadioButtonsListeners(final JRadioButton[] radioButtons, ChangeListener listener) {
