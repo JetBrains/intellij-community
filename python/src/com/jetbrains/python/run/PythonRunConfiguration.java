@@ -36,6 +36,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.regex.Pattern;
 
 /**
  * @author yole
@@ -54,6 +55,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   private boolean myShowCommandLineAfterwards = false;
   private boolean myEmulateTerminal = false;
   private boolean myModuleMode = false;
+  private final Pattern myQualifiedNameRegex = Pattern.compile("^[a-zA-Z0-9._]+[a-zA-Z0-9_]$");
 
   protected PythonRunConfiguration(Project project, ConfigurationFactory configurationFactory) {
     super(project, configurationFactory);
@@ -75,6 +77,11 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     if (StringUtil.isEmptyOrSpaces(myScriptName)) {
       throw new RuntimeConfigurationException(
         PyBundle.message(isModuleMode() ? "runcfg.unittest.no_module_name" : "runcfg.unittest.no_script_name"));
+    }
+    else {
+      if (isModuleMode() && !myQualifiedNameRegex.matcher(myScriptName).matches()) {
+        throw new RuntimeConfigurationWarning("Provide a qualified name of a module");
+      }
     }
   }
 
