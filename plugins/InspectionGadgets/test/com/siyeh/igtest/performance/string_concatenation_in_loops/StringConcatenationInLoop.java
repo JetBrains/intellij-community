@@ -270,4 +270,12 @@ public class StringConcatenationInLoop
             parent.field = this.parent.field <warning descr="String concatenation '+' in loop">+</warning> "x";
         }
     }
+
+    void testUsedCompletely() {
+        String s = "";
+        for(int i=0; i<10; i++) {
+            s+=i;
+            System.out.println(i > 5 ? s : "...");
+        }
+    }
 }
