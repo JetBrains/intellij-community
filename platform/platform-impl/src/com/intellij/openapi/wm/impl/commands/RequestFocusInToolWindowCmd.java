@@ -147,7 +147,11 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
         if (c.isShowing()) {
           final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner();
           if (owner == null || owner != c) {
-            myManager.getFocusManager().requestFocus(myToolWindow.getComponent().getFocusTraversalPolicy().getDefaultComponent(myToolWindow.getComponent()), true);
+            Component defaultComponent = myToolWindow.getComponent().getFocusTraversalPolicy().getDefaultComponent(myToolWindow.getComponent());
+            if (defaultComponent != null) {
+              myManager.getFocusManager().requestFocus(
+                defaultComponent, true);
+            }
           }
           myManager.getFocusManager().doWhenFocusSettlesDown(() -> updateToolWindow(c));
         }
