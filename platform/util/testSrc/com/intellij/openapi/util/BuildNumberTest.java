@@ -148,19 +148,10 @@ public class BuildNumberTest {
     assertEquals("IU", IU_173_SNAPSHOT.getProductCode());
     assertEquals(Ints.asList(IU_173_SNAPSHOT.getComponents()), Arrays.asList(173, BuildNumber.SNAPSHOT_VALUE));
 
-    BuildNumber _173_SNAPSHOT_IU = BuildNumber.fromStringWithProductCode("173.SNAPSHOT", "IU");
-    assertTrue(_173_SNAPSHOT_IU.isSnapshot());
-    assertEquals("IU", _173_SNAPSHOT_IU.getProductCode());
-    assertEquals(Ints.asList(_173_SNAPSHOT_IU.getComponents()), Arrays.asList(173, BuildNumber.SNAPSHOT_VALUE));
+    assertEquals(IU_173_SNAPSHOT, BuildNumber.fromStringWithProductCode("173.SNAPSHOT", "IU"));
 
-    BuildNumber IU_173_SNAPSHOT_IU = BuildNumber.fromStringWithProductCode("IU-173.SNAPSHOT", "IU");
-    assertTrue(IU_173_SNAPSHOT_IU.isSnapshot());
-    assertEquals("IU", IU_173_SNAPSHOT_IU.getProductCode());
-    assertEquals(Ints.asList(IU_173_SNAPSHOT_IU.getComponents()), Arrays.asList(173, BuildNumber.SNAPSHOT_VALUE));
+    assertEquals(IU_173_SNAPSHOT, BuildNumber.fromStringWithProductCode("IU-173.SNAPSHOT", "IU"));
 
-    BuildNumber IU_173_SNAPSHOT_IC = BuildNumber.fromStringWithProductCode("IU-173.SNAPSHOT", "IC");
-    assertTrue(IU_173_SNAPSHOT_IC.isSnapshot());
-    assertEquals("IU", IU_173_SNAPSHOT_IC.getProductCode());
-    assertEquals(Ints.asList(IU_173_SNAPSHOT_IC.getComponents()), Arrays.asList(173, BuildNumber.SNAPSHOT_VALUE));
+    assertEquals(IU_173_SNAPSHOT, BuildNumber.fromStringWithProductCode("IU-173.SNAPSHOT", "IC"));
   }
 }
