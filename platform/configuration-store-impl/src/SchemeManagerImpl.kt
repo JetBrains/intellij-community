@@ -24,7 +24,6 @@ import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil.DEFAULT_EXT
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.AbstractExtensionPointBean
-import com.intellij.openapi.options.ExternalizableScheme
 import com.intellij.openapi.options.NonLazySchemeProcessor
 import com.intellij.openapi.options.SchemeProcessor
 import com.intellij.openapi.options.SchemeState
@@ -61,7 +60,7 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Function
 
-class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
+class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
                                                         processor: SchemeProcessor<T, MUTABLE_SCHEME>,
                                                         private val provider: StreamProvider?,
                                                         private val ioDirectory: Path,
@@ -83,7 +82,7 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
   private val schemeExtension: String
   private val updateExtension: Boolean
 
-  private val filesToDelete = ContainerUtil.newConcurrentSet<String>()
+  internal val filesToDelete = ContainerUtil.newConcurrentSet<String>()
 
   // scheme could be changed - so, hashcode will be changed - we must use identity hashing strategy
   internal val schemeToInfo = ConcurrentCollectionFactory.createMap<T, ExternalInfo>(ContainerUtil.identityStrategy())
@@ -841,54 +840,7 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
     }
   }
 
-  override fun addNewScheme(scheme: T, replaceExisting: Boolean) {
-    var toReplace = -1
-    val schemes = schemes
-    for ((index, existing) in schemes.withIndex()) {
-      if (processor.getSchemeKey(existing) != processor.getSchemeKey(scheme)) {
-        continue
-      }
-
-      toReplace = index
-      if (existing === scheme) {
-        // do not just return, below scheme will be removed from filesToDelete list
-        break
-      }
-
-      if (existing.javaClass != scheme.javaClass) {
-        LOG.warn("'${processor.getSchemeKey(scheme)}' ${existing.javaClass.simpleName} replaced with ${scheme.javaClass.simpleName}")
-      }
-
-      if (replaceExisting && processor.isExternalizable(existing)) {
-        val oldInfo = schemeToInfo.remove(existing)
-        if (oldInfo != null && processor.isExternalizable(scheme) && !schemeToInfo.containsKey(scheme)) {
-          schemeToInfo.put(scheme, oldInfo)
-        }
-      }
-    }
-
-    when {
-      toReplace == -1 -> schemes.add(scheme)
-      (replaceExisting || !processor.isExternalizable(scheme)) -> {
-        if (schemes.get(toReplace) !== scheme) {
-          // avoid "set" (LockFreeCopyOnWriteArrayList calls ARRAY_UPDATER.compareAndSet and so on)
-          schemes.set(toReplace, scheme)
-        }
-      }
-      else -> {
-        (scheme as ExternalizableScheme).renameScheme(UniqueNameGenerator.generateUniqueName(scheme.name, schemeListManager.collectExistingNames(schemes)))
-        schemes.add(scheme)
-      }
-    }
-
-    if (processor.isExternalizable(scheme) && filesToDelete.isNotEmpty()) {
-      schemeToInfo.get(scheme)?.let {
-        filesToDelete.remove(it.fileName)
-      }
-    }
-
-    processPendingCurrentSchemeName(scheme)
-  }
+  override fun addNewScheme(scheme: T, replaceExisting: Boolean) = schemeListManager.addScheme(scheme, replaceExisting)
 
   override fun findSchemeByName(schemeName: String) = schemes.firstOrNull { processor.getSchemeKey(it) == schemeName }
 
