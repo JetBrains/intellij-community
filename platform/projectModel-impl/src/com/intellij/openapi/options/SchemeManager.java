@@ -13,124 +13,97 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.options;
+package com.intellij.openapi.options
 
-import com.intellij.openapi.util.Condition;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.Condition
 
-import java.io.File;
-import java.util.Collection;
-import java.util.List;
+import java.io.File
 
-@SuppressWarnings("UnusedParameters")
-public abstract class SchemeManager<T extends Scheme> {
-  public final static String EDITABLE_COPY_PREFIX = "_@user_";
+abstract class SchemeManager<T> {
+  companion object {
+    @JvmField
+    val EDITABLE_COPY_PREFIX = "_@user_"
 
-  @NotNull
-  public abstract Collection<T> loadSchemes();
-
-  public void reload() {
+    @JvmStatic
+    fun getDisplayName(scheme: Scheme): String {
+      val schemeName = scheme.name
+      return if (schemeName.startsWith(EDITABLE_COPY_PREFIX))
+        schemeName.substring(EDITABLE_COPY_PREFIX.length)
+      else
+        schemeName
+    }
   }
 
-  public abstract void addNewScheme(@NotNull T scheme, boolean replaceExisting);
+  abstract val allSchemes: List<T>
 
-  public void addScheme(@NotNull T scheme) {
-    addNewScheme(scheme, true);
-  }
+  open val isEmpty: Boolean
+    get() = allSchemes.isEmpty()
 
-  /**
-   * Consider to use {@link #setSchemes}
-   */
-  public abstract void clearAllSchemes();
-
-  @NotNull
-  public abstract List<T> getAllSchemes();
-
-  public boolean isEmpty() {
-    return getAllSchemes().isEmpty();
-  }
-
-  @Nullable
-  public abstract T findSchemeByName(@NotNull String schemeName);
+  var currentScheme: T? = null
+    protected set
 
   /**
    * If schemes are lazy loaded, you can use this method to postpone scheme selection (scheme will be found by name on first use)
    */
-  public final void setCurrentSchemeName(@Nullable String schemeName) {
-    setCurrentSchemeName(schemeName, true);
+  abstract var currentSchemeName: String?
+
+  abstract val allSchemeNames: Collection<String>
+
+  abstract val rootDirectory: File
+
+  abstract fun loadSchemes(): Collection<T>
+
+  open fun reload() {}
+
+  abstract fun addNewScheme(scheme: T, replaceExisting: Boolean)
+
+  fun addScheme(scheme: T) {
+    addNewScheme(scheme, true)
   }
-
-  public abstract void setCurrentSchemeName(@Nullable String schemeName, boolean notify);
-
-  public final void setCurrent(@Nullable T scheme) {
-    setCurrent(scheme, true);
-  }
-
-  public void setCurrent(@Nullable T scheme, boolean notify) {
-    setCurrentSchemeName(scheme == null ? null : scheme.getName());
-  }
-
-  @Nullable
-  public abstract T getCurrentScheme();
-
-  @Nullable
-  public String getCurrentSchemeName() {
-    T scheme = getCurrentScheme();
-    return scheme == null ? null : scheme.getName();
-  }
-
-  public abstract boolean removeScheme(@NotNull T scheme);
-
-  @Nullable
-  public T removeScheme(@NotNull String name) {
-    T scheme = findSchemeByName(name);
-    if (scheme != null) {
-      removeScheme(scheme);
-      return scheme;
-    }
-    return null;
-  }
-
-  @NotNull
-  public abstract Collection<String> getAllSchemeNames();
-
-  public abstract File getRootDirectory();
 
   /**
-   * Must be called before {@link #loadSchemes}.
+   * Consider to use [.setSchemes]
+   */
+  abstract fun clearAllSchemes()
+
+  abstract fun findSchemeByName(schemeName: String): T?
+
+  abstract fun setCurrentSchemeName(schemeName: String?, notify: Boolean)
+
+  fun setCurrent(scheme: T?) {
+    setCurrent(scheme, true)
+  }
+
+  abstract fun setCurrent(scheme: T?, notify: Boolean)
+
+  abstract fun removeScheme(scheme: T): Boolean
+
+  open fun removeScheme(name: String): T? {
+    val scheme = findSchemeByName(name)
+    if (scheme != null) {
+      removeScheme(scheme)
+      return scheme
+    }
+    return null
+  }
+
+  /**
+   * Must be called before [.loadSchemes].
    *
    * Scheme manager processor must be LazySchemeProcessor
    */
-  public void loadBundledScheme(@NotNull String resourceName, @NotNull Object requestor) {
-  }
+  open fun loadBundledScheme(resourceName: String, requestor: Any) {}
 
-  public final void setSchemes(@NotNull List<T> newSchemes) {
-    setSchemes(newSchemes, null, null);
-  }
-
-  public final void setSchemes(@NotNull List<T> newSchemes, @Nullable T newCurrentScheme) {
-    setSchemes(newSchemes, newCurrentScheme, null);
-  }
-
-  public void setSchemes(@NotNull List<T> newSchemes, @Nullable T newCurrentScheme, @Nullable Condition<T> removeCondition) {
+  @JvmOverloads
+  open fun setSchemes(newSchemes: List<T>, newCurrentScheme: T? = null, removeCondition: Condition<T>? = null) {
   }
 
   /**
    * Bundled / read-only (or overriding) scheme cannot be renamed or deleted.
    */
-  public boolean isMetadataEditable(@NotNull T scheme) {
-    return true;
+  open fun isMetadataEditable(scheme: T): Boolean {
+    return true
   }
 
-  public static String getDisplayName(@NotNull Scheme scheme) {
-    String schemeName = scheme.getName();
-    return
-      schemeName.startsWith(EDITABLE_COPY_PREFIX) ?
-      schemeName.substring(EDITABLE_COPY_PREFIX.length()) :
-      schemeName;
-  }
-
-  public void save(@NotNull List<Throwable> errors) {
-  }
+  open fun save(errors: MutableList<Throwable>) {}
 }
