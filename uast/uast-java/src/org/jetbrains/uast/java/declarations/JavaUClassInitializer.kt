@@ -24,7 +24,10 @@ class JavaUClassInitializer(
         psi: PsiClassInitializer,
         override val uastParent: UElement?
 ) : UClassInitializer, JavaUElementWithComments, PsiClassInitializer by psi {
-    override val psi = unwrap<UClassInitializer, PsiClassInitializer>(psi)
+    override val psi
+        get() = javaPsi
+
+    override val javaPsi = unwrap<UClassInitializer, PsiClassInitializer>(psi)
 
     override val uastAnchor: UElement?
         get() = null

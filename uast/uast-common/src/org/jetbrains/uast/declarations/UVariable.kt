@@ -27,6 +27,9 @@ import org.jetbrains.uast.visitor.UastVisitor
 interface UVariable : UDeclaration, PsiVariable {
     override val psi: PsiVariable
 
+    override val javaPsi: PsiVariable
+        get() = psi
+
     /**
      * Returns the variable initializer or the parameter default value, or null if the variable has not an initializer.
      */
@@ -69,6 +72,9 @@ private fun UVariable.visitContents(visitor: UastVisitor) {
 interface UParameter : UVariable, PsiParameter {
     override val psi: PsiParameter
 
+    override val javaPsi: PsiParameter
+        get() = psi
+
     override fun asLogString() = log("name = $name")
 
     override fun accept(visitor: UastVisitor) {
@@ -82,6 +88,9 @@ interface UParameter : UVariable, PsiParameter {
 
 interface UField : UVariable, PsiField {
     override val psi: PsiField
+
+    override val javaPsi: PsiField
+        get() = psi
 
     override fun asLogString() = log("name = $name")
 
@@ -97,6 +106,9 @@ interface UField : UVariable, PsiField {
 interface ULocalVariable : UVariable, PsiLocalVariable {
     override val psi: PsiLocalVariable
 
+    override val javaPsi: PsiLocalVariable
+        get() = psi
+
     override fun asLogString() = log("name = $name")
 
     override fun accept(visitor: UastVisitor) {
@@ -110,6 +122,9 @@ interface ULocalVariable : UVariable, PsiLocalVariable {
 
 interface UEnumConstant : UField, UCallExpression, PsiEnumConstant {
     override val psi: PsiEnumConstant
+
+    override val javaPsi: PsiEnumConstant
+        get() = psi
 
     val initializingClass: UClass?
 

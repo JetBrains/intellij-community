@@ -29,9 +29,28 @@ interface UElement {
     val uastParent: UElement?
 
     /**
+     * Returns the PSI element in original (physical) tree to which this UElement corresponds.
+     * **Note**: that some UElements are synthetic and do not have an underlying PSI element;
+     * this doesn't mean that they are invalid.
+     */
+    val sourcePsi: PsiElement?
+        get() = psi
+
+    /**
+     * Returns the element which try to mimic Java-api psi element: [com.intellij.psi.PsiClass], [com.intellij.psi.PsiMethod] or [com.intellij.psi.PsiAnnotation] etc.
+     * Will return null if this UElement doesn't have Java representation or it is not implemented.
+     */
+    val javaPsi: PsiElement?
+        get() = psi
+
+    /**
      * Returns the PSI element underlying this element. Note that some UElements are synthetic and do not have
      * an underlying PSI element; this doesn't mean that they are invalid.
+     *
+     * **Node for implementors**: please implement both [sourcePsi] and [javaPsi] fields or make them return `null` explicitly
+     * if implementing is not possible. Redirect `psi` to one of them keeping existing behavior, use [sourcePsi] if nothing else is specified.
      */
+    @Deprecated("ambiguous psi element, use `sourcePsi` or less likely `lightPsi`", ReplaceWith("sourcePsi"))
     val psi: PsiElement?
 
     /**

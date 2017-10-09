@@ -28,6 +28,9 @@ import org.jetbrains.uast.visitor.UastVisitor
 interface UClass : UDeclaration, PsiClass {
     override val psi: PsiClass
 
+    override val javaPsi: PsiClass
+        get() = psi
+
     /**
      * Returns a [UClass] wrapper of the superclass of this class, or null if this class is [java.lang.Object].
      */

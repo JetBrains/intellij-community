@@ -40,7 +40,10 @@ open class JavaUVariable(
         psi: PsiVariable,
         override val uastParent: UElement?
 ) : AbstractJavaUVariable(), UVariable, PsiVariable by psi {
-    override val psi = unwrap<UVariable, PsiVariable>(psi)
+    override val psi
+        get() = javaPsi
+
+    override val javaPsi = unwrap<UVariable, PsiVariable>(psi)
     
     companion object {
         fun create(psi: PsiVariable, containingElement: UElement?): UVariable {
@@ -59,21 +62,30 @@ open class JavaUParameter(
         psi: PsiParameter,
         override val uastParent: UElement?
 ) : AbstractJavaUVariable(), UParameter, PsiParameter by psi {
-    override val psi = unwrap<UParameter, PsiParameter>(psi)
+    override val psi
+        get() = javaPsi
+
+    override val javaPsi = unwrap<UParameter, PsiParameter>(psi)
 }
 
 open class JavaUField(
         psi: PsiField,
         override val uastParent: UElement?
 ) : AbstractJavaUVariable(), UField, PsiField by psi {
-    override val psi = unwrap<UField, PsiField>(psi)
+    override val psi
+        get() = javaPsi
+
+    override val javaPsi = unwrap<UField, PsiField>(psi)
 }
 
 open class JavaULocalVariable(
         psi: PsiLocalVariable,
         override val uastParent: UElement?
 ) : AbstractJavaUVariable(), ULocalVariable, PsiLocalVariable by psi {
-    override val psi = unwrap<ULocalVariable, PsiLocalVariable>(psi)
+    override val psi
+        get() = javaPsi
+
+    override val javaPsi = unwrap<ULocalVariable, PsiLocalVariable>(psi)
 }
 
 open class JavaUEnumConstant(
@@ -82,7 +94,10 @@ open class JavaUEnumConstant(
 ) : AbstractJavaUVariable(), UEnumConstant, PsiEnumConstant by psi {
     override val initializingClass: UClass? by lz { getLanguagePlugin().convertOpt<UClass>(psi.initializingClass, this) }
 
-    override val psi = unwrap<UEnumConstant, PsiEnumConstant>(psi)
+    override val psi
+        get() = javaPsi
+
+    override val javaPsi = unwrap<UEnumConstant, PsiEnumConstant>(psi)
 
     override val kind: UastCallKind
         get() = UastCallKind.CONSTRUCTOR_CALL
