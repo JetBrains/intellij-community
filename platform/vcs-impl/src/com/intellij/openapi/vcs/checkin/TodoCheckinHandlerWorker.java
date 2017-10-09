@@ -193,7 +193,7 @@ public class TodoCheckinHandlerWorker {
 
       StepIntersection.processIntersections(
         myNewTodoItems, lineFragments,
-          TODO_ITEM_CONVERTOR, LINE_FRAGMENT_CONVERTOR,
+        TODO_ITEM_CONVERTOR, RIGHT_LINE_FRAGMENT_CONVERTOR,
         (todoItem, lineFragment) -> {
           ProgressManager.checkCanceled();
           if (myCurrentLineFragment == null || myCurrentLineFragment != lineFragment) {
@@ -236,7 +236,7 @@ public class TodoCheckinHandlerWorker {
         myOldTodoTexts = new HashSet<>();
         StepIntersection.processIntersections(
           Collections.singletonList(myCurrentLineFragment), myOldItems,
-          LINE_FRAGMENT_CONVERTOR, TODO_ITEM_CONVERTOR,
+          LEFT_LINE_FRAGMENT_CONVERTOR, TODO_ITEM_CONVERTOR,
           (lineFragment, todoItem) -> myOldTodoTexts.add(getTodoText(todoItem, myBeforeContent)));
       }
       final String text = getTodoText(newTodoItem, myAfterContent);
@@ -291,7 +291,13 @@ public class TodoCheckinHandlerWorker {
     return new TextRange(textRange.getStartOffset(), textRange.getEndOffset() - 1);
   };
 
-  private static final Convertor<LineFragment, TextRange> LINE_FRAGMENT_CONVERTOR = o -> {
+  private static final Convertor<LineFragment, TextRange> LEFT_LINE_FRAGMENT_CONVERTOR = o -> {
+    int start = o.getStartOffset1();
+    int end = o.getEndOffset1();
+    return new TextRange(start, Math.max(start, end - 1));
+  };
+
+  private static final Convertor<LineFragment, TextRange> RIGHT_LINE_FRAGMENT_CONVERTOR = o -> {
     int start = o.getStartOffset2();
     int end = o.getEndOffset2();
     return new TextRange(start, Math.max(start, end - 1));
