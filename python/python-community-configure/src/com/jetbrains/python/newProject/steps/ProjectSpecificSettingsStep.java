@@ -31,6 +31,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HideableDecorator;
+import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -135,12 +136,9 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
   protected void registerValidators() {
     super.registerValidators();
     if (myProjectGenerator instanceof PythonProjectGenerator) {
-      myLocationField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-        @Override
-        protected void textChanged(DocumentEvent e) {
-          final String path = myLocationField.getText().trim();
-          ((PythonProjectGenerator)myProjectGenerator).locationChanged(PathUtil.getFileName(path));
-        }
+      addLocationChangeListener(event -> {
+        final String fileName = PathUtil.getFileName(getNewProjectPath());
+        ((PythonProjectGenerator)myProjectGenerator).locationChanged(fileName);
       });
       final PyAddSdkGroupPanel interpreterPanel = myInterpreterPanel;
       if (interpreterPanel != null) {
@@ -291,7 +289,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     final List<Sdk> existingSdks = getValidPythonSdks();
     final Sdk preferredSdk = getPreferredSdk(existingSdks);
 
-    final String newProjectPath = myLocationField.getText().trim();
+    final String newProjectPath = getNewProjectPath();
     final PyAddNewVirtualEnvPanel newVirtualEnvPanel = new PyAddNewVirtualEnvPanel(null, existingSdks, newProjectPath);
     final PyAddExistingSdkPanel existingSdkPanel = new PyAddExistingSdkPanel(null, existingSdks, newProjectPath, preferredSdk);
 
@@ -306,8 +304,32 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     existingSdkPanel.addChangeListener(this::checkValid);
     myInterpreterPanel.addChangeListener(this::checkValid);
 
+    addLocationChangeListener(event -> {
+      final String path = getNewProjectPath();
+      newVirtualEnvPanel.setNewProjectPath(path);
+      existingSdkPanel.setNewProjectPath(path);
+    });
+
     container.add(myInterpreterPanel, BorderLayout.NORTH);
     return decoratorPanel;
+  }
+
+  @NotNull
+  private String getNewProjectPath() {
+    final TextFieldWithBrowseButton field = myLocationField;
+    if (field == null) return "";
+    return field.getText().trim();
+  }
+
+  private void addLocationChangeListener(@NotNull Consumer<DocumentEvent> listener) {
+    final TextFieldWithBrowseButton field = myLocationField;
+    if (field == null) return;
+    field.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        listener.consume(e);
+      }
+    });
   }
 
   @NotNull
