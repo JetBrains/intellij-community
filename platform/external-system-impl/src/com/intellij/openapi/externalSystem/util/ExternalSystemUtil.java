@@ -478,7 +478,7 @@ public class ExternalSystemUtil {
                   else {
                     RunContentDescriptor contentDescriptor = new RunContentDescriptor(consoleView, processHandler, consoleView.getComponent(), "Sync");
                     contentDescriptor.setActivateToolWindowWhenAdded(reportRefreshError);
-                    contentDescriptor.setAutoFocusContent(true);
+                    contentDescriptor.setAutoFocusContent(reportRefreshError);
                     return contentDescriptor;
                   }
                 })
