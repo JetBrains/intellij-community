@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.ProjectTopics
@@ -480,9 +478,10 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   override fun getState(): Element {
     if (!isFirstLoadState.get()) {
       lock.read {
-        for (settings in idToSettings.values) {
+        val list = idToSettings.values.toList()
+        for (settings in list) {
           if (settings.type !is UnknownConfigurationType) {
-            checkIfDependenciesAreStable(settings.configuration)
+            checkIfDependenciesAreStable(settings.configuration, list)
           }
         }
       }
@@ -601,6 +600,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
         task.serializeStateInto(child)
       }
       else {
+        @Suppress("DEPRECATION")
         task.writeExternal(child)
       }
       methodElement.addContent(child)
@@ -817,6 +817,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
         beforeRunTask.deserializeAndLoadState(methodElement)
       }
       else {
+        @Suppress("DEPRECATION")
         beforeRunTask.readExternal(methodElement)
       }
       if (result == null) {
@@ -1084,21 +1085,17 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     fireBeforeRunTasksUpdated()
   }
 
-  private fun checkIfDependenciesAreStable(configuration: RunConfiguration) {
-    if (isFirstLoadState.get()) {
-      return
-    }
-
+  private fun checkIfDependenciesAreStable(configuration: RunConfiguration, list: List<RunnerAndConfigurationSettings>) {
     for (runTask in configuration.beforeRunTasks) {
       if (runTask is RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask && runTask.settings != null && runTask.settings.isTemporary) {
         makeStable(runTask.settings)
-        checkIfDependenciesAreStable(runTask.settings.configuration)
+        checkIfDependenciesAreStable(runTask.settings.configuration, list)
       }
     }
 
     if (configuration is CompoundRunConfiguration) {
       val children = configuration.getConfigurations(this)
-      for (otherSettings in idToSettings.values) {
+      for (otherSettings in list) {
         if (!otherSettings.isTemporary) {
           continue
         }
@@ -1111,7 +1108,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
         if (ContainerUtil.containsIdentity(children, otherConfiguration)) {
           if (otherSettings.isTemporary) {
             makeStable(otherSettings)
-            checkIfDependenciesAreStable(otherConfiguration)
+            checkIfDependenciesAreStable(otherConfiguration, list)
           }
         }
       }
