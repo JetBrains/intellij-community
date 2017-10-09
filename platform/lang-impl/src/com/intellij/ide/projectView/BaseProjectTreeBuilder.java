@@ -110,7 +110,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     if (element instanceof AbstractTreeNode) {
       object = ((AbstractTreeNode)element).getValue();
     }
-    
+
     return object instanceof PsiDirectory
            ? ((PsiDirectory)object).getVirtualFile()
            : object instanceof PsiFile ? ((PsiFile)object).getVirtualFile() : null;
@@ -159,7 +159,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
     UiActivityMonitor.getInstance().addActivity(myProject, new UiActivity.AsyncBgOperation("projectViewSelect"), updater.getModalityState());
     batch(indicator -> {
-      _select(element, file, requestFocus, nonStopCondition);
+      _select(element, file, requestFocus, nonStopCondition, result, indicator, null, null, false);
       UiActivityMonitor.getInstance().removeActivity(myProject, new UiActivity.AsyncBgOperation("projectViewSelect"));
     });
 
