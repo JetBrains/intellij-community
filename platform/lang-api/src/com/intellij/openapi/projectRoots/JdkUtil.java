@@ -179,7 +179,7 @@ public class JdkUtil {
         if (javaParameters.isUseClasspathJar()) {
           setClasspathJarParams(commandLine, javaParameters, vmParameters, commandLineWrapper, dynamicVMOptions, dynamicParameters);
         }
-        else {
+        else if (javaParameters.isClasspathFile()) {
           setCommandLineWrapperParams(commandLine, javaParameters, vmParameters, commandLineWrapper, dynamicVMOptions, dynamicParameters);
         }
       }

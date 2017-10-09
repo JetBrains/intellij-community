@@ -17,8 +17,10 @@ package com.intellij.execution;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ExecutionUtil;
@@ -105,41 +107,50 @@ public class ProgramRunnerUtil {
       }
     }
     catch (ExecutionException e) {
-      String name = runnerAndConfigurationSettings != null ? runnerAndConfigurationSettings.getName() : null;
-      if (name == null) {
-        name = environment.getRunProfile().getName();
-      }
-      if (name == null && environment.getContentToReuse() != null) {
-        name = environment.getContentToReuse().getDisplayName();
-      }
-      if (name == null) {
-        name = "<Unknown>";
-      }
-      String windowId = ExecutionManager.getInstance(project).getContentManager().getToolWindowIdByEnvironment(environment);
-      RunConfiguration configuration = runnerAndConfigurationSettings != null ? runnerAndConfigurationSettings.getConfiguration() : null;
-      if (configuration instanceof ConfigurationWithCommandLineShortener && ExecutionUtil.isProcessNotCreated(e)) {
-        handelProcessNotStartedError(runnerAndConfigurationSettings, e, name, windowId);
-      }
-      else {
-        ExecutionUtil.handleExecutionError(project, windowId, name, e);
-      }
-
-
+      handleExecutionError(project, environment, e, runnerAndConfigurationSettings != null ? runnerAndConfigurationSettings.getConfiguration() : null);
     }
   }
 
-  private static void handelProcessNotStartedError(RunnerAndConfigurationSettings runnerAndConfigurationSettings,
+  public static void handleExecutionError(Project project,
+                                          @NotNull ExecutionEnvironment environment,
+                                          Throwable e,
+                                          RunProfile configuration) {
+    String name = configuration != null ? configuration.getName() : null;
+    if (name == null) {
+      name = environment.getRunProfile().getName();
+    }
+    if (name == null && environment.getContentToReuse() != null) {
+      name = environment.getContentToReuse().getDisplayName();
+    }
+    if (name == null) {
+      name = "<Unknown>";
+    }
+    String windowId = ExecutionManager.getInstance(project).getContentManager().getToolWindowIdByEnvironment(environment);
+
+    if (configuration instanceof ConfigurationWithCommandLineShortener && ExecutionUtil.isProcessNotCreated(e)) {
+      handelProcessNotStartedError((ConfigurationWithCommandLineShortener)configuration, (ProcessNotCreatedException)e, name, windowId);
+    }
+    else {
+      ExecutionUtil.handleExecutionError(project, windowId, name, e);
+    }
+  }
+
+  private static void handelProcessNotStartedError(ConfigurationWithCommandLineShortener configuration,
                                                    ExecutionException e,
                                                    String name,
                                                    String windowId) {
     String description = e.getMessage();
     HyperlinkListener listener = null;
-    ConfigurationWithCommandLineShortener configuration = (ConfigurationWithCommandLineShortener)runnerAndConfigurationSettings.getConfiguration();
     Project project = configuration.getProject();
-    if (configuration.getShortenCommandLine() == null) {
+    RunManager runManager = RunManager.getInstance(project);
+    RunnerAndConfigurationSettings runnerAndConfigurationSettings = runManager.getAllSettings().stream()
+      .filter(settings -> settings.getConfiguration() == configuration)
+      .findFirst()
+      .orElse(null);
+    if (runnerAndConfigurationSettings != null &&
+        (configuration.getShortenCommandLine() == null || configuration.getShortenCommandLine() == ShortenCommandLine.NONE)) {
       ConfigurationFactory factory = runnerAndConfigurationSettings.getFactory();
-      RunnerAndConfigurationSettings configurationTemplate = RunManager.getInstance(project)
-        .getConfigurationTemplate(factory);
+      RunnerAndConfigurationSettings configurationTemplate = runManager.getConfigurationTemplate(factory);
       description = "Command line is too long. Shorten command line for <a href=\"current\">" + name + "</a>";
       if (((ConfigurationWithCommandLineShortener)configurationTemplate.getConfiguration()).getShortenCommandLine() == null) {
         description += " or also for " + factory.getName() + " <a href=\"default\">default</a> configuration";
@@ -152,7 +163,7 @@ public class ProgramRunnerUtil {
           SingleConfigurableEditor dialog = RunDialog.editShortenClasspathSetting(isDefaultConfigurationChosen ? configurationTemplate : runnerAndConfigurationSettings,
                                                                                   "Edit" + (isDefaultConfigurationChosen ? " Default" : "") + " Configuration");
           if (dialog.showAndGet() && isDefaultConfigurationChosen) {
-            ((ConfigurationWithCommandLineShortener)runnerAndConfigurationSettings.getConfiguration())
+            configuration
               .setShortenCommandLine(((ConfigurationWithCommandLineShortener)configurationTemplate.getConfiguration()).getShortenCommandLine());
           }
         }
