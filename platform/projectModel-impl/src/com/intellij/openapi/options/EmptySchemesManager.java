@@ -64,10 +64,6 @@ public class EmptySchemesManager extends SchemeManager<Scheme> {
   }
 
   @Override
-  public void setCurrent(@Nullable Scheme scheme, boolean notify) {
-  }
-
-  @Override
   public void setCurrentSchemeName(@Nullable String s) {
   }
 

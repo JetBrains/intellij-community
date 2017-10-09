@@ -25,7 +25,7 @@ abstract class SchemeManager<T> {
   open val isEmpty: Boolean
     get() = allSchemes.isEmpty()
 
-  abstract var currentScheme: T?
+  abstract val currentScheme: T?
 
   /**
    * If schemes are lazy loaded, you can use this method to postpone scheme selection (scheme will be found by name on first use)
@@ -55,11 +55,9 @@ abstract class SchemeManager<T> {
 
   abstract fun setCurrentSchemeName(schemeName: String?, notify: Boolean)
 
-  fun setCurrent(scheme: T?) {
-    setCurrent(scheme, true)
+  @JvmOverloads
+  open fun setCurrent(scheme: T?, notify: Boolean = true) {
   }
-
-  abstract fun setCurrent(scheme: T?, notify: Boolean)
 
   abstract fun removeScheme(scheme: T): Boolean
 
