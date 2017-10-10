@@ -137,11 +137,22 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                       @Nullable LocalChangeList initialSelection,
                                       @Nullable CommitExecutor executor,
                                       @Nullable String comment) {
+    return commitChanges(project, changes, changes, initialSelection, executor, comment);
+  }
+
+  public static boolean commitChanges(@NotNull Project project,
+                                      @NotNull Collection<Change> changes,
+                                      @NotNull Collection<?> included,
+                                      @Nullable LocalChangeList initialSelection,
+                                      @Nullable CommitExecutor executor,
+                                      @Nullable String comment) {
     if (executor == null) {
-      return commitChanges(project, changes, initialSelection, collectExecutors(project, changes), true, comment, null);
+      return commitChanges(project, newArrayList(changes), included, initialSelection, collectExecutors(project, changes), true, null,
+                           comment, null, true);
     }
     else {
-      return commitChanges(project, changes, initialSelection, singletonList(executor), false, comment, null);
+      return commitChanges(project, newArrayList(changes), included, initialSelection, singletonList(executor), false, null, comment, null,
+                           true);
     }
   }
 
@@ -170,12 +181,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                       @Nullable String comment,
                                       @Nullable CommitResultHandler customResultHandler,
                                       boolean cancelIfNoChanges) {
-    return commitChanges(project, changes, initialSelection, executors, showVcsCommit, null, comment, customResultHandler,
+    return commitChanges(project, changes, changes, initialSelection, executors, showVcsCommit, null, comment, customResultHandler,
                          cancelIfNoChanges);
   }
 
   public static boolean commitChanges(@NotNull Project project,
                                       @NotNull List<Change> changes,
+                                      @NotNull Collection<?> included,
                                       @Nullable LocalChangeList initialSelection,
                                       @NotNull List<CommitExecutor> executors,
                                       boolean showVcsCommit,
@@ -212,8 +224,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
 
     CommitChangeListDialog dialog =
-      new CommitChangeListDialog(project, changes, initialSelection, executors, showVcsCommit, defaultList,
-                                 changeLists, affectedVcses, forceCommitInVcs, false, comment, customResultHandler);
+      new CommitChangeListDialog(project, changes, included, initialSelection, executors, showVcsCommit, defaultList, changeLists,
+                                 affectedVcses, forceCommitInVcs, false, comment, customResultHandler);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       dialog.show();
     }
@@ -251,12 +263,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                         @NotNull String changelistName,
                                         @Nullable String comment) {
     LocalChangeList changeList = new AlienLocalChangeList(changes, changelistName);
-    new CommitChangeListDialog(project, changes, null, emptyList(), true, AlienLocalChangeList.DEFAULT_ALIEN, singletonList(changeList),
-                               singleton(vcs), vcs, true, comment, null).show();
+    new CommitChangeListDialog(project, changes, changes, null, emptyList(), true, AlienLocalChangeList.DEFAULT_ALIEN,
+                               singletonList(changeList), singleton(vcs), vcs, true, comment, null).show();
   }
 
   private CommitChangeListDialog(@NotNull Project project,
                                  @NotNull List<Change> changes,
+                                 @NotNull Collection<?> included,
                                  @Nullable LocalChangeList initialSelection,
                                  @NotNull List<CommitExecutor> executors,
                                  boolean showVcsCommit,
@@ -292,7 +305,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       LocalChangeList changeList = changeLists.get(0);
 
       myBrowser = new AlienChangeListBrowser(project, changeList, changes);
-      myBrowser.getViewer().setIncludedChanges(changes);
+      myBrowser.getViewer().setIncludedChanges(included);
 
       myCommitMessageArea.setChangeList(changeList);
     }
@@ -300,7 +313,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       MultipleLocalChangeListsBrowser browser = new MultipleLocalChangeListsBrowser(project, true, true, myShowVcsCommit);
       myBrowser = browser;
 
-      browser.getViewer().setIncludedChanges(changes);
+      browser.getViewer().setIncludedChanges(included);
       if (initialSelection != null) browser.setSelectedChangeList(initialSelection);
       myCommitMessageArea.setChangeList(browser.getSelectedChangeList());
 
