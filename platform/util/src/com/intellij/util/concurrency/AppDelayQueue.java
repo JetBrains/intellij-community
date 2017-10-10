@@ -16,6 +16,7 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.ExecutorService;
@@ -85,6 +86,7 @@ class AppDelayQueue extends DelayQueue<SchedulingWrapper.MyScheduledFutureTask> 
     }
   }
 
+  @NotNull
   Thread getThread() {
     return scheduledToPooledTransferer;
   }
