@@ -43,8 +43,6 @@ def new_figure_manager(num, *args, **kwargs):
 def new_figure_manager_given_figure(num, figure):
     canvas = FigureCanvasInterAgg(figure)
     manager = FigureManagerInterAgg(canvas, num)
-    if matplotlib.is_interactive():
-        manager.show()
     return manager
 
 
@@ -76,6 +74,10 @@ class FigureCanvasInterAgg(FigureCanvasAgg):
             # nothing bad. It just means, that our tool window doesn't run yet
             pass
 
+    def draw(self):
+        is_interactive = os.getenv("PYCHARM_MATPLOTLIB_INTERACTIVE", False)
+        if is_interactive and matplotlib.is_interactive():
+            self.show()
 
 class FigureManagerInterAgg(FigureManagerBase):
     def __init__(self, canvas, num):

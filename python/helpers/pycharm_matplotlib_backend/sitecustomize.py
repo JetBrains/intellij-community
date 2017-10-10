@@ -1,16 +1,5 @@
 try:
     import sys
-    modules_list = list(sys.modules.keys())
-    old_getfilesystemencoding = None
-    if not sys.getfilesystemencoding():
-        old_getfilesystemencoding = sys.getfilesystemencoding
-        sys.getfilesystemencoding = lambda: 'UTF-8'
-
-    import matplotlib
-
-    if old_getfilesystemencoding:
-        sys.getfilesystemencoding = old_getfilesystemencoding
-    matplotlib.use('module://backend_interagg')
 
     # We want to import users sitecustomize.py file if any
     import os
@@ -31,6 +20,21 @@ try:
                 sys.modules[sitecustomize] = pycharm_sitecustomize_module
 
         sys.path.append(parent_dir)
+
+    # Use matplotlib backend from pycharm
+    modules_list = list(sys.modules.keys())
+    old_getfilesystemencoding = None
+    if not sys.getfilesystemencoding():
+        old_getfilesystemencoding = sys.getfilesystemencoding
+        sys.getfilesystemencoding = lambda: 'UTF-8'
+
+    import matplotlib
+
+    if old_getfilesystemencoding:
+        sys.getfilesystemencoding = old_getfilesystemencoding
+    matplotlib.use('module://backend_interagg')
+
+
 except:
     # fallback in case matplotlib is not loaded correctly
     import sys
