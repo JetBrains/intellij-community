@@ -318,26 +318,26 @@ public abstract class PythonCommandLineState extends CommandLineState {
     params.addParamsGroup(GROUP_SCRIPT);
   }
 
-  protected static void initEnvironment(Project project, GeneralCommandLine commandLine, PythonRunParams myConfig, boolean isDebug) {
+  protected static void initEnvironment(Project project, GeneralCommandLine commandLine, PythonRunParams runParams, boolean isDebug) {
     Map<String, String> env = Maps.newHashMap();
 
     setupEncodingEnvs(env, commandLine.getCharset());
 
-    if (myConfig.getEnvs() != null) {
-      env.putAll(myConfig.getEnvs());
+    if (runParams.getEnvs() != null) {
+      env.putAll(runParams.getEnvs());
     }
-    addCommonEnvironmentVariables(getInterpreterPath(project, myConfig), env);
+    addCommonEnvironmentVariables(getInterpreterPath(project, runParams), env);
 
-    setupVirtualEnvVariables(myConfig, env, myConfig.getSdkHome());
+    setupVirtualEnvVariables(runParams, env, runParams.getSdkHome());
 
     commandLine.getEnvironment().clear();
     commandLine.getEnvironment().putAll(env);
-    commandLine.withParentEnvironmentType(myConfig.isPassParentEnvs() ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
+    commandLine.withParentEnvironmentType(runParams.isPassParentEnvs() ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
 
-    buildPythonPath(project, commandLine, myConfig, isDebug);
+    buildPythonPath(project, commandLine, runParams, isDebug);
 
     for (PythonCommandLineEnvironmentProvider envProvider : Extensions.getExtensions(PythonCommandLineEnvironmentProvider.EP_NAME)) {
-      envProvider.extendEnvironment(project, commandLine);
+      envProvider.extendEnvironment(project, commandLine, runParams);
     }
   }
 

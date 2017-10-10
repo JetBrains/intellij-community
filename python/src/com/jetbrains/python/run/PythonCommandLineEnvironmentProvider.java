@@ -24,5 +24,5 @@ public interface PythonCommandLineEnvironmentProvider {
   ExtensionPointName<PythonCommandLineEnvironmentProvider> EP_NAME =
     ExtensionPointName.create("Pythonid.pythonCommandLineEnvironmentProvider");
 
-  void extendEnvironment(@NotNull Project project, @NotNull GeneralCommandLine cmdLine);
+  void extendEnvironment(@NotNull Project project, @NotNull GeneralCommandLine cmdLine, PythonRunParams runParams);
 }

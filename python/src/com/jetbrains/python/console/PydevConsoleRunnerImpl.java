@@ -1105,7 +1105,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     return new PydevConsoleRunnerFactory();
   }
 
-  private static class PythonConsoleRunParams implements PythonRunParams {
+  public static class PythonConsoleRunParams implements PythonRunParams {
     private final PyConsoleOptions.PyConsoleSettings myConsoleSettings;
     private String myWorkingDir;
     private Sdk mySdk;
