@@ -19,6 +19,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.PreloadingActivity;
 import com.intellij.openapi.components.ComponentManager;
@@ -149,19 +150,23 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
 
     @Override
     public void runActivity(@NotNull Project project) {
-      if (!getApplication().isUnitTestMode()) cacheAll(null, project); // for given project
+      cacheAll(null, project); // for given project
     }
 
     private static void cacheAll(@Nullable ProgressIndicator indicator, @Nullable Project project) {
-      long time = System.currentTimeMillis();
-      for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
-        if (indicator != null) indicator.checkCanceled();
-        if (provider instanceof OptionsTopHitProvider) {
-          OptionsTopHitProvider options = (OptionsTopHitProvider)provider;
-          if (options.isEnabled(project)) options.getCachedOptions(project);
+      Application application = getApplication();
+      if (application != null && !application.isUnitTestMode()) {
+        for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
+          if (provider instanceof OptionsTopHitProvider) {
+            application.invokeLater(() -> {
+              if (indicator == null || !indicator.isCanceled()) {
+                OptionsTopHitProvider options = (OptionsTopHitProvider)provider;
+                if (options.isEnabled(project)) options.getCachedOptions(project);
+              }
+            });
+          }
         }
       }
-      LOG.debug((System.currentTimeMillis() - time) + " ms spent to cache options in " + (project == null ? "application" : "project"));
     }
   }
 }
