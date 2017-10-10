@@ -59,8 +59,12 @@ open class StubsGenerator(private val stubsVersion: String, private val stubsSto
     }
   }
 
-  override fun getIndexValue(fileContent: FileContentImpl): SerializedStubTree {
+  override fun getIndexValue(fileContent: FileContentImpl): SerializedStubTree? {
     val stub = buildStubForFile(fileContent, serializationManager)
+
+    if (stub == null) {
+      return null
+    }
 
     val bytes = BufferExposingByteArrayOutputStream()
     serializationManager.serialize(stub, bytes)
@@ -84,7 +88,7 @@ open class StubsGenerator(private val stubsVersion: String, private val stubsSto
   }
 
   open fun buildStubForFile(fileContent: FileContentImpl,
-                            serializationManager: SerializationManagerImpl): Stub {
+                            serializationManager: SerializationManagerImpl): Stub? {
 
     return ReadAction.compute<Stub, Throwable> { StubTreeBuilder.buildStubTree(fileContent) }
   }
@@ -210,46 +214,62 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
  */
 abstract class LanguageLevelAwareStubsGenerator<T>(stubsVersion: String, stubsStorageFilePath: String) : StubsGenerator(stubsVersion,
                                                                                                                         stubsStorageFilePath) {
+  companion object {
+    val FAIL_ON_ERRORS: Boolean = System.getenv("STUB_GENERATOR_FAIL_ON_ERRORS")?.toBoolean() ?: false
+  }
+
   abstract fun languageLevelIterator(): Iterator<T>
 
   abstract fun applyLanguageLevel(level: T)
 
   abstract fun defaultLanguageLevel(): T
 
-  override fun buildStubForFile(fileContent: FileContentImpl, serializationManager: SerializationManagerImpl): Stub {
-    var prevLanguageLevelBytes: ByteArray? = null
+  override fun buildStubForFile(fileContent: FileContentImpl, serializationManager: SerializationManagerImpl): Stub? {
     var prevLanguageLevel: T? = null
     var prevStub: Stub? = null
     val iter = languageLevelIterator()
-    for (languageLevel in iter) {
+    try {
+      for (languageLevel in iter) {
 
-      applyLanguageLevel(languageLevel)
+        applyLanguageLevel(languageLevel)
 
-      // create new FileContentImpl, because it caches stub in user data
-      val content = FileContentImpl(fileContent.file, fileContent.content)
+        // create new FileContentImpl, because it caches stub in user data
+        val content = FileContentImpl(fileContent.file, fileContent.content)
 
-      val stub = super.buildStubForFile(content, serializationManager)
+        val stub = super.buildStubForFile(content, serializationManager)
 
-      val bytes = BufferExposingByteArrayOutputStream()
-      serializationManager.serialize(stub, bytes)
+        if (stub != null) {
+          val bytes = BufferExposingByteArrayOutputStream()
+          serializationManager.serialize(stub, bytes)
 
-      if (prevStub != null) {
-        try {
-          check(stub, prevStub)
-        } catch (e: AssertionError) {
-          val msg = "Stubs are different for ${content.file.path} between Python versions $prevLanguageLevel and $languageLevel.\n"
-          TestCase.assertEquals(msg, DebugUtil.stubTreeToString(stub), DebugUtil.stubTreeToString(prevStub))
-          TestCase.fail(msg + "But DebugUtil.stubTreeToString values of stubs are unfortunately equal.")
+          if (prevStub != null) {
+            try {
+              check(stub, prevStub)
+            }
+            catch (e: AssertionError) {
+              val msg = "Stubs are different for ${content.file.path} between Python versions $prevLanguageLevel and $languageLevel.\n"
+              TestCase.assertEquals(msg, DebugUtil.stubTreeToString(stub), DebugUtil.stubTreeToString(prevStub))
+              TestCase.fail(msg + "But DebugUtil.stubTreeToString values of stubs are unfortunately equal.")
+            }
+          }
         }
+
+        prevLanguageLevel = languageLevel
+        prevStub = stub
       }
 
-      prevLanguageLevel = languageLevel
-      prevStub = stub
+      applyLanguageLevel(defaultLanguageLevel())
+
+      return prevStub!!
     }
-
-    applyLanguageLevel(defaultLanguageLevel())
-
-    return prevStub!!
+    catch (e: AssertionError) {
+      if (FAIL_ON_ERRORS) {
+        throw e
+      }
+      println("Can't generate universal stub for ${fileContent.file.path}")
+      e.printStackTrace()
+      return null
+    }
   }
 }
 
