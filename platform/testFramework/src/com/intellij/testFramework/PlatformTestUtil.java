@@ -249,17 +249,19 @@ public class PlatformTestUtil {
   }
 
   @TestOnly
-  public static void waitForPromise(@NotNull Promise<?> promise) {
+  @Nullable
+  public static <T> T waitForPromise(@NotNull Promise<T> promise) {
     Application app = ApplicationManager.getApplication();
     assert !app.isWriteAccessAllowed() : "It's a bad idea to wait for a promise under the write action. Somebody creates an alarm which requires read action and you are deadlocked.";
     assert app.isDispatchThread();
     AtomicBoolean complete = new AtomicBoolean(false);
     promise.processed(ignore -> complete.set(true));
+    T result = null;
     long start = System.currentTimeMillis();
     while (!complete.get()) {
       UIUtil.dispatchAllInvocationEvents();
       try {
-        promise.blockingGet(20, TimeUnit.MILLISECONDS);
+        result = promise.blockingGet(20, TimeUnit.MILLISECONDS);
       }
       catch (Exception ignore) {
       }
@@ -268,6 +270,7 @@ public class PlatformTestUtil {
       }
     }
     UIUtil.dispatchAllInvocationEvents();
+    return result;
   }
 
   @TestOnly
