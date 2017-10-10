@@ -564,7 +564,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myScrollingToCaret = true;
         ApplicationManager.getApplication().invokeLater(() -> {
           myScrollingToCaret = false;
-          EditorUtil.runWithAnimationDisabled(this, () -> myScrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE));
+          if (!isReleased) EditorUtil.runWithAnimationDisabled(this, () -> myScrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE));
         }, ModalityState.any());
       }
     }
