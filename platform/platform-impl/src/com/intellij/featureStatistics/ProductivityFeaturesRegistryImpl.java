@@ -53,19 +53,19 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
   }
 
   private void reloadFromXml() {
+    boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
     try {
       readFromXml("file:///ProductivityFeaturesRegistry.xml");
     }
-    catch (Exception e) {
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        LOG.error(e);
-      }
+    catch (Throwable e) {
+      if (!testMode) LOG.error(e);
     }
 
     try {
       readFromXml("file:///IdeSpecificFeatures.xml");
     }
-    catch (Exception e) {// ignore
+    catch (Throwable e) {
+      if (!testMode) LOG.warn(e);
     }
   }
 
