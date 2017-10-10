@@ -57,7 +57,6 @@ import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.*;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
-import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -85,14 +84,13 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class StructureViewComponent extends SimpleToolWindowPanel implements TreeActionsOwner, DataProvider, StructureView.Scrollable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.structureView.newStructureView.StructureViewComponent");
 
   private static final Key<TreeState> STRUCTURE_VIEW_STATE_KEY = Key.create("STRUCTURE_VIEW_STATE");
   private static AtomicInteger ourSettingsModificationCount = new AtomicInteger();
-  private final boolean myUseATM = !ApplicationManager.getApplication().isUnitTestMode() &&
+  private final boolean myUseATM = ApplicationManager.getApplication().isUnitTestMode() ||
     Experiments.isFeatureEnabled("structure.view.async.tree.model");
 
   private FileEditor myFileEditor;
@@ -139,10 +137,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         if (isDisposed()) return;
         super.rebuildTree();
         if (myUseATM) {
-          myStructureTreeModel.invalidate().processed(ignored -> {
-            // todo restoreState??
-            //UIUtil.invokeLaterIfNeeded(StructureViewComponent.this::restoreState);
-          });
+          myStructureTreeModel.invalidate();
         }
       }
 
@@ -286,7 +281,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   public void rebuild() {
     if (myUseATM) {
-      //storeState();
       myStructureTreeModel.getInvoker().invokeLaterIfNeeded(myTreeStructure::rebuildTree);
     }
     else {
@@ -757,13 +751,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       if (o instanceof AbstractTreeNode) ((AbstractTreeNode)o).update();
       return TreeVisitor.Action.CONTINUE;
     };
-    AtomicReference<Consumer<TreePath>> thisRef = new AtomicReference<>();
-    Consumer<TreePath> consumer = ignore -> EdtInvocationManager.getInstance().invokeLater(() -> {
-      if (myAsyncTreeModel.isProcessing()) myAsyncTreeModel.accept(visitor).processed(thisRef.get());
-      else result.setResult(null);
-    });
-    thisRef.set(consumer);
-    myStructureTreeModel.getInvoker().invokeLaterIfNeeded(() -> consumer.consume(null));
+    myStructureTreeModel.getInvoker().invokeLater(() ->
+      myAsyncTreeModel.accept(visitor).processed(ignore -> result.setResult(null)));
     return result;
   }
 
