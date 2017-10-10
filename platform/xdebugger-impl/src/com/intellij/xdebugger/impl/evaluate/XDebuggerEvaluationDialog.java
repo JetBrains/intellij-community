@@ -139,12 +139,10 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     mySwitchModeAction = new SwitchModeAction();
 
     // preserve old mode switch shortcut
-    new DumbAwareAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        mySwitchModeAction.actionPerformed(null);
-      }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.ALT_DOWN_MASK)) ,getRootPane(), myDisposable);
+    DumbAwareAction.create(e -> mySwitchModeAction.actionPerformed(null))
+      .registerCustomShortcutSet(
+        new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.ALT_DOWN_MASK)),
+        getRootPane(), myDisposable);
 
     new AnAction(){
       @Override

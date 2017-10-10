@@ -908,40 +908,26 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   private void initSearchActions(JBPopup balloon, MySearchTextField searchTextField) {
     final JTextField editor = searchTextField.getTextEditor();
-    new DumbAwareAction(){
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        jumpNextGroup(true);
+    DumbAwareAction.create(e -> jumpNextGroup(true))
+      .registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), editor, balloon);
+    DumbAwareAction.create(e -> jumpNextGroup(false))
+      .registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), editor, balloon);
+    AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
+    DumbAwareAction.create(e -> {
+      if (myBalloon != null && myBalloon.isVisible()) {
+        myBalloon.cancel();
       }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), editor, balloon);
-    new DumbAwareAction(){
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        jumpNextGroup(false);
+      if (myPopup != null && myPopup.isVisible()) {
+        myPopup.cancel();
       }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), editor, balloon);
-    final AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
-    new DumbAwareAction(){
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        if (myBalloon != null && myBalloon.isVisible()) {
-          myBalloon.cancel();
-        }
-        if (myPopup != null && myPopup.isVisible()) {
-          myPopup.cancel();
-        }
+    }).registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(), editor, balloon);
+    DumbAwareAction.create(e -> {
+      int index = myList.getSelectedIndex();
+      if (index != -1) {
+        doNavigate(index);
       }
-    }.registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(), editor, balloon);
-    new DumbAwareAction(){
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        final int index = myList.getSelectedIndex();
-        if (index != -1) {
-          doNavigate(index);
-        }
-      }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER", "shift ENTER"), editor, balloon);
-    new DumbAwareAction(){
+    }).registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER", "shift ENTER"), editor, balloon);
+    new DumbAwareAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final PropertiesComponent storage = PropertiesComponent.getInstance(e.getProject());

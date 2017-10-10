@@ -97,22 +97,12 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
     if (multiline) {
       ShortcutSet shortcut = ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_OCCURENCE).getShortcutSet();
       if (shortcut != null) {
-        new DumbAwareAction() {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-            goForward();
-          }
-        }.registerCustomShortcutSet(shortcut, myEditorTextField);
+        DumbAwareAction.create(e -> goForward()).registerCustomShortcutSet(shortcut, myEditorTextField);
       }
 
       shortcut = ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_OCCURENCE).getShortcutSet();
       if (shortcut != null) {
-        new DumbAwareAction() {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-            goBackward();
-          }
-        }.registerCustomShortcutSet(shortcut, myEditorTextField);
+        DumbAwareAction.create(e -> goBackward()).registerCustomShortcutSet(shortcut, myEditorTextField);
       }
     }
 

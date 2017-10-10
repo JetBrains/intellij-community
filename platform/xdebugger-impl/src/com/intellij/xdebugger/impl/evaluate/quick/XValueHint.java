@@ -21,7 +21,6 @@ import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -223,12 +222,8 @@ public class XValueHint extends AbstractValueHint {
                 disposeVisibleHint();
                 myDisposable = Disposer.newDisposable();
                 ShortcutSet shortcut = ActionManager.getInstance().getAction("ShowErrorDescription").getShortcutSet();
-                new DumbAwareAction() {
-                  @Override
-                  public void actionPerformed(@NotNull AnActionEvent e) {
-                    showTree(result);
-                  }
-                }.registerCustomShortcutSet(shortcut, getEditor().getContentComponent(), myDisposable);
+                DumbAwareAction.create(e -> showTree(result))
+                  .registerCustomShortcutSet(shortcut, getEditor().getContentComponent(), myDisposable);
               }
 
               showHint(createExpandableHintComponent(text, () -> showTree(result)));

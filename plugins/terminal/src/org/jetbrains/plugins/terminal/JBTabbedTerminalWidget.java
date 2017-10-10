@@ -23,8 +23,6 @@ import com.intellij.ide.dnd.DnDSupport;
 import com.intellij.ide.dnd.TransferableWrapper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
@@ -116,18 +114,14 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
       if (action.isHidden()) {
         continue;
       }
-      AnAction a = new DumbAwareAction() {
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          KeyEvent event = e.getInputEvent() instanceof KeyEvent ? (KeyEvent)e.getInputEvent() : null;
-          if (!action.perform(event)) {
-            if (elseAction != null) {
-              elseAction.apply(event);
-            }
+      DumbAwareAction.create(e -> {
+        KeyEvent event = e.getInputEvent() instanceof KeyEvent ? (KeyEvent)e.getInputEvent() : null;
+        if (!action.perform(event)) {
+          if (elseAction != null) {
+            elseAction.apply(event);
           }
         }
-      };
-      a.registerCustomShortcutSet(action.getKeyCode(), action.getModifiers(), component);
+      }).registerCustomShortcutSet(action.getKeyCode(), action.getModifiers(), component);
     }
   }
 
