@@ -20,16 +20,7 @@ import com.intellij.testGuiFramework.recorder.components.GuiRecorderComponent
 
 object Writer {
 
-  private val scriptBuffer = StringBuilder()
   val indent = 2
-
-  fun getScript(): String {
-    return scriptBuffer.toString()
-  }
-
-  fun clearScript() {
-    scriptBuffer.setLength(0)
-  }
 
   private fun writeln(str: String) {
     write(str + "\n")
@@ -37,10 +28,7 @@ object Writer {
 
   private fun write(str: String) {
     print(str)
-    if (GuiRecorderComponent.syncEditor)
-      writeToEditor(str)
-    else
-      scriptBuffer.append(str)
+    writeToEditor(str)
   }
 
   private fun writeToEditor(str: String) {

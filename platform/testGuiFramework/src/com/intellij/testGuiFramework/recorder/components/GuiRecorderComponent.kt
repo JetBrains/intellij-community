@@ -32,8 +32,6 @@ object GuiRecorderComponent : ApplicationComponent, Disposable {
   var state: States = States.IDLE
   lateinit var frame: GuiScriptEditorFrame
   var currentTask: Future<*>? = null
-  //let editor be synchronised by default
-  var syncEditor = true
 
   override fun initComponent() {
     if(!ApplicationManager.getApplication().isHeadlessEnvironment)
