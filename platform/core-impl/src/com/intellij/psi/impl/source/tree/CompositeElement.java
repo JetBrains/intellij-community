@@ -91,6 +91,7 @@ public class CompositeElement extends TreeElement {
         }
         else if (psi instanceof PsiFile) {
           ((PsiFile)psi).subtreeChanged();
+          assertThreading((PsiFile)psi);
         }
       }
 
@@ -100,7 +101,6 @@ public class CompositeElement extends TreeElement {
 
   @Override
   public void clearCaches() {
-    assertThreading();
     myCachedLength = -1;
 
     myHC = -1;
@@ -108,39 +108,24 @@ public class CompositeElement extends TreeElement {
     clearRelativeOffsets(rawFirstChild());
   }
 
-  private void assertThreading() {
+  private static void assertThreading(@NotNull PsiFile file) {
     if (ASSERT_THREADING) {
-      boolean ok = ApplicationManager.getApplication().isWriteAccessAllowed() || isNonPhysicalOrInjected();
+      boolean ok = ApplicationManager.getApplication().isWriteAccessAllowed() || isNonPhysicalOrInjected(file);
       if (!ok) {
-        LOG.error("Threading assertion. " + getThreadingDiagnostics());
+        LOG.error("Threading assertion. " + getThreadingDiagnostics(file));
       }
     }
   }
 
-  private String getThreadingDiagnostics() {
-    FileElement fileElement;PsiFile psiFile;
-    return " Under write: " + ApplicationManager.getApplication().isWriteAccessAllowed() +
-           "; wrapper: " + myWrapper +
-           "; wrapper.isPhysical(): " + (myWrapper != null && myWrapper.isPhysical()) +
-           "; fileElement: " + (fileElement = TreeUtil.getFileElement(this)) +
-           "; psiFile: " + (psiFile = fileElement == null ? null : (PsiFile)fileElement.getPsi()) +
-           "; psiFile.getViewProvider(): " + (psiFile == null ? null : psiFile.getViewProvider()) +
-           "; psiFile.isPhysical(): " + (psiFile != null && psiFile.isPhysical()) +
-           "; nonPhysicalOrInjected: " + isNonPhysicalOrInjected();
+  private static String getThreadingDiagnostics(@NotNull PsiFile psiFile) {
+    return "psiFile: " + psiFile +
+           "; psiFile.getViewProvider(): " + psiFile.getViewProvider() +
+           "; psiFile.isPhysical(): " + psiFile.isPhysical() +
+           "; nonPhysicalOrInjected: " + isNonPhysicalOrInjected(psiFile);
   }
 
-  private boolean isNonPhysicalOrInjected() {
-    FileElement fileElement = TreeUtil.getFileElement(this);
-    if (fileElement == null || fileElement instanceof DummyHolderElement) return true;
-    if (fileElement.getTreeParent() != null) return true; // dummy holder
-    PsiElement wrapper = this instanceof PsiElement ? (PsiElement)this : myWrapper;
-    if (wrapper == null) return true;
-    PsiFile psiFile = wrapper.getContainingFile();
-    return
-      psiFile ==  null ||
-      psiFile instanceof DummyHolder ||
-      psiFile.getViewProvider() instanceof FreeThreadedFileViewProvider ||
-      !psiFile.isPhysical();
+  private static boolean isNonPhysicalOrInjected(@NotNull PsiFile psiFile) {
+    return psiFile instanceof DummyHolder || psiFile.getViewProvider() instanceof FreeThreadedFileViewProvider || !psiFile.isPhysical();
   }
 
   @Override
@@ -299,7 +284,7 @@ public class CompositeElement extends TreeElement {
 
   private String diagnoseTextInconsistency(String text) {
     @NonNls String msg = "";
-    msg += ";\n nonPhysicalOrInjected=" + isNonPhysicalOrInjected();
+    msg += ";\n nonPhysicalOrInjected=" + isNonPhysicalOrInjected(SharedImplUtil.getContainingFile(this));
     msg += ";\n buffer=" + text;
     try {
       msg += ";\n this=" + this;
