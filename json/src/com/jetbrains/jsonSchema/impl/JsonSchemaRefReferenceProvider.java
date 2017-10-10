@@ -85,7 +85,7 @@ public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
       if (schemaObject == null) return null;
 
       final List<JsonSchemaVariantsTreeBuilder.Step> steps = JsonSchemaVariantsTreeBuilder.buildSteps(StringUtil.join(chain, "/"));
-      return new JsonSchemaResolver(schemaObject, true, steps).findNavigationTarget(true, false);
+      return new JsonSchemaResolver(schemaObject, true, steps).findNavigationTarget(true, null, false);
     }
   }
 }

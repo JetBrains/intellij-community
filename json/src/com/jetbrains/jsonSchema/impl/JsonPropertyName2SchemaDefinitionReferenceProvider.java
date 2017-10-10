@@ -15,12 +15,14 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
@@ -53,8 +55,10 @@ public class JsonPropertyName2SchemaDefinitionReferenceProvider extends PsiRefer
       if (steps == null) return null;
       final JsonSchemaObject schemaObject = service.getSchemaObject(file);
       if (schemaObject != null) {
+        final JsonProperty parentProperty = PsiTreeUtil.getParentOfType(myElement, JsonProperty.class);
         return new JsonSchemaResolver(schemaObject, true, steps)
-          .findNavigationTarget(false, JsonSchemaService.isSchemaFile(myElement.getContainingFile()));
+          .findNavigationTarget(false, parentProperty == null ? null : parentProperty.getValue(),
+                                JsonSchemaService.isSchemaFile(myElement.getContainingFile()));
       }
       return null;
     }

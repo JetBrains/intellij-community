@@ -17,12 +17,15 @@ package com.jetbrains.jsonSchema;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.json.JsonFileType;
 import com.intellij.json.psi.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.AreaPicoContainer;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -30,6 +33,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
@@ -813,5 +817,67 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         checkCompletion("\"id\"", "\"testProp\"");
       }
     });
+  }
+
+  public void testResolveByValuesCombinations() throws Exception {
+    skeleton(new Callback() {
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getModuleDir(getProject());
+        final List<UserDefinedJsonSchemaConfiguration.Item> patterns = Collections.singletonList(
+          new UserDefinedJsonSchemaConfiguration.Item("*.json", true, false));
+        addSchema(new UserDefinedJsonSchemaConfiguration("one", moduleDir + "/ResolveByValuesCombinationsSchema.json", false, patterns));
+      }
+
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFile("ResolveByValuesCombinationsSchema.json");
+      }
+
+      @Override
+      public void doCheck() {
+        final List<Trinity<String, String, String>> variants = ContainerUtil.list(
+          Trinity.create("yes", "barkling", "dog"),
+          Trinity.create("yes", "meowing", "cat"),
+          Trinity.create("yes", "crowling", "mouse"),
+          Trinity.create("not", "apparel", "schrank"),
+          Trinity.create("not", "dinner", "tisch"),
+          Trinity.create("not", "rest", "sessel")
+        );
+        variants.forEach(
+          t -> {
+            final PsiFile file = configureByText(JsonFileType.INSTANCE, String.format("{\"alive\":\"%s\",\n" +
+                                                                                      "\"feature\":\"%s\"}", t.getFirst(), t.getSecond()), ".json");
+            final JsonFile jsonFile = ObjectUtils.tryCast(file, JsonFile.class);
+            Assert.assertNotNull(jsonFile);
+            final JsonObject top = ObjectUtils.tryCast(jsonFile.getTopLevelValue(), JsonObject.class);
+            Assert.assertNotNull(top);
+
+            TextRange range = top.findProperty("alive").getNameElement().getTextRange();
+            checkNavigationToSchemaVariant("alive", range.getStartOffset() + 1, t.getThird());
+
+            range = top.findProperty("feature").getNameElement().getTextRange();
+            checkNavigationToSchemaVariant("feature", range.getStartOffset() + 1, t.getThird());
+          }
+        );
+      }
+    });
+  }
+
+  private void checkNavigationToSchemaVariant(@NotNull String name, int offset, @NotNull String parentPropertyName) {
+    final PsiReference referenceAt = myFile.findReferenceAt(offset);
+    Assert.assertNotNull(referenceAt);
+    final PsiElement resolve = referenceAt.resolve();
+    Assert.assertNotNull(resolve);
+    Assert.assertEquals("\"" + name + "\"", resolve.getText());
+    final PsiElement parent = resolve.getParent();
+    Assert.assertTrue(parent instanceof JsonProperty);
+    Assert.assertEquals(name, ((JsonProperty)parent).getName());
+    Assert.assertTrue(parent.getParent().getParent() instanceof JsonProperty);
+    final JsonProperty props = (JsonProperty)parent.getParent().getParent();
+    Assert.assertEquals("properties", props.getName());
+    final JsonProperty parentProperty = ObjectUtils.tryCast(props.getParent().getParent(), JsonProperty.class);
+    Assert.assertNotNull(parentProperty);
+    Assert.assertEquals(parentPropertyName, parentProperty.getName());
   }
 }
