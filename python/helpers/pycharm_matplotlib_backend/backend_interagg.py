@@ -33,6 +33,14 @@ show = Show()
 
 
 # from pyplot API
+def draw_if_interactive():
+    if matplotlib.is_interactive():
+        figManager = Gcf.get_active()
+        if figManager is not None:
+            figManager.canvas.show()
+
+
+# from pyplot API
 def new_figure_manager(num, *args, **kwargs):
     FigureClass = kwargs.pop('FigureClass', Figure)
     figure = FigureClass(*args, **kwargs)
@@ -60,6 +68,10 @@ class FigureCanvasInterAgg(FigureCanvasAgg):
             buffer = self.tostring_rgb(0, 0)
         else:
             buffer = self.tostring_rgb()
+
+        if len(set(buffer)) <= 1:
+            # do not plot empty
+            return
 
         render = self.get_renderer()
         width, height = int(render.width), int(render.height) # pass to the socket
