@@ -184,7 +184,10 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
                     // optimization: don't need to search, cause may be used only in this class
                     continue;
                   }
-                  affectDirectUsages(changedField, accessChanged, affectedPaths);
+                  if (!affectDirectUsages(changedField, accessChanged, affectedPaths)) {
+                    isSuccess.set(Boolean.FALSE);
+                    break;
+                  }
                 }
               }
             }
@@ -258,6 +261,11 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
     final Ref<Boolean> result = new Ref<>(Boolean.TRUE);
     final PsiFile fieldContainingFile = aClass != null? aClass.getContainingFile() : null;
 
+    SearchScope searchScope = getSearchScope(aClass, fieldAccessFlags);
+    if (containsUnloadedModules(searchScope)) {
+      LOG.debug("Constant search tasks: there may be usages of " + (aClass!= null ? aClass.getQualifiedName() + "::": "") + fieldName + " in unloaded modules");
+      return false;
+    }
     processIdentifiers(psiSearchHelper, new PsiElementProcessor<PsiIdentifier>() {
       @Override
       public boolean execute(@NotNull PsiIdentifier identifier) {
@@ -283,7 +291,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
           return false;
         }
       }
-    }, fieldName, getSearchScope(aClass, fieldAccessFlags), UsageSearchContext.IN_CODE);
+    }, fieldName, searchScope, UsageSearchContext.IN_CODE);
 
     return result.get();
   }
@@ -313,10 +321,10 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
     return helper.processElementsWithWord(processor1, javaScope, identifier, searchContext, true, false);
   }
 
-  private void affectDirectUsages(final PsiField psiField,
+  private boolean affectDirectUsages(final PsiField psiField,
                                   final boolean ignoreAccessScope,
                                   final Set<String> affectedPaths) throws ProcessCanceledException {
-    ApplicationManager.getApplication().runReadAction(() -> {
+    return ReadAction.compute(() -> {
       if (psiField.isValid()) {
         final PsiFile fieldContainingFile = psiField.getContainingFile();
         final Set<PsiFile> processedFiles = new HashSet<>();
@@ -326,6 +334,10 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
         // if field is invalid, the file might be changed, so next time it is compiled,
         // the constant value change, if any, will be processed
         final Collection<PsiReferenceExpression> references = doFindReferences(psiField, ignoreAccessScope);
+        if (references == null) {
+          return false;
+        }
+
         for (final PsiReferenceExpression ref : references) {
           final PsiElement usage = ref.getElement();
           final PsiFile containingPsi = usage.getContainingFile();
@@ -337,13 +349,20 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
           }
         }
       }
+      return true;
     });
   }
 
+  @Nullable("returns null if search failed")
   private Collection<PsiReferenceExpression> doFindReferences(final PsiField psiField, boolean ignoreAccessScope) {
     final SmartList<PsiReferenceExpression> result = new SmartList<>();
 
     final SearchScope searchScope = (ignoreAccessScope? psiField.getContainingFile() : psiField).getUseScope();
+    if (containsUnloadedModules(searchScope)) {
+      PsiClass aClass = psiField.getContainingClass();
+      LOG.debug("Constant search tasks: there may be usages of " + (aClass != null ? aClass.getQualifiedName() + "::" : "") + psiField.getName() + " in unloaded modules");
+      return null;
+    }
 
     processIdentifiers(PsiSearchHelper.SERVICE.getInstance(myProject), new PsiElementProcessor<PsiIdentifier>() {
       @Override
@@ -382,6 +401,19 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
       element = element.getParent();
     }
     return null;
+  }
+
+  private static boolean containsUnloadedModules(SearchScope scope) {
+    if (scope instanceof LocalSearchScope) {
+      return false;
+    }
+    else if (scope instanceof GlobalSearchScope) {
+      return !((GlobalSearchScope)scope).getUnloadedModulesBelongingToScope().isEmpty();
+    }
+    else {
+      //cannot happen now, every SearchScope's implementation extends either LocalSearchScope or GlobalSearchScope
+      return true;
+    }
   }
 
   private static boolean isPackageLocal(int flags) {
