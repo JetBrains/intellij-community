@@ -29,19 +29,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.util.NullableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageService
-import com.jetbrains.python.sdk.associateWithProject
-import com.jetbrains.python.sdk.createSdkByGenerateTask
-import com.jetbrains.python.sdk.findBaseSdks
+import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import icons.PythonIcons
 import org.jetbrains.annotations.SystemDependent
@@ -50,23 +48,16 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.awt.BorderLayout
 import java.io.File
 import javax.swing.Icon
-import javax.swing.event.DocumentEvent
 
 /**
  * @author vlan
  */
 class PyAddNewVirtualEnvPanel(private val project: Project?,
                               private val existingSdks: List<Sdk>,
-                              newProjectPath: String?) : PyAddSdkPanel() {
+                              private val newProjectPath: String?) : PyAddSdkPanel() {
   companion object {
     private const val VIRTUALENV_ROOT_DIR_MACRO_NAME = "VIRTUALENV_ROOT_DIR"
   }
-
-  var newProjectPath: String? = newProjectPath
-    set(value) {
-      field = value
-      pathField.text = defaultBasePath
-    }
 
   val path: String
     get() = pathField.text.trim()
@@ -101,6 +92,10 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
       .filterNotNull()
 
   override fun getOrCreateSdk(): Sdk? {
+    return if (newProjectPath != null) sdk else createSdk()
+  }
+
+  private fun createSdk(): Sdk? {
     val root = pathField.text
     val task = object : Task.WithResult<String, ExecutionException>(project, "Creating Virtual Environment", false) {
       override fun compute(indicator: ProgressIndicator): String {
@@ -121,14 +116,15 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
     return sdk
   }
 
-  fun addChangeListener(listener: Runnable) {
-    pathField.textField.document.addDocumentListener(object: DocumentAdapter() {
-      override fun textChanged(e: DocumentEvent?) {
-        listener.run()
+  override val sdk: Sdk?
+    get() {
+      val baseName = baseSdkField.selectedSdk?.homePath?.let { PythonSdkType.suggestBaseSdkName(it) }
+      val title = when {
+        baseName != null -> "New ${baseName} virtual environment"
+        else -> "New virtual environment"
       }
-    })
-    baseSdkField.childComponent.addItemListener { listener.run() }
-  }
+      return PyLazySdk(title, PythonIcons.Python.Virtualenv, NullableComputable { createSdk() })
+    }
 
   private fun excludeDirectoryFromProject(path: String, project: Project?) {
     val currentProject = project ?: findProjectFromFocus() ?: return
