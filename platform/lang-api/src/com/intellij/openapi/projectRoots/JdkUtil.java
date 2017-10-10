@@ -141,7 +141,11 @@ public class JdkUtil {
   }
 
   public static boolean isModularRuntime(@NotNull File homePath) {
-    return new File(homePath, "lib/jrt-fs.jar").isFile();
+    return new File(homePath, "lib/jrt-fs.jar").isFile() || isExplodedModularRuntime(homePath.getPath());
+  }
+
+  public static boolean isExplodedModularRuntime(@NotNull String homePath) {
+    return new File(homePath, "modules/java.base").isDirectory();
   }
 
   public static GeneralCommandLine setupJVMCommandLine(@NotNull SimpleJavaParameters javaParameters) throws CantRunException {

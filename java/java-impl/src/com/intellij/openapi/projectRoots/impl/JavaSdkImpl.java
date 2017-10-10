@@ -419,7 +419,13 @@ public class JavaSdkImpl extends JavaSdk {
     List<VirtualFile> result = ContainerUtil.newArrayList();
     VirtualFileManager fileManager = VirtualFileManager.getInstance();
 
-    if (JdkUtil.isModularRuntime(file)) {
+    if (JdkUtil.isExplodedModularRuntime(file.getPath())) {
+      VirtualFile exploded = fileManager.findFileByUrl(StandardFileSystems.FILE_PROTOCOL_PREFIX + getPath(new File(file, "modules")));
+      if (exploded != null) {
+        ContainerUtil.addAll(result, exploded.getChildren());
+      }
+    }
+    else if (JdkUtil.isModularRuntime(file)) {
       VirtualFile jrt = fileManager.findFileByUrl(JrtFileSystem.PROTOCOL_PREFIX + getPath(file) + JrtFileSystem.SEPARATOR);
       if (jrt != null) {
         ContainerUtil.addAll(result, jrt.getChildren());
