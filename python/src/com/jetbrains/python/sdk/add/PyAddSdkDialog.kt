@@ -24,7 +24,6 @@ import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.list.GroupedItemsListRenderer
-import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.sdk.PreferredSdkComparator
 import com.jetbrains.python.sdk.PythonSdkType
@@ -101,18 +100,13 @@ class PyAddSdkDialog(private val project: Project?,
   private fun createVirtualEnvPanel(project: Project?,
                                     existingSdks: List<Sdk>,
                                     newProjectPath: String?): PyAddSdkPanel {
-    val newVirtualEnvPanel = if (project != null || PlatformUtils.isPyCharmEducational())
-      PyAddNewVirtualEnvPanel(project, existingSdks, newProjectPath)
-    else
-      null
+    val newVirtualEnvPanel = PyAddNewVirtualEnvPanel(project, existingSdks, newProjectPath)
     val existingVirtualEnvPanel = PyAddExistingVirtualEnvPanel(project, existingSdks, newProjectPath)
     val panels = listOf(newVirtualEnvPanel,
                         existingVirtualEnvPanel)
-      .filterNotNull()
     val defaultPanel = when {
       detectVirtualEnvs(project, existingSdks).any { it.isAssociatedWithProject(project) } -> existingVirtualEnvPanel
-      newVirtualEnvPanel != null -> newVirtualEnvPanel
-      else -> existingVirtualEnvPanel
+      else -> newVirtualEnvPanel
     }
     return PyAddSdkGroupPanel("Virtual environment", PythonIcons.Python.Virtualenv, panels, defaultPanel)
   }

@@ -224,7 +224,7 @@ public final class PythonSdkType extends SdkType {
   }
 
   public static boolean isInvalid(@NotNull Sdk sdk) {
-    if (isRemote(sdk)) {
+    if (isRemote(sdk) || sdk instanceof PyLazySdk) {
       return false;
     }
     final VirtualFile interpreter = sdk.getHomeDirectory();

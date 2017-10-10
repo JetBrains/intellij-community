@@ -29,7 +29,8 @@ import java.awt.Component
 class PyAddExistingSdkPanel(project: Project?,
                             existingSdks: List<Sdk>,
                             newProjectPath: String?,
-                            preferredSdk: Sdk?) : PyAddSdkPanel() {
+                            preferredSdk: Sdk?,
+                            formBuilder: FormBuilder) : PyAddSdkPanel() {
 
   override val panelName = "Existing interpreter"
 
@@ -56,7 +57,6 @@ class PyAddExistingSdkPanel(project: Project?,
 
   init {
     layout = BorderLayout()
-    // TODO: Set new project path on external change
     sdkChooserCombo = PythonSdkChooserCombo(project, existingSdks, newProjectPath, { it != null && it == preferredSdk }).apply {
       if (SystemInfo.isMac && !UIUtil.isUnderDarcula()) {
         putClientProperty("JButton.buttonType", null)
@@ -66,7 +66,7 @@ class PyAddExistingSdkPanel(project: Project?,
         update()
       }
     }
-    val formPanel = FormBuilder.createFormBuilder()
+    val formPanel = formBuilder
       .addLabeledComponent("Interpreter:", sdkChooserCombo)
       .addComponent(remotePathField.mainPanel)
       .panel
