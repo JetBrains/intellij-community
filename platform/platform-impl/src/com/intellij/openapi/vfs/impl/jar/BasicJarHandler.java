@@ -115,40 +115,46 @@ public class BasicJarHandler extends ZipHandlerBase {
       
       myLock.lock();
 
-      ScheduledFuture<?> invalidationRequest = myInvalidationRequest;
-      if (invalidationRequest != null) {
-        invalidationRequest.cancel(false);
-        myInvalidationRequest = null;
-      }
-
-      if (myFile == null) {
-        File fileToUse = getFile();
-        if (doTracing) trace("To be opened:" + fileToUse);
-
-        long started = doTracing ? System.nanoTime() : 0;
-
-        FileAttributes attributes = FileSystemUtil.getAttributes(fileToUse.getPath());
-
-        myFileStamp = attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP;
-        //myFileLength = attributes != null ? attributes.length : DEFAULT_LENGTH;
-
-        ZipFile file = new ZipFile(fileToUse);
-
-        if (doTracing) {
-          long openedFor = System.nanoTime() - started;
-          int opened = ourOpenCount.incrementAndGet();
-          long openTime = ourOpenTime.addAndGet(openedFor);
-
-          trace("Opened for " +
-                (openedFor / 1000000) +
-                "ms, times opened:" +
-                opened +
-                ", open time:" +
-                (openTime / 1000000) +
-                "ms, reference will be cached for " + cacheInvalidationTime() + "ms");
+      try {
+        ScheduledFuture<?> invalidationRequest = myInvalidationRequest;
+        if (invalidationRequest != null) {
+          invalidationRequest.cancel(false);
+          myInvalidationRequest = null;
         }
 
-        myFile = file;
+        if (myFile == null) {
+          File fileToUse = getFile();
+          if (doTracing) trace("To be opened:" + fileToUse);
+  
+          long started = doTracing ? System.nanoTime() : 0;
+  
+          FileAttributes attributes = FileSystemUtil.getAttributes(fileToUse.getPath());
+  
+          myFileStamp = attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP;
+          //myFileLength = attributes != null ? attributes.length : DEFAULT_LENGTH;
+  
+          ZipFile file = new ZipFile(fileToUse);
+  
+          if (doTracing) {
+            long openedFor = System.nanoTime() - started;
+            int opened = ourOpenCount.incrementAndGet();
+            long openTime = ourOpenTime.addAndGet(openedFor);
+  
+            trace("Opened for " +
+                  (openedFor / 1000000) +
+                  "ms, times opened:" +
+                  opened +
+                  ", open time:" +
+                  (openTime / 1000000) +
+                  "ms, reference will be cached for " + cacheInvalidationTime() + "ms");
+          }
+  
+          myFile = file;
+        }
+      }
+      catch (IOException|RuntimeException e) {
+        myLock.unlock();
+        throw e;
       }
     }
 
@@ -156,10 +162,13 @@ public class BasicJarHandler extends ZipHandlerBase {
     public void close() {
       assert myLock.isLocked();
       ScheduledFuture<?> invalidationRequest;
-      myInvalidationRequest = invalidationRequest = 
-        JobScheduler.getScheduler().schedule(() -> invalidateZipReference(), cacheInvalidationTime(), TimeUnit.MILLISECONDS);
-
-      myLock.unlock();
+      try {
+        myInvalidationRequest = invalidationRequest = 
+          JobScheduler.getScheduler().schedule(() -> invalidateZipReference(), cacheInvalidationTime(), TimeUnit.MILLISECONDS);
+      }
+      finally {
+        myLock.unlock();
+      }
 
       synchronized (ourOpenFileLimitGuard) {
         ourOpenFileLimitGuard.put(BasicJarHandler.this, invalidationRequest);

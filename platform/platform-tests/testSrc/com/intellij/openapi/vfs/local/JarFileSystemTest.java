@@ -46,6 +46,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
 
@@ -137,44 +139,71 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testBasicJarHandlerConcurrency() throws Exception {
-    int number = 40;
-    List<BasicJarHandler> handlers = new ArrayList<>();
-    for(int i = 0; i < number; ++i) {
-      File jar = IoTestUtil.createTestJar(tempDir.newFile("test" + i + ".jar"));
-      handlers.add(new BasicJarHandler(jar.getPath()));
-    }
-
-    int N = Math.max(2, Runtime.getRuntime().availableProcessors());
-    for(int iteration = 0 ; iteration < 200; ++iteration) {
-      if (iteration % 10 == 0) System.out.println(iteration);
-      List<Future> futuresToWait = new ArrayList<>();
-      CountDownLatch sameStartCondition = new CountDownLatch(N);
-
-      for(int i = 0; i < N; ++i) {
-        futuresToWait.add(ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          try {
-            sameStartCondition.countDown();
-            sameStartCondition.await();
-            Random random = new Random();
-            for (int j = 0; j < 1000; ++j) {
-              BasicJarHandler handler = handlers.get(random.nextInt(handlers.size()));
-
-              int op = random.nextInt(2);
-              if (op == 0) assertNotNull(handler.getAttributes(JarFile.MANIFEST_NAME));
-              else if (op == 1) assertNotNull(handler.contentsToByteArray(JarFile.MANIFEST_NAME));
-            }
-          }
-          catch (Throwable ignore) {
-            ignore.printStackTrace();
-          }
-        }));
+  public void testBasicJarHandlerWithInvalidJar() throws Exception {
+    final BasicJarHandler handler = new BasicJarHandler("some invalid path");
+    Runnable failingIOAction = () -> {
+      try {
+        handler.getInputStream("").close();
+        fail("Unexpected");
       }
-
-      for(Future future:futuresToWait) future.get();
+      catch (IOException ignored) {
+      }
+    };
+    failingIOAction.run();
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(failingIOAction);
+    try {
+      future.get(1, TimeUnit.SECONDS);
+    }
+    catch (TimeoutException exception) {
+      fail("Deadlock detected");
     }
   }
-  
+
+  @Test
+  public void testBasicJarHandlerConcurrency() throws Exception {
+    try {
+      int number = 40;
+      List<BasicJarHandler> handlers = new ArrayList<>();
+      for (int i = 0; i < number; ++i) {
+        File jar = IoTestUtil.createTestJar(tempDir.newFile("test" + i + ".jar"));
+        handlers.add(new BasicJarHandler(jar.getPath()));
+      }
+
+      int N = Math.max(2, Runtime.getRuntime().availableProcessors());
+      for (int iteration = 0; iteration < 200; ++iteration) {
+        List<Future> futuresToWait = new ArrayList<>();
+        CountDownLatch sameStartCondition = new CountDownLatch(N);
+
+        for (int i = 0; i < N; ++i) {
+          futuresToWait.add(ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            try {
+              sameStartCondition.countDown();
+              sameStartCondition.await();
+              Random random = new Random();
+              for (int j = 0; j < 2 * number; ++j) {
+                BasicJarHandler handler = handlers.get(random.nextInt(handlers.size()));
+
+                int op = random.nextInt(2);
+                if (op == 0) {
+                  assertNotNull(handler.getAttributes(JarFile.MANIFEST_NAME));
+                }
+                else if (op == 1) assertNotNull(handler.contentsToByteArray(JarFile.MANIFEST_NAME));
+              }
+            }
+            catch (Throwable ignore) {
+              ignore.printStackTrace();
+            }
+          }));
+        }
+
+        for (Future future : futuresToWait) future.get(2, TimeUnit.SECONDS);
+      }
+    }
+    catch (TimeoutException e) {
+      fail("Deadlock detected");
+    }
+  }
+
   @Test
   public void testJarHandlerDoNotCreateCopyWhenListingArchive() throws Exception {
     File jar = IoTestUtil.createTestJar(tempDir.newFile("test.jar"));
@@ -191,7 +220,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
       resolved.setAccessible(true);
       assertTrue(resolved.get(handler) == null);
     }
-    
+
     jarFileSystem.setNoCopyJarForPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR);
     assertTrue(!jarFileSystem.isMakeCopyOfJar(jar));
   }
