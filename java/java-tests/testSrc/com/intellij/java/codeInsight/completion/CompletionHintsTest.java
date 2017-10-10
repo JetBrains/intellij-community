@@ -708,6 +708,13 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     checkResultWithInlays("class C { void m() { String local = \"a\"; String local2 = \"b\"; System.getProperty(<hint text=\"key:\"/>local, <HINT text=\"def:\"/><caret>) } }");
   }
 
+  public void testGenericType() throws Exception {
+    configureJava("class C { void abcd(Class<?> c) {} void m() { abc<caret> } }");
+    complete();
+    waitForAllAsyncStuff();
+    checkHintContents("<html><b>Class&lt;?&gt;</b></html>");
+  }
+
   private void checkResult(String text) {
     myFixture.checkResult(text);
   }
