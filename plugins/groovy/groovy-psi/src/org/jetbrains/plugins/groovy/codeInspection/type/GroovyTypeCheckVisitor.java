@@ -795,7 +795,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     );
   }
 
-  //copypaste from org.codehaus.groovy.transform.stc.StaticTypeCheckingSupport.checkPossibleLooseOfPrecision()
+  //see org.codehaus.groovy.transform.stc.StaticTypeCheckingSupport.checkPossibleLooseOfPrecision()
   static boolean isPossibleLooseOfPrecision(@NotNull PsiType targetType, @NotNull PsiType actualType, @NotNull GrExpression expression) {
     int targetRank = getTypeRank(targetType);
     int actualRank = getTypeRank(actualType);

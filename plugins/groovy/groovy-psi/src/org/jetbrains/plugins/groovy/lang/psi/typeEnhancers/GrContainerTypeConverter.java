@@ -36,9 +36,10 @@ public class GrContainerTypeConverter extends GrTypeConverter {
     return null;
   }
 
-  private static ConversionResult isCSConvertible(PsiType targetType,
-                                                  PsiType actualType,
-                                                  GroovyPsiElement context) {
+  @Nullable
+  private static ConversionResult isCSConvertible(@NotNull PsiType targetType,
+                                                  @NotNull PsiType actualType,
+                                                  @NotNull GroovyPsiElement context) {
     if (targetType instanceof PsiArrayType && actualType instanceof PsiArrayType) {
       return TypesUtil.isAssignableByParameter(((PsiArrayType)targetType).getComponentType(), ((PsiArrayType)actualType).getComponentType(),
                                                context) ? ConversionResult.OK : ConversionResult.ERROR;

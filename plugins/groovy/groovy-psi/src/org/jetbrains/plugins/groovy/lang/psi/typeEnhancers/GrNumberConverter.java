@@ -28,14 +28,15 @@ public class GrNumberConverter extends GrTypeConverter {
                                           @NotNull PsiType actualType,
                                           @NotNull GroovyPsiElement context,
                                           @NotNull ApplicableTo currentPosition) {
-    if (PsiUtil.isCompileStatic(context)) return isCSConvertible(targetType, actualType, context, currentPosition);
+    if (PsiUtil.isCompileStatic(context)) return isCSConvertible(targetType, actualType);
     if (TypesUtil.isNumericType(targetType) && TypesUtil.isNumericType(actualType)) {
       return OK;
     }
     return null;
   }
 
-  private static ConversionResult isCSConvertible(PsiType targetType, PsiType actualType, GroovyPsiElement context, @NotNull ApplicableTo currentPosition) {
+  @Nullable
+  private static ConversionResult isCSConvertible(@NotNull PsiType targetType, @NotNull PsiType actualType) {
 
     if (TypesUtil.isClassType(actualType, JAVA_MATH_BIG_DECIMAL))
       return isFloatOrDoubleType(targetType) ? OK : null;
