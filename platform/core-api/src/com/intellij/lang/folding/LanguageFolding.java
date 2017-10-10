@@ -49,13 +49,9 @@ public class LanguageFolding extends LanguageExtension<FoldingBuilder> {
     List<FoldingBuilder> extensions = new ArrayList<>(forKey(l));
     FoldingBuilder result;
 
-    if (!(l instanceof MetaLanguage)) {
-      for (MetaLanguage metaLanguage : MetaLanguage.all()) {
-        if (metaLanguage.getMatchingLanguages().contains(l)) {
-          extensions.addAll(allForLanguage(metaLanguage));
-        }
-      }
-    }
+    MetaLanguage.getAllMatchingMetaLanguages(l).forEach(metaLanguage -> {
+      extensions.addAll(allForLanguage(metaLanguage));
+    });
 
     if (extensions.isEmpty()) {
 
