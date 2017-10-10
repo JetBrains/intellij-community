@@ -437,6 +437,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
   @Override
   protected void installListeners() {
+    myDisposed = false;
+
     initRegularThumbAnimator();
     initMacScrollbarAnimators();
 
