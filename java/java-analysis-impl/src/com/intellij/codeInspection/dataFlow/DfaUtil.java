@@ -20,7 +20,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -200,7 +199,7 @@ public class DfaUtil {
 
     PsiClass placeClass = placeMethod.getContainingClass();
     if (placeClass == null || placeClass != target.getContainingClass()) return null;
-    if (!placeMethod.hasModifier(JvmModifier.STATIC) && target.hasModifier(JvmModifier.STATIC)) return null;
+    if (!placeMethod.hasModifierProperty(PsiModifier.STATIC) && target.hasModifierProperty(PsiModifier.STATIC)) return null;
     if (getAccessOffset(placeMethod) >= getWriteOffset(target)) return null;
 
     return factory.createTypeValue(target.getType(), Nullness.NULLABLE);
@@ -210,7 +209,7 @@ public class DfaUtil {
     // Final field: written either in field initializer or in class initializer block which directly writes this field
     // Non-final field: written either in field initializer, in class initializer which directly writes this field or calls any method,
     //    or in other field initializer which directly writes this field or calls any method
-    boolean isFinal = target.hasModifier(JvmModifier.FINAL);
+    boolean isFinal = target.hasModifierProperty(PsiModifier.FINAL);
     int offset = Integer.MAX_VALUE;
     if (target.getInitializer() != null) {
       offset = target.getInitializer().getTextRange().getStartOffset();
@@ -225,7 +224,7 @@ public class DfaUtil {
     Predicate<PsiElement> hasSideEffectCall = element -> !PsiTreeUtil.findChildrenOfType(element, PsiMethodCallExpression.class).stream()
       .map(PsiMethodCallExpression::resolveMethod).allMatch(method -> method != null && ControlFlowAnalyzer.isPure(method));
     for (PsiClassInitializer initializer : initializers) {
-      if (initializer.hasModifier(JvmModifier.STATIC) != target.hasModifier(JvmModifier.STATIC)) continue;
+      if (initializer.hasModifierProperty(PsiModifier.STATIC) != target.hasModifierProperty(PsiModifier.STATIC)) continue;
       if (!isFinal && hasSideEffectCall.test(initializer)) {
         // non-final field could be written indirectly (via method call), so assume it's written in the first applicable initializer
         offset = Math.min(offset, initializer.getTextRange().getStartOffset());
@@ -239,7 +238,7 @@ public class DfaUtil {
     }
     if (!isFinal) {
       for (PsiField field : aClass.getFields()) {
-        if (field.hasModifier(JvmModifier.STATIC) != target.hasModifier(JvmModifier.STATIC)) continue;
+        if (field.hasModifierProperty(PsiModifier.STATIC) != target.hasModifierProperty(PsiModifier.STATIC)) continue;
         if (hasSideEffectCall.test(field.getInitializer()) || writesToTarget.test(field)) {
           offset = Math.min(offset, field.getTextRange().getStartOffset());
           break;
@@ -251,9 +250,9 @@ public class DfaUtil {
 
   private static int getAccessOffset(PsiMethod referrer) {
     PsiClass aClass = Objects.requireNonNull(referrer.getContainingClass());
-    boolean isStatic = referrer.hasModifier(JvmModifier.STATIC);
+    boolean isStatic = referrer.hasModifierProperty(PsiModifier.STATIC);
     for (PsiField field : aClass.getFields()) {
-      if (field.hasModifier(JvmModifier.STATIC) != isStatic) continue;
+      if (field.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
       PsiExpression initializer = field.getInitializer();
       Predicate<PsiExpression> callToMethod = (PsiExpression e) -> {
         if (!(e instanceof PsiMethodCallExpression)) return false;

@@ -21,7 +21,6 @@ import com.intellij.codeInspection.dataFlow.inliner.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
-import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -84,7 +83,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(conditionalGoto);
     for (PsiElement element : psiClass.getChildren()) {
       if ((element instanceof PsiField || element instanceof PsiClassInitializer) &&
-          ((PsiModifierListOwner)element).hasModifier(JvmModifier.STATIC) == isStatic) {
+          ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC) == isStatic) {
         element.accept(this);
       }
     }
@@ -292,7 +291,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (initializer != null) {
       initializeVariable(field, initializer);
     }
-    else if (!field.hasModifier(JvmModifier.FINAL)) {
+    else if (!field.hasModifierProperty(PsiModifier.FINAL)) {
       // initialize with default value
       DfaVariableValue dfaVariable = myFactory.getVarFactory().createVariableValue(field, false);
       addInstruction(new PushInstruction(dfaVariable, null, true));
