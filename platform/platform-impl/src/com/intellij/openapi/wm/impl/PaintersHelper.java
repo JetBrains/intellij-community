@@ -326,7 +326,7 @@ final class PaintersHelper implements Painter.Listener {
           if (fillType == Fill.SCALE) {
             gg.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
                                 RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-            gg.drawImage(image, 0, 0, sw, sh, null);
+            UIUtil.drawImage(gg, image, new Rectangle(0, 0, sw, sh), null);
           }
           else {
             for (int x = 0; x < sw; x += w) {
