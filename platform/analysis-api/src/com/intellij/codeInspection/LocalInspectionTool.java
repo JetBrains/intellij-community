@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -167,12 +153,18 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
     };
   }
 
+  /**
+   * The method finds problem container (ex: method, class, file) that used to be shown as inspection view tree node.
+   *
+   * Consider {@link com.intellij.codeInspection.lang.RefManagerExtension#getElementContainer(PsiElement)}
+   * to override container element for any inspection for given language.
+   *
+   * @param psiElement: problem element
+   * @return problem container element
+   */
   @Nullable
-  public PsiNamedElement getProblemElement(PsiElement psiElement) {
-    while (psiElement!=null && !(psiElement instanceof PsiFile)) {
-      psiElement = psiElement.getParent();
-    }
-    return (PsiFile)psiElement;
+  public PsiNamedElement getProblemElement(@NotNull PsiElement psiElement) {
+    return psiElement.getContainingFile();
   }
 
   public void inspectionStarted(@NotNull LocalInspectionToolSession session, boolean isOnTheFly) {}

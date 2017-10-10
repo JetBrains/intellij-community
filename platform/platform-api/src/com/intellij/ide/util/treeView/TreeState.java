@@ -28,6 +28,7 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -47,6 +48,7 @@ import javax.swing.tree.TreePath;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -120,7 +122,7 @@ public class TreeState implements JDOMExternalizable {
   private final List<List<PathElement>> mySelectedPaths;
   private boolean myScrollToSelection;
 
-  private TreeState(List<List<PathElement>> expandedPaths, final List<List<PathElement>> selectedPaths) {
+  private TreeState(List<List<PathElement>> expandedPaths, List<List<PathElement>> selectedPaths) {
     myExpandedPaths = expandedPaths;
     mySelectedPaths = selectedPaths;
     myScrollToSelection = true;
@@ -147,9 +149,14 @@ public class TreeState implements JDOMExternalizable {
   }
 
   @NotNull
-  public static TreeState createOn(JTree tree, final DefaultMutableTreeNode treeNode) {
-    return new TreeState(createPaths(tree, TreeUtil.collectExpandedPaths(tree, new TreePath(treeNode.getPath()))),
-                         createPaths(tree, TreeUtil.collectSelectedPaths(tree, new TreePath(treeNode.getPath()))));
+  public static TreeState createOn(@NotNull JTree tree, @NotNull DefaultMutableTreeNode treeNode) {
+    return createOn(tree, new TreePath(treeNode.getPath()));
+  }
+
+  @NotNull
+  public static TreeState createOn(@NotNull JTree tree, @NotNull TreePath rootPath) {
+    return new TreeState(createPaths(tree, TreeUtil.collectExpandedPaths(tree, rootPath)),
+                         createPaths(tree, TreeUtil.collectSelectedPaths(tree, rootPath)));
   }
 
   @NotNull
@@ -187,29 +194,27 @@ public class TreeState implements JDOMExternalizable {
     element.addContent(root);
   }
 
-  private static List<List<PathElement>> createPaths(JTree tree, List<TreePath> paths) {
-    ArrayList<List<PathElement>> result = new ArrayList<>();
-    for (TreePath path : paths) {
-      if (tree.isRootVisible() || path.getPathCount() > 1) {
-        ContainerUtil.addIfNotNull(result, createPath(tree.getModel(), path));
-      }
-    }
-    return result;
+  @NotNull
+  private static List<List<PathElement>> createPaths(@NotNull JTree tree, @NotNull List<TreePath> paths) {
+    return JBIterable.from(paths)
+      .filter(o -> o.getPathCount() > 1 || tree.isRootVisible())
+      .map(o -> createPath(tree.getModel(), o))
+      .toList();
   }
 
   @NotNull
   private static List<PathElement> createPath(@NotNull TreeModel model, @NotNull TreePath treePath) {
-    ArrayList<PathElement> result = new ArrayList<>();
     Object prev = null;
-    for (int i = 0; i < treePath.getPathCount(); i++) {
+    int count = treePath.getPathCount();
+    PathElement[] result = new PathElement[count];
+    for (int i = 0; i < count; i++) {
       Object cur = treePath.getPathComponent(i);
       Object userObject = TreeUtil.getUserObject(cur);
       int childIndex = prev == null ? 0 : model.getIndexOfChild(prev, cur);
-      PathElement pe = new PathElement(calcId(userObject), calcType(userObject), childIndex, userObject);
-      result.add(pe);
+      result[i] = new PathElement(calcId(userObject), calcType(userObject), childIndex, userObject);
       prev = cur;
     }
-    return result;
+    return Arrays.asList(result);
   }
 
   @NotNull
@@ -467,21 +472,21 @@ public class TreeState implements JDOMExternalizable {
     return false;
   }
 
-  private Promise<List<TreePath>> expand(@NotNull Function<TreeVisitor, Promise<TreePath>> visit, @NotNull JTree tree) {
-    return collectResults(myExpandedPaths.stream().map(elements -> new Visitor(elements, tree::expandPath)).map(visit).collect(toList()));
+  private Promise<List<TreePath>> expand(@NotNull Function<TreeVisitor, Promise<TreePath>> acceptor, @NotNull JTree tree) {
+    return collectResults(myExpandedPaths.stream().map(elements -> new Visitor(elements, tree::expandPath)).map(acceptor).collect(toList()));
   }
 
-  private Promise<List<TreePath>> select(@NotNull Function<TreeVisitor, Promise<TreePath>> visit) {
-    return collectResults(mySelectedPaths.stream().map(elements -> new Visitor(elements, null)).map(visit).collect(toList()));
+  private Promise<List<TreePath>> select(@NotNull Function<TreeVisitor, Promise<TreePath>> acceptor) {
+    return collectResults(mySelectedPaths.stream().map(elements -> new Visitor(elements, null)).map(acceptor).collect(toList()));
   }
 
   private boolean visit(@NotNull JTree tree) {
-    Function<TreeVisitor, Promise<TreePath>> visit = UIUtil.getClientProperty(tree, VISIT);
-    if (visit == null) return false;
+    Function<TreeVisitor, Promise<TreePath>> acceptor = UIUtil.getClientProperty(tree, VISIT);
+    if (acceptor == null) return false;
 
-    expand(tree, promise -> expand(visit, tree).processed(expanded -> {
+    expand(tree, promise -> expand(acceptor, tree).processed(expanded -> {
       if (isSelectionNeeded(expanded, tree, promise)) {
-        select(visit).processed(selected -> {
+        select(acceptor).processed(selected -> {
           if (isSelectionNeeded(selected, tree, promise)) {
             for (TreePath path : selected) {
               tree.addSelectionPath(path);
@@ -498,14 +503,14 @@ public class TreeState implements JDOMExternalizable {
     private final List<PathElement> elements;
     private final Consumer<TreePath> consumer;
 
-    private Visitor(List<PathElement> elements, Consumer<TreePath> consumer) {
+    Visitor(List<PathElement> elements, Consumer<TreePath> consumer) {
       this.elements = elements;
       this.consumer = consumer;
     }
 
     @NotNull
     @Override
-    public Action accept(@NotNull TreePath path) {
+    public Action visit(@NotNull TreePath path) {
       int count = path.getPathCount();
       if (count > elements.size()) return Action.SKIP_CHILDREN;
       boolean matches = elements.get(count - 1).isMatchTo(path.getLastPathComponent());

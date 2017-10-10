@@ -87,21 +87,22 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
                                          boolean everywhere,
                                          @NotNull Processor<Object> consumer) {
     String sanitized = getSanitizedPattern(pattern, myModel);
-    NameGrouper grouper = new NameGrouper(sanitized.substring(sanitized.lastIndexOf('/') + 1));
+    int qualifierEnd = sanitized.lastIndexOf('/') + 1;
+    NameGrouper grouper = new NameGrouper(sanitized.substring(qualifierEnd));
     myModel.processNames(name -> grouper.processName(name), true);
 
     Ref<Boolean> hasSuggestions = Ref.create(false);
-    DirectoryPathMatcher dirMatcher = DirectoryPathMatcher.root(myModel);
-    while (true) {
+    DirectoryPathMatcher dirMatcher = DirectoryPathMatcher.root(myModel, sanitized.substring(0, qualifierEnd));
+    while (dirMatcher != null) {
       int index = grouper.index;
       SuffixMatches group = grouper.nextGroup(base);
-      if (group == null) return true;
+      if (group == null) break;
       if (!group.processFiles(pattern, sanitized, everywhere, consumer, hasSuggestions, dirMatcher)) {
         return false;
       }
-      dirMatcher = dirMatcher.appendChar(sanitized.charAt(index));
-      if (dirMatcher == null) return true;
+      dirMatcher = dirMatcher.appendChar(grouper.namePattern.charAt(index));
     }
+    return true;
   }
 
   @NotNull
@@ -150,7 +151,9 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     Map<PsiFileSystemItem, Integer> dirCloseness = new HashMap<>();
     Map<PsiFileSystemItem, Integer> nesting = new HashMap<>();
     for (String fileName : fileNames) {
+      ProgressManager.checkCanceled();
       for (Object o : myModel.getElementsByName(fileName, parameters, new ProgressIndicatorBase())) {
+        ProgressManager.checkCanceled();
         String fullName = myModel.getFullName(o);
         if (o instanceof PsiFileSystemItem && fullName != null) {
           fullName = FileUtilRt.toSystemIndependentName(fullName);

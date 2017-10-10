@@ -84,6 +84,10 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     setBorder(JBUI.Borders.empty(0, 10));
   }
 
+  public static Color getToolbarBackground() {
+    return UIUtil.getPanelBackground();
+  }
+
   public void setText(String text) {
     myLabel.setText(text);
   }

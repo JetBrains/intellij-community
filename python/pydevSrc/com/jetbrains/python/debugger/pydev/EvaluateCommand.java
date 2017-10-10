@@ -3,6 +3,7 @@ package com.jetbrains.python.debugger.pydev;
 import com.jetbrains.python.debugger.IPyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
+import org.jetbrains.annotations.NotNull;
 
 
 public class EvaluateCommand extends AbstractFrameCommand {
@@ -37,10 +38,10 @@ public class EvaluateCommand extends AbstractFrameCommand {
   }
 
   @Override
-  protected void processResponse(final ProtocolFrame response) throws PyDebuggerException {
+  protected void processResponse(@NotNull final ProtocolFrame response) throws PyDebuggerException {
     super.processResponse(response);
     final PyDebugValue value = ProtocolParser.parseValue(response.getPayload(), myDebugProcess);
-    myValue = value.setName((myExecute ? "" : myExpression));
+    myValue = new PyDebugValue(value, myExecute ? "" : myExpression);
     if (!myTempName.isEmpty()) {
       myValue.setTempName(myTempName);
     }

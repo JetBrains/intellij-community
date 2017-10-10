@@ -46,7 +46,7 @@
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyAnnotatingVisitor"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyDumbAwareAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.inspections.PyCompatibilityInspectionAdvertiser"/>
-    <annotator language="Python" implementationClass="com.jetbrains.python.inspections.PySciViewAdvertiser"/>
+
     <quoteHandler fileType="Python" className="com.jetbrains.python.editor.PythonQuoteHandler"/>
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PythonEnterHandler"/>
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PyEnterAtIndentHandler" order="first"/>
@@ -370,7 +370,7 @@
     <localInspection language="Python" shortName="PySimplifyBooleanCheckInspection" suppressId="PySimplifyBooleanCheck" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.check.can.be.simplified" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PySimplifyBooleanCheckInspection"/>
     <localInspection language="Python" shortName="PyFromFutureImportInspection" suppressId="PyFromFutureImport" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.from.future.import" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyFromFutureImportInspection"/>
     <localInspection language="Python" shortName="PyComparisonWithNoneInspection" suppressId="PyComparisonWithNone" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.comparison.with.none" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyComparisonWithNoneInspection"/>
-    <localInspection language="Python" shortName="PyStringExceptionInspection" suppressId="PyStringException" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.raising.string.exception" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyStringExceptionInspection"/>
+    <localInspection language="Python" shortName="PyStringExceptionInspection" suppressId="PyStringException" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.raising.string.exception" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="ERROR" implementationClass="com.jetbrains.python.inspections.PyStringExceptionInspection"/>
     <localInspection language="Python" shortName="PySuperArgumentsInspection" suppressId="PySuperArguments" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.wrong.super.arguments" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PySuperArgumentsInspection"/>
     <localInspection language="Python" shortName="PyByteLiteralInspection" suppressId="PyByteLiteral" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.byte.literal" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyByteLiteralInspection"/>
     <localInspection language="Python" shortName="PyNonAsciiCharInspection" suppressId="PyNonAsciiChar" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.non.ascii" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyNonAsciiCharInspection"/>
@@ -624,14 +624,14 @@
     <breadcrumbsInfoProvider implementation="com.jetbrains.python.breadcrumbs.PyBreadcrumbsInfoProvider"/>
     <highlightVisitor implementation="com.jetbrains.python.highlighting.PyRainbowVisitor"/>
 
-    <toolWindow id="Data View" factoryClass="com.jetbrains.python.debugger.containerview.PyDataViewToolWindowFactory" anchor="right" icon="PythonIcons.Python.DataView"/>
     <projectService serviceInterface="com.jetbrains.python.debugger.containerview.PyDataView" serviceImplementation="com.jetbrains.python.debugger.containerview.PyDataView"/>
-
     <createFromTemplateHandler implementation="com.jetbrains.python.packaging.setupPy.PyCreateSetupPyFromTemplateHandler"/>
+    <consoleHistoryModelProvider implementation="com.jetbrains.python.console.PyConsoleHistoryModelProvider"/>
   </extensions>
 
   <extensionPoints>
     <extensionPoint qualifiedName="Pythonid.pythonDocumentationQuickInfoProvider" interface="com.jetbrains.python.documentation.PythonDocumentationQuickInfoProvider"/>
+    <extensionPoint qualifiedName="Pythonid.pythonCommandLineEnvironmentProvider" interface="com.jetbrains.python.run.PythonCommandLineEnvironmentProvider"/>
     <extensionPoint qualifiedName="Pythonid.importResolver" interface="com.jetbrains.python.psi.impl.PyImportResolver"/>
     <extensionPoint qualifiedName="Pythonid.magicLiteral" interface="com.jetbrains.python.magicLiteral.PyMagicLiteralExtensionPoint"/>
     <extensionPoint qualifiedName="Pythonid.unresolvedReferenceSkipper" interface="com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferenceSkipperExtPoint"/>
@@ -879,22 +879,12 @@
       <add-to-group group-id="DebugMainMenu" relative-to-action="ForceRunToCursor" anchor="after"/>
       <add-to-group group-id="EditorPopupMenuDebug" relative-to-action="ForceRunToCursor" anchor="after"/>
     </action>
-
-    <action id="PySciView" class="com.jetbrains.python.actions.PySciViewAction">
-      <add-to-group group-id="ViewMenu" anchor="before" relative-to-action="ToggleFullScreenGroup"/>
-    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">
     <support language="Python" implementationClass="com.jetbrains.python.spellchecker.PythonSpellcheckerStrategy"/>
     <bundledDictionaryProvider implementation="com.jetbrains.python.spellchecker.PythonBundledDictionaryProvider"/>
   </extensions>
-
-  <project-components>
-    <component>
-      <implementation-class>com.jetbrains.python.actions.PySciProjectComponent</implementation-class>
-    </component>
-  </project-components>
 
   <application-components>
     <component>

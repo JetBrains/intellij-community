@@ -16,7 +16,9 @@
 package com.intellij.testGuiFramework.recorder.components
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ApplicationComponent
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.testGuiFramework.recorder.ui.GuiScriptEditorFrame
 import java.util.concurrent.Future
 
@@ -27,44 +29,33 @@ object GuiRecorderComponent : ApplicationComponent, Disposable {
 
   enum class States {IDLE, COMPILING, COMPILATION_ERROR, COMPILATION_DONE, RUNNING, RUNNING_ERROR, TEST_INIT }
 
-  var myState: States = States.IDLE;
+  var state: States = States.IDLE
+  lateinit var frame: GuiScriptEditorFrame
+  var currentTask: Future<*>? = null
+  //let editor be synchronised by default
+  var syncEditor = true
 
-  override fun dispose() {
+  override fun initComponent() {
+    if(!ApplicationManager.getApplication().isHeadlessEnvironment)
+      frame = GuiScriptEditorFrame()
   }
 
-  private var myFrame: GuiScriptEditorFrame? = null
-
-  private var currentTask: Future<*>? = null
+  override fun dispose() {
+    if(!ApplicationManager.getApplication().isHeadlessEnvironment)
+      frame.dispose()
+  }
 
   override fun getComponentName() = "GuiRecorderComponent"
-
-  fun setCurrentTask(task: Future<*>) { currentTask = task }
 
   fun cancelCurrentTask() {
     if (currentTask != null && !currentTask!!.isDone) currentTask!!.cancel(true)
   }
 
-  fun getState() = myState
+  fun getEditor() = frame.guiScriptEditorPanel.editor
 
-  fun setState(yaState: States) {
-    myState = yaState
+  fun placeCaretToEnd() {
+    val caretModel = getEditor().caretModel
+    val lineCount = getEditor().document.lineCount
+    caretModel.moveToLogicalPosition(LogicalPosition(lineCount + 1, 0))
   }
-
-  fun getFrame() = myFrame
-
-  fun getEditor() = myFrame!!.getGuiScriptEditorPanel().editor
-
-  fun registerFrame(frame: GuiScriptEditorFrame) {
-    myFrame = frame
-  }
-
-  fun unregisterFrame() {
-    if (myFrame != null)
-      myFrame!!.dispose()
-  }
-
-  fun disposeFrame() {
-    myFrame = null
-  }
-
 }

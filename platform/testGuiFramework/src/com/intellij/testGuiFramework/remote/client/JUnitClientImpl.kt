@@ -20,10 +20,12 @@ import com.intellij.testGuiFramework.remote.transport.MessageType
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
-import java.net.Socket
-import java.net.SocketException
+import java.net.*
 import java.util.*
-import java.util.concurrent.*
+import java.util.concurrent.BlockingQueue
+import java.util.concurrent.Executors
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
 
 /**
  * @author Sergey Karashevich
@@ -36,6 +38,7 @@ class JUnitClientImpl(val host: String, val port: Int, initHandlers: Array<Clien
   private val KEEP_ALIVE_THREAD = "JUnit Keep Alive Thread"
 
   private val connection: Socket
+  private val clientConnectionTimeout = 60000 //in ms
   private val clientReceiveThread: ClientReceiveThread
   private val clientSendThread: ClientSendThread
   private val poolOfMessages: BlockingQueue<TransportMessage> = LinkedBlockingQueue()
@@ -50,7 +53,8 @@ class JUnitClientImpl(val host: String, val port: Int, initHandlers: Array<Clien
     if (initHandlers != null) handlers.addAll(initHandlers)
 
     LOG.info("Client connecting to Server($host, $port) ...")
-    connection = Socket(host, port)
+    connection = Socket()
+    connection.connect(InetSocketAddress(InetAddress.getByName(host), port), clientConnectionTimeout)
     LOG.info("Client connected to Server($host, $port) successfully")
 
     objectOutputStream = ObjectOutputStream(connection.getOutputStream())

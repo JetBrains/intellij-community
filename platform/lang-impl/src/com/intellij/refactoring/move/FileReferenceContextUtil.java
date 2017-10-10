@@ -45,24 +45,29 @@ public class FileReferenceContextUtil {
         }
 
         final PsiReference[] refs = element.getReferences();
-        if (refs.length > 0 && refs[0] instanceof FileReferenceOwner) {
-          final PsiFileReference ref = ((FileReferenceOwner)refs[0]).getLastFileReference();
-          if (ref != null) {
-            final ResolveResult[] results = ref.multiResolve(false);
-            for (ResolveResult result : results) {
-              if (result.getElement() instanceof PsiFileSystemItem) {
-                PsiFileSystemItem fileSystemItem = (PsiFileSystemItem)result.getElement();
-                element.putCopyableUserData(REF_FILE_SYSTEM_ITEM_KEY, fileSystemItem);
-                map.put(element.getText(), fileSystemItem);
-                break;
-              }
-            }
-          }
+        for (PsiReference reference : refs) {
+          final PsiFileReference ref = reference instanceof FileReferenceOwner ?
+                                       ((FileReferenceOwner)reference).getLastFileReference() :
+                                       null;
+          if (ref != null && encodeFileReference(element, ref, map)) break;
         }
         super.visitElement(element);
       }
     });
     return map;
+  }
+
+  private static boolean encodeFileReference(PsiElement element, PsiFileReference ref, Map<String, PsiFileSystemItem> map) {
+    final ResolveResult[] results = ref.multiResolve(false);
+    for (ResolveResult result : results) {
+      if (result.getElement() instanceof PsiFileSystemItem) {
+        PsiFileSystemItem fileSystemItem = (PsiFileSystemItem)result.getElement();
+        element.putCopyableUserData(REF_FILE_SYSTEM_ITEM_KEY, fileSystemItem);
+        map.put(element.getText(), fileSystemItem);
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean isBinary(PsiElement element) {

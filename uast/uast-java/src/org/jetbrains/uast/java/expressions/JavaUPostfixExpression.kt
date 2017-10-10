@@ -24,8 +24,8 @@ import org.jetbrains.uast.UastPostfixOperator
 
 class JavaUPostfixExpression(
         override val psi: PsiPostfixExpression,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UPostfixExpression {
+        givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UPostfixExpression {
     override val operand by lz { JavaConverter.convertOrEmpty(psi.operand, this) }
 
     override val operatorIdentifier: UIdentifier?

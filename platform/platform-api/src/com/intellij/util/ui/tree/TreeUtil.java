@@ -31,7 +31,6 @@ import com.intellij.util.Range;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,25 +47,25 @@ import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 public final class TreeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.tree.TreeUtil");
-  @NonNls @NotNull private static final String TREE_UTIL_SCROLL_TIME_STAMP = "TreeUtil.scrollTimeStamp";
+  private static final String TREE_UTIL_SCROLL_TIME_STAMP = "TreeUtil.scrollTimeStamp";
+  private static final JBIterable<Integer> NUMBERS = JBIterable.generate(0, i -> i + 1);
 
   private TreeUtil() {}
 
   @NotNull
   public static JBTreeTraverser<TreePath> treePathTraverser(@NotNull JTree tree) {
     TreeModel model = tree.getModel();
-    JBIterable<Integer> numbers = JBIterable.generate(0, i -> i + 1);
     Object root = model.getRoot();
     TreePath rootPath = root == null ? null : new TreePath(root);
-    return new JBTreeTraverser<TreePath>(o -> {
-      Object parent = o.getLastPathComponent();
-      int count = model.getChildCount(parent);
-
-      return count == 0 ? JBIterable.empty() :
-             numbers.take(count).map(
-               index -> o.pathByAddingChild(model.getChild(parent, index)));
-    })
+    return JBTreeTraverser.<TreePath>from(path -> nodeChildren(path.getLastPathComponent(), model)
+      .map(o -> path.pathByAddingChild(o)))
       .withRoot(rootPath);
+  }
+
+  @NotNull
+  public static JBIterable<Object> nodeChildren(@Nullable Object node, @NotNull TreeModel model) {
+    int count = model.getChildCount(node);
+    return count == 0 ? JBIterable.empty() : NUMBERS.take(count).map(index -> model.getChild(node, index));
   }
 
   @NotNull
@@ -229,8 +228,8 @@ public final class TreeUtil {
 
   @NotNull
   public static TreePath getFirstNodePath(@NotNull JTree tree) {
-    final TreeModel model = tree.getModel();
-    final Object root = model.getRoot();
+    TreeModel model = tree.getModel();
+    Object root = model.getRoot();
     TreePath selectionPath = new TreePath(root);
     if (!tree.isRootVisible() && model.getChildCount(root) > 0) {
       selectionPath = selectionPath.pathByAddingChild(model.getChild(root, 0));
@@ -743,19 +742,24 @@ public final class TreeUtil {
 
   public static void expandRootChildIfOnlyOne(@Nullable final JTree tree) {
     if (tree == null) return;
-    final Runnable runnable = () -> {
-      final DefaultMutableTreeNode root = (DefaultMutableTreeNode)tree.getModel().getRoot();
-      tree.expandPath(new TreePath(new Object[]{root}));
-      if (root.getChildCount() == 1) {
-        TreeNode firstChild = root.getFirstChild();
-        tree.expandPath(new TreePath(new Object[]{root, firstChild}));
+    Runnable runnable = () -> {
+      TreeModel model = tree.getModel();
+      Object root = model.getRoot();
+      if (root == null) return;
+      TreePath rootPath = new TreePath(root);
+      tree.expandPath(rootPath);
+      if (model.getChildCount(root) == 1) {
+        Object firstChild = model.getChild(root, 0);
+        tree.expandPath(rootPath.pathByAddingChild(firstChild));
       }
     };
     UIUtil.invokeLaterIfNeeded(runnable);
   }
 
-  public static void expandAll(@NotNull final JTree tree) {
-    tree.expandPath(new TreePath(tree.getModel().getRoot()));
+  public static void expandAll(@NotNull JTree tree) {
+    Object root = tree.getModel().getRoot();
+    if (root == null) return;
+    tree.expandPath(new TreePath(root));
     int oldRowCount = 0;
     do {
       int rowCount = tree.getRowCount();
@@ -774,16 +778,9 @@ public final class TreeUtil {
    * @param levels depths of the expantion
    */
   public static void expand(@NotNull JTree tree, int levels) {
-    expand(tree, new TreePath(tree.getModel().getRoot()), levels);
-  }
-
-  /**
-   * Expands n levels of the tree counting from the root and return true if there is no nodes to expand
-   * @param tree to expand nodes of
-   * @param levels depths of the expantion
-   */
-  public static boolean expandWithResult(@NotNull JTree tree, int levels) {
-    return expand(tree, new TreePath(tree.getModel().getRoot()), levels);
+    Object root = tree.getModel().getRoot();
+    if (root == null) return;
+    expand(tree, new TreePath(root), levels);
   }
 
   private static boolean expand(@NotNull JTree tree, @NotNull TreePath path, int levels) {

@@ -40,7 +40,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
 
     checkGistExists();
     checkGistNotAnonymous();
-    checkGistPrivate();
+    checkGistSecret();
     checkGistDescription(GIST_DESCRIPTION);
     checkGistContent(expected);
   }
@@ -56,7 +56,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
 
     checkGistExists();
     checkGistAnonymous();
-    checkGistPrivate();
+    checkGistSecret();
     checkGistDescription(GIST_DESCRIPTION);
     checkGistContent(expected);
 
@@ -75,7 +75,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
 
     checkGistExists();
     checkGistNotAnonymous();
-    checkGistPrivate();
+    checkGistSecret();
     checkGistDescription(GIST_DESCRIPTION);
     checkGistContent(expected);
   }
@@ -91,7 +91,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
 
     checkGistExists();
     checkGistNotAnonymous();
-    checkGistPrivate();
+    checkGistSecret();
     checkGistDescription(GIST_DESCRIPTION);
     checkGistContent(expected);
   }

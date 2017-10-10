@@ -3,7 +3,8 @@ import traceback
 from _pydevd_bundle import pydevd_resolver
 import sys
 from _pydevd_bundle.pydevd_constants import dict_contains, dict_iter_items, dict_keys, IS_PY3K, \
-    MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT
+    IS_PY2, BUILTINS_MODULE_NAME, MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_ASYNC, \
+    DEFAULT_VALUE
 
 from _pydev_bundle.pydev_imports import quote
 
@@ -162,14 +163,22 @@ def get_type(o):
     return (type_object, type_name, pydevd_resolver.defaultResolver)
 
 
-def return_values_from_dict_to_xml(return_dict):
+def is_builtin(x):
+    return getattr(x, '__module__', None) == BUILTINS_MODULE_NAME
+
+
+def should_evaluate_full_value(val):
+    return not LOAD_VALUES_ASYNC or (is_builtin(type(val)) and not isinstance(val, (list, tuple, dict)))
+
+
+def return_values_from_dict_to_xml(return_dict, eval_full_val=True):
     res = ""
     for name, val in dict_iter_items(return_dict):
-        res += var_to_xml(val, name, additionalInXml=' isRetVal="True"')
+        res += var_to_xml(val, name, additionalInXml=' isRetVal="True"', evaluate_full_value=eval_full_val)
     return res
 
 
-def frame_vars_to_xml(frame_f_locals, hidden_ns=None):
+def frame_vars_to_xml(frame_f_locals, hidden_ns=None, dbg=None, thread_id=None, frame_id=None):
     """ dumps frame variables to XML
     <var name="var_name" scope="local" type="type" value="value"/>
     """
@@ -184,13 +193,15 @@ def frame_vars_to_xml(frame_f_locals, hidden_ns=None):
     for k in keys:
         try:
             v = frame_f_locals[k]
+            eval_full_val = should_evaluate_full_value(v)
+
             if k == RETURN_VALUES_DICT:
-                xml += return_values_from_dict_to_xml(v)
+                xml += return_values_from_dict_to_xml(v, eval_full_val=eval_full_val)
             else:
                 if hidden_ns is not None and dict_contains(hidden_ns, k):
-                    xml += var_to_xml(v, str(k), additionalInXml=' isIPythonHidden="True"')
+                    xml += var_to_xml(v, str(k), additionalInXml=' isIPythonHidden="True"', evaluate_full_value=eval_full_val)
                 else:
-                    xml += var_to_xml(v, str(k))
+                    xml += var_to_xml(v, str(k), evaluate_full_value=eval_full_val)
         except Exception:
             traceback.print_exc()
             pydev_log.error("Unexpected error, recovered safely.\n")
@@ -198,7 +209,7 @@ def frame_vars_to_xml(frame_f_locals, hidden_ns=None):
     return xml
 
 
-def var_to_xml(val, name, doTrim=True, additionalInXml='', return_value=False, ipython_hidden=False):
+def var_to_xml(val, name, doTrim=True, additionalInXml='', evaluate_full_value=True):
     """ single variable or dictionary to xml representation """
 
     is_exception_on_eval = isinstance(val, ExceptionOnEvaluate)
@@ -210,43 +221,45 @@ def var_to_xml(val, name, doTrim=True, additionalInXml='', return_value=False, i
 
     _type, typeName, resolver = get_type(v)
     type_qualifier = getattr(_type, "__module__", "")
-    do_not_call_value_str = resolver is not None and resolver.use_value_repr_instead_of_str
 
-    try:
-        if hasattr(v, '__class__'):
-            if v.__class__ == frame_type:
-                value = pydevd_resolver.frameResolver.get_frame_name(v)
-
-            elif v.__class__ in (list, tuple):
-                if len(v) > 300:
-                    value = '%s: %s' % (str(v.__class__), '<Too big to print. Len: %s>' % (len(v),))
-                else:
-                    value = '%s: %s' % (str(v.__class__), v)
-            else:
-                try:
-                    cName = str(v.__class__)
-                    if cName.find('.') != -1:
-                        cName = cName.split('.')[-1]
-
-                    elif cName.find("'") != -1: #does not have '.' (could be something like <type 'int'>)
-                        cName = cName[cName.index("'") + 1:]
-
-                    if cName.endswith("'>"):
-                        cName = cName[:-2]
-                except:
-                    cName = str(v.__class__)
-
-                if do_not_call_value_str:
-                    value = '%s: %r' % (cName, v)
-                else:
-                    value = '%s: %s' % (cName, v)
-        else:
-            value = str(v)
-    except:
+    if not evaluate_full_value:
+        value = DEFAULT_VALUE
+    else:
         try:
-            value = repr(v)
+            if hasattr(v, '__class__'):
+                if v.__class__ == frame_type:
+                    value = pydevd_resolver.frameResolver.get_frame_name(v)
+
+                elif v.__class__ in (list, tuple, dict):
+                    if len(v) > 300:
+                        value = '%s: %s' % (str(v.__class__), '<Too big to print. Len: %s>' % (len(v),))
+                    else:
+                        value = '%s: %s' % (str(v.__class__), v)
+                else:
+                    try:
+                        cName = str(v.__class__)
+                        if cName.find('.') != -1:
+                            cName = cName.split('.')[-1]
+
+                        elif cName.find("'") != -1: #does not have '.' (could be something like <type 'int'>)
+                            cName = cName[cName.index("'") + 1:]
+
+                        if cName.endswith("'>"):
+                            cName = cName[:-2]
+                    except:
+                        cName = str(v.__class__)
+
+                    if resolver is not None and resolver.use_value_repr_instead_of_str:
+                        value = '%s: %r' % (cName, v)
+                    else:
+                        value = '%s: %s' % (cName, v)
+            else:
+                value = str(v)
         except:
-            value = 'Unable to get repr for %s' % v.__class__
+            try:
+                value = repr(v)
+            except:
+                value = 'Unable to get repr for %s' % v.__class__
 
     try:
         name = quote(name, '/>_= ') #TODO: Fix PY-5834 without using quote

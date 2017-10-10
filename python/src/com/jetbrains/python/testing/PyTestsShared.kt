@@ -68,6 +68,9 @@ import com.jetbrains.reflection.DelegationProperty
 import com.jetbrains.reflection.Properties
 import com.jetbrains.reflection.Property
 import com.jetbrains.reflection.getProperties
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
+import jetbrains.buildServer.messages.serviceMessages.TestStdErr
+import jetbrains.buildServer.messages.serviceMessages.TestStdOut
 
 
 /**
@@ -78,6 +81,19 @@ val factories: Array<PythonConfigurationFactoryBase> = arrayOf(
   PyTestFactory,
   PyNoseTestFactory,
   PyTrialTestFactory)
+
+/**
+ * Accepts text that may be wrapped in TC message. Unwarps it and removes TC escape code.
+ * Regular text is unchanged
+ */
+fun processTCMessage(text: String): String {
+  val parsedMessage = ServiceMessage.parse(text.trim()) ?: return text // Not a TC message
+  return when (parsedMessage) {
+    is TestStdOut  -> parsedMessage.stdOut // TC with stdout
+    is TestStdErr -> parsedMessage.stdErr // TC with stderr
+    else -> "" // TC with out of any output
+  }
+}
 
 internal fun getAdditionalArgumentsPropertyName() = com.jetbrains.python.testing.PyAbstractTestConfiguration::additionalArguments.name
 
@@ -247,7 +263,10 @@ data class ConfigurationTarget(@ConfigField var target: String,
    */
   fun checkValid() {
     if (targetType != TestTargetType.CUSTOM && target.isEmpty()) {
-      throw RuntimeConfigurationWarning("Target should be set for anything but custom")
+      throw RuntimeConfigurationWarning("Target not provided")
+    }
+    if (targetType == TestTargetType.PYTHON && !Regex("^[a-zA-Z0-9._]+[a-zA-Z0-9_]$").matches(target)) {
+      throw RuntimeConfigurationWarning("Provide a qualified name of function, class or a module")
     }
   }
 
@@ -385,6 +404,18 @@ abstract class PyAbstractTestConfiguration(project: Project,
   var additionalArguments = ""
 
   val testFrameworkName = configurationFactory.name!!
+
+
+  /**
+   * @see [RunnersThatRequireTestCaseClass]
+   */
+  fun isTestClassRequired() = if (RunnersThatRequireTestCaseClass.contains(runnerName)) {
+    ThreeState.YES
+  }
+  else {
+    ThreeState.NO
+  }
+
 
   @Suppress("LeakingThis") // Legacy adapter is used to support legacy configs. Leak is ok here since everything takes place in one thread
   @DelegationProperty
@@ -617,13 +648,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
     // TODO: PythonUnitTestUtil logic is weak. We should give user ability to launch test on symbol since user knows better if folder
     // contains tests etc
     val context = TypeEvalContext.userInitiated(element.project, element.containingFile)
-    val testCaseClassRequired: ThreeState = if (RunnersThatRequireTestCaseClass.contains(runnerName)) {
-      ThreeState.YES
-    }
-    else {
-      ThreeState.NO
-    }
-    return isTestElement(element, testCaseClassRequired, context)
+    return isTestElement(element,isTestClassRequired(), context)
   }
 
   /**
@@ -779,7 +804,6 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
     return configuration.target == targetForConfig.first
   }
 }
-
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.PROPERTY)

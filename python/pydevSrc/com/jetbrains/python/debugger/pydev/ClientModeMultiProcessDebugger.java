@@ -188,6 +188,13 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
+  public void loadFullVariableValues(@NotNull String threadId,
+                                     @NotNull String frameId,
+                                     @NotNull List<PyFrameAccessor.PyAsyncValue<String>> vars) throws PyDebuggerException {
+    debugger(threadId).loadFullVariableValues(threadId, frameId, vars);
+  }
+
+  @Override
   public String loadSource(String path) {
     return myMainDebugger.loadSource(path);
   }

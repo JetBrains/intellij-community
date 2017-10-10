@@ -11,12 +11,12 @@ if sys.version_info >= (3, 5):
         def __init__(self, msg: str, doc: str, pos: int) -> None: ...
 
 class JSONDecoder:
-    object_hook = None  # type: Callable[[Dict[str, Any]], Any]
-    parse_float = ...  # Callable[[str], Any]
-    parse_int = ...  # Callable[[str], Any]
+    object_hook = ...  # type: Callable[[Dict[str, Any]], Any]
+    parse_float = ...  # type: Callable[[str], Any]
+    parse_int = ...  # type: Callable[[str], Any]
     parse_constant = ...  # Callable[[str], Any]
     strict = ...  # type: bool
-    object_pairs_hook = None  # type: Callable[[List[Tuple[str, Any]]], Any]
+    object_pairs_hook = ...  # type: Callable[[List[Tuple[str, Any]]], Any]
 
     def __init__(self, object_hook: Optional[Callable[[Dict[str, Any]], Any]] = None,
             parse_float: Optional[Callable[[str], Any]] = None,

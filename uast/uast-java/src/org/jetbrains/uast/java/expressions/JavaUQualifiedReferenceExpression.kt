@@ -21,10 +21,10 @@ import org.jetbrains.uast.*
 
 class JavaUQualifiedReferenceExpression(
         override val psi: PsiJavaCodeReferenceElement,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UQualifiedReferenceExpression {
+        givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UQualifiedReferenceExpression {
     override val receiver by lz {
-        psi.qualifier?.let { JavaConverter.convertPsiElement(it, { this }) as? UExpression } ?: UastEmptyExpression
+        psi.qualifier?.let { JavaConverter.convertPsiElement(it, this) as? UExpression } ?: UastEmptyExpression
     }
 
     override val selector by lz { 

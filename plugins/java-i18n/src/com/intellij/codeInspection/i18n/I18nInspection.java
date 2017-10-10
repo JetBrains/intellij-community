@@ -1,27 +1,13 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.editor.Document;
@@ -44,7 +30,6 @@ import com.intellij.ui.AddDeleteListPanel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -66,7 +51,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class I18nInspection extends BaseLocalInspectionTool {
+public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implements CustomSuppressableInspectionTool {
   public boolean ignoreForAssertStatements = true;
   public boolean ignoreForExceptionConstructors = true;
   @NonNls
@@ -90,11 +75,19 @@ public class I18nInspection extends BaseLocalInspectionTool {
   @NotNull
   @Override
   public SuppressIntentionAction[] getSuppressActions(PsiElement element) {
-    SuppressIntentionAction[] actions = {};
-    if (myCachedNonNlsPattern != null) {
-      actions = new SuppressIntentionAction[]{new SuppressByCommentOutAction(nonNlsCommentPattern)};
+    HighlightDisplayKey key = HighlightDisplayKey.find(getShortName());
+    assert key != null : "No key for '" + getShortName() + "' / " + getClass();
+    SuppressIntentionAction[] defaultSuppressors = SuppressManager.getInstance().createSuppressActions(key);
+
+    if (myCachedNonNlsPattern == null) {
+      return defaultSuppressors;
     }
-    return ArrayUtil.mergeArrays(actions, super.getSuppressActions(element));
+    else {
+      List<SuppressIntentionAction> suppressors = new ArrayList<>(defaultSuppressors.length + 1);
+      suppressors.add(new SuppressByCommentOutAction(nonNlsCommentPattern));
+      ContainerUtil.addAll(suppressors, defaultSuppressors);
+      return suppressors.toArray(SuppressIntentionAction.EMPTY_ARRAY);
+    }
   }
 
   private static final String SKIP_FOR_ENUM = "ignoreForEnumConstant";

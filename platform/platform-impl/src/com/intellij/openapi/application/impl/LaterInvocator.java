@@ -38,9 +38,8 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @SuppressWarnings("SSBasedInspection")
@@ -56,17 +55,21 @@ public class LaterInvocator {
     @NotNull private final Runnable runnable;
     @NotNull private final ModalityState modalityState;
     @NotNull private final Condition<?> expired;
-    @NotNull private final ActionCallback callback;
+    @Nullable private final ActionCallback callback;
 
     @Debugger.Capture
     RunnableInfo(@NotNull Runnable runnable,
                  @NotNull ModalityState modalityState,
                  @NotNull Condition<?> expired,
-                 @NotNull ActionCallback callback) {
+                 @Nullable ActionCallback callback) {
       this.runnable = runnable;
       this.modalityState = modalityState;
       this.expired = expired;
       this.callback = callback;
+    }
+
+    void markDone() {
+      if (callback != null) callback.setDone();
     }
 
     @Override
@@ -84,8 +87,8 @@ public class LaterInvocator {
   private static final Map<Project, Stack<ModalityState>> projectToModalEntitiesStack = ContainerUtil.createWeakMap();
 
   private static final Stack<ModalityStateEx> ourModalityStack = new Stack<>((ModalityStateEx)ModalityState.NON_MODAL);
-  private static final List<RunnableInfo> ourQueue = new ArrayList<>(); //protected by LOCK
-  private static volatile int ourQueueSkipCount; // optimization: should look for next events starting from this index
+  private static final List<RunnableInfo> ourSkippedItems = new ArrayList<>(); //protected by LOCK
+  private static final ArrayDeque<RunnableInfo> ourQueue = new ArrayDeque<>(); //protected by LOCK
   private static final FlushQueue ourFlushQueueRunnable = new FlushQueue();
 
   private static final EventDispatcher<ModalityStateListener> ourModalityStateMulticaster = EventDispatcher.create(ModalityStateListener.class);
@@ -123,14 +126,23 @@ public class LaterInvocator {
 
   @NotNull
   static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition<?> expired) {
-    if (expired.value(null)) return ActionCallback.REJECTED;
-    final ActionCallback callback = new ActionCallback();
+    ActionCallback callback = new ActionCallback();
+    invokeLaterWithCallback(runnable, modalityState, expired, callback);
+    return callback;
+  }
+
+  static void invokeLaterWithCallback(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition<?> expired, @Nullable ActionCallback callback) {
+    if (expired.value(null)) {
+      if (callback != null) {
+        callback.setRejected();
+      }
+      return;
+    }
     RunnableInfo runnableInfo = new RunnableInfo(runnable, modalityState, expired, callback);
     synchronized (LOCK) {
       ourQueue.add(runnableInfo);
     }
     requestFlush();
-    return callback;
   }
 
   static void invokeAndWait(@NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
@@ -159,7 +171,7 @@ public class LaterInvocator {
         return "InvokeAndWait[" + runnable + "]";
       }
     };
-    invokeLater(runnable1, modalityState);
+    invokeLaterWithCallback(runnable1, modalityState, Conditions.FALSE, null);
     semaphore.waitFor();
     if (!exception.isNull()) {
       Throwable cause = exception.get();
@@ -249,8 +261,17 @@ public class LaterInvocator {
       }
     }
 
-    ourQueueSkipCount = 0;
+    reincludeSkippedItems();
     requestFlush();
+  }
+
+  private static void reincludeSkippedItems() {
+    synchronized (LOCK) {
+      for (int i = ourSkippedItems.size() - 1; i >= 0; i--) {
+        ourQueue.addFirst(ourSkippedItems.get(i));
+      }
+      ourSkippedItems.clear();
+    }
   }
 
   public static void leaveModal(@NotNull Object modalEntity) {
@@ -267,10 +288,10 @@ public class LaterInvocator {
     ourModalEntities.remove(index);
     ourModalityStack.remove(index + 1);
     for (int i = 1; i < ourModalityStack.size(); i++) {
-      ((ModalityStateEx)ourModalityStack.get(i)).removeModality(modalEntity);
+      ourModalityStack.get(i).removeModality(modalEntity);
     }
 
-    ourQueueSkipCount = 0;
+    reincludeSkippedItems();
     requestFlush();
   }
 
@@ -280,7 +301,7 @@ public class LaterInvocator {
       leaveModal(ourModalEntities.get(ourModalEntities.size() - 1));
     }
     LOG.assertTrue(getCurrentModalityState() == ModalityState.NON_MODAL, getCurrentModalityState());
-    ourQueueSkipCount = 0;
+    reincludeSkippedItems();
     requestFlush();
   }
 
@@ -351,22 +372,22 @@ public class LaterInvocator {
     synchronized (LOCK) {
       ModalityState currentModality = getCurrentModalityState();
 
-      while (ourQueueSkipCount < ourQueue.size()) {
-        RunnableInfo info = ourQueue.get(ourQueueSkipCount);
+      while (!ourQueue.isEmpty()) {
+        RunnableInfo info = ourQueue.getFirst();
 
         if (info.expired.value(null)) {
-          ourQueue.remove(ourQueueSkipCount);
-          info.callback.setDone();
+          ourQueue.removeFirst();
+          info.markDone();
           continue;
         }
 
         if (!currentModality.dominates(info.modalityState)) {
           if (remove) {
-            ourQueue.remove(ourQueueSkipCount);
+            ourQueue.removeFirst();
           }
           return info;
         }
-        ourQueueSkipCount++;
+        ourSkippedItems.add(ourQueue.removeFirst());
       }
 
       return null;
@@ -401,7 +422,7 @@ public class LaterInvocator {
       if (lastInfo != null) {
         try {
           lastInfo.runnable.run();
-          lastInfo.callback.setDone();
+          lastInfo.markDone();
         }
         catch (ProcessCanceledException ignored) { }
         catch (Throwable t) {
@@ -429,17 +450,20 @@ public class LaterInvocator {
 
   public static void purgeExpiredItems() {
     synchronized (LOCK) {
-      boolean removed = false;
-      for (int i = ourQueue.size() - 1; i >= 0; i--) {
-        RunnableInfo info = ourQueue.get(i);
+      reincludeSkippedItems();
+
+      List<RunnableInfo> alive = new ArrayList<>(ourQueue.size());
+      for (RunnableInfo info : ourQueue) {
         if (info.expired.value(null)) {
-          ourQueue.remove(i);
-          info.callback.setDone();
-          removed = true;
+          info.markDone();
+        }
+        else {
+          alive.add(info);
         }
       }
-      if (removed) {
-        ourQueueSkipCount = 0;
+      if (alive.size() < ourQueue.size()) {
+        ourQueue.clear();
+        ourQueue.addAll(alive);
       }
     }
   }

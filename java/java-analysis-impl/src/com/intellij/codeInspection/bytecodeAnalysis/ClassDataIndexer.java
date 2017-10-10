@@ -252,6 +252,10 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
         catch (ProcessCanceledException e) {
           throw e;
         }
+        catch (TooComplexException e) {
+          LOG.debug(method + " in " + presentableUrl + " is too complex for bytecode analysis");
+          return topEquations(method, argumentTypes, isReferenceResult, isInterestingResult, stable);
+        }
         catch (Throwable e) {
           // incorrect bytecode may result in Runtime exceptions during analysis
           // so here we suppose that exception is due to incorrect bytecode

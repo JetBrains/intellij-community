@@ -18,13 +18,10 @@ package org.jetbrains.uast.java
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
-import org.jetbrains.uast.UAnnotation
-import org.jetbrains.uast.UComment
-import org.jetbrains.uast.UFile
-import org.jetbrains.uast.UastLanguagePlugin
+import org.jetbrains.uast.*
 import java.util.*
 
-class JavaUFile(override val psi: PsiJavaFile, override val languagePlugin: UastLanguagePlugin) : UFile {
+class JavaUFile(override val psi: PsiJavaFile, override val languagePlugin: UastLanguagePlugin) : UFile, JvmDeclarationUElement {
     override val packageName: String
         get() = psi.packageName
     
@@ -33,7 +30,7 @@ class JavaUFile(override val psi: PsiJavaFile, override val languagePlugin: Uast
     }
 
     override val annotations: List<UAnnotation>
-        get() = emptyList()
+        get() = psi.packageStatement?.annotationList?.annotations?.map { JavaUAnnotation(it, this) } ?: emptyList()
 
     override val classes by lz { psi.classes.map { JavaUClass.create(it, this) } }
 

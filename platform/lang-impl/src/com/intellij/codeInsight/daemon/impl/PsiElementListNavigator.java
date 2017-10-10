@@ -109,8 +109,9 @@ public class PsiElementListNavigator {
     return navigateOrCreatePopup(targets, title, findUsagesTitle, listRenderer, listUpdaterTask, selectedElements -> {
       for (Object element : selectedElements) {
         PsiElement selected = (PsiElement)element;
-        LOG.assertTrue(selected.isValid());
-        ((NavigatablePsiElement)selected).navigate(true);
+        if (selected.isValid()) {
+          ((NavigatablePsiElement)selected).navigate(true);
+        }
       }
     });
   }

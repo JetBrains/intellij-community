@@ -355,7 +355,8 @@ public class AboutPopup {
       config.restore();
       if (myShowCopy) {
         JBPoint coord = getCopyIconCoord();
-        config = new GraphicsConfig(g).paintWithAlpha(myShowCopyAlpha);
+        float alpha = myShowCopyAlpha;
+        config = new GraphicsConfig(g).paintWithAlpha(Math.min(1f, Math.max(0f, alpha)));
         AllIcons.General.CopyHovered.paintIcon(this, g, coord.x, coord.y);
         config.restore();
       }

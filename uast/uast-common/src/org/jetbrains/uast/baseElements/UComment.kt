@@ -19,7 +19,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import org.jetbrains.uast.internal.log
 
-class UComment(override val psi: PsiComment, override val uastParent: UElement) : UElement {
+class UComment(override val psi: PsiComment, override val uastParent: UElement) : JvmDeclarationUElement {
     @Deprecated("Use a constructor that takes PsiComment as parameter")
     constructor(psi: PsiElement, parent: UElement) : this(psi as PsiComment, parent)
 

@@ -41,7 +41,6 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -289,7 +288,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   private void initMap(BlockTreeNode rootBlockNode, PsiElement psiEl) {
     myPsiToBlockMap = new HashMap<>();
-    JBTreeTraverser<BlockTreeNode> traverser = new JBTreeTraverser<>(o -> JBIterable.of(o.getChildren()));
+    JBTreeTraverser<BlockTreeNode> traverser = JBTreeTraverser.of(BlockTreeNode::getChildren);
     for (BlockTreeNode block : traverser.withRoot(rootBlockNode)) {
       PsiElement currentElem = null;
       if (block.getBlock() instanceof ASTBlock) {

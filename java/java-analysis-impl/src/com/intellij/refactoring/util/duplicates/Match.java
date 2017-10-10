@@ -424,10 +424,11 @@ public final class Match {
     return getMatchStart().getContainingFile();
   }
 
-  public boolean putAdditionalParameter(@NotNull PsiElement pattern, @NotNull PsiElement candidate) {
-    return ExtractedParameter.match(pattern, candidate, myExtractedParameters);
+  public boolean putExtractedParameter(@NotNull ExtractableExpressionPart patternPart, @NotNull ExtractableExpressionPart candidatePart) {
+    return ExtractedParameter.match(patternPart, candidatePart, myExtractedParameters);
   }
 
+  @NotNull
   public List<ExtractedParameter> getExtractedParameters() {
     return myExtractedParameters;
   }

@@ -546,4 +546,6 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testGetterOfNullableFieldIsNotAnnotated() { doTest(); }
 
   public void testGetterOfNullableFieldIsNotNull() { doTest(); }
+
+  public void testTryWithResourceExpressions() { doTest(); }
 }

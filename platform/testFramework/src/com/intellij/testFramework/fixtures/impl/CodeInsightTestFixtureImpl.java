@@ -93,6 +93,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -1004,16 +1005,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   protected PsiFile addFileToProject(@NotNull final String rootPath, @NotNull final String relativePath, @NotNull final String fileText) {
-    return new WriteCommandAction<PsiFile>(getProject()) {
+    VirtualFile file = new WriteCommandAction<VirtualFile>(getProject()) {
       @Override
-      protected void run(@NotNull Result<PsiFile> result) throws Throwable {
+      protected void run(@NotNull Result<VirtualFile> result) {
         try {
           if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
-            final VirtualFile file = myTempDirFixture.createFile(relativePath, fileText);
-            result.setResult(PsiManager.getInstance(getProject()).findFile(file));
+            result.setResult(myTempDirFixture.createFile(relativePath, fileText));
           }
           else {
-            result.setResult(((HeavyIdeaTestFixture)myProjectFixture).addFileToProject(rootPath, relativePath, fileText));
+            result.setResult(((HeavyIdeaTestFixture)myProjectFixture).addFileToProject(rootPath, relativePath, fileText).getViewProvider().getVirtualFile());
           }
         }
         catch (IOException e) {
@@ -1024,6 +1024,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         }
       }
     }.execute().getResultObject();
+    return ReadAction.compute(() -> PsiManager.getInstance(getProject()).findFile(file));
   }
 
   public <T> void registerExtension(final ExtensionsArea area, final ExtensionPointName<T> epName, final T extension) {
@@ -1227,6 +1228,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         try {
           DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true); // return default value to avoid unnecessary save
           closeOpenFiles();
+          // clear order entry roots cache
+          WriteAction.run(()->ProjectRootManagerEx.getInstanceEx(getProject()).makeRootsChange(EmptyRunnable.getInstance(), false, true));
         }
         finally {
           myEditor = null;
@@ -1812,6 +1815,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     StructureViewComponent component = null;
     try {
       component = (StructureViewComponent)builder.createStructureView(fileEditor, getProject());
+      PlatformTestUtil.waitForPromise(component.rebuildAndUpdate());
       consumer.consume(component);
     }
     finally {

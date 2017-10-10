@@ -40,7 +40,7 @@ public interface ModifiableModuleModel {
    * to which the module manager is related. {@link #commit()} must be called to
    * bring the changes in effect.
    *
-   * @param filePath the path at which the module is created.
+   * @param filePath path to an *.iml file where module configuration will be saved; name of the module will be equal to the file name without extension.
    * @param moduleTypeId the ID of the module type to create.
    * @return the module instance.
    */
@@ -52,7 +52,7 @@ public interface ModifiableModuleModel {
    * bring the changes in effect.
    *
    *
-   * @param filePath the path at which the module is created.
+   * @param filePath path to an *.iml file where module configuration will be saved; name of the module will be equal to the file name without extension.
    * @param moduleTypeId ID of the module type to create.
    * @param options map of module options to be used when creating the module
    * @return the module instance.

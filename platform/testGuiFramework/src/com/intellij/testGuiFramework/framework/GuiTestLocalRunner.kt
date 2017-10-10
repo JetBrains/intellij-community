@@ -122,12 +122,10 @@ class GuiTestLocalRunner @Throws(InitializationError::class)
     GuiTestLocalLauncher.process?.waitFor(2, TimeUnit.MINUTES)
     //restart JUnitServer to let accept a new connection
     server.stopServer()
-    server.start()
     //start a new one IDE
     val localIde = ide ?: getIdeFromAnnotation(this@GuiTestLocalRunner.testClass.javaClass)
     runIdeLocally(port = server.getPort(), ide = localIde)
-    //check connection
-    //start test if needed
+    server.start()
   }
 
   private fun sendRunTestCommand(method: FrameworkMethod,

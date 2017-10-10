@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.intellij.lang.java.parser;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
@@ -133,6 +121,7 @@ public class DeclarationParser {
   }
 
   private void parseEnumConstants(final PsiBuilder builder) {
+    boolean first = true;
     while (builder.getTokenType() != null) {
       if (expect(builder, JavaTokenType.SEMICOLON)) {
         return;
@@ -143,16 +132,21 @@ public class DeclarationParser {
         return;
       }
 
-      final PsiBuilder.Marker enumConstant = parseEnumConstant(builder);
-      if (enumConstant == null) {
-        error(builder, JavaErrorMessages.message("expected.identifier"));
+      PsiBuilder.Marker enumConstant = parseEnumConstant(builder);
+      if (enumConstant == null && builder.getTokenType() == JavaTokenType.COMMA && first) {
+        IElementType next = builder.lookAhead(1);
+        if (next != JavaTokenType.SEMICOLON && next != JavaTokenType.RBRACE) {
+          error(builder, JavaErrorMessages.message("expected.identifier"));
+        }
       }
 
-      if (!expect(builder, JavaTokenType.COMMA)) {
-        if (builder.getTokenType() != null && builder.getTokenType() != JavaTokenType.SEMICOLON) {
-          error(builder, JavaErrorMessages.message("expected.comma.or.semicolon"));
-          return;
-        }
+      first = false;
+
+      if (!expect(builder, JavaTokenType.COMMA) &&
+          builder.getTokenType() != null &&
+          builder.getTokenType() != JavaTokenType.SEMICOLON) {
+        error(builder, JavaErrorMessages.message("expected.comma.or.semicolon"));
+        return;
       }
     }
   }

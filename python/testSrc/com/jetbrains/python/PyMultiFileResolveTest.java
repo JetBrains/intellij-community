@@ -480,11 +480,12 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     myFixture.copyDirectoryToProject("bothForeignAndSourceRootImportResultsReturned", "");
 
     VirtualFile vf = myFixture.findFileInTempDir("ext/m1.py");
-    final PsiFile extSource = myFixture.getPsiManager().findFile(vf);
-    PyImportResolver foreignResolver = (name, context, withRoots) -> name.toString().equals("m1") ? extSource : null;
-    PlatformTestUtil.registerExtension(PyImportResolver.EP_NAME, foreignResolver, getTestRootDisposable());
 
     withSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root")), () -> {
+      final PsiFile extSource = myFixture.getPsiManager().findFile(vf);
+      PyImportResolver foreignResolver = (name, context, withRoots) -> name.toString().equals("m1") ? extSource : null;
+      PlatformTestUtil.registerExtension(PyImportResolver.EP_NAME, foreignResolver, getTestRootDisposable());
+
       final PsiFile psiFile = myFixture.configureByFile("a.py");
       final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
       assertInstanceOf(ref, PsiPolyVariantReference.class);

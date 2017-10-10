@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerBorder;
 import com.intellij.openapi.ui.ErrorBorderCapable;
 import com.intellij.util.ui.JBInsets;
@@ -23,9 +24,6 @@ import com.intellij.util.ui.JBUI;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Path2D;
-
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.ACTIVE_ERROR_COLOR;
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.INACTIVE_ERROR_COLOR;
 
 public class WinIntelliJSpinnerBorder extends DarculaSpinnerBorder implements ErrorBorderCapable {
   @Override
@@ -38,8 +36,10 @@ public class WinIntelliJSpinnerBorder extends DarculaSpinnerBorder implements Er
       Rectangle r = new Rectangle(x, y, width, height);
 
       int bw = 1;
-      if (spinner.getClientProperty("JComponent.error.outline") == Boolean.TRUE) {
-        g2.setColor(c.hasFocus() ? ACTIVE_ERROR_COLOR : INACTIVE_ERROR_COLOR);
+      Object op = spinner.getClientProperty("JComponent.outline");
+
+      if (op != null) {
+        DarculaUIUtil.Outline.valueOf(op.toString()).setGraphicsColor(g2, DarculaSpinnerBorder.isFocused(c));
         bw = 2;
       } else if (c.isEnabled()) {
         boolean hover = spinner.getClientProperty(WinIntelliJSpinnerUI.HOVER_PROPERTY) == Boolean.TRUE;

@@ -20,6 +20,7 @@
 package com.intellij.util.messages;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ConcurrencyUtil;
@@ -95,7 +96,7 @@ public class MessageBusTest extends TestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      myBus.dispose();
+      Disposer.dispose(myBus);
     }
     finally {
       myBus = null;
@@ -343,7 +344,7 @@ public class MessageBusTest extends TestCase {
       public void t11() {
         myLog.add("root 11");
         myBus.syncPublisher(TOPIC1).t12();
-        child.dispose();
+        Disposer.dispose(child);
       }
 
       @Override

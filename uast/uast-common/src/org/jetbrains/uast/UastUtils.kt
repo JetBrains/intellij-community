@@ -76,6 +76,14 @@ fun <T : UElement> UElement.getParentOfType(
     }
 }
 
+fun UElement.getUCallExpression(): UCallExpression? = this.withContainingElements.mapNotNull {
+  when (it) {
+    is UCallExpression -> it
+    is UQualifiedReferenceExpression -> it.selector as? UCallExpression
+    else -> null
+  }
+}.firstOrNull()
+
 @Deprecated(message = "This function is deprecated, use getContainingUFile", replaceWith = ReplaceWith("getContainingUFile()"))
 fun UElement.getContainingFile() = getContainingUFile()
 fun UElement.getContainingUFile() = getParentOfType<UFile>(UFile::class.java)

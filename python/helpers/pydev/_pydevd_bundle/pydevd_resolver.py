@@ -349,8 +349,8 @@ class SetResolver:
         d = {}
         i = 0
         for item in var:
-            i+= 1
-            d[id(item)] = item
+            i += 1
+            d[str(id(item))] = item
             
             if i > MAX_ITEMS_TO_HANDLE:
                 d[TOO_LARGE_ATTR] = TOO_LARGE_MSG

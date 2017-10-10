@@ -102,7 +102,7 @@ public abstract class LightVirtualFileBase extends VirtualFile {
   @NotNull
   @Override
   public FileType getFileType() {
-    if (myOriginalFile != null) return myOriginalFile.getFileType();
+    // eventually leads to myFileType via FileTypeManagerImpl.getByFile()
     return super.getFileType();
   }
 

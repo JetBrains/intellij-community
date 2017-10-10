@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit
  * @author Sergey Karashevich
  */
 
-class JUnitServerImpl: JUnitServer {
+class JUnitServerImpl : JUnitServer {
 
   private val SEND_THREAD = "JUnit Server Send Thread"
   private val RECEIVE_THREAD = "JUnit Server Receive Thread"
@@ -124,7 +124,8 @@ class JUnitServerImpl: JUnitServer {
   override fun isConnected(): Boolean {
     try {
       return connection.isConnected
-    } catch (lateInitException: UninitializedPropertyAccessException) {
+    }
+    catch (lateInitException: UninitializedPropertyAccessException) {
       return false
     }
   }
@@ -145,14 +146,20 @@ class JUnitServerImpl: JUnitServer {
 
 
   private fun execOnParallelThread(body: () -> Unit) {
-    (object: Thread("JUnitServer: Exec On Parallel Thread") { override fun run() { body(); Thread.currentThread().join() } }).start()
+    (object : Thread("JUnitServer: Exec On Parallel Thread") {
+      override fun run() {
+        body(); Thread.currentThread().join()
+      }
+    }).start()
   }
 
   private fun createCallbackServerHandler(handler: (TransportMessage) -> Unit, id: Long)
     = object : ServerHandler() {
-      override fun acceptObject(message: TransportMessage) = message.id == id
-      override fun handleObject(message: TransportMessage) { handler(message) }
+    override fun acceptObject(message: TransportMessage) = message.id == id
+    override fun handleObject(message: TransportMessage) {
+      handler(message)
     }
+  }
 
   inner class ServerSendThread(val connection: Socket, val objectOutputStream: ObjectOutputStream) : Thread(SEND_THREAD) {
 
@@ -165,7 +172,7 @@ class JUnitServerImpl: JUnitServer {
           objectOutputStream.writeObject(message)
         }
       }
-      catch(e: InterruptedException) {
+      catch (e: InterruptedException) {
         Thread.currentThread().interrupt()
       }
       catch (e: Exception) {
@@ -186,13 +193,14 @@ class JUnitServerImpl: JUnitServer {
         LOG.info("Server Receive Thread started")
         while (connection.isConnected) {
           val obj = objectInputStream.readObject()
-          LOG.info("Receiving message: $obj")
+          LOG.debug("Receiving message: $obj")
           assert(obj is TransportMessage)
           val message = obj as TransportMessage
           receivingMessages.put(message)
           handlers.filter { it.acceptObject(message) }.forEach { it.handleObject(message) }
         }
-      } catch (e: Exception) {
+      }
+      catch (e: Exception) {
         if (e is InvalidClassException) LOG.error("Probably serialization error:", e)
         failHandler?.invoke(e)
       }

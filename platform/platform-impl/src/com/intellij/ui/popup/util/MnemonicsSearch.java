@@ -18,6 +18,7 @@ package com.intellij.ui.popup.util;
 import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.popup.WizardPopup;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.KeyEvent;
 import java.util.HashMap;
@@ -46,8 +47,10 @@ public abstract class MnemonicsSearch<T> {
     }
   }
 
-  public void process(KeyEvent e) {
-    if (e.isConsumed() || !StringUtil.isEmptyOrSpaces(myPopup.getSpeedSearch().getFilter())) return;
+  public void processKeyEvent(@NotNull KeyEvent e) {
+    if (e.isConsumed()) return;
+    if (e.getID() != KeyEvent.KEY_TYPED) return;
+    if (!StringUtil.isEmptyOrSpaces(myPopup.getSpeedSearch().getFilter())) return;
 
     if (Character.isLetterOrDigit(e.getKeyChar())) {
       final String s = Character.toString(e.getKeyChar());

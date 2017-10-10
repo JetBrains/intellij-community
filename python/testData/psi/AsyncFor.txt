@@ -30,13 +30,10 @@ PyFile:AsyncFor.py
             PyPassStatement
               PsiElement(Py:PASS_KEYWORD)('pass')
   PsiWhiteSpace('\n\n\n')
-  PyExpressionStatement
-    PyReferenceExpression: async
-      PsiElement(Py:IDENTIFIER)('async')
-    PsiErrorElement:End of statement expected
-      <empty list>
-  PsiWhiteSpace(' ')
   PyForStatement
+    PsiErrorElement:'async' keyword is not expected here
+      PsiElement(Py:IDENTIFIER)('async')
+    PsiWhiteSpace(' ')
     PyForPart
       PsiElement(Py:FOR_KEYWORD)('for')
       PsiWhiteSpace(' ')

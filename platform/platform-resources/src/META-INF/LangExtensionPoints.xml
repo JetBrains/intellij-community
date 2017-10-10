@@ -780,7 +780,7 @@
     <extensionPoint name="fileLookupInfoProvider" interface="com.intellij.psi.file.FileLookupInfoProvider"/>
 
     <extensionPoint name="idIndexer" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
-      <with attribute="implementationClass" implements="com.intellij.psi.impl.cache.impl.id.FileTypeIdIndexer"/>
+      <with attribute="implementationClass" implements="com.intellij.psi.impl.cache.impl.id.IdIndexer"/>
     </extensionPoint>
 
     <extensionPoint name="todoIndexer" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
@@ -912,6 +912,7 @@
                     interface="org.jetbrains.uast.UastLanguagePlugin"/>
 
     <extensionPoint name="breadcrumbsInfoProvider" interface="com.intellij.ui.breadcrumbs.BreadcrumbsProvider"/>
+    <extensionPoint name="consoleHistoryModelProvider" interface="com.intellij.execution.console.ConsoleHistoryModelProvider"/>
 
     <extensionPoint name="filetype.prebuiltStubsProvider"
                     beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">

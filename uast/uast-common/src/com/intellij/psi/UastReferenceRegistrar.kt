@@ -26,8 +26,9 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.toUElement
 
 fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: (UElement, ProcessingContext) -> Boolean,
-                                                        provider: UastReferenceProvider) {
-  this.registerReferenceProvider(UastPatternAdapter(pattern), UastReferenceProviderAdapter(provider))
+                                                        provider: UastReferenceProvider,
+                                                        priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
+  this.registerReferenceProvider(UastPatternAdapter(pattern), UastReferenceProviderAdapter(provider), priority)
 }
 
 abstract class UastReferenceProvider {

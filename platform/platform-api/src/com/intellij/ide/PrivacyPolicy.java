@@ -124,6 +124,9 @@ public final class PrivacyPolicy {
     try {
       FileUtil.writeToFile(ourCachedPolicyFile, text);
     }
+    catch (FileNotFoundException e) {
+      LOG.info(e.getMessage());
+    }
     catch (IOException e) {
       LOG.info(e);
     }

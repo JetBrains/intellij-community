@@ -408,7 +408,6 @@ public class JsonSchemaReader {
       if (element instanceof JsonObject) {
         final JsonObject definitions = (JsonObject)element;
         object.setDefinitionsMap(readInnerObject(definitions, queue));
-        object.setDefinitions(definitions);
       }
     };
   }

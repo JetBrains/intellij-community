@@ -33,7 +33,7 @@ extensionClasses=${fqn}
 """)
   }
 
-  void 'test prefer extension method w/o conversions over class method with SAM conversion'() {
+  void 'test prefer extension method wo conversions over class method with SAM conversion'() {
     fixture.addClass '''\
 package com.foo.baz;
 

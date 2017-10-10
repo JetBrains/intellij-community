@@ -33,6 +33,7 @@ class StopRecAction : AnAction(null, "Stop Recording, Compiling, Running and Cle
     GuiRecorderComponent.cancelCurrentTask()
     Notifier.updateStatus("Stopped")
     Writer.clearScript()
+    GuiRecorderComponent.placeCaretToEnd()
   }
 
 }

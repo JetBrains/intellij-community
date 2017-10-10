@@ -28,6 +28,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.PlatformIcons;
@@ -110,14 +111,30 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
 
   @Override
   public void update(PresentationData presentation) {
-    final String[] groupPath = getValue().getGroupPath();
-    presentation.setPresentableText(groupPath[groupPath.length-1]);
+    presentation.setPresentableText(getPresentableName());
     presentation.setIcon(PlatformIcons.CLOSED_MODULE_GROUP_ICON);
+  }
+
+  @NotNull
+  private String getPresentableName() {
+    return StringUtil.join(getRelativeGroupPath(), ".");
+  }
+
+  private List<String> getRelativeGroupPath() {
+    AbstractTreeNode parent = getParent();
+    List<String> thisPath = getValue().getGroupPathList();
+    if (parent instanceof ModuleGroupNode) {
+      List<String> parentPath = ((ModuleGroupNode)parent).getValue().getGroupPathList();
+      if (ContainerUtil.startsWith(thisPath, parentPath)) {
+        return thisPath.subList(parentPath.size(), thisPath.size());
+      }
+    }
+    return thisPath;
   }
 
   @Override
   public String getTestPresentation() {
-    return "Group: " + getValue();
+    return "Group: " + getPresentableName();
   }
 
   @Override

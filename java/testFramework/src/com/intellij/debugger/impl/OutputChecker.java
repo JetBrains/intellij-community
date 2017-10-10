@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -198,25 +184,20 @@ public class OutputChecker {
 
         String result = buffer;
         //System.out.println("Original Output = " + result);
-        final boolean shouldIgnoreCase = !SystemInfo.isFileSystemCaseSensitive;
 
         result = StringUtil.replace(result, "\r\n", "\n");
         result = StringUtil.replace(result, "\r", "\n");
         result = replaceAdditionalInOutput(result);
-        result = StringUtil.replace(result, myAppPath, "!APP_PATH!", shouldIgnoreCase);
-        result = StringUtil.replace(result, myOutputPath, "!OUTPUT_PATH!", shouldIgnoreCase);
-        result = StringUtil.replace(result, FileUtil.toSystemIndependentName(myOutputPath), "!OUTPUT_PATH!", shouldIgnoreCase);
-        result = StringUtil.replace(result, FileUtil.toSystemIndependentName(myAppPath), "!APP_PATH!", shouldIgnoreCase);
-        result = StringUtil.replace(result, JavaSdkUtil.getIdeaRtJarPath(), "!RT_JAR!", shouldIgnoreCase);
+        result = replacePath(result, myAppPath, "!APP_PATH!");
+        result = replacePath(result, myOutputPath, "!OUTPUT_PATH!");
+        result = replacePath(result, JavaSdkUtil.getIdeaRtJarPath(), "!RT_JAR!");
         String junit4JarPaths = StringUtil.join(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit4"), File.pathSeparator);
-        result = StringUtil.replace(result, junit4JarPaths, "!JUNIT4_JARS!", shouldIgnoreCase);
-        result = StringUtil.replace(result, InetAddress.getLocalHost().getCanonicalHostName(), "!HOST_NAME!", shouldIgnoreCase);
-        result = StringUtil.replace(result, InetAddress.getLocalHost().getHostName(), "!HOST_NAME!", shouldIgnoreCase);
-        result = StringUtil.replace(result, "127.0.0.1", "!HOST_NAME!", shouldIgnoreCase);
-        result = StringUtil.replace(result, JavaSdkUtil.getIdeaRtJarPath().replace('/', File.separatorChar), "!RT_JAR!", shouldIgnoreCase);
-        result = StringUtil.replace(result, FileUtil.toSystemDependentName(internalJdkHome), JDK_HOME_STR, shouldIgnoreCase);
-        result = StringUtil.replace(result, internalJdkHome, JDK_HOME_STR, shouldIgnoreCase);
-        result = StringUtil.replace(result, PathManager.getHomePath(), "!IDEA_HOME!", shouldIgnoreCase);
+        result = replacePath(result, junit4JarPaths, "!JUNIT4_JARS!");
+        result = StringUtil.replace(result, InetAddress.getLocalHost().getCanonicalHostName(), "!HOST_NAME!", true);
+        result = StringUtil.replace(result, InetAddress.getLocalHost().getHostName(), "!HOST_NAME!", true);
+        result = StringUtil.replace(result, "127.0.0.1", "!HOST_NAME!", false);
+        result = replacePath(result, internalJdkHome, JDK_HOME_STR);
+        result = replacePath(result, PathManager.getHomePath(), "!IDEA_HOME!");
         result = StringUtil.replace(result, "Process finished with exit code 255", "Process finished with exit code -1");
 
         //          result = result.replaceAll(" +\n", "\n");
@@ -230,6 +211,7 @@ public class OutputChecker {
         // unquote extra params
         result = result.replaceAll("\"(-D.*?)\"", "$1");
 
+        result = result.replaceAll(" -javaagent:.*props", "");
         result = result.replaceAll("-Didea.launcher.port=\\d*", "-Didea.launcher.port=!IDEA_LAUNCHER_PORT!");
         result = result.replaceAll("-Dfile.encoding=[\\w\\d-]*", "-Dfile.encoding=!FILE_ENCODING!");
         result = result.replaceAll("\\((.*)\\:\\d+\\)", "($1:!LINE_NUMBER!)");
@@ -272,6 +254,12 @@ public class OutputChecker {
         return result;
       }
     });
+  }
+
+  protected static String replacePath(String result, String path, String replacement) {
+    result = StringUtil.replace(result, FileUtil.toSystemDependentName(path), replacement, !SystemInfo.isFileSystemCaseSensitive);
+    result = StringUtil.replace(result, FileUtil.toSystemIndependentName(path), replacement, !SystemInfo.isFileSystemCaseSensitive);
+    return result;
   }
 
   @NotNull

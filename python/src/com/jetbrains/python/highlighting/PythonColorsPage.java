@@ -60,6 +60,9 @@ public class PythonColorsPage implements ColorSettingsPage, InspectionColorSetti
     new AttributesDescriptor("Parameter", PyHighlighter.PY_PARAMETER),
     new AttributesDescriptor("'self' parameter", PyHighlighter.PY_SELF_PARAMETER),
     new AttributesDescriptor("Keyword argument", PyHighlighter.PY_KEYWORD_ARGUMENT),
+    new AttributesDescriptor("Function call", PyHighlighter.PY_FUNCTION_CALL),
+    new AttributesDescriptor("Method call", PyHighlighter.PY_METHOD_CALL),
+    new AttributesDescriptor("Type annotations", PyHighlighter.PY_ANNOTATION),
     new AttributesDescriptor("Valid escape sequence", PyHighlighter.PY_VALID_STRING_ESCAPE),
     new AttributesDescriptor("Invalid escape sequence", PyHighlighter.PY_INVALID_STRING_ESCAPE),
   };
@@ -76,6 +79,9 @@ public class PythonColorsPage implements ColorSettingsPage, InspectionColorSetti
     .put("self", PyHighlighter.PY_SELF_PARAMETER)
     .put("param", PyHighlighter.PY_PARAMETER)
     .put("kwarg", PyHighlighter.PY_KEYWORD_ARGUMENT)
+    .put("call", PyHighlighter.PY_FUNCTION_CALL)
+    .put("mcall", PyHighlighter.PY_METHOD_CALL)
+    .put("annotation", PyHighlighter.PY_ANNOTATION)
     .build();
 
   @NotNull
@@ -112,13 +118,14 @@ public class PythonColorsPage implements ColorSettingsPage, InspectionColorSetti
       "    <docComment>\"\"\" Syntax Highlighting Demo\n" +
       "        <docCommentTag>@param</docCommentTag> x Parameter\"\"\"</docComment>\n" +
       "    s = (\"Test\", 2+3, {'a': 'b'}, <param>x</param>)   # Comment\n" +
-      "    print s[0].lower()\n"+
+      "    <call>f</call>(s[0].<mcall>lower()</mcall>)\n"+
       "\n"+
       "class <classDef>Foo</classDef>:\n"+
-      "    def <predefined>__init__</predefined>(<self>self</self>):\n" +
-      "        byte_string = 'newline:\\n also newline:\\x0a'\n" +
+      "    tags: <annotation>List[<builtin>str</builtin>]</annotation>\n" +
+      "    def <predefined>__init__</predefined>(<self>self</self>: <annotation>Foo</annotation>):\n" +
+      "        byte_string: <annotation><builtin>str</builtin></annotation> = 'newline:\\n also newline:\\x0a'\n" +
       "        text_string = u\"Cyrillic \u042f is \\u042f. Oops: \\u042g\"\n"+
-      "        <self>self</self>.makeSense(<kwarg>whatever</kwarg>=1)\n" +
+      "        <self>self</self>.<mcall>makeSense</mcall>(<kwarg>whatever</kwarg>=1)\n" +
       "    \n" +
       "    def <funcDef>makeSense</funcDef>(<self>self</self>, <param>whatever</param>):\n"+
       "        <self>self</self>.sense = <param>whatever</param>\n"+

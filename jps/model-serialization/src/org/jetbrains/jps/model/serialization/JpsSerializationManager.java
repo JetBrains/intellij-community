@@ -34,7 +34,12 @@ public abstract class JpsSerializationManager {
   }
 
   @NotNull
-  public abstract JpsModel loadModel(@NotNull String projectPath, @Nullable String optionsPath) throws IOException;
+  public JpsModel loadModel(@NotNull String projectPath, @Nullable String optionsPath) throws IOException {
+    return loadModel(projectPath, optionsPath, false);
+  }
+
+  @NotNull
+  public abstract JpsModel loadModel(@NotNull String projectPath, @Nullable String optionsPath, boolean loadUnloadedModules) throws IOException;
 
   @NotNull
   public abstract JpsProject loadProject(@NotNull String projectPath, @NotNull Map<String, String> pathVariables) throws IOException;

@@ -264,6 +264,11 @@ public class CompilerManagerImpl extends CompilerManager {
   }
 
   @Override
+  public void makeWithModalProgress(@NotNull CompileScope scope, @Nullable CompileStatusNotification callback) {
+    new CompileDriver(myProject).make(scope, true, new ListenerNotificator(callback));
+  }
+
+  @Override
   public void make(@NotNull CompileScope scope, CompilerFilter filter, @Nullable CompileStatusNotification callback) {
     final CompileDriver compileDriver = new CompileDriver(myProject);
     compileDriver.setCompilerFilter(filter);

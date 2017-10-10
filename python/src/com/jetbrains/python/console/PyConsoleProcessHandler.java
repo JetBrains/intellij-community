@@ -92,5 +92,9 @@ public class PyConsoleProcessHandler extends PythonProcessHandler {
       // waiting for REPL communication before destroying process handler
     }
   }
+
+  public PydevConsoleCommunication getPydevConsoleCommunication() {
+    return myPydevConsoleCommunication;
+  }
 }
 

@@ -23,8 +23,8 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.EditSourceForDialogAction;
+import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
@@ -65,7 +65,7 @@ public class PushLog extends JPanel implements DataProvider {
   private static final String CONTEXT_MENU = "Vcs.Push.ContextMenu";
   private static final String START_EDITING = "startEditing";
   private static final String SPLITTER_PROPORTION = "Vcs.Push.Splitter.Proportion";
-  private final ChangesBrowser myChangesBrowser;
+  private final SimpleChangesBrowser myChangesBrowser;
   private final CheckboxTree myTree;
   private final MyTreeCellRenderer myTreeCellRenderer;
   private final JScrollPane myScrollPane;
@@ -237,9 +237,7 @@ public class PushLog extends JPanel implements DataProvider {
     ToolTipManager.sharedInstance().registerComponent(myTree);
     PopupHandler.installPopupHandler(myTree, VcsLogActionPlaces.POPUP_ACTION_GROUP, CONTEXT_MENU);
 
-    myChangesBrowser =
-      new ChangesBrowser(project, null, Collections.emptyList(), null, false, false, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES,
-                         null);
+    myChangesBrowser = new SimpleChangesBrowser(project, false, false);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), myTree);
     final EditSourceForDialogAction editSourceAction = new EditSourceForDialogAction(myChangesBrowser);
     editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myChangesBrowser);

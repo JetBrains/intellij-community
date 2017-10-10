@@ -16,14 +16,11 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.uast.UAnnotation
-import org.jetbrains.uast.UDeclaration
-import org.jetbrains.uast.UDeclarationsExpression
-import org.jetbrains.uast.UElement
+import org.jetbrains.uast.*
 
 class JavaUDeclarationsExpression(
-        override val uastParent: UElement?
-) : UDeclarationsExpression {
+        uastParent: UElement?
+) : JavaAbstractUElement(uastParent), UDeclarationsExpression, JvmDeclarationUElement {
     override lateinit var declarations: List<UDeclaration>
         internal set
 

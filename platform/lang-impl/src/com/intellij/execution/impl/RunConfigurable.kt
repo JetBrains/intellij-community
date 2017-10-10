@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.execution.*
@@ -35,7 +21,6 @@ import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Trinity
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance
@@ -492,18 +477,13 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
       settingsWrapper.add(settingsPanel, BorderLayout.WEST)
       settingsWrapper.add(Box.createGlue(), BorderLayout.CENTER)
 
-      if (Registry.`is`("ide.run.dashboard.types.configuration") || ApplicationManager.getApplication().isInternal) {
-        val wrapper = JPanel(BorderLayout())
-        wrapper.add(runDashboardTypesPanel, BorderLayout.CENTER)
-        runDashboardTypesPanel.addChangeListener(this::defaultsSettingsChanged)
-        runDashboardTypesPanel.border = JBUI.Borders.empty(0, 0, 20, 0)
-        wrapper.add(settingsWrapper, BorderLayout.SOUTH)
+      val wrapper = JPanel(BorderLayout())
+      wrapper.add(runDashboardTypesPanel, BorderLayout.CENTER)
+      runDashboardTypesPanel.addChangeListener(this::defaultsSettingsChanged)
+      runDashboardTypesPanel.border = JBUI.Borders.empty(0, 0, 20, 0)
+      wrapper.add(settingsWrapper, BorderLayout.SOUTH)
 
-        panel.add(wrapper, BorderLayout.SOUTH)
-      }
-      else {
-        panel.add(settingsWrapper, BorderLayout.SOUTH)
-      }
+      panel.add(wrapper, BorderLayout.SOUTH)
     }
     rightPanel.revalidate()
     rightPanel.repaint()
@@ -907,7 +887,7 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
         if (userObject is ConfigurationType) {
           return node
         }
-        node = node.parent as DefaultMutableTreeNode
+        node = node.parent as? DefaultMutableTreeNode
       }
       return null
     }
@@ -980,7 +960,7 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
     var selectedNode: DefaultMutableTreeNode? = null
     val selectionPath = tree.selectionPath
     if (selectionPath != null) {
-      selectedNode = selectionPath.lastPathComponent as DefaultMutableTreeNode
+      selectedNode = selectionPath.lastPathComponent as? DefaultMutableTreeNode
     }
     var typeNode = getConfigurationTypeNode(factory.type)
     if (typeNode == null) {

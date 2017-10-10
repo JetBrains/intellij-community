@@ -15,8 +15,8 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInspection.NamingConvention;
-import com.intellij.codeInspection.NamingConventionBean;
+import com.intellij.codeInspection.naming.NamingConvention;
+import com.intellij.codeInspection.naming.NamingConventionBean;
 import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 

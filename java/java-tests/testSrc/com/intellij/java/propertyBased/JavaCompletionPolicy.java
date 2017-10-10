@@ -34,7 +34,12 @@ class JavaCompletionPolicy extends CompletionPolicy {
 
   @Override
   protected boolean isAfterError(@NotNull PsiFile file, @NotNull PsiElement leaf) {
-    return super.isAfterError(file, leaf) || isAdoptedOrphanPsiAfterClassEnd(leaf);
+    return super.isAfterError(file, leaf) || isAdoptedOrphanPsiAfterClassEnd(leaf) || isInsideAnnotationWithErrors(leaf);
+  }
+
+  private static boolean isInsideAnnotationWithErrors(PsiElement leaf) {
+    PsiAnnotationParameterList list = PsiTreeUtil.getParentOfType(leaf, PsiAnnotationParameterList.class);
+    return list != null && PsiTreeUtil.findChildOfType(list, PsiErrorElement.class) != null;
   }
 
   @Override
@@ -112,21 +117,26 @@ class JavaCompletionPolicy extends CompletionPolicy {
 
   @Override
   protected boolean shouldSuggestNonReferenceLeafText(@NotNull PsiElement leaf) {
+    PsiElement parent = leaf.getParent();
     if (leaf instanceof PsiKeyword) {
-      if (leaf.getParent() instanceof PsiClassObjectAccessExpression &&
-          PsiUtil.resolveClassInType(((PsiClassObjectAccessExpression)leaf.getParent()).getOperand().getType()) == null) {
+      if (parent instanceof PsiClassObjectAccessExpression &&
+          PsiUtil.resolveClassInType(((PsiClassObjectAccessExpression)parent).getOperand().getType()) == null) {
         return false;
       }
-      if (leaf.getParent() instanceof PsiModifierList &&
-          Arrays.stream(leaf.getParent().getNode().getChildren(null)).filter(e -> leaf.textMatches(e.getText())).count() > 1) {
-        return false;
+      if (parent instanceof PsiModifierList) {
+        if (Arrays.stream(parent.getNode().getChildren(null)).filter(e -> leaf.textMatches(e.getText())).count() > 1) {
+          return false;
+        }
+        if (parent.getParent() instanceof PsiModifierListOwner && PsiTreeUtil.getParentOfType(parent.getParent(), PsiCodeBlock.class, true, PsiClass.class) != null) {
+          return false; // no modifiers for local classes/variables
+        }
       }
     }
     if (leaf.textMatches(PsiKeyword.TRUE) || leaf.textMatches(PsiKeyword.FALSE)) {
       return false; // boolean literal presence depends on expected types, which can be missing in red files
     }
-    if (leaf.getParent() instanceof PsiNewExpression && ((PsiNewExpression)leaf.getParent()).getQualifier() != null) {
-      PsiJavaCodeReferenceElement reference = ((PsiNewExpression)leaf.getParent()).getClassOrAnonymousClassReference();
+    if (parent instanceof PsiNewExpression && ((PsiNewExpression)parent).getQualifier() != null) {
+      PsiJavaCodeReferenceElement reference = ((PsiNewExpression)parent).getClassOrAnonymousClassReference();
       if (reference == null || reference.resolve() == null) {
         return false; // this.new Foo isn't completed when there's no "Foo"
       }

@@ -72,6 +72,7 @@ import com.jetbrains.python.debugger.PyStackFrameInfo;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.testing.PyTestsSharedKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,6 +86,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   private static final Logger LOG = Logger.getInstance(PythonConsoleView.class);
   private final ConsolePromptDecorator myPromptView;
+  private final boolean myTestMode;
 
   private PythonConsoleExecuteActionHandler myExecuteActionHandler;
   private PyConsoleSourceHighlighter mySourceHighlighter;
@@ -97,8 +99,12 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private ActionCallback myInitialized = new ActionCallback();
   private boolean isShowVars = true;
 
-  public PythonConsoleView(final Project project, final String title, final Sdk sdk) {
+  /**
+   * @param testMode this console will be used to display test output and should support TC messages
+   */
+  public PythonConsoleView(final Project project, final String title, final Sdk sdk,  final boolean testMode) {
     super(project, title, PythonLanguage.getInstance());
+    myTestMode = testMode;
 
     getVirtualFile().putUserData(LanguageLevel.KEY, PythonSdkType.getLanguageLevelForSdk(sdk));
     // Mark editor as console one, to prevent autopopup completion
@@ -263,6 +269,9 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   @Override
   public void print(@NotNull String text, @NotNull final ConsoleViewContentType outputType) {
+    if (myTestMode) {
+      text = PyTestsSharedKt.processTCMessage(text);
+    }
     detectIPython(text, outputType);
     if (PyConsoleUtil.detectIPythonEnd(text)) {
       myIsIPythonOutput = false;

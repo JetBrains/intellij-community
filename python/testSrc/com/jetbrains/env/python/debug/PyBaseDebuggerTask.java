@@ -45,6 +45,8 @@ import org.junit.Assert;
 
 import javax.swing.*;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 
@@ -163,6 +165,56 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     }
 
     return result.first;
+  }
+
+  protected List<PyDebugValue> loadChildren(List<PyDebugValue> debugValues, String name) throws PyDebuggerException {
+    PyDebugValue var = findDebugValueByName(debugValues, name);
+    return convertToList(myDebugProcess.loadVariable(var));
+  }
+
+  protected List<PyDebugValue> loadFrame() throws PyDebuggerException {
+    return convertToList(myDebugProcess.loadFrame());
+  }
+
+  protected String computeValueAsync(List<PyDebugValue> debugValues, String name) throws PyDebuggerException {
+    final PyDebugValue debugValue = findDebugValueByName(debugValues, name);
+    assert debugValue != null;
+    Semaphore variableSemaphore = new Semaphore(0);
+    ArrayList<PyFrameAccessor.PyAsyncValue<String>> valuesForEvaluation = new ArrayList<>();
+    valuesForEvaluation.add(new PyFrameAccessor.PyAsyncValue<>(debugValue, new PyDebugCallback<String>() {
+      @Override
+      public void ok(String value) {
+        debugValue.setValue(value);
+        variableSemaphore.release();
+      }
+
+      @Override
+      public void error(PyDebuggerException exception) {
+        variableSemaphore.release();
+      }
+    }));
+    myDebugProcess.loadAsyncVariablesValues(valuesForEvaluation);
+    XDebuggerTestUtil.waitFor(variableSemaphore, NORMAL_TIMEOUT);
+    return debugValue.getValue();
+  }
+
+  public static List<PyDebugValue> convertToList(XValueChildrenList childrenList) {
+    List<PyDebugValue> values = new ArrayList<>();
+    for (int i = 0; i < childrenList.size(); i++) {
+      PyDebugValue value = (PyDebugValue)childrenList.getValue(i);
+      values.add(value);
+    }
+    return values;
+  }
+
+  @Nullable
+  public static PyDebugValue findDebugValueByName(@NotNull List<PyDebugValue> debugValues, @NotNull String name) {
+    for (PyDebugValue val : debugValues) {
+      if (val.getName().equals(name)) {
+        return val;
+      }
+    }
+    return null;
   }
 
   @NotNull

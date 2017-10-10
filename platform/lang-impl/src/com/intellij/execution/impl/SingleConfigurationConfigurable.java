@@ -294,7 +294,11 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
   public RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
     final SettingsEditor<RunnerAndConfigurationSettings> editor = getEditor();
-    return editor == null ? null : editor.getSnapshot();
+    RunnerAndConfigurationSettings snapshot = editor == null ? null : editor.getSnapshot();
+    if (snapshot != null) {
+      snapshot.setSingleton(isSingleton());
+    }
+    return snapshot;
   }
 
   @Override

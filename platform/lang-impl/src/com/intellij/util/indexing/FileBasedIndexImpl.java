@@ -254,6 +254,9 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       @Override
       public void fileContentReloaded(@NotNull VirtualFile file, @NotNull Document document) {
         cleanupMemoryStorage();
+        if (myState != null) {  // we might have psi different from document
+          clearUpToDateStateForPsiIndicesOfVirtualFile(file);
+        }
       }
 
       @Override
@@ -2195,26 +2198,30 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
             if (!clearUpToDateStateForPsiIndicesOfUnsavedDocuments(virtualFile)) {
               // change in persistent file
-              if (virtualFile instanceof VirtualFileWithId) {
-                int fileId = ((VirtualFileWithId)virtualFile).getId();
-                boolean wasIndexed = false;
-                List<ID<?, ?>> candidates = getAffectedIndexCandidates(virtualFile);
-                for (ID<?, ?> psiBackedIndex : myPsiDependentIndices) {
-                  if (!candidates.contains(psiBackedIndex)) continue;
-                  if(getInputFilter(psiBackedIndex).acceptInput(virtualFile)) {
-                    getIndex(psiBackedIndex).resetIndexedStateForFile(fileId);
-                    wasIndexed = true;
-                  }
-                }
-                if (wasIndexed) {
-                  myChangedFilesCollector.scheduleForUpdate(virtualFile);
-                  IndexingStamp.flushCache(fileId);
-                }
-              }
+              clearUpToDateStateForPsiIndicesOfVirtualFile(virtualFile);
             }
           }
         }
       });
+    }
+  }
+
+  protected void clearUpToDateStateForPsiIndicesOfVirtualFile(VirtualFile virtualFile) {
+    if (virtualFile instanceof VirtualFileWithId) {
+      int fileId = ((VirtualFileWithId)virtualFile).getId();
+      boolean wasIndexed = false;
+      List<ID<?, ?>> candidates = getAffectedIndexCandidates(virtualFile);
+      for (ID<?, ?> psiBackedIndex : myPsiDependentIndices) {
+        if (!candidates.contains(psiBackedIndex)) continue;
+        if(getInputFilter(psiBackedIndex).acceptInput(virtualFile)) {
+          getIndex(psiBackedIndex).resetIndexedStateForFile(fileId);
+          wasIndexed = true;
+        }
+      }
+      if (wasIndexed) {
+        myChangedFilesCollector.scheduleForUpdate(virtualFile);
+        IndexingStamp.flushCache(fileId);
+      }
     }
   }
 

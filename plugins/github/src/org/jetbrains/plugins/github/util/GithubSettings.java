@@ -52,6 +52,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     @NotNull public AuthType AUTH_TYPE = AuthType.ANONYMOUS;
     public boolean ANONYMOUS_GIST = false;
     public boolean OPEN_IN_BROWSER_GIST = true;
+    // "Secret" in UI, "Public" in API. "Private" here to preserve user settings after refactoring
     public boolean PRIVATE_GIST = true;
     public boolean SAVE_PASSWORD = true;
     public int CONNECTION_TIMEOUT = 5000;
@@ -144,8 +145,8 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     myState.ANONYMOUS_GIST = anonymousGist;
   }
 
-  public void setPrivateGist(final boolean privateGist) {
-    myState.PRIVATE_GIST = privateGist;
+  public void setPrivateGist(final boolean secretGist) {
+    myState.PRIVATE_GIST = secretGist;
   }
 
   public void setSavePassword(final boolean savePassword) {

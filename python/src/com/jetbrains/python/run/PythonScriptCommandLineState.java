@@ -115,6 +115,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
 
   @Override
   public void customizeEnvironmentVars(Map<String, String> envs, boolean passParentEnvs) {
+    super.customizeEnvironmentVars(envs, passParentEnvs);
     if (myConfig.emulateTerminal()) {
       if (!SystemInfo.isWindows) {
         envs.put("TERM", "xterm-256color");
@@ -156,18 +157,23 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
   @Override
   protected void buildCommandLineParameters(GeneralCommandLine commandLine) {
     ParametersList parametersList = commandLine.getParametersList();
-    ParamsGroup exe_options = parametersList.getParamsGroup(GROUP_EXE_OPTIONS);
-    assert exe_options != null;
-    exe_options.addParametersString(myConfig.getInterpreterOptions());
+    ParamsGroup exeOptions = parametersList.getParamsGroup(GROUP_EXE_OPTIONS);
+    assert exeOptions != null;
+    exeOptions.addParametersString(myConfig.getInterpreterOptions());
 
-    ParamsGroup script_parameters = parametersList.getParamsGroup(GROUP_SCRIPT);
-    assert script_parameters != null;
-    if (!StringUtil.isEmptyOrSpaces(myConfig.getScriptName())) {
-      script_parameters.addParameter(myConfig.getScriptName());
+    ParamsGroup scriptParameters = parametersList.getParamsGroup(GROUP_SCRIPT);
+    assert scriptParameters != null;
+
+    if (myConfig.isModuleMode()) {
+      scriptParameters.addParameter("-m");
     }
 
-    final String script_options_string = myConfig.getScriptParameters();
-    if (script_options_string != null) script_parameters.addParametersString(script_options_string);
+    if (!StringUtil.isEmptyOrSpaces(myConfig.getScriptName())) {
+      scriptParameters.addParameter(myConfig.getScriptName());
+    }
+
+    final String scriptOptionsString = myConfig.getScriptParameters();
+    if (scriptOptionsString != null) scriptParameters.addParametersString(scriptOptionsString);
 
     if (!StringUtil.isEmptyOrSpaces(myConfig.getWorkingDirectory())) {
       commandLine.setWorkDirectory(myConfig.getWorkingDirectory());

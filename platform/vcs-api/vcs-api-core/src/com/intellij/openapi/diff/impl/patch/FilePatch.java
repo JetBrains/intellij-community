@@ -24,6 +24,8 @@ public abstract class FilePatch {
   private String myBeforeVersionId;
   private String myAfterVersionId;
   private String myBaseRevisionText;
+  // store file mode in 6 digit format a.e. 100655, -1 means file mode was not changed in the pathc 
+  private int myNewFileMode = -1;
 
   public String getBeforeName() {
     return myBeforeName;
@@ -83,4 +85,12 @@ public abstract class FilePatch {
   public abstract boolean isNewFile();
 
   public abstract boolean isDeletedFile();
+
+  public int getNewFileMode() {
+    return myNewFileMode;
+  }
+
+  public void setNewFileMode(int newFileMode) {
+    myNewFileMode = newFileMode;
+  }
 }

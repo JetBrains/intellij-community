@@ -17,6 +17,7 @@ package com.intellij.codeInspection.dataFlow
 
 import com.intellij.lang.LighterAST
 import com.intellij.lang.LighterASTNode
+import com.intellij.psi.CommonClassNames
 import com.intellij.psi.JavaTokenType
 import com.intellij.psi.impl.source.JavaLightTreeUtil
 import com.intellij.psi.impl.source.tree.ElementType
@@ -115,6 +116,21 @@ private fun inferNotNullParameters(tree: LighterAST, parameterNames: List<String
         // Ignore classes, methods and lambda expression bodies as it's not known whether they will be instantiated/executed.
         // For anonymous classes argument list, field initializers and instance initialization sections are checked.
       }
+      TRY_STATEMENT -> {
+        queue.clear()
+        val canCatchNpe = LightTreeUtil.getChildrenOfType(tree, element, CATCH_SECTION)
+          .asSequence()
+          .map { LightTreeUtil.firstChildOfType(tree, it, PARAMETER) }
+          .filterNotNull()
+          .map { parameter -> LightTreeUtil.firstChildOfType(tree, parameter, TYPE) }
+          .any { canCatchNpe(tree, it) }
+        if (!canCatchNpe) {
+          LightTreeUtil.getChildrenOfType(tree, element, RESOURCE_LIST).forEach(queue::addFirst)
+          LightTreeUtil.firstChildOfType(tree, element, CODE_BLOCK)?.let(queue::addFirst)
+          // stop analysis after first try as we are not sure how execution goes further:
+          // whether or not it visit catch blocks, etc.
+        }
+      }
       else -> {
         if (ElementType.JAVA_STATEMENT_BIT_SET.contains(type)) {
           // Unknown/unprocessed statement: just stop processing the rest of the method
@@ -129,6 +145,21 @@ private fun inferNotNullParameters(tree: LighterAST, parameterNames: List<String
   val notNullParameters = BitSet()
   parameterNames.forEachIndexed { index, s -> if (notNulls.contains(s)) notNullParameters.set(index) }
   return notNullParameters
+}
+
+private val NPE_CATCHERS = setOf("Throwable", "Exception", "RuntimeException", "NullPointerException",
+                                 CommonClassNames.JAVA_LANG_THROWABLE, CommonClassNames.JAVA_LANG_EXCEPTION,
+                                 CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, CommonClassNames.JAVA_LANG_NULL_POINTER_EXCEPTION)
+
+fun canCatchNpe(tree: LighterAST, type: LighterASTNode?): Boolean {
+  if (type == null) return false
+  val codeRef = LightTreeUtil.firstChildOfType(tree, type, JAVA_CODE_REFERENCE)
+  val name = JavaLightTreeUtil.getNameIdentifierText(tree, codeRef)
+  if (name == null) {
+    // Multicatch
+    return LightTreeUtil.getChildrenOfType(tree, type, TYPE).any { canCatchNpe(tree, it) }
+  }
+  return NPE_CATCHERS.contains(name)
 }
 
 private fun ignore(tree: LighterAST,

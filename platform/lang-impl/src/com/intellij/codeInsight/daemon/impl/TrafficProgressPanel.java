@@ -104,7 +104,7 @@ class TrafficProgressPanel extends JPanel {
     String text = label.getText();
     Icon icon = label.isEnabled() ? label.getIcon() : label.getDisabledIcon();
 
-    if ((icon == null) && (StringUtil.isEmpty(text))) {
+    if (icon == null && StringUtil.isEmpty(text)) {
       return 0;
     }
 

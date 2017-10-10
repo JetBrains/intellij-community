@@ -21,11 +21,11 @@ import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -50,7 +50,7 @@ public class ChangeListStorageImpl implements ChangeListStorage {
   private LocalHistoryStorage myStorage;
   private long myLastId;
 
-  private boolean isCompletelyBroken = false;
+  private boolean isCompletelyBroken;
 
   public ChangeListStorageImpl(File storageDir) throws IOException {
     myStorageDir = storageDir;
@@ -76,7 +76,7 @@ public class ChangeListStorageImpl implements ChangeListStorage {
             "local history version mismatch (was: {0}, expected: {1}), rebuilding...", storedVersion, VERSION));
         }
         if (timestampMismatch) LocalHistoryLog.LOG.info("FS has been rebuild, rebuilding local history...");
-        result.dispose();
+        Disposer.dispose(result);
         if (!FileUtil.delete(storageDir)) {
           throw new IOException("cannot clear storage dir: " + storageDir);
         }
@@ -109,11 +109,13 @@ public class ChangeListStorageImpl implements ChangeListStorage {
 
     LocalHistoryLog.LOG.error("Local history is broken" +
                               "(version:" + VERSION +
-                              ",current timestamp:" + DateFormat.getDateTimeInstance().format(timestamp) +
-                              ",storage timestamp:" + DateFormat.getDateTimeInstance().format(storageTimestamp) +
-                              ",vfs timestamp:" + DateFormat.getDateTimeInstance().format(vfsTimestamp) + ")\n" + message, e);
+                              ", current timestamp: " + DateFormat.getDateTimeInstance().format(timestamp) +
+                              ", storage timestamp: " + DateFormat.getDateTimeInstance().format(storageTimestamp) +
+                              ", vfs timestamp: " + DateFormat.getDateTimeInstance().format(vfsTimestamp) +
+                              ", path: "+myStorageDir+
+                              ")\n" + message, e);
 
-    myStorage.dispose();
+    Disposer.dispose(myStorage);
     try {
       FileUtil.delete(myStorageDir);
       initStorage(myStorageDir);
@@ -127,7 +129,7 @@ public class ChangeListStorageImpl implements ChangeListStorage {
   }
 
 
-  public static void notifyUser(String message) {
+  private static void notifyUser(String message) {
     final String logFile = PathManager.getLogPath();
     /*String createIssuePart = "<br>" +
                              "<br>" +
@@ -137,31 +139,30 @@ public class ChangeListStorageImpl implements ChangeListStorage {
                                               "Local History is broken",
                                               message /*+ createIssuePart*/,
                                               NotificationType.ERROR,
-                                              new NotificationListener() {
-                                                @Override
-                                                public void hyperlinkUpdate(@NotNull Notification notification,
-                                                                            @NotNull HyperlinkEvent event) {
-                                                  if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                                                    if ("url".equals(event.getDescription())) {
-                                                      BrowserUtil.browse("http://youtrack.jetbrains.net/issue/IDEA-71270");
-                                                    }
-                                                    else {
-                                                      File file = new File(logFile);
-                                                      ShowFilePathAction.openFile(file);
-                                                    }
+                                              (notification, event) -> {
+                                                if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                                                  if ("url".equals(event.getDescription())) {
+                                                    BrowserUtil.browse("http://youtrack.jetbrains.net/issue/IDEA-71270");
+                                                  }
+                                                  else {
+                                                    File file = new File(logFile);
+                                                    ShowFilePathAction.openFile(file);
                                                   }
                                                 }
                                               }), null);
   }
 
+  @Override
   public synchronized void close() {
-    myStorage.dispose();
+    Disposer.dispose(myStorage);
   }
 
+  @Override
   public synchronized long nextId() {
     return ++myLastId;
   }
 
+  @Override
   @Nullable
   public synchronized ChangeSetHolder readPrevious(int id, TIntHashSet recursionGuard) {
     if (isCompletelyBroken) return null;
@@ -200,25 +201,18 @@ public class ChangeListStorageImpl implements ChangeListStorage {
 
   @NotNull
   private ChangeSetHolder doReadBlock(int id) throws IOException {
-    DataInputStream in = myStorage.readStream(id);
-    try {
+    try (DataInputStream in = myStorage.readStream(id)) {
       return new ChangeSetHolder(id, new ChangeSet(in));
-    }
-    finally {
-      in.close();
     }
   }
 
+  @Override
   public synchronized void writeNextSet(ChangeSet changeSet) {
     if (isCompletelyBroken) return;
 
     try {
-      AbstractStorage.StorageDataOutput out = myStorage.writeStream(myStorage.createNextRecord(), true);
-      try {
+      try (AbstractStorage.StorageDataOutput out = myStorage.writeStream(myStorage.createNextRecord(), true)) {
         changeSet.write(out);
-      }
-      finally {
-        out.close();
       }
       myStorage.setLastId(myLastId);
       myStorage.force();
@@ -228,6 +222,7 @@ public class ChangeListStorageImpl implements ChangeListStorage {
     }
   }
 
+  @Override
   public synchronized void purge(long period, int intervalBetweenActivities, Consumer<ChangeSet> processor) {
     if (isCompletelyBroken) return;
 

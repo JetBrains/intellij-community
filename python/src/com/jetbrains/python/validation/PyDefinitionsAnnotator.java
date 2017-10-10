@@ -16,7 +16,6 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.annotation.Annotation;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyNames;
@@ -36,8 +35,7 @@ public class PyDefinitionsAnnotator extends PyAnnotator {
   public void visitPyClass(PyClass node) {
     final ASTNode name_node = node.getNameNode();
     if (name_node != null) {
-      Annotation ann = getHolder().createInfoAnnotation(name_node, null);
-      ann.setTextAttributes(PyHighlighter.PY_CLASS_DEFINITION);
+      addHighlightingAnnotation(name_node, PyHighlighter.PY_CLASS_DEFINITION);
     }
   }
 
@@ -45,7 +43,6 @@ public class PyDefinitionsAnnotator extends PyAnnotator {
   public void visitPyFunction(PyFunction node) {
     ASTNode name_node =  node.getNameNode();
     if (name_node != null) {
-      Annotation ann = getHolder().createInfoAnnotation(name_node, null);
       final String name = node.getName();
       LanguageLevel languageLevel = LanguageLevel.forElement(node);
       if (PyNames.UNDERSCORED_ATTRIBUTES.contains(name) || PyNames.getBuiltinMethods(languageLevel).containsKey(name)) {
@@ -58,14 +55,14 @@ public class PyDefinitionsAnnotator extends PyAnnotator {
           catch (IndexNotReadyException ignored) {
           }
           if (new_style_class) {
-            ann.setTextAttributes(PyHighlighter.PY_PREDEFINED_DEFINITION);
+            addHighlightingAnnotation(name_node, PyHighlighter.PY_PREDEFINED_DEFINITION);
           }
         }
         else {
-          ann.setTextAttributes(PyHighlighter.PY_PREDEFINED_DEFINITION);
+          addHighlightingAnnotation(name_node, PyHighlighter.PY_PREDEFINED_DEFINITION);
         }
       }
-      else ann.setTextAttributes(PyHighlighter.PY_FUNC_DEFINITION);
+      else addHighlightingAnnotation(name_node, PyHighlighter.PY_FUNC_DEFINITION);
     }
   }
 
@@ -80,10 +77,10 @@ public class PyDefinitionsAnnotator extends PyAnnotator {
   private void highlightDecorator(@NotNull PyDecorator node) {
     final PsiElement atSign = node.getFirstChild();
     if (atSign != null) {
-      getHolder().createInfoAnnotation(atSign, null).setTextAttributes(PyHighlighter.PY_DECORATOR);
+      addHighlightingAnnotation(atSign, PyHighlighter.PY_DECORATOR);
       final PsiElement refExpression = PyPsiUtils.getNextNonWhitespaceSibling(atSign);
       if (refExpression != null) {
-        getHolder().createInfoAnnotation(refExpression, null).setTextAttributes(PyHighlighter.PY_DECORATOR);
+        addHighlightingAnnotation(refExpression, PyHighlighter.PY_DECORATOR);
       }
     }
   }

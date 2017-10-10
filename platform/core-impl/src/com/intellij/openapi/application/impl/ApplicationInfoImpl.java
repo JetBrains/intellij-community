@@ -238,7 +238,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public BuildNumber getBuild() {
-    return BuildNumber.fromString(myBuildNumber, getProductPrefix());
+    return BuildNumber.fromStringWithProductCode(myBuildNumber, getProductPrefix());
   }
 
   private static String getProductPrefix() {
@@ -256,7 +256,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   public String getApiVersion() {
     BuildNumber build = getBuild();
     if (myApiVersion != null) {
-      BuildNumber api = BuildNumber.fromString(myApiVersion, build.getProductCode());
+      BuildNumber api = BuildNumber.fromStringWithProductCode(myApiVersion, build.getProductCode());
       if (api != null) {
         return api.asString();
       }

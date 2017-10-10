@@ -22,8 +22,8 @@ import org.jetbrains.uast.UThisExpression
 
 class JavaUThisExpression(
         override val psi: PsiThisExpression,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UThisExpression {
+        givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UThisExpression {
     override val label: String?
         get() = psi.qualifier?.qualifiedName
 

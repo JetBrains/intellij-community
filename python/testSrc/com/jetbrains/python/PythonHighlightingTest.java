@@ -25,6 +25,7 @@ import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -37,10 +38,7 @@ public class PythonHighlightingTest extends PyTestCase {
   private static final String TEST_PATH = "/highlighting/";
 
   public void testBuiltins() {
-    EditorColorsManager manager = EditorColorsManager.getInstance();
-    EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
-    manager.addColorsScheme(scheme);
-    EditorColorsManager.getInstance().setGlobalScheme(scheme);
+    EditorColorsScheme scheme = createTemporaryColorScheme();
 
     TextAttributesKey xKey;
     TextAttributes xAttributes;
@@ -57,10 +55,7 @@ public class PythonHighlightingTest extends PyTestCase {
   }
 
   public void testDeclarations() {
-    EditorColorsManager manager = EditorColorsManager.getInstance();
-    EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
-    manager.addColorsScheme(scheme);
-    EditorColorsManager.getInstance().setGlobalScheme(scheme);
+    EditorColorsScheme scheme = createTemporaryColorScheme();
 
     TextAttributesKey xKey = TextAttributesKey.find("PY.CLASS_DEFINITION");
     TextAttributes xAttributes = new TextAttributes(Color.blue, Color.black, Color.white, EffectType.BOXED, Font.BOLD);
@@ -217,10 +212,7 @@ public class PythonHighlightingTest extends PyTestCase {
 
   public void testYieldInNestedFunction() {
     // highlight func declaration first, lest we get an "Extra fragment highlighted" error.
-    EditorColorsManager manager = EditorColorsManager.getInstance();
-    EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
-    manager.addColorsScheme(scheme);
-    EditorColorsManager.getInstance().setGlobalScheme(scheme);
+    EditorColorsScheme scheme = createTemporaryColorScheme();
 
     TextAttributesKey xKey = TextAttributesKey.find("PY.FUNC_DEFINITION");
     TextAttributes xAttributes = new TextAttributes(Color.red, Color.black, Color.white, EffectType.BOXED, Font.BOLD);
@@ -288,10 +280,7 @@ public class PythonHighlightingTest extends PyTestCase {
 
   // PY-19927
   public void testMagicMethods() {
-    EditorColorsManager manager = EditorColorsManager.getInstance();
-    EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
-    manager.addColorsScheme(scheme);
-    EditorColorsManager.getInstance().setGlobalScheme(scheme);
+    EditorColorsScheme scheme = createTemporaryColorScheme();
 
     TextAttributesKey xKey = TextAttributesKey.find("PY.PREDEFINED_DEFINITION");
     TextAttributes xAttributes = new TextAttributes(Color.green, Color.black, Color.white, EffectType.BOXED, Font.BOLD);
@@ -375,6 +364,30 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(true, true);
   }
 
+  // PY-11418
+  public void testFunctionCalls() {
+    doTest();
+  }
+
+  // PY-20401
+  public void testAnnotations() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-22729
+  public void testParametersWithAnnotationsAndDefaults() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+  }
+
+  @NotNull
+  private static EditorColorsScheme createTemporaryColorScheme() {
+    EditorColorsManager manager = EditorColorsManager.getInstance();
+    EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
+    manager.addColorsScheme(scheme);
+    EditorColorsManager.getInstance().setGlobalScheme(scheme);
+    return scheme;
+  }
+
   // ---
   private void doTest(final LanguageLevel languageLevel, final boolean checkWarnings, final boolean checkInfos) {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
@@ -387,12 +400,15 @@ public class PythonHighlightingTest extends PyTestCase {
   }
 
   private void doTest() {
-    final String TEST_PATH = "/highlighting/";
-    myFixture.testHighlighting(true, true, false, TEST_PATH + getTestName(true) + PyNames.DOT_PY);
+    doTest(true, true);
   }
 
   private void doTest(boolean checkWarnings, boolean checkInfos) {
-    myFixture.testHighlighting(checkWarnings, checkInfos, false, TEST_PATH + getTestName(true) + PyNames.DOT_PY);
+    myFixture.testHighlighting(checkWarnings, checkInfos, false, getTestName(true) + PyNames.DOT_PY);
   }
 
+  @Override
+  protected String getTestDataPath() {
+    return super.getTestDataPath() + "/highlighting/";
+  }
 }

@@ -110,6 +110,11 @@ USE_LIB_COPY = SUPPORT_GEVENT and \
 INTERACTIVE_MODE_AVAILABLE = sys.platform in ('darwin', 'win32') or os.getenv('DISPLAY') is not None
 IS_PYCHARM = True
 
+LOAD_VALUES_ASYNC = os.getenv('PYDEVD_LOAD_VALUES_ASYNC', 'False') == 'True'
+DEFAULT_VALUE = "__pydevd_value_async"
+NEXT_VALUE_SEPARATOR = "__pydev_val__"
+BUILTINS_MODULE_NAME = '__builtin__' if IS_PY2 else 'builtins'
+
 
 def protect_libraries_from_patching():
     """

@@ -63,7 +63,7 @@ public class CreateVirtualEnvDialog extends AbstractCreateVirtualEnvDialog {
     setTitle(PyBundle.message("sdk.create.venv.dialog.title"));
 
     Iterables.removeIf(allSdks, s -> PythonSdkType.isInvalid(s) || PythonSdkType.isVirtualEnv(s) || RemoteSdkCredentialsHolder.isRemoteSdk(s.getHomePath()) ||
-                                 PythonSdkType.isCondaVirtualEnv(s));
+                                 PythonSdkType.isConda(s));
     List<Sdk> sortedSdks = new ArrayList<>(allSdks);
     Collections.sort(sortedSdks, new PreferredSdkComparator());
     updateSdkList(allSdks, sortedSdks.isEmpty() ? null : sortedSdks.get(0));

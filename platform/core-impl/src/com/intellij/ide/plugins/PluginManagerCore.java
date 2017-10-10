@@ -100,6 +100,7 @@ public class PluginManagerCore {
 
   private static class Holder {
     private static final BuildNumber ourBuildNumber = calcBuildNumber();
+    private static final boolean ourIsRunningFromSources = new File(PathManager.getHomePath(), ".idea").isDirectory();
 
     private static BuildNumber calcBuildNumber() {
       BuildNumber ourBuildNumber = BuildNumber.fromString(System.getProperty("idea.plugins.compatible.build"));
@@ -520,6 +521,7 @@ public class PluginManagerCore {
   @NotNull
   private static ClassLoader[] getParentLoaders(@NotNull Map<PluginId, ? extends IdeaPluginDescriptor> idToDescriptorMap, @NotNull PluginId[] pluginIds) {
     if (isUnitTestMode()) return new ClassLoader[0];
+
     LinkedHashSet<ClassLoader> loaders = new LinkedHashSet<>(pluginIds.length);
     for (final PluginId id : pluginIds) {
       IdeaPluginDescriptor pluginDescriptor = idToDescriptorMap.get(id);
@@ -534,6 +536,10 @@ public class PluginManagerCore {
       loaders.add(loader);
     }
     return loaders.toArray(new ClassLoader[loaders.size()]);
+  }
+
+  public static boolean isRunningFromSources() {
+    return Holder.ourIsRunningFromSources;
   }
 
   private static int countPlugins(@NotNull String pluginsPath) {
@@ -1243,12 +1249,12 @@ public class PluginManagerCore {
                                        @Nullable String descriptorName,
                                        @Nullable String descriptorDebugString) {
     JBIterable<String> messages = JBIterable.empty();
-    BuildNumber sinceBuildNumber = StringUtil.isEmpty(sinceBuild) ? null : BuildNumber.fromString(sinceBuild, descriptorName);
+    BuildNumber sinceBuildNumber = StringUtil.isEmpty(sinceBuild) ? null : BuildNumber.fromString(sinceBuild, descriptorName, null);
     if (sinceBuildNumber != null && sinceBuildNumber.compareTo(buildNumber) > 0) {
       messages = messages.append("since build " + sinceBuildNumber + " > " + buildNumber);
     }
 
-    BuildNumber untilBuildNumber = StringUtil.isEmpty(untilBuild) ? null : BuildNumber.fromString(untilBuild, descriptorName);
+    BuildNumber untilBuildNumber = StringUtil.isEmpty(untilBuild) ? null : BuildNumber.fromString(untilBuild, descriptorName, null);
     if (untilBuildNumber != null && untilBuildNumber.compareTo(buildNumber) < 0) {
       messages = messages.append("until build " + untilBuildNumber + " < " + buildNumber);
     }
@@ -1516,7 +1522,8 @@ public class PluginManagerCore {
   static class EssentialPluginMissingException extends RuntimeException {
     final Set<String> pluginIds;
 
-    public EssentialPluginMissingException(@NotNull Set<String> ids) {
+    EssentialPluginMissingException(@NotNull Set<String> ids) {
+      super("Missing essential plugins: " + StringUtil.join(ids, ", "));
       this.pluginIds = ids;
     }
   }

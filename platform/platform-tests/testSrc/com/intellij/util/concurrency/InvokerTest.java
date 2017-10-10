@@ -86,6 +86,33 @@ public class InvokerTest {
   }
 
   @Test
+  public void testScheduleOnEDT() {
+    Disposable parent = InvokerTest::dispose;
+    testSchedule(parent, new Invoker.EDT(parent));
+  }
+
+  @Test
+  public void testScheduleOnBgPool() {
+    Disposable parent = InvokerTest::dispose;
+    testSchedule(parent, new Invoker.BackgroundPool(parent));
+  }
+
+  @Test
+  public void testScheduleOnBgThread() {
+    Disposable parent = InvokerTest::dispose;
+    testSchedule(parent, new Invoker.BackgroundThread(parent));
+  }
+
+  private static void testSchedule(Disposable parent, Invoker invoker) {
+    CountDownLatch latch = new CountDownLatch(1);
+    test(parent, invoker, latch, error -> {
+      AtomicBoolean current = new AtomicBoolean(false);
+      invoker.invokeLater(() -> countDown(latch, 0, error, "task is not done before subtask", current::get), 200);
+      invoker.invokeLater(() -> current.set(true), 100);
+    });
+  }
+
+  @Test
   public void testInvokeLaterIfNeededOnEDT() {
     Disposable parent = InvokerTest::dispose;
     testInvokeLaterIfNeeded(parent, new Invoker.EDT(parent));

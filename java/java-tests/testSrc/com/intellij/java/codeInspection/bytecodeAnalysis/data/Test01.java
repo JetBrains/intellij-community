@@ -18,7 +18,11 @@ package com.intellij.java.codeInspection.bytecodeAnalysis.data;
 import com.intellij.java.codeInspection.bytecodeAnalysis.ExpectContract;
 import com.intellij.java.codeInspection.bytecodeAnalysis.ExpectNotNull;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.lang.reflect.Array;
+import java.nio.file.Files;
 
 /**
  * @author lambdamix
@@ -224,5 +228,70 @@ public class Test01 {
     if (a == null) return true;
     if (b) throw new RuntimeException();
     return b;
+  }
+
+  @ExpectNotNull
+  String getStringNoTry(@ExpectNotNull String s) throws IOException {
+    return String.valueOf(new FileReader(s.trim()).read());
+  }
+
+  String getStringTry(String s) {
+    try {
+      return String.valueOf(new FileReader(s.trim()).read());
+    }
+    catch (IOException ex) {
+      return null;
+    }
+  }
+
+  @ExpectContract("null->null")
+  String getStringTryNPECatched(String s) {
+    try {
+      return String.valueOf(new FileReader(s.trim()).read());
+    }
+    catch (Exception ex) {
+      return null;
+    }
+  }
+
+  @ExpectContract(pure = true)
+  void testThrow(@ExpectNotNull String s) {
+    if(s.isEmpty()) {
+      throw new IllegalArgumentException();
+    }
+  }
+
+  @ExpectContract("!null->!null;null->null")
+  String testCatchReturn(String s) {
+    try {
+      Integer.parseInt(s);
+    }
+    catch (NumberFormatException ex) {
+      System.out.println("exception!");
+    }
+    return s;
+  }
+
+  boolean testCatchBool(File file) {
+    try {
+      Files.createDirectories(file.toPath());
+      return true;
+    }
+    catch (IOException ignored) {
+
+    }
+    return false;
+  }
+
+  @ExpectContract("null->false")
+  boolean testCatchBool2(File file) {
+    try {
+      Files.createDirectories(file.toPath());
+      return true;
+    }
+    catch (Throwable ignored) {
+
+    }
+    return false;
   }
 }

@@ -46,7 +46,6 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestLoggerFactory
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 /**
  * @author peter
  */
@@ -951,8 +950,8 @@ class AppTest {
 
   static class GroovycTest extends GroovyCompilerTest {
     void "test navigate from stub to source"() {
-      GroovyFile groovyFile = (GroovyFile) myFixture.addFileToProject("a.groovy", "class Groovy3 { InvalidType type }")
-      myFixture.addClass("class Java4 extends Groovy3 {}").containingFile
+      myFixture.addFileToProject("a.groovy", "class Groovy3 { InvalidType type }").virtualFile
+      myFixture.addClass("class Java4 extends Groovy3 {}")
 
       def msg = make().find { it.message.contains('InvalidType') }
       assert msg?.virtualFile
@@ -962,7 +961,7 @@ class AppTest {
       assert messages
       def error = messages.find { it.message.contains('InvalidType') }
       assert error?.virtualFile
-      assert groovyFile.classes[0] == GroovyStubNotificationProvider.findClassByStub(project, error.virtualFile)
+      assert myFixture.findClass("Groovy3") == GroovyStubNotificationProvider.findClassByStub(project, error.virtualFile)
     }
 
     void "test config script"() {

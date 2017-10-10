@@ -33,11 +33,14 @@
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ContentRootDataService"/>
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.LibraryDependencyDataService"/>
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ModuleDependencyDataService"/>
-    <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ConfigurationDataService"/>
+    <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.settings.ConfigurationDataService"/>
 
-    <externalSystemConfigurationHandler implementation="com.intellij.openapi.externalSystem.service.project.manage.CompilerConfigurationHandler"/>
-    <externalSystemConfigurationHandler implementation="com.intellij.openapi.externalSystem.service.project.manage.RunConfigurationHandler"/>
-    <runConfigurationHandlerExtension implementation="com.intellij.openapi.externalSystem.service.project.manage.ApplicationRunConfigHandler"/>
+    <externalSystemConfigurationHandler implementation="com.intellij.openapi.externalSystem.service.project.settings.CompilerConfigurationHandler"/>
+    <externalSystemConfigurationHandler implementation="com.intellij.openapi.externalSystem.service.project.settings.CodeStyleConfigurationHandler"/>
+    <externalSystemConfigurationHandler implementation="com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationHandler"/>
+    <externalSystemConfigurationHandler implementation="com.intellij.openapi.externalSystem.service.project.settings.FacetConfigurationHandler"/>
+    <externalSystemConfigurationHandler implementation="com.intellij.profile.codeInspection.InspectionsProfileConfigurationHandler"/>
+    <runConfigurationImporter implementation="com.intellij.openapi.externalSystem.service.project.settings.ApplicationRunConfigurationImporter"/>
 
     <configuration.ModuleStructureExtension implementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalModuleStructureExtension"/>
     

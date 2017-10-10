@@ -127,7 +127,7 @@ public class Standalone {
       return 1;
     }
 
-    JpsModelLoaderImpl loader = new JpsModelLoaderImpl(projectPath, globalOptionsPath, initializer);
+    JpsModelLoaderImpl loader = new JpsModelLoaderImpl(projectPath, globalOptionsPath, false, initializer);
     Set<String> modulesSet = new HashSet<>(Arrays.asList(modules));
     List<String> artifactsList = Arrays.asList(artifacts);
     File dataStorageRoot;

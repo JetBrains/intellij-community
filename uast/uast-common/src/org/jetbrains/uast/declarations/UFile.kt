@@ -59,6 +59,10 @@ interface UFile : UElement, UAnnotated {
     override fun asLogString() = log("package = $packageName")
 
     override fun asRenderString() = buildString {
+        if (annotations.isNotEmpty()) {
+            annotations.joinTo(buffer = this, separator = "\n", postfix = "\n", transform = UAnnotation::asRenderString)
+        }
+
         val packageName = this@UFile.packageName
         if (packageName.isNotEmpty()) appendln("package $packageName").appendln()
 

@@ -180,7 +180,8 @@
                     testServiceImplementation="com.intellij.build.internal.DummyBuildContentManager"/>
 
     <projectService serviceInterface="com.intellij.build.BuildViewManager"
-                    serviceImplementation="com.intellij.build.BuildViewManager"/>
+                    serviceImplementation="com.intellij.build.BuildViewManager"
+                    testServiceImplementation="com.intellij.build.internal.DummyBuildViewManager"/>
     <projectService serviceInterface="com.intellij.build.SyncViewManager"
                     serviceImplementation="com.intellij.build.SyncViewManager"
                     testServiceImplementation="com.intellij.build.internal.DummySyncViewManager"/>
@@ -355,6 +356,8 @@
     <programRunner id="defaultRunRunner" implementation="com.intellij.execution.impl.DefaultJavaProgramRunner"/>
     <programRunner implementation="com.intellij.execution.runners.DefaultRunProgramRunner" order="last"/>
 
+    <checkinHandlerFactory implementation="com.intellij.compiler.impl.vcs.UnloadedModulesCompilationCheckinHandler$Factory"/>
+
     <hectorComponentProvider implementation="com.intellij.codeInsight.daemon.impl.ImportPopupHectorComponentProvider"/>
 
 
@@ -383,6 +386,15 @@
     <projectStructure.sourceRootEditHandler implementation="com.intellij.openapi.roots.ui.configuration.JavaTestResourceRootEditHandler"/>
 
     <buildProcess.parametersProvider implementation="com.intellij.compiler.CompilerReferenceIndexBuildParametersProvider"/>
+    <experimentalFeature id="project.view.async.tree.model" internalFeature="true" percentOfUsers="10" requireRestart="true">
+      <description>New implementation based on AsyncTreeModel + StructureTreeModel</description>
+    </experimentalFeature>
+    <experimentalFeature id="structure.view.async.tree.model" internalFeature="true" percentOfUsers="10" requireRestart="false">
+      <description>New implementation based on AsyncTreeModel + StructureTreeModel</description>
+    </experimentalFeature>
+
+    <editorActionHandler action="EditorChooseLookupItemReplace" 
+                         implementationClass="com.intellij.codeInsight.hint.NextParameterAfterCompletionHandler"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <webServerRootsProvider implementation="org.jetbrains.builtInWebServer.ArtifactWebServerRootsProvider" order="last"/>

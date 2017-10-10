@@ -33,6 +33,7 @@ import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
+import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ParameterInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementBuilder;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
@@ -47,7 +48,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 
 /**
  * @author Eugene.Kudelevsky
@@ -219,7 +219,7 @@ public abstract class StructuralSearchProfile {
                                 MatchResult match,
                                 StringBuilder result,
                                 int offset,
-                                HashMap<String, MatchResult> matchMap) {
+                                ReplacementInfo replacementInfo) {
     if (info.getName().equals(match.getName())) {
       String replacementString = match.getMatchImage();
       boolean forceAddingNewLine = false;
@@ -284,6 +284,6 @@ public abstract class StructuralSearchProfile {
 
   @NotNull
   public PsiElement getPresentableElement(PsiElement element) {
-    return element;
+    return isIdentifier(element) ? element.getParent() : element;
   }
 }

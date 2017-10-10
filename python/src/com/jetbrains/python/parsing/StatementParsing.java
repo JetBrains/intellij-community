@@ -50,7 +50,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   @NonNls protected static final String TOK_FALSE = "False";
   @NonNls protected static final String TOK_NONLOCAL = "nonlocal";
   @NonNls protected static final String TOK_EXEC = "exec";
-  @NonNls protected static final String TOK_ASYNC = "async";
+  @NonNls public static final String TOK_ASYNC = "async";
   @NonNls protected static final String TOK_AWAIT = "await";
 
   private static final String EXPRESSION_EXPECTED = "Expression expected";
@@ -133,8 +133,14 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       return;
     }
     if (firstToken == PyTokenTypes.ASYNC_KEYWORD) {
-      parseAsyncStatement();
+      parseAsyncStatement(false);
       return;
+    }
+
+    if (atToken(PyTokenTypes.IDENTIFIER, TOK_ASYNC)) {
+      if (parseAsyncStatement(true)) {
+        return;
+      }
     }
 
     parseSimpleStatement();
@@ -655,7 +661,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     while (!atAnyOfTokens(null, PyTokenTypes.DEDENT, PyTokenTypes.STATEMENT_BREAK, PyTokenTypes.COLON)) {
       myBuilder.advanceLexer();
     }
-    boolean result =  matchToken(PyTokenTypes.COLON);
+    boolean result = matchToken(PyTokenTypes.COLON);
     if (!result && atToken(PyTokenTypes.STATEMENT_BREAK)) {
       myBuilder.advanceLexer();
     }
@@ -821,23 +827,36 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     classMarker.done(PyElementTypes.CLASS_DECLARATION);
   }
 
-  private void parseAsyncStatement() {
-    assertCurrentToken(PyTokenTypes.ASYNC_KEYWORD);
+  private boolean parseAsyncStatement(boolean falseAsync) {
+    if (!falseAsync) {
+      assertCurrentToken(PyTokenTypes.ASYNC_KEYWORD);
+    }
     final PsiBuilder.Marker marker = myBuilder.mark();
-    myBuilder.advanceLexer();
+
+    advanceAsync(falseAsync);
+
     final IElementType token = myBuilder.getTokenType();
     if (token == PyTokenTypes.DEF_KEYWORD) {
       getFunctionParser().parseFunctionDeclaration(marker, true);
+      return true;
     }
     else if (token == PyTokenTypes.WITH_KEYWORD) {
       parseWithStatement(marker);
+      return true;
     }
     else if (token == PyTokenTypes.FOR_KEYWORD) {
       parseForStatement(marker);
+      return true;
     }
     else {
-      marker.drop();
-      myBuilder.error("'def' or 'with' or 'for' expected");
+      if (falseAsync) {
+        marker.rollbackTo();
+      }
+      else {
+        marker.drop();
+        myBuilder.error("'def' or 'with' or 'for' expected");
+      }
+      return false;
     }
   }
 

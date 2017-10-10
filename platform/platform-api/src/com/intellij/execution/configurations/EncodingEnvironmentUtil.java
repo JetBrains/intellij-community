@@ -32,7 +32,7 @@ public class EncodingEnvironmentUtil {
   private static final Logger LOG = Logger.getInstance(EncodingEnvironmentUtil.class);
 
   private static final String LC_ALL = "LC_ALL";
-  private static final String LC_CTYPE = "LC_CTYPE";
+  public static final String LC_CTYPE = "LC_CTYPE";
   private static final String LANG = "LANG";
 
   /**

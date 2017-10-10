@@ -800,7 +800,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       }
       myIsInheritedInitial = scheme.isInherited(key);
       setInherited(myIsInheritedInitial);
-      if (myIsInheritedInitial) {
+      if (myIsInheritedInitial && myFallbackAttributes != null) {
         getTextAttributes().copyFrom(myFallbackAttributes);
       }
       initCheckedStatus();
@@ -1231,7 +1231,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   @Nullable
   public SearchableConfigurable findSubConfigurable(String pageName) {
     if (mySubPanelFactories == null) {
-      buildConfigurables();
+      getConfigurables();
     }
     for (InnerSearchableConfigurable configurable : mySubPanelFactories.values()) {
       if (configurable.getDisplayName().equals(pageName)) {

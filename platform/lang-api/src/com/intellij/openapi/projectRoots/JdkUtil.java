@@ -1,18 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.execution.CantRunException;
@@ -27,6 +25,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.JarUtil;
@@ -38,16 +37,12 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
-import com.intellij.util.lang.ClassPath;
 import com.intellij.util.lang.UrlClassLoader;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
@@ -60,6 +55,8 @@ import java.util.jar.Manifest;
  * @author max
  */
 public class JdkUtil {
+  public static Key<Map<String, String>> COMMAND_LINE_CONTENT = Key.create("command.line.content");
+
   /**
    * The VM property is needed to workaround incorrect escaped URLs handling in WebSphere,
    * see <a href="https://youtrack.jetbrains.com/issue/IDEA-126859#comment=27-778948">IDEA-126859</a> for additional details
@@ -174,15 +171,15 @@ public class JdkUtil {
 
     if (dynamicClasspath) {
       Class commandLineWrapper;
-      if (canUseArgFile(commandLine, javaParameters)) {
+      if (javaParameters.isArgFile()) {
         setArgFileParams(commandLine, javaParameters, vmParameters, dynamicVMOptions, dynamicParameters);
         dynamicMainClass = dynamicParameters;
       }
       else if (!explicitClassPath(vmParameters) && javaParameters.getJarPath() == null && (commandLineWrapper = getCommandLineWrapperClass()) != null) {
-        if (canUseClasspathJar(javaParameters)) {
+        if (javaParameters.isUseClasspathJar()) {
           setClasspathJarParams(commandLine, javaParameters, vmParameters, commandLineWrapper, dynamicVMOptions, dynamicParameters);
         }
-        else {
+        else if (javaParameters.isClasspathFile()) {
           setCommandLineWrapperParams(commandLine, javaParameters, vmParameters, commandLineWrapper, dynamicVMOptions, dynamicParameters);
         }
       }
@@ -202,11 +199,6 @@ public class JdkUtil {
     if (!dynamicParameters) {
       commandLine.addParameters(javaParameters.getProgramParametersList().getList());
     }
-  }
-
-  private static boolean canUseArgFile(GeneralCommandLine commandLine, SimpleJavaParameters javaParameters) {
-    return javaParameters.getModuleName() != null ||
-           isModularRuntime(new File(commandLine.getExePath()).getParentFile().getParentFile());
   }
 
   private static boolean explicitClassPath(ParametersList vmParameters) {
@@ -262,11 +254,13 @@ public class JdkUtil {
         }
       }
 
+      commandLine.putUserData(COMMAND_LINE_CONTENT, ContainerUtil.stringMap(argFile.getAbsolutePath(), FileUtil.loadFile(argFile)));
+
       appendEncoding(javaParameters, commandLine, vmParameters);
 
       commandLine.addParameter("@" + argFile.getAbsolutePath());
 
-      getFilesToDeleteUserData(commandLine).add(argFile);
+      OSProcessHandler.deleteFileOnTermination(commandLine, argFile);
     }
     catch (IOException e) {
       throwUnableToCreateTempFile(e);
@@ -337,11 +331,15 @@ public class JdkUtil {
       }
 
       File classpathFile = FileUtil.createTempFile("idea_classpath", null);
+      PathsList classPath = javaParameters.getClassPath();
       try (PrintWriter writer = new PrintWriter(classpathFile)) {
-        for (String path : javaParameters.getClassPath().getPathList()) {
+        for (String path : classPath.getPathList()) {
           writer.println(path);
         }
       }
+
+      Map<String, String> map = ContainerUtil.stringMap(classpathFile.getAbsolutePath(), classPath.getPathsString());
+      commandLine.putUserData(COMMAND_LINE_CONTENT, map);
 
       Set<String> classpath = new LinkedHashSet<>();
       classpath.add(PathUtil.getJarPathForClass(commandLineWrapper));
@@ -355,21 +353,21 @@ public class JdkUtil {
 
       commandLine.addParameter(commandLineWrapper.getName());
       commandLine.addParameter(classpathFile.getAbsolutePath());
+      OSProcessHandler.deleteFileOnTermination(commandLine, classpathFile);
 
       if (vmParamsFile != null) {
         commandLine.addParameter("@vm_params");
         commandLine.addParameter(vmParamsFile.getAbsolutePath());
+        map.put(vmParamsFile.getAbsolutePath(), FileUtil.loadFile(vmParamsFile));
+        OSProcessHandler.deleteFileOnTermination(commandLine, vmParamsFile);
       }
 
       if (appParamsFile != null) {
         commandLine.addParameter("@app_params");
         commandLine.addParameter(appParamsFile.getAbsolutePath());
+        map.put(appParamsFile.getAbsolutePath(), FileUtil.loadFile(appParamsFile));
+        OSProcessHandler.deleteFileOnTermination(commandLine, appParamsFile);
       }
-
-      Set<File> filesToDelete = getFilesToDeleteUserData(commandLine);
-      ContainerUtil.addIfNotNull(filesToDelete, classpathFile);
-      ContainerUtil.addIfNotNull(filesToDelete, vmParamsFile);
-      ContainerUtil.addIfNotNull(filesToDelete, appParamsFile);
     }
     catch (IOException e) {
       throwUnableToCreateTempFile(e);
@@ -386,6 +384,7 @@ public class JdkUtil {
       Manifest manifest = new Manifest();
       manifest.getMainAttributes().putValue("Created-By", ApplicationNamesInfo.getInstance().getFullProductName());
 
+      String manifestText = "Manifest.MF";
       if (dynamicVMOptions) {
         List<String> properties = new ArrayList<>();
         for (String param : vmParameters.getList()) {
@@ -397,6 +396,7 @@ public class JdkUtil {
           }
         }
         manifest.getMainAttributes().putValue("VM-Options", ParametersListUtil.join(properties));
+        manifestText += "VM-Options: " + ParametersListUtil.join(properties) + "\n";
       }
       else {
         commandLine.addParameters(vmParameters.getList());
@@ -406,12 +406,12 @@ public class JdkUtil {
 
       if (dynamicParameters) {
         manifest.getMainAttributes().putValue("Program-Parameters", ParametersListUtil.join(javaParameters.getProgramParametersList().getList()));
+        manifestText += "Program-Parameters: " + ParametersListUtil.join(javaParameters.getProgramParametersList().getList()) + "\n";
       }
 
       boolean notEscape = vmParameters.hasParameter(PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL);
-      List<String> classPathList = javaParameters.getClassPath().getPathList();
-
-      File classpathJarFile = CommandLineWrapperUtil.createClasspathJarFile(manifest, classPathList, notEscape);
+      PathsList path = javaParameters.getClassPath();
+      File classpathJarFile = CommandLineWrapperUtil.createClasspathJarFile(manifest, path.getPathList(), notEscape);
 
       String jarFilePath = classpathJarFile.getAbsolutePath();
       commandLine.addParameter("-classpath");
@@ -421,7 +421,9 @@ public class JdkUtil {
       }
       commandLine.addParameter(jarFilePath);
 
-      getFilesToDeleteUserData(commandLine).add(classpathJarFile);
+      commandLine.putUserData(COMMAND_LINE_CONTENT, ContainerUtil.stringMap(jarFilePath, manifestText + "Class-Path: " + path.getPathsString()));
+
+      OSProcessHandler.deleteFileOnTermination(commandLine, classpathJarFile);
     }
     catch (IOException e) {
       throwUnableToCreateTempFile(e);
@@ -435,33 +437,6 @@ public class JdkUtil {
 
   private static void throwUnableToCreateTempFile(IOException cause) throws CantRunException {
     throw new CantRunException("Failed to a create temporary file in " + FileUtilRt.getTempDirectory(), cause);
-  }
-
-  private static boolean canUseClasspathJar(SimpleJavaParameters javaParameters) {
-    String currentPath = PathUtil.getJarPathForClass(ClassPath.class);
-    if (javaParameters.isUseClasspathJar() && useClasspathJar()) {
-      try {
-        final List<URL> urls = new ArrayList<>();
-        for (String path : javaParameters.getClassPath().getPathList()) {
-          if (!path.equals(currentPath)) {
-            try {
-              urls.add(new File(path).toURI().toURL());
-            }
-            catch (MalformedURLException ignore) {}
-          }
-        }
-        final Class<?> aClass = Class.forName("com.intellij.util.lang.ClassPath", false, UrlClassLoader.build().urls(urls).get());
-        try {
-          aClass.getDeclaredMethod("initLoaders", URL.class, boolean.class, int.class);
-        }
-        catch (NoSuchMethodException e) {
-          return false;
-        }
-      }
-      catch (Throwable ignore) {}
-      return true;
-    }
-    return false;
   }
 
   private static void appendParamsEncodingClasspath(SimpleJavaParameters javaParameters,
@@ -518,15 +493,6 @@ public class JdkUtil {
     else {
       throw new CantRunException(ExecutionBundle.message("main.class.is.not.specified.error.message"));
     }
-  }
-
-  private static Set<File> getFilesToDeleteUserData(GeneralCommandLine commandLine) {
-    Set<File> filesToDelete = commandLine.getUserData(OSProcessHandler.DELETE_FILES_ON_TERMINATION);
-    if (filesToDelete == null) {
-      filesToDelete = new THashSet<>();
-      commandLine.putUserData(OSProcessHandler.DELETE_FILES_ON_TERMINATION, filesToDelete);
-    }
-    return filesToDelete;
   }
 
   @Nullable

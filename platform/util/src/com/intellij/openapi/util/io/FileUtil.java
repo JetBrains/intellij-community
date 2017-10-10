@@ -1294,15 +1294,15 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static JBTreeTraverser<File> fileTraverser(@Nullable File root) {
-    return new JBTreeTraverser<File>(FILE_CHILDREN).withRoot(root);
+    return FILE_TRAVERSER.withRoot(root);
   }
 
-  private static final Function<File, Iterable<File>> FILE_CHILDREN = new Function<File, Iterable<File>>() {
+  private static final JBTreeTraverser<File> FILE_TRAVERSER = JBTreeTraverser.from(new Function<File, Iterable<File>>() {
     @Override
     public Iterable<File> fun(File file) {
       return file != null && file.isDirectory() ? JBIterable.of(file.listFiles()) : JBIterable.<File>empty();
     }
-  };
+  });
 
   public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<File> processor) {
     return fileTraverser(root).bfsTraversal().processEach(processor);

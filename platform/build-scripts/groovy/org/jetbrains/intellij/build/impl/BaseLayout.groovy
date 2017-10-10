@@ -27,6 +27,8 @@ import org.jetbrains.intellij.build.ResourcesGenerator
 abstract class BaseLayout {
   /** JAR name (or path relative to 'lib' directory) to names of modules */
   final MultiValuesMap<String, String> moduleJars = new MultiValuesMap<>(true)
+  /** artifact name to relative output path */
+  final Map<String, String> includedArtifacts = [:]
   final List<ModuleResourceData> resourcePaths = []
   /** module name to entries which should be excluded from its output */
   final MultiValuesMap<String, String> moduleExcludes = new MultiValuesMap<>(true)

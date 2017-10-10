@@ -88,6 +88,7 @@ public class InvokeIntention extends ActionOnRange {
     boolean mayBreakCode = myPolicy.mayBreakCode(intention, editor, file);
     Document changedDocument = getDocumentToBeChanged(intention);
     String textBefore = changedDocument == null ? null : changedDocument.getText();
+    Long stampBefore = changedDocument == null ? null : changedDocument.getModificationStamp();
 
     Runnable r = () -> CodeInsightTestFixtureImpl.invokeIntention(intention, file, editor, intention.getText());
     try {
@@ -101,7 +102,7 @@ public class InvokeIntention extends ActionOnRange {
           PsiDocumentManager.getInstance(project).isDocumentBlockedByPsi(changedDocument)) {
         throw new AssertionError("Document is left blocked by PSI");
       }
-      if (!hasErrors && textBefore != null && textBefore.equals(changedDocument.getText())) {
+      if (!hasErrors && stampBefore != null && stampBefore.equals(changedDocument.getModificationStamp())) {
         String message = "No change was performed in the document";
         if (intention.startInWriteAction()) {
           message += ".\nIf it's by design that " + intentionString + " doesn't change source files, " +

@@ -57,10 +57,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
-import com.intellij.xdebugger.frame.XExecutionStack;
-import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.frame.XSuspendContext;
-import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.console.PythonConsoleView;
@@ -105,7 +102,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     new ConcurrentHashMap<>();
 
   private final List<PyThreadInfo> mySuspendedThreads = Collections.synchronizedList(Lists.<PyThreadInfo>newArrayList());
-  private final Map<String, XValueChildrenList> myStackFrameCache = Maps.newHashMap();
+  private final Map<String, XValueChildrenList> myStackFrameCache = Maps.newConcurrentMap();
+  private final Object myFrameCacheObject = new Object();
   private final Map<String, PyDebugValue> myNewVariableValue = Maps.newHashMap();
   private boolean myDownloadSources = false;
 
@@ -451,7 +449,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
                                         @NotNull DefaultActionGroup settings) {
     super.registerAdditionalActions(leftToolbar, topToolbar, settings);
     settings.add(new WatchReturnValuesAction(this));
-    settings.add(new SimplifiedView(this));
+    settings.add(new PyVariableViewSettings.SimplifiedView(this));
+    settings.add(new PyVariableViewSettings.AsyncView());
   }
 
   private static class WatchReturnValuesAction extends ToggleAction {
@@ -491,38 +490,6 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
-  private static class SimplifiedView extends ToggleAction {
-    private volatile boolean mySimplifiedView;
-    private final PyDebugProcess myProcess;
-    private final String myText;
-
-    public SimplifiedView(@NotNull PyDebugProcess debugProcess) {
-      super("", "Disables watching classes, functions and modules objects", null);
-      mySimplifiedView = PyDebuggerSettings.getInstance().isSimplifiedView();
-      myProcess = debugProcess;
-      myText = "Simplified Variables View";
-    }
-
-    @Override
-    public void update(@NotNull final AnActionEvent e) {
-      super.update(e);
-      final Presentation presentation = e.getPresentation();
-      presentation.setEnabled(true);
-      presentation.setText(myText);
-    }
-
-    @Override
-    public boolean isSelected(AnActionEvent e) {
-      return mySimplifiedView;
-    }
-
-    @Override
-    public void setSelected(AnActionEvent e, boolean hide) {
-      mySimplifiedView = hide;
-      PyDebuggerSettings.getInstance().setSimplifiedView(hide);
-      myProcess.getSession().rebuildViews();
-    }
-  }
 
   public void setShowReturnValues(boolean showReturnValues) {
     myDebugger.setShowReturnValues(showReturnValues);
@@ -733,15 +700,64 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
+  public boolean isCurrentFrameCached() {
+    try {
+      synchronized (myFrameCacheObject) {
+        final PyStackFrame frame = currentFrame();
+        return myStackFrameCache.containsKey(frame.getThreadFrameId());
+      }
+    }
+    catch (PyDebuggerException e) {
+      LOG.warn(e);
+    }
+    return false;
+  }
+
+  @Override
   @Nullable
   public XValueChildrenList loadFrame() throws PyDebuggerException {
     final PyStackFrame frame = currentFrame();
-    //do not reload frame every time it is needed, because due to bug in pdb, reloading frame clears all variable changes
-    if (!myStackFrameCache.containsKey(frame.getThreadFrameId())) {
-      XValueChildrenList values = myDebugger.loadFrame(frame.getThreadId(), frame.getFrameId());
-      myStackFrameCache.put(frame.getThreadFrameId(), values);
+    synchronized (myFrameCacheObject) {
+      //do not reload frame every time it is needed, because due to bug in pdb, reloading frame clears all variable changes
+      if (!myStackFrameCache.containsKey(frame.getThreadFrameId())) {
+        XValueChildrenList values = myDebugger.loadFrame(frame.getThreadId(), frame.getFrameId());
+        myStackFrameCache.put(frame.getThreadFrameId(), values);
+      }
     }
     return applyNewValue(myStackFrameCache.get(frame.getThreadFrameId()), frame.getThreadFrameId());
+  }
+
+  public void loadAsyncVariablesValues(@NotNull final List<PyAsyncValue<String>> pyAsyncValues) {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        if (isConnected()) {
+          final PyStackFrame frame = currentFrame();
+          XSuspendContext context = getSession().getSuspendContext();
+          String threadId = threadIdBeforeResumeOrStep(context);
+          for (PyThreadInfo suspendedThread : mySuspendedThreads) {
+            if (threadId == null || threadId.equals(suspendedThread.getId())) {
+              myDebugger.loadFullVariableValues(frame.getThreadId(), frame.getFrameId(), pyAsyncValues);
+              break;
+            }
+          }
+        }
+      }
+      catch (PyDebuggerException e) {
+        if (!isConnected()) return;
+        for (PyAsyncValue<String> asyncValue: pyAsyncValues) {
+          PyDebugValue value = asyncValue.getDebugValue();
+          XValueNode node = value.getLastNode();
+          if (node != null && !node.isObsolete()) {
+            if (e.getMessage().startsWith("Timeout")) {
+              value.updateNodeValueAfterLoading(node, " ", "Timeout Exceeded");
+            }
+            else {
+              LOG.error(e);
+            }
+          }
+        }
+      }
+    });
   }
 
   private XValueChildrenList applyNewValue(XValueChildrenList pyDebugValues, String threadFrameId) {
@@ -767,7 +783,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   @Override
   public XValueChildrenList loadVariable(final PyDebugValue var) throws PyDebuggerException {
     final PyStackFrame frame = currentFrame();
-    PyDebugValue debugValue = var.setName(var.getFullName());
+    PyDebugValue debugValue = new PyDebugValue(var, var.getFullName());
     return myDebugger.loadVariable(frame.getThreadId(), frame.getFrameId(), debugValue);
   }
 
@@ -1183,7 +1199,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
-  public void showNumericContainer(PyDebugValue value) {
+  public void showNumericContainer(@NotNull PyDebugValue value) {
     PyViewNumericContainerAction.showNumericViewer(getProject(), value);
   }
 

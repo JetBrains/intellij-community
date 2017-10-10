@@ -23,8 +23,8 @@ import org.jetbrains.uast.UWhileExpression
 
 class JavaUWhileExpression(
         override val psi: PsiWhileStatement,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UWhileExpression {
+        givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UWhileExpression {
     override val condition by lz { JavaConverter.convertOrEmpty(psi.condition, this) }
     override val body by lz { JavaConverter.convertOrEmpty(psi.body, this) }
 

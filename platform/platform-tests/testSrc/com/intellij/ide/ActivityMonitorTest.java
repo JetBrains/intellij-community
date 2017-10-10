@@ -29,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
+import static org.junit.Assume.assumeFalse;
+
 public class ActivityMonitorTest extends LightPlatformTestCase {
   private UiActivityMonitorImpl myMonitor;
 
@@ -123,6 +125,7 @@ public class ActivityMonitorTest extends LightPlatformTestCase {
   }
 
   public void testModalityState() {
+    assumeFalse("Test cannot be run in headless environment", GraphicsEnvironment.isHeadless());
     assertReady(null);
 
     myMonitor.addActivity(new UiActivity("non_modal_1"), ModalityState.NON_MODAL);
@@ -142,7 +145,7 @@ public class ActivityMonitorTest extends LightPlatformTestCase {
 
       Dialog popup = new Dialog(dialog, "popup", true);
       ModalityState m2 = ApplicationManager.getApplication().getModalityStateForComponent(popup);
-      assertTrue(m2.dominates(m1));
+      assertTrue("m1: "+m1+"; m2:"+m2, m2.dominates(m1));
       myMonitor.addActivity(new UiActivity("modal_2"), m2);
       assertBusy(null);
     }

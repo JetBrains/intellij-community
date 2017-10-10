@@ -304,7 +304,7 @@ public class CodeInsightUtil {
     if (baseClass.hasModifierProperty(PsiModifier.FINAL)) return;
 
     if (matcher.getPrefix().length() > 2) {
-      JBTreeTraverser<PsiClass> traverser = new JBTreeTraverser<>(c -> Arrays.asList(c.getInnerClasses()));
+      JBTreeTraverser<PsiClass> traverser = JBTreeTraverser.of(PsiClass::getInnerClasses);
       AllClassesGetter.processJavaClasses(matcher, context.getProject(), scope, psiClass -> {
         Iterable<PsiClass> inheritors = traverser.withRoot(psiClass).filter(c -> c.isInheritor(baseClass, true));
         return ContainerUtil.process(inheritors, inheritorsProcessor);

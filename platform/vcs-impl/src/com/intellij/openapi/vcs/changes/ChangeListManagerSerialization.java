@@ -127,6 +127,11 @@ class ChangeListManagerSerialization {
       listNode.setAttribute(ATT_COMMENT, comment);
     }
 
+    Object listData = list.getData();
+    if (listData instanceof ChangeListData) {
+      listNode.addContent(ChangeListData.writeExternal((ChangeListData)listData));
+    }
+    
     List<Change> changes = ContainerUtil.sorted(list.getChanges(), new ChangeComparator());
     for (Change change : changes) {
       listNode.addContent(writeChange(change));
@@ -166,7 +171,8 @@ class ChangeListManagerSerialization {
 
     LocalChangeListImpl list = LocalChangeListImpl.createEmptyChangeListImpl(project, name, id);
     list.setCommentImpl(comment);
-
+    list.setData(ChangeListData.readExternal(listNode));
+    
     for (Element changeNode : listNode.getChildren(NODE_CHANGE)) {
       list.addChange(readChange(changeNode));
     }

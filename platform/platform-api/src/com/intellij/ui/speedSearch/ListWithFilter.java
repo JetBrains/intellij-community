@@ -38,8 +38,6 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.FocusEvent;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 
 public class ListWithFilter<T> extends JPanel implements DataProvider {
   private final JList<T> myList;
@@ -87,16 +85,9 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
     mySpeedSearch = new MySpeedSearch(highlightAllOccurrences);
     mySpeedSearch.setEnabled(namer != null);
 
-    myList.addKeyListener(new KeyAdapter() {
-      public void keyPressed(final KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_A && (e.isControlDown() || e.isMetaDown())) {
-          return;
-        }
-        mySpeedSearch.process(e);
-      }
-    });
-    final int selectedIndex = myList.getSelectedIndex();
-    final int modelSize = myList.getModel().getSize();
+    myList.addKeyListener(mySpeedSearch);
+    int selectedIndex = myList.getSelectedIndex();
+    int modelSize = myList.getModel().getSize();
     myModel = new NameFilteringListModel<>(myList, namer, s -> mySpeedSearch.shouldBeShowing(s), mySpeedSearch);
     if (myModel.getSize() == modelSize) {
       myList.setSelectedIndex(selectedIndex);

@@ -16,7 +16,7 @@
 package com.siyeh.ig;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -44,7 +44,7 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.List;
 
-public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
+public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool {
   private String m_shortName = null;
 
   @Override

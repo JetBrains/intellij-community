@@ -109,15 +109,16 @@ public class BasicJarHandler extends ZipHandlerBase {
     private ScheduledFuture<?> myInvalidationRequest;
     
     void attach() throws IOException {
+      synchronized (ourOpenFileLimitGuard) {
+        ourOpenFileLimitGuard.remove(BasicJarHandler.this);
+      }
+      
       myLock.lock();
 
       ScheduledFuture<?> invalidationRequest = myInvalidationRequest;
       if (invalidationRequest != null) {
         invalidationRequest.cancel(false);
         myInvalidationRequest = null;
-        synchronized (ourOpenFileLimitGuard) {
-          ourOpenFileLimitGuard.remove(BasicJarHandler.this);
-        }
       }
 
       if (myFile == null) {

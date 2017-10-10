@@ -38,6 +38,7 @@ import com.intellij.openapi.options.colors.RainbowColorSettingsPage;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.ui.EditorCustomization;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
@@ -84,6 +85,9 @@ public class SimpleEditorPreview implements PreviewPanel {
     myEditor = (EditorEx)FontEditorPreview.createPreviewEditor(
       myHighlightsExtractor.extractHighlights(page.getDemoText(), myHighlightData), // text without tags
       10, 3, -1, myOptions.getSelectedScheme(), false);
+    if (page instanceof EditorCustomization) {
+      ((EditorCustomization)page).customize(myEditor);
+    }
 
     FontEditorPreview.installTrafficLights(myEditor);
     myBlinkingAlarm = new Alarm().setActivationComponent(myEditor.getComponent());

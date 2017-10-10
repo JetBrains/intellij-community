@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -116,51 +104,51 @@ public class PyCallExpressionHelper {
   }
 
   @NotNull
-  public static List<PyCallExpression.PyRatedMarkedCallee> multiResolveRatedCallee(@NotNull PyCallExpression call,
-                                                                                   @NotNull PyResolveContext resolveContext,
-                                                                                   int implicitOffset) {
+  public static List<PyCallExpression.PyMarkedCallee> multiResolveCallee(@NotNull PyCallExpression call,
+                                                                         @NotNull PyResolveContext resolveContext,
+                                                                         int implicitOffset) {
     final PyExpression callee = call.getCallee();
 
-    final List<PyCallExpression.PyRatedMarkedCallee> calleesFromProviders = getCalleesFromProviders(callee, resolveContext.getTypeEvalContext());
+    final List<PyCallExpression.PyMarkedCallee> calleesFromProviders = getCalleesFromProviders(callee, resolveContext.getTypeEvalContext());
     if (calleesFromProviders != null) {
       return calleesFromProviders;
     }
 
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
-    final List<PyCallExpression.PyRatedMarkedCallee> ratedMarkedCallees = new ArrayList<>();
+    final List<PyCallExpression.PyMarkedCallee> ratedMarkedCallees = new ArrayList<>();
 
     for (QualifiedRatedResolveResult resolveResult : multiResolveCallee(call.getCallee(), resolveContext)) {
       for (ClarifiedResolveResult clarifiedResolveResult : clarifyResolveResult(resolveResult, resolveContext)) {
-        final PyCallExpression.PyRatedMarkedCallee markedCallee = markResolveResult(clarifiedResolveResult, context, implicitOffset);
+        final PyCallExpression.PyMarkedCallee markedCallee = markResolveResult(clarifiedResolveResult, context, implicitOffset);
         if (markedCallee == null) continue;
 
         ratedMarkedCallees.add(markedCallee);
       }
     }
 
-    return forEveryScopeTakeOverloadsOtherwiseImplementations(ratedMarkedCallees, PyCallExpression.PyRatedMarkedCallee::getElement, context)
+    return forEveryScopeTakeOverloadsOtherwiseImplementations(ratedMarkedCallees, PyCallExpression.PyMarkedCallee::getElement, context)
       // while clarifying resolve results we could get duplicate callable types so we have to group them and select result with highest rate
       .collect(
-        Collectors.groupingBy(markedCallee -> markedCallee.getMarkedCallee().getCallableType(), LinkedHashMap::new, Collectors.toList())
+        Collectors.groupingBy(markedCallee -> markedCallee.getCallableType(), LinkedHashMap::new, Collectors.toList())
       )
       .entrySet()
       .stream()
-      .map(entry -> entry.getValue().stream().max(Comparator.comparingInt(PyCallExpression.PyRatedMarkedCallee::getRate)).orElse(null))
+      .map(entry -> entry.getValue().stream().max(Comparator.comparingInt(PyCallExpression.PyMarkedCallee::getRate)).orElse(null))
       .filter(Objects::nonNull)
       .collect(Collectors.toList());
   }
 
   @Nullable
-  private static List<PyCallExpression.PyRatedMarkedCallee> getCalleesFromProviders(@Nullable PyExpression callee, @NotNull TypeEvalContext context) {
+  private static List<PyCallExpression.PyMarkedCallee> getCalleesFromProviders(@Nullable PyExpression callee,
+                                                                               @NotNull TypeEvalContext context) {
     if (callee instanceof PyReferenceExpression) {
       final PyReferenceExpression referenceExpression = (PyReferenceExpression)callee;
 
-      final List<PyCallExpression.PyRatedMarkedCallee> callees = StreamEx
+      final List<PyCallExpression.PyMarkedCallee> callees = StreamEx
         .of(Extensions.getExtensions(PyTypeProvider.EP_NAME))
         .map(provider -> provider.getReferenceExpressionType(referenceExpression, context))
         .select(PyCallableType.class)
-        .map(type -> new PyCallExpression.PyMarkedCallee(type, null, null, 0, false))
-        .map(markedCallee -> new PyCallExpression.PyRatedMarkedCallee(markedCallee, RatedResolveResult.RATE_NORMAL))
+        .map(type -> new PyCallExpression.PyMarkedCallee(type, null, null, 0, false, RatedResolveResult.RATE_NORMAL))
         .toList();
 
       if (!callees.isEmpty()) {
@@ -246,7 +234,7 @@ public class PyCallExpressionHelper {
   }
 
   @Nullable
-  private static PyCallExpression.PyRatedMarkedCallee markResolveResult(@NotNull ClarifiedResolveResult resolveResult,
+  private static PyCallExpression.PyMarkedCallee markResolveResult(@NotNull ClarifiedResolveResult resolveResult,
                                                                         @NotNull TypeEvalContext context,
                                                                         int implicitOffset) {
     final PsiElement clarifiedResolved = resolveResult.myClarifiedResolved;
@@ -274,21 +262,22 @@ public class PyCallExpressionHelper {
       final int resolvedImplicitOffset =
         implicitOffset + getImplicitArgumentCount(callable, resolvedModifier, isConstructorCall, isByInstance, isByClass);
 
-      final PyCallExpression.PyMarkedCallee markedCallee = new PyCallExpression.PyMarkedCallee(
+      return new PyCallExpression.PyMarkedCallee(
         callableType,
         callable,
         resolvedModifier,
         Math.max(0, resolvedImplicitOffset), // wrong source can trigger strange behaviour
-        resolveResult.myOriginalResolveResult.isImplicit()
+        resolveResult.myOriginalResolveResult.isImplicit(),
+        resolveResult.myOriginalResolveResult.getRate()
       );
-
-      return new PyCallExpression.PyRatedMarkedCallee(markedCallee, resolveResult.myOriginalResolveResult.getRate());
     }
 
-    return new PyCallExpression.PyRatedMarkedCallee(
-      new PyCallExpression.PyMarkedCallee(callableType, null, null, implicitOffset, resolveResult.myOriginalResolveResult.isImplicit()),
-      resolveResult.myOriginalResolveResult.getRate()
-    );
+    return new PyCallExpression.PyMarkedCallee(callableType,
+                                               null,
+                                               null,
+                                               implicitOffset,
+                                               resolveResult.myOriginalResolveResult.isImplicit(),
+                                               resolveResult.myOriginalResolveResult.getRate());
   }
 
   /**
@@ -754,36 +743,37 @@ public class PyCallExpressionHelper {
   public static List<PyCallExpression.PyArgumentsMapping> mapArguments(@NotNull PyCallSiteExpression callSite,
                                                                        @NotNull PyResolveContext resolveContext) {
     final List<PyCallExpression.PyArgumentsMapping> results = new ArrayList<>();
-    for (PyCallExpression.PyRatedCallee ratedCallee : multiResolveCallee(callSite, resolveContext)) {
-      results.add(mapArguments(callSite, ratedCallee.getCallableType(), ratedCallee.getElement(), resolveContext));
+    for (Pair<PyCallable, PyCallableType> callableAndType : multiResolveCalleeFunction(callSite, resolveContext)) {
+      results.add(mapArguments(callSite, callableAndType.second, callableAndType.first, resolveContext));
     }
     return results;
   }
 
   @NotNull
-  private static List<PyCallExpression.PyRatedCallee> multiResolveCallee(@NotNull PyCallSiteExpression callSite,
-                                                                         @NotNull PyResolveContext resolveContext) {
+  private static List<Pair<PyCallable, PyCallableType>> multiResolveCalleeFunction(@NotNull PyCallSiteExpression callSite,
+                                                                                   @NotNull PyResolveContext resolveContext) {
     if (callSite instanceof PyCallExpression) {
-      return PyUtil.filterTopPriorityResults(((PyCallExpression)callSite).multiResolveRatedCalleeFunction(resolveContext));
+      final List<PyCallExpression.PyMarkedCallee> callees = ((PyCallExpression)callSite).multiResolveCallee(resolveContext);
+
+      return ContainerUtil.map(PyUtil.filterTopPriorityResults(callees),
+                               callee -> Pair.create(callee.getElement(), callee.getCallableType()));
     }
     else if (callSite instanceof PySubscriptionExpression || callSite instanceof PyBinaryExpression) {
-      final List<PyCallExpression.PyRatedCallee> results = new ArrayList<>();
-      boolean resolvedToUnknownResult = false;
+      final List<Pair<PyCallable, PyCallableType>> results = new ArrayList<>();
+
       for (PsiElement result : PyUtil.multiResolveTopPriority(callSite, resolveContext)) {
         if (result instanceof PyTypedElement) {
           final PyType resultType = resolveContext.getTypeEvalContext().getType((PyTypedElement)result);
           if (resultType instanceof PyCallableType) {
-            final PyCallExpression.PyRatedCallee ratedCallee =
-              new PyCallExpression.PyRatedCallee((PyCallableType)resultType,
-                                                 PyUtil.as(result, PyCallable.class),
-                                                 RatedResolveResult.RATE_NORMAL);
-            results.add(ratedCallee);
+            final PyCallable callable = PyUtil.as(result, PyCallable.class);
+            results.add(Pair.create(callable, (PyCallableType)resultType));
             continue;
           }
         }
-        resolvedToUnknownResult = true;
+        return Collections.emptyList();
       }
-      return resolvedToUnknownResult ? Collections.emptyList() : results;
+
+      return results;
     }
     else {
       return Collections.emptyList();
@@ -814,8 +804,11 @@ public class PyCallExpressionHelper {
 
     final ArgumentMappingResults mappingResults = analyzeArguments(arguments, explicitParameters);
 
+    final PyCallExpression.PyMarkedCallee markedCallee =
+      new PyCallExpression.PyMarkedCallee(callableType, callable, null, 0, false, RatedResolveResult.RATE_NORMAL);
+
     return new PyCallExpression.PyArgumentsMapping(callSite,
-                                                   new PyCallExpression.PyMarkedCallee(callableType, callable, null, 0, false),
+                                                   markedCallee,
                                                    mappingResults.getMappedParameters(),
                                                    mappingResults.getUnmappedParameters(),
                                                    mappingResults.getUnmappedArguments(),

@@ -180,9 +180,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   protected void customizeComponent(final T value, final JTable table, final boolean isSelected) {
     setOpaque(true);
     setText(value == null ? "" : getTextFor(value));
-    if (value != null) {
-      setIcon(getIconFor(value));
-    }
+    setIcon(value == null ? null : getIconFor(value));
     setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
     setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
   }
@@ -270,7 +268,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     myListenerList.remove(CellEditorListener.class, l);
   }
 
-  private abstract static class ListStep<T> implements ListPopupStep<T> {
+  private abstract static class ListStep<T> implements ListPopupStep<T>, SpeedSearchFilter<T> {
     private final List<T> myValues;
     private final T mySelected;
 
@@ -292,7 +290,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     }
 
     public boolean isSpeedSearchEnabled() {
-      return false;
+      return true;
     }
 
     public boolean isAutoSelectionEnabled() {
@@ -321,7 +319,17 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     }
 
     public SpeedSearchFilter<T> getSpeedSearchFilter() {
-      return null;
+      return this;
+    }
+
+    @Override
+    public boolean canBeHidden(T value) {
+      return true;
+    }
+
+    @Override
+    public String getIndexedString(T value) {
+      return getTextFor(value);
     }
   }
 }

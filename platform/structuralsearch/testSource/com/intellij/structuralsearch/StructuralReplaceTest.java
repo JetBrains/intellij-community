@@ -2269,4 +2269,17 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "}",
                  replacer.testReplace(in, what, by, options, true));
   }
+
+  public void testReplaceVariableInitializer() {
+    String in = "class X {" +
+                "  private final int i = 1;" +
+                "}";
+    String what = "int '_v;";
+    String by = "long $v$;";
+    assertEquals("initializer should remain",
+                 "class X {" +
+                 "  private final long i=1;" +
+                 "}",
+                 replacer.testReplace(in, what, by, options, true));
+  }
 }

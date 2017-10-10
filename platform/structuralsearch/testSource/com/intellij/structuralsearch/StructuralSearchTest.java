@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -1289,19 +1275,31 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
   }
 
   public void testHierarchy() {
-    final String s105 = "class B {} class A extends B { }";
-    assertEquals("extends match", 1, findMatchesCount(s105, "class '_ extends '_:[ref('T)] {}"));
+    final String s105 = "class B {} class A extends B { } class C {} class D extends C {}";
+    assertEquals("extends match", 1, findMatchesCount(s105, "class '_ extends '_:[ref( \"class B {}\" )] {}"));
 
     final String s107 = "interface IA {} interface IB extends IA { } interface IC extends IB {} interface ID extends IC {}" +
                         "class A implements IA {} class B extends A { } class C extends B implements IC {} class D extends C {}";
     assertEquals("extends navigation match", 2, findMatchesCount(s107, "class '_ extends 'Type:+A {}"));
     assertEquals("implements navigation match", 3, findMatchesCount(s107, "class '_ implements 'Type:+IA {}"));
 
-    final String s109 = "interface I {} interface I2 extends I {} class A implements I2 {} class B extends A { } class C extends B {} class D { void e() { C c; B b; A a;} }";
+    final String s109 = "interface I {}" +
+                        "interface I2 extends I {}" +
+                        "class A implements I2 {}" +
+                        "class B extends A {}" +
+                        "class C extends B {}" +
+                        "class D {" +
+                        "  void e() {" +
+                        "    D d;" +
+                        "    C c;" +
+                        "    B b;" +
+                        "    A a;" +
+                        "  }" +
+                        "}";
     assertEquals("extends navigation match in definition", 3, findMatchesCount(s109, "'_:*A '_;"));
     assertEquals("implements navigation match in definition 2", 3, findMatchesCount(s109, "'_:*I '_;"));
-    assertEquals("implements navigation match in definition 2 with nested conditions", 1,
-                 findMatchesCount(s109, "'_:*[regex( I ) && ref('T)] '_;"));
+    assertEquals("implements navigation match in definition 2 with nested conditions", 3,
+                 findMatchesCount(s109, "'_:[ref( \"class '_A:*[regex( I )] {}\" )] '_;"));
     try {
       findMatchesCount(s109, "'_:*[regex( I ) && ref2('T)] '_;");
       fail("implements navigation match in definition 2 with nested conditions - incorrect cond");
@@ -1408,19 +1406,33 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("body of method by block search", 2, findMatchesCount(s79, " { '_T 'T3 = '_T2?; '_*; } "));
     assertEquals("first matches, next not", 2, findMatchesCount(s95, " class '_ {private int 'T+:field.* ;}"));
 
-    final String s97 = "class A { int c; void b() { C d; } } class C { C() { A a; a.b(); a.c=1; } }";
-    assertEquals("method predicate match", 1, findMatchesCount(s97, "'_.'_:[ref('T)] ()"));
-    assertEquals("field predicate match", 1, findMatchesCount(s97, "'_.'_:[ref('T)]"));
-    assertEquals("dcl predicate match", 1, findMatchesCount(s97, "'_:[ref('T)].'_ ();"));
+    final String s97 = "class A {" +
+                       "  int c;" +
+                       "  int d;" +
+                       "  void b(){}" +
+                       "  void x(){" +
+                       "    C d;" +
+                       "  }" +
+                       "}" +
+                       "class C {" +
+                       "  C() {" +
+                       "    A a;" +
+                       "    A z;" +
+                       "    z.b();" +
+                       "    a.x();" +
+                       "    z.c=1;" +
+                       "    a.d=2;" +
+                       "  }" +
+                       "}";
+    assertEquals("method predicate match", 1, findMatchesCount(s97, "'_.'_:[ref( \"void b(){}\" )] ()"));
+    assertEquals("field predicate match", 1, findMatchesCount(s97, "'_.'_:[ref( \"int c;\" )]"));
+    assertEquals("dcl predicate match", 1, findMatchesCount(s97, "'_:[ref( \"A a;\" )].'_ ();"));
 
     final String s99 = "class X {{ char s = '\\u1111';  char s1 = '\\n'; }}";
     assertEquals("char constants in pattern", 1, findMatchesCount(s99, " char 'var = '\\u1111'; "));
     assertEquals("char constants in pattern 2", 1, findMatchesCount(s99, " char 'var = '\\n'; "));
 
-    assertEquals("class predicate match (from definition)", 3, findMatchesCount(s97, "'_:[ref('T)] '_;"));
-
-    final String s101 = "class A { void b() { String d; String e; String[] f; f.length=1; f.length=1; } }";
-    assertEquals("distinct match", 1, findMatchesCount(s101, "'_:[ref('T)] '_;"));
+    assertEquals("class predicate match (from definition)", 3, findMatchesCount(s97, "'_:[ref( \"class '_A{}\" )] '_;"));
 
     String s107 = "class A {\n" +
                   "  /* */\n" +
@@ -1932,14 +1944,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     assertEquals(7, vars.size());
 
-    Matcher testMatcher = new Matcher(getProject());
     MatchOptions options = new MatchOptions();
     options.fillSearchCriteria("try  { '_st*; } catch('_Type 't+) { '_st2*; }");
     options.setFileType(StdFileTypes.JAVA);
+    Matcher testMatcher = new Matcher(getProject(), options);
 
     List<MatchResult> results = new ArrayList<>();
     for(PsiVariable var:vars) {
-      final List<MatchResult> matchResult = testMatcher.matchByDownUp(var, options);
+      final List<MatchResult> matchResult = testMatcher.matchByDownUp(var);
       results.addAll(matchResult);
       assertTrue((var instanceof PsiParameter && var.getParent() instanceof PsiCatchSection && !matchResult.isEmpty()) ||
                  matchResult.isEmpty());
@@ -1959,7 +1971,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     for(PsiVariable var:vars) {
       final PsiTypeElement typeElement = var.getTypeElement();
-      final List<MatchResult> matchResult = testMatcher.matchByDownUp(typeElement, options);
+      final List<MatchResult> matchResult = testMatcher.matchByDownUp(typeElement);
       results.addAll(matchResult);
       assertTrue((var instanceof PsiParameter && var.getParent() instanceof PsiCatchSection && !matchResult.isEmpty()) ||
                  matchResult.isEmpty());
@@ -2666,5 +2678,22 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals(3, findMatchesCount(source6, "'x:[exprtype( List )]"));
     assertEquals(1, findMatchesCount(source6, "'x:[exprtype( List<List<String>> )]"));
     assertEquals(2, findMatchesCount(source6, "'x:[exprtype( List<Garbage> )]"));
+  }
+
+  public void testSearchReferences() {
+    String source = "class X {" +
+                    "  @Deprecated" +
+                    "  void a() {}" +
+                    "  void b() {}" +
+                    "  void c() {" +
+                    "    a();" +
+                    "    b();" +
+                    "    b();" +
+                    "  }" +
+                    "}";
+    assertEquals("find calls to deprecated methods", 1,
+                 findMatchesCount(source, "'_instance?.'_call:[ref( \"@Deprecated void '_x();\" )] ()"));
+    assertEquals("find calls to non-deprecated methods", 2,
+                 findMatchesCount(source, "'_instance?.'_call:[ref( \"@'_Anno{0,0} void '_x();\" )] ()"));
   }
 }

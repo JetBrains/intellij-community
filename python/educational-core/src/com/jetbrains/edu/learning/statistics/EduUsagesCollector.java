@@ -48,10 +48,6 @@ public class EduUsagesCollector extends UsagesCollector {
     advanceKey("fillPlaceholders");
   }
 
-  public static void stepThroughInvoked() {
-    advanceKey("stepThroughCode");
-  }
-
   public static void projectTypeCreated(@NotNull String projectTypeId) {
     advanceKey("project.created." + projectTypeId);
   }

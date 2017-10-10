@@ -23,7 +23,7 @@ public class JsonStructureViewTest extends JsonTestCase {
 
   private void doTest(final String expected) {
     myFixture.configureByFile(getTestName(false) + ".json");
-    myFixture.testStructureView(component -> assertTreeEqual(component.getTree(), expected));
+    myFixture.testStructureView(svc -> assertTreeEqual(svc.getTree(), expected));
   }
 
   private void doTestTreeStructure(@NotNull Consumer<StructureViewModel> consumer) {
@@ -65,14 +65,24 @@ public class JsonStructureViewTest extends JsonTestCase {
            " -node2\n" +
            "  -object\n" +
            "   -subNode2\n" +
-           "    +object\n" +
+           "    -object\n" +
+           "     someNode\n" +
            " -node3\n" +
            "  -object\n" +
            "   prop1\n" +
            "   prop2\n" +
            "   someFlag\n" +
            "   -array\n" +
-           "    +object\n");
+           "    -object\n" +
+           "     arrProp1\n" +
+           "     -array2\n" +
+           "      -object\n" +
+           "       arr2Prop1\n" +
+           "       arr2Prop2\n" +
+           "       -array3\n" +
+           "        -object\n" +
+           "         prop1\n" +
+           "         prop2\n");
   }
 
   // IDEA-131502

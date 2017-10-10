@@ -67,12 +67,14 @@ public class JpsProjectLoader extends JpsLoaderBase {
   public static final String CLASSPATH_DIR_ATTRIBUTE = "classpath-dir";
   private final JpsProject myProject;
   private final Map<String, String> myPathVariables;
+  private final boolean myLoadUnloadedModules;
 
-  private JpsProjectLoader(JpsProject project, Map<String, String> pathVariables, Path baseDir) {
+  private JpsProjectLoader(JpsProject project, Map<String, String> pathVariables, Path baseDir, boolean loadUnloadedModules) {
     super(createProjectMacroExpander(pathVariables, baseDir));
     myProject = project;
     myPathVariables = pathVariables;
     myProject.getContainer().setChild(JpsProjectSerializationDataExtensionImpl.ROLE, new JpsProjectSerializationDataExtensionImpl(baseDir));
+    myLoadUnloadedModules = loadUnloadedModules;
   }
 
   static JpsMacroExpander createProjectMacroExpander(Map<String, String> pathVariables, @NotNull Path baseDir) {
@@ -81,10 +83,17 @@ public class JpsProjectLoader extends JpsLoaderBase {
     return expander;
   }
 
-  public static void loadProject(final JpsProject project, Map<String, String> pathVariables, String projectPath) throws IOException {
+  public static void loadProject(final JpsProject project,
+                                 Map<String, String> pathVariables,
+                                 String projectPath) throws IOException {
+    loadProject(project, pathVariables, projectPath, false);
+  }
+
+  public static void loadProject(final JpsProject project, Map<String, String> pathVariables, String projectPath,
+                                 boolean loadUnloadedModules) throws IOException {
     Path file = Paths.get(FileUtil.toCanonicalPath(projectPath));
     if (Files.isRegularFile(file) && projectPath.endsWith(".ipr")) {
-      new JpsProjectLoader(project, pathVariables, file.getParent()).loadFromIpr(file);
+      new JpsProjectLoader(project, pathVariables, file.getParent(), loadUnloadedModules).loadFromIpr(file);
     }
     else {
       Path dotIdea = file.resolve(PathMacroUtil.DIRECTORY_STORE_NAME);
@@ -98,7 +107,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
       else {
         throw new IOException("Cannot find IntelliJ IDEA project files at " + projectPath);
       }
-      new JpsProjectLoader(project, pathVariables, directory.getParent()).loadFromDirectory(directory);
+      new JpsProjectLoader(project, pathVariables, directory.getParent(), loadUnloadedModules).loadFromDirectory(directory);
     }
   }
 
@@ -236,7 +245,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
     if (componentRoot == null) return;
 
     Set<String> unloadedModules = new HashSet<>();
-    if (Files.exists(workspaceFile)) {
+    if (!myLoadUnloadedModules && Files.exists(workspaceFile)) {
       Element unloadedModulesList = JDomSerializationUtil.findComponent(loadRootElement(workspaceFile), "UnloadedModulesList");
       for (Element element : JDOMUtil.getChildren(unloadedModulesList, "module")) {
         unloadedModules.add(element.getAttributeValue("name"));

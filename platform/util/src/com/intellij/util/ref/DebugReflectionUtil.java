@@ -156,7 +156,7 @@ public class DebugReflectionUtil {
     Class rootClass = root.getClass();
     for (Field field : getAllFields(rootClass)) {
       String fieldName = field.getName();
-      if (root instanceof Reference && "referent".equals(fieldName)) continue; // do not follow weak/soft refs
+      if (root instanceof Reference && ("referent".equals(fieldName) || "discovered".equals(fieldName))) continue; // do not follow weak/soft refs
       Object value;
       try {
         value = field.get(root);

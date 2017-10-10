@@ -64,8 +64,10 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
     try {
       g2.translate(x, y);
 
-      if (((JComponent)c).getClientProperty("JComponent.error.outline") == Boolean.TRUE) {
-        DarculaUIUtil.paintErrorBorder(g2, width, height, JBUI.scale(5), true, c.hasFocus());
+      Object op = ((JComponent)c).getClientProperty("JComponent.outline");
+      if (op != null) {
+        DarculaUIUtil.paintOutlineBorder(g2, width, height, JBUI.scale(5), true, c.hasFocus(),
+                                         DarculaUIUtil.Outline.valueOf(op.toString()));
       } else if (c.hasFocus()) {
         DarculaUIUtil.paintFocusRing(g2, new Rectangle(JBUI.scale(1), JBUI.scale(1), width - JBUI.scale(2), height - JBUI.scale(2)));
       } else {

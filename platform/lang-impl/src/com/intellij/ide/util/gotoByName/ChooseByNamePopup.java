@@ -140,6 +140,8 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
   @Override
   protected void showList() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
     final JLayeredPane layeredPane = myTextField.getRootPane().getLayeredPane();
 
     Rectangle bounds = new Rectangle(layeredPane.getLocationOnScreen(), myTextField.getSize());

@@ -16,14 +16,15 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.*
-import com.intellij.psi.util.*
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.uast.*
 import org.jetbrains.uast.psi.UElementWithLocation
 
 class JavaUCallExpression(
         override val psi: PsiMethodCallExpression,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UCallExpression, UElementWithLocation {
+        givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UCallExpression, UElementWithLocation {
     override val kind: UastCallKind
         get() = UastCallKind.METHOD_CALL
 
@@ -59,10 +60,12 @@ class JavaUCallExpression(
 
     override val receiver: UExpression?
         get() {
-            return if (uastParent is UQualifiedReferenceExpression && uastParent.selector == this)
-                uastParent.receiver
-            else
-                null
+            uastParent.let { uastParent ->
+                return if (uastParent is UQualifiedReferenceExpression && uastParent.selector == this)
+                    uastParent.receiver
+                else
+                    null
+            }
         }
     
     override val receiverType: PsiType?
@@ -97,8 +100,8 @@ class JavaUCallExpression(
 
 class JavaConstructorUCallExpression(
         override val psi: PsiNewExpression,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UCallExpression {
+        givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UCallExpression {
     override val kind by lz {
         when {
             psi.arrayInitializer != null -> UastCallKind.NEW_ARRAY_WITH_INITIALIZER
@@ -118,7 +121,7 @@ class JavaConstructorUCallExpression(
 
     override val classReference by lz {
         psi.classReference?.let { ref ->
-            JavaConverter.convertReference(ref, { this }, null) as? UReferenceExpression
+            JavaConverter.convertReference(ref, this, null) as? UReferenceExpression
         }
     }
 
@@ -157,8 +160,8 @@ class JavaConstructorUCallExpression(
 
 class JavaArrayInitializerUCallExpression(
         override val psi: PsiArrayInitializerExpression,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UCallExpression {
+        givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UCallExpression {
     override val methodIdentifier: UIdentifier?
         get() = null
 
@@ -194,8 +197,8 @@ class JavaArrayInitializerUCallExpression(
 
 class JavaAnnotationArrayInitializerUCallExpression(
         override val psi: PsiArrayInitializerMemberValue,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UCallExpression {
+        givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UCallExpression {
     override val kind: UastCallKind
         get() = UastCallKind.NESTED_ARRAY_INITIALIZER
 
@@ -212,7 +215,7 @@ class JavaAnnotationArrayInitializerUCallExpression(
     
     override val valueArguments by lz {
         psi.initializers.map {
-            JavaConverter.convertPsiElement(it, { this }) as? UExpression ?: UnknownJavaExpression(it, this)
+            JavaConverter.convertPsiElement(it, this) as? UExpression ?: UnknownJavaExpression(it, this)
         }
     }
 

@@ -21,6 +21,7 @@ import com.intellij.injected.editor.*;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -53,7 +54,7 @@ public class InjectedLanguageUtil {
   static final Key<List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>>> HIGHLIGHT_TOKENS =
     Key.create("HIGHLIGHT_TOKENS");
   public static final Key<IElementType> INJECTED_FRAGMENT_TYPE = Key.create("INJECTED_FRAGMENT_TYPE");
-  public static final Key<Boolean> FRANKENSTEIN_INJECTION = Key.create("FRANKENSTEIN_INJECTION");
+  public static final Key<Boolean> FRANKENSTEIN_INJECTION = InjectedLanguageManager.FRANKENSTEIN_INJECTION;
   // meaning: injected file text is probably incorrect
 
   public static void forceInjectionOnElement(@NotNull PsiElement host) {
@@ -634,5 +635,15 @@ public class InjectedLanguageUtil {
   public static PsiLanguageInjectionHost findInjectionHost(@Nullable VirtualFile virtualFile) {
     return virtualFile instanceof VirtualFileWindow ?
            getShreds(((VirtualFileWindow)virtualFile).getDocumentWindow()).getHostPointer().getElement() : null;
+  }
+
+  public static <T> void putInjectedFileUserData(MultiHostRegistrar registrar, Key<T> key, T value) {
+    PsiFile psiFile = getInjectedFile(registrar);
+    if (psiFile != null) psiFile.putUserData(key, value);
+  }
+
+  public static PsiFile getInjectedFile(MultiHostRegistrar registrar) {
+    final List<Pair<Place,PsiFile>> result = ((MultiHostRegistrarImpl)registrar).getResult();
+    return result == null || result.isEmpty() ? null : result.get(result.size() - 1).second;
   }
 }

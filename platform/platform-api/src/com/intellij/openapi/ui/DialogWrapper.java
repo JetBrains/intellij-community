@@ -202,8 +202,11 @@ public abstract class DialogWrapper {
 
   private final Alarm myErrorTextAlarm = new Alarm();
 
-  private static final Color BALLOON_BORDER = new JBColor(new Color(0xe0a8a9), new Color(0x73454b));
-  private static final Color BALLOON_BACKGROUND = new JBColor(new Color(0xf5e6e7), new Color(0x593d41));
+  public static final Color BALLOON_ERROR_BORDER = new JBColor(new Color(0xe0a8a9), new Color(0x73454b));
+  public static final Color BALLOON_ERROR_BACKGROUND = new JBColor(new Color(0xf5e6e7), new Color(0x593d41));
+
+  public static final Color BALLOON_WARNING_BORDER = new JBColor(new Color(0xcca869), new Color(0x4e452f));
+  public static final Color BALLOON_WARNING_BACKGROUND = new JBColor(new Color(0xf9f4ee), new Color(0x594e32));
 
   /**
    * Creates modal {@code DialogWrapper}. The currently active window will be the dialog's parent.
@@ -1955,7 +1958,7 @@ public abstract class DialogWrapper {
     List<ValidationInfo> corrected = myInfo.stream().filter((vi) -> !info.contains(vi)).collect(Collectors.toList());
     if (Registry.is("ide.inplace.errors.outline")) {
       corrected.stream().filter(vi -> (vi.component != null && vi.component.getBorder() instanceof ErrorBorderCapable)).
-            forEach(vi -> vi.component.putClientProperty("JComponent.error.outline", false));
+            forEach(vi -> vi.component.putClientProperty("JComponent.outline", null));
     }
 
     if (Registry.is("ide.inplace.errors.balloon")) {
@@ -1982,7 +1985,7 @@ public abstract class DialogWrapper {
 
     if (Registry.is("ide.inplace.errors.outline")) {
       myInfo.stream().filter(vi -> (vi.component != null && vi.component.getBorder() instanceof ErrorBorderCapable)).
-        forEach(vi -> vi.component.putClientProperty("JComponent.error.outline", true));
+        forEach(vi -> vi.component.putClientProperty("JComponent.outline", "error"));
     }
 
     if (Registry.is("ide.inplace.errors.balloon") && !myInfo.isEmpty()) {
@@ -2002,8 +2005,8 @@ public abstract class DialogWrapper {
               .setHideOnKeyOutside(false)
               .setHideOnClickOutside(false)
               .setHideOnAction(false)
-              .setBorderColor(BALLOON_BORDER)
-              .setFillColor(BALLOON_BACKGROUND)
+              .setBorderColor(BALLOON_ERROR_BORDER)
+              .setFillColor(BALLOON_ERROR_BACKGROUND)
               .setHideOnFrameResize(false)
               .setRequestFocus(false)
               .setAnimationCycle(100)

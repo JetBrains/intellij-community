@@ -522,8 +522,6 @@
 
     <applicationService serviceImplementation="com.intellij.codeInsight.intention.impl.JavaElementRenderer"/>
 
-    <applicationService serviceImplementation="com.intellij.codeInsight.intention.impl.JavaElementMaterializer"/>
-
     <applicationService serviceInterface="com.intellij.psi.JavaDirectoryService"
                         serviceImplementation="com.intellij.psi.impl.file.JavaDirectoryServiceImpl"/>
 
@@ -880,9 +878,14 @@
                      displayName="Duplicated delimiters in java.util.StringTokenizer"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CollectionAddAllCanBeReplacedWithConstructor"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.CollectionAddAllCanBeReplacedWithConstructorInspection"
                      displayName="Redundant 'Collection.addAll()' call"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="OverwrittenKey"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.OverwrittenKeyInspection"
+                     displayName="Overwritten Map key or Set element"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="AnonymousHasLambdaAlternative" displayName="Anonymous type has shorter lambda alternative"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.AnonymousHasLambdaAlternativeInspection" />
@@ -976,7 +979,7 @@
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.OptionalAssignedToNullInspection"
                      displayName="Null value for Optional type"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="RequireNonNull"
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="RequireNonNull"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids9" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.RequireNonNullInspection"
@@ -1947,6 +1950,7 @@
     <annotator language="SPI" implementationClass="com.intellij.spi.SPIAnnotator"/>
 
     <gotoDeclarationHandler implementation="com.intellij.codeInsight.navigation.actions.GotoLambdaParameterHandler"/>
+    <gotoDeclarationHandler implementation="com.intellij.codeInsight.navigation.actions.GotoVarTypeHandler"/>
 
     <completion.contributor language="JAVA" id="methodsChainsCompletionContributor" order="first"
                             implementationClass="com.intellij.compiler.chainsSearch.completion.MethodChainCompletionContributor"/>

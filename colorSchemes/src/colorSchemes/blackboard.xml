@@ -944,16 +944,8 @@
     </option>
     <option baseAttributes="TEXT" name="OC.DOT" />
     <option baseAttributes="OC.LOCAL_VARIABLE" name="OC.EXTERN_VARIABLE" />
-    <option name="OC.FUNCTION_CALL">
-      <value>
-        <option name="FOREGROUND" value="FF6400" />
-      </value>
-    </option>
-    <option name="OC.FUNCTION_DECLARATION">
-      <value>
-        <option name="FOREGROUND" value="FF6400" />
-      </value>
-    </option>
+    <option baseAttributes="DEFAULT_FUNCTION_CALL" name="OC.FUNCTION" />
+    <option baseAttributes="DEFAULT_FUNCTION_DECLARATION" name="OC.FUNCTION_DECLARATION" />
     <option baseAttributes="OC.LOCAL_VARIABLE" name="OC.GLOBAL_VARIABLE" />
     <option name="OC.KEYWORD">
       <value>

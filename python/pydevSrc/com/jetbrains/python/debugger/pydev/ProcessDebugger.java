@@ -50,6 +50,11 @@ public interface ProcessDebugger {
   PyDebugValue changeVariable(String threadId, String frameId, PyDebugValue var, String value)
     throws PyDebuggerException;
 
+  void loadFullVariableValues(@NotNull String threadId,
+                              @NotNull String frameId,
+                              @NotNull List<PyFrameAccessor.PyAsyncValue<String>> vars)
+    throws PyDebuggerException;
+
   @Nullable
   String loadSource(String path);
 

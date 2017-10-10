@@ -173,7 +173,9 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
       String tabName = getPinnedTabName(buildsView);
       UIUtil.invokeLaterIfNeeded(() -> {
         content.setPinnable(false);
-        content.setIcon(EmptyIcon.ICON_8);
+        if(content.getIcon() == null) {
+          content.setIcon(EmptyIcon.ICON_8);
+        }
         content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
         ((BuildContentManagerImpl)myBuildContentManager).updateTabDisplayName(content, tabName);
       });

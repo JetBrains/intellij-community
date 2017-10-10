@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,6 +16,7 @@ import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacerUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.siyeh.ig.psiutils.ImportUtils;
 import com.siyeh.ig.psiutils.PsiElementOrderComparator;
@@ -133,14 +120,12 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
    * Copy all comments, doc comments, modifier lists and method bodies
    * that are present in matched nodes but not present in searched & replaced nodes
    */
-  private void copyUnmatchedElements(final PsiElement original, final PsiElement replacement) {
-    Map<String, String> newNameToSearchPatternNameMap = myContext.getNewName2PatternNameMap();
-
+  private void copyUnmatchedElements(PsiElement original, PsiElement replacement, ReplacementInfo info) {
     Map<String, PsiNamedElement> originalNamedElements = Collector.collectNamedElements(original);
     Map<String, PsiNamedElement> replacedNamedElements = Collector.collectNamedElements(replacement);
 
     if (originalNamedElements.size() == 0 && replacedNamedElements.size() == 0) {
-      Replacer.handleComments(original, replacement, myContext);
+      Replacer.handleComments(original, replacement, info);
       return;
     }
 
@@ -149,8 +134,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     for (String name : originalNamedElements.keySet()) {
       PsiNamedElement originalNamedElement = originalNamedElements.get(name);
       PsiNamedElement replacementNamedElement = replacedNamedElements.get(name);
-      String key = newNameToSearchPatternNameMap.get(name);
-      if (key == null) key = name;
+      String key = ObjectUtils.notNull(info.getSearchPatternName(name), name);
       PsiNamedElement patternNamedElement = patternNamedElements.get(key);
 
       if (replacementNamedElement == null && originalNamedElements.size() == 1 && replacedNamedElements.size() == 1) {
@@ -173,7 +157,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
       }
 
       if (replacementNamedElement != null && patternNamedElement != null) {
-        Replacer.handleComments(originalNamedElement, replacementNamedElement, myContext);
+        Replacer.handleComments(originalNamedElement, replacementNamedElement, info);
       }
 
       if (comment != null && replacementNamedElement instanceof PsiDocCommentOwner &&
@@ -199,6 +183,17 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
           patternNamedElement instanceof PsiMethod &&
           replacementNamedElement instanceof PsiMethod) {
         copyMethodBodyIfNotReplaced((PsiMethod)originalNamedElement, (PsiMethod)patternNamedElement, (PsiMethod)replacementNamedElement);
+      }
+
+      if (originalNamedElement instanceof PsiVariable  &&
+        patternNamedElement instanceof PsiVariable &&
+        replacementNamedElement instanceof PsiVariable) {
+        final PsiVariable originalVariable = (PsiVariable)originalNamedElement;
+        final PsiVariable queryVariable = (PsiVariable)patternNamedElement;
+        final PsiVariable replacementVariable = (PsiVariable)replacementNamedElement;
+        if (originalVariable.hasInitializer() && !queryVariable.hasInitializer() && !replacementVariable.hasInitializer()) {
+          replacementVariable.setInitializer(originalVariable.getInitializer());
+        }
       }
 
       if (originalNamedElement instanceof PsiClass &&
@@ -380,7 +375,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     if (listContext) {
       if (replacements.length > 1) {
         final PsiElement replacement = elementParent.addRangeBefore(replacements[0], replacements[replacements.length - 1], elementToReplace);
-        copyUnmatchedElements(elementToReplace, replacement);
+        copyUnmatchedElements(elementToReplace, replacement, info);
       }
       else if (replacements.length == 1) {
         PsiElement replacement = getMatchExpr(replacements[0], elementToReplace);
@@ -395,7 +390,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
           replacement = JavaPsiFacade.getElementFactory(variable.getProject()).createParameterFromText(parameterText, variable);
         }
 
-        copyUnmatchedElements(elementToReplace, replacement);
+        copyUnmatchedElements(elementToReplace, replacement, info);
         replacement = handleSymbolReplacement(replacement, elementToReplace);
 
         if (replacement instanceof PsiTryStatement) {
@@ -459,7 +454,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
         elementToReplace.getNode().getTreeParent().removeChild(elementToReplace.getNode());
       }
       else {
-        copyUnmatchedElements(elementToReplace, replacement);
+        copyUnmatchedElements(elementToReplace, replacement, info);
 
         replacement = handleSymbolReplacement(replacement, elementToReplace);
         elementToReplace.replace(replacement);

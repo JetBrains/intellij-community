@@ -28,7 +28,6 @@ import com.intellij.ui.AddEditRemovePanel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.Nullable;
 
@@ -283,8 +282,9 @@ public class ExternalResourceConfigurable extends BaseConfigurable
         } else {
           path = LocalFileSystem.getInstance().findFileByPath(loc);
         }
-
-        setForeground(path != null ? isSelected ? UIUtil.getTableSelectionForeground() : Color.black : new Color(210, 0, 0));
+        if (path == null) {
+          setForeground(new Color(210, 0, 0));
+        }
       }
       return rendererComponent;
     }

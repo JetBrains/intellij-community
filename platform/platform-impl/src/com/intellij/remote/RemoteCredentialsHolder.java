@@ -42,14 +42,13 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   public static final String USE_KEY_PAIR = "USE_KEY_PAIR";
   public static final String USE_AUTH_AGENT = "USE_AUTH_AGENT";
   public static final String PRIVATE_KEY_FILE = "PRIVATE_KEY_FILE";
-  public static final String KNOWN_HOSTS_FILE = "MY_KNOWN_HOSTS_FILE";
   public static final String PASSPHRASE = "PASSPHRASE";
 
   public static final String SSH_PREFIX = "ssh://";
 
   private static final Map<AuthType, String> CREDENTIAL_ATTRIBUTES_QUALIFIERS = ImmutableMap.of(AuthType.PASSWORD, "password",
                                                                                                 AuthType.KEY_PAIR, "passphrase",
-                                                                                                AuthType.AUTH_AGENT, "empty");
+                                                                                                AuthType.OPEN_SSH, "empty");
 
   private String myHost;
   private int myPort;//will always be equal to myLiteralPort, if it's valid, or equal to 0 otherwise
@@ -152,23 +151,6 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     myPrivateKeyFile = privateKeyFile;
   }
 
-  /**
-   * @deprecated see {@link RemoteCredentials#getKnownHostsFile()}
-   */
-  @Deprecated
-  @Override
-  public String getKnownHostsFile() {
-    return myKnownHostsFile;
-  }
-
-  /**
-   * @deprecated see {@link MutableRemoteCredentials#setKnownHostsFile(String)}
-   */
-  @Deprecated
-  public void setKnownHostsFile(String knownHostsFile) {
-    myKnownHostsFile = knownHostsFile;
-  }
-
   @Override
   @Transient
   public String getPassphrase() {
@@ -250,17 +232,17 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   @Deprecated
   @Override
   public boolean isUseAuthAgent() {
-    return myAuthType == AuthType.AUTH_AGENT;
+    return myAuthType == AuthType.OPEN_SSH;
   }
 
   @Deprecated
   @Override
   public void setUseAuthAgent(boolean useAuthAgent) {
     if (useAuthAgent) {
-      myAuthType = AuthType.AUTH_AGENT;
+      myAuthType = AuthType.OPEN_SSH;
     }
     else {
-      if (myAuthType == AuthType.AUTH_AGENT) {
+      if (myAuthType == AuthType.OPEN_SSH) {
         myAuthType = AuthType.PASSWORD;
       }
       else {
@@ -284,7 +266,6 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     to.setPassword(from.getPassword());
     to.setAuthType(from.getAuthType());
     to.setPrivateKeyFile(from.getPrivateKeyFile());
-    to.setKnownHostsFile(from.getKnownHostsFile());
     to.setStorePassword(from.isStorePassword());
     to.setStorePassphrase(from.isStorePassphrase());
   }
@@ -295,7 +276,6 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     setSerializedUserName(element.getAttributeValue(USERNAME));
     setSerializedPassword(element.getAttributeValue(PASSWORD));
     setPrivateKeyFile(StringUtil.nullize(element.getAttributeValue(PRIVATE_KEY_FILE)));
-    setKnownHostsFile(StringUtil.nullize(element.getAttributeValue(KNOWN_HOSTS_FILE)));
     setSerializedPassphrase(element.getAttributeValue(PASSPHRASE));
     boolean useKeyPair = StringUtil.parseBoolean(element.getAttributeValue(USE_KEY_PAIR), false);
     boolean useAuthAgent = StringUtil.parseBoolean(element.getAttributeValue(USE_AUTH_AGENT), false);
@@ -303,7 +283,8 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
       myAuthType = AuthType.KEY_PAIR;
     }
     else if (useAuthAgent) {
-      myAuthType = AuthType.AUTH_AGENT;
+      // the old `USE_AUTH_AGENT` attribute is used to avoid settings migration
+      myAuthType = AuthType.OPEN_SSH;
     }
     else {
       myAuthType = AuthType.PASSWORD;
@@ -351,13 +332,13 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     rootElement.setAttribute(PORT, StringUtil.notNullize(getLiteralPort()));
     rootElement.setAttribute(USERNAME, getSerializedUserName());
     rootElement.setAttribute(PRIVATE_KEY_FILE, StringUtil.notNullize(getPrivateKeyFile()));
-    rootElement.setAttribute(KNOWN_HOSTS_FILE, StringUtil.notNullize(getKnownHostsFile()));
     rootElement.setAttribute(USE_KEY_PAIR, Boolean.toString(myAuthType == AuthType.KEY_PAIR));
-    rootElement.setAttribute(USE_AUTH_AGENT, Boolean.toString(myAuthType == AuthType.AUTH_AGENT));
+    // the old `USE_AUTH_AGENT` attribute is used to avoid settings migration
+    rootElement.setAttribute(USE_AUTH_AGENT, Boolean.toString(myAuthType == AuthType.OPEN_SSH));
 
     boolean memoryOnly = (myAuthType == AuthType.KEY_PAIR && !isStorePassphrase())
                          || (myAuthType == AuthType.PASSWORD && !isStorePassword())
-                         || myAuthType == AuthType.AUTH_AGENT;
+                         || myAuthType == AuthType.OPEN_SSH;
     String password;
     if (myAuthType == AuthType.KEY_PAIR) {
       password = getPassphrase();

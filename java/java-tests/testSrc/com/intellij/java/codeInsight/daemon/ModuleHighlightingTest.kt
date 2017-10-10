@@ -201,6 +201,10 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("module-info.java", "module M2 { exports pkg.m2; }", M2)
     addFile("pkg/m2/C2.java", "package pkg.m2;\npublic class C2 { }", M2)
     addFile("pkg/m3/C3.java", "package pkg.m3;\npublic class C3 { }", M3)
+    addFile("module-info.java", "module M6 { exports pkg.m6; }", M6)
+    addFile("pkg/m6/C6.java", "package pkg.m6;\nimport pkg.m8.*;\nimport java.util.function.*;\npublic class C6 { public void m(Consumer<C8> c) { } }", M6)
+    addFile("module-info.java", "module M8 { exports pkg.m8; }", M8)
+    addFile("pkg/m8/C8.java", "package pkg.m8;\npublic class C8 { }", M8)
 
     fixes("module M { requires <caret>M.missing; }")
     fixes("module M { requires <caret>M3; }", arrayOf("AddModuleDependencyFix"))
@@ -212,6 +216,11 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     fixes("module M { uses <caret>pkg.m3.C3; }", arrayOf("AddModuleDependencyFix"))
 
     fixes("pkg/main/C.java", "package pkg.main;\nimport <caret>pkg.m2.C2;", arrayOf("AddRequiredModuleFix"))
+
+    addFile("module-info.java", "module M { requires M6; }")
+    addFile("pkg/main/Util.java", "package pkg.main;\nclass Util {\n static <T> void sink(T t) { }\n}")
+    fixes("pkg/main/C.java", "package pkg.main;\nimport pkg.m6.*;class C {{ new C6().m(<caret>Util::sink); }}", arrayOf("AddRequiredModuleFix"))
+    fixes("pkg/main/C.java", "package pkg.main;\nimport pkg.m6.*;class C {{ new C6().m(<caret>t -> Util.sink(t)); }}", arrayOf("AddRequiredModuleFix"))
   }
 
   fun testPackageAccessibility() = doTestPackageAccessibility(moduleFileInTests = false, checkFileInTests = false)

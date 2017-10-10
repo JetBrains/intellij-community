@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -25,6 +11,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -45,7 +32,7 @@ import java.util.List;
  * @author cdr
  * @author Tagir Valeev
  */
-public class MoveFieldAssignmentToInitializerInspection extends BaseJavaBatchLocalInspectionTool {
+public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -127,13 +114,16 @@ public class MoveFieldAssignmentToInitializerInspection extends BaseJavaBatchLoc
           result.set(Boolean.FALSE);
           return;
         }
-        if (resolved instanceof PsiMember && ((PsiMember)resolved).getContainingClass() == aClass) {
+        if (resolved instanceof PsiMethod) {
+          resolved = PropertyUtil.getFieldOfGetter((PsiMethod)resolved);
+        }
+        if (resolved instanceof PsiField && ((PsiField)resolved).getContainingClass() == aClass) {
           // refers to another field/method of the same class (except referring from non-static member to static and
           // referring to initialized field which is probably ok)
           boolean nonStaticRefersToStatic =
-            !field.hasModifierProperty(PsiModifier.STATIC) && ((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC);
+            !field.hasModifierProperty(PsiModifier.STATIC) && ((PsiField)resolved).hasModifierProperty(PsiModifier.STATIC);
           if (nonStaticRefersToStatic) return;
-          boolean initializedField = resolved instanceof PsiField && ((PsiField)resolved).getInitializer() != null;
+          boolean initializedField = ((PsiField)resolved).getInitializer() != null;
           if (initializedField) {
             PsiField[] fields = aClass.getFields();
             int indexSource = ArrayUtil.indexOf(fields, field);

@@ -134,8 +134,6 @@ public abstract class ChooseByNameBase {
 
   protected final Alarm myAlarm = new Alarm();
 
-  private final ListUpdater myListUpdater = new ListUpdater();
-
   private boolean myDisposedFlag = false;
 
   private final String[][] myNames = new String[2][];
@@ -762,7 +760,6 @@ public abstract class ChooseByNameBase {
       calcElementsThread.cancel();
       myCalcElementsThread = null;
     }
-    myListUpdater.cancelAll();
   }
 
   @NotNull public String getTrimmedText() {
@@ -908,8 +905,6 @@ public abstract class ChooseByNameBase {
       return;
     }
 
-    myListUpdater.cancelAll();
-
     final CalcElementsThread calcElementsThread = myCalcElementsThread;
     if (calcElementsThread != null) {
       calcElementsThread.cancel();
@@ -935,9 +930,8 @@ public abstract class ChooseByNameBase {
     }
     MatcherHolder.associateMatcher(myList, matcher);
 
-    scheduleCalcElements(text, myCheckBox.isSelected(), modalityState, elements -> {
+    scheduleCalcElements(text, myCheckBox.isSelected(), modalityState, pos, elements -> {
       ApplicationManager.getApplication().assertIsDispatchThread();
-      backgroundCalculationFinished(elements, pos);
 
       if (postRunnable != null) {
         postRunnable.run();
@@ -959,8 +953,9 @@ public abstract class ChooseByNameBase {
   public void scheduleCalcElements(String text,
                                    boolean checkboxState,
                                    ModalityState modalityState,
+                                   SelectionPolicy policy,
                                    Consumer<Set<?>> callback) {
-    new CalcElementsThread(text, checkboxState, callback, modalityState).scheduleThread();
+    new CalcElementsThread(text, checkboxState, callback, modalityState, policy).scheduleThread();
   }
 
   private boolean isShowListAfterCompletionKeyStroke() {
@@ -968,7 +963,6 @@ public abstract class ChooseByNameBase {
   }
 
   private void setElementsToList(SelectionPolicy pos, @NotNull Collection<?> elements) {
-    myListUpdater.cancelAll();
     if (checkDisposed()) return;
     if (isCloseByFocusLost() && Registry.is("focus.follows.mouse.workarounds")) {
       PointerInfo pointerInfo = MouseInfo.getPointerInfo();
@@ -979,7 +973,6 @@ public abstract class ChooseByNameBase {
     if (elements.isEmpty()) {
       myListModel.removeAll();
       myTextField.setForeground(JBColor.red);
-      myListUpdater.cancelAll();
       hideList();
       return;
     }
@@ -1000,7 +993,7 @@ public abstract class ChooseByNameBase {
     }
     else {
       showList();
-      myListUpdater.appendToModel(commands, pos);
+      appendToModel(commands, pos);
     }
   }
 
@@ -1053,53 +1046,19 @@ public abstract class ChooseByNameBase {
     return "choose_by_name#" + myModel.getPromptText() + "#" + myCheckBox.isSelected() + "#" + getTrimmedText();
   }
 
-  private class ListUpdater {
-    private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-    private static final int DELAY = 10;
-    private static final int MAX_BLOCKING_TIME = 30;
-    private final List<ModelDiff.Cmd> myCommands = Collections.synchronizedList(new ArrayList<ModelDiff.Cmd>());
-
-    public void cancelAll() {
-      myCommands.clear();
-      myAlarm.cancelAllRequests();
+  private void appendToModel(@NotNull List<ModelDiff.Cmd> commands, @NotNull SelectionPolicy selection) {
+    for (ModelDiff.Cmd command : commands) {
+      command.apply();
     }
 
-    public void appendToModel(@NotNull List<ModelDiff.Cmd> commands, SelectionPolicy selection) {
-      myAlarm.cancelAllRequests();
-      myCommands.addAll(commands);
+    myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
+    showList();
 
-      if (myCommands.isEmpty() || checkDisposed()) {
-        return;
-      }
-      myAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          if (checkDisposed()) {
-            return;
-          }
-          final long startTime = System.currentTimeMillis();
-          while (!myCommands.isEmpty() && System.currentTimeMillis() - startTime < MAX_BLOCKING_TIME) {
-            final ModelDiff.Cmd cmd = myCommands.remove(0);
-            cmd.apply();
-          }
+    myTextFieldPanel.repositionHint();
 
-          myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
-
-          if (!myCommands.isEmpty()) {
-            myAlarm.addRequest(this, DELAY);
-          }
-          if (!checkDisposed()) {
-            showList();
-            myTextFieldPanel.repositionHint();
-
-            if (!myListModel.isEmpty()) {
-              applySelection(selection);
-            }
-          }
-        }
-      }, DELAY);
+    if (!myListModel.isEmpty()) {
+      applySelection(selection);
     }
-
   }
 
   private void applySelection(SelectionPolicy selection) {
@@ -1128,7 +1087,7 @@ public abstract class ChooseByNameBase {
   }
 
   protected List<Object> getChosenElements() {
-    return ContainerUtil.filter(myList.getSelectedValuesList(), o -> !isSpecialElement(o));
+    return ContainerUtil.filter(myList.getSelectedValuesList(), o -> o != null && !isSpecialElement(o));
   }
 
   protected void chosenElementMightChange() {
@@ -1359,20 +1318,24 @@ public abstract class ChooseByNameBase {
     private final boolean myCheckboxState;
     private final Consumer<Set<?>> myCallback;
     private final ModalityState myModalityState;
+    @NotNull private SelectionPolicy mySelectionPolicy;
 
     private final ProgressIndicator myProgress = new ProgressIndicatorBase();
 
     CalcElementsThread(String pattern,
                        boolean checkboxState,
                        Consumer<Set<?>> callback,
-                       @NotNull ModalityState modalityState) {
+                       @NotNull ModalityState modalityState,
+                       @NotNull SelectionPolicy policy) {
       myPattern = pattern;
       myCheckboxState = checkboxState;
       myCallback = callback;
       myModalityState = modalityState;
+      mySelectionPolicy = policy;
     }
 
     private final Alarm myShowCardAlarm = new Alarm();
+    private final Alarm myUpdateListAlarm = new Alarm();
 
     void scheduleThread() {
       ApplicationManager.getApplication().assertIsDispatchThread();
@@ -1393,7 +1356,9 @@ public abstract class ChooseByNameBase {
     public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
       if (myProject != null && myProject.isDisposed()) return null;
 
-      final Set<Object> elements = new LinkedHashSet<>();
+      Set<Object> elements = Collections.synchronizedSet(new LinkedHashSet<>());
+      scheduleIncrementalListUpdate(elements, 0);
+
       boolean scopeExpanded = populateElements(elements);
       final String cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : scopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
 
@@ -1404,10 +1369,26 @@ public abstract class ChooseByNameBase {
           LOG.assertTrue(currentBgProcess == this, currentBgProcess);
 
           showCard(cardToShow, 0);
+          backgroundCalculationFinished(elements, mySelectionPolicy);
 
           myCallback.consume(filtered);
         }
       }, myModalityState);
+    }
+
+    private void scheduleIncrementalListUpdate(Set<Object> elements, int lastCount) {
+      myUpdateListAlarm.addRequest(() -> {
+        if (myCalcElementsThread != this) return;
+
+        int count = elements.size();
+        if (count > lastCount) {
+          setElementsToList(mySelectionPolicy, ContainerUtil.newArrayList(elements));
+          if (myCurrentChosenInfo != null) {
+            mySelectionPolicy = myCurrentChosenInfo;
+          }
+        }
+        scheduleIncrementalListUpdate(elements, count);
+      }, 200);
     }
 
     private boolean populateElements(Set<Object> elements) {
@@ -1446,7 +1427,7 @@ public abstract class ChooseByNameBase {
       LOG.assertTrue(myCalcElementsThread == this, myCalcElementsThread);
 
       if (!myProject.isDisposed()) {
-        new CalcElementsThread(myPattern, myCheckboxState, myCallback, myModalityState).scheduleThread();
+        new CalcElementsThread(myPattern, myCheckboxState, myCallback, myModalityState, mySelectionPolicy).scheduleThread();
       }
     }
 
@@ -1583,7 +1564,7 @@ public abstract class ChooseByNameBase {
             ensureNamesLoaded(everywhere);
             indicator.setIndeterminate(true);
             final TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.createFor(indicator);
-            myCalcUsagesThread = new CalcElementsThread(text, everywhere, null, ModalityState.NON_MODAL) {
+            myCalcUsagesThread = new CalcElementsThread(text, everywhere, null, ModalityState.NON_MODAL, myCurrentChosenInfo) {
               @Override
               protected boolean isOverflow(@NotNull Set<Object> elementsArray) {
                 tooManyUsagesStatus.pauseProcessingIfTooManyUsages();

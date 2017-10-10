@@ -205,6 +205,13 @@ public class RemoteDebugger implements ProcessDebugger {
     return command.getNewValue();
   }
 
+  public void loadFullVariableValues(@NotNull String threadId,
+                                     @NotNull String frameId,
+                                     @NotNull List<PyFrameAccessor.PyAsyncValue<String>> vars) throws PyDebuggerException {
+    final LoadFullValueCommand command = new LoadFullValueCommand(this, threadId, frameId, vars);
+    command.execute();
+  }
+
   @Override
   @Nullable
   public String loadSource(String path) {
@@ -407,7 +414,14 @@ public class RemoteDebugger implements ProcessDebugger {
                                @Nullable String functionName,
                                @NotNull PyDebugCallback<Pair<Boolean, String>> callback) {
     final SetNextStatementCommand command = new SetNextStatementCommand(this, threadId, sourcePosition, functionName, callback);
-    execute(command);
+    try {
+      command.execute();
+    }
+    catch (PyDebuggerException e) {
+      if (isConnected()) {
+        LOG.error(e);
+      }
+    }
   }
 
   @Override

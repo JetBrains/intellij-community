@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
@@ -54,7 +53,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     .register(CallMatcher.staticCall(CommonClassNames.JAVA_LANG_LONG, "numberOfLeadingZeros", "numberOfTrailingZeros", "bitCount"),
               LongRangeSet.range(0, Long.SIZE))
     .register(CallMatcher.staticCall(CommonClassNames.JAVA_LANG_INTEGER, "numberOfLeadingZeros", "numberOfTrailingZeros", "bitCount"),
-              LongRangeSet.range(0, Integer.SIZE));
+              LongRangeSet.range(0, Integer.SIZE))
+    .register(CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_ENUM, "ordinal").parameterCount(0), LongRangeSet.indexRange());
 
   private final Set<BinopInstruction> myReachable = new THashSet<>();
   private final Set<BinopInstruction> myCanBeNullInInstanceof = new THashSet<>();
@@ -558,14 +558,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (call instanceof PsiMethodCallExpression) {
         LongRangeSet range = KNOWN_METHOD_RANGES.mapFirst((PsiMethodCallExpression)call);
         if (range == null) {
-          PsiMethod method = call.resolveMethod();
-          if (method != null && AnnotationUtil.isAnnotated(method, "javax.annotation.Nonnegative", false)) {
-            range = LongRangeSet.range(0, Long.MAX_VALUE);
-          }
+          range = LongRangeSet.fromAnnotation(call.resolveMethod());
         }
-        if (range != null) {
-          return rangeValue.intersect(range);
-        }
+        return rangeValue.intersect(range);
       }
       return rangeValue;
     }

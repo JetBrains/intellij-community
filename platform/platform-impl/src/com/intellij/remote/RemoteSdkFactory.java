@@ -41,5 +41,5 @@ public interface RemoteSdkFactory<T extends RemoteSdkAdditionalData> {
 
   boolean canSaveUnfinished();
 
-  void initSdk(@NotNull Sdk sdk, @Nullable Project project, @Nullable Component ownerComponent);
+  void initSdk(@NotNull Sdk sdk, @Nullable Project project, @Nullable Component ownerComponent) throws RemoteSdkException;
 }

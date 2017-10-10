@@ -123,10 +123,10 @@ public class CompilerReferencesTest extends CompilerReferencesTestBase {
   }
 
   public void testExtensionRename() {
-    final PsiFile file = myFixture.configureByFiles(getName() + "/Bar.java", getName() + "/Foo.txt")[1];
+    VirtualFile file = myFixture.configureByFiles(getName() + "/Bar.java", getName() + "/Foo.txt")[1].getVirtualFile();
     rebuildProject();
     assertOneElement(getReferentFilesForElementUnderCaret());
-    myFixture.renameElement(file, "Foo.java");
+    myFixture.renameElement(getPsiManager().findFile(file), "Foo.java");
     final PsiClass foo = myFixture.findClass("Foo");
     assertNotNull(foo);
     final CompilerReferenceServiceImpl compilerReferenceService = (CompilerReferenceServiceImpl) CompilerReferenceService
@@ -136,10 +136,10 @@ public class CompilerReferencesTest extends CompilerReferencesTestBase {
   }
 
   public void testReverseExtensionRename() {
-    final PsiFile file = myFixture.configureByFiles(getName() + "/Bar.java", getName() + "/Foo.java")[1];
+    VirtualFile file = myFixture.configureByFiles(getName() + "/Bar.java", getName() + "/Foo.java")[1].getVirtualFile();
     rebuildProject();
     assertSize(2, getReferentFilesForElementUnderCaret());
-    myFixture.renameElement(file, "Foo.txt");
+    myFixture.renameElement(getPsiManager().findFile(file), "Foo.txt");
     assertEquals("Bar.java", assertOneElement(getReferentFilesForElementUnderCaret()).getName());
   }
 

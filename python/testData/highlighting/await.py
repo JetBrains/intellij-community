@@ -1,4 +1,4 @@
-<info descr="null">async</info> def <info descr="null">foo</info>():
+<info descr="null">async</info> def <info descr="PY.FUNC_DEFINITION">foo</info>():
     <info descr="null">await</info> x
 
 

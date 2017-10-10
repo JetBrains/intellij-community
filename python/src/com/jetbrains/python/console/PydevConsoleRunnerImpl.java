@@ -94,6 +94,8 @@ import com.jetbrains.python.console.actions.ShowVarsAction;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PySourcePosition;
+import com.jetbrains.python.debugger.PyVariableViewSettings;
+import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteProcessHandlerBase;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
@@ -222,6 +224,13 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     toolbarActions.add(ConsoleHistoryController.getController(myConsoleView).getBrowseHistory());
 
     toolbarActions.add(new ConnectDebuggerAction());
+
+    DefaultActionGroup settings = new DefaultActionGroup("Settings", true);
+    settings.getTemplatePresentation().setIcon(AllIcons.General.SecondaryGroup);
+    settings.add(new PyVariableViewSettings.SimplifiedView(null));
+    settings.add(new PyVariableViewSettings.AsyncView());
+
+    toolbarActions.add(settings);
 
     toolbarActions.add(new NewConsoleAction());
 
@@ -387,7 +396,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   private PythonConsoleView createConsoleView() {
-    PythonConsoleView consoleView = new PythonConsoleView(myProject, myTitle, mySdk);
+    PythonConsoleView consoleView = new PythonConsoleView(myProject, myTitle, mySdk, false);
     myPydevConsoleCommunication.setConsoleFile(consoleView.getVirtualFile());
     consoleView.addMessageFilter(new PythonTracebackFilter(myProject));
     return consoleView;
@@ -1111,6 +1120,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       mySdk = sdk;
       myEnvironmentVariables = envs;
       myEnvironmentVariables.putAll(consoleSettings.getEnvs());
+      PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
+      if (debuggerSettings.isLoadValuesAsync()) {
+        myEnvironmentVariables.put(PyVariableViewSettings.PYDEVD_LOAD_VALUES_ASYNC, "True");
+      }
     }
 
     @Override

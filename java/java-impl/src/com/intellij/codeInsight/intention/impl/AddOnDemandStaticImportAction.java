@@ -84,10 +84,10 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
       if (method != null && method.getContainingClass() != psiClass)  return null;
     }
     else {
-      final PsiJavaCodeReferenceElement copy = (PsiJavaCodeReferenceElement)gParent.copy();
-      final PsiElement qualifier = copy.getQualifier();
-      if (qualifier == null || copy.getReferenceNameElement() == null) return null;
-      qualifier.delete();
+      PsiElement refNameElement = ((PsiJavaCodeReferenceElement)gParent).getReferenceNameElement();
+      if (refNameElement == null) return null;
+      final PsiJavaCodeReferenceElement copy = JavaPsiFacade.getElementFactory(refNameElement.getProject())
+        .createReferenceFromText(refNameElement.getText(), refExpr);
       final PsiElement target = copy.resolve();
       if (target != null && PsiTreeUtil.getParentOfType(target, PsiClass.class) != psiClass) return null;
     }

@@ -742,6 +742,16 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertNull(findClass("B"))
     assertNotNull(findClass("C"))
   }
+
+  void "test reload from disk after adding import"() {
+    def file = myFixture.addFileToProject("Foo.java", "class Foo {}") as PsiJavaFile
+    file.importList.add(JavaPsiFacade.getElementFactory(project).createImportStatementOnDemand('java.util'))
+    PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
+
+    psiManager.reloadFromDisk(file)
+
+    assert findClass("Foo")
+  }
   
   void "test read-only index has read-only storages"() {
     def index = createIndex(getTestName(false), new EnumeratorStringDescriptor(), true).getIndex()

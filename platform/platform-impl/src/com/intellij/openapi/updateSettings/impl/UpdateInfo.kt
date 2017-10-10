@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.updateSettings.impl
 
+import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.BuildRange
@@ -54,14 +55,20 @@ class UpdateChannel(node: Element) {
 }
 
 class BuildInfo(node: Element) {
-  val number: BuildNumber = BuildNumber.fromString(node.getAttributeValue("fullNumber") ?: node.getAttributeValue("number") ?: throw JDOMException("build@number missing"))
-  val apiVersion: BuildNumber = BuildNumber.fromString(node.getAttributeValue("apiVersion"), number.productCode) ?: number
+  val number: BuildNumber = parseBuildNumber(node)
+  val apiVersion: BuildNumber = BuildNumber.fromStringWithProductCode(node.getAttributeValue("apiVersion"), number.productCode) ?: number
   val version: String = node.getAttributeValue("version") ?: ""
   val message: String = node.getChild("message")?.value ?: ""
   val releaseDate: Date? = parseDate(node.getAttributeValue("releaseDate"))
   val target: BuildRange? = BuildRange.fromStrings(node.getAttributeValue("targetSince"), node.getAttributeValue("targetUntil"))
   val buttons: List<ButtonInfo> = node.getChildren("button").map(::ButtonInfo)
   val patches: List<PatchInfo> = node.getChildren("patch").map(::PatchInfo)
+
+  private fun parseBuildNumber(node: Element) = let {
+    val buildNumber = BuildNumber.fromString(
+      node.getAttributeValue("fullNumber") ?: node.getAttributeValue("number") ?: throw JDOMException("build@number missing"))
+    if (buildNumber.productCode.isNotEmpty()) buildNumber else BuildNumber(ApplicationInfoImpl.getShadowInstance().build.productCode, *buildNumber.components)
+  }
 
   private fun parseDate(value: String?): Date? = value?.let {
     try {

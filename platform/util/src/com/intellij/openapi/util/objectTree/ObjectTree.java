@@ -49,8 +49,13 @@ public final class ObjectTree<T> {
     return myObject2NodeMap.get(object);
   }
 
-  ObjectNode<T> putNode(@NotNull T object, @Nullable("null means remove") ObjectNode<T> node) {
-    return node == null ? myObject2NodeMap.remove(object) : myObject2NodeMap.put(object, node);
+  void putNode(@NotNull T object, @Nullable("null means remove") ObjectNode<T> node) {
+    if (node == null) {
+      myObject2NodeMap.remove(object);
+    }
+    else {
+      myObject2NodeMap.put(object, node);
+    }
   }
 
   @NotNull
@@ -66,7 +71,9 @@ public final class ObjectTree<T> {
                                             "(see the cause for stacktrace) so the child: "+child+" will never be disposed",
                                             wasDisposed instanceof Throwable ? (Throwable)wasDisposed : null);
     }
-
+    if (isDisposing(parent)) {
+      throw new IncorrectOperationException("Sorry but parent: " + parent + " is being disposed so the child: "+child+" will never be disposed");
+    }
     synchronized (treeLock) {
       myDisposedObjects.remove(child); // if we dispose thing and then register it back it means it's not disposed anymore
       ObjectNode<T> parentNode = getNode(parent);
@@ -120,7 +127,7 @@ public final class ObjectTree<T> {
     return myModification.incrementAndGet();
   }
 
-  public final boolean executeAll(@NotNull T object, @NotNull ObjectTreeAction<T> action, boolean processUnregistered) {
+  public final void executeAll(@NotNull T object, @NotNull ObjectTreeAction<T> action, boolean processUnregistered) {
     ObjectNode<T> node;
     synchronized (treeLock) {
       node = getNode(object);
@@ -129,12 +136,22 @@ public final class ObjectTree<T> {
       if (processUnregistered) {
         rememberDisposedTrace(object);
         executeUnregistered(object, action);
-        return true;
       }
-      return false;
     }
-    node.execute(action);
-    return true;
+    else {
+      node.execute(action);
+    }
+  }
+
+  public boolean isDisposing(@NotNull T disposable) {
+    List<ObjectNode<T>> guard = getNodesInExecution();
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    synchronized (guard) {
+      for (ObjectNode<T> node : guard) {
+        if (node.getObject() == disposable) return true;
+      }
+    }
+    return false;
   }
 
   @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")

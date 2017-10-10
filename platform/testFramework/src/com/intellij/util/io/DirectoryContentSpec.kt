@@ -19,6 +19,7 @@ package com.intellij.util.io
 
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.io.impl.*
 import java.io.File
 
@@ -84,6 +85,6 @@ fun File.assertMatches(spec: DirectoryContentSpec) {
 fun DirectoryContentSpec.generateInVirtualTempDir(): VirtualFile {
   val ioFile = generateInTempDir()
   val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile)!!
-  virtualFile.refresh(false, true)
+  UsefulTestCase.refreshRecursively(virtualFile)
   return virtualFile
 }

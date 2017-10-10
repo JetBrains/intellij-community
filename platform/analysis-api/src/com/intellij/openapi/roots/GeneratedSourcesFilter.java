@@ -33,7 +33,7 @@ public abstract class GeneratedSourcesFilter {
   public static final ExtensionPointName<GeneratedSourcesFilter> EP_NAME = ExtensionPointName.create("com.intellij.generatedSourcesFilter");
 
   public static boolean isGeneratedSourceByAnyFilter(@NotNull VirtualFile file, @NotNull Project project) {
-    return ReadAction.compute(() -> !project.isDisposed() &&
+    return ReadAction.compute(() -> !project.isDisposed() && file.isValid() &&
                                     Arrays.stream(EP_NAME.getExtensions()).anyMatch(filter -> filter.isGeneratedSource(file, project)));
   }
 

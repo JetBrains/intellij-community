@@ -880,7 +880,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @NotNull
   @Override
-  public LocalChangeList addChangeList(@NotNull final String name, @Nullable final String comment, @Nullable final Object data) {
+  public LocalChangeList addChangeList(@NotNull final String name, @Nullable final String comment, @Nullable final ChangeListData data) {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         final LocalChangeList changeList = myModifier.addChangeList(name, comment, data);
@@ -952,25 +952,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     synchronized (myDataLock) {
       LocalChangeList list = myWorker.getChangeListIfOnlyOne(changes);
       return list != null ? list.getName() : null;
-    }
-  }
-
-  /**
-   * @deprecated better use normal comparison, with equals
-   */
-  @Override
-  @Nullable
-  public LocalChangeList getIdentityChangeList(@NotNull Change change) {
-    synchronized (myDataLock) {
-      final List<LocalChangeList> lists = myWorker.getChangeLists();
-      for (LocalChangeList list : lists) {
-        for (Change oldChange : list.getChanges()) {
-          if (oldChange == change) {
-            return list.copy();
-          }
-        }
-      }
-      return null;
     }
   }
 

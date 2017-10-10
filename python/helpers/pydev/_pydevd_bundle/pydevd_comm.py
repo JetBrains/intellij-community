@@ -89,6 +89,13 @@ from _pydevd_bundle.pydevd_tracing import get_exception_traceback_str
 from _pydevd_bundle import pydevd_console
 from _pydev_bundle.pydev_monkey import disable_trace_thread_modules, enable_trace_thread_modules
 
+try:
+    import cStringIO as StringIO #may not always be available @UnusedImport
+except:
+    try:
+        import StringIO #@Reimport
+    except:
+        import io as StringIO
 
 
 CMD_RUN = 101
@@ -148,6 +155,7 @@ CMD_GET_DESCRIPTION = 148
 
 CMD_PROCESS_CREATED = 149
 CMD_SHOW_CYTHON_WARNING = 150
+CMD_LOAD_FULL_VALUE = 151
 
 CMD_VERSION = 501
 CMD_RETURN = 502
@@ -207,6 +215,7 @@ ID_TO_MEANING = {
 
     '149': 'CMD_PROCESS_CREATED',
     '150': 'CMD_SHOW_CYTHON_WARNING',
+    '151': 'CMD_LOAD_FULL_VALUE',
 
     '501': 'CMD_VERSION',
     '502': 'CMD_RETURN',
@@ -844,6 +853,12 @@ class NetCommandFactory:
         except:
             return self.make_error_message(0, get_exception_traceback_str())
 
+    def make_load_full_value_message(self, seq, payload):
+        try:
+            return NetCommand(CMD_LOAD_FULL_VALUE, seq, payload)
+        except Exception:
+            return self.make_error_message(seq, get_exception_traceback_str())
+
     def make_exit_message(self):
         try:
             net = NetCommand(CMD_EXIT, 0, '')
@@ -1009,7 +1024,8 @@ class InternalGetVariable(InternalThreadCommand):
     def do_it(self, dbg):
         """ Converts request into python variable """
         try:
-            xml = "<xml>"
+            xml = StringIO.StringIO()
+            xml.write("<xml>")
             _typeName, valDict = pydevd_vars.resolve_compound_variable(self.thread_id, self.frame_id, self.scope, self.attributes)
             if valDict is None:
                 valDict = {}
@@ -1025,10 +1041,13 @@ class InternalGetVariable(InternalThreadCommand):
                         keys = sorted(keys, cmp=compare_object_attrs) #Jython 2.1 does not have it (and all must be compared as strings).
 
             for k in keys:
-                xml += pydevd_xml.var_to_xml(valDict[k], to_string(k))
+                val = valDict[k]
+                evaluate_full_value = pydevd_xml.should_evaluate_full_value(val)
+                xml.write(pydevd_xml.var_to_xml(val, k, evaluate_full_value=evaluate_full_value))
 
-            xml += "</xml>"
-            cmd = dbg.cmd_factory.make_get_variable_message(self.sequence, xml)
+            xml.write("</xml>")
+            cmd = dbg.cmd_factory.make_get_variable_message(self.sequence, xml.getvalue())
+            xml.close()
             dbg.writer.add_command(cmd)
         except Exception:
             cmd = dbg.cmd_factory.make_error_message(self.sequence, "Error resolving variables " + get_exception_traceback_str())
@@ -1440,6 +1459,61 @@ class InternalConsoleExec(InternalThreadCommand):
 
             sys.stderr.flush()
             sys.stdout.flush()
+
+
+#=======================================================================================================================
+# InternalLoadFullValue
+#=======================================================================================================================
+class InternalLoadFullValue(InternalThreadCommand):
+    """ changes the value of a variable """
+    def __init__(self, seq, thread_id, frame_id, vars):
+        self.sequence = seq
+        self.thread_id = thread_id
+        self.frame_id = frame_id
+        self.vars = vars
+
+    def do_it(self, dbg):
+        """ Converts request into python variable """
+        try:
+            var_objects = []
+            for variable in self.vars:
+                variable = variable.strip()
+                if len(variable) > 0:
+                    if '\t' in variable:  # there are attributes beyond scope
+                        scope, attrs = variable.split('\t', 1)
+                        name = attrs[0]
+                    else:
+                        scope, attrs = (variable, None)
+                        name = scope
+
+                    var_obj = pydevd_vars.getVariable(self.thread_id, self.frame_id, scope, attrs)
+                    var_objects.append((var_obj, name))
+
+            t = GetValueAsyncThread(dbg, self.sequence, var_objects)
+            t.start()
+        except:
+            exc = get_exception_traceback_str()
+            sys.stderr.write('%s\n' % (exc,))
+            cmd = dbg.cmd_factory.make_error_message(self.sequence, "Error evaluating variable %s " % exc)
+            dbg.writer.add_command(cmd)
+
+
+class GetValueAsyncThread(PyDBDaemonThread):
+    def __init__(self, py_db, seq, var_objects):
+        PyDBDaemonThread.__init__(self)
+        self.py_db = py_db
+        self.seq = seq
+        self.var_objs = var_objects
+
+    def _on_run(self):
+        xml = StringIO.StringIO()
+        xml.write("<xml>")
+        for (var_obj, name) in self.var_objs:
+            xml.write(pydevd_xml.var_to_xml(var_obj, name, evaluate_full_value=True))
+        xml.write("</xml>")
+        cmd = self.py_db.cmd_factory.make_load_full_value_message(self.seq, xml.getvalue())
+        xml.close()
+        self.py_db.writer.add_command(cmd)
 
 
 #=======================================================================================================================

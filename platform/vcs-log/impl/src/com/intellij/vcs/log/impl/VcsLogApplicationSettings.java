@@ -24,8 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW;
-import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_TAG_NAMES;
+import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.*;
 
 @State(name = "Vcs.Log.App.Settings", storages = {@Storage("vcs.xml")})
 public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLogApplicationSettings.State>, VcsLogUiProperties {
@@ -63,6 +62,9 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
     else if (SHOW_TAG_NAMES.equals(property)) {
       return (T)Boolean.valueOf(myState.SHOW_TAG_NAMES);
     }
+    else if (SHOW_CHANGES_FROM_PARENTS.equals(property)) {
+      return (T)Boolean.valueOf(myState.SHOW_CHANGES_FROM_PARENTS);
+    }
     throw new UnsupportedOperationException("Property " + property + " does not exist");
   }
 
@@ -74,6 +76,9 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
     else if (SHOW_TAG_NAMES.equals(property)) {
       myState.SHOW_TAG_NAMES = (Boolean)value;
     }
+    else if (SHOW_CHANGES_FROM_PARENTS.equals(property)) {
+      myState.SHOW_CHANGES_FROM_PARENTS = (Boolean)value;
+    }
     else {
       throw new UnsupportedOperationException("Property " + property + " does not exist");
     }
@@ -82,7 +87,8 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
 
   @Override
   public <T> boolean exists(@NotNull VcsLogUiProperty<T> property) {
-    return COMPACT_REFERENCES_VIEW.equals(property) || SHOW_TAG_NAMES.equals(property);
+    return COMPACT_REFERENCES_VIEW.equals(property) || SHOW_TAG_NAMES.equals(property) ||
+           SHOW_CHANGES_FROM_PARENTS.equals(property);
   }
 
   public void addChangeListener(@NotNull VcsLogUiProperties.PropertiesChangeListener listener) {
@@ -97,5 +103,6 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
     public boolean COMPACT_REFERENCES_VIEW = true;
     public boolean SHOW_TAG_NAMES = false;
     public boolean MIGRATED = false; // for migration from per-tab settings
+    public boolean SHOW_CHANGES_FROM_PARENTS = false;
   }
 }

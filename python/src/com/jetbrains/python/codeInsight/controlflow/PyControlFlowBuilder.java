@@ -25,6 +25,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
@@ -387,6 +388,29 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       myBuilder.prevInstruction = lastBranchingPoint;
       InstructionBuilder.addAssertInstructions(myBuilder, negativeAssertionEvaluator);
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
+    }
+  }
+
+  @Override
+  public void visitPyBinaryExpression(PyBinaryExpression node) {
+    final PyElementType operator = node.getOperator();
+    if (operator == PyTokenTypes.AND_KEYWORD || operator == PyTokenTypes.OR_KEYWORD) {
+      myBuilder.startNode(node);
+      final PyExpression left = node.getLeftExpression();
+      final PyTypeAssertionEvaluator assertionEvaluator = new PyTypeAssertionEvaluator(operator == PyTokenTypes.AND_KEYWORD);
+      if (left != null) {
+        left.accept(this);
+        left.accept(assertionEvaluator);
+      }
+      final PyExpression right = node.getRightExpression();
+      if (right != null) {
+        InstructionBuilder.addAssertInstructions(myBuilder, assertionEvaluator);
+        right.accept(this);
+        myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
+      }
+    }
+    else {
+      super.visitPyBinaryExpression(node);
     }
   }
 

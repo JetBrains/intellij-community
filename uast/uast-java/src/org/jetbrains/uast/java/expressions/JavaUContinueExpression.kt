@@ -22,8 +22,8 @@ import org.jetbrains.uast.UElement
 
 class JavaUContinueExpression(
         override val psi: PsiContinueStatement,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UContinueExpression {
+        givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UContinueExpression {
     override val label: String?
         get() = psi.labelIdentifier?.text
 }

@@ -409,8 +409,8 @@ public class AntBuildFileImpl implements AntBuildFileBase {
             BuildFileProperty property = properties.next();
             try {
               String value = property.getPropertyValue();
-              value = macroManager.expandSilentMarcos(value, true, context);
-              value = macroManager.expandSilentMarcos(value, false, context);
+              value = macroManager.expandSilentMacros(value, true, context);
+              value = macroManager.expandSilentMacros(value, false, context);
               result.put(property.getPropertyName(), value);
             }
             catch (Macro.ExecutionCancelledException e) {

@@ -1066,18 +1066,8 @@
         <option name="FOREGROUND" value="108888" />
       </value>
     </option>
-    <option name="OC.FUNCTION_CALL">
-      <value>
-        <option name="FOREGROUND" value="990000" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="OC.FUNCTION_DECLARATION">
-      <value>
-        <option name="FOREGROUND" value="990000" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
+    <option baseAttributes="DEFAULT_FUNCTION_CALL" name="OC.FUNCTION" />
+    <option baseAttributes="DEFAULT_FUNCTION_DECLARATION" name="OC.FUNCTION_DECLARATION" />
     <option name="OC.GLOBAL_VARIABLE">
       <value>
         <option name="FOREGROUND" value="108888" />

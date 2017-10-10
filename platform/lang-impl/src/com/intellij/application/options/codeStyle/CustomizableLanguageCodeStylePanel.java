@@ -86,12 +86,6 @@ public abstract class CustomizableLanguageCodeStylePanel extends CodeStyleAbstra
   }
 
   @Override
-  protected PsiFile createFileFromText(final Project project, final String text) {
-    final PsiFile file = LanguageCodeStyleSettingsProvider.createFileFromText(getDefaultLanguage(), project, text);
-    return file != null ? file : super.createFileFromText(project, text);
-  }
-
-  @Override
   protected int getRightMargin() {
     if (getDefaultLanguage() == null) return -1;
     return LanguageCodeStyleSettingsProvider.getRightMargin(getDefaultLanguage(), getSettingsType());

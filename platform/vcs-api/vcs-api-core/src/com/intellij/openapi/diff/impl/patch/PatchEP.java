@@ -38,7 +38,9 @@ public interface PatchEP {
   /**
    * @param path - before path, if exist, otherwise after path
    * @param commitContext
+   * @deprecated it's better not to use PatchEP at all
    */
+  @Deprecated
   void consumeContent(@NotNull final String path, @NotNull final CharSequence content, @Nullable CommitContext commitContext);
   /**
    * @param path - before path, if exist, otherwise after path

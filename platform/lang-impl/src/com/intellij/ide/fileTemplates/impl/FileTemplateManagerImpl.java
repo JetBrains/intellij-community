@@ -491,9 +491,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
         return text;
       }
     });
-    Disposer.register(parentDisposable, () -> {
-      templates.put(qName, oldTemplate);
-    });
+    Disposer.register(parentDisposable, () -> templates.put(qName, oldTemplate));
   }
 
   public static class State {

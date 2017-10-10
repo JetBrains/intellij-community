@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.formatter.java;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -40,6 +26,10 @@ import org.jetbrains.annotations.NonNls;
  */
 @SuppressWarnings({"Deprecation"})
 public class JavaFormatterTest extends AbstractJavaFormatterTest {
+  public void testPaymentManager() {
+    getSettings().KEEP_LINE_BREAKS = false;
+    doTest("paymentManager.java", "paymentManager_after.java");
+  }
 
   public void testForEach() {
     doTest("ForEach.java", "ForEach_after.java");
@@ -75,7 +65,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
     settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest("NullMethodParameter.java", "NullMethodParameter_after.java");
   }
-  
+
   public void test_DoNot_JoinLines_If_KeepLineBreaksIsOn() {
     getSettings().KEEP_LINE_BREAKS = true;
     getSettings().METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
@@ -92,7 +82,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
-  
+
   public void test_DoNot_JoinLines_If_KeepLineBreaksIsOn_WithMultipleAnnotations() {
     getSettings().KEEP_LINE_BREAKS = true;
     getSettings().METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
@@ -109,7 +99,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
-  
+
   public void test_format_only_selected_range() {
     myTextRange = new TextRange(18, 19);
     doTextTest(
@@ -192,7 +182,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   public void testWrapAssertion() {
     doTest();
   }
-  
+
   public void testIfElse() {
     final CommonCodeStyleSettings settings = getSettings();
     settings.IF_BRACE_FORCE = CommonCodeStyleSettings.DO_NOT_FORCE;
@@ -2145,7 +2135,7 @@ public void testSCR260() {
     doTest();
   }
 
-  
+
 
   public void testSCR547() {
     doTextTest("class Foo { \n" +
@@ -2304,7 +2294,7 @@ public void testSCR260() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
     getSettings().CASE_STATEMENT_ON_NEW_LINE = false;
-    
+
     doTextTest("class Foo{\n" +
                "void foo() {\n" +
                "if(a) {return;}\n" +
@@ -3254,14 +3244,14 @@ public void testSCR260() {
                "    };\n\n\n" +
                "}  ");
   }
-  
+
   public void testReformatPackageAnnotation() {
     doTextTest(
       "@ParametersAreNonnullByDefault package com.example;",
       "@ParametersAreNonnullByDefault\n" +
       "package com.example;"
     );
-    
+
     doTextTest(
       "        @ParametersAreNonnullByDefault\n" +
       "package com.example;",
@@ -3306,7 +3296,7 @@ public void testSCR260() {
       "    return null;\n" +
       "  }\n" +
       "}",
-      
+
       "import java.lang.annotation.ElementType;\n" +
       "import java.lang.annotation.Retention;\n" +
       "import java.lang.annotation.RetentionPolicy;\n" +
@@ -3325,7 +3315,7 @@ public void testSCR260() {
       "}"
     );
   }
-  
+
   public void testKeepSimpleSwitchInOneLine() {
     getSettings().CASE_STATEMENT_ON_NEW_LINE = false;
     doMethodTest(
@@ -3336,13 +3326,13 @@ public void testSCR260() {
       "    case 1: case 2: break;\n" +
       "}");
   }
-  
+
   public void testExpandSwitch() {
     getSettings().CASE_STATEMENT_ON_NEW_LINE = false;
     doMethodTest(
       "switch (b) {\n" +
       "case 1: { println(1); } case 2: break;\n" +
-      "}", 
+      "}",
       "switch (b) {\n" +
       "    case 1: {\n" +
       "        println(1);\n" +
@@ -3403,5 +3393,4 @@ public void testSCR260() {
       "}\n"
     );
   }
-  
 }

@@ -74,10 +74,14 @@ public abstract class LanguageCodeStyleSettingsProvider {
 
   /**
    * Allows to customize PSI file creation for a language settings preview panel.
+   * <p>
+   * <b>IMPORTANT</b>: The created file must be a non-physical one with PSI events disabled. For more information see
+   * {@link com.intellij.psi.PsiFileFactory#createFileFromText(String, Language, CharSequence, boolean, boolean)} where
+   * {@code eventSystemEnabled} parameter must be {@code false}
    *
    * @param project current project
    * @param text    code sample to demonstrate formatting settings (see {@link #getCodeSample(LanguageCodeStyleSettingsProvider.SettingsType)}
-   * @return a PSI file instance with given text, or null for use
+   * @return a PSI file instance with given text, or null for default implementation using provider's language.
    */
   @Nullable
   public PsiFile createFileFromText(final Project project, final String text) {

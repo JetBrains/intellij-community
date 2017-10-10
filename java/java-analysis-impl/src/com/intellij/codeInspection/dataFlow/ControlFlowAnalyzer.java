@@ -399,7 +399,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(statement);
   }
 
-  private void controlTransfer(InstructionTransfer target, FList<Trap> traps) {
+  private void controlTransfer(@NotNull InstructionTransfer target, FList<Trap> traps) {
     addInstruction(new ControlTransferInstruction(myFactory.controlTransfer(target, traps)));
   }
 
@@ -972,6 +972,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
       else if (resource instanceof PsiResourceExpression) {
         ((PsiResourceExpression)resource).getExpression().accept(this);
+        addInstruction(new PopInstruction());
       }
 
       final List<PsiClassType> closerExceptions = ExceptionUtil.getCloserExceptions(resource);
@@ -1049,7 +1050,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (parent instanceof PsiVariable) {
       // initialization
-      return getFactory().getVarFactory().createVariableValue((PsiVariable)expression.getParent(), false);
+      return getFactory().getVarFactory().createVariableValue((PsiVariable)parent, false);
     }
     if (parent instanceof PsiAssignmentExpression) {
       PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;

@@ -30,7 +30,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -44,13 +43,13 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
-import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.content.Content;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.ui.JBUI;
@@ -72,7 +71,9 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
+import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.unshelveSilentlyWithDnd;
 import static java.util.stream.Collectors.toList;
 
 @State(
@@ -100,7 +101,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   private PreviewDiffSplitterComponent mySplitterComponent;
 
   @NotNull private final TreeSelectionListener myTsl;
-  private Content myContent;
+  private MyChangeViewContent myContent;
 
   @NotNull
   public static ChangesViewI getInstance(@NotNull Project project) {
@@ -356,6 +357,21 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     }
   }
 
+  @Nullable
+  public static ChangesBrowserNode getDropRootNode(@NotNull Tree tree, @NotNull DnDEvent event) {
+    RelativePoint dropPoint = event.getRelativePoint();
+    Point onTree = dropPoint.getPoint(tree);
+    final TreePath dropPath = tree.getPathForLocation(onTree.x, onTree.y);
+
+    if (dropPath == null) return null;
+
+    ChangesBrowserNode dropNode = (ChangesBrowserNode)dropPath.getLastPathComponent();
+    while (!((ChangesBrowserNode)dropNode.getParent()).isRoot()) {
+      dropNode = (ChangesBrowserNode)dropNode.getParent();
+    }
+    return dropNode;
+  }
+
   public static class State {
 
     @Attribute("flattened_view")
@@ -500,55 +516,56 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
     @NotNull
     @Override
-    protected List<Change> getSelectedChanges() {
-      List<Change> result = myView.getSelectedChanges().collect(toList());
-      if (result.isEmpty()) result = myView.getChanges().collect(toList());
+    protected List<Wrapper> getSelectedChanges() {
+      List<Wrapper> result = wrap(myView.getSelectedChanges(), myView.getSelectedUnversionedFiles());
+      if (result.isEmpty()) result = getAllChanges();
       return result;
     }
 
     @NotNull
     @Override
-    protected List<Change> getAllChanges() {
-      return myView.getChanges().collect(toList());
+    protected List<Wrapper> getAllChanges() {
+      return wrap(myView.getChanges(), myView.getUnversionedFiles());
     }
 
     @Override
-    protected void selectChange(@NotNull Change change) {
+    protected void selectChange(@NotNull Wrapper change) {
       DefaultMutableTreeNode root = (DefaultMutableTreeNode)myView.getModel().getRoot();
-      DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, change);
+      DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, change.getUserObject());
       if (node != null) {
         TreePath path = TreeUtil.getPathFromRoot(node);
         TreeUtil.selectPath(myView, path, false);
       }
     }
+
+    @NotNull
+    private List<Wrapper> wrap(@NotNull Stream<Change> changes, @NotNull Stream<VirtualFile> unversioned) {
+      return Stream.concat(changes.map(ChangeWrapper::new), unversioned.map(UnversionedFileWrapper::new)).collect(toList());
+    }
   }
 
-  private class MyChangeViewContent extends DnDTargetContentAdapter {
+  private class MyChangeViewContent extends DnDActivateOnHoldTargetContent {
+  
     private MyChangeViewContent(JComponent component, String displayName, boolean isLockable) {
-      super(component, displayName, isLockable);
+      super(myProject, component, displayName, isLockable);
     }
 
     @Override
     public void drop(DnDEvent event) {
+      super.drop(event);
       Object attachedObject = event.getAttachedObject();
       if (attachedObject instanceof ShelvedChangeListDragBean) {
-        FileDocumentManager.getInstance().saveAllDocuments();
-        ShelvedChangeListDragBean shelvedBean = (ShelvedChangeListDragBean)attachedObject;
-        ShelveChangesManager.getInstance(myProject)
-          .unshelveSilentlyAsynchronously(myProject, shelvedBean.getShelvedChangelists(), shelvedBean.getChanges(),
-                                          shelvedBean.getBinaryFiles(), null);
+        unshelveSilentlyWithDnd(myProject,(ShelvedChangeListDragBean)attachedObject, getDropRootNode(myView, event));
       }
     }
 
     @Override
-    public boolean update(DnDEvent event) {
+    public boolean isDropPossible(@NotNull DnDEvent event) {
       Object attachedObject = event.getAttachedObject();
       if (attachedObject instanceof ShelvedChangeListDragBean) {
-        ShelvedChangeListDragBean shelveBean = (ShelvedChangeListDragBean)attachedObject;
-        event.setDropPossible(!shelveBean.getShelvedChangelists().isEmpty());
-        return false;
+        return !((ShelvedChangeListDragBean)attachedObject).getShelvedChangelists().isEmpty();
       }
-      return true;
+      return attachedObject instanceof ChangeListDragBean;
     }
   }
 }

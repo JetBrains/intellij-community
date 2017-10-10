@@ -36,7 +36,6 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.Key;
@@ -186,7 +185,7 @@ public class XsltCommandLineState extends CommandLineState {
         extension.patchParameters(parameters, myXsltRunConfiguration, myExtensionData);
       }
 
-      parameters.setUseDynamicClasspath(JdkUtil.useDynamicClasspath(myXsltRunConfiguration.getProject()));
+      parameters.setUseDynamicClasspath(myXsltRunConfiguration.getProject());
 
       return parameters;
     }

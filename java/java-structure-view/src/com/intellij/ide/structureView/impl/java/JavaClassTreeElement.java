@@ -27,12 +27,15 @@ import java.util.*;
  * @author Konstantin Bulenkov
  */
 public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
-  private final Set<PsiClass> myParents;
 
-  public JavaClassTreeElement(PsiClass cls, boolean inherited, Set<PsiClass> parents) {
+  public JavaClassTreeElement(PsiClass cls, boolean inherited) {
     super(inherited, cls);
-    myParents = parents;
-    myParents.add(cls);
+  }
+
+  /** @noinspection unused*/
+  @Deprecated
+  public JavaClassTreeElement(PsiClass cls, boolean inherited, Set<PsiClass> parents) {
+    this(cls, inherited);
   }
 
   @Override
@@ -48,12 +51,10 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
     LinkedHashSet<PsiElement> members = getOwnChildren(aClass);
     List<StructureViewTreeElement> children = new ArrayList<>(members.size());
 
-    //aClass.processDeclarations(new AddAllMembersProcessor(inherited, aClass), ResolveState.initial(), null, aClass);
-
     for (PsiElement child : members) {
       if (!child.isValid()) continue;
-      if (child instanceof PsiClass && !myParents.contains((PsiClass)child)) {
-        children.add(new JavaClassTreeElement((PsiClass)child, false, myParents));
+      if (child instanceof PsiClass) {
+        children.add(new JavaClassTreeElement((PsiClass)child, false));
       }
       else if (child instanceof PsiField) {
         children.add(new PsiFieldTreeElement((PsiField)child, false));
@@ -87,17 +88,15 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
     }
   }
 
-  public Set<PsiClass> getParents() {
-    return myParents;
-  }
-
   @Override
   public String getPresentableText() {
-    return getElement().getName();
+    PsiClass o = getElement();
+    return o == null ? "" : o.getName();
   }
 
   @Override
   public boolean isPublic() {
-    return getElement().getParent() instanceof PsiFile || super.isPublic();
+    PsiClass o = getElement();
+    return o != null && o.getParent() instanceof PsiFile || super.isPublic();
   }
 }

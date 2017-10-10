@@ -90,6 +90,16 @@ public class CompositeScope extends ExportableUserDataHolderBase implements Comp
     return modules.toArray(new Module[modules.size()]);
   }
 
+  @NotNull
+  @Override
+  public Collection<String> getAffectedUnloadedModules() {
+    Set<String> unloadedModules = new LinkedHashSet<>();
+    for (final CompileScope compileScope : myScopes) {
+      ContainerUtil.addAll(unloadedModules, compileScope.getAffectedUnloadedModules());
+    }
+    return unloadedModules;
+  }
+
   public <T> T getUserData(@NotNull Key<T> key) {
     for (CompileScope compileScope : myScopes) {
       T userData = compileScope.getUserData(key);
