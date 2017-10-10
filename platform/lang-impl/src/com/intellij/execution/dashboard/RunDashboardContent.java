@@ -23,7 +23,6 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DefaultTreeExpander;
@@ -158,6 +157,9 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
         Content content = event.getContent();
         myContentActions.remove(content);
         updateContentToolbar(content);
+        if (myContentManager.getContentCount() == 0 && !RunDashboardManager.getInstance(project).isShowConfigurations()) {
+          RunDashboardManager.getInstance(project).setShowConfigurations(true);
+        }
       }
 
       @Override
@@ -366,10 +368,6 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
 
     DefaultActionGroup treeGroup = new DefaultActionGroup();
 
-    treeGroup.addAction(new PreviousConfigurationAction());
-    treeGroup.addAction(new NextConfigurationAction());
-    treeGroup.addSeparator();
-
     TreeExpander treeExpander = new DefaultTreeExpander(myTree);
     AnAction expandAllAction = CommonActionsManager.getInstance().createExpandAllAction(treeExpander, this);
     treeGroup.add(expandAllAction);
@@ -470,38 +468,6 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     public void setSelected(AnActionEvent e, boolean state) {
       myGrouper.setEnabled(state);
       updateContent(true);
-    }
-  }
-
-  private class PreviousConfigurationAction extends AnAction implements DumbAware {
-    PreviousConfigurationAction() {
-      super(ExecutionBundle.message("run.dashboard.previous.configuration.action.name"), null, AllIcons.Actions.PreviousOccurence);
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(myContentManager.getContentCount() > 1);
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      myContentManager.selectPreviousContent();
-    }
-  }
-
-  private class NextConfigurationAction extends AnAction implements DumbAware {
-    NextConfigurationAction() {
-      super(ExecutionBundle.message("run.dashboard.next.configuration.action.name"), null, AllIcons.Actions.NextOccurence);
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(myContentManager.getContentCount() > 1);
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      myContentManager.selectNextContent();
     }
   }
 }
