@@ -613,13 +613,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     @Override
-    protected void paintMaxiThumb(@NotNull Graphics2D g, @NotNull Rectangle thumbBounds) {
-      g.setColor(adjustColor(getGradientDarkColor()));
-      int arc = 3;
-      g.fillRoundRect(isMirrored() ? -3 : 2, 0, thumbBounds.width, thumbBounds.height, arc, arc);
-    }
-
-    @Override
     protected int getThickness() {
       return getErrorIconWidth() + getThinGap() + myMinMarkHeight;
     }
