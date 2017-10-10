@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.updates
 
+import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.updateSettings.impl.*
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.loadElement
@@ -248,5 +249,14 @@ class UpdateStrategyTest {
     return result
   }
 
-  private fun assertBuild(expected: String, build: BuildInfo?) = assertEquals(expected, build?.number.toString())
+  private fun assertBuild(expectedProductCode: String, expectedBuildNumber: String, build: BuildInfo?) {
+    assertEquals(expectedBuildNumber, build?.number?.asStringWithoutProductCode())
+    assertEquals(expectedProductCode, build?.number?.productCode)
+  }
+
+  private fun assertBuild(expected: String, build: BuildInfo?) {
+    assertBuild(currentProductCode(), expected, build)
+  }
+
+  private fun currentProductCode() = ApplicationInfoImpl.getShadowInstance().build.productCode
 }
