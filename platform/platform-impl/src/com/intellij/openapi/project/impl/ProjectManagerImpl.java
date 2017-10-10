@@ -408,12 +408,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
             StorageUtilKt.checkUnknownMacros(project, true);
           }
         }
-        if (ApplicationManager.getApplication().isActive()) {
-          JFrame projectFrame = WindowManager.getInstance().getFrame(project);
-          if (projectFrame != null) {
-            IdeFocusManager.getInstance(project).requestFocus(projectFrame, true);
-          }
-        }
       }, ModalityState.NON_MODAL);
     };
 
