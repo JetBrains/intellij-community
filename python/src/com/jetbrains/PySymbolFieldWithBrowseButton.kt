@@ -8,7 +8,6 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.ide.util.TreeChooser
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.vfs.VirtualFile
@@ -23,6 +22,7 @@ import com.intellij.util.ProcessingContext
 import com.intellij.util.TextFieldCompletionProvider
 import com.intellij.util.textCompletion.TextFieldWithCompletion
 import com.jetbrains.extensions.getQName
+import com.jetbrains.extenstions.ContextAnchor
 import com.jetbrains.extenstions.QNameResolveContext
 import com.jetbrains.extenstions.resolveToElement
 import com.jetbrains.python.PyGotoSymbolContributor
@@ -45,13 +45,13 @@ import com.jetbrains.python.psi.types.TypeEvalContext
  * @param startFromDirectory symbols resolved against module, but may additionally be resolved against this folder if provided like in [QNameResolveContext.folderToStart]
  *
  */
-class PySymbolFieldWithBrowseButton(module: Module,
+class PySymbolFieldWithBrowseButton(contextAnchor: ContextAnchor,
                                     filter: ((PsiElement) -> Boolean)? = null,
                                     startFromDirectory: (() -> VirtualFile)? = null) : TextAccessor, ComponentWithBrowseButton<TextFieldWithCompletion>(
-  TextFieldWithCompletion(module.project, PyNameCompletionProvider(module, filter, startFromDirectory), "", true, true, true), null) {
+  TextFieldWithCompletion(contextAnchor.project, PyNameCompletionProvider(contextAnchor, filter, startFromDirectory), "", true, true, true), null) {
   init {
     addActionListener {
-      val dialog = PySymbolChooserDialog(module.project, module.moduleContentScope, filter)
+      val dialog = PySymbolChooserDialog(contextAnchor.project, contextAnchor.scope, filter)
       dialog.showDialog()
       val element = dialog.selected
       if (element is PyQualifiedNameOwner) {
@@ -74,14 +74,14 @@ class PySymbolFieldWithBrowseButton(module: Module,
 private fun PyType.getVariants(element: PsiElement): Array<LookupElement> =
   this.getCompletionVariants("", element, ProcessingContext()).filterIsInstance(LookupElement::class.java).toTypedArray()
 
-private class PyNameCompletionProvider(private val module: Module,
+private class PyNameCompletionProvider(private val contextAnchor: ContextAnchor,
                                        private val filter: ((PsiElement) -> Boolean)?,
                                        private val startFromDirectory: (() -> VirtualFile)? = null) : TextFieldCompletionProvider() {
   override fun addCompletionVariants(text: String, offset: Int, prefix: String, result: CompletionResultSet) {
 
-    val evalContext = TypeEvalContext.userInitiated(module.project, null)
+    val evalContext = TypeEvalContext.userInitiated(contextAnchor.project, null)
     var name = QualifiedName.fromDottedString(text)
-    val resolveContext = QNameResolveContext(module, evalContext = evalContext, allowInaccurateResult = false,
+    val resolveContext = QNameResolveContext(contextAnchor, evalContext = evalContext, allowInaccurateResult = false,
                                              folderToStart = startFromDirectory?.invoke())
     var element = name.resolveToElement(resolveContext, stopOnFirstFail = true)
 
