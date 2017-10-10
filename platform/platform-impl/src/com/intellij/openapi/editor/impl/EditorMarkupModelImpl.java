@@ -350,7 +350,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     else {
       myEditor.getVerticalScrollBar().setPersistentUI(JBScrollBar.createUI(null));
     }
-    myEditor.setHorizontalScrollBarPersistentUI(EditorImpl.createEditorScrollbarUI(myEditor));
   }
 
   @Nullable
