@@ -11,6 +11,7 @@ HOST = 'localhost'
 PORT = os.getenv("PYCHARM_MATPLOTLIB_PORT")
 PORT = int(PORT) if PORT is not None else None
 PORT = PORT if PORT != -1 else None
+index = int(os.getenv("PYCHARM_MATPLOTLIB_INDEX", 0))
 
 rcParams = matplotlib.rcParams
 verbose = matplotlib.verbose
@@ -74,12 +75,14 @@ class FigureCanvasInterAgg(FigureCanvasAgg):
             return
 
         render = self.get_renderer()
-        width, height = int(render.width), int(render.height) # pass to the socket
+        width = int(render.width)
 
+        plot_index = index if os.getenv("PYCHARM_MATPLOTLIB_INTERACTIVE", False) else -1
         try:
             sock = socket.socket()
             sock.connect((HOST, PORT))
             sock.send(struct.pack('>i', width))
+            sock.send(struct.pack('>i', plot_index))
             sock.send(struct.pack('>i', len(buffer)))
             sock.send(buffer)
         except ConnectionRefusedError as _:
@@ -91,9 +94,12 @@ class FigureCanvasInterAgg(FigureCanvasAgg):
         if is_interactive and matplotlib.is_interactive():
             self.show()
 
+
 class FigureManagerInterAgg(FigureManagerBase):
     def __init__(self, canvas, num):
         FigureManagerBase.__init__(self, canvas, num)
+        global index
+        index += 1
         self.canvas = canvas
         self._num = num
         self._shown = False
