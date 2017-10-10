@@ -60,6 +60,7 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
 import java.util.*;
 
 public class ReplaceInProjectManager {
@@ -355,33 +356,57 @@ public class ReplaceInProjectManager {
   }
 
   private void addReplaceActions(final ReplaceContext replaceContext) {
-    final Runnable replaceRunnable = () -> {
-      Set<Usage> usages = replaceContext.getUsageView().getUsages();
-      Set<VirtualFile> files = new HashSet<>();
-      if (usages.isEmpty()) return;
-      for (Usage usage : usages) {
-        if (usage instanceof UsageInfo2UsageAdapter) {
-          files.add(((UsageInfo2UsageAdapter)usage).getFile());
+    final AbstractAction replaceAction = new AbstractAction(FindBundle.message("find.replace.all.action")) {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        Set<Usage> usages = replaceContext.getUsageView().getUsages();
+        Set<VirtualFile> files = new HashSet<>();
+        if (usages.isEmpty()) return;
+        for (Usage usage : usages) {
+          if (usage instanceof UsageInfo2UsageAdapter) {
+            files.add(((UsageInfo2UsageAdapter)usage).getFile());
+          }
+        }
+        if (files.size() < 2 ||
+            JOptionPane.OK_OPTION == JOptionPane.showConfirmDialog(replaceContext.getUsageView().getComponent(),
+                                                                   FindBundle.message("find.replace.all.confirmation",
+                                                                                      usages.size(),
+                                                                                      replaceContext.getFindModel().getStringToFind(),
+                                                                                      files.size(),
+                                                                                      replaceContext.getFindModel().getStringToReplace()),
+                                                                   FindBundle.message("find.replace.all.confirmation.title"),
+                                                                   JOptionPane.OK_CANCEL_OPTION)) {
+          replaceUsagesUnderCommand(replaceContext, usages);
         }
       }
-      if (files.size() < 2 ||
-          JOptionPane.OK_OPTION == JOptionPane.showConfirmDialog(replaceContext.getUsageView().getComponent(),
-                                                                 FindBundle.message("find.replace.all.confirmation",
-                                                                                    usages.size(),
-                                                                                    replaceContext.getFindModel().getStringToFind(),
-                                                                                    files.size(),
-                                                                                    replaceContext.getFindModel().getStringToReplace()),
-                                                                 FindBundle.message("find.replace.all.confirmation.title"),
-                                                                 JOptionPane.OK_CANCEL_OPTION)) {
-        replaceUsagesUnderCommand(replaceContext, usages);
+
+      @Override
+      public boolean isEnabled() {
+        return !replaceContext.getUsageView().getUsages().isEmpty();
       }
     };
-    replaceContext.getUsageView().addButtonToLowerPane(replaceRunnable, FindBundle.message("find.replace.all.action"));
+    replaceContext.getUsageView().addButtonToLowerPane(replaceAction);
 
-    final Runnable replaceSelectedRunnable =
-      () -> replaceUsagesUnderCommand(replaceContext, replaceContext.getUsageView().getSelectedUsages());
+    final AbstractAction replaceSelectedAction = new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        replaceUsagesUnderCommand(replaceContext, replaceContext.getUsageView().getSelectedUsages());
+      }
 
-    replaceContext.getUsageView().addButtonToLowerPane(replaceSelectedRunnable, FindBundle.message("find.replace.selected.action"));
+      @Override
+      public Object getValue(String key) {
+        return Action.NAME.equals(key)
+               ? FindBundle.message("find.popup.replace.selected.button", replaceContext.getUsageView().getSelectedUsages().size())
+               : super.getValue(key);
+      }
+
+      @Override
+      public boolean isEnabled() {
+        return !replaceContext.getUsageView().getSelectedUsages().isEmpty();
+      }
+    };
+
+    replaceContext.getUsageView().addButtonToLowerPane(replaceSelectedAction);
   }
 
   private boolean replaceUsages(@NotNull ReplaceContext replaceContext, @NotNull Collection<Usage> usages) {
@@ -393,7 +418,7 @@ public class ReplaceInProjectManager {
     final boolean[] success = {true};
 
     success[0] &= ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithProgressInDispatchThread(
-      FindBundle.message("find.replace.all.action"), 
+      FindBundle.message("find.replace.all.confirmation.title"),
       myProject, 
       null,
       "Stop",
