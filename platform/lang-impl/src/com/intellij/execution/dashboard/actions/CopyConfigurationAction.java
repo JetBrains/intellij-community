@@ -20,11 +20,13 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +50,9 @@ public class CopyConfigurationAction extends RunConfigurationTreeAction {
 
   @Override
   protected boolean isEnabled4(RunDashboardRunConfigurationNode node) {
-    return RunManager.getInstance(node.getProject()).hasSettings(node.getConfigurationSettings());
+    Project project = node.getProject();
+    return !project.isDisposed() && RunDashboardManager.getInstance(project).isShowConfigurations() &&
+           RunManager.getInstance(node.getProject()).hasSettings(node.getConfigurationSettings());
   }
 
   @Override

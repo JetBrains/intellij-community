@@ -17,6 +17,7 @@ package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
+import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.dashboard.RunDashboardContent;
 import com.intellij.icons.AllIcons;
@@ -39,7 +40,9 @@ public class RemoveConfigurationAction extends RunConfigurationTreeAction {
 
   @Override
   protected boolean isEnabled4(RunDashboardRunConfigurationNode node) {
-    return RunManager.getInstance(node.getProject()).hasSettings(node.getConfigurationSettings());
+    Project project = node.getProject();
+    return !project.isDisposed() && RunDashboardManager.getInstance(project).isShowConfigurations() &&
+           RunManager.getInstance(node.getProject()).hasSettings(node.getConfigurationSettings());
   }
 
   @Override
