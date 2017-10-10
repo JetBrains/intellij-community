@@ -35,5 +35,5 @@ envs {
   python "python36", "3.6.2"
   python "python35", "3.5.0"
 
-  conda "Anaconda3", "Anaconda3-5.0.0", "64", []
+//  conda "Anaconda3", "Anaconda3-5.0.0", "64", []
 }
