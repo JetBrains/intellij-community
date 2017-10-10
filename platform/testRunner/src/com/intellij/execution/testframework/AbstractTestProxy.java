@@ -34,6 +34,7 @@ import java.util.List;
  */
 public abstract class AbstractTestProxy extends CompositePrintable {
   public static final DataKey<AbstractTestProxy> DATA_KEY = DataKey.create("testProxy");
+  public static final DataKey<AbstractTestProxy[]> DATA_KEYS = DataKey.create("testProxies");
 
   protected Printer myPrinter = null;
 

@@ -105,6 +105,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     if (JUnitConfiguration.TEST_PATTERN.equals(id)) {
       return new TestsPattern(configuration, environment);
     }
+    if (JUnitConfiguration.TEST_UNIQUE_ID.equals(id)) {
+      return new TestUniqueId(configuration, environment);
+    }
     if (JUnitConfiguration.BY_SOURCE_POSITION.equals(id)) {
       return new TestBySource(configuration, environment);
     }

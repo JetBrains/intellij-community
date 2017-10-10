@@ -135,6 +135,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
 
     String nodeName = startedNodeEvent.getName();
     SMTestProxy childProxy = new SMTestProxy(nodeName, suite, startedNodeEvent.getLocationUrl(), startedNodeEvent.getMetainfo(), true);
+    childProxy.putUserData(SMTestProxy.NODE_ID, startedNodeEvent.getId());
     childProxy.setTreeBuildBeforeStart();
     TestProxyPrinterProvider printerProvider = myTestProxyPrinterProvider;
     String nodeType = startedNodeEvent.getNodeType();
