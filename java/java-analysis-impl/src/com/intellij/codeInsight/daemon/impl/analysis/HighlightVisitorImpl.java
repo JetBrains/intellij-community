@@ -1110,10 +1110,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
 
-    if (parent instanceof PsiAnonymousClass && ref.equals(((PsiAnonymousClass)parent).getBaseClassReference()) &&
-        myOverrideEquivalentMethodsVisitedClasses.add((PsiClass)parent)) {
-      PsiClass aClass = (PsiClass)parent;
-      myHolder.addAll(GenericsHighlightUtil.checkOverrideEquivalentMethods(aClass));
+    if (parent instanceof PsiAnonymousClass && ref.equals(((PsiAnonymousClass)parent).getBaseClassReference())) {
+      if (myOverrideEquivalentMethodsVisitedClasses.add((PsiClass)parent)) {
+        PsiClass aClass = (PsiClass)parent;
+        myHolder.addAll(GenericsHighlightUtil.checkOverrideEquivalentMethods(aClass));
+      }
+      if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkGenericCannotExtendException((PsiAnonymousClass)parent));
     }
 
     if (resolved instanceof PsiVariable) {
