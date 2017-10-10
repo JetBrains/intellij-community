@@ -635,7 +635,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
         }
         else {
           list.add(found);
-          if (!found.isLoadingRequired() && !removed.containsKey(found.object)) {
+          if (!found.isLoadingRequired() && (deep || !removed.containsKey(found.object))) {
             reload.add(found.object); // reload reused children if they are inserted
           }
         }
