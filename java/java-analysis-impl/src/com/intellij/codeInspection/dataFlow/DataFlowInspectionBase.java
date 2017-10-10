@@ -305,6 +305,8 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
 
     reportArrayAccessProblems(holder, visitor);
 
+    reportArrayStoreProblems(holder, visitor);
+
     if (REPORT_CONSTANT_REFERENCE_VALUES) {
       reportConstantReferenceValues(holder, visitor, reportedAnchors);
     }
@@ -321,6 +323,12 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         holder.registerProblem(indexExpression, InspectionsBundle.message("dataflow.message.array.index.out.of.bounds"));
       }
     });
+  }
+
+  private static void reportArrayStoreProblems(ProblemsHolder holder, DataFlowInstructionVisitor visitor) {
+    visitor.getArrayStoreProblems().forEach(
+      (assignment, types) -> holder.registerProblem(assignment.getOperationSign(), InspectionsBundle
+        .message("dataflow.message.arraystore", types.getFirst().getCanonicalText(), types.getSecond().getCanonicalText())));
   }
 
   private void reportMethodReferenceProblems(ProblemsHolder holder, DataFlowInstructionVisitor visitor) {
@@ -915,6 +923,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     private final Map<PsiMethodCallExpression, ThreeState> myOptionalCalls = new HashMap<>();
     private final Map<PsiMethodCallExpression, ThreeState> myBooleanCalls = new HashMap<>();
     private final Map<MethodCallInstruction, ThreeState> myOfNullableCalls = new HashMap<>();
+    private final Map<PsiAssignmentExpression, Pair<PsiType, PsiType>> myArrayStoreProblems = new HashMap<>();
     private final Map<PsiMethodReferenceExpression, DfaValue> myMethodReferenceResults = new HashMap<>();
     private final Map<PsiArrayAccessExpression, ThreeState> myOutOfBoundsArrayAccesses = new HashMap<>();
     private final List<PsiExpression> myOptionalQualifiers = new ArrayList<>();
@@ -933,6 +942,10 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         //  (e.g. if it's inside "if (var == null)" check after contract method invocation
         return info.normalNpe || info.ephemeralNpe && !info.normalOk;
       });
+    }
+
+    public Map<PsiAssignmentExpression, Pair<PsiType, PsiType>> getArrayStoreProblems() {
+      return myArrayStoreProblems;
     }
 
     Map<PsiMethodCallExpression, ThreeState> getOptionalCalls() {
@@ -1030,6 +1043,13 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     @Override
     protected void processArrayAccess(PsiArrayAccessExpression expression, boolean alwaysOutOfBounds) {
       myOutOfBoundsArrayAccesses.merge(expression, ThreeState.fromBoolean(alwaysOutOfBounds), ThreeState::merge);
+    }
+
+    @Override
+    protected void processArrayStoreTypeMismatch(PsiAssignmentExpression assignmentExpression, PsiType fromType, PsiType toType) {
+      if (assignmentExpression != null) {
+        myArrayStoreProblems.put(assignmentExpression, Pair.create(fromType, toType));
+      }
     }
 
     @Override

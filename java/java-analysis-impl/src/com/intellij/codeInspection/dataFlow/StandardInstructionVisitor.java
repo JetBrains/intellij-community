@@ -23,10 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -72,8 +69,16 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       dfaDest = instruction.getAssignedValue();
     }
 
-    NullabilityProblem problem = PsiUtil.skipParenthesizedExprDown(instruction.getLExpression()) instanceof PsiArrayAccessExpression ?
-                                 NullabilityProblem.storingToNotNullArray : NullabilityProblem.assigningToNotNull;
+    PsiExpression lValue = PsiUtil.skipParenthesizedExprDown(instruction.getLExpression());
+    PsiExpression rValue = instruction.getRExpression();
+    NullabilityProblem problem;
+    if (lValue instanceof PsiArrayAccessExpression) {
+      problem = NullabilityProblem.storingToNotNullArray;
+      checkArrayElementAssignability(runner, memState, dfaSource, lValue, rValue);
+    }
+    else {
+      problem = NullabilityProblem.assigningToNotNull;
+    }
 
     if (dfaDest instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue) dfaDest;
@@ -81,7 +86,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       final PsiModifierListOwner psi = var.getPsiVariable();
       boolean forceDeclaredNullity = !(psi instanceof PsiParameter && psi.getParent() instanceof PsiParameterList);
       if (forceDeclaredNullity && var.getInherentNullability() == Nullness.NOT_NULL) {
-        checkNotNullable(memState, dfaSource, problem, instruction.getRExpression());
+        checkNotNullable(memState, dfaSource, problem, rValue);
       }
       if (!(psi instanceof PsiField) || !psi.hasModifierProperty(PsiModifier.VOLATILE)) {
         memState.setVarValue(var, dfaSource);
@@ -90,14 +95,46 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         DfaMemoryStateImpl stateImpl = (DfaMemoryStateImpl)memState;
         stateImpl.setVariableState(var, stateImpl.getVariableState(var).withFact(DfaFactType.CAN_BE_NULL, true));
       }
-
     } else if (dfaDest instanceof DfaTypeValue && ((DfaTypeValue)dfaDest).isNotNull()) {
-      checkNotNullable(memState, dfaSource, problem, instruction.getRExpression());
+      checkNotNullable(memState, dfaSource, problem, rValue);
     }
 
     memState.push(dfaDest);
 
     return nextInstruction(instruction, runner, memState);
+  }
+
+  private void checkArrayElementAssignability(DataFlowRunner runner,
+                                              DfaMemoryState memState,
+                                              DfaValue dfaSource,
+                                              PsiExpression lValue,
+                                              PsiExpression rValue) {
+    if (rValue == null) return;
+    PsiType rCodeType = rValue.getType();
+    PsiType lCodeType = lValue.getType();
+    // If types known from source are not convertible, a compilation error is displayed, additional warning is unnecessary
+    if (rCodeType == null || lCodeType == null || !TypeConversionUtil.areTypesConvertible(rCodeType, lCodeType)) return;
+    PsiExpression array = ((PsiArrayAccessExpression)lValue).getArrayExpression();
+    DfaValue arrayValue = runner.getFactory().createValue(array);
+    PsiType arrayType = getType(array, arrayValue, memState);
+    if (!(arrayType instanceof PsiArrayType)) return;
+    PsiType componentType = ((PsiArrayType)arrayType).getComponentType();
+    PsiType sourceType = getType(rValue, dfaSource, memState);
+    if (sourceType == null || TypeConversionUtil.areTypesConvertible(sourceType, componentType)) return;
+    PsiAssignmentExpression assignmentExpression =
+      PsiTreeUtil.getParentOfType(rValue, PsiAssignmentExpression.class);
+    processArrayStoreTypeMismatch(assignmentExpression, sourceType, componentType);
+  }
+
+  @Nullable
+  private static PsiType getType(@Nullable PsiExpression expression, @Nullable DfaValue value, @NotNull DfaMemoryState memState) {
+    TypeConstraint fact = value == null ? null : memState.getValueFact(DfaFactType.TYPE_CONSTRAINT, value);
+    PsiType type = fact == null ? null : fact.getPsiType();
+    if (type != null) return type;
+    return expression == null ? null : expression.getType();
+  }
+
+  protected void processArrayStoreTypeMismatch(PsiAssignmentExpression assignmentExpression, PsiType fromType, PsiType toType) {
   }
 
   @Override
