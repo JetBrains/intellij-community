@@ -93,7 +93,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
           x += getPeriodLength();
         }
 
-        BufferedImage pathTile = UIUtil.createImage(getPeriodLength()*2, barRectHeight, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage pathTile = UIUtil.createImage(getPeriodLength(), barRectHeight, BufferedImage.TYPE_INT_ARGB);
         Graphics2D gpt = pathTile.createGraphics();
         GraphicsUtil.setupAAPainting(gpt);
         gpt.setColor(new JBColor(Gray._165, Gray._88));
