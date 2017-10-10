@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.type;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -66,6 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParamsEnhancer;
@@ -78,12 +65,13 @@ import java.util.Map;
 
 import static com.intellij.psi.util.PsiUtil.extractIterableTypeParameter;
 import static org.jetbrains.plugins.groovy.codeInspection.type.GroovyTypeCheckVisitorHelper.*;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.*;
 
 public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
   private static final Logger LOG = Logger.getInstance(GroovyAssignabilityCheckInspection.class);
 
-  private boolean checkCallApplicability(@Nullable PsiType type, boolean checkUnknownArgs, @NotNull CallInfo info) {
+  private boolean checkCallApplicability(@Nullable PsiType type, boolean checkUnknownArgs, @NotNull CallInfo<? extends GroovyPsiElement> info) {
 
     PsiType[] argumentTypes = info.getArgumentTypes();
     GrExpression invoked = info.getInvokedExpression();
@@ -155,7 +143,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
       final PsiType[] newTypes = GrInnerClassConstructorUtil.addEnclosingArgIfNeeded(types, info.getCall(), containingClass);
       if (newTypes.length != types.length) {
         return checkMethodApplicability(constructorResolveResult, checkUnknownArgs, new DelegatingCallInfo<T>(info) {
-          @Nullable
+          @NotNull
           @Override
           public PsiType[] getArgumentTypes() {
             return newTypes;
@@ -530,8 +518,10 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     );
   }
 
-  private void processAssignment(@NotNull PsiType expectedType, @NotNull GrExpression expression, @NotNull PsiElement toHighlight) {
-    processAssignment(expectedType, expression, toHighlight, "cannot.assign", toHighlight, ApplicableTo.ASSIGNMENT);
+  private void processAssignment(@NotNull PsiType expectedType, @NotNull GrExpression expression, @NotNull PsiElement toHighlight, @NotNull PsiElement context) {
+    checkPossibleLooseOfPrecision(expectedType, expression, toHighlight);
+
+    processAssignment(expectedType, expression, toHighlight, "cannot.assign", context, ApplicableTo.ASSIGNMENT);
   }
 
   private void processAssignment(@NotNull PsiType expectedType,
@@ -730,6 +720,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
         throwStatement.getResolveScope()
       ),
       exception,
+      throwWord,
       throwWord
     );
   }
@@ -787,9 +778,90 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     PsiType lValueNominalType = lValue.getNominalType();
     final PsiType targetType = PsiImplUtil.isSpreadAssignment(lValue) ? extractIterableTypeParameter(lValueNominalType, false)
                                                                       : lValueNominalType;
-    if (targetType != null) {
-      processAssignment(targetType, rValue, lValue, "cannot.assign", assignment, ApplicableTo.ASSIGNMENT);
+    if (targetType == null) return;
+    processAssignment(targetType, rValue, lValue, assignment);
+
+  }
+
+  void checkPossibleLooseOfPrecision(@NotNull PsiType targetType, @NotNull GrExpression expression, @NotNull PsiElement toHighlight) {
+    PsiType actualType = expression.getType();
+    if (actualType == null) return;
+    if (isPossibleLooseOfPrecision(targetType, actualType, expression))
+    registerError(
+      toHighlight,
+      GroovyBundle.message("loss.of.precision", actualType.getPresentableText(), targetType.getPresentableText()),
+      new LocalQuickFix[] {new GrCastFix(targetType, expression, false)},
+      ProblemHighlightType.GENERIC_ERROR
+    );
+  }
+
+  //copypaste from org.codehaus.groovy.transform.stc.StaticTypeCheckingSupport.checkPossibleLooseOfPrecision()
+  static boolean isPossibleLooseOfPrecision(@NotNull PsiType targetType, @NotNull PsiType actualType, @NotNull GrExpression expression) {
+    int targetRank = getTypeRank(targetType);
+    int actualRank = getTypeRank(actualType);
+    if (targetRank == CHARACTER_RANK || actualRank == CHARACTER_RANK || targetRank == BIG_DECIMAL_RANK) return false;
+    if (actualRank == 0 || targetRank == 0 || actualRank <= targetRank) return false;
+
+    if (expression instanceof GrLiteralImpl) {
+      Object value = ((GrLiteralImpl) expression).getValue();
+      if (!(value instanceof Number)) return true;
+      Number number = (Number) value;
+      switch (targetRank) {
+        case BYTE_RANK: {
+          byte val = number.byteValue();
+          if (number instanceof Short) {
+            return !Short.valueOf(val).equals(number);
+          }
+          if (number instanceof Integer) {
+            return !Integer.valueOf(val).equals(number);
+          }
+          if (number instanceof Long) {
+            return !Long.valueOf(val).equals(number);
+          }
+          if (number instanceof Float) {
+            return !Float.valueOf(val).equals(number);
+          }
+          return !Double.valueOf(val).equals(number);
+        }
+        case SHORT_RANK: {
+          short val = number.shortValue();
+          if (number instanceof Integer) {
+            return !Integer.valueOf(val).equals(number);
+          }
+          if (number instanceof Long) {
+            return !Long.valueOf(val).equals(number);
+          }
+          if (number instanceof Float) {
+            return !Float.valueOf(val).equals(number);
+          }
+          return !Double.valueOf(val).equals(number);
+        }
+        case INTEGER_RANK: {
+          int val = number.intValue();
+          if (number instanceof Long) {
+            return !Long.valueOf(val).equals(number);
+          }
+          if (number instanceof Float) {
+            return !Float.valueOf(val).equals(number);
+          }
+          return !Double.valueOf(val).equals(number);
+        }
+        case LONG_RANK: {
+          long val = number.longValue();
+          if (number instanceof Float) {
+            return !Float.valueOf(val).equals(number);
+          }
+          return !Double.valueOf(val).equals(number);
+        }
+        case FLOAT_RANK: {
+          float val = number.floatValue();
+          return !Double.valueOf(val).equals(number);
+        }
+        default:
+          return false;
+      }
     }
+    return true;
   }
 
   @Override
@@ -868,9 +940,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
         substitutor.substitute(targetType),
         initializer,
         parameter.getNameIdentifierGroovy(),
-        "cannot.assign",
-        method,
-        ApplicableTo.ASSIGNMENT
+        method
       );
     }
   }
@@ -976,7 +1046,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     GrExpression initializer = variable.getInitializerGroovy();
     if (initializer == null) return;
 
-    processAssignment(varType, initializer, variable.getNameIdentifierGroovy(), "cannot.assign", variable, ApplicableTo.ASSIGNMENT);
+    processAssignment(varType, initializer, variable.getNameIdentifierGroovy(), variable);
   }
 
   @Override
