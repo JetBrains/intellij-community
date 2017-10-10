@@ -101,7 +101,7 @@ final class BreadcrumbsConfigurable implements Configurable {
       languages = new JLabel(message("label.breadcrumbs.languages"));
 
       JPanel languagesPanel = new JPanel(new VerticalLayout(JBUI.scale(6)));
-      languagesPanel.setBorder(JBUI.Borders.emptyLeft(24));
+      languagesPanel.setBorder(JBUI.Borders.empty(0, 24, 12, 0));
       languagesPanel.add(languages);
       languagesPanel.add(boxes);
 
