@@ -114,7 +114,7 @@ public class KeyedExtensionCollector<T, KeyT> {
     if (cached != null) return cached;
 
     cached = buildExtensions(stringKey, key);
-    cached = ConcurrencyUtil.cacheOrGet(myCache, stringKey, cached);
+    cached = ConcurrencyUtil.cacheOrGet(myCache, stringKey, Collections.unmodifiableList(cached));
     return cached;
   }
 
