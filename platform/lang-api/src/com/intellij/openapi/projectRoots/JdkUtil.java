@@ -55,7 +55,7 @@ import java.util.jar.Manifest;
  * @author max
  */
 public class JdkUtil {
-  public static Key<Map<String, String>> COMMAND_LINE_CONTENT = Key.create("command.line.content");
+  public static final Key<Map<String, String>> COMMAND_LINE_CONTENT = Key.create("command.line.content");
 
   /**
    * The VM property is needed to workaround incorrect escaped URLs handling in WebSphere,
