@@ -5,13 +5,17 @@ import java.util.List;
 import java.util.Set;
 
 public class IfStatementWithIdenticalBranches {
-  int work() {
-    if (true) {
-      if <caret>(false) {
-        System.out.println();
-        return;
-      }
+  int getX() {
+    return 42;
+  }
+
+  void work() {
+    if(true) <caret> {
+      int y = getX();
+      return y;
+    } else {
+      int x = getX();
+      return x;
     }
-    System.out.println();
   }
 }

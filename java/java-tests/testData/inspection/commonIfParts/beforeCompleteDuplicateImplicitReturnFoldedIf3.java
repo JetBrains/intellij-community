@@ -1,4 +1,4 @@
-// "Fix all 'Common parts of if statement branches can be extracted' problems in file" "false"
+// "Fix all 'Extract common parts of 'if' statement' problems in file" "false"
 
 import java.util.Collection;
 import java.util.List;

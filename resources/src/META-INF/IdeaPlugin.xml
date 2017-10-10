@@ -873,7 +873,8 @@
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.CommonIfPartsInspection"
-                     displayName="Common parts of if statement branches can be extracted"/>
+                     bundle="messages.InspectionsBundle"
+                     key="inspection.common.if.parts.family"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CollectionAddAllCanBeReplacedWithConstructor"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"

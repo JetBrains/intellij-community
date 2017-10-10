@@ -28,12 +28,12 @@ public class Main {
           person = new Person(12, "aaa");
       renamePerson(person, "ccc");
       int x = 12;
-      work(x)
+      work(x);
     } else {
           person = new Person(15, "bbb");
       renamePerson(person, "ccc");
       int x = 1;
-      work(x)
+      work(x);
     }
   }
 }
