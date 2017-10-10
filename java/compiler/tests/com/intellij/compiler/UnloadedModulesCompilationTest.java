@@ -5,9 +5,13 @@ import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.openapi.compiler.CompilerFilter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -33,7 +37,42 @@ public class UnloadedModulesCompilationTest extends BaseCompilerTestCase {
     List<String> unloadedList = Collections.singletonList(unloaded.getName());
     ModuleManager.getInstance(myProject).setUnloadedModules(unloadedList);
 
-    make(new ModuleCompileScope(myProject, Collections.emptyList(), unloadedList, true, false), CompilerFilter.ALL);
+    make(createScopeWithUnloaded(Collections.emptyList(), unloadedList), CompilerFilter.ALL);
     fs().file("A.class").build().assertDirectoryEqual(outputDir);
+  }
+
+  public void testCompileUsagesOfConstantInUnloadedModules() throws IOException {
+    VirtualFile utilFile = createFile("unloaded/src/Util.java", "class Util { public static final String FOO = \"foo\"; }");
+    VirtualFile a = createFile("unloaded/src/A.java", "class A{ { System.out.println(Util.FOO); } }");
+    Module unloaded = addModule("unloaded", a.getParent());
+    buildAllModules();
+
+    List<String> unloadedList = Collections.singletonList(unloaded.getName());
+    ModuleManager.getInstance(myProject).setUnloadedModules(unloadedList);
+
+    changeFile(utilFile, VfsUtilCore.loadText(utilFile).replace("foo", "foo2"));
+
+    make(createScopeWithUnloaded(Collections.emptyList(), unloadedList), CompilerFilter.ALL).assertGenerated("A.class", "Util.class");
+  }
+
+  public void testCompileUsagesOfConstantFromNormalModuleInInUnloadedModules() throws IOException {
+    VirtualFile utilFile = createFile("util/src/Util.java", "class Util { public static final String FOO = \"foo\"; }");
+    Module util = addModule("util", utilFile.getParent());
+    VirtualFile a = createFile("unloaded/src/A.java", "class A{ { System.out.println(Util.FOO); } }");
+    Module unloaded = addModule("unloaded", a.getParent());
+    ModuleRootModificationUtil.addDependency(unloaded, util);
+    buildAllModules();
+
+    List<String> unloadedList = Collections.singletonList(unloaded.getName());
+    ModuleManager.getInstance(myProject).setUnloadedModules(unloadedList);
+
+    changeFile(utilFile, VfsUtilCore.loadText(utilFile).replace("foo", "foo2"));
+
+    make(createScopeWithUnloaded(Collections.singletonList(util), unloadedList), CompilerFilter.ALL).assertGenerated("A.class", "Util.class");
+  }
+
+  @NotNull
+  private ModuleCompileScope createScopeWithUnloaded(List<Module> modules, List<String> unloaded) {
+    return new ModuleCompileScope(myProject, modules, unloaded, true, false);
   }
 }
