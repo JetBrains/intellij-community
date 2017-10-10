@@ -260,10 +260,12 @@ def zip_stdlib(zip_path):
 
     import platform
 
-    zip_filename = os.path.normpath(os.path.sep.join([zip_path, "python-%s-stdlib-%s.zip" % ('.'.join(map(str, sys.version_info)),
-                                                                                             platform.platform())]))
+    zip_filename = os.path.normpath(os.path.sep.join([zip_path, "%s-%s-stdlib-%s.zip" % (
+        'Anaconda' if sys.version.find('Anaconda') != -1 else 'Python',
+        '.'.join(map(str, sys.version_info)),
+        platform.platform())]))
 
-    print("Adding file to %s" %zip_filename)
+    print("Adding file to %s" % zip_filename)
 
     try:
         zip = zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED)
