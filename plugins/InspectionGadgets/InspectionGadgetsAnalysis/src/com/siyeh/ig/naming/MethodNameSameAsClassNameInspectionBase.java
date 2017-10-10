@@ -68,7 +68,7 @@ public class MethodNameSameAsClassNameInspectionBase extends BaseInspection {
       if (!methodName.equals(className)) {
         return;
       }
-      registerMethodError(method, Boolean.valueOf(isOnTheFly()));
+      registerMethodError(method, isOnTheFly(), method.getBody() != null && !containingClass.isInterface());
     }
   }
 }
