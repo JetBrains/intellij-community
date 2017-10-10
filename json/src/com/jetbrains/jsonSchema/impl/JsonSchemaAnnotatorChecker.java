@@ -49,7 +49,7 @@ class JsonSchemaAnnotatorChecker {
   private final Map<PsiElement, String> myErrors;
   private boolean myHadTypeError;
 
-  private JsonSchemaAnnotatorChecker() {
+  protected JsonSchemaAnnotatorChecker() {
     myErrors = new HashMap<>();
   }
 
@@ -122,7 +122,7 @@ class JsonSchemaAnnotatorChecker {
     myHadTypeError = true;
   }
 
-  private void checkByScheme(@NotNull JsonValueAdapter value, @NotNull JsonSchemaObject schema) {
+  public void checkByScheme(@NotNull JsonValueAdapter value, @NotNull JsonSchemaObject schema) {
     final JsonSchemaType type = JsonSchemaType.getType(value);
     if (type != null) {
       JsonSchemaType schemaType = getMatchingSchemaType(schema, type);
@@ -361,7 +361,7 @@ class JsonSchemaAnnotatorChecker {
     return Pair.create(selected, checker);
   }
 
-  private static boolean areSchemaTypesCompatible(@NotNull final JsonSchemaObject schema, @NotNull final JsonSchemaType type) {
+  public static boolean areSchemaTypesCompatible(@NotNull final JsonSchemaObject schema, @NotNull final JsonSchemaType type) {
     final JsonSchemaType matchingSchemaType = getMatchingSchemaType(schema, type);
     if (matchingSchemaType != null) return matchingSchemaType.equals(type);
     if (schema.getEnum() != null) {
