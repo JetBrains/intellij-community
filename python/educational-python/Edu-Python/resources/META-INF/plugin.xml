@@ -3,7 +3,7 @@
   <id>com.jetbrains.python.edu.interactivelearning.python</id>
   <name>Edu Python</name>
   <version>4.1-IJ2017.3-1</version>
-  <idea-version since-build="173.1" until-build="173.*" />
+  <idea-version since-build="173.1" until-build="181.*" />
   <description><![CDATA[
       Educational plugin for Python programming language
       ]]></description>
