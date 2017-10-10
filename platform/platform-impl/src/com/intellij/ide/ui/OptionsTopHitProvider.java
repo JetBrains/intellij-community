@@ -41,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static java.util.Collections.emptyList;
@@ -156,17 +157,25 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
     private static void cacheAll(@Nullable ProgressIndicator indicator, @Nullable Project project) {
       Application application = getApplication();
       if (application != null && !application.isUnitTestMode()) {
+        long millis = System.currentTimeMillis();
+        String name = project == null ? "application" : "project";
+        AtomicLong time = new AtomicLong();
         for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
           if (provider instanceof OptionsTopHitProvider) {
-            application.invokeLater(() -> {
-              if (indicator == null || !indicator.isCanceled()) {
-                OptionsTopHitProvider options = (OptionsTopHitProvider)provider;
-                if (options.isEnabled(project)) options.getCachedOptions(project);
-              }
-            });
+            application.invokeLater(() -> time.addAndGet(cache((OptionsTopHitProvider)provider, indicator, project)));
           }
         }
+        application.invokeLater(() -> LOG.info(time.get() + " ms spent to cache options in " + name));
+        time.addAndGet(System.currentTimeMillis() - millis);
       }
+    }
+
+    private static long cache(@NotNull OptionsTopHitProvider provider, @Nullable ProgressIndicator indicator, @Nullable Project project) {
+      if (indicator != null && indicator.isCanceled()) return 0; // if application is closed
+      if (project != null && project.isDisposed()) return 0; // if project is closed
+      long millis = System.currentTimeMillis();
+      if (provider.isEnabled(project)) provider.getCachedOptions(project);
+      return System.currentTimeMillis() - millis;
     }
   }
 }
