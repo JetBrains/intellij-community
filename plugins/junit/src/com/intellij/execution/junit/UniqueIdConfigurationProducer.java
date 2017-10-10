@@ -42,7 +42,7 @@ public class UniqueIdConfigurationProducer extends JUnitConfigurationProducer {
       Arrays.stream(testProxies).map(testProxy -> TestUniqueId.getEffectiveNodeId(testProxy, project, searchScope))
         .filter(Objects::nonNull)
         .toArray(String[]::new);
-    if (nodeIds == null) return false;
+    if (nodeIds == null || nodeIds.length == 0) return false;
     final JUnitConfiguration.Data data = configuration.getPersistentData();
     data.setUniqueIds(nodeIds);
     data.TEST_OBJECT = JUnitConfiguration.TEST_UNIQUE_ID;
