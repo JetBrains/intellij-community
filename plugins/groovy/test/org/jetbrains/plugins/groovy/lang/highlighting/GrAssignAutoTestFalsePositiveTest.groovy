@@ -19,7 +19,8 @@ class GrAssignAutoTestFalsePositiveTest extends GrHighlightingTestBase {
 
   List<String> types = ['boolean', 'int', 'double', 'String', 'Integer', 'BigDecimal', 'BigInteger', 'List', 'Object', 'Thread',
                     'List<BigDecimal>', 'List<BigInteger>', 'List<Integer>', 'List<String>', 'List<Object>', 'List<Thread>', 'boolean[]',
-                    'int[]', 'double[]', 'String[]', 'Integer[]', 'List[]', 'Object[]', 'Thread[]', 'short', 'byte']
+                    'int[]', 'double[]', 'String[]', 'Integer[]', 'List[]', 'Object[]', 'Thread[]', 'short', 'byte', 'Set', 'Set<String>',
+                    'Set<Integer>', 'Set<Object>', 'Set<Thread>']
 
   List<String> values = ['true', '0', '1', '(int)1', '(short)1', '(byte)1', '1.1', '1.1d', '1.1f', '"1"', '["1"]', '1f', '"str"', 'null', 'new Object()',
                      'new Thread()', '[]' /*, '[1]', '[(int)1]', '[(byte)1]'*/, '[1.1]', '[1.1d]', '[1.1f]', '["str"]', 'new ArrayList<>()',
@@ -59,7 +60,12 @@ class GrAssignAutoTestFalsePositiveTest extends GrHighlightingTestBase {
          'List<Thread> -> String[]', 'List<Thread> -> Integer[]', 'List<Thread> -> List[]', 'boolean[] -> int[]', 'boolean[] -> double[]',
          'boolean[] -> String[]', 'int[] -> boolean[]', 'int[] -> String[]', 'double[] -> boolean[]', 'double[] -> String[]',
          'String[] -> boolean[]', 'Integer[] -> boolean[]', 'Integer[] -> String[]', 'List[] -> boolean[]', 'List[] -> String[]',
-         'Object[] -> boolean[]', 'Object[] -> String[]', 'Thread[] -> boolean[]', 'Thread[] -> String[]']
+         'Object[] -> boolean[]', 'Object[] -> String[]', 'Thread[] -> boolean[]', 'Thread[] -> String[]', 'Set<String> -> boolean[]',
+         'Set<String> -> int[]', 'Set<String> -> double[]', 'Set<String> -> Integer[]', 'Set<String> -> List[]', 'Set<String> -> Thread[]',
+         'Set<Integer> -> boolean[]', 'Set<Integer> -> String[]', 'Set<Integer> -> List[]', 'Set<Integer> -> Thread[]',
+         'Set<Object> -> boolean[]', 'Set<Object> -> int[]', 'Set<Object> -> double[]', 'Set<Object> -> String[]',
+         'Set<Object> -> Integer[]', 'Set<Object> -> List[]', 'Set<Object> -> Thread[]', 'Set<Thread> -> boolean[]',
+         'Set<Thread> -> int[]', 'Set<Thread> -> double[]', 'Set<Thread> -> String[]', 'Set<Thread> -> Integer[]', 'Set<Thread> -> List[]']
   }
 
 
