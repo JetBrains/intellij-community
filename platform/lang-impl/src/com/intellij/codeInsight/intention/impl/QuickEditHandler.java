@@ -20,7 +20,6 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -226,12 +225,8 @@ public class QuickEditHandler implements Disposable, DocumentListener {
       .setHideOnAction(false)
       .setFillColor(UIUtil.getControlColor())
       .createBalloon();
-    new DumbAwareAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        balloon.hide();
-      }
-    }.registerCustomShortcutSet(CommonShortcuts.ESCAPE, component);
+    DumbAwareAction.create(e -> balloon.hide())
+      .registerCustomShortcutSet(CommonShortcuts.ESCAPE, component);
     Disposer.register(newFile.getProject(), balloon);
     final Balloon.Position position = QuickEditAction.getBalloonPosition(editor);
     RelativePoint point = JBPopupFactory.getInstance().guessBestPopupLocation(editor);

@@ -20,7 +20,6 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -588,12 +587,8 @@ public class AboutPopup {
     public void setInfoSurface(InfoSurface infoSurface) {
       myInfoSurface = infoSurface;
       add(infoSurface, BorderLayout.NORTH);
-      new DumbAwareAction() {
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          copyInfoToClipboard(myInfoSurface.getText());
-        }
-      }.registerCustomShortcutSet(CustomShortcutSet.fromString("meta C", "control C"), this);
+      DumbAwareAction.create(e -> copyInfoToClipboard(myInfoSurface.getText()))
+        .registerCustomShortcutSet(CustomShortcutSet.fromString("meta C", "control C"), this);
     }
 
     protected class AccessiblePopupPanel extends AccessibleJPanel implements AccessibleAction {

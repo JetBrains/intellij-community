@@ -56,6 +56,7 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -214,16 +215,13 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
   private void registerActions() {
     //control+tab switches editors
-    new AnAction(){
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        if (getEditor1() != null && getEditor2() != null) {
-          Editor focus = getEditor1().getContentComponent().hasFocus() ? getEditor2() : getEditor1();
-          IdeFocusManager.getGlobalInstance().requestFocus(focus.getContentComponent(), true);
-          focus.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-        }
+    DumbAwareAction.create(e -> {
+      if (getEditor1() != null && getEditor2() != null) {
+        Editor focus = getEditor1().getContentComponent().hasFocus() ? getEditor2() : getEditor1();
+        IdeFocusManager.getGlobalInstance().requestFocus(focus.getContentComponent(), true);
+        focus.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
       }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("control TAB"), myPanel, this);
+    }).registerCustomShortcutSet(CustomShortcutSet.fromString("control TAB"), myPanel, this);
   }
 
   protected DiffPanelState createDiffPanelState(@NotNull Disposable parentDisposable) {

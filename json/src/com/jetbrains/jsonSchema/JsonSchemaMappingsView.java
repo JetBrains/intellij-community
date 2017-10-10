@@ -2,7 +2,6 @@ package com.jetbrains.jsonSchema;
 
 import com.intellij.json.JsonBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -126,22 +125,19 @@ public class JsonSchemaMappingsView implements Disposable {
   }
 
   private void attachNavigateToSchema() {
-    new DumbAwareAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        final String pathToSchema = mySchemaField.getText();
-        if (StringUtil.isEmptyOrSpaces(pathToSchema)) return;
-        final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(pathToSchema));
-        if (virtualFile == null) {
-          BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
-            .createHtmlTextBalloonBuilder("File not found", UIUtil.getBalloonErrorIcon(), MessageType.ERROR.getPopupBackground(), null);
-          final Balloon balloon = balloonBuilder.setFadeoutTime(TimeUnit.SECONDS.toMillis(3)).createBalloon();
-          balloon.showInCenterOf(mySchemaField);
-          return;
-        }
-        new OpenFileDescriptor(myProject, virtualFile).navigate(true);
+    DumbAwareAction.create(e -> {
+      String pathToSchema = mySchemaField.getText();
+      if (StringUtil.isEmptyOrSpaces(pathToSchema)) return;
+      VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(pathToSchema));
+      if (virtualFile == null) {
+        BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
+          .createHtmlTextBalloonBuilder("File not found", UIUtil.getBalloonErrorIcon(), MessageType.ERROR.getPopupBackground(), null);
+        Balloon balloon = balloonBuilder.setFadeoutTime(TimeUnit.SECONDS.toMillis(3)).createBalloon();
+        balloon.showInCenterOf(mySchemaField);
+        return;
       }
-    }.registerCustomShortcutSet(CommonShortcuts.getEditSource(), mySchemaField);
+      new OpenFileDescriptor(myProject, virtualFile).navigate(true);
+    }).registerCustomShortcutSet(CommonShortcuts.getEditSource(), mySchemaField);
   }
 
   public List<UserDefinedJsonSchemaConfiguration.Item> getData() {
