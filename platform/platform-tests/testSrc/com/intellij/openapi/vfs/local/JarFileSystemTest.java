@@ -44,8 +44,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
 
@@ -138,40 +137,44 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testBasicJarHandlerConcurrency() throws Exception {
-    int number = 40;
-    List<BasicJarHandler> handlers = new ArrayList<>();
-    for(int i = 0; i < number; ++i) {
-      File jar = IoTestUtil.createTestJar(tempDir.newFile("test" + i + ".jar"));
-      handlers.add(new BasicJarHandler(jar.getPath()));
-    }
-
-    int N = Math.max(2, Runtime.getRuntime().availableProcessors());
-    for(int iteration = 0 ; iteration < 200; ++iteration) {
-      if (iteration % 10 == 0) System.out.println(iteration);
-      List<Future> futuresToWait = new ArrayList<>();
-      CountDownLatch sameStartCondition = new CountDownLatch(N);
-
-      for(int i = 0; i < N; ++i) {
-        futuresToWait.add(ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          try {
-            sameStartCondition.countDown();
-            sameStartCondition.await();
-            Random random = new Random();
-            for (int j = 0; j < 1000; ++j) {
-              BasicJarHandler handler = handlers.get(random.nextInt(handlers.size()));
-
-              int op = random.nextInt(2);
-              if (op == 0) assertNotNull(handler.getAttributes(JarFile.MANIFEST_NAME));
-              else if (op == 1) assertNotNull(handler.contentsToByteArray(JarFile.MANIFEST_NAME));
-            }
-          }
-          catch (Throwable ignore) {
-            ignore.printStackTrace();
-          }
-        }));
+    try {
+      int number = 40;
+      List<BasicJarHandler> handlers = new ArrayList<>();
+      for(int i = 0; i < number; ++i) {
+        File jar = IoTestUtil.createTestJar(tempDir.newFile("test" + i + ".jar"));
+        handlers.add(new BasicJarHandler(jar.getPath()));
       }
 
-      for(Future future:futuresToWait) future.get();
+      int N = Math.max(2, Runtime.getRuntime().availableProcessors());
+      for(int iteration = 0 ; iteration < 200; ++iteration) {
+        List<Future> futuresToWait = new ArrayList<>();
+        CountDownLatch sameStartCondition = new CountDownLatch(N);
+  
+        for(int i = 0; i < N; ++i) {
+          futuresToWait.add(ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            try {
+              sameStartCondition.countDown();
+              sameStartCondition.await();
+              Random random = new Random();
+              for (int j = 0; j < 2 * number; ++j) {
+                BasicJarHandler handler = handlers.get(random.nextInt(handlers.size()));
+  
+                int op = random.nextInt(2);
+                if (op == 0) assertNotNull(handler.getAttributes(JarFile.MANIFEST_NAME));
+                else if (op == 1) assertNotNull(handler.contentsToByteArray(JarFile.MANIFEST_NAME));
+              }
+            }
+            catch (Throwable ignore) {
+              ignore.printStackTrace();
+            }
+          }));
+        }
+  
+        for(Future future:futuresToWait) future.get(2, TimeUnit.SECONDS);
+      }
+    }
+    catch (TimeoutException e) {
+      fail("Deadlock detected");
     }
   }
   
