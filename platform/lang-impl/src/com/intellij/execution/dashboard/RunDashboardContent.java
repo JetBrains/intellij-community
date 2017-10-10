@@ -67,6 +67,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   @NonNls private static final String RUN_DASHBOARD_CONTENT_TOOLBAR = "RunDashboardContentToolbar";
   @NonNls private static final String RUN_DASHBOARD_TREE_TOOLBAR = "RunDashboardTreeToolbar";
   @NonNls private static final String RUN_DASHBOARD_POPUP = "RunDashboardPopup";
+  @NonNls private static final String RUN_DASHBOARD_STOP_ACTION_ID = "RunDashboard.Stop";
 
   private static final String MESSAGE_CARD = "message";
   private static final String CONTENT_CARD = "content";
@@ -353,9 +354,13 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   private JComponent createToolbar() {
     JPanel toolBarPanel = new JPanel(new BorderLayout());
 
-    myDashboardContentActions.add(ActionManager.getInstance().getAction(RUN_DASHBOARD_CONTENT_TOOLBAR));
+    ActionManager actionManager = ActionManager.getInstance();
+    myDashboardContentActions.add(actionManager.getAction(RUN_DASHBOARD_CONTENT_TOOLBAR));
+    AnAction stopAction = actionManager.getAction(RUN_DASHBOARD_STOP_ACTION_ID);
+    stopAction.registerCustomShortcutSet(this, null);
+    myDashboardContentActions.add(stopAction);
     myContentActionGroup.add(myDashboardContentActions);
-    ActionToolbar contentActionsToolBar = ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR, myContentActionGroup, false);
+    ActionToolbar contentActionsToolBar = actionManager.createActionToolbar(PLACE_TOOLBAR, myContentActionGroup, false);
     toolBarPanel.add(contentActionsToolBar.getComponent(), BorderLayout.CENTER);
     contentActionsToolBar.setTargetComponent(this);
 

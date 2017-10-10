@@ -1055,11 +1055,11 @@
       <action id="RunDashboard.Run" class="com.intellij.execution.dashboard.actions.RunAction" use-shortcut-of="RunClass"/>
       <!--suppress PluginXmlValidity -->
       <action id="RunDashboard.Debug" class="com.intellij.execution.dashboard.actions.DebugAction" use-shortcut-of="DebugClass"/>
-      <action id="RunDashboard.Stop" class="com.intellij.execution.dashboard.actions.StopAction"/>
     </group>
+    <action id="RunDashboard.Stop" class="com.intellij.execution.dashboard.actions.StopAction" use-shortcut-of="Stop"/>
 
     <action id="RunDashboard.ShowConfigurations" class="com.intellij.execution.dashboard.actions.ShowConfigurationsAction">
-      <add-to-group group-id="Runner.Layout" anchor="after" relative-to-action="Runner.RestoreLayout"/>
+      <add-to-group group-id="Runner.Layout" anchor="before" relative-to-action="Runner.RestoreLayout"/>
     </action>
     <group id="RunDashboardTreeToolbar"/>
     <group id="RunDashboardPopup">
