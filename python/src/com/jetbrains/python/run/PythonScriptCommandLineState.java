@@ -30,18 +30,18 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.terminal.TerminalExecutionConsole;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PathMapper;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
 import com.jetbrains.python.PythonHelper;
-import com.jetbrains.python.console.PyConsoleOptions;
-import com.jetbrains.python.console.PyConsoleType;
-import com.jetbrains.python.console.PydevConsoleRunnerImpl;
+import com.jetbrains.python.console.*;
 import com.jetbrains.python.console.actions.ShowVarsAction;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import org.jetbrains.annotations.NotNull;
@@ -67,6 +67,9 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
   public ExecutionResult execute(Executor executor,
                                  PythonProcessStarter processStarter,
                                  final CommandLinePatcher... patchers) throws ExecutionException {
+    Project project = myConfig.getProject();
+    assert myConfig.getSdk() != null;
+
     if (myConfig.showCommandLineAfterwards() && !myConfig.emulateTerminal()) {
       if (executor.getId() == DefaultDebugExecutor.EXECUTOR_ID) {
         return super.execute(executor, processStarter, ArrayUtil.append(patchers, new CommandLinePatcher() {
@@ -77,11 +80,17 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
         }));
       }
 
-      PythonScriptWithConsoleRunner runner =
-        new PythonScriptWithConsoleRunner(myConfig.getProject(), myConfig.getSdk(), PyConsoleType.PYTHON, myConfig.getWorkingDirectory(),
-                                          myConfig.getEnvs(), patchers,
-                                          PyConsoleOptions.getInstance(myConfig.getProject()).getPythonConsoleSettings());
+      Module module = myConfig.getModule();
+      PyConsoleOptions.PyConsoleSettings settingsProvider = PyConsoleOptions.getInstance(project).getPythonConsoleSettings();
+      PathMapper pathMapper = PydevConsoleRunner.getPathMapper(project, myConfig.getSdk(), settingsProvider);
+      String workingDir = PydevConsoleRunnerFactory.getWorkingDir(project, module, pathMapper, settingsProvider);
+      String[] setupFragment = PydevConsoleRunnerFactory.createSetupFragment(module, workingDir, pathMapper, settingsProvider);
 
+      PythonScriptWithConsoleRunner runner =
+        new PythonScriptWithConsoleRunner(project, myConfig.getSdk(), PyConsoleType.PYTHON, workingDir,
+                                          myConfig.getEnvs(), patchers,
+                                          settingsProvider,
+                                          setupFragment);
       runner.setEnableAfterConnection(false);
       runner.runSync();
       // runner.getProcessHandler() would be null if execution error occurred
