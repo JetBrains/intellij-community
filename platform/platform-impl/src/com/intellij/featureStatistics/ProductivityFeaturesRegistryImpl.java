@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
@@ -57,21 +58,26 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
     try {
       readFromXml("file:///ProductivityFeaturesRegistry.xml");
     }
-    catch (Throwable e) {
+    catch (FileNotFoundException e) {
       if (!testMode) LOG.error(e);
+    }
+    catch (Throwable e) {
+      LOG.error(e);
     }
 
     try {
       readFromXml("file:///IdeSpecificFeatures.xml");
     }
+    catch (FileNotFoundException ignore) {
+    }
     catch (Throwable e) {
-      if (!testMode) LOG.warn(e);
+      LOG.error(e);
     }
   }
 
   private void readFromXml(String path) throws JDOMException, IOException {
-    final Document document = JDOMUtil.loadResourceDocument(new URL(path));
-    final Element root = document.getRootElement();
+    Document document = JDOMUtil.loadResourceDocument(new URL(path));
+    Element root = document.getRootElement();
     readGroups(root);
     readFilters(root);
   }
