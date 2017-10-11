@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.projectRoots.impl;
 
@@ -15,6 +13,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.ArrayUtilRt;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -42,13 +41,15 @@ public class RootsAsVirtualFilePointers implements RootProvider {
   @Override
   @NotNull
   public VirtualFile[] getFiles(@NotNull OrderRootType type) {
-    return myRoots.get(type).getFiles();
+    VirtualFilePointerContainer container = myRoots.get(type);
+    return container == null ? VirtualFile.EMPTY_ARRAY : container.getFiles();
   }
 
   @Override
   @NotNull
   public String[] getUrls(@NotNull OrderRootType type) {
-    return myRoots.get(type).getUrls();
+    VirtualFilePointerContainer container = myRoots.get(type);
+    return container == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : container.getUrls();
   }
 
   public void addRoot(@NotNull VirtualFile virtualFile, @NotNull OrderRootType type) {
