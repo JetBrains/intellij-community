@@ -21,5 +21,6 @@ public class CreateCloneMethodFixTest extends IGQuickFixesTestCase {
   public void testFinal() { assertQuickfixNotAvailable();}
   public void testSimple() { doTest();}
   public void testNoThrows() { doTest();}
+  public void testGenerics() { doTest();}
 
 }

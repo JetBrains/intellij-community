@@ -22,6 +22,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -105,15 +108,23 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
       if (!(parent instanceof PsiClass)) {
         return;
       }
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      String cloneMethod = "public " + element.getText() + " clone() ";
-      if (myGenerateThrows) {
-        cloneMethod += "throws java.lang.CloneNotSupportedException ";
+      final PsiClass aClass = (PsiClass)parent;
+      final StringBuilder methodText = new StringBuilder();
+      if (PsiUtil.isLanguageLevel5OrHigher(aClass) && CodeStyleSettingsManager.getSettings(aClass.getProject())
+        .getCustomSettings(JavaCodeStyleSettings.class).INSERT_OVERRIDE_ANNOTATION) {
+        methodText.append("@java.lang.Override ");
       }
-      cloneMethod += "{\n" +
-                     "return (" + element.getText() + ") super.clone();\n" +
-                     "}";
-      final PsiMethod method = factory.createMethodFromText(cloneMethod, element);
+      methodText.append("public ").append(aClass.getName());
+      final PsiTypeParameterList typeParameterList = aClass.getTypeParameterList();
+      if (typeParameterList != null) {
+        methodText.append(typeParameterList.getText());
+      }
+      methodText.append(" clone() ");
+      if (myGenerateThrows) {
+        methodText.append("throws java.lang.CloneNotSupportedException ");
+      }
+      methodText.append("{\nreturn (").append(element.getText()).append(") super.clone();\n").append("}");
+      final PsiMethod method = JavaPsiFacade.getElementFactory(project).createMethodFromText(methodText.toString(), element);
       if (isOnTheFly()) {
         final PsiElement newElement = parent.add(method);
         final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();

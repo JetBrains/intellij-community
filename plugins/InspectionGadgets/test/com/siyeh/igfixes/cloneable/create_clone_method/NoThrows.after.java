@@ -1,5 +1,6 @@
 class NoThrows extends Parent implements Cloneable {
 
+    @Override
     public NoThrows clone() {
         return (NoThrows) super.clone();
     }
