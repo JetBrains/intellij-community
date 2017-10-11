@@ -31,4 +31,11 @@ public class JUnitExpectedPatternsTest {
                                                                       "Expected: is \"aaa\\naa\"\n" +
                                                                       "     but: was \"bbb\\nbb\""));
   }
+
+  @Test
+  public void testHamcrestAssertThatEqWithReason() {
+    Assert.assertNotNull(ExpectedPatterns.createExceptionNotification("reason\n" +
+                                                                      "Expected: \"aaa\\naa\"\n" +
+                                                                      "     got: \"bbb\\nbb\""));
+  }
 }
