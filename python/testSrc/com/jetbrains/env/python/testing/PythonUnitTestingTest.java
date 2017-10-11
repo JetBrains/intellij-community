@@ -19,6 +19,7 @@ import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.filters.ConsoleInputFilterProvider;
 import com.intellij.execution.filters.InputFilter;
 import com.intellij.execution.testframework.sm.ServiceMessageBuilder;
+import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -35,6 +36,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.testing.*;
+import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
@@ -237,6 +239,31 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                                           "..TestThis\n" +
                                                           "...test_this\n" +
                                                           "....[test](-)\n", runner.getFormattedTestTree());
+      }
+    });
+  }
+
+
+  // Ensure failed and error subtests work
+  @Test
+  @EnvTestTagsRequired(tags = "python3")
+  public void testSubTestAssertEqualsError() {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/subtestError", "test_assert_test.py") {
+
+      @NotNull
+      @Override
+      protected PyUnitTestProcessRunner createProcessRunner() {
+        return new PyUnitTestProcessRunner(toFullPath(getMyScriptName()), 0);
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        final MockPrinter printer = new MockPrinter();
+        runner.findTestByName("[test]").printOn(printer);
+        Assert.assertThat("Subtest assertEquals broken", printer.getStdErr(), Matchers.containsString("AssertionError: 'D' != 'a'"));
       }
     });
   }
