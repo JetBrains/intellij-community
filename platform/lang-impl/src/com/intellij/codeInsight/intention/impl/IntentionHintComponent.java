@@ -78,8 +78,6 @@ import java.awt.event.MouseListener;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
-
 /**
  * @author max
  * @author Mike
@@ -222,10 +220,7 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
     if (!step.wrapAndUpdateActions(intentions, true)) {
       return PopupUpdateResult.NOTHING_CHANGED;
     }
-    if (!myPopupShown) {
-      return PopupUpdateResult.CHANGED_INVISIBLE;
-    }
-    return PopupUpdateResult.HIDE_AND_RECREATE;
+    return myPopupShown ? PopupUpdateResult.HIDE_AND_RECREATE : PopupUpdateResult.CHANGED_INVISIBLE;
   }
 
   @Nullable
@@ -234,7 +229,7 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
     if (myPopup == null || myPopup.isDisposed()) {
       return null;
     }
-    ListPopupStep listStep = myPopup.getListStep();
+    ListPopupStep<IntentionActionWithTextCaching> listStep = myPopup.getListStep();
     List<IntentionActionWithTextCaching> values = listStep.getValues();
     if (values.size() <= index) {
       return null;
@@ -389,6 +384,7 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
   }
 
   public void hide() {
+    myDisposed = true;
     Disposer.dispose(this);
   }
 
@@ -445,7 +441,7 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
     }
     myPopup = JBPopupFactory.getInstance().createListPopup(step);
     if (myPopup instanceof WizardPopup) {
-      Shortcut[] shortcuts = getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS).getShortcuts();
+      Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS).getShortcuts();
       for (Shortcut shortcut : shortcuts) {
         if (shortcut instanceof KeyboardShortcut) {
           KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
@@ -583,25 +579,23 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
   }
 
   public static class EnableDisableIntentionAction extends AbstractEditIntentionSettingsAction {
-    private final IntentionManagerSettings mySettings = IntentionManagerSettings.getInstance();
     private final IntentionAction myAction;
 
-    public EnableDisableIntentionAction(IntentionAction action) {
+    public EnableDisableIntentionAction(@NotNull IntentionAction action) {
       super(action);
       myAction = action;
-      // needed for checking errors in user written actions
-      //noinspection ConstantConditions
-      LOG.assertTrue(myFamilyName != null, "action "+action.getClass()+" family returned null");
     }
 
     @Override
     @NotNull
     public String getText() {
+      final IntentionManagerSettings mySettings = IntentionManagerSettings.getInstance();
       return CodeInsightBundle.message(mySettings.isEnabled(myAction) ? "disable.intention.action" : "enable.intention.action", myFamilyName);
     }
 
     @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      final IntentionManagerSettings mySettings = IntentionManagerSettings.getInstance();
       mySettings.setEnabled(myAction, !mySettings.isEnabled(myAction));
     }
 
@@ -631,13 +625,16 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
   }
 
   private abstract static class AbstractEditIntentionSettingsAction implements IntentionAction {
-    final String myFamilyName;
-    private final boolean myDisabled;
+    @NotNull final String myFamilyName;
+    private final boolean myEnabled;
 
-    private AbstractEditIntentionSettingsAction(IntentionAction action) {
+    private AbstractEditIntentionSettingsAction(@NotNull IntentionAction action) {
       myFamilyName = action.getFamilyName();
-      myDisabled = action instanceof IntentionActionWrapper &&
-                   Comparing.equal(action.getFamilyName(), ((IntentionActionWrapper)action).getFullFamilyName());
+      // needed for checking errors in user written actions
+      //noinspection ConstantConditions
+      LOG.assertTrue(myFamilyName != null, "action "+action.getClass()+" family returned null");
+      myEnabled = !(action instanceof IntentionActionWrapper) ||
+                  !Comparing.equal(action.getFamilyName(), ((IntentionActionWrapper)action).getFullFamilyName());
     }
 
     @NotNull
@@ -648,7 +645,7 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
 
     @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return !myDisabled;
+      return myEnabled;
     }
 
     @Override
