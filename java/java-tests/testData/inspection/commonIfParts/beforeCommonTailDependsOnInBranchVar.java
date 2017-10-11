@@ -8,10 +8,10 @@ public class Main {
   private void work(int i){};
 
   public int test(int a, int b) {
-    if(true) {
+    if<caret>(true) {
       int c = a + b;
       work(1);
-      return c;<caret>
+      return c;
     } else {
       work(2);
       int c = a - b;

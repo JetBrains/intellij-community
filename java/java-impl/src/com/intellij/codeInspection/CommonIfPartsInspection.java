@@ -47,7 +47,9 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
         boolean warning = type != CommonPartType.WITH_VARIABLES_EXTRACT && type != CommonPartType.VARIABLES_ONLY && !mayChangeSemantics;
         ProblemHighlightType highlightType = warning ? ProblemHighlightType.WEAK_WARNING : ProblemHighlightType.INFORMATION;
         String message = type.getMessage(mayChangeSemantics);
-        holder.registerProblem(ifStatement, message, highlightType, new ExtractCommonIfPartsFix(type, mayChangeSemantics, isOnTheFly));
+        PsiElement element = warning ? ifStatement.getChildren()[0] : ifStatement;
+        holder.registerProblem(element, message, highlightType, new ExtractCommonIfPartsFix(type, mayChangeSemantics, isOnTheFly));
+
       }
     };
   }
@@ -108,7 +110,7 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiIfStatement ifStatement = tryCast(descriptor.getStartElement(), PsiIfStatement.class);
+      PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiIfStatement.class, false);
       if (ifStatement == null) return;
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       if (!(ifStatement.getParent() instanceof PsiCodeBlock)) {
@@ -317,7 +319,7 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
     WHOLE_BRANCH("inspection.common.if.parts.message.whole.branch"),
     COMPLETE_DUPLICATE("inspection.common.if.parts.message.complete.duplicate");
 
-    private final String myBundleKey;
+    private @NotNull final String myBundleKey;
 
     @NotNull
     private String getMessage(boolean mayChangeSemantics) {
@@ -325,7 +327,7 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
       return InspectionsBundle.message(myBundleKey, mayChangeSemanticsText);
     }
 
-    CommonPartType(String key) {myBundleKey = key;}
+    CommonPartType(@NotNull String key) {myBundleKey = key;}
   }
 
   private static class ExtractionContext {
@@ -334,6 +336,7 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
     private final CommonPartType myType;
     private final @Nullable ImplicitElse myImplicitElse;
     private final @NotNull Map<PsiLocalVariable, String> mySubstitutionTable;
+    private final boolean myMayChangeSemantics;
 
     @NotNull
     public Map<PsiLocalVariable, String> getSubstitutionTable() {
@@ -344,17 +347,14 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
                               List<PsiStatement> statements,
                               CommonPartType type,
                               @Nullable ImplicitElse implicitElse,
-                              @NotNull Map<PsiLocalVariable, String> table) {
+                              @NotNull Map<PsiLocalVariable, String> table,
+                              boolean mayChangeSemantics) {
       myHeadUnits = units;
       myFinishingStatements = statements;
       myType = type;
       myImplicitElse = implicitElse;
       mySubstitutionTable = table;
-    }
-
-    boolean mayChangeSemantics() {
-      return !myHeadUnits.isEmpty() && StreamEx.of(myHeadUnits)
-        .anyMatch(unit -> unit.mayChangeSemantics() && !(unit.getThenStatement() instanceof PsiDeclarationStatement));
+      myMayChangeSemantics = mayChangeSemantics;
     }
 
 
@@ -373,6 +373,10 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
     @Nullable
     public ImplicitElse getImplicitElse() {
       return myImplicitElse;
+    }
+
+    public boolean mayChangeSemantics() {
+      return myMayChangeSemantics;
     }
 
 
@@ -396,7 +400,8 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
           if (!equivalence.statementsAreEquivalent(thenStmt, elseStmt)) return null;
         }
         Collections.reverse(statements);
-        return new ExtractionContext(Collections.emptyList(), statements, CommonPartType.COMPLETE_DUPLICATE, implicitElse, new HashMap<>());
+        return new ExtractionContext(Collections.emptyList(), statements, CommonPartType.COMPLETE_DUPLICATE, implicitElse, new HashMap<>(),
+                                     false);
       }
       return null;
     }
@@ -451,7 +456,6 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
 
       PsiExpression condition = ifStatement.getCondition();
       if (condition == null) return null;
-      if (SideEffectChecker.mayHaveSideEffects(condition)) return null;
 
       List<ExtractionUnit> headCommonParts = new ArrayList<>();
       Set<PsiVariable> extractedVariables = new HashSet<>();
@@ -517,7 +521,9 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
       }
       if (headCommonParts.isEmpty() && tailCommonParts.isEmpty()) return null;
       final CommonPartType type = getType(headCommonParts, tailCommonParts, thenLen, elseLen, notEquivalentVariableDeclarations.isEmpty());
-      return new ExtractionContext(headCommonParts, tailCommonParts, type, null, equivalence.getSubstitutionTable());
+      boolean mayChangeSemantics = SideEffectChecker.mayHaveSideEffects(condition) && !headCommonParts.isEmpty() && StreamEx.of(headCommonParts)
+        .anyMatch(unit -> unit.mayChangeSemantics() && !(unit.getThenStatement() instanceof PsiDeclarationStatement));
+      return new ExtractionContext(headCommonParts, tailCommonParts, type, null, equivalence.getSubstitutionTable(), mayChangeSemantics);
     }
 
     @NotNull
@@ -669,6 +675,24 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
       if(!myLocalVariables.contains(localVariable1) || !myLocalVariables.contains(localVariable2)) {
         return false;
       }
+      if (!equalNotConsideringInitializer(localVariable1, localVariable2)) return false;
+      return true;
+    }
+
+    private boolean equalNotConsideringInitializer(@NotNull PsiLocalVariable localVariable1, @NotNull PsiLocalVariable localVariable2) {
+
+      PsiModifierList firstModifierList = localVariable1.getModifierList();
+      PsiModifierList secondModifierList = localVariable2.getModifierList();
+      if(firstModifierList != null || secondModifierList != null) {
+        if (firstModifierList == null || secondModifierList == null) {
+          return false;
+        }
+        String firstModifierListText = firstModifierList.getText();
+        String secondModifierListText = secondModifierList.getText();
+        if(firstModifierListText != null && !firstModifierListText.equals(secondModifierListText)) {
+          return false;
+        }
+      }
       PsiAnnotation[] firstAnnotations = localVariable1.getAnnotations();
       if (firstAnnotations.length != localVariable2.getAnnotations().length || firstAnnotations.length != 0) return false;
       PsiType firstType = localVariable1.getType();
@@ -687,17 +711,9 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
       if(!myLocalVariables.contains(localVariable1) || !myLocalVariables.contains(localVariable2)) {
         return super.localVariablesAreEquivalent(localVariable1, localVariable2);
       }
-      PsiAnnotation[] firstAnnotations = localVariable1.getAnnotations();
-      if (firstAnnotations.length != localVariable2.getAnnotations().length || firstAnnotations.length != 0) return EXACT_MISMATCH;
-      PsiType firstType = localVariable1.getType();
-      if(!firstType.equals(localVariable2.getType())) return EXACT_MISMATCH;
-      String firstName = localVariable1.getName();
-      String secondName = localVariable2.getName();
+      if (!equalNotConsideringInitializer(localVariable1, localVariable2)) return EXACT_MISMATCH;
       PsiExpression firstInitializer = localVariable1.getInitializer();
       PsiExpression secondInitializer = localVariable2.getInitializer();
-      if (firstName == null || !firstName.equals(secondName)) {
-        mySubstitutionTable.put(localVariable2, firstName);
-      }
       return expressionsMatch(firstInitializer, secondInitializer);
     }
 

@@ -21,8 +21,8 @@ public class Test {
 
   class Test {
     void work() {
-      if (true) {
-        @MyAnnotation1 <caret>Object x = null;
+      if<caret> (true) {
+        @MyAnnotation1 Object x = null;
         return 42;
       } else {
         @MyAnnotation2 Object x = null;

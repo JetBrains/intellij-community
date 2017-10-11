@@ -10,7 +10,7 @@ public class IfStatementWithIdenticalBranches {
   }
 
   void work() {
-    if(true) <caret> {
+    if<caret>(true)  {
       final int y = getX();
       return y;
     } else {

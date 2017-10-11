@@ -7,8 +7,8 @@ public class Main {
 
 
   public static void main(String[] args) {
-    if(true) {
-      int x <caret>= 0;
+    if<caret>(true) {
+      int x = 0;
     } else {
       int x = 1;
     }

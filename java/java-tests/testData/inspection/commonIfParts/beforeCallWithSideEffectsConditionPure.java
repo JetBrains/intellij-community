@@ -1,4 +1,4 @@
-// "Extract common part with variables from if (may change semantics)" "true"
+// "Extract common part with variables from if " "true"
 
 import java.util.List;
 import java.util.Map;
@@ -23,10 +23,10 @@ public class Main {
   }
 
   public void main(String[] args) {
-    if(true) {
+    if<caret>(true) {
       Person person = new Person(12, "aaa");
       renamePerson(person, "ccc");
-      int x <caret>= 12;
+      int x = 12;
       work(x);
     } else {
       Person person = new Person(12, "aaa");

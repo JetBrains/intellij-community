@@ -1,4 +1,4 @@
-// "Extract common part with variables from if (may change semantics)" "true"
+// "Extract common part with variables from if (may change semantics)" "INFORMATION"
 
 import java.util.List;
 import java.util.Map;
@@ -22,15 +22,21 @@ public class Main {
 
   }
 
+  boolean conditionWithPossibleSideEffects() {
+
+  }
+
   public void main(String[] args) {
+    if<caret>(getCondition()) {
       Person person = new Person(12, "aaa");
       renamePerson(person, "ccc");
-      int x;
-      if(true) {
-          x = 12;
-      } else {
-          x = 1;
-      }
+      int x = 12;
       work(x);
+    } else {
+      Person person = new Person(12, "aaa");
+      renamePerson(person, "ccc");
+      int x = 1;
+      work(x);
+    }
   }
 }

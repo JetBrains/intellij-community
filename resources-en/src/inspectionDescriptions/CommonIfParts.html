@@ -2,6 +2,32 @@
 <body>
 Inspection that can extract common parts from branches of if statement.
 <!-- tooltip end -->
+<p>Before:</p>
+<pre><code>
+  if (jsVariable instanceof JSParameter) {
+    if (copy == null) return;
+    ((JSNamedElement)copy).setName(newVarName);
+    JSVarStatement statementCopy = (JSVarStatement)jsVariable.getParent().copy();
+    char quote = JSCodeStyleSettings.getQuoteChar(jsVariable);
+    handleVariables(quote, statementCopy);
+  } else {
+    if (copy == null) return;
+    ((JSNamedElement)copy).setName(newVarName);
+    copy = jsVariable.copy();
+  }
+</code></pre>
+<p>After:</p>
+<pre><code>
+  if (copy == null) return;
+  ((JSNamedElement)copy).setName(newVarName);
+  if (jsVariable instanceof JSParameter) {
+    JSVarStatement statementCopy = (JSVarStatement)jsVariable.getParent().copy();
+    char quote = JSCodeStyleSettings.getQuoteChar(jsVariable);
+    handleVariables(quote, statementCopy);
+  } else {
+    copy = jsVariable.copy();
+  }
+</code></pre>
 <p><small>New in 2018.1</small></p>
 </body>
 </html>

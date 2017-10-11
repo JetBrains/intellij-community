@@ -7,7 +7,7 @@ import java.util.Set;
 public class IfStatementWithIdenticalBranches {
   int work() {
     if (true) {
-      if <caret>(false) {
+      if<caret> (false) {
         System.out.println();
         System.out.println();
         return;
