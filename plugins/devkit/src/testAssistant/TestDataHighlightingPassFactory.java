@@ -18,6 +18,7 @@ package org.jetbrains.idea.devkit.testAssistant;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -30,15 +31,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Konstantin Bulenkov
- */
 public class TestDataHighlightingPassFactory implements ProjectComponent,  TextEditorHighlightingPassFactory {
-  public static final List<String> SUPPORTED_FILE_TYPES = Arrays.asList(
-    StdFileTypes.JAVA.getDefaultExtension()
-  );
+  public static final List<String> SUPPORTED_FILE_TYPES = Collections.singletonList(StdFileTypes.JAVA.getDefaultExtension());
   public static final List<String> SUPPORTED_IN_TEST_DATA_FILE_TYPES = Arrays.asList(
     "js", "php", "css", "html", "xhtml", "jsp", "test", "py", "aj"
   );
@@ -63,6 +60,9 @@ public class TestDataHighlightingPassFactory implements ProjectComponent,  TextE
   }
 
   public boolean isSupported(@NotNull VirtualFile file) {
+    if (ScratchUtil.isScratch(file)) {
+      return false;
+    }
     final String ext = file.getExtension();
     if (SUPPORTED_FILE_TYPES.contains(ext)) {
       return ProjectRootManager.getInstance(myProject).getFileIndex().getSourceRootForFile(file) == null;
@@ -82,4 +82,3 @@ public class TestDataHighlightingPassFactory implements ProjectComponent,  TextE
     return false;
   }
 }
-
