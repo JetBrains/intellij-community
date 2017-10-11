@@ -59,7 +59,7 @@ public class FunctionParsing extends Parsing {
 
   public void parseReturnTypeAnnotation() {
     if (myBuilder.getTokenType() == PyTokenTypes.RARROW) {
-      if (myContext.getLanguageLevel().isOutdatedPython2()) {
+      if (myContext.getLanguageLevel().isPython2()) {
         myBuilder.error("Return type annotations are unsupported in Python 2");
       }
       PsiBuilder.Marker maybeReturnAnnotation = myBuilder.mark();
@@ -199,7 +199,7 @@ public class FunctionParsing extends Parsing {
     if (myBuilder.getTokenType() == PyTokenTypes.MULT) {
       myBuilder.advanceLexer();
       if ((myBuilder.getTokenType() == PyTokenTypes.COMMA) || myBuilder.getTokenType() == endToken) {
-        if (myContext.getLanguageLevel().isOutdatedPython2()) {
+        if (myContext.getLanguageLevel().isPython2()) {
           parameter.rollbackTo();
           parameter = myBuilder.mark();
           advanceError(myBuilder, "Single star parameter is not supported in Python 2");
@@ -246,7 +246,7 @@ public class FunctionParsing extends Parsing {
 
   public void parseParameterAnnotation() {
     if (atToken(PyTokenTypes.COLON)) {
-      if (myContext.getLanguageLevel().isOutdatedPython2()) {
+      if (myContext.getLanguageLevel().isPython2()) {
         myBuilder.error("Type annotations are unsupported in Python 2");
       }
       PsiBuilder.Marker annotationMarker = myBuilder.mark();

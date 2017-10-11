@@ -975,7 +975,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
         }
       }
     }
-    else if (!myContext.getLanguageLevel().isPy3K() && source == PyTokenTypes.IDENTIFIER) {
+    else if (myContext.getLanguageLevel().isPython2() && source == PyTokenTypes.IDENTIFIER) {
       if (isWordAtPosition(text, start, end, TOK_EXEC)) {
         return PyTokenTypes.EXEC_KEYWORD;
       }

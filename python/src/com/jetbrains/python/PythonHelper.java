@@ -162,7 +162,7 @@ public enum PythonHelper implements HelperPackage {
       assert sdkHomePath != null;
       final GeneralCommandLine cmd = newCommandLine(sdkHomePath, parameters);
       final LanguageLevel version = PythonSdkType.getLanguageLevelForSdk(pythonSdk);
-      final String perVersionDependenciesDir = version.isPy3K() ? PY3_HELPER_DEPENDENCIES_DIR : PY2_HELPER_DEPENDENCIES_DIR;
+      final String perVersionDependenciesDir = version.isPython2() ? PY2_HELPER_DEPENDENCIES_DIR : PY3_HELPER_DEPENDENCIES_DIR;
       PythonEnvUtil.addToPythonPath(cmd.getEnvironment(), FileUtil.join(getPythonPathEntry(), perVersionDependenciesDir));
       return cmd;
     }

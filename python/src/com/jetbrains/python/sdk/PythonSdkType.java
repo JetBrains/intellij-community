@@ -776,7 +776,7 @@ public final class PythonSdkType extends SdkType {
   @Nullable
   public static Sdk findPython2Sdk(@Nullable Module module) {
     final Sdk moduleSDK = findPythonSdk(module);
-    if (moduleSDK != null && !getLanguageLevelForSdk(moduleSDK).isPy3K()) {
+    if (moduleSDK != null && getLanguageLevelForSdk(moduleSDK).isPython2()) {
       return moduleSDK;
     }
     return findPython2Sdk(getAllSdks());
@@ -785,7 +785,7 @@ public final class PythonSdkType extends SdkType {
   @Nullable
   public static Sdk findPython2Sdk(@NotNull List<Sdk> sdks) {
     for (Sdk sdk : ContainerUtil.sorted(sdks, PreferredSdkComparator.INSTANCE)) {
-      if (!getLanguageLevelForSdk(sdk).isPy3K()) {
+      if (getLanguageLevelForSdk(sdk).isPython2()) {
         return sdk;
       }
     }

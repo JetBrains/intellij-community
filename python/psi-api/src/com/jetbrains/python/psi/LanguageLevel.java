@@ -91,11 +91,10 @@ public enum LanguageLevel {
     return mySupportsSetLiterals;
   }
 
-  public boolean isOutdatedPython2() {
+  public boolean isPython2() {
     return !myIsPy3K;
   }
 
-  @Deprecated
   public boolean isPy3K() {
     return myIsPy3K;
   }
