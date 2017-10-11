@@ -72,12 +72,8 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     if (!files.isEmpty()) {
       FileDocumentManager.getInstance().saveAllDocuments();
 
-      @SuppressWarnings("unchecked")
       Consumer<List<Change>> consumer = browser == null ? null : changes -> {
-        if (browser instanceof CommitDialogChangesBrowser) {
-          ((CommitDialogChangesBrowser)browser).updateDisplayedChangeLists();
-        }
-        browser.getViewer().includeChanges((List)changes);
+        browser.getViewer().includeChanges(changes);
       };
       ChangeListManagerImpl manager = ChangeListManagerImpl.getInstanceImpl(project);
 
