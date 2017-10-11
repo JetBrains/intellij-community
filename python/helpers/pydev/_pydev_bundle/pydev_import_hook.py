@@ -1,6 +1,5 @@
 
 import sys
-from _pydevd_bundle.pydevd_constants import dict_contains
 from types import ModuleType
 
 
@@ -15,7 +14,7 @@ class ImportHookManager(ModuleType):
 
     def do_import(self, name, *args, **kwargs):
         activate_func = None
-        if dict_contains(self._modules_to_patch, name):
+        if name in self._modules_to_patch:
             activate_func = self._modules_to_patch.pop(name)
 
         module = self._system_import(name, *args, **kwargs)

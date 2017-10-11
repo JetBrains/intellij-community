@@ -1,4 +1,3 @@
-from _pydevd_bundle.pydevd_constants import dict_contains
 import sys
 from _pydevd_bundle import pydevd_xml
 from os.path import basename
@@ -132,7 +131,7 @@ def get_referrer_info(searched_obj):
 
             for r in referrers:
                 try:
-                    if dict_contains(ignore_frames, r):
+                    if r in ignore_frames:
                         continue  #Skip the references we may add ourselves
                 except:
                     pass  #Ok: unhashable type checked...
