@@ -97,7 +97,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       int index = grouper.index;
       SuffixMatches group = grouper.nextGroup(base);
       if (group == null) break;
-      if (!group.processFiles(pattern, sanitized, everywhere, consumer, hasSuggestions, dirMatcher, indicator)) {
+      if (!group.processFiles(pattern, sanitized, everywhere, consumer, hasSuggestions, dirMatcher)) {
         return false;
       }
       dirMatcher = dirMatcher.appendChar(grouper.namePattern.charAt(index));
@@ -283,8 +283,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
                          boolean everywhere,
                          Processor<? super PsiFileSystemItem> processor,
                          Ref<Boolean> hasSuggestions,
-                         DirectoryPathMatcher dirMatcher,
-                         @NotNull ProgressIndicator indicator) {
+                         DirectoryPathMatcher dirMatcher) {
       MinusculeMatcher fullMatcher = getQualifiedNameMatcher(sanitizedPattern);
 
       List<List<String>> groups = groupByMatchingDegree(!pattern.startsWith("*"));
