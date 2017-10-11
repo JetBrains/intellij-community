@@ -62,7 +62,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   @NotNull
-  protected static File convertToIOFile(@NotNull final VirtualFile file) {
+  protected static File convertToIOFile(@NotNull VirtualFile file) {
     String path = file.getPath();
     if (StringUtil.endsWithChar(path, ':') && path.length() == 2 && SystemInfo.isWindows) {
       path += "/"; // Make 'c:' resolve to a root directory for drive c:, not the current directory on that drive
@@ -72,14 +72,13 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   @NotNull
-  private static File convertToIOFileAndCheck(@NotNull final VirtualFile file) throws FileNotFoundException {
-    final File ioFile = convertToIOFile(file);
+  private static File convertToIOFileAndCheck(@NotNull VirtualFile file) throws FileNotFoundException {
+    File ioFile = convertToIOFile(file);
 
     if (SystemInfo.isUnix) { // avoid opening fifo files
-      final FileAttributes attributes = FileSystemUtil.getAttributes(ioFile);
+      FileAttributes attributes = FileSystemUtil.getAttributes(ioFile);
       if (attributes != null && !attributes.isFile()) {
-        LOG.warn("not a file: " + ioFile + ", " + attributes);
-        throw new FileNotFoundException("Not a file: " + ioFile);
+        throw new FileNotFoundException("Not a file: " + ioFile + " (type=" + attributes.type + ')');
       }
     }
 
