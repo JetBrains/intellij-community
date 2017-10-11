@@ -16,9 +16,11 @@ else:
     _STR_F = str
 
 
-def patch_unittest_diff():
+def patch_unittest_diff(test_filter=None):
     """
-    Patches "assertEquals" to throw DiffError
+    Patches "assertEquals" to throw DiffError.
+
+    @:param test_filter callback to check each test. If not None it should return True to test or EqualsAssertionError will be skipped
     """
     if sys.version_info < (2, 7):
         return
@@ -26,11 +28,11 @@ def patch_unittest_diff():
 
     def _patched_equals(self, first, second, msg=None):
         if first != second:
-            error = EqualsAssertionError(first, second, msg)
-            if error.is_too_big():
-                old(self, first, second, msg)
-            else:
-                raise error
+            if not test_filter or test_filter(self):
+                error = EqualsAssertionError(first, second, msg)
+                if not error.is_too_big():
+                    raise error
+            old(self, first, second, msg)
 
     unittest.TestCase.assertEqual = _patched_equals
 
