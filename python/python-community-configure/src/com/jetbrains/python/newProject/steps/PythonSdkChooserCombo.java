@@ -117,6 +117,7 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
         selectedSdk = oldSelectedSdk;
       }
       comboBox.setModel(new CollectionComboBoxModel<>(allSdks, selectedSdk));
+      notifyChanged(null);
     });
   }
 
