@@ -29,4 +29,10 @@ public class SynchronizeAction extends AnAction implements DumbAware {
     SaveAndSyncHandler.getInstance().refreshOpenFiles();
     VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
   }
+
+  @Override
+  public void update(AnActionEvent e) {
+    // Hide the action from menu and toolbar but not the Find Action dialog.
+    e.getPresentation().setVisible(e.getPlace().equals("GoToAction") || !GeneralSettings.getInstance().isSyncOnFrameActivation());
+  }
 }
