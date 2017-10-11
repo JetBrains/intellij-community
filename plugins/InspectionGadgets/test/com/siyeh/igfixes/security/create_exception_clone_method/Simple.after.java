@@ -1,5 +1,6 @@
 class Simple extends Parent {
 
+    @Override
     protected Simple clone() throws CloneNotSupportedException {
         throw new CloneNotSupportedException();
     }

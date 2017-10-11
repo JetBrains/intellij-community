@@ -1,5 +1,6 @@
 class PublicNoThrows extends Parent {
 
+    @Override
     public PublicNoThrows clone() throws AssertionError {
         throw new AssertionError();
     }

@@ -18,7 +18,8 @@ public class CreateExceptionCloneMethodFixTest extends IGQuickFixesTestCase {
     myDefaultHint = InspectionGadgetsBundle.message("cloneable.class.in.secure.context.quickfix");
   }
 
-  public void testSimple() { doTest();}
-  public void testPublicNoThrows() { doTest();}
+  public void testSimple() { doTest(); }
+  public void testPublicNoThrows() { doTest(); }
+  public void testGeneric() { doTest(); }
 
 }

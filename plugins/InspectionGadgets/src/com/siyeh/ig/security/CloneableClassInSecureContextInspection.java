@@ -21,6 +21,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -118,9 +121,19 @@ public class CloneableClassInSecureContextInspection extends BaseInspection {
         return;
       }
       final PsiClass aClass = (PsiClass)element;
-      final String cloneMethod = "protected " + aClass.getName() + " clone() {}";
+      final StringBuilder methodText = new StringBuilder();
+      if (PsiUtil.isLanguageLevel5OrHigher(aClass) && CodeStyleSettingsManager.getSettings(aClass.getProject())
+        .getCustomSettings(JavaCodeStyleSettings.class).INSERT_OVERRIDE_ANNOTATION) {
+        methodText.append("@java.lang.Override ");
+      }
+      methodText.append("protected ").append(aClass.getName());
+      final PsiTypeParameterList typeParameterList = aClass.getTypeParameterList();
+      if (typeParameterList != null) {
+        methodText.append(typeParameterList.getText());
+      }
+      methodText.append(" clone() {}");
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final PsiMethod method = (PsiMethod)aClass.add(factory.createMethodFromText(cloneMethod, aClass));
+      final PsiMethod method = (PsiMethod)aClass.add(factory.createMethodFromText(methodText.toString(), aClass));
       final PsiClassType exceptionType = factory.createTypeByFQClassName("java.lang.CloneNotSupportedException", element.getResolveScope());
       final PsiMethod superMethod = MethodUtils.getSuper(method);
       boolean throwException = false;
