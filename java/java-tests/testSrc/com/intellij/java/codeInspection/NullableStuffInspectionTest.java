@@ -240,6 +240,17 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
     doTest();
   }
 
+  public void testTypeUseNotNullField() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
+  public void testTypeUseNotNullOverriding() {
+    myInspection.REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = true;
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
   public void testAnnotateQuickFixOnMethodReference() {
     doTest();
     myFixture.launchAction(myFixture.findSingleIntention("Annotate"));
