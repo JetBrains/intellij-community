@@ -979,7 +979,9 @@ public class ExpressionUtils {
   }
 
   /**
-   * Bind a reference element to a new name. The qualifier and type arguments (if present) remain the same
+   * Bind a reference element to a new name. The type arguments (if present) remain the same.
+   * The qualifier remains the same unless the original unqualified reference resolves
+   * to statically imported member. In this case the qualifier could be added.
    *
    * @param ref reference element to rename
    * @param newName new name
@@ -990,12 +992,28 @@ public class ExpressionUtils {
       throw new IllegalStateException("Name element is null: "+ref);
     }
     if(newName.equals(nameElement.getText())) return;
-    PsiIdentifier identifier = JavaPsiFacade.getElementFactory(ref.getProject()).createIdentifier(newName);
+    PsiClass aClass = null;
+    if(ref.getQualifierExpression() == null) {
+      PsiMember member = ObjectUtils.tryCast(ref.resolve(), PsiMember.class);
+      if (member != null && ImportUtils.isStaticallyImported(member, ref)) {
+        aClass = member.getContainingClass();
+      }
+    }
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(ref.getProject());
+    PsiIdentifier identifier = factory.createIdentifier(newName);
     nameElement.replace(identifier);
+    if(aClass != null) {
+      PsiMember member = ObjectUtils.tryCast(ref.resolve(), PsiMember.class);
+      if (member == null || member.getContainingClass() != aClass) {
+        ref.setQualifierExpression(factory.createReferenceExpression(aClass));
+      }
+    }
   }
 
   /**
-   * Bind method call to a new name. Everything else like qualifier, type arguments or call arguments remain the same.
+   * Bind method call to a new name. Type arguments and call arguments remain the same.
+   * The qualifier remains the same unless the original unqualified reference resolves
+   * to statically imported member. In this case the qualifier could be added.
    *
    * @param call to rename
    * @param newName new name
