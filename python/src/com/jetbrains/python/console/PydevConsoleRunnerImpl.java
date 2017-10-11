@@ -241,8 +241,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   public void open() {
     PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(myProject);
     if (toolWindow != null) {
-      toolWindow.getToolWindow().activate(() -> {}, true);
-    } else {
+      toolWindow.getToolWindow().activate(() -> {
+      }, true);
+    }
+    else {
       runSync();
     }
   }
@@ -424,7 +426,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
           PythonConsoleRemoteProcessCreatorKt.createRemoteConsoleProcess(manager, myGeneralCommandLine.getParametersList().getArray(),
                                                                          myGeneralCommandLine.getEnvironment(),
                                                                          myGeneralCommandLine.getWorkDirectory(),
-                                                                         PydevConsoleRunner.getPathMapper(myProject, mySdk, myConsoleSettings),
+                                                                         PydevConsoleRunner
+                                                                           .getPathMapper(myProject, mySdk, myConsoleSettings),
                                                                          myProject, data, getRunnerFileFromHelpers());
 
         myRemoteProcessHandlerBase = remoteConsoleProcessData.getRemoteProcessHandlerBase();
@@ -540,12 +543,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   public static Couple<Integer> getRemotePortsFromProcess(RemoteProcess process) throws ExecutionException {
-    Scanner s = new Scanner(process.getInputStream());
-    try {
-      return Couple.of(readInt(s, process), readInt(s, process));
-    } finally {
-      s.close();
-    }
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") Scanner s = new Scanner(process.getInputStream());
+    return Couple.of(readInt(s, process), readInt(s, process));
   }
 
   private static int readInt(Scanner s, Process process) throws ExecutionException {
