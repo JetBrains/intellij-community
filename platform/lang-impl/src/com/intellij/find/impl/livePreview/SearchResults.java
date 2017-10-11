@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -182,11 +181,9 @@ public class SearchResults implements DocumentListener {
     searchCompleted(new ArrayList<>(), getEditor(), null, false, null, getStamp());
   }
 
-  ActionCallback updateThreadSafe(@NotNull FindModel findModel, final boolean toChangeSelection, 
-                                  @Nullable final TextRange next, final int stamp) {
-    if (myDisposed) return ActionCallback.DONE;
+  void updateThreadSafe(@NotNull FindModel findModel, final boolean toChangeSelection, @Nullable final TextRange next, final int stamp) {
+    if (myDisposed) return;
 
-    ActionCallback result = new ActionCallback();
     final Editor editor = getEditor();
 
     updatePreviousFindModel(findModel);
@@ -216,16 +213,7 @@ public class SearchResults implements DocumentListener {
         }
       }
 
-      long documentTimeStamp = editor.getDocument().getModificationStamp();
-      final Runnable searchCompletedRunnable = () -> {
-        if (editor.getDocument().getModificationStamp() == documentTimeStamp) {
-          searchCompleted(results, editor, findModel, toChangeSelection, next, stamp);
-          result.setDone();
-        }
-        else {
-          result.setRejected();
-        }
-      };
+      final Runnable searchCompletedRunnable = () -> searchCompleted(results, editor, findModel, toChangeSelection, next, stamp);
 
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         searchCompletedRunnable.run();
@@ -234,7 +222,6 @@ public class SearchResults implements DocumentListener {
         UIUtil.invokeLaterIfNeeded(searchCompletedRunnable);
       }
     });
-    return result;
   }
 
   private void updatePreviousFindModel(@NotNull FindModel model) {

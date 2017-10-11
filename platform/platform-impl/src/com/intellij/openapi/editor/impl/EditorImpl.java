@@ -321,8 +321,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private final EditorKind myKind;
 
-  private boolean myScrollingToCaret;
-
   EditorImpl(@NotNull Document document, boolean viewer, @Nullable Project project, @NotNull EditorKind kind) {
     assertIsDispatchThread();
     myProject = project;
@@ -550,23 +548,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     if (SystemInfo.isJavaVersionAtLeast("1.8") && SystemInfo.isMacIntel64 && SystemInfo.isJetBrainsJvm && Registry.is("ide.mac.forceTouch")) {
       new MacGestureSupportForEditor(getComponent());
-    }
-    
-    myScrollingModel.addVisibleAreaListener(this::moveCaretIntoViewIfCoveredByToolWindowBelow);
-  }
-
-  private void moveCaretIntoViewIfCoveredByToolWindowBelow(VisibleAreaEvent e) {
-    Rectangle oldRectangle = e.getOldRectangle();
-    Rectangle newRectangle = e.getNewRectangle();
-    if (!myScrollingToCaret && oldRectangle != null && oldRectangle.height != newRectangle.height && oldRectangle.y == newRectangle.y) {
-      int caretY = myView.visualLineToY(myCaretModel.getVisualPosition().line);
-      if (caretY < oldRectangle.getMaxY() && caretY > newRectangle.getMaxY()) {
-        myScrollingToCaret = true;
-        ApplicationManager.getApplication().invokeLater(() -> {
-          myScrollingToCaret = false;
-          if (!isReleased) EditorUtil.runWithAnimationDisabled(this, () -> myScrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE));
-        }, ModalityState.any());
-      }
     }
   }
 

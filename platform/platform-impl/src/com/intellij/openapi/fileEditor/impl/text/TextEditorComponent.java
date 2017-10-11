@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -110,8 +111,16 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
    */
   @Override
   public void dispose(){
+    if (!myProject.isDefault()) { // There's no EditorHistoryManager for default project (which is used in diff command-line application)
+      EditorHistoryManager.getInstance(myProject).updateHistoryEntry(myFile, false);
+    }
     disposeEditor();
+
     myDisposed = true;
+    //myFocusWatcher.deinstall(this);
+    //removePropertyChangeListener(mySplitterPropertyChangeListener);
+
+    //super.dispose();
   }
 
   public boolean isDisposed() {
