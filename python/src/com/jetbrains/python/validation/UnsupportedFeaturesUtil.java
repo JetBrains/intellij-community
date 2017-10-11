@@ -127,7 +127,7 @@ public class UnsupportedFeaturesUtil {
       if (expressions.length < 2) {
         return false;
       }
-      if (!versionToProcess.isPy3K()) {
+      if (versionToProcess.isPython2()) {
         PsiElement element = expressions[0].getNextSibling();
         while (element instanceof PsiWhiteSpace) {
           element = element.getNextSibling();

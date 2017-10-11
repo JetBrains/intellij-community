@@ -271,7 +271,7 @@ public class PyOverrideImplementUtil {
         statementBody.append(PyNames.SUPER);
         statementBody.append("(");
         final LanguageLevel langLevel = ((PyFile)pyClass.getContainingFile()).getLanguageLevel();
-        if (!langLevel.isPy3K()) {
+        if (langLevel.isPython2()) {
           final String baseFirstName = !baseParams.isEmpty() ? baseParams.get(0).getName() : null;
           final String firstName = baseFirstName != null ? baseFirstName : PyNames.CANONICAL_SELF;
           PsiElement outerClass = PsiTreeUtil.getParentOfType(pyClass, PyClass.class, true, PyFunction.class);

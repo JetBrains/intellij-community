@@ -48,9 +48,9 @@ public class PyPrintPostfixTemplate extends SurroundPostfixTemplateBase {
       public TextRange surroundExpression(@NotNull Project project, @NotNull Editor editor, @NotNull PyExpression expression)
         throws IncorrectOperationException {
         LanguageLevel level = LanguageLevel.forElement(expression);
-        String textToGenerate = level.isPy3K() ? "print(a)" : "print a";
+        String textToGenerate = !level.isPython2() ? "print(a)" : "print a";
         PyStatement pyStatement = PyElementGenerator.getInstance(project).createFromText(level, PyStatement.class, textToGenerate);
-        if (!level.isPy3K()) {
+        if (level.isPython2()) {
           pyStatement.getLastChild().replace(expression);
         } else {
           PyArgumentList argumentList = PsiTreeUtil.findChildOfType(pyStatement, PyArgumentList.class);
