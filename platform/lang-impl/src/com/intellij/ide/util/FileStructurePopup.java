@@ -371,15 +371,12 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     window.addWindowFocusListener(windowFocusListener);
     Disposer.register(myPopup, () -> window.removeWindowFocusListener(windowFocusListener));
 
-    rebuild(false).processed(ignore -> select(myInitialElement)
-      .processed(path -> UIUtil.invokeLaterIfNeeded(() -> {
-        TreeUtil.ensureSelection(myTree);
-        FilteringTreeBuilder.revalidateTree(myTree);
-        myTreeHasBuilt.setDone();
-        installUpdater();
-        Object userObject = path == null ? null : TreeUtil.getUserObject(path.getLastPathComponent());
-        myInitialNodeIsLeaf = userObject != null && myFilteringStructure.getChildElements(userObject).length == 0;
-      })));
+    rebuildAndSelect(false, myInitialElement).processed(path -> UIUtil.invokeLaterIfNeeded(() -> {
+      TreeUtil.ensureSelection(myTree);
+      FilteringTreeBuilder.revalidateTree(myTree);
+      myTreeHasBuilt.setDone();
+      installUpdater();
+    }));
   }
 
   private void installUpdater() {
@@ -400,25 +397,23 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
         if (!filter.equals(prefix)) {
           boolean isBackspace = prefix.length() < filter.length();
           filter = prefix;
-          rebuild(true).processed(ignore -> {
-            UIUtil.invokeLaterIfNeeded(() -> {
-              if (isDisposed()) return;
-              if (isBackspace && handleBackspace(filter)) {
-                return;
-              }
-              if (myFilteringStructure.getRootElement().getChildren().length == 0) {
-                for (JBCheckBox box : myCheckBoxes.values()) {
-                  if (!box.isSelected()) {
-                    myAutoClicked.add(box);
-                    myTriggeredCheckboxes.add(0, Pair.create(filter, box));
-                    box.doClick();
-                    filter = "";
-                    break;
-                  }
+          rebuild(true).processed(ignore -> UIUtil.invokeLaterIfNeeded(() -> {
+            if (isDisposed()) return;
+            if (isBackspace && handleBackspace(filter)) {
+              return;
+            }
+            if (myFilteringStructure.getRootElement().getChildren().length == 0) {
+              for (JBCheckBox box : myCheckBoxes.values()) {
+                if (!box.isSelected()) {
+                  myAutoClicked.add(box);
+                  myTriggeredCheckboxes.add(0, Pair.create(filter, box));
+                  box.doClick();
+                  filter = "";
+                  break;
                 }
               }
-            });
-          });
+            }
+          }));
         }
         if (!alarm.isDisposed()) {
           alarm.addRequest(this, 300);
@@ -478,6 +473,11 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     Function<TreePath, Promise<TreePath>> action = path -> {
       myTree.expandPath(path);
       TreeUtil.selectPath(myTree, path);
+      TreeUtil.ensureSelection(myTree);
+      Object userObject = path == null ? null : TreeUtil.getUserObject(path.getLastPathComponent());
+      if (userObject != null && Comparing.equal(element, unwrapValue(userObject))) {
+        myInitialNodeIsLeaf = myFilteringStructure.getChildElements(userObject).length == 0;
+      }
       return Promises.resolvedPromise(path);
     };
     Function<TreePath, Promise<TreePath>> fallback = new Function<TreePath, Promise<TreePath>>() {
@@ -802,21 +802,32 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   }
 
   @NotNull
-  private AsyncPromise<Void> rebuild(boolean refilterOnly) {
-    AsyncPromise<Void> result = new AsyncPromise<>();
+  private Promise<Void> rebuild(boolean refilterOnly) {
     Object selection = JBIterable.of(myTree.getSelectionPaths())
       .filterMap(o -> unwrapValue(TreeUtil.getUserObject(o.getLastPathComponent()))).first();
+    return rebuildAndSelect(refilterOnly, selection).then(o -> null);
+  }
+
+  @NotNull
+  private Promise<TreePath> rebuildAndSelect(boolean refilterOnly, Object selection) {
+    AsyncPromise<TreePath> result = new AsyncPromise<>();
     if (!myUseATM) {
+      ActionCallback callback;
       if (refilterOnly) {
-        myTreeBuilder.refilter(selection, true, false)
-          .doWhenProcessed(() -> result.setResult(null));
+        callback = myTreeBuilder.refilter(selection, true, false);
       }
       else {
         myTreeStructure.rebuildTree();
+        callback = new ActionCallback();
         myTreeBuilder.queueUpdate(true).doWhenProcessed(
-          () -> myTreeBuilder.refilter(selection, true, false)
-            .doWhenProcessed(() -> result.setResult(null)));
+          () -> myTreeBuilder.refilter(selection, true, false).notify(callback));
       }
+      callback.doWhenProcessed(() -> {
+        if (selection != null) {
+          selectPsiElement((PsiElement)selection);
+        }
+        result.setResult(null);
+      });
       return result;
     }
     myStructureTreeModel.getInvoker().invokeLaterIfNeeded(() -> {
@@ -831,12 +842,12 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
                 TreeUtil.expand(getTree(), 2);
                 TreeUtil.ensureSelection(myTree);
                 mySpeedSearch.refreshSelection();
-                result.setResult(null);
+                result.setResult(p);
               })));
       }
       else {
         myTreeStructure.rebuildTree();
-        myStructureTreeModel.getInvoker().invokeLater(() -> rebuild(true).notify(result));
+        myStructureTreeModel.getInvoker().invokeLater(() -> rebuildAndSelect(true, selection).notify(result));
       }
     });
     return result;
@@ -1056,14 +1067,13 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     if (path == null || myInitialElement == null) {
       return paths.get(0).node;
     }
-    final Set<PsiElement> parents = getAllParents((PsiElement)myInitialElement);
+    Set<PsiElement> parents = getAllParents((PsiElement)myInitialElement);
     ArrayList<SpeedSearchObjectWithWeight> cur = new ArrayList<>();
     int max = -1;
     for (SpeedSearchObjectWithWeight p : paths) {
-      final Object last = ((TreePath)p.node).getLastPathComponent();
-      final List<PsiElement> elements = new ArrayList<>();
-      final Object object = ((DefaultMutableTreeNode)last).getUserObject();
+      Object object = TreeUtil.getUserObject(((TreePath)p.node).getLastPathComponent());
       if (object instanceof FilteringTreeStructure.FilteringNode) {
+        List<PsiElement> elements = new ArrayList<>();
         FilteringTreeStructure.FilteringNode node = (FilteringTreeStructure.FilteringNode)object;
         FilteringTreeStructure.FilteringNode candidate = node;
 
