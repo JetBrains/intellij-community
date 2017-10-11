@@ -16,6 +16,7 @@
 package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -35,6 +36,7 @@ import java.util.List;
  * @author peter
  */
 public class RehighlightAllEditors implements MadTestingAction {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.propertyBased.RehighlightAllEditors");
   private final Project myProject;
 
   public RehighlightAllEditors(Project project) {
@@ -61,9 +63,17 @@ public class RehighlightAllEditors implements MadTestingAction {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     PsiTestUtil.checkStubsMatchText(file);
-    Ref<List<HighlightInfo>> infos = Ref.create();
-    MadTestingUtil.prohibitDocumentChanges(
-      () -> infos.set(CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, new int[0], false)));
-    return infos.get();
+    
+    String text = editor.getDocument().getText();
+    try {
+      Ref<List<HighlightInfo>> infos = Ref.create();
+      MadTestingUtil.prohibitDocumentChanges(
+        () -> infos.set(CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, new int[0], false)));
+      return infos.get();
+    }
+    catch (Throwable e) {
+      LOG.debug("Exception occurred during highlighting in " + editor.getDocument() + ", text before:\n" + text);
+      throw e;
+    }
   }
 }
