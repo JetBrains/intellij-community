@@ -53,7 +53,6 @@ import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.ArrayList;
@@ -122,8 +121,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
       @NotNull
       @Override
       public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
-        if (!PsiUtil.isPluginProject(element.getProject()) ||
-            !DescriptorUtil.isPluginXml(element.getContainingFile())) {
+        if (!PsiUtil.isPluginXmlPsiElement(element)) {
           return PsiReference.EMPTY_ARRAY;
         }
 
