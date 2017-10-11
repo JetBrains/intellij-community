@@ -31,7 +31,6 @@ import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -326,11 +325,10 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
   @CalledInAwt
   public void startEditing(@NotNull ShelvedChangeList shelvedChangeList) {
-    //need to wait until model is synchronized with tree ui
-    myUpdateQueue.cancelAllUpdates();
-    updateChangesContent();
-    selectShelvedList(shelvedChangeList);
-    myTree.startEditingAtPath(myTree.getLeadSelectionPath());
+    runAfterUpdate(() -> {
+      selectShelvedList(shelvedChangeList);
+      myTree.startEditingAtPath(myTree.getLeadSelectionPath());
+    });
   }
   
   private static class ChangelistComparator implements Comparator<ShelvedChangeList> {
@@ -367,7 +365,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   }
 
   private void runAfterUpdate(@NotNull Runnable postUpdateRunnable) {
-    ApplicationManager.getApplication().invokeLater(() -> {
+    GuiUtils.invokeLaterIfNeeded(() -> {
       myUpdateQueue.cancelAllUpdates();
       updateChangesContent();
       postUpdateRunnable.run();
