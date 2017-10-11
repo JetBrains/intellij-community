@@ -55,6 +55,7 @@ public abstract class MavenRunnerConfigurable extends MavenRunnerPanel implement
     return RunnerBundle.message("maven.tab.runner");
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpTopic() {

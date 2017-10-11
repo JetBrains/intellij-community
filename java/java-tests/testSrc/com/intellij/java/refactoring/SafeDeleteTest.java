@@ -382,6 +382,22 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doSingleFileTest();
   }
 
+  public void testForInitExpr() throws Exception {
+    doSingleFileTest();
+  }
+
+  public void testForInitList() throws Exception {
+    doSingleFileTest();
+  }
+
+  public void testForUpdateExpr() throws Exception {
+    doSingleFileTest();
+  }
+
+  public void testForUpdateList() throws Exception {
+    doSingleFileTest();
+  }
+
   private void doTest(@NonNls final String qClassName) {
     doTest((rootDir, rootAfter) -> this.performAction(qClassName));
   }

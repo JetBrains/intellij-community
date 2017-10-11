@@ -1255,6 +1255,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   private void closeOpenFiles() {
+    LookupManager.getInstance(getProject()).hideActiveLookup();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
     for (VirtualFile file : EditorHistoryManager.getInstance(getProject()).getFiles()) {

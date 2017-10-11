@@ -39,6 +39,7 @@ public class GithubSettingsConfigurable implements SearchableConfigurable, VcsCo
     return "GitHub";
   }
 
+  @Override
   @NotNull
   public String getHelpTopic() {
     return "settings.github";

@@ -41,7 +41,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
@@ -564,7 +563,15 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
         final PsiElement psiElement = ReadAction.compute(() -> ((RefElement)refEntity).getElement());
         List<CommonProblemDescriptor> foreignDescriptors = new ArrayList<>();
         for (CommonProblemDescriptor descriptor : descriptors) {
-          if (descriptor instanceof ProblemDescriptor && ReadAction.compute(() -> ((ProblemDescriptor)descriptor).getPsiElement()) == psiElement) continue;
+          if (descriptor instanceof ProblemDescriptor) {
+            PsiElement problemElement = ReadAction.compute(() -> {
+              PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
+              if (element instanceof PsiIdentifier) element = element.getParent();
+              return element;
+            });
+            if (problemElement == psiElement ||
+                problemElement instanceof PsiParameter && ((PsiParameter)problemElement).getDeclarationScope() == psiElement) continue;
+          }
           foreignDescriptors.add(descriptor);
         }
         if (foreignDescriptors.size() == descriptors.length) return;

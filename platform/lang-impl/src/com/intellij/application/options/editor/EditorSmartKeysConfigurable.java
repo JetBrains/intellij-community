@@ -113,6 +113,7 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
     return false;
   }
 
+  @NotNull
   @Override
   protected List<UnnamedConfigurable> createConfigurables() {
     return ConfigurableWrapper.createConfigurables(EP_NAME);

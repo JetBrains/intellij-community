@@ -43,6 +43,7 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
     return CompilerBundle.message("compiler.configurable.display.name");
   }
 
+  @Override
   public String getHelpTopic() {
     return "project.propCompiler";
   }
@@ -76,6 +77,8 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
     myCompilerUIConfigurable.disposeUIResources();
   }
 
+  @NotNull
+  @Override
   public Configurable[] getConfigurables() {
     if (myKids == null) {
       final CompilerSettingsFactory[] factories = Extensions.getExtensions(CompilerSettingsFactory.EP_NAME, myProject);

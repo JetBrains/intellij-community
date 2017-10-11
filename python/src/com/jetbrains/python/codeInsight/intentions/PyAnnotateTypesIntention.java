@@ -173,7 +173,7 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
   }
 
   private static boolean isPy3k(PsiFile file) {
-    return LanguageLevel.forElement(file).isPy3K();
+    return !LanguageLevel.forElement(file).isPython2();
   }
 
   private static void generatePy3kTypeAnnotations(@NotNull Project project, Editor editor, PyCallable callable) {

@@ -315,6 +315,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     return "General";
   }
 
+  @Override
   public String getHelpTopic() {
     return null;
   }

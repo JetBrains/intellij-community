@@ -100,6 +100,7 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
     return null;
   }
 
+  @Override
   public String getHelpTopic() {
     return null;
   }
@@ -227,6 +228,7 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
       return getBannerSlogan();  
     }
 
+    @Override
     public String getHelpTopic() {
       return null;
     }

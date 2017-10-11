@@ -142,12 +142,12 @@ public class PyMoveFileHandler extends MoveFileHandler {
   }
 
   private static boolean canBeRelative(@NotNull PyFromImportStatement statement) {
-    return !LanguageLevel.forElement(statement).isPy3K() || statement.getRelativeLevel() > 0;
+    return LanguageLevel.forElement(statement).isPython2() || statement.getRelativeLevel() > 0;
   }
 
 
   private static boolean canBeRelative(@NotNull PyImportElement statement) {
-    return !LanguageLevel.forElement(statement).isPy3K();
+    return LanguageLevel.forElement(statement).isPython2();
   }
 
   /**

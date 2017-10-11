@@ -88,7 +88,13 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     else if (element instanceof PsiLocalVariable) {
       for (PsiReference reference : ReferencesSearch.search(element)) {
         PsiReferenceExpression referencedElement = (PsiReferenceExpression)reference.getElement();
-        final PsiStatement statement = PsiTreeUtil.getParentOfType(referencedElement, PsiStatement.class);
+        PsiElement statementOrExprInList = PsiTreeUtil.getParentOfType(referencedElement, PsiStatement.class);
+        if (statementOrExprInList instanceof PsiExpressionListStatement) {
+          PsiExpressionList expressionList = ((PsiExpressionListStatement)statementOrExprInList).getExpressionList();
+          if (expressionList != null) {
+            statementOrExprInList = PsiTreeUtil.findPrevParent(expressionList, referencedElement);
+          }
+        }
 
         boolean isSafeToDelete = PsiUtil.isAccessedForWriting(referencedElement);
         boolean hasSideEffects = false;
@@ -98,7 +104,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
               .checkSideEffects(((PsiAssignmentExpression)referencedElement.getParent()).getRExpression(), ((PsiLocalVariable)element),
                                 new ArrayList<>());
         }
-        usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(statement, element, isSafeToDelete && !hasSideEffects));
+        usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(statementOrExprInList, element, isSafeToDelete && !hasSideEffects));
       }
     }
     return new NonCodeUsageSearchInfo(insideDeletedCondition, element);

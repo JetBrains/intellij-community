@@ -152,7 +152,7 @@ public class BasicJarHandler extends ZipHandlerBase {
           myFile = file;
         }
       }
-      catch (IOException|RuntimeException e) {
+      catch (Throwable e) {
         myLock.unlock();
         throw e;
       }

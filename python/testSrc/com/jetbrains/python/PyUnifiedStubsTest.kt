@@ -63,7 +63,7 @@ class PyUnifiedStubsTest : PyTestCase() {
   fun testExecPy3() {
     doTest { level, file ->
       TestCase.assertEquals("Python $level", "exec", file.topLevelFunctions[0].name)
-      level.isOutdatedPython2
+      level.isPython2
     }
   }
 
@@ -73,7 +73,7 @@ class PyUnifiedStubsTest : PyTestCase() {
       TestCase.assertNotNull("Function should contain star argument stub",
                              functionStub!!.childrenStubs[0].findChildStubByType<PySingleStarParameter>(
                                PyElementTypes.SINGLE_STAR_PARAMETER))
-      level.isOutdatedPython2
+      level.isPython2
     }
   }
 
@@ -81,21 +81,21 @@ class PyUnifiedStubsTest : PyTestCase() {
     doTest { level, file ->
       val functionStub = file.topLevelFunctions[0].stub
       TestCase.assertNotNull("Function should contain annotation stub", functionStub!!.findChildStubByType(PyElementTypes.ANNOTATION))
-      level.isOutdatedPython2
+      level.isPython2
     }
   }
 
   fun testPrintWithEndArgument() {
     doTest { level, file ->
       TestCase.assertEquals("'end' argument shouldn't break tuple parsing for Python 2", 2, file.topLevelFunctions.size)
-      level.isOutdatedPython2
+      level.isPython2
     }
   }
 
   fun testExecAsArgument() {
     doTest { level, file ->
       TestCase.assertEquals("'exec' used as an argument shouldn't break parser for Python 2", 2, file.topLevelFunctions.size)
-      level.isOutdatedPython2
+      level.isPython2
     }
   }
 
