@@ -67,29 +67,33 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
                                        @NotNull List<VirtualFile> files,
                                        @NotNull Condition<FileStatus> unversionedFileCondition,
                                        @Nullable ChangesBrowserBase browser) {
-    boolean result = true;
+    LocalChangeList targetChangeList = null;
+    Consumer<List<Change>> changeConsumer = null;
 
-    if (!files.isEmpty()) {
-      FileDocumentManager.getInstance().saveAllDocuments();
-
-      Consumer<List<Change>> consumer = browser == null ? null : changes -> {
-        browser.getViewer().includeChanges(changes);
-      };
-      ChangeListManagerImpl manager = ChangeListManagerImpl.getInstanceImpl(project);
-
-      LocalChangeList targetChangeList;
-      if (browser instanceof CommitDialogChangesBrowser) {
-        targetChangeList = ((CommitDialogChangesBrowser)browser).getSelectedChangeList();
-      }
-      else {
-        targetChangeList = manager.getDefaultChangeList();
-      }
-      List<VcsException> exceptions = manager.addUnversionedFiles(targetChangeList, files, unversionedFileCondition, consumer);
-
-      result = exceptions.isEmpty();
+    if (browser instanceof CommitDialogChangesBrowser) {
+      targetChangeList = ((CommitDialogChangesBrowser)browser).getSelectedChangeList();
     }
 
-    return result;
+    if (browser != null) {
+      changeConsumer = changes -> browser.getViewer().includeChanges(changes);
+    }
+
+    return addUnversioned(project, files, targetChangeList, changeConsumer, unversionedFileCondition);
+  }
+
+  private static boolean addUnversioned(@NotNull Project project,
+                                        @NotNull List<VirtualFile> files,
+                                        @Nullable LocalChangeList targetChangeList,
+                                        @Nullable Consumer<List<Change>> changesConsumer,
+                                        @NotNull Condition<FileStatus> unversionedFileCondition) {
+    if (files.isEmpty()) return true;
+
+    ChangeListManagerImpl manager = ChangeListManagerImpl.getInstanceImpl(project);
+    if (targetChangeList == null) targetChangeList = manager.getDefaultChangeList();
+
+    FileDocumentManager.getInstance().saveAllDocuments();
+    List<VcsException> exceptions = manager.addUnversionedFiles(targetChangeList, files, unversionedFileCondition, changesConsumer);
+    return exceptions.isEmpty();
   }
 
   @NotNull
