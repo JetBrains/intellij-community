@@ -194,6 +194,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
     return "Servers";
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.settings.project.tasks.servers";
   }

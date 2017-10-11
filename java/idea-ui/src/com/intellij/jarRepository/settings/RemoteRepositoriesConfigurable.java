@@ -178,6 +178,7 @@ public class RemoteRepositoriesConfigurable extends BaseConfigurable implements 
     return "Remote Jar Repositories";
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.jar.repositories"; 
   }

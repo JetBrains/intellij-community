@@ -171,6 +171,7 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
     return "Issue Navigation";
   }
 
+  @Override
   public String getHelpTopic() {
     return "project.propVCSSupport.Issue.Navigation";
   }

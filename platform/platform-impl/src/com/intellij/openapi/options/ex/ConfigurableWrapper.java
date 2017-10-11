@@ -243,6 +243,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
       myKids = kids;
     }
 
+    @NotNull
     @Override
     public Configurable[] getConfigurables() {
       if (!isInitialized) {

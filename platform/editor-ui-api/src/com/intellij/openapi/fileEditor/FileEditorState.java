@@ -22,6 +22,7 @@ package com.intellij.openapi.fileEditor;
  *
  * @author Vladimir Kondratyev
  */
+@FunctionalInterface
 public interface FileEditorState {
   FileEditorState INSTANCE = (__0, __1) -> true;
 

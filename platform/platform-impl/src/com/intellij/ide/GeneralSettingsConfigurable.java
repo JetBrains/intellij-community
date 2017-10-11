@@ -212,6 +212,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
     return getHelpTopic();
   }
 
+  @NotNull
   @Override
   protected List<SearchableConfigurable> createConfigurables() {
     return ConfigurableWrapper.createConfigurables(EP_NAME);

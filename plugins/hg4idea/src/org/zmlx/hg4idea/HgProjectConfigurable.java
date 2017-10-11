@@ -38,6 +38,7 @@ public class HgProjectConfigurable implements SearchableConfigurable {
     return DISPLAY_NAME;
   }
 
+  @Override
   public String getHelpTopic() {
     return "project.propVCSSupport.VCSs.Mercurial";
   }

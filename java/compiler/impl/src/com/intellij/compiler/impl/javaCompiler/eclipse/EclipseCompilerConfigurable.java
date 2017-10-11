@@ -56,6 +56,7 @@ public class EclipseCompilerConfigurable implements Configurable {
     return null;
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpTopic() {

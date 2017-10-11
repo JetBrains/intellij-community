@@ -311,6 +311,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     return settings + " > " + name;
   }
 
+  @NotNull
   Map<String, String> getConfigurablesNames() {
     return myConfigurablesNames.getValue();
   }

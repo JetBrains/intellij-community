@@ -56,6 +56,7 @@ public class JavacConfigurable implements Configurable{
     return null;
   }
 
+  @Override
   public String getHelpTopic() {
     return null;
   }

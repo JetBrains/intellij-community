@@ -134,6 +134,7 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable implements S
     return IndicesBundle.message("maven.repositories.title");
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.settings.project.maven.repository.indices";
   }
