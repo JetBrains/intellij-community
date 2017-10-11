@@ -29,6 +29,12 @@ class DebugLogManager(private val properties: PropertiesComponent) : Application
     fromString(properties.getValue(LOG_DEBUG_CATEGORIES), DebugLogLevel.DEBUG) +
     fromString(properties.getValue(LOG_TRACE_CATEGORIES), DebugLogLevel.TRACE)
 
+  fun clearCategories(categories: List<Pair<String, DebugLogLevel>>) {
+    categories.forEach {
+      LogManager.getLogger(it.first)?.level = null
+    }
+  }
+
   fun applyCategories(categories: List<Pair<String, DebugLogLevel>>) {
     applyCategories(categories, DebugLogLevel.DEBUG, Level.DEBUG)
     applyCategories(categories, DebugLogLevel.TRACE, Level.TRACE)

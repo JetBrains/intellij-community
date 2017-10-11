@@ -19,8 +19,10 @@ class DebugLogConfigureAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: ProjectManager.getInstance().defaultProject
     val logCustomizer = ApplicationManager.getApplication().getComponent(DebugLogManager::class.java)!!
-    val dialog = DebugLogConfigureDialog(project, logCustomizer.getSavedCategories())
+    val currentCategories = logCustomizer.getSavedCategories()
+    val dialog = DebugLogConfigureDialog(project, currentCategories)
     if (dialog.showAndGet()) {
+      logCustomizer.clearCategories(currentCategories)
       val categories = dialog.getLogCategories()
       logCustomizer.applyCategories(categories)
       logCustomizer.saveCategories(categories)
