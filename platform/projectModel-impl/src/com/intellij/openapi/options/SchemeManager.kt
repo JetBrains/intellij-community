@@ -46,11 +46,6 @@ abstract class SchemeManager<T> {
     addNewScheme(scheme, true)
   }
 
-  /**
-   * Consider to use [.setSchemes]
-   */
-  abstract fun clearAllSchemes()
-
   abstract fun findSchemeByName(schemeName: String): T?
 
   abstract fun setCurrentSchemeName(schemeName: String?, notify: Boolean)

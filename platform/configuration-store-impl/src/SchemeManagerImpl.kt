@@ -60,7 +60,7 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Function
 
-class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
+class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
                                                         processor: SchemeProcessor<T, MUTABLE_SCHEME>,
                                                         private val provider: StreamProvider?,
                                                         private val ioDirectory: Path,
@@ -103,6 +103,9 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       LOG.runAndLogException { refreshVirtualDirectoryAndAddListener() }
     }
   }
+
+  override val rootDirectory: File
+    get() = ioDirectory.toFile()
 
   override val allSchemeNames: Collection<String>
     get() = schemes.let { if (it.isEmpty()) emptyList() else it.map { processor.getSchemeKey(it) } }
@@ -812,9 +815,6 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       return result
     }
 
-  override val rootDirectory: File
-    get() = ioDirectory.toFile()
-
   override fun setSchemes(newSchemes: List<T>, newCurrentScheme: T?, removeCondition: Condition<T>?) = schemeListManager.setSchemes(newSchemes, newCurrentScheme, removeCondition)
 
   internal fun retainExternalInfo() {
@@ -849,8 +849,6 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
   override fun removeScheme(scheme: T) = schemeListManager.removeFirstScheme(schemes) { it == scheme } != null
 
   override fun isMetadataEditable(scheme: T) = !schemeListManager.readOnlyExternalizableSchemes.containsKey(processor.getSchemeKey(scheme))
-
-  override fun clearAllSchemes() = schemeListManager.clearAllSchemes()
 
   override fun toString() = fileSpec
 }

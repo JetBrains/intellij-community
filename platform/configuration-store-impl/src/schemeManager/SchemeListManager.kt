@@ -113,17 +113,7 @@ internal class SchemeListManager<T : Any>(private val schemeManager: SchemeManag
     }
   }
 
-  fun clearAllSchemes() {
-    for (it in schemeManager.schemeToInfo.values) {
-      schemeManager.scheduleDelete(it)
-    }
-
-    schemeManager.currentScheme = null
-    schemes.clear()
-    schemeManager.schemeToInfo.clear()
-  }
-
-  fun collectExistingNames(schemes: Collection<T>): Collection<String> {
+  private fun collectExistingNames(schemes: Collection<T>): Collection<String> {
     val result = THashSet<String>(schemes.size)
     schemes.mapTo(result) { schemeManager.processor.getSchemeKey(it) }
     return result
