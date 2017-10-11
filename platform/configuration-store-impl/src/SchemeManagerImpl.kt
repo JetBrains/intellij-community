@@ -204,7 +204,7 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
         lazyPreloadScheme(bytes, isOldSchemeNaming) { name, parser ->
           val attributeProvider = Function<String, String?> { parser.getAttributeValue(null, it) }
           val schemeName = name
-                           ?: processor.getName(attributeProvider, FileUtilRt.getNameWithoutExtension(fileName))
+                           ?: processor.getSchemeKey(attributeProvider, FileUtilRt.getNameWithoutExtension(fileName))
                            ?: throw RuntimeException("Name is missed:\n${bytes.toString(Charsets.UTF_8)}")
 
           val dataHolder = SchemeDataHolderImpl(bytes, externalInfo)
@@ -286,17 +286,15 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
         val extension = getFileExtension(fileName, true)
         val externalInfo = ExternalInfo(fileName.substring(0, fileName.length - extension.length), extension)
 
-        val schemeName = name
-                         ?: (processor as LazySchemeProcessor).getName(attributeProvider, externalInfo.fileNameWithoutExtension)
-                         ?: throw RuntimeException("Name is missed:\n${bytes.toString(Charsets.UTF_8)}")
+        val schemeKey = name
+                        ?: (processor as LazySchemeProcessor).getSchemeKey(attributeProvider, externalInfo.fileNameWithoutExtension)
+                        ?: throw RuntimeException("Name is missed:\n${bytes.toString(Charsets.UTF_8)}")
 
-        externalInfo.schemeName = schemeName
+        externalInfo.schemeKey = schemeKey
 
-        val scheme = (processor as LazySchemeProcessor).createScheme(SchemeDataHolderImpl(bytes, externalInfo), schemeName,
-                                                                     attributeProvider, true)
+        val scheme = (processor as LazySchemeProcessor).createScheme(SchemeDataHolderImpl(bytes, externalInfo), schemeKey, attributeProvider, true)
         val oldInfo = schemeToInfo.put(scheme, externalInfo)
         LOG.assertTrue(oldInfo == null)
-        val schemeKey = processor.getSchemeKey(scheme)
         val oldScheme = schemeListManager.readOnlyExternalizableSchemes.put(schemeKey, scheme)
         if (oldScheme != null) {
           LOG.warn("Duplicated scheme ${schemeKey} - old: $oldScheme, new $scheme")
@@ -475,7 +473,7 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
       element?.let {
         info.digest = it.digest()
       }
-      info.schemeName = schemeName
+      info.schemeKey = schemeName
       return info
     }
 
@@ -485,7 +483,7 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
       val bytes = input.readBytes()
       lazyPreloadScheme(bytes, isOldSchemeNaming) { name, parser ->
         val attributeProvider = Function<String, String?> { parser.getAttributeValue(null, it) }
-        val schemeName = name ?: processor.getName(attributeProvider, fileNameWithoutExtension)
+        val schemeName = name ?: processor.getSchemeKey(attributeProvider, fileNameWithoutExtension)
         if (schemeName == null) {
           throw RuntimeException("Name is missed:\n${bytes.toString(Charsets.UTF_8)}")
         }
@@ -721,7 +719,7 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
       externalInfo.setFileNameWithoutExtension(fileNameWithoutExtension, schemeExtension)
     }
     externalInfo.digest = newDigest
-    externalInfo.schemeName = processor.getSchemeKey(scheme)
+    externalInfo.schemeKey = processor.getSchemeKey(scheme)
   }
 
   private fun isEqualToBundledScheme(externalInfo: ExternalInfo?, newDigest: ByteArray, scheme: MUTABLE_SCHEME): Boolean {
@@ -766,7 +764,7 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
 
   private fun isRenamed(scheme: T): Boolean {
     val info = schemeToInfo.get(scheme)
-    return info != null && processor.getSchemeKey(scheme) != info.schemeName
+    return info != null && processor.getSchemeKey(scheme) != info.schemeKey
   }
 
   private fun deleteFiles(errors: MutableList<Throwable>, filesToDelete: MutableSet<String>) {

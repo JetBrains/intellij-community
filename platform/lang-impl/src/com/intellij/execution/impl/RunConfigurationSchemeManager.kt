@@ -15,7 +15,7 @@ private val LOG = logger<RunConfigurationSchemeManager>()
 internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl, private val isShared: Boolean) :
   LazySchemeProcessor<RunnerAndConfigurationSettingsImpl, RunnerAndConfigurationSettingsImpl>(), SchemeContentChangedHandler<RunnerAndConfigurationSettingsImpl> {
   override fun getSchemeKey(scheme: RunnerAndConfigurationSettingsImpl): String {
-    return scheme.name
+    return if (isShared) scheme.name else "${scheme.type.id}-${scheme.name}"
   }
 
   override fun createScheme(dataHolder: SchemeDataHolder<RunnerAndConfigurationSettingsImpl>, name: String, attributeProvider: Function<String, String?>, isBundled: Boolean): RunnerAndConfigurationSettingsImpl {
@@ -53,7 +53,7 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
     return element
   }
 
-  override fun getName(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String): String? {
+  override fun getSchemeKey(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String): String? {
     var name = attributeProvider.apply("name")
     if (name == "<template>" || name == null) {
       attributeProvider.apply("type")?.let {
@@ -63,6 +63,12 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
         name += " of type ${it}"
       }
     }
+    else if (name != null && !isShared) {
+      val typeId = attributeProvider.apply("type")
+      LOG.assertTrue(typeId != null)
+      return "$typeId-${name}"
+    }
+
     return name
   }
 
