@@ -16,7 +16,6 @@
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.impl.LayoutBuilder
-
 /**
  * Builds artifacts which are used in Kotlin Compiler and UpSource
  *
@@ -95,17 +94,8 @@ class IntelliJCoreArtifactsBuilder {
           analysisModules.each { module it }
         }
 
-        ant.fileset(dir: "$home/lib") {
-          include(name: "asm-all.jar")
-          include(name: "guava-21.0.jar")
-          include(name: "picocontainer.jar")
-          include(name: "trove4j.jar")
-          include(name: "cli-parser-1.1.jar")
-          include(name: "snappy-in-java-0.5.1.jar")
-          include(name: "jayatana-1.2.4.jar")
-          include(name: "imgscalr-lib-4.2.jar")
-          include(name: "batik-all.jar")
-          include(name: "xmlgraphics-commons-1.5.jar")
+        ["ASM", "Guava", "picocontainer", "Trove4j", "cli-parser", "Snappy-Java", "jayatana", "imgscalr", "batik", "xmlgraphics-commons"].each {
+          projectLibrary(it)
         }
       }
       buildContext.notifyArtifactBuilt(coreArtifactDir)
