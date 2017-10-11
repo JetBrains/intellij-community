@@ -56,7 +56,7 @@ public class PyStackFrame extends XStackFrame {
   public static final int NUMBER_OF_GROUPS = IPYTHON_VALUES_IND + 1;
 
   private Project myProject;
-  private final PyFrameAccessor myDebugProcess;
+  protected final PyFrameAccessor myDebugProcess;
   private final PyStackFrameInfo myFrameInfo;
   private final XSourcePosition myPosition;
 
@@ -252,7 +252,7 @@ public class PyStackFrame extends XStackFrame {
   }
 
   public String getThreadFrameId() {
-    return myFrameInfo.getThreadId() + ":" + myFrameInfo.getId();
+    return getThreadId() + ":" + getFrameId();
   }
 
   public String getFrameName() {

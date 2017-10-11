@@ -719,4 +719,30 @@ def process_net_command(py_db, cmd_id, seq, text):
     finally:
         py_db._main_lock.release()
 
+from _pydevd_bundle import pydevd_vars, pydevd_save_locals
+import pydevconsole
+from _pydevd_bundle import pydevd_xml
+from _pydev_imps._pydev_saved_modules import socket
+from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR, timeout
+from _pydevd_bundle.pydevd_comm import start_server
 
+def myTempFrameVarsGetter(thread_id, frame_id):
+
+    newSock = start_server(12345)
+    frame = pydevd_vars.find_frame(thread_id, frame_id)
+    xml = ""
+
+    if frame is not None:
+        hidden_ns = pydevconsole.get_ipython_hidden_vars()
+        newSock.sendall(bytearray("<xml>", 'utf-8'))
+        str = pydevd_xml.frame_vars_to_xml(frame.f_locals, hidden_ns)
+        newSock.sendall(bytearray(str, 'utf-8'))
+        newSock.sendall(bytearray("</xml>", 'utf-8'))
+        #xml += "<xml>"
+        #xml += str
+        #xml += "</xml>"
+        del frame
+    newSock.shutdown(SHUT_RDWR)
+    newSock.close()
+    print xml
+    return xml

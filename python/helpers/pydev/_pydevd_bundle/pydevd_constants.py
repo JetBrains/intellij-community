@@ -282,6 +282,13 @@ def clear_cached_thread_id(thread):
 #=======================================================================================================================
 # get_thread_id
 #=======================================================================================================================
+from _pydev_imps._pydev_saved_modules import threading
+
+def get_current_thread_id():
+  thread = threading.current_thread()
+  return get_thread_id(thread)
+
+
 def get_thread_id(thread):
     try:
         tid = thread.__pydevd_id__
