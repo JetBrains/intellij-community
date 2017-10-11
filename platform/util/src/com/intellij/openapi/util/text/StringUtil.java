@@ -2247,6 +2247,9 @@ public class StringUtil extends StringUtilRt {
     return escaped;
   }
 
+  /**
+   * Consider using {@link #replace(String, List, List)}
+   */
   @NotNull
   @Contract(pure = true)
   public static String replace(@NotNull String text, @NotNull String[] from, @NotNull String[] to) {
@@ -2257,7 +2260,7 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static String replace(@NotNull String text, @NotNull List<String> from, @NotNull List<String> to) {
     assert from.size() == to.size();
-    final StringBuilder result = new StringBuilder(text.length());
+    StringBuilder result = null;
     replace:
     for (int i = 0; i < text.length(); i++) {
       for (int j = 0; j < from.size(); j += 1) {
@@ -2266,14 +2269,22 @@ public class StringUtil extends StringUtilRt {
 
         final int len = toReplace.length();
         if (text.regionMatches(i, toReplace, 0, len)) {
+          if (result == null) {
+            result = new StringBuilder(text.length());
+            result.append(text, 0, i);
+          }
           result.append(replaceWith);
+          //noinspection AssignmentToForLoopParameter
           i += len - 1;
           continue replace;
         }
       }
-      result.append(text.charAt(i));
+
+      if (result != null) {
+        result.append(text.charAt(i));
+      }
     }
-    return result.toString();
+    return result == null ? text : result.toString();
   }
 
   @NotNull
