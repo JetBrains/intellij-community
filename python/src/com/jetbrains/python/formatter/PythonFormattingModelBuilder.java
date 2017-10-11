@@ -51,7 +51,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
       printAST(fileNode, 0);
     }
     final PyBlockContext context = new PyBlockContext(settings, createSpacingBuilder(settings), mode);
-    final PyBlock block = new PyBlock(null, element.getNode(), null, Indent.getNoneIndent(), null, context);
+    final PyBlock block = PyBlock.createBlock(null, element.getNode(), null, Indent.getNoneIndent(), null, context);
     if (DUMP_FORMATTING_AST) {
       FormattingModelDumper.dumpFormattingModel(block, 2, System.out);
     }

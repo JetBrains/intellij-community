@@ -1,5 +1,5 @@
 if foo and \
-   bar == 42:
+        bar == 42:
     pass
 elif foo and \
      bar:
