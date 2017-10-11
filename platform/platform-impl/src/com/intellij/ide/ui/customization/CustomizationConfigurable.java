@@ -21,7 +21,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -39,6 +38,7 @@ public class CustomizationConfigurable extends BaseConfigurable implements Searc
     return IdeBundle.message("title.customizations");
   }
 
+  @Override
   public String getHelpTopic() {
     return "preferences.customizations";
   }

@@ -58,6 +58,7 @@ public class GroupConfigurable extends NamedConfigurable<ProxyGroup> {
     return myProxyGroup.getName();
   }
 
+  @Override
   public String getHelpTopic() {
     return null;
   }

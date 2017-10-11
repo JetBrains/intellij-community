@@ -75,6 +75,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
     return "HTTP proxies configuration";
   }
 
+  @Override
   public String getHelpTopic() {
     return null;
   }

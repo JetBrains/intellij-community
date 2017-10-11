@@ -38,6 +38,7 @@ public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.
     return "Copyright";
   }
 
+  @Override
   public String getHelpTopic() {
     return getId();
   }

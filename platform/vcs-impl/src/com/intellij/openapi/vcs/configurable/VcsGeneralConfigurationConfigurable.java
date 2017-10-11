@@ -94,6 +94,7 @@ public class VcsGeneralConfigurationConfigurable implements SearchableConfigurab
     return "Confirmation";
   }
 
+  @Override
   @NotNull
   public String getHelpTopic() {
     return "project.propVCSSupport.Confirmation";

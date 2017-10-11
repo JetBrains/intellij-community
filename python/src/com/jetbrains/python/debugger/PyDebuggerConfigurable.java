@@ -71,6 +71,7 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
     return "Python Debugger";
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.idesettings.debugger.python";
   }

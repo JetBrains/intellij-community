@@ -97,6 +97,7 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
     return ApplicationBundle.message("title.code.generation");
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.settingsdialog.IDE.globalcodestyle.codegen";
   }

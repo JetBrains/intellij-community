@@ -78,6 +78,7 @@ public class CompositeConfigurable implements Configurable {
     tabbedPane = null;
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpTopic() {

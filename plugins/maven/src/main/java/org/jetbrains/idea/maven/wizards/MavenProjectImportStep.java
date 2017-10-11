@@ -152,6 +152,7 @@ public class MavenProjectImportStep extends ProjectImportWizardStep {
       return ProjectBundle.message("maven.import.environment.settings.title");
     }
 
+    @Override
     @Nullable
     @NonNls
     public String getHelpTopic() {
