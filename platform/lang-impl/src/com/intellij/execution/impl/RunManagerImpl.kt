@@ -644,6 +644,11 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
           name += " of type ${it}"
         }
       }
+      else if (name != null) {
+        val typeId = it.getAttributeValue("type")
+        LOG.assertTrue(typeId != null)
+        name = "$typeId-${name}"
+      }
 
       // in case if broken configuration, do not fail, just generate name
       if (name == null) {
