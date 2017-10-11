@@ -94,6 +94,10 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
       myDetachPostponed = false;
       return;
     }
+    if (Disposer.isDisposed(myParentDisposable)) {
+      // TODO: Remove this hack when IDEA-180279 is fixed.
+      return;
+    }
     myGlassPane = IdeGlassPaneUtil.find(myDragComponent);
     myGlassPane.addMousePreprocessor(this, myParentDisposable);
     myGlassPane.addMouseMotionPreprocessor(this, myParentDisposable);
