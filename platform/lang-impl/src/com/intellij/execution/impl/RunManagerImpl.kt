@@ -1087,14 +1087,16 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
   private fun checkIfDependenciesAreStable(configuration: RunConfiguration, list: List<RunnerAndConfigurationSettings>) {
     for (runTask in configuration.beforeRunTasks) {
-      if (runTask is RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask && runTask.settings != null && runTask.settings.isTemporary) {
-        makeStable(runTask.settings)
-        checkIfDependenciesAreStable(runTask.settings.configuration, list)
+      val runTaskSettings = (runTask as? RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)?.settings
+
+      if (runTaskSettings?.isTemporary == true) {
+        makeStable(runTaskSettings)
+        checkIfDependenciesAreStable(runTaskSettings.configuration, list)
       }
     }
 
     if (configuration is CompoundRunConfiguration) {
-      val children = configuration.getConfigurations(this)
+      val children = configuration.getConfigurationsWithTargets(this)
       for (otherSettings in list) {
         if (!otherSettings.isTemporary) {
           continue
@@ -1105,7 +1107,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
           continue
         }
 
-        if (ContainerUtil.containsIdentity(children, otherConfiguration)) {
+        if (ContainerUtil.containsIdentity(children.keys, otherConfiguration)) {
           if (otherSettings.isTemporary) {
             makeStable(otherSettings)
             checkIfDependenciesAreStable(otherConfiguration, list)
