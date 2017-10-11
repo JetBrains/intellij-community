@@ -193,7 +193,7 @@ def main():
                 # Workaround bug in py.test: if we pass the full path it ends up importing conftest
                 # more than once (so, always work with relative paths).
                 if os.path.isfile(arg) or os.path.isdir(arg):
-                    from _pydev_bundle.pydev_imports import relpath
+                    from os.path import relpath
                     try:
                         # May fail if on different drives
                         arg = relpath(arg)
