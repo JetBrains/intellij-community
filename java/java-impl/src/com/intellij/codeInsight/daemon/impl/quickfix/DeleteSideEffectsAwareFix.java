@@ -47,7 +47,8 @@ public class DeleteSideEffectsAwareFix extends LocalQuickFixAndIntentionActionOn
     if (sideEffects.isEmpty()) {
       myMessage = QuickFixBundle.message("delete.element.fix.text");
     }
-    else if (sideEffects.size() == 1 && sideEffects.get(0) == PsiUtil.skipParenthesizedExprDown(expression)) {
+    else if (sideEffects.size() == 1 && statement instanceof PsiExpressionStatement &&
+             sideEffects.get(0) == PsiUtil.skipParenthesizedExprDown(expression)) {
       // "Remove unnecessary parentheses" action is already present which will do the same
       myMessage = "";
     }
