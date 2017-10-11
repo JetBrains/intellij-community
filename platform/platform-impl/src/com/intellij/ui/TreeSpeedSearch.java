@@ -31,7 +31,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.util.ArrayList;
@@ -118,10 +117,6 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
     String string = myToStringConvertor.convert(path);
     if (string == null) return TO_STRING.convert(path);
     return string;
-  }
-
-  public interface PathAwareTreeNode extends TreeNode {
-    TreePath getPath();
   }
 
   @NotNull
