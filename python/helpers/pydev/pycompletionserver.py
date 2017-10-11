@@ -10,14 +10,6 @@ except ImportError:
     import builtins as __builtin__  # Python 3.0
     IS_PYTHON3K = 1
 
-try:
-    True
-    False
-except NameError:
-    # If it's not defined, let's define it now.
-    setattr(__builtin__, 'True', 1)  # Python 3.0 does not accept __builtin__.True = 1 in its syntax
-    setattr(__builtin__, 'False', 0)
-
 from _pydevd_bundle.pydevd_constants import IS_JYTHON
 
 if IS_JYTHON:

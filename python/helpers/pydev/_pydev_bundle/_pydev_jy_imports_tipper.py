@@ -7,15 +7,6 @@ import sys
 from _pydev_bundle._pydev_tipper_common import do_find
 
 
-try:
-    False
-    True
-except NameError: # version < 2.3 -- didn't have the True/False builtins
-    import __builtin__
-    setattr(__builtin__, 'True', 1)
-    setattr(__builtin__, 'False', 0)
-
-
 from org.python.core import PyReflectedFunction #@UnresolvedImport
 
 from org.python import core #@UnresolvedImport
@@ -394,10 +385,10 @@ def search_definition(data):
         return do_find(f, parent), foundAs
 
 
-def generate_imports_tip_for_module(obj_to_complete, dirComps=None, getattr=getattr, filter=lambda name:True):
+def generate_imports_tip_for_module(obj_to_complete, dir_comps=None, getattr=getattr, filter=lambda name:True):
     '''
         @param obj_to_complete: the object from where we should get the completions
-        @param dirComps: if passed, we should not 'dir' the object and should just iterate those passed as a parameter
+        @param dir_comps: if passed, we should not 'dir' the object and should just iterate those passed as a parameter
         @param getattr: the way to get a given object from the obj_to_complete (used for the completer)
         @param filter: a callable that receives the name and decides if it should be appended or not to the results
         @return: list of tuples, so that each tuple represents a completion with:
@@ -405,10 +396,10 @@ def generate_imports_tip_for_module(obj_to_complete, dirComps=None, getattr=geta
     '''
     ret = []
 
-    if dirComps is None:
-        dirComps = dir_obj(obj_to_complete)
+    if dir_comps is None:
+        dir_comps = dir_obj(obj_to_complete)
 
-    for d in dirComps:
+    for d in dir_comps:
 
         if d is None:
             continue

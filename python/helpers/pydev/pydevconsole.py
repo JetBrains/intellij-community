@@ -31,15 +31,6 @@ try:
 except:
     import builtins as __builtin__  # @UnresolvedImport
 
-try:
-    False
-    True
-except NameError: # version < 2.3 -- didn't have the True/False builtins
-    import __builtin__
-
-    setattr(__builtin__, 'True', 1) #Python 3.0 does not accept __builtin__.True = 1 in its syntax
-    setattr(__builtin__, 'False', 0)
-
 from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface, BaseStdIn
 from _pydev_bundle.pydev_console_utils import CodeFragment
 
@@ -371,7 +362,7 @@ def get_interpreter():
         interpreterInterface = getattr(__builtin__, 'interpreter')
     except AttributeError:
         interpreterInterface = InterpreterInterface(None, None, threading.currentThread())
-        setattr(__builtin__, 'interpreter', interpreterInterface)
+        __builtin__.interpreter = interpreterInterface
         print(interpreterInterface.get_greeting_msg())
 
     return interpreterInterface

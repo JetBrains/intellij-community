@@ -22,17 +22,6 @@ from _pydevd_bundle.pydevd_utils import to_string
 
 SENTINEL_VALUE = []
 
-# -------------------------------------------------------------------------- defining true and false for earlier versions
-
-try:
-    __setFalse = False
-except:
-    import __builtin__
-
-    setattr(__builtin__, 'True', 1)
-    setattr(__builtin__, 'False', 0)
-
-
 # ------------------------------------------------------------------------------------------------------ class for errors
 
 class VariableError(RuntimeError): pass

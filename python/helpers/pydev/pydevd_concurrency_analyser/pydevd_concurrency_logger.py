@@ -171,7 +171,7 @@ class ThreadingLogger:
                                 return
                             thread_id = get_thread_id(t)
                             name = t.getName()
-                            setattr(self_obj, "_pydev_join_called", True)
+                            self_obj._pydev_join_called = True
 
                         if real_method == "start":
                             parent = get_thread_id(t)
