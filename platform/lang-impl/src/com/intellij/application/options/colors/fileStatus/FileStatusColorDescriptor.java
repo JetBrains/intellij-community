@@ -52,4 +52,8 @@ public class FileStatusColorDescriptor {
   public void resetToDefault() {
     myColor = myDefaultColor;
   }
+
+  public Color getDefaultColor() {
+    return myDefaultColor;
+  }
 }
