@@ -23,7 +23,7 @@ import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescripto
  * @author Pavel.Dolgov
  */
 class AddRequiredModuleTest : LightJava9ModulesCodeInsightFixtureTestCase() {
-  val messageM2 = QuickFixBundle.message("module.info.add.requires.name", "M2")!!
+  private val messageM2 = QuickFixBundle.message("module.info.add.requires.name", "M2")!!
 
   override fun setUp() {
     super.setUp()
@@ -31,8 +31,26 @@ class AddRequiredModuleTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("pkgA/A.java", "package pkgA; public class A {}", M2)
   }
 
-  fun testAddRequiresToModuleInfo() {
-    addFile("module-info.java", "module MAIN {}", MAIN)
+  fun testAtTheBeginning() =
+    doTest("module MAIN {}",
+           "module MAIN {\n" +
+           "    requires M2;\n" +
+           "}")
+
+  fun testAfterOtherRequires() =
+    doTest("module MAIN {\n" +
+           "    requires java.logging;\n" +
+           "}",
+           "module MAIN {\n" +
+           "    requires java.logging;\n" +
+           "    requires M2;\n" +
+           "}")
+
+  fun testIncompleteModuleInfo() =
+    doTest("module MAIN {", "module MAIN {\n    requires M2;")
+
+  private fun doTest(before: String, after: String) {
+    addFile("module-info.java", before, MAIN)
     val editedFile = addFile("pkgB/B.java", "package pkgB; " +
         "import <caret>pkgA.A; " +
         "public class B { A a; }", MAIN)
@@ -43,7 +61,7 @@ class AddRequiredModuleTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     myFixture.launchAction(action)
 
     myFixture.checkHighlighting()  // error is gone
-    myFixture.checkResult("module-info.java", "module MAIN {\n    requires M2;\n}", false)
+    myFixture.checkResult("module-info.java", after, false)
   }
 
   fun testNoIdeaModuleDependency() {
