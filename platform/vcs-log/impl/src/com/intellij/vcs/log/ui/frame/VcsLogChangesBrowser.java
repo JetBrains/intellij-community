@@ -276,7 +276,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
 
   @NotNull
   private String getText(@NotNull CommitId commitId) {
-    String text = "Changes to " + commitId;
+    String text = "Changes to " + commitId.getHash().toShortString();
     VcsShortCommitDetails detail = myDataGetter.fun(commitId);
     if (!(detail instanceof LoadingDetails) || (detail instanceof IndexedDetails)) {
       text += " " + StringUtil.shortenTextWithEllipsis(detail.getSubject(), 50, 0);
