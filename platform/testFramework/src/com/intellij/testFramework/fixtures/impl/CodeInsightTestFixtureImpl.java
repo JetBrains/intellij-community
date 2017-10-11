@@ -151,6 +151,7 @@ import static org.junit.Assert.*;
 /**
  * @author Dmitry Avdeev
  */
+@TestOnly
 public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsightTestFixture {
   private static final Function<IntentionAction, String> INTENTION_NAME_FUN = intentionAction -> '"' + intentionAction.getText() + '"';
 
@@ -745,14 +746,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void renameElementAtCaretUsingHandler(@NotNull final String newName) {
     final DataContext editorContext = ((EditorEx)myEditor).getDataContext();
-    final DataContext context = new DataContext() {
-      @Override
-      public Object getData(final String dataId) {
-        return PsiElementRenameHandler.DEFAULT_NAME.getName().equals(dataId)
-               ? newName
-               : editorContext.getData(dataId);
-      }
-    };
+    final DataContext context = dataId -> PsiElementRenameHandler.DEFAULT_NAME.getName().equals(dataId)
+           ? newName
+           : editorContext.getData(dataId);
     final RenameHandler renameHandler = RenameHandlerRegistry.getInstance().getRenameHandler(context);
     assertNotNull("No handler for this context", renameHandler);
 
@@ -788,7 +784,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void type(final char c) {
     assertInitialized();
-    ApplicationManager.getApplication().invokeAndWait((Runnable)() -> {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
       final EditorActionManager actionManager = EditorActionManager.getInstance();
       if (c == '\b') {
         performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
@@ -1139,7 +1135,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void checkResult(@NotNull String text, boolean stripTrailingSpaces) {
     new WriteCommandAction(getProject()) {
       @Override
-      protected void run(@NotNull Result result) throws Throwable {
+      protected void run(@NotNull Result result) {
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
         EditorUtil.fillVirtualSpaceUntilCaret(myEditor);
         checkResult("TEXT", stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromText(text), getHostFile().getText());
@@ -1151,7 +1147,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void checkResult(@NotNull String filePath, @NotNull String text, boolean stripTrailingSpaces) {
     new WriteCommandAction(getProject()) {
       @Override
-      protected void run(@NotNull Result result) throws Throwable {
+      protected void run(@NotNull Result result) {
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
         PsiFile psiFile = getFileToCheck(filePath);
         checkResult("TEXT", stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromText(text), psiFile.getText());
@@ -1295,7 +1291,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     if (fileTypeManager.getFileTypeByExtension(extension) != fileType) {
       new WriteCommandAction(getProject()) {
         @Override
-        protected void run(@NotNull Result result) throws Exception {
+        protected void run(@NotNull Result result) {
           fileTypeManager.associateExtension(fileType, extension);
         }
       }.execute();
@@ -1650,7 +1646,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                Arrays.asList(myEditor.getFoldingModel().getAllFoldRegions()),
                                FOLD,
                                foldRegion -> "text=\'" + foldRegion.getPlaceholderText() + "\'"
-                                             + (withCollapseStatus ? (" expand=\'" + foldRegion.isExpanded() + "\'") : ""));
+                                             + (withCollapseStatus ? " expand=\'" + foldRegion.isExpanded() + "\'" : ""));
   }
 
   @NotNull
@@ -1999,6 +1995,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
   }
 
+  @Override
   @NotNull
   public Disposable getProjectDisposable() {
     return myProjectFixture.getTestRootDisposable();
