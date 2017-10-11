@@ -399,6 +399,14 @@ class Intf {
     assert gotoFile("somefb\\index.html") == [someFbFile]
   }
 
+  void "test multiple slashes in goto file"() {
+    def file = addEmptyFile("foo/bar/goo/file.txt")
+    ['foo/goo/file.txt', 'foo/bar/file.txt', 'bar/goo/file.txt', 'foo/bar/goo/file.txt'].each {
+      assert gotoFile(it) == [file]
+      assert gotoFile(it.replace('/', '\\')) == [file]
+    }
+  }
+
   void "test show matches from different suffixes"() {
     def enumControl = addEmptyFile("sample/EnumControl.java")
     def control = addEmptyFile("sample/ControlSmth.java")
