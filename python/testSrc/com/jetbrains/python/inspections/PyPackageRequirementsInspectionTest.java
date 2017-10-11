@@ -65,4 +65,9 @@ public class PyPackageRequirementsInspectionTest extends PyInspectionTestCase {
   public void testOnePackageManyPossibleRequirements() {
     doMultiFileTest("test1.py");
   }
+
+  // PY-20489
+  public void testPackageInstalledIntoModule() {
+    doMultiFileTest();
+  }
 }
