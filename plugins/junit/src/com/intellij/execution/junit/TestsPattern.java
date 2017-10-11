@@ -49,7 +49,7 @@ public class TestsPattern extends TestPackage {
   }
 
   @Override
-  protected String getPackageName(JUnitConfiguration.Data data) throws CantRunException {
+  protected String getPackageName(JUnitConfiguration.Data data) {
     return "";
   }
 
@@ -58,14 +58,20 @@ public class TestsPattern extends TestPackage {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final Project project = getConfiguration().getProject();
     final Set<String> classNames = new LinkedHashSet<>();
+    boolean hasPattern = false;
     for (String className : data.getPatterns()) {
       final PsiClass psiClass = getTestClass(project, className);
-      if (psiClass != null&& JUnitUtil.isTestClass(psiClass)) {
-        classNames.add(className);
+      if (psiClass != null) {
+        if (JUnitUtil.isTestClass(psiClass)) {
+          classNames.add(className);
+        }
+      }
+      else {
+        hasPattern |= className.contains("*");
       }
     }
 
-    if (classNames.size() == data.getPatterns().size()) {
+    if (!hasPattern) {
       return new SearchForTestsTask(project, myServerSocket) {
         @Override
         protected void search() throws ExecutionException { }
