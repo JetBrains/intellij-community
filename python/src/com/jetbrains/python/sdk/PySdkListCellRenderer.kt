@@ -77,15 +77,11 @@ open class PySdkListCellRenderer(private val sdkModifiers: Map<Sdk, SdkModificat
 
     private fun customizeIcon(sdk: Sdk): Icon? {
       val flavor = PythonSdkFlavor.getPlatformIndependentFlavor(sdk.homePath)
-      val icon = when {
-        sdk is PyLazySdk -> sdk.icon
-        flavor != null -> flavor.icon
-        else -> (sdk.sdkType as? SdkType)?.icon ?: return null
-      }
+      val icon = if (flavor != null) flavor.icon else (sdk.sdkType as? SdkType)?.icon ?: return null
       return when {
         PythonSdkType.isInvalid(sdk) || PythonSdkType.isIncompleteRemote(sdk) || PythonSdkType.hasInvalidRemoteCredentials(sdk) ->
           wrapIconWithWarningDecorator(icon)
-        sdk is PyDetectedSdk || sdk is PyLazySdk ->
+        sdk is PyDetectedSdk ->
           IconLoader.getTransparentIcon(icon)
         else ->
           icon
