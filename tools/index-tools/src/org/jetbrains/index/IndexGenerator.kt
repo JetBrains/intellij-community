@@ -25,6 +25,10 @@ abstract class IndexGenerator<Value>(private val indexStorageFilePath: String) {
   open val fileFilter
     get() = VirtualFileFilter { f -> !f.isDirectory }
 
+  data class Stats(val indexed: AtomicInteger, val skipped: AtomicInteger) {
+    constructor() : this(AtomicInteger(0), AtomicInteger(0))
+  }
+
   protected fun buildIndexForRoots(roots: List<VirtualFile>) {
     val hashing = FileContentHashing()
 
@@ -37,15 +41,15 @@ abstract class IndexGenerator<Value>(private val indexStorageFilePath: String) {
 
       for (file in roots) {
         println("Processing files in root ${file.path}")
-        val cnt = AtomicInteger()
+        val stats = Stats()
         VfsUtilCore.visitChildrenRecursively(file,
                                              object : VirtualFileVisitor<Boolean>() {
                                                override fun visitFile(file: VirtualFile): Boolean {
-                                                 return indexFile(file, hashing, map, storage, cnt)
+                                                 return indexFile(file, hashing, map, storage, stats)
                                                }
                                              })
 
-        println("${cnt.get()} entries written")
+        println("${stats.indexed.get()} entries written, ${stats.skipped.get()} skipped")
       }
     }
     finally {
@@ -57,7 +61,7 @@ abstract class IndexGenerator<Value>(private val indexStorageFilePath: String) {
                         hashing: FileContentHashing,
                         map: HashMap<HashCode, Pair<String, Value>>,
                         storage: PersistentHashMap<HashCode, Value>,
-                        cnt: AtomicInteger): Boolean {
+                        stats: Stats): Boolean {
     try {
       if (fileFilter.accept(file)) {
         val fileContent = FileContentImpl(
@@ -67,20 +71,26 @@ abstract class IndexGenerator<Value>(private val indexStorageFilePath: String) {
 
         val value = getIndexValue(fileContent)
 
-        val item = map[hashCode]
-        if (item == null) {
-          storage.put(hashCode, value)
-          cnt.incrementAndGet()
+        if (value != null) {
+          val item = map[hashCode]
+          if (item == null) {
+            storage.put(hashCode, value)
 
-          if (CHECK_HASH_COLLISIONS) {
-            map.put(hashCode,
-                    Pair(fileContent.contentAsText.toString(), value))
+            stats.indexed.incrementAndGet()
+
+            if (CHECK_HASH_COLLISIONS) {
+              map.put(hashCode,
+                      Pair(fileContent.contentAsText.toString(), value))
+            }
+          }
+          else {
+            TestCase.assertEquals(item.first,
+                                  fileContent.contentAsText.toString())
+            TestCase.assertTrue(value == item.second)
           }
         }
         else {
-          TestCase.assertEquals(item.first,
-                                fileContent.contentAsText.toString())
-          TestCase.assertTrue(value == item.second)
+          stats.skipped.incrementAndGet()
         }
       }
     }
@@ -91,7 +101,7 @@ abstract class IndexGenerator<Value>(private val indexStorageFilePath: String) {
     return true
   }
 
-  protected abstract fun getIndexValue(fileContent: FileContentImpl): Value
+  protected abstract fun getIndexValue(fileContent: FileContentImpl): Value?
 
   protected abstract fun createStorage(stubsStorageFilePath: String): PersistentHashMap<HashCode, Value>
 }
