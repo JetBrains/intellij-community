@@ -79,6 +79,7 @@ public class PyBlock implements ASTBlock {
                                                                          PyElementTypes.FROM_IMPORT_STATEMENT);
 
   public static final Key<Boolean> IMPORT_GROUP_BEGIN = Key.create("com.jetbrains.python.formatter.importGroupBegin");
+  private static final boolean ALIGN_IF_CONDITION_WITHOUT_PARENTHESES = false;
 
   private final PyBlock myParent;
   private final Alignment myAlignment;
@@ -209,6 +210,7 @@ public class PyBlock implements ASTBlock {
       childIndent = Indent.getNormalIndent();
     }
 
+    // TODO merge it with the following check of needListAlignment()
     if (ourListElementTypes.contains(parentType)) {
       // wrapping in non-parenthesized tuple expression is not allowed (PY-1792)
       if ((parentType != PyElementTypes.TUPLE_EXPRESSION || grandparentType == PyElementTypes.PARENTHESIZED_EXPRESSION) &&
@@ -230,15 +232,18 @@ public class PyBlock implements ASTBlock {
         final PyBlock topmostBinary = findTopmostBinaryExpressionBlock(child);
         final PyBlock comprehensionBlock = topmostBinary != null ? topmostBinary.myParent : this;
         if (comprehensionBlock != null
+            // TODO check for comprehensions explicitly here
             && ourListElementTypes.contains(comprehensionBlock.myNode.getElementType())
             && needListAlignment(child)
             && !myEmptySequence) {
           childAlignment = comprehensionBlock.getChildAlignment();
         }
-        if (childAlignment == null && topmostBinary != null && !isParenthesisedIfCondition(topmostBinary.myNode)) {
+        if (childAlignment == null && topmostBinary != null &&
+            !isParenthesisedIfCondition(topmostBinary.myNode) &&
+            !(isIfCondition(topmostBinary.myNode) && !ALIGN_IF_CONDITION_WITHOUT_PARENTHESES)) {
           childAlignment = topmostBinary.getAlignmentForChildren();
         }
-        childIndent = isInControlStatement() ? Indent.getContinuationIndent() : Indent.getNormalIndent();
+        childIndent = Indent.getContinuationWithoutFirstIndent();
       }
     }
     else if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION || parentType == PyElementTypes.LIST_COMP_EXPRESSION) {
@@ -288,6 +293,7 @@ public class PyBlock implements ASTBlock {
     else if (isValueOfKeyValuePair(child)) {
       childIndent = Indent.getNormalIndent();
     }
+    // TODO: merge with needChildAlignment()
     //Align elements vertically if there is an argument in the first line of parenthesized expression
     else if (!hasHangingIndent(myNode.getPsi()) &&
              ((parentType == PyElementTypes.PARENTHESIZED_EXPRESSION && myContext.getSettings().ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION) ||
@@ -404,11 +410,16 @@ public class PyBlock implements ASTBlock {
 
   private static boolean isParenthesisedIfCondition(@NotNull ASTNode node) {
     final PyParenthesizedExpression parens = as(node.getPsi().getParent(), PyParenthesizedExpression.class);
-    if (parens == null) {
-      return false;
-    }
-    final PyIfPart ifPart = as(parens.getParent(), PyIfPart.class);
-    return ifPart != null && ifPart.getCondition() == parens && !ifPart.isElif();
+    return parens != null && isIfCondition(parens);
+  }
+
+  private static boolean isIfCondition(@NotNull ASTNode node) {
+    return isIfCondition(node.getPsi(PyExpression.class));
+  }
+
+  private static boolean isIfCondition(@NotNull PyExpression expr) {
+    final PyIfPart ifPart = as(expr.getParent(), PyIfPart.class);
+    return ifPart != null && ifPart.getCondition() == expr && !ifPart.isElif();
   }
 
   @Nullable
@@ -632,7 +643,7 @@ public class PyBlock implements ASTBlock {
       if (!myContext.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS || hasHangingIndent(myNode.getPsi())) {
         return false;
       }
-      if (child.getElementType() == PyTokenTypes.COMMA) {
+      if (childType == PyTokenTypes.COMMA) {
         return false;
       }
       return true;
@@ -643,7 +654,12 @@ public class PyBlock implements ASTBlock {
     if (myNode.getElementType() == PyElementTypes.SUBSCRIPTION_EXPRESSION) {
       return false;
     }
-    if (child.getElementType() == PyTokenTypes.COMMA) {
+    if (childType == PyTokenTypes.COMMA) {
+      return false;
+    }
+    if (myNode.getElementType() == PyElementTypes.PARENTHESIZED_EXPRESSION
+        && childType != PyElementTypes.TUPLE_EXPRESSION
+        && childType != PyElementTypes.GENERATOR_EXPRESSION) {
       return false;
     }
     return myContext.getPySettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS && !hasHangingIndent(myNode.getPsi());
