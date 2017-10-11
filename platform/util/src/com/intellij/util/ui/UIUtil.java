@@ -1584,11 +1584,12 @@ public class UIUtil {
   }
 
   public static Insets getListCellPadding() {
-    return new Insets(getListCellVPadding(), getListCellHPadding(), getListCellVPadding(), getListCellHPadding());
+    return JBUI.insets(getListCellVPadding(), getListCellHPadding());
   }
 
   public static Insets getListViewportPadding() {
-    return isUnderNativeMacLookAndFeel() ? JBUI.insets(1, 0, 1, 0) : JBUI.insets(5, 5, 5, 5);
+    return isUnderNativeMacLookAndFeel() ? JBUI.insets(1, 0) :
+           isUnderWin10LookAndFeel() ? JBUI.emptyInsets() : JBUI.insets(5);
   }
 
   public static boolean isToUseDottedCellBorder() {

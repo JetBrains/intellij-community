@@ -28,6 +28,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
@@ -162,6 +163,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   private void actionPerformed(final AnActionEvent event) {
+    HelpTooltip.hide(this);
+
     if (myAction instanceof ActionGroup &&
         !(myAction instanceof CustomComponentAction) &&
         ((ActionGroup)myAction).isPopup() &&
@@ -177,10 +180,6 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         }
       });
       popupMenu.setDataContextProvider(() -> this.getDataContext());
-
-      if (Registry.is("ide.helptooltip.enabled")) {
-        HelpTooltip.onShowMasterPopup(this, popupMenu.getComponent());
-      }
 
       if (event.isFromActionToolbar()) {
         popupMenu.getComponent().show(this, 0, getHeight());
@@ -283,7 +282,13 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     String description = myPresentation.getDescription();
     if (Registry.is("ide.helptooltip.enabled")) {
       String shortcut = KeymapUtil.getFirstKeyboardShortcutText(myAction);
-      new HelpTooltip().setTitle(text).setDescription(description).setShortcut(shortcut).setLocation(getTooltipLocation()).installOn(this);
+      if (StringUtil.isNotEmpty(text) || StringUtil.isNotEmpty(description)) {
+        HelpTooltip ht = new HelpTooltip().setTitle(text).setShortcut(shortcut).setLocation(getTooltipLocation());
+        if (!StringUtil.equals(text, description)) {
+          ht.setDescription(description);
+        }
+        ht.installOn(this);
+      }
     } else {
       setToolTipText(text == null ? description : text);
     }

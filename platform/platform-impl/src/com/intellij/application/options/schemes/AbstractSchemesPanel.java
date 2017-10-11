@@ -16,6 +16,7 @@
 package com.intellij.application.options.schemes;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.Scheme;
@@ -122,9 +123,11 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     myInfoComponent = createInfoComponent();
     controlsPanel.add(myInfoComponent);
     controlsPanel.add(Box.createHorizontalGlue());
-    int height = Math.max(mySchemesCombo.getComponent().getPreferredSize().height, myToolbar.getPreferredSize().height);
-    height += UIUtil.isUnderWin10LookAndFeel() ? 0 : 2;
-    controlsPanel.setPreferredSize(new Dimension(controlsPanel.getMinimumSize().width, height));
+
+    mySchemesCombo.getComponent().setMaximumSize(mySchemesCombo.getComponent().getPreferredSize());
+
+    int height = mySchemesCombo.getComponent().getPreferredSize().height;
+    height += JBUI.scale(2) * 2;
     controlsPanel.setMaximumSize(new Dimension(controlsPanel.getMaximumSize().width, height));
     return controlsPanel;
   }
@@ -136,7 +139,6 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     JComponent toolbarComponent = toolbar.getComponent();
     toolbarActionGroup.add(new ShowSchemesActionsListAction(myActions.getActions(), toolbarComponent));
-    toolbarComponent.setMaximumSize(new Dimension(toolbarComponent.getPreferredSize().width, Short.MAX_VALUE));
     toolbarComponent.setBorder(JBUI.Borders.empty());
     return toolbarComponent;
   }
@@ -306,9 +308,16 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      final ListPopup actionGroupPopup =
-        JBPopupFactory.getInstance().createActionGroupPopup(null, myActionGroup, e.getDataContext(), true, null, Integer.MAX_VALUE);
-      actionGroupPopup.show(new RelativePoint(myParentComponent, new Point(JBUI.scale(2), myParentComponent.getHeight() - JBUI.scale(1))));
+      ListPopup actionGroupPopup = JBPopupFactory.getInstance().
+        createActionGroupPopup(null, myActionGroup, e.getDataContext(), true, null, Integer.MAX_VALUE);
+
+      HelpTooltip.setMasterPopup(e.getInputEvent().getComponent(), actionGroupPopup);
+      actionGroupPopup.show(new RelativePoint(myParentComponent, getPopupPoint()));
+    }
+
+    private Point getPopupPoint() {
+      int dH = UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(1) : 0;
+      return new Point(JBUI.scale(2), myParentComponent.getHeight() - dH);
     }
   }
 

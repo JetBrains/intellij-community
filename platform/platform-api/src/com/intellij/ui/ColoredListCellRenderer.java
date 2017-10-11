@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,8 +42,7 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
   public ColoredListCellRenderer(@Nullable JComboBox comboBox) {
     myComboBox = comboBox;
     setFocusBorderAroundIcon(true);
-    getIpad().left = UIUtil.getListCellHPadding();
-    getIpad().right = UIUtil.getListCellHPadding();
+    getIpad().left = getIpad().right = UIUtil.isUnderWin10LookAndFeel() ? 0 : JBUI.scale(UIUtil.getListCellHPadding());
   }
 
   @Override

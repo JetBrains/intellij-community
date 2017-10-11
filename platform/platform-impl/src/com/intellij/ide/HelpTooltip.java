@@ -83,7 +83,7 @@ public class HelpTooltip {
   private Alignment alignment = Alignment.BOTTOM;
 
   private JComponent owner;
-  private Object masterPopup; // can be JPopupMenu or JBPopup which don't belong to one hierarchy
+  private JBPopup masterPopup;
   private ComponentPopupBuilder myPopupBuilder;
   private JBPopup myPopup;
   private Alarm popupAlarm = new Alarm();
@@ -185,6 +185,7 @@ public class HelpTooltip {
 
     if (StringUtil.isNotEmpty(description)) {
       String[] pa = description.split(PARAGRAPH_SPLITTER);
+      isMultiline = pa.length > 1;
       for (String p : pa) {
         if (!p.isEmpty()) {
           tipPanel.add(new Paragraph(p), VerticalLayout.TOP);
@@ -247,11 +248,21 @@ public class HelpTooltip {
     owner.addPropertyChangeListener("ancestor", myPropertyChangeListener);
   }
 
-  public static void onShowMasterPopup(@NotNull JComponent owner, @NotNull Object master) {
-    HelpTooltip instance = (HelpTooltip)owner.getClientProperty(TOOLTIP_PROPERTY);
-    if (instance != null) {
-      instance.hidePopup(true);
-      instance.masterPopup = master;
+  public static void hide(@NotNull Component owner) {
+    if (owner instanceof JComponent) {
+      HelpTooltip instance = (HelpTooltip)((JComponent)owner).getClientProperty(TOOLTIP_PROPERTY);
+      if (instance != null) {
+        instance.hidePopup(true);
+      }
+    }
+  }
+
+  public static void setMasterPopup(@NotNull Component owner, JBPopup master) {
+    if (owner instanceof JComponent) {
+      HelpTooltip instance = (HelpTooltip)((JComponent)owner).getClientProperty(TOOLTIP_PROPERTY);
+      if (instance != null) {
+        instance.masterPopup = master;
+      }
     }
   }
 
@@ -269,13 +280,7 @@ public class HelpTooltip {
   }
 
   private boolean canShow() {
-    if (masterPopup instanceof JPopupMenu) {
-      return !((JPopupMenu)masterPopup).isVisible();
-    } else if (masterPopup instanceof JBPopup) {
-      return !((JBPopup)masterPopup).isVisible();
-    } else {
-      return true;
-    }
+    return masterPopup == null || !masterPopup.isVisible();
   }
 
   private void scheduleHide(boolean force, int delay) {
