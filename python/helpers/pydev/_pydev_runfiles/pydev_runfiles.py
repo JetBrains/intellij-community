@@ -223,7 +223,7 @@ def parse_cmdline(argv=None):
                         file_and_test = line.split('|')
                         if len(file_and_test) == 2:
                             file, test = file_and_test
-                            if dict_contains(files_to_tests, file):
+                            if file in files_to_tests:
                                 files_to_tests[file].append(test)
                             else:
                                 files_to_tests[file] = [test]
@@ -544,7 +544,7 @@ class PydevTestRunner(object):
             testFnNames = []
             className = testCaseClass.__name__
 
-            if dict_contains(self.accepted_classes, className):
+            if className in self.accepted_classes:
                 for attrname in dir(testCaseClass):
                     #If a class is chosen, we select all the 'test' methods'
                     if attrname.startswith('test') and hasattr(getattr(testCaseClass, attrname), '__call__'):
@@ -553,7 +553,7 @@ class PydevTestRunner(object):
             else:
                 for attrname in dir(testCaseClass):
                     #If we have the class+method name, we must do a full check and have an exact match.
-                    if dict_contains(self.accepted_methods, className + '.' + attrname):
+                    if className + '.' + attrname in self.accepted_methods:
                         if hasattr(getattr(testCaseClass, attrname), '__call__'):
                             testFnNames.append(attrname)
 
@@ -695,7 +695,8 @@ class PydevTestRunner(object):
                             test_suite.append(test_obj)
                         else:
                             if self.verbosity > 3:
-                                sys.stdout.write('Skipped test: %s (did not match any include_tests pattern %s)\n' % (self.configuration.include_tests,))
+                                sys.stdout.write('Skipped test: %s (did not match any include_tests pattern %s)\n' % (
+                                    testMethodName, self.configuration.include_tests,))
         return test_suite
 
 

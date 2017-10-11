@@ -2,7 +2,7 @@
     resolution/conversion to XML.
 """
 import pickle
-from _pydevd_bundle.pydevd_constants import dict_contains, get_frame, get_thread_id, xrange
+from _pydevd_bundle.pydevd_constants import get_frame, get_thread_id, xrange
 
 from _pydevd_bundle.pydevd_custom_frames import get_custom_frame
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate, get_type, var_to_xml
@@ -86,7 +86,7 @@ removeAdditionalFrameById = remove_additional_frame_by_id  # Backward compatibil
 
 
 def has_additional_frames_by_id(thread_id):
-    return dict_contains(AdditionalFramesContainer.additional_frames, thread_id)
+    return thread_id in AdditionalFramesContainer.additional_frames
 
 
 def get_additional_frames_by_id(thread_id):
@@ -108,7 +108,7 @@ def find_frame(thread_id, frame_id):
         lookingFor = int(frame_id)
 
         if AdditionalFramesContainer.additional_frames:
-            if dict_contains(AdditionalFramesContainer.additional_frames, thread_id):
+            if thread_id in AdditionalFramesContainer.additional_frames:
                 frame = AdditionalFramesContainer.additional_frames[thread_id].get(lookingFor)
 
                 if frame is not None:

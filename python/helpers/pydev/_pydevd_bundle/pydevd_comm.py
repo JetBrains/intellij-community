@@ -66,7 +66,7 @@ from _pydev_imps._pydev_saved_modules import thread
 from _pydev_imps._pydev_saved_modules import threading
 from _pydev_imps._pydev_saved_modules import socket
 from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR, timeout
-from _pydevd_bundle.pydevd_constants import DebugInfoHolder, dict_contains, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, IS_PY36_OR_GREATER, \
+from _pydevd_bundle.pydevd_constants import DebugInfoHolder, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, IS_PY36_OR_GREATER, \
     STATE_RUN
 
 try:
@@ -919,13 +919,13 @@ class ReloadCodeCommand(InternalThreadCommand):
             self.lock.release()
 
         module_name = self.module_name
-        if not dict_contains(sys.modules, module_name):
+        if module_name not in sys.modules:
             if '.' in module_name:
                 new_module_name = module_name.split('.')[-1]
-                if dict_contains(sys.modules, new_module_name):
+                if new_module_name in sys.modules:
                     module_name = new_module_name
 
-        if not dict_contains(sys.modules, module_name):
+        if module_name not in sys.modules:
             sys.stderr.write('pydev debugger: Unable to find module to reload: "' + module_name + '".\n')
             # Too much info...
             # sys.stderr.write('pydev debugger: This usually means you are trying to reload the __main__ module (which cannot be reloaded).\n')

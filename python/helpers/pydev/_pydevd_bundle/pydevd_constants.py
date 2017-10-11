@@ -152,22 +152,6 @@ if USE_LIB_COPY:
 from _pydev_imps._pydev_saved_modules import thread
 _nextThreadIdLock = thread.allocate_lock()
 
-#=======================================================================================================================
-# Jython?
-#=======================================================================================================================
-try:
-    dict_contains = dict.has_key
-except:
-    try:
-        #Py3k does not have has_key anymore, and older versions don't have __contains__
-        dict_contains = dict.__contains__
-    except:
-        try:
-            dict_contains = dict.has_key
-        except NameError:
-            def dict_contains(d, key):
-                return d.has_key(key)
-
 if IS_PY3K:
     def dict_keys(d):
         return list(d.keys())
