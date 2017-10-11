@@ -486,16 +486,23 @@ class PydevTestRunner(object):
                     'error', buf_out.getvalue(), buf_err.getvalue(), pyfile, modname, 0)
 
             return None
+        
+    def remove_duplicates_keeping_order(self, seq):
+        seen = set()
+        seen_add = seen.add
+        return [x for x in seq if not (x in seen or seen_add(x))]
 
     def find_modules_from_files(self, pyfiles):
         """ returns a list of modules given a list of files """
         #let's make sure that the paths we want are in the pythonpath...
         imports = [(s, self.__importify(s)) for s in pyfiles]
+        
+        sys_path = [os.path.normpath(path) for path in sys.path]
+        self.remove_duplicates_keeping_order(sys_path)
 
         system_paths = []
-        for s in sys.path:
+        for s in sys_path:
             system_paths.append(self.__importify(s, True))
-
 
         ret = []
         for pyfile, imp in imports:
