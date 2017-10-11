@@ -18,7 +18,7 @@ import java.util.*
 internal class XmlSerializerCollectionTest {
   @Test fun testJDOMExternalizableStringList() {
     val bean = Bean3()
-    bean.list.add("one")
+    bean.list.add("\u0001one")
     bean.list.add("two")
     bean.list.add("three")
     doSerializerTest("<b>\n" + "  <list>\n" + "    <item value=\"one\" />\n" + "    <item value=\"two\" />\n" + "    <item value=\"three\" />\n" + "  </list>\n" + "</b>", bean, SkipDefaultsSerializationFilter())
