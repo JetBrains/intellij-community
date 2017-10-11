@@ -145,11 +145,10 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
         }
         if (shouldBeCleared) {
           myBuildsMap.clear();
-          myViewMap.clear();
+          SmartList<BuildView> viewsToDispose = new SmartList<>(myViewMap.values());
+          runOnEdt.add(() -> viewsToDispose.forEach(Disposer::dispose));
 
-          for (BuildView view : myViewMap.values()) {
-            Disposer.dispose(view);
-          }
+          myViewMap.clear();
           listModel.clear();
           myBuildsList.setVisible(false);
           runOnEdt.add(() -> {
