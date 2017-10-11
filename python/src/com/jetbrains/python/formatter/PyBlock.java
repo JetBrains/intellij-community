@@ -81,10 +81,23 @@ public class PyBlock implements ASTBlock {
   public static final Key<Boolean> IMPORT_GROUP_BEGIN = Key.create("com.jetbrains.python.formatter.importGroupBegin");
   private static final boolean ALIGN_IF_CONDITION_WITHOUT_PARENTHESES = false;
 
+  @NotNull
+  public static PyBlock createBlock(@Nullable PyBlock parent,
+                                    @NotNull ASTNode node,
+                                    @Nullable Alignment alignment,
+                                    @NotNull Indent indent,
+                                    @Nullable Wrap wrap,
+                                    @NotNull PyBlockContext context) {
+    if (node.getElementType() == PyElementTypes.BINARY_EXPRESSION) {
+      return new PyBinaryExpressionBlock(parent, node, alignment, indent, wrap, context);
+    }
+    return new PyBlock(parent, node, alignment, indent, wrap, context);
+  }
+
   private final PyBlock myParent;
   private final Alignment myAlignment;
   private final Indent myIndent;
-  private final ASTNode myNode;
+  protected final ASTNode myNode;
   private final Wrap myWrap;
   private final PyBlockContext myContext;
   private List<PyBlock> mySubBlocks = null;
@@ -97,12 +110,12 @@ public class PyBlock implements ASTBlock {
   private Wrap myDictWrapping = null;
   private Wrap myFromImportWrapping = null;
 
-  public PyBlock(@Nullable PyBlock parent,
-                 @NotNull ASTNode node,
-                 @Nullable Alignment alignment,
-                 @NotNull Indent indent,
-                 @Nullable Wrap wrap,
-                 @NotNull PyBlockContext context) {
+  protected PyBlock(@Nullable PyBlock parent,
+                    @NotNull ASTNode node,
+                    @Nullable Alignment alignment,
+                    @NotNull Indent indent,
+                    @Nullable Wrap wrap,
+                    @NotNull PyBlockContext context) {
     myParent = parent;
     myAlignment = alignment;
     myIndent = indent;
@@ -163,7 +176,7 @@ public class PyBlock implements ASTBlock {
   @NotNull
   private Map<ASTNode, PyBlock> buildSubBlocks() {
     final Map<ASTNode, PyBlock> blocks = new LinkedHashMap<>();
-    for (ASTNode child = myNode.getFirstChildNode(); child != null; child = child.getTreeNext()) {
+    for (ASTNode child: getSubBlockNodes()) {
 
       final IElementType childType = child.getElementType();
 
@@ -176,6 +189,11 @@ public class PyBlock implements ASTBlock {
       blocks.put(child, buildSubBlock(child));
     }
     return Collections.unmodifiableMap(blocks);
+  }
+
+  @NotNull
+  protected Iterable<ASTNode> getSubBlockNodes() {
+    return Arrays.asList(myNode.getChildren(null));
   }
 
   @NotNull
@@ -405,7 +423,7 @@ public class PyBlock implements ASTBlock {
       prev = prev.getTreePrev();
     }
 
-    return new PyBlock(this, child, childAlignment, childIndent, childWrap, myContext);
+    return createBlock(this, child, childAlignment, childIndent, childWrap, myContext);
   }
 
   private static boolean isParenthesisedIfCondition(@NotNull ASTNode node) {
