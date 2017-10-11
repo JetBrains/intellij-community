@@ -15,7 +15,10 @@
  */
 package com.siyeh.ig.security;
 
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -25,6 +28,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CloneUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,6 +104,7 @@ public class CloneableClassInSecureContextInspection extends BaseInspection {
   }
 
   private static class CreateExceptionCloneMethodFix extends InspectionGadgetsFix {
+
     @NotNull
     @Override
     public String getFamilyName() {
@@ -113,12 +118,43 @@ public class CloneableClassInSecureContextInspection extends BaseInspection {
         return;
       }
       final PsiClass aClass = (PsiClass)element;
-      final String cloneMethod =
-        "public " + aClass.getName() + " clone() throws java.lang.CloneNotSupportedException{\n" +
-        "throw new java.lang.CloneNotSupportedException();\n" +
-        "}";
-      final PsiMethod method = JavaPsiFacade.getElementFactory(project).createMethodFromText(cloneMethod, aClass);
-      aClass.add(method);
+      final String cloneMethod = "protected " + aClass.getName() + " clone() {}";
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      final PsiMethod method = (PsiMethod)aClass.add(factory.createMethodFromText(cloneMethod, aClass));
+      final PsiClassType exceptionType = factory.createTypeByFQClassName("java.lang.CloneNotSupportedException", element.getResolveScope());
+      final PsiMethod superMethod = MethodUtils.getSuper(method);
+      boolean throwException = false;
+      if (superMethod != null) {
+        if (superMethod.hasModifierProperty(PsiModifier.PUBLIC)) {
+          method.getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
+        }
+        for (PsiClassType thrownType : superMethod.getThrowsList().getReferencedTypes()) {
+          if (thrownType.equals(exceptionType)) {
+            throwException = true;
+            break;
+          }
+        }
+        if (throwException) {
+          final PsiJavaCodeReferenceElement exceptionReference = factory.createReferenceElementByType(exceptionType);
+          method.getThrowsList().add(exceptionReference);
+        }
+        else {
+          final PsiJavaCodeReferenceElement errorReference =
+            factory.createFQClassNameReferenceElement("java.lang.AssertionError", element.getResolveScope());
+          method.getThrowsList().add(errorReference);
+        }
+      }
+      final String throwableName = throwException ? "java.lang.CloneNotSupportedException" : "java.lang.AssertionError";
+      final PsiStatement statement = factory.createStatementFromText("throw new " + throwableName + "();", element);
+      final PsiCodeBlock body = method.getBody();
+      assert body != null;
+      body.add(statement);
+      if (isOnTheFly()) {
+        final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+        if (editor != null) {
+          GenerateMembersUtil.positionCaret(editor, method, true);
+        }
+      }
     }
   }
 
