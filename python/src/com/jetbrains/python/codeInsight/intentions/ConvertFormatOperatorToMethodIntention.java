@@ -286,7 +286,7 @@ public class ConvertFormatOperatorToMethodIntention extends PyBaseIntentionActio
     String prefix = "";
     final LanguageLevel languageLevel = guessLanguageLevel(project);
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(rhs);
-    if (!languageLevel.isPy3K() && PyTypeChecker.match(builtinCache.getUnicodeType(languageLevel), rhsType, context) &&
+    if (languageLevel.isPython2() && PyTypeChecker.match(builtinCache.getUnicodeType(languageLevel), rhsType, context) &&
         !PyTypeChecker.match(builtinCache.getBytesType(languageLevel), rhsType, context)) {
       prefix = "u";
     }

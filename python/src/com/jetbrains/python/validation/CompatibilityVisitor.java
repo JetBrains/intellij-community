@@ -155,7 +155,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
       if (qName != null) {
         if (qName.matches("builtins")) {
-          registerForAllMatchingVersions(level -> !level.isPy3K(), " not have module builtins", node, new ReplaceBuiltinsQuickFix());
+          registerForAllMatchingVersions(level -> level.isPython2(), " not have module builtins", node, new ReplaceBuiltinsQuickFix());
         }
         else if (qName.matches("__builtin__")) {
           registerForAllMatchingVersions(LanguageLevel::isPy3K, " not have module __builtin__", node, new ReplaceBuiltinsQuickFix());
@@ -422,7 +422,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
     final PsiElement firstChild = node.getFirstChild();
     if (firstChild != null && PyNames.SUPER.equals(firstChild.getText()) && ArrayUtil.isEmpty(node.getArguments())) {
-      registerForAllMatchingVersions(level -> !level.isPy3K(),
+      registerForAllMatchingVersions(level -> level.isPython2(),
                                      " not support this syntax. super() should have arguments in Python 2",
                                      node,
                                      null);
