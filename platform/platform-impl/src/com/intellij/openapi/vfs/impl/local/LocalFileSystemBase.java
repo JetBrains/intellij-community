@@ -78,7 +78,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (SystemInfo.isUnix) { // avoid opening fifo files
       final FileAttributes attributes = FileSystemUtil.getAttributes(ioFile);
       if (attributes != null && !attributes.isFile()) {
-        throw new FileNotFoundException("Not a file: " + ioFile + "; type=" + attributes.type);
+        LOG.warn("not a file: " + ioFile + ", " + attributes);
+        throw new FileNotFoundException("Not a file: " + ioFile);
       }
     }
 
@@ -754,7 +755,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     finally {
       if (t != 0) {
         t = (System.nanoTime() - t) / 1000;
-        LOG.debug("getCanonicallyCasedName(" + file + "): " + t + " mks");
+        LOG.trace("getCanonicallyCasedName(" + file + "): " + t + " mks");
       }
     }
   }
