@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.updates
 
-import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.updateSettings.impl.*
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
@@ -236,14 +235,7 @@ class UpdateStrategyTest : BareTestFixtureTestCase() {
     return result
   }
 
-  private fun assertBuild(expectedProductCode: String, expectedBuildNumber: String, build: BuildInfo?) {
-    assertEquals(expectedBuildNumber, build?.number?.asStringWithoutProductCode())
-    assertEquals(expectedProductCode, build?.number?.productCode)
-  }
-
   private fun assertBuild(expected: String, build: BuildInfo?) {
-    assertBuild(currentProductCode(), expected, build)
+    assertEquals(expected, build?.number?.asStringWithoutProductCode())
   }
-
-  private fun currentProductCode() = ApplicationInfoImpl.getShadowInstance().build.productCode
 }

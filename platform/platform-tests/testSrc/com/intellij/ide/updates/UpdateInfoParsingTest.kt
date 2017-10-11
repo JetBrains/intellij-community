@@ -4,7 +4,6 @@ package com.intellij.ide.updates
 import com.intellij.openapi.updateSettings.impl.ChannelStatus
 import com.intellij.openapi.updateSettings.impl.UpdateChannel
 import com.intellij.openapi.updateSettings.impl.UpdatesInfo
-import com.intellij.openapi.util.BuildNumber
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.util.loadElement
 import org.junit.Assume.assumeTrue
@@ -82,7 +81,7 @@ class UpdateInfoParsingTest : BareTestFixtureTestCase() {
     assertEquals(1, channel.builds.size)
 
     val build = channel.builds[0]
-    assertEquals(BuildNumber.fromString("98.520"), build.number)
+    assertEquals("98.520", build.number.asStringWithoutProductCode())
     assertEquals("2011-04-03", SimpleDateFormat("yyyy-MM-dd").format(build.releaseDate))
     assertNotNull(build.downloadUrl)
     assertEquals(0, build.patches.size)
@@ -118,8 +117,8 @@ class UpdateInfoParsingTest : BareTestFixtureTestCase() {
         </product>
       </products>""".trimIndent())
     val buildInfo = info["IU"]!!.channels[0].builds[0]
-    assertEquals("162.100.1", buildInfo.number.asString())
-    assertEquals("162.99.2", buildInfo.patches[0].fromBuild.asString())
+    assertEquals("162.100.1", buildInfo.number.asStringWithoutProductCode())
+    assertEquals("162.99.2", buildInfo.patches[0].fromBuild.asStringWithoutProductCode())
   }
 
   private fun load(text: String) = UpdatesInfo(loadElement(text))
