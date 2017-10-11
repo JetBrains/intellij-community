@@ -235,5 +235,7 @@ class UpdateStrategyTest : BareTestFixtureTestCase() {
     return result
   }
 
-  private fun assertBuild(expected: String, build: BuildInfo?) = assertEquals(expected, build?.number.toString())
+  private fun assertBuild(expected: String, build: BuildInfo?) {
+    assertEquals(expected, build?.number?.asStringWithoutProductCode())
+  }
 }
