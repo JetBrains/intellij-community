@@ -28,13 +28,14 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -164,15 +165,18 @@ public abstract class DiffApplicationBase extends ApplicationStarterEx {
     }
 
     if (projects.isEmpty()) {
-      ContainerUtil.addAll(projects, ProjectManager.getInstance().getOpenProjects());
+      Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+      projects.addAll(ContainerUtil.filter(openProjects, project -> project.isInitialized() && !project.isDisposed()));
     }
     if (projects.isEmpty()) return null;
 
-    Project activeProject = ContainerUtil.find(projects, project -> {
-      JFrame frame = WindowManager.getInstance().getFrame(project);
-      return frame != null && frame.isActive();
-    });
-    if (activeProject != null) return activeProject;
+    Window recentFocusedWindow = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
+    if (recentFocusedWindow instanceof IdeFrame) {
+      Project recentFocusedProject = ((IdeFrame)recentFocusedWindow).getProject();
+      if (recentFocusedProject != null && projects.contains(recentFocusedProject)) {
+        return recentFocusedProject;
+      }
+    }
 
     return projects.iterator().next();
   }
