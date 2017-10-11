@@ -21,10 +21,6 @@ public class EmptySchemesManager extends SchemeManager<Object> {
   }
 
   @Override
-  public void clearAllSchemes() {
-  }
-
-  @Override
   @NotNull
   public List<Object> getAllSchemes() {
     return Collections.emptyList();
