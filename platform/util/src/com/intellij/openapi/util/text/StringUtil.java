@@ -2248,7 +2248,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Consider using {@link #replace(String, List, List)}
+   * @deprecated Use {@link #replace(String, List, List)}
    */
   @NotNull
   @Contract(pure = true)
