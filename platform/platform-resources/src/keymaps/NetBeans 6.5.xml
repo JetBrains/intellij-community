@@ -381,4 +381,7 @@
   <action id="Git.Reword.Commit">
     <keyboard-shortcut first-keystroke="control R"/>
   </action>
+  <action id="ShelvedChanges.Rename">
+    <keyboard-shortcut first-keystroke="control R"/>
+  </action>
 </keymap>
