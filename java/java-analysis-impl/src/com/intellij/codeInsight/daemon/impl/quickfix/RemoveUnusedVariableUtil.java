@@ -208,7 +208,8 @@ public class RemoveUnusedVariableUtil {
     return true;
   }
 
-  private static boolean isForLoopUpdate(PsiElement element) {
+  public static boolean isForLoopUpdate(@Nullable PsiElement element) {
+    if(element == null) return false;
     PsiElement parent = element.getParent();
     return parent instanceof PsiForStatement &&
            ((PsiForStatement)parent).getUpdate() == element;
