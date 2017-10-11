@@ -7,6 +7,7 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 
 import java.time.ZoneOffset
@@ -362,9 +363,8 @@ idea.fatal.error.notification=disabled
     }
     buildContext.ant.zip(destfile: "$buildContext.paths.artifacts/internalUtilities.zip") {
       fileset(file: "$buildContext.paths.buildOutputRoot/internal/internalUtilities.jar")
-      fileset(dir: "$buildContext.paths.communityHome/lib") {
-        include(name: "junit-4*.jar")
-        include(name: "hamcrest-core-*.jar")
+      buildContext.project.libraryCollection.findLibrary("JUnit4").getFiles(JpsOrderRootType.COMPILED).each {
+        fileset(file: it.absolutePath)
       }
       zipfileset(src: "$buildContext.paths.buildOutputRoot/internal/internalUtilities.jar") {
         include(name: "*.xml")
