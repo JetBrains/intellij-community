@@ -388,7 +388,7 @@ public class JdkUtil {
       Manifest manifest = new Manifest();
       manifest.getMainAttributes().putValue("Created-By", ApplicationNamesInfo.getInstance().getFullProductName());
 
-      String manifestText = "Manifest.MF\n";
+      String manifestText = "";
       if (dynamicVMOptions) {
         List<String> properties = new ArrayList<>();
         for (String param : vmParameters.getList()) {
