@@ -32,7 +32,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
-public class MergeApplication extends ApplicationStarterBase {
+public class MergeApplication extends DiffApplicationBase {
   @Override
   protected boolean checkArguments(@NotNull String[] args) {
     return (args.length == 4 || args.length == 5) && "merge".equals(args[0]);

@@ -41,8 +41,8 @@ import java.util.List;
 import java.util.Set;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
-public abstract class ApplicationStarterBase extends ApplicationStarterEx {
-  protected static final Logger LOG = Logger.getInstance(ApplicationStarterBase.class);
+public abstract class DiffApplicationBase extends ApplicationStarterEx {
+  protected static final Logger LOG = Logger.getInstance(DiffApplicationBase.class);
 
   protected abstract boolean checkArguments(@NotNull String[] args);
 
