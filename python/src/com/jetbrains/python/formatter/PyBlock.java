@@ -79,7 +79,7 @@ public class PyBlock implements ASTBlock {
                                                                          PyElementTypes.FROM_IMPORT_STATEMENT);
 
   public static final Key<Boolean> IMPORT_GROUP_BEGIN = Key.create("com.jetbrains.python.formatter.importGroupBegin");
-  private static final boolean ALIGN_IF_CONDITION_WITHOUT_PARENTHESES = false;
+  private static final boolean ALIGN_CONDITIONS_WITHOUT_PARENTHESES = false;
 
   @NotNull
   public static PyBlock createBlock(@Nullable PyBlock parent,
@@ -258,7 +258,7 @@ public class PyBlock implements ASTBlock {
         }
         if (childAlignment == null && topmostBinary != null &&
             !isParenthesisedIfCondition(topmostBinary.myNode) &&
-            !(isIfCondition(topmostBinary.myNode) && !ALIGN_IF_CONDITION_WITHOUT_PARENTHESES)) {
+            !(isCondition(topmostBinary.myNode) && !ALIGN_CONDITIONS_WITHOUT_PARENTHESES)) {
           childAlignment = topmostBinary.getAlignmentForChildren();
         }
         childIndent = Indent.getContinuationWithoutFirstIndent();
@@ -431,13 +431,15 @@ public class PyBlock implements ASTBlock {
     return parens != null && isIfCondition(parens);
   }
 
-  private static boolean isIfCondition(@NotNull ASTNode node) {
-    return isIfCondition(node.getPsi(PyExpression.class));
-  }
-
   private static boolean isIfCondition(@NotNull PyExpression expr) {
     final PyIfPart ifPart = as(expr.getParent(), PyIfPart.class);
     return ifPart != null && ifPart.getCondition() == expr && !ifPart.isElif();
+  }
+
+  private static boolean isCondition(@NotNull ASTNode node) {
+    final PsiElement element = node.getPsi();
+    final PyConditionalStatementPart conditionalStatement = as(element.getParent(), PyConditionalStatementPart.class);
+    return conditionalStatement != null && conditionalStatement.getCondition() == element;
   }
 
   @Nullable
