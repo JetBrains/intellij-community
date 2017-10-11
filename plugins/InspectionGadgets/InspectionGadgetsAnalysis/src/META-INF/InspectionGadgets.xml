@@ -1691,8 +1691,9 @@
                      implementationClass="com.siyeh.ig.naming.FieldNamingConventionInspection"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.naming.FieldNamingConventionMerger"/>
     <naming.convention.field implementation="com.siyeh.ig.naming.EnumeratedConstantNamingConvention" id="EnumeratedConstantNamingConvention" order="first"/>
-    <naming.convention.field implementation="com.siyeh.ig.naming.ConstantNamingConvention" id="ConstantNamingConvention" order="after EnumeratedConstantNamingConvention"/>
-    <naming.convention.field implementation="com.siyeh.ig.naming.StaticVariableNamingConvention" id="StaticVariableNamingConvention" order="after ConstantNamingConvention"/>
+    <naming.convention.field implementation="com.siyeh.ig.naming.ConstantWithMutableFieldTypeNamingConvention" id="ConstantWithMutableFieldTypeNamingConvention" order="after EnumeratedConstantNamingConvention"/>
+    <naming.convention.field implementation="com.siyeh.ig.naming.ConstantNamingConvention" id="ConstantNamingConvention" order="after ConstantWithMutableFieldTypeNamingConvention"/>
+    <naming.convention.field implementation="com.siyeh.ig.naming.StaticVariableNamingConvention" id="StaticVariableNamingConvention" order="after ConstantWithMutableFieldTypeNamingConvention"/>
     <naming.convention.field implementation="com.siyeh.ig.naming.InstanceVariableNamingConvention" id="InstanceVariableNamingConvention" order="after StaticVariableNamingConvention"/>
 
     <localInspection groupPath="Java" language="JAVA" shortName="DollarSignInName" bundle="com.siyeh.InspectionGadgetsBundle" key="dollar.sign.in.name.display.name"

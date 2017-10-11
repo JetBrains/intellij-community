@@ -34,6 +34,7 @@ import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.JdomKt;
 import com.intellij.util.SmartList;
 import com.siyeh.ig.naming.ClassNamingConvention;
+import com.siyeh.ig.naming.FieldNamingConventionInspection;
 import com.siyeh.ig.naming.NewClassNamingConventionInspection;
 import com.siyeh.ig.naming.NewMethodNamingConventionInspection;
 import org.jdom.Element;
@@ -500,6 +501,58 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     assertTrue(profile.isToolEnabled(HighlightDisplayKey.find("NewMethodNamingConvention"), null));
     assertFalse(tool.isConventionEnabled("JUnit4MethodNamingConvention"));
     assertFalse(tool.isConventionEnabled("JUnit3MethodNamingConvention"));
+
+    Element toImportElement = profile.writeScheme();
+    final InspectionProfileImpl importedProfile =
+      InspectionProfileSchemesPanel.importInspectionProfile(toImportElement, getApplicationProfileManager(), getProject());
+
+    //check merged
+    Element mergedElement = JdomKt.loadElement(customSettingsText);
+    profile = createProfile(new InspectionProfileImpl("foo"));
+    profile.readExternal(mergedElement);
+    profile.getModifiableModel().commit();
+    assertThat(profile.writeScheme()).isEqualTo(mergedElement);
+
+    assertThat(importedProfile.writeScheme()).isEqualTo(mergedElement);
+  }
+
+  public void testMergeFieldNamingConventions() throws Exception {
+    final Element element = JdomKt.loadElement("<profile version=\"1.0\">\n" +
+                                               "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                                               "</profile>");
+    InspectionProfileImpl profile = createProfile(new InspectionProfileImpl("foo"));
+    profile.readExternal(element);
+    profile.getModifiableModel().commit();
+    assertThat(profile.writeScheme()).isEqualTo(element);
+
+    String customSettingsText = "<profile version=\"1.0\">\n" +
+                                "  <option name=\"myName\" value=\"empty\" />\n" +
+                                "  <inspection_tool class=\"ConstantNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                                "    <option name=\"m_regex\" value=\"i_[a-z][A-Za-z\\d]*\" />\n" +
+                                "    <option name=\"m_minLength\" value=\"4\" />\n" +
+                                "    <option name=\"m_maxLength\" value=\"32\" />\n" +
+                                "    <option name=\"onlyCheckImmutables\" value=\"true\" />\n" +
+                                "  </inspection_tool>\n" +
+                                "  <inspection_tool class=\"StaticVariableNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                                "    <option name=\"m_regex\" value=\"i_[a-z][A-Za-z\\d]*\" />\n" +
+                                "    <option name=\"m_minLength\" value=\"4\" />\n" +
+                                "    <option name=\"m_maxLength\" value=\"32\" />\n" +
+                                "    <option name=\"checkMutableFinals\" value=\"true\" />\n" +
+                                "  </inspection_tool>\n" +
+                                "</profile>";
+
+    final Element allEnabledProfile = JdomKt.loadElement(customSettingsText);
+    profile.readExternal(allEnabledProfile);
+    profile.getModifiableModel().commit();
+    assertEquals(customSettingsText, serialize(profile));
+
+    InspectionToolWrapper wrapper = profile.getInspectionTool("FieldNamingConvention", getProject());
+    assertNotNull(wrapper);
+    FieldNamingConventionInspection tool = (FieldNamingConventionInspection)wrapper.getTool();
+    assertTrue(profile.isToolEnabled(HighlightDisplayKey.find("FieldNamingConvention"), null));
+    assertTrue(tool.isConventionEnabled("StaticVariableNamingConvention"));
+    assertTrue(tool.isConventionEnabled("ConstantNamingConvention"));
+    assertTrue(tool.isConventionEnabled("ConstantWithMutableFieldTypeNamingConvention"));
 
     Element toImportElement = profile.writeScheme();
     final InspectionProfileImpl importedProfile =

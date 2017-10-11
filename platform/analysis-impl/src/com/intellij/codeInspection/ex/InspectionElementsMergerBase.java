@@ -79,7 +79,7 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
     final Element toolElement = new Element(InspectionProfileImpl.INSPECTION_TOOL_TAG);
 
     for (String sourceToolName : getSourceToolNames()) {
-      Element sourceElement = inspectionElements.get(sourceToolName);
+      Element sourceElement = getSourceElement(inspectionElements, sourceToolName);
 
       if (sourceElement == null) {
         if (includeDefaults) {
@@ -130,8 +130,12 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
     return null;
   }
 
+  protected Element getSourceElement(Map<String, Element> inspectionElements, String sourceToolName) {
+    return inspectionElements.get(sourceToolName);
+  }
+
   private void copyDefaultSettings(Element targetElement, Map<String, Element> inspectionElements, String sourceToolName) {
-    Element oldElement = inspectionElements.get(sourceToolName);
+    Element oldElement = getSourceElement(inspectionElements, sourceToolName);
     if (oldElement != null) {
       Element defaultElement = wrapElement(sourceToolName, oldElement, targetElement);
       oldElement.getChildren().stream()

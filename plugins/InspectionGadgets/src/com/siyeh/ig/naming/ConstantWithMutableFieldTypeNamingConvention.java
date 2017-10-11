@@ -20,10 +20,11 @@ import com.intellij.codeInspection.naming.NamingConventionBean;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.psiutils.ClassUtils;
 
-public class ConstantNamingConvention extends NamingConvention<PsiField> {
+public class ConstantWithMutableFieldTypeNamingConvention extends NamingConvention<PsiField> {
 
-  static final String CONSTANT_NAMING_CONVENTION_SHORT_NAME = "ConstantNamingConvention";
+  static final String CONSTANT_WITH_MUTABLE_FIELD_TYPE_NAMING_CONVENTION_SHORT_NAME = "ConstantWithMutableFieldTypeNamingConvention";
 
   private static final int DEFAULT_MIN_LENGTH = 5;
   private static final int DEFAULT_MAX_LENGTH = 32;
@@ -31,12 +32,12 @@ public class ConstantNamingConvention extends NamingConvention<PsiField> {
 
   @Override
   public String getElementDescription() {
-    return InspectionGadgetsBundle.message("constant.naming.convention.element.description");
+    return InspectionGadgetsBundle.message("constant.with.mutable.field.naming.convention.element.description");
   }
 
   @Override
   public String getShortName() {
-    return CONSTANT_NAMING_CONVENTION_SHORT_NAME;
+    return CONSTANT_WITH_MUTABLE_FIELD_TYPE_NAMING_CONVENTION_SHORT_NAME;
   }
 
   @Override
@@ -47,6 +48,6 @@ public class ConstantNamingConvention extends NamingConvention<PsiField> {
 
   @Override
   public boolean isApplicable(PsiField field) {
-    return field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL);
+    return field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL) && !ClassUtils.isImmutable(field.getType());
   }
 }
