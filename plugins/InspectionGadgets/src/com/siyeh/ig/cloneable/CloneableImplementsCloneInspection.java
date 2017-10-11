@@ -125,8 +125,8 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
       }
       methodText.append("{\nreturn (").append(element.getText()).append(") super.clone();\n").append("}");
       final PsiMethod method = JavaPsiFacade.getElementFactory(project).createMethodFromText(methodText.toString(), element);
+      final PsiElement newElement = parent.add(method);
       if (isOnTheFly()) {
-        final PsiElement newElement = parent.add(method);
         final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
         if (editor != null) {
           GenerateMembersUtil.positionCaret(editor, newElement, true);
