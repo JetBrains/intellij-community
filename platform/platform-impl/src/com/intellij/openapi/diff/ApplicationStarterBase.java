@@ -19,17 +19,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationStarterEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.Arrays;
 
 /**
@@ -113,52 +105,6 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
     }
 
     System.exit(0);
-  }
-
-  public static VirtualFile findOrCreateFile(String path, @Nullable String currentDirectory) throws IOException {
-    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path));
-    if (file == null) {
-      boolean result = new File(path).createNewFile();
-      if (result) {
-        return findFile(path, currentDirectory);
-      }
-      else {
-        throw new FileNotFoundException("Can't create file " + path);
-      }
-    }
-    return file;
-  }
-
-  /**
-   * Get direct from file because IDEA cache files(see #IDEA-81067)
-   */
-  public static String getText(VirtualFile file) throws IOException {
-    FileInputStream inputStream = new FileInputStream(file.getPath());
-    try {
-      return StreamUtil.readText(inputStream);
-    }
-    finally {
-      inputStream.close();
-    }
-  }
-
-  public static class OperationFailedException extends IOException {
-    public OperationFailedException(@NotNull String message) {
-      super(message);
-    }
-  }
-
-  @NotNull
-  public static VirtualFile findFile(final String path, @Nullable String currentDirectory) throws OperationFailedException {
-    File ioFile = new File(path);
-    if (!ioFile.isAbsolute() && currentDirectory != null) {
-      ioFile = new File(currentDirectory, path);
-    }
-    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
-    if (file == null) {
-      throw new OperationFailedException("Can't find file " + path);
-    }
-    return file;
   }
 
   @Override
