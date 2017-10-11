@@ -15,6 +15,7 @@
     <inspectionElementsMerger implementation="com.siyeh.ig.internationalization.CallToSuspiciousStringMethodInspectionMerger"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.visibility.MethodOverridesInaccessibleMethodMerger"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.security.SerializableClassInSecureContextMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.redundancy.RedundantStringOperationMerger"/>
 
     <!--group.names.abstraction.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="BooleanParameter" bundle="com.siyeh.InspectionGadgetsBundle" key="boolean.parameter.display.name"
@@ -2028,12 +2029,9 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="string.replaceable.by.string.buffer.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.performance.StringReplaceableByStringBufferInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="RedundantStringToString" shortName="StringToString" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="string.to.string.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues"
-                     enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.performance.StringToStringInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="SubstringZero" bundle="com.siyeh.InspectionGadgetsBundle" key="substring.zero.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="true"
-                     level="WARNING" implementationClass="com.siyeh.ig.performance.SubstringZeroInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="RedundantStringOperation" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="inspection.redundant.string.operation.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
+                     enabledByDefault="true" level="WARNING" cleanupTool="true" implementationClass="com.siyeh.ig.redundancy.RedundantStringOperationInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="TailRecursion" bundle="com.siyeh.InspectionGadgetsBundle" key="tail.recursion.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="true"
                      level="INFORMATION" implementationClass="com.siyeh.ig.performance.TailRecursionInspection"/>
