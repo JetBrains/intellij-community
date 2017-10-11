@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,20 @@
  */
 package com.siyeh.ig.cloneable;
 
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CloneUtils;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -61,10 +66,32 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new CreateCloneMethodFix();
+    final PsiClass aClass = (PsiClass)infos[0];
+    if (aClass.hasModifierProperty(PsiModifier.FINAL)) {
+      return null;
+    }
+    final PsiMethod[] superMethods = aClass.findMethodsByName(HardcodedMethodConstants.CLONE, true);
+    boolean generateThrows = false;
+    for (PsiMethod method : superMethods) {
+      if (CloneUtils.isClone(method)) {
+        if (method.hasModifierProperty(PsiModifier.FINAL)) {
+          return null;
+        }
+        generateThrows = MethodUtils.hasInThrows(method, "java.lang.CloneNotSupportedException");
+        break;
+      }
+    }
+    return new CreateCloneMethodFix(generateThrows);
   }
 
   private static class CreateCloneMethodFix extends InspectionGadgetsFix {
+
+    private final boolean myGenerateThrows;
+
+    public CreateCloneMethodFix(boolean generateThrows) {
+      myGenerateThrows = generateThrows;
+    }
+
     @NotNull
     @Override
     public String getFamilyName() {
@@ -79,12 +106,21 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
         return;
       }
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final String cloneMethod =
-        "public " + element.getText() + " clone() throws java.lang.CloneNotSupportedException {\n" +
-        "return (" + element.getText() + ") super.clone();\n" +
-        "}";
+      String cloneMethod = "public " + element.getText() + " clone() ";
+      if (myGenerateThrows) {
+        cloneMethod += "throws java.lang.CloneNotSupportedException ";
+      }
+      cloneMethod += "{\n" +
+                     "return (" + element.getText() + ") super.clone();\n" +
+                     "}";
       final PsiMethod method = factory.createMethodFromText(cloneMethod, element);
-      parent.add(method);
+      if (isOnTheFly()) {
+        final PsiElement newElement = parent.add(method);
+        final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+        if (editor != null) {
+          GenerateMembersUtil.positionCaret(editor, newElement, true);
+        }
+      }
     }
   }
 
@@ -97,7 +133,6 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      // no call to super, so it doesn't drill down
       if (aClass.isInterface() || aClass.isAnnotationType() || aClass.isEnum()) {
         return;
       }
@@ -118,7 +153,7 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
           return;
         }
       }
-      registerClassError(aClass);
+      registerClassError(aClass, aClass);
     }
   }
 }
