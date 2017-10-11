@@ -1929,9 +1929,6 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="collections.must.have.initial.capacity.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.performance.CollectionsMustHaveInitialCapacityInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ConstantStringIntern" bundle="com.siyeh.InspectionGadgetsBundle" key="constant.string.intern.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="true"
-                     level="WARNING" implementationClass="com.siyeh.ig.performance.ConstantStringInternInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="DynamicRegexReplaceableByCompiledPattern" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="dynamic.regex.replaceable.by.compiled.pattern.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"

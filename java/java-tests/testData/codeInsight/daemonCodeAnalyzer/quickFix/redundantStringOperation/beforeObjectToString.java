@@ -1,4 +1,4 @@
-// "Remove 'toString'" "false"
+// "Remove redundant 'toString' call" "false"
 class Foo {
   public static void main(String[] args) {
     Object[] a = args;

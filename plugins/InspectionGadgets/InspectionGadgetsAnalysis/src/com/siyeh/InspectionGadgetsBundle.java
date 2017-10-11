@@ -34,7 +34,7 @@ public class InspectionGadgetsBundle {
   }
 
   private static Reference<ResourceBundle> ourBundle;
-  @NonNls private static final String BUNDLE = "com.siyeh.InspectionGadgetsBundle";
+  @NonNls public static final String BUNDLE = "com.siyeh.InspectionGadgetsBundle";
 
   private InspectionGadgetsBundle() {
   }

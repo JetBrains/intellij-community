@@ -16,7 +16,7 @@ public class RedundantStringOperationMerger extends InspectionElementsMerger {
   public String[] getSourceToolNames() {
     return new String[] {
       "StringToString", "RedundantStringToString",
-      "SubstringZero"
+      "SubstringZero", "ConstantStringIntern"
     };
   }
 }
