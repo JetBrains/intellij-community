@@ -5,13 +5,6 @@ except:
 import traceback
 from os.path import basename
 
-try:
-    __setFalse = False
-except:
-    import __builtin__
-    setattr(__builtin__, 'True', 1)
-    setattr(__builtin__, 'False', 0)
-
 from _pydevd_bundle import pydevd_constants
 from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, xrange
 

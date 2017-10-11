@@ -26,7 +26,7 @@ def save_main_module(file, module_name):
     m = new_module('__main__')
     sys.modules['__main__'] = m
     if hasattr(sys.modules[module_name], '__loader__'):
-        setattr(m, '__loader__', getattr(sys.modules[module_name], '__loader__'))
+        m.__loader__ = getattr(sys.modules[module_name], '__loader__')
     m.__file__ = file
 
     return m

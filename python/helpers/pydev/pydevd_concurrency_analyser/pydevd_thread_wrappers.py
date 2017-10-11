@@ -14,7 +14,7 @@ def wrapper(fun):
 def wrap_attr(obj, attr):
     t_save_start = getattr(obj, attr)
     setattr(obj, attr, wrapper(t_save_start))
-    setattr(obj, "_pydev_run_patched", True)
+    obj._pydev_run_patched = True
 
 
 class ObjectWrapper(object):

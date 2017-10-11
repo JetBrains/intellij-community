@@ -6,13 +6,6 @@ except ImportError:
     import builtins as __builtin__
 
 try:
-    False
-    True
-except NameError: # version < 2.3 -- didn't have the True/False builtins
-    setattr(__builtin__, 'True', 1)
-    setattr(__builtin__, 'False', 0)
-    
-try:
     import java.lang #@UnusedImport
     from _pydev_bundle import _pydev_jy_imports_tipper
     _pydev_imports_tipper = _pydev_jy_imports_tipper
