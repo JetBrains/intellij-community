@@ -61,6 +61,8 @@ public class DiffApplication extends DiffApplicationBase {
     else {
       request = DiffRequestFactory.getInstance().createFromFiles(project, files.get(0), files.get(1));
     }
-    DiffManagerEx.getInstance().showDiffBuiltin(project, request, DiffDialogHints.MODAL);
+
+    DiffDialogHints dialogHints = project != null ? DiffDialogHints.DEFAULT : DiffDialogHints.MODAL;
+    DiffManagerEx.getInstance().showDiffBuiltin(project, request, dialogHints);
   }
 }
