@@ -124,8 +124,9 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
           if (finalChoice) {
             return doFinalStep(() -> {
               PsiDocumentManager.getInstance(project).commitAllDocuments();
-              LOG.assertTrue(selectedValue.isValid());
-              doImport(selectedValue);
+              if (selectedValue.isValid()) {
+                doImport(selectedValue);
+              }
             });
           }
 
