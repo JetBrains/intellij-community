@@ -353,14 +353,14 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     }
   }
 
-  public void activateView(final ShelvedChangeList list) {
+  public void activateView(@Nullable final ShelvedChangeList list) {
     runAfterUpdate(() -> {
       if (list != null) {
         selectShelvedList(list);
       }
       myContentManager.setSelectedContent(myContent);
       ToolWindow window = getVcsToolWindow();
-      if (!window.isVisible()) {
+      if (window != null && !window.isVisible()) {
         window.activate(null);
       }
     });
