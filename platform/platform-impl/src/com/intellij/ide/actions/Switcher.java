@@ -1115,12 +1115,12 @@ public class Switcher extends AnAction implements DumbAware {
       protected void selectElement(final Object element, String selectedText) {
         if (element instanceof FileInfo) {
           if (!toolWindows.isSelectionEmpty()) toolWindows.clearSelection();
+          files.clearSelection();
           files.setSelectedValue(element, true);
         }
         else {
           if (!files.isSelectionEmpty()) files.clearSelection();
-          IdeFocusManager.findInstanceByComponent(toolWindows).requestFocus(toolWindows, true).doWhenDone(
-            () -> toolWindows.setSelectedValue(element, true));
+          toolWindows.setSelectedValue(element, true);
         }
       }
 
