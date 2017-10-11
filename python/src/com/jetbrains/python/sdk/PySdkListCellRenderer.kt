@@ -23,8 +23,9 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.LayeredIcon
-import com.intellij.ui.ListCellRendererWrapper
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.TitledSeparator
+import com.intellij.util.ui.JBUI
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import java.awt.Component
 import javax.swing.Icon
@@ -37,7 +38,9 @@ open class PySdkListCellRenderer(private val sdkModifiers: Map<Sdk, SdkModificat
   override fun getListCellRendererComponent(list: JList<out Any>?, value: Any?, index: Int, selected: Boolean,
                                             hasFocus: Boolean): Component =
     when (value) {
-      SEPARATOR -> ListCellRendererWrapper.createSeparator(null)
+      SEPARATOR -> TitledSeparator(null).apply {
+        border = JBUI.Borders.empty()
+      }
       else -> super.getListCellRendererComponent(list, value, index, selected, hasFocus)
     }
 
