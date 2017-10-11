@@ -59,6 +59,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -121,7 +122,6 @@ public class IdeEventQueue extends EventQueue {
   private final List<EventDispatcher> myPostProcessors = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Set<Runnable> myReady = ContainerUtil.newHashSet();
   private boolean myKeyboardBusy;
-  private boolean myDispatchingFocusEvent;
   private boolean myWinMetaPressed;
   private int myInputMethodLock;
   private final com.intellij.util.EventDispatcher<PostEventHook>
@@ -134,21 +134,21 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private void ifFocusEventsInTheQueue(Consumer<AWTEvent> yes, Runnable no) {
-    if (!timestampsToFocusEvents.isEmpty()) {
+    if (!focusEventsList.isEmpty()) {
       // find the latest focus gained
-      Set<Map.Entry<Long, AWTEvent>> focusEvents = timestampsToFocusEvents.entrySet();
-      Optional<AWTEvent> first = focusEvents.stream().
-        map(entry -> entry.getValue()).
+      Optional<AWTEvent> first = focusEventsList.stream().
         filter(e ->
                  e.getID() == FocusEvent.FOCUS_GAINED).
-          findFirst();
+        findFirst();
 
       if (first.isPresent()) {
         yes.accept(first.get());
-      } else {
+      }
+      else {
         no.run();
       }
-    } else {
+    }
+    else {
       no.run();
     }
   }
@@ -415,19 +415,15 @@ public class IdeEventQueue extends EventQueue {
 
     if (isFocusEvent(e)) {
       AWTEvent finalEvent = e;
-     // System.err.println("GOT: " + e.paramString());
-      StreamEx.of(timestampsToFocusEvents.entrySet()).
-        takeWhile(entry -> entry.getValue().equals(finalEvent)).
-        collect(Collectors.toList()).forEach(entry -> {
-        AWTEvent awtEvent = timestampsToFocusEvents.remove(entry.getKey());
-        Runnable runnable = myRunnablesWaitingFocusChange.remove(awtEvent);
-        if (runnable != null) {
-        //  System.err.println("     processed (" + entry.getKey() + ") : " + awtEvent.paramString());
-          runnable.run();
-        }
-      });
-
-
+      StreamEx.of(focusEventsList).
+          takeWhile(entry -> entry.equals(finalEvent)).
+          collect(Collectors.toList()).forEach(entry -> {
+          focusEventsList.remove(entry);
+          Runnable runnable = myRunnablesWaitingFocusChange.remove(entry);
+          if (runnable != null) {
+            runnable.run();
+          }
+        });
     }
   }
 
@@ -762,18 +758,12 @@ public class IdeEventQueue extends EventQueue {
 
   private void defaultDispatchEvent(@NotNull AWTEvent e) {
     try {
-      myDispatchingFocusEvent = e instanceof FocusEvent;
-
       maybeReady();
       fixStickyAlt(e);
-
       super.dispatchEvent(e);
     }
     catch (Throwable t) {
       processException(t);
-    }
-    finally {
-      myDispatchingFocusEvent = false;
     }
   }
 
@@ -1113,7 +1103,8 @@ public class IdeEventQueue extends EventQueue {
       e.getID() == WindowEvent.WINDOW_GAINED_FOCUS;
   }
 
-  private Map <Long, AWTEvent> timestampsToFocusEvents = new TreeMap<>();
+  private ConcurrentLinkedQueue<AWTEvent> focusEventsList =
+      new ConcurrentLinkedQueue<>();
 
   // return true if posted, false if consumed immediately
   boolean doPostEvent(@NotNull AWTEvent event) {
@@ -1132,7 +1123,7 @@ public class IdeEventQueue extends EventQueue {
     }
 
     if (isFocusEvent(event)) {
-      timestampsToFocusEvents.put(System.currentTimeMillis(), event);
+        focusEventsList.add(event);
     }
 
     super.postEvent(event);
