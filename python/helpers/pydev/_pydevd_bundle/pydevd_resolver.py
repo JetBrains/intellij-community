@@ -454,7 +454,7 @@ class NdArrayResolver:
         return None
 
     def get_dictionary(self, obj):
-        ret = dict()
+        ret = {}
         ret['__internals__'] = defaultResolver.get_dictionary(obj)
         if obj.size > 1024 * 1024:
             ret['min'] = 'ndarray too big, calculating min would slow down debugging'
@@ -569,7 +569,7 @@ class FrameResolver:
 
 
     def get_dictionary(self, obj):
-        ret = dict()
+        ret = {}
         ret['__internals__'] = defaultResolver.get_dictionary(obj)
         ret['stack'] = self.get_frame_stack(obj)
         ret['f_locals'] = obj.f_locals
