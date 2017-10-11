@@ -139,11 +139,6 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
       // restore the frame if it is minimized
       projectFrame.setExtendedState(frameState ^ Frame.ICONIFIED);
     }
-    projectFrame.toFront();
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(projectFrame.getMostRecentFocusOwner(), true);
-    });
-    //ProjectUtil.focusProjectWindow(project, true);
   }
 
   @Override
