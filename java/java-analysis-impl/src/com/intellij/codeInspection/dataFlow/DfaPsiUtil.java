@@ -25,6 +25,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
@@ -103,6 +104,10 @@ public class DfaPsiUtil {
       return Nullness.NOT_NULL;
     }
 
+    if (owner instanceof PsiMethod && isMapGet((PsiMethod)owner)) {
+      return Nullness.UNKNOWN;
+    }
+
     Nullness fromType = getTypeNullability(resultType);
     if (fromType != Nullness.UNKNOWN) return fromType;
 
@@ -118,6 +123,12 @@ public class DfaPsiUtil {
     }
 
     return Nullness.UNKNOWN;
+  }
+
+  private static boolean isMapGet(@NotNull PsiMethod method) {
+    if (!"get".equals(method.getName())) return false;
+    PsiMethod superMethod = DeepestSuperMethodsSearch.search(method).findFirst();
+    return "java.util.Map.get".equals(PsiUtil.getMemberQualifiedName(superMethod != null ? superMethod : method));
   }
 
   @NotNull
