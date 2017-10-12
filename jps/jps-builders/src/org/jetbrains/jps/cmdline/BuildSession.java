@@ -97,8 +97,8 @@ final class BuildSession implements Runnable, CanceledStatus {
     for (CmdlineRemoteProto.Message.KeyValuePair pair : params.getBuilderParameterList()) {
       builderParams.put(pair.getKey(), pair.getValue());
     }
-    myInitialFSDelta = delta;
     boolean loadUnloadedModules = Boolean.parseBoolean(builderParams.get(BuildParametersKeys.LOAD_UNLOADED_MODULES));
+    myInitialFSDelta = loadUnloadedModules ? null : delta;
     if (loadUnloadedModules && preloaded != null) {
       myPreloadedData = null;
       ProjectDescriptor projectDescriptor = preloaded.getProjectDescriptor();
