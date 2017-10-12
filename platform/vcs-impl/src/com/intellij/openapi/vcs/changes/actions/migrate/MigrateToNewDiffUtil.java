@@ -1,7 +1,6 @@
 package com.intellij.openapi.vcs.changes.actions.migrate;
 
 import com.intellij.diff.chains.DiffRequestProducer;
-import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContentImpl;
 import com.intellij.diff.contents.EmptyContent;
@@ -9,10 +8,7 @@ import com.intellij.diff.contents.FileContentImpl;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.ErrorDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
-import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.LineCol;
-import com.intellij.openapi.diff.DiffNavigationContext;
-import com.intellij.openapi.diff.DiffTool;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -20,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,14 +50,7 @@ public class MigrateToNewDiffUtil {
       newContents.add(convertedContent);
     }
 
-    SimpleDiffRequest newRequest = new SimpleDiffRequest(oldRequest.getWindowTitle(), newContents, Arrays.asList(titles));
-
-    DiffNavigationContext navigationContext = (DiffNavigationContext)oldRequest.getGenericData().get(DiffTool.SCROLL_TO_LINE.getName());
-    if (navigationContext != null) {
-      newRequest.putUserData(DiffUserDataKeysEx.NAVIGATION_CONTEXT, navigationContext);
-    }
-
-    return newRequest;
+    return new SimpleDiffRequest(oldRequest.getWindowTitle(), newContents, Arrays.asList(titles));
   }
 
   @Nullable

@@ -16,7 +16,6 @@
 package com.intellij.openapi.diff;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataKey;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,8 +50,6 @@ public interface DiffTool {
   @NonNls Object HINT_DO_NOT_IGNORE_WHITESPACES = "doNotIgnoreWhitespaces";
 
   @NonNls Object HINT_ALLOW_NO_DIFFERENCES = "allowNoDifferences";
-
-  @NonNls DataKey SCROLL_TO_LINE = DataKey.create("scrollToLine");
 
   /**
    * Opens window to compare contents. Clients should call {@link #canShow(com.intellij.openapi.diff.DiffRequest)} first.
