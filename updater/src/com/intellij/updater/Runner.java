@@ -62,7 +62,7 @@ public class Runner {
     return logger;
   }
 
-  private static void initLogger() throws IOException {
+  public static void initLogger() throws IOException {
     System.setProperty("java.util.logging.config.class", Object.class.getName());
 
     String dirPath = System.getProperty("idea.updater.log", System.getProperty("java.io.tmpdir", System.getProperty("user.home", ".")));
