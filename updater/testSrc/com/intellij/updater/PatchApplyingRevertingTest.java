@@ -72,8 +72,8 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   @Test
   public void testCreatingAndApplyingMD5() throws Exception {
     myPatchSpec.setHashAlgorithm("md5");
-    Patch patch = createPatch();
-    assertAppliedAndRevertedCorrectly(patch, PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI));
+    createPatch();
+    assertAppliedAndReverted(PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI));
   }
 
   @Test

@@ -45,10 +45,6 @@ public class PatchRenameRootTest extends PatchTestCase {
   private File myPatchFile;
   private File myBackupDir;
 
-  private static Map<String, Long> digest(Patch patch, File dir) throws IOException, OperationCancelledException {
-    return new TreeMap<>(patch.digestFiles(dir, Collections.emptyList(), false, TEST_UI));
-  }
-
   @Override
   @Before
   public void setUp() throws Exception {

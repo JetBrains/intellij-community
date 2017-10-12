@@ -15,7 +15,7 @@
  */
 package com.intellij.updater;
 
-public class PatchFileCreatorLargeFileTest extends PatchFileCreatorTest {
+public class PatchFileCreatorLargeFileTest extends PatchApplyingRevertingTest {
   @Override
   public void setUp() throws Exception {
     super.setUp();
