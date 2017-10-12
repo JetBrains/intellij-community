@@ -399,7 +399,7 @@ class PydevTestRunner(object):
                             #they don't have __init__.py
                             exclude = {}
                             for d in dirs:
-                                for init in ['__init__.py', '__init__.pyo', '__init__.pyc', '__init__.pyw']:
+                                for init in ['__init__.py', '__init__.pyo', '__init__.pyc', '__init__.pyw', '__init__$py.class']:
                                     if os.path.exists(os.path.join(root, d, init).replace('\\', '/')):
                                         break
                                 else:
@@ -486,7 +486,7 @@ class PydevTestRunner(object):
                     'error', buf_out.getvalue(), buf_err.getvalue(), pyfile, modname, 0)
 
             return None
-        
+
     def remove_duplicates_keeping_order(self, seq):
         seen = set()
         seen_add = seen.add
@@ -496,7 +496,7 @@ class PydevTestRunner(object):
         """ returns a list of modules given a list of files """
         #let's make sure that the paths we want are in the pythonpath...
         imports = [(s, self.__importify(s)) for s in pyfiles]
-        
+
         sys_path = [os.path.normpath(path) for path in sys.path]
         self.remove_duplicates_keeping_order(sys_path)
 

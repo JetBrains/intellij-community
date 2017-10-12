@@ -37,6 +37,9 @@ def _imp(name):
             s = 'Unable to import module: %s - sys.path: %s' % (str(name), sys.path)
             raise RuntimeError(s)
 
+import java.util
+_java_rt_file = getattr(java.util, '__file__', None)
+
 def Find(name):
     f = None
     if name.startswith('__builtin__'):
@@ -73,10 +76,21 @@ def Find(name):
             foundAs = foundAs + comp
 
         old_comp = comp
+        
+    if f is None and name.startswith('java.lang'):
+        # Hack: java.lang.__file__ is None on Jython 2.7 (whereas it pointed to rt.jar on Jython 2.5).
+        f = _java_rt_file
 
+    if f is not None:
+        if f.endswith('.pyc'):
+            f = f[:-1]
+        elif f.endswith('$py.class'):
+            f = f[:-len('$py.class')] + '.py'
     return f, mod, parent, foundAs
 
 def format_param_class_name(paramClassName):
+    if paramClassName.startswith('<type \'') and paramClassName.endswith('\'>'):
+        paramClassName = paramClassName[len('<type \''): -2]
     if paramClassName.startswith('['):
         if paramClassName == '[C':
             paramClassName = 'char[]'
@@ -119,9 +133,12 @@ class Info:
     def basic_as_str(self):
         '''@returns this class information as a string (just basic format)
         '''
-
+        args = self.args
+        if sys.version_info[0] <= 2:
+            # Supress the u''
+            args = [arg.encode('utf-8') if isinstance(arg, unicode) else arg for arg in args]
         s = 'function:%s args=%s, varargs=%s, kwargs=%s, docs:%s' % \
-            (str(self.name), str(self.args), str(self.varargs), str(self.kwargs), str(self.doc))
+            (self.name, args, self.varargs, self.kwargs, self.doc)
         return s
 
 
@@ -151,7 +168,7 @@ class Info:
         return str(s)
 
 def isclass(cls):
-    return isinstance(cls, core.PyClass)
+    return isinstance(cls, core.PyClass) or type(cls) == java.lang.Class
 
 def ismethod(func):
     '''this function should return the information gathered on a function

@@ -653,11 +653,16 @@ class WriterThreadCase7(debugger_unittest.AbstractWriterThread):
 
         self.write_step_over(thread_id)
 
+        self.wait_for_breakpoint_hit('108')
+
         self.write_get_frame(thread_id, frame_id)
 
         self.wait_for_vars('<xml><var name="variable_for_test_1" type="int" qualifier="{0}" value="int%253A 10" />%0A</xml>'.format(builtin_qualifier))
 
         self.write_step_over(thread_id)
+
+        self.wait_for_breakpoint_hit('108')
+
 
         self.write_get_frame(thread_id, frame_id)
 
