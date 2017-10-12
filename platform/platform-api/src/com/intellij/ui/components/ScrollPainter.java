@@ -71,9 +71,41 @@ class ScrollPainter extends RegionPainter.Alpha {
   }
 
   static final class EditorThumb {
-    static final RegionPainter<Float> DARCULA = new ScrollPainter(0, .33f, .12f, Gray.xA6, Gray.x1A);
-    static final RegionPainter<Float> DEFAULT = new Protected(new SubtractColor(0, .25f, .15f, Gray.x80, Gray.xA6),
-                                                              new ScrollPainter(0, .25f, .15f, Gray.x80, Gray.x59));
+    private static final RegionPainter<Float> DARCULA_OLD = new ScrollPainter(0, .33f, .12f, Gray.xA6, Gray.x1A);
+    private static final RegionPainter<Float> DARCULA_NEW = new EditorThumbPainter(
+      1,
+      value("win.editor.thumb.darcula.alpha.base", 89),
+      value("win.editor.thumb.darcula.alpha.delta", 166),
+      new ColorFunction(
+        value("win.editor.thumb.darcula.color.min", 0x8C),
+        value("win.editor.thumb.darcula.color.max", 0xA1)),
+      gray("win.editor.thumb.darcula.border", 0x1F));
+
+    private static final RegionPainter<Float> DEFAULT_OLD = new Protected(new SubtractColor(0, .25f, .15f, Gray.x80, Gray.xA6),
+                                                                          new ScrollPainter(0, .25f, .15f, Gray.x80, Gray.x59));
+    private static final RegionPainter<Float> DEFAULT_NEW = new EditorThumbPainter(
+      2,
+      value("win.editor.thumb.default.alpha.base", 140),
+      value("win.editor.thumb.default.alpha.delta", 115),
+      new ColorFunction(
+        value("win.editor.thumb.default.color.min", 0x9E),
+        value("win.editor.thumb.default.color.max", 0xBD)),
+      gray("win.editor.thumb.default.border", 0x8C));
+
+    static final RegionPainter<Float> DARCULA = new RegionPainter<Float>() {
+      @Override
+      public void paint(Graphics2D g, int x, int y, int width, int height, Float value) {
+        RegionPainter<Float> painter = Registry.is("ide.editor.thumb.experimental") ? DARCULA_NEW : DARCULA_OLD;
+        painter.paint(g, x, y, width, height, value);
+      }
+    };
+    static final RegionPainter<Float> DEFAULT = new RegionPainter<Float>() {
+      @Override
+      public void paint(Graphics2D g, int x, int y, int width, int height, Float value) {
+        RegionPainter<Float> painter = Registry.is("ide.editor.thumb.experimental") ? DEFAULT_NEW : DEFAULT_OLD;
+        painter.paint(g, x, y, width, height, value);
+      }
+    };
 
     static final class Mac {
       private static final RegionPainter<Float> DARCULA_OLD = new Round(1, .35f, .20f, xA6, x0D);
