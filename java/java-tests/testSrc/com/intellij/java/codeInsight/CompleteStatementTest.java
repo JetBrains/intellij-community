@@ -182,6 +182,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testReturnInLambda() { doTest(); }
   public void testSemicolonAfterLambda() { doTest(); }
   public void testModuleInfo() { doTest(); }
+  public void testDoubleFieldDeclaration() { doTest(); }
 
   private void doTestBracesNextLineStyle() {
     myJavaSettings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
