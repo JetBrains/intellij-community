@@ -1,6 +1,6 @@
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider
 from _pydevd_bundle.pydevd_resolver import defaultResolver, MAX_ITEMS_TO_HANDLE, TOO_LARGE_ATTR, TOO_LARGE_MSG
-from .helpers import find_mod_attr
+from .pydevd_helpers import find_mod_attr
 
 
 # =======================================================================================================================

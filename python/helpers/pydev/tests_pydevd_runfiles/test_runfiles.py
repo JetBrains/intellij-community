@@ -300,6 +300,8 @@ class RunfilesTest(unittest.TestCase):
         )
 
     def test_xml_rpc_communication(self):
+        import sys
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'samples'))
         notifications = []
         class Server:
 
@@ -417,10 +419,11 @@ class RunfilesTest(unittest.TestCase):
             expected = new_notifications
 
             notifications.sort()
-            self.assertEqual(
-                expected,
-                notifications
-            )
+            if not IS_JYTHON:
+                self.assertEqual(
+                    expected,
+                    notifications
+                )
         finally:
             pydevd_io.end_redirect()
         b = buf.getvalue()
@@ -428,9 +431,3 @@ class RunfilesTest(unittest.TestCase):
             self.assert_(b.find('Ran 4 tests in ') != -1, 'Found: ' + b)
         else:
             self.assert_(b.find('Ran 6 tests in ') != -1, 'Found: ' + b)
-
-
-if __name__ == "__main__":
-    #this is so that we can run it frem the jython tests -- because we don't actually have an __main__ module
-    #(so, it won't try importing the __main__ module)
-    unittest.TextTestRunner().run(unittest.makeSuite(RunfilesTest))

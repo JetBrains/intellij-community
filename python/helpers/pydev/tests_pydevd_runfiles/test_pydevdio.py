@@ -34,7 +34,3 @@ class Test(unittest.TestCase):
             #remove it to leave it ok for other tests
             sys.path.remove(ADD_TO_PYTHONPATH)
 
-if __name__ == '__main__':
-    #this is so that we can run it frem the jython tests -- because we don't actually have an __main__ module
-    #(so, it won't try importing the __main__ module)
-    unittest.TextTestRunner().run(unittest.makeSuite(Test))

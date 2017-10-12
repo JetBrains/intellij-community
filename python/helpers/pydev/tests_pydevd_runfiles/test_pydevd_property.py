@@ -122,13 +122,3 @@ class Test(unittest.TestCase):
         testObj.name = "Custom2"
         self.assertEqual(testObj.name, "Custom2")
 
-
-
-#=======================================================================================================================
-# main
-#=======================================================================================================================
-if __name__ == '__main__':
-    #this is so that we can run it from the jython tests -- because we don't actually have an __main__ module
-    #(so, it won't try importing the __main__ module)
-    unittest.TextTestRunner().run(unittest.makeSuite(Test))
-
