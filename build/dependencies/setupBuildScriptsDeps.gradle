@@ -34,7 +34,7 @@ task setupBuildScriptsDeps(dependsOn: configurations.buildScriptsDeps, type: Syn
 }
 
 private String loadLibraryMavenId(String libraryName) {
-  File file = new File(project.rootDir, "../../.idea/libraries/${libraryName}.xml")
+  File file = new File(project.rootDir, "../../.idea/libraries/${libraryName.replace('-', '_')}.xml")
   if (!file.exists()) {
     throw new GradleException("Cannot find $libraryName project library: $file doesn't exist")
   }
