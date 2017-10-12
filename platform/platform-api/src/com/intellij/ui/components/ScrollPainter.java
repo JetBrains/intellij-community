@@ -20,10 +20,13 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.RectanglePainter;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.RegionPainter;
 
 import java.awt.*;
 import java.awt.image.*;
+import java.util.function.Function;
+import java.util.function.IntSupplier;
 
 /**
  * @author Sergey.Malenkov
@@ -37,6 +40,13 @@ class ScrollPainter extends RegionPainter.Alpha {
       int value = Registry.intValue(key, defaultValue);
       return value <= 0 ? Gray._0 : value >= 255 ? Gray._255 : Gray.get(value);
     });
+  }
+
+  private static IntSupplier value(String key, int defaultValue) {
+    return () -> {
+      int value = Registry.intValue(key, defaultValue);
+      return value <= 0 ? 0 : value >= 255 ? 255 : value;
+    };
   }
 
   static final class Track {
@@ -66,13 +76,40 @@ class ScrollPainter extends RegionPainter.Alpha {
                                                               new ScrollPainter(0, .25f, .15f, Gray.x80, Gray.x59));
 
     static final class Mac {
-      static final RegionPainter<Float> DARCULA = new Round(1, .35f, .20f, xA6, x0D);
-      static final RegionPainter<Float> DEFAULT = Thumb.Mac.DEFAULT;
+      private static final RegionPainter<Float> DARCULA_OLD = new Round(1, .35f, .20f, xA6, x0D);
+      private static final RegionPainter<Float> DARCULA_NEW = new EditorThumbPainter(
+        1,
+        value("mac.editor.thumb.darcula.alpha.base", 102),
+        value("mac.editor.thumb.darcula.alpha.delta", 153),
+        new ColorFunction(
+          value("mac.editor.thumb.darcula.color.min", 0x8C),
+          value("mac.editor.thumb.darcula.color.max", 0xA1)),
+        gray("mac.editor.thumb.darcula.border", 0x1F));
 
-      static final class Overlay {
-        static final RegionPainter<Float> DARCULA = new Round(1, 0f, .55f, xA6, x0D);
-        static final RegionPainter<Float> DEFAULT = Thumb.Mac.Overlay.DEFAULT;
-      }
+      private static final RegionPainter<Float> DEFAULT_OLD = Thumb.Mac.DEFAULT;
+      private static final RegionPainter<Float> DEFAULT_NEW = new EditorThumbPainter(
+        2,
+        value("mac.editor.thumb.default.alpha.base", 102),
+        value("mac.editor.thumb.default.alpha.delta", 153),
+        new ColorFunction(
+          value("mac.editor.thumb.default.color.min", 0x59),
+          value("mac.editor.thumb.default.color.max", 0x73)),
+        null);
+
+      static final RegionPainter<Float> DARCULA = new RegionPainter<Float>() {
+        @Override
+        public void paint(Graphics2D g, int x, int y, int width, int height, Float value) {
+          RegionPainter<Float> painter = Registry.is("ide.editor.thumb.experimental") ? DARCULA_NEW : DARCULA_OLD;
+          painter.paint(g, x, y, width, height, value);
+        }
+      };
+      static final RegionPainter<Float> DEFAULT = new RegionPainter<Float>() {
+        @Override
+        public void paint(Graphics2D g, int x, int y, int width, int height, Float value) {
+          RegionPainter<Float> painter = Registry.is("ide.editor.thumb.experimental") ? DEFAULT_NEW : DEFAULT_OLD;
+          painter.paint(g, x, y, width, height, value);
+        }
+      };
     }
   }
 
@@ -238,6 +275,74 @@ class ScrollPainter extends RegionPainter.Alpha {
 
     @Override
     public void dispose() {
+    }
+  }
+
+  private static final class ColorFunction implements Function<Float, Color> {
+    private final IntSupplier myMinSupplier;
+    private final IntSupplier myMaxSupplier;
+
+    private ColorFunction(IntSupplier min, IntSupplier max) {
+      myMinSupplier = min;
+      myMaxSupplier = max;
+    }
+
+    @Override
+    public Color apply(Float value) {
+      int min = myMinSupplier.getAsInt();
+      if (value != null) {
+        int max = myMaxSupplier.getAsInt();
+        if (max != min) min += (int)(0.5 + value * (max - min));
+      }
+      //noinspection UseJBColor
+      return new Color(min, min, min);
+    }
+  }
+
+  private static final class EditorThumbPainter extends RegionPainter.Alpha {
+    private final int myOffset;
+    private final IntSupplier myAlphaBase;
+    private final IntSupplier myAlphaDelta;
+    private final Function<Float, Color> myFillFunction;
+    private final Color myDrawColor;
+    private Color myFillColor;
+
+    private EditorThumbPainter(int offset, IntSupplier base, IntSupplier delta, Function<Float, Color> fill, Color draw) {
+      myOffset = offset;
+      myAlphaBase = base;
+      myAlphaDelta = delta;
+      myFillFunction = fill;
+      myDrawColor = draw;
+    }
+
+    private float getAlpha(int width, int height) {
+      if (width == height) return myAlphaBase.getAsInt() + myAlphaDelta.getAsInt();
+
+      int size = Math.abs(width - height);
+      float threshold = JBUI.scale(500f);
+      if (threshold <= size) return myAlphaBase.getAsInt();
+
+      float function = 1 - size / threshold;
+      return myAlphaBase.getAsInt() + myAlphaDelta.getAsInt() * function * function;
+    }
+
+    @Override
+    public void paint(Graphics2D g, int x, int y, int width, int height, Float value) {
+      if (myOffset > 0) {
+        x += myOffset;
+        y += myOffset;
+        width -= myOffset + myOffset;
+        height -= myOffset + myOffset;
+      }
+      if (width > 0 && height > 0) {
+        myFillColor = myFillFunction.apply(value);
+        super.paint(g, x, y, width, height, getAlpha(width, height) / 255);
+      }
+    }
+
+    @Override
+    protected void paint(Graphics2D g, int x, int y, int width, int height) {
+      RectanglePainter.paint(g, x, y, width, height, SystemInfo.isMac ? Math.min(width, height) : 0, myFillColor, myDrawColor);
     }
   }
 }
