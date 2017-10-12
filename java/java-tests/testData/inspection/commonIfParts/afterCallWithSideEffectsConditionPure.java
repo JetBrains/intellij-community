@@ -1,4 +1,4 @@
-// "Extract common part with variables from if " "true"
+// "Extract common part with variables from if (may change semantics)" "true"
 
 import java.util.List;
 import java.util.Map;

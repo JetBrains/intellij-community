@@ -521,7 +521,7 @@ public class CommonIfPartsInspection extends BaseJavaBatchLocalInspectionTool {
       }
       if (headCommonParts.isEmpty() && tailCommonParts.isEmpty()) return null;
       final CommonPartType type = getType(headCommonParts, tailCommonParts, thenLen, elseLen, notEquivalentVariableDeclarations.isEmpty());
-      boolean mayChangeSemantics = SideEffectChecker.mayHaveSideEffects(condition) && !headCommonParts.isEmpty() && StreamEx.of(headCommonParts)
+      boolean mayChangeSemantics = SideEffectChecker.mayHaveSideEffects(condition) || !headCommonParts.isEmpty() && StreamEx.of(headCommonParts)
         .anyMatch(unit -> unit.mayChangeSemantics() && !(unit.getThenStatement() instanceof PsiDeclarationStatement));
       return new ExtractionContext(headCommonParts, tailCommonParts, type, null, equivalence.getSubstitutionTable(), mayChangeSemantics);
     }
