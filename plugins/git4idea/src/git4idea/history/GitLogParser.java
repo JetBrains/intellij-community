@@ -246,10 +246,6 @@ public class GitLogParser {
           String path2 = nameStatusMatcher.group(3);
           assertNotNull(status, "status", pathsAndStatuses);
           assertNotNull(path1, "path1", pathsAndStatuses);
-          paths.add(path1);
-          if (path2 != null) {
-            paths.add(path2);
-          }
           statuses.add(new GitLogStatusInfo(GitChangeType.fromString(status), path1, path2));
         }
       }

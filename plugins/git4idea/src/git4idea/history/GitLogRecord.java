@@ -63,7 +63,15 @@ class GitLogRecord {
   }
 
   @NotNull
-  private List<String> getPaths() {
+  private Collection<String> getPaths() {
+    if (!myStatusInfo.isEmpty()) {
+      LinkedHashSet<String> result = ContainerUtil.newLinkedHashSet();
+      for (GitLogStatusInfo info : myStatusInfo) {
+        result.add(info.getFirstPath());
+        if (info.getSecondPath() != null) result.add(info.getSecondPath());
+      }
+      return result;
+    }
     return myPaths;
   }
 
