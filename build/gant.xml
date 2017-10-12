@@ -50,7 +50,6 @@
         <include name="jna-platform.jar"/>
         <include name="oromatcher.jar"/>
         <include name="snappy-in-java-*.jar"/>
-        <include name="cli-parser-*.jar"/>
         <include name="nanoxml-*.jar"/>
         <include name="aether-*-all.jar"/>
         <include name="maven-aether-provider-*-all.jar"/>
