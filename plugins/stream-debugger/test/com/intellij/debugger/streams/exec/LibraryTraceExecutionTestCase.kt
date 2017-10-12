@@ -16,6 +16,7 @@
 package com.intellij.debugger.streams.exec
 
 import com.intellij.debugger.impl.OutputChecker
+import com.intellij.debugger.streams.test.TraceExecutionTestCase
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PluginPathManager
