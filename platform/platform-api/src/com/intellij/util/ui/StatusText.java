@@ -35,7 +35,7 @@ public abstract class StatusText {
   public static final SimpleTextAttributes DEFAULT_ATTRIBUTES = SimpleTextAttributes.GRAYED_ATTRIBUTES;
   public static final String DEFAULT_EMPTY_TEXT = UIBundle.message("message.nothingToShow");
 
-  private static final int Y_GAP = JBUI.scale(2);
+  private static final int Y_GAP = 2;
 
   @Nullable private Component myOwner;
   private Component myMouseTarget;
@@ -270,7 +270,7 @@ public abstract class StatusText {
     else {
       Rectangle primaryBounds = adjustComponentBounds(myComponent, bounds);
       Rectangle secondaryBounds = adjustComponentBounds(mySecondaryComponent, bounds);
-      secondaryBounds.y += primaryBounds.height + Y_GAP;
+      secondaryBounds.y += primaryBounds.height + JBUI.scale(Y_GAP);
 
       paintComponentInBounds(myComponent, g, primaryBounds);
       paintComponentInBounds(mySecondaryComponent, g, secondaryBounds);
@@ -304,6 +304,6 @@ public abstract class StatusText {
     if (!hasSecondaryText()) return componentSize;
     Dimension secondaryComponentSize = mySecondaryComponent.getPreferredSize();
     return new Dimension(Math.max(componentSize.width, secondaryComponentSize.width),
-                         componentSize.height + secondaryComponentSize.height + Y_GAP);
+                         componentSize.height + secondaryComponentSize.height + JBUI.scale(Y_GAP));
   }
 }
