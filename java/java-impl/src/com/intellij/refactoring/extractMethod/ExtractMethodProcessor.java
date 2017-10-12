@@ -231,7 +231,9 @@ public class ExtractMethodProcessor implements MatchProvider {
       myCodeFragmentMember = codeFragment.getParent();
     }
     if (myCodeFragmentMember == null) {
-      myCodeFragmentMember = ControlFlowUtil.findCodeFragment(codeFragment.getContext()).getParent();
+      PsiElement context = codeFragment.getContext();
+      LOG.assertTrue(context != null, "code fragment context is null");
+      myCodeFragmentMember = ControlFlowUtil.findCodeFragment(context).getParent();
     }
 
     myControlFlowWrapper = new ControlFlowWrapper(myProject, codeFragment, myElements);
