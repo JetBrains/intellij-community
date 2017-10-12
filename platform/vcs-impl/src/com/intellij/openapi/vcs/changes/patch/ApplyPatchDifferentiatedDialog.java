@@ -1226,7 +1226,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
             Change change = myChanges.get(i);
             FilePath filePath = ChangesUtil.getFilePath(change);
             FileStatus fileStatus = change.getFileStatus();
-            nodesData.add(new TreeModelBuilder.GenericNodeData(filePath, fileStatus, myIndex));
+            nodesData.add(new TreeModelBuilder.GenericNodeData(filePath, fileStatus, i));
           }
 
           TreeModelBuilder builder = new TreeModelBuilder(project, showFlatten);
