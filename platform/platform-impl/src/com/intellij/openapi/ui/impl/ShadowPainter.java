@@ -16,9 +16,12 @@
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUI.ScaleContext;
 import com.intellij.util.ui.JBUI.ScaleContextSupport;
 import com.intellij.util.ui.JBUI.ScaleContextAware;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -107,25 +110,51 @@ public class ShadowPainter extends ScaleContextSupport<ScaleContext> {
 
     myTopLeft.paintIcon(c, g, x, y);
     myTopRight.paintIcon(c, g, x + width - myTopRight.getIconWidth(), y);
-    myBottomRight.paintIcon(c, g, x + width - myBottomRight.getIconWidth(), y + height - myBottomRight.getIconHeight());
     myBottomLeft.paintIcon(c, g, x, y + height - myBottomLeft.getIconHeight());
+    myBottomRight.paintIcon(c, g, x + width - myBottomRight.getIconWidth(), y + height - myBottomRight.getIconHeight());
 
-    for (int _x = myTopLeft.getIconWidth(); _x < width - myTopRight.getIconWidth(); _x++) {
-      myCroppedTop.paintIcon(c, g, _x + x, y);
-    }
-    for (int _x = myBottomLeft.getIconWidth(); _x < width - myBottomLeft.getIconWidth(); _x++) {
-      myCroppedBottom.paintIcon(c, g, _x + x, y + height - bottomSize);
-    }
-    for (int _y = myTopLeft.getIconHeight(); _y < height - myBottomLeft.getIconHeight(); _y++) {
-      myCroppedLeft.paintIcon(c, g, x, _y + y);
-    }
-    for (int _y = myTopRight.getIconHeight(); _y < height - myBottomRight.getIconHeight(); _y++) {
-      myCroppedRight.paintIcon(c, g, x + width - rightSize, _y + y);
-    }
+    fill(g, myCroppedTop, x, y, myTopLeft.getIconWidth(), width - myTopRight.getIconWidth(), true);
+    fill(g, myCroppedBottom, x, y + height - bottomSize, myBottomLeft.getIconWidth(), width - myBottomRight.getIconWidth(), true);
+    fill(g, myCroppedLeft, x, y, myTopLeft.getIconHeight(), height - myBottomLeft.getIconHeight(), false);
+    fill(g, myCroppedRight, x + width - rightSize, y, myTopRight.getIconHeight(), height - myBottomRight.getIconHeight(), false);
 
     if (myBorderColor != null) {
       g.setColor(myBorderColor);
       g.drawRect(x + leftSize - 1, y + topSize - 1, width - leftSize - rightSize + 1, height - topSize - bottomSize + 1);
+    }
+  }
+
+  private static void fill(Graphics g, Icon pattern, int x, int y, int from, int to, boolean horizontally) {
+    double scale = JBUI.sysScale((Graphics2D)g);
+    if (UIUtil.isJreHiDPIEnabled() && Math.ceil(scale) > scale) {
+      // Direct painting for fractional scale
+      BufferedImage img = ImageUtil.toBufferedImage(IconUtil.toImage(pattern));
+      int patternSize = horizontally ? img.getWidth() : img.getHeight();
+      Graphics2D g2d = (Graphics2D)g.create();
+      try {
+        g2d.scale(1 / scale, 1 / scale);
+        g2d.translate(x * scale, y * scale);
+        for (int at = (int)Math.floor(from * scale); at < to * scale; at += patternSize) {
+          if (horizontally) {
+            g2d.drawImage(img, at, 0, null);
+          }
+          else {
+            g2d.drawImage(img, 0, at, null);
+          }
+        }
+      } finally {
+        g2d.dispose();
+      }
+    }
+    else {
+      for (int at = from; at < to; at++) {
+        if (horizontally) {
+          pattern.paintIcon(null, g, x + at, y);
+        }
+        else {
+          pattern.paintIcon(null, g, x, y + at);
+        }
+      }
     }
   }
 }

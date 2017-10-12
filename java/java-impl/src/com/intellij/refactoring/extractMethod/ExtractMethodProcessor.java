@@ -1963,16 +1963,16 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     if (myExtractedMethod != null && myParametrizedDuplicates != null) {
       if (ApplicationManager.getApplication().isUnitTestMode() ||
-          new ExtractMethodSignatureSuggester.PreviewDialog(myExtractedMethod, myParametrizedDuplicates.getParametrizedMethod(),
-                                                            myMethodCall, myParametrizedDuplicates.getParametrizedCall(),
-                                                            myParametrizedDuplicates.getSize()).showAndGet()) {
+          new SignatureSuggesterPreviewDialog(myExtractedMethod, myParametrizedDuplicates.getParametrizedMethod(),
+                                              myMethodCall, myParametrizedDuplicates.getParametrizedCall(),
+                                              myParametrizedDuplicates.getSize()).showAndGet()) {
 
         myDuplicates = myParametrizedDuplicates.getDuplicates();
         WriteCommandAction.runWriteCommandAction(myProject, () -> {
           myExtractedMethod = myParametrizedDuplicates.replaceMethod(myExtractedMethod);
           myMethodCall = myParametrizedDuplicates.replaceCall(myMethodCall);
         });
-        myVariableDatum = myParametrizedDuplicates.getVariableData();
+        myVariableDatum = myParametrizedDuplicates.getVariableDatum();
         return null;
       }
     }

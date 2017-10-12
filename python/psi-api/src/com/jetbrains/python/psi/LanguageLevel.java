@@ -91,6 +91,10 @@ public enum LanguageLevel {
     return mySupportsSetLiterals;
   }
 
+  public boolean isPython2() {
+    return !myIsPy3K;
+  }
+
   public boolean isPy3K() {
     return myIsPy3K;
   }
@@ -152,7 +156,7 @@ public enum LanguageLevel {
   public static LanguageLevel forElement(@NotNull PsiElement element) {
     final PsiFile containingFile = element.getContainingFile();
     if (containingFile instanceof PyFile) {
-      return ((PyFile) containingFile).getLanguageLevel();
+      return ((PyFile)containingFile).getLanguageLevel();
     }
     return getDefault();
   }

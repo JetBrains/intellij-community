@@ -3,8 +3,9 @@ package com.intellij.index
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
-import com.intellij.psi.impl.cache.impl.id.IdIndexer
+import com.intellij.psi.impl.cache.impl.id.LexingIdIndexer
 import com.intellij.util.indexing.FileContent
+import com.intellij.util.indexing.impl.DebugAssertions
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.DataInputOutputUtil
 import java.io.DataInput
@@ -14,7 +15,7 @@ import java.io.DataOutput
  * @author traff
  */
 
-abstract class PrebuiltIndexAwareIdIndexer : PrebuiltIndexProviderBase<Map<IdIndexEntry, Int>>(), IdIndexer {
+abstract class PrebuiltIndexAwareIdIndexer : PrebuiltIndexProviderBase<Map<IdIndexEntry, Int>>(), LexingIdIndexer {
   companion object {
     private val LOG = Logger.getInstance("#com.intellij.index.PrebuiltIndexAwareIdIndexer")
     val ID_INDEX_FILE_NAME = "id-index"
@@ -27,8 +28,8 @@ abstract class PrebuiltIndexAwareIdIndexer : PrebuiltIndexProviderBase<Map<IdInd
   override fun map(inputData: FileContent): Map<IdIndexEntry, Int> {
     val map = get(inputData)
     return if (map != null) {
-      if (PREBUILT_INDICES_DEBUG) {
-        if (!map.equals(idIndexMap(inputData))) {
+      if (DebugAssertions.DEBUG) {
+        if (map != idIndexMap(inputData)) {
           LOG.error("Prebuilt id index differs from actual value for ${inputData.file.path}")
         }
       }

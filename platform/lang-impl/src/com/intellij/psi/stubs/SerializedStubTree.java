@@ -102,6 +102,10 @@ public class SerializedStubTree {
     return myByteContentLength == byteContentLength;
   }
 
+  String dumpLengths() {
+    return "{chars=" + myCharContentLength + ", bytes=" + myByteContentLength + "}";
+  }
+
   public boolean equals(final Object that) {
     if (this == that) {
       return true;

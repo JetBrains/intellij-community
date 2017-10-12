@@ -173,7 +173,13 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
         mySearch.updateToolTipText();
         myFilter.myContext.fireErrorsChanged(map, null);
         if (!map.isEmpty()) {
-          myTreeView.select(map.keySet().iterator().next());
+          Configurable targetConfigurable = map.keySet().iterator().next();
+          ConfigurationException exception = map.get(targetConfigurable);
+          Configurable originator = exception.getOriginator();
+          if (originator != null) {
+            targetConfigurable = originator;
+          }
+          myTreeView.select(targetConfigurable);
           return false;
         }
         updateStatus(myFilter.myContext.getCurrentConfigurable());

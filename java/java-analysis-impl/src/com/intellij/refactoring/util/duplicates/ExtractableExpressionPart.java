@@ -56,6 +56,17 @@ public class ExtractableExpressionPart {
     return null;
   }
 
+  @NotNull
+  ExtractableExpressionPart copy() {
+    return new ExtractableExpressionPart(myUsage, myVariable, myValue, myType);
+  }
+
+  @NotNull
+  ExtractableExpressionPart deepCopy() {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myUsage.getProject());
+    PsiExpression usageCopy = factory.createExpressionFromText(myUsage.getText(), myUsage);
+    return new ExtractableExpressionPart(usageCopy, myVariable, myValue, myType);
+  }
 
   boolean isEquivalent(@NotNull ExtractableExpressionPart part) {
     if (myVariable != null && myVariable.equals(part.myVariable)) {
@@ -71,21 +82,20 @@ public class ExtractableExpressionPart {
   @Nullable
   static ExtractableExpressionPart match(@NotNull PsiExpression expression,
                                          @NotNull List<PsiElement> scope,
-                                         @Nullable ParameterFolding parameterFolding) {
-    if (PsiUtil.isConstantExpression(expression)) {
-      if (PsiTreeUtil.findChildOfType(expression, PsiJavaCodeReferenceElement.class) != null) {
-        return null;
-      }
-      return matchConstant(expression);
-    }
+                                         @Nullable ComplexityHolder complexityHolder) {
     if (expression instanceof PsiReferenceExpression) {
       return matchVariable((PsiReferenceExpression)expression, scope);
     }
-    if (parameterFolding != null && parameterFolding.isAcceptableComplexity(expression)) {
-      PsiType type = expression.getType();
-      if (type != null && !PsiType.VOID.equals(type)) {
-        return new ExtractableExpressionPart(expression, null, null, type);
+    boolean isConstant = PsiUtil.isConstantExpression(expression);
+    if (isConstant) {
+      // Avoid replacement of coincidentally equal expressions containing different constant fields
+      // E.g. don't count as equal values expressions like (Foo.A + 1) and (Bar.B - 2)
+      if (PsiTreeUtil.findChildOfType(expression, PsiJavaCodeReferenceElement.class) == null) {
+        return matchConstant(expression);
       }
+    }
+    if (complexityHolder != null && (isConstant || complexityHolder.isAcceptableExpression(expression))) {
+      return matchExpression(expression);
     }
     return null;
   }
@@ -109,6 +119,15 @@ public class ExtractableExpressionPart {
     if (resolved instanceof PsiVariable && (scope == null || !DuplicatesFinder.isUnder(resolved, scope))) {
       PsiVariable variable = (PsiVariable)resolved;
       return new ExtractableExpressionPart(expression, variable, null, variable.getType());
+    }
+    return null;
+  }
+
+  @Nullable
+  private static ExtractableExpressionPart matchExpression(@NotNull PsiExpression expression) {
+    PsiType type = expression.getType();
+    if (type != null && !PsiType.VOID.equals(type)) {
+      return new ExtractableExpressionPart(expression, null, null, type);
     }
     return null;
   }

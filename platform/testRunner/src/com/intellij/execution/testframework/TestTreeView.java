@@ -43,8 +43,7 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
 
 public abstract class TestTreeView extends Tree implements DataProvider, CopyProvider {
@@ -129,6 +128,16 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
           }
         }
         return locations.isEmpty() ? null : locations.toArray(new Location[locations.size()]);
+      }
+    }
+
+    if (AbstractTestProxy.DATA_KEYS.is(dataId)) {
+      TreePath[] paths = getSelectionPaths();
+      if (paths != null) {
+        return Arrays.stream(paths)
+          .map(path -> getSelectedTest(path))
+          .filter(Objects::nonNull)
+          .toArray(AbstractTestProxy[]::new);
       }
     }
 

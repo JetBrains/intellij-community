@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
@@ -28,6 +14,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -38,9 +25,11 @@ import com.intellij.structuralsearch.impl.matcher.*;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler;
+import com.intellij.structuralsearch.impl.matcher.iterators.SingleNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
+import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
 import com.intellij.structuralsearch.plugin.util.DuplicateFilteringResultSink;
 import com.intellij.util.IncorrectOperationException;
@@ -50,16 +39,17 @@ import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.SoftReference;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * This class makes program structure tree matching:
  */
 public class Matcher {
   private static final Logger LOG = Logger.getInstance("#com.intellij.structuralsearch.impl.matcher.MatcherImpl");
+
+  @SuppressWarnings("SSBasedInspection")
+  private static final ThreadLocal<Set<String>> ourRecursionGuard = ThreadLocal.withInitial(() -> new HashSet<>());
+
   // project being worked on
   private final Project project;
   private final DumbService myDumbService;
@@ -90,6 +80,36 @@ public class Matcher {
       cacheCompiledPattern(matchOptions, PatternCompiler.compilePattern(project, matchOptions));
     }
     myDumbService = DumbService.getInstance(project);
+  }
+
+  public static Matcher buildMatcher(Project project, FileType fileType, String constraint) {
+    if (StringUtil.isQuotedString(constraint)) {
+      // keep old configurations working, also useful for testing
+      final MatchOptions myMatchOptions = new MatchOptions();
+      myMatchOptions.setLooseMatching(true);
+      myMatchOptions.setFileType(fileType);
+      myMatchOptions.fillSearchCriteria(StringUtil.unquoteString(constraint));
+      return new Matcher(project, myMatchOptions);
+    }
+    else {
+      final Set<String> set = ourRecursionGuard.get();
+      if (!set.add(constraint)) {
+        throw new MalformedPatternException("Pattern recursively references itself");
+      }
+      try {
+        final Configuration configuration = ConfigurationManager.getInstance(project).findConfigurationByName(constraint);
+        if (configuration == null) {
+          throw new MalformedPatternException("Configuration '" + constraint + "' not found");
+        }
+        return new Matcher(project, configuration.getMatchOptions());
+      } finally {
+        set.remove(constraint);
+        if (set.isEmpty()) {
+          // we're finished with this thread local
+          ourRecursionGuard.remove();
+        }
+      }
+    }
   }
 
   static class LastMatchData {
@@ -139,7 +159,8 @@ public class Matcher {
     }
   }
 
-  public void processMatchesInElement(MatchContext context, Configuration configuration,
+  public void processMatchesInElement(MatchContext context,
+                                      Configuration configuration,
                                       NodeIterator matchedNodes,
                                       PairProcessor<MatchResult, Configuration> processor) {
     try {
@@ -150,6 +171,18 @@ public class Matcher {
       matchedNodes.reset();
       context.getOptions().setScope(null);
     }
+  }
+
+  public boolean matchNode(PsiElement element) {
+    final CollectingMatchResultSink sink = new CollectingMatchResultSink();
+    final MatchOptions options = matchContext.getOptions();
+    final CompiledPattern compiledPattern = prepareMatching(sink, options);
+    if (compiledPattern == null) {
+      return false;
+    }
+    matchContext.setShouldRecursivelyMatch(false);
+    visitor.matchContext(new SingleNodeIterator(element));
+    return !sink.getMatches().isEmpty();
   }
 
   public void clearContext() {
@@ -480,7 +513,7 @@ public class Matcher {
 
     final Language elementLanguage = element.getLanguage();
     if (strategy.continueMatching(element) && elementLanguage.isKindOf(language)) {
-      visitor.matchContext(new ArrayBackedNodeIterator(new PsiElement[] {element}));
+      visitor.matchContext(new SingleNodeIterator(element));
       return;
     }
     for(PsiElement el=element.getFirstChild();el!=null;el=el.getNextSibling()) {
@@ -497,9 +530,9 @@ public class Matcher {
    * @throws UnsupportedPatternException
    */
   @NotNull
-  public List<MatchResult> matchByDownUp(PsiElement element, MatchOptions options)
-    throws MalformedPatternException, UnsupportedPatternException {
+  public List<MatchResult> matchByDownUp(PsiElement element) throws MalformedPatternException, UnsupportedPatternException {
     final CollectingMatchResultSink sink = new CollectingMatchResultSink();
+    final MatchOptions options = matchContext.getOptions();
     final CompiledPattern compiledPattern = prepareMatching(sink, options);
     matchContext.setShouldRecursivelyMatch(false);
 
@@ -551,8 +584,7 @@ public class Matcher {
 
     assert targetNode != null : "Could not match down up when no target node";
 
-    final LanguageFileType fileType = (LanguageFileType)matchContext.getOptions().getFileType();
-    match(elementToStartMatching, fileType.getLanguage());
+    visitor.matchContext(new SingleNodeIterator(elementToStartMatching));
     matchContext.getSink().matchingFinished();
     return sink.getMatches();
   }

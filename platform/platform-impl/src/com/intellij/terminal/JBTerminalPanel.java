@@ -114,25 +114,22 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     for (String actionId : ACTIONS_TO_SKIP) {
       final AnAction action = actionManager.getAction(actionId);
       if (action != null) {
-        AnAction a = new DumbAwareAction() {
-          @Override
-          public void actionPerformed(AnActionEvent e) {
-            if (e.getInputEvent() instanceof KeyEvent) {
-              AnActionEvent event =
-                new AnActionEvent(e.getInputEvent(), e.getDataContext(), e.getPlace(), new Presentation(), e.getActionManager(),
-                                  e.getModifiers());
-              action.update(event);
-              if (event.getPresentation().isEnabled()) {
-                action.actionPerformed(event);
-              }
-              else {
-                terminalPanel.handleKeyEvent((KeyEvent)event.getInputEvent());
-              }
-
-              event.getInputEvent().consume();
+        AnAction a = DumbAwareAction.create(e -> {
+          if (e.getInputEvent() instanceof KeyEvent) {
+            AnActionEvent event =
+              new AnActionEvent(e.getInputEvent(), e.getDataContext(), e.getPlace(), new Presentation(), e.getActionManager(),
+                                e.getModifiers());
+            action.update(event);
+            if (event.getPresentation().isEnabled()) {
+              action.actionPerformed(event);
             }
+            else {
+              terminalPanel.handleKeyEvent((KeyEvent)event.getInputEvent());
+            }
+
+            event.getInputEvent().consume();
           }
-        };
+        });
         for (Shortcut sc : action.getShortcutSet().getShortcuts()) {
           if (sc.isKeyboard() && sc instanceof KeyboardShortcut) {
             KeyboardShortcut ksc = (KeyboardShortcut)sc;

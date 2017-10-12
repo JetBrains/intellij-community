@@ -16,13 +16,13 @@
 package com.intellij.execution.impl
 
 import com.intellij.execution.ExecutionManager
+import com.intellij.execution.ProgramRunnerUtil
 import com.intellij.execution.RunProfileStarter
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.Disposable
@@ -65,7 +65,7 @@ class ExecutionManagerKtImpl(project: Project) : ExecutionManagerImpl(project) {
 
       fun handleError(e: Throwable) {
         if (e !is ProcessCanceledException) {
-          ExecutionUtil.handleExecutionError(project, contentManager.getToolWindowIdByEnvironment(environment), environment.runProfile.name, e)
+          ProgramRunnerUtil.handleExecutionError(project, environment, e, environment.runProfile)
           LOG.debug(e)
         }
         processNotStarted()

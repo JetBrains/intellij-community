@@ -61,6 +61,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.im.InputContext;
 import java.awt.image.BufferedImage;
@@ -1583,11 +1584,12 @@ public class UIUtil {
   }
 
   public static Insets getListCellPadding() {
-    return new Insets(getListCellVPadding(), getListCellHPadding(), getListCellVPadding(), getListCellHPadding());
+    return JBUI.insets(getListCellVPadding(), getListCellHPadding());
   }
 
   public static Insets getListViewportPadding() {
-    return isUnderNativeMacLookAndFeel() ? new Insets(1, 0, 1, 0) : new Insets(5, 5, 5, 5);
+    return isUnderNativeMacLookAndFeel() ? JBUI.insets(1, 0) :
+           isUnderWin10LookAndFeel() ? JBUI.emptyInsets() : JBUI.insets(5);
   }
 
   public static boolean isToUseDottedCellBorder() {
@@ -2056,10 +2058,8 @@ public class UIUtil {
       dw = dstBounds.width;
       dh = dstBounds.height;
     }
-    if (dw == -1 && dh == -1) {
-      dw = ImageUtil.getUserWidth(image);
-      dh = ImageUtil.getUserHeight(image);
-    }
+    boolean dstSizeUndefined = (dw == -1 && dh == -1);
+
     int sx = 0;
     int sy = 0;
     int sw = -1;
@@ -2070,11 +2070,21 @@ public class UIUtil {
       sw = srcBounds.width;
       sh = srcBounds.height;
     }
-    if (sw == -1 && sh == -1) {
-      sw = ImageUtil.getRealWidth(image);
-      sh = ImageUtil.getRealHeight(image);
+    boolean srcSizeUndefined = (sw == -1 && sh == -1);
+
+    if (dstSizeUndefined && srcSizeUndefined) {
+      drawImage(g, image, null, dx, dy, -1, -1, observer);
+    } else {
+      if (dstSizeUndefined) {
+        dw = ImageUtil.getUserWidth(image);
+        dh = ImageUtil.getUserHeight(image);
+      }
+      if (srcSizeUndefined) {
+        sw = ImageUtil.getRealWidth(image);
+        sh = ImageUtil.getRealHeight(image);
+      }
+      g.drawImage(drawImage, dx, dy, dx + dw, dy + dh, sx, sy, sx + sw, sy + sh, observer);
     }
-    g.drawImage(drawImage, dx, dy, dx + dw, dy + dh, sx, sy, sx + sw, sy + sh, observer);
   }
 
   /**
@@ -2085,44 +2095,59 @@ public class UIUtil {
    */
   @Deprecated
   public static void drawImage(Graphics g, Image image, int x, int y, int width, int height, ImageObserver observer) {
+    drawImage(g, image, null, x, y, width, height, observer);
+  }
+
+  private static void drawImage(Graphics g, Image image, @Nullable BufferedImageOp op, int x, int y, int width, int height, ImageObserver observer) {
+    double scale = 1d;
+    Graphics2D invG = null;
+    boolean srcSizeUndefined = (width == -1 && height == -1);
+    int dstw = ImageUtil.getUserWidth(image);
+    int dsth = ImageUtil.getUserHeight(image);
+
     if (image instanceof JBHiDPIScaledImage) {
-      Image img = ((JBHiDPIScaledImage)image).getDelegate();
-      if (img == null) {
-        img = image;
+      JBHiDPIScaledImage hidpiImage = (JBHiDPIScaledImage)image;
+      Image delegate = hidpiImage.getDelegate();
+      if (delegate != null) image = delegate;
+      scale = hidpiImage.getScale();
+
+      if (srcSizeUndefined) {
+        AffineTransform tx = ((Graphics2D)g).getTransform();
+        if (scale == tx.getScaleX()) {
+          // The image has the same original scale as the graphics scale. However, the real image
+          // scale - userSize/realSize - can suffer from inaccuracy due to the image user size
+          // rounding to int (userSize = (int)realSize/originalImageScale). This may case quality
+          // loss if the image is drawn via Graphics.drawImage(image, <srcRect>, <dstRect>)
+          // due to scaling in Graphics. To avoid that, the image should be drawn directly via
+          // Graphics.drawImage(image, 0, 0) on the unscaled Graphics.
+          double gScaleX = tx.getScaleX();
+          double gScaleY = tx.getScaleY();
+          tx.scale(1 / gScaleX, 1 / gScaleY);     // inverse the scale
+          tx.translate(x * gScaleX, y * gScaleY); // scale x/y with double precision
+          invG = (Graphics2D)g.create();
+          invG.setTransform(tx);
+        }
       }
-      int dstw = width;
-      int dsth = height;
-      if (width == -1 && height == -1) {
-        dstw = ImageUtil.getUserWidth(image);
-        dsth = ImageUtil.getUserHeight(image);
-      }
-      int srcw = ImageUtil.getRealWidth(image);
-      int srch = ImageUtil.getRealHeight(image);
-      g.drawImage(img, x, y, x + dstw, y + dsth, 0, 0, srcw, srch, observer);
     }
-    else if (width == -1 && height == -1) {
-      g.drawImage(image, x, y, observer);
+    if (op != null && image instanceof BufferedImage) {
+      image = op.filter((BufferedImage)image, null);
+    }
+    if (invG != null) {
+      invG.drawImage(image, 0, 0, observer);
+      invG.dispose();
+    }
+    else if (srcSizeUndefined) {
+      g.drawImage(image, x, y, dstw, dsth, observer);
     }
     else {
-      g.drawImage(image, x, y, x + width, y + height, 0, 0, width, height, observer);
+      int srcw = (int)Math.ceil(width * scale);
+      int srch = (int)Math.ceil(height * scale);
+      g.drawImage(image, x, y, x + width, y + height, 0, 0, srcw, srch, observer);
     }
   }
 
   public static void drawImage(Graphics g, BufferedImage image, BufferedImageOp op, int x, int y) {
-    if (image instanceof JBHiDPIScaledImage) {
-      Image img = ((JBHiDPIScaledImage)image).getDelegate();
-      if (img == null) {
-        img = image;
-      }
-      if (op != null && img instanceof BufferedImage) img = op.filter((BufferedImage)img, null);
-      int dstw = ImageUtil.getUserWidth(image);
-      int dsth = ImageUtil.getUserHeight(image);
-      int srcw = ImageUtil.getRealWidth(image);
-      int srch = ImageUtil.getRealHeight(image);
-      g.drawImage(img, x, y, x + dstw, y + dsth, 0, 0, srcw, srch, null);
-    } else {
-      ((Graphics2D)g).drawImage(image, op, x, y);
-    }
+    drawImage(g, image, op, x, y, -1, -1, null);
   }
 
   public static void paintWithXorOnRetina(@NotNull Dimension size, @NotNull Graphics g, Consumer<Graphics2D> paintRoutine) {

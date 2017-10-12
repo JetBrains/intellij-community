@@ -15,6 +15,7 @@
     <inspectionElementsMerger implementation="com.siyeh.ig.internationalization.CallToSuspiciousStringMethodInspectionMerger"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.visibility.MethodOverridesInaccessibleMethodMerger"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.security.SerializableClassInSecureContextMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.redundancy.RedundantStringOperationMerger"/>
 
     <!--group.names.abstraction.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="BooleanParameter" bundle="com.siyeh.InspectionGadgetsBundle" key="boolean.parameter.display.name"
@@ -1691,8 +1692,9 @@
                      implementationClass="com.siyeh.ig.naming.FieldNamingConventionInspection"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.naming.FieldNamingConventionMerger"/>
     <naming.convention.field implementation="com.siyeh.ig.naming.EnumeratedConstantNamingConvention" id="EnumeratedConstantNamingConvention" order="first"/>
-    <naming.convention.field implementation="com.siyeh.ig.naming.ConstantNamingConvention" id="ConstantNamingConvention" order="after EnumeratedConstantNamingConvention"/>
-    <naming.convention.field implementation="com.siyeh.ig.naming.StaticVariableNamingConvention" id="StaticVariableNamingConvention" order="after ConstantNamingConvention"/>
+    <naming.convention.field implementation="com.siyeh.ig.naming.ConstantWithMutableFieldTypeNamingConvention" id="ConstantWithMutableFieldTypeNamingConvention" order="after EnumeratedConstantNamingConvention"/>
+    <naming.convention.field implementation="com.siyeh.ig.naming.ConstantNamingConvention" id="ConstantNamingConvention" order="after ConstantWithMutableFieldTypeNamingConvention"/>
+    <naming.convention.field implementation="com.siyeh.ig.naming.StaticVariableNamingConvention" id="StaticVariableNamingConvention" order="after ConstantWithMutableFieldTypeNamingConvention"/>
     <naming.convention.field implementation="com.siyeh.ig.naming.InstanceVariableNamingConvention" id="InstanceVariableNamingConvention" order="after StaticVariableNamingConvention"/>
 
     <localInspection groupPath="Java" language="JAVA" shortName="DollarSignInName" bundle="com.siyeh.InspectionGadgetsBundle" key="dollar.sign.in.name.display.name"
@@ -1928,9 +1930,6 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="collections.must.have.initial.capacity.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.performance.CollectionsMustHaveInitialCapacityInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ConstantStringIntern" bundle="com.siyeh.InspectionGadgetsBundle" key="constant.string.intern.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="true"
-                     level="WARNING" implementationClass="com.siyeh.ig.performance.ConstantStringInternInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="DynamicRegexReplaceableByCompiledPattern" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="dynamic.regex.replaceable.by.compiled.pattern.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
@@ -2028,12 +2027,9 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="string.replaceable.by.string.buffer.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.performance.StringReplaceableByStringBufferInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="RedundantStringToString" shortName="StringToString" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="string.to.string.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues"
-                     enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.performance.StringToStringInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="SubstringZero" bundle="com.siyeh.InspectionGadgetsBundle" key="substring.zero.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="true"
-                     level="WARNING" implementationClass="com.siyeh.ig.performance.SubstringZeroInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="RedundantStringOperation" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="inspection.redundant.string.operation.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
+                     enabledByDefault="true" level="WARNING" cleanupTool="true" implementationClass="com.siyeh.ig.redundancy.RedundantStringOperationInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="TailRecursion" bundle="com.siyeh.InspectionGadgetsBundle" key="tail.recursion.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="true"
                      level="INFORMATION" implementationClass="com.siyeh.ig.performance.TailRecursionInspection"/>

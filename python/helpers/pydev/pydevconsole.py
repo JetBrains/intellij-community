@@ -315,6 +315,7 @@ def start_console_server(host, port, interpreter):
     server.register_function(interpreter.getArray)
     server.register_function(interpreter.evaluate)
     server.register_function(interpreter.ShowConsole)
+    server.register_function(interpreter.loadFullValue)
 
     # Functions for GUI main loop integration
     server.register_function(interpreter.enableGui)

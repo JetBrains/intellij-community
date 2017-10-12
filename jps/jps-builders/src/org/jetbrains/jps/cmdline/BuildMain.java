@@ -129,7 +129,7 @@ public class BuildMain {
           try {
             FileSystemUtil.getAttributes(projectPathToPreload); // this will pre-load all FS optimizations
 
-            final BuildRunner runner = new BuildRunner(new JpsModelLoaderImpl(projectPathToPreload, globalsPathToPreload, null));
+            final BuildRunner runner = new BuildRunner(new JpsModelLoaderImpl(projectPathToPreload, globalsPathToPreload, false, null));
             data.setRunner(runner);
 
             final File dataStorageRoot = Utils.getDataStorageRoot(projectPathToPreload);

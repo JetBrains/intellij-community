@@ -92,7 +92,7 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
 
   @Override
   public void navigate(boolean requestFocus) {
-    if (myNavigationProvider != null) myNavigationProvider.navigate(myElement, true);
+    if (myNavigationProvider != null) myNavigationProvider.navigate(myElement, requestFocus);
   }
 
   @Override

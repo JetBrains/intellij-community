@@ -84,15 +84,13 @@ public class Extensions {
   }
 
   @NotNull
-  @SuppressWarnings("unchecked")
   public static <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName) {
-    return (T[])getExtensions(extensionPointName.getName(), null);
+    return getExtensions(extensionPointName, null);
   }
 
   @NotNull
-  public static <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName, AreaInstance areaInstance) {
-    // keep it until 1.7 JDK
-    return Extensions.getExtensions(extensionPointName.getName(), areaInstance);
+  public static <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName, @Nullable AreaInstance areaInstance) {
+    return getExtensions(extensionPointName.getName(), areaInstance);
   }
 
   @NotNull

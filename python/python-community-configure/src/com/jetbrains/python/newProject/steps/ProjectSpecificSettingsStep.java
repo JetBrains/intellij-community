@@ -15,81 +15,51 @@
  */
 package com.jetbrains.python.newProject.steps;
 
-import com.intellij.execution.ExecutionException;
+import com.google.common.collect.Iterables;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.ui.*;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HideableDecorator;
-import com.intellij.ui.TextAccessor;
+import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
-import com.jetbrains.python.configuration.VirtualEnvProjectFilter;
 import com.jetbrains.python.newProject.PyFrameworkProjectGenerator;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import com.jetbrains.python.packaging.PyPackage;
-import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyPackageUtil;
-import com.jetbrains.python.remote.PyProjectSynchronizer;
-import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
-import com.jetbrains.python.sdk.PySdkUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
-import icons.PythonIcons;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.sdk.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.function.Supplier;
 
 public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> implements DumbAware {
-  private static final Logger LOGGER = Logger.getInstance(ProjectSpecificSettingsStep.class);
-  private PythonSdkChooserCombo mySdkCombo;
   private boolean myInstallFramework;
-  private Sdk mySdk;
-  /**
-   * For remote projects path for project on remote side
-   */
-  private PyRemotePathField myRemotePathField;
-  /**
-   * If remote path required for project creation or not
-   */
-  private boolean myRemotePathRequired;
+  @Nullable private PyAddExistingSdkPanel myInterpreterPanel;
 
   public ProjectSpecificSettingsStep(@NotNull final DirectoryProjectGenerator<T> projectGenerator,
                                      @NotNull final AbstractNewProjectStep.AbstractCallback callback) {
     super(projectGenerator, callback);
-  }
-
-  private void acceptsSdk(@NotNull final DirectoryProjectGenerator<?> generator,
-                          @NotNull final Sdk sdk,
-                          @NotNull final File projectDirectory) throws PythonProjectGenerator.PyNoProjectAllowedOnSdkException {
-    if (generator instanceof PythonProjectGenerator) {
-      ((PythonProjectGenerator<?>)generator).checkProjectCanBeCreatedOnSdk(sdk, projectDirectory);
-    }
   }
 
   @Override
@@ -114,10 +84,8 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     if (advancedSettings != null) {
       final JPanel jPanel = new JPanel(new VerticalFlowLayout());
       final HideableDecorator deco = new HideableDecorator(jPanel, "Mor&e Settings", false);
-      boolean isValid = checkValid();
-      deco.setOn(!isValid);
-      if (myProjectGenerator instanceof PythonProjectGenerator && !deco.isExpanded()) {
-        final ValidationResult result = ((PythonProjectGenerator)myProjectGenerator).warningValidation(getSdk());
+      if (myProjectGenerator instanceof PythonProjectGenerator) {
+        final ValidationResult result = ((PythonProjectGenerator)myProjectGenerator).warningValidation(getInterpreterPanelSdk());
         deco.setOn(!result.isOk());
       }
       deco.setContentComponent(advancedSettings);
@@ -129,13 +97,16 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
   @Nullable
   public Sdk getSdk() {
     if (!(myProjectGenerator instanceof PythonProjectGenerator)) return null;
-    if (mySdk != null) return mySdk;
-    if (((PythonProjectGenerator)myProjectGenerator).hideInterpreter()) return null;
-    return (Sdk)mySdkCombo.getComboBox().getSelectedItem();
+    final PyAddExistingSdkPanel interpreterPanel = myInterpreterPanel;
+    if (interpreterPanel == null) return null;
+    return interpreterPanel.getSdk();
   }
 
-  public void setSdk(final Sdk sdk) {
-    mySdk = sdk;
+  @Nullable
+  private Sdk getInterpreterPanelSdk() {
+    final PyAddExistingSdkPanel interpreterPanel = myInterpreterPanel;
+    if (interpreterPanel == null) return null;
+    return interpreterPanel.getSdk();
   }
 
   public boolean installFramework() {
@@ -145,44 +116,15 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
   @Override
   protected void registerValidators() {
     super.registerValidators();
-    if (myProjectGenerator instanceof PythonProjectGenerator && !((PythonProjectGenerator)myProjectGenerator).hideInterpreter()) {
-      myLocationField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-        @Override
-        protected void textChanged(DocumentEvent e) {
-          final String path = myLocationField.getText().trim();
-          ((PythonProjectGenerator)myProjectGenerator).locationChanged(PathUtil.getFileName(path));
-        }
+    if (myProjectGenerator instanceof PythonProjectGenerator) {
+      addLocationChangeListener(event -> {
+        final String fileName = PathUtil.getFileName(getNewProjectPath());
+        ((PythonProjectGenerator)myProjectGenerator).locationChanged(fileName);
       });
-
-      mySdkCombo.getComboBox().addItemListener(e -> {
-        if (e.getStateChange() == ItemEvent.SELECTED) {
-          final Runnable checkValidOnSwing = () -> ApplicationManager.getApplication().invokeLater(this::checkValid);
-          ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-            try {
-              // Refresh before validation to make sure no stale data
-              final Sdk sdk = getSdk();
-              if (sdk == null) {
-                return;
-              }
-              final boolean noPackages = PyPackageManager.getInstance(sdk).refreshAndGetPackages(true).isEmpty();
-              if (noPackages) {
-                LOGGER.warn(String.format("No packages on %s", sdk.getHomePath()));
-              }
-              checkValidOnSwing.run();
-            }
-            catch (final ExecutionException exception) {
-              LOGGER.warn(exception);
-              checkValidOnSwing.run();
-            }
-          }, "Refreshing List of Packages, Please Wait", false, null);
-        }
-      });
-
-      if (myRemotePathField != null) {
-        myRemotePathField.addTextChangeListener(this::checkValid);
+      final PyAddExistingSdkPanel interpreterPanel = myInterpreterPanel;
+      if (interpreterPanel != null) {
+        UiNotifyConnector.doWhenFirstShown(interpreterPanel, this::checkValid);
       }
-      
-      UiNotifyConnector.doWhenFirstShown(mySdkCombo, this::checkValid);
     }
   }
 
@@ -191,8 +133,9 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
    */
   @Nullable
   final String getRemotePath() {
-    final PyRemotePathField field = myRemotePathField;
-    return (field != null ? field.getTextField().getText() : null);
+    final PyAddExistingSdkPanel interpreterPanel = myInterpreterPanel;
+    if (interpreterPanel == null) return null;
+    return interpreterPanel.getRemotePath();
   }
 
   @Override
@@ -211,115 +154,94 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
       return false;
     }
 
-    if (myProjectGenerator instanceof PythonProjectGenerator) {
-      final Sdk sdk = getSdk();
-      if (sdk == null) {
-        if (!((PythonProjectGenerator)myProjectGenerator).hideInterpreter()) {
-          setErrorText("No Python interpreter selected");
-          return false;
-        }
-        return true;
-      }
-      if (PythonSdkType.isInvalid(sdk)) {
-        setErrorText("Choose valid python interpreter");
+    final PyAddExistingSdkPanel interpreterPanel = myInterpreterPanel;
+    if (interpreterPanel != null) {
+      final List<ValidationInfo> validationInfos = interpreterPanel.validateAll();
+      if (!validationInfos.isEmpty()) {
+        setErrorText(StringUtil.join(validationInfos, info -> info.message, "\n"));
         return false;
       }
-      final List<String> warningList = new ArrayList<>();
-      final boolean isPy3k = PythonSdkType.getLanguageLevelForSdk(sdk).isPy3K();
-      try {
-        acceptsSdk(myProjectGenerator, sdk, new File(myLocationField.getText()));
-      }
-      catch (final PythonProjectGenerator.PyNoProjectAllowedOnSdkException e) {
-        setErrorText(e.getMessage());
+    }
+
+    final PythonProjectGenerator generator = ObjectUtils.tryCast(myProjectGenerator, PythonProjectGenerator.class);
+    final Sdk sdk = getInterpreterPanelSdk();
+
+    if (generator == null || sdk == null || sdk instanceof PyLazySdk) return true;
+
+    try {
+      generator.checkProjectCanBeCreatedOnSdk(sdk, new File(myLocationField.getText()));
+    }
+    catch (final PythonProjectGenerator.PyNoProjectAllowedOnSdkException e) {
+      setErrorText(e.getMessage());
+      return false;
+    }
+
+    final List<String> warnings = new ArrayList<>();
+
+    final PyFrameworkProjectGenerator frameworkGenerator = ObjectUtils.tryCast(myProjectGenerator, PyFrameworkProjectGenerator.class);
+
+    if (frameworkGenerator != null) {
+      final String python3Error = validateFrameworkSupportsPython3(frameworkGenerator, sdk);
+      if (python3Error != null) {
+        setErrorText(python3Error);
         return false;
       }
-      if (myRemotePathRequired && StringUtil.isEmpty(myRemotePathField.getTextField().getText())) {
-        setErrorText("Remote path not provided");
-        return false;
-      }
 
-      if (myProjectGenerator instanceof PyFrameworkProjectGenerator) {
-        PyFrameworkProjectGenerator frameworkProjectGenerator = (PyFrameworkProjectGenerator)myProjectGenerator;
-        String frameworkName = frameworkProjectGenerator.getFrameworkTitle();
+      // Framework package check may be heavy in case of remote sdk and should not be called on AWT, pretend everything is OK for
+      // remote and check for packages later
+      if (!PythonSdkType.isRemote(sdk)) {
+        final Pair<Boolean, List<String>> validationInfo = validateFramework(frameworkGenerator, sdk);
+        myInstallFramework = validationInfo.first;
+        warnings.addAll(validationInfo.second);
 
-        if (isPy3k && !((PyFrameworkProjectGenerator)myProjectGenerator).supportsPython3()) {
-          setErrorText(frameworkName + " is not supported for the selected interpreter");
-          return false;
-        }
-
-        if (PythonSdkType.isRemote(sdk)) {
-          return true;
-        }
-        // All code beyond this line may be heavy in case of remote sdk and should not be called on AWT
-        // pretend everything is ok for remote and check package later
-
-        if (!isFrameworkInstalled(sdk)) {
-          if (PyPackageUtil.packageManagementEnabled(sdk)) {
-            myInstallFramework = true;
-            final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
-            if (packages == null) {
-              warningList.add(frameworkName + " will be installed on the selected interpreter");
-              return false;
-            }
-            if (!PyPackageUtil.hasManagement(packages)) {
-              warningList.add("Python packaging tools and " + frameworkName + " will be installed on the selected interpreter");
-            }
-            else {
-              warningList.add(frameworkName + " will be installed on the selected interpreter");
-            }
-          }
-          else {
-            warningList.add(frameworkName + " is not installed on the selected interpreter");
-          }
-        }
         final ValidationResult warningResult = ((PythonProjectGenerator)myProjectGenerator).warningValidation(sdk);
         if (!warningResult.isOk()) {
-          warningList.add(warningResult.getErrorMessage());
-        }
-
-        if (!warningList.isEmpty()) {
-          final String warning = StringUtil.join(warningList, "<br/>");
-          setWarningText(warning);
+          warnings.add(warningResult.getErrorMessage());
         }
       }
+    }
+
+    if (!warnings.isEmpty()) {
+      setWarningText(StringUtil.join(warnings, "<br/>"));
     }
     return true;
   }
 
-  private boolean isFrameworkInstalled(Sdk sdk) {
-    PyFrameworkProjectGenerator projectGenerator = (PyFrameworkProjectGenerator)getProjectGenerator();
-    return projectGenerator != null && projectGenerator.isFrameworkInstalled(sdk);
+  private static String validateFrameworkSupportsPython3(@NotNull PyFrameworkProjectGenerator generator, @NotNull Sdk sdk) {
+    final String frameworkName = generator.getFrameworkTitle();
+    final boolean isPy3k = PythonSdkType.getLanguageLevelForSdk(sdk).isPy3K();
+    return isPy3k && !generator.supportsPython3() ? frameworkName + " is not supported for the selected interpreter" : null;
+  }
+
+  @NotNull
+  private static Pair<Boolean, List<String>> validateFramework(@NotNull PyFrameworkProjectGenerator generator, @NotNull Sdk sdk) {
+    final List<String> warnings = new ArrayList<>();
+    boolean installFramework = false;
+    if (!generator.isFrameworkInstalled(sdk)) {
+      final String frameworkName = generator.getFrameworkTitle();
+      if (PyPackageUtil.packageManagementEnabled(sdk)) {
+        installFramework = true;
+        final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
+        if (!PyPackageUtil.hasManagement(packages)) {
+          warnings.add("Python packaging tools and " + frameworkName + " will be installed on the selected interpreter");
+        }
+        else {
+          warnings.add(frameworkName + " will be installed on the selected interpreter");
+        }
+      }
+      else {
+        warnings.add(frameworkName + " is not installed on the selected interpreter");
+      }
+    }
+    return Pair.create(installFramework, warnings);
   }
 
   @Override
   protected JPanel createBasePanel() {
     if (myProjectGenerator instanceof PythonProjectGenerator) {
-      final BorderLayout layout = new BorderLayout();
-
-      final JPanel locationPanel = new JPanel(layout);
-
       final JPanel panel = new JPanel(new VerticalFlowLayout(0, 2));
-      final LabeledComponent<TextFieldWithBrowseButton> location = createLocationComponent();
-
-      locationPanel.add(location, BorderLayout.CENTER);
-      panel.add(locationPanel);
-      if (((PythonProjectGenerator)myProjectGenerator).hideInterpreter()) {
-        addInterpreterButton(locationPanel, location);
-      }
-      else {
-        final LabeledComponent<PythonSdkChooserCombo> labeled = createInterpreterCombo();
-        UIUtil.mergeComponentsWithAnchor(labeled, location);
-        panel.add(labeled);
-      }
-
-      final PythonRemoteInterpreterManager remoteInterpreterManager = PythonRemoteInterpreterManager.getInstance();
-
-      final Sdk sdk = getSdk();
-      if (remoteInterpreterManager != null && sdk != null) {
-        createRemotePathField(panel, remoteInterpreterManager);
-      }
-
-
+      final JPanel interpretersPanel = createInterpretersPanel();
+      panel.add(interpretersPanel);
       final JPanel basePanelExtension = ((PythonProjectGenerator)myProjectGenerator).extendBasePanel();
       if (basePanelExtension != null) {
         panel.add(basePanelExtension);
@@ -330,144 +252,64 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     return super.createBasePanel();
   }
 
-  private void createRemotePathField(@NotNull final JPanel panelToAddField,
-                                     @NotNull final PythonRemoteInterpreterManager remoteInterpreterManager) {
-    myRemotePathField = new PyRemotePathField();
+  @NotNull
+  private JPanel createInterpretersPanel() {
+    final List<Sdk> existingSdks = getValidPythonSdks();
+    final Sdk preferredSdk = getPreferredSdk(existingSdks);
 
-    myRemotePathField.addActionListener(e -> {
-      final Sdk currentSdk = getSdk();
-      if (!PySdkUtil.isRemote(currentSdk)) {
-        return;
-      }
-      // If chosen SDK is remote then display
+    final FormBuilder formBuilder = FormBuilder.createFormBuilder();
+    formBuilder.addLabeledComponent("Location:", createLocationComponent().getComponent());
 
-      final Pair<Supplier<String>, JPanel> browserForm;
-      try {
-        browserForm = remoteInterpreterManager.createServerBrowserForm(currentSdk);
-      }
-      catch (final ExecutionException  | InterruptedException ex) {
-        Logger.getInstance(ProjectSpecificSettingsStep.class).warn("Failed to create server browse button", ex);
-        JBPopupFactory.getInstance().createMessage("Failed to browse remote server. Make sure you have permissions. ").show(panelToAddField);
-        return;
-      }
-      if (browserForm != null) {
-        browserForm.second.setVisible(true);
-        final DialogWrapper wrapper = new MyRemoteServerBrowserDialog(browserForm.second);
-        if (wrapper.showAndGet()) {
-          myRemotePathField.getTextField().setText(browserForm.first.get());
-        }
-      }
-    });
+    final String newProjectPath = getNewProjectPath();
 
-    mySdkCombo.addChangedListener(e -> configureMappingField(remoteInterpreterManager));
-    panelToAddField.add(myRemotePathField.getMainPanel());
-    configureMappingField(remoteInterpreterManager);
-  }
+    final PyAddExistingSdkPanel existingSdkPanel = new PyAddExistingSdkPanel(null, existingSdks, newProjectPath, preferredSdk, formBuilder);
 
-  /**
-   * Enables or disables "remote path" based on interpreter.
-   */
-  private void configureMappingField(@NotNull final PythonRemoteInterpreterManager remoteInterpreterManager) {
-    if (myRemotePathField == null) {
-      return;
-    }
+    myInterpreterPanel = existingSdkPanel;
 
-    final JPanel mainPanel = myRemotePathField.getMainPanel();
-    final PyProjectSynchronizer synchronizer = getSynchronizer(remoteInterpreterManager);
-    if (synchronizer != null) {
-      final String defaultRemotePath = synchronizer.getDefaultRemotePath();
-      final boolean mappingRequired = defaultRemotePath != null;
-      mainPanel.setVisible(mappingRequired);
-      final TextAccessor textField = myRemotePathField.getTextField();
-      if (mappingRequired && StringUtil.isEmpty(textField.getText())) {
-        textField.setText(defaultRemotePath);
-      }
-      myRemotePathRequired = mappingRequired;
-    }
-    else {
-      mainPanel.setVisible(false);
-      myRemotePathRequired = false;
-    }
-  }
+    existingSdkPanel.addChangeListener(this::checkValid);
+    addLocationChangeListener(e -> myInterpreterPanel.setNewProjectPath(getNewProjectPath()));
 
-  @Nullable
-  private PyProjectSynchronizer getSynchronizer(@NotNull final PythonRemoteInterpreterManager manager) {
-    final Sdk sdk = getSdk();
-    if (sdk == null) {
-      return null;
-    }
-    return manager.getSynchronizer(sdk);
-  }
-
-  private void addInterpreterButton(final JPanel locationPanel, final LabeledComponent<TextFieldWithBrowseButton> location) {
-    final JButton interpreterButton = new FixedSizeButton(location);
-    if (SystemInfo.isMac && !UIUtil.isUnderDarcula()) {
-      interpreterButton.putClientProperty("JButton.buttonType", null);
-    }
-    interpreterButton.setIcon(PythonIcons.Python.Python);
-    interpreterButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final DialogBuilder builder = new DialogBuilder();
-        final JPanel panel = new JPanel();
-        final LabeledComponent<PythonSdkChooserCombo> interpreterCombo = createInterpreterCombo();
-        if (mySdk != null) {
-          mySdkCombo.getComboBox().setSelectedItem(mySdk);
-        }
-        panel.add(interpreterCombo);
-        builder.setCenterPanel(panel);
-        builder.setTitle("Select Python Interpreter");
-        if (builder.showAndGet()) {
-          mySdk = (Sdk)mySdkCombo.getComboBox().getSelectedItem();
-        }
-      }
-    });
-    locationPanel.add(interpreterButton, BorderLayout.EAST);
+    return existingSdkPanel;
   }
 
   @NotNull
-  private LabeledComponent<PythonSdkChooserCombo> createInterpreterCombo() {
-    final Project project = ProjectManager.getInstance().getDefaultProject();
-    final List<Sdk> sdks = PyConfigurableInterpreterList.getInstance(project).getAllPythonSdks();
-    VirtualEnvProjectFilter.removeAllAssociated(sdks);
-    Sdk compatibleSdk = sdks.isEmpty() ? null : sdks.iterator().next();
-    DirectoryProjectGenerator generator = getProjectGenerator();
-    if (generator instanceof PyFrameworkProjectGenerator && !((PyFrameworkProjectGenerator)generator).supportsPython3()) {
-      if (compatibleSdk != null && PythonSdkType.getLanguageLevelForSdk(compatibleSdk).isPy3K()) {
-        Sdk python2Sdk = PythonSdkType.findPython2Sdk(sdks);
-        if (python2Sdk != null) {
-          compatibleSdk = python2Sdk;
-        }
-      }
-    }
-
-    final Sdk preferred = compatibleSdk;
-    mySdkCombo = new PythonSdkChooserCombo(project, sdks, sdk -> sdk == preferred);
-    if (SystemInfo.isMac && !UIUtil.isUnderDarcula()) {
-      mySdkCombo.putClientProperty("JButton.buttonType", null);
-    }
-    mySdkCombo.setButtonIcon(PythonIcons.Python.InterpreterGear);
-
-    return LabeledComponent.create(mySdkCombo, "Interpreter", BorderLayout.WEST);
+  private String getNewProjectPath() {
+    final TextFieldWithBrowseButton field = myLocationField;
+    if (field == null) return "";
+    return field.getText().trim();
   }
 
-  /**
-   * Dialog to display remote server browser
-   */
-  private static class MyRemoteServerBrowserDialog extends DialogWrapper {
+  private void addLocationChangeListener(@NotNull Consumer<DocumentEvent> listener) {
+    final TextFieldWithBrowseButton field = myLocationField;
+    if (field == null) return;
+    field.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        listener.consume(e);
+      }
+    });
+  }
 
-    private final JPanel myBrowserForm;
-
-    MyRemoteServerBrowserDialog(@NotNull final JPanel browserForm) {
-      super(true);
-      myBrowserForm = browserForm;
-      init();
+  @Nullable
+  private Sdk getPreferredSdk(@NotNull List<Sdk> sdks) {
+    final PyFrameworkProjectGenerator projectGenerator = ObjectUtils.tryCast(getProjectGenerator(), PyFrameworkProjectGenerator.class);
+    final boolean onlyPython2 = projectGenerator != null && !projectGenerator.supportsPython3();
+    final Sdk preferred = ContainerUtil.getFirstItem(sdks);
+    if (preferred == null) return null;
+    if (onlyPython2 && PythonSdkType.getLanguageLevelForSdk(preferred).isAtLeast(LanguageLevel.PYTHON30)) {
+      final Sdk python2Sdk = PythonSdkType.findPython2Sdk(sdks);
+      return python2Sdk != null ? python2Sdk : preferred;
     }
+    return preferred;
+  }
 
-    @Nullable
-    @Override
-    protected JComponent createCenterPanel() {
-      return myBrowserForm;
-    }
+  @NotNull
+  private static List<Sdk> getValidPythonSdks() {
+    final List<Sdk> pythonSdks = PyConfigurableInterpreterList.getInstance(null).getAllPythonSdks();
+    Iterables.removeIf(pythonSdks, sdk -> !(sdk.getSdkType() instanceof PythonSdkType) ||
+                                          PythonSdkType.isInvalid(sdk) ||
+                                          PySdkExtKt.getAssociatedProjectPath(sdk) != null);
+    Collections.sort(pythonSdks, new PreferredSdkComparator());
+    return pythonSdks;
   }
 }

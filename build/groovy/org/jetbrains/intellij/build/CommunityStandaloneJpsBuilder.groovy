@@ -16,7 +16,6 @@
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.impl.LayoutBuilder
-
 /**
  * Creates JARs containing classes required to run the external build for IDEA project without IDE.
  *
@@ -30,9 +29,7 @@ class CommunityStandaloneJpsBuilder {
   }
 
   void layoutJps(String targetDir, String buildNumber, @DelegatesTo(LayoutBuilder.LayoutSpec) Closure additionalJars) {
-    AntBuilder ant = buildContext.ant
-    String home = buildContext.paths.communityHome
-    new LayoutBuilder(ant, buildContext.project, false).layout(targetDir) {
+    new LayoutBuilder(buildContext.ant, buildContext.project, false).layout(targetDir) {
       zip("standalone-jps-${buildNumber}.zip") {
         jar("util.jar") {
           module("annotations-common")
@@ -81,7 +78,7 @@ class CommunityStandaloneJpsBuilder {
         jar("maven-jps-plugin.jar") { module("maven-jps-plugin") }
         jar("aether-dependency-resolver.jar") { module("aether-dependency-resolver") }
         jar("gradle-jps-plugin.jar") { module("gradle-jps-plugin") }
-        ant.fileset(dir: "$home/plugins/maven/maven30-server-impl/lib/maven3/lib") { include(name: "plexus-utils-*.jar") }
+        moduleLibrary("maven-jps-plugin", "plexus-utils-2.0.6.jar")
 
         jar("eclipse-jps-plugin.jar") {
           module("common-eclipse-util")
@@ -89,32 +86,17 @@ class CommunityStandaloneJpsBuilder {
         }
         jar("devkit-jps-plugin.jar") { module("devkit-jps-plugin") }
         jar("intellilang-jps-plugin.jar") { module("intellilang-jps-plugin") }
-        ant.fileset(dir: "$home/lib") {
-          include(name: "jdom.jar")
-          include(name: "jna.jar")
-          include(name: "jna-platform.jar")
-          include(name: "oromatcher.jar")
-          include(name: "trove4j.jar")
-          include(name: "asm-all.jar")
-          include(name: "nanoxml-*.jar")
-          include(name: "protobuf-*.jar")
-          include(name: "cli-parser-*.jar")
-          include(name: "log4j.jar")
-          include(name: "jgoodies-forms.jar")
-          include(name: "ecj*.jar")
-          include(name: "netty-all-*.jar")
-          include(name: "snappy-in-java-*.jar")
-          include(name: "aether-*.jar")
-          include(name: "maven-aether-provider-*.jar")
-          include(name: "commons-codec-*.jar")
-          include(name: "commons-logging-*.jar")
-          include(name: "httpclient-*.jar")
-          include(name: "httpcore-*.jar")
-          include(name: "slf4j-api-*.jar")
+
+        [
+          "JDOM", "jna", "OroMatcher", "Trove4j", "ASM", "NanoXML", "protobuf", "cli-parser", "Log4J", "jgoodies-forms", "Eclipse",
+          "Netty", "Snappy-Java", "commons-codec", "commons-logging", "http-client", "Slf4j"
+        ].each {
+          projectLibrary(it)
         }
-        ant.fileset(dir: "$home/jps/lib") {
-          include(name: "optimizedFileManager.jar")
-        }
+        moduleLibrary("aether-dependency-resolver", "aether-1.1.0-all.jar")
+        moduleLibrary("aether-dependency-resolver", "maven-aether-provider-3.3.9-all.jar")
+
+        moduleLibrary("jps-builders-6", "optimizedFileManager.jar")
         jar("ant-jps-plugin.jar") { module("ant-jps-plugin") }
         include(additionalJars)
       }

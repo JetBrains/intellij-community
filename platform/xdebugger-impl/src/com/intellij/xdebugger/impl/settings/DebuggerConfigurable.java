@@ -51,6 +51,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
     return "reference.idesettings.debugger";
   }
 
+  @NotNull
   @Override
   public Configurable[] getConfigurables() {
     compute();

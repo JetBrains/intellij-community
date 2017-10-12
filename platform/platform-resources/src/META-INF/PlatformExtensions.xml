@@ -423,6 +423,9 @@
     <applicationService serviceInterface="com.intellij.ide.TypePresentationService"
                         serviceImplementation="com.intellij.ide.TypePresentationServiceImpl"/>
 
+    <preloadingActivity implementation="com.intellij.ide.ui.OptionsTopHitProvider$Activity"/>
+    <postStartupActivity implementation="com.intellij.ide.ui.OptionsTopHitProvider$Activity"/>
+
     <postStartupActivity implementation="com.intellij.ide.TipOfTheDayManager"/>
     <postStartupActivity implementation="com.intellij.ide.actions.PowerSaveModeNotifier"/>
     <postStartupActivity implementation="com.intellij.openapi.wm.impl.ToolWindowManagerImpl$InitToolWindowsActivity" order="after OpenFilesActivity"/>

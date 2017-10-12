@@ -55,7 +55,7 @@ import java.util.jar.Manifest;
  * @author max
  */
 public class JdkUtil {
-  public static Key<Map<String, String>> COMMAND_LINE_CONTENT = Key.create("command.line.content");
+  public static final Key<Map<String, String>> COMMAND_LINE_CONTENT = Key.create("command.line.content");
 
   /**
    * The VM property is needed to workaround incorrect escaped URLs handling in WebSphere,
@@ -141,7 +141,11 @@ public class JdkUtil {
   }
 
   public static boolean isModularRuntime(@NotNull File homePath) {
-    return new File(homePath, "lib/jrt-fs.jar").isFile();
+    return new File(homePath, "lib/jrt-fs.jar").isFile() || isExplodedModularRuntime(homePath.getPath());
+  }
+
+  public static boolean isExplodedModularRuntime(@NotNull String homePath) {
+    return new File(homePath, "modules/java.base").isDirectory();
   }
 
   public static GeneralCommandLine setupJVMCommandLine(@NotNull SimpleJavaParameters javaParameters) throws CantRunException {
@@ -179,7 +183,7 @@ public class JdkUtil {
         if (javaParameters.isUseClasspathJar()) {
           setClasspathJarParams(commandLine, javaParameters, vmParameters, commandLineWrapper, dynamicVMOptions, dynamicParameters);
         }
-        else {
+        else if (javaParameters.isClasspathFile()) {
           setCommandLineWrapperParams(commandLine, javaParameters, vmParameters, commandLineWrapper, dynamicVMOptions, dynamicParameters);
         }
       }
@@ -384,7 +388,7 @@ public class JdkUtil {
       Manifest manifest = new Manifest();
       manifest.getMainAttributes().putValue("Created-By", ApplicationNamesInfo.getInstance().getFullProductName());
 
-      String manifestText = "Manifest.MF";
+      String manifestText = "";
       if (dynamicVMOptions) {
         List<String> properties = new ArrayList<>();
         for (String param : vmParameters.getList()) {

@@ -116,7 +116,7 @@ public class IntentionSettingsConfigurable extends BaseConfigurable implements S
   }
 
   @Override
-  public void selectIntention(String familyName) {
+  public void selectIntention(@NotNull String familyName) {
     myPanel.selectIntention(familyName);
   }
 }

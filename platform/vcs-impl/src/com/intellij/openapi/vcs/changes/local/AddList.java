@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes.local;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.changes.ChangeListData;
 import com.intellij.openapi.vcs.changes.ChangeListListener;
 import com.intellij.openapi.vcs.changes.ChangeListWorker;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -26,13 +27,13 @@ import org.jetbrains.annotations.Nullable;
 public class AddList implements ChangeListCommand {
   @NotNull private final String myName;
   @Nullable private final String myComment;
-  @Nullable private final Object myData;
+  @Nullable private final ChangeListData myData;
 
   private boolean myWasListCreated;
   private LocalChangeList myNewListCopy;
   private String myOldComment;
 
-  public AddList(@NotNull String name, @Nullable String comment, @Nullable Object data) {
+  public AddList(@NotNull String name, @Nullable String comment, @Nullable ChangeListData data) {
     myName = name;
     myComment = comment;
     myData = data;

@@ -38,12 +38,10 @@ public class FileStatusColorsTableModel extends AbstractTableModel {
 
   private final static ColumnInfo[] COLUMNS_INFO = {
     new ColumnInfo(
-      String.class, ApplicationBundle.message("file.status.colors.header.status"), descriptor -> descriptor.getStatus().getText()),
-    new ColumnInfo(
-      Color.class, ApplicationBundle.message("file.status.colors.header.color"), descriptor -> descriptor.getColor()),
-    new ColumnInfo(
       Boolean.class, "", descriptor -> descriptor.isDefault()
-    )
+    ),
+    new ColumnInfo(
+      String.class, ApplicationBundle.message("file.status.colors.header.status"), descriptor -> descriptor.getStatus().getText())
   };
 
   private static class ColumnInfo {
@@ -112,10 +110,6 @@ public class FileStatusColorsTableModel extends AbstractTableModel {
     fireTableCellUpdated(rowIndex, 1);
   }
 
-  boolean isResetAvailable(int rowIndex) {
-    return !myDescriptors.get(rowIndex).isDefault();
-  }
-
   @Nullable
   FileStatusColorDescriptor getDescriptorByName(String statusName) {
     for (FileStatusColorDescriptor descriptor : myDescriptors) {
@@ -150,5 +144,20 @@ public class FileStatusColorsTableModel extends AbstractTableModel {
     if (myScheme instanceof AbstractColorsScheme) {
       ((AbstractColorsScheme)myScheme).setSaveNeeded(true);
     }
+  }
+
+  @Nullable
+  public FileStatusColorDescriptor getDescriptorAt(int index) {
+    if (index >= 0 && index < myDescriptors.size()) {
+      return myDescriptors.get(index);
+    }
+    return null;
+  }
+
+  public boolean containsCustomSettings() {
+    for (FileStatusColorDescriptor descriptor : myDescriptors) {
+      if (!descriptor.isDefault()) return true;
+    }
+    return false;
   }
 }

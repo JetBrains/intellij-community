@@ -135,7 +135,7 @@ public class TextDiffViewerUtil {
       for (DiffContent content : contents) {
         message.append(content.toString()).append("\n");
       }
-      LOG.warn(new Throwable(message.toString()));
+      LOG.warn(message.toString());
     }
   }
 

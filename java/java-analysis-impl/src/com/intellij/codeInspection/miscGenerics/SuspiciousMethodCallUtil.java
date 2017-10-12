@@ -154,8 +154,9 @@ public class SuspiciousMethodCallUtil {
     if (argType == null) return null;
 
     final JavaResolveResult resolveResult = methodExpression.advancedResolve(false);
-    PsiMethod calleeMethod = (PsiMethod)resolveResult.getElement();
-    if (calleeMethod == null) return null;
+    PsiElement element = resolveResult.getElement();
+    if (!(element instanceof PsiMethod)) return null;
+    PsiMethod calleeMethod = (PsiMethod)element;
     PsiMethod contextMethod = PsiTreeUtil.getParentOfType(methodExpression, PsiMethod.class);
 
     //noinspection SynchronizationOnLocalVariableOrMethodParameter

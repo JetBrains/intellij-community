@@ -35,8 +35,8 @@ import java.util.Locale;
   name = "ExportableFileTemplateSettings",
   storages = @Storage(FileTemplateSettings.EXPORTABLE_SETTINGS_FILE)
 )
-public class FileTemplateSettings extends FileTemplatesLoader implements PersistentStateComponent<Element> {
-  public static final String EXPORTABLE_SETTINGS_FILE = "file.template.settings.xml";
+class FileTemplateSettings extends FileTemplatesLoader implements PersistentStateComponent<Element> {
+  static final String EXPORTABLE_SETTINGS_FILE = "file.template.settings.xml";
 
   private static final String ELEMENT_TEMPLATE = "template";
   private static final String ATTRIBUTE_NAME = "name";
@@ -44,7 +44,7 @@ public class FileTemplateSettings extends FileTemplatesLoader implements Persist
   private static final String ATTRIBUTE_LIVE_TEMPLATE = "live-template-enabled";
   private static final String ATTRIBUTE_ENABLED = "enabled";
 
-  public FileTemplateSettings(@NotNull FileTypeManagerEx typeManager, @Nullable Project project) {
+  FileTemplateSettings(@NotNull FileTypeManagerEx typeManager, @Nullable Project project) {
     super(typeManager, project);
   }
 
@@ -58,7 +58,8 @@ public class FileTemplateSettings extends FileTemplatesLoader implements Persist
       for (FileTemplateBase template : manager.getAllTemplates(true)) {
         // save only those settings that differ from defaults
         boolean shouldSave = template.isReformatCode() != FileTemplateBase.DEFAULT_REFORMAT_CODE_VALUE ||
-                             template.isLiveTemplateEnabled() != template.isLiveTemplateEnabledByDefault();
+                             // check isLiveTemplateEnabledChanged() first to avoid expensive loading all templates on exit
+                             template.isLiveTemplateEnabledChanged() && template.isLiveTemplateEnabled() != template.isLiveTemplateEnabledByDefault();
         if (template instanceof BundledFileTemplate) {
           shouldSave |= ((BundledFileTemplate)template).isEnabled() != FileTemplateBase.DEFAULT_ENABLED_VALUE;
         }

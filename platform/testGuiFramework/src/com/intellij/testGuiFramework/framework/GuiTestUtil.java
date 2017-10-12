@@ -108,6 +108,7 @@ public final class GuiTestUtil {
   public static final Timeout SHORT_TIMEOUT = timeout(2, MINUTES);
   public static final Timeout LONG_TIMEOUT = timeout(5, MINUTES);
   public static final Timeout TEN_MIN_TIMEOUT = timeout(10, MINUTES);
+  public static final Timeout FIFTEEN_MIN_TIMEOUT = timeout(15, MINUTES);
 
   public static final String GUI_TESTS_RUNNING_IN_SUITE_PROPERTY = "gui.tests.running.in.suite";
 

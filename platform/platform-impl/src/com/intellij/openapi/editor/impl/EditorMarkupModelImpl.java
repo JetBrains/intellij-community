@@ -350,7 +350,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     else {
       myEditor.getVerticalScrollBar().setPersistentUI(JBScrollBar.createUI(null));
     }
-    myEditor.setHorizontalScrollBarPersistentUI(EditorImpl.createEditorScrollbarUI(myEditor));
   }
 
   @Nullable
@@ -610,13 +609,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       bounds.x = getThinGap() + myMinMarkHeight+ getErrorIconWidth() /2 - b2;
       
       return bounds;
-    }
-
-    @Override
-    protected void paintMaxiThumb(@NotNull Graphics2D g, @NotNull Rectangle thumbBounds) {
-      g.setColor(adjustColor(getGradientDarkColor()));
-      int arc = 3;
-      g.fillRoundRect(isMirrored() ? -3 : 2, 0, thumbBounds.width, thumbBounds.height, arc, arc);
     }
 
     @Override

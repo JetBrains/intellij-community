@@ -38,6 +38,7 @@ class BoundedScheduledExecutorService extends SchedulingWrapper {
   @Override
   public void shutdown() {
     super.shutdown();
+    cancelAndRemoveTasksFromQueue();
     backendExecutorService.shutdown();
   }
 

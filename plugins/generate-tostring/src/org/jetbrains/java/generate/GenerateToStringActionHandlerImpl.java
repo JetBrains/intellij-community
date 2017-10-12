@@ -219,6 +219,8 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
                 public void actionPerformed(ActionEvent e) {
                   final TemplatesPanel ui = new TemplatesPanel(clazz.getProject());
                   Configurable composite = new TabbedConfigurable() {
+                        @Override
+                        @NotNull
                         protected List<Configurable> createConfigurables() {
                             List<Configurable> res = new ArrayList<>();
                             res.add(new GenerateToStringConfigurable(clazz.getProject()));
@@ -230,6 +232,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
                             return "toString() Generation Settings";
                         }
 
+                        @Override
                         public String getHelpTopic() {
                             return "editing.altInsert.tostring.settings";
                         }

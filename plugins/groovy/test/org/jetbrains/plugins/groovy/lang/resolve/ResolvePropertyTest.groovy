@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
@@ -1169,7 +1155,7 @@ a<caret>bc = 4
 
 
   void testResolveBinding5() {
-    assert resolveByText('''\
+    resolveByText '''\
 def foo() {
   abc = 4
 }
@@ -1177,11 +1163,11 @@ def foo() {
 def bar() {
   print ab<caret>c
 }
-''') == null
+''', null
   }
 
   void testResolveBinding6() {
-    assert resolveByText('''\
+    resolveByText'''\
 def foo() {
   print ab<caret>c
 }
@@ -1189,11 +1175,11 @@ def foo() {
 def bar() {
   abc = 4
 }
-''') == null
+''', null
   }
 
   void testResolveBinding7() {
-    assert resolveByText('''\
+    resolveByText '''\
 def foo() {
   a<caret>bc = 4
 }
@@ -1201,11 +1187,11 @@ def foo() {
 def bar() {
   print abc
 }
-''') == null
+''', null
   }
 
   void testResolveBinding8() {
-    assert resolveByText('''\
+    resolveByText '''\
 def foo() {
   print abc
 }
@@ -1213,7 +1199,7 @@ def foo() {
 def bar() {
   a<caret>bc = 4
 }
-''') == null
+''', null
   }
 
   void testBinding9() {
@@ -1263,13 +1249,13 @@ def foo() {
   }
 
   void testBinding14() {
-    assert resolveByText('''\
+    resolveByText '''\
 def foo() {
   aa<caret>a
 }
 
 aaa = 1
-''') == null
+''', null
   }
 
   void testVarVsPackage1() {

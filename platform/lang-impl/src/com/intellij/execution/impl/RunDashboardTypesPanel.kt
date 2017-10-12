@@ -110,7 +110,7 @@ internal class RunDashboardTypesPanel(private val myProject: Project) : JPanel(B
         PropertiesComponent.getInstance().setValue(EXPAND_PROPERTY_KEY, isExpanded.toString())
       }
     }
-    hideableDecorator.setOn(PropertiesComponent.getInstance().getBoolean(EXPAND_PROPERTY_KEY, true))
+    hideableDecorator.setOn(PropertiesComponent.getInstance().getBoolean(EXPAND_PROPERTY_KEY, false))
     hideableDecorator.setContentComponent(listPanel)
   }
 

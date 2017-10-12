@@ -178,7 +178,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
         if (expression == null) return true;
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
         while (parent instanceof PsiTypeCastExpression || parent instanceof PsiConditionalExpression) {
-          parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+          parent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
         }
         if (parent instanceof PsiExpressionList ||
             (parent instanceof PsiAssignmentExpression &&

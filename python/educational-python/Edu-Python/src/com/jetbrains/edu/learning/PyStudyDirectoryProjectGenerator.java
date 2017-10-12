@@ -8,24 +8,22 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.psi.PsiDirectory;
@@ -49,7 +47,10 @@ import com.jetbrains.python.newProject.steps.PythonSdkChooserCombo;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.remote.PyProjectSynchronizer;
-import com.jetbrains.python.sdk.*;
+import com.jetbrains.python.sdk.PyDetectedSdk;
+import com.jetbrains.python.sdk.PySdkExtKt;
+import com.jetbrains.python.sdk.PySdkListCellRenderer;
+import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.PythonIcons;
 import org.jetbrains.annotations.Nls;
@@ -60,6 +61,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -133,8 +135,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
   }
 
   public ValidationResult validate() {
-    final Project project = ProjectManager.getInstance().getDefaultProject();
-    final List<Sdk> sdks = PyConfigurableInterpreterList.getInstance(project).getAllPythonSdks();
+    final List<Sdk> sdks = PyConfigurableInterpreterList.getInstance(null).getAllPythonSdks();
 
     ValidationResult validationResult;
     if (sdks.isEmpty()) {
@@ -166,48 +167,24 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
   @Override
   public void afterProjectGenerated(@NotNull Project project) {
     Sdk sdk = mySettings.getSdk();
-
     if (sdk == null) {
       createAndAddVirtualEnv(project, mySettings);
       sdk = mySettings.getSdk();
     }
-    if (sdk instanceof PyDetectedSdk) {
-      sdk = addDetectedSdk(sdk, project);
-    }
     SdkConfigurationUtil.setDirectoryProjectSdk(project, sdk);
-  }
-
-  private static Sdk addDetectedSdk(@NotNull Sdk sdk, @NotNull Project project) {
-    final ProjectSdksModel model = PyConfigurableInterpreterList.getInstance(project).getModel();
-    final String name = sdk.getName();
-    VirtualFile sdkHome = WriteAction.compute(() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(name));
-    sdk = SdkConfigurationUtil.createAndAddSDK(sdkHome.getPath(), PythonSdkType.getInstance());
-    if (sdk != null) {
-      PythonSdkUpdater.updateOrShowError(sdk, null, project, null);
-    }
-
-    model.addSdk(sdk);
-    try {
-      model.apply();
-    }
-    catch (ConfigurationException exception) {
-      LOG.error("Error adding detected python interpreter " + exception.getMessage());
-    }
-    return sdk;
   }
 
   @Nullable
   @Override
   public LabeledComponent<JComponent> getLanguageSettingsComponent(@NotNull Course selectedCourse) {
-    final Project project = ProjectManager.getInstance().getDefaultProject();
-    final List<Sdk> sdks = PyConfigurableInterpreterList.getInstance(project).getAllPythonSdks();
+    final List<Sdk> sdks = PyConfigurableInterpreterList.getInstance(null).getAllPythonSdks();
     VirtualEnvProjectFilter.removeAllAssociated(sdks);
     // by default we create new virtual env in project, we need to add this non-existing sdk to sdk list
     ProjectJdkImpl fakeSdk = createFakeSdk(selectedCourse);
     if (fakeSdk != null) {
       sdks.add(0, fakeSdk);
     }
-    PythonSdkChooserCombo combo = new PythonSdkChooserCombo(project, sdks, sdk -> true);
+    PythonSdkChooserCombo combo = new PythonSdkChooserCombo(null, sdks, null, sdk -> true);
     if (fakeSdk != null) {
       patchRenderer(fakeSdk, combo);
       combo.getComboBox().setSelectedItem(fakeSdk);
@@ -240,11 +217,11 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
   }
 
   private static void patchRenderer(@NotNull ProjectJdkImpl fakeSdk, @NotNull PythonSdkChooserCombo combo) {
-    combo.getComboBox().setRenderer(new PySdkListCellRenderer(true) {
+    combo.getComboBox().setRenderer(new PySdkListCellRenderer(null) {
       @Override
-      public void customize(JList list, Object item, int index, boolean selected, boolean hasFocus) {
-        super.customize(list, item, index, selected, hasFocus);
-        if (item == fakeSdk) {
+      protected void customizeCellRenderer(@NotNull JList<?> list, @Nullable Object value, int index, boolean selected, boolean hasFocus) {
+        super.customizeCellRenderer(list, value, index, selected, hasFocus);
+        if (value == fakeSdk) {
           setIcon(IconLoader.getTransparentIcon(PythonIcons.Python.Virtualenv));
         }
       }
@@ -333,11 +310,6 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
     return myGenerator;
   }
 
-  @Override
-  public boolean hideInterpreter() {
-    return true;
-  }
-
   @Nullable
   @Override
   public BooleanFunction<PythonProjectGenerator> beforeProjectGenerated(@Nullable Sdk sdk) {
@@ -362,48 +334,38 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
     if (course == null) {
       return;
     }
-    final String baseSdk = getBaseSdk(course);
-
-    if (baseSdk != null) {
-      final PyPackageManager packageManager = PyPackageManager.getInstance(new PyDetectedSdk(baseSdk));
-      try {
-        final String path = packageManager.createVirtualEnv(project.getBasePath() + "/.idea/VirtualEnvironment", false);
-        AbstractCreateVirtualEnvDialog.setupVirtualEnvSdk(path, true, new AbstractCreateVirtualEnvDialog.VirtualEnvCallback() {
+    final String baseSdkPath = getBaseSdk(course);
+    if (baseSdkPath != null) {
+      final PyDetectedSdk baseSdk = new PyDetectedSdk(baseSdkPath);
+      final String virtualEnvPath = project.getBasePath() + "/.idea/VirtualEnvironment";
+      final Sdk sdk = PySdkExtKt.createSdkByGenerateTask(new Task.WithResult<String, ExecutionException>(project,
+                                                                                                         "Creating Virtual Environment",
+                                                                                                         false) {
           @Override
-          public void virtualEnvCreated(Sdk createdSdk, boolean associateWithProject) {
-            settings.setSdk(createdSdk);
-            model.addSdk(createdSdk);
-            try {
-              model.apply();
-            }
-            catch (ConfigurationException exception) {
-              LOG.error("Error adding created virtual env " + exception.getMessage());
-            }
-            if (associateWithProject) {
-              SdkAdditionalData additionalData = createdSdk.getSdkAdditionalData();
-              if (additionalData == null) {
-                additionalData = new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(createdSdk.getHomePath()));
-                ((ProjectJdkImpl)createdSdk).setSdkAdditionalData(additionalData);
-              }
-              ((PythonSdkAdditionalData)additionalData).associateWithNewProject();
-            }
+          protected String compute(@NotNull ProgressIndicator indicator) throws ExecutionException {
+            indicator.setIndeterminate(true);
+            final PyPackageManager packageManager = PyPackageManager.getInstance(baseSdk);
+            return packageManager.createVirtualEnv(virtualEnvPath, false);
           }
-        });
+        }, Arrays.asList(model.getSdks()), baseSdk, project.getBasePath());
+      if (sdk == null) {
+        LOG.warn("Failed to create virtual env in " + virtualEnvPath);
+        return;
       }
-      catch (ExecutionException e) {
-        LOG.warn("Failed to create virtual env " + e.getMessage());
-      }
+      settings.setSdk(sdk);
+      SdkConfigurationUtil.addSdk(sdk);
+      PySdkExtKt.associateWithProject(sdk, project, false);
     }
   }
 
   private static String getBaseSdk(@NotNull final Course course) {
-    LanguageLevel baseLevel = LanguageLevel.PYTHON30;
+    LanguageLevel baseLevel = LanguageLevel.PYTHON36;
     final String version = course.getLanguageVersion();
     if (PyEduPluginConfigurator.PYTHON_2.equals(version)) {
       baseLevel = LanguageLevel.PYTHON27;
     }
     else if (PyEduPluginConfigurator.PYTHON_3.equals(version)) {
-      baseLevel = LanguageLevel.PYTHON31;
+      baseLevel = LanguageLevel.PYTHON36;
     }
     else if (version != null) {
       baseLevel = LanguageLevel.fromPythonVersion(version);

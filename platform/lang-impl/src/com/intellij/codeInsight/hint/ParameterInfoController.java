@@ -494,7 +494,7 @@ public class ParameterInfoController implements Disposable {
                                                    Editor editor,
                                                    VisualPosition pos,
                                                    LightweightHint hint,
-                                                   boolean awtTooltip, short preferredPosition) {
+                                                   boolean awtTooltip, short preferredPosition, boolean showLookupHint) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return Pair.pair(new Point(), HintManager.DEFAULT);
 
     HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
@@ -504,8 +504,7 @@ public class ParameterInfoController implements Disposable {
 
     Point p1;
     Point p2;
-    boolean isLookupShown = LookupManager.getInstance(project).getActiveLookup() != null;
-    if (isLookupShown) {
+    if (showLookupHint) {
       p1 = hintManager.getHintPosition(hint, editor, HintManager.UNDER);
       p2 = hintManager.getHintPosition(hint, editor, HintManager.ABOVE);
     }
@@ -524,7 +523,7 @@ public class ParameterInfoController implements Disposable {
     boolean p1Ok = p1.y + hintSize.height < layeredPane.getHeight();
     boolean p2Ok = p2.y >= 0;
 
-    if (isLookupShown) {
+    if (showLookupHint) {
       if (p1Ok) return new Pair<>(p1, HintManager.UNDER);
       if (p2Ok) return new Pair<>(p2, HintManager.ABOVE);
     }
@@ -693,7 +692,7 @@ public class ParameterInfoController implements Disposable {
       Pair<Point, Short> position;
 
       if (!isMultiline) {
-        position = chooseBestHintPosition(myEditor.getProject(), myEditor, pos, hint, awtTooltip, preferredPosition);
+        position = chooseBestHintPosition(myEditor.getProject(), myEditor, pos, hint, awtTooltip, preferredPosition, false);
       }
       else {
         Point p = HintManagerImpl.getHintPosition(hint, myEditor, pos, HintManager.ABOVE);

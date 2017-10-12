@@ -30,11 +30,16 @@ public class JpsModelLoaderImpl implements JpsModelLoader {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.JpsModelLoaderImpl");
   private final String myProjectPath;
   private final String myGlobalOptionsPath;
+  private final boolean myLoadUnloadedModules;
   private final ParameterizedRunnable<JpsModel> myModelInitializer;
 
-  public JpsModelLoaderImpl(String projectPath, String globalOptionsPath, @Nullable ParameterizedRunnable<JpsModel> initializer) {
+  public JpsModelLoaderImpl(String projectPath,
+                            String globalOptionsPath,
+                            boolean loadUnloadedModules,
+                            @Nullable ParameterizedRunnable<JpsModel> initializer) {
     myProjectPath = projectPath;
     myGlobalOptionsPath = globalOptionsPath;
+    myLoadUnloadedModules = loadUnloadedModules;
     myModelInitializer = initializer;
   }
 
@@ -42,7 +47,7 @@ public class JpsModelLoaderImpl implements JpsModelLoader {
   public JpsModel loadModel() throws IOException {
     final long start = System.currentTimeMillis();
     LOG.info("Loading model: project path = " + myProjectPath + ", global options path = " + myGlobalOptionsPath);
-    final JpsModel model = JpsSerializationManager.getInstance().loadModel(myProjectPath, myGlobalOptionsPath);
+    final JpsModel model = JpsSerializationManager.getInstance().loadModel(myProjectPath, myGlobalOptionsPath, myLoadUnloadedModules);
     if (myModelInitializer != null) {
       myModelInitializer.run(model);
     }

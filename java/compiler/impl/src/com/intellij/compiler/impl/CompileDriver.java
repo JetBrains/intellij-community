@@ -66,10 +66,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.jps.api.CmdlineProtoUtil;
-import org.jetbrains.jps.api.CmdlineRemoteProto;
-import org.jetbrains.jps.api.GlobalOptions;
-import org.jetbrains.jps.api.TaskFuture;
+import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
@@ -107,8 +104,12 @@ public class CompileDriver {
   }
 
   public void make(CompileScope scope, CompileStatusNotification callback) {
+    make(scope, false, callback);
+  }
+
+  public void make(CompileScope scope, boolean withModalProgress, CompileStatusNotification callback) {
     if (validateCompilerConfiguration(scope)) {
-      startup(scope, false, false, callback, null);
+      startup(scope, false, false, withModalProgress, callback, null);
     }
     else {
       callback.finished(true, 0, 0, DummyCompileContext.getInstance());
@@ -195,7 +196,7 @@ public class CompileDriver {
       scopes.addAll(explicitScopes);
     }
     else if (!compileContext.isRebuild() && !CompileScopeUtil.allProjectModulesAffected(compileContext)) {
-      CompileScopeUtil.addScopesForModules(Arrays.asList(scope.getAffectedModules()), scopes, forceBuild);
+      CompileScopeUtil.addScopesForModules(Arrays.asList(scope.getAffectedModules()), scope.getAffectedUnloadedModules(), scopes, forceBuild);
     }
     else {
       scopes.addAll(CmdlineProtoUtil.createAllModulesScopes(forceBuild));
@@ -228,7 +229,7 @@ public class CompileDriver {
     // need to pass scope's user data to server
     final Map<String, String> builderParams;
     if (onlyCheckUpToDate) {
-      builderParams = Collections.emptyMap();
+      builderParams = new HashMap<>();
     }
     else {
       final Map<Key, Object> exported = scope.exportUserData();
@@ -241,8 +242,11 @@ public class CompileDriver {
         }
       }
       else {
-        builderParams = Collections.emptyMap();
+        builderParams = new HashMap<>();
       }
+    }
+    if (!scope.getAffectedUnloadedModules().isEmpty()) {
+      builderParams.put(BuildParametersKeys.LOAD_UNLOADED_MODULES, Boolean.TRUE.toString());
     }
 
     final MessageBus messageBus = myProject.getMessageBus();
@@ -372,16 +376,22 @@ public class CompileDriver {
     });
   }
 
+  private void startup(final CompileScope scope, final boolean isRebuild, final boolean forceCompile,
+                       final CompileStatusNotification callback, final CompilerMessage message) {
+    startup(scope, isRebuild, forceCompile, false, callback, message);
+  }
+
   private void startup(final CompileScope scope,
                        final boolean isRebuild,
                        final boolean forceCompile,
-                       final CompileStatusNotification callback,
+                       boolean withModalProgress, final CompileStatusNotification callback,
                        final CompilerMessage message) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final String contentName = CompilerBundle.message(forceCompile ? "compiler.content.name.compile" : "compiler.content.name.make");
     final boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-    final CompilerTask compileTask = new CompilerTask(myProject, contentName, isUnitTestMode, true, true, isCompilationStartedAutomatically(scope));
+    final CompilerTask compileTask = new CompilerTask(myProject, contentName, isUnitTestMode, !withModalProgress, true,
+                                                      isCompilationStartedAutomatically(scope), withModalProgress);
 
     StatusBar.Info.set("", myProject, "Compiler");
     // ensure the project model seen by build process is up-to-date

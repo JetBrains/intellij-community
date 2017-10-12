@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -69,7 +68,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.configuration.PythonSdkDetailsDialog");
 
   private JPanel myMainPanel;
-  private JList mySdkList;
+  private JList<Object> mySdkList;
   private boolean mySdkListChanged = false;
   private final PyConfigurableInterpreterList myInterpreterList;
   private final ProjectSdksModel myProjectSdksModel;
@@ -120,10 +119,11 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   @Nullable
   @Override
   protected JComponent createCenterPanel() {
-    mySdkList = new JBList();
+    mySdkList = new JBList<>();
     //noinspection unchecked
-    mySdkList.setCellRenderer(new PySdkListCellRenderer("", myModificators));
+    mySdkList.setCellRenderer(new PySdkListCellRenderer(myModificators));
     mySdkList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    new ListSpeedSearch<>(mySdkList);
 
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(mySdkList).disableUpDownActions()
       .setAddAction(new AnActionButtonRunnable() {
@@ -147,7 +147,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
           updateOkButton();
         }
       })
-      .setRemoveActionUpdater(e -> !(getSelectedSdk() instanceof PyDetectedSdk))
+      //.setRemoveActionUpdater(e -> !(getSelectedSdk() instanceof PyDetectedSdk))
       .addExtraAction(new ToggleVirtualEnvFilterButton())
       .addExtraAction(new ShowPathButton());
 
@@ -206,15 +206,11 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    try {
-      apply();
-    }
-    catch (ConfigurationException ignored) {
-    }
+    apply();
     super.doOKAction();
   }
 
-  public void apply() throws ConfigurationException {
+  public void apply() {
     if (!myModifiedModificators.isEmpty()) {
       mySdkSettingsWereModified.run();
     }
@@ -229,7 +225,9 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     mySdkListChanged = false;
     final Sdk sdk = getSelectedSdk();
     myShowMoreCallback.consume(sdk);
-    PyPackageManagers.getInstance().clearCache(sdk);
+    if (sdk != null) {
+      PyPackageManagers.getInstance().clearCache(sdk);
+    }
     Disposer.dispose(getDisposable());
   }
 
@@ -268,7 +266,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   private void addSdk(AnActionButton button) {
     PythonSdkDetailsStep
       .show(myProject, myProjectSdksModel.getSdks(), null, myMainPanel, button.getPreferredPopupPoint().getScreenPoint(),
-            sdk -> addCreatedSdk(sdk, true));
+            null, sdk -> addCreatedSdk(sdk, true));
   }
 
   private void addCreatedSdk(@Nullable final Sdk sdk, boolean newVirtualEnv) {
@@ -443,7 +441,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
     @Override
     public boolean isEnabled() {
-      return getSelectedSdk() != null && !(getSelectedSdk() instanceof PyDetectedSdk);
+      return getSelectedSdk() != null;
     }
 
     @Override

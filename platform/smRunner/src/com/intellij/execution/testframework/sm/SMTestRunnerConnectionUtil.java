@@ -14,6 +14,7 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerUIActionsHandler;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
@@ -200,9 +201,11 @@ public class SMTestRunnerConnectionUtil {
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
       public void processTerminated(@NotNull final ProcessEvent event) {
-        outputConsumer.flushBufferBeforeTerminating(event.getExitCode());
-        outputConsumer.finishTesting();
-        Disposer.dispose(outputConsumer);
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          outputConsumer.flushBufferBeforeTerminating(event.getExitCode());
+          outputConsumer.finishTesting();
+          Disposer.dispose(outputConsumer);
+        });
       }
 
       @Override

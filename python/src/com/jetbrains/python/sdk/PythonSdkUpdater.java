@@ -64,7 +64,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class PythonSdkUpdater implements StartupActivity {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.PythonSdkUpdater");
-  public static final int INITIAL_ACTIVITY_DELAY = 7000;
+  public static final int INITIAL_ACTIVITY_DELAY = 3000;
 
   private static final Object ourLock = new Object();
   private static final Set<String> ourScheduledToRefresh = Sets.newHashSet();
@@ -117,6 +117,9 @@ public class PythonSdkUpdater implements StartupActivity {
       return false;
     }
 
+    if (project == null) {
+      return true;
+    }
 
     final Application application = ApplicationManager.getApplication();
 
@@ -134,7 +137,10 @@ public class PythonSdkUpdater implements StartupActivity {
         }
         ourScheduledToRefresh.remove(key);
       }
-      if (project != null && project.isDisposed()) {
+      if (project.isDisposed()) {
+        return;
+      }
+      if (PythonSdkType.findSdkByKey(key) == null) {
         return;
       }
       ProgressManager.getInstance().run(new Task.Backgroundable(project, PyBundle.message("sdk.gen.updating.interpreter"), false) {

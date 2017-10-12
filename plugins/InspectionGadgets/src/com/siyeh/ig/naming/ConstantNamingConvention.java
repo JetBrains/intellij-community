@@ -19,16 +19,11 @@ import com.intellij.codeInspection.naming.NamingConvention;
 import com.intellij.codeInspection.naming.NamingConventionBean;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiType;
-import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.psiutils.ClassUtils;
-
-import javax.swing.*;
-import java.awt.*;
 
 public class ConstantNamingConvention extends NamingConvention<PsiField> {
 
+  static final String CONSTANT_NAMING_CONVENTION_SHORT_NAME = "ConstantNamingConvention";
 
   private static final int DEFAULT_MIN_LENGTH = 5;
   private static final int DEFAULT_MAX_LENGTH = 32;
@@ -41,65 +36,17 @@ public class ConstantNamingConvention extends NamingConvention<PsiField> {
 
   @Override
   public String getShortName() {
-    return "ConstantNamingConvention";
+    return CONSTANT_NAMING_CONVENTION_SHORT_NAME;
   }
 
   @Override
   public NamingConventionBean createDefaultBean() {
-    return new ConstantNamingConventionBean();
+    return new FieldNamingConventionInspection.FieldNamingConventionBean("[A-Z][A-Z_\\d]*", DEFAULT_MIN_LENGTH, DEFAULT_MAX_LENGTH);
   }
 
 
   @Override
   public boolean isApplicable(PsiField field) {
     return field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL);
-  }
-
-  @Override
-  public boolean isValid(PsiField member, NamingConventionBean bean) {
-    if (((ConstantNamingConventionBean)bean).onlyCheckImmutables) {
-      final PsiType type = member.getType();
-      if (!ClassUtils.isImmutable(type)) {
-        return true;
-      }
-    }
-    return super.isValid(member, bean);
-  }
-
-  private static class ConstantNamingConventionBean extends FieldNamingConventionInspection.FieldNamingConventionBean {
-    @SuppressWarnings({"PublicField"})
-    public boolean onlyCheckImmutables = false;
-
-    public ConstantNamingConventionBean() {
-      super("[A-Z][A-Z_\\d]*", DEFAULT_MIN_LENGTH, DEFAULT_MAX_LENGTH);
-    }
-
-    @Override
-    public JComponent createOptionsPanel() {
-      JPanel panel = new JPanel(new BorderLayout());
-      JComponent selfOptions = super.createOptionsPanel();
-      JCheckBox inheritCb = new CheckBox(InspectionGadgetsBundle.message("constant.naming.convention.immutables.option"), this, "onlyCheckImmutables");
-      panel.add(inheritCb, BorderLayout.NORTH);
-      panel.add(selfOptions, BorderLayout.CENTER);
-      return panel;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof ConstantNamingConventionBean)) return false;
-      if (!super.equals(o)) return false;
-
-      ConstantNamingConventionBean bean = (ConstantNamingConventionBean)o;
-
-      if (onlyCheckImmutables != bean.onlyCheckImmutables) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return 31 * super.hashCode() + (onlyCheckImmutables ? 1 : 0);
-    }
   }
 }

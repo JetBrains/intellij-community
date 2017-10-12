@@ -495,6 +495,8 @@ public class AllIcons {
     public static final Icon Information = IconLoader.getIcon("/general/information.png"); // 16x16
     public static final Icon InformationDialog = IconLoader.getIcon("/general/informationDialog.png"); // 32x32
     public static final Icon InheritedMethod = IconLoader.getIcon("/general/inheritedMethod.png"); // 11x14
+    public static final Icon Inline_edit = IconLoader.getIcon("/general/inline_edit.png"); // 16x16
+    public static final Icon Inline_edit_hovered = IconLoader.getIcon("/general/inline_edit_hovered.png"); // 16x16
     public static final Icon InspectionsError = IconLoader.getIcon("/general/inspectionsError.png"); // 14x14
     public static final Icon InspectionsEye = IconLoader.getIcon("/general/inspectionsEye.png"); // 14x14
     public static final Icon InspectionsOff = IconLoader.getIcon("/general/inspectionsOff.png"); // 16x16

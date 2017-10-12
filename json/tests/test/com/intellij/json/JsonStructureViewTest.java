@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.testFramework.PlatformTestUtil.assertTreeEqual;
@@ -23,7 +24,10 @@ public class JsonStructureViewTest extends JsonTestCase {
 
   private void doTest(final String expected) {
     myFixture.configureByFile(getTestName(false) + ".json");
-    myFixture.testStructureView(svc -> assertTreeEqual(svc.getTree(), expected));
+    myFixture.testStructureView(svc -> {
+      TreeUtil.expandAll(svc.getTree());
+      assertTreeEqual(svc.getTree(), expected);
+    });
   }
 
   private void doTestTreeStructure(@NotNull Consumer<StructureViewModel> consumer) {
@@ -55,7 +59,6 @@ public class JsonStructureViewTest extends JsonTestCase {
 
   // IDEA-127119
   public void testObjectsInsideArraysAreShown() {
-    // maximum expansion depth is determined by 'ide.tree.autoExpandMaxDepth' registry value
     doTest("-ObjectsInsideArraysAreShown.json\n" +
            " aProp\n" +
            " -node1\n" +

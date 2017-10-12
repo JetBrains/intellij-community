@@ -168,6 +168,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doTest("B");
   }
 
+  public void testSafeDeleteImportsOnInnerClasses() {
+    doTest("p.B");
+  }
+
   public void testRemoveOverridersInspiteOfUnsafeUsages() {
     try {
       BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
@@ -379,6 +383,22 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   public void testDeleteMethodCascadeWithField() throws Exception {
+    doSingleFileTest();
+  }
+
+  public void testForInitExpr() throws Exception {
+    doSingleFileTest();
+  }
+
+  public void testForInitList() throws Exception {
+    doSingleFileTest();
+  }
+
+  public void testForUpdateExpr() throws Exception {
+    doSingleFileTest();
+  }
+
+  public void testForUpdateList() throws Exception {
     doSingleFileTest();
   }
 

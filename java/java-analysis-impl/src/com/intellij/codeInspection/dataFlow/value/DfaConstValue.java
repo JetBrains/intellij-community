@@ -16,7 +16,6 @@
 
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -69,7 +68,7 @@ public class DfaConstValue extends DfaValue {
         if (initializer instanceof PsiLiteralExpression && initializer.textMatches(PsiKeyword.NULL)) {
           return dfaNull;
         }
-        if (variable instanceof PsiField && variable.hasModifier(JvmModifier.STATIC) && ExpressionUtils.isNewObject(initializer)) {
+        if (variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.STATIC) && ExpressionUtils.isNewObject(initializer)) {
           return createFromValue(variable, type, variable);
         }
         return null;

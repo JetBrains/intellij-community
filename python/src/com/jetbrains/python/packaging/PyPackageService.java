@@ -18,6 +18,9 @@ package com.jetbrains.python.packaging;
 import com.intellij.openapi.components.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 
 import java.util.List;
 import java.util.Map;
@@ -28,7 +31,7 @@ public class PyPackageService implements
   public volatile Map<String, Boolean> sdkToUsersite = ContainerUtil.newConcurrentMap();
   public volatile List<String> additionalRepositories = ContainerUtil.createConcurrentList();
   public volatile Map<String, String> PY_PACKAGES = ContainerUtil.newConcurrentMap();
-  public volatile String virtualEnvBasePath;
+  @SystemIndependent public volatile String virtualEnvBasePath;
   public volatile Boolean PYPI_REMOVED = false;
   
   public long LAST_TIME_CHECKED = 0;
@@ -76,11 +79,13 @@ public class PyPackageService implements
     return ServiceManager.getService(PyPackageService.class);
   }
 
+  @Nullable
+  @SystemIndependent
   public String getVirtualEnvBasePath() {
     return virtualEnvBasePath;
   }
 
-  public void setVirtualEnvBasePath(String virtualEnvBasePath) {
+  public void setVirtualEnvBasePath(@NotNull @SystemIndependent String virtualEnvBasePath) {
     this.virtualEnvBasePath = virtualEnvBasePath;
   }
 }

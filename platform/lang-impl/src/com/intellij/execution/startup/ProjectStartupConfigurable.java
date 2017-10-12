@@ -106,16 +106,13 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
     defaultEditor.setClickCountToStart(1);
 
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    new DumbAwareAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        final int row = myTable.getSelectedRow();
-        if (row >= 0 && myModel.isCellEditable(row, ProjectStartupTasksTableModel.IS_SHARED_COLUMN)) {
-          myModel.setValueAt(!Boolean.TRUE.equals(myTable.getValueAt(row, ProjectStartupTasksTableModel.IS_SHARED_COLUMN)),
-                             row, ProjectStartupTasksTableModel.IS_SHARED_COLUMN);
-        }
+    DumbAwareAction.create(e -> {
+      int row = myTable.getSelectedRow();
+      if (row >= 0 && myModel.isCellEditable(row, ProjectStartupTasksTableModel.IS_SHARED_COLUMN)) {
+        myModel.setValueAt(!Boolean.TRUE.equals(myTable.getValueAt(row, ProjectStartupTasksTableModel.IS_SHARED_COLUMN)),
+                           row, ProjectStartupTasksTableModel.IS_SHARED_COLUMN);
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyEvent.VK_SPACE), myTable);
+    }).registerCustomShortcutSet(new CustomShortcutSet(KeyEvent.VK_SPACE), myTable);
     myTable.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {

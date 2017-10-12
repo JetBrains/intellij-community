@@ -268,8 +268,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
     }
 
     for (int i = 0; i < N; i++) {
-      assertFalse(futures[i].isCancelled());
-      futures[i].cancel(false);
+      assertTrue(futures[i].isCancelled());
     }
 
     String logs = log.toString();
@@ -315,9 +314,8 @@ public class BoundedScheduledExecutorTest extends TestCase {
     ScheduledExecutorService executor = createBoundedScheduledExecutor(PooledThreadExecutor.INSTANCE, 1);
     Future<?> future = executor.schedule(() -> TimeoutUtil.sleep(10000), 100, TimeUnit.MILLISECONDS);
     executor.shutdown();
-    assertFalse(executor.awaitTermination(1, TimeUnit.SECONDS));
-    assertFalse(future.isDone());
-    assertFalse(future.isCancelled());
+    assertTrue(future.isDone());
+    assertTrue(future.isCancelled());
     assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
     assertTrue(future.isDone());
     assertTrue(future.isCancelled());

@@ -100,7 +100,7 @@ public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
              + " folder2\n");
 
     updateFilter("fo_");
-    assertTree("+/\n");
+    assertTree("/\n");
 
     updateFilter("");
     assertTree("-/\n"

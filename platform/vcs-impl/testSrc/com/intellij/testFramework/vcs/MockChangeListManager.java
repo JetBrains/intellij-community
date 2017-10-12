@@ -387,7 +387,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
 
   @NotNull
   @Override
-  public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable Object data) {
+  public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable ChangeListData data) {
     return addChangeList(name, comment);
   }
 

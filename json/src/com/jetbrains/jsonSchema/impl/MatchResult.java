@@ -15,6 +15,8 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.openapi.util.Ref;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,23 +37,38 @@ public class MatchResult {
   public static MatchResult create(@NotNull JsonSchemaTreeNode root) {
     List<JsonSchemaObject> schemas = new ArrayList<>();
     Map<Integer, Set<JsonSchemaObject>> oneOfGroups = new HashMap<>();
+    iterateTree(root, (parent, node) -> {
+      if (node.isAny()) return true;
+      int groupNumber = node.getExcludingGroupNumber();
+      if (groupNumber < 0) {
+        schemas.add(node.getSchema());
+      }
+      else {
+        Set<JsonSchemaObject> set = oneOfGroups.get(groupNumber);
+        if (set == null) oneOfGroups.put(groupNumber, (set = new HashSet<>()));
+        set.add(node.getSchema());
+      }
+      return true;
+    });
+    return new MatchResult(schemas, new ArrayList<>(oneOfGroups.values()));
+  }
+
+  public static void iterateTree(@NotNull JsonSchemaTreeNode root,
+                                 @NotNull final PairProcessor<JsonSchemaTreeNode, JsonSchemaTreeNode> parentChildConsumer) {
+    final Ref<JsonSchemaTreeNode> parentRef = new Ref<>(root);
     JBTreeTraverser.<JsonSchemaTreeNode>from(node -> node.getChildren())
       .withRoot(root)
       .preOrderDfsTraversal()
-      .consumeEach(node -> {
-        if (node.getChildren().isEmpty() && !node.isAny() && !node.isNothing() &&
-            SchemaResolveState.normal.equals(node.getResolveState())) {
-          int groupNumber = node.getExcludingGroupNumber();
-          if (groupNumber < 0) {
-            schemas.add(node.getSchema());
-          }
-          else {
-            Set<JsonSchemaObject> set = oneOfGroups.get(groupNumber);
-            if (set == null) oneOfGroups.put(groupNumber, (set = new HashSet<>()));
-            set.add(node.getSchema());
-          }
+      .processEach(node -> {
+        if (!node.getChildren().isEmpty()) {
+          parentRef.set(node);
+          return true;
         }
+        if (node.getChildren().isEmpty() && !node.isNothing() && SchemaResolveState.normal.equals(node.getResolveState())) {
+          assert !parentRef.isNull();
+          return parentChildConsumer.process(parentRef.get(), node);
+        }
+        return true;
       });
-    return new MatchResult(schemas, new ArrayList<>(oneOfGroups.values()));
   }
 }

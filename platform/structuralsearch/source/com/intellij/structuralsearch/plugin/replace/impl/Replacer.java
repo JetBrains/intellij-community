@@ -40,10 +40,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Maxim.Mossienko
@@ -74,7 +71,7 @@ public class Replacer {
  }
 
   public String testReplace(String in, String what, String by, ReplaceOptions options) throws IncorrectOperationException {
-    return testReplace(in, what, by, options,false);
+    return testReplace(in, what, by, options, false);
   }
 
   public String testReplace(String in, String what, String by, ReplaceOptions options, boolean filePattern) {
@@ -220,9 +217,8 @@ public class Replacer {
   }
 
   @Nullable
-  private PsiElement doReplace(final ReplacementInfo info) {
-    final ReplacementInfoImpl replacementInfo = (ReplacementInfoImpl)info;
-    final PsiElement element = replacementInfo.matchesPtrList.get(0).getElement();
+  private PsiElement doReplace(ReplacementInfo info) {
+    final PsiElement element = info.getMatch(0);
 
     if (element==null || !element.isWritable() || !element.isValid()) return null;
 
@@ -230,10 +226,8 @@ public class Replacer {
 
     CodeStyleManager.getInstance(project).performActionWithFormatterDisabled(
       (Runnable)() -> {
-        context.replacementInfo = replacementInfo;
-
         if (replaceHandler != null) {
-          replaceHandler.replace(replacementInfo, options);
+          replaceHandler.replace(info, options);
         }
       }
     );
@@ -268,28 +262,17 @@ public class Replacer {
       context = new ReplacementContext(options, project);
     }
     if (replaceHandler == null) {
-      StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(psiContext);
+      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(psiContext);
       if (profile != null) {
-        replaceHandler = profile.getReplaceHandler(this.context);
+        replaceHandler = profile.getReplaceHandler(context);
       }
     }
   }
 
-  public static void handleComments(final PsiElement el, final PsiElement replacement, ReplacementContext context) throws IncorrectOperationException {
-    ReplacementInfoImpl replacementInfo = context.replacementInfo;
-    if (replacementInfo.elementToVariableNameMap == null) {
-      replacementInfo.elementToVariableNameMap = new HashMap<>(1);
-      Map<String, MatchResult> variableMap = replacementInfo.variableMap;
-      if (variableMap != null) {
-        for(String name:variableMap.keySet()) {
-          fill(name,replacementInfo.variableMap.get(name),replacementInfo.elementToVariableNameMap);
-        }
-      }
-    }
-
-    PsiElement lastChild = el.getLastChild();
+  public static void handleComments(final PsiElement el, final PsiElement replacement, ReplacementInfo replacementInfo) {
+    final PsiElement lastChild = el.getLastChild();
     if (lastChild instanceof PsiComment &&
-        replacementInfo.elementToVariableNameMap.get(lastChild) == null &&
+        replacementInfo.getVariableName(lastChild) == null &&
         !(replacement.getLastChild() instanceof PsiComment)
       ) {
       PsiElement firstElementAfterStatementEnd = lastChild;
@@ -303,7 +286,7 @@ public class Replacer {
     final PsiElement firstChild = el.getFirstChild();
     if (firstChild instanceof PsiComment &&
         !(firstChild instanceof PsiDocCommentBase) &&
-        replacementInfo.elementToVariableNameMap.get(firstChild) == null
+        replacementInfo.getVariableName(firstChild) == null
         ) {
       PsiElement lastElementBeforeStatementStart = firstChild;
 
@@ -312,17 +295,6 @@ public class Replacer {
         lastElementBeforeStatementStart = curElement;
       }
       replacement.addRangeBefore(firstChild,lastElementBeforeStatementStart,replacement.getFirstChild());
-    }
-  }
-
-  private static void fill(final String name, final MatchResult matchResult, final Map<PsiElement, String> elementToVariableNameMap) {
-    boolean b = matchResult.isMultipleMatch() || matchResult.isScopeMatch();
-    if(matchResult.hasSons() && b) {
-      for(MatchResult r:matchResult.getAllSons()) {
-        fill(name, r, elementToVariableNameMap);
-      }
-    } else if (!b && matchResult.getMatchRef() != null)  {
-      elementToVariableNameMap.put(matchResult.getMatch(),name);
     }
   }
 
@@ -384,44 +356,12 @@ public class Replacer {
   }
 
   public ReplacementInfo buildReplacement(MatchResult result) {
-    List<SmartPsiElementPointer> l = new SmartList<>();
-    SmartPointerManager manager = SmartPointerManager.getInstance(project);
+    final ReplacementInfoImpl replacementInfo = new ReplacementInfoImpl(result, project);
 
-    if (MatchResult.MULTI_LINE_MATCH.equals(result.getName())) {
-      for(Iterator<MatchResult> i=result.getAllSons().iterator();i.hasNext();) {
-        final MatchResult r = i.next();
-
-        if (MatchResult.LINE_MATCH.equals(r.getName())) {
-          PsiElement element = r.getMatch();
-
-          if (element instanceof PsiDocCommentBase) { // doc comment is not collapsed when created in block
-            if (i.hasNext()) {
-              MatchResult matchResult = i.next();
-
-              if (MatchResult.LINE_MATCH.equals(matchResult.getName()) &&
-                  StructuralSearchUtil.isDocCommentOwner(matchResult.getMatch())) {
-                element = matchResult.getMatch();
-              } else {
-                l.add( manager.createSmartPsiElementPointer(element) );
-                element = matchResult.getMatch();
-              }
-            }
-          }
-          l.add( manager.createSmartPsiElementPointer(element) );
-        }
-      }
-    } else {
-      l.add(manager.createSmartPsiElementPointer(result.getMatch()));
-    }
-
-    ReplacementInfoImpl replacementInfo = new ReplacementInfoImpl();
-
-    replacementInfo.matchesPtrList = l;
     if (replacementBuilder==null) {
-      replacementBuilder = new ReplacementBuilder(project,options);
+      replacementBuilder = new ReplacementBuilder(project, options);
     }
-    replacementInfo.result = replacementBuilder.process(result, replacementInfo, options.getMatchOptions().getFileType());
-    replacementInfo.matchResult = result;
+    replacementInfo.setReplacement(replacementBuilder.process(result, replacementInfo, options.getMatchOptions().getFileType()));
 
     return replacementInfo;
   }

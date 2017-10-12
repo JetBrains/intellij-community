@@ -162,7 +162,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
         case param_start:
           if (Character.isWhitespace(ch)) {
           }
-          else if (Character.isDigit(ch) || ch == '\"') {
+          else if (Character.isDigit(ch) || ch == '-' || ch == '\"') {
             curFrame.state = State.literal;
             curString.append(ch);
           }

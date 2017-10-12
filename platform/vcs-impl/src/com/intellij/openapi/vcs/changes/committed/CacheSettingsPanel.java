@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
 
@@ -101,6 +100,7 @@ public class CacheSettingsPanel implements Configurable {
     return "Cache";
   }
 
+  @Override
   public String getHelpTopic() {
     return "project.propVCSSupport.Cache";
   }

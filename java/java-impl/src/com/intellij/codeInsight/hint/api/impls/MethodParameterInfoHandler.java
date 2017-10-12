@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.CompletionParameterTypeInferencePolicy;
@@ -586,7 +587,8 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           }
           if (context.isSingleParameterInfo()) buffer.append("<b>");
           appendModifierList(buffer, param);
-          buffer.append(paramType.getPresentableText(true));
+          String type = paramType.getPresentableText(true);
+          buffer.append(context.isSingleParameterInfo() ? StringUtil.escapeXml(type) : type);
           String name = param.getName();
           if (name != null && !context.isSingleParameterInfo()) {
             buffer.append(" ");

@@ -383,12 +383,6 @@ public class AbstractPopup implements JBPopup {
     myDimensionServiceKey = dimensionServiceKey;
   }
 
-  @Override
-  public void showInCenterOf(@NotNull Component aContainer) {
-    final Point popupPoint = getCenterOf(aContainer, getPreferredContentSize());
-    show(aContainer, popupPoint.x, popupPoint.y, false);
-  }
-
   public void setAdText(@NotNull final String s) {
     setAdText(s, SwingConstants.LEFT);
   }
@@ -459,18 +453,22 @@ public class AbstractPopup implements JBPopup {
   }
 
   @Override
+  public void showInCenterOf(@NotNull Component aComponent) {
+    Point popupPoint = getCenterOf(aComponent, getPreferredContentSize());
+    show(new RelativePoint(aComponent, popupPoint));
+  }
+
+
+  @Override
   public void showUnderneathOf(@NotNull Component aComponent) {
     show(new RelativePoint(aComponent, UIUtil.isUnderWin10LookAndFeel() ?
-              new Point(2, aComponent.getHeight()) :
+              new Point(JBUI.scale(2), aComponent.getHeight()) :
               new Point(0, aComponent.getHeight())));
   }
 
   @Override
   public void show(@NotNull RelativePoint aPoint) {
-    Component c = aPoint.getOriginalComponent();
-    if (Registry.is("ide.helptooltip.enabled") && c instanceof JComponent) {
-      HelpTooltip.onShowMasterPopup((JComponent)c, this);
-    }
+    HelpTooltip.setMasterPopup(aPoint.getOriginalComponent(), this);
 
     Point screenPoint = aPoint.getScreenPoint();
     show(aPoint.getComponent(), screenPoint.x, screenPoint.y, false);

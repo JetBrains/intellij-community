@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
@@ -31,12 +17,13 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilit
  */
 class GrAssignAutoTestFalsePositiveTest extends GrHighlightingTestBase {
 
-  String[] types = ['boolean', 'int', 'double', 'String', 'Integer', 'BigDecimal', 'BigInteger', 'List', 'Object', 'Thread',
+  List<String> types = ['boolean', 'int', 'double', 'String', 'Integer', 'BigDecimal', 'BigInteger', 'List', 'Object', 'Thread',
                     'List<BigDecimal>', 'List<BigInteger>', 'List<Integer>', 'List<String>', 'List<Object>', 'List<Thread>', 'boolean[]',
-                    'int[]', 'double[]', 'String[]', 'Integer[]', 'List[]', 'Object[]', 'Thread[]']
+                    'int[]', 'double[]', 'String[]', 'Integer[]', 'List[]', 'Object[]', 'Thread[]', 'short', 'byte', 'Set', 'Set<String>',
+                    'Set<Integer>', 'Set<Object>', 'Set<Thread>']
 
-  String[] values = ['true', '0', '1', '(int)1', '1.1', '1.1d', '1.1f', '"1"', '["1"]', '1f', '"str"', 'null', 'new Object()',
-                     'new Thread()' /*'[]' , '[1]', '[(int)1]', '[(byte)1]'*/, '[1.1]', '[1.1d]', '[1.1f]', '["str"]', 'new ArrayList<>()',
+  List<String> values = ['true', '0', '1', '(int)1', '(short)1', '(byte)1', '1.1', '1.1d', '1.1f', '"1"', '["1"]', '1f', '"str"', 'null', 'new Object()',
+                     'new Thread()', '[]' /*, '[1]', '[(int)1]', '[(byte)1]'*/, '[1.1]', '[1.1d]', '[1.1f]', '["str"]', 'new ArrayList<>()',
                      '[new Thread()]', '[new Object()]', 'BigInteger.valueOf(1)', 'BigDecimal.valueOf(1.1f)']
 
   def shell = GroovyShell.newInstance()
@@ -58,7 +45,27 @@ class GrAssignAutoTestFalsePositiveTest extends GrHighlightingTestBase {
         void method(%1$s param) {
           %2$s local = param
         }
-        ''', 'Parameter: %1$s, local var: %2$s. Groovy - %3$s , Idea - %4$s\n'
+        ''',
+        vectorProduct(types, types),
+        [],
+        ['boolean -> int', 'boolean -> double', 'boolean -> short', 'boolean -> byte', 'List<BigDecimal> -> boolean[]',
+         'List<BigDecimal> -> int[]', 'List<BigDecimal> -> String[]', 'List<BigDecimal> -> Integer[]', 'List<BigDecimal> -> List[]',
+         'List<BigDecimal> -> Thread[]', 'List<BigInteger> -> boolean[]', 'List<BigInteger> -> int[]', 'List<BigInteger> -> double[]',
+         'List<BigInteger> -> String[]', 'List<BigInteger> -> Integer[]', 'List<BigInteger> -> List[]', 'List<BigInteger> -> Thread[]',
+         'List<Integer> -> boolean[]', 'List<Integer> -> String[]', 'List<Integer> -> List[]', 'List<Integer> -> Thread[]',
+         'List<String> -> boolean[]', 'List<String> -> int[]', 'List<String> -> double[]', 'List<String> -> Integer[]',
+         'List<String> -> List[]', 'List<String> -> Thread[]', 'List<Object> -> boolean[]', 'List<Object> -> int[]',
+         'List<Object> -> double[]', 'List<Object> -> String[]', 'List<Object> -> Integer[]', 'List<Object> -> List[]',
+         'List<Object> -> Thread[]', 'List<Thread> -> boolean[]', 'List<Thread> -> int[]', 'List<Thread> -> double[]',
+         'List<Thread> -> String[]', 'List<Thread> -> Integer[]', 'List<Thread> -> List[]', 'boolean[] -> int[]', 'boolean[] -> double[]',
+         'boolean[] -> String[]', 'int[] -> boolean[]', 'int[] -> String[]', 'double[] -> boolean[]', 'double[] -> String[]',
+         'String[] -> boolean[]', 'Integer[] -> boolean[]', 'Integer[] -> String[]', 'List[] -> boolean[]', 'List[] -> String[]',
+         'Object[] -> boolean[]', 'Object[] -> String[]', 'Thread[] -> boolean[]', 'Thread[] -> String[]', 'Set<String> -> boolean[]',
+         'Set<String> -> int[]', 'Set<String> -> double[]', 'Set<String> -> Integer[]', 'Set<String> -> List[]', 'Set<String> -> Thread[]',
+         'Set<Integer> -> boolean[]', 'Set<Integer> -> String[]', 'Set<Integer> -> List[]', 'Set<Integer> -> Thread[]',
+         'Set<Object> -> boolean[]', 'Set<Object> -> int[]', 'Set<Object> -> double[]', 'Set<Object> -> String[]',
+         'Set<Object> -> Integer[]', 'Set<Object> -> List[]', 'Set<Object> -> Thread[]', 'Set<Thread> -> boolean[]',
+         'Set<Thread> -> int[]', 'Set<Thread> -> double[]', 'Set<Thread> -> String[]', 'Set<Thread> -> Integer[]', 'Set<Thread> -> List[]']
   }
 
 
@@ -70,18 +77,31 @@ class GrAssignAutoTestFalsePositiveTest extends GrHighlightingTestBase {
         %2$s method(%1$s param) {
           return param
         }
-        ''', 'Parameter: %1$s, return value: %2$s. Groovy - %3$s , Idea - %4$s\n'
+        ''',
+        vectorProduct(types, types),
+        [],
+        ['boolean -> int', 'boolean -> double', 'boolean -> short', 'boolean -> byte', 'boolean[] -> int[]', 'boolean[] -> double[]',
+         'boolean[] -> String[]', 'int[] -> boolean[]', 'int[] -> String[]', 'double[] -> boolean[]', 'double[] -> String[]',
+         'String[] -> boolean[]', 'Integer[] -> boolean[]', 'Integer[] -> String[]', 'List[] -> boolean[]', 'List[] -> String[]',
+         'Object[] -> boolean[]', 'Object[] -> String[]', 'Thread[] -> boolean[]', 'Thread[] -> String[]']
   }
 
   void testLocalAssignValue() {
-    doValueTest '''
+    doTest '''
         import groovy.transform.CompileStatic
 
         @CompileStatic
         void method() {
-          %1$s param = %2$s
+          %2$s param = %1$s
         }
-        ''', 'Parameter: %1$s, value: %2$s. Groovy - %3$s , Idea - %4$s\n'
+        ''',
+        vectorProduct(values, types),
+        ['[] -> BigInteger'],
+        ['["1"] -> int', '["1"] -> double', '["1"] -> boolean[]', '["1"] -> short', '["1"] -> byte', '[] -> int', '[] -> double',
+         '[] -> short', '[] -> byte', '[1.1] -> int', '[1.1] -> double', '[1.1] -> Integer', '[1.1] -> boolean[]', '[1.1] -> String[]',
+         '[1.1] -> short', '[1.1d] -> double', '[1.1d] -> boolean[]', '[1.1d] -> String[]', '[1.1f] -> double', '[1.1f] -> boolean[]',
+         '[1.1f] -> String[]', '["str"] -> int', '["str"] -> double', '["str"] -> boolean[]', '["str"] -> short', '["str"] -> byte',
+         '[new Thread()] -> boolean[]', '[new Thread()] -> String[]', '[new Object()] -> boolean[]', '[new Object()] -> String[]']
   }
 
   void testWrongConstructorResolve() {
@@ -95,36 +115,33 @@ class GrAssignAutoTestFalsePositiveTest extends GrHighlightingTestBase {
 '''
   }
 
-  void doTest(String body, String errorText) {
-    List<String> diff = []
-    for (String type1 : types) {
-      for (String type2 : types) {
-        String text = String.format(body, type1, type2)
-        boolean shellTest = shellTest(text)
-        boolean ideaTest = ideaTest(text)
-        if (!shellTest && ideaTest) {
-          diff.add(String.format(errorText, type1, type2, shellTest, ideaTest))
-        }
-      }
-    }
-
-    assert diff.isEmpty(), (diff.size().toString() + " " + diff)
+  static List<List<String>> vectorProduct(List<String> vector1, List<String> vector2) {
+    return vector1.collectMany{arg1 -> vector2.collect{arg2 -> [arg1, arg2]}}
   }
 
-  void doValueTest(String body, String errorText) {
-    List<String> diff = []
-    for (String type : types) {
-      for (String value : values) {
-        String text = String.format(body, type, value)
-        boolean shellTest = shellTest(text)
-        boolean ideaTest = ideaTest(text)
-        if (!shellTest && ideaTest) {
-          diff.add(String.format(errorText, type, value, shellTest, ideaTest))
+  void doTest(String body, List<List<String>> arguments ,List<String> wrongTrueByIdea, List<String> wrongFalseByIdea) {
+    List<String> falseDiff = []
+    List<String> trueDiff = []
+    Set<String> trueIssues = wrongTrueByIdea
+    Set<String> falseIssues = wrongFalseByIdea
+    for (List<String> args : arguments) {
+      String pair = "${args[0]} -> ${args[1]}"
+      String text = String.format(body, args[0], args[1])
+      boolean shellTest = shellTest(text)
+      boolean ideaTest = ideaTest(text)
+      if (shellTest != ideaTest) {
+        def activeIssues = ideaTest ? trueIssues : falseIssues
+        def activeDiff = ideaTest ? trueDiff : falseDiff
+        if (!activeIssues.remove(pair)) {
+          activeDiff.add(pair)
         }
       }
     }
 
-    assert diff.isEmpty(), (diff.size().toString() + " " + diff)
+    assert falseDiff.isEmpty(), "Idea false, groovy true : " + falseDiff.collect { "'$it'" }
+    assert trueDiff.isEmpty(), "Idea true, groovy false : " + trueDiff.collect { "'$it'" }
+    assert falseIssues.isEmpty(), falseIssues.collect { "'$it'" }
+    assert trueIssues.isEmpty(), trueIssues.collect { "'$it'" }
   }
 
   boolean ideaTest(String body) {

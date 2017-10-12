@@ -806,7 +806,7 @@
                 factoryClass="com.intellij.ide.structureView.impl.StructureViewToolWindowFactory"/>
     <toolWindow id="Favorites" anchor="left" icon="AllIcons.Toolwindows.ToolWindowFavorites" secondary="true"
                 factoryClass="com.intellij.ide.projectView.impl.FavoritesViewToolWindowFactory"/>
-    <toolWindow id="Run Dashboard" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowRun"
+    <toolWindow id="Run Dashboard" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowRun" canCloseContents="true"
                 factoryClass="com.intellij.execution.dashboard.RunDashboardToolWindowFactory"
                 conditionClass="com.intellij.execution.dashboard.RunDashboardToolWindowFactory" />
 
@@ -966,6 +966,7 @@
     <copyPastePostProcessor implementation="com.intellij.openapi.editor.richcopy.TextWithMarkupProcessor"/>
      <!--the following binding uses 'first' order to make sure it captures raw text before any other processor modifies it -->
     <copyPastePreProcessor implementation="com.intellij.openapi.editor.richcopy.TextWithMarkupProcessor$RawTextSetter" order="first" id="richcopy"/>
+    <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.LineCommentCopyPastePreProcessor"/>
 
     <!-- Postfix templates -->
     <applicationService serviceImplementation="com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings"/>

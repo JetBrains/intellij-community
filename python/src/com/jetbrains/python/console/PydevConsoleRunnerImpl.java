@@ -94,6 +94,8 @@ import com.jetbrains.python.console.actions.ShowVarsAction;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PySourcePosition;
+import com.jetbrains.python.debugger.PyVariableViewSettings;
+import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteProcessHandlerBase;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
@@ -223,6 +225,13 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     toolbarActions.add(new ConnectDebuggerAction());
 
+    DefaultActionGroup settings = new DefaultActionGroup("Settings", true);
+    settings.getTemplatePresentation().setIcon(AllIcons.General.SecondaryGroup);
+    settings.add(new PyVariableViewSettings.SimplifiedView(null));
+    settings.add(new PyVariableViewSettings.AsyncView());
+
+    toolbarActions.add(settings);
+
     toolbarActions.add(new NewConsoleAction());
 
     return actions;
@@ -232,8 +241,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   public void open() {
     PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(myProject);
     if (toolWindow != null) {
-      toolWindow.getToolWindow().activate(() -> {}, true);
-    } else {
+      toolWindow.getToolWindow().activate(() -> {
+      }, true);
+    }
+    else {
       runSync();
     }
   }
@@ -415,7 +426,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
           PythonConsoleRemoteProcessCreatorKt.createRemoteConsoleProcess(manager, myGeneralCommandLine.getParametersList().getArray(),
                                                                          myGeneralCommandLine.getEnvironment(),
                                                                          myGeneralCommandLine.getWorkDirectory(),
-                                                                         PydevConsoleRunner.getPathMapper(myProject, mySdk, myConsoleSettings),
+                                                                         PydevConsoleRunner
+                                                                           .getPathMapper(myProject, mySdk, myConsoleSettings),
                                                                          myProject, data, getRunnerFileFromHelpers());
 
         myRemoteProcessHandlerBase = remoteConsoleProcessData.getRemoteProcessHandlerBase();
@@ -531,12 +543,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   public static Couple<Integer> getRemotePortsFromProcess(RemoteProcess process) throws ExecutionException {
-    Scanner s = new Scanner(process.getInputStream());
-    try {
-      return Couple.of(readInt(s, process), readInt(s, process));
-    } finally {
-      s.close();
-    }
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") Scanner s = new Scanner(process.getInputStream());
+    return Couple.of(readInt(s, process), readInt(s, process));
   }
 
   private static int readInt(Scanner s, Process process) throws ExecutionException {
@@ -1096,7 +1104,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     return new PydevConsoleRunnerFactory();
   }
 
-  private static class PythonConsoleRunParams implements PythonRunParams {
+  public static class PythonConsoleRunParams implements PythonRunParams {
     private final PyConsoleOptions.PyConsoleSettings myConsoleSettings;
     private String myWorkingDir;
     private Sdk mySdk;
@@ -1111,6 +1119,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       mySdk = sdk;
       myEnvironmentVariables = envs;
       myEnvironmentVariables.putAll(consoleSettings.getEnvs());
+      PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
+      if (debuggerSettings.isLoadValuesAsync()) {
+        myEnvironmentVariables.put(PyVariableViewSettings.PYDEVD_LOAD_VALUES_ASYNC, "True");
+      }
     }
 
     @Override

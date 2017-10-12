@@ -21,7 +21,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -1016,8 +1015,8 @@ public class RefactoringUtil {
       PsiField field = (PsiField)parent;
       PsiClassInitializer initializer =
         ObjectUtils.tryCast(PsiTreeUtil.skipWhitespacesAndCommentsForward(field), PsiClassInitializer.class);
-      boolean isStatic = field.hasModifier(JvmModifier.STATIC);
-      if (initializer == null || initializer.hasModifier(JvmModifier.STATIC) != isStatic) {
+      boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
+      if (initializer == null || initializer.hasModifierProperty(PsiModifier.STATIC) != isStatic) {
         initializer = factory.createClassInitializer();
         if (isStatic) {
           Objects.requireNonNull(initializer.getModifierList()).setModifierProperty(PsiModifier.STATIC, true);

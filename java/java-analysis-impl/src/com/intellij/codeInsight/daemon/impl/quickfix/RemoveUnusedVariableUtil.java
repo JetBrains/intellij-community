@@ -59,6 +59,12 @@ public class RemoveUnusedVariableUtil {
       elementToReplace = element.getParent();
       expressionToReplaceWith =
       factory.createStatementFromText((expression == null ? "" : expression.getText()) + ";", null);
+      if (isForLoopUpdate(elementToReplace)) {
+        PsiElement lastChild = expressionToReplaceWith.getLastChild();
+        if (PsiUtil.isJavaToken(lastChild, JavaTokenType.SEMICOLON)) {
+          lastChild.delete();
+        }
+      }
     }
     else if (element.getParent() instanceof PsiDeclarationStatement) {
       expressionToReplaceWith =
@@ -83,7 +89,7 @@ public class RemoveUnusedVariableUtil {
     // just delete it altogether
     if (element.getParent() instanceof PsiExpressionStatement) {
       PsiExpressionStatement parent = (PsiExpressionStatement)element.getParent();
-      if (parent.getParent() instanceof PsiCodeBlock) {
+      if (parent.getParent() instanceof PsiCodeBlock || isForLoopUpdate(parent)) {
         parent.delete();
       }
       else {
@@ -134,7 +140,7 @@ public class RemoveUnusedVariableUtil {
         if (rExpression == null) return true;
         // replace assignment with expression and resimplify
         boolean sideEffectFound = checkSideEffects(rExpression, variable, sideEffects);
-        if (!(element.getParent() instanceof PsiExpressionStatement) || PsiUtil.isStatement(rExpression)) {
+        if (!isStatementExpression(expression) || PsiUtil.isStatement(rExpression)) {
           if (deleteMode == RemoveMode.MAKE_STATEMENT ||
               deleteMode == RemoveMode.DELETE_ALL && !(element.getParent() instanceof PsiExpressionStatement)) {
             element = replaceElementWithExpression(rExpression, factory, element);
@@ -200,5 +206,18 @@ public class RemoveUnusedVariableUtil {
       element = element.getParent();
     }
     return true;
+  }
+
+  public static boolean isForLoopUpdate(@Nullable PsiElement element) {
+    if(element == null) return false;
+    PsiElement parent = element.getParent();
+    return parent instanceof PsiForStatement &&
+           ((PsiForStatement)parent).getUpdate() == element;
+  }
+
+  private static boolean isStatementExpression(PsiExpression expression) {
+    PsiElement parent = expression.getParent();
+    return parent instanceof PsiExpressionStatement ||
+           parent instanceof PsiExpressionList && parent.getParent() instanceof PsiExpressionListStatement;
   }
 }

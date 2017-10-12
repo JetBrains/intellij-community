@@ -1,18 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.openapi.util.text;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -2148,19 +2146,17 @@ public class StringUtil extends StringUtilRt {
     return '\"' + str + "\"";
   }
 
-  @NonNls private static final String[] REPLACES_REFS = {"&lt;", "&gt;", "&amp;", "&#39;", "&quot;"};
-  @NonNls private static final String[] REPLACES_DISP = {"<", ">", "&", "'", "\""};
+  @NonNls private static final List<String> REPLACES_REFS = Arrays.asList("&lt;", "&gt;", "&amp;", "&#39;", "&quot;");
+  @NonNls private static final List<String> REPLACES_DISP = Arrays.asList("<", ">", "&", "'", "\"");
 
   @Contract(value = "null -> null; !null -> !null",pure = true)
   public static String unescapeXml(@Nullable final String text) {
-    if (text == null) return null;
-    return replace(text, REPLACES_REFS, REPLACES_DISP);
+    return text == null ? null : replace(text, REPLACES_REFS, REPLACES_DISP);
   }
 
   @Contract(value = "null -> null; !null -> !null",pure = true)
   public static String escapeXml(@Nullable final String text) {
-    if (text == null) return null;
-    return replace(text, REPLACES_DISP, REPLACES_REFS);
+    return text == null ? null : replace(text, REPLACES_DISP, REPLACES_REFS);
   }
 
   public static String removeHtmlTags (@Nullable String htmlString) {
@@ -2174,13 +2170,12 @@ public class StringUtil extends StringUtilRt {
     return html2TextParser.getText();
   }
 
-  @NonNls private static final String[] MN_QUOTED = {"&&", "__"};
-  @NonNls private static final String[] MN_CHARS = {"&", "_"};
+  @NonNls private static final List<String> MN_QUOTED = Arrays.asList("&&", "__");
+  @NonNls private static final List<String> MN_CHARS = Arrays.asList("&", "_");
 
   @Contract(value = "null -> null; !null -> !null", pure = true)
   public static String escapeMnemonics(@Nullable String text) {
-    if (text == null) return null;
-    return replace(text, MN_CHARS, MN_QUOTED);
+    return text == null ? null : replace(text, MN_CHARS, MN_QUOTED);
   }
 
   @NotNull
@@ -2252,6 +2247,9 @@ public class StringUtil extends StringUtilRt {
     return escaped;
   }
 
+  /**
+   * @deprecated Use {@link #replace(String, List, List)}
+   */
   @NotNull
   @Contract(pure = true)
   public static String replace(@NotNull String text, @NotNull String[] from, @NotNull String[] to) {
@@ -2262,7 +2260,7 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static String replace(@NotNull String text, @NotNull List<String> from, @NotNull List<String> to) {
     assert from.size() == to.size();
-    final StringBuilder result = new StringBuilder(text.length());
+    StringBuilder result = null;
     replace:
     for (int i = 0; i < text.length(); i++) {
       for (int j = 0; j < from.size(); j += 1) {
@@ -2271,14 +2269,22 @@ public class StringUtil extends StringUtilRt {
 
         final int len = toReplace.length();
         if (text.regionMatches(i, toReplace, 0, len)) {
+          if (result == null) {
+            result = new StringBuilder(text.length());
+            result.append(text, 0, i);
+          }
           result.append(replaceWith);
+          //noinspection AssignmentToForLoopParameter
           i += len - 1;
           continue replace;
         }
       }
-      result.append(text.charAt(i));
+
+      if (result != null) {
+        result.append(text.charAt(i));
+      }
     }
-    return result.toString();
+    return result == null ? text : result.toString();
   }
 
   @NotNull

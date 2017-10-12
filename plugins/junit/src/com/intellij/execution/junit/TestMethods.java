@@ -84,7 +84,12 @@ public class TestMethods extends TestMethod {
     final Location location = testInfo.getLocation(project, searchScope);
     final PsiElement element = location != null ? location.getPsiElement() : null;
     if (element instanceof PsiMethod) {
-      final PsiClass containingClass = location instanceof MethodLocation ? ((MethodLocation)location).getContainingClass() 
+      String nodeId = TestUniqueId.getEffectiveNodeId(testInfo, project, searchScope);
+      if (nodeId != null) {
+        return TestUniqueId.getUniqueIdPresentation().fun(nodeId);
+      }
+
+      final PsiClass containingClass = location instanceof MethodLocation ? ((MethodLocation)location).getContainingClass()
                                                                           : location instanceof PsiMemberParameterizedLocation ? ((PsiMemberParameterizedLocation)location).getContainingClass() 
                                                                                                                                : ((PsiMethod)element).getContainingClass();
       if (containingClass != null) {

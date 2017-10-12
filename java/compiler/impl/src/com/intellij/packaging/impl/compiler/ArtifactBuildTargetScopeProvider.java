@@ -52,7 +52,7 @@ public class ArtifactBuildTargetScopeProvider extends BuildTargetScopeProvider {
         final Set<Artifact> artifacts = ArtifactCompileScope.getArtifactsToBuild(project, baseScope, false);
         if (ArtifactCompileScope.getArtifacts(baseScope) == null) {
           Set<Module> modules = ArtifactUtil.getModulesIncludedInArtifacts(artifacts, project);
-          CompileScopeUtil.addScopesForModules(modules, scopes, forceBuild);
+          CompileScopeUtil.addScopesForModules(modules, Collections.emptyList(), scopes, forceBuild);
         }
         if (!artifacts.isEmpty()) {
           TargetTypeBuildScope.Builder builder = TargetTypeBuildScope.newBuilder()

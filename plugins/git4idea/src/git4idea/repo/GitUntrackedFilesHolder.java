@@ -17,6 +17,7 @@ package git4idea.repo;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -295,13 +296,18 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
 
   @Nullable
   private static VirtualFile getAffectedFile(@NotNull VFileEvent event) {
-    if (event instanceof VFileCreateEvent || event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent || isRename(event)) {
-      return event.getFile();
-    } else if (event instanceof VFileCopyEvent) {
-      VFileCopyEvent copyEvent = (VFileCopyEvent) event;
-      return copyEvent.getNewParent().findChild(copyEvent.getNewChildName());
-    }
-    return null;
+    return ReadAction.compute(() -> {
+      if (!event.isValid()) return null;
+
+      if (event instanceof VFileCreateEvent || event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent || isRename(event)) {
+        return event.getFile();
+      }
+      else if (event instanceof VFileCopyEvent) {
+        VFileCopyEvent copyEvent = (VFileCopyEvent) event;
+        return copyEvent.getNewParent().findChild(copyEvent.getNewChildName());
+      }
+      return null;
+    });
   }
 
   private static boolean isRename(@NotNull VFileEvent event) {

@@ -19,8 +19,10 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Allows to register a language extension for a group of languages defined by a certain criterion.
@@ -38,6 +40,12 @@ public abstract class MetaLanguage extends Language {
   @NotNull
   public static MetaLanguage[] all() {
     return Extensions.getExtensions(EP_NAME);
+  }
+
+  @NotNull
+  public static Stream<MetaLanguage> getAllMatchingMetaLanguages(@NotNull Language language) {
+    if (language instanceof MetaLanguage) return Stream.empty();
+    return Arrays.stream(all()).filter(l -> l.matchesLanguage(language));
   }
 
   /**

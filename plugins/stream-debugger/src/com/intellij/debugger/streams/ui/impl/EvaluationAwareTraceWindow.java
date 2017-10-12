@@ -107,6 +107,10 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
   }
 
   public void setTrace(@NotNull ResolvedTracingResult resolvedTrace, @NotNull EvaluationContextImpl context) {
+    if (Disposer.isDisposed(myDisposable)) {
+      return;
+    }
+
     final ResolvedStreamChain chain = resolvedTrace.getResolvedChain();
 
     assert chain.length() == myTabContents.size();

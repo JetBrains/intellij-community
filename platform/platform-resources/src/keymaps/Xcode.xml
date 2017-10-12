@@ -565,4 +565,9 @@
     <keyboard-shortcut first-keystroke="control meta E"/>
     <keyboard-shortcut first-keystroke="shift F6"/>
   </action>
+
+  <action id="ShelvedChanges.Rename">
+    <keyboard-shortcut first-keystroke="control meta E"/>
+    <keyboard-shortcut first-keystroke="shift F6"/>
+  </action>
 </keymap>

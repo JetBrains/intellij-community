@@ -86,8 +86,7 @@ final class BuildSession implements Runnable, CanceledStatus {
                @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent delta, @Nullable PreloadedData preloaded) {
     mySessionId = sessionId;
     myChannel = channel;
-    myPreloadedData = preloaded;
-    
+
     final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals = params.getGlobalSettings();
     myProjectPath = FileUtil.toCanonicalPath(params.getProjectId());
     String globalOptionsPath = FileUtil.toCanonicalPath(globals.getGlobalOptionsPath());
@@ -99,11 +98,24 @@ final class BuildSession implements Runnable, CanceledStatus {
       builderParams.put(pair.getKey(), pair.getValue());
     }
     myInitialFSDelta = delta;
-    if (preloaded == null || preloaded.getRunner() == null) {
-      myBuildRunner = new BuildRunner(new JpsModelLoaderImpl(myProjectPath, globalOptionsPath, null));
+    boolean loadUnloadedModules = Boolean.parseBoolean(builderParams.get(BuildParametersKeys.LOAD_UNLOADED_MODULES));
+    if (loadUnloadedModules && preloaded != null) {
+      myPreloadedData = null;
+      ProjectDescriptor projectDescriptor = preloaded.getProjectDescriptor();
+      if (projectDescriptor != null) {
+        projectDescriptor.release();
+        preloaded.setProjectDescriptor(null);
+      }
     }
     else {
-      myBuildRunner = preloaded.getRunner();
+      myPreloadedData = preloaded;
+    }
+
+    if (myPreloadedData == null || myPreloadedData.getRunner() == null) {
+      myBuildRunner = new BuildRunner(new JpsModelLoaderImpl(myProjectPath, globalOptionsPath, loadUnloadedModules, null));
+    }
+    else {
+      myBuildRunner = myPreloadedData.getRunner();
     }
     myBuildRunner.setFilePaths(filePaths);
     myBuildRunner.setBuilderParams(builderParams);

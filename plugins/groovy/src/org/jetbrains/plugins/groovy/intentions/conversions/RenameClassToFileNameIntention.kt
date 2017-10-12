@@ -3,25 +3,19 @@ package org.jetbrains.plugins.groovy.intentions.conversions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
-import com.intellij.psi.SmartPsiElementPointer
-import com.intellij.psi.util.createSmartPointer
 import com.intellij.refactoring.RefactoringFactory
 import com.intellij.util.Consumer
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle.message
 import org.jetbrains.plugins.groovy.intentions.base.Intention
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 
 class RenameClassToFileNameIntention : Intention() {
 
-  private lateinit var myClassPointer: SmartPsiElementPointer<GrTypeDefinition>
   private lateinit var myFileName: String
 
   override fun getElementPredicate(): PsiElementPredicate = ClassNameDiffersFromFileNamePredicate(
-    classConsumer = Consumer {
-      myClassPointer = it.createSmartPointer()
-    },
     fileNameConsumer = Consumer { fileName ->
       myFileName = fileName
     }
@@ -34,7 +28,10 @@ class RenameClassToFileNameIntention : Intention() {
   override fun startInWriteAction(): Boolean = false
 
   override fun processIntention(element: PsiElement, project: Project, editor: Editor?) {
-    val clazz = myClassPointer.element ?: return
+    var clazz: PsiClass? = null
+    val predicate = ClassNameDiffersFromFileNamePredicate(classConsumer = Consumer { clazz = it })
+    if (!predicate.satisfiedBy(element)) return
+    assert(clazz != null)
     RefactoringFactory.getInstance(project).createRename(clazz, myFileName).run()
   }
 }

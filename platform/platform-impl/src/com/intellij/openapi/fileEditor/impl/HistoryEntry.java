@@ -54,7 +54,7 @@ final class HistoryEntry {
    * can be null when read from XML
    */
   @Nullable private FileEditorProvider mySelectedProvider;
-  @NotNull private final HashMap<FileEditorProvider, FileEditorState> myProvider2State;
+  @NotNull private final Map<FileEditorProvider, FileEditorState> myProvider2State = new HashMap<>();
 
   @Nullable private final Disposable myDisposable;
 
@@ -64,7 +64,6 @@ final class HistoryEntry {
     myFilePointer = filePointer;
     mySelectedProvider = selectedProvider;
     myDisposable = disposable;
-    myProvider2State = new HashMap<>();
   }
 
   @NotNull

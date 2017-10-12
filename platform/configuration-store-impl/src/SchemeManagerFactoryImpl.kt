@@ -36,18 +36,18 @@ import java.nio.file.Paths
 const val ROOT_CONFIG = "\$ROOT_CONFIG$"
 
 sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingComponent {
-  private val managers = ContainerUtil.createLockFreeCopyOnWriteList<SchemeManagerImpl<Scheme, out Scheme>>()
+  private val managers = ContainerUtil.createLockFreeCopyOnWriteList<SchemeManagerImpl<Scheme, Scheme>>()
 
   protected open val componentManager: ComponentManager? = null
 
-  override final fun <T : Scheme, MutableT : T> create(directoryName: String,
-                                                       processor: SchemeProcessor<T, MutableT>,
-                                                       presentableName: String?,
-                                                       roamingType: RoamingType,
-                                                       schemeNameToFileName: SchemeNameToFileName,
-                                                       streamProvider: StreamProvider?,
-                                                       directoryPath: Path?,
-                                                       autoSave: Boolean): SchemeManager<T> {
+  override final fun <T : Any, MutableT : T> create(directoryName: String,
+                                                    processor: SchemeProcessor<T, MutableT>,
+                                                    presentableName: String?,
+                                                    roamingType: RoamingType,
+                                                    schemeNameToFileName: SchemeNameToFileName,
+                                                    streamProvider: StreamProvider?,
+                                                    directoryPath: Path?,
+                                                    autoSave: Boolean): SchemeManager<T> {
     val path = checkPath(directoryName)
     val manager = SchemeManagerImpl(path,
                                     processor,
@@ -59,7 +59,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
                                     componentManager?.messageBus)
     if (autoSave) {
       @Suppress("UNCHECKED_CAST")
-      managers.add(manager as SchemeManagerImpl<Scheme, out Scheme>)
+      managers.add(manager as SchemeManagerImpl<Scheme, Scheme>)
     }
     return manager
   }
@@ -83,7 +83,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
   abstract fun pathToFile(path: String): Path
 
-  fun process(processor: (SchemeManagerImpl<Scheme, out Scheme>) -> Unit) {
+  fun process(processor: (SchemeManagerImpl<Scheme, Scheme>) -> Unit) {
     for (manager in managers) {
       try {
         processor(manager)

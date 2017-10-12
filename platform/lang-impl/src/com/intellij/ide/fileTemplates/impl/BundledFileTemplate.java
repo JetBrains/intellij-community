@@ -22,17 +22,22 @@ import org.jetbrains.annotations.NotNull;
  *         Date: 4/6/11
  */
 public final class BundledFileTemplate extends FileTemplateBase {
-
   private final DefaultTemplate myDefaultTemplate;
   private final boolean myInternal;
-  private final boolean myLiveTemplateEnabledByDefault;
   private boolean myEnabled = true; // when user 'deletes' bundled plugin, it simply becomes disabled
 
   public BundledFileTemplate(@NotNull DefaultTemplate defaultTemplate, boolean internal) {
     myDefaultTemplate = defaultTemplate;
     myInternal = internal;
-    myLiveTemplateEnabledByDefault = defaultTemplate.getText().contains("#[[$");
-    setLiveTemplateEnabled(myLiveTemplateEnabledByDefault);
+  }
+
+  // these complications are to avoid eager initialization/load of huge files
+  @Override
+  public boolean isLiveTemplateEnabled() {
+    if (isLiveTemplateEnabledChanged()) {
+      return super.isLiveTemplateEnabled();
+    }
+    return isLiveTemplateEnabledByDefault();
   }
 
   @Override
@@ -96,7 +101,7 @@ public final class BundledFileTemplate extends FileTemplateBase {
   public void revertToDefaults() {
     setText(null);
     setReformatCode(DEFAULT_REFORMAT_CODE_VALUE);
-    setLiveTemplateEnabled(myLiveTemplateEnabledByDefault);
+    setLiveTemplateEnabled(isLiveTemplateEnabledByDefault());
   }
 
   public boolean isTextModified() {
@@ -105,11 +110,11 @@ public final class BundledFileTemplate extends FileTemplateBase {
 
   @Override
   public boolean isLiveTemplateEnabledByDefault() {
-    return myLiveTemplateEnabledByDefault;
+    return myDefaultTemplate.getText().contains("#[[$");
   }
 
   @Override
   public String toString() {
-    return myDefaultTemplate.getTemplateURL() == null ? "" : myDefaultTemplate.getTemplateURL().toString();
+    return myDefaultTemplate.getTemplateURL().toString();
   }
 }

@@ -30,7 +30,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
-public class DiffApplication extends ApplicationStarterBase {
+public class DiffApplication extends DiffApplicationBase {
   @Override
   protected boolean checkArguments(@NotNull String[] args) {
     return (args.length == 3 || args.length == 4) && "diff".equals(args[0]);
@@ -50,10 +50,9 @@ public class DiffApplication extends ApplicationStarterBase {
 
   @Override
   public void processCommand(@NotNull String[] args, @Nullable String currentDirectory) throws Exception {
-    Project project = getProject();
-
     List<String> filePaths = Arrays.asList(args).subList(1, args.length);
     List<VirtualFile> files = findFiles(filePaths, currentDirectory);
+    Project project = guessProject(files);
 
     DiffRequest request;
     if (files.size() == 3) {
@@ -62,6 +61,8 @@ public class DiffApplication extends ApplicationStarterBase {
     else {
       request = DiffRequestFactory.getInstance().createFromFiles(project, files.get(0), files.get(1));
     }
-    DiffManagerEx.getInstance().showDiffBuiltin(project, request, DiffDialogHints.MODAL);
+
+    DiffDialogHints dialogHints = project != null ? DiffDialogHints.DEFAULT : DiffDialogHints.MODAL;
+    DiffManagerEx.getInstance().showDiffBuiltin(project, request, dialogHints);
   }
 }

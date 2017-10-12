@@ -500,9 +500,8 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
 
       if (root != null && loaded != null && root.object.equals(loaded.object)) {
         LOG.debug("same root: ", root.object);
+        if (!root.isLoadingRequired()) processor.process(new CmdGetChildren("Update root children", root, true));
         tree.queue.done(this, root);
-        if (root.isLoadingRequired()) return;
-        processor.process(new CmdGetChildren("Update root children", root, true));
         return;
       }
 
@@ -636,7 +635,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
         }
         else {
           list.add(found);
-          if (!found.isLoadingRequired() && !removed.containsKey(found.object)) {
+          if (!found.isLoadingRequired() && (deep || !removed.containsKey(found.object))) {
             reload.add(found.object); // reload reused children if they are inserted
           }
         }
@@ -686,7 +685,6 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
       if (!inserted.isEmpty()) treeNodesInserted(node, inserted);
       if (!contained.isEmpty()) treeNodesChanged(node, contained);
       LOG.debug("children changed: ", node.object);
-      node.queue.done(this, node);
 
       if (!reload.isEmpty()) {
         for (Node child : newChildren) {
@@ -695,6 +693,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
           }
         }
       }
+      node.queue.done(this, node);
     }
   }
 

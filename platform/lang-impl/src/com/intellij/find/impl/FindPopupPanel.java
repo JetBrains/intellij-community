@@ -477,26 +477,22 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myOKButton.addActionListener(myOkActionListener);
     boolean enterAsOK = Registry.is("ide.find.enter.as.ok", false);
 
-    new DumbAwareAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        if (enterAsOK ) {
-          myOkActionListener.actionPerformed(null);
-        } else {
-          navigateToSelectedUsage();
-        }
+    DumbAwareAction.create(e -> {
+      if (enterAsOK) {
+        myOkActionListener.actionPerformed(null);
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(ENTER), this);
-    new AnAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        if (enterAsOK) {
-          navigateToSelectedUsage();
-        } else {
-          myOkActionListener.actionPerformed(null);
-        }
+      else {
+        navigateToSelectedUsage();
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(ENTER_WITH_MODIFIERS), this);
+    }).registerCustomShortcutSet(new CustomShortcutSet(ENTER), this);
+    DumbAwareAction.create(e -> {
+      if (enterAsOK) {
+        navigateToSelectedUsage();
+      }
+      else {
+        myOkActionListener.actionPerformed(null);
+      }
+    }).registerCustomShortcutSet(new CustomShortcutSet(ENTER_WITH_MODIFIERS), this);
     
     List<Shortcut> navigationKeyStrokes = ContainerUtil.newArrayList();
     KeyStroke viewSourceKeyStroke = KeymapUtil.getKeyStroke(CommonShortcuts.getViewSource());
@@ -756,16 +752,12 @@ public class FindPopupPanel extends JBPanel implements FindUI {
 
   private void registerCloseAction(JBPopup popup) {
     final AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
-    DumbAwareAction closeAction = new DumbAwareAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        if (canBeClosedImmediately() && myBalloon != null && myBalloon.isVisible()) {
-          myIsPinned.set(false);
-          myBalloon.cancel();
-        }
+    DumbAwareAction.create(e -> {
+      if (canBeClosedImmediately() && myBalloon != null && myBalloon.isVisible()) {
+        myIsPinned.set(false);
+        myBalloon.cancel();
       }
-    };
-    closeAction.registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(), popup.getContent(), popup);
+    }).registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(), popup.getContent(), popup);
   }
 
   @Override
@@ -999,7 +991,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
           UsageInfo2UsageAdapter recentAdapter =
             recent instanceof UsageInfo2UsageAdapter ? (UsageInfo2UsageAdapter)recent : null;
           UsageInfo2UsageAdapter currentAdapter = usage instanceof UsageInfo2UsageAdapter ? (UsageInfo2UsageAdapter)usage : null;
-          final boolean merged = currentAdapter != null && recentAdapter != null && recentAdapter.merge(currentAdapter);
+          final boolean merged = !myHelper.isReplaceState() && currentAdapter != null && recentAdapter != null && recentAdapter.merge(currentAdapter);
           if (!merged) {
             recentUsageRef.set(usage);
           }

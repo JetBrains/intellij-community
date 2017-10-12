@@ -74,7 +74,7 @@ public class XmlPathReferenceInspection extends XmlSuppressableInspectionTool {
       if (!isHtml && XmlHighlightVisitor.skipValidation(element)) {
         continue;
       }
-      final TextRange range = reference.getRangeInElement();
+      final TextRange range = reference.getElement() == null ? null : reference.getElement().getTextRange();
       if (range != null && !range.isEmpty() && XmlHighlightVisitor.hasBadResolve(reference, false)) {
         holder.registerProblem(reference, ProblemsHolder.unresolvedReferenceMessage(reference),
                                isHtml ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING : ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);

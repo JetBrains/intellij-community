@@ -16,7 +16,7 @@ import java.io.File
  * @author traff
  */
 
-class IdIndexGenerator(private val idIndexStorageFilePath: String) : IndexGenerator<Map<IdIndexEntry, Int>>(idIndexStorageFilePath) {
+open class IdIndexGenerator(private val idIndexStorageFilePath: String) : IndexGenerator<Map<IdIndexEntry, Int>>(idIndexStorageFilePath) {
   override fun getIndexValue(fileContent: FileContentImpl): Map<IdIndexEntry, Int> {
     return IdIndexers.INSTANCE.forFileType(fileContent.file.fileType).map(fileContent)
   }

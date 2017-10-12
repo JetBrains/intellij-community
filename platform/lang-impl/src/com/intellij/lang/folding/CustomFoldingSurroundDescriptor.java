@@ -306,7 +306,7 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
       }
 
       String startString = linePrefix + startText + lineSuffix + "\n" + startIndent;
-      String endString = "\n" + linePrefix + myProvider.getEndString() + lineSuffix;
+      String endString = "\n" + startIndent + linePrefix + myProvider.getEndString() + lineSuffix;
       document.insertString(endOffset, endString);
       delta += endString.length();
       document.insertString(startOffset, startString);

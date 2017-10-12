@@ -78,6 +78,7 @@ public class CompilerTask extends Task.Backgroundable {
   private static final String APP_ICON_ID = "compiler";
   @NotNull
   private final Object myContentId = new IDObject("content_id");
+  private final boolean myModal;
 
   @NotNull
   private Object mySessionId = myContentId; // by default sessionID should be unique, just as content ID
@@ -105,12 +106,18 @@ public class CompilerTask extends Task.Backgroundable {
 
   public CompilerTask(@NotNull Project project, String contentName, final boolean headlessMode, boolean forceAsync,
                       boolean waitForPreviousSession, boolean compilationStartedAutomatically) {
+    this(project, contentName, headlessMode, forceAsync, waitForPreviousSession, compilationStartedAutomatically, false);
+  }
+
+  public CompilerTask(@NotNull Project project, String contentName, final boolean headlessMode, boolean forceAsync,
+                       boolean waitForPreviousSession, boolean compilationStartedAutomatically, boolean modal) {
     super(project, contentName);
     myContentName = contentName;
     myHeadlessMode = headlessMode;
     myForceAsyncExecution = forceAsync;
     myWaitForPreviousSession = waitForPreviousSession;
     myCompilationStartedAutomatically = compilationStartedAutomatically;
+    myModal = modal;
   }
 
   @NotNull
@@ -149,7 +156,12 @@ public class CompilerTask extends Task.Backgroundable {
 
   @Override
   public boolean shouldStartInBackground() {
-    return true;
+    return !myModal;
+  }
+
+  @Override
+  public boolean isConditionalModal() {
+    return myModal;
   }
 
   public ProgressIndicator getIndicator() {

@@ -28,6 +28,7 @@ import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.formove.CustomBinaryPatchApplier;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.NonLazySchemeProcessor;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
@@ -45,19 +46,19 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchDefaultExecutor;
 import com.intellij.openapi.vcs.changes.patch.PatchFileType;
 import com.intellij.openapi.vcs.changes.patch.PatchNameChecker;
-import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
-import com.intellij.openapi.vcs.changes.ui.RollbackWorker;
+import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.util.text.UniqueNameGenerator;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.FilesProgress;
 import com.intellij.vcsUtil.VcsUtil;
@@ -77,8 +78,9 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
-import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChangeList;
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.openapi.vcs.changes.ChangeListUtil.getChangeListNameForUnshelve;
+import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChangeList;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public class ShelveChangesManager extends AbstractProjectComponent implements JDOMExternalizable {
@@ -577,9 +579,8 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   @NotNull
   private File generateUniqueSchemePatchDir(@Nullable final String defaultName, boolean createResourceDirectory) {
     ignoreShelfDirectoryIfFirstShelf();
-    String uniqueName = UniqueNameGenerator
-      .generateUniqueName(shortenAndSanitize(defaultName), mySchemeManager.getAllSchemeNames());
-    File dir = new File(getShelfResourcesDirectory(), uniqueName);
+    File shelfResourcesDirectory = getShelfResourcesDirectory();
+    File dir = suggestPatchName(myProject, defaultName, shelfResourcesDirectory, "");
     if (createResourceDirectory && !dir.exists()) {
       //noinspection ResultOfMethodCallIgnored
       dir.mkdirs();
@@ -614,7 +615,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
 
   @NotNull
   private static String shortenAndSanitize(@Nullable String commitMessage) {
-    @NonNls String defaultPath = FileUtil.sanitizeFileName(StringUtil.notNullize(commitMessage));
+    @NonNls String defaultPath = PathUtil.suggestFileName(notNullize(commitMessage));
     if (defaultPath.isEmpty()) {
       defaultPath = "unnamed";
     }
@@ -736,23 +737,34 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
 
   @CalledInAwt
   public void shelveSilentlyUnderProgress(@NotNull List<Change> changes) {
+    final List<ShelvedChangeList> result = ContainerUtil.newArrayList();
     final boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> shelveChangesInSeparatedLists(changes),
+      () -> result.addAll(shelveChangesInSeparatedLists(changes)),
       VcsBundle.getString("shelve.changes.progress.title"), true, myProject);
 
     if (completed) {
       VcsNotifier.getInstance(myProject).notifySuccess("Changes shelved successfully");
+      if (result.size() == 1 && isShelfContentActive()) {
+        ShelvedChangesViewManager.getInstance(myProject).startEditing(result.get(0));
+      }
     }
   }
 
-  public void shelveChangesInSeparatedLists(@NotNull Collection<Change> changes) {
+  private boolean isShelfContentActive() {
+    return ToolWindowManager.getInstance(myProject).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID).isVisible() &&
+           ((ChangesViewContentManager)ChangesViewContentManager.getInstance(myProject)).isContentSelected(ChangesViewContentManager.SHELF);
+  }
+
+  @NotNull
+  public List<ShelvedChangeList> shelveChangesInSeparatedLists(@NotNull Collection<Change> changes) {
     List<String> failedChangeLists = ContainerUtil.newArrayList();
+    List<ShelvedChangeList> result = ContainerUtil.newArrayList();
     List<LocalChangeList> changeListsCopy = ChangeListManager.getInstance(myProject).getChangeListsCopy();
     for (LocalChangeList list : changeListsCopy) {
       Collection<Change> changesForChangelist = ContainerUtil.intersection(list.getChanges(), changes);
       if (changesForChangelist.isEmpty()) continue;
       try {
-        shelveChanges(changesForChangelist, list.getName(), true);
+        result.add(shelveChanges(changesForChangelist, list.getName(), true));
       }
       catch (Exception e) {
         LOG.warn(e);
@@ -764,8 +776,20 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
         .format("Shelving changes for %s [%s] failed", StringUtil.pluralize("changelist", failedChangeLists.size()),
                 StringUtil.join(failedChangeLists, ",")));
     }
+    return result;
   }
 
+  @CalledInAwt
+  public static void unshelveSilentlyWithDnd(@NotNull Project project,
+                                             @NotNull ShelvedChangeListDragBean shelvedChangeListDragBean,
+                                             @Nullable ChangesBrowserNode dropRootNode) {
+    FileDocumentManager.getInstance().saveAllDocuments();
+    LocalChangeList predefinedChangeList =
+      dropRootNode != null ? ObjectUtils.tryCast(dropRootNode.getUserObject(), LocalChangeList.class) : null;
+    getInstance(project).unshelveSilentlyAsynchronously(project, shelvedChangeListDragBean.getShelvedChangelists(),
+                                                        shelvedChangeListDragBean.getChanges(),
+                                                        shelvedChangeListDragBean.getBinaryFiles(), predefinedChangeList);
+  }
 
   public void unshelveSilentlyAsynchronously(@NotNull final Project project,
                                              @NotNull final List<ShelvedChangeList> selectedChangeLists,
@@ -1026,7 +1050,6 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
 
   public void renameChangeList(final ShelvedChangeList changeList, final String newName) {
     changeList.DESCRIPTION = newName;
-    notifyStateChanged();
   }
 
   @NotNull

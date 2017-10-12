@@ -31,8 +31,6 @@ abstract class PrebuiltIndexProviderBase<Value> : Disposable {
 
   companion object {
     private val LOG = Logger.getInstance("#com.intellij.index.PrebuiltIndexProviderBase")
-
-    val PREBUILT_INDICES_DEBUG: Boolean = System.getProperty("PREBUILT_INDICES_DEBUG", "false").toBoolean()
   }
 
   init {

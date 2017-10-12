@@ -130,7 +130,7 @@ public class PyStackFrame extends XStackFrame {
            ? SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES;
   }
 
-  private boolean isVariablesViewVisible() {
+  private boolean isDebugVariableViewVisible() {
     if (myDebugProcess instanceof PyDebugProcess) {
       RunnerLayoutUi ui = ((PyDebugProcess)myDebugProcess).getSession().getUI();
       Content variablesView = null;
@@ -144,12 +144,16 @@ public class PyStackFrame extends XStackFrame {
 
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
-    if (node.isObsolete() || !isVariablesViewVisible()) return;
+    if (node.isObsolete() || !isDebugVariableViewVisible()) return;
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
+        boolean cached = myDebugProcess.isCurrentFrameCached();
         XValueChildrenList values = myDebugProcess.loadFrame();
         if (!node.isObsolete()) {
           addChildren(node, values);
+        }
+        if (values != null && !cached) {
+          PyDebugValue.getAsyncValues(myDebugProcess, values);
         }
       }
       catch (PyDebuggerException e) {

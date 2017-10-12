@@ -15,6 +15,8 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.json.psi.JsonObject;
+import com.intellij.json.psi.JsonProperty;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.Annotator;
@@ -42,7 +44,8 @@ public class JsonSchemaAnnotator implements Annotator {
 
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-    if (element.getContainingFile() == null) return;
+    if (element.getContainingFile() == null ||
+        !(element instanceof JsonProperty || element instanceof JsonObject)) return;
 
     final JsonSchemaObject rootSchema =
       JsonSchemaService.Impl.get(element.getProject()).getSchemaObject(element.getContainingFile().getViewProvider().getVirtualFile());

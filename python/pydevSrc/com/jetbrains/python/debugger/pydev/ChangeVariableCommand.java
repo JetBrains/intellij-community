@@ -4,6 +4,7 @@ package com.jetbrains.python.debugger.pydev;
 import com.jetbrains.python.debugger.IPyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
+import org.jetbrains.annotations.NotNull;
 
 public class ChangeVariableCommand extends AbstractFrameCommand {
 
@@ -32,9 +33,10 @@ public class ChangeVariableCommand extends AbstractFrameCommand {
     return true;
   }
 
-  protected void processResponse(final ProtocolFrame response) throws PyDebuggerException {
+  protected void processResponse(@NotNull final ProtocolFrame response) throws PyDebuggerException {
     super.processResponse(response);
-    myNewValue = ProtocolParser.parseValue(response.getPayload(), myDebugProcess).setName(myVariableName);
+    PyDebugValue returnedValue = ProtocolParser.parseValue(response.getPayload(), myDebugProcess);
+    myNewValue = new PyDebugValue(returnedValue, myVariableName);
   }
 
   public PyDebugValue getNewValue() {

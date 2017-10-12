@@ -19,22 +19,17 @@ import com.intellij.codeInspection.naming.NamingConvention;
 import com.intellij.codeInspection.naming.NamingConventionBean;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiType;
-import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.psiutils.ClassUtils;
-
-import javax.swing.*;
-import java.awt.*;
 
 public class StaticVariableNamingConvention extends NamingConvention<PsiField> {
+  static final String STATIC_VARIABLE_NAMING_CONVENTION_SHORT_NAME = "StaticVariableNamingConvention";
 
   private static final int DEFAULT_MIN_LENGTH = 5;
   private static final int DEFAULT_MAX_LENGTH = 32;
 
   @Override
   public NamingConventionBean createDefaultBean() {
-    return new ConstantNamingConventionBean();
+    return new FieldNamingConventionInspection.FieldNamingConventionBean("[A-Z][A-Z_\\d]*", DEFAULT_MIN_LENGTH, DEFAULT_MAX_LENGTH);
   }
 
   @Override
@@ -44,64 +39,11 @@ public class StaticVariableNamingConvention extends NamingConvention<PsiField> {
 
   @Override
   public String getShortName() {
-    return "StaticVariableNamingConvention";
+    return STATIC_VARIABLE_NAMING_CONVENTION_SHORT_NAME;
   }
 
   @Override
   public boolean isApplicable(PsiField field) {
     return field.hasModifierProperty(PsiModifier.STATIC);
-  }
-
-  @Override
-  public boolean isValid(PsiField field, NamingConventionBean bean) {
-    if (field.hasModifierProperty(PsiModifier.FINAL)) {
-      if (((ConstantNamingConventionBean)bean).checkMutableFinals) {
-        final PsiType type = field.getType();
-        if (ClassUtils.isImmutable(type)) {
-          return true;
-        }
-      }
-      else {
-        return true;
-      }
-    }
-    return super.isValid(field, bean);
-  }
-
-  private static class ConstantNamingConventionBean extends FieldNamingConventionInspection.FieldNamingConventionBean {
-    @SuppressWarnings({"PublicField"})
-    public boolean checkMutableFinals = false;
-
-    public ConstantNamingConventionBean() {
-      super("[A-Z][A-Z_\\d]*", DEFAULT_MIN_LENGTH, DEFAULT_MAX_LENGTH);
-    }
-
-    @Override
-    public JComponent createOptionsPanel() {
-      JPanel panel = new JPanel(new BorderLayout());
-      JComponent selfOptions = super.createOptionsPanel();
-      JCheckBox inheritCb = new CheckBox(InspectionGadgetsBundle.message("static.variable.naming.convention.mutable.option"), this, "checkMutableFinals");
-      panel.add(inheritCb, BorderLayout.NORTH);
-      panel.add(selfOptions, BorderLayout.CENTER);
-      return panel;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof ConstantNamingConventionBean)) return false;
-      if (!super.equals(o)) return false;
-
-      ConstantNamingConventionBean bean = (ConstantNamingConventionBean)o;
-
-      if (checkMutableFinals != bean.checkMutableFinals) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return 31 * super.hashCode() + (checkMutableFinals ? 1 : 0);
-    }
   }
 }

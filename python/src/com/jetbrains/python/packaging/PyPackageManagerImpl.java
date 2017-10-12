@@ -42,6 +42,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.sdk.PyLazySdk;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -293,6 +294,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @NotNull
   protected List<PyPackage> collectPackages() throws ExecutionException {
+    if (mySdk instanceof PyLazySdk) return Collections.emptyList();
     final String output;
     try {
       LOG.debug("Collecting installed packages for the SDK " + mySdk.getName(), new Throwable());

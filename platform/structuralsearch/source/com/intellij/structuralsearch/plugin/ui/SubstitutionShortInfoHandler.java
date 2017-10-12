@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.hint.TooltipController;
@@ -136,22 +122,26 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
       if (constraint.isPartOfSearchResults()) {
         append(buf, SSRBundle.message("target.tooltip.message"));
       }
-      if (constraint.getRegExp() != null && constraint.getRegExp().length() > 0) {
+      if (constraint.getRegExp() != null && !constraint.getRegExp().isEmpty()) {
         append(buf, SSRBundle.message("text.tooltip.message",
                                       constraint.isInvertRegExp() ? SSRBundle.message("not.tooltip.message") : "", constraint.getRegExp()));
       }
       if (constraint.isWithinHierarchy() || constraint.isStrictlyWithinHierarchy()) {
         append(buf, SSRBundle.message("within.hierarchy.tooltip.message"));
       }
+      if (!StringUtil.isEmpty(constraint.getReferenceConstraint())) {
+        final String text = StringUtil.unquoteString(constraint.getReferenceConstraint());
+        append(buf, "reference target matches: " + text);
+      }
 
-      if (constraint.getNameOfExprType() != null && constraint.getNameOfExprType().length() > 0) {
+      if (constraint.getNameOfExprType() != null && !constraint.getNameOfExprType().isEmpty()) {
         append(buf, SSRBundle.message("exprtype.tooltip.message",
                                      constraint.isInvertExprType() ? SSRBundle.message("not.tooltip.message") : "",
                                      constraint.getNameOfExprType(),
                                      constraint.isExprTypeWithinHierarchy() ? SSRBundle.message("supertype.tooltip.message") : ""));
       }
 
-      if (constraint.getNameOfFormalArgType() != null && constraint.getNameOfFormalArgType().length() > 0) {
+      if (constraint.getNameOfFormalArgType() != null && !constraint.getNameOfFormalArgType().isEmpty()) {
         append(buf, SSRBundle.message("expected.type.tooltip.message",
                                       constraint.isInvertFormalType() ? SSRBundle.message("not.tooltip.message") : "",
                                       constraint.getNameOfFormalArgType(),
@@ -188,7 +178,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     if (buf.length() == 0) {
       return SSRBundle.message("no.constraints.specified.tooltip.message");
     }
-    return StringUtil.escapeXml(buf.toString());
+    return buf.toString();
   }
 
   private static void append(final StringBuilder buf, final String str) {
@@ -216,7 +206,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
                                                 editor.getComponent().getRootPane().getLayeredPane());
     final HintHint hint = new HintHint(editor, bestPoint).setAwtTooltip(true).setHighlighterType(true).setShowImmediately(true)
       .setCalloutShift(editor.getLineHeight() / 2 - 1);
-    TooltipController.getInstance().showTooltip(editor, p, text, visibleArea.width, false, SS_INFO_TOOLTIP_GROUP, hint);
+    TooltipController.getInstance().showTooltip(editor, p, StringUtil.escapeXml(text), visibleArea.width, false, SS_INFO_TOOLTIP_GROUP, hint);
   }
 
   static SubstitutionShortInfoHandler retrieve(Editor editor) {

@@ -1276,6 +1276,15 @@ public class GenericsHighlightUtil {
     return null;
   }
 
+  static HighlightInfo checkGenericCannotExtendException(PsiAnonymousClass anonymousClass) {
+    if (PsiUtil.typeParametersIterator(anonymousClass).hasNext() &&
+        InheritanceUtil.isInheritor(anonymousClass, true, CommonClassNames.JAVA_LANG_THROWABLE)) {
+      String message = JavaErrorMessages.message("generic.extend.exception");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(anonymousClass.getBaseClassReference()).descriptionAndTooltip(message).create();
+    }
+    return null;
+  }
+
   static HighlightInfo checkEnumMustNotBeLocal(final PsiClass aClass) {
     if (!aClass.isEnum()) return null;
     PsiElement parent = aClass.getParent();

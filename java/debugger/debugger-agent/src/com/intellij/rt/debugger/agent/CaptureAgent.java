@@ -25,43 +25,13 @@ public class CaptureAgent {
   private static Map<String, List<CapturePoint>> myCapturePoints = new HashMap<String, List<CapturePoint>>();
   private static Map<String, List<InsertPoint>> myInsertPoints = new HashMap<String, List<InsertPoint>>();
 
-  public static void premain(String args, Instrumentation instrumentation) throws IOException {
+  public static void premain(String args, Instrumentation instrumentation) {
     ourInstrumentation = instrumentation;
-
-    boolean deleteSettings = true;
-
-    FileReader reader = null;
     try {
-      reader = new FileReader(args);
-      Properties properties = new Properties();
-      properties.load(reader);
+      String asmPath = readSettings(args);
 
-      DEBUG = Boolean.parseBoolean(properties.getProperty("debug", "false"));
-      if (DEBUG) {
-        CaptureStorage.setDebug(true);
-      }
-
-      if (Boolean.parseBoolean(properties.getProperty("disabled", "false"))) {
-        CaptureStorage.setEnabled(false);
-      }
-
-      deleteSettings = Boolean.parseBoolean(properties.getProperty("deleteSettings", "true"));
-
-      String asmPath = properties.getProperty("asm-lib");
       if (asmPath == null) {
-        System.out.println("Capture agent: asm path is not specified, exiting");
         return;
-      }
-
-      Enumeration<?> propNames = properties.propertyNames();
-      while (propNames.hasMoreElements()) {
-        String propName = (String)propNames.nextElement();
-        if (propName.startsWith("capture")) {
-          addPoint(true, properties.getProperty(propName));
-        }
-        else if (propName.startsWith("insert")) {
-          addPoint(false, properties.getProperty(propName));
-        }
       }
 
       try {
@@ -98,18 +68,68 @@ public class CaptureAgent {
         System.out.println("Capture agent: ready");
       }
     }
+    catch (Throwable e) {
+      System.out.println("Capture agent: unknown exception");
+      e.printStackTrace();
+    }
+  }
+
+  private static String readSettings(String path) {
+    FileReader reader = null;
+    try {
+      reader = new FileReader(path);
+      Properties properties = new Properties();
+      properties.load(reader);
+
+      DEBUG = Boolean.parseBoolean(properties.getProperty("debug", "false"));
+      if (DEBUG) {
+        CaptureStorage.setDebug(true);
+      }
+
+      if (Boolean.parseBoolean(properties.getProperty("disabled", "false"))) {
+        CaptureStorage.setEnabled(false);
+      }
+
+      boolean deleteSettings = Boolean.parseBoolean(properties.getProperty("deleteSettings", "true"));
+
+      String asmPath = properties.getProperty("asm-lib");
+      if (asmPath == null) {
+        System.out.println("Capture agent: asm path is not specified, exiting");
+        return null;
+      }
+
+      Enumeration<?> propNames = properties.propertyNames();
+      while (propNames.hasMoreElements()) {
+        String propName = (String)propNames.nextElement();
+        if (propName.startsWith("capture")) {
+          addPoint(true, properties.getProperty(propName));
+        }
+        else if (propName.startsWith("insert")) {
+          addPoint(false, properties.getProperty(propName));
+        }
+      }
+
+      // delete settings file only if it was read correctly
+      if (deleteSettings) {
+        new File(path).delete();
+      }
+      return asmPath;
+    }
     catch (IOException e) {
       System.out.println("Capture agent: unable to read settings");
       e.printStackTrace();
     }
     finally {
       if (reader != null) {
-        reader.close();
-      }
-      if (deleteSettings) {
-        new File(args).delete();
+        try {
+          reader.close();
+        }
+        catch (IOException e) {
+          e.printStackTrace();
+        }
       }
     }
+    return null;
   }
 
   private static <T> List<T> getNotNull(List<T> list) {

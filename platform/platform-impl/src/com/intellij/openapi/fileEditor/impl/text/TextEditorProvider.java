@@ -322,7 +322,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
       if (file == null) return null;
 
       final Project project = myEditor.getProject();
-      LOG.assertTrue(project != null);
+      if (project == null) return null;
       return StructureViewBuilder.PROVIDER.getStructureViewBuilder(file.getFileType(), file, project);
     }
 

@@ -156,7 +156,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
         PsiElement replacement = ReplacerUtil.copySpacesAndCommentsBefore(elementToReplace, statements, replacementToMake, elementParent);
 
         // preserve comments
-        Replacer.handleComments(elementToReplace, replacement, myContext);
+        Replacer.handleComments(elementToReplace, replacement, info);
         elementToReplace.replace(replacement);
       }
       else {
@@ -178,7 +178,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
     else if (statements.length == 1) {
       PsiElement replacement = statements[0];
 
-      Replacer.handleComments(elementToReplace, replacement, context);
+      Replacer.handleComments(elementToReplace, replacement, info);
 
       try {
         elementParent.addBefore(replacement, elementToReplace);

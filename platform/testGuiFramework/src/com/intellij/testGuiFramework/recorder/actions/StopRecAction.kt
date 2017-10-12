@@ -19,7 +19,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.testGuiFramework.recorder.GlobalActionRecorder
-import com.intellij.testGuiFramework.recorder.Writer
 import com.intellij.testGuiFramework.recorder.components.GuiRecorderComponent
 import com.intellij.testGuiFramework.recorder.ui.Notifier
 
@@ -32,7 +31,6 @@ class StopRecAction : AnAction(null, "Stop Recording, Compiling, Running and Cle
     GlobalActionRecorder.deactivate()
     GuiRecorderComponent.cancelCurrentTask()
     Notifier.updateStatus("Stopped")
-    Writer.clearScript()
     GuiRecorderComponent.placeCaretToEnd()
   }
 

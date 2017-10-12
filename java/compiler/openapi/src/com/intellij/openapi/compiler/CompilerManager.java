@@ -222,6 +222,11 @@ public abstract class CompilerManager {
   public abstract void make(@NotNull CompileScope scope, @Nullable CompileStatusNotification callback);
 
   /**
+   * Same as {@link #make(CompileScope, CompileStatusNotification)} but with modal progress window instead of background progress
+   */
+  public abstract void makeWithModalProgress(@NotNull CompileScope scope, @Nullable CompileStatusNotification callback);
+
+  /**
    * Compile all modified files and all files that depend on them from the scope given.
    * Files are compiled according to dependencies between the modules they belong to. Compiler excludes are honored. All modules must belong to the same project
    *

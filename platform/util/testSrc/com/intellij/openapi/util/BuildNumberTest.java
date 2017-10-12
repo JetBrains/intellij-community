@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.util;
 
+import com.google.common.primitives.Ints;
 import org.junit.Test;
+
+import java.util.Arrays;
 
 import static org.junit.Assert.*;
 
@@ -136,5 +139,19 @@ public class BuildNumberTest {
     assertTrue(current.compareTo(BuildNumber.fromString("7512")) > 0);
     assertTrue(current.compareTo(BuildNumber.fromString("145")) > 0);
     assertTrue(current.compareTo(BuildNumber.fromString("145.12")) > 0);
+  }
+
+  @Test
+  public void withProductCode() {
+    BuildNumber IU_173_SNAPSHOT = BuildNumber.fromString("IU-173.SNAPSHOT");
+    assertTrue(IU_173_SNAPSHOT.isSnapshot());
+    assertEquals("IU", IU_173_SNAPSHOT.getProductCode());
+    assertEquals(Ints.asList(IU_173_SNAPSHOT.getComponents()), Arrays.asList(173, BuildNumber.SNAPSHOT_VALUE));
+
+    assertEquals(IU_173_SNAPSHOT, BuildNumber.fromStringWithProductCode("173.SNAPSHOT", "IU"));
+
+    assertEquals(IU_173_SNAPSHOT, BuildNumber.fromStringWithProductCode("IU-173.SNAPSHOT", "IU"));
+
+    assertEquals(IU_173_SNAPSHOT, BuildNumber.fromStringWithProductCode("IU-173.SNAPSHOT", "IC"));
   }
 }

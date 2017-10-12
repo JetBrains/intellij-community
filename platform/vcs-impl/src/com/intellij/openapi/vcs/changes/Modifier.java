@@ -41,7 +41,7 @@ public class Modifier implements ChangeListsWriteOperations {
 
   @NotNull
   @Override
-  public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable Object data) {
+  public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable ChangeListData data) {
     AddList command = new AddList(name, comment, data);
     impl(command);
     return command.getNewListCopy();

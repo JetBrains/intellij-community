@@ -18,9 +18,6 @@ package com.intellij.testFramework;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
-import com.intellij.util.ui.tree.TreeUtil;
-
-import javax.swing.tree.TreePath;
 
 /**
  * @author Konstantin Bulenkov
@@ -43,9 +40,13 @@ public abstract class FileStructureTestBase extends CodeInsightFixtureTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    Disposer.dispose(myPopupFixture);
-    myPopupFixture = null;
-    super.tearDown();
+    try {
+      Disposer.dispose(myPopupFixture);
+      myPopupFixture = null;
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   private String getFileName(String ext) {
@@ -60,9 +61,8 @@ public abstract class FileStructureTestBase extends CodeInsightFixtureTestCase {
     configureDefault();
     myPopupFixture.update();
     myPopupFixture.getPopup().setSearchFilterForTests(filter);
-    myPopupFixture.getBuilder().refilter(null, false, true);
-    myPopupFixture.getBuilder().queueUpdate();
-    TreeUtil.selectPath(myPopupFixture.getTree(), (TreePath)myPopupFixture.getSpeedSearch().findElement(filter));
+    PlatformTestUtil.waitForPromise(myPopupFixture.getPopup().rebuildAndUpdate());
+    myPopupFixture.getSpeedSearch().findAndSelectElement(filter);
     checkResult();
   }
 

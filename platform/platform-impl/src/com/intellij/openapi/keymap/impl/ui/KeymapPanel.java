@@ -277,7 +277,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       public void actionPerformed(@NotNull AnActionEvent e) {
         myFilterComponent.reset();
         currentKeymapChanged();
-        myFilteringPanel.showPopup(searchToolbar);
+        myFilteringPanel.showPopup(searchToolbar, e.getInputEvent().getComponent());
       }
     });
     group.add(new DumbAwareAction(KeyMapBundle.message("filter.clear.action.text"),

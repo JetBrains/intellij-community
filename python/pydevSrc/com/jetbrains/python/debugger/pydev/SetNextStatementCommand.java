@@ -28,7 +28,7 @@ public class SetNextStatementCommand extends AbstractThreadCommand {
   }
 
   @Override
-  protected void processResponse(ProtocolFrame response) throws PyDebuggerException {
+  protected void processResponse(@NotNull ProtocolFrame response) throws PyDebuggerException {
     super.processResponse(response);
     try {
       Pair<Boolean, String> result = ProtocolParser.parseSetNextStatementCommand(response.getPayload());

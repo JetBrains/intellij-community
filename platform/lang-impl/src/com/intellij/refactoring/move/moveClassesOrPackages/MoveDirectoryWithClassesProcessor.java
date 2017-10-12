@@ -16,6 +16,8 @@
 
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -119,9 +121,8 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     return UsageViewUtil.removeDuplicatedUsages(usages.toArray(new UsageInfo[usages.size()]));
   }
 
-  @Override
-  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+  private void collectConflicts(@NotNull MultiMap<PsiElement, String> conflicts,
+                                @NotNull Ref<UsageInfo[]> refUsages) {
     for (VirtualFile vFile : myFilesToMove.keySet()) {
       PsiFile file = myManager.findFile(vFile);
       if (file == null) continue;
@@ -134,6 +135,15 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     }
     for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
       helper.preprocessUsages(myProject, getPsiFiles(), refUsages.get(), myTargetDirectory, conflicts);
+    }
+  }
+
+  @Override
+  protected boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    if (!ProgressManager.getInstance()
+      .runProcessWithProgressSynchronously(() -> ReadAction.run(() -> collectConflicts(conflicts, refUsages)), RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) {
+      return false;
     }
     return showConflicts(conflicts, refUsages.get());
   }

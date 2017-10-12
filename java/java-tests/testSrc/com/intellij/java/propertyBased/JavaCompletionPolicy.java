@@ -16,7 +16,6 @@
 package com.intellij.java.propertyBased;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -110,7 +109,7 @@ class JavaCompletionPolicy extends CompletionPolicy {
   private static boolean isStaticWithInstanceQualifier(PsiJavaCodeReferenceElement ref, @NotNull PsiElement target) {
     PsiElement qualifier = ref.getQualifier();
     return target instanceof PsiModifierListOwner &&
-           ((PsiModifierListOwner)target).hasModifier(JvmModifier.STATIC) &&
+           ((PsiModifierListOwner)target).hasModifierProperty(PsiModifier.STATIC) &&
            qualifier instanceof PsiJavaCodeReferenceElement &&
            !(((PsiJavaCodeReferenceElement)qualifier).resolve() instanceof PsiClass);
   }

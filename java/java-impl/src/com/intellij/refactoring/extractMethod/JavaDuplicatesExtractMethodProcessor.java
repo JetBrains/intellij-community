@@ -50,10 +50,7 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
       VariableData fromData = from.myVariableDatum[i];
       PsiVariable mappedVariable = variablesMapping.get(fromData.variable);
       if (isReferenced(mappedVariable, fromData.variable)) {
-        VariableData newData = new VariableData(mappedVariable, fromData.type);
-        newData.name = fromData.name;
-        newData.originalName = fromData.originalName;
-        newData.passAsParameter = fromData.passAsParameter;
+        VariableData newData = fromData.substitute(mappedVariable);
         variableDatum.add(newData);
       }
     }

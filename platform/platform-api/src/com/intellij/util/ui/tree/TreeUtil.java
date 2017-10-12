@@ -324,7 +324,9 @@ public final class TreeUtil {
     }
   }
 
-  public static boolean traverse(@NotNull final TreeNode node, @NotNull final Traverse traverse) {
+  /** @deprecated use TreeUtil#treePathTraverser() */
+  @Deprecated
+  public static boolean traverse(@NotNull TreeNode node, @NotNull Traverse traverse) {
     final int childCount = node.getChildCount();
     for (int i = 0; i < childCount; i++){
       if (!traverse(node.getChildAt(i), traverse)) return false;
@@ -332,6 +334,8 @@ public final class TreeUtil {
     return traverse.accept(node);
   }
 
+  /** @deprecated use TreeUtil#treePathTraverser() */
+  @Deprecated
   public static boolean traverseDepth(@NotNull final TreeNode node, @NotNull final Traverse traverse) {
     if (!traverse.accept(node)) return false;
     final int childCount = node.getChildCount();
@@ -957,6 +961,8 @@ public final class TreeUtil {
     return paths != null && paths.length == 1 ? paths[0] : null;
   }
 
+  /** @deprecated use TreeUtil#treePathTraverser() */
+  @Deprecated
   @FunctionalInterface
   public interface Traverse{
     boolean accept(Object node);

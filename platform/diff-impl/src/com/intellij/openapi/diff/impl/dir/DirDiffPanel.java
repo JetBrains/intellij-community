@@ -640,12 +640,8 @@ public class DirDiffPanel implements Disposable, DataProvider {
     public MyFilterComponent() {
       super("dir.diff.filter", 15, false);
 
-      new DumbAwareAction() {
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          userTriggeredFilter();
-        }
-      }.registerCustomShortcutSet(CommonShortcuts.ENTER, this);
+      DumbAwareAction.create(e -> userTriggeredFilter())
+        .registerCustomShortcutSet(CommonShortcuts.ENTER, this);
     }
 
     @Override

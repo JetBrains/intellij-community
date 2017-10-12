@@ -166,7 +166,7 @@ public class ChooseActionsDialog extends DialogWrapper {
       public void actionPerformed(AnActionEvent e) {
         myFilterComponent.reset();
         myActionsTree.reset(myKeymap, myQuicklists);
-        myFilteringPanel.showPopup(searchToolbar);
+        myFilteringPanel.showPopup(searchToolbar, e.getInputEvent().getComponent());
       }
     });
     group.add(new AnAction(KeyMapBundle.message("filter.clear.action.text"),

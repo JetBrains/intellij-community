@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -27,6 +28,8 @@ import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicProgressBarUI;
 import java.awt.*;
 import java.awt.geom.*;
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 
 /**
  * @author Konstantin Bulenkov
@@ -54,6 +57,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
     private Area outerInnerBorderRoundRectArea = null;
     private Area outlineArea = null;
     private Path2D path = null;
+    private ArrayList<TexturePaint> pathPaintList = new ArrayList<>();
 
     private int barRectWidth = -1;
     private int barRectHeight = -1;
@@ -68,7 +72,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
                                         int barRectHeight,
                                         int w,
                                         int h,
-                                        double progressOffset) {
+                                        int frame) {
       final float newOff = JBUI.scale(1f);
       if (path == null || barRectWidth != this.barRectWidth ||
           barRectHeight != this.barRectHeight ||
@@ -77,8 +81,8 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
       {
         this.cHeight = c.getHeight();
         path = new Path2D.Double();
-        int x = 0;
-        while (x < Math.max(w, cHeight) + getPeriodLength()) {
+        int x = h / 2;
+        while (x < 2*getPeriodLength()) {
           float ww = getPeriodLength() / 2f;
           path.moveTo(x, 0);
           path.lineTo(x + ww, 0);
@@ -87,6 +91,22 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
           path.lineTo(x, 0);
           path.closePath();
           x += getPeriodLength();
+        }
+
+        BufferedImage pathTile = UIUtil.createImage(getPeriodLength(), barRectHeight, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D gpt = pathTile.createGraphics();
+        GraphicsUtil.setupAAPainting(g);
+        gpt.setColor(new JBColor(Gray._165, Gray._88));
+        gpt.fill(path);
+
+        pathPaintList.clear();
+        for (int i = 0; i < getFrameCount(); i++) {
+          double progressOffset = ((double)i*getPeriodLength())/getFrameCount();
+
+          TexturePaint pathPaint =
+            new TexturePaint(pathTile, new Rectangle2D.Double(
+              getPeriodLength() - progressOffset,0, getPeriodLength(), barRectHeight));
+          pathPaintList.add(pathPaint);
         }
 
         this.barRectWidth = barRectWidth;
@@ -110,11 +130,8 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
 
       g.translate(0, (c.getHeight() - h) / 2);
 
-      Area area = new Area(path);
-      area.transform(AffineTransform.getTranslateInstance(-progressOffset, 0));
-      area.intersect(containingRoundRect);
-      g.setColor(new JBColor(Gray._165, Gray._88));
-      g.fill(area);
+      g.setPaint(pathPaintList.get(frame));
+      g.fill(containingRoundRect);
 
       g.setColor(Gray._128);
       if (c.isOpaque()) {
@@ -148,7 +165,6 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
     if (barRectWidth <= 0 || barRectHeight <= 0) {
       return;
     }
-    double progressOffset = ((double)getAnimationIndex()*getPeriodLength())/getFrameCount();
     int w = c.getWidth();
     int h = c.getPreferredSize().height;
     if (!isEven(c.getHeight() - h)) h++;
@@ -159,7 +175,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
     }
     final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
 
-    indeterminateProgressCache.validateAndRender(g, c, barRectWidth, barRectHeight, w, h, progressOffset);
+    indeterminateProgressCache.validateAndRender(g, c, barRectWidth, barRectHeight, w, h, getAnimationIndex());
 
     // Deal with possible text painting
     if (progressBar.isStringPainted()) {

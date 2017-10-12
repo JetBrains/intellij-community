@@ -333,12 +333,12 @@ public class ImageLoader implements Serializable {
     if (w <= 0 || h <= 0) {
       return image;
     }
-    int width = (int)Math.ceil(scale * w);
-    int height = (int)Math.ceil(scale * h);
+    int width = (int)Math.round(scale * w);
+    int height = (int)Math.round(scale * h);
     // Using "QUALITY" instead of "ULTRA_QUALITY" results in images that are less blurry
     // because ultra quality performs a few more passes when scaling, which introduces blurriness
     // when the scaling factor is relatively small (i.e. <= 3.0f) -- which is the case here.
-    return Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.QUALITY, width, height);
+    return Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.QUALITY, Scalr.Mode.FIT_EXACT, width, height, null);
   }
 
   @Nullable

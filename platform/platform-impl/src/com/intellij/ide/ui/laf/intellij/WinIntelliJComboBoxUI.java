@@ -459,7 +459,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
   @Override
   public Insets getBorderInsets(Component c) {
     return c.getComponentOrientation().isLeftToRight() ?
-           JBUI.insets(2, 5, 2, 2).asUIResource() : JBUI.insets(2, 2, 2, 5).asUIResource();
+           JBUI.insets(2, 7, 2, 2).asUIResource() : JBUI.insets(2, 2, 2, 7).asUIResource();
   }
 
   protected Dimension  getSizeWithButton(Dimension d) {
@@ -467,7 +467,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     Insets i = getInsets();
     int width = ARROW_BUTTON_SIZE.width + i.left;
     int editorHeight = editor != null ? editor.getPreferredSize().height + i.top + i.bottom : 0;
-    return new Dimension(Math.max(d.width, width + JBUI.scale(10)),
+    return new Dimension(Math.max(d.width + JBUI.scale(5), width),
                          Math.max(editorHeight, Math.max(ARROW_BUTTON_SIZE.height, d.height)));
   }
 
@@ -586,10 +586,10 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       Component c = myRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      BorderLayoutPanel panel = JBUI.Panels.simplePanel(c).withBorder(JBUI.Borders.empty(0, 4, 0, 1));
+      BorderLayoutPanel panel = JBUI.Panels.simplePanel(c).withBorder(
+        list.getComponentOrientation().isLeftToRight() ? JBUI.Borders.empty(0, 5, 0, 1) : JBUI.Borders.empty(0, 1, 0, 5));
       panel.setBackground(c.getBackground());
       return panel;
     }
   }
-
 }

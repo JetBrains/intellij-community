@@ -1022,8 +1022,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
       if (shouldRebuildUI) {
         revalidate();
-      }
-      else {
+      } else {
         Container parent = getParent();
         if (parent != null) {
           parent.invalidate();
@@ -1337,7 +1336,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     } else {
       if (UIUtil.isUnderWin10LookAndFeel()) {
         setBorder(JBUI.Borders.empty(0));
-        setMinimumButtonSize(myDecorateButtons ? JBUI.size(30, 20) : JBUI.size(25, 22));
+        setMinimumButtonSize(myDecorateButtons ? JBUI.size(30, 22) : JBUI.size(25, 22));
       } else {
         setBorder(JBUI.Borders.empty(2));
         setMinimumButtonSize(myDecorateButtons ? JBUI.size(30, 20) : DEFAULT_MINIMUM_BUTTON_SIZE);

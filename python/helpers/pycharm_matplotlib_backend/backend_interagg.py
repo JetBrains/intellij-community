@@ -11,6 +11,7 @@ HOST = 'localhost'
 PORT = os.getenv("PYCHARM_MATPLOTLIB_PORT")
 PORT = int(PORT) if PORT is not None else None
 PORT = PORT if PORT != -1 else None
+index = int(os.getenv("PYCHARM_MATPLOTLIB_INDEX", 0))
 
 rcParams = matplotlib.rcParams
 verbose = matplotlib.verbose
@@ -33,6 +34,14 @@ show = Show()
 
 
 # from pyplot API
+def draw_if_interactive():
+    if matplotlib.is_interactive():
+        figManager = Gcf.get_active()
+        if figManager is not None:
+            figManager.canvas.show()
+
+
+# from pyplot API
 def new_figure_manager(num, *args, **kwargs):
     FigureClass = kwargs.pop('FigureClass', Figure)
     figure = FigureClass(*args, **kwargs)
@@ -43,8 +52,6 @@ def new_figure_manager(num, *args, **kwargs):
 def new_figure_manager_given_figure(num, figure):
     canvas = FigureCanvasInterAgg(figure)
     manager = FigureManagerInterAgg(canvas, num)
-    if matplotlib.is_interactive():
-        manager.show()
     return manager
 
 
@@ -63,23 +70,36 @@ class FigureCanvasInterAgg(FigureCanvasAgg):
         else:
             buffer = self.tostring_rgb()
 
-        render = self.get_renderer()
-        width, height = int(render.width), int(render.height) # pass to the socket
+        if len(set(buffer)) <= 1:
+            # do not plot empty
+            return
 
+        render = self.get_renderer()
+        width = int(render.width)
+
+        plot_index = index if os.getenv("PYCHARM_MATPLOTLIB_INTERACTIVE", False) else -1
         try:
             sock = socket.socket()
             sock.connect((HOST, PORT))
             sock.send(struct.pack('>i', width))
+            sock.send(struct.pack('>i', plot_index))
             sock.send(struct.pack('>i', len(buffer)))
             sock.send(buffer)
         except ConnectionRefusedError as _:
             # nothing bad. It just means, that our tool window doesn't run yet
             pass
 
+    def draw(self):
+        is_interactive = os.getenv("PYCHARM_MATPLOTLIB_INTERACTIVE", False)
+        if is_interactive and matplotlib.is_interactive():
+            self.show()
+
 
 class FigureManagerInterAgg(FigureManagerBase):
     def __init__(self, canvas, num):
         FigureManagerBase.__init__(self, canvas, num)
+        global index
+        index += 1
         self.canvas = canvas
         self._num = num
         self._shown = False

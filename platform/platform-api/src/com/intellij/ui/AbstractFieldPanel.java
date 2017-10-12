@@ -15,10 +15,9 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -199,12 +198,7 @@ public abstract class AbstractFieldPanel extends JPanel {
         }
       });
 
-      new AnAction() {
-        public void actionPerformed(AnActionEvent e) {
-          doOKAction();
-        }
-      }.registerCustomShortcutSet(CommonShortcuts.ENTER, myTextArea);
-
+      DumbAwareAction.create(e -> doOKAction()).registerCustomShortcutSet(CommonShortcuts.ENTER, myTextArea);
       return ScrollPaneFactory.createScrollPane(myTextArea);
     }
   }

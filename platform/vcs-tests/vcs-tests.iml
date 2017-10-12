@@ -16,5 +16,6 @@
     <orderEntry type="module" module-name="core-api" />
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="platform-api" />
+    <orderEntry type="module" module-name="diff-tests" scope="TEST" />
   </component>
 </module>

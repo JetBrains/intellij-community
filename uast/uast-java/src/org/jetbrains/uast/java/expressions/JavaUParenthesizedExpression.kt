@@ -21,8 +21,8 @@ import org.jetbrains.uast.UParenthesizedExpression
 
 class JavaUParenthesizedExpression(
         override val psi: PsiParenthesizedExpression,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UParenthesizedExpression {
+        givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UParenthesizedExpression {
     override val expression by lz { JavaConverter.convertOrEmpty(psi.expression, this) }
     override fun evaluate() = expression.evaluate()
 }

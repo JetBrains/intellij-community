@@ -86,10 +86,10 @@ public class IconUtil {
     int imageWidth = ImageUtil.getRealWidth(image);
     int imageHeight = ImageUtil.getRealHeight(image);
 
-    final int w = Math.min(imageWidth, maxWidth);
-    final int h = Math.min(imageHeight, maxHeight);
     maxWidth = maxWidth == Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)ceil(maxWidth * scale);
     maxHeight = maxHeight == Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)ceil(maxHeight * scale);
+    final int w = Math.min(imageWidth, maxWidth);
+    final int h = Math.min(imageHeight, maxHeight);
 
     final BufferedImage img = UIUtil.createImage(g, w, h, Transparency.TRANSLUCENT);
     final int offX = imageWidth > maxWidth ? (imageWidth - maxWidth) / 2 : 0;

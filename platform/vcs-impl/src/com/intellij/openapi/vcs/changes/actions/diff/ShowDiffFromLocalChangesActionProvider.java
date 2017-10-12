@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
+import com.intellij.openapi.vcs.changes.ui.ChangesComparator;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -72,6 +73,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
 
     List<Change> changes = view.getSelectedChanges().collect(toList());
     List<VirtualFile> unversioned = view.getSelectedUnversionedFiles().collect(toList());
+    boolean isFlatten = view.isShowFlatten();
 
     final boolean needsConversion = checkIfThereAreFakeRevisions(project, changes);
 
@@ -81,14 +83,14 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
       ChangeListManager.getInstance(project).invokeAfterUpdate(
         () -> {
           List<Change> actualChanges = loadFakeRevisions(project, changes);
-          showDiff(project, actualChanges, unversioned);
+          showDiff(project, actualChanges, unversioned, isFlatten);
         },
         InvokeAfterUpdateMode.BACKGROUND_CANCELLABLE,
         ActionsBundle.actionText(IdeActions.ACTION_SHOW_DIFF_COMMON),
         ModalityState.current());
     }
     else {
-      showDiff(project, changes, unversioned);
+      showDiff(project, changes, unversioned, isFlatten);
     }
   }
 
@@ -122,14 +124,16 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
 
   private static void showDiff(@NotNull Project project,
                                @NotNull List<Change> changes,
-                               @NotNull List<VirtualFile> unversioned) {
+                               @NotNull List<VirtualFile> unversioned,
+                               boolean isFlatten) {
     ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(project);
 
     if (changes.size() == 1 && unversioned.isEmpty()) { // show all changes from this changelist
       Change selectedChange = changes.get(0);
       ChangeList changeList = changeListManager.getChangeList(selectedChange);
       if (changeList != null) {
-        ArrayList<Change> changelistChanges = new ArrayList<>(changeList.getChanges());
+        List<Change> changelistChanges = new ArrayList<>(changeList.getChanges());
+        ContainerUtil.sort(changelistChanges, ChangesComparator.getInstance(isFlatten));
         showChangesDiff(project, ListSelection.create(changelistChanges, selectedChange));
         return;
       }
@@ -138,6 +142,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
     if (unversioned.size() == 1 && changes.isEmpty()) { // show all unversioned changes
       VirtualFile selectedFile = unversioned.get(0);
       List<VirtualFile> allUnversioned = changeListManager.getUnversionedFiles();
+      ContainerUtil.sort(allUnversioned, ChangesComparator.getVirtualFileComparator(isFlatten));
       showUnversionedDiff(project, ListSelection.create(allUnversioned, selectedFile));
       return;
     }

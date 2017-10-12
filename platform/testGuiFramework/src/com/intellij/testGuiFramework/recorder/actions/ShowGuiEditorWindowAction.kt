@@ -18,17 +18,16 @@ package com.intellij.testGuiFramework.recorder.actions
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.testGuiFramework.recorder.components.GuiRecorderComponent
-import com.intellij.testGuiFramework.recorder.ui.GuiScriptEditorFrame
 
 /**
  * @author Sergey Karashevich
  */
-class ShowGuiEditorWindowAction() : AnAction() {
+class ShowGuiEditorWindowAction : AnAction() {
 
   override fun actionPerformed(p0: AnActionEvent?) {
-    val frame = GuiRecorderComponent.getFrame()
-    if (frame == null) {
-      GuiScriptEditorFrame()
+    val frame = GuiRecorderComponent.frame
+    if (!frame.isShowing()) {
+      frame.show()
     }
     else {
       frame.toFront()

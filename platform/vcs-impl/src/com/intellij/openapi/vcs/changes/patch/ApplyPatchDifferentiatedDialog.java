@@ -48,10 +48,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeGoToChangePopupAction;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
 import com.intellij.openapi.vcs.changes.ui.*;
@@ -64,6 +61,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.VcsUser;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +78,9 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
+import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.containers.ContainerUtil.map;
 
 public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
@@ -388,6 +388,12 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         return;
       }
       myReader = loadPatches(file);
+      final PatchFileHeaderInfo patchFileInfo = myReader != null ? myReader.getPatchFileInfo() : null;
+      final String messageFromPatch = patchFileInfo != null ? patchFileInfo.getMessage() : null;
+      VcsUser author = patchFileInfo != null ? patchFileInfo.getAuthor() : null;
+      if (author != null) {
+        myChangeListChooser.setData(new ChangeListData(author));
+      }
       List<FilePatch> filePatches = myReader != null ? ContainerUtil.newArrayList(myReader.getAllPatches()) : Collections.emptyList();
       if (!ContainerUtil.isEmpty(myBinaryShelvedPatches)) {
         filePatches.addAll(myBinaryShelvedPatches);
@@ -397,7 +403,9 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
       ApplicationManager.getApplication().invokeLater(() -> {
         if (myShouldUpdateChangeListName) {
-          myChangeListChooser.setSuggestedName(file.getNameWithoutExtension().replace('_', ' ').trim());
+          myChangeListChooser.setSuggestedName(
+            chooseNotNull(getSubjectFromMessage(messageFromPatch), file.getNameWithoutExtension().replace('_', ' ').trim()),
+            messageFromPatch);
         }
         myPatches.clear();
         myPatches.addAll(matchedPatches);
@@ -406,6 +414,11 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         updateOkActions();
       }, ModalityState.stateForComponent(myCenterPanel));
     }
+  }
+
+  @Nullable
+  private String getSubjectFromMessage(@Nullable String message) {
+    return isEmptyOrSpaces(message) ? null : ChangeListUtil.createNameForChangeList(myProject, message);
   }
 
   @Nullable

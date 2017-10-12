@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Trinity
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance
@@ -478,18 +477,13 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
       settingsWrapper.add(settingsPanel, BorderLayout.WEST)
       settingsWrapper.add(Box.createGlue(), BorderLayout.CENTER)
 
-      if (Registry.`is`("ide.run.dashboard.types.configuration") || ApplicationManager.getApplication().isInternal) {
-        val wrapper = JPanel(BorderLayout())
-        wrapper.add(runDashboardTypesPanel, BorderLayout.CENTER)
-        runDashboardTypesPanel.addChangeListener(this::defaultsSettingsChanged)
-        runDashboardTypesPanel.border = JBUI.Borders.empty(0, 0, 20, 0)
-        wrapper.add(settingsWrapper, BorderLayout.SOUTH)
+      val wrapper = JPanel(BorderLayout())
+      wrapper.add(runDashboardTypesPanel, BorderLayout.CENTER)
+      runDashboardTypesPanel.addChangeListener(this::defaultsSettingsChanged)
+      runDashboardTypesPanel.border = JBUI.Borders.empty(0, 0, 20, 0)
+      wrapper.add(settingsWrapper, BorderLayout.SOUTH)
 
-        panel.add(wrapper, BorderLayout.SOUTH)
-      }
-      else {
-        panel.add(settingsWrapper, BorderLayout.SOUTH)
-      }
+      panel.add(wrapper, BorderLayout.SOUTH)
     }
     rightPanel.revalidate()
     rightPanel.repaint()

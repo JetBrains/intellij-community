@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.icons.AllIcons;
@@ -24,7 +10,10 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.AnnotationOrderRootType;
+import com.intellij.openapi.roots.JavadocOrderRootType;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -126,7 +115,7 @@ public class JavaSdkImpl extends JavaSdk {
     if (version == JavaSdkVersion.JDK_1_6) return "http://docs.oracle.com/javase/6/docs/api/";
     if (version == JavaSdkVersion.JDK_1_7) return "http://docs.oracle.com/javase/7/docs/api/";
     if (version == JavaSdkVersion.JDK_1_8) return "http://docs.oracle.com/javase/8/docs/api/";
-    if (version == JavaSdkVersion.JDK_1_9) return "http://download.java.net/java/jdk9/docs/api/";
+    if (version == JavaSdkVersion.JDK_1_9) return "http://docs.oracle.com/javase/9/docs/api/";
     return null;
   }
 
@@ -256,6 +245,20 @@ public class JavaSdkImpl extends JavaSdk {
       }
     }
     return versionString;
+  }
+
+  @Override
+  public boolean setupSdkPaths(@NotNull Sdk sdk, @NotNull SdkModel sdkModel) {
+    setupSdkPaths(sdk);
+
+    if (sdk.getSdkModificator().getRoots(OrderRootType.CLASSES).length == 0) {
+      String title = ProjectBundle.message("sdk.cannot.create");
+      String message = ProjectBundle.message("sdk.java.no.classes", sdk.getHomePath());
+      Messages.showMessageDialog(message, title, Messages.getErrorIcon());
+      return false;
+    }
+
+    return true;
   }
 
   @Override
@@ -416,7 +419,13 @@ public class JavaSdkImpl extends JavaSdk {
     List<VirtualFile> result = ContainerUtil.newArrayList();
     VirtualFileManager fileManager = VirtualFileManager.getInstance();
 
-    if (JdkUtil.isModularRuntime(file)) {
+    if (JdkUtil.isExplodedModularRuntime(file.getPath())) {
+      VirtualFile exploded = fileManager.findFileByUrl(StandardFileSystems.FILE_PROTOCOL_PREFIX + getPath(new File(file, "modules")));
+      if (exploded != null) {
+        ContainerUtil.addAll(result, exploded.getChildren());
+      }
+    }
+    else if (JdkUtil.isModularRuntime(file)) {
       VirtualFile jrt = fileManager.findFileByUrl(JrtFileSystem.PROTOCOL_PREFIX + getPath(file) + JrtFileSystem.SEPARATOR);
       if (jrt != null) {
         ContainerUtil.addAll(result, jrt.getChildren());

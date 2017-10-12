@@ -74,6 +74,8 @@ public class HidpiInfo extends AnAction implements DumbAware {
         };
       }
     };
+
+    popup.getList().setBackground(UIManager.getColor("Panel.background"));
     popup.getList().setSelectionModel(new DefaultListSelectionModel() {
       @Override
       public boolean isSelectedIndex(int i) {

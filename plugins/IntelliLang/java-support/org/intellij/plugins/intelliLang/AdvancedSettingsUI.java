@@ -19,7 +19,6 @@ package org.intellij.plugins.intelliLang;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -27,11 +26,9 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
-import com.intellij.util.Function;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -81,6 +78,7 @@ public class AdvancedSettingsUI implements SearchableConfigurable {
     return "Advanced";
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.settings.injection.advanced";
   }

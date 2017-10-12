@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
@@ -335,6 +321,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private final EditorKind myKind;
 
+  private boolean myScrollingToCaret;
+
   EditorImpl(@NotNull Document document, boolean viewer, @Nullable Project project, @NotNull EditorKind kind) {
     assertIsDispatchThread();
     myProject = project;
@@ -562,6 +550,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     if (SystemInfo.isJavaVersionAtLeast("1.8") && SystemInfo.isMacIntel64 && SystemInfo.isJetBrainsJvm && Registry.is("ide.mac.forceTouch")) {
       new MacGestureSupportForEditor(getComponent());
+    }
+    
+    myScrollingModel.addVisibleAreaListener(this::moveCaretIntoViewIfCoveredByToolWindowBelow);
+  }
+
+  private void moveCaretIntoViewIfCoveredByToolWindowBelow(VisibleAreaEvent e) {
+    Rectangle oldRectangle = e.getOldRectangle();
+    Rectangle newRectangle = e.getNewRectangle();
+    if (!myScrollingToCaret && oldRectangle != null && oldRectangle.height != newRectangle.height && oldRectangle.y == newRectangle.y) {
+      int caretY = myView.visualLineToY(myCaretModel.getVisualPosition().line);
+      if (caretY < oldRectangle.getMaxY() && caretY > newRectangle.getMaxY()) {
+        myScrollingToCaret = true;
+        ApplicationManager.getApplication().invokeLater(() -> {
+          myScrollingToCaret = false;
+          if (!isReleased) EditorUtil.runWithAnimationDisabled(this, () -> myScrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE));
+        }, ModalityState.any());
+      }
     }
   }
 
@@ -2828,7 +2833,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     private MyScrollBar(@JdkConstants.AdjustableOrientation int orientation) {
       super(orientation);
-      setPersistentUI(createEditorScrollbarUI(EditorImpl.this));
     }
 
     void setPersistentUI(ScrollBarUI ui) {
@@ -2914,28 +2918,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (myPersistentUI instanceof ButtonlessScrollBarUI) {
         ((ButtonlessScrollBarUI)myPersistentUI).registerRepaintCallback(callback);
       }
-    }
-  }
-
-  static BasicScrollBarUI createEditorScrollbarUI(@NotNull EditorImpl editor) {
-    return new EditorScrollBarUI(editor);
-  }
-
-  private static class EditorScrollBarUI extends ButtonlessScrollBarUI.Transparent {
-    @NotNull private final EditorImpl myEditor;
-
-    EditorScrollBarUI(@NotNull EditorImpl editor) {
-      myEditor = editor;
-    }
-
-    @Override
-    protected boolean isDark() {
-      return myEditor.isDarkEnough();
-    }
-
-    @Override
-    protected Color adjustColor(Color c) {
-      return isMacOverlayScrollbar() ? super.adjustColor(c) : adjustThumbColor(super.adjustColor(c), isDark());
     }
   }
 
@@ -3089,13 +3071,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull
   MyScrollBar getVerticalScrollBar() {
     return myVerticalScrollBar;
-  }
-
-  void setHorizontalScrollBarPersistentUI(ScrollBarUI ui) {
-    JScrollBar bar = myScrollPane.getHorizontalScrollBar();
-    if (bar instanceof MyScrollBar) {
-      ((MyScrollBar)bar).setPersistentUI(ui);
-    }
   }
 
   @MouseSelectionState

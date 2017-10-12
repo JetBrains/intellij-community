@@ -15,7 +15,6 @@
  */
 package org.jetbrains.uast.java
 
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethodReferenceExpression
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiType
@@ -24,8 +23,8 @@ import org.jetbrains.uast.UElement
 
 class JavaUCallableReferenceExpression(
         override val psi: PsiMethodReferenceExpression,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UCallableReferenceExpression {
+        givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UCallableReferenceExpression {
     override val qualifierExpression by lz { JavaConverter.convertOrNull(psi.qualifierExpression, this) }
     
     override val qualifierType: PsiType?

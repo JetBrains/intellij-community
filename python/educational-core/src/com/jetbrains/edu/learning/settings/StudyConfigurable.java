@@ -59,6 +59,7 @@ public class StudyConfigurable extends CompositeConfigurable<StudyOptionsProvide
     return myMainPanel;
   }
 
+  @NotNull
   @Override
   protected List<StudyOptionsProvider> createConfigurables() {
     return ConfigurableWrapper.createConfigurables(StudyOptionsProviderEP.EP_NAME);

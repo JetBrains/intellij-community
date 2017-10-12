@@ -22,6 +22,7 @@ import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
@@ -105,13 +106,8 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
         });
       }
     });
-
-    new AnAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        field.requestFocusInWindow();
-      }
-    }.registerCustomShortcutSet(CommonShortcuts.getFind(), root, this);
+    DumbAwareAction.create(e -> field.requestFocusInWindow())
+      .registerCustomShortcutSet(CommonShortcuts.getFind(), root, this);
 
     return field;
   }

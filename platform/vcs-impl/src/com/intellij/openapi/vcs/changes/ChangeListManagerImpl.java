@@ -880,7 +880,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @NotNull
   @Override
-  public LocalChangeList addChangeList(@NotNull final String name, @Nullable final String comment, @Nullable final Object data) {
+  public LocalChangeList addChangeList(@NotNull final String name, @Nullable final String comment, @Nullable final ChangeListData data) {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         final LocalChangeList changeList = myModifier.addChangeList(name, comment, data);
@@ -1044,7 +1044,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  public void moveChangesTo(final LocalChangeList list, final Change... changes) {
+  public void moveChangesTo(@NotNull final LocalChangeList list, @NotNull final Change... changes) {
     ApplicationManager.getApplication().runReadAction(() -> {
       synchronized (myDataLock) {
         myModifier.moveChangesTo(list.getName(), changes);
@@ -1054,7 +1054,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  public void addUnversionedFiles(final LocalChangeList list, @NotNull final List<VirtualFile> files) {
+  public void addUnversionedFiles(@NotNull final LocalChangeList list, @NotNull final List<VirtualFile> files) {
     addUnversionedFiles(list, files, getDefaultUnversionedFileCondition(), null);
   }
 
@@ -1062,7 +1062,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   // (which should introduce something like VcsAddRemoveEnvironment)
   @Deprecated
   @NotNull
-  public List<VcsException> addUnversionedFiles(final LocalChangeList list,
+  public List<VcsException> addUnversionedFiles(@NotNull final LocalChangeList list,
                                                 @NotNull final List<VirtualFile> files,
                                                 @NotNull final Condition<FileStatus> statusChecker,
                                                 @Nullable Consumer<List<Change>> changesConsumer) {

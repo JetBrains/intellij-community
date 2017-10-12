@@ -45,13 +45,13 @@ object ScriptGenerator {
     val actionId = event.actionManager.getId(action)
     if (actionId != null) {
       if (ignore(actionId)) return
-      addToScript(Templates.invokeActionComment(actionId))
+      addToScript("""//invokeAction("$actionId")""")
     }
 
     val keyStroke = getKeyStrokeForEvent(keyEvent)
     val keyStrokeStr = KeyStrokeAdapter.toString(keyStroke)
     if (ignore(keyStrokeStr)) return
-    addToScript(Templates.shortcut(keyStrokeStr))
+    addToScript("""shortcut("$keyStrokeStr")""")
   }
 
   fun clickComponent(component: Component, convertedPoint: Point, mouseEvent: MouseEvent) {
@@ -74,7 +74,7 @@ object ScriptGenerator {
       addToScript("//invokeAction(\"$actionId\")")
       return
     }
-    addToScript(Templates.invokeMainMenuAction(actionId))
+    addToScript("""invokeMainMenu("$actionId")""")
   }
 
   fun addToScript(code: String) {
@@ -104,7 +104,7 @@ private object Typer {
 
   fun flushBuffer() {
     if (strBuffer.isEmpty()) return
-    Writer.writeWithIndent(Templates.typeText(strBuffer.toString()))
+    Writer.writeWithIndent("""typeText("${strBuffer}")""")
     strBuffer.setLength(0)
   }
 }

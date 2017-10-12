@@ -29,7 +29,7 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
   public abstract Collection<LocalChangeList> getInvolvedListsFilterChanges(@NotNull Collection<Change> changes, @NotNull List<Change> validChanges);
 
   @NotNull
-  public abstract LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable Object data);
+  public abstract LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable ChangeListData data);
 
   /**
    * Blocks modal dialogs that we don't want to popup during some process, for example, above the commit dialog.

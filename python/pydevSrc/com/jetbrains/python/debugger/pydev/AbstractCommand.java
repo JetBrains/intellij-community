@@ -57,6 +57,7 @@ public abstract class AbstractCommand<T> {
 
   public static final int PROCESS_CREATED = 149;
   public static final int SHOW_CYTHON_WARNING = 150;
+  public static final int LOAD_FULL_VALUE = 151;
 
   public static final int ERROR = 901;
 
@@ -188,7 +189,7 @@ public abstract class AbstractCommand<T> {
   }
 
 
-  protected void processResponse(final ProtocolFrame response) throws PyDebuggerException {
+  protected void processResponse(@NotNull final ProtocolFrame response) throws PyDebuggerException {
     if (response.getCommand() >= 900 && response.getCommand() < 1000) {
       throw new PyDebuggerException(response.getPayload());
     }

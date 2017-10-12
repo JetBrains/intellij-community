@@ -21,10 +21,12 @@ import org.jetbrains.uast.*
 
 class JavaUCompositeQualifiedExpression(
     override val psi: PsiElement,
-    override val uastParent: UElement?
-) : JavaAbstractUExpression(), UQualifiedReferenceExpression {
-    override lateinit var receiver: UExpression
-        internal set
+    givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UQualifiedReferenceExpression {
+
+    lateinit internal var receiverInitializer: () -> UExpression
+
+    override val receiver: UExpression by lazy { receiverInitializer() }
 
     override lateinit var selector: UExpression
         internal set

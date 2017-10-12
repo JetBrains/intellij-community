@@ -22,6 +22,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
-public class CompositePrintable implements Printable, Disposable {
+public class CompositePrintable extends UserDataHolderBase implements Printable, Disposable {
   public static final String NEW_LINE = "\n";
 
   protected final List<Printable> myNestedPrintables = new ArrayList<>();

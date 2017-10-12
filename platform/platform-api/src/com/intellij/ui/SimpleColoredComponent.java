@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.paint.EffectPainter;
+import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -118,9 +119,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     myFragments = new ArrayList<>(3);
     myLayouts = new ArrayList<>(3);
     myAttributes = new ArrayList<>(3);
-    myIpad = new JBInsets(1, 2, 1, 2);
+    myIpad = JBUI.insets(1, 2);
     myIconTextGap = JBUI.scale(2);
-    myBorder = new MyBorder();
+    myBorder = JBUI.Borders.empty(1, UIUtil.isUnderWin10LookAndFeel() ? 0 : 1);
     myFragmentPadding = new TIntIntHashMap(10);
     myFragmentAlignment = new TIntIntHashMap(10);
     setOpaque(true);
@@ -1001,37 +1002,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   protected void setBorderInsets(Insets insets) {
-    if (myBorder instanceof MyBorder) {
-      ((MyBorder)myBorder).setInsets(insets);
-    }
-
+    myBorder = new JBEmptyBorder(insets);
     revalidateAndRepaint();
-  }
-
-  private static final class MyBorder implements Border {
-    private Insets myInsets;
-
-    public MyBorder() {
-      myInsets = JBUI.insets(1);
-    }
-
-    public void setInsets(final Insets insets) {
-      myInsets = insets;
-    }
-
-    @Override
-    public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
-    }
-
-    @Override
-    public Insets getBorderInsets(final Component c) {
-      return (Insets)myInsets.clone();
-    }
-
-    @Override
-    public boolean isBorderOpaque() {
-      return false;
-    }
   }
 
   @NotNull

@@ -50,6 +50,7 @@ public class GitUpdateConfigurable implements Configurable {
   /**
    * {@inheritDoc}
    */
+  @Override
   public String getHelpTopic() {
     return "reference.VersionControl.Git.UpdateProject";
   }

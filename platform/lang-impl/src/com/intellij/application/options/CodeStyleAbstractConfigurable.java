@@ -61,7 +61,13 @@ public abstract class CodeStyleAbstractConfigurable implements CodeStyleConfigur
   @Override
   public void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException {
     if (myPanel != null) {
-      myPanel.apply(settings);
+      try {
+        myPanel.apply(settings);
+      }
+      catch (ConfigurationException ce) {
+        ce.setOriginator(this);
+        throw ce;
+      }
     }
   }
 

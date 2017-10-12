@@ -384,7 +384,7 @@ public class PyStringFormatInspection extends PyInspection {
               }
             }
             final LanguageLevel languageLevel = LanguageLevel.forElement(formatExpression);
-            if (PERCENT_FORMAT_CONVERSIONS.containsKey(conversionType) && !(!languageLevel.isPy3K() && conversionType == 'a')) {
+            if (PERCENT_FORMAT_CONVERSIONS.containsKey(conversionType) && !(languageLevel.isPython2() && conversionType == 'a')) {
               myFormatSpec.put(mappingKey, PERCENT_FORMAT_CONVERSIONS.get(conversionType));
               continue;
             }

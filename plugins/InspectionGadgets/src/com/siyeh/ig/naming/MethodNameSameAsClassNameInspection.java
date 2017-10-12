@@ -17,30 +17,35 @@ package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiTypeElement;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.*;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MethodNameSameAsClassNameInspection extends MethodNameSameAsClassNameInspectionBase {
+  private static final String[] MODIFIERS_NOT_ALLOWED_ON_CONSTRUCTORS = {
+    // JLS 8.8.3
+    PsiModifier.ABSTRACT, PsiModifier.STATIC, PsiModifier.FINAL, PsiModifier.NATIVE, PsiModifier.STRICTFP, PsiModifier.SYNCHRONIZED
+  };
 
   @Override
   @NotNull
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
     final Boolean onTheFly = (Boolean)infos[0];
-    if (onTheFly.booleanValue()) {
-      return new InspectionGadgetsFix[]{
-        new RenameFix(), new MethodNameSameAsClassNameFix()};
+    final Boolean canBeConvertedToConstructor = (Boolean)infos[1];
+    List<InspectionGadgetsFix> fixes = new ArrayList<>();
+    if (onTheFly) {
+      fixes.add(new RenameFix());
     }
-    else {
-      return new InspectionGadgetsFix[]{
-        new MethodNameSameAsClassNameFix()
-      };
+    if (canBeConvertedToConstructor) {
+      fixes.add(new MethodNameSameAsClassNameFix());
     }
+    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
   }
 
   private static class MethodNameSameAsClassNameFix
@@ -53,18 +58,15 @@ public class MethodNameSameAsClassNameInspection extends MethodNameSameAsClassNa
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiMethod)) {
-        return;
-      }
-      final PsiMethod method = (PsiMethod)parent;
-      final PsiTypeElement returnTypeElement =
-        method.getReturnTypeElement();
-      if (returnTypeElement == null) {
-        return;
+      final PsiMethod method = ObjectUtils.tryCast(element.getParent(), PsiMethod.class);
+      if (method == null) return;
+      final PsiTypeElement returnTypeElement = method.getReturnTypeElement();
+      if (returnTypeElement == null) return;
+      PsiModifierList modifiers = method.getModifierList();
+      for (String modifier : MODIFIERS_NOT_ALLOWED_ON_CONSTRUCTORS) {
+        modifiers.setModifierProperty(modifier, false);
       }
       returnTypeElement.delete();
     }

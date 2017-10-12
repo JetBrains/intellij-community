@@ -49,6 +49,7 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
   private boolean myUseDynamicParameters;
   private boolean myUseClasspathJar;
   private boolean myArgFile;
+  private boolean myClasspathFile = true;
   private String myJarPath;
 
   @Nullable
@@ -102,11 +103,11 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
   }
 
   public void setUseDynamicClasspath(boolean useDynamicClasspath) {
-    myUseDynamicClasspath = useDynamicClasspath;
+    myUseDynamicClasspath = useDynamicClasspath && (myArgFile || myUseClasspathJar || myClasspathFile);
   }
 
   public void setUseDynamicClasspath(@Nullable Project project) {
-    myUseDynamicClasspath = JdkUtil.useDynamicClasspath(project);
+    setUseDynamicClasspath(JdkUtil.useDynamicClasspath(project));
   }
 
   public boolean isDynamicVMOptions() {
@@ -142,6 +143,14 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
     myArgFile = argFile;
   }
 
+  public boolean isClasspathFile() {
+    return myClasspathFile;
+  }
+
+  public void setClasspathFile(boolean classpathFile) {
+    myClasspathFile = classpathFile;
+  }
+
   /**
    * Allows to use a specially crafted .jar file instead of a custom class loader to pass classpath/properties/parameters.
    * Would have no effect if user explicitly disabled idea.dynamic.classpath.jar
@@ -157,6 +166,7 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
     }
     myUseDynamicClasspath = mode != ShortenCommandLine.NONE;
     myUseClasspathJar = mode == ShortenCommandLine.MANIFEST;
+    setClasspathFile(mode == ShortenCommandLine.CLASSPATH_FILE);
     setArgFile(mode == ShortenCommandLine.ARGS_FILE);
   }
 

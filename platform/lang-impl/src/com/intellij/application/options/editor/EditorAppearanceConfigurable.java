@@ -236,6 +236,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     super.disposeUIResources();
   }
 
+  @NotNull
   @Override
   protected List<UnnamedConfigurable> createConfigurables() {
     return ConfigurableWrapper.createConfigurables(EP_NAME);

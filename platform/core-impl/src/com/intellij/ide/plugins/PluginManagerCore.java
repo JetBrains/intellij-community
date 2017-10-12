@@ -462,7 +462,7 @@ public class PluginManagerCore {
     PluginId pluginId = pluginDescriptor.getPluginId();
     File pluginRoot = pluginDescriptor.getPath();
 
-    if (isUnitTestMode() && isRunningFromSources()) return null;
+    if (isUnitTestMode()) return null;
 
     try {
       final List<URL> urls = new ArrayList<>(classPath.length);
@@ -520,7 +520,7 @@ public class PluginManagerCore {
 
   @NotNull
   private static ClassLoader[] getParentLoaders(@NotNull Map<PluginId, ? extends IdeaPluginDescriptor> idToDescriptorMap, @NotNull PluginId[] pluginIds) {
-    if (isUnitTestMode() && isRunningFromSources()) return new ClassLoader[0];
+    if (isUnitTestMode()) return new ClassLoader[0];
 
     LinkedHashSet<ClassLoader> loaders = new LinkedHashSet<>(pluginIds.length);
     for (final PluginId id : pluginIds) {
@@ -1096,9 +1096,13 @@ public class PluginManagerCore {
 
     int pluginsCount = countPlugins(PathManager.getPluginsPath()) + countPlugins(PathManager.getPreInstalledPluginsPath());
     loadDescriptors(new File(PathManager.getPluginsPath()), result, progress, pluginsCount);
-    int descriptorsCount = result.size();
-    loadDescriptors(new File(PathManager.getPreInstalledPluginsPath()), result, progress, pluginsCount);
-    boolean fromSources = descriptorsCount == result.size();
+    Application application = ApplicationManager.getApplication();
+    boolean fromSources = false;
+    if (application == null || !application.isUnitTestMode()) {
+      int size = result.size();
+      loadDescriptors(new File(PathManager.getPreInstalledPluginsPath()), result, progress, pluginsCount);
+      fromSources = size == result.size();
+    }
 
     loadDescriptorsFromProperty(result);
 
@@ -1245,12 +1249,12 @@ public class PluginManagerCore {
                                        @Nullable String descriptorName,
                                        @Nullable String descriptorDebugString) {
     JBIterable<String> messages = JBIterable.empty();
-    BuildNumber sinceBuildNumber = StringUtil.isEmpty(sinceBuild) ? null : BuildNumber.fromString(sinceBuild, descriptorName);
+    BuildNumber sinceBuildNumber = StringUtil.isEmpty(sinceBuild) ? null : BuildNumber.fromString(sinceBuild, descriptorName, null);
     if (sinceBuildNumber != null && sinceBuildNumber.compareTo(buildNumber) > 0) {
       messages = messages.append("since build " + sinceBuildNumber + " > " + buildNumber);
     }
 
-    BuildNumber untilBuildNumber = StringUtil.isEmpty(untilBuild) ? null : BuildNumber.fromString(untilBuild, descriptorName);
+    BuildNumber untilBuildNumber = StringUtil.isEmpty(untilBuild) ? null : BuildNumber.fromString(untilBuild, descriptorName, null);
     if (untilBuildNumber != null && untilBuildNumber.compareTo(buildNumber) < 0) {
       messages = messages.append("until build " + untilBuildNumber + " < " + buildNumber);
     }

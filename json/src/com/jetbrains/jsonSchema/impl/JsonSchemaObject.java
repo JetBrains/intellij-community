@@ -25,7 +25,6 @@ public class JsonSchemaObject {
   @NonNls public static final String DEFINITIONS = "definitions";
   @NonNls public static final String PROPERTIES = "properties";
   @NotNull private final JsonObject myJsonObject;
-  @Nullable private JsonObject myDefinitions;
   private Map<String, JsonSchemaObject> myDefinitionsMap;
   private Map<String, JsonSchemaObject> myProperties;
 
@@ -167,15 +166,6 @@ public class JsonSchemaObject {
   @NotNull
   public JsonObject getJsonObject() {
     return myJsonObject;
-  }
-
-  @Nullable
-  public JsonObject getDefinitions() {
-    return myDefinitions;
-  }
-
-  public void setDefinitions(@Nullable JsonObject definitions) {
-    myDefinitions = definitions;
   }
 
   public Map<String, JsonSchemaObject> getDefinitionsMap() {
@@ -488,10 +478,6 @@ public class JsonSchemaObject {
     myTitle = title;
   }
 
-  public boolean hasSpecifiedType() {
-    return myType != null || (myTypeVariants != null && !myTypeVariants.isEmpty());
-  }
-
   @Nullable
   public JsonSchemaObject getMatchingPatternPropertySchema(@NotNull String name) {
     if (myPatternProperties == null) return null;
@@ -515,7 +501,7 @@ public class JsonSchemaObject {
         final JsonSchemaObject object = myPatternProperties.getSchemaForPattern(entry.getKey());
         assert object != null;
         return Pair.create(object.getJsonObject(), entry.getValue());
-      }).filter(o -> o != null).collect(Collectors.toMap(o -> o.getFirst(), o -> o.getSecond()));
+      }).collect(Collectors.toMap(o -> o.getFirst(), o -> o.getSecond()));
     }
     return null;
   }

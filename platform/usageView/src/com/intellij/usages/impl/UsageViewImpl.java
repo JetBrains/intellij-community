@@ -118,7 +118,7 @@ public class UsageViewImpl implements UsageView {
   private final ExclusionHandler<DefaultMutableTreeNode> myExclusionHandler;
   private final Map<Usage, UsageNode> myUsageNodes = new ConcurrentHashMap<>();
   public static final UsageNode NULL_NODE = new UsageNode(null, NullUsage.INSTANCE);
-  private final ButtonPanel myButtonPanel = new ButtonPanel();
+  private final ButtonPanel myButtonPanel;
   private final JComponent myAdditionalComponent = new JPanel(new BorderLayout());
   private volatile boolean isDisposed;
   private volatile boolean myChangesDetected;
@@ -180,6 +180,8 @@ public class UsageViewImpl implements UsageView {
     myTargets = targets;
     myUsageSearcherFactory = usageSearcherFactory;
     myProject = project;
+
+    myButtonPanel = new ButtonPanel();
 
     myModel = new UsageViewTreeModelBuilder(myPresentation, targets);
     myRoot = (GroupNode)myModel.getRoot();
@@ -1319,10 +1321,20 @@ public class UsageViewImpl implements UsageView {
   }
 
   @Override
-  public void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull String text) {
+  public void addButtonToLowerPane(@NotNull Action action) {
     int index = myButtonPanel.getComponentCount();
     if (!SystemInfo.isMac && index > 0 && myPresentation.isShowCancelButton()) index--;
-    myButtonPanel.addButtonRunnable(index, runnable, text);
+    myButtonPanel.addButtonAction(index, action);
+  }
+
+  @Override
+  public void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull String text) {
+    addButtonToLowerPane(new AbstractAction(UIUtil.replaceMnemonicAmpersand(text)) {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        runnable.run();
+      }
+    });
   }
 
   @Override
@@ -1747,13 +1759,6 @@ public class UsageViewImpl implements UsageView {
   private final class ButtonPanel extends JPanel {
     private ButtonPanel() {
       setLayout(new FlowLayout(FlowLayout.LEFT, 8, 0));
-    }
-
-    private void addButtonRunnable(int index, final Runnable runnable, String text) {
-      if (getBorder() == null) setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
-
-      final JButton button = new JButton(UIUtil.replaceMnemonicAmpersand(text));
-      DialogUtil.registerMnemonic(button);
       getProject().getMessageBus().connect(UsageViewImpl.this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
         @Override
         public void enteredDumbMode() {
@@ -1765,12 +1770,16 @@ public class UsageViewImpl implements UsageView {
           update();
         }
       });
+    }
 
-      button.setFocusable(false);
-      button.addActionListener(e -> runnable.run());
-
+    private void addButtonAction(int index, @NotNull Action action) {
+      JButton button = new JButton(action);
       add(button, index);
+      button.setFocusable(false);
+      DialogUtil.registerMnemonic(button);
 
+      if (getBorder() == null) setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
+      update();
       invalidate();
       if (getParent() != null) {
         getParent().validate();
@@ -1782,7 +1791,16 @@ public class UsageViewImpl implements UsageView {
         Component component = getComponent(i);
         if (component instanceof JButton) {
           final JButton button = (JButton)component;
-          button.setEnabled(!isSearchInProgress() && !DumbService.isDumb(myProject));
+          boolean enabled = !isSearchInProgress() && !DumbService.isDumb(myProject);
+          Action action = button.getAction();
+          if (action != null) {
+            enabled &= action.isEnabled();
+            Object name = action.getValue(Action.NAME);
+            if (name instanceof String) {
+              DialogUtil.setTextWithMnemonic(button, (String)name);
+            }
+          }
+          button.setEnabled(enabled);
         }
       }
     }

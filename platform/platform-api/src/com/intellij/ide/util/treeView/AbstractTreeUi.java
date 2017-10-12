@@ -2804,11 +2804,6 @@ public class AbstractTreeUi {
       }
     }
 
-    if (parent == getRootNode() && !myTree.isRootVisible() && parent.getChildCount() == 0) {
-      insertLoadingNode(parent, false);
-      reallyRemoved = false;
-    }
-
     maybeReady();
     if (reallyRemoved) {
       nodeStructureChanged(parent);
