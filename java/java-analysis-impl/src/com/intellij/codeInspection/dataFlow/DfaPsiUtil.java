@@ -138,13 +138,28 @@ public class DfaPsiUtil {
       return getFunctionalParameterNullability((PsiLambdaExpression)parent.getParent(), ((PsiParameterList)parent).getParameterIndex(parameter));
     }
     if (parent instanceof PsiForeachStatement) {
-      PsiExpression iteratedValue = ((PsiForeachStatement)parent).getIteratedValue();
-      if (iteratedValue != null) {
-        return getTypeNullability(JavaGenericsUtil.getCollectionItemType(iteratedValue));
-      }
+      return getTypeNullability(inferLoopParameterTypeWithNullability((PsiForeachStatement)parent));
     }
     return Nullness.UNKNOWN;
   }
+
+  @Nullable
+  private static PsiType inferLoopParameterTypeWithNullability(PsiForeachStatement loop) {
+    PsiExpression iteratedValue = PsiUtil.skipParenthesizedExprDown(loop.getIteratedValue());
+    if (iteratedValue == null) return null;
+
+    PsiType iteratedType = iteratedValue.getType();
+    if (iteratedValue instanceof PsiReferenceExpression) {
+      PsiElement target = ((PsiReferenceExpression)iteratedValue).resolve();
+      if (target instanceof PsiParameter &&
+          target.getParent() instanceof PsiForeachStatement &&
+          PsiTreeUtil.isAncestor(target.getParent(), loop, true)) {
+        iteratedType = inferLoopParameterTypeWithNullability((PsiForeachStatement)target.getParent());
+      }
+    }
+    return JavaGenericsUtil.getCollectionItemType(iteratedType, iteratedValue.getResolveScope());
+  }
+
 
   @NotNull
   public static Nullness getTypeNullability(@Nullable PsiType type) {
