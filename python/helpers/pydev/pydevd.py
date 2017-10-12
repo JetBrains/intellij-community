@@ -1070,7 +1070,10 @@ class PyDB:
             import runpy
             if hasattr(runpy, '_run_module_as_main'):
                 # Newer versions of Python actually use this when the -m switch is used.
-                runpy._run_module_as_main(module_name, alter_argv=False)
+                if sys.version_info[:2] <= (2, 6):
+                    runpy._run_module_as_main(module_name, set_argv0=False)
+                else:
+                    runpy._run_module_as_main(module_name, alter_argv=False)
             else:
                 runpy.run_module(module_name)
         return globals
