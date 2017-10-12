@@ -3,11 +3,13 @@ Entry point module (keep at root):
 
 This module starts the debugger.
 '''
-from __future__ import nested_scopes  # Jython 2.1 support
+import sys
+
+if sys.version_info[:2] < (2, 6):
+    raise RuntimeError('The PyDev.Debugger requires Python 2.6 onwards to be run. If you need to use an older Python version, use an older version of the debugger.')
 
 import atexit
 import os
-import sys
 import traceback
 
 from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PY3K, IS_PY34_OR_GREATER, IS_PYCHARM, get_thread_id, \
@@ -43,7 +45,7 @@ from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogge
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads
 
 
-__version_info__ = (1, 0, 0)
+__version_info__ = (1, 1, 0)
 __version_info_str__ = []
 for v in __version_info__:
     __version_info_str__.append(str(v))
