@@ -158,6 +158,23 @@ def main():
             return not nose.run(argv=argv, addplugins=[PYDEV_NOSE_PLUGIN_SINGLETON])
 
         elif test_framework == PY_TEST_FRAMEWORK:
+
+            if '--coverage_output_dir' in pydev_params and '--coverage_include' in pydev_params:
+                coverage_output_dir = pydev_params[pydev_params.index('--coverage_output_dir') + 1]
+                coverage_include = pydev_params[pydev_params.index('--coverage_include') + 1]
+                try:
+                    import pytest_cov
+                except ImportError:
+                    sys.stderr.write('To do a coverage run with pytest the pytest-cov library is needed (i.e.: pip install pytest-cov).\n\n')
+                    raise
+
+                argv.insert(0, '--cov-append')
+                argv.insert(1, '--cov-report=')
+                argv.insert(2, '--cov=%s' % (coverage_include,))
+
+                import time
+                os.environ['COVERAGE_FILE'] = os.path.join(coverage_output_dir, '.coverage.%s' % (time.time(),))
+
             if DEBUG:
                 sys.stdout.write('Final test framework args: %s\n' % (argv,))
                 sys.stdout.write('py_test_accept_filter: %s\n' % (py_test_accept_filter,))
