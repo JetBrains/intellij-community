@@ -67,7 +67,20 @@ except:
 #defined as a list of tuples where the 1st element of the tuple is the path in the client machine
 #and the 2nd element is the path in the server machine.
 #see module docstring for more details.
-PATHS_FROM_ECLIPSE_TO_PYTHON = json.loads(os.environ.get('PATHS_FROM_ECLIPSE_TO_PYTHON', '[]'))
+try:
+    PATHS_FROM_ECLIPSE_TO_PYTHON = json.loads(os.environ.get('PATHS_FROM_ECLIPSE_TO_PYTHON', '[]'))
+except Exception:
+    sys.stderr.write('Error loading PATHS_FROM_ECLIPSE_TO_PYTHON from environment variable.\n')
+    traceback.print_exc()
+    PATHS_FROM_ECLIPSE_TO_PYTHON = []
+else:
+    if not isinstance(PATHS_FROM_ECLIPSE_TO_PYTHON, list):
+        sys.stderr.write('Expected PATHS_FROM_ECLIPSE_TO_PYTHON loaded from environment variable to be a list.\n')
+        PATHS_FROM_ECLIPSE_TO_PYTHON = []
+    else:
+        # Converting json lists to tuple
+        PATHS_FROM_ECLIPSE_TO_PYTHON = [tuple(x) for x in PATHS_FROM_ECLIPSE_TO_PYTHON]
+        
 
 #example:
 #PATHS_FROM_ECLIPSE_TO_PYTHON = [
