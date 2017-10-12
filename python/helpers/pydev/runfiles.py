@@ -67,17 +67,16 @@ def main():
                 test_framework = PY_TEST_FRAMEWORK
 
             else:
-                raise ImportError()
+                raise ImportError('Test framework: %s not supported.' % (found_other_test_framework_param,))
 
         else:
             raise ImportError()
 
     except ImportError:
         if found_other_test_framework_param:
-            sys.stderr.write('Warning: Could not import the test runner: %s. Running with the default pydev unittest runner instead.\n' % (
-                found_other_test_framework_param,))
+            raise
 
-        test_framework = 0
+        test_framework = None
 
     # Clear any exception that may be there so that clients don't see it.
     # See: https://sourceforge.net/tracker/?func=detail&aid=3408057&group_id=85796&atid=577329
