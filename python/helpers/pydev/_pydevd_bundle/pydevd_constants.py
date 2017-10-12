@@ -38,6 +38,7 @@ import os
 from _pydevd_bundle import pydevd_vm_type
 
 IS_JYTHON = pydevd_vm_type.get_vm_type() == pydevd_vm_type.PydevdVmType.JYTHON
+IS_IRONPYTHON = sys.platform == 'cli'
 
 IS_JYTH_LESS25 = False
 if IS_JYTHON:
