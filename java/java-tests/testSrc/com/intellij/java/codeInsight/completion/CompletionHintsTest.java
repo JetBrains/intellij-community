@@ -715,6 +715,15 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     checkHintContents("<html><b>Class&lt;?&gt;</b></html>");
   }
 
+  public void testCompletionBetweenVarargHints() {
+    configureJava("class C { int myVal = 1; void vararg(int a, int... b) {} void m() { varar<caret> } }");
+    complete();
+    checkResultWithInlays("class C { int myVal = 1; void vararg(int a, int... b) {} void m() { vararg(<HINT text=\"a:\"/><caret><hint text=\", b:\"/>); } }");
+    type("myVa");
+    complete();
+    checkResultWithInlays("class C { int myVal = 1; void vararg(int a, int... b) {} void m() { vararg(<HINT text=\"a:\"/>myVal<caret><hint text=\", b:\"/>); } }");
+  }
+
   private void checkResult(String text) {
     myFixture.checkResult(text);
   }
