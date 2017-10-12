@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.streams.exec.kotlin
 
-import com.intellij.debugger.streams.exec.TraceExecutionTestCase
+import com.intellij.debugger.streams.test.TraceExecutionTestCase
 
 /**
  * @author Vitaliy.Bibaev

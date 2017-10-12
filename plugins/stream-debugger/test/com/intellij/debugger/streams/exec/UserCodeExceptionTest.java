@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.streams.exec;
 
+import com.intellij.debugger.streams.test.TraceExecutionTestCase;
 import com.intellij.debugger.streams.trace.TracingResult;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import org.jetbrains.annotations.Nullable;
