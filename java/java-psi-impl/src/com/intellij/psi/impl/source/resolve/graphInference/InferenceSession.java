@@ -1240,7 +1240,9 @@ public class InferenceSession {
 
         //restore captured wildcard from method return type when no additional constraints were inferred
         //to preserve equality of type arguments
-        if (capturedWildcard != null && capturedWildcard.getUpperBound().equals(getUpperBound(aClass))) {
+        if (capturedWildcard != null &&
+            capturedWildcard.getUpperBound().equals(getUpperBound(aClass)) &&
+            isProperType(capturedWildcard.getWildcard())) {
           eqBound = capturedWildcard;
         }
       }
