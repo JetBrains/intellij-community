@@ -75,10 +75,6 @@ public abstract class DiffRequest {
    */
   public abstract String getWindowTitle();
 
-  public void setWindowTitle(final String value) {
-    //
-  }
-
   /**
    * <B>Work in progress. Don't rely on this functionality</B><br>
    * @return not null (possibly empty) collection of hints for diff tool.
