@@ -28,7 +28,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
-import com.intellij.util.WaitFor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XValueChildrenList;
@@ -47,6 +46,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.MalformedURLException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
 /**
  * Communication with Xml-rpc with the client.
@@ -144,9 +145,9 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   }
 
   /**
-   * Stops the communication with the client (passes message for it to quit).
+   * Sends {@link #CLOSE} message to the Python console script.
    */
-  public synchronized void close() {
+  private void sendCloseMessageToScript() {
     if (this.myClient != null) {
       new Task.Backgroundable(myProject, "Close Console Communication", true) {
         @Override
@@ -161,11 +162,37 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
         }
       }.queue();
     }
+  }
+
+  /**
+   * Stops the communication with the client (passes message for it to quit).
+   */
+  public synchronized void close() {
+    sendCloseMessageToScript();
 
     if (myWebServer != null) {
       myWebServer.shutdown();
       myWebServer = null;
     }
+  }
+
+  /**
+   * Stops the communication with the client (passes message for it to quit).
+   *
+   * @return {@link Future} that allows to wait for Python console server
+   * thread {@link WebServer#listener} to die
+   */
+  @NotNull
+  public synchronized Future<Void> closeAsync() {
+    sendCloseMessageToScript();
+
+    if (myWebServer != null) {
+      Future<Void> shutdownFuture = myWebServer.shutdownAsync();
+      myWebServer = null;
+      return shutdownFuture;
+    }
+
+    return completedFuture();
   }
 
   /**
@@ -711,30 +738,33 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     return myDebugCommunication;
   }
 
-
-  public boolean waitForTerminate() {
-    if (myWebServer != null) {
-      return myWebServer.waitForTerminate();
-    }
-
-    return true;
-  }
-
   private static final class MyWebServer extends WebServer {
     public MyWebServer(int port) {
       super(port);
     }
 
-    public boolean waitForTerminate() {
-      if (listener != null) {
-        return new WaitFor(10000) {
-          @Override
-          protected boolean condition() {
-            return !listener.isAlive();
-          }
-        }.isConditionRealized();
+    /**
+     * Shutdowns the server and returns {@link Future} that allows to wait for
+     * the server thread (i.e. {@link #listener}) to die after it gracefully
+     * finished its work.
+     *
+     * @return {@link Future} that allows to wait for the server thread (i.e.
+     * {@link #listener}) to die
+     */
+    @NotNull
+    public synchronized Future<Void> shutdownAsync() {
+      //noinspection NonPrivateFieldAccessedInSynchronizedContext
+      Thread thread = listener;
+      shutdown();
+      if (thread != null) {
+        return ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          thread.join();
+          return null;
+        });
       }
-      return true;
+      else {
+        return completedFuture();
+      }
     }
   }
 
@@ -750,5 +780,10 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   @Override
   public void addFrameListener(@NotNull PyFrameListener listener) {
     myFrameListeners.add(listener);
+  }
+
+  @NotNull
+  private static Future<Void> completedFuture() {
+    return CompletableFuture.completedFuture(null);
   }
 }
