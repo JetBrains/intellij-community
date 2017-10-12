@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.PositionTracker;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,7 +77,11 @@ public class GotItMessage {
     return this;
   }
 
-  public void show(RelativePoint point, Balloon.Position position) {
+  public void show(@NotNull RelativePoint point, @NotNull Balloon.Position position) {
+    show(new PositionTracker.Static<>(point), position);
+  }
+
+  public void show(@NotNull PositionTracker<Balloon> tracker, @NotNull Balloon.Position position) {
     if (myDisposable != null && Disposer.isDisposed(myDisposable)) {
       return;
     }
@@ -115,6 +120,6 @@ public class GotItMessage {
       }
     });
 
-    balloon.show(point, position);
+    balloon.show(tracker, position);
   }
 }
