@@ -573,6 +573,9 @@ public class DuplicatesFinder {
     if (!(pattern instanceof PsiExpression) || !(candidate instanceof PsiExpression) || withFolding && !myWithExtractedParameters) {
       return null;
     }
+    if (myPattern.length == 1 && myPattern[0] == pattern || candidates.size() == 1 && candidates.get(0) == candidate) {
+      return null;
+    }
 
     ComplexityHolder patternComplexity = null;
     if (withFolding) {
