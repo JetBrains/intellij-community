@@ -18,7 +18,6 @@ package com.intellij.openapi.diff.impl.external;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.impl.CompositeDiffPanel;
@@ -98,16 +97,7 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
   }
 
   private CompositeDiffPanel createPanel(final DiffRequest request, final Window window, @NotNull Disposable parentDisposable) {
-    final CompositeDiffPanel panel = new CompositeDiffPanel(request.getProject(), this, window, parentDisposable);
-    request.getGenericData().put(PlatformDataKeys.COMPOSITE_DIFF_VIEWER.getName(), panel);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        final String name = PlatformDataKeys.COMPOSITE_DIFF_VIEWER.getName();
-        request.getGenericData().remove(name);
-      }
-    });
-    return panel;
+    return new CompositeDiffPanel(request.getProject(), this, window, parentDisposable);
   }
 
   public DiffViewer viewerForRequest(Window window,

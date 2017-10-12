@@ -17,7 +17,6 @@ package com.intellij.openapi.diff.impl;
 
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.DiffViewer;
 import com.intellij.openapi.diff.DiffViewerType;
@@ -71,7 +70,6 @@ public class CompositeDiffPanel implements DiffViewer {
     for (Map.Entry<String, DiffRequest> entry : requestMap.entrySet()) {
       final String key = entry.getKey();
       final DiffRequest diffRequest = entry.getValue();
-      diffRequest.getGenericData().put(PlatformDataKeys.COMPOSITE_DIFF_VIEWER.getName(), this);
       final Pair<DiffViewer, Content> pair = mapCopy.get(key);
       DiffViewer viewer = Pair.getFirst(pair);
       if (viewer != null && viewer.acceptsType(diffRequest.getType()) && viewer.canShowRequest(diffRequest)) {
