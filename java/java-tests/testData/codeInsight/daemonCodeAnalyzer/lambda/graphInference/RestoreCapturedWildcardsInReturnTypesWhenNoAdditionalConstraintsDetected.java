@@ -43,3 +43,14 @@ class Test {
     return list.stream().collect(Collectors.toCollection(() -> create()));
   }
 }
+
+
+class TestWithNonProperTypeBeforeCapture {
+  {
+    Set<? super List<String>> set = foo();
+  }
+
+  private <K> Set<? super List<K>> foo() { //#CAP<? super List<K>> is not proper, can't be used as eq bound
+    return null;
+  }
+}
