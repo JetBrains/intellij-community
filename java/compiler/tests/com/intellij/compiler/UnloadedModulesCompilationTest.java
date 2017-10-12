@@ -71,6 +71,23 @@ public class UnloadedModulesCompilationTest extends BaseCompilerTestCase {
     make(createScopeWithUnloaded(Collections.singletonList(util), unloadedList), CompilerFilter.ALL).assertGenerated("A.class", "Util.class");
   }
 
+  public void testCompileUnloadedModuleAfterBuildingAllLoadedModules() {
+    VirtualFile utilFile = createFile("util/src/Util.java", "class Util { }");
+    Module util = addModule("util", utilFile.getParent());
+    VirtualFile a = createFile("unloaded/src/A.java", "class A { Util u = new Util();  }");
+    Module unloaded = addModule("unloaded", a.getParent());
+    ModuleRootModificationUtil.addDependency(unloaded, util);
+    buildAllModules();
+
+    List<String> unloadedList = Collections.singletonList(unloaded.getName());
+    ModuleManager.getInstance(myProject).setUnloadedModules(unloadedList);
+
+    changeFile(utilFile, "class Util { Util(int i) {} }");
+    buildAllModules().assertGenerated("Util.class");
+
+    compile(createScopeWithUnloaded(Collections.singletonList(util), unloadedList), CompilerFilter.ALL, false, true);
+  }
+
   @NotNull
   private ModuleCompileScope createScopeWithUnloaded(List<Module> modules, List<String> unloaded) {
     return new ModuleCompileScope(myProject, modules, unloaded, true, false);
