@@ -54,10 +54,6 @@ public abstract class DiffRequest {
     return myProject;
   }
 
-  public boolean isSafeToCallFromUpdate() {
-    return true;
-  }
-  
   /**
    * @return contents to compare
    */
