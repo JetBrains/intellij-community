@@ -17,12 +17,10 @@ package com.intellij.openapi.diff;
 
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Factory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 
 /**
@@ -35,7 +33,6 @@ public abstract class DiffRequest {
 
   private String myGroupKey = COMMON_DIFF_GROUP_KEY;
   @Nullable private final Project myProject;
-  private Factory<JComponent> myBottomComponentFactory = null;
   private final HashSet myHints = new HashSet();
   private final Map<String, Object> myGenericData;
   private Runnable myOnOkRunnable;
@@ -124,15 +121,6 @@ public abstract class DiffRequest {
    */
   public interface ToolbarAddons {
     void customize(DiffToolbar toolbar);
-  }
-
-  @Nullable
-  public JComponent getBottomComponent() {
-    return myBottomComponentFactory == null ? null : myBottomComponentFactory.create();
-  }
-
-  public void setBottomComponentFactory(final Factory<JComponent> factory) {
-    myBottomComponentFactory = factory;
   }
 
   public Runnable getOnOkRunnable() {

@@ -459,11 +459,6 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     Disposer.dispose(myScrollSupport);
     Disposer.dispose(myData);
     myPanel.cancelScrollEditors();
-    JComponent component = myPanel.getBottomComponent();
-    if (component instanceof Disposable) {
-      Disposer.dispose((Disposable)component);
-    }
-    myPanel.setBottomComponent(null);
     myPanel.setDataProvider(null);
     myPanel.setScrollingPanel(null);
   }
@@ -673,13 +668,6 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myPanel.registerToolbarActions();
     initEditorSettings(getEditor1());
     initEditorSettings(getEditor2());
-
-    final JComponent oldBottomComponent = myPanel.getBottomComponent();
-    if (oldBottomComponent instanceof Disposable) {
-      Disposer.dispose((Disposable)oldBottomComponent);
-    }
-    final JComponent newBottomComponent = data.getBottomComponent();
-    myPanel.setBottomComponent(newBottomComponent);
 
 
     if (myIsRequestFocus) {
