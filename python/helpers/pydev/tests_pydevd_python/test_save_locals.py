@@ -3,6 +3,8 @@ import sys
 import unittest
 
 from _pydevd_bundle.pydevd_save_locals import save_locals
+from _pydevd_bundle.pydevd_constants import IS_JYTHON
+import pytest
 
 
 def use_save_locals(name, value):
@@ -34,12 +36,13 @@ class TestSetLocals(unittest.TestCase):
     Test setting locals in one function from another function using several approaches.
     """
 
-
+    @pytest.mark.skipif(IS_JYTHON, reason='CPython/pypy only')
     def test_set_locals_using_save_locals(self):
         x = check_method(use_save_locals)
         self.assertEqual(x, 2)  # Expected to succeed
 
 
+    @pytest.mark.skipif(IS_JYTHON, reason='CPython/pypy only')
     def test_frame_simple_change(self):
         frame = sys._getframe()
         a = 20
@@ -48,6 +51,7 @@ class TestSetLocals(unittest.TestCase):
         self.assertEquals(50, a)
 
 
+    @pytest.mark.skipif(IS_JYTHON, reason='CPython/pypy only')
     def test_frame_co_freevars(self):
 
         outer_var = 20
@@ -60,6 +64,7 @@ class TestSetLocals(unittest.TestCase):
 
         func()
 
+    @pytest.mark.skipif(IS_JYTHON, reason='CPython/pypy only')
     def test_frame_co_cellvars(self):
 
         def check_co_vars(a):
@@ -76,6 +81,7 @@ class TestSetLocals(unittest.TestCase):
         check_co_vars(1)
 
 
+    @pytest.mark.skipif(IS_JYTHON, reason='CPython/pypy only')
     def test_frame_change_in_inner_frame(self):
         def change(f):
             self.assert_(f is not sys._getframe())
