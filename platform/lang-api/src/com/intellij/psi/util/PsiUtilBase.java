@@ -133,7 +133,14 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
           lang = language;
         }
         else if (lang != language) {
-          return null;
+          // correctly process the case when leaf element is a part of embedded fragment, but it is totally contained inside
+          // "parent" language
+          Language finalLang = lang;
+          final TextRange range = new TextRange(start, end);
+          final PsiElement wrappingParent = PsiTreeUtil.findFirstParent(
+            elt, false, element -> file.equals(element.getContainingFile()) && finalLang.equals(element.getLanguage()),
+            element -> element.getTextRange() != null && !range.contains(element.getTextRange()));
+          if (wrappingParent == null) return null;
         }
       }
       TextRange range = elt.getTextRange();
