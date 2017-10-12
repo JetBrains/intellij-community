@@ -39,7 +39,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ReplaceNullCheckInspection extends BaseJavaBatchLocalInspectionTool {
   private static final EquivalenceChecker ourEquivalence = EquivalenceChecker.getCanonicalPsiEquivalence();
-  public int MINIMAL_WARN_DELTA_SIZE = 30;
+  private int MINIMAL_WARN_DELTA_SIZE = 30;
 
   private static final CallMatcher STREAM_EMPTY = CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "empty")
     .parameterCount(0);
@@ -47,15 +47,6 @@ public class ReplaceNullCheckInspection extends BaseJavaBatchLocalInspectionTool
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "ofNullable").parameterCount(1),
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "of").parameterTypes("T")
   );
-
-  @Nullable
-  @Override
-  public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(
-      InspectionsBundle.message("inspection.require.non.null.option.min.size"),
-      this, "MINIMAL_WARN_DELTA_SIZE"
-    );
-  }
 
   @NotNull
   @Override
