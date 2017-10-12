@@ -93,6 +93,7 @@ args = dict(
 
         'pydevd_concurrency_analyser',
         'pydevd_plugins',
+        'pydevd_plugins.extensions',
     ],
     py_modules=[
         # 'interpreterInfo', -- Not needed for debugger
@@ -124,6 +125,11 @@ args = dict(
         'Programming Language :: Python',
         'Topic :: Software Development :: Debuggers',
     ],
+    entry_points={
+        'console_scripts':[
+            'pydevd = pydevd:main',
+        ],
+    },
     data_files=data_files,
     keywords=['pydev', 'pydevd', 'pydev.debugger'],
     include_package_data=True,
