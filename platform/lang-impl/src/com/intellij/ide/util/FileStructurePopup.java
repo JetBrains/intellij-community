@@ -114,7 +114,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.FileStructurePopup");
   private static final String NARROW_DOWN_PROPERTY_KEY = "FileStructurePopup.narrowDown";
 
-  private final boolean myUseATM = !ApplicationManager.getApplication().isUnitTestMode() &&
+  private final boolean myUseATM = ApplicationManager.getApplication().isUnitTestMode() ||
                                    Experiments.isFeatureEnabled("structure.view.async.tree.model");
 
   private final Project myProject;
