@@ -1,6 +1,6 @@
 from _pydev_bundle import pydev_log
 import traceback
-from _pydevd_bundle import pydevd_plugin_utils
+from _pydevd_bundle import pydevd_extension_utils
 from _pydevd_bundle import pydevd_resolver
 import sys
 from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, IS_PY3K, \
@@ -39,9 +39,9 @@ class AbstractTypeResolveHandler(object):
     def __init__(self,default_type_map):
         super(AbstractTypeResolveHandler, self).__init__()
         self.default_type_map = default_type_map
-        self.resolve_providers = pydevd_plugin_utils.extensions_of_type(TypeResolveProvider)
+        self.resolve_providers = pydevd_extension_utils.extensions_of_type(TypeResolveProvider)
         self.raw_type_map = dict(self.default_type_map)
-        self.str_providers = pydevd_plugin_utils.extensions_of_type(StrPresentationProvider)
+        self.str_providers = pydevd_extension_utils.extensions_of_type(StrPresentationProvider)
 
 
     def get_type(self,o):
