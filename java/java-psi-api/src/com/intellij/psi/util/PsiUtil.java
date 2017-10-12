@@ -911,9 +911,7 @@ public final class PsiUtil extends PsiUtilCore {
       }
 
       if (currentOwner.hasModifierProperty(PsiModifier.STATIC)) break;
-      currentOwner = currentOwner instanceof PsiClass && isLocalOrAnonymousClass((PsiClass)currentOwner)
-                     ? PsiTreeUtil.getParentOfType(currentOwner, PsiClass.class)
-                     : currentOwner.getContainingClass();
+      currentOwner = currentOwner.getContainingClass();
     }
 
     if (result == null) return EmptyIterable.getInstance();
