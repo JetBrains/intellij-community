@@ -63,8 +63,8 @@ public class InspectionEngine {
     if(visitor == null) {
       LOG.error("Tool " + tool + " (" + tool.getClass()+ ") must not return null from the buildVisitor() method");
     }
-    assert !(visitor instanceof PsiRecursiveElementVisitor || visitor instanceof PsiRecursiveElementWalkingVisitor)
-      : "The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive. "+tool;
+    assert !(visitor instanceof PsiRecursiveVisitor)
+      : "The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive: " + tool;
 
     tool.inspectionStarted(session, isOnTheFly);
     acceptElements(elements, visitor, elementDialectIds, dialectIdsSpecifiedForTool);
