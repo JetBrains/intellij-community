@@ -498,7 +498,7 @@ class PydevTestRunner(object):
         imports = [(s, self.__importify(s)) for s in pyfiles]
 
         sys_path = [os.path.normpath(path) for path in sys.path]
-        self.remove_duplicates_keeping_order(sys_path)
+        sys_path = self.remove_duplicates_keeping_order(sys_path)
 
         system_paths = []
         for s in sys_path:

@@ -38,7 +38,7 @@ if not hasattr(sys, '_current_frames'):
                 ret[thread.getId()] = frame
             return ret
         
-    if IS_IRONPYTHON: 
+    elif IS_IRONPYTHON: 
         _tid_to_last_frame = {}
         
         # IronPython doesn't have it. Let's use our workaround...
