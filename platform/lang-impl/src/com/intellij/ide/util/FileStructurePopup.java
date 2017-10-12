@@ -391,7 +391,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       public void run() {
         alarm.cancelAllRequests();
         String prefix = mySpeedSearch.getEnteredPrefix();
-        myTree.getEmptyText().setText(StringUtil.isEmpty(prefix) ? "Nothing to show" : "Can't find '" + prefix + "'");
+        myTree.getEmptyText().setText(StringUtil.isEmpty(prefix) ? "Structure is empty" : "'" + prefix + "' not found");
         if (prefix == null) prefix = "";
 
         if (!filter.equals(prefix)) {
