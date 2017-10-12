@@ -2,7 +2,7 @@ import traceback
 
 from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydev_imps._pydev_saved_modules import threading
-from _pydevd_bundle.pydevd_constants import get_thread_id
+from _pydevd_bundle.pydevd_constants import get_thread_id, IS_IRONPYTHON
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
@@ -14,7 +14,14 @@ from _pydevd_bundle.pydevd_tracing import SetTrace
 # ELSE
 from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfo
 from _pydevd_bundle.pydevd_frame import PyDBFrame
+
 # ENDIF
+
+try:
+    from _pydevd_bundle.pydevd_signature import send_signature_call_trace
+except ImportError:
+    def send_signature_call_trace(*args, **kwargs):
+        pass
 
 threadingCurrentThread = threading.currentThread
 get_file_type = DONT_TRACE.get
@@ -33,6 +40,7 @@ get_file_type = DONT_TRACE.get
 global_cache_skips = {}
 global_cache_frame_skips = {}
 
+
 def trace_dispatch(py_db, frame, event, arg):
     t = threadingCurrentThread()
 
@@ -47,12 +55,13 @@ def trace_dispatch(py_db, frame, event, arg):
         additional_info = t.additional_info = PyDBAdditionalThreadInfo()
 
     thread_tracer = ThreadTracer((py_db, t, additional_info, global_cache_skips, global_cache_frame_skips))
-# IFDEF CYTHON
-#     t._tracer = thread_tracer # Hack for cython to keep it alive while the thread is alive (just the method in the SetTrace is not enough).
-# ELSE
-# ENDIF
+    # IFDEF CYTHON
+    #     t._tracer = thread_tracer # Hack for cython to keep it alive while the thread is alive (just the method in the SetTrace is not enough).
+    # ELSE
+    # ENDIF
     SetTrace(thread_tracer.__call__)
     return thread_tracer.__call__(frame, event, arg)
+
 
 # IFDEF CYTHON
 # cdef class SafeCallWrapper:
@@ -75,8 +84,8 @@ def trace_dispatch(py_db, frame, event, arg):
 class ThreadTracer:
     def __init__(self, args):
         self._args = args
-    # ENDIF
 
+    # ENDIF
 
     def __call__(self, frame, event, arg):
         ''' This is the callback used when we enter some context in the debugger.
@@ -109,7 +118,7 @@ class ThreadTracer:
         try:
             if py_db._finish_debugging_session:
                 if not py_db._termination_event_set:
-                    #that was not working very well because jython gave some socket errors
+                    # that was not working very well because jython gave some socket errors
                     try:
                         if py_db.output_checker is None:
                             kill_all_pydev_threads()
@@ -143,10 +152,11 @@ class ThreadTracer:
                 # print('skipped: trace_dispatch (cache hit)', cache_key, frame.f_lineno, event, frame.f_code.co_name)
                 return None
 
-            file_type = get_file_type(abs_path_real_path_and_base[-1]) #we don't want to debug threading or anything related to pydevd
+            file_type = get_file_type(
+                abs_path_real_path_and_base[-1])  # we don't want to debug threading or anything related to pydevd
 
             if file_type is not None:
-                if file_type == 1: # inlining LIB_FILE = 1
+                if file_type == 1:  # inlining LIB_FILE = 1
                     if py_db.not_in_scope(filename):
                         # print('skipped: trace_dispatch (not in scope)', abs_path_real_path_and_base[-1], frame.f_lineno, event, frame.f_code.co_name, file_type)
                         cache_skips[cache_key] = 1
@@ -166,11 +176,13 @@ class ThreadTracer:
 
             # print('trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name, file_type)
             if additional_info.is_tracing:
-                return None  #we don't wan't to trace code invoked from pydevd_frame.trace_dispatch
+                return None  # we don't wan't to trace code invoked from pydevd_frame.trace_dispatch
 
             # Just create PyDBFrame directly (removed support for Python versions < 2.5, which required keeping a weak
             # reference to the frame).
-            ret = PyDBFrame((py_db, filename, additional_info, t, frame_skips_cache, (frame.f_code.co_name, frame.f_code.co_firstlineno, filename))).trace_dispatch(frame, event, arg)
+            ret = PyDBFrame((py_db, filename, additional_info, t, frame_skips_cache,
+                             (frame.f_code.co_name, frame.f_code.co_firstlineno, filename))).trace_dispatch(frame,
+                                                                                                            event, arg)
             if ret is None:
                 cache_skips[cache_key] = 1
                 return None
@@ -186,7 +198,7 @@ class ThreadTracer:
 
         except Exception:
             if py_db._finish_debugging_session:
-                return None # Don't log errors when we're shutting down.
+                return None  # Don't log errors when we're shutting down.
             # Log it
             try:
                 if traceback is not None:
@@ -197,3 +209,25 @@ class ThreadTracer:
                 # (https://github.com/fabioz/PyDev.Debugger/issues/8)
                 pass
             return None
+
+
+if IS_IRONPYTHON:
+    # This is far from ideal, as we'll leak frames (we'll always have the last created frame, not really
+    # the last topmost frame saved -- this should be Ok for our usage, but it may leak frames and things
+    # may live longer... as IronPython is garbage-collected, things should live longer anyways, so, it
+    # shouldn't be an issue as big as it's in CPython -- it may still be annoying, but this should
+    # be a reasonable workaround until IronPython itself is able to provide that functionality).
+    #
+    # See: https://github.com/IronLanguages/main/issues/1630
+    from _pydevd_bundle.pydevd_additional_thread_info_regular import _tid_to_last_frame
+
+    _original_call = ThreadTracer.__call__
+
+
+    def __call__(self, frame, event, arg):
+        _tid_to_last_frame[self._args[1].ident] = frame
+        return _original_call(self, frame, event, arg)
+
+
+    ThreadTracer.__call__ = __call__
+

@@ -3,7 +3,7 @@
 # DO NOT edit manually!
 # DO NOT edit manually!
 import sys
-from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND, IS_JYTHON
+from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND, IS_JYTHON, IS_IRONPYTHON
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
 # ELSE
 # from _pydevd_bundle.pydevd_frame import PyDBFrame
@@ -41,6 +41,14 @@ if not hasattr(sys, '_current_frames'):
 
                 ret[thread.getId()] = frame
             return ret
+        
+    if IS_IRONPYTHON: 
+        _tid_to_last_frame = {}
+        
+        # IronPython doesn't have it. Let's use our workaround...
+        def _current_frames():
+            return _tid_to_last_frame
+
     else:
         raise RuntimeError('Unable to proceed (sys._current_frames not available in this Python implementation).')
 else:
@@ -113,14 +121,6 @@ cdef class PyDBAdditionalThreadInfo:
         if v is not None:
             return [v]
         return []
-
-    # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
-    def create_db_frame(self, *args, **kwargs):
-        raise AssertionError('This method should not be called on cython (PyDbFrame should be used directly).')
-    # ELSE
-#     # just create the db frame directly
-#     create_db_frame = PyDBFrame
-    # ENDIF
 
     def __str__(self):
         return 'State:%s Stop:%s Cmd: %s Kill:%s' % (
@@ -898,7 +898,7 @@ import traceback
 
 from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydev_imps._pydev_saved_modules import threading
-from _pydevd_bundle.pydevd_constants import get_thread_id
+from _pydevd_bundle.pydevd_constants import get_thread_id, IS_IRONPYTHON
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
@@ -1093,3 +1093,23 @@ cdef class ThreadTracer:
                 # (https://github.com/fabioz/PyDev.Debugger/issues/8)
                 pass
             return None
+
+
+if IS_IRONPYTHON:
+    # This is far from ideal, as we'll leak frames (we'll always have the last created frame, not really
+    # the last topmost frame saved -- this should be Ok for our usage, but it may leak frames and things
+    # may live longer... as IronPython is garbage-collected, things should live longer anyways, so, it
+    # shouldn't be an issue as big as it's in CPython -- it may still be annoying, but this should
+    # be a reasonable workaround until IronPython itself is able to provide that functionality).
+    #
+    # See: https://github.com/IronLanguages/main/issues/1630
+    from _pydevd_bundle.pydevd_additional_thread_info_regular import _tid_to_last_frame
+    
+    _original_call = ThreadTracer.__call__
+    
+    def __call__(self, frame, event, arg):
+        _tid_to_last_frame[self._args[1].ident] = frame
+        return _original_call(self, frame, event, arg)
+    
+    ThreadTracer.__call__ = __call__
+    

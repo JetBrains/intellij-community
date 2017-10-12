@@ -24,9 +24,9 @@ class C:
         return 'unchanged'
 """
 
-IS_JYTHON = sys.platform.find('java') != -1
+from _pydevd_bundle.pydevd_constants import IS_JYTHON, IS_IRONPYTHON
 
-@pytest.mark.skipif(IS_JYTHON, reason='CPython related test')
+@pytest.mark.skipif(IS_JYTHON or IS_IRONPYTHON, reason='CPython related test')
 class Test(unittest.TestCase):
 
 
