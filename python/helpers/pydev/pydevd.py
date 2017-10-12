@@ -1475,12 +1475,12 @@ def patch_stdin(debugger):
     orig_stdin = sys.stdin
     sys.stdin = DebugConsoleStdIn(debugger, orig_stdin)
 
-# Dispatch on_debugger_initialized here, after all primary debugger modules are loaded
+# Dispatch on_debugger_modules_loaded here, after all primary debugger modules are loaded
 from _pydevd_bundle.pydevd_extension_api import DebuggerEventHandler
 from _pydevd_bundle import pydevd_extension_utils
 
 for handler in pydevd_extension_utils.extensions_of_type(DebuggerEventHandler):
-    handler.on_debugger_initialized(debugger_version=__version__)
+    handler.on_debugger_modules_loaded(debugger_version=__version__)
 #=======================================================================================================================
 # main
 #=======================================================================================================================

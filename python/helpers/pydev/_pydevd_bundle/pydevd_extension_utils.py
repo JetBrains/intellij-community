@@ -3,9 +3,10 @@ import sys
 from _pydev_bundle import pydev_log
 import pydevd_plugins.extensions
 
+
 class ExtensionManager(object):
+
     def __init__(self):
-        super(ExtensionManager, self).__init__()
         self.loaded_extensions = None
         self.type_to_instance = {}
 
@@ -49,6 +50,7 @@ class ExtensionManager(object):
 
 
 EXTENSION_MANAGER_INSTANCE = ExtensionManager()
+
 
 def extensions_of_type(extension_type):
     """
