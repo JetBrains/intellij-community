@@ -4,15 +4,13 @@ package com.intellij.debugger.streams.test
 import com.intellij.debugger.streams.trace.dsl.CodeContext
 import com.intellij.debugger.streams.trace.dsl.Dsl
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
-import com.intellij.openapi.application.PluginPathManager
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
  * @author Vitaliy.Bibaev
  */
-abstract class DslTestCase(private val directoryName: String, private val dsl: Dsl) : LightCodeInsightFixtureTestCase() {
+abstract class DslTestCase(private val dsl: Dsl) : LightCodeInsightFixtureTestCase() {
   fun testCall() {
     doTest {
       call("this".expr, "method")
@@ -423,7 +421,6 @@ abstract class DslTestCase(private val directoryName: String, private val dsl: D
 
   private fun check(actualText: String) {
     val testName = getTestName(true)
-    UsefulTestCase.assertSameLinesWithFile(
-      PluginPathManager.getPluginHomePath("stream-debugger") + "/testData/dsl/$directoryName/$testName.out", actualText, false)
+    assertSameLinesWithFile("$testDataPath/$testName.out", actualText, false)
   }
 }
