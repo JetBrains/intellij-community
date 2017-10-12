@@ -30,78 +30,78 @@ import org.jetbrains.uast.java.JavaUastLanguagePlugin
 import java.io.File
 
 abstract class AbstractTestWithCoreEnvironment : TestCase() {
-    private var myEnvironment: AbstractCoreEnvironment? = null
+  private var myEnvironment: AbstractCoreEnvironment? = null
 
-    protected val environment: AbstractCoreEnvironment
-        get() = myEnvironment!!
+  protected val environment: AbstractCoreEnvironment
+    get() = myEnvironment!!
 
-    protected lateinit var project: MockProject
+  protected lateinit var project: MockProject
 
-    protected val uastContext: UastContext by lazy {
-        ServiceManager.getService(project, UastContext::class.java)
+  protected val uastContext: UastContext by lazy {
+    ServiceManager.getService(project, UastContext::class.java)
+  }
+
+  protected val psiManager: PsiManager by lazy {
+    PsiManager.getInstance(project)
+  }
+
+  override fun tearDown() {
+    disposeEnvironment()
+  }
+
+  protected abstract fun createEnvironment(source: File): AbstractCoreEnvironment
+
+  protected fun initializeEnvironment(source: File) {
+    if (myEnvironment != null) {
+      error("Environment is already initialized")
     }
+    myEnvironment = createEnvironment(source)
+    project = environment.project
 
-    protected val psiManager: PsiManager by lazy {
-        PsiManager.getInstance(project)
-    }
+    CoreApplicationEnvironment.registerExtensionPoint(
+      Extensions.getRootArea(),
+      UastLanguagePlugin.extensionPointName,
+      UastLanguagePlugin::class.java)
 
-    override fun tearDown() {
-        disposeEnvironment()
-    }
+    CoreApplicationEnvironment.registerExtensionPoint(
+      Extensions.getRootArea(),
+      UEvaluatorExtension.EXTENSION_POINT_NAME,
+      UEvaluatorExtension::class.java)
 
-    protected abstract fun createEnvironment(source: File): AbstractCoreEnvironment
+    project.registerService(UastContext::class.java, UastContext::class.java)
 
-    protected fun initializeEnvironment(source: File) {
-        if (myEnvironment != null) {
-            error("Environment is already initialized")
-        }
-        myEnvironment = createEnvironment(source)
-        project = environment.project
+    registerUastLanguagePlugins()
+  }
 
-        CoreApplicationEnvironment.registerExtensionPoint(
-                Extensions.getRootArea(),
-                UastLanguagePlugin.extensionPointName,
-                UastLanguagePlugin::class.java)
+  private fun registerUastLanguagePlugins() {
+    val area = Extensions.getRootArea()
 
-        CoreApplicationEnvironment.registerExtensionPoint(
-                Extensions.getRootArea(),
-                UEvaluatorExtension.EXTENSION_POINT_NAME,
-                UEvaluatorExtension::class.java)
+    area.getExtensionPoint(UastLanguagePlugin.extensionPointName)
+      .registerExtension(JavaUastLanguagePlugin())
+  }
 
-        project.registerService(UastContext::class.java, UastContext::class.java)
-
-        registerUastLanguagePlugins()
-    }
-
-    private fun registerUastLanguagePlugins() {
-        val area = Extensions.getRootArea()
-
-        area.getExtensionPoint(UastLanguagePlugin.extensionPointName)
-                .registerExtension(JavaUastLanguagePlugin())
-    }
-
-    protected fun disposeEnvironment() {
-        myEnvironment?.dispose()
-        myEnvironment = null
-    }
+  protected fun disposeEnvironment() {
+    myEnvironment?.dispose()
+    myEnvironment = null
+  }
 }
 
 private fun String.trimTrailingWhitespacesAndAddNewlineAtEOF(): String =
-        this.split('\n').map(String::trimEnd).joinToString(separator = "\n").let {
-            result -> if (result.endsWith("\n")) result else result + "\n"
-        }
+  this.split('\n').map(String::trimEnd).joinToString(separator = "\n").let { result ->
+    if (result.endsWith("\n")) result else result + "\n"
+  }
 
 fun assertEqualsToFile(description: String, expected: File, actual: String) {
-    if (!expected.exists()) {
-        expected.writeText(actual)
-        TestCase.fail("File didn't exist. New file was created (${expected.canonicalPath}).")
-    }
+  if (!expected.exists()) {
+    expected.writeText(actual)
+    TestCase.fail("File didn't exist. New file was created (${expected.canonicalPath}).")
+  }
 
-    val expectedText =
-            StringUtil.convertLineSeparators(expected.readText().trim()).trimTrailingWhitespacesAndAddNewlineAtEOF()
-    val actualText =
-            StringUtil.convertLineSeparators(actual.trim()).trimTrailingWhitespacesAndAddNewlineAtEOF()
-    if (expectedText != actualText) {
-        throw FileComparisonFailure(description, expectedText, actualText, expected.absolutePath)
-    }
+  val expectedText =
+    StringUtil.convertLineSeparators(expected.readText().trim()).trimTrailingWhitespacesAndAddNewlineAtEOF()
+  val actualText =
+    StringUtil.convertLineSeparators(actual.trim()).trimTrailingWhitespacesAndAddNewlineAtEOF()
+  if (expectedText != actualText) {
+    throw FileComparisonFailure(description, expectedText, actualText, expected.absolutePath)
+  }
 }

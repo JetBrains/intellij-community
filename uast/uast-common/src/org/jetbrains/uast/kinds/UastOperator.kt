@@ -21,8 +21,8 @@ package org.jetbrains.uast
  * @see [UastPrefixOperator], [UastPostfixOperator], [UastBinaryOperator]
  */
 interface UastOperator {
-    /**
-     * Returns the operator text to render in [UElement.asRenderString].
-     */
-    val text: String
+  /**
+   * Returns the operator text to render in [UElement.asRenderString].
+   */
+  val text: String
 }

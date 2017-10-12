@@ -22,14 +22,14 @@ import org.jetbrains.uast.UForExpression
 import org.jetbrains.uast.UIdentifier
 
 class JavaUForExpression(
-        override val psi: PsiForStatement,
-        givenParent: UElement?
+  override val psi: PsiForStatement,
+  givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UForExpression {
-    override val declaration by lz { psi.initialization?.let { JavaConverter.convertStatement(it, this) } }
-    override val condition by lz { psi.condition?.let { JavaConverter.convertExpression(it, this) } }
-    override val update by lz { psi.update?.let { JavaConverter.convertStatement(it, this) } }
-    override val body by lz { JavaConverter.convertOrEmpty(psi.body, this) }
+  override val declaration by lz { psi.initialization?.let { JavaConverter.convertStatement(it, this) } }
+  override val condition by lz { psi.condition?.let { JavaConverter.convertExpression(it, this) } }
+  override val update by lz { psi.update?.let { JavaConverter.convertStatement(it, this) } }
+  override val body by lz { JavaConverter.convertOrEmpty(psi.body, this) }
 
-    override val forIdentifier: UIdentifier
-        get() = UIdentifier(psi.getChildByRole(ChildRole.FOR_KEYWORD), this)
+  override val forIdentifier: UIdentifier
+    get() = UIdentifier(psi.getChildByRole(ChildRole.FOR_KEYWORD), this)
 }
