@@ -18,7 +18,7 @@ package com.intellij.openapi.vcs.changes.patch;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
-import com.intellij.diff.chains.DiffRequestChain;
+import com.intellij.diff.chains.DiffRequestChainBase;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.requests.DiffRequest;
@@ -1184,17 +1184,15 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     };
   }
 
-  private static class MyDiffRequestChain extends UserDataHolderBase implements DiffRequestChain, GoToChangePopupBuilder.Chain {
+  private static class MyDiffRequestChain extends DiffRequestChainBase implements GoToChangePopupBuilder.Chain {
     private final List<DiffRequestProducer> myRequests;
     private final List<? extends Change> myChanges;
-    private int myIndex;
 
     public MyDiffRequestChain(@NotNull List<DiffRequestProducer> requests, @NotNull List<? extends Change> changes, int index) {
+      super(index);
       assert requests.size() == changes.size();
       myRequests = requests;
       myChanges = changes;
-
-      myIndex = index >= 0 ? index : 0;
     }
 
     @NotNull
@@ -1203,21 +1201,10 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       return myRequests;
     }
 
-    @Override
-    public int getIndex() {
-      return myIndex;
-    }
-
-    @Override
-    public void setIndex(int index) {
-      assert index >= 0 && index < myRequests.size();
-      myIndex = index;
-    }
-
     @NotNull
     @Override
     public AnAction createGoToChangeAction(@NotNull Consumer<Integer> onSelected) {
-      return new ChangeGoToChangePopupAction<MyDiffRequestChain>(this, myIndex) {
+      return new ChangeGoToChangePopupAction<MyDiffRequestChain>(this, getIndex()) {
         @NotNull
         @Override
         protected DefaultTreeModel buildTreeModel(@NotNull Project project, boolean showFlatten) {
