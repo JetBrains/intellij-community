@@ -126,12 +126,6 @@ if not sys.platform.startswith("java"):
                 pass #not available on all python versions
 
             try:
-                import numpy
-                type_map.append((numpy.ndarray, pydevd_resolver.ndarrayResolver))
-            except:
-                pass  #numpy may not be installed
-
-            try:
                 from django.utils.datastructures import MultiValueDict
                 _TYPE_MAP.insert(0, (MultiValueDict, pydevd_resolver.multiValueDictResolver))
                 # we should put it before dict
