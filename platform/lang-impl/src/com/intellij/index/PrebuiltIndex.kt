@@ -10,6 +10,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.stubs.FileContentHashing
 import com.intellij.psi.stubs.HashCodeDescriptor
 import com.intellij.psi.stubs.PrebuiltStubsProviderBase
+import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.FileContent
 import com.intellij.util.indexing.IndexInfrastructure
 import com.intellij.util.io.DataExternalizer
@@ -31,6 +32,9 @@ abstract class PrebuiltIndexProviderBase<Value> : Disposable {
 
   companion object {
     private val LOG = Logger.getInstance("#com.intellij.index.PrebuiltIndexProviderBase")
+
+    @JvmField
+    val DEBUG_PREBUILT_INDICES = SystemProperties.getBooleanProperty("debug.prebuilt.indices", false)
   }
 
   init {
