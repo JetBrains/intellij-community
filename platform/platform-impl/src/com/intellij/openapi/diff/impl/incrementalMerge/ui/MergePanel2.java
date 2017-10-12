@@ -85,7 +85,6 @@ public class MergePanel2 implements DiffViewer {
   private final DividersRepainter myDividersRepainter = new DividersRepainter();
   private StatusUpdater myStatusUpdater;
   private final DialogBuilder myBuilder;
-  private final MyDataProvider myProvider;
 
   public MergePanel2(DialogBuilder builder, @NotNull Disposable parent) {
     DiffUsageTriggerCollector.trigger("deprecated.MergePanel2");
@@ -121,8 +120,7 @@ public class MergePanel2 implements DiffViewer {
     FontSizeSynchronizer.attachTo(editorPlaces);
     myPanel = new DiffPanelOuterComponent(TextDiffType.MERGE_TYPES, createToolbar());
     myPanel.insertDiffComponent(new ThreePanels(myEditorsPanels, myDividers), new MyScrollingPanel());
-    myProvider = new MyDataProvider();
-    myPanel.setDataProvider(myProvider);
+    myPanel.setDataProvider(new MyDataProvider());
     myBuilder = builder;
   }
 
@@ -358,7 +356,6 @@ public class MergePanel2 implements DiffViewer {
     }
     LOG.assertTrue(!myDuringCreation);
     myDuringCreation = true;
-    myProvider.putData(data.getGenericData());
     try {
       myData = data;
       String[] titles = myData.getContentTitles();

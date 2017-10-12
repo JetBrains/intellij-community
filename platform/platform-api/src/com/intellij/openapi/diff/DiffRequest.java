@@ -15,13 +15,14 @@
  */
 package com.intellij.openapi.diff;
 
-import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 
 /**
  * A request for a diff or merge operation.
@@ -34,12 +35,10 @@ public abstract class DiffRequest {
   private String myGroupKey = COMMON_DIFF_GROUP_KEY;
   @Nullable private final Project myProject;
   private final HashSet myHints = new HashSet();
-  private final Map<String, Object> myGenericData;
   private Runnable myOnOkRunnable;
 
   protected DiffRequest(@Nullable Project project) {
     myProject = project;
-    myGenericData = new HashMap<>(2);
   }
 
   public String getGroupKey() {
@@ -90,14 +89,6 @@ public abstract class DiffRequest {
    */
   public Collection getHints() {
     return Collections.unmodifiableCollection(myHints);
-  }
-
-  public void passForDataContext(final DataKey key, final Object value) {
-    myGenericData.put(key.getName(), value);
-  }
-
-  public Map<String, Object> getGenericData() {
-    return myGenericData;
   }
 
   /**

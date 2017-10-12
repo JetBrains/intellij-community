@@ -43,10 +43,6 @@ public class GenericDataProvider implements DataProvider {
     myGenericData.put(key, value);
   }
 
-  public void putData(final Map<String, Object> map) {
-    myGenericData.putAll(map);
-  }
-
   public Object getData(String dataId) {
     Object data = myGenericData.get(dataId);
     if (data != null) return data;

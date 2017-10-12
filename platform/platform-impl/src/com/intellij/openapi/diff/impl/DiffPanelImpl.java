@@ -125,7 +125,6 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   }
 
   private boolean myDisposed = false;
-  private final GenericDataProvider myDataProvider;
   @NotNull private final Project myProject;
   private final boolean myIsHorizontal;
   private final DiffTool myParentTool;
@@ -169,8 +168,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
 
     myPanel.insertDiffComponent(mySplitter.getComponent(), new MyScrollingPanel());
-    myDataProvider = new MyGenericDataProvider(this);
-    myPanel.setDataProvider(myDataProvider);
+    myPanel.setDataProvider(new MyGenericDataProvider(this));
 
     ComparisonPolicy comparisonPolicy = getComparisonPolicy();
     ComparisonPolicy defaultComparisonPolicy = DiffManagerImpl.getInstanceEx().getComparisonPolicy();
@@ -643,7 +641,6 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     if (data.getHints().contains(DiffTool.HINT_DO_NOT_IGNORE_WHITESPACES)) {
       setComparisonPolicy(ComparisonPolicy.DEFAULT, false);
     }
-    myDataProvider.putData(myDiffRequest.getGenericData());
 
     DiffContent content1 = data.getContents()[0];
     DiffContent content2 = data.getContents()[1];
