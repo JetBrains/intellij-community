@@ -23,19 +23,19 @@ import org.jetbrains.uast.UPostfixExpression
 import org.jetbrains.uast.UastPostfixOperator
 
 class JavaUPostfixExpression(
-        override val psi: PsiPostfixExpression,
-        givenParent: UElement?
+  override val psi: PsiPostfixExpression,
+  givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UPostfixExpression {
-    override val operand by lz { JavaConverter.convertOrEmpty(psi.operand, this) }
+  override val operand by lz { JavaConverter.convertOrEmpty(psi.operand, this) }
 
-    override val operatorIdentifier: UIdentifier?
-        get() = UIdentifier(psi.operationSign, this)
+  override val operatorIdentifier: UIdentifier?
+    get() = UIdentifier(psi.operationSign, this)
 
-    override fun resolveOperator() = null
+  override fun resolveOperator() = null
 
-    override val operator = when (psi.operationTokenType) {
-        JavaTokenType.PLUSPLUS -> UastPostfixOperator.INC
-        JavaTokenType.MINUSMINUS -> UastPostfixOperator.DEC
-        else -> UastPostfixOperator.UNKNOWN
-    }
+  override val operator = when (psi.operationTokenType) {
+    JavaTokenType.PLUSPLUS -> UastPostfixOperator.INC
+    JavaTokenType.MINUSMINUS -> UastPostfixOperator.DEC
+    else -> UastPostfixOperator.UNKNOWN
+  }
 }

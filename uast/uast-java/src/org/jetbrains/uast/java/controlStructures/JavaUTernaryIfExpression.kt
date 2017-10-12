@@ -21,19 +21,19 @@ import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.UIfExpression
 
 class JavaUTernaryIfExpression(
-        override val psi: PsiConditionalExpression,
-        givenParent: UElement?
+  override val psi: PsiConditionalExpression,
+  givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UIfExpression {
-    override val condition by lz { JavaConverter.convertOrEmpty(psi.condition, this) }
-    override val thenExpression by lz { JavaConverter.convertOrEmpty(psi.thenExpression, this) }
-    override val elseExpression by lz { JavaConverter.convertOrEmpty(psi.elseExpression, this) }
+  override val condition by lz { JavaConverter.convertOrEmpty(psi.condition, this) }
+  override val thenExpression by lz { JavaConverter.convertOrEmpty(psi.thenExpression, this) }
+  override val elseExpression by lz { JavaConverter.convertOrEmpty(psi.elseExpression, this) }
 
-    override val isTernary: Boolean
-        get() = true
+  override val isTernary: Boolean
+    get() = true
 
-    override val ifIdentifier: UIdentifier
-        get() = UIdentifier(null, this)
+  override val ifIdentifier: UIdentifier
+    get() = UIdentifier(null, this)
 
-    override val elseIdentifier: UIdentifier?
-        get() = UIdentifier(null, this)
+  override val elseIdentifier: UIdentifier?
+    get() = UIdentifier(null, this)
 }

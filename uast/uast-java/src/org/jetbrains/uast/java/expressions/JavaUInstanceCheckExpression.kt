@@ -23,15 +23,15 @@ import org.jetbrains.uast.UastBinaryExpressionWithTypeKind
 import org.jetbrains.uast.UastErrorType
 
 class JavaUInstanceCheckExpression(
-        override val psi: PsiInstanceOfExpression,
-        givenParent: UElement?
+  override val psi: PsiInstanceOfExpression,
+  givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UBinaryExpressionWithType {
-    override val operand by lz { JavaConverter.convertOrEmpty(psi.operand, this) }
-    override val typeReference by lz { psi.checkType?.let { JavaUTypeReferenceExpression(it, this) } }
-    
-    override val type: PsiType
-        get() = psi.checkType?.type ?: UastErrorType
+  override val operand by lz { JavaConverter.convertOrEmpty(psi.operand, this) }
+  override val typeReference by lz { psi.checkType?.let { JavaUTypeReferenceExpression(it, this) } }
 
-    override val operationKind: UastBinaryExpressionWithTypeKind.InstanceCheck
-        get() = UastBinaryExpressionWithTypeKind.INSTANCE_CHECK
+  override val type: PsiType
+    get() = psi.checkType?.type ?: UastErrorType
+
+  override val operationKind: UastBinaryExpressionWithTypeKind.InstanceCheck
+    get() = UastBinaryExpressionWithTypeKind.INSTANCE_CHECK
 }

@@ -23,23 +23,23 @@ import org.jetbrains.uast.UPrefixExpression
 import org.jetbrains.uast.UastPrefixOperator
 
 class JavaUPrefixExpression(
-        override val psi: PsiPrefixExpression,
-        givenParent: UElement?
+  override val psi: PsiPrefixExpression,
+  givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UPrefixExpression {
-    override val operand by lz { JavaConverter.convertOrEmpty(psi.operand, this) }
+  override val operand by lz { JavaConverter.convertOrEmpty(psi.operand, this) }
 
-    override val operatorIdentifier: UIdentifier?
-        get() = UIdentifier(psi.operationSign, this)
+  override val operatorIdentifier: UIdentifier?
+    get() = UIdentifier(psi.operationSign, this)
 
-    override fun resolveOperator() = null
+  override fun resolveOperator() = null
 
-    override val operator = when (psi.operationTokenType) {
-        JavaTokenType.PLUS -> UastPrefixOperator.UNARY_PLUS
-        JavaTokenType.MINUS -> UastPrefixOperator.UNARY_MINUS
-        JavaTokenType.PLUSPLUS -> UastPrefixOperator.INC
-        JavaTokenType.MINUSMINUS-> UastPrefixOperator.DEC
-        JavaTokenType.EXCL -> UastPrefixOperator.LOGICAL_NOT
-        JavaTokenType.TILDE -> UastPrefixOperator.BITWISE_NOT
-        else -> UastPrefixOperator.UNKNOWN
-    }
+  override val operator = when (psi.operationTokenType) {
+    JavaTokenType.PLUS -> UastPrefixOperator.UNARY_PLUS
+    JavaTokenType.MINUS -> UastPrefixOperator.UNARY_MINUS
+    JavaTokenType.PLUSPLUS -> UastPrefixOperator.INC
+    JavaTokenType.MINUSMINUS -> UastPrefixOperator.DEC
+    JavaTokenType.EXCL -> UastPrefixOperator.LOGICAL_NOT
+    JavaTokenType.TILDE -> UastPrefixOperator.BITWISE_NOT
+    else -> UastPrefixOperator.UNKNOWN
+  }
 }
