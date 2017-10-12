@@ -1,5 +1,5 @@
 from _pydevd_bundle.pydevd_extension_api import StrPresentationProvider
-from .helpers import find_mod_attr, find_class_name
+from .pydevd_helpers import find_mod_attr, find_class_name
 
 
 class DjangoFormStr(object):

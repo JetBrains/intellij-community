@@ -4,13 +4,15 @@ from _pydevd_bundle import pydevd_extension_utils
 from _pydevd_bundle import pydevd_resolver
 import sys
 from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, IS_PY3K, \
-    IS_PY2, BUILTINS_MODULE_NAME, MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_ASYNC, \
+    BUILTINS_MODULE_NAME, MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_ASYNC, \
     DEFAULT_VALUE
 
 from _pydev_bundle.pydev_imports import quote
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresentationProvider
+
 try:
     import types
+
     frame_type = types.FrameType
 except:
     frame_type = None
@@ -18,12 +20,14 @@ except:
 try:
     from xml.sax.saxutils import escape
 
+
     def make_valid_xml_value(s):
         return escape(s, {'"': '&quot;'})
 except:
-    #Simple replacement if it's not there.
+    # Simple replacement if it's not there.
     def make_valid_xml_value(s):
         return s.replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+
 
 class ExceptionOnEvaluate:
     def __init__(self, result):

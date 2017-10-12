@@ -989,6 +989,7 @@ class PyDB:
     def run(self, file, globals=None, locals=None, is_module=False, set_trace=True):
         module_name = None
         if is_module:
+            file, _,  entry_point_fn = file.partition(':')
             module_name = file
             filename = self.get_fullname(file)
             if filename is None:
@@ -1070,16 +1071,24 @@ class PyDB:
         if not is_module:
             pydev_imports.execfile(file, globals, locals)  # execute the script
         else:
-            # Run with the -m switch
-            import runpy
-            if hasattr(runpy, '_run_module_as_main'):
-                # Newer versions of Python actually use this when the -m switch is used.
-                if sys.version_info[:2] <= (2, 6):
-                    runpy._run_module_as_main(module_name, set_argv0=False)
-                else:
-                    runpy._run_module_as_main(module_name, alter_argv=False)
+            # treat ':' as a seperator between module and entry point function
+            # if there is no entry point we run we same as with -m switch. Otherwise we perform
+            # an import and execute the entry point
+            if entry_point_fn:
+                mod = __import__(module_name, level=0, fromlist=[entry_point_fn], globals=globals, locals=locals)
+                func = getattr(mod, entry_point_fn)
+                func()
             else:
-                runpy.run_module(module_name)
+                # Run with the -m switch
+                import runpy
+                if hasattr(runpy, '_run_module_as_main'):
+                    # Newer versions of Python actually use this when the -m switch is used.
+                    if sys.version_info[:2] <= (2, 6):
+                        runpy._run_module_as_main(module_name, set_argv0=False)
+                    else:
+                        runpy._run_module_as_main(module_name, alter_argv=False)
+                else:
+                    runpy.run_module(module_name)
         return globals
 
     def exiting(self):

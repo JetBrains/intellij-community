@@ -46,7 +46,7 @@ def add_exception_breakpoint(plugin, pydb, type, exception):
         if not hasattr(pydb, 'django_exception_break'):
             _init_plugin_breaks(pydb)
         pydb.django_exception_break[exception] = True
-        pydb.set_tracing_for_untraced_contexts()
+        pydb.set_tracing_for_untraced_contexts_if_not_frame_eval()
         return True
     return False
 
@@ -235,7 +235,7 @@ def _get_template_file_name(frame):
                             self = locals['self']
                             if self.__class__.__name__ == 'Template' and hasattr(self, 'origin') and \
                                     hasattr(self.origin, 'name'):
-                                return self.origin.name
+                                return normcase(self.origin.name)
                         back = back.f_back
                 else:
                     if hasattr(context, 'template') and hasattr(context.template, 'origin') and \
@@ -343,6 +343,7 @@ def has_exception_breaks(plugin):
     if len(plugin.main_debugger.django_exception_break) > 0:
         return True
     return False
+
 
 def has_line_breaks(plugin):
     for file, breakpoints in dict_iter_items(plugin.main_debugger.django_breakpoints):

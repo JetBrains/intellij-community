@@ -25,10 +25,6 @@ class _AbstractResolver(_with_metaclass(abc.ABCMeta)):
         - arbitrary instance: get_dictionary could return dict with attr_name->attr and use getattr to resolve it later
     """
 
-    # It's mandatory for subclasses to define a boolean: use_value_repr_instead_of_str in the class
-    # which is used to define if str() or repr() should be used to get the representation of the object.
-    # use_value_repr_instead_of_str = False
-
     @abc.abstractmethod
     def resolve(self, var, attribute):
         """
@@ -52,7 +48,6 @@ class _AbstractResolver(_with_metaclass(abc.ABCMeta)):
 
 
 class _AbstractProvider(_with_metaclass(abc.ABCMeta)):
-
     @abc.abstractmethod
     def can_provide(self, type_object, type_name):
         raise NotImplementedError
