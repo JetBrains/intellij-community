@@ -126,7 +126,8 @@ public class FSRecordsShard implements IFSRecords {
   public int createChildRecord(int parentId) {
     int publicId = myDelegate.createChildRecord(removeShardId(parentId));
     if (publicId >= 1 << 19) {
-      throw new AssertionError("big black id");
+      throw new AssertionError("big black id " + publicId + " shard-id: " + myShardId + " parent-public-id: "
+                               + parentId + " parent-shard-id: " + getShardId(parentId) + " parent-id-in-shard " + removeShardId(parentId));
     }
     return addShardId(publicId);
   }

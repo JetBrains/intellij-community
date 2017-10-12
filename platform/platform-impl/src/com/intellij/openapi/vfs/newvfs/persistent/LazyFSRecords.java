@@ -41,6 +41,7 @@ public class LazyFSRecords implements IFSRecords {
   private VfsDependentEnum<String> myAttrsList;
   private Map<String, Integer> myRoots;
   private int mySourceMaxId;
+  private volatile int nextId = 0;
 
   public LazyFSRecords(File baseFile, IFSRecords sink, FSRecordsSource source) {
     myFile = baseFile;
@@ -49,6 +50,7 @@ public class LazyFSRecords implements IFSRecords {
     FSRecordsSource.SourceInfo init = mySource.connect();
     myRoots = init.roots;
     mySourceMaxId = init.maxId;
+    nextId = mySourceMaxId + 1;
   }
 
   public void dumpToCassandra(int shardId) {
@@ -68,7 +70,7 @@ public class LazyFSRecords implements IFSRecords {
   }
 
   @Override
-  public void writeAttributesToRecord(int id, int parentId, @NotNull FileAttributes attributes, @NotNull String name) {
+  public synchronized void writeAttributesToRecord(int id, int parentId, @NotNull FileAttributes attributes, @NotNull String name) {
     ensureLoaded(new int[]{id, parentId});
     mySink.writeAttributesToRecord(toSinkIdAsserting(id), toSinkIdAsserting(parentId), attributes, name);
   }
@@ -302,7 +304,7 @@ public class LazyFSRecords implements IFSRecords {
   synchronized public int createChildRecord(int parentId) {
     ensureLoaded(new int [] { parentId });
     int recordId = mySink.createChildRecord(toSinkIdAsserting(parentId));
-    int publicId = recordId + mySourceMaxId;
+    int publicId = nextId++;
     updateLocalList(recordId, new int[0]);
     addToMapping(publicId, recordId);
     return publicId;
