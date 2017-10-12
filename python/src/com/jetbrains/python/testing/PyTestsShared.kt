@@ -701,8 +701,10 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
   override fun setupConfigurationFromContext(configuration: PyAbstractTestConfiguration?,
                                              context: ConfigurationContext?,
                                              sourceElement: Ref<PsiElement>?): Boolean {
-
     if (sourceElement == null || configuration == null) {
+      return false
+    }
+    if (sourceElement.get()?.containingFile !is PyFile) {
       return false
     }
 
