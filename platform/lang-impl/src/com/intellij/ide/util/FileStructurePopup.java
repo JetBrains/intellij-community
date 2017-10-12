@@ -812,17 +812,10 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   private Promise<TreePath> rebuildAndSelect(boolean refilterOnly, Object selection) {
     AsyncPromise<TreePath> result = new AsyncPromise<>();
     if (!myUseATM) {
-      ActionCallback callback;
-      if (refilterOnly) {
-        callback = myTreeBuilder.refilter(selection, true, false);
-      }
-      else {
+      if (!refilterOnly) {
         myTreeStructure.rebuildTree();
-        callback = new ActionCallback();
-        myTreeBuilder.queueUpdate(true).doWhenProcessed(
-          () -> myTreeBuilder.refilter(selection, true, false).notify(callback));
       }
-      callback.doWhenProcessed(() -> {
+      myTreeBuilder.refilter(selection, true, false).doWhenProcessed(() -> {
         if (selection != null) {
           selectPsiElement((PsiElement)selection);
         }
