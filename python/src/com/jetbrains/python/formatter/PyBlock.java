@@ -248,20 +248,24 @@ public class PyBlock implements ASTBlock {
     if (parentType == PyElementTypes.BINARY_EXPRESSION) {
       if (childType != PyElementTypes.BINARY_EXPRESSION) {
         final PyBlock topmostBinary = findTopmostBinaryExpressionBlock(child);
-        final PyBlock comprehensionBlock = topmostBinary != null ? topmostBinary.myParent : this;
-        if (comprehensionBlock != null
-            // TODO check for comprehensions explicitly here
-            && ourListElementTypes.contains(comprehensionBlock.myNode.getElementType())
-            && needListAlignment(child)
-            && !myEmptySequence) {
-          childAlignment = comprehensionBlock.getChildAlignment();
+        assert topmostBinary != null;
+        final PyBlock binaryParentBlock = topmostBinary.myParent;
+        final ASTNode binaryParentNode = binaryParentBlock.myNode;
+        final IElementType binaryParentType = binaryParentNode.getElementType();
+        // TODO check for comprehensions explicitly here
+        if (ourListElementTypes.contains(binaryParentType) && needListAlignment(child) && !myEmptySequence) {
+          childAlignment = binaryParentBlock.getChildAlignment();
         }
+        final boolean parenthesised = binaryParentType == PyElementTypes.PARENTHESIZED_EXPRESSION;
         if (childAlignment == null && topmostBinary != null &&
-            !isParenthesisedIfCondition(topmostBinary.myNode) &&
+            !(parenthesised && isIfCondition(binaryParentNode)) &&
             !(isCondition(topmostBinary.myNode) && !ALIGN_CONDITIONS_WITHOUT_PARENTHESES)) {
           childAlignment = topmostBinary.getAlignmentForChildren();
         }
-        childIndent = Indent.getContinuationWithoutFirstIndent();
+        // We omit indentation for the binary expression itself in this case (similarly to PyTupleExpression inside
+        // PyParenthesisedExpression) because we indent individual operands and operators inside rather than
+        // the whole contained expression.
+        childIndent = parenthesised ? Indent.getContinuationIndent() : Indent.getContinuationWithoutFirstIndent();
       }
     }
     else if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION || parentType == PyElementTypes.LIST_COMP_EXPRESSION) {
@@ -342,6 +346,10 @@ public class PyBlock implements ASTBlock {
           !hasLineBreaksBeforeInSameParent(child, 1)) {
         childIndent = Indent.getNoneIndent();
       }
+      // Operands and operators of a binary expression have their own indent, no need to increase it by indenting the expression itself
+      else if (childType == PyElementTypes.BINARY_EXPRESSION && parentType == PyElementTypes.PARENTHESIZED_EXPRESSION) {
+        childIndent = Indent.getNoneIndent();
+      }
       else {
         childIndent = isIndentNext(child) ? Indent.getContinuationIndent() : Indent.getNormalIndent();
       }
@@ -392,7 +400,9 @@ public class PyBlock implements ASTBlock {
       childIndent = Indent.getNormalIndent();
     }
 
-    if (isAfterStatementList(child) && !hasLineBreaksBeforeInSameParent(child, 2) && child.getElementType() != PyTokenTypes.END_OF_LINE_COMMENT) {
+    if (isAfterStatementList(child) &&
+        !hasLineBreaksBeforeInSameParent(child, 2) &&
+        child.getElementType() != PyTokenTypes.END_OF_LINE_COMMENT) {
       // maybe enter was pressed and cut us from a previous (nested) statement list
       childIndent = Indent.getNormalIndent();
     }
@@ -426,14 +436,10 @@ public class PyBlock implements ASTBlock {
     return createBlock(this, child, childAlignment, childIndent, childWrap, myContext);
   }
 
-  private static boolean isParenthesisedIfCondition(@NotNull ASTNode node) {
-    final PyParenthesizedExpression parens = as(node.getPsi().getParent(), PyParenthesizedExpression.class);
-    return parens != null && isIfCondition(parens);
-  }
-
-  private static boolean isIfCondition(@NotNull PyExpression expr) {
-    final PyIfPart ifPart = as(expr.getParent(), PyIfPart.class);
-    return ifPart != null && ifPart.getCondition() == expr && !ifPart.isElif();
+  private static boolean isIfCondition(@NotNull ASTNode node) {
+    @NotNull PsiElement element = node.getPsi();
+    final PyIfPart ifPart = as(element.getParent(), PyIfPart.class);
+    return ifPart != null && ifPart.getCondition() == element && !ifPart.isElif();
   }
 
   private static boolean isCondition(@NotNull ASTNode node) {
@@ -854,7 +860,6 @@ public class PyBlock implements ASTBlock {
           return getBlankLinesForOption(pySettings.BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS);
         }
       }
-
     }
     return myContext.getSpacingBuilder().getSpacing(this, child1, child2);
   }
@@ -935,8 +940,7 @@ public class PyBlock implements ASTBlock {
     // delegation sometimes causes NPEs in formatter core, so we calculate the
     // correct indent manually.
     if (statementListsBelow > 0) { // was 1... strange
-      @SuppressWarnings("ConstantConditions")
-      final int indent = myContext.getSettings().getIndentOptions().INDENT_SIZE;
+      @SuppressWarnings("ConstantConditions") final int indent = myContext.getSettings().getIndentOptions().INDENT_SIZE;
       return new ChildAttributes(Indent.getSpaceIndent(indent * statementListsBelow), null);
     }
 
