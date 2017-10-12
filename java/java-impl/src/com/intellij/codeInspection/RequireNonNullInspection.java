@@ -28,7 +28,7 @@ public class RequireNonNullInspection extends AbstractBaseJavaLocalInspectionToo
     if(!PsiUtil.isLanguageLevel9OrHigher(file)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
-    return new JavaRecursiveElementVisitor() {
+    return new JavaElementVisitor() {
       @Override
       public void visitIfStatement(PsiIfStatement ifStatement) {
         NotNullContext context = NotNullContext.from(ifStatement);
