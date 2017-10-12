@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.EditorTextField
 import java.awt.Dimension
@@ -21,7 +22,7 @@ import javax.swing.ScrollPaneConstants
 class ShowTextPopupHyperlinkInfo(private val title: String, private val text: String) : HyperlinkInfo {
   override fun navigate(project: Project) {
     ApplicationManager.getApplication().invokeLater {
-      val document = EditorFactory.getInstance().createDocument(text)
+      val document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(text))
       val textField = object : EditorTextField(document, project, FileTypes.PLAIN_TEXT, true, false) {
         override fun createEditor(): EditorEx {
           val editor = super.createEditor()
