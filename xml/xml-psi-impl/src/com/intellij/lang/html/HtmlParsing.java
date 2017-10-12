@@ -60,29 +60,36 @@ public class HtmlParsing {
     parseProlog();
 
     PsiBuilder.Marker error = null;
+    PsiBuilder.Marker xmlText = null;
     while (!eof()) {
       final IElementType tt = token();
       if (tt == XmlTokenType.XML_START_TAG_START) {
         error = flushError(error);
+        xmlText = terminateText(xmlText);
         parseTag();
         myTagMarkersStack.clear();
         myTagNamesStack.clear();
       }
       else if (tt == XmlTokenType.XML_COMMENT_START) {
         error = flushError(error);
+        xmlText = startText(xmlText);
         parseComment();
       }
       else if (tt == XmlTokenType.XML_PI_START) {
         error = flushError(error);
+        xmlText = terminateText(xmlText);
         parseProcessingInstruction();
       }
       else if (tt == XmlTokenType.XML_CHAR_ENTITY_REF || tt == XmlTokenType.XML_ENTITY_REF_TOKEN) {
+        xmlText = startText(xmlText);
         parseReference();
       }
       else if (tt == XmlTokenType.XML_REAL_WHITE_SPACE || tt == XmlTokenType.XML_DATA_CHARACTERS) {
         error = flushError(error);
+        xmlText = startText(xmlText);
         advance();
       } else if (tt == XmlTokenType.XML_END_TAG_START) {
+        xmlText = terminateText(xmlText);
         final PsiBuilder.Marker tagEndError = myBuilder.mark();
 
         advance();
@@ -100,7 +107,7 @@ public class HtmlParsing {
         advance();
       }
     }
-
+    terminateText(xmlText);
     if (error != null) {
       error.error(XmlErrorMessages.message("top.level.element.is.not.completed"));
     }
@@ -276,9 +283,6 @@ public class HtmlParsing {
           error(XmlErrorMessages.message("xml.parsing.closing.tag.is.not.done"));
         }
         if (hasTags()) doneTag(myTagMarkersStack.peek());
-      } else if ((token() == XmlTokenType.XML_REAL_WHITE_SPACE || token() == XmlTokenType.XML_DATA_CHARACTERS) && !hasTags()) {
-        xmlText = terminateText(xmlText);
-        advance();
       } else {
         xmlText = startText(xmlText);
         advance();
