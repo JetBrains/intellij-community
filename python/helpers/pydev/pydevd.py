@@ -486,7 +486,7 @@ class PyDB:
                                 # (otherwise we may no longer be able to get its variables -- see: https://www.brainwy.com/tracker/PyDev/776).
                                 clear_cached_thread_id(t)
                                 clear_cached_thread_id(threadingCurrentThread())
-    
+
                             thread_id = get_thread_id(t)
                             curr_thread_id = get_thread_id(threadingCurrentThread())
                             if pydevd_vars.has_additional_frames_by_id(old_thread_id):
@@ -1475,7 +1475,12 @@ def patch_stdin(debugger):
     orig_stdin = sys.stdin
     sys.stdin = DebugConsoleStdIn(debugger, orig_stdin)
 
+# Dispatch on_debugger_initialized here, after all primary debugger modules are loaded
+from _pydevd_bundle.pydevd_extension_api import DebuggerEventHandler
+from _pydevd_bundle import pydevd_extension_utils
 
+for handler in pydevd_extension_utils.extensions_of_type(DebuggerEventHandler):
+    handler.on_debugger_initialized(debugger_version=__version__)
 #=======================================================================================================================
 # main
 #=======================================================================================================================

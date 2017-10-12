@@ -1163,6 +1163,32 @@ class WriterThreadCaseTypeExt(debugger_unittest.AbstractWriterThread):
 
 
 #=======================================================================================================================
+# WriterThreadCaseEventExt - [Test Case]: Test initialize event for extensions
+#======================================================================================================================
+class WriterThreadCaseEventExt(debugger_unittest.AbstractWriterThread):
+
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_event_ext.py')
+
+    def run(self):
+        self.start_socket()
+        self.write_make_initial_run()
+        self.finished_ok = True
+
+    def additional_output_checks(self, stdout, stderr):
+        if 'INITIALIZE EVENT RECEIVED' not in stdout:
+            raise AssertionError('No initialize event received')
+
+    def get_environ(self):
+        env = os.environ.copy()
+
+        python_path = env.get("PYTHONPATH","")
+        ext_base = debugger_unittest._get_debugger_test_file('my_extensions')
+        env['PYTHONPATH']= ext_base + os.pathsep + python_path if python_path else ext_base
+        env["VERIFY_EVENT_TEST"] = "1"
+        return env
+
+
+#=======================================================================================================================
 # DebuggerBase
 #=======================================================================================================================
 class DebuggerBase(debugger_unittest.DebuggerRunner):
@@ -1270,6 +1296,12 @@ class DebuggerBase(debugger_unittest.DebuggerRunner):
 
     def test_m_switch(self):
         self.check_case(WriterThreadCaseMSwitch)
+
+    def test_case_type_ext(self):
+        self.check_case(WriterThreadCaseTypeExt)
+
+    def test_case_event_ext(self):
+        self.check_case(WriterThreadCaseEventExt)
 
 
 
