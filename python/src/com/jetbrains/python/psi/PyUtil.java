@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi;
 
 import com.google.common.collect.Collections2;
@@ -290,21 +276,6 @@ public class PyUtil {
     if (!isLast) node.addChild(gen.createComma(), beforeThis);
     if (addWhitespace) node.addChild(ASTFactory.whitespace(" "), beforeThis);
   }
-
-  /**
-   * Collects superclasses of a class all the way up the inheritance chain. The order is <i>not</i> necessarily the MRO.
-   */
-  @NotNull
-  public static List<PyClass> getAllSuperClasses(@NotNull PyClass pyClass) {
-    List<PyClass> superClasses = new ArrayList<>();
-    for (PyClass ancestor : pyClass.getAncestorClasses(null)) {
-      if (!PyNames.TYPES_INSTANCE_TYPE.equals(ancestor.getQualifiedName())) {
-        superClasses.add(ancestor);
-      }
-    }
-    return superClasses;
-  }
-
 
   // TODO: move to a more proper place?
 
