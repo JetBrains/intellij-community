@@ -349,8 +349,14 @@ class CompletionServer:
                             else:
                                 self.send(MSG_INVALID_REQUEST)
                     except Exit:
-                        self.send(self.get_completions_message(None, [('Exit:', 'SystemExit', '')]))
-                        raise
+                        e = sys.exc_info()[1]
+                        msg = self.get_completions_message(None, [('Exit:', 'SystemExit', '')])
+                        try:
+                            self.send(msg)
+                        except socket.error:
+                            pass # Ok, may be closed already 
+                        
+                        raise e # raise original error.
 
                     except:
                         dbg(SERVER_NAME + ' exception occurred', ERROR)
@@ -359,7 +365,11 @@ class CompletionServer:
 
                         err = s.getvalue()
                         dbg(SERVER_NAME + ' received error: ' + str(err), ERROR)
-                        self.send(self.get_completions_message(None, [('ERROR:', '%s\nLog:%s' % (err, log.get_contents()), '')]))
+                        msg = self.get_completions_message(None, [('ERROR:', '%s\nLog:%s' % (err, log.get_contents()), '')])
+                        try:
+                            self.send(msg)
+                        except socket.error:
+                            pass # Ok, may be closed already 
 
 
                 finally:

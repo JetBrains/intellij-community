@@ -80,7 +80,7 @@ else:
     else:
         # Converting json lists to tuple
         PATHS_FROM_ECLIPSE_TO_PYTHON = [tuple(x) for x in PATHS_FROM_ECLIPSE_TO_PYTHON]
-        
+
 
 #example:
 #PATHS_FROM_ECLIPSE_TO_PYTHON = [
@@ -284,23 +284,23 @@ norm_file_to_server = _NormFile
 
 def setup_client_server_paths(paths):
     '''paths is the same format as PATHS_FROM_ECLIPSE_TO_PYTHON'''
-    
+
     global NORM_FILENAME_TO_SERVER_CONTAINER
     global NORM_FILENAME_TO_CLIENT_CONTAINER
     global PATHS_FROM_ECLIPSE_TO_PYTHON
     global norm_file_to_client
     global norm_file_to_server
-    
+
     NORM_FILENAME_TO_SERVER_CONTAINER = {}
     NORM_FILENAME_TO_CLIENT_CONTAINER = {}
     PATHS_FROM_ECLIPSE_TO_PYTHON = paths[:]
-    
+
     if not PATHS_FROM_ECLIPSE_TO_PYTHON:
         #no translation step needed (just inline the calls)
         norm_file_to_client = _AbsFile
         norm_file_to_server = _NormFile
         return
-            
+
     #Work on the client and server slashes.
     eclipse_sep = None
     python_sep = None
@@ -383,8 +383,8 @@ def setup_client_server_paths(paths):
             #only at the beginning of this method.
             NORM_FILENAME_TO_CLIENT_CONTAINER[filename] = translated
             return translated
-    
-    norm_file_to_server = _norm_file_to_server        
+
+    norm_file_to_server = _norm_file_to_server
     norm_file_to_client = _norm_file_to_client
 
 setup_client_server_paths(PATHS_FROM_ECLIPSE_TO_PYTHON)
@@ -410,8 +410,12 @@ def get_abs_path_real_path_and_base_from_frame(frame):
         if f is not None and f.startswith (('build/bdist.','build\\bdist.')):
             # files from eggs in Python 2.7 have paths like build/bdist.linux-x86_64/egg/<path-inside-egg>
             f = frame.f_globals['__file__']
-        if f is not None and f.endswith('.pyc'):
-            f = f[:-1]
+        if f is not None:
+            if f.endswith('.pyc'):
+                f = f[:-1]
+            elif f.endswith('$py.class'):
+                f = f[:-len('$py.class')] + '.py'
+
         ret = get_abs_path_real_path_and_base_from_file(f)
         # Also cache based on the frame.f_code.co_filename (if we had it inside build/bdist it can make a difference).
         NORM_PATHS_AND_BASE_CONTAINER[frame.f_code.co_filename] = ret

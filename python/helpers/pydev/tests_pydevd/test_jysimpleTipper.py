@@ -1,17 +1,13 @@
-#line to run:
-#java -classpath D:\bin\jython-2.1\jython.jar;D:\bin\eclipse331_1\plugins\org.junit_3.8.2.v200706111738\junit.jar;D:\bin\eclipse331_1\plugins\org.apache.ant_1.7.0.v200706080842\lib\ant.jar org.python.util.jython w:\org.python.pydev\pysrc\tests\test_jysimpleTipper.py
-
 import unittest
 import os
 import sys
+import pytest
 
-#this does not work (they must be in the system pythonpath)
-#sys.path.insert(1, r"D:\bin\eclipse321\plugins\org.junit_3.8.1\junit.jar" ) #some late loading jar tests
-#sys.path.insert(1, r"D:\bin\eclipse331_1\plugins\org.apache.ant_1.7.0.v200706080842\lib\ant.jar" ) #some late loading jar tests
+# Note: ant.jar and junit.jar must be in the PYTHONPATH (see jython_test_deps)
 
-IS_JYTHON = 0
+IS_JYTHON = False
 if sys.platform.find('java') != -1:
-    IS_JYTHON = 1
+    IS_JYTHON = True
     from _pydev_bundle._pydev_jy_imports_tipper import ismethod
     from _pydev_bundle._pydev_jy_imports_tipper import isclass
     from _pydev_bundle._pydev_jy_imports_tipper import dir_obj
@@ -32,6 +28,7 @@ def dbg(s):
 
 
 
+@pytest.mark.skipif(not IS_JYTHON, reason='Jython related test')
 class TestMod(unittest.TestCase):
 
     def assert_args(self, tok, args, tips):
@@ -126,10 +123,10 @@ class TestMod(unittest.TestCase):
         self.assertEquals('(string, objectArray)', tup[2])
         self.assert_(tup[1].find('[Ljava.lang.Object;') == -1)
 
-        tup = self.assert_in('getBytes'          , tip)
+        tup = self.assert_in('getBytes', tip)
         self.assertEquals(str(_pydev_jy_imports_tipper.TYPE_FUNCTION), tup[3])
-        self.assert_(tup[1].find('[B') == -1)
-        self.assert_(tup[1].find('byte[]') != -1)
+        assert '[B' not in tup[1]
+        assert 'byte[]' in tup[1]
 
         f, tip = _pydev_jy_imports_tipper.generate_tip('__builtin__.str')
         assert f.endswith('jython.jar')
@@ -140,24 +137,20 @@ class TestMod(unittest.TestCase):
         self.assert_in('get'          , tip)
 
 
+@pytest.mark.skipif(not IS_JYTHON, reason='Jython related test')
 class TestSearch(unittest.TestCase):
 
     def test_search_on_jython(self):
-        self.assertEqual('javaos.py', _pydev_jy_imports_tipper.search_definition('os')[0][0].split(os.sep)[-1])
+        assert _pydev_jy_imports_tipper.search_definition('os')[0][0].split(os.sep)[-1] in ('javaos.py', 'os.py')
         self.assertEqual(0, _pydev_jy_imports_tipper.search_definition('os')[0][1])
 
-        self.assertEqual('javaos.py', _pydev_jy_imports_tipper.search_definition('os.makedirs')[0][0].split(os.sep)[-1])
+        assert _pydev_jy_imports_tipper.search_definition('os.makedirs')[0][0].split(os.sep)[-1] in ('javaos.py', 'os.py')
         self.assertNotEqual(0, _pydev_jy_imports_tipper.search_definition('os.makedirs')[0][1])
 
         #print _pydev_jy_imports_tipper.search_definition('os.makedirs')
 
+@pytest.mark.skipif(not IS_JYTHON, reason='Jython related test')
 class TestCompl(unittest.TestCase):
-
-    def setUp(self):
-        unittest.TestCase.setUp(self)
-
-    def tearDown(self):
-        unittest.TestCase.tearDown(self)
 
     def test_getting_info_on_jython(self):
 
@@ -234,23 +227,10 @@ class TestCompl(unittest.TestCase):
         assert not isclass(met2)
 
 
-if not IS_JYTHON:
-    # Disable tests if not running under Jython
-    class TestMod(unittest.TestCase):
-        pass
-    class TestCompl(TestMod):
-        pass
-    class TestSearch(TestMod):
-        pass
+# Run for jython in command line:
 
+# On Windows:
+# c:/bin/jython2.7.0/bin/jython.exe -Dpython.path=jython_test_deps/ant.jar;jython_test_deps/junit.jar -m py.test tests/test_jysimpleTipper.py
 
-if __name__ == '__main__':
-    #Only run if jython
-    suite = unittest.makeSuite(TestCompl)
-    suite2 = unittest.makeSuite(TestMod)
-    suite3 = unittest.makeSuite(TestSearch)
-
-    unittest.TextTestRunner(verbosity=1).run(suite)
-    unittest.TextTestRunner(verbosity=1).run(suite2)
-    unittest.TextTestRunner(verbosity=1).run(suite3)
-
+# On Linux (different path separator for jars)
+# jython -Dpython.path=jython_test_deps/ant.jar:jython_test_deps/junit.jar -m py.test tests/test_jysimpleTipper.py

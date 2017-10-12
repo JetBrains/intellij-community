@@ -1,6 +1,6 @@
 import os  # @NoMove
 import sys  # @NoMove
-sys.path.insert(0, os.path.realpath(os.path.abspath('..')))
+import pytest
 
 from _pydevd_bundle import pydevd_reload
 import tempfile
@@ -24,8 +24,9 @@ class C:
         return 'unchanged'
 """
 
+IS_JYTHON = sys.platform.find('java') != -1
 
-
+@pytest.mark.skipif(IS_JYTHON, reason='CPython related test')
 class Test(unittest.TestCase):
 
 
@@ -509,8 +510,3 @@ class B(object):
         self.assertRaises(Exception, setattr, b, 'foo', 20) #__slots__ can't be updated
 
 
-
-
-if __name__ == "__main__":
-#     import sys;sys.argv = ['', 'Test.test_reload_custom_code_after_changes_in_class']
-    unittest.main()
