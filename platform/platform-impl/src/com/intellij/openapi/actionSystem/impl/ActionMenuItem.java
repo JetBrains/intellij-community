@@ -359,6 +359,10 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
           }
           else {
             setVisible(visible);
+
+            Window parent = UIUtil.getParentOfType(Window.class, ActionMenuItem.this);
+            if (parent != null)
+              parent.pack();
           }
         }
         else if (Presentation.PROP_ENABLED.equals(name)) {

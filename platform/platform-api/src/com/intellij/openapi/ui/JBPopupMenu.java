@@ -218,7 +218,8 @@ public class JBPopupMenu extends JPopupMenu {
       for (Component component : components) {
         int height = component.getPreferredSize().height;
         component.setBounds(insets.left, y, width, height);
-        y += height;
+        if (component.isVisible())
+          y += height;
       }
     }
 

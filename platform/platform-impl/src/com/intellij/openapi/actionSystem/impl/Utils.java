@@ -186,6 +186,7 @@ public class Utils{
       return;
     }
     AnAction[] children = group.getChildren(e);
+    boolean includeInvisibleActions = group instanceof IncludedInvisibleItemsActionGroup;
     for (int i = 0; i < children.length; i++) {
       AnAction child = children[i];
       if (child == null) {
@@ -202,7 +203,7 @@ public class Utils{
         if (!doUpdate(isInModalContext, child, e1, presentation)) continue;
       }
 
-      if (!presentation.isVisible() || (!presentation.isEnabled() && hideDisabled)) { // don't create invisible items in the menu
+      if (!includeInvisibleActions && !presentation.isVisible() || !presentation.isEnabled() && hideDisabled) { // don't create invisible items in the menu
         continue;
       }
       if (child instanceof ActionGroup) {
@@ -228,7 +229,12 @@ public class Utils{
         }
       }
       else if (child instanceof Separator) {
-        if (!StringUtil.isEmpty(((Separator)child).getText()) || (!list.isEmpty() && !(list.get(list.size() - 1) instanceof Separator))) {
+        if (!StringUtil.isEmpty(((Separator) child).getText()) ||
+          !list.stream()
+            .filter((it) -> presentationFactory.getPresentation(it).isVisible())
+            .reduce((a, b) -> b)
+            .map((it) -> it instanceof Separator)
+            .orElse(true)) {
           list.add(child);
         }
       }
