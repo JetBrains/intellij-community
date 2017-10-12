@@ -36,7 +36,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.nio.charset.Charset;
-import java.nio.charset.UnsupportedCharsetException;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -326,37 +325,14 @@ public class EnvironmentUtil {
     return env;
   }
 
-  private static boolean checkIfLocaleAvailable(String candidateateLanguageTerritory, String candidateCharset) {
-    try {
-      ProcessBuilder builder = new ProcessBuilder("locale", "-a");
-      Process process = builder.start();
-      StreamGobbler gobbler = new StreamGobbler(process.getInputStream());
-      waitAndTerminateAfter(process, SHELL_ENV_READING_TIMEOUT);
-      gobbler.stop();
-      String[] lines = gobbler.getText().split("\n");
-      for (String line : lines) {
-        if (line.matches(LOCALE_PATTERN)) {
-          String[] languageTerritoryAndCharset = line.split("\\.");
-          String languageTerritory = languageTerritoryAndCharset[0];
-          Charset charset;
-          try {
-            charset = Charset.forName(languageTerritoryAndCharset[1]);
-          }
-          catch (UnsupportedCharsetException ignored) {
-            continue;
-          }
-
-          if (StringUtil.equals(languageTerritory, candidateateLanguageTerritory) &&
-              StringUtil.equals(charset.name(), candidateCharset)) {
-            return true;
-          }
+  private static boolean checkIfLocaleAvailable(String candidateLanguageTerritory) {
+      Locale[] available = Locale.getAvailableLocales();
+      for (Locale l : available) {
+        if (StringUtil.equals(l.toString(), candidateLanguageTerritory)) {
+          return true;
         }
       }
-    }
-    catch (Throwable e) {
-      LOG.error(e);
-    }
-    return false;
+      return false;
   }
 
   @NotNull
@@ -368,7 +344,7 @@ public class EnvironmentUtil {
     String languageTerritory = "en_US";
     if (!language.isEmpty() && !country.isEmpty()) {
       String languageTerritoryFromLocale = language + '_' + country;
-      if (checkIfLocaleAvailable(languageTerritoryFromLocale, charset.name())) {
+      if (checkIfLocaleAvailable(languageTerritoryFromLocale)) {
         languageTerritory = languageTerritoryFromLocale ;
       }
     }
