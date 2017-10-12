@@ -97,7 +97,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   private XStandaloneVariablesView mySplitView;
   private ActionCallback myInitialized = new ActionCallback();
-  private boolean isShowVars = true;
+  private boolean isShowVars;
 
   /**
    * @param testMode this console will be used to display test output and should support TC messages
@@ -105,7 +105,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   public PythonConsoleView(final Project project, final String title, final Sdk sdk,  final boolean testMode) {
     super(project, title, PythonLanguage.getInstance());
     myTestMode = testMode;
-
+    isShowVars = PyConsoleOptions.getInstance(project).isShowVariableByDefault();
     getVirtualFile().putUserData(LanguageLevel.KEY, PythonSdkType.getLanguageLevelForSdk(sdk));
     // Mark editor as console one, to prevent autopopup completion
     getConsoleEditor().putUserData(PythonConsoleAutopopupBlockingHandler.REPL_KEY, new Object());
