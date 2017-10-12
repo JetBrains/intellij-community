@@ -46,7 +46,7 @@ public class Runner {
     }
   }
 
-  private static void initLogger() {
+  public static void initLogger() {
     String logDirectory = Utils.findDirectory(1_000_000L);
     logPath = new File(logDirectory, "idea_updater.log").getAbsolutePath();
 
