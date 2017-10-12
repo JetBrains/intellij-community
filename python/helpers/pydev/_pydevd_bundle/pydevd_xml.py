@@ -31,100 +31,102 @@ class ExceptionOnEvaluate:
 
 
 _IS_JYTHON = sys.platform.startswith("java")
-if not _IS_JYTHON:
-    _default_type_map = [
-        # None means that it should not be treated as a compound variable
 
-        # isintance does not accept a tuple on some versions of python, so, we must declare it expanded
-        (type(None), None,),
-        (int, None),
-        (float, None),
-        (complex, None),
-        (str, None),
-        (tuple, pydevd_resolver.tupleResolver),
-        (list, pydevd_resolver.tupleResolver),
-        (dict, pydevd_resolver.dictResolver),
-    ]
-    try:
-        _default_type_map.append((long, None))  # @UndefinedVariable
-    except:
-        pass  # not available on all python versions
 
-    try:
-        _default_type_map.append((unicode, None))  # @UndefinedVariable
-    except:
-        pass  # not available on all python versions
+def _create_default_type_map():
+    if not _IS_JYTHON:
+        default_type_map = [
+            # None means that it should not be treated as a compound variable
 
-    try:
-        _default_type_map.append((set, pydevd_resolver.setResolver))
-    except:
-        pass  # not available on all python versions
+            # isintance does not accept a tuple on some versions of python, so, we must declare it expanded
+            (type(None), None,),
+            (int, None),
+            (float, None),
+            (complex, None),
+            (str, None),
+            (tuple, pydevd_resolver.tupleResolver),
+            (list, pydevd_resolver.tupleResolver),
+            (dict, pydevd_resolver.dictResolver),
+        ]
+        try:
+            default_type_map.append((long, None))  # @UndefinedVariable
+        except:
+            pass  # not available on all python versions
 
-    try:
-        _default_type_map.append((frozenset, pydevd_resolver.setResolver))
-    except:
-        pass  # not available on all python versions
+        try:
+            default_type_map.append((unicode, None))  # @UndefinedVariable
+        except:
+            pass  # not available on all python versions
 
-    try:
-        from django.utils.datastructures import MultiValueDict
+        try:
+            default_type_map.append((set, pydevd_resolver.setResolver))
+        except:
+            pass  # not available on all python versions
 
-        _default_type_map.insert(0, (MultiValueDict, pydevd_resolver.multiValueDictResolver))
-        # we should put it before dict
-    except:
-        pass  # django may not be installed
+        try:
+            default_type_map.append((frozenset, pydevd_resolver.setResolver))
+        except:
+            pass  # not available on all python versions
 
-    try:
-        from django.forms import BaseForm
+        try:
+            from django.utils.datastructures import MultiValueDict
+            default_type_map.insert(0, (MultiValueDict, pydevd_resolver.multiValueDictResolver))
+            # we should put it before dict
+        except:
+            pass  # django may not be installed
 
-        _default_type_map.insert(0, (BaseForm, pydevd_resolver.djangoFormResolver))
-        # we should put it before instance resolver
-    except:
-        pass  # django may not be installed
+        try:
+            from django.forms import BaseForm
+            default_type_map.insert(0, (BaseForm, pydevd_resolver.djangoFormResolver))
+            # we should put it before instance resolver
+        except:
+            pass  # django may not be installed
 
-    try:
-        from collections import deque
+        try:
+            from collections import deque
+            default_type_map.append((deque, pydevd_resolver.dequeResolver))
+        except:
+            pass
 
-        _default_type_map.append((deque, pydevd_resolver.dequeResolver))
-    except:
-        pass
+        if frame_type is not None:
+            default_type_map.append((frame_type, pydevd_resolver.frameResolver))
 
-    if frame_type is not None:
-        _default_type_map.append((frame_type, pydevd_resolver.frameResolver))
+    else:
+        from org.python import core  # @UnresolvedImport
+        default_type_map = [
+            (core.PyNone, None),
+            (core.PyInteger, None),
+            (core.PyLong, None),
+            (core.PyFloat, None),
+            (core.PyComplex, None),
+            (core.PyString, None),
+            (core.PyTuple, pydevd_resolver.tupleResolver),
+            (core.PyList, pydevd_resolver.tupleResolver),
+            (core.PyDictionary, pydevd_resolver.dictResolver),
+            (core.PyStringMap, pydevd_resolver.dictResolver),
+        ]
+        if hasattr(core, 'PyJavaInstance'):
+            # Jython 2.5b3 removed it.
+            default_type_map.append((core.PyJavaInstance, pydevd_resolver.instanceResolver))
 
-else:
-    from org.python import core  # @UnresolvedImport
-
-    _default_type_map = [
-        (core.PyNone, None),
-        (core.PyInteger, None),
-        (core.PyLong, None),
-        (core.PyFloat, None),
-        (core.PyComplex, None),
-        (core.PyString, None),
-        (core.PyTuple, pydevd_resolver.tupleResolver),
-        (core.PyList, pydevd_resolver.tupleResolver),
-        (core.PyDictionary, pydevd_resolver.dictResolver),
-        (core.PyStringMap, pydevd_resolver.dictResolver),
-    ]
-    if hasattr(core, 'PyJavaInstance'):
-        # Jython 2.5b3 removed it.
-        _default_type_map.append((core.PyJavaInstance, pydevd_resolver.instanceResolver))
+    return default_type_map
 
 
 class TypeResolveHandler(object):
-    __instance = None
-
     NO_PROVIDER = []  # Sentinel value (any mutable object to be used as a constant would be valid).
 
     def __init__(self):
-        self.default_type_map = _default_type_map
-        self.resolve_providers = pydevd_extension_utils.extensions_of_type(TypeResolveProvider)
-        self.str_providers = pydevd_extension_utils.extensions_of_type(StrPresentationProvider)
-
         # Note: don't initialize with the types we already know about so that the extensions can override
         # the default resolvers that are already available if they want.
         self._type_to_resolver_cache = {}
         self._type_to_str_provider_cache = {}
+        self._initialized = False
+
+    def _initialize(self):
+        self._default_type_map = _create_default_type_map()
+        self._resolve_providers = pydevd_extension_utils.extensions_of_type(TypeResolveProvider)
+        self._str_providers = pydevd_extension_utils.extensions_of_type(StrPresentationProvider)
+        self._initialized = True
 
     def get_type(self, o):
         try:
@@ -147,14 +149,17 @@ class TypeResolveHandler(object):
         if resolver is not None:
             return type_object, type_name, resolver
 
+        if not self._initialized:
+            self._initialize()
+
         try:
-            for resolver in self.resolve_providers:
+            for resolver in self._resolve_providers:
                 if resolver.can_provide(type_object, type_name):
                     # Cache it
                     self._type_to_resolver_cache[type_object] = resolver
                     return type_object, type_name, resolver
 
-            for t in self.default_type_map:
+            for t in self._default_type_map:
                 if isinstance(o, t[0]):
                     # Cache it
                     resolver = t[1]
@@ -189,7 +194,10 @@ class TypeResolveHandler(object):
         if provider is not None:
             return provider
 
-        for provider in self.str_providers:
+        if not self._initialized:
+            self._initialize()
+
+        for provider in self._str_providers:
             if provider.can_provide(type_object, type_name):
                 self._type_to_str_provider_cache[type_object] = provider
                 return provider.get_str(o)

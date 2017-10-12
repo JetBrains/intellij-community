@@ -9,8 +9,11 @@ To implement your own extension:
 and nothing else.
 Preamble: 
 ```python
-import pkgutil
-__path__ = pkgutil.extend_path(__path__, __name__)
+try:
+    __import__('pkg_resources').declare_namespace(__name__)
+except ImportError:
+    import pkgutil
+    __path__ = pkgutil.extend_path(__path__, __name__)
 ```
 4. Your plugin name inside the extensions folder must start with `"pydevd_plugin"`
 5. Implement one or more of the abstract base classes defined in `_pydevd_bundle.pydevd_extension_api`. This can be done
