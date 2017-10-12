@@ -15,11 +15,13 @@
  */
 package com.intellij.java.psi.resolve
 
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
@@ -32,7 +34,6 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.stubs.StubTreeLoader
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
-
 /**
  * @author peter
  */
@@ -62,13 +63,13 @@ class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void "test inheritance transitivity"() {
-    def lib = LocalFileSystem.getInstance().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + "/../../../lib")
-    def protoJar = lib.children.find { it.name.startsWith("protobuf") }
+    def protobufJar = IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("protobuf")
+    VirtualFile jarCopy = WriteAction.compute {
+      JarFileSystem.instance.getLocalVirtualFileFor(protobufJar).copy(this, myFixture.getTempDirFixture().findOrCreateDir("lib"), "protoJar.jar")
+    }
 
-    def jarCopy = myFixture.copyFileToProject(protoJar.path, 'lib/protoJar.jar')
-
-    PsiTestUtil.addLibrary(myModule, 'proto1', lib.path, ["/$protoJar.name!/"] as String[], [] as String[])
-    PsiTestUtil.addLibrary(myModule, 'proto2', jarCopy.parent.path, ["/$jarCopy.name!/"] as String[], [] as String[])
+    PsiTestUtil.addProjectLibrary(myModule, 'proto1', [protobufJar], [])
+    PsiTestUtil.addProjectLibrary(myModule, 'proto2', [JarFileSystem.instance.getJarRootForLocalFile(jarCopy)], [])
 
     def scope = GlobalSearchScope.allScope(project)
 
