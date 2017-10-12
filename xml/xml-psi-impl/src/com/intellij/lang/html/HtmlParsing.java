@@ -84,7 +84,12 @@ public class HtmlParsing {
         xmlText = startText(xmlText);
         parseReference();
       }
-      else if (tt == XmlTokenType.XML_REAL_WHITE_SPACE || tt == XmlTokenType.XML_DATA_CHARACTERS) {
+      else if (tt == XmlTokenType.XML_REAL_WHITE_SPACE) {
+        error = flushError(error);
+        xmlText = terminateText(xmlText);
+        advance();
+      }
+      else if (tt == XmlTokenType.XML_DATA_CHARACTERS) {
         error = flushError(error);
         xmlText = startText(xmlText);
         advance();
@@ -283,6 +288,9 @@ public class HtmlParsing {
           error(XmlErrorMessages.message("xml.parsing.closing.tag.is.not.done"));
         }
         if (hasTags()) doneTag(myTagMarkersStack.peek());
+      } else if (token() == XmlTokenType.XML_REAL_WHITE_SPACE && !hasTags()) {
+        xmlText = terminateText(xmlText);
+        advance();
       } else {
         xmlText = startText(xmlText);
         advance();
