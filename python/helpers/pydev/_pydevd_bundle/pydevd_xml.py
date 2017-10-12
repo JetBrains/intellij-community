@@ -235,14 +235,7 @@ def should_evaluate_full_value(val):
     return not LOAD_VALUES_ASYNC or (is_builtin(type(val)) and not isinstance(val, (list, tuple, dict)))
 
 
-def return_values_from_dict_to_xml(return_dict, eval_full_val=True):
-    res = ""
-    for name, val in dict_iter_items(return_dict):
-        res += var_to_xml(val, name, additionalInXml=' isRetVal="True"', evaluate_full_value=eval_full_val)
-    return res
-
-
-def frame_vars_to_xml(frame_f_locals, hidden_ns=None, dbg=None, thread_id=None, frame_id=None):
+def frame_vars_to_xml(frame_f_locals, hidden_ns=None):
     """ dumps frame variables to XML
     <var name="var_name" scope="local" type="type" value="value"/>
     """
@@ -250,9 +243,11 @@ def frame_vars_to_xml(frame_f_locals, hidden_ns=None, dbg=None, thread_id=None, 
 
     keys = dict_keys(frame_f_locals)
     if hasattr(keys, 'sort'):
-        keys.sort() #Python 3.0 does not have it
+        keys.sort()  # Python 3.0 does not have it
     else:
-        keys = sorted(keys) #Jython 2.1 does not have it
+        keys = sorted(keys)  # Jython 2.1 does not have it
+
+    return_values_xml = ''
 
     for k in keys:
         try:
@@ -260,23 +255,31 @@ def frame_vars_to_xml(frame_f_locals, hidden_ns=None, dbg=None, thread_id=None, 
             eval_full_val = should_evaluate_full_value(v)
 
             if k == RETURN_VALUES_DICT:
-                xml += return_values_from_dict_to_xml(v, eval_full_val=eval_full_val)
+                for name, val in dict_iter_items(v):
+                    return_values_xml += var_to_xml(val, name, additional_in_xml=' isRetVal="True"')
+
             else:
                 if hidden_ns is not None and k in hidden_ns:
-                    xml += var_to_xml(v, str(k), additionalInXml=' isIPythonHidden="True"', evaluate_full_value=eval_full_val)
+                    xml += var_to_xml(v, str(k), additional_in_xml=' isIPythonHidden="True"',
+                                      evaluate_full_value=eval_full_val)
                 else:
                     xml += var_to_xml(v, str(k), evaluate_full_value=eval_full_val)
         except Exception:
             traceback.print_exc()
             pydev_log.error("Unexpected error, recovered safely.\n")
 
-    return xml
+    # Show return values as the first entry.
+    return return_values_xml + xml
 
 
-def var_to_xml(val, name, doTrim=True, additionalInXml='', evaluate_full_value=True):
+def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value=True):
     """ single variable or dictionary to xml representation """
 
-    is_exception_on_eval = isinstance(val, ExceptionOnEvaluate)
+    try:
+        # This should be faster than isinstance (but we have to protect against not having a '__class__' attribute).
+        is_exception_on_eval = val.__class__ == ExceptionOnEvaluate
+    except:
+        is_exception_on_eval = False
 
     if is_exception_on_eval:
         v = val.result
@@ -285,19 +288,18 @@ def var_to_xml(val, name, doTrim=True, additionalInXml='', evaluate_full_value=T
 
     _type, typeName, resolver = get_type(v)
     type_qualifier = getattr(_type, "__module__", "")
-
     if not evaluate_full_value:
         value = DEFAULT_VALUE
     else:
         try:
-            str_from_provider = TypeResolveHandler.instance().str_from_providers(v, _type, typeName)
+            str_from_provider = _str_from_providers(v, _type, typeName)
             if str_from_provider is not None:
                 value = str_from_provider
             elif hasattr(v, '__class__'):
                 if v.__class__ == frame_type:
                     value = pydevd_resolver.frameResolver.get_frame_name(v)
 
-                elif v.__class__ in (list, tuple, dict):
+                elif v.__class__ in (list, tuple):
                     if len(v) > 300:
                         value = '%s: %s' % (str(v.__class__), '<Too big to print. Len: %s>' % (len(v),))
                     else:
@@ -308,7 +310,7 @@ def var_to_xml(val, name, doTrim=True, additionalInXml='', evaluate_full_value=T
                         if cName.find('.') != -1:
                             cName = cName.split('.')[-1]
 
-                        elif cName.find("'") != -1: #does not have '.' (could be something like <type 'int'>)
+                        elif cName.find("'") != -1:  # does not have '.' (could be something like <type 'int'>)
                             cName = cName[cName.index("'") + 1:]
 
                         if cName.endswith("'>"):
@@ -316,10 +318,7 @@ def var_to_xml(val, name, doTrim=True, additionalInXml='', evaluate_full_value=T
                     except:
                         cName = str(v.__class__)
 
-                    if resolver is not None and getattr(resolver,'use_value_repr_instead_of_str', False):
-                        value = '%s: %r' % (cName, v)
-                    else:
-                        value = '%s: %s' % (cName, v)
+                    value = '%s: %s' % (cName, v)
             else:
                 value = str(v)
         except:
@@ -329,45 +328,45 @@ def var_to_xml(val, name, doTrim=True, additionalInXml='', evaluate_full_value=T
                 value = 'Unable to get repr for %s' % v.__class__
 
     try:
-        name = quote(name, '/>_= ') #TODO: Fix PY-5834 without using quote
+        name = quote(name, '/>_= ')  # TODO: Fix PY-5834 without using quote
     except:
         pass
 
     xml = '<var name="%s" type="%s" ' % (make_valid_xml_value(name), make_valid_xml_value(typeName))
 
     if type_qualifier:
-        xmlQualifier = 'qualifier="%s"' % make_valid_xml_value(type_qualifier)
+        xml_qualifier = 'qualifier="%s"' % make_valid_xml_value(type_qualifier)
     else:
-        xmlQualifier = ''
+        xml_qualifier = ''
 
     if value:
-        #cannot be too big... communication may not handle it.
+        # cannot be too big... communication may not handle it.
         if len(value) > MAXIMUM_VARIABLE_REPRESENTATION_SIZE and doTrim:
             value = value[0:MAXIMUM_VARIABLE_REPRESENTATION_SIZE]
             value += '...'
 
-        #fix to work with unicode values
+        # fix to work with unicode values
         try:
             if not IS_PY3K:
-                if isinstance(value, unicode):
+                if value.__class__ == unicode:  # @UndefinedVariable
                     value = value.encode('utf-8')
             else:
-                if isinstance(value, bytes):
+                if value.__class__ == bytes:
                     value = value.encode('utf-8')
-        except TypeError: #in java, unicode is a function
+        except TypeError:  # in java, unicode is a function
             pass
 
-        xmlValue = ' value="%s"' % (make_valid_xml_value(quote(value, '/>_= ')))
+        xml_value = ' value="%s"' % (make_valid_xml_value(quote(value, '/>_= ')))
     else:
-        xmlValue = ''
+        xml_value = ''
 
     if is_exception_on_eval:
-        xmlCont = ' isErrorOnEval="True"'
+        xml_container = ' isErrorOnEval="True"'
     else:
         if resolver is not None:
-            xmlCont = ' isContainer="True"'
+            xml_container = ' isContainer="True"'
         else:
-            xmlCont = ''
+            xml_container = ''
 
-    return ''.join((xml, xmlQualifier, xmlValue, xmlCont, additionalInXml, ' />\n'))
+    return ''.join((xml, xml_qualifier, xml_value, xml_container, additional_in_xml, ' />\n'))
 
