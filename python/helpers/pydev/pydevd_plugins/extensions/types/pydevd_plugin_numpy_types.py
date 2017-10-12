@@ -1,10 +1,13 @@
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider
 from _pydevd_bundle.pydevd_resolver import defaultResolver, MAX_ITEMS_TO_HANDLE, TOO_LARGE_ATTR, TOO_LARGE_MSG
 from .helpers import find_mod_attr
-#=======================================================================================================================
+
+
+# =======================================================================================================================
 # NdArrayResolver
-#=======================================================================================================================
+# =======================================================================================================================
 class NdArrayResolver: pass
+
 
 class NdArrayItemsContainer: pass
 
@@ -17,7 +20,6 @@ class NDArrayTypeResolveProvider(object):
     '''
        This resolves a numpy ndarray returning some metadata about the NDArray
    '''
-    use_value_repr_instead_of_str = False
 
     def is_numeric(self, obj):
         if not hasattr(obj, 'dtype'):
@@ -75,6 +77,8 @@ class NDArrayTypeResolveProvider(object):
         ret['[0:%s] ' % (len(obj))] = list(obj[0:MAX_ITEMS_TO_HANDLE])
         return ret
 
+
 import sys
+
 if not sys.platform.startswith("java"):
     TypeResolveProvider.register(NDArrayTypeResolveProvider)
