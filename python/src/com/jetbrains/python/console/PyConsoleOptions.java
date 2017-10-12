@@ -55,6 +55,14 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     myState.myShowDebugConsoleByDefault = showDebugConsoleByDefault;
   }
 
+  public boolean isShowVariableByDefault() {
+    return myState.myShowVariablesByDefault;
+  }
+
+  public void setShowVariablesByDefault(boolean showVariableByDefault) {
+    myState.myShowVariablesByDefault = showVariableByDefault;
+  }
+
   public boolean isIpythonEnabled(){
     return myState.myIpythonEnabled;
   }
@@ -75,6 +83,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
   @Override
   public void loadState(State state) {
     myState.myShowDebugConsoleByDefault = state.myShowDebugConsoleByDefault;
+    myState.myShowVariablesByDefault = state.myShowVariablesByDefault;
     myState.myPythonConsoleState = state.myPythonConsoleState;
     myState.myIpythonEnabled = state.myIpythonEnabled;
   }
@@ -83,6 +92,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     public PyConsoleSettings myPythonConsoleState = new PyConsoleSettings();
 
     public boolean myShowDebugConsoleByDefault = false;
+    public boolean myShowVariablesByDefault = true;
     public boolean myIpythonEnabled = true;
   }
 
