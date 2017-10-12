@@ -13,12 +13,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.DomTarget;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.util.ExtensionCandidate;
@@ -54,6 +56,13 @@ public class OrderReferencesContributor extends PsiReferenceContributor {
           if (orderValue == null) {
             return PsiReference.EMPTY_ARRAY;
           }
+
+          try {
+            LoadingOrder.readOrder(orderValue);
+          } catch (AssertionError ignore) {
+            return new PsiReference[]{new InvalidOrderPsiReference(element)};
+          }
+
           ExtensionPoint extensionPoint = extension.getExtensionPoint();
           if (extensionPoint == null) {
             return PsiReference.EMPTY_ARRAY;
@@ -104,45 +113,48 @@ public class OrderReferencesContributor extends PsiReferenceContributor {
           int processedLength = 0;
           for (int i = 0; i < parts.length; i++) {
             String part = parts[i];
-            String referencedId = getReferencedIdFromOrderPart(part.trim());
-            int currentProcessedLength = processedLength;
-            result[i] = new OrderPsiReferenceBase(element, extensionPoint.getEffectiveName()) {
-              @Nullable
-              @Override
-              public PsiElement resolve() {
-                if (referencedId == null) {
-                  return null;
+            String trimmedPart = part.trim();
+            if (!LoadingOrder.FIRST_STR.equalsIgnoreCase(trimmedPart) && !LoadingOrder.LAST_STR.equalsIgnoreCase(trimmedPart)) {
+              String referencedId = getReferencedIdFromOrderPart(trimmedPart);
+              int currentProcessedLength = processedLength;
+              result[i] = new OrderPsiReferenceBase(element, extensionPoint.getEffectiveName()) {
+                @Nullable
+                @Override
+                public PsiElement resolve() {
+                  if (referencedId == null) {
+                    return null;
+                  }
+
+                  Optional<Extension> targetExtensionOptional =
+                    extensionsForThisEp.stream().filter(e -> referencedId.equals(e.getId().getStringValue())).findAny();
+                  if (!targetExtensionOptional.isPresent()) {
+                    return null;
+                  }
+
+                  DomTarget targetExtensionDomTarget = DomTarget.getTarget(targetExtensionOptional.get());
+                  if (targetExtensionDomTarget == null) {
+                    // shouldn't happen
+                    return null;
+                  }
+                  return PomService.convertToPsi(targetExtensionDomTarget);
                 }
 
-                Optional<Extension> targetExtensionOptional =
-                  extensionsForThisEp.stream().filter(e -> referencedId.equals(e.getId().getStringValue())).findAny();
-                if (!targetExtensionOptional.isPresent()) {
-                  return null;
+                @NotNull
+                @Override
+                public Object[] getVariants() {
+                  return idCompletionVariants;
                 }
 
-                DomTarget targetExtensionDomTarget = DomTarget.getTarget(targetExtensionOptional.get());
-                if (targetExtensionDomTarget == null) {
-                  // shouldn't happen
-                  return null;
+                @Override
+                protected TextRange calculateDefaultRangeInElement() {
+                  int prefixLength = referencedId == null ? 0 : getOrderPrefixLength(part);
+                  assert prefixLength >= 0;
+                  int currentPartIndex = StringUtil.indexOf(orderValue, part, currentProcessedLength);
+                  int startOffset = currentPartIndex + prefixLength + 1; // +1 because of quotes surrounding attribute value
+                  return new TextRange(startOffset, startOffset + part.length() - prefixLength);
                 }
-                return PomService.convertToPsi(targetExtensionDomTarget);
-              }
-
-              @NotNull
-              @Override
-              public Object[] getVariants() {
-                return idCompletionVariants;
-              }
-
-              @Override
-              protected TextRange calculateDefaultRangeInElement() {
-                int prefixLength = referencedId == null ? 0 : getOrderPrefixLength(part);
-                assert prefixLength >= 0;
-                int currentPartIndex = StringUtil.indexOf(orderValue, part, currentProcessedLength);
-                int startOffset = currentPartIndex + prefixLength + 1; // +1 because of quotes surrounding attribute value
-                return new TextRange(startOffset, startOffset + part.length() - prefixLength);
-              }
-            };
+              };
+            }
 
             processedLength += parts[i].length() + LoadingOrder.ORDER_RULE_SEPARATOR.length(); // + comma
           }
@@ -220,6 +232,35 @@ public class OrderReferencesContributor extends PsiReferenceContributor {
     @Override
     public boolean isSoft() {
       return true;
+    }
+  }
+
+  private static class InvalidOrderPsiReference extends PsiReferenceBase<PsiElement> implements EmptyResolveMessageProvider {
+    public InvalidOrderPsiReference(@NotNull PsiElement element) {
+      super(element);
+    }
+
+    @Nullable
+    @Override
+    public PsiElement resolve() {
+      return null;
+    }
+
+    @NotNull
+    @Override
+    public Object[] getVariants() {
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    }
+
+    @Override
+    public boolean isSoft() {
+      return true;
+    }
+
+    @NotNull
+    @Override
+    public String getUnresolvedMessagePattern() {
+      return DevKitBundle.message("inspections.plugin.xml.invalid.order.attribute");
     }
   }
 }

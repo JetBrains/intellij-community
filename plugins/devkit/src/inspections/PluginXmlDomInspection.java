@@ -23,9 +23,7 @@ import com.intellij.diagnostic.ITNReporter;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginManagerMain;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -42,7 +40,6 @@ import com.intellij.util.xml.highlighting.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
 import org.jetbrains.idea.devkit.inspections.quickfix.AddWithTagFix;
@@ -269,11 +266,9 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       if (attributeValue == null || !DomUtil.hasXml(attributeValue)) continue;
 
       // IconsReferencesContributor
-      if ("icon".equals(attributeDescription.getXmlElementName())) {
+      String attributeName = attributeDescription.getXmlElementName();
+      if ("icon".equals(attributeName) || "order".equals(attributeName)) {
         annotateResolveProblems(holder, attributeValue);
-      }
-      else if ("order".equals(attributeDescription.getXmlElementName())) {
-        annotateOrderAttributeProblems(holder, attributeValue);
       }
 
       final PsiElement declaration = attributeDescription.getDeclaration(extension.getManager().getProject());
@@ -332,23 +327,6 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     if (DomUtil.hasXml(iconAttribute)) {
       annotateResolveProblems(holder, iconAttribute);
     }
-  }
-
-  private static void annotateOrderAttributeProblems(DomElementAnnotationHolder holder, GenericAttributeValue attributeValue) {
-    String orderValue = attributeValue.getStringValue();
-    if (StringUtil.isEmpty(orderValue)) {
-      return;
-    }
-
-    try {
-      LoadingOrder.readOrder(orderValue);
-    } catch (AssertionError ignore) {
-      holder.createProblem(attributeValue, HighlightSeverity.ERROR, DevKitBundle.message("inspections.plugin.xml.invalid.order.attribute"));
-      return; // no need to resolve references for invalid attribute value
-    }
-
-    // OrderReferencesContributor
-    annotateResolveProblems(holder, attributeValue);
   }
 
   private static void annotateResolveProblems(DomElementAnnotationHolder holder, GenericAttributeValue attributeValue) {
