@@ -32,12 +32,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 public class CompositeDiffPanel implements DiffViewer {
+  private final static String ourDefaultTab = "Contents";
   private final static String FICTIVE_KEY = "FICTIVE_KEY";
-  private final static int ourBadHackMagicContentsNumber = 101;
   private final RunnerLayoutUi myUi;
   private final DiscloseMultiRequest myRequest;
   private final Window myWindow;
@@ -62,7 +63,7 @@ public class CompositeDiffPanel implements DiffViewer {
 
   @Override
   public void setDiffRequest(DiffRequest request) {
-    final Map<String, DiffRequest> requestMap = myRequest.discloseRequest(request);
+    final Map<String, DiffRequest> requestMap = Collections.singletonMap(ourDefaultTab, request);
 
     HashMap<String, Pair<DiffViewer, Content>> mapCopy = new HashMap<>(myMap);
     myMap.clear();
@@ -118,11 +119,6 @@ public class CompositeDiffPanel implements DiffViewer {
     final Content[] contents = myUi.getContents();
     if (contents == null || contents.length == 0) return null;
     return contents[0].getPreferredFocusableComponent();
-  }
-
-  @Override
-  public int getContentsNumber() {
-    return ourBadHackMagicContentsNumber;
   }
 
   @Override

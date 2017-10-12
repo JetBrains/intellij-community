@@ -413,10 +413,6 @@ public class MergePanel2 implements DiffViewer {
     return getEditorPlace(1).getContentComponent();
   }
 
-  public int getContentsNumber() {
-    return 3;
-  }
-
   @Override
   public boolean acceptsType(DiffViewerType type) {
     return DiffViewerType.merge.equals(type);

@@ -25,7 +25,6 @@ import com.intellij.openapi.diff.impl.CompositeDiffPanel;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.FrameWrapper;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.config.AbstractProperty;
@@ -34,13 +33,10 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
-  public final static String ourDefaultTab = "Contents";
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.external.MultiLevelDiffTool");
   private final List<DiffTool> myTools;
 
@@ -127,16 +123,6 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
       }
     }
     return viewer;
-  }
-
-  public Map<String, DiffRequest> discloseRequest(DiffRequest request) {
-    final Map<String, DiffRequest> pairs = new TreeMap<>((o1, o2) -> {
-      if (ourDefaultTab.equals(o1)) return -1;
-      if (ourDefaultTab.equals(o2)) return 1;
-      return Comparing.compare(o1, o2);
-    });
-    pairs.put(ourDefaultTab, request);
-    return pairs;
   }
 
   @Override

@@ -489,10 +489,6 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     return myCurrentSide.getFocusableComponent();
   }
 
-  public int getContentsNumber() {
-    return 2;
-  }
-
   @Override
   public boolean acceptsType(DiffViewerType type) {
     return DiffViewerType.contents.equals(type);

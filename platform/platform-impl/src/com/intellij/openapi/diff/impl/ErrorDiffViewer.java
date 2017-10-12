@@ -120,11 +120,6 @@ public class ErrorDiffViewer implements DiffViewer {
   }
 
   @Override
-  public int getContentsNumber() {
-    return 0;
-  }
-
-  @Override
   public boolean acceptsType(DiffViewerType type) {
     return DiffViewerType.empty.equals(type);
   }
