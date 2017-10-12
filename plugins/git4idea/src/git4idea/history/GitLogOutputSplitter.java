@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Consumer;
+import git4idea.GitFormatException;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitLineHandlerListener;
 import git4idea.i18n.GitBundle;
@@ -31,16 +32,12 @@ import org.jetbrains.annotations.Nullable;
  * and feeds them to the consumer. It does not store output in order to save memory.
  */
 class GitLogOutputSplitter implements GitLineHandlerListener {
-  private static final int OUTPUT_CAPACITY_THRESHOLD = 5_000_000;
   @NotNull private final GitLineHandler myHandler;
   @NotNull private final GitLogParser myParser;
   @NotNull private final Consumer<GitLogRecord> myRecordConsumer;
 
-  @NotNull private final StringBuilder myOutput = new StringBuilder();
   @NotNull private final StringBuilder myErrors = new StringBuilder();
   @Nullable private VcsException myException = null;
-
-  private boolean myIsInsideBody = true;
 
   public GitLogOutputSplitter(@NotNull GitLineHandler handler,
                               @NotNull GitLogParser parser,
@@ -68,52 +65,18 @@ class GitLogOutputSplitter implements GitLineHandlerListener {
   }
 
   private void processOutputLine(@NotNull String line) {
-    // format of the record is <RECORD_START><BODY><RECORD_END><CHANGES>
-    // then next record goes
-    // (rather inconveniently, after RECORD_END there is a list of modified files)
-    // so here I'm trying to find text between two RECORD_START symbols
-    // that simultaneously contains a RECORD_END
-    // this helps to deal with commits like a929478f6720ac15d949117188cd6798b4a9c286 in linux repo that have RECORD_START symbols in the message
-    // wont help with RECORD_END symbols in the message however (have not seen those yet)
-
-    if (myIsInsideBody) {
-      // find body
-      int bodyEnd = line.indexOf(GitLogParser.RECORD_END);
-      if (bodyEnd >= 0) {
-        myIsInsideBody = false;
-        myOutput.append(line.substring(0, bodyEnd + GitLogParser.RECORD_END.length()));
-        processOutputLine(line.substring(bodyEnd + GitLogParser.RECORD_END.length()));
-      }
-      else {
-        myOutput.append(line).append("\n");
-      }
-    }
-    else {
-      int nextRecordStart = line.indexOf(GitLogParser.RECORD_START);
-      if (nextRecordStart >= 0) {
-        myOutput.append(line.substring(0, nextRecordStart));
-        parseOutput(myOutput);
-        myOutput.setLength(0);
-        if (myOutput.capacity() >= OUTPUT_CAPACITY_THRESHOLD) myOutput.trimToSize();
-        myIsInsideBody = true;
-        processOutputLine(line.substring(nextRecordStart));
-      }
-      else {
-        myOutput.append(line).append("\n");
-      }
-    }
-  }
-
-  private void parseOutput(@NotNull StringBuilder output) {
     try {
-      GitLogRecord record = myParser.parseOneRecord(output);
-      if (record != null) {
+      for (GitLogRecord record : myParser.parseLine(line)) {
         record.setUsedHandler(myHandler);
         myRecordConsumer.consume(record);
       }
     }
     catch (ProcessCanceledException pce) {
       throw pce;
+    }
+    catch (GitFormatException e) {
+      myParser.clear();
+      myException = new VcsException("Error while parsing line " + line, e);
     }
     catch (Throwable t) {
       myException = new VcsException(t);
@@ -131,10 +94,14 @@ class GitLogOutputSplitter implements GitLineHandlerListener {
     }
     else {
       try {
-        parseOutput(myOutput);
+        GitLogRecord record = myParser.finish();
+        if (record != null) {
+          record.setUsedHandler(myHandler);
+          myRecordConsumer.consume(record);
+        }
       }
-      catch (Exception e) {
-        myException = new VcsException(e);
+      catch (Throwable t) {
+        myException = new VcsException(t);
       }
     }
   }
