@@ -30,4 +30,8 @@ class UIdentifier(
         get() = psi?.text ?: "<error>"
     
     override fun asLogString() = log("Identifier ($name)")
+
+    override val sourcePsi: PsiElement? = psi
+
+    override val javaPsi: PsiElement? = null
 }
