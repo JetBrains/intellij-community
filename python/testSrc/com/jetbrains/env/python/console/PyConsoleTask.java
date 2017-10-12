@@ -45,10 +45,7 @@ import org.junit.Assert;
 
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.*;
 
 /**
  * @author traff
@@ -113,8 +110,8 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   /**
    * Disposes Python console and waits for Python console server thread to die.
    */
-  private void disposeConsole() throws InterruptedException, ExecutionException {
-    disposeConsoleAsync().get();
+  private void disposeConsole() throws InterruptedException, ExecutionException, TimeoutException {
+    disposeConsoleAsync().get(30L, TimeUnit.SECONDS);
   }
 
   @NotNull
