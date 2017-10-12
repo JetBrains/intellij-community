@@ -907,6 +907,19 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-24160
+  public void testMultilineIfConditionInParenthesesHangingIndent() {
+    doTest();
+  }
+
+  public void testMultilineBinaryExpressionInsideGenerator() {
+    doTest();
+  }
+
+  public void testNotParenthesisedBinaryExpressions() {
+    doTest();
+  }
+
   public void testVariableAnnotations() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
