@@ -40,6 +40,7 @@ import com.intellij.testGuiFramework.util.Key
 import com.intellij.testGuiFramework.util.Shortcut
 import com.intellij.ui.CheckboxTree
 import com.intellij.ui.HyperlinkLabel
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import org.fest.swing.exception.ActionFailedException
 import org.fest.swing.exception.ComponentLookupException
@@ -129,7 +130,11 @@ open class GuiTestCase {
    * @needToKeepDialog is true if no need to wait when dialog is closed
    * @timeout time in seconds to find dialog in GUI hierarchy.
    */
-  fun dialog(title: String? = null, ignoreCaseTitle: Boolean = false, timeout: Long = defaultTimeout, needToKeepDialog: Boolean = false, func: JDialogFixture.() -> Unit) {
+  fun dialog(title: String? = null,
+             ignoreCaseTitle: Boolean = false,
+             timeout: Long = defaultTimeout,
+             needToKeepDialog: Boolean = false,
+             func: JDialogFixture.() -> Unit) {
     val dialog = dialog(title, ignoreCaseTitle, timeout)
     func(dialog)
     if (!needToKeepDialog) dialog.waitTillGone()
@@ -503,6 +508,22 @@ open class GuiTestCase {
     if (target() is Container) func(MessagesFixture.findByTitle(guiTestRule.robot(), target() as Container, title, timeout.toFestTimeout()))
     else throw UnableToFindComponent("Message")
   }
+
+  /**
+   * Finds a JBLabel component in hierarchy of context component by a label name and returns fixture for it.
+   *
+   * @timeout in seconds to find JBLabel component
+   * @throws ComponentLookupException if component has not been found or timeout exceeded
+   */
+  fun <S, C : Component> ComponentFixture<S, C>.label(labelName: String, timeout: Long = defaultTimeout): JLabelFixture =
+    if (target() is Container) {
+      val jbLabel = waitUntilFound(
+        guiTestRule.robot(), target() as Container,
+        typeMatcher(JBLabel::class.java) { it.isShowing && it.text == labelName },
+        timeout.toFestTimeout())
+      JLabelFixture(guiTestRule.robot(), jbLabel)
+    }
+    else throw UnableToFindComponent("JBLabel")
 
   @Suppress("FunctionName")
   private fun <S, C : Component> ComponentFixture<S, C>.UnableToFindComponent(component: String): ComponentLookupException {
