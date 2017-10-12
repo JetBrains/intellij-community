@@ -83,7 +83,8 @@ class DebuggerEventHandler(_with_metaclass(abc.ABCMeta)):
     def on_debugger_initialized(self, **kwargs):
         """
         This method invoked after all debugger modules are loaded. Useful for importing and/or patching debugger
-        modules at a safe time :param kwargs: This is intended to be flexible dict passed from the debugger.
+        modules at a safe time
+        :param kwargs: This is intended to be flexible dict passed from the debugger.
         Currently passes the debugger version
         """
         pass
