@@ -258,7 +258,7 @@ public class PlatformTestUtil {
     promise.processed(ignore -> complete.set(true));
     T result = null;
     long start = System.currentTimeMillis();
-    while (!complete.get()) {
+    do {
       UIUtil.dispatchAllInvocationEvents();
       try {
         result = promise.blockingGet(20, TimeUnit.MILLISECONDS);
@@ -269,6 +269,7 @@ public class PlatformTestUtil {
         throw new AssertionError("The promise takes too long... aborting");
       }
     }
+    while (!complete.get());
     UIUtil.dispatchAllInvocationEvents();
     return result;
   }
