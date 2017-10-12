@@ -56,8 +56,6 @@ public class ErrorDiffViewer implements DiffViewer {
       }
     };
     myToolbar.resetToolbar(addons);
-    final DiffToolbarImpl toolbar = myToolbar.getToolbar();
-    myRequest.customizeToolbar(toolbar);
     /*group.addAction(actionManager.getAction("Diff.PrevChange"));
     group.addAction(actionManager.getAction("Diff.NextChange"));*/
 

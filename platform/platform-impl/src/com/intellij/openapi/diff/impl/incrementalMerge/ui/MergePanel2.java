@@ -367,7 +367,7 @@ public class MergePanel2 implements DiffViewer {
         editorsPanel.getLabel().setText(titles[i].isEmpty() ? " " : titles[i]);
       }
       createMergeList();
-      data.customizeToolbar(myPanel.resetToolbar());
+      myPanel.resetToolbar();
       myPanel.registerToolbarActions();
       if ( data instanceof MergeRequestImpl && myBuilder != null){
         Convertor<DialogWrapper, Boolean> preOkHook = dialog -> {

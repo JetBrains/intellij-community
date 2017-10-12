@@ -669,7 +669,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
     setWindowTitle(myOwnerWindow, data.getWindowTitle());
     myPanel.setToolbarActions(createToolbar());
-    data.customizeToolbar(myPanel.resetToolbar());
+    myPanel.resetToolbar();
     myPanel.registerToolbarActions();
     initEditorSettings(getEditor1());
     initEditorSettings(getEditor2());

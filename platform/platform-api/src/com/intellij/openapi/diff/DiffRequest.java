@@ -16,7 +16,6 @@
 package com.intellij.openapi.diff;
 
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import org.jetbrains.annotations.NonNls;
@@ -36,7 +35,6 @@ public abstract class DiffRequest {
 
   private String myGroupKey = COMMON_DIFF_GROUP_KEY;
   @Nullable private final Project myProject;
-  private ToolbarAddons myToolbarAddons = ToolbarAddons.NOTHING;
   private Factory<JComponent> myBottomComponentFactory = null;
   private final HashSet myHints = new HashSet();
   private final Map<String, Object> myGenericData;
@@ -45,10 +43,6 @@ public abstract class DiffRequest {
   protected DiffRequest(@Nullable Project project) {
     myProject = project;
     myGenericData = new HashMap<>(2);
-  }
-
-  public void setToolbarAddons(@NotNull ToolbarAddons toolbarAddons) {
-    myToolbarAddons = toolbarAddons;
   }
 
   public String getGroupKey() {
@@ -95,13 +89,6 @@ public abstract class DiffRequest {
 
   /**
    * <B>Work in progress. Don't rely on this functionality</B><br>
-   */
-  public void customizeToolbar(DiffToolbar toolbar) {
-    myToolbarAddons.customize(toolbar);
-  }
-
-  /**
-   * <B>Work in progress. Don't rely on this functionality</B><br>
    * @return not null (possibly empty) collection of hints for diff tool.
    */
   public Collection getHints() {
@@ -136,27 +123,6 @@ public abstract class DiffRequest {
    * <B>Work in progress. Don't rely on this functionality</B><br>
    */
   public interface ToolbarAddons {
-    /**
-     * Does nothing
-     */
-    ToolbarAddons NOTHING = new ToolbarAddons() {
-      public void customize(DiffToolbar toolbar) {
-      }
-    };
-
-    /**
-     * Removes some of default action to use {@link DiffToolbar} as child of main IDEA frame.
-     * Removes actions:<p/>
-     * {@link IdeActions#ACTION_COPY}<p/>
-     * {@link IdeActions#ACTION_FIND}
-     */
-    ToolbarAddons IDE_FRAME = new ToolbarAddons() {
-      public void customize(DiffToolbar toolbar) {
-        toolbar.removeActionById(IdeActions.ACTION_COPY);
-        toolbar.removeActionById(IdeActions.ACTION_FIND);
-      }
-    };
-
     void customize(DiffToolbar toolbar);
   }
 
