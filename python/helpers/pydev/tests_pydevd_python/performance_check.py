@@ -114,7 +114,7 @@ class CheckDebuggerPerformance(debugger_unittest.DebuggerRunner):
 
     def _get_time_from_result(self, result):
         stdout = ''.join(result['stdout'])
-        match = re.search('TotalTime>>((\d|\.)+)<<', stdout)
+        match = re.search(r'TotalTime>>((\d|\.)+)<<', stdout)
         time_taken = match.group(1)
         return float(time_taken)
 

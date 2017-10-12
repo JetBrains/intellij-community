@@ -1,4 +1,4 @@
-'''
+r'''
 Full setup, used to distribute the debugger backend to PyPi.
 
 Note that this is mostly so that users can do:

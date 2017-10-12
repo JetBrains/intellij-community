@@ -1,4 +1,4 @@
-'''
+r'''
     This module provides utilities to get the absolute filenames so that we can be sure that:
         - The case of a file will match the actual file in the filesystem (otherwise breakpoints won't be hit).
         - Providing means for the user to make path conversions when doing a remote debugging session in

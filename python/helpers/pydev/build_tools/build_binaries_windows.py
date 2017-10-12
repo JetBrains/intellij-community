@@ -1,4 +1,4 @@
-'''
+r'''
 Creating the needed environments for creating the pre-compiled distribution on Windods:
 
 1. Download:
