@@ -15,9 +15,9 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.Consumer;
 import com.intellij.util.PairProcessor;
-import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -55,20 +55,20 @@ public class MatchResult {
 
   public static void iterateTree(@NotNull JsonSchemaTreeNode root,
                                  @NotNull final PairProcessor<JsonSchemaTreeNode, JsonSchemaTreeNode> parentChildConsumer) {
-    final Ref<JsonSchemaTreeNode> parentRef = new Ref<>(root);
-    JBTreeTraverser.<JsonSchemaTreeNode>from(node -> node.getChildren())
-      .withRoot(root)
-      .preOrderDfsTraversal()
-      .processEach(node -> {
-        if (!node.getChildren().isEmpty()) {
-          parentRef.set(node);
-          return true;
+    final ArrayDeque<Pair<JsonSchemaTreeNode, JsonSchemaTreeNode>> queue = new ArrayDeque<>();
+    final Consumer<JsonSchemaTreeNode> queueChildren = node -> node.getChildren().forEach(child -> queue.add(Pair.create(node, child)));
+    queueChildren.consume(root);
+    while (!queue.isEmpty()) {
+      final Pair<JsonSchemaTreeNode, JsonSchemaTreeNode> pair = queue.removeFirst();
+      final JsonSchemaTreeNode node = pair.getSecond();
+      if (node.getChildren().isEmpty()) {
+        if (!node.isNothing() && SchemaResolveState.normal.equals(node.getResolveState()) &&
+            !parentChildConsumer.process(pair.getFirst(), node)) {
+          break;
         }
-        if (node.getChildren().isEmpty() && !node.isNothing() && SchemaResolveState.normal.equals(node.getResolveState())) {
-          assert !parentRef.isNull();
-          return parentChildConsumer.process(parentRef.get(), node);
-        }
-        return true;
-      });
+      } else {
+        queueChildren.consume(node);
+      }
+    }
   }
 }
