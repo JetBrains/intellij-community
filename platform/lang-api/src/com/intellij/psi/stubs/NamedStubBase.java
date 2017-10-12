@@ -19,24 +19,26 @@ package com.intellij.psi.stubs;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
 public abstract class NamedStubBase<T extends PsiNamedElement> extends StubBase<T> implements NamedStub<T> {
-  private final StringRef myName;
+  @Nullable private final StringRef myName;
 
-  protected NamedStubBase(StubElement parent, @NotNull IStubElementType elementType, StringRef name) {
+  protected NamedStubBase(StubElement parent, @NotNull IStubElementType elementType, @Nullable StringRef name) {
     super(parent, elementType);
     myName = name;
   }
 
-  protected NamedStubBase(final StubElement parent, @NotNull IStubElementType elementType, final String name) {
+  protected NamedStubBase(final StubElement parent, @NotNull IStubElementType elementType, @Nullable String name) {
     this(parent, elementType, StringRef.fromString(name));
   }
 
   @Override
+  @Nullable
   public String getName() {
-    return myName.getString();
+    return myName != null ? myName.getString() : null;
   }
 }
