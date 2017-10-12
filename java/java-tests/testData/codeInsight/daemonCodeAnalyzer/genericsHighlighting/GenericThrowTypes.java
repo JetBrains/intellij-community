@@ -15,4 +15,10 @@ class C {
     class LocalExn extends Exception {}
     throw new RuntimeException() {};
   }
+
+  {
+    class LocalGenerics<K>  {
+      class Ex extends <error descr="Generic class may not extend 'java.lang.Throwable'">Exception</error> {}
+    }
+  }
 }

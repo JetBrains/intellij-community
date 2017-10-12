@@ -20,7 +20,6 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -31,8 +30,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Calendar;
 
 public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/genericsHighlighting";
@@ -428,7 +425,6 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testAvoidDblSubstitutionDuringErasureOfParameterTypesOfMethodSignature() { doTest8Incompatibility(false); }
   public void testUncheckedWarningWhenCastingFromCapturedWildcard() { doTest8Incompatibility(true); }
   public void testEnclosingRefInTopLevelClassExtendingInnerWhichExtendsItsOuter() { doTest8Incompatibility(true); }
-  @Bombed(day = 13, month = Calendar.OCTOBER, user = "anna")
   public void testGenericThrowTypes() { doTest5(false); }
   public void testClassInWrongPackage() { doTest6(false); }
   public void testRecursiveParamBoundsWhenSuperSubstitution() { doTest6(false); }

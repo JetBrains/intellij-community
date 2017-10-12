@@ -1241,7 +1241,7 @@ public class GenericsHighlightUtil {
     PsiElement parent = list.getParent();
     if (parent instanceof PsiClass) {
       PsiClass klass = (PsiClass)parent;
-      if (PsiUtil.typeParametersIterator(klass).hasNext() && klass.getExtendsList() == list) {
+      if (hasGenericSignature(klass) && klass.getExtendsList() == list) {
         PsiClass throwableClass = null;
         for (PsiJavaCodeReferenceElement refElement : list.getReferenceElements()) {
           PsiElement resolved = refElement.resolve();
@@ -1277,12 +1277,21 @@ public class GenericsHighlightUtil {
   }
 
   static HighlightInfo checkGenericCannotExtendException(PsiAnonymousClass anonymousClass) {
-    if (PsiUtil.typeParametersIterator(anonymousClass).hasNext() &&
+    if (hasGenericSignature(anonymousClass) &&
         InheritanceUtil.isInheritor(anonymousClass, true, CommonClassNames.JAVA_LANG_THROWABLE)) {
       String message = JavaErrorMessages.message("generic.extend.exception");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(anonymousClass.getBaseClassReference()).descriptionAndTooltip(message).create();
     }
     return null;
+  }
+
+  private static boolean hasGenericSignature(PsiClass klass) {
+    PsiClass containingClass = klass;
+    while (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass)) {
+      if (containingClass.hasTypeParameters()) return true;
+      containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class);
+    }
+    return containingClass != null && PsiUtil.typeParametersIterator(containingClass).hasNext();
   }
 
   static HighlightInfo checkEnumMustNotBeLocal(final PsiClass aClass) {
