@@ -1,0 +1,7 @@
+<form action="/your-name/" method="post">
+    {% csrf_token %}
+    {{ form }}
+    It is {% now "jS F Y H:i" %}
+    <input type="submit" value="Submit" />
+</form>
+<p> End of form</p>
