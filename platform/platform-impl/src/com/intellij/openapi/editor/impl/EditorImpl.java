@@ -558,7 +558,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private void moveCaretIntoViewIfCoveredByToolWindowBelow(VisibleAreaEvent e) {
     Rectangle oldRectangle = e.getOldRectangle();
     Rectangle newRectangle = e.getNewRectangle();
-    if (!myScrollingToCaret && oldRectangle != null && oldRectangle.height != newRectangle.height && oldRectangle.y == newRectangle.y) {
+    if (!myScrollingToCaret && 
+        oldRectangle != null && oldRectangle.height != newRectangle.height && oldRectangle.y == newRectangle.y && newRectangle.height > 0) {
       int caretY = myView.visualLineToY(myCaretModel.getVisualPosition().line);
       if (caretY < oldRectangle.getMaxY() && caretY > newRectangle.getMaxY()) {
         myScrollingToCaret = true;
