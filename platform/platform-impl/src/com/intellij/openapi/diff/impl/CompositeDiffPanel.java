@@ -127,6 +127,6 @@ public class CompositeDiffPanel implements DiffViewer {
 
   @Override
   public boolean acceptsType(DiffViewerType type) {
-    return DiffViewerType.multiLayer.equals(type) || DiffViewerType.contents.equals(type) || DiffViewerType.merge.equals(type);
+    return DiffViewerType.contents.equals(type) || DiffViewerType.merge.equals(type);
   }
 }

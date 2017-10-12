@@ -27,7 +27,6 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.config.AbstractProperty;
 import org.jetbrains.annotations.NotNull;
@@ -105,22 +104,11 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
   private CompositeDiffPanel createPanel(final DiffRequest request, final Window window, @NotNull Disposable parentDisposable) {
     final CompositeDiffPanel panel = new CompositeDiffPanel(request.getProject(), this, window, parentDisposable);
     request.getGenericData().put(PlatformDataKeys.COMPOSITE_DIFF_VIEWER.getName(), panel);
-    final List<Pair<String, DiffRequest>> layers = request.getOtherLayers();
-    if (layers != null) {
-      for (Pair<String, DiffRequest> layer : layers) {
-        layer.getSecond().getGenericData().put(PlatformDataKeys.COMPOSITE_DIFF_VIEWER.getName(), panel);
-      }
-    }
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {
         final String name = PlatformDataKeys.COMPOSITE_DIFF_VIEWER.getName();
         request.getGenericData().remove(name);
-        if (layers != null) {
-          for (Pair<String, DiffRequest> layer : layers) {
-            layer.getSecond().getGenericData().remove(name);
-          }
-        }
       }
     });
     return panel;
@@ -147,10 +135,6 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
       if (ourDefaultTab.equals(o2)) return 1;
       return Comparing.compare(o1, o2);
     });
-    final List<Pair<String, DiffRequest>> layers = request.getOtherLayers();
-    for (Pair<String, DiffRequest> layer : layers) {
-      pairs.put(layer.getFirst(), layer.getSecond());
-    }
     pairs.put(ourDefaultTab, request);
     return pairs;
   }
