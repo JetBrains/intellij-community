@@ -18,7 +18,9 @@ package com.intellij.psi.stubs;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.impl.source.StubbedSpine;
@@ -43,7 +45,7 @@ public abstract class StubProcessingHelperBase {
                                                       @NotNull Class<Psi> requiredClass) {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (psiFile == null) {
-      LOG.error("Stub index points to a file without PSI: " + file.getFileType());
+      LOG.error("Stub index points to a file without PSI: " + file.getCanonicalPath() + " (" + file.getFileType() + ")");
       onInternalError(file);
       return true;
     }
