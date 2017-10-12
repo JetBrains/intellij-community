@@ -60,6 +60,7 @@ import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiReference;
+import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
@@ -906,8 +907,8 @@ public class PlatformTestUtil {
                        ? null
                        : LoadTextUtil.getTextByBinaryPresentation(fileAfter.contentsToByteArray(false), fileAfter).toString();
 
-      if (textA != null && textB != null) {
-        Assert.assertEquals(fileAfter.getPath(), textA, textB);
+      if (textA != null && textB != null && !StringUtil.equals(textA, textB)) {
+        throw new FileComparisonFailure("Text mismatch in file " + fileBefore.getName(), textA, textB, fileAfter.getPath());
       }
       else {
         Assert.assertArrayEquals(fileAfter.getPath(), fileAfter.contentsToByteArray(), fileBefore.contentsToByteArray());
