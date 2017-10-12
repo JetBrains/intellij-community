@@ -99,7 +99,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
     throws InterruptedException, ExecutionException, InvocationTargetException {
     createLocalProcess(className);
     final XDebugSession session = getDebuggerSession().getXDebugSession();
-    TestCase.assertNotNull(session);
+    assertNotNull(session);
 
     final AtomicBoolean completed = new AtomicBoolean(false);
     final DebuggerPositionResolver positionResolver = getPositionResolver();
@@ -151,17 +151,16 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
                             @Nullable FailureReason errorReason) {
         try {
           if (error != null) {
-            TestCase.assertNotNull(errorReason);
-            TestCase.assertNotNull(chain);
+            assertNotNull(errorReason);
+            assertNotNull(chain);
             handleError(chain, error, errorReason);
           }
           else {
-            TestCase.assertNull(errorReason);
+            assertNull(errorReason);
             handleSuccess(chain, result, isResultNull);
           }
         }
         catch (Throwable t) {
-          t.printStackTrace();
           println("Exception caught: " + t + ", " + t.getMessage(), ProcessOutputTypes.SYSTEM);
         }
         finally {
@@ -196,14 +195,14 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
   }
 
   protected void handleError(@NotNull StreamChain chain, @NotNull String error, @NotNull FailureReason reason) {
-    TestCase.fail(error);
+    fail(error);
   }
 
   protected void handleSuccess(@Nullable StreamChain chain,
                                @Nullable TracingResult result,
                                boolean resultMustBeNull) {
-    TestCase.assertNotNull(chain);
-    TestCase.assertNotNull(result);
+    assertNotNull(chain);
+    assertNotNull(result);
 
     println(chain.getText(), ProcessOutputTypes.SYSTEM);
 
@@ -219,10 +218,10 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
 
   protected void handleResultValue(@Nullable Value result, boolean mustBeNull) {
     if (mustBeNull) {
-      TestCase.assertNull(result);
+      assertNull(result);
     }
     else {
-      TestCase.assertNotNull(result);
+      assertNotNull(result);
     }
   }
 
@@ -255,9 +254,9 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
   }
 
   private void printBeforeAndAfterValues(@Nullable NextAwareState before, @Nullable PrevAwareState after) {
-    TestCase.assertFalse(before == null && after == null);
+    assertFalse(before == null && after == null);
     final StreamCall call = before == null ? after.getPrevCall() : before.getNextCall();
-    TestCase.assertNotNull(call);
+    assertNotNull(call);
     println("mappings for " + call.getName(), ProcessOutputTypes.SYSTEM);
     println("  direct:", ProcessOutputTypes.SYSTEM);
     if (before != null) {
@@ -298,24 +297,24 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
     final List<ResolvedStreamCall.Intermediate> intermediates = chain.getIntermediateCalls();
     final ResolvedStreamCall.Terminator terminator = chain.getTerminator();
     if (intermediates.isEmpty()) {
-      TestCase.assertFalse(terminator.getStateBefore() instanceof PrevAwareState);
+      assertFalse(terminator.getStateBefore() instanceof PrevAwareState);
     }
 
     checkIntermediates(chain.getIntermediateCalls());
 
-    TestCase.assertEquals(terminator.getCall().getName(), terminator.getStateBefore().getNextCall().getName());
+    assertEquals(terminator.getCall().getName(), terminator.getStateBefore().getNextCall().getName());
     final PrevAwareState after = terminator.getStateAfter();
     if (after != null) {
       final StreamCall terminatorCall = after.getPrevCall();
-      TestCase.assertNotNull(terminatorCall);
-      TestCase.assertEquals(terminator.getCall().getName(), terminatorCall.getName());
+      assertNotNull(terminatorCall);
+      assertEquals(terminator.getCall().getName(), terminatorCall.getName());
     }
 
     if (!intermediates.isEmpty()) {
       final ResolvedStreamCall.Intermediate lastIntermediate = intermediates.get(intermediates.size() - 1);
       final PrevAwareState stateAfterIntermediates = lastIntermediate.getStateAfter();
-      UsefulTestCase.assertInstanceOf(stateAfterIntermediates, NextAwareState.class);
-      TestCase.assertEquals(terminator.getCall().getName(), ((NextAwareState)stateAfterIntermediates).getNextCall().getName());
+      assertInstanceOf(stateAfterIntermediates, NextAwareState.class);
+      assertEquals(terminator.getCall().getName(), ((NextAwareState)stateAfterIntermediates).getNextCall().getName());
     }
   }
 
@@ -323,11 +322,11 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
     for (int i = 0; i < intermediates.size() - 1; i++) {
       final ResolvedStreamCall.Intermediate prev = intermediates.get(i);
       final ResolvedStreamCall.Intermediate next = intermediates.get(i + 1);
-      TestCase.assertSame(prev.getStateAfter(), next.getStateBefore());
+      assertSame(prev.getStateAfter(), next.getStateBefore());
       final StreamCall prevCall = prev.getStateAfter().getPrevCall();
-      TestCase.assertNotNull(prevCall);
-      TestCase.assertEquals(prev.getCall().getName(), prevCall.getName());
-      TestCase.assertEquals(next.getCall().getName(), next.getStateBefore().getNextCall().getName());
+      assertNotNull(prevCall);
+      assertEquals(prev.getCall().getName(), prevCall.getName());
+      assertEquals(next.getCall().getName(), next.getStateBefore().getNextCall().getName());
     }
   }
 
@@ -358,8 +357,8 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
     for (final TraceElement leftElement : prev) {
       final List<TraceElement> mapToRight = toNext.apply(leftElement);
       for (final TraceElement rightElement : mapToRight) {
-        TestCase.assertTrue(next.contains(rightElement));
-        TestCase.assertTrue(toPrev.apply(rightElement).contains(leftElement));
+        assertTrue(next.contains(rightElement));
+        assertTrue(toPrev.apply(rightElement).contains(leftElement));
       }
     }
   }
