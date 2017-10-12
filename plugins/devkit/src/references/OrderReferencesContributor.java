@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.XmlPatterns;
+import com.intellij.pom.references.PomService;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -15,6 +16,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.DomTarget;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Extension;
@@ -118,19 +120,12 @@ public class OrderReferencesContributor extends PsiReferenceContributor {
                   return null;
                 }
 
-                XmlTag targetTag = targetExtensionOptional.get().getXmlTag();
-                if (targetTag != null) {
-                  XmlAttribute idAttr = targetTag.getAttribute("id");
-                  if (idAttr != null) {
-                    XmlAttributeValue idAttrValue = idAttr.getValueElement();
-                    if (idAttrValue != null) {
-                      return idAttrValue;
-                    }
-                    return idAttr;
-                  }
-                  return targetTag;
+                DomTarget targetExtensionDomTarget = DomTarget.getTarget(targetExtensionOptional.get());
+                if (targetExtensionDomTarget == null) {
+                  // shouldn't happen
+                  return null;
                 }
-                return null;
+                return PomService.convertToPsi(targetExtensionDomTarget);
               }
 
               @NotNull
