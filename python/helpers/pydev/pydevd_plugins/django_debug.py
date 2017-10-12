@@ -46,7 +46,7 @@ def add_exception_breakpoint(plugin, pydb, type, exception):
         if not hasattr(pydb, 'django_exception_break'):
             _init_plugin_breaks(pydb)
         pydb.django_exception_break[exception] = True
-        pydb.set_tracing_for_untraced_contexts_if_not_frame_eval()
+        pydb.set_tracing_for_untraced_contexts()
         return True
     return False
 
@@ -235,7 +235,7 @@ def _get_template_file_name(frame):
                             self = locals['self']
                             if self.__class__.__name__ == 'Template' and hasattr(self, 'origin') and \
                                     hasattr(self.origin, 'name'):
-                                return normcase(self.origin.name)
+                                return self.origin.name
                         back = back.f_back
                 else:
                     if hasattr(context, 'template') and hasattr(context.template, 'origin') and \
@@ -332,14 +332,17 @@ def _is_django_exception_break_context(frame):
 #=======================================================================================================================
 
 def can_not_skip(plugin, main_debugger, pydb_frame, frame):
-    return main_debugger.django_breakpoints and _is_django_render_call(frame)
-
+    if main_debugger.django_breakpoints and _is_django_render_call(frame):
+        filename = _get_template_file_name(frame)
+        django_breakpoints_for_file = main_debugger.django_breakpoints.get(filename)
+        if django_breakpoints_for_file:
+            return True
+    return False
 
 def has_exception_breaks(plugin):
     if len(plugin.main_debugger.django_exception_break) > 0:
         return True
     return False
-
 
 def has_line_breaks(plugin):
     for file, breakpoints in dict_iter_items(plugin.main_debugger.django_breakpoints):
@@ -427,7 +430,7 @@ def exception_break(plugin, main_debugger, pydb_frame, frame, args, arg):
     thread = args[3]
     exception, value, trace = arg
     if main_debugger.django_exception_break and \
-                    get_exception_name(exception) in ['VariableDoesNotExist', 'TemplateDoesNotExist', 'TemplateSyntaxError'] and \
+            get_exception_name(exception) in ['VariableDoesNotExist', 'TemplateDoesNotExist', 'TemplateSyntaxError'] and \
             just_raised(trace) and _is_django_exception_break_context(frame):
         render_frame = _find_django_render_frame(frame)
         if render_frame:

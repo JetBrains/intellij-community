@@ -10,7 +10,7 @@ class NdArrayItemsContainer: pass
 
 
 class NDArrayTypeResolveProvider(object):
-    def can_provide(self, type_object, type_name, value):
+    def can_provide(self, type_object, type_name):
         nd_array = find_mod_attr('numpy', 'ndarray')
         return nd_array is not None and issubclass(type_object, nd_array)
 

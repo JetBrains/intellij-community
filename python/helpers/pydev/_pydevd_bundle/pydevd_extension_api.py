@@ -25,7 +25,9 @@ class _AbstractResolver(_with_metaclass(abc.ABCMeta)):
         - arbitrary instance: get_dictionary could return dict with attr_name->attr and use getattr to resolve it later
     """
 
-    use_value_repr_instead_of_str = False
+    # It's mandatory for subclasses to define a boolean: use_value_repr_instead_of_str in the class
+    # which is used to define if str() or repr() should be used to get the representation of the object.
+    # use_value_repr_instead_of_str = False
 
     @abc.abstractmethod
     def resolve(self, var, attribute):
@@ -50,8 +52,9 @@ class _AbstractResolver(_with_metaclass(abc.ABCMeta)):
 
 
 class _AbstractProvider(_with_metaclass(abc.ABCMeta)):
+
     @abc.abstractmethod
-    def can_provide(self, type_object, type_name, var):
+    def can_provide(self, type_object, type_name):
         raise NotImplementedError
 
 
@@ -63,7 +66,6 @@ class TypeResolveProvider(_AbstractResolver, _AbstractProvider):
     """
         Implement this in an extension to provide a custom resolver, see _AbstractResolver
     """
-    pass
 
 
 class StrPresentationProvider(_AbstractProvider):
@@ -75,16 +77,16 @@ class StrPresentationProvider(_AbstractProvider):
     def get_str(self, val):
         raise NotImplementedError
 
+
 class DebuggerEventHandler(_with_metaclass(abc.ABCMeta)):
     """
     Implement this to receive lifecycle events from the debugger
     """
 
-    def on_debugger_initialized(self, **kwargs):
+    def on_debugger_modules_loaded(self, **kwargs):
         """
         This method invoked after all debugger modules are loaded. Useful for importing and/or patching debugger
         modules at a safe time
         :param kwargs: This is intended to be flexible dict passed from the debugger.
         Currently passes the debugger version
         """
-        pass

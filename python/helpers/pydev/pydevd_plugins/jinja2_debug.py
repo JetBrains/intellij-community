@@ -34,7 +34,7 @@ def add_exception_breakpoint(plugin, pydb, type, exception):
         if not hasattr(pydb, 'jinja2_exception_break'):
             _init_plugin_breaks(pydb)
         pydb.jinja2_exception_break[exception] = True
-        pydb.set_tracing_for_untraced_contexts_if_not_frame_eval()
+        pydb.set_tracing_for_untraced_contexts()
         return True
     return False
 
@@ -94,7 +94,7 @@ def _is_jinja2_context_call(frame):
 
 def _is_jinja2_internal_function(frame):
     return 'self' in frame.f_locals and frame.f_locals['self'].__class__.__name__ in \
-                                                     ('LoopContext', 'TemplateReference', 'Macro', 'BlockReference')
+        ('LoopContext', 'TemplateReference', 'Macro', 'BlockReference')
 
 def _find_jinja2_render_frame(frame):
     while frame is not None and not _is_jinja2_render_call(frame):
@@ -122,20 +122,13 @@ class Jinja2TemplateFrame:
         self.f_locals = self.collect_context(frame)
         self.f_trace = None
 
-    def _get_real_var_name(self, orig_name):
-        # replace leading number for local variables
-        parts = orig_name.split('_')
-        if len(parts) > 1 and parts[0].isdigit():
-            return parts[1]
-        return orig_name
-
     def collect_context(self, frame):
         res = {}
         for k, v in frame.f_locals.items():
             if not k.startswith('l_'):
                 res[k] = v
             elif v and not _is_missing(v):
-                res[self._get_real_var_name(k[2:])] = v
+                res[k[2:]] = v
         if self.back_context is not None:
             for k, v in self.back_context.items():
                 res[k] = v
@@ -331,7 +324,7 @@ def get_breakpoint(plugin, pydb, pydb_frame, frame, event, args):
     jinja2_breakpoint = None
     flag = False
     type = 'jinja2'
-    if event == 'line' and info.pydev_state != STATE_SUSPEND and \
+    if event in ('line', 'call') and info.pydev_state != STATE_SUSPEND and \
             pydb.jinja2_breakpoints and _is_jinja2_render_call(frame):
         filename = _get_jinja2_template_filename(frame)
         jinja2_breakpoints_for_file = pydb.jinja2_breakpoints.get(filename)
