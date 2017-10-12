@@ -1,16 +1,16 @@
 try:
     from urllib import quote, quote_plus, unquote_plus
 except ImportError:
-    from urllib.parse import quote, quote_plus, unquote_plus #@UnresolvedImport
+    from urllib.parse import quote, quote_plus, unquote_plus  # @UnresolvedImport
 
-
-import socket
 import os
-import threading
-import time
-from _pydev_bundle import pydev_localhost
+import socket
 import subprocess
 import sys
+import threading
+import time
+
+from _pydev_bundle import pydev_localhost
 
 IS_PY3K = sys.version_info[0] >= 3
 
@@ -48,8 +48,6 @@ CMD_SMART_STEP_INTO = 128
 CMD_EXIT = 129
 CMD_SIGNATURE_CALL_TRACE = 130
 
-
-
 CMD_SET_PY_EXCEPTION = 131
 CMD_GET_FILE_CONTENTS = 132
 CMD_SET_PROPERTY_TRACE = 133
@@ -72,14 +70,10 @@ CMD_VERSION = 501
 CMD_RETURN = 502
 CMD_ERROR = 901
 
-
-
 # Always True (because otherwise when we do have an error, it's hard to diagnose).
-# Note: set to False because we seem to be using too much memory (and subprocess uses fork which can throw an error on travis).
 SHOW_WRITES_AND_READS = True
 SHOW_OTHER_DEBUG_INFO = True
 SHOW_STDOUT = True
-
 
 try:
     from thread import start_new_thread
@@ -92,21 +86,41 @@ except:
     xrange = range
 
 
-#=======================================================================================================================
+# =======================================================================================================================
 # ReaderThread
-#=======================================================================================================================
+# =======================================================================================================================
 class ReaderThread(threading.Thread):
 
     def __init__(self, sock):
         threading.Thread.__init__(self)
+        try:
+            from queue import Queue
+        except ImportError:
+            from Queue import Queue
+
         self.setDaemon(True)
         self.sock = sock
-        self.last_received = ''
+        self._queue = Queue()
         self.all_received = []
         self._kill = False
 
+    def get_next_message(self, context_messag):
+        try:
+            msg = self._queue.get(block=True, timeout=15)
+        except:
+            raise AssertionError('No message was written in 15 seconds. Error message:\n%s' % (context_messag,))
+        else:
+            frame = sys._getframe().f_back
+            frame_info = ' --  File "%s", line %s, in %s\n' % (
+            frame.f_code.co_filename, frame.f_lineno, frame.f_code.co_name)
+            frame_info += ' --  File "%s", line %s, in %s\n' % (
+            frame.f_back.f_code.co_filename, frame.f_back.f_lineno, frame.f_back.f_code.co_name)
+            frame = None
+            sys.stdout.write('Message returned in get_next_message(): %s --  ctx: %s, returned to:\n%s\n' % (
+            msg, context_messag, frame_info))
+        return msg
+
     def run(self):
-        last_printed = None
         try:
             buf = ''
             while not self._kill:
@@ -118,14 +132,14 @@ class ReaderThread(threading.Thread):
 
                 while '\n' in buf:
                     # Print each part...
-                    i = buf.index('\n')+1
-                    self.last_received = buf[:i]
+                    i = buf.index('\n') + 1
+                    last_received = buf[:i]
                     buf = buf[i:]
 
                     if SHOW_WRITES_AND_READS:
-                        if last_printed != self.last_received.strip():
-                            last_printed = self.last_received.strip()
-                            print('Test Reader Thread Received %s' % last_printed)
+                        print('Test Reader Thread Received %s' % (last_received,))
+
+                    self._queue.put(last_received)
         except:
             pass  # ok, finished it
         finally:
@@ -223,13 +237,13 @@ class DebuggerRunner(object):
 
             start_new_thread(read, (process.stdout, stdout))
 
-
             if SHOW_OTHER_DEBUG_INFO:
                 print('Both processes started')
 
             # polls can fail (because the process may finish and the thread still not -- so, we give it some more chances to
             # finish successfully).
-            check = 0
+            initial_time = time.time()
+            shown_intermediate = False
             while True:
                 if process.poll() is not None:
                     break
@@ -240,18 +254,21 @@ class DebuggerRunner(object):
                                 process.kill()
                                 continue
 
-                            check += 1
-                            if check == 20:
-                                print('Warning: writer thread exited and process still did not.')
-                            if check == 100:
+                            if not shown_intermediate and (time.time() - initial_time > 10):
+                                print(
+                                    'Warning: writer thread exited and process still did not (%.2fs seconds elapsed).' % (
+                                    time.time() - initial_time,))
+                                shown_intermediate = True
+
+                            if time.time() - initial_time > 20:
                                 process.kill()
                                 time.sleep(.2)
                                 self.fail_with_message(
-                                    "The other process should've exited but still didn't (timeout for process to exit).",
+                                    "The other process should've exited but still didn't (%.2fs seconds timeout for process to exit)." % (
+                                    time.time() - initial_time,),
                                     stdout, stderr, writer_thread
                                 )
                 time.sleep(.2)
-
 
             if writer_thread is not None:
                 if not writer_thread.FORCE_KILL_PROCESS_WHEN_FINISHED_OK:
@@ -260,10 +277,10 @@ class DebuggerRunner(object):
                         self.fail_with_message(
                             "The other process exited with error code: " + str(poll), stdout, stderr, writer_thread)
 
-
                     if stdout is None:
                         self.fail_with_message(
-                            "The other process may still be running -- and didn't give any output.", stdout, stderr, writer_thread)
+                            "The other process may still be running -- and didn't give any output.", stdout, stderr,
+                            writer_thread)
 
                     check = 0
                     while 'TEST SUCEEDED' not in ''.join(stdout):
@@ -278,25 +295,24 @@ class DebuggerRunner(object):
 
                 if not writer_thread.finished_ok:
                     self.fail_with_message(
-                        "The thread that was doing the tests didn't finish successfully.", stdout, stderr, writer_thread)
+                        "The thread that was doing the tests didn't finish successfully.", stdout, stderr,
+                        writer_thread)
         finally:
             finish[0] = True
 
-        return {'stdout':stdout, 'stderr':stderr}
+        return {'stdout': stdout, 'stderr': stderr}
 
     def fail_with_message(self, msg, stdout, stderr, writerThread):
-        raise AssertionError(msg+
-                             "\n\n===========================\nStdout: \n"+''.join(stdout)+
-                             "\n\n===========================\nStderr:"+''.join(stderr)+
-                             "\n\n===========================\nLog:\n"+'\n'.join(getattr(writerThread, 'log', [])))
+        raise AssertionError(msg +
+                             "\n\n===========================\nStdout: \n" + ''.join(stdout) +
+                             "\n\n===========================\nStderr:" + ''.join(stderr) +
+                             "\n\n===========================\nLog:\n" + '\n'.join(getattr(writerThread, 'log', [])))
 
 
-
-#=======================================================================================================================
+# =======================================================================================================================
 # AbstractWriterThread
-#=======================================================================================================================
+# =======================================================================================================================
 class AbstractWriterThread(threading.Thread):
-
     FORCE_KILL_PROCESS_WHEN_FINISHED_OK = False
     IS_MODULE = False
 
@@ -337,28 +353,25 @@ class AbstractWriterThread(threading.Thread):
     def write(self, s):
         self.log.append('write: %s' % (s,))
 
-        last = self.reader_thread.last_received
         if SHOW_WRITES_AND_READS:
             print('Test Writer Thread Written %s' % (s,))
         msg = s + '\n'
         if IS_PY3K:
             msg = msg.encode('utf-8')
         self.sock.send(msg)
-        time.sleep(0.2)
 
-        i = 0
-        while last == self.reader_thread.last_received and i < 10:
-            i += 1
-            time.sleep(0.1)
-
-
-    def start_socket(self, port=0):
+    def start_socket(self, port=None):
+        from _pydev_bundle.pydev_localhost import get_socket_name
         if SHOW_WRITES_AND_READS:
             print('start_socket')
 
+        if port is None:
+            socket_name = get_socket_name(close=True)
+        else:
+            socket_name = (pydev_localhost.get_localhost(), port)
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind(('', port))
-        self.port = s.getsockname()[1]
+        s.bind(socket_name)
+        self.port = socket_name[1]
         s.listen(1)
         if SHOW_WRITES_AND_READS:
             print('Waiting in socket.accept()')
@@ -384,18 +397,14 @@ class AbstractWriterThread(threading.Thread):
         self._sequence += 2
         return self._sequence
 
-
     def wait_for_new_thread(self):
-        i = 0
         # wait for hit breakpoint
-        while not '<xml><thread name="' in self.reader_thread.last_received or '<xml><thread name="pydevd.' in self.reader_thread.last_received:
-            i += 1
-            time.sleep(1)
-            if i >= 15:
-                raise AssertionError('After %s seconds, a thread was not created.' % i)
+        last = ''
+        while not '<xml><thread name="' in last or '<xml><thread name="pydevd.' in last:
+            last = self.reader_thread.get_next_message('wait_for_new_thread')
 
         # we have something like <xml><thread name="MainThread" id="12103472" /></xml>
-        splitted = self.reader_thread.last_received.split('"')
+        splitted = last.split('"')
         thread_id = splitted[3]
         return thread_id
 
@@ -409,16 +418,10 @@ class AbstractWriterThread(threading.Thread):
             111 is breakpoint
         '''
         self.log.append('Start: wait_for_breakpoint_hit')
-        i = 0
         # wait for hit breakpoint
-        last = self.reader_thread.last_received
+        last = ''
         while not ('stop_reason="%s"' % reason) in last:
-            i += 1
-            time.sleep(1)
-            last = self.reader_thread.last_received
-            if i >= 10:
-                raise AssertionError('After %s seconds, a break with reason: %s was not hit. Found: %s' % \
-                                     (i, reason, last))
+            last = self.reader_thread.get_next_message('wait_for_breakpoint_hit. reason=%s' % (reason,))
 
         # we have something like <xml><thread id="12152656" stop_reason="111"><frame id="12453120" name="encode" ...
         splitted = last.split('"')
@@ -444,95 +447,64 @@ class AbstractWriterThread(threading.Thread):
             return thread_id, frameId, name, suspend_type
 
     def wait_for_custom_operation(self, expected):
-        i = 0
         # wait for custom operation response, the response is double encoded
-        expectedEncoded = quote(quote_plus(expected))
-        while not expectedEncoded in self.reader_thread.last_received:
-            i += 1
-            time.sleep(1)
-            if i >= 10:
-                raise AssertionError('After %s seconds, the custom operation not received. Last found:\n%s\nExpected (encoded)\n%s' %
-                                     (i, self.reader_thread.last_received, expectedEncoded))
+        expected_encoded = quote(quote_plus(expected))
+        last = ''
+        while not expected_encoded in last:
+            last = self.reader_thread.get_next_message(
+                'wait_for_custom_operation. Expected (encoded): %s' % (expected_encoded,))
 
         return True
 
-    def wait_for_evaluation(self, expected):
-        return self._wait_for(expected, 'the expected evaluation was not found')
+    def _is_var_in_last(self, expected, last):
+        if expected in last:
+            return True
 
+        last = unquote_plus(last)
+        if expected in last:
+            return True
 
-    def wait_for_vars(self, expected):
-        i = 0
-        # wait for hit breakpoint
-        while not expected in self.reader_thread.last_received:
-            i += 1
-            time.sleep(1)
-            if i >= 10:
-                raise AssertionError('After %s seconds, the vars were not found. Last found:\n%s' %
-                                     (i, self.reader_thread.last_received))
+        # We actually quote 2 times on the backend...
+        last = unquote_plus(last)
+        if expected in last:
+            return True
 
-        return True
-
-    def wait_for_var(self, expected):
-        self._wait_for(expected, 'the var was not found')
-
-    def _wait_for(self, expected, error_msg):
-        '''
-        :param expected:
-            If a list we'll work with any of the choices.
-        '''
-        if not isinstance(expected, (list, tuple)):
-            expected = [expected]
-
-        i = 0
-        found = False
-        while not found:
-            last = self.reader_thread.last_received
-            for e in expected:
-                if e in last:
-                    found = True
-                    break
-
-            last = unquote_plus(last)
-            for e in expected:
-                if e in last:
-                    found = True
-                    break
-
-            # We actually quote 2 times on the backend...
-            last = unquote_plus(last)
-            for e in expected:
-                if e in last:
-                    found = True
-                    break
-
-            if found:
-                break
-
-            i += 1
-            time.sleep(1)
-            if i >= 10:
-                raise AssertionError('After %s seconds, %s. Last found:\n%s' %
-                                     (i, error_msg, last))
-
-        return True
+        return False
 
     def wait_for_multiple_vars(self, expected_vars):
-        i = 0
-        # wait for hit breakpoint
+        if not isinstance(expected_vars, (list, tuple)):
+            expected_vars = [expected_vars]
+
+        all_found = []
         while True:
+            try:
+                last = self.reader_thread.get_next_message('wait_for_multiple_vars: %s' % (expected_vars,))
+            except:
+                missing = []
+                for v in expected_vars:
+                    if v not in all_found:
+                        missing.append(v)
+                raise ValueError('Not Found:\n%s\nNot found messages: %s\nFound messages: %s\nExpected messages: %s' % (
+                    '\n'.join(missing), len(missing), len(all_found), len(expected_vars)))
+            found = 0
             for expected in expected_vars:
-                if expected not in self.reader_thread.last_received:
-                    break  # Break out of loop (and don't get to else)
-            else:
+                if isinstance(expected, (tuple, list)):
+                    for e in expected:
+                        if self._is_var_in_last(e, last):
+                            all_found.append(expected)
+                            found += 1
+                            break
+                else:
+                    if self._is_var_in_last(expected, last):
+                        all_found.append(expected)
+                        found += 1
+
+            if found == len(expected_vars):
                 return True
 
-            i += 1
-            time.sleep(1)
-            if i >= 10:
-                raise AssertionError('After %s seconds, the vars were not found. Last found:\n%s' %
-                                     (i, self.reader_thread.last_received))
-
-        return True
+    wait_for_var = wait_for_multiple_vars
+    wait_for_vars = wait_for_multiple_vars
+    wait_for_evaluation = wait_for_multiple_vars
 
     def write_make_initial_run(self):
         self.write("101\t%s\t" % self.next_seq())
@@ -549,7 +521,8 @@ class AbstractWriterThread(threading.Thread):
             @param line: starts at 1
         '''
         breakpoint_id = self.next_breakpoint_id()
-        self.write("111\t%s\t%s\t%s\t%s\t%s\t%s\tNone\tNone" % (self.next_seq(), breakpoint_id, 'python-line', self.get_main_filename(), line, func))
+        self.write("111\t%s\t%s\t%s\t%s\t%s\t%s\tNone\tNone" % (
+        self.next_seq(), breakpoint_id, 'python-line', self.get_main_filename(), line, func))
         self.log.append('write_add_breakpoint: %s line: %s func: %s' % (breakpoint_id, line, func))
         return breakpoint_id
 
@@ -557,8 +530,10 @@ class AbstractWriterThread(threading.Thread):
         self.write("122\t%s\t%s" % (self.next_seq(), exception))
         self.log.append('write_add_exception_breakpoint: %s' % (exception,))
 
-    def write_add_exception_breakpoint_with_policy(self, exception, notify_always, notify_on_terminate, ignore_libraries):
-        self.write("122\t%s\t%s" % (self.next_seq(), '\t'.join([exception, notify_always, notify_on_terminate, ignore_libraries])))
+    def write_add_exception_breakpoint_with_policy(self, exception, notify_always, notify_on_terminate,
+                                                   ignore_libraries):
+        self.write("122\t%s\t%s" % (
+        self.next_seq(), '\t'.join([exception, notify_always, notify_on_terminate, ignore_libraries])))
         self.log.append('write_add_exception_breakpoint: %s' % (exception,))
 
     def write_remove_breakpoint(self, breakpoint_id):
@@ -600,7 +575,8 @@ class AbstractWriterThread(threading.Thread):
         self.write("%s\t%s\t%s" % (CMD_EVALUATE_CONSOLE_EXPRESSION, self.next_seq(), locator))
 
     def write_custom_operation(self, locator, style, codeOrFile, operation_fn_name):
-        self.write("%s\t%s\t%s||%s\t%s\t%s" % (CMD_RUN_CUSTOM_OPERATION, self.next_seq(), locator, style, codeOrFile, operation_fn_name))
+        self.write("%s\t%s\t%s||%s\t%s\t%s" % (
+        CMD_RUN_CUSTOM_OPERATION, self.next_seq(), locator, style, codeOrFile, operation_fn_name))
 
     def write_evaluate_expression(self, locator, expression):
         self.write("113\t%s\t%s\t%s\t1" % (self.next_seq(), locator, expression))
@@ -612,6 +588,7 @@ class AbstractWriterThread(threading.Thread):
             enable = 'false'
         self.write("%s\t%s\t%s" % (CMD_ENABLE_DONT_TRACE, self.next_seq(), enable))
 
+
 def _get_debugger_test_file(filename):
     try:
         rPath = os.path.realpath  # @UndefinedVariable
@@ -622,9 +599,7 @@ def _get_debugger_test_file(filename):
 
     return os.path.normcase(rPath(os.path.join(os.path.dirname(__file__), filename)))
 
+
 def get_free_port():
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind((pydev_localhost.get_localhost(), 0))
-    _, port = s.getsockname()
-    s.close()
-    return port
+    from _pydev_bundle.pydev_localhost import get_socket_name
+    return get_socket_name(close=True)[1]
