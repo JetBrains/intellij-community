@@ -336,7 +336,6 @@
         </group>
         <separator/>
         <group id="EditSmartGroup">
-          <reference ref="EditorCompleteStatement"/>
           <reference ref="EditorJoinLines"/>
           <reference ref="FillParagraph"/>
           <reference ref="EditorDuplicate"/>
