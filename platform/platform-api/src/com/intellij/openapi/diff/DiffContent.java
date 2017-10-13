@@ -21,11 +21,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.LineSeparator;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.List;
 
 /**
  * Represents some data that probably can be compared with some other.
@@ -35,25 +33,7 @@ import java.util.List;
  */
 @Deprecated
 public abstract class DiffContent {
-  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myIsEmpty;
-
-  public void addListener(Listener listener) {
-    myListeners.add(listener);
-  }
-
-  public void removeListener(Listener listener) {
-    myListeners.remove(listener);
-  }
-
-  /**
-   * This content becomes invalid for some reason. Diff tool should stop show it.
-   */
-  protected void fireContentInvalid() {
-    for (Listener listener : myListeners) {
-      listener.contentInvalid();
-    }
-  }
 
   /**
    * Means this content represents binary data. It should be used only for byte by byte comparison.
@@ -135,9 +115,5 @@ public abstract class DiffContent {
   @Nullable
   public LineSeparator getLineSeparator() {
     return null;
-  }
-
-  public interface Listener {
-    void contentInvalid();
   }
 }
