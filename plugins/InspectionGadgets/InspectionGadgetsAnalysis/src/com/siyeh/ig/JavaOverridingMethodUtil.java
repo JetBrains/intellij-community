@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
+import com.intellij.psi.impl.search.JavaSourceFilterScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
@@ -60,7 +61,7 @@ public class JavaOverridingMethodUtil {
     if (!StubIndex.getInstance().processElements(JavaStubIndexKeys.METHODS,
                                                 name,
                                                 project,
-                                                effectiveSearchScope,
+                                                new JavaSourceFilterScope(effectiveSearchScope),
                                                 PsiMethod.class,
                                             m -> {
                                               ProgressManager.checkCanceled();
