@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals;
 
@@ -10,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,26 +58,29 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
   public static Object getLiteralValue(PsiElement child) {
     IElementType elemType = child.getNode().getElementType();
     String text = child.getText();
+
     if (TokenSets.NUMBERS.contains(elemType)) {
-      text = text.replaceAll("_", "");
       try {
         if (elemType == GroovyTokenTypes.mNUM_INT) {
-          return Integer.parseInt(text);
+          char lastChar = text.charAt(text.length() - 1);
+          if (lastChar == 'i' || lastChar == 'I') {
+            text = text.substring(0, text.length() - 1);
+          }
+          return PsiLiteralUtil.parseInteger(text);
         }
         else if (elemType == GroovyTokenTypes.mNUM_LONG) {
-          return Long.parseLong(text);
+          return PsiLiteralUtil.parseLong(text);
         }
         else if (elemType == GroovyTokenTypes.mNUM_FLOAT) {
-          return Float.parseFloat(text);
+          return PsiLiteralUtil.parseFloat(text);
         }
         else if (elemType == GroovyTokenTypes.mNUM_DOUBLE) {
-          return Double.parseDouble(text);
+          return PsiLiteralUtil.parseDouble(text);
         }
         else if (elemType == GroovyTokenTypes.mNUM_BIG_INT) {
           return new BigInteger(text);
         }
         else if (elemType == GroovyTokenTypes.mNUM_BIG_DECIMAL) {
-
           return new BigDecimal(text);
         }
       }
