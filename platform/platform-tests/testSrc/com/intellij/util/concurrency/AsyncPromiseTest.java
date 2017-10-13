@@ -40,22 +40,28 @@ public class AsyncPromiseTest {
     CountDownLatch latch = new CountDownLatch(1);
     AsyncPromise<String> promise = new AsyncPromise<>();
     Runnable task = () -> {
-      sleep(10);
-      switch (state) {
-        case RESOLVE:
-          log("resolve promise");
-          promise.setResult("resolved");
-          break;
-        case REJECT:
-          log("reject promise");
-          promise.setError("rejected");
-          break;
-        case ERROR:
-          log("notify promise about error to preserve a cause");
-          promise.setError(new CheckedException());
-          break;
+      try {
+        sleep(10);
+        switch (state) {
+          case RESOLVE:
+            log("resolve promise");
+            promise.setResult("resolved");
+            break;
+          case REJECT:
+            log("reject promise");
+            promise.setError("rejected");
+            break;
+          case ERROR:
+            log("notify promise about error to preserve a cause");
+            promise.setError(new CheckedException());
+            break;
+        }
+        latch.countDown();
       }
-      latch.countDown();
+      catch (Throwable throwable) {
+        log("unexpected error that breaks current task");
+        throwable.printStackTrace();
+      }
     };
     switch (when) {
       case NOW:
