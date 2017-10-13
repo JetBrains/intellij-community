@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUI.CachingScalableJBIcon;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
@@ -25,11 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
-
-import static com.intellij.util.ui.JBUI.ScaleType.OBJ_SCALE;
-import static com.intellij.util.ui.JBUI.ScaleType.USR_SCALE;
-import static java.lang.Math.ceil;
-import static java.lang.Math.floor;
 
 public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.LayeredIcon");
@@ -46,7 +42,7 @@ public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> {
   private int myHeight;
 
   {
-    getScaleContext().addUpdateListener(() -> updateSize());
+    getScaleContext().addUpdateListener(this::updateSize);
     setAutoUpdateScaleContext(false);
   }
 
@@ -233,8 +229,8 @@ public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> {
     for (int i = 0; i < icons.length; i++) {
       Icon icon = icons[i];
       if (icon == null || myDisabledLayers[i]) continue;
-      int xOffset = (int)floor(x + scaleVal(myXShift + myHShifts(i), OBJ_SCALE));
-      int yOffset = (int)floor(y + scaleVal(myYShift + myVShifts(i), OBJ_SCALE));
+      int xOffset = (int)Math.floor(x + scaleVal(myXShift + myHShifts(i), JBUI.ScaleType.OBJ_SCALE));
+      int yOffset = (int)Math.floor(y + scaleVal(myYShift + myVShifts(i), JBUI.ScaleType.OBJ_SCALE));
       icon.paintIcon(c, g, xOffset, yOffset);
     }
   }
@@ -252,7 +248,7 @@ public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> {
     getScaleContext().update();
     if (myWidth <= 1) updateSize();
 
-    return (int)ceil(scaleVal(myWidth, OBJ_SCALE));
+    return (int)Math.ceil(scaleVal(myWidth, JBUI.ScaleType.OBJ_SCALE));
   }
 
   @Override
@@ -260,15 +256,15 @@ public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> {
     getScaleContext().update();
     if (myHeight <= 1) updateSize();
 
-    return (int)ceil(scaleVal(myHeight, OBJ_SCALE));
+    return (int)Math.ceil(scaleVal(myHeight, JBUI.ScaleType.OBJ_SCALE));
   }
 
   private int myHShifts(int i) {
-    return (int)floor(scaleVal(myHShifts[i], USR_SCALE));
+    return (int)Math.floor(scaleVal(myHShifts[i], JBUI.ScaleType.USR_SCALE));
   }
 
   private int myVShifts(int i) {
-    return (int)floor(scaleVal(myVShifts[i], USR_SCALE));
+    return (int)Math.floor(scaleVal(myVShifts[i], JBUI.ScaleType.USR_SCALE));
   }
 
   protected void updateSize() {
@@ -276,11 +272,11 @@ public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> {
     int maxX = Integer.MIN_VALUE;
     int minY = Integer.MAX_VALUE;
     int maxY = Integer.MIN_VALUE;
-    boolean hasNotNullIcons = false;
+    boolean allIconsAreNull = true;
     for (int i = 0; i < myIcons.length; i++) {
       Icon icon = myIcons[i];
       if (icon == null) continue;
-      hasNotNullIcons = true;
+      allIconsAreNull = false;
       int hShift = myHShifts(i);
       int vShift = myVShifts(i);
       minX = Math.min(minX, hShift);
@@ -288,7 +284,7 @@ public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> {
       minY = Math.min(minY, vShift);
       maxY = Math.max(maxY, vShift + icon.getIconHeight());
     }
-    if (!hasNotNullIcons) return;
+    if (allIconsAreNull) return;
     myWidth = maxX - minX;
     myHeight = maxY - minY;
 
