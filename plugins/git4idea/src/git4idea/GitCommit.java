@@ -94,6 +94,8 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
   }
 
   private class UnparsedChanges extends VcsChangesLazilyParsedDetails.UnparsedChanges<GitLogStatusInfo> {
+    @NotNull private final String myRootPath = getRoot().getPath();
+
     private UnparsedChanges(@NotNull Project project,
                             @NotNull List<List<GitLogStatusInfo>> changesOutput) {
       super(project, changesOutput, new GitChangesDescriptor());
@@ -102,10 +104,10 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
     @NotNull
     protected String absolutePath(@NotNull String path) {
       try {
-        return getRoot().getPath() + "/" + GitUtil.unescapePath(path);
+        return myRootPath + "/" + GitUtil.unescapePath(path);
       }
       catch (VcsException e) {
-        return getRoot().getPath() + "/" + path;
+        return myRootPath + "/" + path;
       }
     }
 
