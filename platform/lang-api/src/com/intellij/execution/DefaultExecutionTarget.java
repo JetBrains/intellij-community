@@ -21,7 +21,10 @@ import javax.swing.*;
 public class DefaultExecutionTarget extends ExecutionTarget {
   public static final ExecutionTarget INSTANCE = new DefaultExecutionTarget();
 
-  private DefaultExecutionTarget() {
+  /** 
+   * @deprecated for removal, please use {@link DefaultExecutionTarget#INSTANCE} 
+   * */
+  public DefaultExecutionTarget() {
   }
 
   @NotNull
