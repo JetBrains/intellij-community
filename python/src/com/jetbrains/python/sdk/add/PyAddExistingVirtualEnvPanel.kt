@@ -29,7 +29,7 @@ import javax.swing.Icon
  */
 class PyAddExistingVirtualEnvPanel(private val project: Project?,
                                    private val existingSdks: List<Sdk>,
-                                   private val newProjectPath: String?) : PyAddSdkPanel() {
+                                   override var newProjectPath: String?) : PyAddSdkPanel() {
   override val panelName = "Existing virtual environment"
   override val icon: Icon = PythonIcons.Python.Virtualenv
   private val sdkComboBox = PySdkPathChoosingComboBox(detectVirtualEnvs(project, existingSdks)

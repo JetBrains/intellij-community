@@ -46,7 +46,6 @@ import com.jetbrains.python.sdk.PreferredSdkComparator;
 import com.jetbrains.python.sdk.PyLazySdk;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.add.PyAddNewVirtualEnvPanel;
 import com.jetbrains.python.sdk.add.PyAddSdkGroupPanel;
 import com.jetbrains.python.sdk.add.PyAddSdkPanel;
 import org.jetbrains.annotations.NotNull;
@@ -108,10 +107,9 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     final PyAddSdkGroupPanel interpreterPanel = myInterpreterPanel;
     if (interpreterPanel == null) return null;
     final PyAddSdkPanel panel = interpreterPanel.getSelectedPanel();
-    if (panel instanceof PyAddNewVirtualEnvPanel) {
-      final PyAddNewVirtualEnvPanel virtualEnvPanel = (PyAddNewVirtualEnvPanel)panel;
-      return new PyLazySdk("Uninitialized virtual environment at " + virtualEnvPanel.getPath(),
-                           virtualEnvPanel::getOrCreateSdk);
+    if (panel instanceof PyAddNewEnvironmentPanel) {
+      final PyAddNewEnvironmentPanel newEnvironmentPanel = (PyAddNewEnvironmentPanel)panel;
+      return new PyLazySdk("Uninitialized environment", newEnvironmentPanel::getOrCreateSdk);
     }
     else if (panel instanceof PyAddExistingSdkPanel) {
       return panel.getSdk();
@@ -290,25 +288,20 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     final Sdk preferredSdk = getPreferredSdk(existingSdks);
 
     final String newProjectPath = getNewProjectPath();
-    final PyAddNewVirtualEnvPanel newVirtualEnvPanel = new PyAddNewVirtualEnvPanel(null, existingSdks, newProjectPath);
+    final PyAddNewEnvironmentPanel newEnvironmentPanel = new PyAddNewEnvironmentPanel(existingSdks, newProjectPath);
     final PyAddExistingSdkPanel existingSdkPanel = new PyAddExistingSdkPanel(null, existingSdks, newProjectPath, preferredSdk);
 
-    final HideableDecorator decorator = new HideableDecorator(decoratorPanel, getProjectInterpreterTitle(newVirtualEnvPanel), false);
+    final HideableDecorator decorator = new HideableDecorator(decoratorPanel, getProjectInterpreterTitle(newEnvironmentPanel), false);
     decorator.setContentComponent(container);
 
-    final List<PyAddSdkPanel> panels = Arrays.asList(newVirtualEnvPanel, existingSdkPanel);
-    myInterpreterPanel = new PyAddSdkGroupPanel("New project interpreter", getIcon(), panels, newVirtualEnvPanel);
-    myInterpreterPanel.addChangeListener(() -> decorator.setTitle(getProjectInterpreterTitle(myInterpreterPanel.getSelectedPanel())));
-
-    newVirtualEnvPanel.addChangeListener(this::checkValid);
-    existingSdkPanel.addChangeListener(this::checkValid);
-    myInterpreterPanel.addChangeListener(this::checkValid);
-
-    addLocationChangeListener(event -> {
-      final String path = getNewProjectPath();
-      newVirtualEnvPanel.setNewProjectPath(path);
-      existingSdkPanel.setNewProjectPath(path);
+    final List<PyAddSdkPanel> panels = Arrays.asList(newEnvironmentPanel, existingSdkPanel);
+    myInterpreterPanel = new PyAddSdkGroupPanel("New project interpreter", getIcon(), panels, newEnvironmentPanel);
+    myInterpreterPanel.addChangeListener(() -> {
+      decorator.setTitle(getProjectInterpreterTitle(myInterpreterPanel.getSelectedPanel()));
+      checkValid();
     });
+
+    addLocationChangeListener(event -> myInterpreterPanel.setNewProjectPath(getNewProjectPath()));
 
     container.add(myInterpreterPanel, BorderLayout.NORTH);
     return decoratorPanel;
@@ -334,7 +327,14 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
 
   @NotNull
   private static String getProjectInterpreterTitle(@NotNull PyAddSdkPanel panel) {
-    return "Project Interpreter: " + StringUtil.toTitleCase(panel.getPanelName());
+    final String name;
+    if (panel instanceof PyAddNewEnvironmentPanel) {
+      name = "New " + ((PyAddNewEnvironmentPanel)panel).getSelectedPanel().getEnvName() + " environment";
+    }
+    else {
+      name = panel.getPanelName();
+    }
+    return "Project Interpreter: " + StringUtil.toTitleCase(name);
   }
 
   @Nullable
