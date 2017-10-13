@@ -319,6 +319,12 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     else if (completeMatch != null) {
       context.setHighlightedParameter(completeMatch);
     }
+
+    CandidateInfo resultingCandidate = (CandidateInfo)(candidates.length == 1 ? candidates[0] : context.getHighlightedParameter());
+    if (resultingCandidate != null) {
+      PsiMethod method = (PsiMethod)resultingCandidate.getElement();
+      if (!method.isVarArgs() && index >= method.getParameterList().getParametersCount()) context.setCurrentParameter(-1);
+    }
   }
 
   private void highlightHints(@NotNull Editor editor, @Nullable PsiExpressionList expressionList, int currentHintIndex) {
