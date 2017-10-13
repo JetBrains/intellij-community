@@ -67,6 +67,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.intellij.openapi.fileTypes.impl.AbstractFileType.*;
+
 @State(name = "FileTypeManager", storages = @Storage("filetypes.xml"), additionalExportFile = FileTypeManagerImpl.FILE_SPEC )
 public class FileTypeManagerImpl extends FileTypeManagerEx implements PersistentStateComponent<Element>, Disposable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
@@ -191,7 +193,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
         fileType.writeExternal(root);
 
-        Element map = new Element(AbstractFileType.ELEMENT_EXTENSION_MAP);
+        Element map = new Element(ELEMENT_EXTENSION_MAP);
         writeExtensionsMap(map, fileType, false);
         if (!map.getChildren().isEmpty()) {
           root.addContent(map);
@@ -311,15 +313,26 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       if (defaultFileTypesUrl != null) {
         Element defaultFileTypesElement = JdomKt.loadElement(URLUtil.openStream(defaultFileTypesUrl));
         for (Element e : defaultFileTypesElement.getChildren()) {
-          //noinspection SpellCheckingInspection
           if ("filetypes".equals(e.getName())) {
             for (Element element : e.getChildren(ELEMENT_FILETYPE)) {
               loadFileType(element, true);
             }
           }
-          else if (AbstractFileType.ELEMENT_EXTENSION_MAP.equals(e.getName())) {
+          else if (ELEMENT_EXTENSION_MAP.equals(e.getName())) {
             readGlobalMappings(e);
           }
+        }
+
+        if (PlatformUtils.isIdeaCommunity()) {
+          Element extensionMap = new Element(ELEMENT_EXTENSION_MAP);
+          extensionMap.addContent(new Element(ELEMENT_MAPPING)
+                                    .setAttribute(ATTRIBUTE_EXT, "jspx")
+                                    .setAttribute(ATTRIBUTE_TYPE, "XML"));
+          //noinspection SpellCheckingInspection
+          extensionMap.addContent(new Element(ELEMENT_MAPPING)
+                                    .setAttribute(ATTRIBUTE_EXT, "tagx")
+                                    .setAttribute(ATTRIBUTE_TYPE, "XML"));
+          readGlobalMappings(extensionMap);
         }
       }
     }
@@ -1087,7 +1100,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       if (element.getName().equals(ELEMENT_IGNORE_FILES)) {
         myIgnoredPatterns.setIgnoreMasks(element.getAttributeValue(ATTRIBUTE_LIST));
       }
-      else if (AbstractFileType.ELEMENT_EXTENSION_MAP.equals(element.getName())) {
+      else if (ELEMENT_EXTENSION_MAP.equals(element.getName())) {
         readGlobalMappings(element);
       }
     }
@@ -1244,7 +1257,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       state.addContent(new Element(ELEMENT_IGNORE_FILES).setAttribute(ATTRIBUTE_LIST, ignoreFiles));
     }
 
-    Element map = new Element(AbstractFileType.ELEMENT_EXTENSION_MAP);
+    Element map = new Element(ELEMENT_EXTENSION_MAP);
 
     List<FileType> notExternalizableFileTypes = new ArrayList<>();
     for (FileType type : mySchemeManager.getAllSchemes()) {
@@ -1414,7 +1427,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     }
     else {
-      Element extensions = typeElement.getChild(AbstractFileType.ELEMENT_EXTENSION_MAP);
+      Element extensions = typeElement.getChild(ELEMENT_EXTENSION_MAP);
       if (extensions != null) {
         for (Pair<FileNameMatcher, String> association : AbstractFileType.readAssociations(extensions)) {
           associate(type, association.getFirst(), false);
