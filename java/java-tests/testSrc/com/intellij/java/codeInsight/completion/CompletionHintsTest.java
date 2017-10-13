@@ -733,6 +733,16 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     checkResultWithInlays("class C { void vararg(Object a, int... b) {} void m() { vararg(<HINT text=\"a:\"/>new <caret><hint text=\", b:\"/>); } }");
   }
 
+  public void testNoTooltipForInvalidParameter() throws Exception {
+    configureJava("class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key, String def)");
+    type("\"a");
+    next();
+    type("\"b\",");
+    waitForAllAsyncStuff();
+    checkHintContents(null);
+  }
+
   private void checkResult(String text) {
     myFixture.checkResult(text);
   }
