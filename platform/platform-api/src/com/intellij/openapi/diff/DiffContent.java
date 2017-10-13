@@ -74,17 +74,6 @@ public abstract class DiffContent {
   }
 
   /**
-   * Called by {@link com.intellij.openapi.diff.DiffTool}
-   * when document returned by {@link #getDocument()} is opened in editor. Implementors may use this notification to
-   * add listeners when document is editing and remove when editing done to avoid memory leaks.
-   *
-   * @param isAssigned true means editing started, false means editing stopped.
-   *                   Total number of calls with true should be same as for false
-   */
-  public void onAssigned(boolean isAssigned) {
-  }
-
-  /**
    * Represents this content as Document
    * null means content has no text representation
    *

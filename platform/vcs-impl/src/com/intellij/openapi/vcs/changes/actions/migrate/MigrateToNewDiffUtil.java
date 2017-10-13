@@ -72,11 +72,6 @@ public class MigrateToNewDiffUtil {
         public Navigatable getNavigatable(@NotNull LineCol position) {
           return oldContent.getOpenFileDescriptor(position.toOffset(document));
         }
-
-        @Override
-        public void onAssigned(boolean isAssigned) {
-          oldContent.onAssigned(isAssigned);
-        }
       };
     }
   }
