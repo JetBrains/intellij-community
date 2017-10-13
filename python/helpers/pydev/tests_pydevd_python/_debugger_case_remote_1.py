@@ -12,7 +12,7 @@ if __name__ == '__main__':
 
     print('before pydevd.settrace')
     sys.stdout.flush()
-    pydevd.settrace(port=8787, patch_multiprocessing=True)
+    pydevd.settrace(host='127.0.0.1', port=8787, patch_multiprocessing=True)
     print('after pydevd.settrace')
     sys.stdout.flush()
     f = _debugger_case_remote_2.__file__
