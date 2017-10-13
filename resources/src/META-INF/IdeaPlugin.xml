@@ -1014,6 +1014,10 @@
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
                      displayName="Field assignment can be moved to initializer"
                      implementationClass="com.intellij.codeInspection.MoveFieldAssignmentToInitializerInspection"/>
+    <localInspection language="JAVA" shortName="IdempotentLoopBody" enabledByDefault="true" level="WARNING"
+                     groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues"
+                     bundle="messages.InspectionsBundle" key="inspection.idempotent.loop.body"
+                     implementationClass="com.intellij.codeInspection.IdempotentLoopBodyInspection"/>
     <localInspection language="JAVA" shortName="JavaModuleNaming" enabledByDefault="true" level="WARNING"
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions"
                      bundle="messages.InspectionsBundle" key="inspection.java.module.naming"
