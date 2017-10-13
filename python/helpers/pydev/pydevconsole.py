@@ -34,18 +34,8 @@ except:
 from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface, BaseStdIn
 from _pydev_bundle.pydev_console_utils import CodeFragment
 
-IS_PYTHON_3K = False
-IS_PY24 = False
-
-try:
-    if sys.version_info[0] == 3:
-        IS_PYTHON_3K = True
-    elif sys.version_info[0] == 2 and sys.version_info[1] == 4:
-        IS_PY24 = True
-except:
-    #That's OK, not all versions of python have sys.version_info
-    pass
-
+IS_PYTHON_3_ONWARDS = sys.version_info[0] >= 3
+IS_PY24 = sys.version_info[0] == 2 and sys.version_info[1] == 4
 
 class Command:
     def __init__(self, interpreter, code_fragment):
@@ -84,13 +74,12 @@ except:
 
 # Pull in runfile, the interface to UMD that wraps execfile
 from _pydev_bundle.pydev_umd import runfile, _set_globals_function
-try:
+if sys.version_info[0] >= 3:
     import builtins  # @UnresolvedImport
     builtins.runfile = runfile
-except:
+else:
     import __builtin__
     __builtin__.runfile = runfile
-
 
 #=======================================================================================================================
 # InterpreterInterface
