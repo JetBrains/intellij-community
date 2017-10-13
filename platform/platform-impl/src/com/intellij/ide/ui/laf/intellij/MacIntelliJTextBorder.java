@@ -40,7 +40,7 @@ public class MacIntelliJTextBorder implements Border, UIResource, ErrorBorderCap
     if (c instanceof JTextField && c.getParent() instanceof ColorPanel) {
       return JBUI.insets(3, 3, 2, 2).asUIResource();
     }
-    Insets insets = JBUI.insets(3, 8).asUIResource();
+    Insets insets = JBUI.insets(4, 8).asUIResource();
     TextFieldWithPopupHandlerUI.updateBorderInsets(c, insets);
     return insets;
   }
