@@ -74,7 +74,7 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager implements Ap
   private static int getDefaultPort() {
     if (System.getProperty(PROPERTY_RPC_PORT) == null) {
       // Default port will be occupied by main idea instance - define the custom default to avoid searching of free port
-      return ApplicationManager.getApplication().isUnitTestMode() ? 64463 : 63342;
+      return ApplicationManager.getApplication().isUnitTestMode() ? 64463 : BuiltInServerOptions.DEFAULT_PORT;
     }
     else {
       return Integer.parseInt(System.getProperty(PROPERTY_RPC_PORT));
