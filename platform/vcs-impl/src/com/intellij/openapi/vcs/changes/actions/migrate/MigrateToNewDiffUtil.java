@@ -1,21 +1,18 @@
 package com.intellij.openapi.vcs.changes.actions.migrate;
 
+import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.contents.DiffContent;
-import com.intellij.diff.contents.DocumentContentImpl;
-import com.intellij.diff.contents.EmptyContent;
-import com.intellij.diff.contents.FileContentImpl;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.ErrorDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
-import com.intellij.diff.util.LineCol;
+import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
+import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class MigrateToNewDiffUtil {
   @NotNull
@@ -37,42 +35,34 @@ public class MigrateToNewDiffUtil {
   @Nullable
   private static DiffRequest convertRequestFair(@NotNull com.intellij.openapi.diff.DiffRequest oldRequest) {
     if (oldRequest.getOnOkRunnable() != null) return null;
-    //if (oldRequest.getBottomComponent() != null) return null; // TODO: we need EDT to make this check. Let's ignore bottom component.
-    // TODO: migrate layers
 
     com.intellij.openapi.diff.DiffContent[] contents = oldRequest.getContents();
     String[] titles = oldRequest.getContentTitles();
     List<DiffContent> newContents = new ArrayList<>(contents.length);
 
     for (int i = 0; i < contents.length; i++) {
-      DiffContent convertedContent = convertContent(oldRequest.getProject(), contents[i]);
-      if (convertedContent == null) return null;
-      newContents.add(convertedContent);
+      newContents.add(convertContent(oldRequest.getProject(), contents[i]));
     }
 
     return new SimpleDiffRequest(oldRequest.getWindowTitle(), newContents, Arrays.asList(titles));
   }
 
-  @Nullable
+  @NotNull
   private static DiffContent convertContent(@Nullable Project project, @NotNull final com.intellij.openapi.diff.DiffContent oldContent) {
+    DiffContentFactory factory = DiffContentFactory.getInstance();
     if (oldContent.isEmpty()) {
-      return new EmptyContent();
+      return factory.createEmpty();
     }
-    if (oldContent.isBinary()) {
-      VirtualFile file = oldContent.getFile();
-      if (file == null) return null;
-      return new FileContentImpl(project, file);
+    if (oldContent instanceof com.intellij.openapi.diff.FileContent) {
+      VirtualFile file = assertNotNull(oldContent.getFile());
+      return factory.create(project, file);
+    }
+    else if (oldContent instanceof com.intellij.openapi.diff.SimpleContent) {
+      return factory.create(project, ((SimpleContent)oldContent).getText(), oldContent.getContentType());
     }
     else {
-      Document document = oldContent.getDocument();
-      if (document == null) return null;
-      return new DocumentContentImpl(project, document, oldContent.getContentType(), oldContent.getFile(), oldContent.getLineSeparator(), null, null) {
-        @Nullable
-        @Override
-        public Navigatable getNavigatable(@NotNull LineCol position) {
-          return oldContent.getOpenFileDescriptor(position.toOffset(document));
-        }
-      };
+      Document document = assertNotNull(oldContent.getDocument());
+      return factory.create(project, document, oldContent.getContentType());
     }
   }
 
