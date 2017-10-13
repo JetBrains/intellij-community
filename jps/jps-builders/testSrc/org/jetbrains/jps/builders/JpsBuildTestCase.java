@@ -276,7 +276,10 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       sdkTable.setSdkReference(JpsJavaSdkType.INSTANCE, JpsJavaExtensionService.
         getInstance().createWrappedJavaSdkReference((JpsJavaSdkTypeWrapper)sdkType, wrapperRef));
     }
+    // ensure jdk entry is the first one in dependency list
+    module.getDependenciesList().clear();
     module.getDependenciesList().addSdkDependency(sdkType);
+    module.getDependenciesList().addModuleSourceDependency();
     if (srcPaths.length > 0 || outputPath != null) {
       for (String srcPath : srcPaths) {
         module.getContentRootsList().addUrl(JpsPathUtil.pathToUrl(srcPath));
