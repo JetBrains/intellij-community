@@ -151,9 +151,11 @@ class EditorPainter implements TextDrawingCallback {
     }
     else {
       int y = myView.visualLineToY(startVisualLine) + yShift;
+      int lineHeight = myView.getLineHeight();
       for(int i = startVisualLine; i <= endVisualLine; i++) {
         int x = myCorrector.marginX(inlaysWidths[i - startVisualLine]);
-        UIUtil.drawLine(g, x, y, x, y += myView.getLineHeight());
+        g.fillRect(x, y, 1, lineHeight);
+        y += lineHeight;
       }
     }
     Color visualGuidesColor = myEditor.getColorsScheme().getColor(EditorColors.VISUAL_INDENT_GUIDE_COLOR);
