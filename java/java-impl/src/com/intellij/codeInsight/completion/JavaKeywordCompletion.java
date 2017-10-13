@@ -592,6 +592,10 @@ public class JavaKeywordCompletion {
       return true;
     }
 
+    if (psiElement().withParents(PsiErrorElement.class, PsiFile.class).accepts(position)) {
+      return true;
+    }
+
     return isEndOfBlock(position);
   }
 
