@@ -29,6 +29,7 @@ import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -45,7 +46,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
 
   public AnnotateMethodFix(@NotNull String fqn, @NotNull String... annotationsToRemove) {
     myAnnotation = fqn;
-    myAnnotationsToRemove = annotationsToRemove;
+    myAnnotationsToRemove = annotationsToRemove.length == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : annotationsToRemove;
     LOG.assertTrue(annotateSelf() || annotateOverriddenMethods(), "annotate method quick fix should not do nothing");
   }
 
@@ -66,12 +67,10 @@ public class AnnotateMethodFix implements LocalQuickFix {
     if (annotateSelf()) {
       if (annotateOverriddenMethods()) {
         return InspectionsBundle.message("inspection.annotate.overridden.method.and.self.quickfix.family.name");
-      } else {
-        return InspectionsBundle.message("inspection.annotate.method.quickfix.family.name");
       }
-    } else {
-      return InspectionsBundle.message("inspection.annotate.overridden.method.quickfix.family.name");
+      return InspectionsBundle.message("inspection.annotate.method.quickfix.family.name");
     }
+    return InspectionsBundle.message("inspection.annotate.overridden.method.quickfix.family.name");
   }
 
   @Override
