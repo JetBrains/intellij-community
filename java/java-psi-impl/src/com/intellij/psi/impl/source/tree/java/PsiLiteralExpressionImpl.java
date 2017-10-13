@@ -126,7 +126,7 @@ public class PsiLiteralExpressionImpl
       return PsiLiteralUtil.parseFloat(text);
     }
     if (type == JavaTokenType.DOUBLE_LITERAL) {
-      return PsiLiteralUtil.parseFloat(text);
+      return PsiLiteralUtil.parseDouble(text);
     }
     if (type == JavaTokenType.CHARACTER_LITERAL) {
       if (StringUtil.endsWithChar(text, '\'')) {
