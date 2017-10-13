@@ -302,12 +302,7 @@ abstract class ProtoMember extends Proto {
 
     final int newBase = base;
 
-    return new Difference() {
-      @Override
-      public Specifier<TypeRepr.ClassType, Difference> annotations() {
-        return diff.annotations();
-      }
-
+    return new DifferenceImpl(diff) {
       @Override
       public int base() {
         return newBase;
@@ -315,32 +310,12 @@ abstract class ProtoMember extends Proto {
 
       @Override
       public boolean no() {
-        return newBase == NONE && diff.no();
-      }
-
-      @Override
-      public int addedModifiers() {
-        return diff.addedModifiers();
-      }
-
-      @Override
-      public int removedModifiers() {
-        return diff.removedModifiers();
-      }
-
-      @Override
-      public boolean packageLocalOn() {
-        return diff.packageLocalOn();
+        return newBase == NONE && super.no();
       }
 
       @Override
       public boolean hadValue() {
         return ((ProtoMember)past).hasValue();
-      }
-
-      @Override
-      public boolean weakedAccess() {
-        return diff.weakedAccess();
       }
     };
   }

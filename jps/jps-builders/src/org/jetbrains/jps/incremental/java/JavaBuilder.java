@@ -57,7 +57,6 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.javac.*;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsProject;
-import org.jetbrains.jps.model.java.JavaModuleIndex;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.LanguageLevel;
@@ -70,7 +69,8 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -233,14 +233,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
 
       int javaModulesCount = 0;
-      if ((!filesToCompile.isEmpty() || dirtyFilesHolder.hasRemovedFiles()) &&
-          JpsJavaSdkType.parseVersion(getLanguageLevel(ContainerUtil.getFirstItem(chunk.getModules()))) >= 9) {
-        // at the moment, there is no incremental compilation for module-info files, so they should be rebuilt on every change
-        JavaModuleIndex index = getJavaModuleIndex(context);
+      if ((!filesToCompile.isEmpty() || dirtyFilesHolder.hasRemovedFiles()) && getTargetPlatformLanguageVersion(chunk.representativeTarget().getModule()) >= 9) {
         for (ModuleBuildTarget target : chunk.getTargets()) {
-          File moduleInfoFile = index.getModuleInfoFile(target.getModule(), target.isTests());
-          if (moduleInfoFile != null) {
-            filesToCompile.add(moduleInfoFile);
+          if (JavaBuilderUtil.findModuleInfoFile(context, target) != null) {
             javaModulesCount++;
           }
         }
@@ -404,7 +399,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     final Map<File, Set<File>> outs = buildOutputDirectoriesMap(context, chunk);
     try {
-      final int targetLanguageLevel = JpsJavaSdkType.parseVersion(getLanguageLevel(chunk.getModules().iterator().next()));
+      final int targetLanguageLevel = getTargetPlatformLanguageVersion(chunk.representativeTarget().getModule());
       final boolean shouldForkJavac = shouldForkCompilerProcess(context, chunk, targetLanguageLevel);
 
       // when forking external javac, compilers from SDK 1.6 and higher are supported
@@ -1000,9 +995,30 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
-  private static String getLanguageLevel(JpsModule module) {
+  @Nullable
+  private static String getLanguageLevel(@NotNull JpsModule module) {
     final LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
     return level != null ? level.getComplianceOption() : null;
+  }
+
+  /**
+   * The assumed module's source code language version.
+   * Returns the version number, corresponding to the language level, associated with the given module.
+   * If no language level set (neither on module- nor on project-level), the version of JDK associated with the module is returned.
+   * If no JDK is associated, returns 0.
+   */
+  private static int getTargetPlatformLanguageVersion(@NotNull JpsModule module) {
+    final String level = getLanguageLevel(module);
+    if (level != null) {
+      return JpsJavaSdkType.parseVersion(level);
+    }
+    // when compiling, if language level is not explicitly set, it is assumed to be equal to
+    // the highest possible language level, that target JDK supports
+    final JpsSdk<JpsDummyElement> sdk = module.getSdk(JpsJavaSdkType.INSTANCE);
+    if (sdk != null) {
+      return JpsJavaSdkType.getJavaVersion(sdk);
+    }
+    return 0;
   }
 
   private static boolean isEncodingSet(List<String> options) {
@@ -1094,12 +1110,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
       map.put(outputDir, roots);
     }
     return map;
-  }
-
-  private static JavaModuleIndex getJavaModuleIndex(CompileContext context) {
-    JpsProject project = context.getProjectDescriptor().getProject();
-    File storageRoot = context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot();
-    return JpsJavaExtensionService.getInstance().getJavaModuleIndex(project, storageRoot);
   }
 
   private static class DiagnosticSink implements DiagnosticOutputConsumer {

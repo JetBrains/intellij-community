@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.ex.JpsElementBase;
 import org.jetbrains.jps.model.java.JavaModuleIndex;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
@@ -32,7 +33,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 
-public class JavaModuleIndexImpl extends JavaModuleIndex {
+public class JavaModuleIndexImpl extends JpsElementBase<JavaModuleIndexImpl> implements JavaModuleIndex {
   public static final String SOURCE_SUFFIX = ":S";
   public static final String TEST_SUFFIX = ":T";
 
@@ -51,6 +52,21 @@ public class JavaModuleIndexImpl extends JavaModuleIndex {
   private JavaModuleIndexImpl(Map<String, File> mapping) {
     myMapping = Collections.unmodifiableMap(mapping);
     myExcludes = null;
+  }
+
+  @NotNull
+  public JavaModuleIndexImpl createCopy() {
+    final JpsCompilerExcludes excludes = myExcludes;
+    if (excludes == null) {
+      return new JavaModuleIndexImpl(myMapping);
+    }
+    final JavaModuleIndexImpl copy = new JavaModuleIndexImpl(excludes);
+    copy.myMapping.putAll(myMapping);
+    return copy;
+  }
+
+  public void applyChanges(@NotNull JavaModuleIndexImpl modified) {
+    // not supported
   }
 
   @Nullable
