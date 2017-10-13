@@ -287,7 +287,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   void reportStubAstMismatch(String message, StubTree stubTree) {
     rebuildStub();
-    updateTrees(myTrees.clearStub(STUB_PSI_MISMATCH));
+    synchronized (myPsiLock) {
+      updateTrees(myTrees.clearStub(STUB_PSI_MISMATCH));
+    }
 
     throw StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch(message, stubTree, this);
   }
