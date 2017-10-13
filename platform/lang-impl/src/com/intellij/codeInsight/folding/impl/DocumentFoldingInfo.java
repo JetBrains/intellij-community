@@ -30,9 +30,11 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
+import com.intellij.openapi.progress.util.ProgressWithTimeoutInDispatch;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -204,7 +206,7 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(final Element element) throws WriteExternalException {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     if (myPsiElements.isEmpty() && myRangeMarkers.isEmpty() && mySerializedElements.isEmpty()){
@@ -212,39 +214,42 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
     }
 
     if (mySerializedElements.isEmpty()) {
-      for (SmartPsiElementPointer<PsiElement> ptr : myPsiElements) {
-        PsiElement psiElement = ptr.getElement();
-        if (psiElement == null || !psiElement.isValid()) {
-          continue;
-        }
-        FoldingInfo fi = psiElement.getUserData(FOLDING_INFO_KEY);
-        boolean state = fi != null && fi.expanded;
-        String signature = FoldingPolicy.getSignature(psiElement);
-        if (signature == null) {
-          continue;
-        }
+      ProgressWithTimeoutInDispatch.execInDispatchWithTimeout(() -> {
+        for (SmartPsiElementPointer<PsiElement> ptr : myPsiElements) {
+          PsiElement psiElement = ptr.getElement();
+          if (psiElement == null || !psiElement.isValid()) {
+            continue;
+          }
+          FoldingInfo fi = psiElement.getUserData(FOLDING_INFO_KEY);
+          boolean state = fi != null && fi.expanded;
+          String signature = FoldingPolicy.getSignature(psiElement);
+          if (signature == null) {
+            continue;
+          }
 
-        PsiFile containingFile = psiElement.getContainingFile();
-        PsiElement restoredElement = FoldingPolicy.restoreBySignature(containingFile, signature);
-        if (!psiElement.equals(restoredElement)) {
-          StringBuilder trace = new StringBuilder();
-          PsiElement restoredAgain = FoldingPolicy.restoreBySignature(containingFile, signature, trace);
-          LOG.error("element: " + psiElement + "(" + psiElement.getText() 
-                    + "); restoredElement: " + restoredElement
-                    + "; signature: '" + signature 
-                    + "'; file: " + containingFile 
-                    + "; injected: " + InjectedLanguageManager.getInstance(myProject).isInjectedFragment(containingFile) 
-                    + "; languages: " + containingFile.getViewProvider().getLanguages()                    
-                    + "; restored again: " + restoredAgain +
-                    "; restore produces same results: " + (restoredAgain == restoredElement) 
-                    + "; trace:\n" + trace);
-        }
+          PsiFile containingFile = psiElement.getContainingFile();
+          PsiElement restoredElement = FoldingPolicy.restoreBySignature(containingFile, signature);
+          if (!psiElement.equals(restoredElement)) {
+            StringBuilder trace = new StringBuilder();
+            PsiElement restoredAgain = FoldingPolicy.restoreBySignature(containingFile, signature, trace);
+            LOG.error("element: " + psiElement + "(" + psiElement.getText()
+                      + "); restoredElement: " + restoredElement
+                      + "; signature: '" + signature
+                      + "'; file: " + containingFile
+                      + "; injected: " + InjectedLanguageManager.getInstance(myProject).isInjectedFragment(containingFile)
+                      + "; languages: " + containingFile.getViewProvider().getLanguages()
+                      + "; restored again: " + restoredAgain +
+                      "; restore produces same results: " + (restoredAgain == restoredElement)
+                      + "; trace:\n" + trace);
+          }
 
-        Element e = new Element(ELEMENT_TAG);
-        e.setAttribute(SIGNATURE_ATT, signature);
-        e.setAttribute(EXPANDED_ATT, Boolean.toString(state));
-        element.addContent(e);
-      }
+          Element e = new Element(ELEMENT_TAG);
+          e.setAttribute(SIGNATURE_ATT, signature);
+          e.setAttribute(EXPANDED_ATT, Boolean.toString(state));
+          element.addContent(e);
+        }
+        return Void.TYPE;
+      }, Registry.get("save.folding.state.timeout").asInteger());
     }
     else {
       // get back postponed state (before folding initialization)
