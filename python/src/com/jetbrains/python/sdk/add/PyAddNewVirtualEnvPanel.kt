@@ -57,12 +57,10 @@ import javax.swing.event.DocumentEvent
  */
 class PyAddNewVirtualEnvPanel(private val project: Project?,
                               private val existingSdks: List<Sdk>,
-                              newProjectPath: String?) : PyAddSdkPanel() {
-  companion object {
-    private const val VIRTUALENV_ROOT_DIR_MACRO_NAME = "VIRTUALENV_ROOT_DIR"
-  }
+                              newProjectPath: String?) : PyAddNewEnvPanel() {
+  override val envName = "Virtualenv"
 
-  var newProjectPath: String? = newProjectPath
+  override var newProjectPath: String? = newProjectPath
     set(value) {
       field = value
       pathField.text = defaultBasePath
@@ -88,7 +86,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
     layout = BorderLayout()
     val formPanel = FormBuilder.createFormBuilder()
       .addLabeledComponent("Location:", pathField)
-      .addLabeledComponent("Base Interpreter:", baseSdkField)
+      .addLabeledComponent("Base interpreter:", baseSdkField)
       .addComponent(inheritSitePackagesField)
       .addComponent(makeSharedField)
       .panel
@@ -121,7 +119,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
     return sdk
   }
 
-  fun addChangeListener(listener: Runnable) {
+  override fun addChangeListener(listener: Runnable) {
     pathField.textField.document.addDocumentListener(object: DocumentAdapter() {
       override fun textChanged(e: DocumentEvent?) {
         listener.run()
@@ -188,4 +186,8 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
 
   private val userHome: @SystemIndependent String
     get() = FileUtil.toSystemIndependentName(SystemProperties.getUserHome())
+
+  companion object {
+    private const val VIRTUALENV_ROOT_DIR_MACRO_NAME = "VIRTUALENV_ROOT_DIR"
+  }
 }

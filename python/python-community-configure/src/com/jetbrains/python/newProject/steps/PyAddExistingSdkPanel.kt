@@ -39,7 +39,7 @@ class PyAddExistingSdkPanel(project: Project?,
   val remotePath: String?
     get() = if (remotePathField.mainPanel.isVisible) remotePathField.textField.text else null
 
-  var newProjectPath: String? = newProjectPath
+  override var newProjectPath: String? = newProjectPath
     set(value) {
       field = value
       sdkChooserCombo.setNewProjectPath(value)
@@ -56,7 +56,6 @@ class PyAddExistingSdkPanel(project: Project?,
 
   init {
     layout = BorderLayout()
-    // TODO: Set new project path on external change
     sdkChooserCombo = PythonSdkChooserCombo(project, existingSdks, newProjectPath, { it != null && it == preferredSdk }).apply {
       if (SystemInfo.isMac && !UIUtil.isUnderDarcula()) {
         putClientProperty("JButton.buttonType", null)
@@ -79,7 +78,7 @@ class PyAddExistingSdkPanel(project: Project?,
            validateRemotePathField())
       .filterNotNull()
 
-  fun addChangeListener(listener: Runnable) {
+  override fun addChangeListener(listener: Runnable) {
     sdkChooserCombo.addChangedListener { listener.run() }
     remotePathField.addTextChangeListener { listener.run() }
   }
