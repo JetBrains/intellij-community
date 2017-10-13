@@ -65,8 +65,8 @@ public class SideEffectChecker {
     return visitor.mayHaveSideEffects();
   }
 
-  public static boolean mayHaveSideEffects(@NotNull PsiElement element, Predicate<PsiMethodCallExpression> shouldIgnoreCall) {
-    final SideEffectsVisitor visitor = new SideEffectsVisitor(null, shouldIgnoreCall);
+  public static boolean mayHaveSideEffects(@NotNull PsiElement element, Predicate<PsiElement> shouldIgnoreElement) {
+    final SideEffectsVisitor visitor = new SideEffectsVisitor(null, shouldIgnoreElement);
     element.accept(visitor);
     return visitor.mayHaveSideEffects();
   }
@@ -86,39 +86,39 @@ public class SideEffectChecker {
   private static class SideEffectsVisitor extends JavaRecursiveElementWalkingVisitor {
     private @Nullable final List<PsiElement> mySideEffects;
     boolean found;
-    final Predicate<PsiMethodCallExpression> myIgnoredCallPredicate;
+    final Predicate<PsiElement> myIgnorePredicate;
 
     SideEffectsVisitor(@Nullable List<PsiElement> sideEffects) {
       this(sideEffects, call -> false);
     }
 
-    SideEffectsVisitor(@Nullable List<PsiElement> sideEffects, Predicate<PsiMethodCallExpression> predicate) {
-      myIgnoredCallPredicate = predicate;
+    SideEffectsVisitor(@Nullable List<PsiElement> sideEffects, Predicate<PsiElement> predicate) {
+      myIgnorePredicate = predicate;
       mySideEffects = sideEffects;
     }
 
-    private void addSideEffect(PsiElement element) {
+    private boolean addSideEffect(PsiElement element) {
+      if (myIgnorePredicate.test(element)) return false;
       found = true;
       if(mySideEffects != null) {
         mySideEffects.add(element);
       } else {
         stopWalking();
       }
+      return true;
     }
 
     @Override
     public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
-      addSideEffect(expression);
+      if (addSideEffect(expression)) return;
+      super.visitAssignmentExpression(expression);
     }
 
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-      if (!myIgnoredCallPredicate.test(expression)) {
-        final PsiMethod method = expression.resolveMethod();
-        if (!isPure(method)) {
-          addSideEffect(expression);
-          return;
-        }
+      final PsiMethod method = expression.resolveMethod();
+      if (!isPure(method)) {
+        if (addSideEffect(expression)) return;
       }
       super.visitMethodCallExpression(expression);
     }
@@ -132,8 +132,7 @@ public class SideEffectChecker {
     @Override
     public void visitNewExpression(@NotNull PsiNewExpression expression) {
       if(!isSideEffectFreeConstructor(expression)) {
-        addSideEffect(expression);
-        return;
+        if (addSideEffect(expression)) return;
       }
       super.visitNewExpression(expression);
     }
@@ -142,20 +141,21 @@ public class SideEffectChecker {
     public void visitUnaryExpression(@NotNull PsiUnaryExpression expression) {
       final IElementType tokenType = expression.getOperationTokenType();
       if (tokenType.equals(JavaTokenType.PLUSPLUS) || tokenType.equals(JavaTokenType.MINUSMINUS)) {
-        addSideEffect(expression);
-        return;
+        if (addSideEffect(expression)) return;
       }
       super.visitUnaryExpression(expression);
     }
 
     @Override
-    public void visitDeclarationStatement(PsiDeclarationStatement statement) {
-      addSideEffect(statement);
+    public void visitVariable(PsiVariable variable) {
+      if (addSideEffect(variable)) return;
+      super.visitVariable(variable);
     }
 
     @Override
     public void visitBreakStatement(PsiBreakStatement statement) {
-      addSideEffect(statement);
+      if (addSideEffect(statement)) return;
+      super.visitBreakStatement(statement);
     }
 
     @Override
@@ -165,17 +165,20 @@ public class SideEffectChecker {
 
     @Override
     public void visitContinueStatement(PsiContinueStatement statement) {
-      addSideEffect(statement);
+      if (addSideEffect(statement)) return;
+      super.visitContinueStatement(statement);
     }
 
     @Override
     public void visitReturnStatement(PsiReturnStatement statement) {
-      addSideEffect(statement);
+      if (addSideEffect(statement)) return;
+      super.visitReturnStatement(statement);
     }
 
     @Override
     public void visitThrowStatement(PsiThrowStatement statement) {
-      addSideEffect(statement);
+      if (addSideEffect(statement)) return;
+      super.visitThrowStatement(statement);
     }
 
     @Override

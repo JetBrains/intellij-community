@@ -261,7 +261,8 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
       if (hasReferenceToVariable(variable, qualifierExpression)) {
         PsiElement parent = PsiTreeUtil.getParentOfType(expression, PsiStatement.class, PsiLambdaExpression.class);
         if (parent instanceof PsiStatement &&
-            !SideEffectChecker.mayHaveSideEffects(parent, this::isSideEffectFreeBuilderMethodCall)) {
+            !SideEffectChecker.mayHaveSideEffects(
+              parent, e -> e instanceof PsiMethodCallExpression && isSideEffectFreeBuilderMethodCall((PsiMethodCallExpression)e))) {
           return;
         }
         queried = true;
