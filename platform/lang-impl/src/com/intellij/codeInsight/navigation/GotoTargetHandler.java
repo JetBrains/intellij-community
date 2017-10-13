@@ -40,6 +40,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
@@ -220,7 +221,11 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     return new Comparator<PsiElement>() {
       @Override
       public int compare(PsiElement o1, PsiElement o2) {
-        return getComparingObject(o1).compareTo(getComparingObject(o2));
+        int diff = getComparingObject(o1).compareTo(getComparingObject(o2));
+        if (diff == 0) {
+          return ReadAction.compute(() -> PsiUtilCore.compareElementsByPosition(o1, o2));
+        }
+        return diff;
       }
 
       private Comparable getComparingObject(PsiElement o1) {
