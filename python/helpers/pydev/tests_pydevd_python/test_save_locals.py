@@ -47,7 +47,7 @@ class TestSetLocals(unittest.TestCase):
         a = 20
         frame.f_locals['a'] = 50
         save_locals(frame)
-        self.assertEquals(50, a)
+        self.assertEqual(50, a)
 
 
     def test_frame_co_freevars(self):
@@ -58,7 +58,7 @@ class TestSetLocals(unittest.TestCase):
             frame = sys._getframe()
             frame.f_locals['outer_var'] = 50
             save_locals(frame)
-            self.assertEquals(50, outer_var)
+            self.assertEqual(50, outer_var)
 
         func()
 
@@ -73,14 +73,14 @@ class TestSetLocals(unittest.TestCase):
             frame = sys._getframe()
             frame.f_locals['a'] = 50
             save_locals(frame)
-            self.assertEquals(50, a)
+            self.assertEqual(50, a)
 
         check_co_vars(1)
 
 
     def test_frame_change_in_inner_frame(self):
         def change(f):
-            self.assert_(f is not sys._getframe())
+            self.assertTrue(f is not sys._getframe())
             f.f_locals['a']= 50
             save_locals(f)
 
@@ -88,7 +88,7 @@ class TestSetLocals(unittest.TestCase):
         frame = sys._getframe()
         a = 20
         change(frame)
-        self.assertEquals(50, a)
+        self.assertEqual(50, a)
 
 
 if __name__ == '__main__':

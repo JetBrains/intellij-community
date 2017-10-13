@@ -34,12 +34,12 @@ class TestMod(unittest.TestCase):
     def assert_args(self, tok, args, tips):
         for a in tips:
             if tok == a[0]:
-                self.assertEquals(args, a[2])
+                self.assertEqual(args, a[2])
                 return
         raise AssertionError('%s not in %s', tok, tips)
 
     def assert_in(self, tok, tips):
-        self.assertEquals(4, len(tips[0]))
+        self.assertEqual(4, len(tips[0]))
         for a in tips:
             if tok == a[0]:
                 return a
@@ -67,26 +67,26 @@ class TestMod(unittest.TestCase):
     def test_imports1(self):
         f, tip = _pydev_jy_imports_tipper.generate_tip('junit.framework.TestCase')
         assert f.endswith('junit.jar')
-        ret = self.assert_in('assertEquals', tip)
-#        self.assertEquals('', ret[2])
+        ret = self.assert_in('assertEqual', tip)
+#        self.assertEqual('', ret[2])
 
     def test_imports2(self):
         f, tip = _pydev_jy_imports_tipper.generate_tip('junit.framework')
         assert f.endswith('junit.jar')
         ret = self.assert_in('TestCase', tip)
-        self.assertEquals('', ret[2])
+        self.assertEqual('', ret[2])
 
     def test_imports2a(self):
         f, tip = _pydev_jy_imports_tipper.generate_tip('org.apache.tools.ant')
         assert f.endswith('ant.jar')
         ret = self.assert_in('Task', tip)
-        self.assertEquals('', ret[2])
+        self.assertEqual('', ret[2])
 
     def test_imports3(self):
         f, tip = _pydev_jy_imports_tipper.generate_tip('os')
         assert f.endswith('os.py')
         ret = self.assert_in('path', tip)
-        self.assertEquals('', ret[2])
+        self.assertEqual('', ret[2])
 
     def test_tip_on_string(self):
         f, tip = _pydev_jy_imports_tipper.generate_tip('string')
@@ -103,28 +103,28 @@ class TestMod(unittest.TestCase):
         f, tip = _pydev_jy_imports_tipper.generate_tip('java.lang')
         assert f.endswith('rt.jar')
         tup = self.assert_in('String' , tip)
-        self.assertEquals(str(_pydev_jy_imports_tipper.TYPE_CLASS), tup[3])
+        self.assertEqual(str(_pydev_jy_imports_tipper.TYPE_CLASS), tup[3])
 
         tip = _pydev_jy_imports_tipper.generate_tip('java')[1]
         tup = self.assert_in('lang' , tip)
-        self.assertEquals(str(_pydev_jy_imports_tipper.TYPE_IMPORT), tup[3])
+        self.assertEqual(str(_pydev_jy_imports_tipper.TYPE_IMPORT), tup[3])
 
         tip = _pydev_jy_imports_tipper.generate_tip('java.lang.String')[1]
         tup = self.assert_in('indexOf'          , tip)
-        self.assertEquals(str(_pydev_jy_imports_tipper.TYPE_FUNCTION), tup[3])
+        self.assertEqual(str(_pydev_jy_imports_tipper.TYPE_FUNCTION), tup[3])
 
         tip = _pydev_jy_imports_tipper.generate_tip('java.lang.String')[1]
         tup = self.assert_in('charAt'          , tip)
-        self.assertEquals(str(_pydev_jy_imports_tipper.TYPE_FUNCTION), tup[3])
-        self.assertEquals('(int)', tup[2])
+        self.assertEqual(str(_pydev_jy_imports_tipper.TYPE_FUNCTION), tup[3])
+        self.assertEqual('(int)', tup[2])
 
         tup = self.assert_in('format'          , tip)
-        self.assertEquals(str(_pydev_jy_imports_tipper.TYPE_FUNCTION), tup[3])
-        self.assertEquals('(string, objectArray)', tup[2])
-        self.assert_(tup[1].find('[Ljava.lang.Object;') == -1)
+        self.assertEqual(str(_pydev_jy_imports_tipper.TYPE_FUNCTION), tup[3])
+        self.assertEqual('(string, objectArray)', tup[2])
+        self.assertTrue(tup[1].find('[Ljava.lang.Object;') == -1)
 
         tup = self.assert_in('getBytes', tip)
-        self.assertEquals(str(_pydev_jy_imports_tipper.TYPE_FUNCTION), tup[3])
+        self.assertEqual(str(_pydev_jy_imports_tipper.TYPE_FUNCTION), tup[3])
         assert '[B' not in tup[1]
         assert 'byte[]' in tup[1]
 
@@ -192,7 +192,7 @@ class TestCompl(unittest.TestCase):
         isMet = ismethod(out.println) #@UndefinedVariable
         assert isMet[0]
         assert len(isMet[1]) == 10
-        self.assertEquals(isMet[1][0].basic_as_str(), "function:println args=[], varargs=None, kwargs=None, docs:None")
+        self.assertEqual(isMet[1][0].basic_as_str(), "function:println args=[], varargs=None, kwargs=None, docs:None")
         assert isMet[1][1].basic_as_str() == "function:println args=['long'], varargs=None, kwargs=None, docs:None"
         assert not isclass(out.println) #@UndefinedVariable
 
