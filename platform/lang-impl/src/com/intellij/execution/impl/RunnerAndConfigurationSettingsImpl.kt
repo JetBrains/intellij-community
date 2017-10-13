@@ -4,7 +4,10 @@ package com.intellij.execution.impl
 import com.intellij.configurationStore.SerializableScheme
 import com.intellij.configurationStore.deserializeAndLoadState
 import com.intellij.configurationStore.serializeStateInto
-import com.intellij.execution.*
+import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.Executor
+import com.intellij.execution.ExecutorRegistry
+import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.application.ApplicationManager
@@ -316,11 +319,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     if (executor != null) {
       configuration.checkSettingsBeforeRun()
     }
-  }
-
-  override fun canRunOn(target: ExecutionTarget): Boolean {
-    val configuration = configuration
-    return if (configuration is TargetAwareRunProfile) configuration.canRunOn(target) else true
   }
 
   override fun getRunnerSettings(runner: ProgramRunner<*>) = runnerSettings.getOrCreateSettings(runner)

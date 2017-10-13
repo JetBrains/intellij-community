@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.BeforeRunTask;
@@ -108,10 +94,13 @@ class BeforeRunStepsPanel extends JPanel {
           return;
         BeforeRunTask task = selection.getFirst();
         BeforeRunTaskProvider<BeforeRunTask> provider = selection.getSecond();
-        if (provider.configureTask(myRunConfiguration, task)) {
-          myModel.setElementAt(task, index);
-          updateText();
-        }
+        
+        provider.configureTask(button.getDataContext(), myRunConfiguration, task).done(changed -> {
+          if (changed) {
+            myModel.setElementAt(task, index);
+            updateText();
+          }
+        });
       }
     });
     myDecorator.setEditActionUpdater(new AnActionButtonUpdater() {
@@ -292,27 +281,27 @@ class BeforeRunStepsPanel extends JPanel {
           @Override
           public void actionPerformed(AnActionEvent e) {
             BeforeRunTask task = provider.createTask(myRunConfiguration);
-            if (task != null) {
-              provider.configureTask(myRunConfiguration, task);
-              if (!provider.canExecuteTask(myRunConfiguration, task))
-                return;
-            } else {
-              return;
-            }
-            task.setEnabled(true);
+            if (task == null)  return;
 
-            Set<RunConfiguration> configurationSet = new HashSet<>();
-            getAllRunBeforeRuns(task, configurationSet);
-            if (configurationSet.contains(myRunConfiguration)) {
-              JOptionPane.showMessageDialog(BeforeRunStepsPanel.this,
-                                            ExecutionBundle.message("before.launch.panel.cyclic_dependency_warning",
-                                                                    myRunConfiguration.getName(),
-                                                                    provider.getDescription(task)),
-                                            ExecutionBundle.message("warning.common.title"),JOptionPane.WARNING_MESSAGE);
-              return;
-            }
-            addTask(task);
-            myListener.fireStepsBeforeRunChanged();
+            provider.configureTask(button.getDataContext(), myRunConfiguration, task).done(changed -> {
+              if (!provider.canExecuteTask(myRunConfiguration, task)) {
+                return;
+              }
+              task.setEnabled(true);
+
+              Set<RunConfiguration> configurationSet = new HashSet<>();
+              getAllRunBeforeRuns(task, configurationSet);
+              if (configurationSet.contains(myRunConfiguration)) {
+                JOptionPane.showMessageDialog(BeforeRunStepsPanel.this,
+                                              ExecutionBundle.message("before.launch.panel.cyclic_dependency_warning",
+                                                                      myRunConfiguration.getName(),
+                                                                      provider.getDescription(task)),
+                                              ExecutionBundle.message("warning.common.title"), JOptionPane.WARNING_MESSAGE);
+                return;
+              }
+              addTask(task);
+              myListener.fireStepsBeforeRunChanged();
+            });
           }
         };
         actionGroup.add(providerAction);
