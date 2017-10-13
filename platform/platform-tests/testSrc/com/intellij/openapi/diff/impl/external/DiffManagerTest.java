@@ -16,9 +16,10 @@
 package com.intellij.openapi.diff.impl.external;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diff.*;
-import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.diff.DiffContent;
+import com.intellij.openapi.diff.DiffRequest;
+import com.intellij.openapi.diff.DiffTool;
+import com.intellij.openapi.diff.DiffViewer;
 import com.intellij.util.ArrayUtil;
 import org.easymock.EasyMock;
 import org.jetbrains.annotations.NotNull;
@@ -105,8 +106,7 @@ public class DiffManagerTest {
     }
 
     public void addContent() {
-      Project project = EasyMock.createMock(Project.class);
-      addContent(new BinaryContent(project, ArrayUtil.EMPTY_BYTE_ARRAY, null, FileTypes.UNKNOWN, null), "");
+      addContent(EasyMock.createMock(DiffContent.class), "");
     }
   }
 }
