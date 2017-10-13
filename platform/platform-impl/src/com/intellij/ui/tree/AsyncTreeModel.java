@@ -635,8 +635,14 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
         }
         else {
           list.add(found);
-          if (!found.isLoadingRequired() && (deep || !removed.containsKey(found.object))) {
-            reload.add(found.object); // reload reused children if they are inserted
+          if (found.leaf) {
+            if (!child.leaf) {
+              found.setLeaf(false); // mark existing leaf node as not a leaf
+              reload.add(found.object); // and request to load its children
+            }
+          }
+          else if (child.leaf || !found.isLoadingRequired() && (deep || !removed.containsKey(found.object))) {
+            reload.add(found.object); // request to load children of existing node
           }
         }
         return list.size() - 1;
@@ -664,7 +670,6 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
         }
         else {
           contained.put(object, newIndex);
-          if (deep) reload.add(object);
         }
       }
 
