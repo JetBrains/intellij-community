@@ -181,6 +181,7 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
 
   public void testPertinentToApplicabilityCheckForBlockLambda() { doTest(); }
   public void testRestoreCapturedWildcardsInReturnTypesWhenNoAdditionalConstraintsDetected() { doTest(); }
+  public void testVarargsMethodPreferred() { doTest(); }
 
   public void testApplicabilityCheckFailsExpressionTypeCheckPasses() {
     doTest();
