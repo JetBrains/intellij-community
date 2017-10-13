@@ -415,6 +415,16 @@ public class HighlightUtil extends HighlightUtilBase {
     return highlightInfo;
   }
 
+  static HighlightInfo checkLegalVarReference(PsiJavaCodeReferenceElement ref, @NotNull PsiClass resolved) {
+    if (PsiKeyword.VAR.equals(resolved.getName()) && PsiUtil.getLanguageLevel(ref).isAtLeast(LanguageLevel.JDK_X)) {
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        .descriptionAndTooltip("Illegal reference to restricted type 'var'")
+        .range(ObjectUtils.notNull(ref.getReferenceNameElement(), ref))
+        .create();
+    }
+    return null;
+  }
+
   static HighlightInfo checkVarTypeApplicability(@NotNull PsiVariable variable) {
     PsiTypeElement typeElement = variable.getTypeElement();
     if (typeElement != null && typeElement.isInferredType()) {
