@@ -18,6 +18,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.util.Map;
@@ -33,7 +34,7 @@ public class BasePathMacroManager extends PathMacroManager {
     myPathMacros = (PathMacrosImpl)pathMacros;
   }
 
-  protected static void addFileHierarchyReplacements(@NotNull ExpandMacroToPathMap result, @NotNull String macroName, @Nullable String path) {
+  protected static void addFileHierarchyReplacements(@NotNull ExpandMacroToPathMap result, @NotNull String macroName, @SystemIndependent @Nullable String path) {
     if (path != null) {
       doAddFileHierarchyReplacements(result, StringUtil.trimEnd(path, "/"), '$' + macroName + '$');
     }
