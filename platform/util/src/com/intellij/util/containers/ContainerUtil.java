@@ -2539,6 +2539,12 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
+  public static <K, V> List<Pair<K, V>> map2List(@NotNull Map<K, V> map) {
+    return ContainerUtilRt.map2List(map);
+  }
+  
+  @NotNull
+  @Contract(pure=true)
   public static <T, V> Set<V> map2Set(@NotNull T[] collection, @NotNull Function<T, V> mapper) {
     return ContainerUtilRt.map2Set(collection, mapper);
   }

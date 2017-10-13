@@ -69,7 +69,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       if (target != DefaultExecutionTarget.INSTANCE) {
         name += " | " + target.getDisplayName();
       } else {
-        if (!settings.canRunOn(target)) {
+        if (!ExecutionTargetManager.canRun(settings, target)) {
           name += " | Nothing to run on";
         }
       }
