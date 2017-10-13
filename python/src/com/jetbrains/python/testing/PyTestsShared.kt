@@ -704,7 +704,9 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
     if (sourceElement == null || configuration == null) {
       return false
     }
-    if (sourceElement.get()?.containingFile !is PyFile) {
+    val element = sourceElement.get() ?: return false
+
+    if (element.containingFile !is PyFile && element !is PsiDirectory) {
       return false
     }
 
@@ -716,7 +718,7 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
     }
     else {
       val targetForConfig = PyTestsConfigurationProducer.getTargetForConfig(configuration,
-                                                                            sourceElement.get()) ?: return false
+                                                                            element) ?: return false
       targetForConfig.first.copyTo(configuration.target)
       // Directory may be set in Default configuration. In that case no need to rewrite it.
       if (configuration.workingDirectory.isNullOrEmpty()) {
