@@ -27,16 +27,16 @@ class ImportDenier(object):
     """
 
     def __init__(self):
-        self.__forbidden = None
+        self.__forbidden = set()
 
     def forbid(self, module_name):
         sys.modules.pop(module_name, None)
-        self.__forbidden = module_name
+        self.__forbidden.add(module_name)
 
     def find_module(self, fullname, path=None):
         if path:
             return
-        if fullname == self.__forbidden:
+        if fullname in self.__forbidden:
             return self
 
     def load_module(self, fullname):
