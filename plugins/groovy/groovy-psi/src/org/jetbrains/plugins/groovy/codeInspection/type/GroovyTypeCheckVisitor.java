@@ -52,7 +52,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParamsEnhancer;
@@ -65,13 +64,14 @@ import java.util.Map;
 
 import static com.intellij.psi.util.PsiUtil.extractIterableTypeParameter;
 import static org.jetbrains.plugins.groovy.codeInspection.type.GroovyTypeCheckVisitorHelper.*;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.*;
 
 public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
   private static final Logger LOG = Logger.getInstance(GroovyAssignabilityCheckInspection.class);
 
-  private boolean checkCallApplicability(@Nullable PsiType type, boolean checkUnknownArgs, @NotNull CallInfo<? extends GroovyPsiElement> info) {
+  private boolean checkCallApplicability(@Nullable PsiType type,
+                                         boolean checkUnknownArgs,
+                                         @NotNull CallInfo<? extends GroovyPsiElement> info) {
 
     PsiType[] argumentTypes = info.getArgumentTypes();
     GrExpression invoked = info.getInvokedExpression();
@@ -433,7 +433,8 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
       if (PsiUtil.isRawClassMemberAccess(namedArgumentExpression)) continue;
 
-      PsiType expressionType = TypesUtil.boxPrimitiveType(namedArgumentExpression.getType(), context.getManager(), context.getResolveScope());
+      PsiType expressionType =
+        TypesUtil.boxPrimitiveType(namedArgumentExpression.getType(), context.getManager(), context.getResolveScope());
       if (expressionType == null) continue;
 
       if (!descriptor.checkType(expressionType, context)) {
@@ -518,7 +519,10 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     );
   }
 
-  private void processAssignment(@NotNull PsiType expectedType, @NotNull GrExpression expression, @NotNull PsiElement toHighlight, @NotNull PsiElement context) {
+  private void processAssignment(@NotNull PsiType expectedType,
+                                 @NotNull GrExpression expression,
+                                 @NotNull PsiElement toHighlight,
+                                 @NotNull PsiElement context) {
     checkPossibleLooseOfPrecision(expectedType, expression, toHighlight);
 
     processAssignment(expectedType, expression, toHighlight, "cannot.assign", context, ApplicableTo.ASSIGNMENT);
@@ -780,88 +784,18 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
                                                                       : lValueNominalType;
     if (targetType == null) return;
     processAssignment(targetType, rValue, lValue, assignment);
-
   }
 
   void checkPossibleLooseOfPrecision(@NotNull PsiType targetType, @NotNull GrExpression expression, @NotNull PsiElement toHighlight) {
     PsiType actualType = expression.getType();
     if (actualType == null) return;
-    if (isPossibleLooseOfPrecision(targetType, actualType, expression))
+    if (!PrecisionUtil.INSTANCE.isPossibleLooseOfPrecision(targetType, actualType, expression)) return;
     registerError(
       toHighlight,
       GroovyBundle.message("loss.of.precision", actualType.getPresentableText(), targetType.getPresentableText()),
-      new LocalQuickFix[] {new GrCastFix(targetType, expression, false)},
+      new LocalQuickFix[]{new GrCastFix(targetType, expression, false)},
       ProblemHighlightType.GENERIC_ERROR
     );
-  }
-
-  //see org.codehaus.groovy.transform.stc.StaticTypeCheckingSupport.checkPossibleLooseOfPrecision()
-  static boolean isPossibleLooseOfPrecision(@NotNull PsiType targetType, @NotNull PsiType actualType, @NotNull GrExpression expression) {
-    int targetRank = getTypeRank(targetType);
-    int actualRank = getTypeRank(actualType);
-    if (targetRank == CHARACTER_RANK || actualRank == CHARACTER_RANK || targetRank == BIG_DECIMAL_RANK) return false;
-    if (actualRank == 0 || targetRank == 0 || actualRank <= targetRank) return false;
-
-    if (expression instanceof GrLiteralImpl) {
-      Object value = ((GrLiteralImpl) expression).getValue();
-      if (!(value instanceof Number)) return true;
-      Number number = (Number) value;
-      switch (targetRank) {
-        case BYTE_RANK: {
-          byte val = number.byteValue();
-          if (number instanceof Short) {
-            return !Short.valueOf(val).equals(number);
-          }
-          if (number instanceof Integer) {
-            return !Integer.valueOf(val).equals(number);
-          }
-          if (number instanceof Long) {
-            return !Long.valueOf(val).equals(number);
-          }
-          if (number instanceof Float) {
-            return !Float.valueOf(val).equals(number);
-          }
-          return !Double.valueOf(val).equals(number);
-        }
-        case SHORT_RANK: {
-          short val = number.shortValue();
-          if (number instanceof Integer) {
-            return !Integer.valueOf(val).equals(number);
-          }
-          if (number instanceof Long) {
-            return !Long.valueOf(val).equals(number);
-          }
-          if (number instanceof Float) {
-            return !Float.valueOf(val).equals(number);
-          }
-          return !Double.valueOf(val).equals(number);
-        }
-        case INTEGER_RANK: {
-          int val = number.intValue();
-          if (number instanceof Long) {
-            return !Long.valueOf(val).equals(number);
-          }
-          if (number instanceof Float) {
-            return !Float.valueOf(val).equals(number);
-          }
-          return !Double.valueOf(val).equals(number);
-        }
-        case LONG_RANK: {
-          long val = number.longValue();
-          if (number instanceof Float) {
-            return !Float.valueOf(val).equals(number);
-          }
-          return !Double.valueOf(val).equals(number);
-        }
-        case FLOAT_RANK: {
-          float val = number.floatValue();
-          return !Double.valueOf(val).equals(number);
-        }
-        default:
-          return false;
-      }
-    }
-    return true;
   }
 
   @Override
@@ -881,7 +815,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
     if (expression.getCastTypeElement() == null) return;
     final PsiType expectedType = expression.getCastTypeElement().getType();
-    
+
     final ConversionResult result = TypesUtil.canCast(expectedType, actualType, expression);
     if (result == ConversionResult.OK) return;
     final ProblemHighlightType highlightType = result == ConversionResult.ERROR
