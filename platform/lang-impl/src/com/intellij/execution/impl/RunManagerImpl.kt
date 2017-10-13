@@ -646,8 +646,10 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       }
       else if (name != null) {
         val typeId = it.getAttributeValue("type")
-        LOG.assertTrue(typeId != null)
-        name = "$typeId-${name}"
+        if (typeId == null) {
+          LOG.warn("typeId is null for '${name}'")
+        }
+        name = "${typeId ?: "unknown"}-${name}"
       }
 
       // in case if broken configuration, do not fail, just generate name
