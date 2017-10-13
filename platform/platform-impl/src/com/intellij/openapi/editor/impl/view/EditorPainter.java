@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.*;
@@ -27,7 +13,9 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.ColorUtil;
@@ -98,8 +86,8 @@ class EditorPainter implements TextDrawingCallback {
     int yShift = -clip.y;
     g.translate(0, -yShift);
 
-    paintBackground(g, clip, yShift, startLine, endLine, caretData);
-    paintRightMargin(g, clip);
+    float[] inlaysWidths = paintBackground(g, clip, yShift, startLine, endLine, caretData);
+    paintRightMargin(g, clip, yShift, startLine, endLine, inlaysWidths);
     paintCustomRenderers(g, yShift, startOffset, endOffset);
     MarkupModelEx docMarkup = myEditor.getFilteredDocumentMarkupModel();
     paintLineMarkersSeparators(g, clip, yShift, docMarkup, startOffset, endOffset);
@@ -148,12 +136,26 @@ class EditorPainter implements TextDrawingCallback {
     g.drawString(hintText.toString(), insets.left, insets.top + myView.getAscent());
     return true;
   }
-  
-  private void paintRightMargin(Graphics g, Rectangle clip) {
+
+  private void paintRightMargin(Graphics g,
+                                Rectangle clip,
+                                int yShift,
+                                int startVisualLine,
+                                int endVisualLine,
+                                float[] inlaysWidths) {
     if (!isMarginShown()) return;
-    int x = myCorrector.marginX();
     g.setColor(myEditor.getColorsScheme().getColor(EditorColors.RIGHT_MARGIN_COLOR));
-    UIUtil.drawLine(g, x, 0, x, clip.height);
+    if (inlaysWidths == null) {
+      int x = myCorrector.marginX();
+      UIUtil.drawLine(g, x, 0, x, clip.height);
+    }
+    else {
+      int y = myView.visualLineToY(startVisualLine) + yShift;
+      for(int i = startVisualLine; i <= endVisualLine; i++) {
+        int x = myCorrector.marginX(inlaysWidths[i - startVisualLine]);
+        UIUtil.drawLine(g, x, y, x, y += myView.getLineHeight());
+      }
+    }
     Color visualGuidesColor = myEditor.getColorsScheme().getColor(EditorColors.VISUAL_INDENT_GUIDE_COLOR);
     if (visualGuidesColor != null) {
       g.setColor(visualGuidesColor);
@@ -171,8 +173,10 @@ class EditorPainter implements TextDrawingCallback {
     return editor.getSettings().isRightMarginShown() && editor.getColorsScheme().getColor(EditorColors.RIGHT_MARGIN_COLOR) != null;
   }
 
-  private void paintBackground(Graphics2D g, Rectangle clip, int yShift,
+  private float[] paintBackground(Graphics2D g, Rectangle clip, int yShift,
                                int startVisualLine, int endVisualLine, IterationState.CaretData caretData) {
+    Ref<float[]> inlaysWidths = new Ref<>();
+    boolean calculateInlayWidths = Registry.is("editor.adjust.right.margin.for.inlays") && isMarginShown();
     int lineCount = myEditor.getVisibleLineCount();
     
     final Map<Integer, Couple<Integer>> virtualSelectionMap = createVirtualSelectionMap(startVisualLine, endVisualLine);
@@ -202,7 +206,12 @@ class EditorPainter implements TextDrawingCallback {
         @Override
         public void paint(Graphics2D g, VisualLineFragmentsIterator.Fragment fragment, int start, int end, 
                           TextAttributes attributes, float xStart, float xEnd, int y) {
-          paintBackground(g, attributes, xStart, y, xEnd - xStart);
+          float width = xEnd - xStart;
+          paintBackground(g, attributes, xStart, y, width);
+          if (calculateInlayWidths && fragment.getCurrentInlay() != null) {
+            if (inlaysWidths.isNull()) inlaysWidths.set(new float[endVisualLine - startVisualLine + 1]);
+            inlaysWidths.get()[visualLine - startVisualLine] += width;
+          }
         }
 
         @Override
@@ -221,6 +230,7 @@ class EditorPainter implements TextDrawingCallback {
       });
       visLinesIterator.advance();
     }
+    return inlaysWidths.get();
   }
 
   private Map<Integer, Couple<Integer>> createVirtualSelectionMap(int startVisualLine, int endVisualLine) {
@@ -1129,6 +1139,7 @@ class EditorPainter implements TextDrawingCallback {
     float singleLineBorderStart(float x);
     float singleLineBorderEnd(float x);
     int marginX();
+    int marginX(float inlaysWidth);
     List<Integer> softMarginsX();
 
     @NotNull
@@ -1201,6 +1212,11 @@ class EditorPainter implements TextDrawingCallback {
       }
 
       @Override
+      public int marginX(float inlaysWidth) {
+        return marginX() + (int) inlaysWidth;
+      }
+
+      @Override
       public List<Integer> softMarginsX() {
         List<Integer> margins = myView.getEditor().getSettings().getSoftMargins();
         List<Integer> result = new ArrayList<>(margins.size());
@@ -1267,6 +1283,11 @@ class EditorPainter implements TextDrawingCallback {
       public int marginX() {
         EditorImpl editor = myView.getEditor();
         return myView.getRightAlignmentMarginX() - editor.getSettings().getRightMargin(editor.getProject()) * myView.getPlainSpaceWidth();
+      }
+
+      @Override
+      public int marginX(float inlaysWidth) {
+        return marginX() - (int) inlaysWidth;
       }
 
       @Override
