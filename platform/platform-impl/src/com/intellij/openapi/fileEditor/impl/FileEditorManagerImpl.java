@@ -1866,6 +1866,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     @Override
     public void uiSettingsChanged(final UISettings uiSettings) {
       assertDispatchThread();
+      TransactionGuard.submitTransaction(myProject, () -> handleUiSettingChange(uiSettings));
+    }
+
+    private void handleUiSettingChange(UISettings uiSettings) {
       setTabsMode(uiSettings.getEditorTabPlacement() != UISettings.TABS_NONE && !uiSettings.getPresentationMode());
 
       for (EditorsSplitters each : getAllSplitters()) {

@@ -68,11 +68,6 @@
       <add-to-group group-id="ExportImportGroup" anchor="last"/>
     </action>
 
-    <!-- Edit -->
-    <reference ref="EditorCompleteStatement">
-      <add-to-group group-id="EditSmartGroup" anchor="first"/>
-    </reference>
-
     <!-- View -->
     <reference ref="DelegateMethods">
       <add-to-group group-id="CodeMenu" anchor="after" relative-to-action="ImplementMethods"/>

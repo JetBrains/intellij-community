@@ -791,4 +791,22 @@ class ContainerUtil extends ContainerUtilRt {
     checkPreferredItems 1, 'XLong', 'XLonger'
   }
 
+  void testSignatureBeforeStats() {
+    myFixture.configureByText 'a.java', '''
+class Foo { 
+  void foo(int a, int b) {
+    Stri<caret>
+    bar();
+  }
+  
+  void bar(int a, int b) {} 
+}'''
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'String'
+    myFixture.type('\n') // increase String statistics
+    myFixture.type('foo;\nbar(')
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'a', 'b', 'a, b'
+  }
+
 }
