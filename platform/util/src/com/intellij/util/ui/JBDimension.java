@@ -28,7 +28,7 @@ import static java.lang.Math.ceil;
  */
 public class JBDimension extends Dimension {
   protected Size2D size2D;
-  private final MyScaler scaler = new MyScaler();
+  private MyScaler scaler = new MyScaler();
 
   private static class Size2D {
     double width;
@@ -199,7 +199,7 @@ public class JBDimension extends Dimension {
 
 class MyScaler extends Scaler {
   @Override
-  protected float currentScale() {
+  protected double currentScale() {
     return JBUI.scale(1f);
   }
 
