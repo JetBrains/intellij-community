@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.MarkupEditorFilter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.changes.actions.migrate.MigrateDiffTool;
 import com.intellij.util.SmartList;
 import com.intellij.util.config.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -117,6 +118,7 @@ public class DiffManagerImpl extends DiffManager implements PersistentStateCompo
         BinaryDiffTool.INSTANCE
       };
       standardTools = new DiffTool[]{
+        MigrateDiffTool.INSTANCE,
         ExtCompareFolders.INSTANCE,
         ExtCompareFiles.INSTANCE,
         ExtMergeFiles.INSTANCE,
@@ -128,6 +130,7 @@ public class DiffManagerImpl extends DiffManager implements PersistentStateCompo
     }
     else {
       standardTools = new DiffTool[]{
+        MigrateDiffTool.INSTANCE,
         ExtCompareFolders.INSTANCE,
         ExtCompareFiles.INSTANCE,
         ExtMergeFiles.INSTANCE,
