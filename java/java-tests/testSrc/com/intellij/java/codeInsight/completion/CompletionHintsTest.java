@@ -724,6 +724,15 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     checkResultWithInlays("class C { int myVal = 1; void vararg(int a, int... b) {} void m() { vararg(<HINT text=\"a:\"/>myVal<caret><hint text=\", b:\"/>); } }");
   }
 
+  public void testEnteringSpaceBetweenVarargHints() throws Exception {
+    configureJava("class C { void vararg(Object a, int... b) {} void m() { varar<caret> } }");
+    complete();
+    checkResultWithInlays("class C { void vararg(Object a, int... b) {} void m() { vararg(<HINT text=\"a:\"/><caret><hint text=\", b:\"/>); } }");
+    type("new ");
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void vararg(Object a, int... b) {} void m() { vararg(<HINT text=\"a:\"/>new <caret><hint text=\", b:\"/>); } }");
+  }
+
   private void checkResult(String text) {
     myFixture.checkResult(text);
   }
