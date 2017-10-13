@@ -96,6 +96,7 @@ cmake
 cmdline
 cname
 codebase
+codecs
 codeinsight
 codesign
 commandline
