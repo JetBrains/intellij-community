@@ -8,7 +8,7 @@ from _pydev_imps._pydev_saved_modules import thread
 start_new_thread = thread.start_new_thread
 
 
-IS_PYTHON_3K = 0
+IS_PYTHON_3_ONWARDS = sys.version_info[0] >= 3
 IS_JYTHON = sys.platform.find('java') != -1
 
 try:
@@ -21,12 +21,11 @@ except ImportError:
 if not IS_JYTHON:
     import pycompletionserver
     import socket
-    try:
+    if not IS_PYTHON_3_ONWARDS:
         from urllib import quote_plus, unquote_plus
         def send(s, msg):
             s.send(msg)
-    except ImportError:
-        IS_PYTHON_3K = 1
+    else:
         from urllib.parse import quote_plus, unquote_plus  #Python 3.0
         def send(s, msg):
             s.send(bytearray(msg, 'utf-8'))
@@ -76,7 +75,7 @@ class TestCPython(unittest.TestCase):
         msg = ''
         while finish == False:
             m = self.socket.recv(1024 * 4)
-            if IS_PYTHON_3K:
+            if IS_PYTHON_3_ONWARDS:
                 m = m.decode('utf-8')
             if m.startswith('@@PROCESSING'):
                 sys.stdout.write('Status msg: %s\n' % (msg,))

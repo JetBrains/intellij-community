@@ -25,10 +25,10 @@ class ImportHookManager(ModuleType):
             sys.stderr.write("Matplotlib support failed\n")
         return module
 
-try:
+if sys.version_info[0] >= 3:
+    import builtins # py3
+else:
     import __builtin__ as builtins
-except ImportError:
-    import builtins
 
 import_hook_manager = ImportHookManager(__name__ + '.import_hook', builtins.__import__)
 builtins.__import__ = import_hook_manager.do_import
