@@ -71,7 +71,7 @@ public abstract class AnAction implements PossiblyDumbAware {
   public static final AnAction[] EMPTY_ARRAY = new AnAction[0];
 
   private Presentation myTemplatePresentation;
-  private ShortcutSet myShortcutSet;
+  private ShortcutSet myShortcutSet = CustomShortcutSet.EMPTY;
   private boolean myEnabledInModalContext;
 
   private boolean myIsDefaultIcon = true;
@@ -83,7 +83,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    * Creates a new action with its text, description and icon set to {@code null}.
    */
   public AnAction(){
-    this(null, null, null);
+    // avoid eagerly creating template presentation
   }
 
   /**
@@ -118,8 +118,6 @@ public abstract class AnAction implements PossiblyDumbAware {
    * @param icon Action's icon
    */
   public AnAction(@Nullable String text, @Nullable String description, @Nullable Icon icon){
-    myShortcutSet = CustomShortcutSet.EMPTY;
-    myEnabledInModalContext = false;
     Presentation presentation = getTemplatePresentation();
     presentation.setText(text);
     presentation.setDescription(description);
