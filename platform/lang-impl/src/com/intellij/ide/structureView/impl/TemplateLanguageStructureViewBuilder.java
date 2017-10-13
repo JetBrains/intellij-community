@@ -71,7 +71,7 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
 
   private void updateAfterPsiChange() {
     if (myProject.isDisposed()) return;
-    if (((StructureViewComponent)myBaseStructureViewDescriptor.structureView).isDisposed()) return;
+    if (myBaseStructureViewDescriptor != null && ((StructureViewComponent)myBaseStructureViewDescriptor.structureView).isDisposed()) return;
     ApplicationManager.getApplication().runReadAction(() -> {
       if (!myVirtualFile.isValid() || getViewProvider() == null) return;
 
