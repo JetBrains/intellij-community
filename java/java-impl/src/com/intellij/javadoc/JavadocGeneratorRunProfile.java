@@ -295,7 +295,8 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
     }
 
     private static String localPath(VirtualFile root) {
-      return FileUtil.toSystemDependentName(VfsUtil.getLocalFile(root).getPath());
+      // @argfile require forward slashes in quoted paths
+      return FileUtil.toSystemIndependentName(VfsUtil.getLocalFile(root).getPath());
     }
   }
 

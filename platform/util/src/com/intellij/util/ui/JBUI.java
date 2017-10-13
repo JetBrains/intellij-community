@@ -22,6 +22,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import gnu.trove.TFloatObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,10 +36,8 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
-
-import static com.intellij.util.ui.JBUI.ScaleType.*;
-import static java.lang.Math.round;
 
 /**
  * @author Konstantin Bulenkov
@@ -150,44 +149,66 @@ public class JBUI {
      */
     PIX_SCALE;
 
-    public Scale of(double value) {
-      return new Scale(value, this);
+    @NotNull
+    public Scale of(float value) {
+      synchronized (scaleCache) {
+        TFloatObjectHashMap<Scale> cache = scaleCache.get(this);
+        Scale cached = cache.get(value);
+        if (cached == null) {
+          cached = createScale(value);
+          cache.put(value, cached);
+        }
+        return cached;
+      }
+    }
+    
+    @NotNull
+    private Scale createScale(float value) {
+      return new Scale(value){
+        @NotNull
+        @Override
+        public ScaleType type() {
+          return ScaleType.this;
+        }
+      };
+    }
+  }
+
+  // guarded by scaleCache
+  private static final EnumMap<ScaleType, TFloatObjectHashMap<Scale>> scaleCache = new EnumMap<ScaleType, TFloatObjectHashMap<Scale>>(ScaleType.class);
+  static {
+    synchronized (scaleCache) {
+      for (ScaleType type : ScaleType.values()) {
+        scaleCache.put(type, new TFloatObjectHashMap<Scale>());
+      }
     }
   }
 
   /**
    * A scale factor of a particular type.
    */
-  public static class Scale {
-    private double value;
-    private final ScaleType type;
+  public abstract static class Scale {
+    private final float value;
 
-    public Scale(ScaleType type) {
-      this(1d, type);
-    }
-
-    public Scale(double value, ScaleType type) {
+    public Scale(float value) {
       this.value = value;
-      this.type = type;
     }
 
     public double value() {
       return value;
     }
 
-    public ScaleType type() {
-      return type;
-    }
+    @NotNull
+    public abstract ScaleType type();
 
-    public boolean update(double value) {
-      boolean res = this.value != value;
-      this.value = value;
-      return res;
+    @NotNull
+    Scale update(float value) {
+      return type().of(value);
     }
 
     @Override
     public String toString() {
-      return "[" + type.name() + " " + value + "]";
+      return "[" + type() + " " + value + "]";
     }
   }
 
@@ -202,7 +223,7 @@ public class JBUI {
   private static float userScaleFactor;
 
   static {
-    setUserScaleFactor(UIUtil.isJreHiDPIEnabled() ? 1f : SYSTEM_SCALE_FACTOR);
+    setUserScaleFactor(UIUtil.isJreHiDPIEnabled() ? 1 : SYSTEM_SCALE_FACTOR);
     LOG.info("System scale factor: " + SYSTEM_SCALE_FACTOR + " (" +
              (UIUtil.isJreHiDPIEnabled() ? "JRE-managed" : "IDE-managed") + " HiDPI)");
   }
@@ -260,7 +281,7 @@ public class JBUI {
     if (UIUtil.isJreHiDPIEnabled() && gc != null) {
       if (gc.getDevice().getType() == GraphicsDevice.TYPE_RASTER_SCREEN) {
         if (SystemInfo.isMac && UIUtil.isJreHiDPI_earlierVersion()) {
-          return UIUtil.DetectRetinaKit.isOracleMacRetinaDevice(gc.getDevice()) ? 2f : 1f;
+          return UIUtil.DetectRetinaKit.isOracleMacRetinaDevice(gc.getDevice()) ? 2f : 1;
         }
         return (float)gc.getDefaultTransform().getScaleX();
       }
@@ -301,7 +322,7 @@ public class JBUI {
 
   public static double sysScale(@Nullable ScaleContext ctx) {
     if (ctx != null) {
-      return ctx.getScale(SYS_SCALE);
+      return ctx.getScale(ScaleType.SYS_SCALE);
     }
     return sysScale();
   }
@@ -309,8 +330,8 @@ public class JBUI {
   /**
    * Returns the pixel scale factor, corresponding to the default monitor device.
    */
-  public static float pixScale() {
-    return UIUtil.isJreHiDPIEnabled() ? sysScale() * scale(1f) : scale(1f);
+  static float pixScale() {
+    return UIUtil.isJreHiDPIEnabled() ? sysScale() * scale(1) : scale(1);
   }
 
   /**
@@ -332,29 +353,29 @@ public class JBUI {
    * In the IDE-managed HiDPI mode defaults to {@link #pixScale()}
    */
   public static float pixScale(@Nullable GraphicsConfiguration gc) {
-    return UIUtil.isJreHiDPIEnabled() ? sysScale(gc) * scale(1f) : scale(1f);
+    return UIUtil.isJreHiDPIEnabled() ? sysScale(gc) * scale(1) : scale(1);
   }
 
   /**
    * Returns the pixel scale factor, corresponding to the provided graphics.
    * In the IDE-managed HiDPI mode defaults to {@link #pixScale()}
    */
-  public static float pixScale(@Nullable Graphics2D g) {
-    return UIUtil.isJreHiDPIEnabled() ? sysScale(g) * scale(1f) : scale(1f);
+  static float pixScale(@Nullable Graphics2D g) {
+    return UIUtil.isJreHiDPIEnabled() ? sysScale(g) * scale(1) : scale(1);
   }
 
   /**
    * Returns the pixel scale factor, corresponding to the device the provided component is tied to.
    * In the IDE-managed HiDPI mode defaults to {@link #pixScale()}
    */
-  public static float pixScale(@Nullable Component comp) {
+  static float pixScale(@Nullable Component comp) {
     return pixScale(comp != null ? comp.getGraphicsConfiguration() : null);
   }
 
   public static <T extends BaseScaleContext> double pixScale(@Nullable T ctx) {
     if (ctx != null) {
-      double usrScale = ctx.getScale(USR_SCALE);
-      return UIUtil.isJreHiDPIEnabled() ? ctx.getScale(SYS_SCALE) * usrScale : usrScale;
+      double usrScale = ctx.getScale(ScaleType.USR_SCALE);
+      return UIUtil.isJreHiDPIEnabled() ? ctx.getScale(ScaleType.SYS_SCALE) * usrScale : usrScale;
     }
     return pixScale();
   }
@@ -381,7 +402,7 @@ public class JBUI {
 
     if (SystemInfo.isLinux && scale == 1.25f) {
       //Default UI font size for Unity and Gnome is 15. Scaling factor 1.25f works badly on Linux
-      scale = 1f;
+      scale = 1;
     }
     if (userScaleFactor == scale) {
       return;
@@ -390,17 +411,7 @@ public class JBUI {
   }
 
   private static float discreteScale(float scale) {
-    int intPart = (int)Math.floor(scale);
-    float fractPart = scale - intPart;
-
-    if (fractPart == 0) return scale;
-
-    for (float f = 0; f < 1; f += DISCRETE_SCALE_RESOLUTION) {
-      if (fractPart < (f + DISCRETE_SCALE_RESOLUTION)) {
-        return intPart + f;
-      }
-    }
-    return intPart; // unreachable
+    return (float)(Math.floor(scale / DISCRETE_SCALE_RESOLUTION) * DISCRETE_SCALE_RESOLUTION);
   }
 
   /**
@@ -414,7 +425,7 @@ public class JBUI {
    * @return 'i' scaled by the user scale factor
    */
   public static int scale(int i) {
-    return round(userScaleFactor * i);
+    return Math.round(userScaleFactor * i);
   }
 
   public static int scaleFontSize(float fontSize) {
@@ -424,7 +435,6 @@ public class JBUI {
   }
 
   /**
-   * @param fontSize
    * @return the scale factor of {@code fontSize} relative to the standard font size (currently 12pt)
    */
   public static float getFontScale(float fontSize) {
@@ -508,10 +518,10 @@ public class JBUI {
 
   /**
    * Returns whether the {@link ScaleType#USR_SCALE} scale factor assumes HiDPI-awareness.
-   * An equivalent of {@code isHiDPI(scale(1f))}
+   * An equivalent of {@code isHiDPI(scale(1))}
    */
   public static boolean isUsrHiDPI() {
-      return isHiDPI(scale(1f));
+      return isHiDPI(scale(1));
   }
 
   /**
@@ -542,7 +552,7 @@ public class JBUI {
    * Returns whether the provided scale assumes HiDPI-awareness.
    */
   public static boolean isHiDPI(double scale) {
-    return scale > 1f;
+    return scale > 1;
   }
 
   public static class Fonts {
@@ -567,6 +577,7 @@ public class JBUI {
     }
   }
 
+  @SuppressWarnings("UseDPIAwareBorders")
   public static class Borders {
     public static JBEmptyBorder empty(int top, int left, int bottom, int right) {
       return new JBEmptyBorder(top, left, bottom, right);
@@ -637,19 +648,19 @@ public class JBUI {
    * in which its initial size is either pre-scaled (according to {@link #currentScale()})
    * or not (given in a standard resolution, e.g. 16x16 for an icon).
    */
-  public static abstract class Scaler {
-    protected double initialScale = currentScale();
+  public abstract static class Scaler {
+    protected float initialScale = currentScale();
 
     private double alignedScale() {
       return currentScale() / initialScale;
     }
 
     protected boolean isPreScaled() {
-      return initialScale != 1d;
+      return initialScale != 1;
     }
 
     protected void setPreScaled(boolean preScaled) {
-      initialScale = preScaled ? currentScale() : 1d;
+      initialScale = preScaled ? currentScale() : 1;
     }
 
     /**
@@ -664,7 +675,7 @@ public class JBUI {
      * Supplies the Scaler with the current user scale. This can be the current global user scale or
      * the context scale ({@link BaseScaleContext#usrScale}) or something else.
      */
-    protected abstract double currentScale();
+    protected abstract float currentScale();
 
     /**
      * Synchronizes the state with the provided scaler.
@@ -688,9 +699,9 @@ public class JBUI {
    * @author tav
    */
   public static class BaseScaleContext {
-    protected Scale usrScale = USR_SCALE.of(scale(1f));
-    protected Scale objScale = OBJ_SCALE.of(1d);
-    protected Scale pixScale = PIX_SCALE.of(usrScale.value);
+    Scale usrScale = ScaleType.USR_SCALE.of(scale(1));
+    Scale objScale = ScaleType.OBJ_SCALE.of(1);
+    Scale pixScale = ScaleType.PIX_SCALE.of(scale(1));
 
     private List<UpdateListener> listeners;
 
@@ -713,21 +724,21 @@ public class JBUI {
       return new BaseScaleContext();
     }
 
-    protected double derivePixScale() {
+    protected float derivePixScale() {
       return usrScale.value * objScale.value;
     }
 
     /**
-     * @return the context scale factor of the provided type (1d for system scale)
+     * @return the context scale factor of the provided type (1 for system scale)
      */
-    public double getScale(ScaleType type) {
+    public float getScale(@NotNull ScaleType type) {
       switch (type) {
         case USR_SCALE: return usrScale.value;
-        case SYS_SCALE: return 1d;
+        case SYS_SCALE: return 1;
         case OBJ_SCALE: return objScale.value;
         case PIX_SCALE: return pixScale.value;
       }
-      return 1f; // unreachable
+      return 1; // unreachable
     }
 
     protected boolean onUpdated(boolean updated) {
@@ -744,7 +755,7 @@ public class JBUI {
      * @return whether any of the scale factors has been updated
      */
     public boolean update() {
-      return onUpdated(usrScale.update(scale(1f)));
+      return onUpdated(updateUsr(scale(1)));
     }
 
     /**
@@ -755,13 +766,26 @@ public class JBUI {
      */
     public boolean update(@NotNull Scale scale) {
       boolean updated = false;
-      switch (scale.type) {
-        case USR_SCALE: updated = usrScale.update(scale.value); break;
+      switch (scale.type()) {
+        case USR_SCALE: updated = updateUsr(scale.value); break;
         case SYS_SCALE: break;
-        case OBJ_SCALE: updated = objScale.update(scale.value); break;
+        case OBJ_SCALE: updated = updateObj(scale.value); break;
         case PIX_SCALE: break;
       }
       return onUpdated(updated);
+    }
+
+    boolean updateUsr(float value) {
+      Scale newScale = usrScale.update(value);
+      boolean updated = newScale != usrScale;
+      usrScale = newScale;
+      return updated;
+    }
+    boolean updateObj(float value) {
+      Scale newScale = objScale.update(value);
+      boolean updated = newScale != objScale;
+      objScale = newScale;
+      return updated;
     }
 
     /**
@@ -776,8 +800,8 @@ public class JBUI {
     }
 
     protected <T extends BaseScaleContext> boolean updateAll(@NotNull T ctx) {
-      boolean updated = usrScale.update(ctx.usrScale.value);
-      return objScale.update(ctx.objScale.value) || updated;
+      boolean updated = updateUsr(ctx.usrScale.value);
+      return updateObj(ctx.objScale.value) || updated;
     }
 
     @Override
@@ -804,7 +828,7 @@ public class JBUI {
       void contextUpdated();
     }
 
-    public void addUpdateListener(UpdateListener l) {
+    public void addUpdateListener(@NotNull UpdateListener l) {
       if (listeners == null) listeners = new ArrayList<UpdateListener>(1);
       listeners.add(l);
     }
@@ -813,7 +837,7 @@ public class JBUI {
       if (listeners != null) listeners.remove(l);
     }
 
-    protected void notifyUpdateListeners() {
+    private void notifyUpdateListeners() {
       if (listeners == null) return;
       for (UpdateListener l : listeners) {
         l.contextUpdated();
@@ -831,16 +855,16 @@ public class JBUI {
    * @author tav
    */
   public static class ScaleContext extends BaseScaleContext {
-    protected Scale sysScale = SYS_SCALE.of(sysScale());
+    protected Scale sysScale = ScaleType.SYS_SCALE.of(sysScale());
 
-    private @Nullable WeakReference<Component> compRef;
+    @Nullable private WeakReference<Component> compRef;
 
     private ScaleContext() {
       pixScale.update(derivePixScale());
     }
 
     private ScaleContext(Scale scale) {
-      switch (scale.type) {
+      switch (scale.type()) {
         case USR_SCALE: usrScale.update(scale.value); break;
         case SYS_SCALE: sysScale.update(scale.value); break;
         case OBJ_SCALE: objScale.update(scale.value); break;
@@ -853,7 +877,7 @@ public class JBUI {
      * Creates a context based on the comp's system scale and sticks to it via the {@link #update()} method.
      */
     public static ScaleContext create(@NotNull Component comp) {
-      final ScaleContext ctx = new ScaleContext(SYS_SCALE.of(sysScale(comp)));
+      final ScaleContext ctx = new ScaleContext(ScaleType.SYS_SCALE.of(sysScale(comp)));
       ctx.compRef = new WeakReference<Component>(comp);
       return ctx;
     }
@@ -862,14 +886,14 @@ public class JBUI {
      * Creates a context based on the gc's system scale
      */
     public static ScaleContext create(GraphicsConfiguration gc) {
-      return new ScaleContext(SYS_SCALE.of(sysScale(gc)));
+      return new ScaleContext(ScaleType.SYS_SCALE.of(sysScale(gc)));
     }
 
     /**
      * Creates a context based on the g's system scale
      */
     public static ScaleContext create(Graphics2D g) {
-      return new ScaleContext(SYS_SCALE.of(sysScale(g)));
+      return new ScaleContext(ScaleType.SYS_SCALE.of(sysScale(g)));
     }
 
     /**
@@ -896,7 +920,7 @@ public class JBUI {
     }
 
     @Override
-    protected double derivePixScale() {
+    protected float derivePixScale() {
       return UIUtil.isJreHiDPIEnabled() ? sysScale.value * super.derivePixScale() : super.derivePixScale();
     }
 
@@ -904,8 +928,8 @@ public class JBUI {
      * {@inheritDoc}
      */
     @Override
-    public double getScale(ScaleType type) {
-      if (type == SYS_SCALE) return sysScale.value;
+    public float getScale(@NotNull ScaleType type) {
+      if (type == ScaleType.SYS_SCALE) return sysScale.value;
       return super.getScale(type);
     }
 
@@ -915,12 +939,19 @@ public class JBUI {
      */
     @Override
     public boolean update() {
-      boolean updated = usrScale.update(scale(1f));
+      boolean updated = updateUsr(scale(1));
       if (compRef != null) {
         Component comp = compRef.get();
-        if (comp != null) updated = sysScale.update(sysScale(comp)) || updated;
+        if (comp != null) updated = updateSys(sysScale(comp)) || updated;
       }
       return onUpdated(updated);
+    }
+
+    boolean updateSys(float value) {
+      Scale newScale = sysScale.update(value);
+      boolean updated = newScale != sysScale;
+      sysScale = newScale;
+      return updated;
     }
 
     /**
@@ -929,7 +960,7 @@ public class JBUI {
      */
     @Override
     public boolean update(@NotNull Scale scale) {
-      if (scale.type == SYS_SCALE) return onUpdated(sysScale.update(scale.value));
+      if (scale.type() == ScaleType.SYS_SCALE) return onUpdated(updateSys(scale.value));
       return super.update(scale);
     }
 
@@ -942,7 +973,7 @@ public class JBUI {
       if (compRef != null) compRef.clear();
       compRef = context.compRef;
 
-      return sysScale.update(context.sysScale.value) || updated;
+      return updateSys(context.sysScale.value) || updated;
     }
 
     @Override
@@ -988,30 +1019,25 @@ public class JBUI {
     /**
      * @return the scale of the provided type from the context
      */
-    double getScale(ScaleType type);
+    float getScale(@NotNull ScaleType type);
 
     /**
      * Updates the provided scale in the context
      *
-     * @return whether the provided scale has been changed
      */
-    boolean updateScale(Scale scale);
+    void updateScale(@NotNull Scale scale);
   }
 
   public static class ScaleContextSupport<T extends BaseScaleContext> implements ScaleContextAware<T> {
     private final T myScaleContext;
 
-    private ScaleContextSupport() {
-      myScaleContext = null;
-      assert false;
-    }
-
-    public ScaleContextSupport(T ctx) {
+    public ScaleContextSupport(@NotNull T ctx) {
       myScaleContext = ctx;
     }
 
+    @NotNull
     @Override
-    public @NotNull T getScaleContext() {
+    public T getScaleContext() {
       return myScaleContext;
     }
 
@@ -1021,13 +1047,13 @@ public class JBUI {
     }
 
     @Override
-    public double getScale(ScaleType type) {
+    public float getScale(@NotNull ScaleType type) {
       return getScaleContext().getScale(type);
     }
 
     @Override
-    public boolean updateScale(Scale scale) {
-      return getScaleContext().update(scale);
+    public void updateScale(@NotNull Scale scale) {
+      getScaleContext().update(scale);
     }
   }
 
@@ -1039,9 +1065,9 @@ public class JBUI {
   public abstract static class JBIcon extends ScaleContextSupport<BaseScaleContext> implements Icon {
     private final Scaler myScaler = new Scaler() {
       @Override
-      protected double currentScale() {
+      protected float currentScale() {
         if (autoUpdateScaleContext) getScaleContext().update();
-        return getScale(USR_SCALE);
+        return getScale(ScaleType.USR_SCALE);
       }
     };
     private boolean autoUpdateScaleContext = true;
@@ -1111,12 +1137,12 @@ public class JBUI {
 
     @Override
     public float getScale() {
-      return (float)getScale(OBJ_SCALE); // todo: float -> double
+      return getScale(ScaleType.OBJ_SCALE); // todo: float -> double
     }
 
     @Override
     public Icon scale(float scale) {
-      updateScale(OBJ_SCALE.of(scale));
+      updateScale(ScaleType.OBJ_SCALE.of(scale));
       return this;
     }
 
@@ -1125,7 +1151,7 @@ public class JBUI {
      */
     @Override
     protected double scaleVal(double value) {
-      return scaleVal(value, PIX_SCALE);
+      return scaleVal(value, ScaleType.PIX_SCALE);
     }
 
     /**
@@ -1134,9 +1160,9 @@ public class JBUI {
     protected double scaleVal(double value, ScaleType type) {
       switch (type) {
         case USR_SCALE: return super.scaleVal(value);
-        case SYS_SCALE: return value * getScale(SYS_SCALE);
-        case OBJ_SCALE: return value * getScale(OBJ_SCALE);
-        case PIX_SCALE: return super.scaleVal(value * getScale(OBJ_SCALE));
+        case SYS_SCALE: return value * getScale(ScaleType.SYS_SCALE);
+        case OBJ_SCALE: return value * getScale(ScaleType.OBJ_SCALE);
+        case PIX_SCALE: return super.scaleVal(value * getScale(ScaleType.OBJ_SCALE));
       }
       return value; // unreachable
     }
@@ -1149,7 +1175,7 @@ public class JBUI {
    * @author Aleksey Pivovarov
    */
   public abstract static class CachingScalableJBIcon<T extends CachingScalableJBIcon> extends ScalableJBIcon {
-    private CachingScalableJBIcon myScaledIconCache = null;
+    private CachingScalableJBIcon myScaledIconCache;
 
     protected CachingScalableJBIcon() {}
 
@@ -1166,7 +1192,7 @@ public class JBUI {
 
       if (myScaledIconCache == null || myScaledIconCache.getScale() != scale) {
         myScaledIconCache = copy();
-        myScaledIconCache.updateScale(OBJ_SCALE.of(scale));
+        myScaledIconCache.updateScale(ScaleType.OBJ_SCALE.of(scale));
       }
       return myScaledIconCache;
     }

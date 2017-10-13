@@ -511,7 +511,7 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
 
     if (schemes === this.schemes) {
       @Suppress("UNCHECKED_CAST")
-      addNewScheme(scheme as T, true)
+      addScheme(scheme as T, true)
     }
     else {
       @Suppress("UNCHECKED_CAST")
@@ -838,7 +838,7 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
     }
   }
 
-  override fun addNewScheme(scheme: T, replaceExisting: Boolean) = schemeListManager.addScheme(scheme, replaceExisting)
+  override fun addScheme(scheme: T, replaceExisting: Boolean) = schemeListManager.addScheme(scheme, replaceExisting)
 
   override fun findSchemeByName(schemeName: String) = schemes.firstOrNull { processor.getSchemeKey(it) == schemeName }
 

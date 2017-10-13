@@ -20,12 +20,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.util.ListWithSelection;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.Collections;
+import java.util.EnumSet;
 
 public class ComboBoxTableCellRenderer extends JPanel implements TableCellRenderer {
   public static final TableCellRenderer INSTANCE = new ComboBoxTableCellRenderer();
@@ -55,17 +57,16 @@ public class ComboBoxTableCellRenderer extends JPanel implements TableCellRender
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public JComponent getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     if (value instanceof ListWithSelection) {
-      final ListWithSelection tags = (ListWithSelection)value;
-      if (tags.getSelection() == null) {
-        tags.selectFirst();
-      }
-      myCombo.removeAllItems();
-      for (Object tag : tags) {
-        myCombo.addItem(tag);
-      }
-      myCombo.setSelectedItem(tags.getSelection());
+      ListWithSelection tags = (ListWithSelection)value;
+      if (tags.getSelection() == null) tags.selectFirst();
+      updateCombobox(tags, tags.getSelection());
+    }
+    else if (value instanceof Enum) {
+      Enum selectedValue = (Enum)value;
+      updateCombobox(EnumSet.allOf(selectedValue.getDeclaringClass()), selectedValue);
     }
     else {
       if (value != null) {
@@ -76,5 +77,14 @@ public class ComboBoxTableCellRenderer extends JPanel implements TableCellRender
     }
 
     return this;
+  }
+
+  @SuppressWarnings("unchecked")
+  private void updateCombobox(@NotNull Iterable<?> options, @NotNull Object selectedOption) {
+    myCombo.removeAllItems();
+    for (Object option : options) {
+      myCombo.addItem(option);
+    }
+    myCombo.setSelectedItem(selectedOption);
   }
 }

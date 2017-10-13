@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ContainerProvider;
@@ -934,13 +932,13 @@ public class HighlightUtil extends HighlightUtilBase {
 
     if (level != null && file != null) {
       if (isFP) {
-        if (text.startsWith(PsiLiteralExpressionImpl.HEX_PREFIX)) {
+        if (text.startsWith(PsiLiteralUtil.HEX_PREFIX)) {
           final HighlightInfo info = checkFeature(expression, Feature.HEX_FP_LITERALS, level, file);
           if (info != null) return info;
         }
       }
       if (isInt) {
-        if (text.startsWith(PsiLiteralExpressionImpl.BIN_PREFIX)) {
+        if (text.startsWith(PsiLiteralUtil.BIN_PREFIX)) {
           final HighlightInfo info = checkFeature(expression, Feature.BIN_LITERALS, level, file);
           if (info != null) return info;
         }
@@ -959,18 +957,18 @@ public class HighlightUtil extends HighlightUtilBase {
     if (type == JavaTokenType.INTEGER_LITERAL) {
       String cleanText = StringUtil.replace(text, "_", "");
       //literal 2147483648 may appear only as the operand of the unary negation operator -.
-      if (!(cleanText.equals(PsiLiteralExpressionImpl._2_IN_31) &&
+      if (!(cleanText.equals(PsiLiteralUtil._2_IN_31) &&
             parent instanceof PsiPrefixExpression &&
             ((PsiPrefixExpression)parent).getOperationTokenType() == JavaTokenType.MINUS)) {
-        if (cleanText.equals(PsiLiteralExpressionImpl.HEX_PREFIX)) {
+        if (cleanText.equals(PsiLiteralUtil.HEX_PREFIX)) {
           String message = JavaErrorMessages.message("hexadecimal.numbers.must.contain.at.least.one.hexadecimal.digit");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
-        if (cleanText.equals(PsiLiteralExpressionImpl.BIN_PREFIX)) {
+        if (cleanText.equals(PsiLiteralUtil.BIN_PREFIX)) {
           String message = JavaErrorMessages.message("binary.numbers.must.contain.at.least.one.hexadecimal.digit");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
-        if (value == null || cleanText.equals(PsiLiteralExpressionImpl._2_IN_31)) {
+        if (value == null || cleanText.equals(PsiLiteralUtil._2_IN_31)) {
           String message = JavaErrorMessages.message("integer.number.too.large");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
@@ -979,18 +977,18 @@ public class HighlightUtil extends HighlightUtilBase {
     else if (type == JavaTokenType.LONG_LITERAL) {
       String cleanText = StringUtil.replace(StringUtil.trimEnd(text, 'l'), "_", "");
       //literal 9223372036854775808L may appear only as the operand of the unary negation operator -.
-      if (!(cleanText.equals(PsiLiteralExpressionImpl._2_IN_63) &&
+      if (!(cleanText.equals(PsiLiteralUtil._2_IN_63) &&
             parent instanceof PsiPrefixExpression &&
             ((PsiPrefixExpression)parent).getOperationTokenType() == JavaTokenType.MINUS)) {
-        if (cleanText.equals(PsiLiteralExpressionImpl.HEX_PREFIX)) {
+        if (cleanText.equals(PsiLiteralUtil.HEX_PREFIX)) {
           String message = JavaErrorMessages.message("hexadecimal.numbers.must.contain.at.least.one.hexadecimal.digit");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
-        if (cleanText.equals(PsiLiteralExpressionImpl.BIN_PREFIX)) {
+        if (cleanText.equals(PsiLiteralUtil.BIN_PREFIX)) {
           String message = JavaErrorMessages.message("binary.numbers.must.contain.at.least.one.hexadecimal.digit");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
-        if (value == null || cleanText.equals(PsiLiteralExpressionImpl._2_IN_63)) {
+        if (value == null || cleanText.equals(PsiLiteralUtil._2_IN_63)) {
           String message = JavaErrorMessages.message("long.number.too.large");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
@@ -1113,7 +1111,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
     if (isInt) {
       int start = 0;
-      if (text.startsWith(PsiLiteralExpressionImpl.HEX_PREFIX) || text.startsWith(PsiLiteralExpressionImpl.BIN_PREFIX)) start += 2;
+      if (text.startsWith(PsiLiteralUtil.HEX_PREFIX) || text.startsWith(PsiLiteralUtil.BIN_PREFIX)) start += 2;
       int end = text.length();
       if (StringUtil.endsWithChar(text, 'l')) --end;
       parts = new String[]{text.substring(start, end)};

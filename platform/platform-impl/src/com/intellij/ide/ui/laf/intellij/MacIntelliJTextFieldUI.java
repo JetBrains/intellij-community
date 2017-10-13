@@ -16,6 +16,7 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
@@ -56,7 +57,7 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
 
   @Override
   protected int getMinimumHeight() {
-    return JBUI.scale(28);
+    return DarculaEditorTextFieldBorder.isComboBoxEditor(getComponent()) ? JBUI.scale(18) : JBUI.scale(28);
   }
 
   @Override
@@ -91,8 +92,7 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
       else if (component.getBorder() instanceof MacIntelliJTextBorder) {
         g.setColor(component.getBackground());
         g.fillRect(JBUI.scale(3), JBUI.scale(3), component.getWidth() - JBUI.scale(3)*2, component.getHeight() - JBUI.scale(3)*2);
-      }
-      else {
+      } else if (component.isOpaque()) {
         super.paintBackground(g);
       }
     }
@@ -127,8 +127,6 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
       if (c.hasFocus() && c.getClientProperty("JTextField.Search.noBorderRing") != Boolean.TRUE) {
         DarculaUIUtil.paintFocusBorder(g2, r.width, r.height, arc, true);
       }
-
-      g2.translate(-r.x, -r.y);
     } finally {
       g2.dispose();
     }
