@@ -23,11 +23,11 @@ class Test(unittest.TestCase):
                 print('foo')
                 print('bar')
 
-                self.assertEquals('foo\nbar\n', sys.stdout.getvalue()) #@UndefinedVariable
+                self.assertEqual('foo\nbar\n', sys.stdout.getvalue()) #@UndefinedVariable
 
                 print('ww')
                 print('xx')
-                self.assertEquals('ww\nxx\n', sys.stdout.getvalue()) #@UndefinedVariable
+                self.assertEqual('ww\nxx\n', sys.stdout.getvalue()) #@UndefinedVariable
             finally:
                 sys.stdout = original
         finally:

@@ -72,13 +72,13 @@ class Test(unittest.TestCase):
                     self.assertTrue(found[0].startswith(u'Out'))
 
             comps = interpreter.getCompletions('foo.', 'foo.')
-            self.assert_(
+            self.assertTrue(
                 ('CONSTANT', '', '', '3') in comps or ('CONSTANT', '', '', '4') in comps, \
                 'Found: %s' % comps
             )
 
             comps = interpreter.getCompletions('"".', '"".')
-            self.assert_(
+            self.assertTrue(
                 ('__add__', 'x.__add__(y) <==> x+y', '', '3') in comps or
                 ('__add__', '', '', '4') in comps or
                 ('__add__', 'x.__add__(y) <==> x+y\r\nx.__add__(y) <==> x+y', '()', '2') in comps or
@@ -99,15 +99,15 @@ class Test(unittest.TestCase):
                 if c[0] == 'RuntimeError':
                     self.fail('Did not expect to find RuntimeError there')
 
-            self.assert_(('__doc__', None, '', '3') not in interpreter.getCompletions('foo.CO', 'foo.'))
+            self.assertTrue(('__doc__', None, '', '3') not in interpreter.getCompletions('foo.CO', 'foo.'))
 
             comps = interpreter.getCompletions('va', 'va')
-            self.assert_(('val', '', '', '3') in comps or ('val', '', '', '4') in comps)
+            self.assertTrue(('val', '', '', '3') in comps or ('val', '', '', '4') in comps)
 
             interpreter.add_exec(CodeFragment('s = "mystring"'))
 
             desc = interpreter.getDescription('val')
-            self.assert_(desc.find('str(object) -> string') >= 0 or
+            self.assertTrue(desc.find('str(object) -> string') >= 0 or
                          desc == "'input_request'" or
                          desc.find('str(string[, encoding[, errors]]) -> str') >= 0 or
                          desc.find('str(Char* value)') >= 0 or
@@ -119,7 +119,7 @@ class Test(unittest.TestCase):
                          'Could not find what was needed in %s' % desc)
 
             desc = interpreter.getDescription('val.join')
-            self.assert_(desc.find('S.join(sequence) -> string') >= 0 or
+            self.assertTrue(desc.find('S.join(sequence) -> string') >= 0 or
                          desc.find('S.join(sequence) -> str') >= 0 or
                          desc.find('S.join(iterable) -> string') >= 0 or
                          desc == "<builtin method 'join'>"  or

@@ -44,15 +44,14 @@ class TestCPython(unittest.TestCase):
         l.append(('Def2', 'description2', 'args2'))
 
         msg = t.processor.format_completion_message(None, l)
-        self.assertEquals('@@COMPLETIONS(None,(Def,description,args),(Def1,description1,args1),(Def2,description2,args2))END@@', msg)
 
+        self.assertEqual('@@COMPLETIONS(None,(Def,description,args),(Def1,description1,args1),(Def2,description2,args2))END@@', msg)
         l = []
         l.append(('Def', 'desc,,r,,i()ption', ''))
         l.append(('Def(1', 'descriptio(n1', ''))
         l.append(('De,f)2', 'de,s,c,ription2', ''))
         msg = t.processor.format_completion_message(None, l)
-        self.assertEquals('@@COMPLETIONS(None,(Def,desc%2C%2Cr%2C%2Ci%28%29ption, ),(Def%281,descriptio%28n1, ),(De%2Cf%292,de%2Cs%2Cc%2Cription2, ))END@@', msg)
-
+        self.assertEqual('@@COMPLETIONS(None,(Def,desc%2C%2Cr%2C%2Ci%28%29ption, ),(Def%281,descriptio%28n1, ),(De%2Cf%292,de%2Cs%2Cc%2Cription2, ))END@@', msg)
     def create_connections(self, p1=50002):
         '''
         Creates the connections needed for testing.
@@ -107,23 +106,23 @@ class TestCPython(unittest.TestCase):
                 'math.cpython-35m' in completions or \
                 'math.cpython-36m' in completions:
                 return
-            self.assert_(completions.startswith(start) or completions.startswith(start_2), '%s DOESNT START WITH %s' % (completions, (start, start_2)))
+            self.assertTrue(completions.startswith(start) or completions.startswith(start_2), '%s DOESNT START WITH %s' % (completions, (start, start_2)))
 
-            self.assert_('@@COMPLETIONS' in completions)
-            self.assert_('END@@' in completions)
+            self.assertTrue('@@COMPLETIONS' in completions)
+            self.assertTrue('END@@' in completions)
 
 
             #now, test i
             msg = quote_plus('%s.list' % BUILTIN_MOD)
             send(socket, "@@IMPORTS:%s\nEND@@" % msg)
             found = self.read_msg()
-            self.assert_('sort' in found, 'Could not find sort in: %s' % (found,))
+            self.assertTrue('sort' in found, 'Could not find sort in: %s' % (found,))
 
             #now, test search
             msg = quote_plus('inspect.ismodule')
             send(socket, '@@SEARCH%sEND@@' % msg)  #math completions
             found = self.read_msg()
-            self.assert_('inspect.py' in found)
+            self.assertTrue('inspect.py' in found)
             for i in range(33, 100):
                 if str(i) in found:
                     break
@@ -134,20 +133,20 @@ class TestCPython(unittest.TestCase):
             msg = quote_plus('inspect.CO_NEWLOCALS')
             send(socket, '@@SEARCH%sEND@@' % msg)  #math completions
             found = self.read_msg()
-            self.assert_('inspect.py' in found)
-            self.assert_('CO_NEWLOCALS' in found)
+            self.assertTrue('inspect.py' in found)
+            self.assertTrue('CO_NEWLOCALS' in found)
 
             #now, test search
             msg = quote_plus('inspect.BlockFinder.tokeneater')
             send(socket, '@@SEARCH%sEND@@' % msg)
             found = self.read_msg()
-            self.assert_('inspect.py' in found)
-#            self.assert_('CO_NEWLOCALS' in found)
+            self.assertTrue('inspect.py' in found)
+#            self.assertTrue('CO_NEWLOCALS' in found)
 
         #reload modules test
 #        send(socket, '@@RELOAD_MODULES_END@@')
 #        ok = self.read_msg()
-#        self.assertEquals('@@MSG_OK_END@@' , ok)
+#        self.assertEqual('@@MSG_OK_END@@' , ok)
 #        this test is not executed because it breaks our current enviroment.
 
         finally:

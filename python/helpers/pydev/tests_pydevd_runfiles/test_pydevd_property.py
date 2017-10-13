@@ -114,11 +114,11 @@ class Test(unittest.TestCase):
         self.assertEqual(testObj.name, "Custom")
         self.assertEqual(1, testObj._get)
 
-        self.assert_(hasattr(testObj, 'name'))
+        self.assertTrue(hasattr(testObj, 'name'))
         del testObj.name
         self.assertEqual(1, testObj._del)
 
-        self.assert_(not hasattr(testObj, 'name'))
+        self.assertTrue(not hasattr(testObj, 'name'))
         testObj.name = "Custom2"
         self.assertEqual(testObj.name, "Custom2")
 

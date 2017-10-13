@@ -107,7 +107,7 @@ class Test(unittest.TestCase):
                     raise AssertionError('Did not get the return asked before the timeout.')
                 time.sleep(.1)
             frame_xml = server.getFrame()
-            self.assert_('RequestInput' in frame_xml, 'Did not fid RequestInput in:\n%s' % (frame_xml,))
+            self.assertTrue('RequestInput' in frame_xml, 'Did not fid RequestInput in:\n%s' % (frame_xml,))
         finally:
             client_thread.shutdown()
 

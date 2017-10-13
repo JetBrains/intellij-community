@@ -34,7 +34,7 @@ class TestJython(unittest.TestCase):
 
         msg = t.processor.format_completion_message('test_jyserver.py', l)
 
-        self.assertEquals('@@COMPLETIONS(test_jyserver.py,(Def,description,args),(Def1,description1,args1),(Def2,description2,args2))END@@', msg)
+        self.assertEqual('@@COMPLETIONS(test_jyserver.py,(Def,description,args),(Def1,description1,args1),(Def2,description2,args2))END@@', msg)
 
         l = []
         l.append(('Def', 'desc,,r,,i()ption', ''))
@@ -43,7 +43,7 @@ class TestJython(unittest.TestCase):
         msg = t.processor.format_completion_message(None, l)
         expected = '@@COMPLETIONS(None,(Def,desc%2C%2Cr%2C%2Ci%28%29ption, ),(Def%281,descriptio%28n1, ),(De%2Cf%292,de%2Cs%2Cc%2Cription2, ))END@@'
 
-        self.assertEquals(expected, msg)
+        self.assertEqual(expected, msg)
 
     
     def test_completion_sockets_and_messages(self):
@@ -63,9 +63,9 @@ class TestJython(unittest.TestCase):
             dbg(urllib.unquote_plus(completions))
 
             start = '@@COMPLETIONS('
-            self.assert_(completions.startswith(start), '%s DOESNT START WITH %s' % (completions, start))
-            self.assert_(completions.find('@@COMPLETIONS') != -1)
-            self.assert_(completions.find('END@@') != -1)
+            self.assertTrue(completions.startswith(start), '%s DOESNT START WITH %s' % (completions, start))
+            self.assertTrue(completions.find('@@COMPLETIONS') != -1)
+            self.assertTrue(completions.find('END@@') != -1)
 
 
             msg = urllib.quote_plus('__builtin__.str')
@@ -76,9 +76,9 @@ class TestJython(unittest.TestCase):
             dbg(urllib.unquote_plus(completions))
 
             start = '@@COMPLETIONS('
-            self.assert_(completions.startswith(start), '%s DOESNT START WITH %s' % (completions, start))
-            self.assert_(completions.find('@@COMPLETIONS') != -1)
-            self.assert_(completions.find('END@@') != -1)
+            self.assertTrue(completions.startswith(start), '%s DOESNT START WITH %s' % (completions, start))
+            self.assertTrue(completions.find('@@COMPLETIONS') != -1)
+            self.assertTrue(completions.find('END@@') != -1)
 
 
 
