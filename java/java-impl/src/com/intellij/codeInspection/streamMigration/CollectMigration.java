@@ -193,7 +193,7 @@ class CollectMigration extends BaseStreamApiMigration {
     @Nullable
     PsiLocalVariable getTargetVariable() { return myTargetVariable; }
 
-    String generateIntermediate() { return ""; }
+    abstract String generateIntermediate();
 
     StreamEx<? extends PsiExpression> targetReferences() {
       List<PsiElement> usedElements = usedElements().toList();
@@ -413,6 +413,11 @@ class CollectMigration extends BaseStreamApiMigration {
     @Override
     public boolean isTrivial() {
       return false;
+    }
+
+    @Override
+    String generateIntermediate() {
+      return myDownstream.myElement.getType() instanceof PsiPrimitiveType ? ".boxed()" : "";
     }
 
     @Override
