@@ -281,7 +281,7 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
           }
 
           for (VirtualFile source : sources) {
-            writer.println(StringUtil.wrapWithDoubleQuote(localPath(source)));
+            writer.println(StringUtil.wrapWithDoubleQuote(source.getPath()));
           }
         }
 
@@ -296,7 +296,7 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
 
     private static String localPath(VirtualFile root) {
       // @argfile require forward slashes in quoted paths
-      return FileUtil.toSystemIndependentName(VfsUtil.getLocalFile(root).getPath());
+      return VfsUtil.getLocalFile(root).getPath();
     }
   }
 
