@@ -587,6 +587,11 @@ class CollectMigration extends BaseStreamApiMigration {
     }
 
     @Override
+    String generateIntermediate() {
+      return myElementVariable.getType() instanceof PsiPrimitiveType ? ".boxed()" : "";
+    }
+
+    @Override
     public String generateTerminal() {
       PsiExpression[] args = myMapUpdateCall.getArgumentList().getExpressions();
       LOG.assertTrue(args.length >= 2);
