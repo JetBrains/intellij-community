@@ -37,6 +37,7 @@ public class PlatformUtils {
   public static final String DBE_PREFIX = "DataGrip";
   public static final String RIDER_PREFIX = "Rider";
   public static final String GOIDE_PREFIX = "Gogland";
+  public static final String ANDROID_STUDIO_PREFIX = "AndroidStudio";
 
   public static String getPlatformPrefix() {
     return getPlatformPrefix(IDEA_PREFIX);
@@ -113,6 +114,10 @@ public class PlatformUtils {
 
   public static boolean isGoIde() {
     return is(GOIDE_PREFIX);
+  }
+
+  public static boolean isAndroidStudio() {
+    return is(ANDROID_STUDIO_PREFIX);
   }
 
   public static boolean isCommunityEdition() {
