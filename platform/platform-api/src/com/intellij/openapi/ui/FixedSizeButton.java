@@ -92,6 +92,7 @@ public class FixedSizeButton extends JButton {
 
     Dimension d = super.getPreferredSize();
     int base = new JTextField().getPreferredSize().height;
+    if (base %2 == 1) base++;
     d.width = Math.max(d.height, base);
     int width = mySize == -1 ? d.width : mySize;
     int height = myComponent != null ? myComponent.getPreferredSize().height : mySize != -1 ? mySize : base;
