@@ -67,7 +67,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     if (browseActionListener != null) {
       myBrowseButton.addActionListener(browseActionListener);
     }
-    add(centerComponentVertically(myBrowseButton), BorderLayout.EAST);
+    add(myBrowseButton, BorderLayout.EAST);
 
     myBrowseButton.setToolTipText(UIBundle.message("component.with.browse.button.browse.button.tooltip.text"));
     // FixedSizeButton isn't focusable but it should be selectable via keyboard.
@@ -78,13 +78,6 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
       myBrowseButton.setFocusable(true);
       myBrowseButton.getAccessibleContext().setAccessibleName("Browse");
     }
-  }
-
-  @NotNull
-  private static JPanel centerComponentVertically(@NotNull Component component) {
-    JPanel panel = new JPanel(new GridBagLayout());
-    panel.add(component, new GridBagConstraints());
-    return panel;
   }
 
   public final Comp getChildComponent() {
