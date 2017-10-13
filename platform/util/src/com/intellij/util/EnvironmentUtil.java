@@ -34,8 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.File;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -324,14 +323,33 @@ public class EnvironmentUtil {
     return env;
   }
 
+  private static boolean checkIfLocaleAvailable(String candidateLanguageTerritory) {
+      Locale[] available = Locale.getAvailableLocales();
+      for (Locale l : available) {
+        if (StringUtil.equals(l.toString(), candidateLanguageTerritory)) {
+          return true;
+        }
+      }
+      return false;
+  }
+
   @NotNull
   public static String setLocaleEnv(@NotNull Map<String, String> env, @NotNull Charset charset) {
     Locale locale = Locale.getDefault();
     String language = locale.getLanguage();
     String country = locale.getCountry();
-    String value = (language.isEmpty() || country.isEmpty() ? "en_US" : language + '_' + country) + '.' + charset.name();
-    env.put(LC_CTYPE, value);
-    return value;
+
+    String languageTerritory = "en_US";
+    if (!language.isEmpty() && !country.isEmpty()) {
+      String languageTerritoryFromLocale = language + '_' + country;
+      if (checkIfLocaleAvailable(languageTerritoryFromLocale)) {
+        languageTerritory = languageTerritoryFromLocale ;
+      }
+    }
+
+    String result = languageTerritory + '.' + charset.name();
+    env.put(LC_CTYPE, result);
+    return result;
   }
 
   private static boolean isCharsetVarDefined(@NotNull Map<String, String> env) {
