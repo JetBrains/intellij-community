@@ -606,7 +606,7 @@ public final class IconLoader {
         icon = checkIcon(image, myUrl);
 
         if (icon != null && icon.getIconWidth() * icon.getIconHeight() * 4 < ImageLoader.CACHED_IMAGE_MAX_SIZE) {
-          scaledIconsCache.put((double)getScale(PIX_SCALE), new SoftReference<ImageIcon>(icon));
+          scaledIconsCache.put(getScale(PIX_SCALE), new SoftReference<ImageIcon>(icon));
         }
         return icon;
       }

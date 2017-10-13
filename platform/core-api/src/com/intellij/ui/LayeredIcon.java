@@ -27,6 +27,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 
+import static com.intellij.util.ui.JBUI.ScaleType.OBJ_SCALE;
+import static com.intellij.util.ui.JBUI.ScaleType.USR_SCALE;
+
 public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.LayeredIcon");
   private final Icon[] myIcons;
@@ -229,8 +232,8 @@ public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> {
     for (int i = 0; i < icons.length; i++) {
       Icon icon = icons[i];
       if (icon == null || myDisabledLayers[i]) continue;
-      int xOffset = (int)Math.floor(x + scaleVal(myXShift + myHShifts(i), JBUI.ScaleType.OBJ_SCALE));
-      int yOffset = (int)Math.floor(y + scaleVal(myYShift + myVShifts(i), JBUI.ScaleType.OBJ_SCALE));
+      int xOffset = (int)Math.floor(x + scaleVal(myXShift + myHShifts(i), OBJ_SCALE));
+      int yOffset = (int)Math.floor(y + scaleVal(myYShift + myVShifts(i), OBJ_SCALE));
       icon.paintIcon(c, g, xOffset, yOffset);
     }
   }
@@ -248,7 +251,7 @@ public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> {
     getScaleContext().update();
     if (myWidth <= 1) updateSize();
 
-    return (int)Math.ceil(scaleVal(myWidth, JBUI.ScaleType.OBJ_SCALE));
+    return (int)Math.ceil(scaleVal(myWidth, OBJ_SCALE));
   }
 
   @Override
@@ -256,15 +259,15 @@ public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> {
     getScaleContext().update();
     if (myHeight <= 1) updateSize();
 
-    return (int)Math.ceil(scaleVal(myHeight, JBUI.ScaleType.OBJ_SCALE));
+    return (int)Math.ceil(scaleVal(myHeight, OBJ_SCALE));
   }
 
   private int myHShifts(int i) {
-    return (int)Math.floor(scaleVal(myHShifts[i], JBUI.ScaleType.USR_SCALE));
+    return (int)Math.floor(scaleVal(myHShifts[i], USR_SCALE));
   }
 
   private int myVShifts(int i) {
-    return (int)Math.floor(scaleVal(myVShifts[i], JBUI.ScaleType.USR_SCALE));
+    return (int)Math.floor(scaleVal(myVShifts[i], USR_SCALE));
   }
 
   protected void updateSize() {
