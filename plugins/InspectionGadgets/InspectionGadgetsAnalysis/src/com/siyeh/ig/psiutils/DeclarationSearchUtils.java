@@ -20,13 +20,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class DeclarationSearchUtils {
@@ -51,8 +53,12 @@ public class DeclarationSearchUtils {
     if (statements.length == 0) {
       return false;
     }
-    final List<PsiCodeBlock> followingBlocks = new ArrayList<>();
-    collectFollowingBlocks(block.getParent().getNextSibling(), followingBlocks);
+    List<PsiCodeBlock> affectedBlocks = ContainerUtil.newArrayList(parentBlock);
+    affectedBlocks.addAll(SyntaxTraverser.psiTraverser(block.getParent().getParent())
+                            .filter(PsiCodeBlock.class)
+                            .filter(cb -> cb.getTextRange().getStartOffset() > block.getTextRange().getEndOffset())
+                            .toList());
+    SearchScope affectedScope = new LocalSearchScope(affectedBlocks.toArray(PsiElement.EMPTY_ARRAY));
     final Project project = block.getProject();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     final PsiResolveHelper resolveHelper = facade.getResolveHelper();
@@ -71,33 +77,16 @@ public class DeclarationSearchUtils {
         if (variableName == null) {
           continue;
         }
-        final PsiVariable target = resolveHelper.resolveAccessibleReferencedVariable(variableName, parentBlock);
-        if (target instanceof PsiLocalVariable) {
-          return true;
-        }
-        for (PsiCodeBlock codeBlock : followingBlocks) {
-          final PsiVariable target1 = resolveHelper.resolveAccessibleReferencedVariable(variableName, codeBlock);
-          if (target1 instanceof PsiLocalVariable) {
+        for (PsiCodeBlock codeBlock : affectedBlocks) {
+          PsiVariable target = resolveHelper.resolveAccessibleReferencedVariable(variableName, codeBlock);
+          if (target instanceof PsiLocalVariable ||
+              target instanceof PsiField && ReferencesSearch.search(target, affectedScope).findFirst() != null) {
             return true;
           }
         }
       }
     }
     return false;
-  }
-
-  /**
-   * Depth first traversal to find all PsiCodeBlock children.
-   */
-  private static void collectFollowingBlocks(PsiElement element,
-                                             List<PsiCodeBlock> out) {
-    while (element != null) {
-      if (element instanceof PsiCodeBlock) {
-        out.add((PsiCodeBlock)element);
-      }
-      collectFollowingBlocks(element.getFirstChild(), out);
-      element = element.getNextSibling();
-    }
   }
 
   public static PsiExpression findDefinition(@NotNull PsiReferenceExpression referenceExpression,
