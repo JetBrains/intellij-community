@@ -907,8 +907,10 @@ public class PlatformTestUtil {
                        ? null
                        : LoadTextUtil.getTextByBinaryPresentation(fileAfter.contentsToByteArray(false), fileAfter).toString();
 
-      if (textA != null && textB != null && !StringUtil.equals(textA, textB)) {
-        throw new FileComparisonFailure("Text mismatch in file " + fileBefore.getName(), textA, textB, fileAfter.getPath());
+      if (textA != null && textB != null) {
+        if (!StringUtil.equals(textA, textB)) {
+          throw new FileComparisonFailure("Text mismatch in file " + fileBefore.getName(), textA, textB, fileAfter.getPath());
+        }
       }
       else {
         Assert.assertArrayEquals(fileAfter.getPath(), fileAfter.contentsToByteArray(), fileBefore.contentsToByteArray());
