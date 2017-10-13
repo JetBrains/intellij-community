@@ -22,6 +22,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import gnu.trove.TDoubleObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 
 import static com.intellij.util.ui.JBUI.ScaleType.*;
@@ -151,7 +153,7 @@ public class JBUI {
     PIX_SCALE;
 
     public Scale of(double value) {
-      return new Scale(value, this);
+      return Scale.create(value, this);
     }
   }
 
@@ -159,14 +161,31 @@ public class JBUI {
    * A scale factor of a particular type.
    */
   public static class Scale {
-    private double value;
+    private final double value;
     private final ScaleType type;
 
-    public Scale(ScaleType type) {
-      this(1d, type);
+    // The cache radically reduces potentially thousands of equal Scale instances.
+    private static final ThreadLocal<EnumMap<ScaleType, TDoubleObjectHashMap<Scale>>> cache =
+      new ThreadLocal<EnumMap<ScaleType, TDoubleObjectHashMap<Scale>>>() {
+        @Override
+        protected EnumMap<ScaleType, TDoubleObjectHashMap<Scale>> initialValue() {
+          return new EnumMap<ScaleType, TDoubleObjectHashMap<Scale>>(ScaleType.class);
+        }
+      };
+
+    public static Scale create(double value, ScaleType type) {
+      EnumMap<ScaleType, TDoubleObjectHashMap<Scale>> emap = cache.get();
+      TDoubleObjectHashMap<Scale> map = emap.get(type);
+      if (map == null) {
+        emap.put(type, map = new TDoubleObjectHashMap<Scale>());
+      }
+      Scale scale = map.get(value);
+      if (scale != null) return scale;
+      map.put(value, scale = new Scale(value, type));
+      return scale;
     }
 
-    public Scale(double value, ScaleType type) {
+    private Scale(double value, ScaleType type) {
       this.value = value;
       this.type = type;
     }
@@ -179,10 +198,9 @@ public class JBUI {
       return type;
     }
 
-    public boolean update(double value) {
-      boolean res = this.value != value;
-      this.value = value;
-      return res;
+    public Scale newOrThis(double value) {
+      if (this.value == value) return this;
+      return type.of(value);
     }
 
     @Override
@@ -390,17 +408,7 @@ public class JBUI {
   }
 
   private static float discreteScale(float scale) {
-    int intPart = (int)Math.floor(scale);
-    float fractPart = scale - intPart;
-
-    if (fractPart == 0) return scale;
-
-    for (float f = 0; f < 1; f += DISCRETE_SCALE_RESOLUTION) {
-      if (fractPart < (f + DISCRETE_SCALE_RESOLUTION)) {
-        return intPart + f;
-      }
-    }
-    return intPart; // unreachable
+    return (float)(Math.floor(scale / DISCRETE_SCALE_RESOLUTION) * DISCRETE_SCALE_RESOLUTION);
   }
 
   /**
@@ -567,6 +575,7 @@ public class JBUI {
     }
   }
 
+  @SuppressWarnings("UseDPIAwareBorders")
   public static class Borders {
     public static JBEmptyBorder empty(int top, int left, int bottom, int right) {
       return new JBEmptyBorder(top, left, bottom, right);
@@ -732,7 +741,7 @@ public class JBUI {
 
     protected boolean onUpdated(boolean updated) {
       if (updated) {
-        pixScale.update(derivePixScale());
+        update(pixScale, derivePixScale());
         notifyUpdateListeners();
       }
       return updated;
@@ -744,7 +753,7 @@ public class JBUI {
      * @return whether any of the scale factors has been updated
      */
     public boolean update() {
-      return onUpdated(usrScale.update(scale(1f)));
+      return onUpdated(update(usrScale, scale(1f)));
     }
 
     /**
@@ -756,9 +765,9 @@ public class JBUI {
     public boolean update(@NotNull Scale scale) {
       boolean updated = false;
       switch (scale.type) {
-        case USR_SCALE: updated = usrScale.update(scale.value); break;
+        case USR_SCALE: updated = update(usrScale, scale.value); break;
         case SYS_SCALE: break;
-        case OBJ_SCALE: updated = objScale.update(scale.value); break;
+        case OBJ_SCALE: updated = update(objScale, scale.value); break;
         case PIX_SCALE: break;
       }
       return onUpdated(updated);
@@ -776,8 +785,8 @@ public class JBUI {
     }
 
     protected <T extends BaseScaleContext> boolean updateAll(@NotNull T ctx) {
-      boolean updated = usrScale.update(ctx.usrScale.value);
-      return objScale.update(ctx.objScale.value) || updated;
+      boolean updated = update(usrScale, ctx.usrScale.value);
+      return update(objScale, ctx.objScale.value) || updated;
     }
 
     @Override
@@ -819,6 +828,17 @@ public class JBUI {
         l.contextUpdated();
       }
     }
+
+    protected boolean update(@NotNull Scale scale, double value) {
+      Scale newScale = scale.newOrThis(value);
+      if (newScale == scale) return false;
+      switch (scale.type) {
+        case USR_SCALE: usrScale = newScale; break;
+        case OBJ_SCALE: objScale = newScale; break;
+        case PIX_SCALE: pixScale = newScale; break;
+      }
+      return true;
+    }
   }
 
   /**
@@ -836,17 +856,17 @@ public class JBUI {
     private @Nullable WeakReference<Component> compRef;
 
     private ScaleContext() {
-      pixScale.update(derivePixScale());
+      update(pixScale, derivePixScale());
     }
 
     private ScaleContext(Scale scale) {
       switch (scale.type) {
-        case USR_SCALE: usrScale.update(scale.value); break;
-        case SYS_SCALE: sysScale.update(scale.value); break;
-        case OBJ_SCALE: objScale.update(scale.value); break;
+        case USR_SCALE: update(usrScale, scale.value); break;
+        case SYS_SCALE: update(sysScale, scale.value); break;
+        case OBJ_SCALE: update(objScale, scale.value); break;
         case PIX_SCALE: break;
       }
-      pixScale.update(derivePixScale());
+      update(pixScale, derivePixScale());
     }
 
     /**
@@ -915,10 +935,10 @@ public class JBUI {
      */
     @Override
     public boolean update() {
-      boolean updated = usrScale.update(scale(1f));
+      boolean updated = update(usrScale, scale(1f));
       if (compRef != null) {
         Component comp = compRef.get();
-        if (comp != null) updated = sysScale.update(sysScale(comp)) || updated;
+        if (comp != null) updated = update(sysScale, sysScale(comp)) || updated;
       }
       return onUpdated(updated);
     }
@@ -929,7 +949,7 @@ public class JBUI {
      */
     @Override
     public boolean update(@NotNull Scale scale) {
-      if (scale.type == SYS_SCALE) return onUpdated(sysScale.update(scale.value));
+      if (scale.type == SYS_SCALE) return onUpdated(update(sysScale, scale.value));
       return super.update(scale);
     }
 
@@ -942,7 +962,18 @@ public class JBUI {
       if (compRef != null) compRef.clear();
       compRef = context.compRef;
 
-      return sysScale.update(context.sysScale.value) || updated;
+      return update(sysScale, context.sysScale.value) || updated;
+    }
+
+    @Override
+    protected boolean update(@NotNull Scale scale, double value) {
+      if (scale.type == SYS_SCALE) {
+        Scale newScale = scale.newOrThis(value);
+        if (newScale == scale) return false;
+        sysScale = newScale;
+        return true;
+      }
+      return super.update(scale, value);
     }
 
     @Override
