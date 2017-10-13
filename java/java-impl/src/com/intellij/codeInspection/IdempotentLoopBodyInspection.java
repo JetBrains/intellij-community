@@ -33,7 +33,7 @@ public class IdempotentLoopBodyInspection extends AbstractBaseJavaLocalInspectio
       @Override
       public void visitForStatement(PsiForStatement loop) {
         PsiExpression condition = loop.getCondition();
-        if (condition == null || SideEffectChecker.mayHaveSideEffects(condition)) return;
+        if (condition != null && SideEffectChecker.mayHaveSideEffects(condition)) return;
         if (isIdempotent(loop.getBody(), loop.getUpdate())) {
           holder.registerProblem(loop.getFirstChild(), InspectionsBundle.message("inspection.idempotent.loop.body"));
         }
