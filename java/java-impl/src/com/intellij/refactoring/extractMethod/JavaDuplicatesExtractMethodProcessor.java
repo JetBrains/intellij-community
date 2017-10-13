@@ -4,6 +4,7 @@
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
@@ -28,8 +29,12 @@ import java.util.*;
 public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor {
   private static final Logger LOG = Logger.getInstance(JavaDuplicatesExtractMethodProcessor.class);
 
-  public JavaDuplicatesExtractMethodProcessor(PsiElement[] elements, String refactoringName) {
-    super(elements[0].getProject(), null, elements, null, refactoringName, "", HelpID.EXTRACT_METHOD);
+  public JavaDuplicatesExtractMethodProcessor(@NotNull PsiElement[] elements, @NotNull String refactoringName) {
+    this(elements, null, refactoringName);
+  }
+
+  public JavaDuplicatesExtractMethodProcessor(@NotNull PsiElement[] elements, @Nullable Editor editor, @Nullable String refactoringName) {
+    super(elements[0].getProject(), editor, elements, null, refactoringName, "", HelpID.EXTRACT_METHOD);
   }
 
   public void applyFrom(@NotNull ExtractMethodProcessor from, @NotNull Map<PsiVariable, PsiVariable> variablesMapping) {

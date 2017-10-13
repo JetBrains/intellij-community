@@ -250,15 +250,16 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
                                                     final PsiElement[] elements,
                                                     final PsiFile file,
                                                     final boolean openEditor) {
-    return getProcessor(elements, project, file, openEditor ? openEditor(project, file) : null, false, null);
+    return getProcessor(elements, project, file, openEditor ? openEditor(file) : null, false, null);
   }
 
   public static boolean invokeOnElements(final Project project, @NotNull final ExtractMethodProcessor processor, final PsiFile file, final boolean directTypes) {
-    return invokeOnElements(project, openEditor(project, file), processor, directTypes);
+    return invokeOnElements(project, openEditor(file), processor, directTypes);
   }
 
   @Nullable
-  private static Editor openEditor(final Project project, final PsiFile file) {
+  public static Editor openEditor(@NotNull final PsiFile file) {
+    final Project project = file.getProject();
     final VirtualFile virtualFile = file.getVirtualFile();
     LOG.assertTrue(virtualFile != null);
     final OpenFileDescriptor fileDescriptor = new OpenFileDescriptor(project, virtualFile);
