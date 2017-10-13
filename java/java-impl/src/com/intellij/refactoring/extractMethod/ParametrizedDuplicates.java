@@ -18,7 +18,6 @@ package com.intellij.refactoring.extractMethod;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -26,6 +25,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
@@ -350,8 +350,9 @@ public class ParametrizedDuplicates {
     else {
       LOG.error("Unexpected statement in expression code block " + bodyStatement);
     }
-    if (expression instanceof UserDataHolderBase && wrapped instanceof UserDataHolderBase) {
-      ((UserDataHolderBase)expression).copyUserDataTo((UserDataHolderBase)wrapped);
+    if (wrapped != null) {
+      // this key is not copyable so replace() doesn't preserve it - have to do it here
+      wrapped.putUserData(ElementToWorkOn.REPLACE_NON_PHYSICAL, expression.getUserData(ElementToWorkOn.REPLACE_NON_PHYSICAL));
     }
     return wrapped;
   }

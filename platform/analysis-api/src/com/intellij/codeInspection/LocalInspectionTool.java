@@ -110,7 +110,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   /**
    * Override the method to provide your own inspection visitor, if you need to store additional state in the
    * LocalInspectionToolSession user data or get information about the inspection scope.
-   * Visitor created must not be recursive (e.g. it must not inherit {@link PsiRecursiveElementVisitor})
+   * Created visitor must not be recursive (e.g. it must not inherit {@link PsiRecursiveElementVisitor})
    * since it will be fed with every element in the file anyway.
    * Visitor created must be thread-safe since it might be called on several elements concurrently.
    *
@@ -118,6 +118,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    * @param isOnTheFly true if inspection was run in non-batch mode
    * @param session    the session in the context of which the tool runs.
    * @return not-null visitor for this inspection.
+   * @see PsiRecursiveVisitor
    */
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
@@ -126,13 +127,14 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
 
   /**
    * Override the method to provide your own inspection visitor.
-   * Visitor created must not be recursive (e.g. it must not inherit {@link PsiRecursiveElementVisitor})
+   * Created visitor must not be recursive (e.g. it must not inherit {@link PsiRecursiveElementVisitor})
    * since it will be fed with every element in the file anyway.
    * Visitor created must be thread-safe since it might be called on several elements concurrently.
    *
    * @param holder     where visitor will register problems found.
    * @param isOnTheFly true if inspection was run in non-batch mode
    * @return not-null visitor for this inspection.
+   * @see PsiRecursiveVisitor
    */
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
@@ -180,8 +182,8 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
     final ProblemsHolder holder = new ProblemsHolder(manager, file, false);
     LocalInspectionToolSession session = new LocalInspectionToolSession(file, 0, file.getTextLength());
     final PsiElementVisitor customVisitor = buildVisitor(holder, false, session);
-    LOG.assertTrue(!(customVisitor instanceof PsiRecursiveElementVisitor),
-                   "The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive");
+    LOG.assertTrue(!(customVisitor instanceof PsiRecursiveVisitor),
+                   "The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive: " + customVisitor);
 
     inspectionStarted(session, false);
 

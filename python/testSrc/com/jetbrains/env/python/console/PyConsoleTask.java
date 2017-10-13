@@ -45,7 +45,7 @@ import org.junit.Assert;
 
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.*;
 
 /**
  * @author traff
@@ -98,7 +98,6 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
       try {
         if (myConsoleView != null) {
           disposeConsole();
-          myCommunication.waitForTerminate();
         }
         super.tearDown();
       }
@@ -108,17 +107,28 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     });
   }
 
-  private void disposeConsole() {
+  /**
+   * Disposes Python console and waits for Python console server thread to die.
+   */
+  private void disposeConsole() throws InterruptedException, ExecutionException, TimeoutException {
+    disposeConsoleAsync().get(30L, TimeUnit.SECONDS);
+  }
+
+  @NotNull
+  private Future<Void> disposeConsoleAsync() {
+    Future<Void> shutdownFuture;
     if (myCommunication != null) {
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      shutdownFuture = UIUtil.invokeAndWaitIfNeeded(() -> {
         try {
-          myCommunication.close();
+          return myCommunication.closeAsync();
         }
-        catch (Exception e) {
-          e.printStackTrace();
+        finally {
+          myCommunication = null;
         }
-        myCommunication = null;
       });
+    }
+    else {
+      shutdownFuture = CompletableFuture.completedFuture(null);
     }
 
     disposeConsoleProcess();
@@ -136,6 +146,8 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
         }
       }.execute();
     }
+
+    return shutdownFuture;
   }
 
   @Override

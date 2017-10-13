@@ -164,6 +164,8 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     checkResultByTestName();
   }
 
+  public void testFinalAfterAnnotationAttributes() { doTest(); }
+
   public void testTryInExpression() {
     configureByTestName();
     assertEquals("toString", myItems[0].getLookupString());

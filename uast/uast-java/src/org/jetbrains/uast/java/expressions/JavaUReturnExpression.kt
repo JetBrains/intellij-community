@@ -21,8 +21,8 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UReturnExpression
 
 class JavaUReturnExpression(
-        override val psi: PsiReturnStatement,
-        givenParent: UElement?
+  override val psi: PsiReturnStatement,
+  givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UReturnExpression {
-    override val returnExpression by lz { JavaConverter.convertOrNull(psi.returnValue, this) }
+  override val returnExpression by lz { JavaConverter.convertOrNull(psi.returnValue, this) }
 }

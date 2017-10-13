@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.stubs;
 
+import com.intellij.index.PrebuiltIndexProviderBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
@@ -217,7 +218,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
               PrebuiltStubsProviders.INSTANCE.forFileType(inputData.getFileType());
             if (prebuiltStubsProvider != null) {
               rootStub = prebuiltStubsProvider.findStub(inputData);
-              if (DebugAssertions.DEBUG) {
+              if (PrebuiltIndexProviderBase.DEBUG_PREBUILT_INDICES) {
                 Stub stub = StubTreeBuilder.buildStubTree(inputData);
                 if (rootStub != null && stub != null) {
                   check(rootStub, stub);

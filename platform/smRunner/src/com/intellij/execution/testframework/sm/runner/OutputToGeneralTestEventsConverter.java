@@ -74,7 +74,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   /**
    * Flashes the rest of stdout text buffer after output has been stopped
    */
-  public void flushBufferBeforeTerminating(int exitCode) {
+  public void flushBufferOnProcessTermination(int exitCode) {
     mySplitter.flush();
     if (myPendingLineBreakFlag) {
       fireOnUncapturedLineBreak();

@@ -59,7 +59,7 @@ interface SchemeContentChangedHandler<MUTABLE_SCHEME> {
 }
 
 abstract class LazySchemeProcessor<SCHEME, MUTABLE_SCHEME : SCHEME>(private val nameAttribute: String = "name") : SchemeProcessor<SCHEME, MUTABLE_SCHEME>() {
-  open fun getName(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String): String? {
+  open fun getSchemeKey(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String): String? {
     return attributeProvider.apply(nameAttribute)
   }
 

@@ -53,7 +53,7 @@ public interface RegionPainter<T> {
    */
   abstract class Alpha implements RegionPainter<Float> {
     @Override
-    public final void paint(Graphics2D g, int x, int y, int width, int height, Float value) {
+    public void paint(Graphics2D g, int x, int y, int width, int height, Float value) {
       float alpha = getAlpha(value);
       if (alpha > 0) {
         Composite composite = g.getComposite();

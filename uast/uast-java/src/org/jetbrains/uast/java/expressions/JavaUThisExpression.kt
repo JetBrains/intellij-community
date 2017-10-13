@@ -21,14 +21,14 @@ import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.UThisExpression
 
 class JavaUThisExpression(
-        override val psi: PsiThisExpression,
-        givenParent: UElement?
+  override val psi: PsiThisExpression,
+  givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UThisExpression {
-    override val label: String?
-        get() = psi.qualifier?.qualifiedName
+  override val label: String?
+    get() = psi.qualifier?.qualifiedName
 
-    override val labelIdentifier: UIdentifier?
-        get() = psi.qualifier?.let { UIdentifier(it, this) }
+  override val labelIdentifier: UIdentifier?
+    get() = psi.qualifier?.let { UIdentifier(it, this) }
 
-    override fun resolve() = psi.qualifier?.resolve()
+  override fun resolve() = psi.qualifier?.resolve()
 }

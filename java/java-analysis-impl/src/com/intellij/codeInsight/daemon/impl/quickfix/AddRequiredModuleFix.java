@@ -68,22 +68,29 @@ public class AddRequiredModuleFix extends LocalQuickFixAndIntentionActionOnPsiEl
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    PsiJavaModule module = (PsiJavaModule)startElement;
+    addRequiresInstruction((PsiJavaModule)startElement, myRequiredName);
+  }
 
-    PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(project).getParserFacade();
-    PsiJavaModule tempModule = parserFacade.createModuleFromText("module " + module.getName() + " { requires " + myRequiredName + "; }");
+  @SuppressWarnings("UnusedReturnValue") // used in Kotlin plugin
+  public static boolean addRequiresInstruction(@NotNull PsiJavaModule module, @NotNull String requiredName) {
+    if (!module.isValid() || findRequiresInstruction(module, requiredName) != null) {
+      return false;
+    }
+    PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(module.getProject()).getParserFacade();
+    PsiJavaModule tempModule = parserFacade.createModuleFromText("module " + module.getName() + " { requires " + requiredName + "; }");
     Iterable<PsiRequiresStatement> tempModuleRequires = tempModule.getRequires();
     PsiRequiresStatement requiresStatement = tempModuleRequires.iterator().next();
 
     PsiElement addingPlace = findAddingPlace(module);
     if (addingPlace != null) {
       addingPlace.getParent().addAfter(requiresStatement, addingPlace);
+      return true;
     }
+    return false;
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return true;
+  private static PsiRequiresStatement findRequiresInstruction(@NotNull PsiJavaModule module, @NotNull String requiredName) {
+    return ContainerUtil.find(module.getRequires(), statement -> requiredName.equals(statement.getModuleName()));
   }
 
   @Nullable

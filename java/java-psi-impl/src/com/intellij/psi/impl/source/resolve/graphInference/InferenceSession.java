@@ -59,7 +59,7 @@ public class InferenceSession {
       }
       if (second instanceof PsiCapturedWildcardType && !first.isAssignableFrom(second)) {
         final PsiClass conjunct = PsiUtil.resolveClassInType(first);
-        if (conjunct != null && !conjunct.isInterface() ) {
+        if (conjunct != null && !conjunct.isInterface() && !(conjunct instanceof PsiTypeParameter) ) {
           return false;
         }
       }
@@ -1240,7 +1240,9 @@ public class InferenceSession {
 
         //restore captured wildcard from method return type when no additional constraints were inferred
         //to preserve equality of type arguments
-        if (capturedWildcard != null && capturedWildcard.getUpperBound().equals(getUpperBound(aClass))) {
+        if (capturedWildcard != null &&
+            capturedWildcard.getUpperBound().equals(getUpperBound(aClass)) &&
+            isProperType(capturedWildcard.getWildcard())) {
           eqBound = capturedWildcard;
         }
       }
@@ -1300,6 +1302,12 @@ public class InferenceSession {
           }
         }
       }
+    }
+    if (type == PsiType.NULL) {
+      registerIncompatibleErrorMessage("Incompatible upper bounds: " + StringUtil.join(var.getBounds(InferenceBound.UPPER), bound -> {
+        final PsiType substituted = substituteNonProperBound(bound, substitutor);
+        return getPresentableText(substituted != null ? substituted : bound);
+      }, ", "));
     }
     return type;
   }

@@ -21,6 +21,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
@@ -51,6 +52,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicButtonUI;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
 import java.awt.event.*;
 import java.util.List;
 
@@ -84,6 +86,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     myProject = project;
     DataManager.registerDataProvider(getList(), dataId -> POPUP_MODEL.is(dataId) ? getListModel() : null);
     installOnHoverIconsSupport(getListElementRenderer());
+    replacePasteAction();
     myKey = dimensionKey;
     if (myKey != null) {
       Dimension storedSize = WindowStateService.getInstance(myProject).getSizeFor(myProject, myKey);
@@ -139,6 +142,17 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     myKey = null;
     DataManager.registerDataProvider(getList(), dataId -> POPUP_MODEL.is(dataId) ? getListModel() : null);
     installOnHoverIconsSupport(getListElementRenderer());
+    replacePasteAction();
+  }
+
+  private void replacePasteAction() {
+    getList().getActionMap().put("paste", new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        getSpeedSearch().type(CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor));
+        getSpeedSearch().update();
+      }
+    });
   }
 
   private void trackDimensions(@Nullable String dimensionKey) {

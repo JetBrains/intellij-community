@@ -193,7 +193,7 @@ class CollectMigration extends BaseStreamApiMigration {
     @Nullable
     PsiLocalVariable getTargetVariable() { return myTargetVariable; }
 
-    String generateIntermediate() { return ""; }
+    abstract String generateIntermediate();
 
     StreamEx<? extends PsiExpression> targetReferences() {
       List<PsiElement> usedElements = usedElements().toList();
@@ -416,6 +416,11 @@ class CollectMigration extends BaseStreamApiMigration {
     }
 
     @Override
+    String generateIntermediate() {
+      return myDownstream.myElement.getType() instanceof PsiPrimitiveType ? ".boxed()" : "";
+    }
+
+    @Override
     public String generateTerminal() {
       String downstreamCollector = myDownstream.generateCollector();
       PsiVariable elementVariable = myDownstream.getElementVariable();
@@ -584,6 +589,11 @@ class CollectMigration extends BaseStreamApiMigration {
       super(variable, loop, status);
       myMapUpdateCall = call;
       myElementVariable = elementVariable;
+    }
+
+    @Override
+    String generateIntermediate() {
+      return myElementVariable.getType() instanceof PsiPrimitiveType ? ".boxed()" : "";
     }
 
     @Override

@@ -47,7 +47,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -592,7 +591,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   public AntBuildModelBase getModel(@NotNull AntBuildFile buildFile) {
     AntBuildModelBase model = myModelToBuildFileMap.get(buildFile);
     if (model == null) {
-      model = createModel(buildFile);
+      model = new AntBuildModelImpl(buildFile);
       myModelToBuildFileMap.put(buildFile, model);
     }
     return model;
@@ -612,10 +611,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   private AntBuildModelBase createModel(final AntBuildFile buildFile) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      // otherwise commitAllDocuments() must have been called before the whole process was started
-      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    }
     return new AntBuildModelImpl(buildFile);
   }
 

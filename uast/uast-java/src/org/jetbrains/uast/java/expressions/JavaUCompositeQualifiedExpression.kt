@@ -20,22 +20,22 @@ import com.intellij.psi.PsiNamedElement
 import org.jetbrains.uast.*
 
 class JavaUCompositeQualifiedExpression(
-    override val psi: PsiElement,
-    givenParent: UElement?
+  override val psi: PsiElement,
+  givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UQualifiedReferenceExpression {
 
-    lateinit internal var receiverInitializer: () -> UExpression
+  lateinit internal var receiverInitializer: () -> UExpression
 
-    override val receiver: UExpression by lazy { receiverInitializer() }
+  override val receiver: UExpression by lazy { receiverInitializer() }
 
-    override lateinit var selector: UExpression
-        internal set
+  override lateinit var selector: UExpression
+    internal set
 
-    override val resolvedName: String?
-        get() = (resolve() as? PsiNamedElement)?.name
+  override val resolvedName: String?
+    get() = (resolve() as? PsiNamedElement)?.name
 
-    override fun resolve() = (selector as? UResolvable)?.resolve()
+  override fun resolve() = (selector as? UResolvable)?.resolve()
 
-    override val accessType: UastQualifiedExpressionAccessType
-        get() = UastQualifiedExpressionAccessType.SIMPLE
+  override val accessType: UastQualifiedExpressionAccessType
+    get() = UastQualifiedExpressionAccessType.SIMPLE
 }

@@ -20,14 +20,18 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.uast.internal.log
 
 class UIdentifier(
-        override val psi: PsiElement?,
-        override val uastParent: UElement?
+  override val psi: PsiElement?,
+  override val uastParent: UElement?
 ) : JvmDeclarationUElement {
-    /**
-     * Returns the identifier name.
-     */
-    val name: String
-        get() = psi?.text ?: "<error>"
-    
-    override fun asLogString() = log("Identifier ($name)")
+  /**
+   * Returns the identifier name.
+   */
+  val name: String
+    get() = psi?.text ?: "<error>"
+
+  override fun asLogString() = log("Identifier ($name)")
+
+  override val sourcePsi: PsiElement? = psi
+
+  override val javaPsi: PsiElement? = null
 }

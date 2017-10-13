@@ -114,7 +114,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.FileStructurePopup");
   private static final String NARROW_DOWN_PROPERTY_KEY = "FileStructurePopup.narrowDown";
 
-  private final boolean myUseATM = !ApplicationManager.getApplication().isUnitTestMode() &&
+  private final boolean myUseATM = ApplicationManager.getApplication().isUnitTestMode() ||
                                    Experiments.isFeatureEnabled("structure.view.async.tree.model");
 
   private final Project myProject;
@@ -391,7 +391,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       public void run() {
         alarm.cancelAllRequests();
         String prefix = mySpeedSearch.getEnteredPrefix();
-        myTree.getEmptyText().setText(StringUtil.isEmpty(prefix) ? "Nothing to show" : "Can't find '" + prefix + "'");
+        myTree.getEmptyText().setText(StringUtil.isEmpty(prefix) ? "Structure is empty" : "'" + prefix + "' not found");
         if (prefix == null) prefix = "";
 
         if (!filter.equals(prefix)) {
@@ -812,17 +812,10 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   private Promise<TreePath> rebuildAndSelect(boolean refilterOnly, Object selection) {
     AsyncPromise<TreePath> result = new AsyncPromise<>();
     if (!myUseATM) {
-      ActionCallback callback;
-      if (refilterOnly) {
-        callback = myTreeBuilder.refilter(selection, true, false);
-      }
-      else {
+      if (!refilterOnly) {
         myTreeStructure.rebuildTree();
-        callback = new ActionCallback();
-        myTreeBuilder.queueUpdate(true).doWhenProcessed(
-          () -> myTreeBuilder.refilter(selection, true, false).notify(callback));
       }
-      callback.doWhenProcessed(() -> {
+      myTreeBuilder.refilter(selection, true, false).doWhenProcessed(() -> {
         if (selection != null) {
           selectPsiElement((PsiElement)selection);
         }

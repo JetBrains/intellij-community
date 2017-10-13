@@ -15,6 +15,8 @@
  */
 package com.intellij.execution.runners;
 
+import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.util.PropertiesComponent;
@@ -26,21 +28,22 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.GotItMessage;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.PositionTracker;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 
-/**
-* @author Sergey Simonchik
-*/
 public class RerunTestsNotification {
 
   private static final String KEY = "rerun.tests.notification.shown";
 
   public static void showRerunNotification(@Nullable RunContentDescriptor contentToReuse,
-                                           @NotNull final ExecutionConsole executionConsole) {
+                                           @NotNull ExecutionConsole executionConsole) {
     if (contentToReuse == null) {
       return;
     }
@@ -51,8 +54,8 @@ public class RerunTestsNotification {
     }
   }
 
-  private static void doShow(@NotNull final ExecutionConsole executionConsole) {
-    final Alarm alarm = new Alarm();
+  private static void doShow(@NotNull ExecutionConsole executionConsole) {
+    Alarm alarm = new Alarm();
     alarm.addRequest(() -> {
       String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(
         ActionManager.getInstance().getAction(RerunTestsAction.ID)
@@ -61,19 +64,27 @@ public class RerunTestsNotification {
         return;
       }
 
-      GotItMessage message = GotItMessage.createMessage("Rerun tests with " + shortcutText, "");
-      message.setDisposable(executionConsole);
-      message.setCallback(() -> PropertiesComponent.getInstance().setValue(KEY, true));
-      message.setShowCallout(false);
-      Dimension consoleSize = executionConsole.getComponent().getSize();
-
-      message.show(
-        new RelativePoint(
-          executionConsole.getComponent(),
-          new Point(consoleSize.width - 185, consoleSize.height - 60)
-        ),
-        Balloon.Position.below
-      );
+      ConsoleView consoleView = UIUtil.findComponentOfType(executionConsole.getComponent(), ConsoleViewImpl.class);
+      if (consoleView != null) {
+        GotItMessage message = GotItMessage.createMessage("Rerun tests with " + shortcutText, "");
+        message.setDisposable(executionConsole);
+        message.setCallback(() -> PropertiesComponent.getInstance().setValue(KEY, true));
+        message.setShowCallout(false);
+        JComponent consoleComponent = consoleView.getComponent();
+        message.show(
+          new PositionTracker<Balloon>(consoleComponent) {
+            @Override
+            public RelativePoint recalculateLocation(@NotNull Balloon balloon) {
+              RelativePoint point = RelativePoint.getSouthEastOf(consoleComponent);
+              Dimension balloonSize = balloon.getPreferredSize();
+              int scrollBarSize = JBUI.scale(10);
+              point.getPoint().translate(-balloonSize.width / 2 - scrollBarSize, -balloonSize.height / 2 - scrollBarSize);
+              return point;
+            }
+          },
+          Balloon.Position.below
+        );
+      }
 
       Disposer.dispose(alarm);
     }, 1000);

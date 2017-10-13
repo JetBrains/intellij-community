@@ -25,6 +25,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
@@ -103,6 +104,10 @@ public class DfaPsiUtil {
       return Nullness.NOT_NULL;
     }
 
+    if (owner instanceof PsiMethod && isMapGet((PsiMethod)owner)) {
+      return Nullness.UNKNOWN;
+    }
+
     Nullness fromType = getTypeNullability(resultType);
     if (fromType != Nullness.UNKNOWN) return fromType;
 
@@ -120,6 +125,12 @@ public class DfaPsiUtil {
     return Nullness.UNKNOWN;
   }
 
+  private static boolean isMapGet(@NotNull PsiMethod method) {
+    if (!"get".equals(method.getName())) return false;
+    PsiMethod superMethod = DeepestSuperMethodsSearch.search(method).findFirst();
+    return "java.util.Map.get".equals(PsiUtil.getMemberQualifiedName(superMethod != null ? superMethod : method));
+  }
+
   @NotNull
   public static Nullness inferParameterNullability(@NotNull PsiParameter parameter) {
     PsiElement parent = parameter.getParent();
@@ -127,13 +138,28 @@ public class DfaPsiUtil {
       return getFunctionalParameterNullability((PsiLambdaExpression)parent.getParent(), ((PsiParameterList)parent).getParameterIndex(parameter));
     }
     if (parent instanceof PsiForeachStatement) {
-      PsiExpression iteratedValue = ((PsiForeachStatement)parent).getIteratedValue();
-      if (iteratedValue != null) {
-        return getTypeNullability(JavaGenericsUtil.getCollectionItemType(iteratedValue));
-      }
+      return getTypeNullability(inferLoopParameterTypeWithNullability((PsiForeachStatement)parent));
     }
     return Nullness.UNKNOWN;
   }
+
+  @Nullable
+  private static PsiType inferLoopParameterTypeWithNullability(PsiForeachStatement loop) {
+    PsiExpression iteratedValue = PsiUtil.skipParenthesizedExprDown(loop.getIteratedValue());
+    if (iteratedValue == null) return null;
+
+    PsiType iteratedType = iteratedValue.getType();
+    if (iteratedValue instanceof PsiReferenceExpression) {
+      PsiElement target = ((PsiReferenceExpression)iteratedValue).resolve();
+      if (target instanceof PsiParameter &&
+          target.getParent() instanceof PsiForeachStatement &&
+          PsiTreeUtil.isAncestor(target.getParent(), loop, true)) {
+        iteratedType = inferLoopParameterTypeWithNullability((PsiForeachStatement)target.getParent());
+      }
+    }
+    return JavaGenericsUtil.getCollectionItemType(iteratedType, iteratedValue.getResolveScope());
+  }
+
 
   @NotNull
   public static Nullness getTypeNullability(@Nullable PsiType type) {

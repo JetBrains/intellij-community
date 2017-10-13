@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -94,7 +95,7 @@ public class SemicolonFixer implements Fixer {
         psiElement instanceof PsiContinueStatement ||
         psiElement instanceof PsiAssertStatement ||
         psiElement instanceof PsiPackageStatement ||
-        psiElement instanceof PsiField && !(psiElement instanceof PsiEnumConstant) ||
+        isStandaloneField(psiElement) ||
         psiElement instanceof PsiMethod && ((PsiMethod)psiElement).getBody() == null && !MissingMethodBodyFixer.shouldHaveBody((PsiMethod)psiElement) ||
         psiElement instanceof PsiRequiresStatement ||
         psiElement instanceof PsiPackageAccessibilityStatement ||
@@ -143,5 +144,11 @@ public class SemicolonFixer implements Fixer {
     }
 
     return false;
+  }
+
+  private static boolean isStandaloneField(@Nullable PsiElement psiElement) {
+    return psiElement instanceof PsiField && 
+           !(psiElement instanceof PsiEnumConstant) && 
+           !PsiJavaPatterns.psiElement().beforeLeaf(PsiJavaPatterns.psiElement().withText(",")).accepts(psiElement);
   }
 }

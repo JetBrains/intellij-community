@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.filters.position;
+package com.intellij.diff.chains;
 
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.filters.FilterUtil;
-import org.jdom.Element;
+import com.intellij.openapi.util.UserDataHolderBase;
 
-public class StartElementFilter extends PositionElementFilter{
-  @Override
-  public boolean isAcceptable(Object element, PsiElement context){
-    if (!(element instanceof PsiElement)) return false;
-    return FilterUtil.getPreviousElement((PsiElement) element, false) == null;
+public abstract class DiffRequestChainBase extends UserDataHolderBase implements DiffRequestChain {
+  private int myIndex;
+
+  public DiffRequestChainBase() {
+    this(0);
   }
 
-  public String toString(){
-    return "start";
+  public DiffRequestChainBase(int index) {
+    myIndex = index;
+  }
+
+  @Override
+  public int getIndex() {
+    return myIndex;
+  }
+
+  @Override
+  public void setIndex(int index) {
+    assert index >= 0 && index < getRequests().size();
+    myIndex = index;
   }
 }

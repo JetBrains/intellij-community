@@ -53,6 +53,7 @@ import com.intellij.ui.breadcrumbs.BreadcrumbsUtil;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MouseEventAdapter;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
@@ -474,9 +475,9 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
       final TextRange range = psiElement.getTextRange();
       final TextAttributes attributes = new TextAttributes();
       final CrumbPresentation p = PsiCrumb.getPresentation(crumb);
-      final Color color = p != null
-                          ? p.getBackgroundColor(false, false, false)
-                          : BreadcrumbsComponent.ButtonSettings.getBackgroundColor(false, false, false, false);
+      Color color = p == null ? null : p.getBackgroundColor(false, false, false);
+      if (color == null) color = BreadcrumbsComponent.ButtonSettings.getBackgroundColor(false, false, false, false);
+      if (color == null) color = UIUtil.getLabelBackground();
       final Color background = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.CARET_ROW_COLOR);
       attributes.setBackgroundColor(XmlTagTreeHighlightingUtil.makeTransparent(color, background != null ? background : Gray._200, 0.3));
       myHighlighed = new ArrayList<>(1);

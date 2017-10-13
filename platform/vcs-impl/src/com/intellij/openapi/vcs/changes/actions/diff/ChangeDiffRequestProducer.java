@@ -390,7 +390,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
 
       if (revision instanceof CurrentContentRevision) {
         VirtualFile vFile = ((CurrentContentRevision)revision).getVirtualFile();
-        if (vFile == null) throw new DiffRequestProducerException("Can't get current revision content");
+        if (vFile == null || !vFile.isValid()) throw new DiffRequestProducerException("Can't get current revision content");
         return contentFactory.create(project, vFile);
       }
 

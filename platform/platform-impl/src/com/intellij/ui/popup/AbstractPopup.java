@@ -454,8 +454,9 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public void showInCenterOf(@NotNull Component aComponent) {
+    HelpTooltip.setMasterPopup(aComponent, this);
     Point popupPoint = getCenterOf(aComponent, getPreferredContentSize());
-    show(new RelativePoint(aComponent, popupPoint));
+    show(aComponent, popupPoint.x, popupPoint.y, false);
   }
 
 
@@ -469,7 +470,6 @@ public class AbstractPopup implements JBPopup {
   @Override
   public void show(@NotNull RelativePoint aPoint) {
     HelpTooltip.setMasterPopup(aPoint.getOriginalComponent(), this);
-
     Point screenPoint = aPoint.getScreenPoint();
     show(aPoint.getComponent(), screenPoint.x, screenPoint.y, false);
   }

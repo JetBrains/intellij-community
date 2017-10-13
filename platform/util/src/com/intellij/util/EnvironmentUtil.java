@@ -51,8 +51,6 @@ public class EnvironmentUtil {
   private static final String LC_ALL = "LC_ALL";
   private static final String LC_CTYPE = "LC_CTYPE";
 
-  private static final String LOCALE_PATTERN = "[a-z]{2}_[A-Z]{2}\\.[a-zA-Z\\-0-9]+";
-
   private static final Future<Map<String, String>> ourEnvGetter;
 
   static {

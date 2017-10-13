@@ -23,53 +23,53 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
 open class JavaUMethod(
-        psi: PsiMethod,
-        uastParent: UElement?
+  psi: PsiMethod,
+  uastParent: UElement?
 ) : JavaAbstractUElement(uastParent), UMethod, JavaUElementWithComments, PsiMethod by psi {
-    override val psi
-        get() = javaPsi
+  override val psi
+    get() = javaPsi
 
-    override val javaPsi = unwrap<UMethod, PsiMethod>(psi)
-    
-    override val uastBody by lz {
-        val body = psi.body ?: return@lz null
-        getLanguagePlugin().convertElement(body, this) as? UExpression
+  override val javaPsi = unwrap<UMethod, PsiMethod>(psi)
+
+  override val uastBody by lz {
+    val body = psi.body ?: return@lz null
+    getLanguagePlugin().convertElement(body, this) as? UExpression
+  }
+
+  override val annotations by lz { psi.annotations.map { JavaUAnnotation(it, this) } }
+
+  override val uastParameters by lz {
+    psi.parameterList.parameters.map { JavaUParameter(it, this) }
+  }
+
+  override val isOverride: Boolean
+    get() = psi.modifierList.findAnnotation("java.lang.Override") != null
+
+  override val uastAnchor: UElement
+    get() = UIdentifier((psi.originalElement as? PsiNameIdentifierOwner)?.nameIdentifier ?: psi.nameIdentifier, this)
+
+  override fun equals(other: Any?) = other is JavaUMethod && psi == other.psi
+  override fun hashCode() = psi.hashCode()
+
+  companion object {
+    fun create(psi: PsiMethod, languagePlugin: UastLanguagePlugin, containingElement: UElement?) = when (psi) {
+      is PsiAnnotationMethod -> JavaUAnnotationMethod(psi, languagePlugin, containingElement)
+      else -> JavaUMethod(psi, containingElement)
     }
-
-    override val annotations by lz { psi.annotations.map { JavaUAnnotation(it, this) } }
-    
-    override val uastParameters by lz {
-        psi.parameterList.parameters.map { JavaUParameter(it, this) }
-    }
-
-    override val isOverride: Boolean
-        get() = psi.modifierList.findAnnotation("java.lang.Override") != null
-
-    override val uastAnchor: UElement
-        get() = UIdentifier((psi.originalElement as? PsiNameIdentifierOwner)?.nameIdentifier ?: psi.nameIdentifier, this)
-
-    override fun equals(other: Any?) = other is JavaUMethod && psi == other.psi
-    override fun hashCode() = psi.hashCode()
-
-    companion object {
-        fun create(psi: PsiMethod, languagePlugin: UastLanguagePlugin, containingElement: UElement?) = when (psi) {
-            is PsiAnnotationMethod -> JavaUAnnotationMethod(psi, languagePlugin, containingElement)
-            else -> JavaUMethod(psi, containingElement)
-        }
-    }
+  }
 }
 
 class JavaUAnnotationMethod(
-        override val psi: PsiAnnotationMethod,
-        languagePlugin: UastLanguagePlugin,
-        containingElement: UElement?
+  override val psi: PsiAnnotationMethod,
+  languagePlugin: UastLanguagePlugin,
+  containingElement: UElement?
 ) : JavaUMethod(psi, containingElement), UAnnotationMethod {
 
-    override val javaPsi: PsiAnnotationMethod
-        get() = psi
+  override val javaPsi: PsiAnnotationMethod
+    get() = psi
 
-    override val uastDefaultValue by lz {
-        val defaultValue = psi.defaultValue ?: return@lz null
-        languagePlugin.convertElement(defaultValue, this, null) as? UExpression
-    }
+  override val uastDefaultValue by lz {
+    val defaultValue = psi.defaultValue ?: return@lz null
+    languagePlugin.convertElement(defaultValue, this, null) as? UExpression
+  }
 }
