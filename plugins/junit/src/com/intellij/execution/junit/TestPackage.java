@@ -28,6 +28,8 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
@@ -81,7 +83,7 @@ public class TestPackage extends TestObject {
             final TestClassFilter classFilter = getClassFilter(data);
             LOG.assertTrue(classFilter.getBase() != null);
             long start = System.currentTimeMillis();
-            if (Registry.is("junit4.search.4.tests.in.classpath", false)) {
+            if (findTestsInClasspath()) {
               String packageName = getPackageName(data);
               String[] classNames = TestClassCollector.collectClassFQNames(packageName, getRootPath(), getConfiguration(), TestPackage::createPredicate);
               PsiManager manager = PsiManager.getInstance(myProject);
@@ -111,6 +113,16 @@ public class TestPackage extends TestObject {
                                          psiClass -> psiClass != null ? JavaExecutionUtil.getRuntimeQualifiedName(psiClass) : null, getPackageName(data), createTempFiles(), getJavaParameters());
         }
         catch (ExecutionException ignored) {}
+      }
+
+      @Override
+      protected boolean findTestsInClasspath() {
+        try {
+          return Registry.is("junit4.search.4.tests.in.classpath", true) && !JavaSdkUtil.isJdkAtLeast(getJavaParameters().getJdk(), JavaSdkVersion.JDK_1_9);
+        }
+        catch (ExecutionException e) {
+          return false;
+        }
       }
     };
   }
