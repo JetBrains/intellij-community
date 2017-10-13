@@ -118,8 +118,13 @@ class PyAddSdkDialog(private val project: Project?,
   }
 
   private fun createAnacondaPanel(): PyAddSdkPanel {
-    val panels = listOf(PyAddNewCondaEnvPanel(project, existingSdks, newProjectPath),
+    val newCondaEnvPanel = when {
+      project != null || PlatformUtils.isPyCharmEducational() -> PyAddNewCondaEnvPanel(project, existingSdks, newProjectPath)
+      else -> null
+    }
+    val panels = listOf(newCondaEnvPanel,
                         PyAddExistingCondaEnvPanel(project, existingSdks, newProjectPath))
+      .filterNotNull()
     return PyAddSdkGroupPanel("Anaconda", PythonIcons.Python.Anaconda, panels, panels[0])
   }
 }
