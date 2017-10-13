@@ -57,7 +57,10 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.*;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -677,7 +680,7 @@ public class PluginManagerCore {
                                                                 @NotNull JDOMXIncluder.PathResolver pathResolver,
                                                                 @NotNull LoadingContext context) {
     try {
-      URL jarURL = URLUtil.getJarEntryURL(file, getNormalizedPathInJar(fileName));
+      URL jarURL = URLUtil.getJarEntryURL(file, FileUtil.toCanonicalPath(META_INF + '/' + fileName, '/'));
 
       ZipFile zipFile = context.myOpenedFiles.get(file);
       if (zipFile == null) {
@@ -702,17 +705,6 @@ public class PluginManagerCore {
     }
 
     return null;
-  }
-
-  @NotNull
-  private static String getNormalizedPathInJar(@NotNull String pathInJar) {
-    String absolutePathInJar = META_INF + '/' + pathInJar;
-    try {
-      return new URI(absolutePathInJar).normalize().getPath();
-    }
-    catch (URISyntaxException ignored) {
-    }
-    return absolutePathInJar;
   }
 
   @Nullable
