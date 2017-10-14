@@ -17,6 +17,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
@@ -33,6 +34,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
@@ -151,10 +153,12 @@ public class DfaPsiUtil {
     PsiType iteratedType = iteratedValue.getType();
     if (iteratedValue instanceof PsiReferenceExpression) {
       PsiElement target = ((PsiReferenceExpression)iteratedValue).resolve();
-      if (target instanceof PsiParameter &&
-          target.getParent() instanceof PsiForeachStatement &&
-          PsiTreeUtil.isAncestor(target.getParent(), loop, true)) {
-        iteratedType = inferLoopParameterTypeWithNullability((PsiForeachStatement)target.getParent());
+      if (target instanceof PsiParameter && target.getParent() instanceof PsiForeachStatement) {
+        PsiForeachStatement targetLoop = (PsiForeachStatement)target.getParent();
+        if (PsiTreeUtil.isAncestor(targetLoop, loop, true) &&
+            !HighlightControlFlowUtil.isReassigned((PsiParameter)target, new HashMap<>())) {
+          iteratedType = inferLoopParameterTypeWithNullability(targetLoop);
+        }
       }
     }
     return JavaGenericsUtil.getCollectionItemType(iteratedType, iteratedValue.getResolveScope());
