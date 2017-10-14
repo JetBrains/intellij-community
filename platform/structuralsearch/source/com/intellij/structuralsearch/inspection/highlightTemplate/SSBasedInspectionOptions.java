@@ -22,13 +22,13 @@ import java.util.List;
  * @author cdr
  */
 public class SSBasedInspectionOptions {
-  private final JBList myTemplatesList;
+  final JBList<Configuration> myTemplatesList;
   // for externalization
-  private final List<Configuration> myConfigurations;
+  final List<Configuration> myConfigurations;
 
   public SSBasedInspectionOptions(final List<Configuration> configurations) {
     myConfigurations = configurations;
-    myTemplatesList  = new JBList(new MyListModel());
+    myTemplatesList  = new JBList<>(new MyListModel());
     myTemplatesList.setCellRenderer(new DefaultListCellRenderer() {
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         JLabel component = (JLabel)super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
@@ -43,7 +43,7 @@ public class SSBasedInspectionOptions {
     SearchDialog createDialog(SearchContext searchContext);
   }
 
-  private void addTemplate(SearchDialogFactory searchDialogFactory) {
+  void addTemplate(SearchDialogFactory searchDialogFactory) {
     SearchDialog dialog = createDialog(searchDialogFactory);
     if (!dialog.showAndGet()) {
       return;
@@ -61,7 +61,7 @@ public class SSBasedInspectionOptions {
     return searchDialogFactory.createDialog(searchContext);
   }
 
-  private static SearchContext createSearchContext() {
+  static SearchContext createSearchContext() {
     AnActionEvent event = new AnActionEvent(null, DataManager.getInstance().getDataContext(),
                                             "", new DefaultActionGroup().getTemplatePresentation(), ActionManager.getInstance(), 0);
     return SearchContext.buildFromDataContext(event.getDataContext());
@@ -85,6 +85,7 @@ public class SSBasedInspectionOptions {
                 @Override
                 public void actionPerformed(AnActionEvent e) {
                   addTemplate(new SearchDialogFactory() {
+                    @Override
                     public SearchDialog createDialog(SearchContext searchContext) {
                       return new SearchDialog(searchContext, false, false);
                     }
@@ -95,6 +96,7 @@ public class SSBasedInspectionOptions {
                 @Override
                 public void actionPerformed(AnActionEvent e) {
                   addTemplate(new SearchDialogFactory() {
+                    @Override
                     public SearchDialog createDialog(SearchContext searchContext) {
                       return new ReplaceDialog(searchContext, false, false);
                     }
@@ -103,8 +105,7 @@ public class SSBasedInspectionOptions {
               }
             };
             JBPopupFactory.getInstance().createActionGroupPopup(null, new DefaultActionGroup(children),
-                                                                DataManager.getInstance()
-                                                                  .getDataContext(button.getContextComponent()),
+                                                                DataManager.getInstance().getDataContext(button.getContextComponent()),
                                                                 JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true)
               .show(button.getPreferredPopupPoint());
           }
@@ -123,9 +124,7 @@ public class SSBasedInspectionOptions {
         @Override
         public void run(AnActionButton button) {
           final SearchContext context = createSearchContext();
-          final Object[] selected = myTemplatesList.getSelectedValues();
-          for (Object o : selected) {
-            final Configuration configuration = (Configuration)o;
+          for (Configuration configuration : myTemplatesList.getSelectedValuesList()) {
             myConfigurations.remove(configuration);
             SSBasedInspectionCompiledPatternsCache.removeFromCache(configuration, context.getProject());
           }
@@ -187,7 +186,7 @@ public class SSBasedInspectionOptions {
   }
 
   void performEditAction() {
-    final Configuration configuration = (Configuration)myTemplatesList.getSelectedValue();
+    final Configuration configuration = myTemplatesList.getSelectedValue();
     if (configuration == null) return;
 
     SearchDialog dialog = createDialog(new SearchDialogFactory() {
@@ -197,7 +196,7 @@ public class SSBasedInspectionOptions {
           return new SearchDialog(searchContext, false, false) {
             @Override
             public Configuration createConfiguration(Configuration c) {
-              return configuration.copy();
+              return myConfiguration.copy();
             }
           };
         }
@@ -205,7 +204,7 @@ public class SSBasedInspectionOptions {
           return new ReplaceDialog(searchContext, false, false) {
             @Override
             public Configuration createConfiguration(Configuration c) {
-              return configuration.copy();
+              return myConfiguration.copy();
             }
           };
         }
@@ -224,14 +223,14 @@ public class SSBasedInspectionOptions {
     configurationsChanged(context);
   }
 
-  private class MyListModel extends AbstractListModel {
+  private class MyListModel extends AbstractListModel<Configuration> {
     @Override
     public int getSize() {
       return myConfigurations.size();
     }
 
     @Override
-    public Object getElementAt(int index) {
+    public Configuration getElementAt(int index) {
       return index < myConfigurations.size() ? myConfigurations.get(index) : null;
     }
 
