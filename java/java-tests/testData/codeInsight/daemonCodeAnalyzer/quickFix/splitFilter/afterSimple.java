@@ -1,4 +1,4 @@
-// "Split into filter's chain" "true"
+// "Split into filter chain" "true"
 
 import java.util.stream.Stream;
 class Test {
