@@ -267,7 +267,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     branchWithCommit(myRepositories, "feature")
 
     val files = ContainerUtil.newArrayList<String>()
-    (0..untrackedFiles - 1).mapTo(files) { "untracked$it.txt" }
+    (0 until untrackedFiles).mapTo(files) { "untracked$it.txt" }
     untrackedFileOverwrittenBy(first, "feature", files)
 
     var notificationShown = false
@@ -382,7 +382,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   private fun prepareLocalChangesOverwrittenBy(repository: GitRepository, numFiles: Int = 1): List<String> {
     val localChanges = ContainerUtil.newArrayList<String>()
-    (0..numFiles - 1).mapTo(localChanges) { String.format("local%d.txt", it) }
+    (0 until numFiles).mapTo(localChanges) { String.format("local%d.txt", it) }
     localChangesOverwrittenByWithoutConflict(repository, "feature", localChanges)
     updateChangeListManager()
 
@@ -400,7 +400,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     `check deny to smart operation in first repo should show nothing`("merge")
   }
 
-  fun `check deny to smart operation in first repo should show nothing`(operation: String) {
+  private fun `check deny to smart operation in first repo should show nothing`(operation: String) {
     prepareLocalChangesOverwrittenBy(first)
 
     checkoutOrMerge(operation, "feature", object : TestUiHandler() {
@@ -426,7 +426,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     `check deny to smart operation in second repo should show rollback proposal`("merge")
   }
 
-  fun `check deny to smart operation in second repo should show rollback proposal`(operation: String) {
+  private fun `check deny to smart operation in second repo should show rollback proposal`(operation: String) {
     prepareLocalChangesOverwrittenBy(second)
 
     val rollbackMsg = Ref.create<String>()
