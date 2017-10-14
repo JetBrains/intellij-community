@@ -10,7 +10,7 @@ import org.jdom.Element;
  */
 public class SearchConfiguration extends Configuration {
 
-  private MatchOptions matchOptions;
+  private final MatchOptions matchOptions;
 
   public SearchConfiguration() {
     matchOptions = new MatchOptions();
@@ -39,10 +39,6 @@ public class SearchConfiguration extends Configuration {
   @Override
   public NamedScriptableDefinition findVariable(String name) {
     return matchOptions.getVariableConstraint(name);
-  }
-
-  public void setMatchOptions(MatchOptions matchOptions) {
-    this.matchOptions = matchOptions;
   }
 
   @Override
