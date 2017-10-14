@@ -12,63 +12,63 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public class IntermediateBuilderPositiveTest extends StreamChainBuilderPositiveTestBase {
-  public void testFilter() throws Exception {
+  public void testFilter() {
     doTest();
   }
 
-  public void testMap() throws Exception {
+  public void testMap() {
     doTest();
   }
 
-  public void testMapToInt() throws Exception {
+  public void testMapToInt() {
     doTest();
   }
 
-  public void testMapToDouble() throws Exception {
+  public void testMapToDouble() {
     doTest();
   }
 
-  public void testMapToLong() throws Exception {
+  public void testMapToLong() {
     doTest();
   }
 
-  public void testFlatMap() throws Exception {
+  public void testFlatMap() {
     doTest();
   }
 
-  public void testFlatMapToInt() throws Exception {
+  public void testFlatMapToInt() {
     doTest();
   }
 
-  public void testFlatMapToLong() throws Exception {
+  public void testFlatMapToLong() {
     doTest();
   }
 
-  public void testFlatMapToDouble() throws Exception {
+  public void testFlatMapToDouble() {
     doTest();
   }
 
-  public void testDistinct() throws Exception {
+  public void testDistinct() {
     doTest();
   }
 
-  public void testSorted() throws Exception {
+  public void testSorted() {
     doTest();
   }
 
-  public void testLimit() throws Exception {
+  public void testLimit() {
     doTest();
   }
 
-  public void testBoxed() throws Exception {
+  public void testBoxed() {
     doTest();
   }
 
-  public void testPeek() throws Exception {
+  public void testPeek() {
     doTest();
   }
 
-  public void testOnClose() throws Exception {
+  public void testOnClose() {
     doTest();
   }
 
