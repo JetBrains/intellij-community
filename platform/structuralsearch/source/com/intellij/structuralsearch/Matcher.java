@@ -86,7 +86,6 @@ public class Matcher {
     if (StringUtil.isQuotedString(constraint)) {
       // keep old configurations working, also useful for testing
       final MatchOptions myMatchOptions = new MatchOptions();
-      myMatchOptions.setLooseMatching(true);
       myMatchOptions.setFileType(fileType);
       myMatchOptions.fillSearchCriteria(StringUtil.unquoteString(constraint));
       return new Matcher(project, myMatchOptions);

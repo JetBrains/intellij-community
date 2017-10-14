@@ -42,6 +42,7 @@ public class MatchOptions implements JDOMExternalizable {
 
   public MatchOptions() {
     variableConstraints = new LinkedHashMap<>();
+    looseMatching = true;
     resultIsContextMatch = false;
     myFileType = null;
     myDialect = null;

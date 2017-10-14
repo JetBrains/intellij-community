@@ -751,7 +751,6 @@ public class SearchDialog extends DialogWrapper {
       options.setScope(
         searchWithinHierarchy && !myDoingOkAction ? GlobalSearchScope.projectScope(getProject()) : myScopeChooserCombo.getSelectedScope());
     }
-    options.setLooseMatching(true);
     options.setRecursiveSearch(isRecursiveSearchEnabled() && recursiveMatching.isSelected());
 
     ourFtSearchVariant = (FileType)fileTypes.getSelectedItem();

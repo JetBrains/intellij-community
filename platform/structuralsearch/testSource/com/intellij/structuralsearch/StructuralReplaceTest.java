@@ -34,7 +34,6 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     super.setUp();
     final MatchOptions matchOptions = this.options.getMatchOptions();
     matchOptions.setFileType(StdFileTypes.JAVA);
-    matchOptions.setLooseMatching(true);
   }
 
   public void testReplaceInLiterals() {
