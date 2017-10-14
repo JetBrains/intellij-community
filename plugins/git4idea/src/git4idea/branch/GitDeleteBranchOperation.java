@@ -155,7 +155,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
         }
       });
     }
-    if (!myTrackedBranches.isEmpty() && hasOnlyTrackingBranch(myTrackedBranches, myBranchName)) {
+    if (!myTrackedBranches.isEmpty() && hasNoOtherTrackingBranch(myTrackedBranches, myBranchName)) {
       notification.addAction(new NotificationAction(DELETE_TRACKED_BRANCH) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
@@ -166,7 +166,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     myNotifier.notify(notification);
   }
 
-  private static boolean hasOnlyTrackingBranch(@NotNull MultiMap<String, GitRepository> trackedBranches, @NotNull String localBranch) {
+  private static boolean hasNoOtherTrackingBranch(@NotNull MultiMap<String, GitRepository> trackedBranches, @NotNull String localBranch) {
     for (String remoteBranch : trackedBranches.keySet()) {
       for (GitRepository repository : trackedBranches.get(remoteBranch)) {
         if (exists(repository.getBranchTrackInfos(), info -> !info.getLocalBranch().getName().equals(localBranch) &&
