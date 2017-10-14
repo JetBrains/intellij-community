@@ -70,7 +70,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     last.update()
   }
 
-  fun test_create_new_branch_without_problems() {
+  fun `test create new branch without problems`() {
     checkoutNewBranch("feature", TestUiHandler())
 
     assertCurrentBranch("feature")
@@ -92,7 +92,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertSuccessfulNotification("Branch ${bcode("feature")} was created")
   }
 
-  fun test_create_new_branch_with_unmerged_files_in_first_repo_should_show_notification() {
+  fun `test create new branch with unmerged files in first repo should show notification`() {
     unmergedFiles(first)
 
     var notificationShown = false
@@ -105,7 +105,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertTrue("Unmerged files notification was not shown", notificationShown)
   }
 
-  fun test_create_new_branch_with_unmerged_files_in_second_repo_should_propose_to_rollback() {
+  fun `test create new branch with unmerged files in second repo should propose to rollback`() {
     unmergedFiles(second)
 
     var rollbackProposed = false
@@ -119,7 +119,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertTrue("Rollback was not proposed if unmerged files prevented checkout in the second repository", rollbackProposed)
   }
 
-  fun test_rollback_create_new_branch_should_delete_branch() {
+  fun `test rollback create new branch should delete branch`() {
     unmergedFiles(second)
 
     checkoutNewBranch("feature", object : TestUiHandler() {
@@ -132,7 +132,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertBranchDeleted(last, "feature")
   }
 
-  fun test_deny_rollback_create_new_branch_should_leave_new_branch() {
+  fun `test deny rollback create new branch should leave new branch`() {
     unmergedFiles(second)
 
     checkoutNewBranch("feature", object : TestUiHandler() {
@@ -146,7 +146,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertCurrentBranch(last, "master")
   }
 
-  fun test_checkout_without_problems() {
+  fun `test checkout without problems`() {
     branchWithCommit(myRepositories, "feature")
 
     checkoutBranch("feature", TestUiHandler())
@@ -156,7 +156,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
                  myVcsNotifier.lastNotification.content)
   }
 
-  fun test_checkout_with_unmerged_files_in_first_repo_should_show_notification() {
+  fun `test checkout with unmerged files in first repo should show notification`() {
     branchWithCommit(myRepositories, "feature")
     unmergedFiles(first)
 
@@ -170,7 +170,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertTrue("Unmerged files notification was not shown", notificationShown)
   }
 
-  fun test_checkout_with_unmerged_file_in_second_repo_should_propose_to_rollback() {
+  fun `test checkout with unmerged file in second repo should propose to rollback`() {
     branchWithCommit(myRepositories, "feature")
     unmergedFiles(second)
 
@@ -185,7 +185,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertTrue("Rollback was not proposed if unmerged files prevented checkout in the second repository", rollbackProposed)
   }
 
-  fun test_rollback_checkout_should_return_to_previous_branch() {
+  fun `test rollback checkout should return to previous branch`() {
     branchWithCommit(myRepositories, "feature")
     unmergedFiles(second)
 
@@ -196,7 +196,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertCurrentBranch("master")
   }
 
-  fun test_deny_rollback_checkout_should_do_nothing() {
+  fun `test deny rollback checkout should do nothing`() {
     branchWithCommit(myRepositories, "feature")
     unmergedFiles(second)
 
@@ -209,7 +209,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertCurrentBranch(last, "master")
   }
 
-  fun test_checkout_revision_checkout_branch_with_complete_success() {
+  fun `test checkout revision checkout branch with complete success`() {
     branchWithCommit(myRepositories, "feature")
 
     checkoutRevision("feature", TestUiHandler())
@@ -218,7 +218,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertSuccessfulNotification("Checked out ${bcode("feature")}")
   }
 
-  fun test_checkout_revision_checkout_ref_with_complete_success() {
+  fun `test checkout revision checkout ref with complete success`() {
     branchWithCommit(myRepositories, "feature")
 
     checkoutRevision("feature~1", TestUiHandler())
@@ -227,7 +227,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertSuccessfulNotification("Checked out ${bcode("feature~1")}")
   }
 
-  fun test_checkout_revision_checkout_ref_with_complete_failure() {
+  fun `test checkout revision checkout ref with complete failure`() {
     branchWithCommit(myRepositories, "feature")
 
     checkoutRevision("unknown_ref", TestUiHandler())
@@ -237,7 +237,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertErrorNotification("Couldn't checkout unknown_ref", "Revision not found in community, contrib and project")
   }
 
-  fun test_checkout_revision_checkout_ref_with_partial_success() {
+  fun `test checkout revision checkout ref with partial success`() {
     branchWithCommit(listOf(first, second), "feature")
 
     checkoutRevision("feature", TestUiHandler())
@@ -250,20 +250,20 @@ class GitBranchWorkerTest : GitPlatformTest() {
                                  "Revision not found in project<br><a href='rollback'>Rollback</a>")
   }
 
-  fun test_checkout_with_untracked_files_overwritten_by_checkout_in_first_repo_should_show_notification() {
-    test_untracked_files_overwritten_by_in_first_repo("checkout", 1)
+  fun `test checkout with untracked files overwritten by checkout in first repo should show notification`() {
+    `test untracked files overwritten by in first repo`("checkout", 1)
   }
 
-  fun test_checkout_with_several_untracked_files_overwritten_by_checkout_in_first_repo_should_show_notification() {
+  fun `test checkout with several untracked files overwritten by checkout in first repo should show notification`() {
     // note that in old Git versions only one file is listed in the error.
-    test_untracked_files_overwritten_by_in_first_repo("checkout", 3)
+    `test untracked files overwritten by in first repo`("checkout", 3)
   }
 
-  fun test_merge_with_untracked_files_overwritten_by_checkout_in_first_repo_should_show_notification() {
-    test_untracked_files_overwritten_by_in_first_repo("merge", 1)
+  fun `test merge with untracked files overwritten by checkout in first repo should show notification`() {
+    `test untracked files overwritten by in first repo`("merge", 1)
   }
 
-  private fun test_untracked_files_overwritten_by_in_first_repo(operation: String, untrackedFiles: Int) {
+  private fun `test untracked files overwritten by in first repo`(operation: String, untrackedFiles: Int) {
     branchWithCommit(myRepositories, "feature")
 
     val files = ContainerUtil.newArrayList<String>()
@@ -282,15 +282,15 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertTrue("Untracked files notification was not shown", notificationShown)
   }
 
-  fun test_checkout_with_untracked_files_overwritten_by_checkout_in_second_repo_should_show_rollback_proposal_with_file_list() {
-    check_checkout_with_untracked_files_overwritten_by_in_second_repo("checkout")
+  fun `test checkout with untracked files overwritten by checkout in second repo should show rollback proposal with file list`() {
+    `check checkout with untracked files overwritten by in second repo`("checkout")
   }
 
-  fun test_merge_with_untracked_files_overwritten_by_checkout_in_second_repo_should_show_rollback_proposal_with_file_list() {
-    check_checkout_with_untracked_files_overwritten_by_in_second_repo("merge")
+  fun `test merge with untracked files overwritten by checkout in second repo should show rollback proposal with file list`() {
+    `check checkout with untracked files overwritten by in second repo`("merge")
   }
 
-  private fun check_checkout_with_untracked_files_overwritten_by_in_second_repo(operation: String) {
+  private fun `check checkout with untracked files overwritten by in second repo`(operation: String) {
     branchWithCommit(myRepositories, "feature")
 
 
@@ -312,19 +312,19 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertEquals("Incorrect set of untracked files was shown in the dialog", untracked, untrackedPaths)
   }
 
-  fun test_checkout_with_local_changes_overwritten_by_checkout_should_show_smart_checkout_dialog() {
-    check_operation_with_local_changes_overwritten_by_should_show_smart_checkout_dialog("checkout", 1)
+  fun `test checkout with local changes overwritten by checkout should show smart checkout dialog`() {
+    `check operation with local changes overwritten by should show smart checkout dialog`("checkout", 1)
   }
 
-  fun test_checkout_with_several_local_changes_overwritten_by_checkout_should_show_smart_checkout_dialog() {
-    check_operation_with_local_changes_overwritten_by_should_show_smart_checkout_dialog("checkout", 3)
+  fun `test checkout with several local changes overwritten by checkout should show smart checkout dialog`() {
+    `check operation with local changes overwritten by should show smart checkout dialog`("checkout", 3)
   }
 
-  fun test_merge_with_local_changes_overwritten_by_merge_should_show_smart_merge_dialog() {
-    check_operation_with_local_changes_overwritten_by_should_show_smart_checkout_dialog("merge", 1)
+  fun `test merge with local changes overwritten by merge should show smart merge dialog`() {
+    `check operation with local changes overwritten by should show smart checkout dialog`("merge", 1)
   }
 
-  private fun check_operation_with_local_changes_overwritten_by_should_show_smart_checkout_dialog(operation: String, numFiles: Int) {
+  private fun `check operation with local changes overwritten by should show smart checkout dialog`(operation: String, numFiles: Int) {
     val repoWithLocalChangesProblem = first
     val expectedChanges = prepareLocalChangesOverwrittenBy(repoWithLocalChangesProblem, numFiles)
 
@@ -349,8 +349,8 @@ class GitBranchWorkerTest : GitPlatformTest() {
     }
   }
 
-  fun test_agree_to_smart_checkout_should_smart_checkout() {
-    val localChanges = agree_to_smart_operation("checkout", "Checked out <b><code>feature</code></b>")
+  fun `test agree to smart checkout should smart checkout`() {
+    val localChanges = `agree to smart operation`("checkout", "Checked out <b><code>feature</code></b>")
 
     assertCurrentBranch("feature")
     cd(last)
@@ -361,9 +361,9 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertContent(expectedContent, actual)
   }
 
-  fun test_agree_to_smart_merge_should_smart_merge() {
-    val localChanges = agree_to_smart_operation("merge",
-                                                "Merged <b><code>feature</code></b> to <b><code>master</code></b><br/><a href='delete'>Delete feature</a>")
+  fun `test agree to smart merge should smart merge`() {
+    val localChanges = `agree to smart operation`("merge",
+                                                  "Merged <b><code>feature</code></b> to <b><code>master</code></b><br/><a href='delete'>Delete feature</a>")
 
     cd(last)
     val actual = cat(localChanges.first())
@@ -373,7 +373,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertContent(expectedContent, actual)
   }
 
-  private fun agree_to_smart_operation(operation: String, expectedSuccessMessage: String): List<String> {
+  private fun `agree to smart operation`(operation: String, expectedSuccessMessage: String): List<String> {
     val localChanges = prepareLocalChangesOverwrittenBy(last)
     checkoutOrMerge(operation, "feature", TestUiHandler())
     assertSuccessfulNotification(expectedSuccessMessage)
@@ -392,15 +392,15 @@ class GitBranchWorkerTest : GitPlatformTest() {
     return localChanges
   }
 
-  fun test_deny_to_smart_checkout_in_first_repo_should_show_nothing() {
-    check_deny_to_smart_operation_in_first_repo_should_show_nothing("checkout")
+  fun `test deny to smart checkout in first repo should show nothing`() {
+    `check deny to smart operation in first repo should show nothing`("checkout")
   }
 
-  fun test_deny_to_smart_merge_in_first_repo_should_show_nothing() {
-    check_deny_to_smart_operation_in_first_repo_should_show_nothing("merge")
+  fun `test deny to smart merge in first repo should show nothing`() {
+    `check deny to smart operation in first repo should show nothing`("merge")
   }
 
-  fun check_deny_to_smart_operation_in_first_repo_should_show_nothing(operation: String) {
+  fun `check deny to smart operation in first repo should show nothing`(operation: String) {
     prepareLocalChangesOverwrittenBy(first)
 
     checkoutOrMerge(operation, "feature", object : TestUiHandler() {
@@ -415,18 +415,18 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertCurrentBranch("master")
   }
 
-  fun test_deny_to_smart_checkout_in_second_repo_should_show_rollback_proposal() {
-    check_deny_to_smart_operation_in_second_repo_should_show_rollback_proposal("checkout")
+  fun `test deny to smart checkout in second repo should show rollback proposal`() {
+    `check deny to smart operation in second repo should show rollback proposal`("checkout")
     assertCurrentBranch(first, "feature")
     assertCurrentBranch(second, "master")
     assertCurrentBranch(last, "master")
   }
 
-  fun test_deny_to_smart_merge_in_second_repo_should_show_rollback_proposal() {
-    check_deny_to_smart_operation_in_second_repo_should_show_rollback_proposal("merge")
+  fun `test deny to smart merge in second repo should show rollback proposal`() {
+    `check deny to smart operation in second repo should show rollback proposal`("merge")
   }
 
-  fun check_deny_to_smart_operation_in_second_repo_should_show_rollback_proposal(operation: String) {
+  fun `check deny to smart operation in second repo should show rollback proposal`(operation: String) {
     prepareLocalChangesOverwrittenBy(second)
 
     val rollbackMsg = Ref.create<String>()
@@ -448,7 +448,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertNotNull("Rollback proposal was not shown", rollbackMsg.get())
   }
 
-  fun test_force_checkout_in_case_of_local_changes_that_would_be_overwritten_by_checkout() {
+  fun `test force checkout in case of local changes that would be overwritten by checkout`() {
     // IDEA-99849
     prepareLocalChangesOverwrittenBy(last)
 
@@ -465,7 +465,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertCurrentBranch("new_branch")
   }
 
-  fun test_rollback_of_checkout_branch_as_new_branch_should_delete_branches() {
+  fun `test rollback of checkout branch as new branch should delete branches`() {
     branchWithCommit(myRepositories, "feature")
     touch("feature.txt", "feature_content")
     git("add feature.txt")
@@ -488,7 +488,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     myRepositories.forEach { assertBranchDeleted(it, "newBranch") }
   }
 
-  fun test_delete_branch_that_is_fully_merged() {
+  fun `test delete branch that is fully merged`() {
     val todelete = "todelete"
     for (repository in myRepositories) {
       git(repository, "branch $todelete")
@@ -499,7 +499,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     `assert successful deleted branch notification`(todelete, false, RESTORE)
   }
 
-  fun test_delete_unmerged_branch_should_restore_on_link_click() {
+  fun `test delete unmerged branch should restore on link click`() {
     prepareUnmergedBranch(first)
 
     first.deleteBranch("todelete")
@@ -534,7 +534,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
   private fun findAction(notification: Notification,
                          actionTitle: String) = notification.actions.find { it.templatePresentation.text == actionTitle }!!
 
-  fun test_ok_in_unmerged_branch_dialog_should_force_delete_branch() {
+  fun `test ok in unmerged branch dialog should force delete branch`() {
     prepareUnmergedBranch(last)
     deleteBranch("todelete", object : TestUiHandler() {
       override fun showBranchIsNotFullyMergedDialog(project: Project,
@@ -545,8 +545,8 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertBranchDeleted("todelete")
   }
 
-  fun test_rollback_delete_branch_should_recreate_branches() {
-    prepare_delete_branch_failure_in_2nd_repo()
+  fun `test rollback delete branch should recreate branches`() {
+    `prepare_delete_branch_failure_in_2nd_repo`()
 
     var rollbackMsg: String? = null
     deleteBranch("todelete", object : TestUiHandler() {
@@ -562,8 +562,8 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertBranchExists(second, "todelete")
   }
 
-  fun test_deny_rollback_delete_branch_should_do_nothing() {
-    prepare_delete_branch_failure_in_2nd_repo()
+  fun `test deny rollback delete branch should do nothing`() {
+    `prepare_delete_branch_failure_in_2nd_repo`()
 
     var rollbackMsg: String? = null
     deleteBranch("todelete", object : TestUiHandler() {
@@ -579,7 +579,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertBranchExists(last, "todelete")
   }
 
-  fun test_delete_branch_merged_to_head_but_unmerged_to_upstream_should_mention_this_in_notification() {
+  fun `test delete branch merged to head but unmerged to upstream should mention this in notification`() {
     // inspired by IDEA-83604
     // for the sake of simplicity we deal with a single myCommunity repository for remote operations
     val feature = "feature"
@@ -615,7 +615,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertTrue("'Branch is not fully merged' dialog was not shown", dialogShown)
   }
 
-  private fun prepare_delete_branch_failure_in_2nd_repo() {
+  private fun `prepare_delete_branch_failure_in_2nd_repo`() {
     for (repository in myRepositories) {
       git(repository, "branch todelete")
     }
@@ -625,7 +625,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     }
   }
 
-  fun test_simple_merge_without_problems() {
+  fun `test simple merge without problems`() {
     branchWithCommit(myRepositories, "master2", "branch_file.txt", "branch content")
 
     mergeBranch("master2", TestUiHandler())
@@ -664,7 +664,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     `assert successful deleted branch notification`(todelete, false, RESTORE)
   }
 
-  fun test_merge_branch_that_is_up_to_date() {
+  fun `test merge branch that is up to date`() {
     for (repository in myRepositories) {
       git(repository, "branch master2")
     }
@@ -676,7 +676,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
                  myVcsNotifier.lastNotification.content)
   }
 
-  fun test_merge_one_simple_and_other_up_to_date() {
+  fun `test merge one simple and other up to date`() {
     branchWithCommit(first, "master2", "branch_file.txt", "branch content")
     git(last, "branch master2")
     git(second, "branch master2")
@@ -690,7 +690,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertFile(first, "branch_file.txt", "branch content")
   }
 
-  fun test_merge_with_unmerged_files_in_first_repo_should_show_notification() {
+  fun `test merge with unmerged files in first repo should show notification`() {
     branchWithCommit(myRepositories, "feature")
     unmergedFiles(first)
 
@@ -704,7 +704,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertTrue("Unmerged files notification was not shown", notificationShown)
   }
 
-  fun test_merge_with_unmerged_files_in_second_repo_should_propose_to_rollback() {
+  fun `test merge with unmerged files in second repo should propose to rollback`() {
     branchWithCommit(myRepositories, "feature")
     unmergedFiles(second)
 
@@ -718,7 +718,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertTrue("Rollback was not proposed if unmerged files prevented checkout in the second repository", rollbackProposed)
   }
 
-  fun test_rollback_merge_should_reset_merge() {
+  fun `test rollback merge should reset merge`() {
     branchWithCommit(myRepositories, "feature")
     val ultimateTip = tip(last)
     unmergedFiles(second)
@@ -732,7 +732,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertEquals("Merge in ultimate should have been reset", ultimateTip, tip(last))
   }
 
-  fun test_deny_rollback_merge_should_leave_as_is() {
+  fun `test deny rollback merge should leave as is`() {
     branchWithCommit(myRepositories, "feature")
     cd(first)
     val firstTipAfterMerge = git("rev-list -1 feature")
@@ -747,7 +747,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertEquals("Merge in community should have been reset", firstTipAfterMerge, tip(first))
   }
 
-  fun test_checkout_in_detached_head() {
+  fun `test checkout in detached head`() {
     cd(first)
     touch("file.txt", "some content")
     add("file.txt")
@@ -759,14 +759,14 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   // inspired by IDEA-127472
-  fun test_checkout_to_common_branch_when_branches_have_diverged() {
+  fun `test checkout to common branch when branches have diverged`() {
     branchWithCommit(last, "feature", "feature-file.txt", "feature_content", false)
     branchWithCommit(first, "newbranch", "newbranch-file.txt", "newbranch_content", false)
     checkoutBranch("master", TestUiHandler())
     assertCurrentBranch("master")
   }
 
-  fun test_rollback_checkout_from_diverged_branches_should_return_to_proper_branches() {
+  fun `test rollback checkout from diverged branches should return to proper branches`() {
     branchWithCommit(last, "feature", "feature-file.txt", "feature_content", false)
     branchWithCommit(first, "newbranch", "newbranch-file.txt", "newbranch_content", false)
     unmergedFiles(second)
