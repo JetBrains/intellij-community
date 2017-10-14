@@ -108,13 +108,7 @@ public class ReplaceDialog extends SearchDialog {
     final ReplaceConfiguration config = (ReplaceConfiguration)myConfiguration;
     final ReplaceOptions options = config.getReplaceOptions();
 
-    UIUtil.setContent(
-      replaceCriteriaEdit,
-      config.getReplaceOptions().getReplacement(),
-      0,
-      replaceCriteriaEdit.getDocument().getTextLength(),
-      searchContext.getProject()
-    );
+    UIUtil.setContent(replaceCriteriaEdit, config.getReplaceOptions().getReplacement());
 
     shortenFQN.setSelected(options.isToShortenFQN());
     formatAccordingToStyle.setSelected(options.isToReformatAccordingToStyle());

@@ -353,13 +353,7 @@ public class SearchDialog extends DialogWrapper {
     setDialogTitle(myConfiguration);
     final MatchOptions matchOptions = myConfiguration.getMatchOptions();
 
-    UIUtil.setContent(
-      searchCriteriaEdit,
-      matchOptions.getSearchPattern(),
-      0,
-      searchCriteriaEdit.getDocument().getTextLength(),
-      searchContext.getProject()
-    );
+    UIUtil.setContent(searchCriteriaEdit, matchOptions.getSearchPattern());
 
     recursiveMatching.setSelected(isRecursiveSearchEnabled() && matchOptions.isRecursiveSearch());
     caseSensitiveMatch.setSelected(matchOptions.isCaseSensitiveMatch());
@@ -386,7 +380,7 @@ public class SearchDialog extends DialogWrapper {
 
   protected final void setTextForEditor(final String selection, Editor editor) {
     final Project project = searchContext.getProject();
-    UIUtil.setContent(editor, selection, 0, -1, project);
+    UIUtil.setContent(editor, selection);
     final Document document = editor.getDocument();
     editor.getSelectionModel().setSelection(0, document.getTextLength());
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
