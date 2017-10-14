@@ -48,7 +48,6 @@ import java.util.*;
 
 import static com.intellij.dvcs.DvcsUtil.findVirtualFilesWithRefresh;
 import static com.intellij.dvcs.DvcsUtil.sortVirtualFilesByPresentation;
-import static com.intellij.util.ObjectUtils.assertNotNull;
 
 /**
  * The class is highly customizable, since the procedure of resolving conflicts is very common in Git operations.
@@ -127,7 +126,7 @@ public class GitConflictResolver {
     myParams = params;
     myRepositoryManager = GitUtil.getRepositoryManager(myProject);
     myVcsHelper = AbstractVcsHelper.getInstance(project);
-    myVcs = assertNotNull(GitVcs.getInstance(myProject));
+    myVcs = GitVcs.getInstance(myProject);
   }
 
   /**

@@ -143,8 +143,7 @@ public class GitLogParser {
     myFormat = makeFormatFromOptions(options);
     myOptions = options;
     myNameStatusOption = nameStatusOption;
-    GitVcs vcs = GitVcs.getInstance(project);
-    mySupportsRawBody = vcs != null && GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(vcs.getVersion());
+    mySupportsRawBody = GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(GitVcs.getInstance(project).getVersion());
   }
 
   private static String makeFormatFromOptions(GitLogOption[] options) {

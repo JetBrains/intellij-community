@@ -88,7 +88,7 @@ public class GitLogProvider implements VcsLogProvider {
     myUserRegistry = userRegistry;
     myRefSorter = new GitRefManager(myRepositoryManager);
     myVcsObjectsFactory = factory;
-    myVcs = ObjectUtils.assertNotNull(GitVcs.getInstance(project));
+    myVcs = GitVcs.getInstance(project);
   }
 
   @NotNull

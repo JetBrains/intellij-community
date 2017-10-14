@@ -48,6 +48,7 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.AnnotationProviderEx;
 import com.intellij.vcs.log.VcsUserRegistry;
@@ -123,12 +124,9 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private static final int MAX_CONSOLE_OUTPUT_SIZE = 10000;
   private GitRepositoryForAnnotationsListener myRepositoryForAnnotationsListener;
 
-  @Nullable
-  public static GitVcs getInstance(Project project) {
-    if (project == null || project.isDisposed()) {
-      return null;
-    }
-    return (GitVcs) ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME);
+  @NotNull
+  public static GitVcs getInstance(@NotNull Project project) {
+    return ObjectUtils.notNull((GitVcs) ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME));
   }
 
   public GitVcs(@NotNull Project project, @NotNull Git git,

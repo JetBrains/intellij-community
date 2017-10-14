@@ -135,7 +135,7 @@ abstract class GitLogRecordCollector implements Consumer<GitLogRecord> {
 
     GitSimpleHandler handler = new GitSimpleHandler(myProject, myRoot, GitCommand.LOG);
     GitLogParser parser = new GitLogParser(myProject, GitLogParser.NameStatus.NONE, HASH, TREE);
-    GitVcs vcs = notNull(GitVcs.getInstance(myProject));
+    GitVcs vcs = GitVcs.getInstance(myProject);
     handler.setStdoutSuppressed(true);
     handler.addParameters(parser.getPretty());
     handler.addParameters(GitLogUtil.getNoWalkParameter(vcs));

@@ -90,9 +90,7 @@ public class GitFileHistory {
     myRoot = root;
     myPath = GitHistoryUtils.getLastCommitName(myProject, path);
     myStartingRevision = revision;
-
-    GitVcs vcs = GitVcs.getInstance(myProject);
-    myVersion = vcs != null ? vcs.getVersion() : GitVersion.NULL;
+    myVersion = GitVcs.getInstance(myProject).getVersion();
   }
 
   private void load(@NotNull Consumer<GitFileRevision> consumer,

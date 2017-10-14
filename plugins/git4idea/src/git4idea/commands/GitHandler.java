@@ -136,7 +136,7 @@ public abstract class GitHandler {
     myAppSettings = GitVcsApplicationSettings.getInstance();
     myProjectSettings = GitVcsSettings.getInstance(myProject);
     myEnv = new HashMap<>(EnvironmentUtil.getEnvironmentMap());
-    myVcs = ObjectUtils.assertNotNull(GitVcs.getInstance(project));
+    myVcs = GitVcs.getInstance(project);
     myWorkingDirectory = directory;
     myCommandLine = new GeneralCommandLine();
     if (myAppSettings != null) {
@@ -738,14 +738,9 @@ public abstract class GitHandler {
   public void runInCurrentThread(@Nullable Runnable postStartAction) {
     //LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread(), "Git process should never start in the dispatch thread.");
 
-    final GitVcs vcs = GitVcs.getInstance(myProject);
-    if (vcs == null) {
-      return;
-    }
-
     if (WRITE == myCommand.lockingPolicy()) {
       // need to lock only write operations: reads can be performed even when a write operation is going on
-      vcs.getCommandLock().writeLock().lock();
+      myVcs.getCommandLock().writeLock().lock();
     }
     try {
       start();
@@ -758,7 +753,7 @@ public abstract class GitHandler {
     }
     finally {
       if (WRITE == myCommand.lockingPolicy()) {
-        vcs.getCommandLock().writeLock().unlock();
+        myVcs.getCommandLock().writeLock().unlock();
       }
 
       logTime();

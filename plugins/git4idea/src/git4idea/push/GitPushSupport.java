@@ -46,7 +46,7 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
   @SuppressWarnings("UnusedDeclaration")
   private GitPushSupport(@NotNull Project project, @NotNull GitRepositoryManager repositoryManager) {
     myRepositoryManager = repositoryManager;
-    myVcs = ObjectUtils.assertNotNull(GitVcs.getInstance(project));
+    myVcs = GitVcs.getInstance(project);
     mySettings = GitVcsSettings.getInstance(project);
     myPusher = new GitPusher(project, mySettings, this);
     myOutgoingCommitsProvider = new GitOutgoingCommitsProvider(project);

@@ -499,8 +499,7 @@ public class GitImpl implements Git {
       h.addParameters(remote.getName());
       h.addParameters(params);
       h.addProgressParameter();
-      GitVcs vcs = GitVcs.getInstance(repository.getProject());
-      if (vcs != null && GitVersionSpecialty.SUPPORTS_FETCH_PRUNE.existsIn(vcs.getVersion())) {
+      if (GitVersionSpecialty.SUPPORTS_FETCH_PRUNE.existsIn(GitVcs.getInstance(repository.getProject()).getVersion())) {
         h.addParameters("--prune");
       }
       addListeners(h, listeners);

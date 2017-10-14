@@ -731,7 +731,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     
 
     GitCheckinOptions(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
-      myVcs = assertNotNull(GitVcs.getInstance(project));
+      myVcs = GitVcs.getInstance(project);
       myCheckinProjectPanel = panel;
       myAuthorField = createTextField(project, getAuthors(project));
       myAuthorField.addFocusListener(new FocusAdapter() {

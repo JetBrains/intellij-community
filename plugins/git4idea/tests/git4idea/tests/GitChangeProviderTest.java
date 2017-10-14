@@ -81,7 +81,6 @@ public abstract class GitChangeProviderTest extends GitSingleRepoTest {
 
   private void initTest() {
     myVcs = GitVcs.getInstance(myProject);
-    assertNotNull(myVcs);
     myChangeProvider = (GitChangeProvider) myVcs.getChangeProvider();
 
     GitTestUtil.createFileStructure(myProjectRoot, "a.txt", "b.txt", "dir/c.txt", "dir/subdir/d.txt");
