@@ -19,7 +19,7 @@ public abstract class StreamChainBuilderPositiveTestBase extends StreamChainBuil
     return "chain" + File.separator + "positive" + File.separator + getDirectoryName();
   }
 
-  void doTest() throws Exception {
+  void doTest() {
     checkResultChains(buildChains());
   }
 

@@ -13,79 +13,79 @@ import java.util.List;
  */
 public class TerminationBuilderPositiveTest extends StreamChainBuilderPositiveTestBase {
 
-  public void testAllMatch() throws Exception {
+  public void testAllMatch() {
     doTest();
   }
 
-  public void testAnyMatch() throws Exception {
+  public void testAnyMatch() {
     doTest();
   }
 
-  public void testNoneMatch() throws Exception {
+  public void testNoneMatch() {
     doTest();
   }
 
-  public void testAverage() throws Exception {
+  public void testAverage() {
     doTest();
   }
 
-  public void testClose() throws Exception {
+  public void testClose() {
     doTest();
   }
 
-  public void testCollect() throws Exception {
+  public void testCollect() {
     doTest();
   }
 
-  public void testCount() throws Exception {
+  public void testCount() {
     doTest();
   }
 
-  public void testFindAny() throws Exception {
+  public void testFindAny() {
     doTest();
   }
 
-  public void testFindFirst() throws Exception {
+  public void testFindFirst() {
     doTest();
   }
 
-  public void testForEach() throws Exception {
+  public void testForEach() {
     doTest();
   }
 
-  public void testForEachOrdered() throws Exception {
+  public void testForEachOrdered() {
     doTest();
   }
 
-  public void testIterator() throws Exception {
+  public void testIterator() {
     doTest();
   }
 
-  public void testMax() throws Exception {
+  public void testMax() {
     doTest();
   }
 
-  public void testMin() throws Exception {
+  public void testMin() {
     doTest();
   }
 
-  public void testReduce() throws Exception {
+  public void testReduce() {
     doTest();
   }
 
-  public void testSpliterator() throws Exception {
+  public void testSpliterator() {
     doTest();
   }
 
-  public void testSummaryStatistics() throws Exception {
+  public void testSummaryStatistics() {
     doTest();
   }
 
-  public void testToArray() throws Exception {
+  public void testToArray() {
     doTest();
   }
 
-  public void testSum() throws Exception {
+  public void testSum() {
     doTest();
   }
 

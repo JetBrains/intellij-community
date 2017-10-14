@@ -10,27 +10,27 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public class ProducerBuilderPositiveTest extends StreamChainBuilderPositiveTestBase {
-  public void testCollectionStream() throws Exception {
+  public void testCollectionStream() {
     doTest();
   }
 
-  public void testCustomSource() throws Exception {
+  public void testCustomSource() {
     doTest();
   }
 
-  public void testIntStreamRange() throws Exception {
+  public void testIntStreamRange() {
     doTest();
   }
 
-  public void testIntStreamRangeClosed() throws Exception {
+  public void testIntStreamRangeClosed() {
     doTest();
   }
 
-  public void testIterate() throws Exception {
+  public void testIterate() {
     doTest();
   }
 
-  public void testConcat() throws Exception {
+  public void testConcat() {
     doTest();
   }
 

@@ -7,35 +7,35 @@ import org.jetbrains.annotations.NotNull;
  * @author Vitaliy.Bibaev
  */
 public class AmbiguousDetectionTest extends AmbiguousChainTestCase {
-  public void testSimpleExpression() throws Exception {
+  public void testSimpleExpression() {
     doTest(ResultChecker.chainsCountChecker(2));
   }
 
-  public void testNestedExpression() throws Exception {
+  public void testNestedExpression() {
     doTest(ResultChecker.chainsCountChecker(3));
   }
 
-  public void testSimpleFunctionParameter() throws Exception {
+  public void testSimpleFunctionParameter() {
     doTest(ResultChecker.chainsCountChecker(2));
   }
 
-  public void testNestedFunctionParameters() throws Exception {
+  public void testNestedFunctionParameters() {
     doTest(ResultChecker.chainsCountChecker(3));
   }
 
-  public void testNestedFunctionParametersReversed() throws Exception {
+  public void testNestedFunctionParametersReversed() {
     doTest(ResultChecker.chainsCountChecker(3));
   }
 
-  public void testStreamProducerParameter() throws Exception {
+  public void testStreamProducerParameter() {
     doTest(ResultChecker.chainsCountChecker(2));
   }
 
-  public void testStreamIntermediateCallParameter() throws Exception {
+  public void testStreamIntermediateCallParameter() {
     doTest(ResultChecker.chainsCountChecker(2));
   }
 
-  public void testStreamTerminatorParameter() throws Exception {
+  public void testStreamTerminatorParameter() {
     doTest(ResultChecker.chainsCountChecker(2));
   }
 
@@ -43,23 +43,23 @@ public class AmbiguousDetectionTest extends AmbiguousChainTestCase {
     doTest(ResultChecker.chainsCountChecker(4));
   }
 
-  public void testNestedStreamProducerParameter() throws Exception {
+  public void testNestedStreamProducerParameter() {
     doTest(ResultChecker.chainsCountChecker(3));
   }
 
-  public void testNestedStreamIntermediateCallParameter() throws Exception {
+  public void testNestedStreamIntermediateCallParameter() {
     doTest(ResultChecker.chainsCountChecker(3));
   }
 
-  public void testNestedStreamTerminatorCallParameter() throws Exception {
+  public void testNestedStreamTerminatorCallParameter() {
     doTest(ResultChecker.chainsCountChecker(3));
   }
 
-  public void testNestedCallInLambda() throws Exception {
+  public void testNestedCallInLambda() {
     doTest(ResultChecker.chainsCountChecker(2));
   }
 
-  public void testNestedCallInAnonymous() throws Exception {
+  public void testNestedCallInAnonymous() {
     doTest(ResultChecker.chainsCountChecker(2));
   }
 
