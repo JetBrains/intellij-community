@@ -470,7 +470,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     boolean result = false;
     try {
       final boolean templateIsInterface = clazz.isInterface();
-      if (templateIsInterface != clazz2.isInterface()) return false;
+      if (templateIsInterface && !clazz2.isInterface()) return false;
       if (templateIsInterface && clazz.isAnnotationType() && !clazz2.isAnnotationType()) return false;
       if (clazz.isEnum() && !clazz2.isEnum()) return false;
       if (clazz instanceof PsiTypeParameter != clazz2 instanceof PsiTypeParameter) return false;

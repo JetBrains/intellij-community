@@ -1278,10 +1278,16 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     final String s105 = "class B {} class A extends B { } class C {} class D extends C {}";
     assertEquals("extends match", 1, findMatchesCount(s105, "class '_ extends '_:[ref( \"class B {}\" )] {}"));
 
-    final String s107 = "interface IA {} interface IB extends IA { } interface IC extends IB {} interface ID extends IC {}" +
-                        "class A implements IA {} class B extends A { } class C extends B implements IC {} class D extends C {}";
+    final String s107 = "interface IA {}" +
+                        "interface IB extends IA {}" +
+                        "interface IC extends IB {} " +
+                        "interface ID extends IC {}" +
+                        "class A implements IA {}" +
+                        "class B extends A {}" +
+                        "class C extends B implements IC {}" +
+                        "class D extends C {}";
     assertEquals("extends navigation match", 2, findMatchesCount(s107, "class '_ extends 'Type:+A {}"));
-    assertEquals("implements navigation match", 3, findMatchesCount(s107, "class '_ implements 'Type:+IA {}"));
+    assertEquals("implements navigation match", 5, findMatchesCount(s107, "class '_ implements 'Type:+IA {}"));
 
     final String s109 = "interface I {}" +
                         "interface I2 extends I {}" +

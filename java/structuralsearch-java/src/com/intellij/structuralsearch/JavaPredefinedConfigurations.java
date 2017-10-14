@@ -84,7 +84,12 @@ class JavaPredefinedConfigurations {
       ),
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.classes"),
-        "class 'Class {}",
+        "class 'Class:[script( \"!__context__.interface && !__context__.enum\" )] {}",
+        CLASS_TYPE
+      ),
+      createSearchTemplateInfo(
+        SSRBundle.message("predefined.configuration.classes.interfaces.enums"),
+        "class 'ClassInterfaceEnum {}",
         CLASS_TYPE
       ),
       createSearchTemplateInfo(
