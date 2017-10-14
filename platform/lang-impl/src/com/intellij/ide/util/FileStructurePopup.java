@@ -438,7 +438,8 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   @NotNull
   public Promise<TreePath> select(Object element) {
     if (!myUseATM) {
-      FilteringTreeStructure.FilteringNode node = selectPsiElement((PsiElement)element);
+      FilteringTreeStructure.FilteringNode node =
+        element instanceof PsiElement ? selectPsiElement((PsiElement)element) : null;
       if (node == null) return Promises.rejectedPromise();
       return Promise.resolve(new TreePath(node));
     }
@@ -818,7 +819,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
         myTreeStructure.rebuildTree();
       }
       myTreeBuilder.refilter(selection, true, false).doWhenProcessed(() -> {
-        if (selection != null) {
+        if (selection instanceof PsiElement) {
           selectPsiElement((PsiElement)selection);
         }
         result.setResult(null);
@@ -1050,7 +1051,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
   @Nullable
   private Object findClosestTo(Object path, List<SpeedSearchObjectWithWeight> paths) {
-    if (path == null || myInitialElement == null) {
+    if (path == null || !(myInitialElement instanceof PsiElement)) {
       return paths.get(0).node;
     }
     Set<PsiElement> parents = getAllParents((PsiElement)myInitialElement);
