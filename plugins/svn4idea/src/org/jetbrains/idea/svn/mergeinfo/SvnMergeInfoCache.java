@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.svn.mergeinfo;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -56,7 +56,7 @@ public class SvnMergeInfoCache {
   }
 
   public static SvnMergeInfoCache getInstance(@NotNull Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetService(project, SvnMergeInfoCache.class);
+    return ServiceManager.getService(project, SvnMergeInfoCache.class);
   }
 
   public void clear(@NotNull WCInfoWithBranches info, String branchPath) {

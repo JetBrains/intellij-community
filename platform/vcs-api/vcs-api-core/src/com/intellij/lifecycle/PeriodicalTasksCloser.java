@@ -20,10 +20,19 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated Use plain {@link ServiceManager#getService(Project, Class)} and {@link Project#getComponent(Class)}.
+ * <br/><br/>
+ * To avoid "Already Disposed" exceptions and NPEs the calls to getService/getComponent should happen either from a Read Action
+ * with a dispose check, or from a background task with a proper dispose-aware ProgressIndicator,
+ * e.g. via {@link ProgressManager#run(Task)} or {@code BackgroundTaskUtil#executeOnPooledThread}.
+ */
+@Deprecated
 public class PeriodicalTasksCloser {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lifecycle.PeriodicalTasksCloser");
   private final Object myLock = new Object();

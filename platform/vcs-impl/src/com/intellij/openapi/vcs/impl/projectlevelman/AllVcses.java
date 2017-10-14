@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -51,7 +51,7 @@ public class AllVcses implements AllVcsesI, Disposable {
   }
 
   public static AllVcsesI getInstance(final Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetService(project, AllVcsesI.class);
+    return ServiceManager.getService(project, AllVcsesI.class);
   }
 
   private void addVcs(final AbstractVcs vcs) {

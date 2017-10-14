@@ -3,7 +3,6 @@
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -83,7 +82,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   private boolean myRemoveFilesFromShelf;
 
   public static ShelveChangesManager getInstance(Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ShelveChangesManager.class);
+    return project.getComponent(ShelveChangesManager.class);
   }
 
   private static final String SHELVE_MANAGER_DIR_PATH = "shelf";

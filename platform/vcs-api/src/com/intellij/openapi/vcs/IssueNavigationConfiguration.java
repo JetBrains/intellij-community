@@ -16,8 +16,8 @@
 
 package com.intellij.openapi.vcs;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,7 +44,7 @@ public class IssueNavigationConfiguration extends SimpleModificationTracker
   private static final Logger LOG = Logger.getInstance(IssueNavigationConfiguration.class);
 
   public static IssueNavigationConfiguration getInstance(Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetService(project, IssueNavigationConfiguration.class);
+    return ServiceManager.getService(project, IssueNavigationConfiguration.class);
   }
 
   private List<IssueNavigationLink> myLinks = new ArrayList<>();

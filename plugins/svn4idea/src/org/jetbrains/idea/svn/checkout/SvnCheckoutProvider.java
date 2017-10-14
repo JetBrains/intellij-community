@@ -15,9 +15,9 @@
  */
 package org.jetbrains.idea.svn.checkout;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -51,7 +51,6 @@ import org.jetbrains.idea.svn.checkin.CommitEventHandler;
 import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
 import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
 import org.jetbrains.idea.svn.dialogs.UpgradeFormatDialog;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.DefaultSVNCommitHandler;
 import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
@@ -249,7 +248,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     final String targetPath = FileUtil.toSystemIndependentName(target.getAbsolutePath());
 
     ExclusiveBackgroundVcsAction.run(project, () -> ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      final FileIndexFacade facade = PeriodicalTasksCloser.getInstance().safeGetService(project, FileIndexFacade.class);
+      final FileIndexFacade facade = ServiceManager.getService(project, FileIndexFacade.class);
       ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
       try {
         progressIndicator.setText(message("progress.text.import", target.getAbsolutePath()));
