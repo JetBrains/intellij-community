@@ -538,6 +538,51 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     assertAllOutputs(myMockResettablePrinter, "preved", "","Empty test suite.\n");
   }
 
+  public void testPrintingOnlyOwnContentForRoot() {
+    myConsole.getProperties().setShouldPrintOnlyOwnContentForRoot(true);
+
+    myConsole.getPrinter().updateOnTestSelected(myResultsViewer.getTestsRootNode());
+
+    myEventsProcessor.onStartTesting();
+    myEventsProcessor.onUncapturedOutput("root output 1\n", ProcessOutputTypes.STDOUT);
+    myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent("suite", null));
+    SMTestProxy suite = myEventsProcessor.getCurrentSuite();
+    myEventsProcessor.onUncapturedOutput("suite output\n", ProcessOutputTypes.STDOUT);
+    myEventsProcessor.onTestStarted(new TestStartedEvent("my test", null));
+    myEventsProcessor.onUncapturedOutput("test output\n", ProcessOutputTypes.STDOUT);
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("my test", null));
+    myEventsProcessor.onSuiteFinished(new TestSuiteFinishedEvent("suite"));
+    myEventsProcessor.onUncapturedOutput("root output 2\n", ProcessOutputTypes.STDOUT);
+    myEventsProcessor.onFinishTesting();
+
+    assertAllOutputs(myMockResettablePrinter, "root output 1\n" +
+                                              "root output 2\n", "", "");
+
+    myMockResettablePrinter.resetIfNecessary();
+    myConsole.getPrinter().updateOnTestSelected(suite);
+    assertAllOutputs(myMockResettablePrinter, "suite output\n" +
+                                              "test output\n", "", "");
+
+    myMockResettablePrinter.resetIfNecessary();
+    myConsole.getPrinter().updateOnTestSelected(myResultsViewer.getTestsRootNode());
+    assertAllOutputs(myMockResettablePrinter, "root output 1\n" +
+                                              "root output 2\n", "", "");
+
+    myConsole.getProperties().setShouldPrintOnlyOwnContentForRoot(false);
+
+    myMockResettablePrinter.resetIfNecessary();
+    myConsole.getPrinter().updateOnTestSelected(suite);
+    assertAllOutputs(myMockResettablePrinter, "suite output\n" +
+                                              "test output\n", "", "");
+
+    myMockResettablePrinter.resetIfNecessary();
+    myConsole.getPrinter().updateOnTestSelected(myResultsViewer.getTestsRootNode());
+    assertAllOutputs(myMockResettablePrinter, "root output 1\n" +
+                                              "suite output\n" +
+                                              "test output\n" +
+                                              "root output 2\n", "", "");
+  }
+
   public void testEnsureOrderedClearFlush() {
     StringBuffer buf = new StringBuffer();
     String expected = "";

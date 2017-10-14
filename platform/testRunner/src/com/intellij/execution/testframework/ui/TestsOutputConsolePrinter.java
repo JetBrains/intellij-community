@@ -21,6 +21,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class TestsOutputConsolePrinter implements Printer, Disposable {
   private final ConsoleView myConsole;
@@ -100,7 +101,12 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
     final Runnable scrollRunnable = () -> scrollToBeginning();
     final AbstractTestProxy currentProxyOrRoot = getCurrentProxyOrRoot();
     CompositePrintable.invokeInAlarm(clearRunnable);
-    currentProxyOrRoot.printOn(this);
+    if (isRoot(currentProxyOrRoot) && myProperties.shouldPrintOnlyOwnContentForRoot()) {
+      currentProxyOrRoot.printOwnPrintablesOn(this, false);
+    }
+    else {
+      currentProxyOrRoot.printOn(this);
+    }
     currentProxyOrRoot.printFromFrameworkOutputFile(this);
     CompositePrintable.invokeInAlarm(scrollRunnable);
   }
@@ -114,8 +120,11 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   }
 
   private boolean isRoot() {
-    final AbstractTestProxy currentTest = myCurrentTest;
-    return currentTest != null && currentTest.getParent() == myUnboundOutputRoot;
+    return isRoot(myCurrentTest);
+  }
+
+  private boolean isRoot(@Nullable AbstractTestProxy proxy) {
+    return proxy != null && proxy.getParent() == myUnboundOutputRoot;
   }
 
   public void printHyperlink(final String text, final HyperlinkInfo info) {
@@ -143,5 +152,9 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
         myConsole.scrollTo(myMarkOffset);
       }
     });
+  }
+
+  public boolean shouldPrintChildrenContent(@NotNull AbstractTestProxy parent) {
+    return !isRoot(parent) || !myProperties.shouldPrintOnlyOwnContentForRoot();
   }
 }

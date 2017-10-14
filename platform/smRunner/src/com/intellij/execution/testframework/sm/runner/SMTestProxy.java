@@ -24,6 +24,7 @@ import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
 import com.intellij.execution.testframework.sm.runner.states.*;
 import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
+import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -217,12 +218,20 @@ public class SMTestProxy extends AbstractTestProxy {
     //
     //TODO reset children cache
     child.setParent(this);
-    // if parent is being printed then all childs output
-    // should be also send to the same printer
-    child.setPrinter(myPrinter);
+
+    if (shouldPrintChildrenContent(myPrinter)) {
+      child.setPrinter(myPrinter);
+    }
     if (myPreferredPrinter != null && child.myPreferredPrinter == null) {
       child.setPreferredPrinter(myPreferredPrinter);
     }
+  }
+
+  private boolean shouldPrintChildrenContent(@Nullable Printer printer) {
+    if (printer instanceof TestsOutputConsolePrinter) {
+      return ((TestsOutputConsolePrinter)printer).shouldPrintChildrenContent(this);
+    }
+    return true;
   }
 
   @Nullable
