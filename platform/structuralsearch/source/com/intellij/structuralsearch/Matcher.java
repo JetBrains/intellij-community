@@ -172,7 +172,7 @@ public class Matcher {
     }
   }
 
-  public boolean matchNode(PsiElement element) {
+  public boolean matchNode(@NotNull PsiElement element) {
     final CollectingMatchResultSink sink = new CollectingMatchResultSink();
     final MatchOptions options = matchContext.getOptions();
     final CompiledPattern compiledPattern = prepareMatching(sink, options);

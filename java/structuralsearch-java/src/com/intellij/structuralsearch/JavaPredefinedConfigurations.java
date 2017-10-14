@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 
 import static com.intellij.structuralsearch.PredefinedConfigurationUtil.createSearchTemplateInfo;
@@ -36,6 +37,7 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.sample.method.invokation.with.constant.argument"),"Integer.parseInt('_a:[script( \"com.intellij.psi.util.PsiUtil.isConstantExpression(__context__)\" )])",EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.method.references"), "'_Qualifier::'Method", EXPRESSION_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.string.concatenations"), "[exprtype( java\\.lang\\.String )]'_a + '_b+", EXPRESSION_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.deprecated.method.calls"), "'_Instance?.'MethodCall:[ref( deprecated methods )]('_Parameter*)", EXPRESSION_TYPE),
 
       // Operators
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.block.dcls"),"{\n  '_Type 'Var+ = '_Init?;\n  '_BlockStatements*;\n}",OPERATOR_TYPE),
@@ -50,6 +52,11 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.methods.of.the.class"),
         "'_ReturnType '_Method('_ParameterType '_Parameter*);",
+        CLASS_TYPE
+      ),
+      createSearchTemplateInfo(
+        SSRBundle.message("predefined.configuration.deprecated.methods"),
+        "@Deprecated\n'_ReturnType '_Method('_ParameterType '_Parameter*);",
         CLASS_TYPE
       ),
       createSearchTemplateInfo(
@@ -307,6 +314,8 @@ class JavaPredefinedConfigurations {
       //createSearchTemplateInfo("fields selected","'_?.'_:[ref('Field)] ", INTERESTING_TYPE),
       //createSearchTemplateInfo("symbols used","'_:[ref('Symbol)] ", INTERESTING_TYPE),
       //createSearchTemplateInfo("types used","'_:[ref('Type)] '_;", INTERESTING_TYPE),
+
+      createSearchTemplateInfo("xml attribute references java class", "<'_tag 'attribute=\"'_value:[ref( classes, interfaces & enums )]\"/>", SSRBundle.message("xml_html.category"), StdFileTypes.XML),
     };
   }
 }
