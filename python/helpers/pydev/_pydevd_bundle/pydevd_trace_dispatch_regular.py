@@ -17,12 +17,6 @@ from _pydevd_bundle.pydevd_frame import PyDBFrame
 
 # ENDIF
 
-try:
-    from _pydevd_bundle.pydevd_signature import send_signature_call_trace
-except ImportError:
-    def send_signature_call_trace(*args, **kwargs):
-        pass
-
 threadingCurrentThread = threading.currentThread
 get_file_type = DONT_TRACE.get
 

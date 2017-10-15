@@ -1,7 +1,6 @@
 import os
 import platform
 import unittest
-import pytest
 import sys
 
 import time
@@ -198,7 +197,7 @@ class WriterThreadAddTerminationExceptionBreak(debugger_unittest.AbstractWriterT
         self.finished_ok = True
 
 
-@pytest.mark.skipif(not IS_PY36 or not IS_CPYTHON or not TEST_CYTHON, reason='Test requires Python 3.6')
+@unittest.skipIf(not IS_PY36 or not IS_CPYTHON or not TEST_CYTHON, reason='Test requires Python 3.6')
 class TestFrameEval(unittest.TestCase, debugger_unittest.DebuggerRunner):
     def get_command_line(self):
         return [sys.executable, '-u']
