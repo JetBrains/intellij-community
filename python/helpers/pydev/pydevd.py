@@ -1407,7 +1407,7 @@ class DispatchReader(ReaderThread):
 
 DISPATCH_APPROACH_NEW_CONNECTION = 1 # Used by PyDev
 DISPATCH_APPROACH_EXISTING_CONNECTION = 2 # Used by PyCharm
-DISPATCH_APPROACH = DISPATCH_APPROACH_EXISTING_CONNECTION if IS_PYCHARM else DISPATCH_APPROACH_NEW_CONNECTION
+DISPATCH_APPROACH = DISPATCH_APPROACH_NEW_CONNECTION
 
 def dispatch():
     setup = SetupHolder.setup
@@ -1543,7 +1543,7 @@ def main():
 
         elif setup['multiproc']: # PyCharm
             pydev_log.debug("Started in multiproc mode\n")
-            # Note: we're not inside method, so, no need for 'global'
+            global DISPATCH_APPROACH
             DISPATCH_APPROACH = DISPATCH_APPROACH_EXISTING_CONNECTION
 
             dispatcher = Dispatcher()
