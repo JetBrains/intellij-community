@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
+import com.intellij.codeInsight.completion.AddSpaceInsertHandler;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -13,14 +14,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.DomTarget;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.util.ExtensionCandidate;
@@ -34,7 +33,8 @@ import java.util.Optional;
 public class OrderReferencesContributor extends PsiReferenceContributor {
   private static final LookupElement[] COMPLETION_VARIANTS = new LookupElement[] {
     LookupElementBuilder.create(LoadingOrder.FIRST_STR), LookupElementBuilder.create(LoadingOrder.LAST_STR),
-    LookupElementBuilder.create(LoadingOrder.BEFORE_STR), LookupElementBuilder.create(LoadingOrder.AFTER_STR)
+    LookupElementBuilder.create(LoadingOrder.BEFORE_STR.trim()).withInsertHandler(new AddSpaceInsertHandler(true)),
+    LookupElementBuilder.create(LoadingOrder.AFTER_STR.trim()).withInsertHandler(new AddSpaceInsertHandler(true))
   };
 
   @Override
@@ -57,17 +57,6 @@ public class OrderReferencesContributor extends PsiReferenceContributor {
             return PsiReference.EMPTY_ARRAY;
           }
 
-          try {
-            LoadingOrder.readOrder(orderValue);
-          } catch (AssertionError ignore) {
-            return new PsiReference[]{new InvalidOrderPsiReference(element)};
-          }
-
-          ExtensionPoint extensionPoint = extension.getExtensionPoint();
-          if (extensionPoint == null) {
-            return PsiReference.EMPTY_ARRAY;
-          }
-
           String[] parts = orderValue.split(LoadingOrder.ORDER_RULE_SEPARATOR);
           if (parts.length == 1 && !orderValue.trim().contains(" ") && !orderValue.trim().contains(":")) {
             // no referenced IDs, just provide completion for keywords
@@ -86,6 +75,10 @@ public class OrderReferencesContributor extends PsiReferenceContributor {
             }};
           }
 
+          ExtensionPoint extensionPoint = extension.getExtensionPoint();
+          if (extensionPoint == null) {
+            return PsiReference.EMPTY_ARRAY;
+          }
           ExtensionLocator locator = ExtensionLocator.byExtensionPoint(extensionPoint);
           List<ExtensionCandidate> candidates = locator.findCandidates();
           DomManager domManager = DomManager.getDomManager(element.getProject());
@@ -232,35 +225,6 @@ public class OrderReferencesContributor extends PsiReferenceContributor {
     @Override
     public boolean isSoft() {
       return true;
-    }
-  }
-
-  private static class InvalidOrderPsiReference extends PsiReferenceBase<PsiElement> implements EmptyResolveMessageProvider {
-    public InvalidOrderPsiReference(@NotNull PsiElement element) {
-      super(element);
-    }
-
-    @Nullable
-    @Override
-    public PsiElement resolve() {
-      return null;
-    }
-
-    @NotNull
-    @Override
-    public Object[] getVariants() {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    }
-
-    @Override
-    public boolean isSoft() {
-      return true;
-    }
-
-    @NotNull
-    @Override
-    public String getUnresolvedMessagePattern() {
-      return DevKitBundle.message("inspections.plugin.xml.invalid.order.attribute");
     }
   }
 }
