@@ -786,7 +786,7 @@ public class PluginManagerCore {
         if (optionalDescriptor == null) {
           optionalDescriptor = loadDescriptor(file, optPathName, context);
         }
-        if (optionalDescriptor == null && directory) {
+        if (optionalDescriptor == null && (directory || resolveDescriptorsInResources())) {
           URL resource = PluginManagerCore.class.getClassLoader().getResource(META_INF + '/' + optPathName);
           if (resource != null) {
             optionalDescriptor = loadDescriptorFromResource(resource, optPathName);
@@ -797,6 +797,11 @@ public class PluginManagerCore {
     }
 
     return descriptor;
+  }
+
+  private static boolean resolveDescriptorsInResources() {
+    // if set, resolve optional descriptors in jars as they are in directories
+    return System.getProperty("resolve.descriptors.in.resources") != null;
   }
 
   /*
