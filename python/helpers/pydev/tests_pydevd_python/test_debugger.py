@@ -22,6 +22,12 @@ IS_CPYTHON = platform.python_implementation() == 'CPython'
 IS_IRONPYTHON = platform.python_implementation() == 'IronPython'
 IS_JYTHON = platform.python_implementation() == 'Jython'
 
+IS_NUMPY = True
+try:
+    import numpy
+except ImportError:
+    IS_NUMPY = False
+
 try:
     xrange
 except:
@@ -1293,12 +1299,10 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
     def test_case_6(self):
         self.check_case(WriterThreadCase6)
 
+    @unittest.skipIf(IS_IRONPYTHON, "Different behavior on IronPython")
     def test_case_7(self):
-        if IS_IRONPYTHON:
-            # This test checks that we start without variables and at each step a new var is created, but on ironpython,
-            # the variables exist all at once (with None values), so, we can't test it properly.
-            unittest.skip("Different behavior on IronPython")
-
+        # This test checks that we start without variables and at each step a new var is created, but on ironpython,
+        # the variables exist all at once (with None values), so, we can't test it properly.
         self.check_case(WriterThreadCase7)
 
     def test_case_8(self):
@@ -1326,12 +1330,8 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
     def test_case_15(self):
         self.check_case(WriterThreadCase15)
 
+    @unittest.skipIf(not IS_NUMPY, "numpy not available")
     def test_case_16(self):
-        try:
-            import numpy
-        except ImportError:
-            unittest.skip('numpy not available')
-
         self.check_case(WriterThreadCase16)
 
     def test_case_17(self):
@@ -1340,10 +1340,8 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
     def test_case_17a(self):
         self.check_case(WriterThreadCase17a)
 
+    @unittest.skipIf(IS_IRONPYTHON or IS_JYTHON, 'Unsupported assign to local')
     def test_case_18(self):
-        if IS_IRONPYTHON or IS_JYTHON:
-            unittest.skip('Unsupported assign to local')
-
         self.check_case(WriterThreadCase18)
 
     def test_case_19(self):
