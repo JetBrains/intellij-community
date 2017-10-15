@@ -12,8 +12,6 @@ import threading
 import time
 import unittest
 
-import pytest
-
 from tests_pydevd_python import debugger_unittest
 from tests_pydevd_python.debugger_unittest import get_free_port
 
@@ -1274,18 +1272,18 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
 
         raise RuntimeError('Unable to provide command line')
 
-    @pytest.mark.skipif(IS_IRONPYTHON, reason='Test needs gc.get_referrers to really check anything.')
+    @unittest.skipIf(IS_IRONPYTHON, reason='Test needs gc.get_referrers to really check anything.')
     def test_case_1(self):
         self.check_case(WriterThreadCase1)
 
     def test_case_2(self):
         self.check_case(WriterThreadCase2)
 
-    @pytest.mark.skipif(IS_IRONPYTHON, reason='This test fails once in a while due to timing issues on IronPython, so, skipping it.')
+    @unittest.skipIf(IS_IRONPYTHON, reason='This test fails once in a while due to timing issues on IronPython, so, skipping it.')
     def test_case_3(self):
         self.check_case(WriterThreadCase3)
 
-    @pytest.mark.skipif(IS_JYTHON, reason='This test is flaky on Jython, so, skipping it.')
+    @unittest.skipIf(IS_JYTHON, reason='This test is flaky on Jython, so, skipping it.')
     def test_case_4(self):
         self.check_case(WriterThreadCase4)
 
@@ -1299,7 +1297,7 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
         if IS_IRONPYTHON:
             # This test checks that we start without variables and at each step a new var is created, but on ironpython,
             # the variables exist all at once (with None values), so, we can't test it properly.
-            pytest.skip("Different behavior on IronPython")
+            unittest.skip("Different behavior on IronPython")
 
         self.check_case(WriterThreadCase7)
 
@@ -1318,7 +1316,7 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
     def test_case_12(self):
         self.check_case(WriterThreadCase12)
 
-    @pytest.mark.skipif(IS_IRONPYTHON, reason='Failing on IronPython (needs to be investigated).')
+    @unittest.skipIf(IS_IRONPYTHON, reason='Failing on IronPython (needs to be investigated).')
     def test_case_13(self):
         self.check_case(WriterThreadCase13)
 
@@ -1332,7 +1330,7 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
         try:
             import numpy
         except ImportError:
-            pytest.skip('numpy not available')
+            unittest.skip('numpy not available')
 
         self.check_case(WriterThreadCase16)
 
@@ -1344,7 +1342,7 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
 
     def test_case_18(self):
         if IS_IRONPYTHON or IS_JYTHON:
-            pytest.skip('Unsupported assign to local')
+            unittest.skip('Unsupported assign to local')
 
         self.check_case(WriterThreadCase18)
 
@@ -1402,20 +1400,19 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
     def test_module_entry_point(self):
         self.check_case(WriterThreadCaseModuleWithEntryPoint)
 
-    @pytest.mark.skipif(not IS_CPYTHON or IS_PY36, reason='Only for Python (failing on 3.6 -- needs to be investigated).')
+    @unittest.skipIf(not IS_CPYTHON or IS_PY36, reason='Only for Python (failing on 3.6 -- needs to be investigated).')
     def test_case_set_next_statement(self):
         self.check_case(WriterThreadCaseSetNextStatement)
 
-
-    @pytest.mark.skipif(IS_IRONPYTHON, reason='Failing on IronPython (needs to be investigated).')
+    @unittest.skipIf(IS_IRONPYTHON, reason='Failing on IronPython (needs to be investigated).')
     def test_case_type_ext(self):
         self.check_case(WriterThreadCaseTypeExt)
 
-    @pytest.mark.skipif(IS_IRONPYTHON, reason='Failing on IronPython (needs to be investigated).')
+    @unittest.skipIf(IS_IRONPYTHON, reason='Failing on IronPython (needs to be investigated).')
     def test_case_event_ext(self):
         self.check_case(WriterThreadCaseEventExt)
 
-@pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
+@unittest.skipIf(not IS_CPYTHON, reason='CPython only test.')
 class TestPythonRemoteDebugger(unittest.TestCase, debugger_unittest.DebuggerRunner):
 
     def get_command_line(self):
