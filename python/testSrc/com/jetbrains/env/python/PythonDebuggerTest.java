@@ -82,7 +82,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   @Test
   @Staging
   public void testPydevTests_Debugger() {
-    unittests("tests_pydevd_python/test_debugger.py", null);
+    unittests("tests_pydevd_python/test_debugger.py", null, true);
   }
 
   @Test
@@ -1395,7 +1395,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         setScriptName("test1");
         setWaitForTermination(false);
 
-        myRunConfiguration.setInterpreterOptions("-m");
+        myRunConfiguration.setModuleMode(true);
       }
     });
   }
