@@ -768,7 +768,7 @@ public class PluginManagerCore {
       resolveOptionalDescriptors(fileName, descriptor, optionalDescriptorName -> {
         IdeaPluginDescriptorImpl optionalDescriptor = loadDescriptor(file, optionalDescriptorName);
         // Android Studio: directory is hit when running in tests or in the ide. We also need this behaviour with jars.
-        if (optionalDescriptor == null && (directory || isUnitTestMode())) {
+        if (optionalDescriptor == null && (directory || resolveDescriptorsInResources())) {
           URL resource = PluginManagerCore.class.getClassLoader().getResource(META_INF + '/' + optionalDescriptorName);
           if (resource != null) {
             optionalDescriptor = loadDescriptorFromResource(resource);
@@ -779,6 +779,12 @@ public class PluginManagerCore {
     }
 
     return descriptor;
+  }
+
+  // Android Studio: resolve optional descriptors in the same way it's done when they are in directories.
+  // We build each directory as a jar, so a basic directory check is not enough
+  private static boolean resolveDescriptorsInResources() {
+    return System.getProperty("resolve.descriptors.in.resources") != null;
   }
 
   // used in upsource
