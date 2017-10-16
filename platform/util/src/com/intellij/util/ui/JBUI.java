@@ -40,7 +40,6 @@ import java.util.EnumMap;
 import java.util.List;
 
 import static com.intellij.util.ui.JBUI.ScaleType.*;
-import static java.lang.Math.round;
 
 /**
  * @author Konstantin Bulenkov
@@ -422,7 +421,7 @@ public class JBUI {
    * @return 'i' scaled by the user scale factor
    */
   public static int scale(int i) {
-    return round(userScaleFactor * i);
+    return Math.round(userScaleFactor * i);
   }
 
   public static int scaleFontSize(float fontSize) {
@@ -432,7 +431,6 @@ public class JBUI {
   }
 
   /**
-   * @param fontSize
    * @return the scale factor of {@code fontSize} relative to the standard font size (currently 12pt)
    */
   public static float getFontScale(float fontSize) {
@@ -494,15 +492,18 @@ public class JBUI {
     return scale(EmptyIcon.create(size));
   }
 
-  public static <T extends JBIcon> T scale(T icon) {
+  @NotNull
+  public static <T extends JBIcon> T scale(@NotNull T icon) {
     return (T)icon.withIconPreScaled(false);
   }
 
+  @NotNull
   public static JBDimension emptySize() {
     return new JBDimension(0, 0);
   }
 
-  public static JBInsets insets(Insets insets) {
+  @NotNull
+  public static JBInsets insets(@NotNull Insets insets) {
     return JBInsets.create(insets);
   }
 
@@ -554,22 +555,27 @@ public class JBUI {
   }
 
   public static class Fonts {
+    @NotNull
     public static JBFont label() {
       return JBFont.create(UIManager.getFont("Label.font"), false);
     }
 
+    @NotNull
     public static JBFont label(float size) {
       return label().deriveFont(scale(size));
     }
 
+    @NotNull
     public static JBFont smallFont() {
       return label().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.SMALL));
     }
 
+    @NotNull
     public static JBFont miniFont() {
       return label().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.MINI));
     }
 
+    @NotNull
     public static JBFont create(String fontFamily, int size) {
       return JBFont.create(new Font(fontFamily, Font.PLAIN, size));
     }
@@ -646,7 +652,7 @@ public class JBUI {
    * in which its initial size is either pre-scaled (according to {@link #currentScale()})
    * or not (given in a standard resolution, e.g. 16x16 for an icon).
    */
-  public static abstract class Scaler {
+  public abstract static class Scaler {
     protected double initialScale = currentScale();
 
     private double alignedScale() {
@@ -853,7 +859,8 @@ public class JBUI {
   public static class ScaleContext extends BaseScaleContext {
     protected Scale sysScale = SYS_SCALE.of(sysScale());
 
-    private @Nullable WeakReference<Component> compRef;
+    @Nullable
+    private WeakReference<Component> compRef;
 
     private ScaleContext() {
       update(pixScale, derivePixScale());
@@ -1030,19 +1037,16 @@ public class JBUI {
   }
 
   public static class ScaleContextSupport<T extends BaseScaleContext> implements ScaleContextAware<T> {
+    @NotNull
     private final T myScaleContext;
 
-    private ScaleContextSupport() {
-      myScaleContext = null;
-      assert false;
-    }
-
-    public ScaleContextSupport(T ctx) {
+    public ScaleContextSupport(@NotNull T ctx) {
       myScaleContext = ctx;
     }
 
+    @NotNull
     @Override
-    public @NotNull T getScaleContext() {
+    public T getScaleContext() {
       return myScaleContext;
     }
 
@@ -1096,6 +1100,7 @@ public class JBUI {
       myScaler.setPreScaled(preScaled);
     }
 
+    @NotNull
     public JBIcon withIconPreScaled(boolean preScaled) {
       setIconPreScaled(preScaled);
       return this;
@@ -1180,7 +1185,7 @@ public class JBUI {
    * @author Aleksey Pivovarov
    */
   public abstract static class CachingScalableJBIcon<T extends CachingScalableJBIcon> extends ScalableJBIcon {
-    private CachingScalableJBIcon myScaledIconCache = null;
+    private CachingScalableJBIcon myScaledIconCache;
 
     protected CachingScalableJBIcon() {}
 

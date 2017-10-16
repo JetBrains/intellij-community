@@ -15,7 +15,6 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Iconable;
@@ -46,7 +45,6 @@ import java.util.*;
 public class DomFileDescription<T> {
   public static final ExtensionPointName<DomFileDescription> EP_NAME = ExtensionPointName.create("com.intellij.dom.fileDescription");
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.DomFileDescription");
   private final Map<Class<? extends ScopeProvider>, ScopeProvider> myScopeProviders = ConcurrentInstanceMap.create();
   protected final Class<T> myRootElementClass;
   protected final String myRootTagName;
