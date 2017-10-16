@@ -27,7 +27,7 @@ object JavaInlayHintsProvider {
                          (arguments.size == params.size - 1 || params.size == 2 && arguments.isEmpty())
         val paramToShow = (if (varargHint) ", " else "") + paramName
         val offset = if (i < arguments.size) inlayOffset(arguments[i]) 
-                        else if (varargHint && i <= arguments.size) callExpression.textRange.endOffset - 1
+                        else if (varargHint && i == arguments.size) callExpression.textRange.endOffset - 1
                         else (callExpression.argumentList?.textOffset?:return@mapIndexedNotNull null) + 1
         InlayInfo(paramToShow, offset, false, params.size == 1, varargHint)
       }.toSet()
