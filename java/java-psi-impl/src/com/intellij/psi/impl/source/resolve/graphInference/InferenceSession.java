@@ -84,7 +84,6 @@ public class InferenceSession {
   private List<String> myErrorMessages;
   
   private boolean myErased;
-  private boolean myCheckApplicabilityPhase = true;
 
   public final InferenceIncorporationPhase myIncorporationPhase = new InferenceIncorporationPhase(this);
 
@@ -376,7 +375,6 @@ public class InferenceSession {
       return;
     }
 
-    myCheckApplicabilityPhase = false;
     if (properties != null && !properties.isApplicabilityCheck()) {
       String expectedActualErrorMessage = null;
       final PsiMethod method = properties.getMethod();
@@ -969,25 +967,21 @@ public class InferenceSession {
                                             final Function<PsiClassType, InferenceVariable> fun) {
     if (type == null) return true;
     final Boolean isProper = type.accept(new PsiTypeVisitor<Boolean>() {
-      @Nullable
       @Override
       public Boolean visitType(PsiType type) {
         return true;
       }
 
-      @Nullable
       @Override
       public Boolean visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
         return true;
       }
 
-      @Nullable
       @Override
       public Boolean visitArrayType(PsiArrayType arrayType) {
         return arrayType.getComponentType().accept(this);
       }
 
-      @Nullable
       @Override
       public Boolean visitWildcardType(PsiWildcardType wildcardType) {
         final PsiType bound = wildcardType.getBound();
@@ -995,7 +989,6 @@ public class InferenceSession {
         return bound.accept(this);
       }
 
-      @Nullable
       @Override
       public Boolean visitClassType(PsiClassType classType) {
         final InferenceVariable inferenceVariable = fun.fun(classType);
@@ -1627,9 +1620,10 @@ public class InferenceSession {
       // the type to search is the result of capture conversion (5.1.10) applied to T;
       // otherwise, the type to search is the same as the type of the first search. Again, the type arguments, if any, are given by the method reference.
       if (PsiUtil.isRawSubstitutor(containingClass, psiSubstitutor)) {
-        PsiType normalizedPType = PsiUtil.captureToplevelWildcards(pType, myContext);
-        final PsiSubstitutor receiverSubstitutor = PsiMethodReferenceCompatibilityConstraint
-          .getParameterizedTypeSubstitutor(containingClass, normalizedPType);
+        PsiClassType subclassType = StrictSubtypingConstraint.getSubclassType(containingClass, pType, true);
+        final PsiSubstitutor receiverSubstitutor = subclassType != null
+                                                   ? TypeConversionUtil.getSuperClassSubstitutor(containingClass, (PsiClassType)PsiUtil.captureToplevelWildcards(subclassType, myContext))
+                                                   : null;
         if (receiverSubstitutor != null) {
           if (!method.hasTypeParameters()) {
             if (signature.getParameterTypes().length == 1 || PsiUtil.isRawSubstitutor(containingClass, receiverSubstitutor)) {
@@ -1674,12 +1668,6 @@ public class InferenceSession {
     }
 
     return null;
-  }
-
-  public void setErasedDuringApplicabilityCheck() {
-    if (myCheckApplicabilityPhase) {
-      myErased = true;
-    }
   }
 
   public void setErased() {

@@ -51,7 +51,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
           session.registerIncompatibleErrorMessage((type != null ? type.getPresentableText() : myExpression.getText()) + " is not compatible with " + session.getPresentableText(myT));
         }
         else if (TypeCompatibilityConstraint.isUncheckedConversion(myT, exprType) && !JavaGenericsUtil.isReifiableType(myT)) {
-          session.setErasedDuringApplicabilityCheck();
+          session.setErased();
         }
         return assignmentCompatible;
       }

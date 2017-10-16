@@ -171,6 +171,8 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   //public void _testResolutionOrderForVariableCycles() { doTest(); }
   public void testPostponeUnresolvedVariables() { doTest(); }
   public void testErasureOfReturnTypeIffUncheckedConversionWasNecessaryDuringApplicabilityCheckOnly() { doTest(); }
+  public void testErasureOfReturnTypeIffUncheckedConversionWasNecessaryDuringApplicabilityCheckOnly1() { doTest(); }
+  public void testErasureOfReturnTypeIffUncheckedConversionWasNecessaryDuringApplicabilityCheckOnly2() { doTest(); }
   public void testTwoDifferentParameterizationCheckWithInterfaceTypeArguments() { doTest(); }
   public void testNonGenericInnerClassOfGenericsOuterInReturnType() { doTest(); }
   public void testNonGenericInnerClassOfGenericsOuterWithWildcardsInReturnType() { doTest(); }

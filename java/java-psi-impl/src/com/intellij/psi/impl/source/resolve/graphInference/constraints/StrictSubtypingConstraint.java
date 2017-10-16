@@ -117,39 +117,11 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
           return false;
         }
 
-        PsiClassType sType = null;
-        if (myS instanceof PsiIntersectionType) {
-          for (PsiType conjunct : ((PsiIntersectionType)myS).getConjuncts()) {
-            if (conjunct instanceof PsiClassType) {
-              final PsiClassType.ClassResolveResult conjunctResult = ((PsiClassType)conjunct).resolveGenerics();
-              if (InheritanceUtil.isInheritorOrSelf(conjunctResult.getElement(), CClass, true)) {
-                sType = (PsiClassType)conjunct;
-                break;
-              }
-            }
-          }
-        }
-        else if (myS instanceof PsiClassType) {
-          sType = (PsiClassType)myS;
-        }
-        else if (myS instanceof PsiArrayType) {
+        if (myS instanceof PsiArrayType) {
           return myT.isAssignableFrom(myS);
         }
-        else if (myS instanceof PsiCapturedWildcardType) {
-          final PsiType upperBound = ((PsiCapturedWildcardType)myS).getUpperBound(myCapture);
-          if (upperBound instanceof PsiClassType) {
-            sType = (PsiClassType)upperBound;
-          }
-          else if (upperBound instanceof PsiIntersectionType) {
-            for (PsiType type : ((PsiIntersectionType)upperBound).getConjuncts()) {
-              PsiClass sCandidate = PsiUtil.resolveClassInClassTypeOnly(type);
-              if (sCandidate != null && InheritanceUtil.isInheritorOrSelf(sCandidate, CClass, true)) {
-                sType = (PsiClassType)type;
-                break;
-              }
-            }
-          }
-        }
+
+        PsiClassType sType = getSubclassType(CClass, myS, myCapture);
 
         if (sType == null) return false;
         final PsiClassType.ClassResolveResult SResult = sType.resolveGenerics();
@@ -198,6 +170,32 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
     }
 
     return true;
+  }
+
+  public static PsiClassType getSubclassType(PsiClass containingClass, PsiType sType, boolean capture) {
+    if (sType instanceof PsiIntersectionType) {
+      for (PsiType conjunct : ((PsiIntersectionType)sType).getConjuncts()) {
+        if (conjunct instanceof PsiClassType) {
+          final PsiClassType.ClassResolveResult conjunctResult = ((PsiClassType)conjunct).resolveGenerics();
+          if (InheritanceUtil.isInheritorOrSelf(conjunctResult.getElement(), containingClass, true)) {
+            return  (PsiClassType)conjunct;
+          }
+        }
+      }
+    }
+    else if (sType instanceof PsiClassType) {
+      return  (PsiClassType)sType;
+    }
+    else if (sType instanceof PsiCapturedWildcardType) {
+      final PsiType upperBound = ((PsiCapturedWildcardType)sType).getUpperBound(capture);
+      if (upperBound instanceof PsiClassType) {
+        return  (PsiClassType)upperBound;
+      }
+      else if (upperBound instanceof PsiIntersectionType) {
+        return getSubclassType(containingClass, upperBound, capture);
+      }
+    }
+    return null;
   }
 
   @Override
