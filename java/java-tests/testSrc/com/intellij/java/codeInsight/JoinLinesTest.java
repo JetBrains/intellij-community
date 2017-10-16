@@ -231,6 +231,12 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
 
   public void testMultipleBlockComments() { doTest(); }
 
+  public void testPreserveSpaceIfOnNewLineOptionEnabled() {
+    CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    settings.CATCH_ON_NEW_LINE = true;
+    doTest();
+  }
+
   private void doTest() {
     doTest(".java");
   }
