@@ -18,6 +18,7 @@ package git4idea.commands;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -208,13 +209,13 @@ public class GitSimpleHandler extends GitTextHandler {
     if (isRemote()) {
       throw new IllegalStateException("Commands that require remote access could not be run using this method");
     }
-    final VcsException[] ex = new VcsException[1];
-    final String[] result = new String[1];
+    Ref<VcsException> exRef = Ref.create();
+    Ref<String> resultRef = Ref.create();
     addListener(new GitHandlerListener() {
       public void processTerminated(final int exitCode) {
         try {
           if (exitCode == 0 || isIgnoredErrorCode(exitCode)) {
-            result[0] = getStdout();
+            resultRef.set(getStdout());
           }
           else {
             String msg = getStderr();
@@ -224,25 +225,26 @@ public class GitSimpleHandler extends GitTextHandler {
             if (msg.length() == 0) {
               msg = GitBundle.message("git.error.exit", exitCode);
             }
-            ex[0] = new VcsException(msg);
+            exRef.set(new VcsException(msg));
           }
         }
         catch (Throwable t) {
-          ex[0] = new VcsException(t.toString(), t);
+          exRef.set(new VcsException(t.toString(), t));
         }
       }
 
       public void startFailed(final Throwable exception) {
-        ex[0] = new VcsException("Process failed to start (" + myCommandLine.getCommandLineString() + "): " + exception.toString(), exception);
+        exRef.set(
+          new VcsException("Process failed to start (" + myCommandLine.getCommandLineString() + "): " + exception.toString(), exception));
       }
     });
     runInCurrentThread(null);
-    if (ex[0] != null) {
-      throw new VcsException(ex[0].getMessage() + " " + DURING_EXECUTING_ERROR_MESSAGE + " " + printableCommandLine(), ex[0]);
+    if (!exRef.isNull()) {
+      throw new VcsException(exRef.get().getMessage() + " " + DURING_EXECUTING_ERROR_MESSAGE + " " + printableCommandLine(), exRef.get());
     }
-    if (result[0] == null) {
+    if (resultRef.isNull()) {
       throw new VcsException("The git command returned null: " + printableCommandLine());
     }
-    return result[0];
+    return resultRef.get();
   }
 }
