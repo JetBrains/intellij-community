@@ -137,13 +137,11 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
   private void checkTargetComboConsistency(boolean mode) {
     String item = myTargetComboBox.getText();
-    if (item == null) {
-      throw new IllegalArgumentException("item is null");
+    assert item != null;
+    //noinspection StringToUpperCaseOrToLowerCaseWithoutLocale
+    if (mode && !item.toLowerCase().contains("module")) {
+      throw new IllegalArgumentException("This option should refer to a module");
     }
-    else //noinspection StringToUpperCaseOrToLowerCaseWithoutLocale
-      if (mode && !item.toLowerCase().contains("module")) {
-        throw new IllegalArgumentException("This option should refer to a module");
-      }
   }
 
   private void updateShowCommandLineEnabled() {
