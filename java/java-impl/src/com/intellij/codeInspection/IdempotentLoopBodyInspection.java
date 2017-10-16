@@ -24,7 +24,7 @@ public class IdempotentLoopBodyInspection extends AbstractBaseJavaLocalInspectio
         if (condition == null || SideEffectChecker.mayHaveSideEffects(condition)) return;
         PsiStatement body = loop.getBody();
         if (body == null) return;
-        if (mayHaveUndesiredSideEffects(loop, body)) return;
+        if (mayHaveUndesiredSideEffects(body)) return;
         final ControlFlow controlFlow;
         try {
           controlFlow =
@@ -44,7 +44,7 @@ public class IdempotentLoopBodyInspection extends AbstractBaseJavaLocalInspectio
         PsiStatement body = loop.getBody();
         if (body == null) return;
         PsiStatement update = loop.getUpdate();
-        if (mayHaveUndesiredSideEffects(loop, body) || update != null && mayHaveUndesiredSideEffects(loop, update)) return;
+        if (mayHaveUndesiredSideEffects(body) || update != null && mayHaveUndesiredSideEffects(update)) return;
         ControlFlow controlFlow;
         try {
           controlFlow =
@@ -70,12 +70,17 @@ public class IdempotentLoopBodyInspection extends AbstractBaseJavaLocalInspectio
         }
       }
 
-      private boolean mayHaveUndesiredSideEffects(PsiLoopStatement loop, @NotNull PsiElement element) {
-        return SideEffectChecker.mayHaveSideEffects(element, e -> isAcceptableSideEffect(loop, e));
+      private boolean mayHaveUndesiredSideEffects(@NotNull PsiElement element) {
+        return SideEffectChecker.mayHaveSideEffects(element, this::isAcceptableSideEffect);
       }
 
-      private boolean isAcceptableSideEffect(PsiLoopStatement loop, PsiElement e) {
-        if (e instanceof PsiContinueStatement && ((PsiContinueStatement)e).findContinuedStatement() == loop) return true;
+      private boolean isAcceptableSideEffect(PsiElement e) {
+        if (e instanceof PsiContinueStatement ||
+            e instanceof PsiBreakStatement ||
+            e instanceof PsiReturnStatement ||
+            e instanceof PsiThrowStatement) {
+          return true;
+        }
         if (e instanceof PsiLocalVariable) return true;
         if (e instanceof PsiAssignmentExpression) {
           PsiAssignmentExpression assignment = (PsiAssignmentExpression)e;
