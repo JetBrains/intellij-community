@@ -1307,7 +1307,26 @@ public class ExtractMethodProcessor implements MatchProvider {
         methodCallExpression.getArgumentList().add(myElementFactory.createExpressionFromText(data.variable.getName(), methodCallExpression));
       }
     }
-    return match.replace(myExtractedMethod, methodCallExpression, myOutputVariable);
+    PsiElement replacedMatch = match.replace(myExtractedMethod, methodCallExpression, myOutputVariable);
+
+    addNotNullConditionalCheck(match, replacedMatch);
+    return replacedMatch;
+  }
+
+  private void addNotNullConditionalCheck(Match match, PsiElement replacedMatch) {
+    if (myNotNullConditionalCheck && myOutputVariable != null) {
+      ReturnValue returnValue = match.getOutputVariableValue(myOutputVariable);
+      if (returnValue instanceof VariableReturnValue) {
+        String varName = ((VariableReturnValue)returnValue).getVariable().getName();
+        LOG.assertTrue(varName != null, "returned variable name is null");
+        PsiStatement statement = PsiTreeUtil.getParentOfType(replacedMatch, PsiStatement.class, false);
+        if (statement != null) {
+          PsiStatement conditionalReturn =
+            myElementFactory.createStatementFromText("if (" + varName + " != null) return " + varName + ";", null);
+          statement.getParent().addAfter(conditionalReturn, statement);
+        }
+      }
+    }
   }
 
   @Nullable
