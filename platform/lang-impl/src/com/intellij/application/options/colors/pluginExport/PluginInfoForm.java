@@ -18,6 +18,7 @@ package com.intellij.application.options.colors.pluginExport;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -33,9 +34,6 @@ public class PluginInfoForm {
   private EditorTextField myDescriptionArea;
   private EditorTextField myChangeNotesArea;
   private JPanel myTopPanel;
-
-  public PluginInfoForm() {
-  }
 
   public JPanel getTopPanel() {
     return myTopPanel;
