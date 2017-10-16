@@ -545,6 +545,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       myWindowListener = new MyWindowListener();
       addWindowListener(myWindowListener);
+      UIUtil.setAutoRequestFocus(this, true);
     }
 
     @Override
@@ -851,7 +852,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
           if (toFocus != null) {
             if (isShowing() && isActive()) {
-              getFocusManager().requestFocus(toFocus, true);
+             // getFocusManager().requestFocus(toFocus, true);
               notifyFocused(wrapper);
             }
           } else {

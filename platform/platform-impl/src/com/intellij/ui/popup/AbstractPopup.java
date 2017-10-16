@@ -914,22 +914,25 @@ public class AbstractPopup implements JBPopup {
     }
 
     myPopup.setRequestFocus(myRequestFocus);
-    myPopup.show();
-
-    WindowAction.setEnabledFor(myPopup.getWindow(), myResizable);
 
     final Window window = getContentWindow(myContent);
-
-    myWindow = window;
-
-    myWindowListener = new MyWindowListener();
-    window.addWindowListener(myWindowListener);
 
     if (myFocusable) {
       window.setAutoRequestFocus(true);
       window.setFocusableWindowState(true);
       window.setFocusable(true);
     }
+
+    myPopup.show();
+
+    myPreferredFocusedComponent.requestFocusInWindow();
+
+    WindowAction.setEnabledFor(myPopup.getWindow(), myResizable);
+
+    myWindow = window;
+
+    myWindowListener = new MyWindowListener();
+    window.addWindowListener(myWindowListener);
 
     if (myWindow != null) {
       // dialogwrapper-based popups do this internally through peer,
@@ -1346,6 +1349,8 @@ public class AbstractPopup implements JBPopup {
         SwingUtilities.invokeLater(() -> {
           if (ModalityState.current().equals(modalityState)) {
             ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(finalRunnable);
+          } else {
+            System.err.println("Final runnable of popup is skipped");
           }
           // Otherwise the UI has changed unexpectedly and the action is likely not applicable.
           // And we don't want finalRunnable to perform potentially destructive actions
