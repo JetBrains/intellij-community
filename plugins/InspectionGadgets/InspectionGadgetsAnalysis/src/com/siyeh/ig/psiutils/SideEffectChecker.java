@@ -20,6 +20,7 @@ import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -60,39 +61,41 @@ public class SideEffectChecker {
   }
 
   public static boolean mayHaveSideEffects(@NotNull PsiExpression exp) {
-    final SideEffectsVisitor visitor = new SideEffectsVisitor(null);
+    final SideEffectsVisitor visitor = new SideEffectsVisitor(null, exp);
     exp.accept(visitor);
     return visitor.mayHaveSideEffects();
   }
 
   public static boolean mayHaveSideEffects(@NotNull PsiElement element, Predicate<PsiElement> shouldIgnoreElement) {
-    final SideEffectsVisitor visitor = new SideEffectsVisitor(null, shouldIgnoreElement);
+    final SideEffectsVisitor visitor = new SideEffectsVisitor(null, element, shouldIgnoreElement);
     element.accept(visitor);
     return visitor.mayHaveSideEffects();
   }
 
   public static boolean checkSideEffects(@NotNull PsiExpression element, @NotNull List<PsiElement> sideEffects) {
-    final SideEffectsVisitor visitor = new SideEffectsVisitor(sideEffects);
+    final SideEffectsVisitor visitor = new SideEffectsVisitor(sideEffects, element);
     element.accept(visitor);
     return visitor.mayHaveSideEffects();
   }
 
   public static List<PsiExpression> extractSideEffectExpressions(@NotNull PsiExpression element) {
     List<PsiElement> list = new ArrayList<>();
-    element.accept(new SideEffectsVisitor(list));
+    element.accept(new SideEffectsVisitor(list, element));
     return StreamEx.of(list).select(PsiExpression.class).toList();
   }
 
   private static class SideEffectsVisitor extends JavaRecursiveElementWalkingVisitor {
-    private @Nullable final List<PsiElement> mySideEffects;
+    private final @Nullable List<PsiElement> mySideEffects;
+    private final @NotNull PsiElement myStartElement;
+    private final @NotNull Predicate<PsiElement> myIgnorePredicate;
     boolean found;
-    final Predicate<PsiElement> myIgnorePredicate;
 
-    SideEffectsVisitor(@Nullable List<PsiElement> sideEffects) {
-      this(sideEffects, call -> false);
+    SideEffectsVisitor(@Nullable List<PsiElement> sideEffects, @NotNull PsiElement startElement) {
+      this(sideEffects, startElement, call -> false);
     }
 
-    SideEffectsVisitor(@Nullable List<PsiElement> sideEffects, Predicate<PsiElement> predicate) {
+    SideEffectsVisitor(@Nullable List<PsiElement> sideEffects, @NotNull PsiElement startElement, @NotNull Predicate<PsiElement> predicate) {
+      myStartElement = startElement;
       myIgnorePredicate = predicate;
       mySideEffects = sideEffects;
     }
@@ -154,6 +157,8 @@ public class SideEffectChecker {
 
     @Override
     public void visitBreakStatement(PsiBreakStatement statement) {
+      PsiStatement exitedStatement = statement.findExitedStatement();
+      if (exitedStatement != null && PsiTreeUtil.isAncestor(myStartElement, exitedStatement, true)) return;
       if (addSideEffect(statement)) return;
       super.visitBreakStatement(statement);
     }
@@ -165,6 +170,8 @@ public class SideEffectChecker {
 
     @Override
     public void visitContinueStatement(PsiContinueStatement statement) {
+      PsiStatement exitedStatement = statement.findContinuedStatement();
+      if (exitedStatement != null && PsiTreeUtil.isAncestor(myStartElement, exitedStatement, false)) return;
       if (addSideEffect(statement)) return;
       super.visitContinueStatement(statement);
     }
