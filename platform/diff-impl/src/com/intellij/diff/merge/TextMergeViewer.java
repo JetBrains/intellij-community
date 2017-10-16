@@ -256,6 +256,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       group.add(new ApplyNonConflictsAction(ThreeSide.BASE));
       group.add(new ApplyNonConflictsAction(ThreeSide.LEFT));
       group.add(new ApplyNonConflictsAction(ThreeSide.RIGHT));
+      group.add(new MagicResolvedConflictsAction());
 
       return group;
     }
@@ -829,14 +830,34 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     //
 
     private boolean hasNonConflictedChanges(@NotNull ThreeSide side) {
-      return ContainerUtil.exists(getAllChanges(), change -> canResolveChangeAutomatically(change, side));
+      return ContainerUtil.exists(getAllChanges(), change -> !change.isConflict() && canResolveChangeAutomatically(change, side));
     }
 
     private void applyNonConflictedChanges(@NotNull ThreeSide side) {
       executeMergeCommand("Apply Non Conflicted Changes", true, null, () -> {
         List<TextMergeChange> allChanges = ContainerUtil.newArrayList(getAllChanges());
         for (TextMergeChange change : allChanges) {
-          resolveChangeAutomatically(change, side);
+          if (!change.isConflict()) {
+            resolveChangeAutomatically(change, side);
+          }
+        }
+      });
+
+      TextMergeChange firstUnresolved = ContainerUtil.find(getAllChanges(), c -> !c.isResolved());
+      if (firstUnresolved != null) doScrollToChange(firstUnresolved, true);
+    }
+
+    private boolean hasResolvableConflictedChanges() {
+      return ContainerUtil.exists(getAllChanges(), change -> change.isConflict() && canResolveChangeAutomatically(change, ThreeSide.BASE));
+    }
+
+    private void applyResolvableConflictedChanges() {
+      executeMergeCommand("Resolve Simple Conflicted Changes", true, null, () -> {
+        List<TextMergeChange> allChanges = ContainerUtil.newArrayList(getAllChanges());
+        for (TextMergeChange change : allChanges) {
+          if (change.isConflict()) {
+            resolveChangeAutomatically(change, ThreeSide.BASE);
+          }
         }
       });
 
@@ -1173,6 +1194,22 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       @Override
       public void actionPerformed(AnActionEvent e) {
         applyNonConflictedChanges(mySide);
+      }
+    }
+
+    public class MagicResolvedConflictsAction extends DumbAwareAction {
+      public MagicResolvedConflictsAction() {
+        ActionUtil.copyFrom(this, "Diff.MagicResolveConflicts");
+      }
+
+      @Override
+      public void update(AnActionEvent e) {
+        e.getPresentation().setEnabled(hasResolvableConflictedChanges());
+      }
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        applyResolvableConflictedChanges();
       }
     }
 
