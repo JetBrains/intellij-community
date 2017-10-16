@@ -225,6 +225,23 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     myDialog.addKeyListener(listener);
   }
 
+  private void createDialog(@Nullable Window owner, boolean canBeParent, @NotNull DialogWrapper.IdeModalityType ideModalityType) {
+    if (isHeadless()) {
+      myDialog = new HeadlessDialog(myWrapper);
+    }
+    else {
+      myDialog = new MyDialog(owner, myWrapper, myProject, myWindowFocusedCallback, myTypeAheadDone, myTypeAheadCallback);
+
+      myDialog.setModalityType(ideModalityType.toAwtModality());
+
+      myCanBeParent = canBeParent;
+    }
+  }
+
+  private void createDialog(@Nullable Window owner, boolean canBeParent) {
+    createDialog(owner, canBeParent, DialogWrapper.IdeModalityType.IDE);
+  }
+
   @Override
   public void toFront() {
     myDialog.toFront();
@@ -545,6 +562,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       myWindowListener = new MyWindowListener();
       addWindowListener(myWindowListener);
+      UIUtil.setAutoRequestFocus(this, true);
     }
 
     @Override
@@ -851,7 +869,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
           if (toFocus != null) {
             if (isShowing() && isActive()) {
-              getFocusManager().requestFocus(toFocus, true);
+             // getFocusManager().requestFocus(toFocus, true);
               notifyFocused(wrapper);
             }
           } else {
