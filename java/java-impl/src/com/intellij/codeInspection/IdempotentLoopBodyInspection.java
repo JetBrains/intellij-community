@@ -71,22 +71,24 @@ public class IdempotentLoopBodyInspection extends AbstractBaseJavaLocalInspectio
       }
 
       private boolean mayHaveUndesiredSideEffects(PsiLoopStatement loop, @NotNull PsiElement element) {
-        return SideEffectChecker.mayHaveSideEffects(element, e -> {
-          if (e instanceof PsiContinueStatement && ((PsiContinueStatement)e).findContinuedStatement() == loop) return true;
-          if (e instanceof PsiLocalVariable) return true;
-          if (e instanceof PsiAssignmentExpression) {
-            PsiAssignmentExpression assignment = (PsiAssignmentExpression)e;
-            if (assignment.getOperationTokenType() == JavaTokenType.EQ) {
-              PsiReferenceExpression ref =
-                tryCast(PsiUtil.skipParenthesizedExprDown(assignment.getLExpression()), PsiReferenceExpression.class);
-              if (ref != null) {
-                PsiElement target = ref.resolve();
-                if (target instanceof PsiLocalVariable || target instanceof PsiParameter) return true;
-              }
+        return SideEffectChecker.mayHaveSideEffects(element, e -> isAcceptableSideEffect(loop, e));
+      }
+
+      private boolean isAcceptableSideEffect(PsiLoopStatement loop, PsiElement e) {
+        if (e instanceof PsiContinueStatement && ((PsiContinueStatement)e).findContinuedStatement() == loop) return true;
+        if (e instanceof PsiLocalVariable) return true;
+        if (e instanceof PsiAssignmentExpression) {
+          PsiAssignmentExpression assignment = (PsiAssignmentExpression)e;
+          if (assignment.getOperationTokenType() == JavaTokenType.EQ) {
+            PsiReferenceExpression ref =
+              tryCast(PsiUtil.skipParenthesizedExprDown(assignment.getLExpression()), PsiReferenceExpression.class);
+            if (ref != null) {
+              PsiElement target = ref.resolve();
+              if (target instanceof PsiLocalVariable || target instanceof PsiParameter) return true;
             }
           }
-          return false;
-        });
+        }
+        return false;
       }
     };
   }
