@@ -829,14 +829,14 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     //
 
     private boolean hasNonConflictedChanges(@NotNull ThreeSide side) {
-      return ContainerUtil.exists(getAllChanges(), change -> canApplyNonConflictedChange(change, side));
+      return ContainerUtil.exists(getAllChanges(), change -> canResolveChangeAutomatically(change, side));
     }
 
     private void applyNonConflictedChanges(@NotNull ThreeSide side) {
       executeMergeCommand("Apply Non Conflicted Changes", true, null, () -> {
         List<TextMergeChange> allChanges = ContainerUtil.newArrayList(getAllChanges());
         for (TextMergeChange change : allChanges) {
-          applyNonConflictedChange(change, side);
+          resolveChangeAutomatically(change, side);
         }
       });
 
@@ -844,7 +844,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       if (firstUnresolved != null) doScrollToChange(firstUnresolved, true);
     }
 
-    public boolean canApplyNonConflictedChange(@NotNull TextMergeChange change, @NotNull ThreeSide side) {
+    public boolean canResolveChangeAutomatically(@NotNull TextMergeChange change, @NotNull ThreeSide side) {
       if (change.isConflict()) {
         return side == ThreeSide.BASE &&
                change.getType().canBeResolved() &&
@@ -874,8 +874,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       return !StringUtil.equals(baseContent, resultContent);
     }
 
-    public void applyNonConflictedChange(@NotNull TextMergeChange change, @NotNull ThreeSide side) {
-      if (!canApplyNonConflictedChange(change, side)) return;
+    public void resolveChangeAutomatically(@NotNull TextMergeChange change, @NotNull ThreeSide side) {
+      if (!canResolveChangeAutomatically(change, side)) return;
 
       if (change.isConflict()) {
         List<CharSequence> texts = ThreeSide.map(it -> {
@@ -1144,14 +1144,14 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       @Override
       protected boolean isEnabled(@NotNull TextMergeChange change) {
-        return canApplyNonConflictedChange(change, ThreeSide.BASE);
+        return canResolveChangeAutomatically(change, ThreeSide.BASE);
       }
 
       @Override
       protected void apply(@NotNull ThreeSide side, @NotNull List<TextMergeChange> changes) {
         for (int i = changes.size() - 1; i >= 0; i--) {
           TextMergeChange change = changes.get(i);
-          applyNonConflictedChange(change, ThreeSide.BASE);
+          resolveChangeAutomatically(change, ThreeSide.BASE);
         }
       }
     }
