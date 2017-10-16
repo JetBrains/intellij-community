@@ -25,6 +25,8 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.editor.colors.ColorKey;
+import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -56,9 +58,11 @@ import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
 
 public class IdeTooltipManager implements Disposable, AWTEventListener, ApplicationComponent {
+  public static final String IDE_TOOLTIP_PLACE = "IdeTooltip";
+  public static final ColorKey TOOLTIP_COLOR_KEY = ColorKey.createColorKey("TOOLTIP", (Color)null);
+
   private static final Key<IdeTooltip> CUSTOM_TOOLTIP = Key.create("custom.tooltip");
   private static final MouseEventAdapter<Void> DUMMY_LISTENER = new MouseEventAdapter<>(null);
-  public static final String IDE_TOOLTIP_PLACE = "IdeTooltip";
 
   public static final Color GRAPHITE_COLOR = new Color(100, 100, 100, 230);
   private RegistryValue myIsEnabled;
@@ -395,7 +399,8 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, Applicat
 
   @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
   public Color getTextBackground(boolean awtTooltip) {
-    return UIUtil.getToolTipBackground();
+    Color color = EditorColorsUtil.getGlobalOrDefaultColor(TOOLTIP_COLOR_KEY);
+    return color != null ? color : UIUtil.getToolTipBackground();
   }
 
   @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
