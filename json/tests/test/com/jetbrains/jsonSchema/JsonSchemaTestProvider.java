@@ -3,7 +3,6 @@ package com.jetbrains.jsonSchema;
 
 import com.intellij.json.JsonLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.SchemaType;
@@ -17,7 +16,7 @@ public class JsonSchemaTestProvider implements JsonSchemaFileProvider {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, @NotNull VirtualFile file) {
+  public boolean isAvailable(@NotNull VirtualFile file) {
     return file.getFileType() instanceof LanguageFileType && ((LanguageFileType)file.getFileType()).getLanguage().isKindOf(JsonLanguage.INSTANCE);
   }
 

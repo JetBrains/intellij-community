@@ -27,21 +27,24 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
 
     final Map<String, UserDefinedJsonSchemaConfiguration> map = configuration.getStateMap();
     final List<JsonSchemaFileProvider> providers = map.values().stream()
-      .map(schema -> new MyProvider(schema.getName(), new File(project.getBasePath(), schema.getRelativePathToSchema()),
+      .map(schema -> new MyProvider(project, schema.getName(), new File(project.getBasePath(), schema.getRelativePathToSchema()),
                                     schema.getCalculatedPatterns())).collect(Collectors.toList());
 
     return providers.isEmpty() ? Collections.emptyList() : providers;
   }
 
   static class MyProvider implements JsonSchemaFileProvider, JsonSchemaImportedProviderMarker {
+    @NotNull private final Project myProject;
     @NotNull private final String myName;
     @NotNull private final File myFile;
     private VirtualFile myVirtualFile;
     @NotNull private final List<PairProcessor<Project, VirtualFile>> myPatterns;
 
-    public MyProvider(@NotNull String name,
-                      @NotNull File file,
-                      @NotNull List<PairProcessor<Project, VirtualFile>> patterns) {
+    public MyProvider(@NotNull final Project project,
+                      @NotNull final String name,
+                      @NotNull final File file,
+                      @NotNull final List<PairProcessor<Project, VirtualFile>> patterns) {
+      myProject = project;
       myName = name;
       myFile = file;
       myPatterns = patterns;
@@ -70,10 +73,10 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
     }
 
     @Override
-    public boolean isAvailable(@NotNull Project project, @NotNull VirtualFile file) {
+    public boolean isAvailable(@NotNull VirtualFile file) {
       if (myPatterns.isEmpty() || file.isDirectory() || !file.isValid() || getSchemaFile() == null ||
-          JsonSchemaService.Impl.get(project).isSchemaFile(file)) return false;
-      return myPatterns.stream().anyMatch(processor -> processor.process(project, file));
+          JsonSchemaService.Impl.get(myProject).isSchemaFile(file)) return false;
+      return myPatterns.stream().anyMatch(processor -> processor.process(myProject, file));
     }
 
     @Override

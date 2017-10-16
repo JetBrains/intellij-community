@@ -148,10 +148,10 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     return ReadAction.compute(() -> CachedValuesManager.getCachedValue(psiFile, provider));
   }
 
-  private boolean isProviderAvailable(@NotNull final VirtualFile file, @NotNull JsonSchemaFileProvider provider) {
+  private static boolean isProviderAvailable(@NotNull final VirtualFile file, @NotNull JsonSchemaFileProvider provider) {
     final FileType type = file.getFileType();
     final boolean isJson = type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage().isKindOf(JsonLanguage.INSTANCE);
-    return (isJson || !SchemaType.userSchema.equals(provider.getSchemaType())) && provider.isAvailable(myProject, file);
+    return (isJson || !SchemaType.userSchema.equals(provider.getSchemaType())) && provider.isAvailable(file);
   }
 
   @Nullable
