@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 class PyDataViewTabs extends JBRunnerTabs {
-  public static final String EMPTY_TEXT = "Run debugger to view available data ";
+  public static final String EMPTY_TEXT = "Run console or debugger to view available data ";
   private static final String HELP_ID = "reference.toolWindows.PyDataView";
 
   public PyDataViewTabs(@NotNull Project project) {
