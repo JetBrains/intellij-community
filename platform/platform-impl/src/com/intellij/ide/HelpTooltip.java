@@ -16,9 +16,11 @@
 package com.intellij.ide;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -52,7 +54,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
-public class HelpTooltip {
+public class HelpTooltip implements Disposable {
   private static Color BACKGROUND_COLOR = new JBColor(Gray.xF7, new Color(0x474a4c));
   private static Color FONT_COLOR = new JBColor(() -> UIUtil.isUnderDarcula() ? Gray.xBF : SystemInfo.isMac ? Gray.x33 : Gray.x1A);
   private static Color SHORTCUT_COLOR = new JBColor(Gray.x78, Gray.x87);
@@ -232,20 +234,35 @@ public class HelpTooltip {
     myPropertyChangeListener = evt -> {
       if (evt.getNewValue() == null) { // owner is removed from the component tree
         hidePopup(true);
-        if (owner != null) {
-          owner.removeMouseListener(myMouseListener);
-          owner.removeMouseMotionListener(myMouseListener);
-          owner.removePropertyChangeListener(myPropertyChangeListener);
-          owner.putClientProperty(TOOLTIP_PROPERTY, null);
-          owner = null;
-          masterPopup = null;
-        }
+        Disposer.dispose(this);
       }
     };
 
     owner.addMouseListener(myMouseListener);
     owner.addMouseMotionListener(myMouseListener);
     owner.addPropertyChangeListener("ancestor", myPropertyChangeListener);
+  }
+
+  @Override
+  public void dispose() {
+    if (owner != null) {
+      owner.removeMouseListener(myMouseListener);
+      owner.removeMouseMotionListener(myMouseListener);
+      owner.removePropertyChangeListener(myPropertyChangeListener);
+      owner.putClientProperty(TOOLTIP_PROPERTY, null);
+      owner = null;
+      masterPopup = null;
+    }
+  }
+
+  public static void dispose(@NotNull Component owner) {
+    if (owner instanceof JComponent) {
+      HelpTooltip instance = (HelpTooltip)((JComponent)owner).getClientProperty(TOOLTIP_PROPERTY);
+      if (instance != null) {
+        instance.hidePopup(true);
+        Disposer.dispose(instance);
+      }
+    }
   }
 
   public static void hide(@NotNull Component owner) {

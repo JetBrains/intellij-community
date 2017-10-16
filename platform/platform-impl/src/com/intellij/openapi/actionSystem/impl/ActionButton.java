@@ -227,6 +227,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (myLook != null) {
       myLook.updateUI();
     }
+    updateToolTipText();
   }
 
   @Override public Dimension getPreferredSize() {
@@ -281,6 +282,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     String text = myPresentation.getText();
     String description = myPresentation.getDescription();
     if (Registry.is("ide.helptooltip.enabled")) {
+      HelpTooltip.dispose(this);
       String shortcut = KeymapUtil.getFirstKeyboardShortcutText(myAction);
       if (StringUtil.isNotEmpty(text) || StringUtil.isNotEmpty(description)) {
         HelpTooltip ht = new HelpTooltip().setTitle(text).setShortcut(shortcut).setLocation(getTooltipLocation());
