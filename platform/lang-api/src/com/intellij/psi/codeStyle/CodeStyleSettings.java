@@ -1249,6 +1249,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings
   public boolean equals(Object obj) {
     if (!(obj instanceof CodeStyleSettings)) return false;
     if (!ReflectionUtil.comparePublicNonFinalFields(this, obj)) return false;
+    if (!mySoftMargins.equals(((CodeStyleSettings)obj).mySoftMargins)) return false;
     if (!OTHER_INDENT_OPTIONS.equals(((CodeStyleSettings)obj).OTHER_INDENT_OPTIONS)) return false;
     if (!myCommonSettingsManager.equals(((CodeStyleSettings)obj).myCommonSettingsManager)) return false;
     for (CustomCodeStyleSettings customSettings : myCustomSettings.values()) {
