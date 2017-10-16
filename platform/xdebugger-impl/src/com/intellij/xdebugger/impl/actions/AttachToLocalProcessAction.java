@@ -339,6 +339,11 @@ public class AttachToLocalProcessAction extends AnAction {
     }
 
     @NotNull
+    public String getTooltipText(@NotNull Project project)  {
+      return myGroup.getProcessTooltipText(project, myProcessInfo, myDataHolder);
+    }
+
+    @NotNull
     public List<XLocalAttachDebugger> getDebuggers() {
       return myDebuggers;
     }
@@ -425,7 +430,7 @@ public class AttachToLocalProcessAction extends AnAction {
     @Nullable
     @Override
     public String getTooltipTextFor(AttachItem value) {
-      return value.getText(myProject);
+      return value.getTooltipText(myProject);
     }
 
     @Override

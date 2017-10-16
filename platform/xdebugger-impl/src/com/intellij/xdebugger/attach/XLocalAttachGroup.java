@@ -47,6 +47,16 @@ public interface XLocalAttachGroup {
   String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder);
 
   /**
+   * @param dataHolder you may put your specific data into the holder at previous step in method @{@link XLocalAttachDebuggerProvider#getAvailableDebuggers(Project, ProcessInfo, UserDataHolder)}
+   * and use it for presentation
+   * @return a text to be shown in tooltip of your debugger item
+   */
+  @NotNull
+  default String getProcessTooltipText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
+    return getProcessDisplayText(project, info, dataHolder);
+  }
+
+  /**
    * Specifies process order in your group
    * @param dataHolder you may put your specific data into the holder at previous step in method @{@link XLocalAttachDebuggerProvider#getAvailableDebuggers(Project, ProcessInfo, UserDataHolder)}
    * and use it for comparison
