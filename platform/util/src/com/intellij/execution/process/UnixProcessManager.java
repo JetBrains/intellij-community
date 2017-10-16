@@ -13,15 +13,14 @@
 // limitations under the License.
 package com.intellij.execution.process;
 
+import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
-import com.sun.jna.Platform;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -30,7 +29,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
 
+import static com.intellij.util.ObjectUtils.assertNotNull;
+
 /**
+ * Use {@code com.intellij.execution.process.OSProcessUtil} wherever possible.
+ *
  * @author traff
  */
 public class UnixProcessManager {
@@ -40,30 +43,34 @@ public class UnixProcessManager {
   public static final int SIGKILL = 9;
   public static final int SIGTERM = 15;
 
-  private static CLib C_LIB;
+  @SuppressWarnings("SpellCheckingInspection")
+  private interface CLib extends Library {
+    int getpid();
+    int kill(int pid, int signal);
+  }
 
+  private static final CLib C_LIB;
   static {
+    CLib lib = null;
     try {
-      if (!Platform.isWindows()) {
-        C_LIB = Native.loadLibrary("c", CLib.class);
+      if (SystemInfo.isUnix && JnaLoader.isLoaded()) {
+        lib = Native.loadLibrary("c", CLib.class);
       }
     }
-    catch (Throwable e) {
-      Logger log = Logger.getInstance(UnixProcessManager.class);
-      log.warn("Can't load c library", e);
-      C_LIB = null;
+    catch (Throwable t) {
+      Logger.getInstance(UnixProcessManager.class).warn("Can't load standard library", t);
     }
+    C_LIB = lib;
   }
 
   private UnixProcessManager() { }
 
-  public static int getProcessPid(@NotNull Process process) {
+  public static int getProcessId(@NotNull Process process) {
     try {
-      Integer pid = ReflectionUtil.getField(process.getClass(), process, int.class, "pid");
-      return ObjectUtils.assertNotNull(pid);
+      return assertNotNull(ReflectionUtil.getField(process.getClass(), process, int.class, "pid"));
     }
-    catch (Exception e) {
-      throw new IllegalStateException("Cannot get PID from instance of " + process.getClass() + ", OS: " + SystemInfo.OS_NAME, e);
+    catch (Throwable t) {
+      throw new IllegalStateException("Failed to get PID from instance of " + process.getClass() + ", OS: " + SystemInfo.OS_NAME, t);
     }
   }
 
@@ -92,7 +99,7 @@ public class UnixProcessManager {
 
   public static boolean sendSignalToProcessTree(@NotNull Process process, int signal) {
     try {
-      return sendSignalToProcessTree(getProcessPid(process), signal);
+      return sendSignalToProcessTree(getProcessId(process), signal);
     }
     catch (Exception e) {
       LOG.warn("Error killing the process", e);
@@ -117,12 +124,12 @@ public class UnixProcessManager {
     // result is true if signal was sent to at least one process
     final boolean result;
     if (!foundPid.isNull()) {
-      processInfo.killProcTree(foundPid.get(), signal, UNIX_KILLER);
+      processInfo.killProcTree(foundPid.get(), signal);
       result = true;
     }
     else {
       for (Integer pid : childrenPids) {
-        processInfo.killProcTree(pid, signal, UNIX_KILLER);
+        processInfo.killProcTree(pid, signal);
       }
       result = !childrenPids.isEmpty(); //we've tried to kill at least one process
     }
@@ -240,41 +247,31 @@ public class UnixProcessManager {
     }
   }
 
-  private interface CLib extends Library {
-    int getpid();
-    int kill(int pid, int signal);
-  }
-
-  public static class ProcessInfo {
+  private static class ProcessInfo {
     private Map<Integer, List<Integer>> BY_PARENT = new TreeMap<Integer, List<Integer>>(); // pid -> list of children pids
 
     public void register(Integer pid, Integer parentPid) {
       List<Integer> children = BY_PARENT.get(parentPid);
-      if (children == null) children = new LinkedList<Integer>();
+      if (children == null) BY_PARENT.put(parentPid, children = new LinkedList<Integer>());
       children.add(pid);
-      BY_PARENT.put(parentPid, children);
     }
 
-    public void killProcTree(int pid, int signal, ProcessKiller killer) {
+    public void killProcTree(int pid, int signal) {
       List<Integer> children = BY_PARENT.get(pid);
       if (children != null) {
-        for (int child : children) killProcTree(child, signal, killer);
+        for (int child : children) {
+          killProcTree(child, signal);
+        }
       }
       if (LOG.isDebugEnabled()) {
         LOG.debug("Sending signal " + signal + " to PID " + pid);
       }
-      killer.kill(pid, signal);
-    }
-  }
-
-  public interface ProcessKiller {
-    void kill(int pid, int signal);
-  }
-
-  private static final ProcessKiller UNIX_KILLER = new ProcessKiller() {
-    @Override
-    public void kill(int pid, int signal) {
       sendSignal(pid, signal);
     }
-  };
+  }
+
+  /** @deprecated to be removed in IDEA 2018 */
+  public static int getProcessPid(@NotNull Process process) {
+    return getProcessId(process);
+  }
 }
