@@ -76,7 +76,6 @@ public class IdempotentLoopBodyInspection extends AbstractBaseJavaLocalInspectio
 
       private boolean isAcceptableSideEffect(PsiElement e) {
         if (e instanceof PsiContinueStatement ||
-            e instanceof PsiBreakStatement ||
             e instanceof PsiReturnStatement ||
             e instanceof PsiThrowStatement) {
           return true;
