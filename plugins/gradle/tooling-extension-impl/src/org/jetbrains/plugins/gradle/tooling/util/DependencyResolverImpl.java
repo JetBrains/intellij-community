@@ -17,13 +17,13 @@
 
 package org.jetbrains.plugins.gradle.tooling.util;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
-import com.google.common.io.Files;
+import org.gradle.internal.impldep.com.google.common.base.Function;
+import org.gradle.internal.impldep.com.google.common.base.Predicate;
+import org.gradle.internal.impldep.com.google.common.collect.ArrayListMultimap;
+import org.gradle.internal.impldep.com.google.common.collect.Lists;
+import org.gradle.internal.impldep.com.google.common.collect.Multimap;
+import org.gradle.internal.impldep.com.google.common.collect.Sets;
+import org.gradle.internal.impldep.com.google.common.io.Files;
 import groovy.lang.MetaMethod;
 import groovy.lang.MetaProperty;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
@@ -62,9 +62,9 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.google.common.base.Predicates.isNull;
-import static com.google.common.base.Predicates.not;
-import static com.google.common.collect.Iterables.filter;
+import static org.gradle.internal.impldep.com.google.common.base.Predicates.isNull;
+import static org.gradle.internal.impldep.com.google.common.base.Predicates.not;
+import static org.gradle.internal.impldep.com.google.common.collect.Iterables.filter;
 import static org.codehaus.groovy.runtime.StringGroovyMethods.capitalize;
 
 /**
