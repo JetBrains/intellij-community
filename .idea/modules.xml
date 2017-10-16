@@ -10,6 +10,7 @@
       <module fileurl="file://$PROJECT_DIR$/RegExpSupport/RegExpSupport.iml" filepath="$PROJECT_DIR$/RegExpSupport/RegExpSupport.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ShortcutPromoter/ShortcutPromoter.iml" filepath="$PROJECT_DIR$/plugins/ShortcutPromoter/ShortcutPromoter.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/adt-branding/adt-branding.iml" filepath="$PROJECT_DIR$/../adt/idea/adt-branding/adt-branding.iml" group="android" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/adt-testutils/adt-testutils.iml" filepath="$PROJECT_DIR$/../adt/idea/adt-testutils/adt-testutils.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/adt-ui/adt-ui.iml" filepath="$PROJECT_DIR$/../adt/idea/adt-ui/adt-ui.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/adt-ui-model/adt-ui-model.iml" filepath="$PROJECT_DIR$/../adt/idea/adt-ui-model/adt-ui-model.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/aether-dependency-resolver/aether-dependency-resolver.iml" filepath="$PROJECT_DIR$/plugins/maven/aether-dependency-resolver/aether-dependency-resolver.iml" />
