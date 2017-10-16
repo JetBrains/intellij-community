@@ -79,6 +79,7 @@ final class BuildSession implements Runnable, CanceledStatus {
   private final boolean myForceModelLoading;
   private final BuildType myBuildType;
   private final List<TargetTypeBuildScope> myScopes;
+  private final boolean myLoadUnloadedModules;
 
   BuildSession(UUID sessionId,
                Channel channel,
@@ -97,9 +98,9 @@ final class BuildSession implements Runnable, CanceledStatus {
     for (CmdlineRemoteProto.Message.KeyValuePair pair : params.getBuilderParameterList()) {
       builderParams.put(pair.getKey(), pair.getValue());
     }
-    boolean loadUnloadedModules = Boolean.parseBoolean(builderParams.get(BuildParametersKeys.LOAD_UNLOADED_MODULES));
-    myInitialFSDelta = loadUnloadedModules ? null : delta;
-    if (loadUnloadedModules && preloaded != null) {
+    myInitialFSDelta = delta;
+    myLoadUnloadedModules = Boolean.parseBoolean(builderParams.get(BuildParametersKeys.LOAD_UNLOADED_MODULES));
+    if (myLoadUnloadedModules && preloaded != null) {
       myPreloadedData = null;
       ProjectDescriptor projectDescriptor = preloaded.getProjectDescriptor();
       if (projectDescriptor != null) {
@@ -112,7 +113,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
 
     if (myPreloadedData == null || myPreloadedData.getRunner() == null) {
-      myBuildRunner = new BuildRunner(new JpsModelLoaderImpl(myProjectPath, globalOptionsPath, loadUnloadedModules, null));
+      myBuildRunner = new BuildRunner(new JpsModelLoaderImpl(myProjectPath, globalOptionsPath, myLoadUnloadedModules, null));
     }
     else {
       myBuildRunner = myPreloadedData.getRunner();
@@ -216,7 +217,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
     final ProjectDescriptor preloadedProject = myPreloadedData != null? myPreloadedData.getProjectDescriptor() : null;
     final DataInputStream fsStateStream = 
-      storageFilesAbsent || preloadedProject != null || myInitialFSDelta == null /*this will force FS rescan*/? null : createFSDataStream(dataStorageRoot, myInitialFSDelta.getOrdinal());
+      storageFilesAbsent || preloadedProject != null || myLoadUnloadedModules || myInitialFSDelta == null /*this will force FS rescan*/? null : createFSDataStream(dataStorageRoot, myInitialFSDelta.getOrdinal());
 
     if (fsStateStream != null || myPreloadedData != null) {
       // optimization: check whether we can skip the build
