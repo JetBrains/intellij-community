@@ -673,15 +673,15 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
         }
       }
 
-      for (Node child : oldChildren) {
-        if (removed.containsKey(child.object) && !inserted.containsKey(child.object)) {
-          tree.removeMapping(node, child);
-        }
-      }
-
       for (Node child : newChildren) {
         if (!removed.containsKey(child.object) && inserted.containsKey(child.object)) {
           child.insertPaths(node);
+        }
+      }
+
+      for (Node child : oldChildren) {
+        if (removed.containsKey(child.object) && !inserted.containsKey(child.object)) {
+          tree.removeMapping(node, child);
         }
       }
 
