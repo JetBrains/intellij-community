@@ -17,9 +17,12 @@ package com.siyeh.ig.naming;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
 
 public class MethodNameSameAsClassNameInspectionBase extends BaseInspection {
@@ -53,21 +56,25 @@ public class MethodNameSameAsClassNameInspectionBase extends BaseInspection {
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
       // no call to super, so it doesn't drill down into inner classes
-      if (method.isConstructor()) {
-        return;
-      }
+      if (method.isConstructor()) return;
       final String methodName = method.getName();
       final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
+      if (containingClass == null) return;
       final String className = containingClass.getName();
-      if (className == null) {
-        return;
+      if (!methodName.equals(className)) return;
+
+      PsiMethod[] constructors = containingClass.getConstructors();
+      PsiParameter[] parameters = method.getParameterList().getParameters();
+      for (PsiMethod constructor : constructors) {
+        PsiParameter[] ctorParameters = constructor.getParameterList().getParameters();
+        if(parameters.length == ctorParameters.length &&
+           !EntryStream.zip(parameters, ctorParameters)
+             .mapKeys(PsiParameter::getType).mapValues(PsiParameter::getType)
+             .mapKeyValue((t1, t2) -> TypeConversionUtil.erasure(t1).equals(TypeConversionUtil.erasure(t2))).has(false)) {
+          return;
+        }
       }
-      if (!methodName.equals(className)) {
-        return;
-      }
+
       registerMethodError(method, isOnTheFly(), method.getBody() != null && !containingClass.isInterface());
     }
   }

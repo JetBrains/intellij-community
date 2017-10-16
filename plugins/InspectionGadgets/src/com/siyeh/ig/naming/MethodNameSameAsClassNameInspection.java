@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
@@ -26,12 +27,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class MethodNameSameAsClassNameInspection extends MethodNameSameAsClassNameInspectionBase {
-  private static final String[] MODIFIERS_NOT_ALLOWED_ON_CONSTRUCTORS = {
+  private static final Set<String> MODIFIERS_ALLOWED_ON_CONSTRUCTORS = ContainerUtil.set(
     // JLS 8.8.3
-    PsiModifier.ABSTRACT, PsiModifier.STATIC, PsiModifier.FINAL, PsiModifier.NATIVE, PsiModifier.STRICTFP, PsiModifier.SYNCHRONIZED
-  };
+    PsiModifier.PUBLIC, PsiModifier.PROTECTED, PsiModifier.PRIVATE
+  );
 
   @Override
   @NotNull
@@ -65,8 +67,10 @@ public class MethodNameSameAsClassNameInspection extends MethodNameSameAsClassNa
       final PsiTypeElement returnTypeElement = method.getReturnTypeElement();
       if (returnTypeElement == null) return;
       PsiModifierList modifiers = method.getModifierList();
-      for (String modifier : MODIFIERS_NOT_ALLOWED_ON_CONSTRUCTORS) {
-        modifiers.setModifierProperty(modifier, false);
+      for (String modifier : PsiModifier.MODIFIERS) {
+        if (!MODIFIERS_ALLOWED_ON_CONSTRUCTORS.contains(modifier)) {
+          modifiers.setModifierProperty(modifier, false);
+        }
       }
       returnTypeElement.delete();
     }
