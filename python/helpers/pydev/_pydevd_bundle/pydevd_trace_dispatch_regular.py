@@ -49,10 +49,10 @@ def trace_dispatch(py_db, frame, event, arg):
         additional_info = t.additional_info = PyDBAdditionalThreadInfo()
 
     thread_tracer = ThreadTracer((py_db, t, additional_info, global_cache_skips, global_cache_frame_skips))
-    # IFDEF CYTHON
-    #     t._tracer = thread_tracer # Hack for cython to keep it alive while the thread is alive (just the method in the SetTrace is not enough).
-    # ELSE
-    # ENDIF
+# IFDEF CYTHON
+#     t._tracer = thread_tracer # Hack for cython to keep it alive while the thread is alive (just the method in the SetTrace is not enough).
+# ELSE
+# ENDIF
     SetTrace(thread_tracer.__call__)
     return thread_tracer.__call__(frame, event, arg)
 
