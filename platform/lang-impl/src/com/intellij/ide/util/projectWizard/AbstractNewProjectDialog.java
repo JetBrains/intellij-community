@@ -68,7 +68,7 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
     DefaultActionGroup root = createRootStep();
     Disposer.register(getDisposable(), () -> root.removeAll());
 
-    Pair<JPanel, JBList<AnAction>> pair = FlatWelcomeFrame.createActionGroupPanel(root, getRootPane(), null, getDisposable());
+    Pair<JPanel, JBList<AnAction>> pair = FlatWelcomeFrame.createActionGroupPanel(root, null, getDisposable());
     JPanel component = pair.first;
     DumbAwareAction.create(e -> close(CANCEL_EXIT_CODE))
       .registerCustomShortcutSet(KeyEvent.VK_ESCAPE, 0, component);
