@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.IconUtil;
@@ -29,38 +30,26 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventHandler;
 import org.intellij.lang.annotations.JdkConstants.FontStyle;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Path2D;
 import java.util.ArrayList;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
-import javax.swing.Icon;
-import javax.swing.JComponent;
 
 import static com.intellij.ide.ui.AntialiasingType.getKeyForCurrentScope;
 import static com.intellij.util.ui.UIUtil.DEF_SYSTEM_FONT_SIZE;
 import static java.util.stream.Collectors.toList;
-import static javax.swing.SwingConstants.LEFT;
-import static javax.swing.SwingConstants.RIGHT;
-import static javax.swing.SwingConstants.CENTER;
+import static javax.swing.SwingConstants.*;
 import static javax.swing.SwingUtilities.isLeftMouseButton;
 import static javax.swing.SwingUtilities.layoutCompoundLabel;
 
 /**
  * @author Sergey.Malenkov
  */
-public class Breadcrumbs extends JComponent {
+public class Breadcrumbs extends JBPanelWithEmptyText {
   private static final int LEFT_RIGHT = 5;
   private static final int TOP_BOTTOM = 3;
 
