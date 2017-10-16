@@ -5,7 +5,7 @@ from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND, IS_JYTHON
 from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
-version = 8
+version = 9
 
 if not hasattr(sys, '_current_frames'):
 

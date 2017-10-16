@@ -9,7 +9,7 @@ from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND, IS_JYTHON
 # from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
-version = 8
+version = 9
 
 if not hasattr(sys, '_current_frames'):
 
@@ -42,7 +42,7 @@ if not hasattr(sys, '_current_frames'):
                 ret[thread.getId()] = frame
             return ret
         
-    if IS_IRONPYTHON: 
+    elif IS_IRONPYTHON: 
         _tid_to_last_frame = {}
         
         # IronPython doesn't have it. Let's use our workaround...
@@ -910,6 +910,7 @@ from cpython.ref cimport Py_INCREF, Py_XDECREF
 # ELSE
 # from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfo
 # from _pydevd_bundle.pydevd_frame import PyDBFrame
+# 
 # ENDIF
 
 threadingCurrentThread = threading.currentThread
@@ -928,6 +929,7 @@ get_file_type = DONT_TRACE.get
 # It can be used when running regularly (without step over/step in/step return)
 global_cache_skips = {}
 global_cache_frame_skips = {}
+
 
 def trace_dispatch(py_db, frame, event, arg):
     t = threadingCurrentThread()
@@ -950,6 +952,7 @@ def trace_dispatch(py_db, frame, event, arg):
     SetTrace(thread_tracer.__call__)
     return thread_tracer.__call__(frame, event, arg)
 
+
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
 cdef class SafeCallWrapper:
   cdef method_object
@@ -971,8 +974,8 @@ cdef class ThreadTracer:
 # class ThreadTracer:
 #     def __init__(self, args):
 #         self._args = args
+# 
     # ENDIF
-
 
     def __call__(self, frame, event, arg):
         ''' This is the callback used when we enter some context in the debugger.
@@ -1005,7 +1008,7 @@ cdef class ThreadTracer:
         try:
             if py_db._finish_debugging_session:
                 if not py_db._termination_event_set:
-                    #that was not working very well because jython gave some socket errors
+                    # that was not working very well because jython gave some socket errors
                     try:
                         if py_db.output_checker is None:
                             kill_all_pydev_threads()
@@ -1039,10 +1042,11 @@ cdef class ThreadTracer:
                 # print('skipped: trace_dispatch (cache hit)', cache_key, frame.f_lineno, event, frame.f_code.co_name)
                 return None
 
-            file_type = get_file_type(abs_path_real_path_and_base[-1]) #we don't want to debug threading or anything related to pydevd
+            file_type = get_file_type(
+                abs_path_real_path_and_base[-1])  # we don't want to debug threading or anything related to pydevd
 
             if file_type is not None:
-                if file_type == 1: # inlining LIB_FILE = 1
+                if file_type == 1:  # inlining LIB_FILE = 1
                     if py_db.not_in_scope(filename):
                         # print('skipped: trace_dispatch (not in scope)', abs_path_real_path_and_base[-1], frame.f_lineno, event, frame.f_code.co_name, file_type)
                         cache_skips[cache_key] = 1
@@ -1062,11 +1066,13 @@ cdef class ThreadTracer:
 
             # print('trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name, file_type)
             if additional_info.is_tracing:
-                return None  #we don't wan't to trace code invoked from pydevd_frame.trace_dispatch
+                return None  # we don't wan't to trace code invoked from pydevd_frame.trace_dispatch
 
             # Just create PyDBFrame directly (removed support for Python versions < 2.5, which required keeping a weak
             # reference to the frame).
-            ret = PyDBFrame((py_db, filename, additional_info, t, frame_skips_cache, (frame.f_code.co_name, frame.f_code.co_firstlineno, filename))).trace_dispatch(frame, event, arg)
+            ret = PyDBFrame((py_db, filename, additional_info, t, frame_skips_cache,
+                             (frame.f_code.co_name, frame.f_code.co_firstlineno, filename))).trace_dispatch(frame,
+                                                                                                            event, arg)
             if ret is None:
                 cache_skips[cache_key] = 1
                 return None
@@ -1082,7 +1088,7 @@ cdef class ThreadTracer:
 
         except Exception:
             if py_db._finish_debugging_session:
-                return None # Don't log errors when we're shutting down.
+                return None  # Don't log errors when we're shutting down.
             # Log it
             try:
                 if traceback is not None:
@@ -1104,12 +1110,14 @@ if IS_IRONPYTHON:
     #
     # See: https://github.com/IronLanguages/main/issues/1630
     from _pydevd_bundle.pydevd_additional_thread_info_regular import _tid_to_last_frame
-    
+
     _original_call = ThreadTracer.__call__
-    
+
+
     def __call__(self, frame, event, arg):
         _tid_to_last_frame[self._args[1].ident] = frame
         return _original_call(self, frame, event, arg)
-    
+
+
     ThreadTracer.__call__ = __call__
-    
+
