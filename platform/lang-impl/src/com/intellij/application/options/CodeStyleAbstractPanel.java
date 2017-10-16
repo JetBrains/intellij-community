@@ -181,6 +181,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
     Project project = ProjectUtil.guessCurrentProject(getPanel());
     TransactionGuard.submitTransaction(project, () -> {
+      if (myEditor.isDisposed()) return;
+      
       if (myLastDocumentModificationStamp != myEditor.getDocument().getModificationStamp()) {
         myTextToReformat = myEditor.getDocument().getText();
       }

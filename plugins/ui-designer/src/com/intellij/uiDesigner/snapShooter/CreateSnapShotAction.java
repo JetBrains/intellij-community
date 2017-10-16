@@ -23,7 +23,6 @@ import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.application.ApplicationConfigurationType;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
-import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.util.JreVersionDetector;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeView;
@@ -151,7 +150,7 @@ public class CreateSnapShotAction extends AnAction {
       if (rc == Messages.NO) return;
       final ApplicationConfiguration appConfig = (ApplicationConfiguration) snapshotConfiguration.getConfiguration();
       final SnapShooterConfigurationSettings settings = SnapShooterConfigurationSettings.get(appConfig);
-      settings.setNotifyRunnable(() -> SwingUtilities.invokeLater(() -> {
+      settings.setNotifyRunnable(() -> ApplicationManager.getApplication().invokeLater(() -> {
         Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.prepare.notice"),
                                    UIDesignerBundle.message("snapshot.title"), Messages.getInformationIcon());
         try {

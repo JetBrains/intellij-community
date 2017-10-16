@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -78,7 +79,9 @@ class DirectoryPathMatcher {
       } else {
         processSubdirectoriesContaining(pair.first, c, sub -> {
           String fullName = myModel.getFullName(sub);
-          if (fullName != null && matcher.matches(fullName)) {
+          if (fullName == null)  return false;
+          fullName = FileUtil.toSystemIndependentName(fullName);
+          if (matcher.matches(fullName)) {
             nextRoots.add(Pair.create(sub, fullName));
             return true;
           }

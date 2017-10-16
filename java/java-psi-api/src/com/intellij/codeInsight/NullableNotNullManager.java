@@ -247,15 +247,14 @@ public abstract class NullableNotNullManager {
     PsiAnnotation memberAnno = checkBases && owner instanceof PsiMethod
                                ? AnnotationUtil.findAnnotationInHierarchy(owner, qNames)
                                : AnnotationUtil.findAnnotation(owner, qNames);
+    PsiType type = getOwnerType(owner);
     if (memberAnno != null) {
-      if (owner instanceof PsiMethod) {
-        return preferTypeAnnotation(memberAnno, ((PsiMethod)owner).getReturnType());
-      }
-      if (owner instanceof PsiVariable) {
-        return preferTypeAnnotation(memberAnno, ((PsiVariable)owner).getType());
-      }
+      return preferTypeAnnotation(memberAnno, type);
+    } 
+    if (type != null) {
+      return ContainerUtil.find(type.getAnnotations(), a -> qNames.contains(a.getQualifiedName()));
     }
-    return memberAnno;
+    return null;
   }
 
   private static PsiAnnotation preferTypeAnnotation(@NotNull PsiAnnotation memberAnno, @Nullable PsiType type) {
