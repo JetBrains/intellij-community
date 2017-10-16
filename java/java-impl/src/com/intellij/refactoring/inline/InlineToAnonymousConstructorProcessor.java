@@ -62,10 +62,10 @@ class InlineToAnonymousConstructorProcessor {
   private final PsiType mySuperType;
   private final Map<String, PsiExpression> myFieldInitializers = new HashMap<>();
   private final Map<PsiParameter, PsiVariable> myLocalsForParameters = new HashMap<>();
-  private PsiStatement myNewStatement;
+  private PsiElement myNewStatement;
   private final PsiElementFactory myElementFactory;
   private PsiMethod myConstructor;
-  private PsiExpressionList myConstructorArguments;
+  private PsiExpression[] myConstructorArguments;
   private PsiParameterList myConstructorParameters;
 
   public InlineToAnonymousConstructorProcessor(final PsiClass aClass, final PsiNewExpression psiNewExpression,
@@ -73,7 +73,7 @@ class InlineToAnonymousConstructorProcessor {
     myClass = aClass;
     myNewExpression = psiNewExpression;
     mySuperType = superType;
-    myNewStatement = PsiTreeUtil.getParentOfType(myNewExpression, PsiStatement.class);
+    myNewStatement = PsiTreeUtil.getParentOfType(myNewExpression, PsiStatement.class, PsiLambdaExpression.class);
     myElementFactory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
   }
 
@@ -83,7 +83,7 @@ class InlineToAnonymousConstructorProcessor {
     JavaResolveResult methodResolveResult = myNewExpression.resolveMethodGenerics();
     final PsiElement element = methodResolveResult.getElement();
     myConstructor = element != null ? (PsiMethod) element.getNavigationElement() : null;
-    myConstructorArguments = myNewExpression.getArgumentList();
+    myConstructorArguments = initConstructorArguments();
 
     PsiSubstitutor classResolveSubstitutor = classResolveResult.getSubstitutor();
     PsiType substType = classResolveSubstitutor.substitute(mySuperType);
@@ -281,6 +281,15 @@ class InlineToAnonymousConstructorProcessor {
       if (parent instanceof PsiCodeBlock) {
         variable = (PsiVariable)((PsiDeclarationStatement)parent.addBefore(declaration, myNewStatement)).getDeclaredElements()[0];
       }
+      else if (myNewStatement instanceof PsiLambdaExpression) {
+        final Object marker = new Object();
+        PsiTreeUtil.mark(myNewExpression, marker);
+        PsiCodeBlock block = RefactoringUtil.expandExpressionLambdaToCodeBlock((PsiLambdaExpression)myNewStatement);
+        myNewStatement = block.getStatements()[0];
+        myNewExpression = (PsiNewExpression)PsiTreeUtil.releaseMark(myNewStatement, marker);
+        variable = (PsiVariable)((PsiDeclarationStatement)block.addBefore(declaration, myNewStatement)).getDeclaredElements()[0];
+        myConstructorArguments = initConstructorArguments();
+      }
       else {
         final int offsetInStatement = myNewExpression.getTextRange().getStartOffset() - myNewStatement.getTextRange().getStartOffset();
         final PsiBlockStatement blockStatement = (PsiBlockStatement)myElementFactory.createStatementFromText("{}", null);
@@ -292,6 +301,7 @@ class InlineToAnonymousConstructorProcessor {
         variable = (PsiVariable)((PsiDeclarationStatement)block.getStatements()[0]).getDeclaredElements()[0];
         myNewStatement = block.getStatements()[1];
         myNewExpression = PsiTreeUtil.getParentOfType(myNewStatement.findElementAt(offsetInStatement), PsiNewExpression.class);
+        myConstructorArguments = initConstructorArguments();
       }
 
       return variable;
@@ -302,10 +312,14 @@ class InlineToAnonymousConstructorProcessor {
     }
   }
 
+  private PsiExpression[] initConstructorArguments() {
+    PsiExpressionList argumentList = myNewExpression.getArgumentList();
+    return argumentList != null ? argumentList.getExpressions() : PsiExpression.EMPTY_ARRAY;
+  }
+
   private void generateLocalsForArguments() {
-    PsiExpression[] expressions = myConstructorArguments.getExpressions();
-    for (int i = 0; i < expressions.length; i++) {
-      PsiExpression expr = expressions[i];
+    for (int i = 0; i < myConstructorArguments.length; i++) {
+      PsiExpression expr = myConstructorArguments[i];
       PsiParameter parameter = myConstructorParameters.getParameters()[i];
       if (parameter.isVarArgs()) {
         PsiEllipsisType ellipsisType = (PsiEllipsisType)parameter.getType();
@@ -317,8 +331,8 @@ class InlineToAnonymousConstructorProcessor {
           PsiNewExpression newExpr = (PsiNewExpression) myElementFactory.createExpressionFromText(exprBuilder.toString(), myClass);
           PsiArrayInitializerExpression arrayInitializer = newExpr.getArrayInitializer();
           assert arrayInitializer != null;
-          for(int j=i; j < expressions.length; j++) {
-            arrayInitializer.add(expressions [j]);
+          for(int j = i; j < myConstructorArguments.length; j++) {
+            arrayInitializer.add(myConstructorArguments[j]);
           }
 
           PsiVariable variable = generateLocal(parameter.getName(), ellipsisType.toArrayType(), newExpr);
@@ -368,7 +382,7 @@ class InlineToAnonymousConstructorProcessor {
           return argument.replace(getParameterReference(parameter));
         }
         int index = myConstructorParameters.getParameterIndex(parameter);
-        return argument.replace(myConstructorArguments.getExpressions() [index]);
+        return argument.replace(myConstructorArguments[index]);
       }
     }
 
@@ -418,10 +432,10 @@ class InlineToAnonymousConstructorProcessor {
       else {
         int index = myConstructorParameters.getParameterIndex(param);
         if (ref == argument) {
-          argument = argument.replace(myConstructorArguments.getExpressions() [index]);
+          argument = argument.replace(myConstructorArguments[index]);
         }
         else {
-          ref.replace(myConstructorArguments.getExpressions() [index]);
+          ref.replace(myConstructorArguments[index]);
         }
       }
     }
