@@ -198,22 +198,22 @@ public class PlatformTestUtil {
                                 boolean withSelection,
                                 @Nullable Queryable.PrintInfo printInfo,
                                 @Nullable Condition<String> nodePrintCondition) {
-    DefaultMutableTreeNode defaultMutableTreeNode = (DefaultMutableTreeNode)root;
+    DefaultMutableTreeNode dmt = (DefaultMutableTreeNode)root;
 
-    final Object userObject = defaultMutableTreeNode.getUserObject();
+    Object userObject = dmt.getUserObject();
     String nodeText = toString(userObject, printInfo);
 
     if (nodePrintCondition != null && !nodePrintCondition.value(nodeText)) return;
 
-    final StringBuilder buff = new StringBuilder();
+    StringBuilder buff = new StringBuilder();
     StringUtil.repeatSymbol(buff, ' ', level);
 
-    final boolean expanded = tree.isExpanded(new TreePath(defaultMutableTreeNode.getPath()));
-    if (!defaultMutableTreeNode.isLeaf()) {
+    boolean expanded = tree.isExpanded(new TreePath(dmt.getPath()));
+    if (!dmt.isLeaf() && (tree.isRootVisible() || dmt != tree.getModel().getRoot() || dmt.getChildCount() > 0)) {
       buff.append(expanded ? "-" : "+");
     }
 
-    final boolean selected = tree.getSelectionModel().isPathSelected(new TreePath(defaultMutableTreeNode.getPath()));
+    boolean selected = tree.getSelectionModel().isPathSelected(new TreePath(dmt.getPath()));
     if (withSelection && selected) {
       buff.append("[");
     }
