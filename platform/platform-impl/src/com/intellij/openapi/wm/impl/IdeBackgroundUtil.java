@@ -100,6 +100,7 @@ public class IdeBackgroundUtil {
            component instanceof JList ? "list" :
            component instanceof JTable ? "table" :
            component instanceof JViewport ? "viewport" :
+           component instanceof JButton ? "button" :
            component instanceof ActionToolbar ? "toolbar" :
            component instanceof EditorsSplitters ? "frame" :
            component instanceof EditorComponentImpl ? "editor" :

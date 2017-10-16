@@ -37,10 +37,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.UserActivityProviderComponent;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.MouseEventAdapter;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -408,12 +405,18 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     }
 
     @Override
+    protected Graphics getComponentGraphics(Graphics graphics) {
+      return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
+    }
+
+    @Override
     public void paint(Graphics g) {
       Dimension size = getSize();
 
       if (UIUtil.isUnderDefaultMacTheme() || UIUtil.isUnderWin10LookAndFeel()) {
         super.paint(g);
-      } else {
+      }
+      else {
         UISettings.setupAntialiasing(g);
         GraphicsUtil.setupRoundedBorderAntialiasing(g);
 
