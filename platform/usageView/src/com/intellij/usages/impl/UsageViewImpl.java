@@ -48,6 +48,7 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
@@ -546,7 +547,9 @@ public class UsageViewImpl implements UsageView {
         }
       });
       tabbedPane.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
-      myPreviewSplitter.setSecondComponent(tabbedPane);
+      JBPanelWithEmptyText panel = new JBPanelWithEmptyText(new BorderLayout());
+      panel.add(tabbedPane, BorderLayout.CENTER);
+      myPreviewSplitter.setSecondComponent(panel);
     }
     else {
       myPreviewSplitter.setProportion(1);
