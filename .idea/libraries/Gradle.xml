@@ -1,18 +1,8 @@
 <component name="libraryTable">
   <library name="Gradle">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-tooling-api-4.0.jar!/" />
-      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-core-4.0.jar!/" />
-      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-messaging-4.0.jar!/" />
-      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-model-core-4.0.jar!/" />
-      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-model-groovy-4.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-api-4.0.jar!/" />
       <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-wrapper-4.0.jar!/" />
-      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-base-services-4.0.jar!/" />
-      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-base-services-groovy-4.0.jar!/" />
-      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-process-services-4.0.jar!/" />
-      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-resources-4.0.jar!/" />
-      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-cli-4.0.jar!/" />
-      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-logging-4.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>

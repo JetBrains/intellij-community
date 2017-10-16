@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.service.execution;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -582,7 +581,6 @@ public class GradleExecutionHelper {
     return result;
   }
 
-  @VisibleForTesting
   @NotNull
   static List<String> obfuscatePasswordParameters(@NotNull List<String> commandLineArguments) {
     List<String> replaced = new ArrayList<>(commandLineArguments.size());
