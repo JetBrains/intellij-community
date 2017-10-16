@@ -153,7 +153,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
   @NotNull
   public Promise<TreePath> resolve(TreePath path) {
     AsyncPromise<TreePath> async = new AsyncPromise<>();
-    onValidThread(() -> resolve(async, path, entry -> async.setResult(path)));
+    onValidThread(() -> resolve(async, path));
     return async;
   }
 
@@ -167,12 +167,12 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
     }
     else {
       promise.rejected(onValidThread(async::setError));
-      promise.done(onValidThread(path -> resolve(async, path, entry -> async.setResult(path))));
+      promise.done(onValidThread(path -> resolve(async, path)));
     }
     return async;
   }
 
-  private void resolve(AsyncPromise<TreePath> async, TreePath path, Consumer<Node> consumer) {
+  private void resolve(AsyncPromise<TreePath> async, TreePath path) {
     LOG.debug("resolve path: ", path);
     if (path == null) {
       async.setError("path is null");
@@ -183,27 +183,13 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
       async.setError("path is wrong");
       return;
     }
-    if (!resolved(path, consumer)) {
-      TreePath parent = path.getParentPath();
-      if (parent == null) {
-        promiseRootEntry().rejected(async::setError).done(node -> {
-          if (!resolved(path, consumer)) async.setError("root not found");
-        });
+    accept(new TreeVisitor.PathFinder(path)).processed(result -> {
+      if (result == null) {
+        async.setError("path not found");
+        return;
       }
-      else {
-        resolve(async, parent, resolved -> promiseChildren(resolved).rejected(async::setError).done(node -> {
-          if (!resolved(path, consumer)) async.setError("path not found");
-        }));
-      }
-    }
-  }
-
-  private boolean resolved(@NotNull TreePath path, @NotNull Consumer<Node> consumer) {
-    Node node = tree.map.get(path.getLastPathComponent());
-    if (node == null || !node.paths.contains(path)) return false;
-    LOG.debug("path resolved: ", path);
-    consumer.consume(node);
-    return true;
+      async.setResult(result);
+    });
   }
 
   @Override
