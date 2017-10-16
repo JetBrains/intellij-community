@@ -50,7 +50,7 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
                    long authorTime, @NotNull List<List<GitLogStatusInfo>> reportedChanges, @NotNull GitLogUtil.DiffRenameLimit renameLimit) {
     super(hash, parents, commitTime, root, subject, author, message, committer, authorTime);
     myRenameLimit = renameLimit;
-    myChanges.set(new UnparsedChanges(project, reportedChanges));
+    myChanges.set(reportedChanges.isEmpty() ? EMPTY_CHANGES : new UnparsedChanges(project, reportedChanges));
   }
 
   @Override
