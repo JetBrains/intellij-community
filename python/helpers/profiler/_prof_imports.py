@@ -33,9 +33,3 @@ def deserialize(base,
     protocol = protocol_factory.get_protocol(transport)
     base.read(protocol)
     return base
-
-
-if IS_PY3K:
-    pass
-else:
-    pass
