@@ -360,15 +360,15 @@ final class PaintersHelper implements Painter.Listener {
       int x, y;
       if (place == Place.CENTER ||
           place == Place.TOP_CENTER || place == Place.BOTTOM_CENTER) {
-        x = i.left + (cw - w) / 2;
+        x = i.left + (w - cw) / 2;
         y = place == Place.TOP_CENTER ? i.top :
-            place == Place.BOTTOM_CENTER ? ch0 - i.bottom - h :
-            i.top + (ch - h) / 2;
+            place == Place.BOTTOM_CENTER ? h - ch0 - i.bottom :
+            i.top + (h - ch) / 2;
       }
       else if (place == Place.TOP_LEFT || place == Place.TOP_RIGHT ||
                place == Place.BOTTOM_LEFT || place == Place.BOTTOM_RIGHT) {
-        x = place == Place.TOP_LEFT || place == Place.BOTTOM_LEFT ? i.left : cw0 - i.right - w;
-        y = place == Place.TOP_LEFT || place == Place.TOP_RIGHT ? i.top : ch0 - i.bottom - h;
+        x = place == Place.TOP_LEFT || place == Place.BOTTOM_LEFT ? i.left : w - cw0 - i.right;
+        y = place == Place.TOP_LEFT || place == Place.TOP_RIGHT ? i.top : h - ch0 - i.bottom;
       }
       else {
         return;
@@ -376,8 +376,9 @@ final class PaintersHelper implements Painter.Listener {
 
       float adjustedAlpha = Boolean.TRUE.equals(g.getRenderingHint(IdeBackgroundUtil.ADJUST_ALPHA)) ? alpha / 2 : alpha;
       GraphicsConfig gc = new GraphicsConfig(g).setAlpha(adjustedAlpha);
-      UIUtil.drawImage(g, scaled, new Rectangle(x, y, w, h), null);
-
+      Rectangle src = new Rectangle(x, y, w, h);
+      Rectangle dst = new Rectangle(i.left, i.top, w, h);
+      UIUtil.drawImage(g, scaled, dst, src, null);
       gc.restore();
     }
 
