@@ -344,6 +344,20 @@ public final class TreeUtil {
     return true;
   }
 
+  public static void selectPaths(@NotNull JTree tree, @NotNull Collection<TreePath> paths) {
+    if (paths.isEmpty()) return;
+    selectPaths(tree, paths.toArray(new TreePath[paths.size()]));
+  }
+
+  public static void selectPaths(@NotNull JTree tree, @NotNull TreePath... paths) {
+    if (paths.length == 0) return;
+    for (TreePath path : paths) {
+      tree.makeVisible(path);
+    }
+    tree.setSelectionPaths(paths);
+    tree.scrollPathToVisible(paths[0]);
+  }
+
   @NotNull
   public static ActionCallback selectPath(@NotNull final JTree tree, final TreePath path) {
     return selectPath(tree, path, true);
