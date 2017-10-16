@@ -247,4 +247,22 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
   protected IndexingStampInfo getIndexingStampInfo(@NotNull VirtualFile file) {
     return StubUpdatingIndex.getIndexingStampInfo(file);
   }
+
+  @Override
+  protected boolean isPrebuilt(@NotNull VirtualFile virtualFile) {
+      boolean canBePrebuilt = false;
+      try {
+        final PrebuiltStubsProvider prebuiltStubsProvider =
+          PrebuiltStubsProviders.INSTANCE.forFileType(virtualFile.getFileType());
+        if (prebuiltStubsProvider != null) {
+          canBePrebuilt = null !=
+                          prebuiltStubsProvider
+                            .findStub(new FileContentImpl(virtualFile, virtualFile.contentsToByteArray()));
+        }
+      }
+      catch (Exception e) {
+        // pass
+      }
+      return canBePrebuilt;
+    }
 }
