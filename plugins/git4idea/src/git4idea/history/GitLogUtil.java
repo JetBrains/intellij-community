@@ -18,9 +18,7 @@ package git4idea.history;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -119,22 +117,16 @@ public class GitLogUtil {
     handler.addParameters(parameters);
     handler.endOptions();
 
-    GitLogOutputSplitter handlerListener = new GitLogOutputSplitter(handler, output -> {
-      List<GitLogRecord> records = parser.parse(output);
-      for (GitLogRecord record : records) {
-        if (record == null) continue;
-        record.setUsedHandler(handler);
+    GitLogOutputSplitter handlerListener = new GitLogOutputSplitter(handler, parser, record -> {
+      Hash hash = HashImpl.build(record.getHash());
+      List<Hash> parents = getParentHashes(factory, record);
+      commitConsumer.consume(factory.createTimedCommit(hash, parents, record.getCommitTime()));
 
-        Hash hash = HashImpl.build(record.getHash());
-        List<Hash> parents = getParentHashes(factory, record);
-        commitConsumer.consume(factory.createTimedCommit(hash, parents, record.getCommitTime()));
-
-        for (VcsRef ref : parseRefs(record.getRefs(), hash, factory, root)) {
-          refConsumer.consume(ref);
-        }
-
-        userConsumer.consume(factory.createUser(record.getAuthorName(), record.getAuthorEmail()));
+      for (VcsRef ref : parseRefs(record.getRefs(), hash, factory, root)) {
+        refConsumer.consume(ref);
       }
+
+      userConsumer.consume(factory.createUser(record.getAuthorName(), record.getAuthorEmail()));
     });
     handler.runInCurrentThread(null);
     handlerListener.reportErrors();
@@ -303,32 +295,10 @@ public class GitLogUtil {
 
     StopWatch sw = StopWatch.start("loading details in [" + root.getName() + "]");
 
-    Ref<Throwable> parseError = new Ref<>();
-    GitLogOutputSplitter handlerListener = new GitLogOutputSplitter(handler, output -> {
-      try {
-        GitLogRecord record = parser.parseOneRecord(output);
-        if (record != null) {
-          record.setUsedHandler(handler);
-          converter.consume(record);
-        }
-      }
-      catch (ProcessCanceledException pce) {
-        throw pce;
-      }
-      catch (Throwable t) {
-        if (parseError.isNull()) {
-          parseError.set(t);
-          LOG.error("Could not parse \" " + GitLogParser.getTruncatedEscapedOutput(output) + "\"\n" +
-                    "Command " + handler.printableCommandLine(), t);
-        }
-      }
-    });
+    GitLogOutputSplitter handlerListener = new GitLogOutputSplitter(handler, parser, converter);
     handler.runInCurrentThread(null);
     handlerListener.reportErrors();
 
-    if (!parseError.isNull()) {
-      throw new VcsException(parseError.get());
-    }
     sw.report();
   }
 

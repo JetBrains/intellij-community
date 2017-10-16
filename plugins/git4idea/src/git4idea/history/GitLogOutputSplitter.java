@@ -33,7 +33,8 @@ import org.jetbrains.annotations.Nullable;
 class GitLogOutputSplitter implements GitLineHandlerListener {
   private static final int OUTPUT_CAPACITY_THRESHOLD = 5_000_000;
   @NotNull private final GitLineHandler myHandler;
-  @NotNull private final Consumer<StringBuilder> myRecordConsumer;
+  @NotNull private final GitLogParser myParser;
+  @NotNull private final Consumer<GitLogRecord> myRecordConsumer;
 
   @NotNull private final StringBuilder myOutput = new StringBuilder();
   @NotNull private final StringBuilder myErrors = new StringBuilder();
@@ -42,8 +43,10 @@ class GitLogOutputSplitter implements GitLineHandlerListener {
   private boolean myIsInsideBody = true;
 
   public GitLogOutputSplitter(@NotNull GitLineHandler handler,
-                              @NotNull Consumer<StringBuilder> recordConsumer) {
+                              @NotNull GitLogParser parser,
+                              @NotNull Consumer<GitLogRecord> recordConsumer) {
     myHandler = handler;
+    myParser = parser;
     myRecordConsumer = recordConsumer;
 
     myHandler.addLineListener(this);
@@ -89,7 +92,7 @@ class GitLogOutputSplitter implements GitLineHandlerListener {
       int nextRecordStart = line.indexOf(GitLogParser.RECORD_START);
       if (nextRecordStart >= 0) {
         myOutput.append(line.substring(0, nextRecordStart));
-        myRecordConsumer.consume(myOutput);
+        parseOutput(myOutput);
         myOutput.setLength(0);
         if (myOutput.capacity() >= OUTPUT_CAPACITY_THRESHOLD) myOutput.trimToSize();
         myIsInsideBody = true;
@@ -98,6 +101,22 @@ class GitLogOutputSplitter implements GitLineHandlerListener {
       else {
         myOutput.append(line).append("\n");
       }
+    }
+  }
+
+  private void parseOutput(@NotNull StringBuilder output) {
+    try {
+      GitLogRecord record = myParser.parseOneRecord(output);
+      if (record != null) {
+        record.setUsedHandler(myHandler);
+        myRecordConsumer.consume(record);
+      }
+    }
+    catch (ProcessCanceledException pce) {
+      throw pce;
+    }
+    catch (Throwable t) {
+      myException = new VcsException(t);
     }
   }
 
@@ -112,7 +131,7 @@ class GitLogOutputSplitter implements GitLineHandlerListener {
     }
     else {
       try {
-        myRecordConsumer.consume(myOutput);
+        parseOutput(myOutput);
       }
       catch (Exception e) {
         myException = new VcsException(e);
