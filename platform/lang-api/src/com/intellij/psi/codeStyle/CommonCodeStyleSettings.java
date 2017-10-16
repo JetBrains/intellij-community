@@ -1062,6 +1062,7 @@ public class CommonCodeStyleSettings {
     if (obj instanceof CommonCodeStyleSettings) {
       if (
         ReflectionUtil.comparePublicNonFinalFields(this, obj) &&
+        mySoftMargins.equals(((CommonCodeStyleSettings)obj).mySoftMargins) &&
         myIndentOptions.equals(((CommonCodeStyleSettings)obj).getIndentOptions()) &&
         arrangementSettingsEqual((CommonCodeStyleSettings)obj)
         ) {
