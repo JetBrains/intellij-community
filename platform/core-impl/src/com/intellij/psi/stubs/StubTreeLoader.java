@@ -77,7 +77,14 @@ public abstract class StubTreeLoader {
     IndexingStampInfo indexingStampInfo = getIndexingStampInfo(file);
     boolean upToDate = indexingStampInfo != null && indexingStampInfo.isUpToDate(document, file, psiFile);
 
+    boolean canBePrebuilt = isPrebuilt(psiFile.getVirtualFile());
+
     String msg = _message + "\nPlease report the problem to JetBrains with the files attached\n";
+
+    if (canBePrebuilt) {
+      msg += "This stub can have pre-built origin\n";
+    }
+
     if (upToDate) {
       msg += "INDEXED VERSION IS THE CURRENT ONE";
     }
@@ -135,6 +142,8 @@ public abstract class StubTreeLoader {
     // separate methods and separate exception classes for EA to treat these situations differently
     return upToDate ? handleUpToDateMismatch(msg, attachments) : new RuntimeExceptionWithAttachments(msg, attachments);
   }
+
+  protected abstract boolean isPrebuilt(@NotNull VirtualFile virtualFile);
 
   private static UpToDateStubIndexMismatch handleUpToDateMismatch(@NotNull String message, Attachment[] attachments) {
     return new UpToDateStubIndexMismatch(message, attachments);
