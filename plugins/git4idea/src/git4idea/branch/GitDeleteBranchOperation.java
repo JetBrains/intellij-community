@@ -35,6 +35,7 @@ import git4idea.GitCommit;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.commands.*;
+import git4idea.config.GitSharedSettings;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitBranchTrackInfo;
@@ -77,7 +78,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     myBranchName = branchName;
     myNotifier = VcsNotifier.getInstance(myProject);
     myTrackedBranches = findTrackedBranches(repositories, branchName);
-    myUnmergedToBranches = ContainerUtil.newHashMap();
+    myUnmergedToBranches = newHashMap();
     myDeletedBranchTips = ContainerUtil.map2MapNotNull(repositories, (GitRepository repo) -> {
       GitBranchesCollection branches = repo.getBranches();
       GitLocalBranch branch = branches.findLocalBranch(myBranchName);
@@ -157,7 +158,9 @@ class GitDeleteBranchOperation extends GitBranchOperation {
         }
       });
     }
-    if (!myTrackedBranches.isEmpty() && hasNoOtherTrackingBranch(myTrackedBranches, myBranchName)) {
+    if (!myTrackedBranches.isEmpty() &&
+        hasNoOtherTrackingBranch(myTrackedBranches, myBranchName) &&
+        trackedBranchIsNotProtected()) {
       notification.addAction(new NotificationAction(DELETE_TRACKED_BRANCH) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
@@ -166,6 +169,11 @@ class GitDeleteBranchOperation extends GitBranchOperation {
       });
     }
     myNotifier.notify(notification);
+  }
+
+  private boolean trackedBranchIsNotProtected() {
+    return myTrackedBranches.values().stream()
+      .noneMatch(branch -> GitSharedSettings.getInstance(myProject).isBranchProtected(branch.getNameForRemoteOperations()));
   }
 
   private static boolean hasNoOtherTrackingBranch(@NotNull Map<GitRepository, GitRemoteBranch> trackedBranches,

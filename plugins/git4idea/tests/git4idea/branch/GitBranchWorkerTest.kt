@@ -35,6 +35,7 @@ import git4idea.branch.GitBranchUtil.getTrackInfoForBranch
 import git4idea.branch.GitDeleteBranchOperation.*
 import git4idea.branch.GitSmartOperationDialog.Choice.*
 import git4idea.commands.GitCommandResult
+import git4idea.config.GitSharedSettings
 import git4idea.config.GitVersion
 import git4idea.config.GitVersionSpecialty
 import git4idea.repo.GitRepository
@@ -658,6 +659,21 @@ class GitBranchWorkerTest : GitPlatformTest() {
     git("branch $todelete")
     git("push -u origin todelete")
     git("branch another origin/todelete")
+
+    first.deleteBranch(todelete)
+
+    `assert successful deleted branch notification`(todelete, false, RESTORE)
+  }
+
+  fun `test delete branch doesn't propose to delete protected tracked branch`() {
+    prepareRemoteRepo(first)
+    cd(first)
+
+    val todelete = "todelete"
+    git("branch $todelete")
+    git("push -u origin todelete")
+
+    GitSharedSettings.getInstance(myProject).setForcePushProhibitedPatters(listOf("todelete"))
 
     first.deleteBranch(todelete)
 
