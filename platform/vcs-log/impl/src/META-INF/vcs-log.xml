@@ -85,9 +85,8 @@
             text="Match Case"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowOtherBranchesAction" id="Vcs.Log.ShowOtherBranches"/>
     <action class="com.intellij.vcs.log.ui.actions.history.OpenRepositoryVersionFromHistoryAction" id="Vcs.Log.OpenRepositoryVersion"
-            use-shortcut-of="EditSource"
-            text="Open Repository Version" description="Open editor with selected revision of the file"
-            icon="AllIcons.Actions.EditSource"/>
+            use-shortcut-of="Vcs.OpenRepositoryVersion"
+            text="Open Repository Version" description="Open editor with selected revision of the file"/>
     <action class="com.intellij.vcs.log.ui.actions.history.GetVersionFromHistoryAction" id="Vcs.Log.GetVersion"
             use-shortcut-of="Vcs.GetVersion"
             text="Get" description="Get version from repository" icon="AllIcons.Actions.Get"/>
