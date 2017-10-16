@@ -15,8 +15,8 @@
  */
 package org.jetbrains.plugins.gradle.tooling.internal;
 
-import com.google.common.collect.Lists;
 import org.gradle.api.Project;
+import org.gradle.internal.impldep.com.google.common.collect.Lists;
 import org.gradle.tooling.provider.model.ToolingModelBuilder;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
