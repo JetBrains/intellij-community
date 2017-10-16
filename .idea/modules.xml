@@ -24,21 +24,21 @@
       <module fileurl="file://$PROJECT_DIR$/../base/apkparser/analyzer/analyzer.iml" filepath="$PROJECT_DIR$/../base/apkparser/analyzer/analyzer.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android/android.iml" filepath="$PROJECT_DIR$/../adt/idea/android/android.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-adb/android-adb.iml" filepath="$PROJECT_DIR$/../adt/idea/android-adb/android-adb.iml" group="android" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-adb/android-adb-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-adb/android-adb-tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-adb/android-adb-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-adb/android-adb-tests.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../base/annotations/android-annotations.iml" filepath="$PROJECT_DIR$/../base/annotations/android-annotations.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google/android-apk/android-apk.iml" filepath="$PROJECT_DIR$/../vendor/google/android-apk/android-apk.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-common/android-common.iml" filepath="$PROJECT_DIR$/../adt/idea/android-common/android-common.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-debuggers/android-debuggers.iml" filepath="$PROJECT_DIR$/../adt/idea/android-debuggers/android-debuggers.iml" group="android" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-debuggers/android-debuggers-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-debuggers/android-debuggers-tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-debuggers/android-debuggers-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-debuggers/android-debuggers-tests.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-gradle-jps/android-gradle-jps.iml" filepath="$PROJECT_DIR$/../adt/idea/android-gradle-jps/android-gradle-jps.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/jps-plugin/android-jps-plugin.iml" filepath="$PROJECT_DIR$/../adt/idea/jps-plugin/android-jps-plugin.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-lang/android-lang.iml" filepath="$PROJECT_DIR$/../adt/idea/android-lang/android-lang.iml" group="android" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-lang/android-lang-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-lang/android-lang-tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-lang/android-lang-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-lang/android-lang-tests.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google/android-ndk/android-ndk.iml" filepath="$PROJECT_DIR$/../vendor/google/android-ndk/android-ndk.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-plugin/android-plugin.iml" filepath="$PROJECT_DIR$/../adt/idea/android-plugin/android-plugin.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/rt/android-rt.iml" filepath="$PROJECT_DIR$/../adt/idea/rt/android-rt.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-test-framework/android-test-framework.iml" filepath="$PROJECT_DIR$/../adt/idea/android-test-framework/android-test-framework.iml" group="android" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/android/android-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android/android-tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/android/android-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android/android-tests.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-uitests/android-uitests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-uitests/android-uitests.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/platform/annotations/annotations.iml" filepath="$PROJECT_DIR$/platform/annotations/annotations.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/annotations/common/annotations-common.iml" filepath="$PROJECT_DIR$/platform/annotations/common/annotations-common.iml" group="platform" />
@@ -260,9 +260,9 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/profilers-android/profilers-android.iml" filepath="$PROJECT_DIR$/../adt/idea/profilers-android/profilers-android.iml" group="android/profilers" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/profilers-ui/profilers-ui.iml" filepath="$PROJECT_DIR$/../adt/idea/profilers-ui/profilers-ui.iml" group="android/profilers" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/project-system/project-system.iml" filepath="$PROJECT_DIR$/../adt/idea/project-system/project-system.iml" group="android" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/project-system/project-system-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/project-system/project-system-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/project-system-gradle/project-system-gradle.iml" filepath="$PROJECT_DIR$/../adt/idea/project-system-gradle/project-system-gradle.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/project-system-gradle/project-system-gradle-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/project-system-gradle/project-system-gradle-tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/project-system/project-system-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/project-system/project-system-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/projectModel-api/projectModel-api.iml" filepath="$PROJECT_DIR$/platform/projectModel-api/projectModel-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/projectModel-impl/projectModel-impl.iml" filepath="$PROJECT_DIR$/platform/projectModel-impl/projectModel-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/properties/properties.iml" filepath="$PROJECT_DIR$/plugins/properties/properties.iml" group="plugins" />
