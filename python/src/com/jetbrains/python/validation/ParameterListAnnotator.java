@@ -28,11 +28,11 @@ import java.util.Set;
 public class ParameterListAnnotator extends PyAnnotator {
   @Override
   public void visitPyParameterList(final PyParameterList paramlist) {
-    final LanguageLevel languageLevel = ((PyFile)paramlist.getContainingFile()).getLanguageLevel();
+    final LanguageLevel languageLevel = LanguageLevel.forElement(paramlist);
     ParamHelper.walkDownParamArray(
       paramlist.getParameters(),
       new ParamHelper.ParamVisitor() {
-        Set<String> parameterNames = new HashSet<>();
+        final Set<String> parameterNames = new HashSet<>();
         boolean hadPositionalContainer = false;
         boolean hadKeywordContainer = false;
         boolean hadDefaultValue = false;
@@ -50,14 +50,18 @@ public class ParameterListAnnotator extends PyAnnotator {
               markError(parameter, PyBundle.message("ANN.starred.param.after.kwparam"));
             }
             if (hadSingleStar) {
-              markError(parameter, "Multiple * arguments are not allowed");
+              markError(parameter, PyBundle.message("ANN.multiple.args"));
             }
+
+            if (hadPositionalContainer) markError(parameter, PyBundle.message("ANN.multiple.args"));
             hadPositionalContainer = true;
           }
           else if (parameter.isKeywordContainer()) {
+            if (hadKeywordContainer) markError(parameter, PyBundle.message("ANN.multiple.kwargs"));
             hadKeywordContainer = true;
+
             if (hadSingleStar && !hadParamsAfterSingleStar) {
-              markError(parameter, PyBundle.message("ANN.named.arguments.after.star"));
+              markError(parameter, PyBundle.message("ANN.named.parameters.after.star"));
             }
           }
           else {
@@ -100,11 +104,11 @@ public class ParameterListAnnotator extends PyAnnotator {
         @Override
         public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
           if (hadPositionalContainer || hadSingleStar) {
-            markError(param, "Multiple * arguments are not allowed");
+            markError(param, PyBundle.message("ANN.multiple.args"));
           }
           hadSingleStar = true;
           if (last) {
-            markError(param, PyBundle.message("ANN.named.arguments.after.star"));
+            markError(param, PyBundle.message("ANN.named.parameters.after.star"));
           }
         }
       }
