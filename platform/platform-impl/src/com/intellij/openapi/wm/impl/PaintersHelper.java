@@ -347,7 +347,7 @@ final class PaintersHelper implements Painter.Listener {
           cachedMap.put(cfg, cached = new Cached(scaled, new Dimension(w, h)));
           Graphics2D gg = scaled.createGraphics();
           gg.setComposite(AlphaComposite.Src);
-          gg.drawImage(image, 0, 0, null);
+          UIUtil.drawImage(gg, image, 0, 0, null);
           gg.dispose();
         }
       }
@@ -376,7 +376,7 @@ final class PaintersHelper implements Painter.Listener {
 
       float adjustedAlpha = Boolean.TRUE.equals(g.getRenderingHint(IdeBackgroundUtil.ADJUST_ALPHA)) ? alpha / 2 : alpha;
       GraphicsConfig gc = new GraphicsConfig(g).setAlpha(adjustedAlpha);
-      UIUtil.drawImage(g, scaled, x, y, w, h, null);
+      UIUtil.drawImage(g, scaled, new Rectangle(x, y, w, h), null);
 
       gc.restore();
     }
