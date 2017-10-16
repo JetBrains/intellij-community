@@ -118,7 +118,7 @@ public class UiTestTask extends Task {
         } else {
           // Pass the entire test group, and let the test runner sift through GuiTestSuite.
           task.createJvmarg().setValue("-Dbootstrap.testcase=" + TEST_SUITE_CLASS_NAME);
-          task.createJvmarg().setValue("-Dui.test.groups=" + testSpec);
+          task.createJvmarg().setValue("-Dui.test.group=" + testSpec);
         }
 
         Path testClasspath = task.createClasspath();
