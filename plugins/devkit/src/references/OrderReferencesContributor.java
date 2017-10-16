@@ -96,7 +96,15 @@ public class OrderReferencesContributor extends PsiReferenceContributor {
           for (Extension e : extensionsForThisEp) {
             String id = e.getId().getStringValue();
             if (StringUtil.isNotEmpty(id)) {
-              idCompletionVariantsList.add(LookupElementBuilder.create(id));
+              DomTarget extensionTarget = DomTarget.getTarget(e);
+              if (extensionTarget != null) {
+                PsiElement extensionPsi = PomService.convertToPsi(extensionTarget);
+                idCompletionVariantsList.add(LookupElementBuilder.create(extensionPsi, id));
+              }
+              else {
+                // shouldn't happen, fallback for additional safety
+                idCompletionVariantsList.add(LookupElementBuilder.create(e.getXmlTag(), id));
+              }
             }
           }
           LookupElement[] idCompletionVariants = idCompletionVariantsList.toArray(new LookupElement[idCompletionVariantsList.size()]);
