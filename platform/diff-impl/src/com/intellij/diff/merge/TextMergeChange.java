@@ -324,11 +324,11 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
   @Nullable
   private GutterIconRenderer createResolveRenderer() {
-    if (!this.isConflict() || !myViewer.canApplyNonConflictedChange(this, ThreeSide.BASE)) return null;
+    if (!this.isConflict() || !myViewer.canResolveChangeAutomatically(this, ThreeSide.BASE)) return null;
 
     return createIconRenderer(DiffBundle.message("merge.dialog.resolve.change.action.name"), AllIcons.Diff.MagicResolve, false, () -> {
       myViewer.executeMergeCommand("Resolve conflict", Collections.singletonList(this), () -> {
-        myViewer.applyNonConflictedChange(this, ThreeSide.BASE);
+        myViewer.resolveChangeAutomatically(this, ThreeSide.BASE);
       });
     });
   }
