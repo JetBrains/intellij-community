@@ -1,18 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -84,27 +82,37 @@ public class UnixProcessManager {
     }
   }
 
-  public static boolean sendSigIntToProcessTree(Process process) {
+  public static boolean sendSigIntToProcessTree(@NotNull Process process) {
     return sendSignalToProcessTree(process, SIGINT);
   }
 
-  public static boolean sendSigKillToProcessTree(Process process) {
+  public static boolean sendSigKillToProcessTree(@NotNull Process process) {
     return sendSignalToProcessTree(process, SIGKILL);
   }
 
-  private static boolean doSendSignalToProcessTree(int process_pid, int signal) {
+  public static boolean sendSignalToProcessTree(@NotNull Process process, int signal) {
+    try {
+      return sendSignalToProcessTree(getProcessPid(process), signal);
+    }
+    catch (Exception e) {
+      LOG.warn("Error killing the process", e);
+      return false;
+    }
+  }
+
+  public static boolean sendSignalToProcessTree(int processId, int signal) {
     checkCLib();
 
     final int our_pid = C_LIB.getpid();
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Sending signal " + signal + " to process tree with root PID " + process_pid);
+      LOG.debug("Sending signal " + signal + " to process tree with root PID " + processId);
     }
 
     final Ref<Integer> foundPid = new Ref<Integer>();
     final ProcessInfo processInfo = new ProcessInfo();
     final List<Integer> childrenPids = new ArrayList<Integer>();
 
-    findChildProcesses(our_pid, process_pid, foundPid, processInfo, childrenPids);
+    findChildProcesses(our_pid, processId, foundPid, processInfo, childrenPids);
 
     // result is true if signal was sent to at least one process
     final boolean result;
@@ -123,23 +131,6 @@ public class UnixProcessManager {
     }
 
     return result;
-  }
-
-  /**
-   * Sends signal to every child process of a tree root process
-   *
-   * @param process tree root process
-   */
-  public static boolean sendSignalToProcessTree(@NotNull Process process, int signal) {
-    try {
-      final int process_pid = getProcessPid(process);
-      return doSendSignalToProcessTree(process_pid, signal);
-    }
-    catch (Exception e) {
-      //If we fail somehow just return false
-      LOG.warn("Error killing the process", e);
-      return false;
-    }
   }
 
   private static void findChildProcesses(final int our_pid,
