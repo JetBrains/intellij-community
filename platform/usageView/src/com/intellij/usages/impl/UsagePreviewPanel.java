@@ -17,7 +17,8 @@
 package com.intellij.usages.impl;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -38,7 +39,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
@@ -249,8 +249,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     if (cannotPreviewMessage != null) {
       releaseEditor();
       removeAll();
-      JComponent titleComp = new JLabel(cannotPreviewMessage, SwingConstants.CENTER);
-      add(titleComp, BorderLayout.CENTER);
+      getEmptyText().setText(cannotPreviewMessage);
       revalidate();
     }
     else {
