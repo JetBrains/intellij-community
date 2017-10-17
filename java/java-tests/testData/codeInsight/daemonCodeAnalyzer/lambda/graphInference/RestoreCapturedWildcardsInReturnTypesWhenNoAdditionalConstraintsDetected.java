@@ -1,3 +1,4 @@
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -52,5 +53,15 @@ class TestWithNonProperTypeBeforeCapture {
 
   private <K> Set<? super List<K>> foo() { //#CAP<? super List<K>> is not proper, can't be used as eq bound
     return null;
+  }
+}
+
+class TestWithNonPropertTypeBeforeCaptureInMethodCall {
+  private <K, V> void test(Stream<Map.Entry<K, V>> stream, BiFunction<K, V, ?> entryMapper) {
+    stream.map(createToStringMapper(entryMapper));
+  }
+
+  private <K, V> Function<? super Map.Entry<K, V>, String> createToStringMapper(BiFunction<K, V, ?> mapper) {
+    return k -> toString();
   }
 }
