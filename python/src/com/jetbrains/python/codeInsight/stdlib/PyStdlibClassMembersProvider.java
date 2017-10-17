@@ -4,19 +4,17 @@ package com.jetbrains.python.codeInsight.stdlib;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.psi.types.PyClassMembersProviderBase;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyFunctionType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author yole
@@ -27,7 +25,7 @@ public class PyStdlibClassMembersProvider extends PyClassMembersProviderBase {
   private static final Key<List<PyCustomMember>> SOCKET_MEMBERS_KEY = Key.create("socket.members");
 
   @NotNull
-  private static final List<PyCustomMember> MOCK_PATCH_MEMBERS = calcMockPatchMembers();
+  public static final List<PyCustomMember> MOCK_PATCH_MEMBERS = calcMockPatchMembers();
 
   @NotNull
   @Override
@@ -45,8 +43,8 @@ public class PyStdlibClassMembersProvider extends PyClassMembersProviderBase {
     }
 
     if (location instanceof PyReferenceExpression) {
-      final PyCallable mockPatchCallable = mockPatchCallable(classType, ((PyReferenceExpression)location).getQualifier(), context);
-      if (mockPatchCallable != null) {
+      final PyExpression qualifier = ((PyReferenceExpression)location).getQualifier();
+      if (qualifier instanceof PyReferenceExpression && referenceToMockPatch((PyReferenceExpression)qualifier, context)) {
         return MOCK_PATCH_MEMBERS;
       }
     }
@@ -56,8 +54,8 @@ public class PyStdlibClassMembersProvider extends PyClassMembersProviderBase {
 
   @Override
   public PsiElement resolveMember(PyClassType clazz, String name, @Nullable PsiElement location, @NotNull PyResolveContext resolveContext) {
-    final PyCallable mockPatchCallable = mockPatchCallable(clazz, location, resolveContext.getTypeEvalContext());
-    if (mockPatchCallable != null && location!= null) {
+    final TypeEvalContext context = resolveContext.getTypeEvalContext();
+    if (location instanceof PyReferenceExpression && referenceToMockPatch((PyReferenceExpression)location, context)) {
       for (PyCustomMember member : MOCK_PATCH_MEMBERS) {
         if (name.equals(member.getName())) {
           return member.resolve(location, resolveContext);
@@ -68,26 +66,19 @@ public class PyStdlibClassMembersProvider extends PyClassMembersProviderBase {
     return super.resolveMember(clazz, name, location, resolveContext);
   }
 
+  public static boolean referenceToMockPatch(@NotNull PyReferenceExpression referenceExpression, @NotNull TypeEvalContext context) {
+    final PyType type = context.getType(referenceExpression);
+    if (type instanceof PyFunctionType) {
+      return "unittest.mock.patch".equals(((PyFunctionType)type).getCallable().getQualifiedName());
+    }
+    return false;
+  }
+
   private static List<PyCustomMember> calcSocketMembers(PyFile socketFile) {
     final List<PyCustomMember> result = new ArrayList<>();
     addMethodsFromAttr(socketFile, result, "_socketmethods");
     addMethodsFromAttr(socketFile, result, "_delegate_methods");
     return result;
-  }
-
-  @Nullable
-  private static PyCallable mockPatchCallable(@NotNull PyClassType classType, @Nullable PsiElement location, @NotNull TypeEvalContext context) {
-    if (!PyNames.TYPES_FUNCTION_TYPE.equals(classType.getClassQName())) {
-      return null;
-    }
-
-    return Optional
-      .ofNullable(PyUtil.as(location, PyReferenceExpression.class))
-      .map(context::getType)
-      .map(qualifierType -> PyUtil.as(qualifierType, PyFunctionType.class))
-      .map(PyFunctionType::getCallable)
-      .filter(callable -> "unittest.mock.patch".equals(QualifiedNameFinder.getQualifiedName(callable)))
-      .orElse(null);
   }
 
   @NotNull
