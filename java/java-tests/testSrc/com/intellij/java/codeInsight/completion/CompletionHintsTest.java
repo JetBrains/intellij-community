@@ -743,6 +743,14 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     checkHintContents(null);
   }
 
+  public void testIncorrectTooltipIsNotShownForInnerContext() throws Exception {
+    configureJava("class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key, String def)");
+    type("new String(\"");
+    waitForAllAsyncStuff();
+    checkHintContents(null);
+  }
+
   private void checkResult(String text) {
     myFixture.checkResult(text);
   }
