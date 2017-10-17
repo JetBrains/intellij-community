@@ -278,12 +278,8 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
       //to override current progress in order to hide useless messages/%
       ProgressManager.getInstance().executeProcessUnderProgress(() -> runTools(scope, runGlobalToolsOnly, isOfflineInspections), ProgressWrapper.wrap(myProgressIndicator));
     }
-    catch (ProcessCanceledException e) {
+    catch (ProcessCanceledException | IndexNotReadyException e) {
       throw e;
-    }
-    catch (IndexNotReadyException e) {
-      DumbService.getInstance(myProject).showDumbModeNotification("Usage search is not available until indices are ready");
-      throw new ProcessCanceledException();
     }
     catch (Throwable e) {
       LOG.error(e);
