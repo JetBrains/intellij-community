@@ -10,15 +10,6 @@
     <orderEntry type="module" module-name="annotations" />
     <orderEntry type="module" module-name="external-system-rt" />
     <orderEntry type="module" module-name="gradle-tooling-extension-api" />
-    <orderEntry type="module-library">
-      <library name="GradleGuava">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../lib/guava-jdk5-17.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="Gradle" level="project" />
     <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="library" name="gson" level="project" />
