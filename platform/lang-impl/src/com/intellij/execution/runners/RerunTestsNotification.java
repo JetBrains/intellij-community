@@ -25,12 +25,11 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.GotItMessage;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.PositionTracker;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,9 +75,16 @@ public class RerunTestsNotification {
             @Override
             public RelativePoint recalculateLocation(@NotNull Balloon balloon) {
               RelativePoint point = RelativePoint.getSouthEastOf(consoleComponent);
-              Dimension balloonSize = balloon.getPreferredSize();
-              int scrollBarSize = JBUI.scale(10);
-              point.getPoint().translate(-balloonSize.width / 2 - scrollBarSize, -balloonSize.height / 2 - scrollBarSize);
+              Insets shadowInsets = balloon instanceof BalloonImpl ? ((BalloonImpl)balloon).getShadowBorderInsets()
+                                                                   : JBUI.emptyInsets();
+              Dimension balloonContentSize = JBDimension.create(balloon.getPreferredSize(), true);
+              JBInsets.removeFrom(balloonContentSize, shadowInsets);
+
+              // compensate "-shift.top" from BalloonImpl.Below.getShiftedPoint(java.awt.Point, java.awt.Insets)
+              point.getPoint().y += shadowInsets.top;
+
+              int spacingFromEdges = JBUI.scale(12);
+              point.getPoint().translate(-balloonContentSize.width / 2 - spacingFromEdges, -balloonContentSize.height / 2 - spacingFromEdges);
               return point;
             }
           },
