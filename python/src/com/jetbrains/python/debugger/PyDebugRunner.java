@@ -33,10 +33,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.xdebugger.XDebugProcess;
-import com.intellij.xdebugger.XDebugProcessStarter;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.*;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.console.PydevConsoleRunnerFactory;
 import com.jetbrains.python.console.PythonConsoleView;
@@ -216,6 +213,13 @@ public class PyDebugRunner extends GenericProgramRunner {
 
       @Override
       public void inputRequested() {
+      }
+    });
+
+    session.addSessionListener(new XDebugSessionListener() {
+      @Override
+      public void sessionPaused() {
+        ApplicationManager.getApplication().invokeLater(() -> console.enableConsole(false));
       }
     });
 
