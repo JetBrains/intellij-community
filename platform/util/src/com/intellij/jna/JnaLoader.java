@@ -14,6 +14,7 @@
 package com.intellij.jna;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.sun.jna.Native;
 
 public class JnaLoader {
@@ -22,11 +23,16 @@ public class JnaLoader {
   public static synchronized void load(Logger logger) {
     if (ourJnaLoaded == null) {
       ourJnaLoaded = Boolean.FALSE;
-      long t = System.currentTimeMillis();
-      int ptrSize = Native.POINTER_SIZE;
-      t = System.currentTimeMillis() - t;
-      logger.info("JNA library (" + (ptrSize << 3) + "-bit) loaded in " + t + " ms");
-      ourJnaLoaded = Boolean.TRUE;
+      try {
+        long t = System.currentTimeMillis();
+        int ptrSize = Native.POINTER_SIZE;
+        t = System.currentTimeMillis() - t;
+        logger.info("JNA library (" + (ptrSize << 3) + "-bit) loaded in " + t + " ms");
+        ourJnaLoaded = Boolean.TRUE;
+      }
+      catch (Throwable t) {
+        logger.error("Unable to load JNA library (OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION + ")", t);
+      }
     }
   }
 
