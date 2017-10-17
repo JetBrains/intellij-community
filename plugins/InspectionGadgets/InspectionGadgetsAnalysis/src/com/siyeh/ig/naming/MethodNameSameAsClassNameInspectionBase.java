@@ -17,13 +17,15 @@ package com.siyeh.ig.naming;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
 
 public class MethodNameSameAsClassNameInspectionBase extends BaseInspection {
   @Override
@@ -63,19 +65,12 @@ public class MethodNameSameAsClassNameInspectionBase extends BaseInspection {
       final String className = containingClass.getName();
       if (!methodName.equals(className)) return;
 
-      PsiMethod[] constructors = containingClass.getConstructors();
-      PsiParameter[] parameters = method.getParameterList().getParameters();
-      for (PsiMethod constructor : constructors) {
-        PsiParameter[] ctorParameters = constructor.getParameterList().getParameters();
-        if(parameters.length == ctorParameters.length &&
-           !EntryStream.zip(parameters, ctorParameters)
-             .mapKeys(PsiParameter::getType).mapValues(PsiParameter::getType)
-             .mapKeyValue((t1, t2) -> TypeConversionUtil.erasure(t1).equals(TypeConversionUtil.erasure(t2))).has(false)) {
-          return;
-        }
-      }
-
-      registerMethodError(method, isOnTheFly(), method.getBody() != null && !containingClass.isInterface());
+      MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
+      boolean canReplaceWithConstructor =
+        method.getBody() != null && !containingClass.isInterface() &&
+        Arrays.stream(containingClass.getConstructors())
+          .noneMatch(ctor -> MethodSignatureUtil.areErasedParametersEqual(signature, ctor.getSignature(PsiSubstitutor.EMPTY)));
+      registerMethodError(method, isOnTheFly(), canReplaceWithConstructor);
     }
   }
 }
