@@ -27,6 +27,10 @@ public abstract class PyTestTask {
   public void setUp(String testName) throws Exception {
   }
 
+  /**
+   * Method called on main thread.
+   * Each inheritor may do anything on edt, but should call parent *after all* on main thread
+   */
   public void tearDown() throws Exception {
   }
 
