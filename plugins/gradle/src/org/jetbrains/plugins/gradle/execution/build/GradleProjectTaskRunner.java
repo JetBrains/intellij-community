@@ -70,11 +70,11 @@ import static com.intellij.openapi.externalSystem.service.execution.ExternalSyst
 public class GradleProjectTaskRunner extends ProjectTaskRunner {
 
   @Language("Groovy")
-  private static final String FORCE_COMPILE_TASKS_INIT_SCRIPT = "allprojects {\n" +
-                                                                "  tasks.withType(AbstractCompile) {\n" +
-                                                                "    outputs.upToDateWhen { false }\n" +
-                                                                "  }" +
-                                                                "}\n";
+  private static final String FORCE_COMPILE_TASKS_INIT_SCRIPT_TEMPLATE = "projectsEvaluated { \n" +
+                                                                         "  rootProject.project('%s').tasks.withType(AbstractCompile) {  \n" +
+                                                                         "    outputs.upToDateWhen { false } \n" +
+                                                                         "  } \n" +
+                                                                         "}\n";
 
   @Override
   public void run(@NotNull Project project,
@@ -244,7 +244,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       }
 
       if (!moduleBuildTask.isIncrementalBuild()) {
-        projectInitScripts.add(FORCE_COMPILE_TASKS_INIT_SCRIPT);
+        projectInitScripts.add(String.format(FORCE_COMPILE_TASKS_INIT_SCRIPT_TEMPLATE, gradlePath));
       }
       String assembleTask = "assemble";
       if (GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY.equals(moduleType)) {
