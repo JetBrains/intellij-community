@@ -36,6 +36,7 @@ import org.junit.runner.notification.Failure
 import org.junit.runner.notification.RunListener
 import org.junit.runner.notification.RunNotifier
 import org.junit.runners.BlockJUnit4ClassRunner
+import org.junit.runners.Suite
 import org.junit.runners.model.FrameworkMethod
 import org.junit.runners.model.InitializationError
 import java.util.concurrent.TimeUnit
@@ -43,12 +44,17 @@ import kotlin.reflect.KClass
 
 
 class GuiTestLocalRunner @Throws(InitializationError::class)
-  constructor(testClass: Class<*>, val ide: Ide?) : BlockJUnit4ClassRunner(testClass) {
+constructor(testClass: Class<*>, val ide: Ide?) : BlockJUnit4ClassRunner(testClass) {
 
-  constructor(testClass: Class<*>): this(testClass, null)
+  constructor(testClass: Class<*>, suiteClass: Class<*>, ide: Ide?) : this(testClass, ide) {
+    mySuiteClass = suiteClass
+  }
+
+  constructor(testClass: Class<*>) : this(testClass, null)
 
   val SERVER_LOG = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.GuiTestLocalRunner")!!
   val criticalError = Ref<Boolean>(false)
+  var mySuiteClass: Class<*>? = null
 
   override fun runChild(method: FrameworkMethod, notifier: RunNotifier) {
 
@@ -68,7 +74,9 @@ class GuiTestLocalRunner @Throws(InitializationError::class)
 
     val description = this@GuiTestLocalRunner.describeChild(method)
     val eachNotifier = EachTestNotifier(notifier, description)
-    if (criticalError.get()) { eachNotifier.fireTestIgnored(); return }
+    if (criticalError.get()) {
+      eachNotifier.fireTestIgnored(); return
+    }
 
     SERVER_LOG.info("Starting test on server side: ${testClass.name}#${method.name}")
     val server = JUnitServerHolder.getServer()
@@ -76,7 +84,7 @@ class GuiTestLocalRunner @Throws(InitializationError::class)
     try {
       if (!server.isConnected()) {
         val localIde = ide ?: getIdeFromAnnotation(this@GuiTestLocalRunner.testClass.javaClass)
-        runIdeLocally(port = server.getPort(), ide = localIde)
+        runIde(port = server.getPort(), ide = localIde)
         if (!server.isStarted())
           server.start()
       }
@@ -89,15 +97,20 @@ class GuiTestLocalRunner @Throws(InitializationError::class)
       Assert.fail(e.message)
     }
     var testIsRunning = true
-    while(testIsRunning) {
+    while (testIsRunning) {
       val message = server.receive()
       if (message.content is JUnitInfo && message.content.testClassAndMethodName == JUnitInfo.getClassAndMethodName(description)) {
         when (message.content.type) {
           Type.STARTED -> eachNotifier.fireTestStarted()
-          Type.ASSUMPTION_FAILURE -> eachNotifier.addFailedAssumption((message.content.obj as Failure).exception as AssumptionViolatedException)
-          Type.IGNORED -> { eachNotifier.fireTestIgnored(); testIsRunning = false }
+          Type.ASSUMPTION_FAILURE -> eachNotifier.addFailedAssumption(
+            (message.content.obj as Failure).exception as AssumptionViolatedException)
+          Type.IGNORED -> {
+            eachNotifier.fireTestIgnored(); testIsRunning = false
+          }
           Type.FAILURE -> eachNotifier.addFailure(message.content.obj as Throwable)
-          Type.FINISHED -> { eachNotifier.fireTestFinished(); testIsRunning = false }
+          Type.FINISHED -> {
+            eachNotifier.fireTestFinished(); testIsRunning = false
+          }
           else -> throw UnsupportedOperationException("Unable to recognize received from JUnitClient")
         }
       }
@@ -124,7 +137,7 @@ class GuiTestLocalRunner @Throws(InitializationError::class)
     server.stopServer()
     //start a new one IDE
     val localIde = ide ?: getIdeFromAnnotation(this@GuiTestLocalRunner.testClass.javaClass)
-    runIdeLocally(port = server.getPort(), ide = localIde)
+    runIde(port = server.getPort(), ide = localIde)
     server.start()
   }
 
@@ -135,7 +148,7 @@ class GuiTestLocalRunner @Throws(InitializationError::class)
   }
 
   private fun sendResumeTestCommand(method: FrameworkMethod,
-                                 server: JUnitServer, resumeTestLabel: String) {
+                                    server: JUnitServer, resumeTestLabel: String) {
     val jUnitTestContainer = JUnitTestContainer(method.declaringClass, method.name, additionalInfo = resumeTestLabel)
     server.send(TransportMessage(MessageType.RESUME_TEST, jUnitTestContainer))
   }
@@ -167,20 +180,46 @@ class GuiTestLocalRunner @Throws(InitializationError::class)
       LOG.info("Starting test: '${testClass.name}.${method.name}'")
       //if IDE has a fatal errors from a previous test
       if (GuiTestUtilKt.fatalErrorsFromIde().isNotEmpty() or GuiTestUtil.doesIdeHaveFatalErrors()) {
-        val restartIdeMessage = TransportMessage(MessageType.RESTART_IDE, "IDE has fatal errors from previous test, let's start a new instance")
+        val restartIdeMessage = TransportMessage(MessageType.RESTART_IDE,
+                                                 "IDE has fatal errors from previous test, let's start a new instance")
         GuiTestThread.client?.send(restartIdeMessage) ?: throw Exception("JUnitClient is accidentally null")
       }
       else {
         if (!GuiTestStarter.isGuiTestThread())
-          runIdeLocally()
+          runIdeLocally() //TODO: investigate this case
         else
           super.runChild(method, notifier)
       }
-    } catch (e: Exception) {
+    }
+    catch (e: Exception) {
       LOG.error(e)
       throw e
     }
   }
+
+  private fun runIde(port: Int, ide: Ide) {
+    val testClassNames = getTestClassesNames()
+    if (testClassNames.isEmpty()) throw Exception("Test classes are not declared.")
+    runIdeLocally(port = port,
+                  ide = ide,
+                  testClassNames = testClassNames)
+  }
+
+  private fun getTestClassesNames(): List<String> {
+    if (mySuiteClass != null) {
+      val annotation = mySuiteClass!!.getAnnotation(Suite.SuiteClasses::class.java)
+      if (annotation?.value !is Array<*>) throw Exception("Annotation @Suite.SuiteClasses for suite doesn't contain classes as value or is null")
+      val array = annotation.value
+      return array.map {
+        if (it !is KClass<*>) throw Exception("Annotation @Suite.SuiteClasses for suite contains something else from Class<*> type")
+        it.java.canonicalName
+      }
+    }
+    else {
+      return listOf(this@GuiTestLocalRunner.testClass.javaClass.canonicalName)
+    }
+  }
+
 
   companion object {
     private val LOG = Logger.getInstance("#com.intellij.testGuiFramework.framework.GuiTestRunner")
@@ -188,7 +227,7 @@ class GuiTestLocalRunner @Throws(InitializationError::class)
     fun getIdeFromAnnotation(clazz: Class<*>): Ide {
       val annotation = clazz.getAnnotation(RunWithIde::class.java)
       val value = annotation?.value
-      val ideType = if(value != null) (value as KClass<out IdeType>).java.newInstance() else CommunityIde()
+      val ideType = if (value != null) (value as KClass<out IdeType>).java.newInstance() else CommunityIde()
       return Ide(ideType, 0, 0)
     }
   }
