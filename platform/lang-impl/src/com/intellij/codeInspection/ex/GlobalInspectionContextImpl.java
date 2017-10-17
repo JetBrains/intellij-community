@@ -51,10 +51,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.project.ProjectUtilCore;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.MessageType;
@@ -426,16 +423,18 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
     Processor<PsiFile> processor = file -> {
       ProgressManager.checkCanceled();
-      if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
+      Boolean readActionSuccess = DumbService.getInstance(getProject()).tryRunReadActionInSmartMode(() -> {
         if (!file.isValid()) {
-          return;
+          return true;
         }
         VirtualFile virtualFile = file.getVirtualFile();
         if (!scope.contains(virtualFile)) {
-          LOG.error(file.getName()+"; scope: "+scope+"; "+virtualFile);
+          LOG.error(file.getName() + "; scope: " + scope + "; " + virtualFile);
         }
         inspectFile(file, getEffectiveRange(searchScope, file), inspectionManager, localTools, globalSimpleTools, map);
-      })) {
+        return true;
+      }, "Inspect code is not available until indices are ready");
+      if (readActionSuccess == null || !readActionSuccess) {
         throw new ProcessCanceledException();
       }
 
