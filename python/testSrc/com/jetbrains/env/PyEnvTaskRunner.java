@@ -104,14 +104,14 @@ public class PyEnvTaskRunner {
           e);
       }
       finally {
-        TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-          try {
-            testTask.tearDown();
-          }
-          catch (Exception e) {
-            throw new RuntimeException("Couldn't tear down task", e);
-          }
-        });
+        try {
+          // Teardown should be called on main thread because fixture teardown checks for
+          // thread leaks, and blocked main thread is considered as leaked
+          testTask.tearDown();
+        }
+        catch (Exception e) {
+          throw new RuntimeException("Couldn't tear down task", e);
+        }
       }
     }
 

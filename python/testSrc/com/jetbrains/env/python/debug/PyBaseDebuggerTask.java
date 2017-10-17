@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
@@ -395,9 +396,8 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
 
   @Override
   public void tearDown() throws Exception {
-    assert SwingUtilities.isEventDispatchThread();
     try {
-      finishSession();
+      EdtTestUtil.runInEdtAndWait(() ->finishSession());
     }finally {
       PyBaseDebuggerTask.super.tearDown();
     }
