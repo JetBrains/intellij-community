@@ -380,7 +380,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       if (unresolved) {
         boolean ignoreUnresolved = false;
         for (PyInspectionExtension extension : Extensions.getExtensions(PyInspectionExtension.EP_NAME)) {
-          if (extension.ignoreUnresolvedReference(node, reference)) {
+          if (extension.ignoreUnresolvedReference(node, reference, myTypeEvalContext)) {
             ignoreUnresolved = true;
             break;
           }

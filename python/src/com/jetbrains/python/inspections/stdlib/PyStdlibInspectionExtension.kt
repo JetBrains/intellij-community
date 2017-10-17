@@ -28,11 +28,11 @@ class PyStdlibInspectionExtension : PyInspectionExtension() {
     return false
   }
 
-  override fun ignoreUnresolvedReference(node: PyElement, reference: PsiReference): Boolean {
+  override fun ignoreUnresolvedReference(node: PyElement, reference: PsiReference, context: TypeEvalContext): Boolean {
     if (node is PyReferenceExpression && node.isQualified) {
       val qualifier = node.qualifier
       if (qualifier is PyReferenceExpression) {
-        return PyStdlibClassMembersProvider.referenceToMockPatch(qualifier, TypeEvalContext.codeInsightFallback(qualifier.project)) &&
+        return PyStdlibClassMembersProvider.referenceToMockPatch(qualifier, context) &&
                PyStdlibClassMembersProvider.MOCK_PATCH_MEMBERS.find { it.name == node.name } != null
       }
     }
