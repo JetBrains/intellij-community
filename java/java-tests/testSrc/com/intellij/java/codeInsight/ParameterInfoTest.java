@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
@@ -25,16 +11,19 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
 import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.fixtures.EditorHintFixture;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.testFramework.utils.parameterInfo.MockCreateParameterInfoContext;
 import com.intellij.testFramework.utils.parameterInfo.MockParameterInfoUIContext;
 import com.intellij.testFramework.utils.parameterInfo.MockUpdateParameterInfoContext;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
@@ -110,6 +99,7 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testSuperConstructorCalls() {
+    EditorHintFixture hintFixture = new EditorHintFixture(getTestRootDisposable());
     myFixture.configureByText("x.java",
                               "class A {\n" +
                               "       public A(String s, int... p) {}\n" +
@@ -119,10 +109,9 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
                               "           super(<caret>\"a\", 1);\n" +
                               "       }\n" +
                               "   }");
-    PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiMethodCallExpression.class);
-    assertNotNull(callExpression);
-    assertNotNull(new MethodParameterInfoHandler().findElementForUpdatingParameterInfo(
-      new MockUpdateParameterInfoContext(getEditor(), getFile(), new Object[] {callExpression.resolveMethodGenerics()})));
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO);
+    UIUtil.dispatchAllInvocationEvents();
+    assertEquals("<html><b>String s</b>, int... p</html>", hintFixture.getCurrentHintText());
   }
 
   private void doTest2CandidatesWithPreselection() {

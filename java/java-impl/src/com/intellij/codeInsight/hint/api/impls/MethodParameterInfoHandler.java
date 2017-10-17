@@ -81,7 +81,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   @Override
   @Nullable
   public PsiExpressionList findElementForParameterInfo(@NotNull final CreateParameterInfoContext context) {
-    PsiExpressionList argumentList = findArgumentList(context.getFile(), context.getOffset(), context.getParameterListStart());
+    PsiExpressionList argumentList = findArgumentList(context.getFile(), context.getOffset(), context.getParameterListStart(), true);
 
     if (argumentList != null) {
       return findMethodsForArgumentList(context, argumentList);
@@ -89,13 +89,19 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     return null;
   }
 
-  private PsiExpressionList findArgumentList(final PsiFile file, int offset, int parameterStart) {
-    PsiExpressionList argumentList = ParameterInfoUtils.findArgumentList(file, offset, parameterStart, this);
+  private PsiExpressionList findArgumentList(final PsiFile file, int offset, int parameterStart, boolean allowOuter) {
+    PsiExpressionList argumentList = ParameterInfoUtils.findArgumentList(file, offset, parameterStart, this, allowOuter);
     if (argumentList == null) {
-      final PsiMethodCallExpression methodCall = ParameterInfoUtils.findParentOfTypeWithStopElements(file, offset, PsiMethodCallExpression.class, PsiMethod.class);
+      final PsiMethodCallExpression methodCall = ParameterInfoUtils.findParentOfTypeWithStopElements(file, offset, 
+                                                                                                     PsiMethodCallExpression.class,
+                                                                                                     PsiNewExpression.class,
+                                                                                                     PsiMethod.class);
 
       if (methodCall != null) {
         argumentList = methodCall.getArgumentList();
+        if (!allowOuter && argumentList.getTextRange().getStartOffset() != parameterStart) {
+          argumentList = null;
+        }
       }
     }
     return argumentList;
@@ -125,7 +131,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       context.setPreservedOnHintHidden(false);
       return null;
     }
-    PsiExpressionList expressionList = findArgumentList(context.getFile(), context.getOffset(), context.getParameterListStart());
+    PsiExpressionList expressionList = findArgumentList(context.getFile(), context.getOffset(), context.getParameterListStart(), false);
     if (expressionList != null) {
       Object[] candidates = context.getObjectsToView();
       if (candidates != null && candidates.length != 0) {
