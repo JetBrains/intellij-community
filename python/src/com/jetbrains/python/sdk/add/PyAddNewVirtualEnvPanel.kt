@@ -66,7 +66,12 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
 
   override val panelName = "New environment"
   override val icon: Icon = PythonIcons.Python.Virtualenv
-  private val baseSdkField = PySdkPathChoosingComboBox(findBaseSdks(existingSdks), null)
+  private val baseSdkField = PySdkPathChoosingComboBox(findBaseSdks(existingSdks), null).apply {
+    val preferredSdkPath = PySdkSettings.instance.preferredVirtualEnvBaseSdk
+    items.find { it.homePath == preferredSdkPath }?.let {
+      selectedSdk = it
+    }
+  }
   private val pathField = TextFieldWithBrowseButton().apply {
     val defaultBasePath = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectBasePath))
     val parentPath = PathUtil.getParentPath(defaultBasePath)
@@ -111,7 +116,10 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
       sdk.associateWithProject(project, newProjectPath != null)
     }
     excludeDirectoryFromProject(root, project)
-    PySdkSettings.instance.setPreferredVirtualEnvBasePath(FileUtil.toSystemIndependentName(pathField.text), projectBasePath)
+    with(PySdkSettings.instance) {
+      setPreferredVirtualEnvBasePath(FileUtil.toSystemIndependentName(pathField.text), projectBasePath)
+      preferredVirtualEnvBaseSdk = baseSdkField.selectedSdk?.homePath
+    }
     return sdk
   }
 
