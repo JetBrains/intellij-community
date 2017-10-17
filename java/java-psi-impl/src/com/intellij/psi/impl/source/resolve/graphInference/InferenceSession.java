@@ -770,7 +770,7 @@ public class InferenceSession {
       InferenceVariable[] variables = initBounds(null, restParamSubstitution, capturedParams.toArray(PsiTypeParameter.EMPTY_ARRAY));
       int idx = 0;
       for (PsiType parameter : parameters) {
-        if (parameter instanceof PsiCapturedWildcardType) {
+        if (parameter instanceof PsiCapturedWildcardType && isProperType(((PsiCapturedWildcardType)parameter).getWildcard())) {
           variables[idx++].putUserData(ORIGINAL_CAPTURE, (PsiCapturedWildcardType)parameter);
         }
       }
@@ -1234,8 +1234,7 @@ public class InferenceSession {
         //restore captured wildcard from method return type when no additional constraints were inferred
         //to preserve equality of type arguments
         if (capturedWildcard != null &&
-            capturedWildcard.getUpperBound().equals(getUpperBound(aClass)) &&
-            isProperType(capturedWildcard.getWildcard())) {
+            capturedWildcard.getUpperBound().equals(getUpperBound(aClass))) {
           eqBound = capturedWildcard;
         }
       }
