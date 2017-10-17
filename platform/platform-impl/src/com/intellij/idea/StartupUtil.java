@@ -323,6 +323,7 @@ public class StartupUtil {
     JnaLoader.load(log);
 
     if (SystemInfo.isWin2kOrNewer) {
+      //noinspection ResultOfMethodCallIgnored
       IdeaWin32.isAvailable();  // logging is done there
     }
 
