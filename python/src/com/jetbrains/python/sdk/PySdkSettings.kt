@@ -30,10 +30,17 @@ class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
     set(value) {
       state.USE_NEW_ENVIRONMENT_FOR_NEW_PROJECT = value
     }
+
   var preferredEnvironmentType: String?
     get() = state.PREFERRED_ENVIRONMENT_TYPE
     set(value) {
       state.PREFERRED_ENVIRONMENT_TYPE = value
+    }
+
+  var preferredVirtualEnvBaseSdk: String?
+    get() = state.PREFERRED_VIRTUALENV_BASE_SDK
+    set(value) {
+      state.PREFERRED_VIRTUALENV_BASE_SDK = value
     }
 
   fun setPreferredVirtualEnvBasePath(value: @SystemIndependent String, projectPath: @SystemIndependent String) {
@@ -79,6 +86,8 @@ class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
     var PREFERRED_ENVIRONMENT_TYPE: String? = null
     @JvmField
     var PREFERRED_VIRTUALENV_BASE_PATH: String? = null
+    @JvmField
+    var PREFERRED_VIRTUALENV_BASE_SDK: String? = null
   }
 
   private val defaultVirtualEnvRoot: @SystemIndependent String
