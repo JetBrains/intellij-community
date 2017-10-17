@@ -195,11 +195,10 @@ object InvocationCountOrigin {
 }
 
 
-class CompletionNumberWeigher : LookupElementWeigher("completion.number.weigher") {
+class CompletionNumberWeigher : LookupElementWeigher("completion.invocation.count") {
 
     override fun weigh(element: LookupElement): Comparable<Nothing> {
-        val weigh = InvocationCountOrigin.invocationTime(element)
-        return weigh
+        return InvocationCountOrigin.invocationTime(element)
     }
 
 }
