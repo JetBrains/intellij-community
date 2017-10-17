@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.google.common.collect.Lists;
@@ -32,6 +18,7 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportResolver;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -396,8 +383,8 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   public void testFromPackageModuleImportElementNamedAsModule() {
     assertResolvesTo(PyFunction.class, "foo");
     final PsiManager psiManager = myFixture.getPsiManager();
-    PyTestCase.assertNotParsed((PyFile)psiManager.findFile(myFixture.findFileInTempDir("p1/__init__.py")));
-    PyTestCase.assertNotParsed((PyFile)psiManager.findFile(myFixture.findFileInTempDir("p1/foo.py")));
+    PyTestCase.assertNotParsed(psiManager.findFile(myFixture.findFileInTempDir("p1/__init__.py")));
+    PyTestCase.assertNotParsed(psiManager.findFile(myFixture.findFileInTempDir("p1/foo.py")));
   }
 
   // PY-10819
@@ -545,12 +532,17 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
 
   public void testCustomMemberTargetClass(){
     prepareTestDirectory();
-    PyCustomMember customMember = new PyCustomMember("Clazz").resolvesToClass("pkg.mod1.Clazz");
-    PsiFile context = myFixture.configureByText("a.py", "");
-    PsiElement resolved = customMember.resolve(context);
+
+    final PyCustomMember customMember = new PyCustomMember("Clazz").resolvesToClass("pkg.mod1.Clazz");
+    final PsiFile context = myFixture.configureByText("a.py", "");
+
+    final TypeEvalContext typeEvalContext = TypeEvalContext.codeAnalysis(myFixture.getProject(), context);
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext);
+
+    final PsiElement resolved = customMember.resolve(context, resolveContext);
     assertInstanceOf(resolved, PyTypedElement.class);
-    PyTypedElement pyTypedElement = (PyTypedElement) resolved;
-    PyType type = TypeEvalContext.codeAnalysis(myFixture.getProject(), context).getType(pyTypedElement);
+
+    final PyType type = typeEvalContext.getType((PyTypedElement) resolved);
     assertInstanceOf(type, PyClassType.class);
   }
 }
