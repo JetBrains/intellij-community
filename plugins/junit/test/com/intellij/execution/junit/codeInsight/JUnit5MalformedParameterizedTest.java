@@ -31,9 +31,13 @@ public class JUnit5MalformedParameterizedTest extends LightInspectionTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    addEnvironmentClass("package org.junit.platform.commons.annotation;\n" +
+                        "public @interface Testable {}");
     addEnvironmentClass("package org.junit.jupiter.params;\n" +
+                        "@org.junit.platform.commons.annotation.Testable\n" +
                         "public @interface ParameterizedTest {}");
     addEnvironmentClass("package org.junit.jupiter.api;\n" +
+                        "@org.junit.platform.commons.annotation.Testable\n" +
                         "public @interface Test {}");
     addEnvironmentClass("package org.junit.jupiter.api;\n" +
                         "public interface TestInfo {}");
