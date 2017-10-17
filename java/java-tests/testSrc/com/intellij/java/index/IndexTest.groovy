@@ -71,6 +71,7 @@ import com.intellij.util.indexing.*
 import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.indexing.impl.MapReduceIndex
 import com.intellij.util.io.*
+import com.siyeh.ig.JavaOverridingMethodUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
@@ -796,5 +797,16 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       files = FilenameIndex.getFilesByName(project, filename, GlobalSearchScope.moduleScope(myModule))
       assert files?.length == 1
     }).assertTiming()
+  }
+
+  void "test class file in src content isn't returned from index"() {
+    def runnable = JavaPsiFacade.getInstance(project).findClass(Runnable.name, GlobalSearchScope.allScope(project))
+    def thread = JavaPsiFacade.getInstance(project).findClass(Thread.name, GlobalSearchScope.allScope(project))
+    def srcRoot = myFixture.tempDirFixture.getFile("")
+    WriteCommandAction.runWriteCommandAction(project) { VfsUtil.copy(this, thread.containingFile.virtualFile, srcRoot) }
+
+    def projectScope = GlobalSearchScope.projectScope(project)
+    assert !JavaOverridingMethodUtil.getOverridingMethodsIfCheapEnough(runnable.methods[0], projectScope, { true }).findFirst().present
+    assert StubIndex.instance.getElements(JavaStubIndexKeys.METHODS, 'run', project, projectScope, PsiMethod).empty 
   }
 }
