@@ -26,6 +26,11 @@ class WinProcessManager {
     String processClassName = process.getClass().getName();
     if (processClassName.equals("java.lang.Win32Process") || processClassName.equals("java.lang.ProcessImpl")) {
       try {
+        if (SystemInfo.IS_AT_LEAST_JAVA9) {
+          //noinspection JavaReflectionMemberAccess
+          return ((Long)Process.class.getMethod("pid").invoke(process)).intValue();
+        }
+
         long handle = assertNotNull(ReflectionUtil.getField(process.getClass(), process, long.class, "handle"));
         return Kernel32.INSTANCE.GetProcessId(new WinNT.HANDLE(Pointer.createConstant(handle)));
       }

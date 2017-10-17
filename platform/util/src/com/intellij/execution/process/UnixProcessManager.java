@@ -67,6 +67,11 @@ public class UnixProcessManager {
 
   public static int getProcessId(@NotNull Process process) {
     try {
+      if (SystemInfo.IS_AT_LEAST_JAVA9 && "java.lang.ProcessImpl".equals(process.getClass().getName())) {
+        //noinspection JavaReflectionMemberAccess
+        return ((Long)Process.class.getMethod("pid").invoke(process)).intValue();
+      }
+
       return assertNotNull(ReflectionUtil.getField(process.getClass(), process, int.class, "pid"));
     }
     catch (Throwable t) {
