@@ -96,8 +96,6 @@ public class ConsoleHistoryConstrollerTest extends LightPlatformCodeInsightTestC
     execStatementList1();
     setCaretWithText("Statement<caret> 4");
     consoleNext();
-    consoleNext();
-
     consolePrev();
     checkResultByText("Statement<caret> 4");
   }
