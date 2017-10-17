@@ -614,13 +614,19 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       descriptions.add(d);
     }
     for (AttributesDescriptor descriptor : attributeDescriptors) {
-      LOG.assertTrue(descriptor != null, className);
+      if (descriptor == null) {
+        LOG.warn("Null attribute descriptor in " + className);
+        continue;
+      }
       SchemeTextAttributesDescription d = new SchemeTextAttributesDescription(
         descriptor.getDisplayName(), group, descriptor.getKey(), scheme, null, null);
       descriptions.add(d);
     }
     for (ColorDescriptor descriptor : provider.getColorDescriptors()) {
-      LOG.assertTrue(descriptor != null, className);
+      if (descriptor == null) {
+        LOG.warn("Null color descriptor in " + className);
+        continue;
+      }
       EditorSettingColorDescription d = new EditorSettingColorDescription(
         descriptor.getDisplayName(), group, descriptor.getKey(), descriptor.getKind(), scheme);
       descriptions.add(d);
