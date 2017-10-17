@@ -763,18 +763,19 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
         parent.loading = null;
       }
       else {
-        for (Node node : child.getChildren()) {
-          //TODO: remove only parent paths
-          removeMapping(child, node);
-        }
         child.removePaths(parent);
-        if (child.paths.isEmpty()) {
-          child.queue.close();
-          Node node = map.remove(child.object);
-          if (node != child) {
-            LOG.warn("invalid node: " + child.object);
-            if (node != null) map.put(node.object, node);
-          }
+        removeEmpty(child);
+      }
+    }
+
+    private void removeEmpty(@NotNull Node child) {
+      child.getChildren().forEach(this::removeEmpty);
+      if (child.paths.isEmpty()) {
+        child.queue.close();
+        Node node = map.remove(child.object);
+        if (node != child) {
+          LOG.warn("invalid node: " + child.object);
+          if (node != null) map.put(node.object, node);
         }
       }
     }
@@ -825,6 +826,9 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
       if (!paths.add(path)) {
         LOG.warn("node is already attached to " + path);
       }
+      for (Node child : getChildren()) {
+        child.insertPath(path.pathByAddingChild(child.object));
+      }
     }
 
     private void insertPaths(Stream<TreePath> stream) {
@@ -846,6 +850,9 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
     private void removePath(TreePath path) {
       if (!paths.remove(path)) {
         LOG.warn("node is not attached to " + path);
+      }
+      for (Node child : getChildren()) {
+        child.removePath(path.pathByAddingChild(child.object));
       }
     }
 
