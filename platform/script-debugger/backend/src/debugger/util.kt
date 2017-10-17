@@ -33,7 +33,7 @@ import java.util.concurrent.Future
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 
-internal class LogEntry(val message: Any, val marker: String) {
+internal class LogEntry(val message: CharSequence, val marker: String) {
   internal val time = System.currentTimeMillis()
 }
 
@@ -59,33 +59,18 @@ class MessagingLogger internal constructor(debugFile: String) {
 
           writer.write("""{"timestamp": "${dateFormatter.format(entry.time)}", """)
           val message = entry.message
-          when (message) {
-            is CharSequence -> {
-              writer.write("\"${entry.marker}\": ")
-              writer.flush()
+          writer.write("\"${entry.marker}\": ")
+          writer.flush()
 
-              if (message is CharSequenceBackedByChars) {
-                fileChannel.write(message.byteBuffer)
-              }
-              else {
-                fileChannel.write(Charsets.UTF_8.encode(CharBuffer.wrap(message)))
-              }
-
-              writer.write("},\n")
-              writer.flush()
-            }
-            is ByteBuf -> {
-              writer.write("\"${entry.marker}\": ")
-              writer.flush()
-
-              message.getBytes(message.readerIndex(), out, message.readableBytes())
-              message.release()
-
-              writer.write("},\n")
-              writer.flush()
-            }
-            else -> throw RuntimeException("Unknown message type")
+          if (message is CharSequenceBackedByChars) {
+            fileChannel.write(message.byteBuffer)
           }
+          else {
+            fileChannel.write(Charsets.UTF_8.encode(CharBuffer.wrap(message)))
+          }
+
+          writer.write("},\n")
+          writer.flush()
         }
       }
       catch (e: InterruptedException) {
@@ -98,12 +83,16 @@ class MessagingLogger internal constructor(debugFile: String) {
     }
   }
 
-  fun add(inMessage: CharSequence, marker: String = "IN") {
-    queue.add(LogEntry(inMessage, marker))
+  fun add(message: CharSequence, marker: String = "IN") {
+    // ignore Network events
+    if (!message.startsWith("{\"method\":\"Network.")) {
+      queue.add(LogEntry(message, marker))
+    }
   }
 
   fun add(outMessage: ByteBuf, marker: String = "OUT") {
-    queue.add(LogEntry(outMessage.copy(), marker))
+    val charSequence = outMessage.getCharSequence(outMessage.readerIndex(), outMessage.readableBytes(), Charsets.UTF_8)
+    add(charSequence, marker)
   }
 
   fun close() {
