@@ -39,7 +39,7 @@ import java.util.*;
  */
 public class ProjectImportAction implements BuildAction<ProjectImportAction.AllModels>, Serializable {
 
-  private final Set<Class> myExtraProjectModelClasses = new HashSet<Class>();
+  private final Set<Class> myExtraProjectModelClasses = new LinkedHashSet<Class>();
   private final boolean myIsPreviewMode;
   private final boolean myIsGradleProjectDirSupported;
   private final boolean myIsCompositeBuildsSupported;
