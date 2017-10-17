@@ -20,6 +20,7 @@ import com.intellij.build.events.impl.FailureImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.SimpleTextAttributes;
@@ -27,9 +28,13 @@ import com.intellij.ui.treeStructure.CachingSimpleNode;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -38,6 +43,8 @@ import java.util.List;
  */
 public class ExecutionNode extends CachingSimpleNode {
   private final List<ExecutionNode> myChildrenList = ContainerUtil.newSmartList();
+  @Nullable
+  private final ExecutionNodeProgressAnimator myAnimator;
   private long startTime;
   private long endTime;
   @Nullable
@@ -50,8 +57,9 @@ public class ExecutionNode extends CachingSimpleNode {
   private EventResult myResult;
   private boolean myAutoExpandNode;
 
-  public ExecutionNode(Project aProject) {
+  public ExecutionNode(Project aProject, @Nullable ExecutionNodeProgressAnimator animator) {
     super(aProject, null);
+    myAnimator = animator;
   }
 
   @Override
@@ -61,7 +69,25 @@ public class ExecutionNode extends CachingSimpleNode {
 
   @Override
   protected void update(PresentationData presentation) {
-    super.update(presentation);
+    Color oldColor = myColor;
+    String oldName = myName;
+    Icon oldIcon = getIcon();
+    List<ColoredFragment> oldFragments = new ArrayList<>(presentation.getColoredText());
+    myColor = UIUtil.getTreeTextForeground();
+
+    setIcon(
+      isRunning() ? ExecutionNodeProgressAnimator.getCurrentFrame() :
+      isFailed() ? AllIcons.Process.State.RedExcl :
+      isSkipped() ? AllIcons.Process.State.YellowStr :
+      AllIcons.Process.State.GreenOK
+    );
+
+    presentation.setPresentableText(myName);
+    presentation.setChanged(!Comparing.equal(new Object[]{getIcon(), myName, oldFragments, myColor},
+                                             new Object[]{oldIcon, oldName, oldFragments, oldColor}));
+
+    presentation.setForcedTextForeground(myColor);
+    presentation.setIcon(getIcon());
     if (title != null) {
       presentation.addText(title + ": ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
@@ -74,21 +100,15 @@ public class ExecutionNode extends CachingSimpleNode {
     if (tooltip != null) {
       presentation.setTooltip(tooltip);
     }
-  }
 
-  @Override
-  protected void updateFileStatus() {
-    // DO NOTHING
-  }
-
-  @Override
-  protected void doUpdate() {
-    setIcon(
-      isRunning() ? ExecutionNodeProgressAnimator.getCurrentFrame() :
-      isFailed() ? AllIcons.Process.State.RedExcl :
-      isSkipped() ? AllIcons.Process.State.YellowStr :
-      AllIcons.Process.State.GreenOK
-    );
+    if (myAnimator != null) {
+      if (isRunning()) {
+        myAnimator.addNode(this);
+      }
+      else {
+        myAnimator.removeNode(this);
+      }
+    }
   }
 
   @Override
