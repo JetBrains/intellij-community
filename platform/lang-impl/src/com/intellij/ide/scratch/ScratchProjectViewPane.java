@@ -25,6 +25,7 @@ import com.intellij.ide.projectView.impl.ProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
@@ -57,6 +58,11 @@ import java.util.List;
 public class ScratchProjectViewPane extends ProjectViewPane {
 
   public static final String ID = "Scratches";
+
+  public static boolean isScratchesMergedIntoProjectTab() {
+    return Registry.is("ide.scratch.in.project.view") &&
+           !ApplicationManager.getApplication().isUnitTestMode();
+  }
 
   public ScratchProjectViewPane(Project project) {
     super(project);
@@ -158,7 +164,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
   @Override
   public boolean isInitiallyVisible() {
-    return !Registry.is("ide.scratch.in.project.view");
+    return !isScratchesMergedIntoProjectTab();
   }
 
   @NotNull
