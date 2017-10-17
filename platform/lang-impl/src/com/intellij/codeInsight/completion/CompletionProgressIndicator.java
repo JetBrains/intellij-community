@@ -100,7 +100,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final CompletionLookupArranger myArranger;
   private OffsetsInFile myHostOffsets;
   private final LookupImpl myLookup;
-  private final Alarm mySuppressTimeoutAlarm = new Alarm();
+  private final Alarm mySuppressTimeoutAlarm = new Alarm(this);
   private final MergingUpdateQueue myQueue;
   private final Update myUpdate = new Update("update") {
     @Override
