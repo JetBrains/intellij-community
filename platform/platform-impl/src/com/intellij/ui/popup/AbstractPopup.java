@@ -925,7 +925,9 @@ public class AbstractPopup implements JBPopup {
 
     myPopup.show();
 
-    myPreferredFocusedComponent.requestFocusInWindow();
+    if (myPreferredFocusedComponent != null) {
+      myPreferredFocusedComponent.requestFocusInWindow();
+    }
 
     WindowAction.setEnabledFor(myPopup.getWindow(), myResizable);
 
