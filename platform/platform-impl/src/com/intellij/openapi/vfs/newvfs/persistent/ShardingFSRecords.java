@@ -2,7 +2,6 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
 import com.intellij.cassandra.CassandraIndexTable;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileAttributes;
@@ -88,7 +87,7 @@ public class ShardingFSRecords implements IFSRecords {
     myNames = names;
     myCache = fileNameCache;
     myAttrsList = attrsList;
-    myMounts = CassandraIndexTable.getInstance().getMounts(0);
+    myMounts = CassandraIndexTable.getInstance().getMountedChildren(0);
     myMounts.forEach(id -> {
       FSRecordsSource.MountPoint mp = myMounts.get(id);
 

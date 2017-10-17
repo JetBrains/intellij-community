@@ -19,9 +19,8 @@ import com.datastax.driver.core.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsSource;
+import com.intellij.openapi.vfs.newvfs.persistent.IFSRecords;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntObjectHashMap;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -35,71 +34,71 @@ public class CassandraIndexTable {
   private final Session mySession;
   private final PreparedStatement myQueryStatement;
   private final PreparedStatement myForwardQueryStatement;
-  private final PreparedStatement myMaxIdQueryStatement;
-  private final PreparedStatement myRootsQueryStatement;
+    private final PreparedStatement myRootsQueryStatement;
   private final PreparedStatement myLoadRecordsQueryStatement;
   private final PreparedStatement myTreeQueryStatement;
   private final PreparedStatement myMountsQueryStatement;
   private final PreparedStatement myContentsQueryStatement;
   private final PreparedStatement myAttrQueryStatement;
+  private final PreparedStatement myQueryShardsStatement;
 
-
-  public int getMaxId(int indexingSession, int shardId) {
-    Row result = mySession.execute(myMaxIdQueryStatement.bind(shardId, indexingSession)).one();
-    if (result == null) {
-      return 2;
-    }
-    return result.getInt("result");
-  }
-
-  public Map<String, Integer> getRoots(int indexingSession, int shardId) {
-    ResultSet result = mySession.execute(myRootsQueryStatement.bind(shardId, indexingSession));
-    HashMap<String, Integer> m = new HashMap<>();
-    for (Row row : result.all()) {
-      m.put(row.getString("url"),
-            row.getInt("file_id"));
-    }
-    return m;
-  }
-
-  public List<FSRecordsSource.RecordInfo> loadFSRecords(int shardId, int indexingSession, List<Integer> ids) {
-    return mySession.execute(myLoadRecordsQueryStatement.bind(shardId, ids, indexingSession))
-      .all().stream()
-      .map(r -> new FSRecordsSource.RecordInfo(r.getInt("file_id"),
-                                               r.getString("name"),
-                                               r.getLong("timestamp"),
-                                               r.getLong("length"),
-                                               r.getInt("flags")))
+  public List<IFSRecords.RootRecord> getRoots(List<Integer> shards) {
+    return mySession.execute(myRootsQueryStatement.bind(shards))
+      .all()
+      .stream()
+      .map(row -> new IFSRecords.RootRecord(row.getInt("file_id"),
+                                            row.getString("url")))
       .collect(Collectors.toList());
   }
 
-  public ByteBuffer getContent(int shardId, int fileId) {
-    Row one = mySession.execute(myContentsQueryStatement.bind(shardId, fileId)).one();
+  public List<FSRecordsSource.RecordInfo> loadFSRecords(List<FSRecordsSource.RecordId> ids) {
+    return ids.stream().collect(Collectors.groupingBy(id -> id.shardId,
+                                                      Collectors.mapping(x -> x.fileId, Collectors.toList())))
+      .entrySet()
+      .stream()
+      .flatMap(entry -> mySession.execute(myLoadRecordsQueryStatement.bind(entry.getKey(), entry.getValue()))
+               .all().stream()
+               .map(r -> new FSRecordsSource.RecordInfo(r.getInt("file_id"),
+                                                        r.getString("name"),
+                                                        r.getLong("timestamp"),
+                                                        r.getLong("length"),
+                                                        r.getInt("flags"),
+                                                        r.getBytes("content_hash"))))
+      .collect(Collectors.toList());
+  }
+
+  public ByteBuffer getContent(ByteBuffer contentHash) {
+    Row one = mySession.execute(myContentsQueryStatement.bind(contentHash)).one();
     return one == null ? null : one.getBytes("content");
   }
 
-  public ByteBuffer readAttr(int shardId, int fileId, String attrId) {
-    Row r = mySession.execute(myAttrQueryStatement.bind(shardId, fileId, attrId)).one();
+  public ByteBuffer readAttr(FSRecordsSource.RecordId recordId, String attrId, int version) {
+    Row r = mySession.execute(myAttrQueryStatement.bind(recordId.shardId, recordId.fileId, attrId)).one();
     return r == null ? null : r.getBytes("value");
   }
 
-  public List<Integer> getTree(int shardId, int indexingSession) {
-    Row one = mySession.execute(myTreeQueryStatement.bind(shardId, indexingSession)).one();
+  public List<Integer> getTree(int shardId) {
+    Row one = mySession.execute(myTreeQueryStatement.bind(shardId)).one();
     if (one == null) {
       return ContainerUtil.emptyList();
     }
     return one.getList("tree", Integer.class);
   }
 
-  public TIntObjectHashMap<FSRecordsSource.MountPoint> getMounts(int indexingSession) {
-    ResultSet mounts = mySession.execute(myMountsQueryStatement.bind(indexingSession));
-    TIntObjectHashMap<FSRecordsSource.MountPoint> result = new TIntObjectHashMap<>();
-    mounts.all().stream()
-      .map(row -> Pair.create(row.getInt("shard_id"),
-                              new FSRecordsSource.MountPoint(row.getInt("parent_file_id"),
-                                                             row.getInt("parent_shard_id"))))
-      .forEach(pair -> result.put(pair.first, pair.second));
-    return result;
+  public List<FSRecordsSource.RecordId> getMountedChildren(FSRecordsSource.RecordId recordId) {
+    return mySession.execute(myMountsQueryStatement.bind(recordId.fileId, recordId.shardId))
+      .all()
+      .stream()
+      .map(row -> new FSRecordsSource.RecordId(row.getInt("child_file_id"),
+                                               row.getInt("child_shard_id")))
+      .collect(Collectors.toList());
+  }
+
+  public List<Integer> getShardIds(int fileId) {
+    return mySession.execute(myQueryShardsStatement.bind(fileId))
+      .all().stream()
+      .map(x-> x.getInt("shard_id"))
+      .collect(Collectors.toList());
   }
 
   public static CassandraIndexTable getInstance() {
@@ -129,27 +128,36 @@ public class CassandraIndexTable {
 
     mySession = cluster.connect();
 
+    myLoadRecordsQueryStatement = mySession.prepare("SELECT * from indices.fs_records WHERE shard_id = ? AND file_id in ?");
+
+    myContentsQueryStatement = mySession.prepare("SELECT content from indices.fs_contents WHERE content_hash = ?");
+
+    myAttrQueryStatement = mySession.prepare("SELECT value FROM indices.fs_attrs WHERE shard_id = ? AND file_id = ? AND attribute = ?");
+
+    myTreeQueryStatement = mySession.prepare("SELECT tree FROM indices.fs_trees WHERE shard_id = ?");
+
+    myQueryShardsStatement = mySession.prepare("SELECT shard_id FROM indices.fs_shards WHERE file_id = ?");
+
+    myMountsQueryStatement = mySession.prepare("SELECT * FROM indices.fs_mounts WHERE parent_file_id = ? AND parent_shard_id = ?");
+
+
+    //---------------------
+
     myQueryStatement = mySession.prepare("SELECT queryIndex(shard_id, values) as result FROM indices.indices " +
                                          "WHERE indexing_session <= ? AND " +
                                          "index_id = ? AND " +
                                          "key = ? " +
                                          "ORDER BY indexing_session DESC");
 
-    myForwardQueryStatement = mySession.prepare("SELECT values as result FROM indices.forward WHERE file_id = ? AND index_id = ?");
 
-    myMaxIdQueryStatement = mySession.prepare("SELECT max_file_id as result FROM indices.indexing_sessions WHERE shard_id = ? AND indexing_session = ?");
+    myForwardQueryStatement = mySession.prepare("SELECT values as result FROM indices.forward WHERE file_id = ? AND index_id = ?");
 
     myRootsQueryStatement = mySession.prepare("SELECT url, file_id FROM indices.fs_roots WHERE shard_id = ? AND indexing_session = ?");
 
-    myTreeQueryStatement = mySession.prepare("SELECT tree FROM indices.trees WHERE shard_id = ? AND indexing_session = ?");
 
-    myMountsQueryStatement = mySession.prepare("SELECT * FROM indices.mounts WHERE indexing_session = ?");
 
-    myLoadRecordsQueryStatement = mySession.prepare("SELECT * from indices.fs WHERE shard_id = ? AND file_id in ? and indexing_session <= ?");
 
-    myContentsQueryStatement = mySession.prepare("SELECT content from indices.contents WHERE shard_id = ? AND file_id = ?");
 
-    myAttrQueryStatement = mySession.prepare("SELECT value FROM indices.attrs WHERE shard_id = ? AND file_id = ? AND attribute = ?");
   }
 
   public void publish(int indexingSession, int shardId, int maxId) {

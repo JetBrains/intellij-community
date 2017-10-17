@@ -38,10 +38,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.EmptyIntHashSet;
 import com.intellij.util.io.*;
 import com.intellij.util.messages.MessageBus;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntHashSet;
+import gnu.trove.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,22 +93,20 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public void initComponent() {
-    final AtomicBoolean once = new AtomicBoolean();
+
     final String cachesDir = System.getProperty("caches_dir")  == null
                              ? PathManager.getSystemPath() + "/caches/" : System.getProperty("caches_dir");
-    FSRecords sink = new FSRecords(new File(cachesDir));
-    myRecords = new ShardingFSRecords((shardId) -> {
-      File shardDir = new File(cachesDir, "shard-" + shardId);
-      if (!shardDir.mkdir()) {
-//        throw new RuntimeException("couldn't create directory for shard " + shardDir);
-      }
-      assert !once.get();
-      once.set(true);
-      FSRecordsSource source = new FSRecordsSource.CassandraFSRecordsSource(0, shardId);
-      return new LazyFSRecords(shardDir, sink, source);
-    });
-
     File cachesDirFile = new File(cachesDir);
+
+    TIntIntHashMap revision = new TIntIntHashMap();
+    for (int i = 0; i < 2150; ++i) {
+      revision.put(i, -1);
+    }
+
+    FSRecords sink = new FSRecords(cachesDirFile);
+    FSRecordsSource source = new FSRecordsSource.CassandraFSRecordsSource(revision);
+    myRecords = new LazyFSRecords(cachesDirFile, sink, source);
+
     File namesFile = new File(cachesDirFile, "names" + FSRecords.VFS_FILES_EXTENSION);
     PagedFileStorage.StorageLockContext lockContext = new PagedFileStorage.StorageLockContext(false);
     try {

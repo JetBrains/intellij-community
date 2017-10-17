@@ -1,51 +1,28 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.cassandra.CassandraIndexTable;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.util.io.PersistentStringEnumerator;
-import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
+import gnu.trove.TIntIntHashMap;
 
-import java.io.DataInputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public interface FSRecordsSource {
 
-  SourceInfo connect();
+  List<RecordInfo> loadRecords(List<RecordId> ids);
 
-  List<RecordInfo> loadRecords(TIntArrayList ids);
+  ByteBuffer getContent(ByteBuffer contentHash);
 
-  ByteBuffer getContent(int fileId);
+  ByteBuffer readAttr(RecordId recordId, String attrId, int version);
 
-  ByteBuffer readAttr(int fileId, String attrId, int version);
+  TIntIntHashMap getTree(int shardId);
 
-  List<Integer> getTree();
+  int getShardId(int fileId);
 
-  class SourceInfo {
-    final int maxId;
-    final Map<String, Integer> roots;
+  List<RecordId> getMountedChildren(RecordId id);
 
-    public SourceInfo(int maxId, final Map<String, Integer> roots) {
-      this.maxId = maxId;
-      this.roots = roots;
-    }
-  }
-
-  class TombStone {
-    public final int id;
-    public final int parentId;
-
-    public TombStone(int id, int parentId) {
-      this.id = id;
-      this.parentId = parentId;
-    }
-  }
+  List<IFSRecords.RootRecord> getRoots();
 
   class RecordInfo {
     public final int id;
@@ -53,78 +30,91 @@ public interface FSRecordsSource {
     public final long timestamp;
     public final long length;
     public final int flags;
+    public final ByteBuffer contentHash;
 
-    public RecordInfo(int id, String name, long timestamp, long length, int flags) {
+    public RecordInfo(int id, String name, long timestamp, long length, int flags, final ByteBuffer contentHash) {
       this.id = id;
       this.name = name;
       this.timestamp = timestamp;
       this.length = length;
       this.flags = flags;
+      this.contentHash = contentHash;
     }
   }
 
-  class MountPoint {
-    int fileId;
-    int shardId;
-    public MountPoint(int fileId, int shardId) {
+  class ShardInfo {
+    FSRecordsSource.RecordId root;
+    TIntIntHashMap myChildParent;
+  }
+
+  class RecordId {
+    public final int fileId;
+    public final int shardId;
+    public RecordId(int fileId, int shardId) {
       this.fileId = fileId;
       this.shardId = shardId;
-    }
-
-    @Override
-    public int hashCode() {
-      return FSRecordsShard.addShardId(fileId, shardId);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      return obj instanceof MountPoint && obj.hashCode() == hashCode();
     }
   }
 
   class CassandraFSRecordsSource implements FSRecordsSource {
 
-    private final int myIndexingSession;
-    private final int myShardId;
+    private final TIntIntHashMap myRevision;
+    private final TIntHashSet myBaseRevisions;
 
-    public int getShard() {
-      return myShardId;
-    }
-
-    public CassandraFSRecordsSource(int indexingSession, int shardId) {
-
-      myIndexingSession = indexingSession;
-      myShardId = shardId;
+    public CassandraFSRecordsSource(TIntIntHashMap revision) {
+      myRevision = revision;
+      myBaseRevisions = new TIntHashSet(myRevision.getValues());
     }
 
     @Override
-    public SourceInfo connect() {
-      CassandraIndexTable cit = CassandraIndexTable.getInstance();
-      int maxId = cit.getMaxId(myIndexingSession, myShardId);
-      Map<String, Integer> roots = cit.getRoots(myIndexingSession, myShardId);
-      return new SourceInfo(maxId, roots);
+    public List<RecordInfo> loadRecords(List<RecordId> ids) {
+      return CassandraIndexTable.getInstance().loadFSRecords(ids);
     }
 
     @Override
-    public List<RecordInfo> loadRecords(TIntArrayList ids) {
-      List<Integer> idsList = new ArrayList<>();
-      ids.forEach(idsList::add);
-      return CassandraIndexTable.getInstance().loadFSRecords(myShardId, myIndexingSession, idsList);
+    public ByteBuffer getContent(ByteBuffer contentHash) {
+      return CassandraIndexTable.getInstance().getContent(contentHash);
     }
 
     @Override
-    public ByteBuffer getContent(int fileId) {
-      return CassandraIndexTable.getInstance().getContent(myShardId, fileId);
+    public ByteBuffer readAttr(RecordId recordId, String attrId, int version) {
+      return CassandraIndexTable.getInstance().readAttr(recordId, attrId, version);
     }
 
     @Override
-    public ByteBuffer readAttr(int fileId, String attrId, int version) {
-      return CassandraIndexTable.getInstance().readAttr(myShardId, fileId, attrId);
+    public TIntIntHashMap getTree(int shardId) {
+      List<Integer> is = CassandraIndexTable.getInstance().getTree(shardId);
+      TIntIntHashMap tree = new TIntIntHashMap();
+      for (int i = 0; i < is.size(); i+=2) {
+        tree.put(is.get(i), is.get(i + 1));
+      }
+      return tree;
     }
 
     @Override
-    public List<Integer> getTree() {
-      return CassandraIndexTable.getInstance().getTree(myShardId, myIndexingSession);
+    public int getShardId(int fileId) {
+      List<Integer> shards = CassandraIndexTable.getInstance().getShardIds(fileId);
+      for (Integer shard : shards) {
+        if (myRevision.containsKey(shard) || myBaseRevisions.contains(shard)) {
+          return shard;
+        }
+      }
+      throw new AssertionError("shard not found for fileId = " + fileId);
+    }
+
+    @Override
+    public List<IFSRecords.RootRecord> getRoots() {
+      int[] keys = myRevision.keys();
+      ArrayList<Integer> list = new ArrayList<>();
+      for (int key : keys) {
+        list.add(key);
+      }
+      return CassandraIndexTable.getInstance().getRoots(list);
+    }
+
+    @Override
+    public List<RecordId> getMountedChildren(RecordId id) {
+      return CassandraIndexTable.getInstance().getMountedChildren(id);
     }
   }
 }
