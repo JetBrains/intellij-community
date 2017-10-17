@@ -28,7 +28,7 @@ public class EscapeHandler extends EditorActionHandler {
     editor.setHeaderComponent(null);
 
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project != null) {
+    if (project != null && editor.getCaretModel().getCaretCount() == 1 && !editor.getSelectionModel().hasSelection()) {
       HighlightManagerImpl highlightManager = (HighlightManagerImpl)HighlightManager.getInstance(project);
       if (highlightManager != null && highlightManager.hideHighlights(editor, HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_ANY_KEY)) {
 
