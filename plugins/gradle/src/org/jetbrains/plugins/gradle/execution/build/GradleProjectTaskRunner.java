@@ -39,11 +39,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.task.*;
 import com.intellij.task.impl.InternalProjectTaskRunner;
 import com.intellij.util.SmartList;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
+import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -65,6 +68,14 @@ import static com.intellij.openapi.externalSystem.service.execution.ExternalSyst
  * @since 5/11/2016
  */
 public class GradleProjectTaskRunner extends ProjectTaskRunner {
+
+  @Language("Groovy")
+  private static final String FORCE_COMPILE_TASKS_INIT_SCRIPT = "allprojects {\n" +
+                                                                "  tasks.withType(AbstractCompile) {\n" +
+                                                                "    outputs.upToDateWhen { false }\n" +
+                                                                "  }" +
+                                                                "}\n";
+
   @Override
   public void run(@NotNull Project project,
                   @NotNull ProjectTaskContext context,
@@ -72,12 +83,13 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
                   @NotNull Collection<? extends ProjectTask> tasks) {
     MultiMap<String, String> buildTasksMap = MultiMap.createLinkedSet();
     MultiMap<String, String> cleanTasksMap = MultiMap.createLinkedSet();
+    MultiMap<String, String> initScripts = MultiMap.createLinkedSet();
 
     Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = InternalProjectTaskRunner.groupBy(tasks);
 
-    List<Module> modules = addModulesBuildTasks(taskMap.get(ModuleBuildTask.class), cleanTasksMap, buildTasksMap);
+    List<Module> modules = addModulesBuildTasks(taskMap.get(ModuleBuildTask.class), buildTasksMap, initScripts);
     // TODO there should be 'gradle' way to build files instead of related modules entirely
-    List<Module> modulesOfFiles = addModulesBuildTasks(taskMap.get(ModuleFilesBuildTask.class), cleanTasksMap, buildTasksMap);
+    List<Module> modulesOfFiles = addModulesBuildTasks(taskMap.get(ModuleFilesBuildTask.class), buildTasksMap, initScripts);
     addArtifactsBuildTasks(taskMap.get(ArtifactBuildTask.class), cleanTasksMap, buildTasksMap);
 
     // TODO send a message if nothing to build
@@ -141,6 +153,11 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
 
       UserDataHolderBase userData = new UserDataHolderBase();
       userData.putUserData(PROGRESS_LISTENER_KEY, BuildViewManager.class);
+
+      String initScript = StringUtil.join(initScripts.get(rootProjectPath), SystemProperties.getLineSeparator());
+      if (StringUtil.isNotEmpty(initScript)) {
+        userData.putUserData(GradleTaskManager.INIT_SCRIPT_KEY, initScript);
+      }
       ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID, project, GradleConstants.SYSTEM_ID,
                                  taskCallback, ProgressExecutionMode.IN_BACKGROUND_ASYNC, false, userData);
     }
@@ -190,8 +207,8 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
   }
 
   private static List<Module> addModulesBuildTasks(@Nullable Collection<? extends ProjectTask> projectTasks,
-                                                         @NotNull MultiMap<String, String> cleanTasksMap,
-                                                         @NotNull MultiMap<String, String> buildTasksMap) {
+                                                   @NotNull MultiMap<String, String> buildTasksMap,
+                                                   @NotNull MultiMap<String, String> initScripts) {
     if (ContainerUtil.isEmpty(projectTasks)) return Collections.emptyList();
 
     List<Module> affectedModules = new SmartList<>();
@@ -217,7 +234,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       List<String> gradleTasks = ContainerUtil.mapNotNull(ExternalSystemApiUtil.findAll(moduleDataNode, ProjectKeys.TASK),
                                                     node -> node.getData().isInherited() ? null : node.getData().getName());
 
-      Collection<String> cleanRootTasks = cleanTasksMap.getModifiable(rootProjectPath);
+      Collection<String> projectInitScripts = initScripts.getModifiable(rootProjectPath);
       Collection<String> buildRootTasks = buildTasksMap.getModifiable(rootProjectPath);
       final String moduleType = ExternalSystemApiUtil.getExternalModuleType(module);
       String gradlePath = GradleProjectResolverUtil.getGradlePath(module);
@@ -226,33 +243,21 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
         gradlePath += ":";
       }
 
+      if (!moduleBuildTask.isIncrementalBuild()) {
+        projectInitScripts.add(FORCE_COMPILE_TASKS_INIT_SCRIPT);
+      }
       String assembleTask = "assemble";
       if (GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY.equals(moduleType)) {
         String sourceSetName = GradleProjectResolverUtil.getSourceSetName(module);
         String gradleTask = StringUtil.isEmpty(sourceSetName) || "main".equals(sourceSetName) ? "classes" : sourceSetName + "Classes";
         if (gradleTasks.contains(gradleTask)) {
-          if (!moduleBuildTask.isIncrementalBuild()) {
-            cleanRootTasks.add(gradlePath + "clean" + StringUtil.capitalize(gradleTask));
-          }
           buildRootTasks.add(gradlePath + gradleTask);
         }
         else if ("main".equals(sourceSetName) || "test".equals(sourceSetName)) {
-          if (!moduleBuildTask.isIncrementalBuild()) {
-            cleanRootTasks.add(gradlePath + "clean");
-          }
           buildRootTasks.add(gradlePath + assembleTask);
         }
       }
       else {
-        if (!moduleBuildTask.isIncrementalBuild()) {
-          if (gradleTasks.contains("classes")) {
-            cleanRootTasks.add(gradlePath + "cleanClasses");
-            cleanRootTasks.add(gradlePath + "cleanTestClasses");
-          }
-          else if (gradleTasks.contains("clean")) {
-            cleanRootTasks.add(gradlePath + "clean");
-          }
-        }
         if (gradleTasks.contains("classes")) {
           buildRootTasks.add(gradlePath + "classes");
           buildRootTasks.add(gradlePath + "testClasses");
