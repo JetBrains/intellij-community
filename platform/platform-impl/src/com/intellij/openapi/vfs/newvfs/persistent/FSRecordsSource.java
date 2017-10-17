@@ -42,11 +42,6 @@ public interface FSRecordsSource {
     }
   }
 
-  class ShardInfo {
-    FSRecordsSource.RecordId root;
-    TIntIntHashMap myChildParent;
-  }
-
   class RecordId {
     public final int fileId;
     public final int shardId;
@@ -95,7 +90,12 @@ public interface FSRecordsSource {
     public int getShardId(int fileId) {
       List<Integer> shards = CassandraIndexTable.getInstance().getShardIds(fileId);
       for (Integer shard : shards) {
-        if (myRevision.containsKey(shard) || myBaseRevisions.contains(shard)) {
+        if (myRevision.containsKey(shard)) {
+          return shard;
+        }
+      }
+      for (Integer shard : shards) {
+        if (myBaseRevisions.contains(shard)) {
           return shard;
         }
       }

@@ -99,7 +99,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     File cachesDirFile = new File(cachesDir);
 
     TIntIntHashMap revision = new TIntIntHashMap();
-    for (int i = 0; i < 2150; ++i) {
+    for (int i = 0; i <= 2172; ++i) {
       revision.put(i, -1);
     }
 

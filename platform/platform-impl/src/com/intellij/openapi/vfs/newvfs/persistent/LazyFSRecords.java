@@ -44,12 +44,12 @@ public class LazyFSRecords implements IFSRecords {
     mySource = source;
   }
 
-  public void dumpToCassandra(int shardId) {
+  public void dumpToCassandra() {
     CassandraIndexTable.getInstance().bulkInsertAttrs(
-      shardId,
       myDirtyAttrs.stream().map(entry -> {
         try {
-          return new CassandraIndexTable.AttrInfo(entry.first,
+          return new CassandraIndexTable.AttrInfo(resolveShard(entry.first),
+                                                  entry.first,
                                                   entry.second.getId(),
                                                   ByteBuffer.wrap(FileUtil.read(readAttribute(entry.first, entry.second))));
         }
@@ -117,25 +117,35 @@ public class LazyFSRecords implements IFSRecords {
     addToMapping(record.id, newRecord);
   }
 
-  private void ensureLoaded(int id) {
-    if (toSinkId(id) != -1) {
-      return;
-    }
-
+  private int ensureTreeLoaded(int id) {
     int shardId = resolveShard(id);
     if (shardId == -1) {
       shardId = mySource.getShardId(id);
       TIntIntHashMap tree = mySource.getTree(shardId);
       myTrees.put(shardId, tree);
     }
+    return shardId;
+  }
+
+  private void ensureLoaded(int id) {
+    if (isLocal(id)) return;
+
+    if (toSinkId(id) != -1) {
+      return;
+    }
+
+    int shardId = ensureTreeLoaded(id);
+    if (shardId == -1) {
+      return;
+    }
+
     TIntIntHashMap tree = myTrees.get(shardId);
     final List<FSRecordsSource.RecordId> recordsToLoad = new ArrayList<>();
-    int finalShardId = shardId;
     getAncestors(tree, id, parentId -> {
       if (toSinkId(parentId) != -1) {
         return false;
       } else {
-        recordsToLoad.add(new FSRecordsSource.RecordId(parentId, finalShardId));
+        recordsToLoad.add(new FSRecordsSource.RecordId(parentId, shardId));
         return true;
       }
     });
@@ -443,7 +453,7 @@ public class LazyFSRecords implements IFSRecords {
     if (offline != null){
       return offline;
     }
-    int shardId = resolveShard(id);
+    int shardId = ensureTreeLoaded(id);
     TIntIntHashMap tree = myTrees.get(shardId);
     List<FSRecordsSource.RecordId> recordsToLoad = new ArrayList<>();
     tree.forEachEntry((c, p) -> {
