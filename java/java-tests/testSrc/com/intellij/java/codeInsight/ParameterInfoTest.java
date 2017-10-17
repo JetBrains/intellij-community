@@ -80,6 +80,20 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
     doTest2CandidatesWithPreselection();
   }
 
+  public void testOverloadWithErrorOnTheTopLevel() {
+    doTest2CandidatesWithPreselection();
+    PsiElement elementAtCaret = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
+    PsiCall call = LambdaUtil.treeWalkUp(elementAtCaret);
+    assertNotNull(call);
+    //cache the type of first argument: if type is calculated by cached session of first (wrong) overload, then applicability check would fail
+    //applicability check itself takes into account only child constraints and thus won't see cached elements on top level, thus explicit type calculation
+    PsiType type = call.getArgumentList().getExpressions()[1].getType();
+    assertNotNull(type);
+    JavaResolveResult result = call.resolveMethodGenerics();
+    assertTrue(result instanceof MethodCandidateInfo);
+    assertTrue(((MethodCandidateInfo)result).isApplicable());
+  }
+
   public void testOverloadWithVarargsArray() {
     doTest2CandidatesWithPreselection();
   }
