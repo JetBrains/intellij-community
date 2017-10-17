@@ -4,6 +4,7 @@ package com.jetbrains.python.newProject.steps
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.util.ui.FormBuilder
+import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.add.PyAddNewCondaEnvPanel
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
 import com.jetbrains.python.sdk.add.PyAddNewVirtualEnvPanel
@@ -31,7 +32,7 @@ class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?)
   private val panels = listOf(PyAddNewVirtualEnvPanel(null, existingSdks, newProjectPath),
                               PyAddNewCondaEnvPanel(null, existingSdks, newProjectPath))
 
-  var selectedPanel = panels[0]
+  var selectedPanel = panels.firstOrNull { it.envName == PySdkSettings.instance.preferredEnvironmentType } ?: panels[0]
 
   private val listeners = mutableListOf<Runnable>()
 
@@ -45,6 +46,7 @@ class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?)
           icon = panel.icon
         }
       }
+      selectedItem = selectedPanel
       addItemListener {
         if (it.stateChange == ItemEvent.SELECTED) {
           val selected = it.item as? PyAddSdkPanel ?: return@addItemListener
@@ -72,7 +74,11 @@ class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?)
     add(formBuilder.panel, BorderLayout.NORTH)
   }
 
-  override fun getOrCreateSdk() = selectedPanel.getOrCreateSdk()
+  override fun getOrCreateSdk(): Sdk? {
+    val createdSdk = selectedPanel.getOrCreateSdk()
+    PySdkSettings.instance.preferredEnvironmentType = selectedPanel.envName
+    return createdSdk
+  }
 
   override fun validateAll() = selectedPanel.validateAll()
 
