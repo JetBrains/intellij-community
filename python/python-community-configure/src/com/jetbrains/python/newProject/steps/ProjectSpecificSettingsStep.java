@@ -42,10 +42,7 @@ import com.jetbrains.python.newProject.PythonProjectGenerator;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.PreferredSdkComparator;
-import com.jetbrains.python.sdk.PyLazySdk;
-import com.jetbrains.python.sdk.PySdkExtKt;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.add.PyAddSdkGroupPanel;
 import com.jetbrains.python.sdk.add.PyAddSdkPanel;
 import org.jetbrains.annotations.NotNull;
@@ -291,13 +288,17 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     final PyAddNewEnvironmentPanel newEnvironmentPanel = new PyAddNewEnvironmentPanel(existingSdks, newProjectPath);
     final PyAddExistingSdkPanel existingSdkPanel = new PyAddExistingSdkPanel(null, existingSdks, newProjectPath, preferredSdk);
 
-    final HideableDecorator decorator = new HideableDecorator(decoratorPanel, getProjectInterpreterTitle(newEnvironmentPanel), false);
+    final PyAddSdkPanel defaultPanel = PySdkSettings.getInstance().getUseNewEnvironmentForNewProject() ?
+                                       newEnvironmentPanel : existingSdkPanel;
+    final HideableDecorator decorator = new HideableDecorator(decoratorPanel, getProjectInterpreterTitle(defaultPanel), false);
     decorator.setContentComponent(container);
 
     final List<PyAddSdkPanel> panels = Arrays.asList(newEnvironmentPanel, existingSdkPanel);
-    myInterpreterPanel = new PyAddSdkGroupPanel("New project interpreter", getIcon(), panels, newEnvironmentPanel);
+    myInterpreterPanel = new PyAddSdkGroupPanel("New project interpreter", getIcon(), panels, defaultPanel);
     myInterpreterPanel.addChangeListener(() -> {
       decorator.setTitle(getProjectInterpreterTitle(myInterpreterPanel.getSelectedPanel()));
+      final boolean useNewEnvironment = myInterpreterPanel.getSelectedPanel() instanceof PyAddNewEnvironmentPanel;
+      PySdkSettings.getInstance().setUseNewEnvironmentForNewProject(useNewEnvironment);
       checkValid();
     });
 
@@ -332,9 +333,10 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
       name = "New " + ((PyAddNewEnvironmentPanel)panel).getSelectedPanel().getEnvName() + " environment";
     }
     else {
-      name = panel.getPanelName();
+      final Sdk sdk = panel.getSdk();
+      name = sdk != null ? sdk.getName() : panel.getPanelName();
     }
-    return "Project Interpreter: " + StringUtil.toTitleCase(name);
+    return "Project Interpreter: " + name;
   }
 
   @Nullable
