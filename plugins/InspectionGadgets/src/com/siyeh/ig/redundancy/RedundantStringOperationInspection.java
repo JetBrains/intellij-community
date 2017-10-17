@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.redundancy;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -32,6 +33,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
   private static final CallMatcher STRING_BUILDER_APPEND =
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER, "append")
       .parameterTypes(JAVA_LANG_STRING);
+  private static final CallMatcher PRINTSTREAM_PRINTLN = CallMatcher.instanceCall("java.io.PrintStream", "println")
+    .parameterTypes(JAVA_LANG_STRING);
 
   @NotNull
   @Override
@@ -42,21 +45,49 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
         PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
         if (qualifier != null) {
           if (STRING_TO_STRING.test(call)) {
-            registerProblem(call, "inspection.redundant.string.message");
+            registerProblem(call, "inspection.redundant.string.call.message");
           }
           else if (STRING_SUBSTRING.test(call)) {
             processSubstring(call);
           }
           else if (STRING_BUILDER_APPEND.test(call)) {
-            PsiExpression arg = call.getArgumentList().getExpressions()[0];
-            if (ExpressionUtils.isLiteral(PsiUtil.skipParenthesizedExprDown(arg), "")) {
-              registerProblem(call, "inspection.redundant.string.message");
+            if (getSingleEmptyStringArgument(call) != null) {
+              registerProblem(call, "inspection.redundant.string.call.message");
             }
           }
           else if (STRING_INTERN.test(call) && PsiUtil.isConstantExpression(qualifier)) {
             registerProblem(call, "inspection.redundant.string.intern.on.constant.message");
           }
+          else if (PRINTSTREAM_PRINTLN.test(call)) {
+            checkUnnecessaryEmptyStringArgument(call);
+          }
         }
+      }
+
+      @Override
+      public void visitNewExpression(PsiNewExpression expression) {
+        PsiJavaCodeReferenceElement classRef = expression.getClassReference();
+        if (classRef == null) return;
+        String className = classRef.getQualifiedName();
+        if (CommonClassNames.JAVA_LANG_STRING_BUILDER.equals(className) || CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(className)) {
+          checkUnnecessaryEmptyStringArgument(expression);
+        }
+      }
+
+      private void checkUnnecessaryEmptyStringArgument(PsiCall call) {
+        PsiExpression argument = getSingleEmptyStringArgument(call);
+        if (argument != null) {
+          holder.registerProblem(argument, InspectionGadgetsBundle.message("inspection.redundant.string.argument.message"),
+                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, new DeleteElementFix(argument));
+        }
+      }
+
+      private PsiExpression getSingleEmptyStringArgument(PsiCall call) {
+        PsiExpressionList argList = call.getArgumentList();
+        if (argList == null) return null;
+        PsiExpression[] args = argList.getExpressions();
+        if (args.length != 1) return null;
+        return ExpressionUtils.isLiteral(PsiUtil.skipParenthesizedExprDown(args[0]), "") ? args[0] : null;
       }
 
       private void processSubstring(PsiMethodCallExpression call) {
@@ -72,7 +103,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
             return;
           }
         }
-        registerProblem(call, "inspection.redundant.string.message");
+        registerProblem(call, "inspection.redundant.string.call.message");
       }
 
       private void registerProblem(PsiMethodCallExpression call, @NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
