@@ -305,7 +305,8 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
       }
       else if (event instanceof VFileCopyEvent) {
         VFileCopyEvent copyEvent = (VFileCopyEvent) event;
-        return copyEvent.getNewParent().findChild(copyEvent.getNewChildName());
+        VirtualFile newParent = copyEvent.getNewParent();
+        return newParent.isValid() ? newParent.findChild(copyEvent.getNewChildName()) : null;
       }
       return null;
     });
