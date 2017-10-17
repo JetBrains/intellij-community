@@ -93,18 +93,18 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   }
 
   @Override
-  public void tearDown() {
+  public void tearDown() throws Exception {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         if (myConsoleView != null) {
           disposeConsole();
         }
-        super.tearDown();
       }
       catch (Exception e) {
         throw new RuntimeException(e);
       }
     });
+    super.tearDown();
   }
 
   /**
