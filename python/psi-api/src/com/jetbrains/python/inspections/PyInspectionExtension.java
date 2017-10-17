@@ -65,27 +65,13 @@ public abstract class PyInspectionExtension {
   /**
    * Checks if unresolved member could be ignored.
    *
-   * @param type type whose member will be checked
-   * @param name member name
-   * @return true if the unresolved member with the specified name could be ignored
-   * @deprecated Use {@link PyInspectionExtension#ignoreUnresolvedMember(PyType, String, TypeEvalContext)} instead.
-   * This method will be removed in 2018.1.
-   */
-  @Deprecated
-  public boolean ignoreUnresolvedMember(@NotNull PyType type, @NotNull String name) {
-    return false;
-  }
-
-  /**
-   * Checks if unresolved member could be ignored.
-   *
    * @param type    type whose member will be checked
    * @param name    member name
    * @param context type evaluation context
    * @return true if the unresolved member with the specified name could be ignored
    */
   public boolean ignoreUnresolvedMember(@NotNull PyType type, @NotNull String name, @NotNull TypeEvalContext context) {
-    return ignoreUnresolvedMember(type, name);
+    return false;
   }
 
   /**
