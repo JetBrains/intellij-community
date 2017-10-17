@@ -21,7 +21,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,10 +31,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.siyeh.ig.psiutils.ComparisonUtils;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -397,11 +393,8 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
   private static void reportAlwaysFailingCalls(ProblemsHolder holder,
                                                DataFlowInstructionVisitor visitor,
                                                HashSet<PsiElement> reportedAnchors) {
-    if (ProjectFileIndex.SERVICE.getInstance(holder.getProject()).isInTestSourceContent(holder.getFile().getViewProvider().getVirtualFile())) {
-      return;
-    }
-
     for (PsiCall call : visitor.getAlwaysFailingCalls()) {
+      if (TestUtils.isExceptionExpected(call)) continue;
       PsiMethod method = call.resolveMethod();
       if (method != null && reportedAnchors.add(call)) {
         holder.registerProblem(getElementToHighlight(call), "The call to '#ref' always fails, according to its method contracts");
