@@ -32,7 +32,7 @@ class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?)
   private val panels = listOf(PyAddNewVirtualEnvPanel(null, existingSdks, newProjectPath),
                               PyAddNewCondaEnvPanel(null, existingSdks, newProjectPath))
 
-  var selectedPanel = panels.firstOrNull { it.envName == PySdkSettings.instance.preferredEnvironmentType } ?: panels[0]
+  var selectedPanel = panels.find { it.envName == PySdkSettings.instance.preferredEnvironmentType } ?: panels[0]
 
   private val listeners = mutableListOf<Runnable>()
 

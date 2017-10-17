@@ -64,7 +64,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
   val path: String
     get() = pathField.text.trim()
 
-  override val panelName = "New virtual environment"
+  override val panelName = "New environment"
   override val icon: Icon = PythonIcons.Python.Virtualenv
   private val baseSdkField = PySdkPathChoosingComboBox(findBaseSdks(existingSdks), null)
   private val pathField = TextFieldWithBrowseButton().apply {

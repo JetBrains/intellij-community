@@ -30,7 +30,7 @@ import javax.swing.Icon
 class PyAddExistingCondaEnvPanel(private val project: Project?,
                                  private val existingSdks: List<Sdk>,
                                  override var newProjectPath: String?) : PyAddSdkPanel() {
-  override val panelName = "Existing Conda environment"
+  override val panelName = "Existing environment"
   override val icon: Icon = PythonIcons.Python.Condaenv
   private val sdkComboBox = PySdkPathChoosingComboBox(detectCondaEnvs(project, existingSdks)
                                                         .filterNot { it.isAssociatedWithAnotherProject(project) },
