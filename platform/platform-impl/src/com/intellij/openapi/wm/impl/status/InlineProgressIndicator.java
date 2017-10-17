@@ -166,8 +166,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
   }
 
   public void updateProgressNow() {
-    boolean indeterminate = isIndeterminate() || getFraction() == 0;
-    if (indeterminate) {
+    if (isPaintingIndeterminate()) {
       myProgress.setIndeterminate(true);
     }
     else {
@@ -202,6 +201,10 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     }
     
     myEastButtons.forEach(b -> b.updateAction.run());
+  }
+
+  protected boolean isPaintingIndeterminate() {
+    return isIndeterminate() || getFraction() == 0;
   }
 
   private boolean isStopping() {
