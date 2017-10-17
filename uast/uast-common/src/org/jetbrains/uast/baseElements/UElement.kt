@@ -16,6 +16,7 @@
 package org.jetbrains.uast
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.visitor.UastTypedVisitor
 import org.jetbrains.uast.visitor.UastVisitor
 
@@ -105,6 +106,7 @@ interface UElement {
  * This is transitional type, all its content will be moved to `UElement` as soon as all implementations will implement it,
  * and someday this interface will be dropped.
  */
+@ApiStatus.Experimental
 interface JvmDeclarationUElement : UElement {
 
   /**
@@ -132,6 +134,17 @@ interface JvmDeclarationUElement : UElement {
   @Deprecated("ambiguous psi element, use `sourcePsi` or `javaPsi`", ReplaceWith("javaPsi"))
   override val psi: PsiElement?
 }
+
+
+val UElement?.sourcePsiElement: PsiElement?
+  get() = (this as? JvmDeclarationUElement)?.sourcePsi
+
+@ApiStatus.Experimental
+@SuppressWarnings("unchecked")
+fun <T : PsiElement> UElement?.getAsJavaPsiElement(clazz: Class<T>): T?
+  = (this as? JvmDeclarationUElement)?.javaPsi?.takeIf {
+  clazz.isAssignableFrom(it.javaClass)
+} as? T
 
 /**
  * Returns a sequence including this element and its containing elements.
