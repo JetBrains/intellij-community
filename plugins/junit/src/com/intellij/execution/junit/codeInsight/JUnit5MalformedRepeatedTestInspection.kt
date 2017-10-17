@@ -70,7 +70,7 @@ class JUnit5MalformedRepeatedTestInspection : AbstractBaseJavaLocalInspectionToo
                                        "RepetitionInfo is injected for @BeforeEach/@AfterEach only, but not for " + StringUtil.getShortName(qName!!))
               }
               else {
-                if (MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_CONFIG_METHODS) && method.containingClass?.methods?.find { MetaAnnotationUtil.isMetaAnnotated(it, JUnitUtil.TEST5_ANNOTATIONS)} != null) {
+                if (MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_CONFIG_METHODS) && method.containingClass?.methods?.find { MetaAnnotationUtil.isMetaAnnotated(it, Annotations.NON_REPEATED_ANNOTATIONS)} != null) {
                   holder.registerProblem(repetitionInfoParam.nameIdentifier ?: repetitionInfoParam,
                                          "RepetitionInfo won't be injected for @Test methods")
                 }
