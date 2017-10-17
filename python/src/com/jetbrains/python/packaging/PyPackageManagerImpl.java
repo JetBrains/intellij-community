@@ -32,7 +32,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -51,6 +50,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -245,7 +246,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
         if (canModify) {
           final String location = pkg.getLocation();
           if (location != null) {
-            canModify = ensureCanCreateFile(new File(location));
+            canModify = Files.isWritable(Paths.get(location));
           }
         }
         args.add(pkg.getName());
@@ -259,29 +260,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
       LOG.debug("Packages cache is about to be refreshed because these packages were uninstalled: " + packages);
       refreshPackagesSynchronously();
     }
-  }
-
-  // TODO: Move to FileUtil.ensureCanCreateFile ?
-
-  /**
-   * When file it protected with UAC on Windows, you can't relay on {@link File#canWrite()}.
-   *
-   * @param file file to check if writable (works in UAC too)
-   */
-  private static boolean ensureCanCreateFile(@NotNull final File file) {
-    if (SystemInfo.isWinVistaOrNewer) {
-      try {
-        final File folder = (file.isFile() ? file.getParentFile() : file);
-        final File tmpFile = File.createTempFile("pycharm", null, folder);
-        tmpFile.deleteOnExit();
-        tmpFile.delete();
-      }
-      catch (final IOException ignored) {
-        return false;
-      }
-      return true;
-    }
-    return FileUtil.ensureCanCreateFile(file);
   }
 
 
@@ -476,7 +454,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     cmdline.addAll(args);
     LOG.info("Running packaging tool: " + StringUtil.join(cmdline, " "));
 
-    final boolean canCreate = ensureCanCreateFile(new File(homePath));
+    final boolean canCreate = Files.isWritable(Paths.get(homePath));
     final boolean useSudo = !canCreate && askForSudo;
 
     try {
