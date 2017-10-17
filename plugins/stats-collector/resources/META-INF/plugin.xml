@@ -9,7 +9,7 @@
     ]]></description>
 
   <change-notes><![CDATA[
-      Initial completion sorting via machine learning 
+        Completion items from subsequent code completion invokations are added automatically on typing, no need to invoke completion multiple times now.
     ]]>
   </change-notes>
 
