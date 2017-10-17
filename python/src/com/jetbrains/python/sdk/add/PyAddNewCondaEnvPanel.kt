@@ -47,7 +47,7 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
                             private val existingSdks: List<Sdk>,
                             override var newProjectPath: String?) : PyAddNewEnvPanel() {
   override val envName = "Conda"
-  override val panelName = "New Conda environment"
+  override val panelName = "New environment"
   override val icon: Icon = PythonIcons.Python.Anaconda
 
   private val pathField = TextFieldWithBrowseButton().apply {

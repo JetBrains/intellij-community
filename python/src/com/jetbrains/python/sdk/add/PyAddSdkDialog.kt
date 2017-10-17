@@ -55,8 +55,8 @@ class PyAddSdkDialog(private val project: Project?,
       .filter { it.sdkType is PythonSdkType && !PythonSdkType.isInvalid(it) }
       .sortedWith(PreferredSdkComparator())
     return createCardSplitter(listOf(createVirtualEnvPanel(project, sdks, newProjectPath),
-                                     PyAddSystemWideInterpreterPanel(existingSdks),
-                                     createAnacondaPanel()))
+                                     createAnacondaPanel(),
+                                     PyAddSystemWideInterpreterPanel(existingSdks)))
   }
 
   override fun postponeValidation() = false
@@ -114,7 +114,7 @@ class PyAddSdkDialog(private val project: Project?,
       newVirtualEnvPanel != null -> newVirtualEnvPanel
       else -> existingVirtualEnvPanel
     }
-    return PyAddSdkGroupPanel("Virtual environment", PythonIcons.Python.Virtualenv, panels, defaultPanel)
+    return PyAddSdkGroupPanel("Virtualenv environment", PythonIcons.Python.Virtualenv, panels, defaultPanel)
   }
 
   private fun createAnacondaPanel(): PyAddSdkPanel {
@@ -125,6 +125,6 @@ class PyAddSdkDialog(private val project: Project?,
     val panels = listOf(newCondaEnvPanel,
                         PyAddExistingCondaEnvPanel(project, existingSdks, newProjectPath))
       .filterNotNull()
-    return PyAddSdkGroupPanel("Anaconda", PythonIcons.Python.Anaconda, panels, panels[0])
+    return PyAddSdkGroupPanel("Conda environment", PythonIcons.Python.Anaconda, panels, panels[0])
   }
 }
