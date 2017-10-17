@@ -49,7 +49,7 @@ import java.util.List;
  * Generates text with markup (in RTF and HTML formats) for interaction via clipboard with third-party applications.
  *
  * Interoperability with the following applications was tested:
- *   MS Office 2010 (Word, PowerPoint, Outlook), OpenOffice (Writer, Impress), Gmail, Mac TextEdit, Mac Mail.
+ *   MS Office 2010 (Word, PowerPoint, Outlook), OpenOffice (Writer, Impress), Gmail, Mac TextEdit, Mac Mail, Mac Keynote.
  */
 public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithMarkup> {
   private static final Logger LOG = Logger.getInstance(TextWithMarkupProcessor.class);
