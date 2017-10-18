@@ -72,6 +72,7 @@ import javax.swing.plaf.TextUI;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.AffineTransform;
 import java.awt.im.InputMethodRequests;
 import java.util.ArrayList;
 import java.util.List;
@@ -238,7 +239,19 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       else {
         UISettings.setupAntialiasing(gg);
       }
+      AffineTransform tx = gg.getTransform();
+      double scaleX = tx.getScaleX();
+      double scaleY = tx.getScaleY();
+      boolean fpsTx = scaleX != (int)scaleX || scaleY != (int)scaleY;
+      if (fpsTx) {
+        // Align the FPS graphics to int. See JRE-502
+        AffineTransform alignedTx = new AffineTransform();
+        alignedTx.translate((int)Math.ceil(tx.getTranslateX() - 0.5), (int)Math.ceil(tx.getTranslateY() - 0.5));
+        alignedTx.scale(scaleX, scaleY);
+        gg.setTransform(alignedTx);
+      }
       myEditor.paint(gg);
+      if (fpsTx) gg.setTransform(tx);
     }
     finally {
       myApplication.editorPaintFinish();
