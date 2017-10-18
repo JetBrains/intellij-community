@@ -67,6 +67,9 @@ public abstract class SyntheticLibrary {
     return null;
   }
 
+  public boolean isShowInExternalLibrariesNode() {
+    return true;
+  }
 
   /**
    * This method is vital if this library is shown under "External Libraries" (the library should implement ItemPresentation for that).
