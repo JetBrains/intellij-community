@@ -3,6 +3,7 @@ Entry point module to run a file in the interactive console.
 '''
 import os
 import sys
+import traceback
 from pydevconsole import do_exit, InterpreterInterface, process_exec_queue, start_console_server, init_mpl_in_console
 from _pydev_imps._pydev_saved_modules import threading
 
@@ -32,7 +33,10 @@ def run_file(file, globals=None, locals=None):
     sys.path.insert(0, os.path.split(file)[0])
 
     print('Running %s'%file)
-    pydev_imports.execfile(file, globals, locals)  # execute the script
+    try:
+        pydev_imports.execfile(file, globals, locals)  # execute the script
+    except:
+        traceback.print_exc()
 
     return globals
 
