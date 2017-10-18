@@ -51,14 +51,6 @@ public abstract class SyntheticLibrary {
   }
 
   /**
-   * @deprecated use getExcludeFileCondition instead
-   */
-  @Nullable
-  public Condition<CharSequence> getExcludeCondition() {
-    return null;
-  }
-
-  /**
    * @return a condition for excluding file from a library or {@code null}
    * E.g. you can exclude all non-java file by returning {@code file -> !file.getName().endsWith(".java")}
    * <p>
@@ -72,8 +64,7 @@ public abstract class SyntheticLibrary {
    */
   @Nullable
   public Condition<VirtualFile> getExcludeFileCondition() {
-    Condition<CharSequence> condition = getExcludeCondition();
-    return condition != null ? (f) -> condition.value(f.getNameSequence()) : null;
+    return null;
   }
 
   public boolean isShowInExternalLibrariesNode() {
