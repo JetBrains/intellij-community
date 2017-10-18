@@ -91,17 +91,13 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
   private PsiExpressionList findArgumentList(final PsiFile file, int offset, int parameterStart, boolean allowOuter) {
     PsiExpressionList argumentList = ParameterInfoUtils.findArgumentList(file, offset, parameterStart, this, allowOuter);
-    if (argumentList == null) {
+    if (argumentList == null && allowOuter) {
       final PsiMethodCallExpression methodCall = ParameterInfoUtils.findParentOfTypeWithStopElements(file, offset, 
                                                                                                      PsiMethodCallExpression.class,
-                                                                                                     PsiNewExpression.class,
                                                                                                      PsiMethod.class);
 
       if (methodCall != null) {
         argumentList = methodCall.getArgumentList();
-        if (!allowOuter && argumentList.getTextRange().getStartOffset() != parameterStart) {
-          argumentList = null;
-        }
       }
     }
     return argumentList;
