@@ -241,7 +241,12 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
         myDelegate.advanceLexer();
       }
     }
-    return new MyMarker(mark, originalPositionMarker, myLexPosition);
+    return buildMarker(mark, originalPositionMarker, myLexPosition);
+  }
+
+  @NotNull
+  protected Marker buildMarker(Marker mark, Marker originalPositionMarker, int lexPosition) {
+    return new MyMarker(mark, originalPositionMarker, lexPosition);
   }
 
   private void skipWhitespace() {
@@ -334,7 +339,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
     }
   }
 
-  private class MyMarker extends DelegateMarker {
+  protected class MyMarker extends DelegateMarker {
 
     private final int myBuilderPosition;
 
