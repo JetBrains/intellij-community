@@ -222,7 +222,8 @@ public abstract class StatusText {
     return this;
   }
 
-  public StatusText appendSecondaryText(String text, SimpleTextAttributes attrs, ActionListener listener) {
+  @NotNull
+  public StatusText appendSecondaryText(@NotNull String text, @NotNull SimpleTextAttributes attrs, @Nullable ActionListener listener) {
     mySecondaryComponent.append(text, attrs);
     mySecondaryListeners.add(listener);
     if (listener != null) {
