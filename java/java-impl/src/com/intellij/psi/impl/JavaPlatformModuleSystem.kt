@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.jrt.JrtFileSystem
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightJavaModule
+import com.intellij.psi.impl.source.PsiJavaModuleReference
 import com.intellij.psi.util.PsiUtil
 
 class JavaPlatformModuleSystem : JavaModuleSystemEx {
@@ -86,7 +87,11 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
       }
 
       if (useModule == null) {
-        return null
+        // JEP 261 "Root modules" (http://openjdk.java.net/jeps/261#root-modules)
+        if (!targetName.startsWith("java.")) return null
+        val root = PsiJavaModuleReference.resolve(place, "java.se", false)
+        if (root == null || JavaModuleGraphUtil.reads(root, targetModule)) return null
+        return if (quick) ERR else ErrorWithFixes(JavaErrorMessages.message("module.access.not.in.graph", packageName, targetName))
       }
 
       if (!(targetName == PsiJavaModule.JAVA_BASE || JavaModuleGraphUtil.reads(useModule, targetModule))) {
