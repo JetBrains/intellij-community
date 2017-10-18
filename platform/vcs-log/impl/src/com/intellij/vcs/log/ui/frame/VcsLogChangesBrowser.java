@@ -31,8 +31,6 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.UI;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.CommitId;
@@ -46,6 +44,7 @@ import com.intellij.vcs.log.impl.MergedChange;
 import com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
+import com.intellij.vcs.log.util.VcsLogUiUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -138,7 +137,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
 
       if (myChanges.isEmpty() && detail.getParents().size() > 1) {
         myViewer.getEmptyText().setText("No merged conflicts.").
-          appendSecondaryText("Show changes to parents", getLinkAttributes(),
+          appendSecondaryText("Show changes to parents", VcsLogUiUtil.getLinkAttributes(),
                               e -> myUiProperties.set(SHOW_CHANGES_FROM_PARENTS, true));
       }
       else {
@@ -157,12 +156,6 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
     }
 
     myViewer.rebuildTree();
-  }
-
-  @NotNull
-  private static SimpleTextAttributes getLinkAttributes() {
-    return new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN,
-                                    UI.getColor("link.foreground"));
   }
 
   @NotNull

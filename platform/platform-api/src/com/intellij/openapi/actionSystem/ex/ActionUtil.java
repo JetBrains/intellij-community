@@ -37,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.util.ArrayList;
@@ -330,5 +331,19 @@ public class ActionUtil {
       }
     }
   }
-  
+
+  @NotNull
+  public static ActionListener createActionListener(@NotNull String actionId, @NotNull Component component, @NotNull String place) {
+    return new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        AnAction action = ActionManager.getInstance().getAction(actionId);
+        if (action == null) {
+          LOG.warn("Can not find action by id " + actionId);
+          return;
+        }
+        invokeAction(action, null, component, place, null);
+      }
+    };
+  }
 }
