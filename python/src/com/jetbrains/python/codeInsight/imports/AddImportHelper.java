@@ -107,6 +107,16 @@ public class AddImportHelper {
     THIRD_PARTY,
     PROJECT
   }
+
+  private static class ImportPriorityChoice {
+    final ImportPriority myPriority;
+    final String myDescription;
+
+    public ImportPriorityChoice(@NotNull ImportPriority priority, @NotNull String description) {
+      myPriority = priority;
+      myDescription = description;
+    }
+  }
   
   private static final ImportPriority UNRESOLVED_SYMBOL_PRIORITY = ImportPriority.THIRD_PARTY;
 
@@ -240,25 +250,29 @@ public class AddImportHelper {
   @NotNull
   public static ImportPriority getImportPriority(@NotNull PyImportStatementBase importStatement) {
     final PsiElement resolved;
+    final PsiElement resolveAnchor;
     if (importStatement instanceof PyFromImportStatement) {
       final PyFromImportStatement fromImportStatement = (PyFromImportStatement)importStatement;
       if (fromImportStatement.isFromFuture()) {
-        return ImportPriority.FUTURE;
+        return logImportPriorityChoice(ImportPriority.FUTURE, importStatement, "import from __future__");
       }
       if (fromImportStatement.getRelativeLevel() > 0) {
-        return ImportPriority.PROJECT;
+        return logImportPriorityChoice(ImportPriority.PROJECT, importStatement, "explicit relative import");
       }
+      resolveAnchor = ((PyFromImportStatement)importStatement).getImportSource();
       resolved = fromImportStatement.resolveImportSource();
     }
     else {
       final PyImportElement firstImportElement = ArrayUtil.getFirstElement(importStatement.getImportElements());
       if (firstImportElement == null) {
-        return UNRESOLVED_SYMBOL_PRIORITY;
+        return logImportPriorityChoice(UNRESOLVED_SYMBOL_PRIORITY, importStatement, "incomplete import statement");
       }
+      resolveAnchor = firstImportElement;
       resolved = firstImportElement.resolve();
     }
     if (resolved == null) {
-      return UNRESOLVED_SYMBOL_PRIORITY;
+      return logImportPriorityChoice(UNRESOLVED_SYMBOL_PRIORITY, importStatement,
+                                     resolveAnchor == null ? "incomplete import statement" : resolveAnchor.getText() + " is unresolved");
     }
 
     PsiFileSystemItem resolvedFileOrDir;
@@ -278,27 +292,50 @@ public class AddImportHelper {
     }
     
     if (resolvedFileOrDir == null) {
-      return UNRESOLVED_SYMBOL_PRIORITY;
+      return logImportPriorityChoice(UNRESOLVED_SYMBOL_PRIORITY, importStatement, resolved + " is not a file or directory");
     }
-    
-    return getImportPriority(importStatement, resolvedFileOrDir);
+
+    final ImportPriorityChoice choice = getImportPriorityWithReason(importStatement, resolvedFileOrDir);
+    logImportPriorityChoice(choice.myPriority, importStatement, choice.myDescription);
+    return choice.myPriority;
+  }
+
+  @NotNull
+  private static ImportPriority logImportPriorityChoice(@NotNull ImportPriority priority, @NotNull PyImportStatementBase importStatement,
+                                                        @NotNull String description) {
+    LOG.debug(String.format("Import group for '%s' is %s: %s", importStatement.getText(), priority, description));
+    return priority;
   }
 
   @NotNull
   public static ImportPriority getImportPriority(@NotNull PsiElement importLocation, @NotNull PsiFileSystemItem toImport) {
+    final ImportPriorityChoice choice = getImportPriorityWithReason(importLocation, toImport);
+    LOG.debug(String.format("Import group for %s at %s is %s: %s", toImport, importLocation.getContainingFile(), choice.myPriority, choice.myDescription));
+    return choice.myPriority;
+  }
+
+  @NotNull
+  public static ImportPriorityChoice getImportPriorityWithReason(@NotNull PsiElement importLocation, @NotNull PsiFileSystemItem toImport) {
     final VirtualFile vFile = toImport.getVirtualFile();
     if (vFile == null) {
-      return UNRESOLVED_SYMBOL_PRIORITY;
+      return new ImportPriorityChoice(UNRESOLVED_SYMBOL_PRIORITY, toImport + " doesn't have an associated virtual file");
     }
     final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(toImport.getProject());
     final ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
     if (fileIndex.isInContent(vFile) && !fileIndex.isInLibraryClasses(vFile)) {
-      return ImportPriority.PROJECT;
+      return new ImportPriorityChoice(ImportPriority.PROJECT, vFile + " belongs to the project and not under interpreter paths");
     }
     final Module module = ModuleUtilCore.findModuleForPsiElement(importLocation);
     final Sdk pythonSdk = module != null ? PythonSdkType.findPythonSdk(module) : projectRootManager.getProjectSdk();
 
-    return PythonSdkType.isStdLib(vFile, pythonSdk) ? ImportPriority.BUILTIN : ImportPriority.THIRD_PARTY;
+    if (PythonSdkType.isStdLib(vFile, pythonSdk)) {
+      return new ImportPriorityChoice(ImportPriority.BUILTIN, vFile + " is either somewhere in lib but not under site-packages," +
+                                                              " or belongs to the root of skeletons," +
+                                                              " or is a .pyi stub definition for stdlib module");
+    }
+    else {
+      return new ImportPriorityChoice(ImportPriority.THIRD_PARTY, "Fall back value for " + vFile);
+    }
   }
 
   /**
