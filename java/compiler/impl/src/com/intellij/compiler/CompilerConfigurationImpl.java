@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler;
 
 import com.intellij.CommonBundle;
@@ -75,6 +60,7 @@ import static org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompile
 @State(name = "CompilerConfiguration", storages = @Storage("compiler.xml"))
 public class CompilerConfigurationImpl extends CompilerConfiguration implements PersistentStateComponent<Element>, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerConfiguration");
+
   public static final String TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME = "tests.external.compiler.home";
   public static final int DEFAULT_BUILD_PROCESS_HEAP_SIZE = 700;
 
@@ -355,7 +341,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       throw new MalformedPatternException(ex);
     }
   }
-  
+
   public JavacCompiler getJavacCompiler() {
     createCompilers();
     return JAVAC_EXTERNAL_BACKEND;
@@ -703,8 +689,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       }
       if (myState.BUILD_PROCESS_HEAP_SIZE == DEFAULT_BUILD_PROCESS_HEAP_SIZE) {
         final CompilerWorkspaceConfiguration workspace = CompilerWorkspaceConfiguration.getInstance(myProject);
-        // older version compatibility: as a fallback load this setting from workspace 
-        myState.BUILD_PROCESS_HEAP_SIZE = workspace.COMPILER_PROCESS_HEAP_SIZE; 
+        // older version compatibility: as a fallback load this setting from workspace
+        myState.BUILD_PROCESS_HEAP_SIZE = workspace.COMPILER_PROCESS_HEAP_SIZE;
       }
     }
 
@@ -890,7 +876,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   /**
-   * @param defaultCompiler The compiler that is passed as a parameter to setDefaultCompiler() 
+   * @param defaultCompiler The compiler that is passed as a parameter to setDefaultCompiler()
    * must be one of the registered compilers in compiler configuration.
    * Otherwise because of lazy compiler initialization, the value of default compiler will point to some other compiler instance
    */
