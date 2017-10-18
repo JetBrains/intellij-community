@@ -25,6 +25,10 @@ public class DfaFactMapValue extends DfaValue {
     return myFacts;
   }
 
+  public <T> T get(@NotNull DfaFactType<T> factType) {
+    return myFacts.get(factType);
+  }
+
   @Override
   public String toString() {
     return myFacts.toString();

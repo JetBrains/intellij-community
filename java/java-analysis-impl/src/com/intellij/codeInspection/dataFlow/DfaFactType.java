@@ -50,13 +50,15 @@ public abstract class DfaFactType<T> extends Key<T> {
       if (value instanceof DfaConstValue) {
         return ((DfaConstValue)value).getValue() == null;
       }
-      if (value instanceof DfaBoxedValue || value instanceof DfaUnboxedValue || value instanceof DfaRangeValue) {
-        return false;
-      }
+      if (value instanceof DfaBoxedValue || value instanceof DfaUnboxedValue) return false;
       if (value instanceof DfaTypeValue) {
         return NullnessUtil.toBoolean(((DfaTypeValue)value).getNullness());
       }
-      return null;
+      if (value instanceof DfaFactMapValue) {
+        DfaFactMapValue factValue = (DfaFactMapValue)value;
+        if (factValue.get(OPTIONAL_PRESENCE) != null || factValue.get(RANGE) != null) return false;
+      }
+      return super.fromDfaValue(value);
     }
 
     @Nullable
@@ -186,7 +188,7 @@ public abstract class DfaFactType<T> extends Key<T> {
 
   @Nullable
   T fromDfaValue(DfaValue value) {
-    return value instanceof DfaFactMapValue ? ((DfaFactMapValue)value).getFacts().get(this) : null;
+    return value instanceof DfaFactMapValue ? ((DfaFactMapValue)value).get(this) : null;
   }
 
   // Could be expensive

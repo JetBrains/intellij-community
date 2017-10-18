@@ -123,7 +123,7 @@ public class CustomMethodHandlers {
     DfaValue length = specialField.createValue(factory, qualifier);
     LongRangeSet range = memState.getValueFact(DfaFactType.RANGE, length);
     long maxLen = range == null || range.isEmpty() ? Integer.MAX_VALUE : range.max();
-    return singleResult(memState, factory.getRangeFactory().create(LongRangeSet.range(-1, maxLen - 1)));
+    return singleResult(memState, factory.getFactFactory().createValue(DfaFactType.RANGE, LongRangeSet.range(-1, maxLen - 1)));
   }
 
   private static List<DfaMemoryState> mathMinMax(DfaValue[] args, DfaMemoryState memState, DfaValueFactory factory, boolean max) {
@@ -134,7 +134,7 @@ public class CustomMethodHandlers {
     LongRangeSet domain = max ? LongRangeSet.range(Math.max(first.min(), second.min()), Long.MAX_VALUE)
                           : LongRangeSet.range(Long.MIN_VALUE, Math.min(first.max(), second.max()));
     LongRangeSet result = first.union(second).intersect(domain);
-    return singleResult(memState, factory.getRangeFactory().create(result));
+    return singleResult(memState, factory.getFactFactory().createValue(DfaFactType.RANGE, result));
   }
 
   private static List<DfaMemoryState> mathAbs(DfaValue[] args, DfaMemoryState memState, DfaValueFactory factory, boolean isLong) {
@@ -142,7 +142,7 @@ public class CustomMethodHandlers {
     if(arg == null) return Collections.emptyList();
     LongRangeSet range = memState.getValueFact(DfaFactType.RANGE, arg);
     if (range == null) return Collections.emptyList();
-    return singleResult(memState, factory.getRangeFactory().create(range.abs(isLong)));
+    return singleResult(memState, factory.getFactFactory().createValue(DfaFactType.RANGE, range.abs(isLong)));
   }
 
   private static List<DfaMemoryState> singleResult(DfaMemoryState state, DfaValue value) {

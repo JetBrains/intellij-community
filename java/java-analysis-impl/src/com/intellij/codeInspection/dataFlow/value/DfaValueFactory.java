@@ -55,7 +55,6 @@ public class DfaValueFactory {
     myTypeFactory = new DfaTypeValue.Factory(this);
     myRelationFactory = new DfaRelationValue.Factory(this);
     myExpressionFactory = new DfaExpressionFactory(this);
-    myRangeFactory = new DfaRangeValue.Factory(this);
     myFactFactory = new DfaFactMapValue.Factory(this);
   }
 
@@ -214,7 +213,6 @@ public class DfaValueFactory {
   private final DfaTypeValue.Factory myTypeFactory;
   private final DfaRelationValue.Factory myRelationFactory;
   private final DfaExpressionFactory myExpressionFactory;
-  private final DfaRangeValue.Factory myRangeFactory;
   private final DfaFactMapValue.Factory myFactFactory;
 
   @NotNull
@@ -239,11 +237,6 @@ public class DfaValueFactory {
   @NotNull
   public DfaRelationValue.Factory getRelationFactory() {
     return myRelationFactory;
-  }
-
-  @NotNull
-  public DfaRangeValue.Factory getRangeFactory() {
-    return myRangeFactory;
   }
 
   @NotNull

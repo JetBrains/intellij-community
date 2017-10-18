@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.dataFlow.rangeSet;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiPrimitiveType;
@@ -330,8 +331,8 @@ public abstract class LongRangeSet {
 
   @Nullable
   public static LongRangeSet fromDfaValue(DfaValue value) {
-    if (value instanceof DfaRangeValue) {
-      return ((DfaRangeValue)value).getValue();
+    if (value instanceof DfaFactMapValue) {
+      return ((DfaFactMapValue)value).get(DfaFactType.RANGE);
     }
     if (value instanceof DfaConstValue) {
       return fromConstant(((DfaConstValue)value).getValue());

@@ -589,17 +589,17 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
       return factory.createTypeValue(type, nullability);
     }
-    DfaRangeValue rangeValue = factory.getRangeFactory().create(type);
-    if (rangeValue != null) {
+    LongRangeSet range = LongRangeSet.fromType(type);
+    if (range != null) {
       PsiCall call = instruction.getCallExpression();
       if (call instanceof PsiMethodCallExpression) {
-        LongRangeSet range = KNOWN_METHOD_RANGES.mapFirst((PsiMethodCallExpression)call);
-        if (range == null) {
-          range = LongRangeSet.fromAnnotation(call.resolveMethod());
+        LongRangeSet inferredRange = KNOWN_METHOD_RANGES.mapFirst((PsiMethodCallExpression)call);
+        if (inferredRange == null) {
+          inferredRange = LongRangeSet.fromAnnotation(call.resolveMethod());
         }
-        return rangeValue.intersect(range);
+        range = range.intersect(inferredRange);
       }
-      return rangeValue;
+      return factory.getFactFactory().createValue(DfaFactType.RANGE, range);
     }
     return DfaUnknownValue.getInstance();
   }
@@ -657,7 +657,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       LongRangeSet left = memState.getValueFact(DfaFactType.RANGE, dfaLeft);
       LongRangeSet right = memState.getValueFact(DfaFactType.RANGE, dfaRight);
       if(left != null && right != null) {
-        result = runner.getFactory().getRangeFactory().create(left.bitwiseAnd(right));
+        result = runner.getFactory().getFactFactory().createValue(DfaFactType.RANGE, left.bitwiseAnd(right));
       }
     }
     else if (JavaTokenType.PLUS == opSign) {
