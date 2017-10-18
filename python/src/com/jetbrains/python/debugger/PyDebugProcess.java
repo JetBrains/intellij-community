@@ -116,6 +116,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private PyReferrersLoader myReferrersProvider;
   private final List<PyFrameListener> myFrameListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean isCythonWarningShown = false;
+  private PyDebugArrowRenderer myArrowRenderer;
 
   public PyDebugProcess(@NotNull XDebugSession session,
                         @NotNull ServerSocket serverSocket,
@@ -134,9 +135,9 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   private PyDebugProcess(@NotNull XDebugSession session,
-                        @NotNull DebuggerFactory debuggerFactory,
-                        @NotNull ExecutionConsole executionConsole,
-                        @Nullable ProcessHandler processHandler) {
+                         @NotNull DebuggerFactory debuggerFactory,
+                         @NotNull ExecutionConsole executionConsole,
+                         @Nullable ProcessHandler processHandler) {
     super(session);
 
     session.setPauseActionSupported(true);
@@ -216,6 +217,18 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
         }
       }
     });
+
+    myArrowRenderer = new PyDebugArrowRenderer(session);
+    session.addSessionListener(new XDebugSessionListener() {
+      @Override
+      public void sessionPaused() {
+        addArrowHighlighter();
+      }
+    });
+  }
+
+  public void addArrowHighlighter() {
+    myArrowRenderer.addHighlighter();
   }
 
   private MultiProcessDebugger createMultiprocessDebugger(ServerSocket serverSocket) {
@@ -238,6 +251,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   protected void detachDebuggedProcess() {
     handleStop(); //in case of normal debug we stop the session
+    myArrowRenderer.release();
   }
 
   protected void handleStop() {
@@ -689,7 +703,6 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   public void consoleExec(String command, PyDebugCallback<String> callback) {
-    dropFrameCaches();
     try {
       final PyStackFrame frame = currentFrame();
       myDebugger.consoleExec(frame.getThreadId(), frame.getFrameId(), command, callback);
@@ -1003,6 +1016,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private void dropFrameCaches() {
     myStackFrameCache.clear();
     myNewVariableValue.clear();
+    myArrowRenderer.release();
   }
 
   @NotNull

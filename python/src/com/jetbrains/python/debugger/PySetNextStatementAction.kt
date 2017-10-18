@@ -22,10 +22,12 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.DebuggerSupport
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.actions.XDebuggerActionBase
@@ -41,25 +43,7 @@ class PySetNextStatementAction : XDebuggerActionBase(true) {
         val debugProcess = session.debugProcess as? PyDebugProcess ?: return
         val position = XDebuggerUtilImpl.getCaretPosition(session.project, dataContext) ?: return
         val editor = CommonDataKeys.EDITOR.getData(dataContext) ?: FileEditorManager.getInstance(session.project).selectedTextEditor
-        val suspendContext = debugProcess.session.suspendContext
-        ApplicationManager.getApplication().executeOnPooledThread(Runnable {
-          debugProcess.startSetNextStatement(suspendContext, position, object : PyDebugCallback<Pair<Boolean, String>> {
-            override fun ok(response: Pair<Boolean, String>) {
-              if (!response.first && editor != null) {
-                ApplicationManager.getApplication().invokeLater(Runnable {
-                  if (!editor.isDisposed) {
-                    editor.caretModel.moveToOffset(position.offset)
-                    HintManager.getInstance().showErrorHint(editor, response.second)
-                  }
-                }, ModalityState.defaultModalityState())
-              }
-            }
-
-            override fun error(e: PyDebuggerException) {
-              LOG.error(e)
-            }
-          })
-        })
+        executeSetNextStatement(debugProcess, position, editor)
       }
 
       override fun isEnabled(project: Project, event: AnActionEvent): Boolean {
@@ -76,5 +60,27 @@ class PySetNextStatementAction : XDebuggerActionBase(true) {
 
   companion object {
     private val LOG = Logger.getInstance("#com.jetbrains.python.debugger.PySetNextStatementAction")
+    fun executeSetNextStatement(debugProcess: PyDebugProcess, position: XSourcePosition, editor: Editor?) {
+      val suspendContext = debugProcess.session.suspendContext
+      ApplicationManager.getApplication().executeOnPooledThread(Runnable {
+        debugProcess.startSetNextStatement(suspendContext, position, object : PyDebugCallback<Pair<Boolean, String>> {
+          override fun ok(response: Pair<Boolean, String>) {
+            if (!response.first && editor != null) {
+              ApplicationManager.getApplication().invokeLater(Runnable {
+                if (!editor.isDisposed) {
+                  editor.caretModel.moveToOffset(position.offset)
+                  HintManager.getInstance().showErrorHint(editor, response.second)
+                  debugProcess.addArrowHighlighter()
+                }
+              }, ModalityState.defaultModalityState())
+            }
+          }
+
+          override fun error(e: PyDebuggerException) {
+            LOG.error(e)
+          }
+        })
+      })
+    }
   }
 }
