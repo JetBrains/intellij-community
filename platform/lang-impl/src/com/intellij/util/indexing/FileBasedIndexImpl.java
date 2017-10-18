@@ -753,7 +753,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       }
     }
 
-    throw new IndexNotReadyException(project == null ? null : DumbServiceImpl.getInstance(project).getDumbModeStartTrace());
+    throw IndexNotReadyException.create(project == null ? null : DumbServiceImpl.getInstance(project).getDumbModeStartTrace());
   }
 
   @Override
