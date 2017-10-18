@@ -6,6 +6,7 @@ import com.intellij.codeInsight.JavaModuleSystemEx.ErrorWithFixes
 import com.intellij.codeInsight.daemon.JavaErrorMessages
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.AddRequiredModuleFix
+import com.intellij.compiler.CompilerConfiguration
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.jrt.JrtFileSystem
 import com.intellij.psi.*
@@ -78,7 +79,9 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
         return null  // a target is not on the mandatory module path
       }
 
-      if (!(targetModule is LightJavaModule || JavaModuleGraphUtil.exports(targetModule, packageName, useModule))) {
+      if (!(targetModule is LightJavaModule ||
+            JavaModuleGraphUtil.exports(targetModule, packageName, useModule) ||
+            inAddedExports(targetName, packageName, useName, place))) {
         return when {
           quick -> ERR
           useModule == null -> ErrorWithFixes(JavaErrorMessages.message("module.access.from.unnamed", packageName, targetName))
@@ -91,6 +94,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
         if (!targetName.startsWith("java.")) return null
         val root = PsiJavaModuleReference.resolve(place, "java.se", false)
         if (root == null || JavaModuleGraphUtil.reads(root, targetModule)) return null
+        if (inAddedModules(targetName, place)) return null
         return if (quick) ERR else ErrorWithFixes(JavaErrorMessages.message("module.access.not.in.graph", packageName, targetName))
       }
 
@@ -106,4 +110,52 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
 
     return null
   }
+
+  private fun inAddedExports(targetName: String, packageName: String, useName: String, place: PsiFileSystemItem): Boolean {
+    val module = module(place)
+    if (module != null) {
+      val options = CompilerConfiguration.getInstance(place.project).getAdditionalOptions(module)
+      val prefix = "${targetName}/${packageName}="
+      val recipient = if (useName.isEmpty()) "ALL-UNNAMED" else useName
+      return optionValues(options, "--add-exports")
+        .filter { it.startsWith(prefix) }
+        .map { it.substring(prefix.length) }
+        .flatMap { it.splitToSequence(",") }
+        .any { it == recipient }
+    }
+
+    return false
+  }
+
+  private fun inAddedModules(moduleName: String, place: PsiFileSystemItem): Boolean {
+    val module = module(place)
+    if (module != null) {
+      val options = CompilerConfiguration.getInstance(place.project).getAdditionalOptions(module)
+      return optionValues(options, "--add-modules")
+        .flatMap { it.splitToSequence(",") }
+        .any { it == moduleName || it == "ALL-SYSTEM" }
+    }
+
+    return false
+  }
+
+  private fun module(place: PsiFileSystemItem) =
+    place.virtualFile?.let { ProjectFileIndex.getInstance(place.project).getModuleForFile(it) }
+
+  private fun optionValues(options: List<String>, name: String) =
+    if (options.isEmpty()) emptySequence()
+    else {
+      var useValue = false
+      val prefix = name + "="
+      options.asSequence()
+        .map {
+          when {
+            it == name -> { useValue = true; "" }
+            useValue -> { useValue = false; it }
+            it.startsWith(prefix) -> it.substring(prefix.length)
+            else -> ""
+          }
+        }
+        .filterNot { it.isEmpty() }
+    }
 }
