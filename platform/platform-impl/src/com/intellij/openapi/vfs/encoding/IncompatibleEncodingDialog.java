@@ -55,17 +55,11 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
     JLabel label = new JLabel(XmlStringUtil.wrapInHtml(
                               "The encoding you've chosen ('" + charset.displayName() + "') may change the contents of '" + virtualFile.getName() + "'.<br>" +
                               "Do you want to<br>" +
-                              "1. <b>Reload</b> the file from disk in the new encoding '" + charset.displayName() + "'" + warning(safeToReload) + " or<br>" +
-                              "2. <b>Convert</b> the text and save in the new encoding" +  warning(safeToConvert) + "?"));
+                              "1. <b>Reload</b> the file from disk in the new encoding '" + charset.displayName() + "' and overwrite editor contents or<br>" +
+                              "2. <b>Convert</b> the text and overwrite file in the new encoding" + "?"));
     label.setIcon(Messages.getQuestionIcon());
     label.setIconTextGap(10);
     return label;
-  }
-
-  @NotNull
-  private static String warning(@NotNull EncodingUtil.Magic8 isItSafe) {
-    return isItSafe == EncodingUtil.Magic8.ABSOLUTELY ? "" :
-           isItSafe == EncodingUtil.Magic8.WELL_IF_YOU_INSIST ? " (may change contents)" : " (contents will be changed)";
   }
 
   @NotNull
