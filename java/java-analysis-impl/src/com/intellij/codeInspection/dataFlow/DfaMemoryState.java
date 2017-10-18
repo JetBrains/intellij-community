@@ -16,7 +16,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
+import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +37,7 @@ public interface DfaMemoryState {
 
   void setVarValue(DfaVariableValue var, DfaValue value);
 
-  boolean applyInstanceofOrNull(@NotNull DfaRelationValue dfaCond);
+  boolean applyInstanceofOrNull(DfaValue operand, DfaPsiType type);
 
   boolean applyCondition(DfaValue dfaCond);
 

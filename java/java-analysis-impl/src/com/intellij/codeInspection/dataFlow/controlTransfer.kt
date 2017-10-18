@@ -18,7 +18,7 @@
 package com.intellij.codeInspection.dataFlow
 
 import com.intellij.codeInspection.dataFlow.instructions.Instruction
-import com.intellij.codeInspection.dataFlow.value.DfaTypeValue
+import com.intellij.codeInspection.dataFlow.value.DfaPsiType
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
@@ -36,7 +36,7 @@ class DfaControlTransferValue(factory: DfaValueFactory,
 }
 
 interface TransferTarget
-data class ExceptionTransfer(val throwable: DfaValue) : TransferTarget
+data class ExceptionTransfer(val throwable: DfaPsiType?) : TransferTarget
 data class InstructionTransfer(val offset: ControlFlow.ControlFlowOffset, val toFlush: List<DfaVariableValue>) : TransferTarget
 object ReturnTransfer : TransferTarget {
   override fun toString(): String = "ReturnTransfer"
@@ -110,7 +110,7 @@ private class ControlTransferHandler(val state: DfaMemoryState, val runner: Data
     return iteration(traps)
   }
 
-  private fun processCatches(tryCatch: Trap.TryCatch, thrownValue: DfaValue, traps: FList<Trap>): List<DfaInstructionState> {
+  private fun processCatches(tryCatch: Trap.TryCatch, thrownValue: DfaPsiType?, traps: FList<Trap>): List<DfaInstructionState> {
     val result = arrayListOf<DfaInstructionState>()
     for ((catchSection, jumpOffset) in tryCatch.clauses) {
       val param = catchSection.parameter ?: continue
@@ -127,9 +127,9 @@ private class ControlTransferHandler(val state: DfaMemoryState, val runner: Data
     return result + iteration(traps)
   }
 
-  private fun allCaughtTypes(param: PsiParameter): List<DfaTypeValue> {
+  private fun allCaughtTypes(param: PsiParameter): List<DfaPsiType> {
     val psiTypes = param.type.let { if (it is PsiDisjunctionType) it.disjunctions else listOfNotNull(it) }
-    return psiTypes.map { runner.factory.createTypeValue(it, Nullness.NOT_NULL) }.filterIsInstance<DfaTypeValue>()
+    return psiTypes.map { runner.factory.createDfaType(it) }
   }
 
   private fun stateForCatchClause(param: PsiParameter, varState: DfaVariableState): DfaMemoryState {
@@ -138,10 +138,10 @@ private class ControlTransferHandler(val state: DfaMemoryState, val runner: Data
     return catchingCopy
   }
 
-  private fun initVariableState(param: PsiParameter, throwable: DfaValue): DfaVariableState {
+  private fun initVariableState(param: PsiParameter, throwable: DfaPsiType?): DfaVariableState {
     val sampleVar = (state as DfaMemoryStateImpl).factory.varFactory.createVariableValue(param, false)
     val varState = state.createVariableState(sampleVar).withFact(DfaFactType.CAN_BE_NULL, false)
-    return if (throwable is DfaTypeValue) varState.withInstanceofValue(throwable)!! else varState
+    return if (throwable != null) varState.withInstanceofValue(throwable)!! else varState
   }
 
 }

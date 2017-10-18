@@ -17,7 +17,6 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
-import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiPrimitiveType;
@@ -44,17 +43,16 @@ class DfaVariableState {
   }
 
   @Nullable
-  DfaVariableState withInstanceofValue(@NotNull DfaTypeValue dfaType) {
-    if (dfaType.getDfaType().getPsiType() instanceof PsiPrimitiveType) return this;
+  DfaVariableState withInstanceofValue(@NotNull DfaPsiType dfaType) {
+    if (dfaType.getPsiType() instanceof PsiPrimitiveType) return this;
     TypeConstraint typeConstraint = getTypeConstraint();
     TypeConstraint newTypeConstraint = typeConstraint.withInstanceofValue(dfaType);
     if (newTypeConstraint == null) return null;
-    DfaVariableState result = dfaType.isNullable() ? withFact(DfaFactType.CAN_BE_NULL, true) : this;
-    return result.withFact(DfaFactType.TYPE_CONSTRAINT, newTypeConstraint);
+    return withFact(DfaFactType.TYPE_CONSTRAINT, newTypeConstraint);
   }
 
   @Nullable
-  DfaVariableState withNotInstanceofValue(@NotNull DfaTypeValue dfaType) {
+  DfaVariableState withNotInstanceofValue(@NotNull DfaPsiType dfaType) {
     TypeConstraint typeConstraint = getTypeConstraint();
     TypeConstraint newTypeConstraint = typeConstraint.withNotInstanceofValue(dfaType);
     return newTypeConstraint == null ? null : withFact(DfaFactType.TYPE_CONSTRAINT, newTypeConstraint);

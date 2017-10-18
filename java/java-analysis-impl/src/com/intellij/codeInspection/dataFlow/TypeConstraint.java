@@ -16,7 +16,6 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
-import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiPrimitiveType;
@@ -82,11 +81,6 @@ public final class TypeConstraint {
   }
 
   @Nullable
-  TypeConstraint withInstanceofValue(@NotNull DfaTypeValue dfaType) {
-    return withInstanceofValue(dfaType.getDfaType());
-  }
-
-  @Nullable
   TypeConstraint withInstanceofValue(@NotNull DfaPsiType type) {
     if (type.getPsiType() instanceof PsiPrimitiveType) return this;
 
@@ -107,11 +101,6 @@ public final class TypeConstraint {
     newInstanceof.removeAll(moreGeneric);
     newInstanceof.add(type);
     return create(newInstanceof, myNotInstanceofValues);
-  }
-
-  @Nullable
-  TypeConstraint withNotInstanceofValue(@NotNull DfaTypeValue dfaType) {
-    return withNotInstanceofValue(dfaType.getDfaType());
   }
 
   @Nullable
@@ -172,7 +161,14 @@ public final class TypeConstraint {
   }
 
   boolean isSuperStateOf(@NotNull TypeConstraint that) {
-    return that.myNotInstanceofValues.containsAll(myNotInstanceofValues) && that.myInstanceofValues.containsAll(myInstanceofValues);
+    if (that.myNotInstanceofValues.containsAll(myNotInstanceofValues) && that.myInstanceofValues.containsAll(myInstanceofValues)) {
+      return true;
+    }
+    if (this.myNotInstanceofValues.isEmpty() && that.myNotInstanceofValues.isEmpty() && this.myInstanceofValues.size() == 1) {
+      DfaPsiType type = this.myInstanceofValues.iterator().next();
+      return that.myInstanceofValues.stream().allMatch(type::isAssignableFrom);
+    }
+    return false;
   }
 
   @NotNull

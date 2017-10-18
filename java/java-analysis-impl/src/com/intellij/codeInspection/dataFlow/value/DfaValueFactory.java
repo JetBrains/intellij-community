@@ -77,14 +77,15 @@ public class DfaValueFactory {
 
   @NotNull
   public DfaValue createTypeValue(@Nullable PsiType type, @NotNull Nullness nullability) {
-    if (type instanceof PsiClassType) {
-      type = ((PsiClassType)type).rawType();
-    }
     if (type == null) return DfaUnknownValue.getInstance();
-    return getTypeFactory().createTypeValue(internType(type), nullability);
+    return getTypeFactory().createTypeValue(createDfaType(type), nullability);
   }
 
-  private DfaPsiType internType(@NotNull PsiType psiType) {
+  @NotNull
+  public DfaPsiType createDfaType(@NotNull PsiType psiType) {
+    if (psiType instanceof PsiClassType) {
+      psiType = ((PsiClassType)psiType).rawType();
+    }
     DfaPsiType dfaType = myDfaTypes.get(psiType);
     if (dfaType == null) {
       myDfaTypes.put(psiType, dfaType = new DfaPsiType(psiType, myAssignableCache, myConvertibleCache));

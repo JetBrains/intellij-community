@@ -146,10 +146,10 @@ public abstract class DfaFactType<T> extends Key<T> {
     @Override
     TypeConstraint fromDfaValue(DfaValue value) {
       if(value instanceof DfaTypeValue) {
-        TypeConstraint constraint = TypeConstraint.EMPTY.withInstanceofValue((DfaTypeValue)value);
+        TypeConstraint constraint = TypeConstraint.EMPTY.withInstanceofValue(((DfaTypeValue)value).getDfaType());
         return constraint == null || constraint.isEmpty() ? null : constraint;
       }
-      return null;
+      return super.fromDfaValue(value);
     }
 
     @Override

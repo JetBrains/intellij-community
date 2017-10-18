@@ -72,8 +72,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     myProject = codeFragment.getProject();
     myIgnoreAssertions = ignoreAssertions;
     GlobalSearchScope scope = codeFragment.getResolveScope();
-    myRuntimeException = new ExceptionTransfer(myFactory.createTypeValue(createClassType(scope, JAVA_LANG_RUNTIME_EXCEPTION), Nullness.NOT_NULL));
-    myError = new ExceptionTransfer(myFactory.createTypeValue(createClassType(scope, JAVA_LANG_ERROR), Nullness.NOT_NULL));
+    myRuntimeException = new ExceptionTransfer(myFactory.createDfaType(createClassType(scope, JAVA_LANG_RUNTIME_EXCEPTION)));
+    myError = new ExceptionTransfer(myFactory.createDfaType(createClassType(scope, JAVA_LANG_ERROR)));
     myAssertionError = createClassType(scope, JAVA_LANG_ASSERTION_ERROR);
   }
 
@@ -1436,7 +1436,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void throwException(PsiType ref, @Nullable PsiElement anchor) {
-    throwException(new ExceptionTransfer(myFactory.createTypeValue(ref, Nullness.NOT_NULL)), anchor);
+    throwException(new ExceptionTransfer(myFactory.createDfaType(ref)), anchor);
   }
 
   private void throwException(ExceptionTransfer kind, @Nullable PsiElement anchor) {
@@ -1533,7 +1533,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(ifNotFail);
       addInstruction(new EmptyStackInstruction());
       addInstruction(
-        new ReturnInstruction(myFactory.controlTransfer(new ExceptionTransfer(DfaUnknownValue.getInstance()), myTrapStack), anchor));
+        new ReturnInstruction(myFactory.controlTransfer(new ExceptionTransfer(null), myTrapStack), anchor));
 
       ifNotFail.setOffset(myCurrentFlow.getInstructionCount());
     }

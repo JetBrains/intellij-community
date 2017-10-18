@@ -260,11 +260,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     setVariableState(var, withValueNullability(value, getVariableState(var).withValue(value)));
     if (value instanceof DfaTypeValue) {
-      DfaRelationValue dfaInstanceof = myFactory.getRelationFactory().createRelation(var, RelationType.IS, value);
       if (((DfaTypeValue)value).isNotNull()) {
+        DfaRelationValue dfaInstanceof = myFactory.getRelationFactory().createRelation(var, RelationType.IS, value);
         applyCondition(dfaInstanceof);
       } else {
-        applyInstanceofOrNull(dfaInstanceof);
+        applyInstanceofOrNull(var, ((DfaTypeValue)value).getDfaType());
       }
     }
     else {
@@ -699,16 +699,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
-  public boolean applyInstanceofOrNull(@NotNull DfaRelationValue dfaCond) {
-    DfaValue left = unwrap(dfaCond.getLeftOperand());
+  public boolean applyInstanceofOrNull(DfaValue operand, DfaPsiType type) {
+    DfaValue left = unwrap(operand);
 
     if (!(left instanceof DfaVariableValue)) return true;
 
     DfaVariableValue dfaVar = (DfaVariableValue)left;
-    DfaTypeValue dfaType = (DfaTypeValue)dfaCond.getRightOperand();
 
     if (isUnknownState(dfaVar) || isNull(dfaVar)) return true;
-    DfaVariableState newState = getVariableState(dfaVar).withInstanceofValue(dfaType);
+    DfaVariableState newState = getVariableState(dfaVar).withInstanceofValue(type);
     if (newState != null) {
       setVariableState(dfaVar, newState);
       return true;
@@ -830,10 +829,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         DfaTypeValue typeValue = (DfaTypeValue)dfaRight;
         switch (relationType) {
           case EQ:
-          case NE:
-            return !(dfaRelation.isEquality() && typeValue.isNotNull() && isNull(dfaVar));
+            return !(typeValue.isNotNull() && isNull(dfaVar));
           case IS_NOT: {
-            DfaVariableState newState = getVariableState(dfaVar).withNotInstanceofValue(typeValue);
+            DfaVariableState newState = getVariableState(dfaVar).withNotInstanceofValue(typeValue.getDfaType());
             if (newState != null) {
               setVariableState(dfaVar, newState);
               return true;
@@ -842,7 +840,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
           }
           case IS:
             if (applyRelation(dfaVar, myFactory.getConstFactory().getNull(), true)) {
-              DfaVariableState newState = getVariableState(dfaVar).withInstanceofValue(typeValue);
+              DfaVariableState newState = getVariableState(dfaVar).withInstanceofValue(typeValue.getDfaType());
               if (newState != null) {
                 setVariableState(dfaVar, newState);
                 return true;
@@ -882,12 +880,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
           return;
         }
         if (constValue instanceof PsiVariable) {
-          DfaValue typeValue = myFactory.createTypeValue(((PsiVariable)constValue).getType(), Nullness.NOT_NULL);
-          if (typeValue instanceof DfaTypeValue) {
-            DfaVariableState state = getVariableState(dfaVar).withInstanceofValue((DfaTypeValue)typeValue);
-            if (state != null) {
-              setVariableState(dfaVar, state);
-            }
+          DfaPsiType dfaType = myFactory.createDfaType(((PsiVariable)constValue).getType());
+          DfaVariableState state = getVariableState(dfaVar).withInstanceofValue(dfaType);
+          if (state != null) {
+            setVariableState(dfaVar, state);
           }
         }
       }
@@ -1169,7 +1165,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       state = myDefaultVariableStates.get(dfaVar);
       if (state == null) {
         state = createVariableState(dfaVar);
-        DfaTypeValue initialType = dfaVar.getTypeValue();
+        DfaPsiType initialType = dfaVar.getDfaType();
         if (initialType != null) {
           state = state.withInstanceofValue(initialType);
           assert state != null;

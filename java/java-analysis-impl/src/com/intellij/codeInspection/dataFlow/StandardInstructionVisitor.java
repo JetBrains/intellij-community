@@ -313,9 +313,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     final DfaValueFactory factory = runner.getFactory();
     DfaValue dfaExpr = factory.createValue(instruction.getCasted());
     if (dfaExpr != null) {
-      DfaTypeValue dfaType = (DfaTypeValue)factory.createTypeValue(instruction.getCastTo(), Nullness.UNKNOWN);
-      DfaRelationValue dfaInstanceof = factory.getRelationFactory().createRelation(dfaExpr, RelationType.IS, dfaType);
-      if (dfaInstanceof != null && !memState.applyInstanceofOrNull(dfaInstanceof)) {
+      if (!memState.applyInstanceofOrNull(dfaExpr, factory.createDfaType(instruction.getCastTo()))) {
         onInstructionProducesCCE(instruction);
       }
     }
