@@ -107,7 +107,11 @@ public class KeyedExtensionCollector<T, KeyT> {
 
     List<T> cached = myCache.get(stringKey);
     if (cached == null) {
-      cached = Collections.unmodifiableList(buildExtensions(stringKey, key));
+      List<T> list = buildExtensions(stringKey, key);
+      // tiny optimisations to save memory
+      //noinspection unchecked
+      cached = list.isEmpty() ? Collections.emptyList() :
+               list.size() == 1 ? ContainerUtil.immutableSingletonList(list.get(0)) : ContainerUtil.immutableList((T[])list.toArray());
       cached = ConcurrencyUtil.cacheOrGet(myCache, stringKey, cached);
     }
     return cached;
@@ -200,7 +204,7 @@ public class KeyedExtensionCollector<T, KeyT> {
         }
 
         @Override
-        public void areaReplaced(final ExtensionsArea area) {
+        public void areaReplaced(@NotNull final ExtensionsArea area) {
           resetAreaListener();
         }
       };

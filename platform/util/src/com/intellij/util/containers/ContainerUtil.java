@@ -463,6 +463,12 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
+  public static <E> ImmutableList<E> immutableSingletonList(final E element) {
+    return ImmutableList.singleton(element);
+  }
+
+  @NotNull
+  @Contract(pure=true)
   public static <E> ImmutableList<E> immutableList(@NotNull List<E> list) {
     return new ImmutableListBackedByList<E>(list);
   }
