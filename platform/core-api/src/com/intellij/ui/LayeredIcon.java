@@ -18,7 +18,6 @@ package com.intellij.ui;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUI.CachingScalableJBIcon;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
@@ -104,6 +103,7 @@ public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> {
     return myScaledIcons;
   }
 
+  @NotNull
   @Override
   public LayeredIcon withIconPreScaled(boolean preScaled) {
     super.withIconPreScaled(preScaled);

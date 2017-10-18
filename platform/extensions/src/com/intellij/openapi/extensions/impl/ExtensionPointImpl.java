@@ -379,19 +379,14 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   public synchronized void addExtensionPointListener(@NotNull final ExtensionPointListener<T> listener,
-                                        final boolean invokeForLoadedExtensions,
-                                        @NotNull Disposable parentDisposable) {
+                                                     final boolean invokeForLoadedExtensions,
+                                                     @NotNull Disposable parentDisposable) {
     if (invokeForLoadedExtensions) {
       addExtensionPointListener(listener);
     } else {
       myEPListeners.add(listener);
     }
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeExtensionPointListener(listener, invokeForLoadedExtensions);
-      }
-    });
+    Disposer.register(parentDisposable, () -> removeExtensionPointListener(listener, invokeForLoadedExtensions));
   }
 
   @Override
@@ -479,10 +474,10 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     myExtensionsCache = null;
   }
 
-  private boolean unregisterExtensionAdapter(@NotNull ExtensionComponentAdapter adapter) {
+  private void unregisterExtensionAdapter(@NotNull ExtensionComponentAdapter adapter) {
     try {
       if (myExtensionAdapters != null && myExtensionAdapters.remove(adapter)) {
-        return true;
+        return;
       }
       if (myLoadedAdapters != null && myLoadedAdapters.contains(adapter)) {
         Object key = adapter.getComponentKey();
@@ -490,9 +485,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
         @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension();
         unregisterExtension(extension, adapter.getPluginDescriptor());
-        return true;
       }
-      return false;
     }
     finally {
       clearCache();
@@ -500,7 +493,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   @TestOnly
-  final synchronized void notifyAreaReplaced(final ExtensionsArea area) {
+  final synchronized void notifyAreaReplaced(@NotNull ExtensionsArea area) {
     for (final ExtensionPointListener<T> listener : myEPListeners) {
       if (listener instanceof ExtensionPointAndAreaListener) {
         ((ExtensionPointAndAreaListener)listener).areaReplaced(area);

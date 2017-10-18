@@ -25,7 +25,6 @@ import com.intellij.openapi.module.*;
 import com.intellij.openapi.module.impl.LoadedModuleDescriptionImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
@@ -79,7 +78,7 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     if (getSettings().isShowLibraryContents()) {
       nodes.add(new ExternalLibrariesNode(getProject(), getSettings()));
     }
-    if (Registry.is("ide.scratch.in.project.view")) {
+    if (ScratchProjectViewPane.isScratchesMergedIntoProjectTab()) {
       nodes.add(ScratchProjectViewPane.createRootNode(getProject(), getSettings()));
     }
 

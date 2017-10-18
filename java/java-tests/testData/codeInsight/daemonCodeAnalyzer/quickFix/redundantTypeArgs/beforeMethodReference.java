@@ -1,4 +1,4 @@
-// "Remove explicit type arguments" "true"
+// "Remove explicit type arguments of method reference" "true"
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;

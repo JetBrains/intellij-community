@@ -17,6 +17,7 @@ package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
@@ -219,13 +220,18 @@ public class JUnit5ConverterInspection extends BaseInspection {
         return ArrayUtil.mergeArrays(usages, descriptors);
       }
 
+      List<SmartPsiElementPointer<PsiElement>> myReplacedRefs = new ArrayList<>();
+
       @Override
       protected void performRefactoring(@NotNull UsageInfo[] usages) {
         List<UsageInfo> migrateUsages = new ArrayList<>();
         List<ProblemDescriptor> descriptions = new ArrayList<>();
+        SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
         for (UsageInfo usage : usages) {
           if (usage instanceof MyDescriptionBasedUsageInfo) {
-            descriptions.add (((MyDescriptionBasedUsageInfo)usage).myDescriptor);
+            ProblemDescriptor descriptor = ((MyDescriptionBasedUsageInfo)usage).myDescriptor;
+            descriptions.add (descriptor);
+            markUsagesImportedThroughStaticImport(smartPointerManager, descriptor);
           }
           else {
             migrateUsages.add(usage);
@@ -233,6 +239,46 @@ public class JUnit5ConverterInspection extends BaseInspection {
         }
         super.performRefactoring(migrateUsages.toArray(new UsageInfo[migrateUsages.size()]));
         CleanupInspectionIntention.applyFixes(myProject, "Convert Assertions", descriptions, JUnit5AssertionsConverterInspection.ReplaceObsoleteAssertsFix.class, false);
+      }
+
+      @Override
+      protected void performPsiSpoilingRefactoring() {
+        super.performPsiSpoilingRefactoring();
+        tryToRestoreStaticImportsOnNewAssertions();
+      }
+
+      private void markUsagesImportedThroughStaticImport(SmartPointerManager smartPointerManager, ProblemDescriptor descriptor) {
+        PsiElement element = descriptor.getPsiElement();
+        PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
+        if (callExpression != null) {
+          PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
+          PsiElement scope = methodExpression.getQualifierExpression() == null
+                             ? methodExpression.advancedResolve(false).getCurrentFileResolveScope()
+                             : null;
+          if (scope instanceof PsiImportStaticStatement && ((PsiImportStaticStatement)scope).isOnDemand()) {
+            myReplacedRefs.add(smartPointerManager.createSmartPsiElementPointer(callExpression));
+          }
+        }
+      }
+
+      private void tryToRestoreStaticImportsOnNewAssertions() {
+        for (SmartPsiElementPointer<PsiElement> ref : myReplacedRefs) {
+          PsiElement element = ref.getElement();
+          if (element instanceof PsiMethodCallExpression) {
+            PsiExpression qualifierExpression = ((PsiMethodCallExpression)element).getMethodExpression().getQualifierExpression();
+            if (qualifierExpression != null) {
+              PsiElement referenceNameElement = ((PsiReferenceExpression)qualifierExpression).getReferenceNameElement();
+              PsiClass aClass = referenceNameElement != null ? AddOnDemandStaticImportAction
+                .getClassToPerformStaticImport(referenceNameElement) : null;
+              PsiFile containingFile = element.getContainingFile();
+              if (aClass != null && !AddOnDemandStaticImportAction.invoke(myProject, containingFile, null, referenceNameElement)) {
+                PsiImportStatementBase importReferenceTo = PsiTreeUtil
+                  .getParentOfType(((PsiJavaFile)containingFile).findImportReferenceTo(aClass), PsiImportStatementBase.class);
+                if (importReferenceTo != null) importReferenceTo.delete();
+              }
+            }
+          }
+        }
       }
     }
   }

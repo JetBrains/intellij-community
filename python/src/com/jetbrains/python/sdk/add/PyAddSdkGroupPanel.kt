@@ -23,6 +23,7 @@ import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import javax.swing.ButtonGroup
 import javax.swing.Icon
+import javax.swing.JComponent
 import javax.swing.JPanel
 
 /**
@@ -36,6 +37,14 @@ class PyAddSdkGroupPanel(name: String,
   override val icon = panelIcon
   var selectedPanel: PyAddSdkPanel = defaultPanel
   private val changeListeners: MutableList<Runnable> = mutableListOf()
+
+  override var newProjectPath: String?
+    get() = selectedPanel.newProjectPath
+    set(value) {
+      for (panel in panels) {
+        panel.newProjectPath = value
+      }
+    }
 
   init {
     layout = BorderLayout()
@@ -53,8 +62,11 @@ class PyAddSdkGroupPanel(name: String,
 
   override fun getOrCreateSdk() = selectedPanel.getOrCreateSdk()
 
-  fun addChangeListener(listener: Runnable) {
+  override fun addChangeListener(listener: Runnable) {
     changeListeners += listener
+    for (panel in panels) {
+      panel.addChangeListener(listener)
+    }
   }
 
   private fun createRadioButtonPanel(panels: List<PyAddSdkPanel>, defaultPanel: PyAddSdkPanel): JPanel? {
@@ -67,11 +79,23 @@ class PyAddSdkGroupPanel(name: String,
     val formBuilder = FormBuilder.createFormBuilder()
     for ((button, panel) in buttonMap) {
       panel.border = JBUI.Borders.emptyLeft(30)
-      formBuilder.addComponent(button)
+      val name: JComponent = panel.nameExtensionComponent?.let {
+        JPanel(BorderLayout()).apply {
+          val inner = JPanel().apply {
+            add(button)
+            add(it)
+          }
+          add(inner, BorderLayout.WEST)
+        }
+      } ?: button
+      formBuilder.addComponent(name)
       formBuilder.addComponent(panel)
       button.addItemListener {
         for (c in panels) {
           UIUtil.setEnabled(c, c == panel, true)
+          c.nameExtensionComponent?.let {
+            UIUtil.setEnabled(it, c == panel, true)
+          }
         }
         if (button.isSelected) {
           selectedPanel = panel

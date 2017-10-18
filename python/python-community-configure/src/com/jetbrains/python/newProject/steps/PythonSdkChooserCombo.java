@@ -27,7 +27,6 @@ import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
-import com.jetbrains.python.sdk.PyLazySdk;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
 import com.jetbrains.python.sdk.PythonSdkDetailsStep;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -87,36 +85,20 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
     final Sdk oldSelectedSdk = (Sdk)comboBox.getSelectedItem();
     PythonSdkDetailsStep.show(project, sdks, null, this, getButton().getLocationOnScreen(), myNewProjectPath, sdk -> {
       if (sdk == null) return;
-      if (!(sdk instanceof PyLazySdk)) {
-        final ProjectSdksModel projectSdksModel = interpreterList.getModel();
-        if (projectSdksModel.findSdk(sdk) == null) {
-          projectSdksModel.addSdk(sdk);
-          try {
-            projectSdksModel.apply();
-          }
-          catch (ConfigurationException e) {
-            LOG.error("Error adding new python interpreter " + e.getMessage());
-          }
+      final ProjectSdksModel projectSdksModel = interpreterList.getModel();
+      if (projectSdksModel.findSdk(sdk) == null) {
+        projectSdksModel.addSdk(sdk);
+        try {
+          projectSdksModel.apply();
+        }
+        catch (ConfigurationException e) {
+          LOG.error("Error adding new python interpreter " + e.getMessage());
         }
       }
-      final List<Sdk> allSdks = new ArrayList<>();
-      if (sdk instanceof PyLazySdk) {
-        allSdks.add(sdk);
-      }
-      // TODO: Filter out and sort the interpreters list
-      allSdks.addAll(interpreterList.getAllPythonSdks());
+      final List<Sdk> committedSdks = interpreterList.getAllPythonSdks();
       final Sdk copiedSdk = interpreterList.getModel().findSdk(sdk.getName());
-      final Sdk selectedSdk;
-      if (sdk instanceof PyLazySdk) {
-        selectedSdk = sdk;
-      }
-      else if (copiedSdk != null) {
-        selectedSdk = copiedSdk;
-      }
-      else {
-        selectedSdk = oldSelectedSdk;
-      }
-      comboBox.setModel(new CollectionComboBoxModel<>(allSdks, selectedSdk));
+      comboBox.setModel(new CollectionComboBoxModel<>(committedSdks, oldSelectedSdk));
+      comboBox.setSelectedItem(copiedSdk);
       notifyChanged(null);
     });
   }

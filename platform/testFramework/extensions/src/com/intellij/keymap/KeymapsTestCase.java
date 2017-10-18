@@ -87,7 +87,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift control G",          "ClassTemplateNavigation", "GoToClass"},
     { "shift control LEFT",       "EditorPreviousWordWithSelection", "ResizeToolWindowLeft", },
     { "shift control RIGHT",      "EditorNextWordWithSelection", "ResizeToolWindowRight", },
-    { "shift control T",          "GotoTest", "Images.ShowThumbnails"},
+    { "shift control T",          "GotoTest", "Images.ShowThumbnails", "RunDashboard.ShowConfigurations"},
     { "shift control UP",         "ResizeToolWindowUp", "MoveStatementUp"},
     { "shift control alt D",      "UML.ShowChanges", "Console.TableResult.CloneColumn"},
     { "shift control U",          "ShelveChanges.UnshelveWithDialog", "EditorToggleCase"},
@@ -302,6 +302,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift meta X",             "EditorToggleCase", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
     { "shift meta U",             "FindUsagesInFile", "ShelveChanges.UnshelveWithDialog"},
     { "control shift alt Z",      "Vcs.RollbackChangedLines", "ChangesView.Revert"},
+    { "meta alt H",               "ChangesView.ShelveSilently", "RunDashboard.ShowConfigurations"}
     });
   }};
   // @formatter:on

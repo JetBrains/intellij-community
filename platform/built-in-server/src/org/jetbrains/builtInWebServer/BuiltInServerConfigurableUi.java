@@ -18,9 +18,9 @@ class BuiltInServerConfigurableUi implements ConfigurableUi<BuiltInServerOptions
     portLabel.setLabelFor(builtInServerPort);
     builtInServerPort.setMin(1024);
     builtInServerPort.addChangeListener(e -> {
-      boolean isEnabled = builtInServerPort.getNumber() != BuiltInServerOptions.DEFAULT_PORT;
+      boolean isEnabled = builtInServerPort.getNumber() < BuiltInServerOptions.DEFAULT_PORT;
       builtInServerAvailableExternallyCheckBox.setEnabled(isEnabled);
-      builtInServerAvailableExternallyCheckBox.setToolTipText(isEnabled ? null : "Can’t be enabled for default port. Please change it.");
+      builtInServerAvailableExternallyCheckBox.setToolTipText(isEnabled ? null : "Can’t be enabled for default port (port number >= 63342). Please change it.");
     });
   }
 

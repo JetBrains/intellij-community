@@ -45,8 +45,9 @@ import javax.swing.JComboBox
  */
 class PyAddNewCondaEnvPanel(private val project: Project?,
                             private val existingSdks: List<Sdk>,
-                            private val newProjectPath: String?) : PyAddSdkPanel() {
-  override val panelName = "New Conda environment"
+                            override var newProjectPath: String?) : PyAddNewEnvPanel() {
+  override val envName = "Conda"
+  override val panelName = "New environment"
   override val icon: Icon = PythonIcons.Python.Anaconda
 
   private val pathField = TextFieldWithBrowseButton().apply {

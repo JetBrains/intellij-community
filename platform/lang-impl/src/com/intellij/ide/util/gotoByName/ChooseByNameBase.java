@@ -1362,15 +1362,16 @@ public abstract class ChooseByNameBase {
       boolean scopeExpanded = populateElements(elements);
       final String cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : scopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
 
-      Set<Object> filtered = filter(elements);
+      AnchoredSet resultSet = new AnchoredSet(filter(elements));
       return new Continuation(() -> {
         if (!checkDisposed() && !myProgress.isCanceled()) {
           CalcElementsThread currentBgProcess = myCalcElementsThread;
           LOG.assertTrue(currentBgProcess == this, currentBgProcess);
 
           showCard(cardToShow, 0);
-          backgroundCalculationFinished(elements, mySelectionPolicy);
 
+          Set<Object> filtered = resultSet.getElements();
+          backgroundCalculationFinished(filtered, mySelectionPolicy);
           myCallback.consume(filtered);
         }
       }, myModalityState);

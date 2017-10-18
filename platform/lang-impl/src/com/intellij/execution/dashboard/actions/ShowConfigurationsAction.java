@@ -27,6 +27,7 @@ public class ShowConfigurationsAction extends ToggleAction implements DumbAware 
       return;
     }
 
+    e.getPresentation().setEnabledAndVisible(true);
     super.update(e);
   }
 

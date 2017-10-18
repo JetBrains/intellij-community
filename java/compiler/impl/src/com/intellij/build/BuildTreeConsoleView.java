@@ -105,7 +105,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         }
       }
     };
-    final ExecutionNode rootNode = new ExecutionNode(myProject);
+    final ExecutionNode rootNode = new ExecutionNode(myProject, null);
     rootNode.setAutoExpandNode(true);
     final ListTreeTableModelOnColumns model = new ListTreeTableModelOnColumns(new DefaultMutableTreeNode(rootNode), COLUMNS);
 
@@ -150,7 +150,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     myBuilder.expand(rootNode, null);
 
     myProgressAnimator = new ExecutionNodeProgressAnimator(myBuilder);
-    myProgressAnimator.setCurrentNode(rootNode);
 
     JPanel myContentPanel = new JPanel();
     myContentPanel.setLayout(new CardLayout());
@@ -274,7 +273,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     if (event instanceof StartEvent) {
       ExecutionNode rootElement = getRootElement();
       if (currentNode == null) {
-        currentNode = event instanceof StartBuildEvent ? rootElement : new ExecutionNode(myProject);
+        currentNode = event instanceof StartBuildEvent ? rootElement : new ExecutionNode(myProject, myProgressAnimator);
         currentNode.setAutoExpandNode(currentNode == rootElement || parentNode == rootElement);
         nodesMap.put(event.getId(), currentNode);
       }
@@ -295,7 +294,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     else {
       currentNode = nodesMap.get(event.getId());
       if (currentNode == null && event instanceof ProgressBuildEvent) {
-        currentNode = new ExecutionNode(myProject);
+        currentNode = new ExecutionNode(myProject, myProgressAnimator);
         nodesMap.put(event.getId(), currentNode);
         if (parentNode != null) {
           parentNode.add(currentNode);
@@ -323,7 +322,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       }
     }
 
-    myProgressAnimator.setCurrentNode(currentNode);
     myBuilder.queueUpdateFrom(currentNode, false, false);
 
     if (event instanceof FinishBuildEvent) {
@@ -331,7 +329,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       String time = DateFormatUtil.formatDateTime(event.getEventTime());
       aHint = aHint == null ? "  at " + time : aHint + "  at " + time;
       currentNode.setHint(aHint);
-      myProgressAnimator.stopMovie();
       updateTimeColumnWidth(myTimeColumnWidth);
       if (myDetailsHandler.myExecutionNode == null) {
         myDetailsHandler.setNode(getRootElement());
@@ -341,7 +338,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         JTree tree = myBuilder.getTree();
         if (tree != null && !tree.isRootVisible()) {
           ExecutionNode rootElement = getRootElement();
-          ExecutionNode resultNode = new ExecutionNode(myProject);
+          ExecutionNode resultNode = new ExecutionNode(myProject, null);
           resultNode.setName(StringUtil.toTitleCase(rootElement.getName()));
           resultNode.setHint(rootElement.getHint());
           resultNode.setEndTime(rootElement.getEndTime());

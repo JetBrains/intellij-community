@@ -24,16 +24,6 @@ public class Utils {
     return fileName.endsWith(".zip") || fileName.endsWith(".jar");
   }
 
-  private static File findUniqueName(String path) {
-    int index = 0;
-    File myTempFile;
-    do {
-      myTempFile = new File(path + ".tmp." + index++);
-    }
-    while (myTempFile.exists());
-    return myTempFile;
-  }
-
   public static String findDirectory(long requiredFreeSpace) {
     String dir = System.getProperty("idea.updater.log");
     if (dir == null || !isValidDir(dir, requiredFreeSpace)) {
@@ -55,7 +45,14 @@ public class Utils {
       myTempDir = Files.createTempDirectory(Paths.get(findDirectory(REQUIRED_FREE_SPACE)), "idea.updater.files.").toFile();
       Runner.logger().info("created working directory: " + myTempDir);
     }
-    return findUniqueName(myTempDir.getPath() + '/' + name);
+
+    File myTempFile;
+    int index = 0;
+    do {
+      myTempFile = new File(myTempDir, name + ".tmp." + index++);
+    }
+    while (myTempFile.exists());
+    return myTempFile;
   }
 
   public static void cleanup() throws IOException {

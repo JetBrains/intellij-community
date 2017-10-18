@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import org.junit.jupiter.api.Assumptions;
+
 import static org.junit.Assume.*;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 class Test1 {
 
   @org.junit.jupiter.api.Test
   public void test_first() throws Exception {
-    assumeTrue(false, "message");
+    Assumptions.assumeTrue(false, "message");
   }
 }
