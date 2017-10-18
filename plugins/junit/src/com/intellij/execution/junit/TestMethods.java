@@ -27,6 +27,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
+import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -65,6 +66,19 @@ public class TestMethods extends TestMethod {
     addClassesListToJavaParameters(myFailedTests, testInfo -> testInfo != null ? getTestPresentation(testInfo, project, searchScope) : null, data.getPackageName(), true, javaParameters);
 
     return javaParameters;
+  }
+
+  @Override
+  protected PsiElement retrievePsiElement(Object element) {
+    if (element instanceof SMTestProxy) {
+      JUnitConfiguration configuration = getConfiguration();
+      Location location = ((SMTestProxy)element).getLocation(configuration.getProject(),
+                                                             configuration.getConfigurationModule().getSearchScope());
+      if (location != null) {
+        return location.getPsiElement();
+      }
+    }
+    return super.retrievePsiElement(element);
   }
 
   @Nullable
