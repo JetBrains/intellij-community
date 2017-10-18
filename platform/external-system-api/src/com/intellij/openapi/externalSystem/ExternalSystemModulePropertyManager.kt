@@ -117,10 +117,6 @@ class ExternalSystemModulePropertyManager(private val module: Module) : Persiste
   fun setExternalModuleType(type: String?) {
     store.externalSystemModuleType = type
   }
-
-  fun setLinkedProjectId(projectId: String) {
-    store.linkedProjectId = projectId
-  }
 }
 
 private interface ExternalOptionState {
