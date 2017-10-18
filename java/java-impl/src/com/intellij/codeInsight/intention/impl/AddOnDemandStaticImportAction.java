@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -110,17 +111,17 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
     return classToImport != null;
   }
 
-  public static void invoke(final Project project, PsiFile file, final Editor editor, PsiElement element) {
+  public static boolean invoke(final Project project, PsiFile file, final Editor editor, PsiElement element) {
     final PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)element.getParent();
     final PsiClass aClass = (PsiClass)refExpr.resolve();
     if (aClass == null) {
-      return;
+      return false;
     }
     final PsiClass containingClass = PsiUtil.getTopLevelClass(refExpr);
     if (aClass != containingClass) {
       PsiImportList importList = ((PsiJavaFile)file).getImportList();
       if (importList == null) {
-        return;
+        return false;
       }
       boolean alreadyImported = false;
       for (PsiImportStaticStatement statement : importList.getImportStaticStatements()) {
@@ -138,6 +139,7 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
       }
     }
 
+    Ref<Boolean> conflict = new Ref<>(false);
     List<PsiFile> roots = file.getViewProvider().getAllFiles();
     for (final PsiFile root : roots) {
       PsiElement copy = root.copy();
@@ -162,6 +164,9 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
               PsiElement after = expression.resolve();
               if (manager.areElementsEquivalent(after, resolved)) {
                 expressionToDequalifyOffsets.add(expression.getTextRange().getStartOffset() + delta);
+              }
+              else {
+                conflict.set(true);
               }
             }
             catch (IncorrectOperationException e) {
@@ -191,6 +196,7 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
         return true;
       });
     }
+    return conflict.get();
   }
 
   @Override
