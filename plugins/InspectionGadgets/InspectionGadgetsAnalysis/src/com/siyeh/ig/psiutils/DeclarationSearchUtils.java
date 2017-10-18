@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,12 +53,13 @@ public class DeclarationSearchUtils {
     if (statements.length == 0) {
       return false;
     }
-    List<PsiCodeBlock> affectedBlocks = ContainerUtil.newArrayList(parentBlock);
-    affectedBlocks.addAll(SyntaxTraverser.psiTraverser(block.getParent().getParent())
-                            .filter(PsiCodeBlock.class)
-                            .filter(cb -> cb.getTextRange().getStartOffset() > block.getTextRange().getEndOffset())
-                            .toList());
-    SearchScope affectedScope = new LocalSearchScope(affectedBlocks.toArray(PsiElement.EMPTY_ARRAY));
+    final int endOffset = block.getTextRange().getEndOffset();
+    final List<PsiCodeBlock> affectedBlocks =
+      SyntaxTraverser.psiTraverser(parentBlock)
+        .filter(PsiCodeBlock.class)
+        .filter(cb -> cb.getTextRange().getEndOffset() > endOffset)
+        .addAllTo(new SmartList<>());
+    final SearchScope affectedScope = new LocalSearchScope(affectedBlocks.toArray(PsiElement.EMPTY_ARRAY));
     final Project project = block.getProject();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     final PsiResolveHelper resolveHelper = facade.getResolveHelper();
@@ -78,7 +79,7 @@ public class DeclarationSearchUtils {
           continue;
         }
         for (PsiCodeBlock codeBlock : affectedBlocks) {
-          PsiVariable target = resolveHelper.resolveAccessibleReferencedVariable(variableName, codeBlock);
+          final PsiVariable target = resolveHelper.resolveAccessibleReferencedVariable(variableName, codeBlock);
           if (target instanceof PsiLocalVariable ||
               target instanceof PsiField && ReferencesSearch.search(target, affectedScope).findFirst() != null) {
             return true;
