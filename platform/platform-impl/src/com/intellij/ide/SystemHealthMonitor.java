@@ -181,12 +181,12 @@ public class SystemHealthMonitor implements ApplicationComponent {
     try {
       Class.forName("com.sun.jdi.Value");
     } catch (Throwable t) {
-      showNotification(new KeyHyperlinkAdapter("unsupported.jre"));
+      showNotification("unsupported.jre", null);
     }
 
     if (StringUtil.containsIgnoreCase(System.getProperty("java.vm.name", ""), "OpenJDK") &&
         !SystemInfo.isJetbrainsJvm && !SystemInfo.isStudioJvm) {
-      showNotification(new KeyHyperlinkAdapter("unsupported.jvm.openjdk.message"));
+      showNotification("unsupported.jvm.openjdk.message", null);
     }
 
     if (StringUtil.endsWithIgnoreCase(System.getProperty("java.version", ""), "-ea")) {
@@ -240,7 +240,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
         !SystemInfo.isJavaVersionAtLeast("1.8.0_76")) {
       // Upstream JDK8 bug tracked by https://bugs.openjdk.java.net/browse/JDK-8134917, affecting 1.8.0_60 up to 1.8.0_76.
       // Fixed by Jetbrains in their 1.8.0_40-b108 JRE and tracked in https://youtrack.jetbrains.com/issue/IDEA-146691
-      showNotification(new KeyHyperlinkAdapter("unsupported.jvm.dragndrop.message"));
+      showNotification("unsupported.jvm.dragndrop.message", null);
     }
   }
 
@@ -758,33 +758,6 @@ public class SystemHealthMonitor implements ApplicationComponent {
     public Object getData() {
       return ImmutableMap.of("Type", "Crashes", // keep consistent with the error reporter in android plugin
                              "descriptions", myDescriptions);
-    }
-  }
-
-  class KeyHyperlinkAdapter extends HyperlinkAdapter {
-    private final String key;
-
-    KeyHyperlinkAdapter(String key) {
-      this.key = key;
-    }
-
-    public String getKey() {
-      return key;
-    }
-
-    public String getIgnoreKey() {
-      return "ignore." + key;
-    }
-
-    @Override
-    protected void hyperlinkActivated(HyperlinkEvent e) {
-      String url = e.getDescription();
-      if ("ack".equals(url)) {
-        myProperties.setValue(getIgnoreKey(), "true");
-      }
-      else {
-        BrowserUtil.browse(url);
-      }
     }
   }
 }
