@@ -599,7 +599,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         }
         range = range.intersect(inferredRange);
       }
-      return factory.getFactFactory().createValue(DfaFactType.RANGE, range);
+      return factory.getFactValue(DfaFactType.RANGE, range);
     }
     return DfaUnknownValue.getInstance();
   }
@@ -657,7 +657,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       LongRangeSet left = memState.getValueFact(DfaFactType.RANGE, dfaLeft);
       LongRangeSet right = memState.getValueFact(DfaFactType.RANGE, dfaRight);
       if(left != null && right != null) {
-        result = runner.getFactory().getFactFactory().createValue(DfaFactType.RANGE, left.bitwiseAnd(right));
+        result = runner.getFactory().getFactValue(DfaFactType.RANGE, left.bitwiseAnd(right));
       }
     }
     else if (JavaTokenType.PLUS == opSign) {

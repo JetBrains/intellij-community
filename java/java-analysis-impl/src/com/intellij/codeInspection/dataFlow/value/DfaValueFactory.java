@@ -183,6 +183,10 @@ public class DfaValueFactory {
     return value ? getConstFactory().getTrue() : getConstFactory().getFalse();
   }
 
+  public <T> DfaValue getFactValue(@NotNull DfaFactType<T> factType, @Nullable T value) {
+    return getFactFactory().createValue(factType, value);
+  }
+
   public static boolean isEffectivelyUnqualified(PsiReferenceExpression refExpression) {
     PsiExpression qualifier = refExpression.getQualifierExpression();
     if (qualifier == null) {

@@ -19,8 +19,8 @@ import com.intellij.codeInspection.dataFlow.CFGBuilder;
 import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.NullabilityProblem;
 import com.intellij.codeInspection.dataFlow.Nullness;
-import com.intellij.codeInspection.dataFlow.value.DfaFactMapValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -144,17 +144,17 @@ public class OptionalChainInliner implements CallInliner {
       terminalInliner.accept(builder, call);
       return true;
     }
-    DfaFactMapValue.Factory factFactory = builder.getFactory().getFactFactory();
+    DfaValueFactory factFactory = builder.getFactory();
     if (pushIntermediateOperationValue(builder, call)) {
       builder.ifNotNull()
-        .push(factFactory.createValue(DfaFactType.OPTIONAL_PRESENCE, true))
+        .push(factFactory.getFactValue(DfaFactType.OPTIONAL_PRESENCE, true))
         .elseBranch()
-        .push(factFactory.createValue(DfaFactType.OPTIONAL_PRESENCE, false))
+        .push(factFactory.getFactValue(DfaFactType.OPTIONAL_PRESENCE, false))
         .endIf();
       return true;
     }
     if (OPTIONAL_EMPTY.test(call)) {
-      builder.push(factFactory.createValue(DfaFactType.OPTIONAL_PRESENCE, false));
+      builder.push(factFactory.getFactValue(DfaFactType.OPTIONAL_PRESENCE, false));
       return true;
     }
     return false;
@@ -187,7 +187,7 @@ public class OptionalChainInliner implements CallInliner {
         return true;
       }
     }
-    DfaValue presentOptional = builder.getFactory().getFactFactory().createValue(DfaFactType.OPTIONAL_PRESENCE, true);
+    DfaValue presentOptional = builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, true);
     builder
       .pushExpression(expression)
       .checkNotNull(dereferenceContext, problem)

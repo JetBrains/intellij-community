@@ -138,7 +138,7 @@ public enum SpecialField {
         }
       }
     }
-    return factory.getFactFactory().createValue(DfaFactType.RANGE, myRange);
+    return factory.getFactValue(DfaFactType.RANGE, myRange);
   }
 
   public DfaValue createFromConstant(DfaValueFactory factory, @NotNull Object obj) {

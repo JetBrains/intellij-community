@@ -221,7 +221,7 @@ public class StreamChainInliner implements CallInliner {
 
     @Override
     protected void pushInitialValue(CFGBuilder builder) {
-      builder.push(builder.getFactory().getFactFactory().createValue(DfaFactType.OPTIONAL_PRESENCE, false));
+      builder.push(builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, false));
     }
 
     @Override
@@ -229,7 +229,7 @@ public class StreamChainInliner implements CallInliner {
       if (myFunction != null) {
         builder.pushUnknown().invokeFunction(2, myFunction);
       }
-      builder.pushVariable(myResult).push(builder.getFactory().getFactFactory().createValue(DfaFactType.OPTIONAL_PRESENCE, true)).assign().splice(2);
+      builder.pushVariable(myResult).push(builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, true)).assign().splice(2);
     }
   }
 
@@ -243,7 +243,7 @@ public class StreamChainInliner implements CallInliner {
 
     @Override
     protected void pushInitialValue(CFGBuilder builder) {
-      builder.push(builder.getFactory().getFactFactory().createValue(DfaFactType.OPTIONAL_PRESENCE, false));
+      builder.push(builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, false));
     }
 
     @Override
@@ -255,7 +255,7 @@ public class StreamChainInliner implements CallInliner {
     @Override
     void iteration(CFGBuilder builder) {
       myComparatorModel.invoke(builder);
-      builder.pushVariable(myResult).push(builder.getFactory().getFactFactory().createValue(DfaFactType.OPTIONAL_PRESENCE, true)).assign().pop();
+      builder.pushVariable(myResult).push(builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, true)).assign().pop();
     }
 
     @Override
