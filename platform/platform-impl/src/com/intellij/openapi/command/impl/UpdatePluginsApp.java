@@ -74,9 +74,11 @@ public class UpdatePluginsApp extends ApplicationStarterEx {
   }
 
   private static void updateAllPlugins(ActionCallback callback, @Nullable List<String> plugins) {
+    BuildNumber apiVersion = BuildNumber.currentVersion();  // following UpdateChecker.doUpdateAndShowResult
     Collection<PluginDownloader> availableUpdates = UpdateChecker.checkPluginsUpdate(UpdateSettings.getInstance(),
                                                                                     new EmptyProgressIndicator(),
                                                                                     new HashSet<>(),
+                                                                                    apiVersion,
                                                                                     BuildNumber.currentVersion());
     if (availableUpdates == null) {
       log("All plugins up to date.");
