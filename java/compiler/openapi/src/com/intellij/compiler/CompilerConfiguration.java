@@ -21,6 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
 
+import java.util.List;
+
 public abstract class CompilerConfiguration {
   public static CompilerConfiguration getInstance(Project project) {
     return project.getComponent(CompilerConfiguration.class);
@@ -39,6 +41,12 @@ public abstract class CompilerConfiguration {
   @Nullable
   public abstract String getBytecodeTargetLevel(Module module);
   public abstract void setBytecodeTargetLevel(Module module, String level);
+
+  /**
+   * Returns additional compiler options applicable to the given module, if any.
+   */
+  @NotNull
+  public abstract List<String> getAdditionalOptions(@NotNull Module module);
 
   @NotNull
   public abstract AnnotationProcessingConfiguration getAnnotationProcessingConfiguration(Module module);
