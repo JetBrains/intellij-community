@@ -37,6 +37,8 @@ import java.util.*;
 
 /**
  * @author traff
+ *
+*  All inhertors must be in {@link com.jetbrains.env.}.*
  */
 public abstract class PyEnvTestCase {
   private static final Logger LOG = Logger.getInstance(PyEnvTestCase.class.getName());
