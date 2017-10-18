@@ -29,11 +29,13 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 class MemoryResource extends Resource {
+  private final URL myCodeSourceUrl;
   private final URL myUrl;
   private final byte[] myContent;
   private final Map<Resource.Attribute, String> myAttributes;
 
-  private MemoryResource(URL url, byte[] content, Map<Resource.Attribute, String> attributes) {
+  private MemoryResource(URL codeSourceUrl, URL url, byte[] content, Map<Resource.Attribute, String> attributes) {
+    myCodeSourceUrl = codeSourceUrl;
     myUrl = url;
     myContent = content;
     myAttributes = attributes;
@@ -42,6 +44,11 @@ class MemoryResource extends Resource {
   @Override
   public URL getURL() {
     return myUrl;
+  }
+
+  @Override
+  public URL getCodeSourceUrl() {
+    return myCodeSourceUrl;
   }
 
   @Override
@@ -60,7 +67,8 @@ class MemoryResource extends Resource {
   }
 
   @NotNull
-  public static MemoryResource load(URL baseUrl,
+  public static MemoryResource load(URL codeSourceUrl,
+                                    URL baseUrl,
                                     @NotNull ZipFile zipFile,
                                     @NotNull ZipEntry entry,
                                     @Nullable Map<Attribute, String> attributes) throws IOException {
@@ -78,6 +86,6 @@ class MemoryResource extends Resource {
       }
     }
 
-    return new MemoryResource(url, content, attributes);
+    return new MemoryResource(codeSourceUrl, url, content, attributes);
   }
 }

@@ -19,6 +19,8 @@ import com.intellij.util.lang.ClassPath;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 
+import java.security.CodeSource;
+
 /**
  * @author peter
  */
@@ -33,9 +35,9 @@ class JointCompilationClassLoader extends UrlClassLoader {
   }
 
   @Override
-  protected Class _defineClass(String name, byte[] b) {
+  protected Class _defineClass(String name, byte[] b, CodeSource codeSource) {
     try {
-      return super._defineClass(name, b);
+      return super._defineClass(name, b, codeSource);
     }
     catch (NoClassDefFoundError e) {
       NoClassDefFoundError wrap = new NoClassDefFoundError(e.getMessage() + " needed for " + name);

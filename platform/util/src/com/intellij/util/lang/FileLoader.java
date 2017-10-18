@@ -80,19 +80,20 @@ class FileLoader extends Loader {
     URL url = null;
     File file = null;
 
+    URL baseUrl = getBaseURL();
     try {
-      url = new URL(getBaseURL(), name);
-      if (!url.getFile().startsWith(getBaseURL().getFile())) return null;
+      url = new URL(baseUrl, name);
+      if (!url.getFile().startsWith(baseUrl.getFile())) return null;
 
       file = new File(myRootDir, name.replace('/', File.separatorChar));
       if (!check || file.exists()) {     // check means we load or process resource so we check its existence via old way
-        return new MyResource(url, file, !check);
+        return new MyResource(baseUrl, url, file, !check);
       }
     }
     catch (Exception exception) {
       if (!check && file != null && file.exists()) {
         try {   // we can not open the file if it is directory, Resource still can be created
-          return new MyResource(url, file, false);
+          return new MyResource(baseUrl, url, file, false);
         }
         catch (IOException ex) {}
       }
@@ -254,10 +255,12 @@ class FileLoader extends Loader {
   }
 
   private static class MyResource extends Resource {
+    private final URL myCodeSourceUrl;
     private final URL myUrl;
     private final File myFile;
 
-    public MyResource(URL url, File file, boolean willLoadBytes) throws IOException {
+    public MyResource(URL codeSourceUrl, URL url, File file, boolean willLoadBytes) throws IOException {
+      myCodeSourceUrl = codeSourceUrl;
       myUrl = url;
       myFile = file;
       if (willLoadBytes) getInputStream().close(); // check file existence
@@ -266,6 +269,11 @@ class FileLoader extends Loader {
     @Override
     public URL getURL() {
       return myUrl;
+    }
+
+    @Override
+    public URL getCodeSourceUrl() {
+      return myCodeSourceUrl;
     }
 
     @Override

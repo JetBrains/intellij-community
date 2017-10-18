@@ -18,6 +18,7 @@ package com.intellij.util.lang;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.security.CodeSigner;
 
 abstract class Resource {
   public enum Attribute {
@@ -26,11 +27,17 @@ abstract class Resource {
 
   public abstract URL getURL();
 
+  public abstract URL getCodeSourceUrl();
+
   public abstract InputStream getInputStream() throws IOException;
 
   public abstract byte[] getBytes() throws IOException;
 
   public String getValue(Attribute key) {
+    return null;
+  }
+
+  public CodeSigner[] getCodeSigners() {
     return null;
   }
 

@@ -26,6 +26,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.zip.ZipFile;
@@ -95,7 +96,8 @@ public class ReorderJarsTest {
 
     ZipFile zipFile3 = new ZipFile(file);
     try {
-      JarMemoryLoader loader = JarMemoryLoader.load(zipFile3, file.toURI().toURL(), null);
+      URL url = file.toURI().toURL();
+      JarMemoryLoader loader = JarMemoryLoader.load(zipFile3, url, url, null);
       assertNotNull(loader);
       Resource resource = loader.getResource("org/jetbrains/annotations/Nullable.class");
       assertNotNull(resource);

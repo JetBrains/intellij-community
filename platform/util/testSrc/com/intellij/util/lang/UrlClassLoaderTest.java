@@ -203,6 +203,11 @@ public class UrlClassLoaderTest {
     }
   }
 
+  @Test
+  public void testCodeSourceLocation() {
+    assertNotNull("Location of code source is null", getClass().getProtectionDomain().getCodeSource().getLocation());
+  }
+
   private static URL findResource(UrlClassLoader loader, String name, boolean findAll) {
     if (findAll) {
       try {

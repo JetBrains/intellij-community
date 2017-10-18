@@ -34,13 +34,16 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.security.CodeSigner;
+import java.security.CodeSource;
+import java.security.SecureClassLoader;
 import java.util.*;
 
 /**
  * A class loader that allows for various customizations, e.g. not locking jars or using a special cache to speed up class loading.
  * Should be constructed using {@link #build()} method.
  */
-public class UrlClassLoader extends ClassLoader {
+public class UrlClassLoader extends SecureClassLoader {
   static final String CLASS_EXTENSION = ".class";
 
   private static final Set<Class<?>> ourParallelCapableLoaders;
@@ -269,11 +272,14 @@ public class UrlClassLoader extends ClassLoader {
     }
 
     byte[] b = res.getBytes();
-    return _defineClass(name, b);
+    URL codeSourceUrl = res.getCodeSourceUrl();
+    CodeSigner[] signers = res.getCodeSigners();
+    CodeSource codeSource = new CodeSource(codeSourceUrl, signers);
+    return _defineClass(name, b, codeSource);
   }
 
-  protected Class _defineClass(final String name, final byte[] b) {
-    return defineClass(name, b, 0, b.length);
+  protected Class _defineClass(String name, byte[] b, CodeSource codeSource) {
+    return defineClass(name, b, 0, b.length, codeSource);
   }
 
   @Override
