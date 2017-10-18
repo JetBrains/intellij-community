@@ -15,8 +15,10 @@
  */
 package com.intellij.ui.components.labels;
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -55,20 +57,7 @@ public class ActionLink extends LinkLabel implements DataProvider {
     setListener(new LinkListener() {
       @Override
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
-        final Presentation presentation = myAction.getTemplatePresentation().clone();
-        final AnActionEvent event = new AnActionEvent(myEvent,
-                                                      DataManager.getInstance().getDataContext(ActionLink.this),
-                                                      myPlace,
-                                                      presentation,
-                                                      ActionManager.getInstance(),
-                                                      0);
-        ActionUtil.performDumbAwareUpdate(false, myAction, event, true);
-        if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
-          myAction.actionPerformed(event);
-          if (onDone != null) {
-            onDone.run();
-          }
-        }
+        ActionUtil.invokeAction(myAction, myEvent, ActionLink.this, myPlace, onDone);
       }
     }, null);
     myAction = action;
