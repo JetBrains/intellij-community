@@ -618,8 +618,17 @@ public class ExprProcessor implements CodeConstants {
           stack.pop();
           break;
         case opc_pop:
-        case opc_pop2:
           stack.pop();
+          break;
+        case opc_pop2:
+          if (stack.getByOffset(-1).getExprType().stackSize == 1) {
+            // Since value at the top of the stack is a value of category 1 (JVMS9 2.11.1)
+            // we should remove one more item from the stack.
+            // See JVMS9 pop2 chapter.
+            stack.pop();
+          }
+          stack.pop();
+          break;
       }
     }
   }
