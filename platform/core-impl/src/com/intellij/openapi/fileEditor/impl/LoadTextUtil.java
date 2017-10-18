@@ -37,7 +37,6 @@ import com.intellij.util.NullableConsumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.ByteArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +49,8 @@ import java.nio.charset.CharsetEncoder;
 
 public final class LoadTextUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.LoadTextUtil");
-  @Nls private static final String AUTO_DETECTED_FROM_BOM = "auto-detected from BOM";
+
+  public enum AutoDetectionReason { FROM_BOM, FROM_BYTES }
 
   private static final int UNLIMITED = -1;
 
@@ -257,7 +257,7 @@ public final class LoadTextUtil {
 
     if (saveBOM && bom != null && bom.length != 0) {
       file.setBOM(bom);
-      setCharsetWasDetectedFromBytes(file, AUTO_DETECTED_FROM_BOM);
+      setCharsetAutoDetectionReason(file, AutoDetectionReason.FROM_BOM);
     }
 
     file.setCharset(charset);
@@ -287,7 +287,7 @@ public final class LoadTextUtil {
   }
 
   private static Trinity<Charset, CharsetToolkit.GuessedEncoding, byte[]> guessFromContent(@NotNull VirtualFile virtualFile, @NotNull byte[] content, int startOffset, int endOffset) {
-    String detectedFromBytes = null;
+    AutoDetectionReason detectedFromBytes = null;
     try {
       Trinity<Charset, CharsetToolkit.GuessedEncoding, byte[]> info;
       if (!GUESS_UTF) {
@@ -299,16 +299,16 @@ public final class LoadTextUtil {
         byte[] bom = info.getThird();
         CharsetToolkit.GuessedEncoding guessed = info.getSecond();
         if (bom != null) {
-          detectedFromBytes = AUTO_DETECTED_FROM_BOM;
+          detectedFromBytes = AutoDetectionReason.FROM_BOM;
         }
         else if (guessed == CharsetToolkit.GuessedEncoding.VALID_UTF8) {
-          detectedFromBytes = "auto-detected from bytes";
+          detectedFromBytes = AutoDetectionReason.FROM_BYTES;
         }
       }
       return info;
     }
     finally {
-      setCharsetWasDetectedFromBytes(virtualFile, detectedFromBytes);
+      setCharsetAutoDetectionReason(virtualFile, detectedFromBytes);
     }
   }
 
@@ -445,7 +445,7 @@ public final class LoadTextUtil {
     }
     else {
       // prevent file to be reloaded in other encoding after save with BOM
-      setCharsetWasDetectedFromBytes(virtualFile, AUTO_DETECTED_FROM_BOM);
+      setCharsetAutoDetectionReason(virtualFile, AutoDetectionReason.FROM_BOM);
     }
   }
 
@@ -661,14 +661,20 @@ public final class LoadTextUtil {
     return convertLineSeparatorsToSlashN(charBuffer);
   }
 
-  private static final Key<String> CHARSET_WAS_DETECTED_FROM_BYTES = Key.create("CHARSET_WAS_DETECTED_FROM_BYTES");
+  private static final Key<AutoDetectionReason> CHARSET_WAS_DETECTED_FROM_BYTES = Key.create("CHARSET_WAS_DETECTED_FROM_BYTES");
+
   @Nullable("null if was not detected, otherwise the reason it was")
-  public static String wasCharsetDetectedFromBytes(@NotNull VirtualFile virtualFile) {
+  public static AutoDetectionReason getCharsetAutoDetectionReason(@NotNull VirtualFile virtualFile) {
     return virtualFile.getUserData(CHARSET_WAS_DETECTED_FROM_BYTES);
   }
 
-  public static void setCharsetWasDetectedFromBytes(@NotNull VirtualFile virtualFile,
-                                                    @Nullable("null if was not detected, otherwise the reason it was") String reason) {
+  private static void setCharsetAutoDetectionReason(
+    @NotNull VirtualFile virtualFile,
+    @Nullable("null if was not detected, otherwise the reason it was") AutoDetectionReason reason) {
     virtualFile.putUserData(CHARSET_WAS_DETECTED_FROM_BYTES, reason);
+  }
+
+  public static void clearCharsetAutoDetectionReason(@NotNull VirtualFile virtualFile) {
+    virtualFile.putUserData(CHARSET_WAS_DETECTED_FROM_BYTES, null);
   }
 }

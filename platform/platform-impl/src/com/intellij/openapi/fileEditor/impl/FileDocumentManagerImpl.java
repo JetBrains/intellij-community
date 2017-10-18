@@ -627,7 +627,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
           @Override
           public void run() {
             if (!isBinaryWithoutDecompiler(file)) {
-              LoadTextUtil.setCharsetWasDetectedFromBytes(file, null);
+              LoadTextUtil.clearCharsetAutoDetectionReason(file);
               file.setBOM(null); // reset BOM in case we had one and the external change stripped it away
               file.setCharset(null, null, false);
               boolean wasWritable = document.isWritable();
