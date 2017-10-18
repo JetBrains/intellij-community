@@ -31,7 +31,9 @@ import java.awt.*;
 
 /**
  * Handler utilities that allow running handlers with progress indicators
+ * @deprecated use {@link GitImpl}
  */
+@Deprecated
 public class GitHandlerUtil {
 
   private GitHandlerUtil() {
