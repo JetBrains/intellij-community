@@ -242,7 +242,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     return FSRecords.writeContent(getFileId(file), readOnly);
   }
 
-  private static void writeContent(@NotNull VirtualFile file, ByteSequence content, boolean readOnly) {
+  private static void writeContent(@NotNull VirtualFile file, ByteArraySequence content, boolean readOnly) {
     FSRecords.writeContent(getFileId(file), content, readOnly);
   }
 
@@ -519,7 +519,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
            cacheContent && !application.isInternal() && !application.isUnitTestMode()) &&
           content.length <= PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) {
         synchronized (myInputLock) {
-          writeContent(file, new ByteSequence(content), delegate.isReadOnly());
+          writeContent(file, new ByteArraySequence(content), delegate.isReadOnly());
           setFlag(file, MUST_RELOAD_CONTENT, false);
         }
       }
@@ -557,9 +557,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         if (len > PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) return nativeStream;
         return createReplicator(file, nativeStream, len, delegate.isReadOnly());
       }
-      else {
-        return contentStream;
-      }
+      return contentStream;
     }
   }
 
@@ -596,7 +594,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
                                      boolean readOnly, @NotNull byte[] bytes, int bytesLength) {
     synchronized (myInputLock) {
       if (bytesLength == fileLength) {
-        writeContent(file, new ByteSequence(bytes, 0, bytesLength), readOnly);
+        writeContent(file, new ByteArraySequence(bytes, 0, bytesLength), readOnly);
         setFlag(file, MUST_RELOAD_CONTENT, false);
       }
       else {

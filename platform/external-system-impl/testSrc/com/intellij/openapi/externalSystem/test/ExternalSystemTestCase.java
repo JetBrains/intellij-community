@@ -35,7 +35,7 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.ByteSequence;
+import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -357,7 +357,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   }
 
   @NotNull
-  protected VirtualFile createProjectJarSubFile(String relativePath, Pair<ByteSequence, String>... contentEntries) throws IOException {
+  protected VirtualFile createProjectJarSubFile(String relativePath, Pair<ByteArraySequence, String>... contentEntries) throws IOException {
     assertTrue("Use 'jar' extension for JAR files: '" + relativePath + "'", FileUtilRt.extensionEquals(relativePath, "jar"));
     File f = new File(getProjectPath(), relativePath);
     FileUtil.ensureExists(f.getParentFile());
@@ -370,7 +370,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
     JarOutputStream target = new JarOutputStream(new FileOutputStream(f), manifest);
-    for (Pair<ByteSequence, String> contentEntry : contentEntries) {
+    for (Pair<ByteArraySequence, String> contentEntry : contentEntries) {
       addJarEntry(contentEntry.first.getBytes(), contentEntry.second, target);
     }
     target.close();

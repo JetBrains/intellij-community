@@ -24,7 +24,7 @@ import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.ByteSequence;
+import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -775,14 +775,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
    * Read first {@code firstChunkLength} bytes from the {@code stream} to pass them to the {@code processor}.
    * {@code processor} may later request all the bytes from the stream by calling {@code Getter<ByteSequence>.get()}
    */
-  private void processFirstBytes(@NotNull InputStream stream, int fileLength, int firstChunkLength, @NotNull PairConsumer<ByteSequence, Getter<ByteSequence>> processor) throws IOException {
+  private void processFirstBytes(@NotNull InputStream stream, int fileLength, int firstChunkLength, @NotNull PairConsumer<ByteArraySequence, Getter<ByteArraySequence>> processor) throws IOException {
     final byte[] bytes = FileUtilRt.getThreadLocalBuffer();
     assert bytes.length >= firstChunkLength : "Cannot process more than " + bytes.length + " in one call, requested:" + firstChunkLength;
 
     int n = readSafely(stream, bytes, 0, firstChunkLength);
     if (n<=0) return;
 
-    ByteSequence firstChunk = new ByteSequence(bytes, 0, n);
+    ByteArraySequence firstChunk = new ByteArraySequence(bytes, 0, n);
 
     processor.consume(firstChunk, ()->{
       if (fileLength <= n) {
@@ -798,7 +798,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         return null;
       }
       if (read <= 0) return null;
-      return new ByteSequence(buffer, 0, n+read);
+      return new ByteArraySequence(buffer, 0, n+read);
     });
   }
 
@@ -834,12 +834,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
           // detected as binary
           return;
         }
-        int firstChunkLength = firstChunk.getLength();
+        int firstChunkLength = firstChunk.length();
         // It seems the file is text but the problem is we might have detected its charset wrong
         // The first DETECT_BUFFER_SIZE bytes might have been not enough to e.g. encounter some specific UTF-8 byte sequences
         // Need to scan all the file text
-        ByteSequence entireFile = entireFileBytesGetter.get();
-        if (entireFile != null && entireFile.getLength() != firstChunkLength) {
+        ByteArraySequence entireFile = entireFileBytesGetter.get();
+        if (entireFile != null && entireFile.length() != firstChunkLength) {
           detect(file, result, entireFile);
         }
       });
@@ -876,7 +876,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return fileType;
   }
 
-  private void detect(@NotNull VirtualFile file, Ref<FileType> result, ByteSequence byteSequence) {
+  private void detect(@NotNull VirtualFile file, Ref<FileType> result, ByteArraySequence byteSequence) {
     // use PlainTextFileType because it doesn't supply its own charset detector
     // help set charset in the process to avoid double charset detection from content
     LoadTextUtil.processTextFromBinaryPresentationOrNull(byteSequence.getBytes(),

@@ -19,7 +19,7 @@
  */
 package com.intellij.util.io.storage;
 
-import com.intellij.openapi.util.io.ByteSequence;
+import com.intellij.openapi.util.io.ByteArraySequence;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -28,7 +28,7 @@ import java.io.IOException;
 public class StorageTest extends StorageTestBase {
   public void testSmoke() throws Exception {
     final int record = myStorage.createNewRecord();
-    myStorage.writeBytes(record, new ByteSequence("Hello".getBytes()), false);
+    myStorage.writeBytes(record, new ByteArraySequence("Hello".getBytes()), false);
     assertEquals("Hello", new String(myStorage.readBytes(record)));
   }
 
@@ -45,7 +45,7 @@ public class StorageTest extends StorageTestBase {
 
     for (int i = 0; i < count; i++) {
       final int record = myStorage.createNewRecord();
-      myStorage.writeBytes(record, new ByteSequence(hello.getBytes()), true);  // fixed size optimization is mor than 50 percents here!
+      myStorage.writeBytes(record, new ByteArraySequence(hello.getBytes()), true);  // fixed size optimization is mor than 50 percents here!
       records[i] = record;
     }
 

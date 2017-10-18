@@ -20,10 +20,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.util.io.ByteSequence;
-import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.util.*;
@@ -1646,7 +1643,7 @@ public class FSRecords {
 
   private static final MessageDigest myDigest = ContentHashesUtil.createHashDigest();
 
-  static void writeContent(int fileId, ByteSequence bytes, boolean readOnly) {
+  static void writeContent(int fileId, ByteArraySequence bytes, boolean readOnly) {
     //noinspection IOResourceOpenedButNotSafelyClosed
     new ContentOutputStream(fileId, readOnly).writeBytes(bytes);
   }
@@ -1706,10 +1703,10 @@ public class FSRecords {
       super.close();
 
       final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
-      writeBytes(new ByteSequence(_out.getInternalBuffer(), 0, _out.size()));
+      writeBytes(new ByteArraySequence(_out.getInternalBuffer(), 0, _out.size()));
     }
 
-    private void writeBytes(ByteSequence bytes) {
+    private void writeBytes(ByteArraySequence bytes) {
       RefCountingStorage contentStorage = getContentStorage();
       w.lock();
       try {
@@ -1746,7 +1743,7 @@ public class FSRecords {
           DataOutputStream outputStream = new DataOutputStream(out);
           CompressionUtil.writeCompressed(outputStream, bytes.getBytes(), bytes.getOffset(), bytes.getLength());
           outputStream.close();
-          bytes = new ByteSequence(out.getInternalBuffer(), 0, out.size());
+          bytes = new ByteArraySequence(out.getInternalBuffer(), 0, out.size());
         }
         contentStorage.writeBytes(page, bytes, fixedSize);
       }
@@ -1844,10 +1841,10 @@ public class FSRecords {
               out = stream;
               writeRecordHeader(DbConnection.getAttributeId(myAttribute.getId()), myFileId, this);
               write(_out.getInternalBuffer(), 0, _out.size());
-              getAttributesStorage().writeBytes(page, new ByteSequence(stream.getInternalBuffer(), 0, stream.size()), myAttribute.isFixedSize());
+              getAttributesStorage().writeBytes(page, new ByteArraySequence(stream.getInternalBuffer(), 0, stream.size()), myAttribute.isFixedSize());
             }
             else {
-              getAttributesStorage().writeBytes(page, new ByteSequence(_out.getInternalBuffer(), 0, _out.size()), myAttribute.isFixedSize());
+              getAttributesStorage().writeBytes(page, new ByteArraySequence(_out.getInternalBuffer(), 0, _out.size()), myAttribute.isFixedSize());
             }
           }
           finally {
@@ -1916,7 +1913,7 @@ public class FSRecords {
                 if (_out.size() == attrAddressOrSize) {
                   // update inplace when new attr has the same size
                   int remaining = attrRefs.available();
-                  storage.replaceBytes(recordId, remainingAtStart - remaining, new ByteSequence(_out.getInternalBuffer(), 0, _out.size()));
+                  storage.replaceBytes(recordId, remainingAtStart - remaining, new ByteArraySequence(_out.getInternalBuffer(), 0, _out.size()));
                   return;
                 }
                 attrRefs.skipBytes(attrAddressOrSize);
