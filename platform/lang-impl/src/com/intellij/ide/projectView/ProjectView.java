@@ -18,6 +18,7 @@ package com.intellij.ide.projectView;
 
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
+import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
@@ -113,6 +114,15 @@ public abstract class ProjectView {
    * @see com.intellij.ide.projectView.impl.AbstractProjectViewPane#getId()
    */
   public abstract String getCurrentViewId();
+
+  // Android Studio: Default should be "AndroidView" unless custom properties override it. See b/67790043
+  /**
+   * Return what view ID should be used when none is selected
+   */
+  @NotNull
+  public static String getDefaultViewId() {
+    return Boolean.getBoolean("studio.projectview") ? ProjectViewPane.ID : "AndroidView";
+  }
 
   public abstract void selectPsiElement(PsiElement element, boolean requestFocus);
 
