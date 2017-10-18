@@ -160,7 +160,7 @@ public class DfaRelationValue extends DfaValue {
     }
 
     public DfaRelationValue createRelation(DfaValue dfaLeft, RelationType relationType, DfaValue dfaRight) {
-      if ((relationType == RelationType.IS || relationType == RelationType.IS_NOT) && dfaRight instanceof DfaOptionalValue) {
+      if ((relationType == RelationType.IS || relationType == RelationType.IS_NOT) && dfaRight instanceof DfaFactMapValue) {
         return createCanonicalRelation(dfaLeft, relationType, dfaRight);
       }
       if (dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue || dfaLeft instanceof DfaUnboxedValue

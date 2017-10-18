@@ -722,6 +722,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
   }
 
+  private boolean applyFacts(DfaValue dfaLeft, DfaFactMap facts) {
+    if (dfaLeft instanceof DfaVariableValue && !isUnknownState(dfaLeft)) {
+      DfaVariableState state = getVariableState((DfaVariableValue)dfaLeft).intersectMap(facts);
+      if (state == null) return false;
+      setVariableState((DfaVariableValue)dfaLeft, state);
+    }
+    return true;
+  }
+
   <T> boolean applyFact(DfaVariableValue target, DfaFactType<T> factType, T range) {
     if (!isUnknownState(target) && range != null) {
       DfaVariableState state = getVariableState(target);
@@ -806,11 +815,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
     }
 
-    if (dfaLeft instanceof DfaVariableValue &&
-        dfaRight instanceof DfaOptionalValue &&
-        (relationType == RelationType.IS || relationType == RelationType.IS_NOT)) {
-      boolean present = ((DfaOptionalValue)dfaRight).isPresent() == (relationType == RelationType.IS);
-      return applyFact((DfaVariableValue)dfaLeft, DfaFactType.OPTIONAL_PRESENCE, present);
+    if (dfaLeft instanceof DfaVariableValue && dfaRight instanceof DfaFactMapValue && relationType == RelationType.IS) {
+      return applyFacts(dfaLeft, ((DfaFactMapValue)dfaRight).getFacts());
+    }
+    if (dfaLeft instanceof DfaVariableValue && dfaRight instanceof DfaFactMapValue && relationType == RelationType.IS_NOT) {
+      return applyFacts(dfaLeft, ((DfaFactMapValue)dfaRight).getFacts().invert());
     }
 
     if (dfaRight instanceof DfaTypeValue) {
@@ -933,8 +942,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         return false;
       }
     }
-    if (!isNegated && dfaRight instanceof DfaOptionalValue) {
-      setFact(dfaLeft, DfaFactType.OPTIONAL_PRESENCE, ((DfaOptionalValue)dfaRight).isPresent());
+    if (!isNegated && dfaRight instanceof DfaFactMapValue) {
+      return applyFacts(dfaLeft, ((DfaFactMapValue)dfaRight).getFacts());
     }
 
     return true;

@@ -73,14 +73,13 @@ public abstract class DfaFactType<T> extends Key<T> {
    */
   public static final DfaFactType<Boolean> OPTIONAL_PRESENCE = new DfaFactType<Boolean>("Optional presense") {
     @Override
-    String toString(Boolean fact) {
-      return fact ? "present Optional" : "absent Optional";
+    Boolean invert(Boolean fact) {
+      return fact == null ? null : !fact;
     }
 
-    @Nullable
     @Override
-    Boolean fromDfaValue(DfaValue value) {
-      return value instanceof DfaOptionalValue ? ((DfaOptionalValue)value).isPresent() : null;
+    String toString(Boolean fact) {
+      return fact ? "present Optional" : "absent Optional";
     }
   };
 
@@ -187,7 +186,7 @@ public abstract class DfaFactType<T> extends Key<T> {
 
   @Nullable
   T fromDfaValue(DfaValue value) {
-    return null;
+    return value instanceof DfaFactMapValue ? ((DfaFactMapValue)value).getFacts().get(this) : null;
   }
 
   // Could be expensive
@@ -210,6 +209,16 @@ public abstract class DfaFactType<T> extends Key<T> {
   @Nullable
   T intersectFacts(@NotNull T left, @NotNull T right) {
     return left.equals(right) ? left : null;
+  }
+
+  /**
+   * Inverts a fact. This operation might not be reversible.
+   *
+   * @param fact
+   * @return an inverted fact
+   */
+  T invert(T fact) {
+    return null;
   }
 
   /**

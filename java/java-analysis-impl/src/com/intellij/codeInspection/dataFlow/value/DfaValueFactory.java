@@ -55,8 +55,8 @@ public class DfaValueFactory {
     myTypeFactory = new DfaTypeValue.Factory(this);
     myRelationFactory = new DfaRelationValue.Factory(this);
     myExpressionFactory = new DfaExpressionFactory(this);
-    myOptionalFactory = new DfaOptionalValue.Factory(this);
     myRangeFactory = new DfaRangeValue.Factory(this);
+    myFactFactory = new DfaFactMapValue.Factory(this);
   }
 
   public boolean isHonorFieldInitializers() {
@@ -149,11 +149,11 @@ public class DfaValueFactory {
       }
     }
 
-    if(dfaLeft instanceof DfaOptionalValue && dfaRight instanceof DfaOptionalValue) {
-      if(relationType == RelationType.IS) {
-        return getBoolean(dfaLeft == dfaRight);
-      } else if(relationType == RelationType.IS_NOT) {
-        return getBoolean(dfaLeft != dfaRight);
+    if(dfaLeft instanceof DfaFactMapValue && dfaRight instanceof DfaFactMapValue) {
+      if(relationType == RelationType.IS || relationType == RelationType.IS_NOT) {
+        boolean isSuperState = ((DfaFactMapValue)dfaRight).getFacts().isSuperStateOf(((DfaFactMapValue)dfaLeft).getFacts());
+        boolean wantedSuperState = relationType == RelationType.IS;
+        return getBoolean(isSuperState == wantedSuperState);
       }
     }
 
@@ -214,8 +214,8 @@ public class DfaValueFactory {
   private final DfaTypeValue.Factory myTypeFactory;
   private final DfaRelationValue.Factory myRelationFactory;
   private final DfaExpressionFactory myExpressionFactory;
-  private final DfaOptionalValue.Factory myOptionalFactory;
   private final DfaRangeValue.Factory myRangeFactory;
+  private final DfaFactMapValue.Factory myFactFactory;
 
   @NotNull
   public DfaVariableValue.Factory getVarFactory() {
@@ -242,12 +242,12 @@ public class DfaValueFactory {
   }
 
   @NotNull
-  public DfaOptionalValue.Factory getOptionalFactory() {
-    return myOptionalFactory;
+  public DfaRangeValue.Factory getRangeFactory() {
+    return myRangeFactory;
   }
 
   @NotNull
-  public DfaRangeValue.Factory getRangeFactory() {
-    return myRangeFactory;
+  public DfaFactMapValue.Factory getFactFactory() {
+    return myFactFactory;
   }
 }

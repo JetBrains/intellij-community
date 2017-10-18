@@ -21,6 +21,8 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * An immutable collection of facts which are known for some value. Each fact is identified by {@link DfaFactType} and fact value.
  * A null value for some fact type means that the value is not restricted by given fact type or given fact type is not
@@ -109,6 +111,31 @@ public final class DfaFactMap {
     T newFact = type.intersectFacts(curFact, value);
     return newFact == null ? null : with(type, newFact);
   }
+
+  private <TT> DfaFactMap intersect(@NotNull DfaFactMap otherMap, @NotNull DfaFactType<TT> type) {
+    return intersect(type, otherMap.get(type));
+  }
+
+  @Nullable
+  public DfaFactMap intersect(@NotNull DfaFactMap other) {
+    DfaFactMap result = this;
+    List<DfaFactType<?>> types = DfaFactType.getTypes();
+    for (DfaFactType<?> type : types) {
+      result = result.intersect(other, type);
+      if (result == null) return null;
+    }
+    return result;
+  }
+
+  public DfaFactMap invert() {
+    return StreamEx.of(DfaFactType.getTypes()).foldLeft(this, DfaFactMap::invert);
+  }
+
+  private <TT> DfaFactMap invert(@NotNull DfaFactType<TT> type) {
+    TT fact = get(type);
+    return with(type, type.invert(fact));
+  }
+
 
   /**
    * Returns a fact map which additionally allows having supplied value for the supplied fact

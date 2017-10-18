@@ -115,6 +115,11 @@ class DfaVariableState {
     return factMap == null ? null : myFactMap.equals(factMap) ? this : createCopy(factMap);
   }
 
+  DfaVariableState intersectMap(DfaFactMap map) {
+    DfaFactMap factMap = myFactMap.intersect(map);
+    return factMap == null ? null : myFactMap.equals(factMap) ? this : createCopy(factMap);
+  }
+
   @NotNull
   public DfaVariableState withValue(DfaValue value) {
     return this;
