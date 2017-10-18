@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Predicate;
 
 public class KeyedExtensionCollector<T, KeyT> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.KeyedExtensionCollector");
@@ -70,7 +71,7 @@ public class KeyedExtensionCollector<T, KeyT> {
   public void addExplicitExtension(@NotNull KeyT key, @NotNull T t) {
     synchronized (lock) {
       final String skey = keyToString(key);
-      List<T> list = myExplicitExtensions.computeIfAbsent(skey, __ -> new ArrayList<>());
+      List<T> list = myExplicitExtensions.computeIfAbsent(skey, __ -> new SmartList<>());
       list.add(t);
       myCache.remove(skey);
       for (ExtensionPointListener<T> listener : myListeners) {
@@ -124,7 +125,38 @@ public class KeyedExtensionCollector<T, KeyT> {
 
   @NotNull
   protected List<T> buildExtensions(@NotNull String stringKey, @NotNull KeyT key) {
-    return buildExtensions(Collections.singleton(stringKey));
+    synchronized (lock) {
+      List<T> list = myExplicitExtensions.get(stringKey);
+      List<T> result = list == null ? null : new ArrayList<>(list);
+
+      result = buildExtensionsFromExtensionPoint(result, bean -> stringKey.equals(bean.getKey()));
+      return result == null ? Collections.emptyList() : result;
+    }
+  }
+
+  private List<T> buildExtensionsFromExtensionPoint(@Nullable List<T> result, @NotNull Predicate<KeyedLazyInstance<T>> isMyBean) {
+    final ExtensionPoint<KeyedLazyInstance<T>> point = getPoint();
+    if (point != null) {
+      final KeyedLazyInstance<T>[] beans = point.getExtensions();
+      for (KeyedLazyInstance<T> bean : beans) {
+        if (isMyBean.test(bean)) {
+          final T instance;
+          try {
+            instance = bean.getInstance();
+          }
+          catch (ProcessCanceledException e) {
+            throw e;
+          }
+          catch (Exception | LinkageError e) {
+            LOG.error(e);
+            continue;
+          }
+          if (result == null) result = new SmartList<>();
+          result.add(instance);
+        }
+      }
+    }
+    return result;
   }
 
   @NotNull
@@ -144,27 +176,7 @@ public class KeyedExtensionCollector<T, KeyT> {
         }
       }
 
-      final ExtensionPoint<KeyedLazyInstance<T>> point = getPoint();
-      if (point != null) {
-        final KeyedLazyInstance<T>[] beans = point.getExtensions();
-        for (KeyedLazyInstance<T> bean : beans) {
-          if (keys.contains(bean.getKey())) {
-            final T instance;
-            try {
-              instance = bean.getInstance();
-            }
-            catch (ProcessCanceledException e) {
-              throw e;
-            }
-            catch (Exception | LinkageError e) {
-              LOG.error(e);
-              continue;
-            }
-            if (result == null) result = new SmartList<>();
-            result.add(instance);
-          }
-        }
-      }
+      result = buildExtensionsFromExtensionPoint(result, bean -> keys.contains(bean.getKey()));
       return result == null ? Collections.emptyList() : result;
     }
   }
