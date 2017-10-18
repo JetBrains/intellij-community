@@ -496,7 +496,12 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         e.getKey().performOperation(myProject, e.getValue());
       }
       myTransaction.commit();
-      app.runWriteAction(() -> performPsiSpoilingRefactoring());
+      if (Registry.is("run.refactorings.under.progress")) {
+        app.runWriteActionWithProgressInDispatchThread(getCommandName(), myProject, null, null, indicator -> performPsiSpoilingRefactoring());
+      }
+      else {
+        app.runWriteAction(() -> performPsiSpoilingRefactoring());
+      }
     }
     finally {
       action.finish();
