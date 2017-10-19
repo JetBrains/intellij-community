@@ -37,14 +37,14 @@ public class PyUserSkeletonsClassMembersProvider extends PyClassMembersProviderB
 
   @Nullable
   @Override
-  public PsiElement resolveMember(@NotNull PyClassType classType,
+  public PsiElement resolveMember(@NotNull PyClassType type,
                                   @NotNull String name,
                                   @Nullable PsiElement location,
                                   @NotNull PyResolveContext resolveContext) {
-    final PyClass cls = classType.getPyClass();
+    final PyClass cls = type.getPyClass();
     final PyClass skeleton = PyUserSkeletonsUtil.getUserSkeletonWithContext(cls, resolveContext.getTypeEvalContext());
     if (skeleton != null) {
-      return findClassMember(skeleton, name, classType.isDefinition());
+      return findClassMember(skeleton, name, type.isDefinition());
     }
     return null;
   }

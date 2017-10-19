@@ -22,7 +22,7 @@ import java.util.*;
 public class PyiModuleMembersProvider extends PyModuleMembersProvider {
   @Nullable
   @Override
-  public PsiElement resolveMember(PyFile module, String name, @NotNull PyResolveContext resolveContext) {
+  public PsiElement resolveMember(@NotNull PyFile module, @NotNull String name, @NotNull PyResolveContext resolveContext) {
     final PsiElement pythonStub = PyiUtil.getPythonStub(module);
     if (pythonStub instanceof PyFile) {
       final PyFile stubFile = (PyFile)pythonStub;
@@ -35,7 +35,8 @@ public class PyiModuleMembersProvider extends PyModuleMembersProvider {
   }
 
   @Override
-  public Collection<PyCustomMember> getMembers(PyFile module, PointInImport point, @NotNull TypeEvalContext context) {
+  @NotNull
+  public Collection<PyCustomMember> getMembers(@NotNull PyFile module, @NotNull PointInImport point, @NotNull TypeEvalContext context) {
     final PsiElement pythonStub = PyiUtil.getPythonStub(module);
     if (pythonStub instanceof PyFile) {
       final PyFile stubFile = (PyFile)pythonStub;
@@ -52,8 +53,15 @@ public class PyiModuleMembersProvider extends PyModuleMembersProvider {
   }
 
   @Override
-  protected Collection<PyCustomMember> getMembersByQName(PyFile module, String qName, @NotNull TypeEvalContext context) {
-    return null;
+  protected Collection<PyCustomMember> getMembersByQName(PyFile module, String qName) {
+    // This method will be removed in 2018.2
+    return Collections.emptyList();
+  }
+
+  @Override
+  @NotNull
+  protected Collection<PyCustomMember> getMembersByQName(@NotNull PyFile module, @NotNull String qName, @NotNull TypeEvalContext context) {
+    return Collections.emptyList();
   }
 
   private static boolean isExportedName(@NotNull PyFile file, @NotNull String name) {

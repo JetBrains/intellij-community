@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,8 +13,33 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public abstract class PyPsiPath {
+
+  /**
+   * Resolves psi path in specified context.
+   *
+   * @param context psi element to be used as psi context
+   * @return resolved element
+   * @deprecated Use {@link PyPsiPath#resolve(PsiElement, PyResolveContext)} instead.
+   * This method will be removed in 2018.2.
+   */
   @Nullable
-  public abstract PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext);
+  @Deprecated
+  public PsiElement resolve(@NotNull PsiElement context) {
+    return resolve(context, PyResolveContext.noImplicits().withTypeEvalContext(TypeEvalContext.codeInsightFallback(context.getProject())));
+  }
+
+  /**
+   * Resolves psi path in specified context.
+   *
+   * @param context        psi element to be used as psi context
+   * @param resolveContext context to be used in resolve
+   * @return resolved element
+   * @apiNote This method will be marked as abstract in 2018.2.
+   */
+  @Nullable
+  public PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext) {
+    return null;
+  }
 
   public static class ToFile extends PyPsiPath {
     private final QualifiedName myQualifiedName;
