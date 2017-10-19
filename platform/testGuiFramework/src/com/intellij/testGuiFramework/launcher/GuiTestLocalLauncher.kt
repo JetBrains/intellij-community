@@ -251,7 +251,15 @@ object GuiTestLocalLauncher {
   private fun getFullClasspath(moduleName: String, testClassNames: List<String>): List<File> {
     val classpath: MutableSet<File> = substituteAllMacro(getExtendedClasspath(moduleName))
     classpath.addAll(getTestClasspath(testClassNames))
+    classpath.add(getToolsJarFile())
     return classpath.toList()
+  }
+
+  private fun getToolsJarFile(): File {
+    val toolsJarUrl = getUrlPathsFromClassloader().firstOrNull {
+      it.endsWith("/tools.jar") or it.endsWith("\\tools.jar")
+    } ?: throw Exception("Unable to find tools.jar URL in the classloader URLs of ${GuiTestLocalLauncher::class.java.name} class")
+    return File(toolsJarUrl)
   }
 
   /**
@@ -273,7 +281,7 @@ object GuiTestLocalLauncher {
     val macroMap = mutableMapOf<String, String>()
     macroList.forEach { macroMap.put(it, resolveMacro(classpath, it)) }
     val mutableClasspath = mutableListOf<File>()
-    classpath.forEachIndexed { index, file ->
+    classpath.forEach { file ->
       val macro = file.path.findStartsWith(macroList)
       if (macro != null) {
         val resolvedMacro = macroMap.get(macro)
