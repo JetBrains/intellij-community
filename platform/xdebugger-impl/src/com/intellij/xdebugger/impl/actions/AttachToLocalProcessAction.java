@@ -340,7 +340,7 @@ public class AttachToLocalProcessAction extends AnAction {
 
     @NotNull
     public String getTooltipText(@NotNull Project project)  {
-      return myGroup.getProcessTooltipText(project, myProcessInfo, myDataHolder);
+      return myGroup.getProcessDescription(project, myProcessInfo, myDataHolder);
     }
 
     @NotNull

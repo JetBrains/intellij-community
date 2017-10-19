@@ -49,10 +49,10 @@ public interface XLocalAttachGroup {
   /**
    * @param dataHolder you may put your specific data into the holder at previous step in method @{@link XLocalAttachDebuggerProvider#getAvailableDebuggers(Project, ProcessInfo, UserDataHolder)}
    * and use it for presentation
-   * @return a text to be shown in tooltip of your debugger item
+   * @return a description of process to be shown in tooltip of your debugger item
    */
   @NotNull
-  default String getProcessTooltipText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
+  default String getProcessDescription(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
     return getProcessDisplayText(project, info, dataHolder);
   }
 
