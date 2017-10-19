@@ -34,7 +34,6 @@ import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -60,17 +59,6 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
     final List<? extends PsiElement> elements = JavaCompletionUtil.getAllPsiElements(item);
     return elements != null && !elements.isEmpty() && elements.get(0) instanceof PsiMethod ? elements.toArray() : null;
-  }
-
-  @Override
-  public Object[] getParametersForDocumentation(final Object p, final ParameterInfoContext context) {
-    if (p instanceof MethodCandidateInfo) {
-      return ((MethodCandidateInfo)p).getElement().getParameterList().getParameters();
-    }
-    if (p instanceof PsiMethod) {
-      return ((PsiMethod)p).getParameterList().getParameters();
-    }
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override
@@ -409,16 +397,6 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         return false;
       }
     }
-    return true;
-  }
-
-  @Override
-  public String getParameterCloseChars() {
-    return ParameterInfoUtils.DEFAULT_PARAMETER_CLOSE_CHARS;
-  }
-
-  @Override
-  public boolean tracksParameterIndex() {
     return true;
   }
 
