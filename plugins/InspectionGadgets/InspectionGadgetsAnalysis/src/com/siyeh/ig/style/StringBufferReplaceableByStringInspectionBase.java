@@ -17,6 +17,7 @@ package com.siyeh.ig.style;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -59,7 +60,7 @@ public class StringBufferReplaceableByStringInspectionBase extends BaseInspectio
           !TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING_BUILDER, type)) {
         return;
       }
-      final PsiExpression initializer = variable.getInitializer();
+      final PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
       if (!isNewStringBufferOrStringBuilder(initializer)) {
         return;
       }

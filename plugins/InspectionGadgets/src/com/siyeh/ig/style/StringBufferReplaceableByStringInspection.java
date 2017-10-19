@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -99,7 +100,7 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
       if (originalTypeElement == null) {
         return;
       }
-      final PsiExpression initializer = variable.getInitializer();
+      final PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
       if (initializer == null) {
         return;
       }
