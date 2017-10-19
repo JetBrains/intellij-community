@@ -40,6 +40,7 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
 
   private final Map<String, NamingConvention<T>> myNamingConventions = new LinkedHashMap<>();
   private final Map<String, NamingConventionBean> myNamingConventionBeans = new LinkedHashMap<>();
+  private final Map<String, Element> myUnloadedElements = new LinkedHashMap<>();
   private final Set<String> myDisabledShortNames = new HashSet<>();
   @Nullable private final String myDefaultConventionShortName;
 
@@ -88,6 +89,10 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
       String shortName = extension.getAttributeValue("name");
       if (shortName == null) continue;
       NamingConventionBean conventionBean = myNamingConventionBeans.get(shortName);
+      if (conventionBean == null) {
+        myUnloadedElements.put(shortName, extension);
+        continue;
+      }
       try {
         XmlSerializer.deserializeInto(conventionBean, extension);
         conventionBean.initPattern();
@@ -104,8 +109,15 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
 
   @Override
   public void writeSettings(@NotNull Element node) {
-    for (NamingConvention<T> convention : myNamingConventions.values()) {
-      String shortName = convention.getShortName();
+    Set<String> shortNames = new TreeSet<>(myNamingConventions.keySet());
+    shortNames.addAll(myUnloadedElements.keySet());
+    for (String shortName : shortNames) {
+      NamingConvention<T> convention = myNamingConventions.get(shortName);
+      if (convention == null) {
+        Element element = myUnloadedElements.get(shortName);
+        if (element != null) node.addContent(element.clone());
+        continue;
+      }
       boolean disabled = myDisabledShortNames.contains(shortName);
       Element element = new Element("extension")
         .setAttribute("name", shortName)

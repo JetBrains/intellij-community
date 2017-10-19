@@ -462,6 +462,35 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     assertThat(importedProfile.writeScheme()).isEqualTo(mergedElement);
   }
 
+  public void testKeepUnloadedMergeNamingConventions() throws Exception {
+      String unchanged = "<profile version=\"1.0\">\n" +
+                         "  <option name=\"myName\" value=\"ToConvert\" />\n" +
+                         "  <inspection_tool class=\"NewClassNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                         "    <extension name=\"AnnotationNamingConvention\" enabled=\"true\">\n" +
+                         "      <option name=\"inheritDefaultSettings\" value=\"false\" />\n" +
+                         "      <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*\" />\n" +
+                         "      <option name=\"m_minLength\" value=\"8\" />\n" +
+                         "      <option name=\"m_maxLength\" value=\"66\" />\n" +
+                         "    </extension>\n" +
+                         "    <extension name=\"AnnotationNamingConventionUnknown\" enabled=\"true\">\n" +
+                         "      <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*\" />\n" +
+                         "      <option name=\"m_minLength\" value=\"8\" />\n" +
+                         "      <option name=\"m_maxLength\" value=\"66\" />\n" +
+                         "    </extension>\n" +
+                         "    <extension name=\"ClassNamingConvention\" enabled=\"true\">\n" +
+                         "      <option name=\"m_regex\" value=\"[A-Z][A-Za-z\\d]*\" />\n" +
+                         "      <option name=\"m_minLength\" value=\"8\" />\n" +
+                         "      <option name=\"m_maxLength\" value=\"66\" />\n" +
+                         "    </extension>\n" +
+                         "  </inspection_tool>\n" +
+                         "</profile>";
+      final Element allEnabledProfile = JdomKt.loadElement(unchanged);
+      InspectionProfileImpl profile = createProfile(new InspectionProfileImpl("foo"));
+      profile.readExternal(allEnabledProfile);
+      profile.initInspectionTools();
+      assertEquals(unchanged, serialize(profile));
+    }
+
   public void testMergeMethodNamingConventions() throws Exception {
     final Element element = JdomKt.loadElement("<profile version=\"1.0\">\n" +
                                                "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
