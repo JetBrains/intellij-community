@@ -25,8 +25,9 @@ import org.jetbrains.annotations.Nullable;
 public class MalformedSetUpTearDownInspectionTest extends LightInspectionTestCase {
 
   public void testSimple() {
+    //noinspection ALL
     doTest("import junit.framework.*;" +
-           " /** @noinspection ALL*/ public class C extends TestCase {" +
+           "class C extends TestCase {" +
            "  private void /*'setUp()' has incorrect signature*/setUp/**/(int i) {}" +
            "}");
   }
