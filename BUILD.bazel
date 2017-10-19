@@ -71,6 +71,12 @@ iml_project(
     tags = ["managed"],
 )
 
+filegroup(
+    name = "config",
+    srcs = ["bin/log.xml"],
+    visibility = ["//visibility:public"],
+)
+
 iml_module(
     name = "platform-impl_and_others",
     # do not sort: must match IML order
