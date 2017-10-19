@@ -21,6 +21,7 @@ import one.util.streamex.IntStreamEx
 /**
  * @author peter
  */
+@Suppress("unused") // enable after fixing the bugs due to which the test fails
 abstract class PsiEventConsistencyTest : LightPlatformCodeInsightFixtureTestCase() {
 
   fun testPsiDocSynchronization() {
