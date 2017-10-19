@@ -15,6 +15,7 @@
  */
 package com.intellij.testGuiFramework.remote.server
 
+import com.intellij.testGuiFramework.remote.transport.MessageType
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
 import org.apache.log4j.Logger
 import java.io.InvalidClassException
@@ -193,9 +194,10 @@ class JUnitServerImpl : JUnitServer {
         LOG.info("Server Receive Thread started")
         while (connection.isConnected) {
           val obj = objectInputStream.readObject()
-          LOG.debug("Receiving message: $obj")
+          LOG.debug("Receiving message (DEBUG): $obj")
           assert(obj is TransportMessage)
           val message = obj as TransportMessage
+          if (message.type != MessageType.KEEP_ALIVE) LOG.info("Receiving message: $obj")
           receivingMessages.put(message)
           handlers.filter { it.acceptObject(message) }.forEach { it.handleObject(message) }
         }
