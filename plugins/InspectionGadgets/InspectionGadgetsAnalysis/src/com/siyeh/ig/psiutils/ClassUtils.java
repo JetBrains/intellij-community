@@ -250,7 +250,7 @@ public class ClassUtils {
     if (aClass == null) {
       return false;
     }
-    if (!aClass.hasModifierProperty(PsiModifier.FINAL) || !hasOnlyPrivateConstructors(aClass)) {
+    if (!aClass.hasModifierProperty(PsiModifier.FINAL) && !hasOnlyPrivateConstructors(aClass)) {
       return false;
     }
     final PsiMethod[] methods = aClass.findMethodsByName("equals", true);
