@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs.newvfs.impl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
@@ -360,9 +361,14 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       setCharset(charset);
     }
     else {
+      FileType fileType = getFileType();
+      if (isCharsetSet()) {
+        // file type detection may have cached the charset, no need to re-detect
+        return super.getCharset();
+      }
       try {
         final byte[] content = VfsUtilCore.loadBytes(this);
-        charset = LoadTextUtil.detectCharsetAndSetBOM(this, content, getFileType());
+        charset = LoadTextUtil.detectCharsetAndSetBOM(this, content, fileType);
       }
       catch (IOException e) {
         return super.getCharset();
