@@ -1063,9 +1063,6 @@
     </action>
     <group id="RunDashboardTreeToolbar"/>
     <group id="RunDashboardPopup">
-      <action id="RunDashboard.NextConfiguration" class="com.intellij.execution.dashboard.actions.NextConfigurationAction"/>
-      <action id="RunDashboard.PreviousConfiguration" class="com.intellij.execution.dashboard.actions.PreviousConfigurationAction"/>
-      <separator/>
       <action id="RunDashboard.EditConfiguration" class="com.intellij.execution.dashboard.actions.EditConfigurationAction"
               use-shortcut-of="EditSource"/>
       <action id="RunDashboard.CopyConfiguration" class="com.intellij.execution.dashboard.actions.CopyConfigurationAction"
