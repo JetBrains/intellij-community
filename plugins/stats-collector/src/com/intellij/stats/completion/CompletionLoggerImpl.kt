@@ -29,28 +29,27 @@ interface CompletionEventLogger {
     fun log(event: LogEvent)
 }
 
+fun LookupElement.idString(): String {
+    val p = LookupElementPresentation()
+    renderElement(p)
+    return "${p.itemText} ${p.tailText} ${p.typeText}"
+}
 
 class CompletionFileLogger(private val installationUID: String,
                            private val completionUID: String,
                            private val eventLogger: CompletionEventLogger) : CompletionLogger() {
 
-    val elementToId = mutableMapOf<String, Int>()
-
-    private fun LookupElement.toIdString(): String {
-        val p = LookupElementPresentation()
-        renderElement(p)
-        return "${p.itemText} ${p.tailText} ${p.typeText}"
-    }
+    private val elementToId = mutableMapOf<String, Int>()
 
     private fun registerElement(item: LookupElement): Int {
-        val itemString = item.toIdString()
+        val itemString = item.idString()
         val newId = elementToId.size
         elementToId[itemString] = newId
         return newId
     }
 
     private fun getElementId(item: LookupElement): Int? {
-        val itemString = item.toIdString()
+        val itemString = item.idString()
         return elementToId[itemString]
     }
 
