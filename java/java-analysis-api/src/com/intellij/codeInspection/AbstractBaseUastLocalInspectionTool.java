@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.uast.UastVisitorAdapter;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UClass;
@@ -13,6 +14,8 @@ import org.jetbrains.uast.UField;
 import org.jetbrains.uast.UFile;
 import org.jetbrains.uast.UMethod;
 import org.jetbrains.uast.visitor.AbstractUastVisitor;
+
+import java.util.Objects;
 
 public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectionTool {
   private static final Condition<PsiElement> PROBLEM_ELEMENT_CONDITION = Conditions.and(Conditions.instanceOf(PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class), Conditions.notInstanceOf(PsiTypeParameter.class));
@@ -87,10 +90,52 @@ public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectio
       private void addDescriptors(final ProblemDescriptor[] descriptors) {
         if (descriptors != null) {
           for (ProblemDescriptor descriptor : descriptors) {
-            holder.registerProblem(descriptor);
+            // Substitution is required when reporting on light(non-physical) elements.
+            // of course it is better to fix in on reporter side,
+            // but it still not possible sometimes. So we will try to workaround here.
+            // TODO: remove it when implementations will be able to provide elements strictly from the file under inspection
+            PsiElement startElement = substitute(descriptor.getStartElement(), holder.getFile());
+            PsiElement endElement = substitute(descriptor.getEndElement(), holder.getFile());
+
+            if (startElement == descriptor.getStartElement() && endElement == descriptor.getEndElement()) {
+              holder.registerProblem(descriptor);
+            }
+            else {
+              QuickFix[] fixes = descriptor.getFixes();
+              holder.registerProblem(holder.getManager().createProblemDescriptor(
+                startElement,
+                endElement,
+                descriptor.getDescriptionTemplate(),
+                descriptor.getHighlightType(),
+                isOnTheFly,
+                fixes != null ? ContainerUtil.findAllAsArray(fixes, LocalQuickFix.class) : LocalQuickFix.EMPTY_ARRAY
+              ));
+            }
           }
         }
       }
+
+      @NotNull
+      private PsiElement substitute(@NotNull PsiElement element, @NotNull PsiFile desiredFile) {
+        if (inFile(element, desiredFile)) return element;
+        PsiElement navigationElement = element.getNavigationElement();
+        if (navigationElement == null) return element;
+        if (inFile(navigationElement, desiredFile)) return navigationElement;
+
+        // last resort
+        PsiElement elementAtSamePosition = desiredFile.findElementAt(navigationElement.getTextRange().getStartOffset());
+        if (elementAtSamePosition != null && Objects.equals(elementAtSamePosition.getText(), navigationElement.getText())) {
+          return elementAtSamePosition;
+        }
+        return element; // it can't be helped
+      }
+
+      private boolean inFile(@NotNull PsiElement element, @NotNull PsiFile desiredFile) {
+        PsiFile file = element.getContainingFile();
+        if (file == null) return false;
+        return file.getViewProvider() == desiredFile.getViewProvider();
+      }
+
     });
   }
 
