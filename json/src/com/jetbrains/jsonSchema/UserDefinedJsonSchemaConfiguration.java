@@ -15,6 +15,8 @@
  */
 package com.jetbrains.jsonSchema;
 
+import com.intellij.idea.RareLogger;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicClearableLazyValue;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -47,6 +49,7 @@ public class UserDefinedJsonSchemaConfiguration {
     if (o1.directory != o2.directory) return o1.directory ? -1 : 1;
     return o1.path.compareToIgnoreCase(o2.path);
   };
+  private static final Logger LOG = RareLogger.wrap(Logger.getInstance(UserDefinedJsonSchemaConfiguration.class), false);
 
   public String name;
   public String relativePathToSchema;
@@ -123,7 +126,12 @@ public class UserDefinedJsonSchemaConfiguration {
           @Override
           public boolean process(Project project, VirtualFile file) {
             matcher.reset(file.getName());
-            return matcher.matches();
+            try {
+              return matcher.matches();
+            } catch (Exception e) {
+              LOG.info(e);
+              return false;
+            }
           }
         });
       }
