@@ -212,6 +212,10 @@ public class Generator<T> {
     return from(data -> data.drawInt());
   }
 
+  public static Generator<Integer> naturals() {
+    return integers(0, Integer.MAX_VALUE);
+  }
+
   /** Generates integers in the given range (both ends inclusive) */
   public static Generator<Integer> integers(int min, int max) {
     IntDistribution distribution = IntDistribution.uniform(min, max);
