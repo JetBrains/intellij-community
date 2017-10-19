@@ -198,19 +198,19 @@ public class ChangeListWorker {
   }
 
   @NotNull
-  public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable ChangeListData data) {
-    return addChangeList(name, comment, false, data);
+  public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable String id, @Nullable ChangeListData data) {
+    return addChangeList(name, comment, id, data, false);
   }
 
   @NotNull
-  private LocalChangeList addChangeList(@NotNull String name, @Nullable String description, boolean inUpdate,
-                                        @Nullable ChangeListData data) {
+  private LocalChangeList addChangeList(@NotNull String name, @Nullable String description, @Nullable String id,
+                                        @Nullable ChangeListData data, boolean inUpdate) {
     if (myMap.containsKey(name)) {
       LOG.error("Attempt to create duplicate changelist " + name);
       return myMap.get(name);
     }
 
-    LocalChangeListImpl newList = LocalChangeListImpl.createEmptyChangeListImpl(myProject, name, null);
+    LocalChangeListImpl newList = LocalChangeListImpl.createEmptyChangeListImpl(myProject, name, id);
     newList.setCommentImpl(description);
     newList.setData(data);
 
@@ -734,7 +734,7 @@ public class ChangeListWorker {
     @NotNull
     @Override
     public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment) {
-      return myWorker.addChangeList(name, comment, true, null).copy();
+      return myWorker.addChangeList(name, comment, null, null, true).copy();
     }
 
     @NotNull
