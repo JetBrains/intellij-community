@@ -31,6 +31,7 @@ import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
+import java.awt.geom.AffineTransform;
 import java.awt.image.ImageObserver;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -552,6 +553,29 @@ public class JBUI {
    */
   public static boolean isHiDPI(double scale) {
     return scale > 1f;
+  }
+
+  /**
+   * If the graphics has floating point scale transform, aligns the graphics to the integer coordinate grid,
+   * otherwise does nothing. This is used to avoid the rounding problem, see JRE-502.
+   *
+   * @param g the graphics to align
+   * @return the original graphics transform when aligned, otherwise null
+   */
+  public static AffineTransform alignToIntGrid(@NotNull Graphics2D g) {
+    AffineTransform tx = g.getTransform();
+    double scaleX = tx.getScaleX();
+    double scaleY = tx.getScaleY();
+    boolean fpsTx = scaleX != (int)scaleX || scaleY != (int)scaleY;
+    if (fpsTx) {
+      AffineTransform alignedTx = new AffineTransform();
+      alignedTx.translate((int)Math.ceil(tx.getTranslateX() - 0.5), (int)Math.ceil(tx.getTranslateY() - 0.5));
+      alignedTx.scale(scaleX, scaleY);
+      assert tx.getShearX() == 0 && tx.getShearY() == 0; // the shear is ignored
+      g.setTransform(alignedTx);
+      return tx;
+    }
+    return null;
   }
 
   public static class Fonts {

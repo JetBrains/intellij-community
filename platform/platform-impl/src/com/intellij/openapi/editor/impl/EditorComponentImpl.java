@@ -57,6 +57,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.Grayer;
 import com.intellij.ui.components.Magnificator;
 import com.intellij.util.ui.JBSwingUtilities;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.intellij.lang.annotations.MagicConstant;
@@ -239,19 +240,9 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       else {
         UISettings.setupAntialiasing(gg);
       }
-      AffineTransform tx = gg.getTransform();
-      double scaleX = tx.getScaleX();
-      double scaleY = tx.getScaleY();
-      boolean fpsTx = scaleX != (int)scaleX || scaleY != (int)scaleY;
-      if (fpsTx) {
-        // Align the FPS graphics to int. See JRE-502
-        AffineTransform alignedTx = new AffineTransform();
-        alignedTx.translate((int)Math.ceil(tx.getTranslateX() - 0.5), (int)Math.ceil(tx.getTranslateY() - 0.5));
-        alignedTx.scale(scaleX, scaleY);
-        gg.setTransform(alignedTx);
-      }
+      AffineTransform origTx = JBUI.alignToIntGrid(gg);
       myEditor.paint(gg);
-      if (fpsTx) gg.setTransform(tx);
+      if (origTx != null) gg.setTransform(origTx);
     }
     finally {
       myApplication.editorPaintFinish();
