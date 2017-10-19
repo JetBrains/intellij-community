@@ -21,13 +21,14 @@ import com.intellij.codeInsight.lookup.impl.PrefixChangeListener
 import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Key
+import com.intellij.stats.completion.idString
 
 
 data class StagePosition(val stage: Int, val position: Int)
 
 
 interface LookupElementTracking {
-    fun positionsHistory(element: LookupElement): List<StagePosition>
+    fun positionsHistory(lookup: LookupImpl, element: LookupElement): List<StagePosition>
 
     companion object {
         fun getInstance(): LookupElementTracking = service()
@@ -35,20 +36,35 @@ interface LookupElementTracking {
 }
 
 
-private class UserDataLookupElementTracking : LookupElementTracking {
+class ElementPositionHistory {
+    private val history = mutableListOf<StagePosition>()
 
-    override fun positionsHistory(element: LookupElement): List<StagePosition> {
-        element.putUserDataIfAbsent(KEY, mutableListOf())
-        return element.getUserData(KEY)!!
+    fun add(position: StagePosition) = history.add(position)
+    fun history() = history
+}
+
+
+class UserDataLookupElementTracking : LookupElementTracking {
+
+    override fun positionsHistory(lookup: LookupImpl, element: LookupElement): List<StagePosition> {
+        val id = element.idString()
+        val userData = lookup.getUserData(KEY)
+        return userData?.get(id)?.history() ?: emptyList()
     }
 
     companion object {
-        private val KEY = Key.create<MutableList<StagePosition>>("lookup.element.position.history")
+        private val KEY = Key.create<MutableMap<String, ElementPositionHistory>>("lookup.element.position.history")
 
-        fun addElementPosition(element: LookupElement, stagePosition: StagePosition) {
-            element.putUserDataIfAbsent(KEY, mutableListOf())
-            val positionHistory = element.getUserData(KEY)!!
-            positionHistory.add(stagePosition)
+        fun history(lookup: LookupImpl) = lookup.getUserData(KEY)
+
+        fun addElementPosition(lookup: LookupImpl, element: LookupElement, stagePosition: StagePosition) {
+            lookup.putUserDataIfAbsent(KEY, mutableMapOf())
+            val elementsHistory = lookup.getUserData(KEY)!!
+
+            val id = element.idString()
+            val history = elementsHistory.computeIfAbsent(id, { ElementPositionHistory() })
+
+            history.add(stagePosition)
         }
     }
 
@@ -80,7 +96,8 @@ private class ShownTimesTrackingListener(private val lookup: LookupImpl): Prefix
 
     private fun update() {
         lookup.items.forEachIndexed { index, lookupElement ->
-            UserDataLookupElementTracking.addElementPosition(lookupElement, StagePosition(stage, index))
+            val position = StagePosition(stage, index)
+            UserDataLookupElementTracking.addElementPosition(lookup, lookupElement, position)
         }
         stage++
     }

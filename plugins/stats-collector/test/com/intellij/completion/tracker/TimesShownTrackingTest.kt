@@ -17,7 +17,9 @@ package com.intellij.completion.tracker
 
 
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
+import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.stats.completion.idString
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import org.assertj.core.api.Assertions.assertThat
 
@@ -38,10 +40,14 @@ class TimesShownTrackingTest : LightFixtureCompletionTestCase() {
     assertThat(allItems.take(5).map { it.lookupString })
       .isEqualTo(listOf("cat", "man", "run", "runnable", "rus"))
 
+    myFixture.type("r")
+    val history: MutableMap<String, ElementPositionHistory> = UserDataLookupElementTracking.history(lookup)!!
+    myFixture.type("us\n")
 
-    myFixture.type("rus\n")
-
-    val map = allItems.map { it.lookupString to tracker.positionsHistory(it) }.toMap()
+    val map = allItems.map {
+      val id = it.idString()
+      it.lookupString to history[id]?.history()
+    }.toMap()
 
     assertThat(map["man"]).isEqualTo(listOf(
       StagePosition(0, 1)
