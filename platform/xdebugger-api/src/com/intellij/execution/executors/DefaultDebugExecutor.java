@@ -71,7 +71,7 @@ public class DefaultDebugExecutor extends Executor {
     return myStartActionText;
   }
 
-  private static String escapeMnemonicsInConfigurationName(String configurationName) {
+  protected static String escapeMnemonicsInConfigurationName(String configurationName) {
     return configurationName.replace("_", "__");
   }
 
