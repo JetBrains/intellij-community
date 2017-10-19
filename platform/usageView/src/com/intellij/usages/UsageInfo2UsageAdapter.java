@@ -280,11 +280,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   public Module getModule() {
     if (!isValid()) return null;
     VirtualFile virtualFile = getFile();
-    if (virtualFile == null) return null;
-
-    ProjectRootManager projectRootManager = ProjectRootManager.getInstance(getProject());
-    ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
-    return fileIndex.getModuleForFile(virtualFile);
+    return virtualFile != null ? ProjectFileIndex.getInstance(getProject()).getModuleForFile(virtualFile) : null;
   }
 
   @Override
@@ -294,9 +290,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     VirtualFile virtualFile = getFile();
     if (virtualFile == null) return null;
 
-    ProjectRootManager projectRootManager = ProjectRootManager.getInstance(getProject());
-    ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
-
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(getProject());
     if (psiFile instanceof PsiCompiledElement || fileIndex.isInLibrarySource(virtualFile)) {
       List<OrderEntry> orders = fileIndex.getOrderEntriesForFile(virtualFile);
       for (OrderEntry order : orders) {
@@ -317,8 +311,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     if (virtualFile == null) return Collections.emptyList();
 
     Project project = getProject();
-    ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
-    ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
     if (!fileIndex.isInLibrarySource(virtualFile)) return Collections.emptyList();
 
     VirtualFile sourcesRoot = fileIndex.getSourceRootForFile(virtualFile);
