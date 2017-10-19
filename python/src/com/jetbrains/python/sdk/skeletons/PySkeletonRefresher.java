@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.sdk.skeletons;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;

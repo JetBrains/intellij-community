@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.ZipUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -156,7 +155,7 @@ public class DefaultPregeneratedSkeletonsProvider implements PyPregeneratedSkele
     }
 
     @Override
-    public boolean copyPregeneratedSkeleton(String moduleName, String skeletonDir) throws InvalidSdkException {
+    public boolean copyPregeneratedSkeleton(String moduleName, String skeletonDir) {
       File targetDir;
       final String modulePath = moduleName.replace('.', '/');
       File skeletonsDir = new File(skeletonDir);
@@ -197,7 +196,7 @@ public class DefaultPregeneratedSkeletonsProvider implements PyPregeneratedSkele
     }
 
     @Override
-    public void unpackPreGeneratedSkeletons(String skeletonDir) throws InvalidSdkException {
+    public void unpackPreGeneratedSkeletons(String skeletonDir) {
       ProgressManager.progress("Unpacking pregenerated skeletons...");
       try {
         final VirtualFile jar = JarFileSystem.getInstance().getVirtualFileForJar(myArchiveRoot);
