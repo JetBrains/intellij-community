@@ -3,6 +3,7 @@ package com.intellij.psi.impl
 
 import com.intellij.codeInsight.JavaModuleSystemEx
 import com.intellij.codeInsight.JavaModuleSystemEx.ErrorWithFixes
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.JavaErrorMessages
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
@@ -172,6 +173,8 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
         val options = configuration.getAdditionalOptions(module).toMutableList()
         update(options)
         configuration.setAdditionalOptions(module, options)
+        PsiManager.getInstance(project).dropPsiCaches()
+        DaemonCodeAnalyzer.getInstance(project).restart()
       }
     }
 
