@@ -2,6 +2,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
@@ -9,6 +10,7 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.ElementClassHint;
@@ -381,7 +383,11 @@ public class GrClassImplUtil {
         final PsiClass inner = (PsiClass)info.getElement();
         final PsiClass containingClass = inner.getContainingClass();
         if (containingClass == null) {
-          LOG.warn("Contating class must not be null. Name: " + inner.getName() + ", class: :" + inner.getClass());
+          PsiFile file = grType.getContainingFile();
+          LOG.error(
+            "Contating class must not be null. Name: " + inner.getName() + ", class: :" + inner.getClass(),
+            new Attachment(file.getVirtualFile().getPresentableUrl(), DebugUtil.psiToString(file, false))
+          );
           continue;
         }
 
