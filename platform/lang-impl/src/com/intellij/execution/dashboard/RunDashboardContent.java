@@ -147,7 +147,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
         }
         RunnerLayoutUiImpl layoutUiImpl = (RunnerLayoutUiImpl)layoutUi;
         layoutUiImpl.setLeftToolbarVisible(false);
-        layoutUiImpl.setContentToolbarBefore(!RunDashboardManager.getInstance(myProject).isShowConfigurations());
+        layoutUiImpl.setContentToolbarBefore(false);
         List<AnAction> leftToolbarActions = layoutUiImpl.getActions();
         myContentActions.put(content, leftToolbarActions);
         updateContentToolbar(content);
@@ -402,18 +402,6 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   public void updateContent(boolean withStructure) {
     AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
       boolean showConfigurations = RunDashboardManager.getInstance(myProject).isShowConfigurations();
-
-      Content selectedContent = myContentManager.getSelectedContent();
-      if (selectedContent != null) {
-        RunContentDescriptor descriptor = RunContentManagerImpl.getRunContentDescriptorByContent(selectedContent);
-        if (descriptor != null) {
-          RunnerLayoutUi layoutUi = descriptor.getRunnerLayoutUi();
-          if (layoutUi instanceof RunnerLayoutUiImpl) {
-            ((RunnerLayoutUiImpl)layoutUi).setContentToolbarBefore(!showConfigurations);
-          }
-        }
-      }
-
       if (myTreePanel.isVisible() ^ showConfigurations) {
         setTreeVisible(showConfigurations);
 
