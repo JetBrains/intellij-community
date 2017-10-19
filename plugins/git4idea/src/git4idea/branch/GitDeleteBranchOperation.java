@@ -368,7 +368,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
 
   @NotNull
   private MultiMap<String, GitRepository> groupTrackedBranchesByName() {
-    MultiMap<String, GitRepository> trackedBranchNames = MultiMap.createLinked();
+    MultiMap<String, GitRepository> trackedBranchNames = MultiMap.create();
     for (GitRepository repository : myTrackedBranches.keySet()) {
       GitRemoteBranch trackedBranch = myTrackedBranches.get(repository);
       if (trackedBranch != null) {
