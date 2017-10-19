@@ -156,7 +156,7 @@ public class GitBinaryHandler extends GitHandler {
         }
       }
     });
-    GitHandlerUtil.runInCurrentThread(this, null);
+    runInCurrentThread(null);
     //noinspection ThrowableResultOfMethodCallIgnored
     if (myException.get() != null) {
       throw myException.get();

@@ -200,7 +200,7 @@ public class GitSimpleHandler extends GitTextHandler {
   }
 
   /**
-   * Execute without UI. If UI interactions are required (for example SSH popups or progress dialog), use {@link GitHandlerUtil} methods.
+   * Execute without UI. If UI interactions are required (for example SSH popups or progress dialog), use {@link Git} methods.
    *
    * @return a value if process was successful
    * @throws VcsException exception if process failed to start.

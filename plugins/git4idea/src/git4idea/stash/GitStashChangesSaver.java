@@ -62,7 +62,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
     LOG.info("saving " + rootsToSave);
 
     for (VirtualFile root : rootsToSave) {
-      final String message = GitHandlerUtil.formatOperationName("Stashing changes from", root);
+      final String message = "Stashing changes from '" + root.getName() + "'...";
       LOG.info(message);
       final String oldProgressTitle = myProgressIndicator.getText();
       myProgressIndicator.setText(message);
