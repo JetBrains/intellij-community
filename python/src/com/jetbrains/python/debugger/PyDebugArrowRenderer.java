@@ -39,7 +39,7 @@ public class PyDebugArrowRenderer {
   private XDebugSession mySession;
   private Reference<RangeHighlighter> myHighlighterRef;
   private int myLine;
-  private VirtualFile myFile;
+  private @Nullable VirtualFile myFile;
 
   public PyDebugArrowRenderer(XDebugSession session) {
     mySession = session;
@@ -124,6 +124,7 @@ public class PyDebugArrowRenderer {
 
   @Nullable
   public Document getDocument() {
+    if (myFile == null) return null;
     return FileDocumentManager.getInstance().getCachedDocument(myFile);
   }
 
