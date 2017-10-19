@@ -288,20 +288,23 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
 
   @Override
   public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
-    final List<LookupElement> result = getCompletionVariantsAsLookupElements(location, context, false, false);
+    final TypeEvalContext typeEvalContext = TypeEvalContext.codeCompletion(location.getProject(), location.getContainingFile());
+    final List<LookupElement> result = getCompletionVariantsAsLookupElements(location, context, false, false, typeEvalContext);
     return result.toArray();
   }
 
-  public List<LookupElement> getCompletionVariantsAsLookupElements(PsiElement location,
-                                                                   ProcessingContext context,
-                                                                   boolean wantAllSubmodules, boolean suppressParentheses) {
+  @NotNull
+  public List<LookupElement> getCompletionVariantsAsLookupElements(@NotNull PsiElement location,
+                                                                   @NotNull ProcessingContext context,
+                                                                   boolean wantAllSubmodules,
+                                                                   boolean suppressParentheses,
+                                                                   @NotNull TypeEvalContext typeEvalContext) {
     final List<LookupElement> result = new ArrayList<>();
-
-    final TypeEvalContext typeEvalContext = TypeEvalContext.codeInsightFallback(myModule.getProject());
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext);
 
     final Set<String> namesAlready = context.get(CTX_NAMES);
     final PointInImport point = ResolveImportUtil.getPointInImport(location);
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext);
+
     for (PyModuleMembersProvider provider : Extensions.getExtensions(PyModuleMembersProvider.EP_NAME)) {
       for (PyCustomMember member : provider.getMembers(myModule, point, typeEvalContext)) {
         final String name = member.getName();
@@ -344,7 +347,9 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       }
     }
     if (PyUtil.isPackage(myModule)) { // our module is a dir, not a single file
-      if (point == PointInImport.AS_MODULE || point == PointInImport.AS_NAME || wantAllSubmodules) { // when imported from somehow, add submodules
+      if (point == PointInImport.AS_MODULE ||
+          point == PointInImport.AS_NAME ||
+          wantAllSubmodules) { // when imported from somehow, add submodules
         result.addAll(getSubModuleVariants(myModule.getContainingDirectory(), location, namesAlready));
       }
       else {
