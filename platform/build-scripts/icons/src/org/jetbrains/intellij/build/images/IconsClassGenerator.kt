@@ -166,7 +166,6 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
     sortedKeys.forEach { key ->
       val group = nodeMap[key]
       val image = leafMap[key]
-      assert(group == null || image == null)
 
       if (group != null) {
         val inners = StringBuilder()
