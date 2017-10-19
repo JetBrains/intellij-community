@@ -329,6 +329,17 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return !StringUtil.isEmptyOrSpaces(options) ? ParametersListUtil.parse(options) : Collections.emptyList();
   }
 
+  @Override
+  public void setAdditionalOptions(@NotNull Module module, @NotNull List<String> options) {
+    JpsJavaCompilerOptions settings = JavacConfiguration.getOptions(myProject, JavacConfiguration.class);
+    String previous = settings.ADDITIONAL_OPTIONS_OVERRIDE.getOrDefault(module.getName(), settings.ADDITIONAL_OPTIONS_STRING);
+    String newValue = ParametersListUtil.join(options);
+    if (!newValue.equals(previous)) {
+      settings.ADDITIONAL_OPTIONS_OVERRIDE.put(module.getName(), newValue);
+      BuildManager.getInstance().clearState(myProject);
+    }
+  }
+
   public static String getTestsExternalCompilerHome() {
     String compilerHome = System.getProperty(TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME, null);
     if (compilerHome == null) {

@@ -47,6 +47,7 @@ public abstract class CompilerConfiguration {
    */
   @NotNull
   public abstract List<String> getAdditionalOptions(@NotNull Module module);
+  public abstract void setAdditionalOptions(@NotNull Module module, @NotNull List<String> options);
 
   @NotNull
   public abstract AnnotationProcessingConfiguration getAnnotationProcessingConfiguration(Module module);
