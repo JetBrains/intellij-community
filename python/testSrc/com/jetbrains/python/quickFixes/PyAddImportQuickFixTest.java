@@ -55,15 +55,18 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     doMultiFileAutoImportTest("Import this name");
   }
 
+  public void testSkeletonStdlibModule() {
+    doMultiFileAutoImportTest("Import 'sys'");
+  }
+
   private void doMultiFileAutoImportTest(@NotNull String hintPrefix) {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
-    final String entryPoint = "main";
-    myFixture.configureByFile(entryPoint + ".py");
+    myFixture.configureByFile("main.py");
     myFixture.checkHighlighting(true, false, false);
-    IntentionAction intention = myFixture.findSingleIntention(hintPrefix);
 
+    final IntentionAction intention = myFixture.findSingleIntention(hintPrefix);
     myFixture.launchAction(intention);
-    myFixture.checkResultByFile(getTestName(true) + "/" + entryPoint + "_after.py", true);
+    myFixture.checkResultByFile(getTestName(true) + "/main_after.py", true);
   }
 }
