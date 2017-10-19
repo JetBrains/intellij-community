@@ -29,7 +29,7 @@ public class SwitchToTheNextContextAction extends DebuggerAction {
         List<SuspendContextImpl> pausedContexts = ((SuspendManagerImpl)process.getSuspendManager()).getPausedContexts();
         if (pausedContexts.size() > 1) {
           int currentIndex = pausedContexts.indexOf(debuggerContext.getSuspendContext());
-          int newIndex = currentIndex > -1 && currentIndex + 1 < pausedContexts.size() ? currentIndex + 1 : 0;
+          int newIndex = (currentIndex + 1) % pausedContexts.size();
           process.getManagerThread().schedule(new SuspendContextCommandImpl(pausedContexts.get(newIndex)) {
             @Override
             public void contextAction(@NotNull SuspendContextImpl suspendContext) {
