@@ -57,7 +57,10 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewManager;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.*;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LinkedMultiMap;
@@ -1048,20 +1051,7 @@ public class UsageViewImpl implements UsageView {
   protected void doReRun() {
     myChangesDetected = false;
     com.intellij.usages.UsageViewManager.getInstance(getProject()).
-      searchAndShowUsages(myTargets, myUsageSearcherFactory, true, false, myPresentation,
-                          new com.intellij.usages.UsageViewManager.UsageViewStateListener() {
-                            @Override
-                            public void usageViewCreated(@NotNull UsageView usageView) {
-                              for (Action action : myButtonPanel.myActionMap) {
-                                usageView.addButtonToLowerPane(action);
-                              }
-                            }
-
-                            @Override
-                            public void findingUsagesFinished(UsageView usageView) {
-
-                            }
-                          });
+      searchAndShowUsages(myTargets, myUsageSearcherFactory, true, false, myPresentation, null);
   }
 
   private void reset() {
@@ -1770,7 +1760,6 @@ public class UsageViewImpl implements UsageView {
   }
 
   private final class ButtonPanel extends JPanel {
-    private List<Action> myActionMap = new SmartList<>();
     private ButtonPanel() {
       setLayout(new FlowLayout(FlowLayout.LEFT, 8, 0));
       getProject().getMessageBus().connect(UsageViewImpl.this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
@@ -1787,7 +1776,6 @@ public class UsageViewImpl implements UsageView {
     }
 
     private void addButtonAction(int index, @NotNull Action action) {
-      myActionMap.add(action);
       JButton button = new JButton(action);
       add(button, index);
       button.setFocusable(false);
