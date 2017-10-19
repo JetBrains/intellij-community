@@ -56,6 +56,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author max
@@ -72,7 +73,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   private final Object myInputLock = new Object();
 
   private final AtomicBoolean myShutDown = new AtomicBoolean(false);
-  private volatile int myStructureModificationCount;
+  private final AtomicInteger myStructureModificationCount = new AtomicInteger();
   private final BulkFileListener myPublisher;
 
   public PersistentFSImpl(@NotNull MessageBus bus) {
@@ -263,11 +264,11 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public int getStructureModificationCount() {
-    return myStructureModificationCount;
+    return myStructureModificationCount.get();
   }
 
   public void incStructuralModificationCount() {
-    myStructureModificationCount++;
+    myStructureModificationCount.incrementAndGet();
   }
 
   @Override
@@ -613,7 +614,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   public OutputStream getOutputStream(@NotNull final VirtualFile file,
                                       final Object requestor,
                                       final long modStamp,
-                                      final long timeStamp) throws IOException {
+                                      final long timeStamp) {
     return new ByteArrayOutputStream() {
       private boolean closed; // protection against user calling .close() twice
 
