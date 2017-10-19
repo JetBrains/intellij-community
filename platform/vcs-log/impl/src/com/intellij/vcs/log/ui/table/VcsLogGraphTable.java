@@ -175,7 +175,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     return Registry.is("vcs.log.speedsearch");
   }
 
-  private void updateEmptyText() {
+  protected void updateEmptyText() {
     StatusText statusText = getEmptyText();
     VisiblePack visiblePack = getModel().getVisiblePack();
 
