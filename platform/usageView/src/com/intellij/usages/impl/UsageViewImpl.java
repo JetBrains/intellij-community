@@ -168,6 +168,7 @@ public class UsageViewImpl implements UsageView {
   private boolean expandingAll;
   private final UsageViewTreeCellRenderer myUsageViewTreeCellRenderer;
   private Usage myOriginUsage;
+  @Nullable private Runnable myRerunActivity;
 
   public UsageViewImpl(@NotNull final Project project,
                        @NotNull UsageViewPresentation presentation,
@@ -1050,8 +1051,12 @@ public class UsageViewImpl implements UsageView {
   @SuppressWarnings("WeakerAccess") // used in rider
   protected void doReRun() {
     myChangesDetected = false;
-    com.intellij.usages.UsageViewManager.getInstance(getProject()).
-      searchAndShowUsages(myTargets, myUsageSearcherFactory, true, false, myPresentation, null);
+    if (myRerunActivity != null) {
+      myRerunActivity.run();
+    } else {
+      com.intellij.usages.UsageViewManager.getInstance(getProject()).
+        searchAndShowUsages(myTargets, myUsageSearcherFactory, true, false, myPresentation, null);
+    }
   }
 
   private void reset() {
@@ -1321,6 +1326,11 @@ public class UsageViewImpl implements UsageView {
       myTree.expandPath(usagePath.getParentPath());
       TreeUtil.selectPath(myTree, usagePath);
     }
+  }
+
+  @Override
+  public void setReRunActivity(@Nullable Runnable runnable) {
+    myRerunActivity = runnable;
   }
 
   @Override
