@@ -3,6 +3,8 @@
   <name>Java Stream Debugger</name>
   <vendor url="https://www.jetbrains.com">JetBrains</vendor>
 
+  <depends>com.intellij.modules.java</depends>
+
   <description><![CDATA[
       <p>In some ways, Stream API is better than traditional loop approach: it takes full advantage of modern multi-core architectures,
       and lets you process data in a declarative way. What's also good is that this approach helps to avoid the state issues, and the
