@@ -101,6 +101,12 @@ public class ExecUtil {
     return new CapturingProcessHandler(commandLine).runProcess();
   }
 
+  @NotNull
+  public static ProcessOutput execAndGetOutput(@NotNull GeneralCommandLine commandLine, int timeoutInMilliseconds)
+    throws ExecutionException {
+    return new CapturingProcessHandler(commandLine).runProcess(timeoutInMilliseconds);
+  }
+
   @Nullable
   public static String execAndReadLine(@NotNull GeneralCommandLine commandLine) {
     try {

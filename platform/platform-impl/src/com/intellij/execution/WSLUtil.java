@@ -60,6 +60,33 @@ public class WSLUtil {
     return StringUtil.isEmpty(localAppDataPath) ? null : localAppDataPath + WSL_ROOT_CHUNK;
   });
 
+  private static final Pattern WIN_10_VERSION_PATTERN = Pattern.compile(".*(?:\\[Version 10\\.\\d+\\.(\\d+)\\])");
+  private static final int READ_VERSION_TIMEOUT = 10000;
+  private static final int RESOLVE_SYMLINK_TIMEOUT = 10000;
+
+  /**
+   * WSL version equals Windows build number
+   * (https://github.com/Microsoft/BashOnWindows/issues/1728)
+   */
+  private static final AtomicNullableLazyValue<String> ourWSLVersion = AtomicNullableLazyValue.createValue(() -> {
+    final GeneralCommandLine commandLine = new GeneralCommandLine(ExecUtil.getWindowsShellName(), "/c", "ver");
+
+    try {
+      final ProcessOutput result = ExecUtil.execAndGetOutput(commandLine, READ_VERSION_TIMEOUT);
+      if (result.isTimeout()) return null;
+
+      final String out = result.getStdout().trim();
+      final Matcher matcher = WIN_10_VERSION_PATTERN.matcher(out);
+      if (matcher.find()) {
+        return matcher.group(1);
+      }
+    }
+    catch (ExecutionException e) {
+      LOG.warn(e);
+    }
+    return null;
+  });
+
   /**
    * @return bash file or null if not exists
    */
@@ -75,41 +102,12 @@ public class WSLUtil {
     return getWSLBashFile() != null;
   }
 
-  private static final Pattern WIN_BUILD_VER = Pattern.compile(".*(?:\\[Version \\d+\\.\\d+\\.(\\d+)\\])");
-  private static final int READ_VERSION_TIMEOUT = 10000;
-  /*
-   * WSL version equals Windows build number
-   * (https://github.com/Microsoft/BashOnWindows/issues/1728)
-   */
-  private static final AtomicNullableLazyValue<String> ourWSLVersion = AtomicNullableLazyValue.createValue(() -> {
-    final GeneralCommandLine cl = new GeneralCommandLine(ExecUtil.getWindowsShellName(), "/c", "ver");
-
-    try {
-      final CapturingProcessHandler handler = new CapturingProcessHandler(cl);
-      final ProcessOutput result = handler.runProcess(READ_VERSION_TIMEOUT);
-      if (result.isTimeout()) return null;
-
-      final String out = result.getStdout().trim();
-      final Matcher dependency = WIN_BUILD_VER.matcher(out);
-      if (dependency.find()) {
-        return dependency.group(1);
-      }
-    }
-    catch (ExecutionException e) {
-      LOG.warn(e);
-    }
-    return null;
-  });
-
   /**
    * @return WSL build number or null if it cannot be determined
    */
   @Nullable
   public static String getWslVersion() {
-    if (hasWSL()) {
-      return ourWSLVersion.getValue();
-    }
-    return null;
+    return hasWSL() ? ourWSLVersion.getValue() : null;
   }
 
   /**
@@ -120,7 +118,7 @@ public class WSLUtil {
     String result;
     if (matcher.matches()) { // it's a windows path inside WSL
       String path = matcher.group(2);
-      result = matcher.group(1) + ":" + (path == null ? "//" : path);
+      result = matcher.group(1) + ":" + (StringUtil.isEmpty(path) ? "/" : path);
     }
     else { // it's a lsxx path
       String wslRootInHost = WSL_ROOT_IN_WINDOWS_PROVIDER.getValue();
@@ -267,22 +265,25 @@ public class WSLUtil {
   }
 
   @NotNull
-  public static String resolveSymlink(@NotNull String path, int timeoutInMillisecondss) {
-    final GeneralCommandLine cl = new GeneralCommandLine();
-    cl.setExePath("readlink");
-    cl.addParameter("-f");
-    cl.addParameter(path);
+  public static String resolveSymlink(@NotNull String path) {
+    return resolveSymlink(path, RESOLVE_SYMLINK_TIMEOUT);
+  }
 
-    final GeneralCommandLine cmd = patchCommandLine(cl, null, null, false);
+  @NotNull
+  public static String resolveSymlink(@NotNull String path, int timeoutInMilliseconds) {
+    GeneralCommandLine commandLine = new GeneralCommandLine("readlink", "-f", path);
+    commandLine = patchCommandLine(commandLine, null, null, false);
 
     try {
-      final CapturingProcessHandler process = new CapturingProcessHandler(cmd);
-      final ProcessOutput output = process.runProcess(timeoutInMillisecondss);
-      if (output.getExitCode() == 0) {
-        return output.getStdout().trim();
+      final ProcessOutput output = ExecUtil.execAndGetOutput(commandLine, timeoutInMilliseconds);
+      final String stdout = output.getStdout().trim();
+      if (output.getExitCode() == 0 && StringUtil.isNotEmpty(stdout)) {
+        return stdout;
       }
     }
-    catch (ExecutionException ignored) {}
+    catch (ExecutionException e) {
+      LOG.warn(e);
+    }
     return path;
   }
 

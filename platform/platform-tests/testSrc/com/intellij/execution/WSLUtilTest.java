@@ -18,7 +18,7 @@ public class WSLUtilTest extends TestCase {
     assertWslPath("/usr/something/include", "%LOCALAPPDATA%\\lxss\\rootfs\\usr\\something\\include");
     assertWslPath("/usr/something/bin/gcc", "%LOCALAPPDATA%\\lxss\\rootfs\\usr\\something\\bin\\gcc");
 
-    assertWslPath("/mnt/c", "c:");
+    assertWslPath("/mnt/c", "c:\\");
     assertWslPath("/mnt/x/", "x:\\");
 
     assertWslPath("/mnt/c/temp/foo", "c:\\temp\\foo");
@@ -30,6 +30,9 @@ public class WSLUtilTest extends TestCase {
   public void testWinToWslPath() {
     assertWinPath("c:\\foo", "/mnt/c/foo");
     assertWinPath("c:\\temp\\KeepCase", "/mnt/c/temp/KeepCase");
+
+    assertWinPath("%LOCALAPPDATA%\\lxss\\rootfs\\usr\\something\\include", "/usr/something/include");
+    assertWinPath("%LOCALAPPDATA%\\lxss\\rootfs\\usr\\something\\bin\\gcc", "/usr/something/bin/gcc");
   }
 
   public void testPaths() {
@@ -58,7 +61,7 @@ public class WSLUtilTest extends TestCase {
       final String symlink = WSLUtil.getWslPath(winSymlink.getPath());
       mkSymlink(file, symlink);
 
-      final String resolved = WSLUtil.getWindowsPath(WSLUtil.resolveSymlink(symlink, 10_000));
+      final String resolved = WSLUtil.getWindowsPath(WSLUtil.resolveSymlink(symlink));
       assertTrue(FileUtil.exists(resolved));
       assertTrue(winFile.getPath().equalsIgnoreCase(resolved));
     }
@@ -69,7 +72,7 @@ public class WSLUtilTest extends TestCase {
   }
 
   private static void assertWinPath(@NotNull String winPath, @NotNull String wslPath) {
-    assertEquals(wslPath, WSLUtil.getWslPath(winPath));
+    assertEquals(wslPath, WSLUtil.getWslPath(prepare(winPath)));
   }
 
   private static void assertWslPath(@NotNull String wslPath, @NotNull String winPath) {
