@@ -332,12 +332,8 @@ def _is_django_exception_break_context(frame):
 #=======================================================================================================================
 
 def can_not_skip(plugin, main_debugger, pydb_frame, frame):
-    if main_debugger.django_breakpoints and _is_django_render_call(frame):
-        filename = _get_template_file_name(frame)
-        django_breakpoints_for_file = main_debugger.django_breakpoints.get(filename)
-        if django_breakpoints_for_file:
-            return True
-    return False
+    return main_debugger.django_breakpoints and _is_django_render_call(frame)
+
 
 def has_exception_breaks(plugin):
     if len(plugin.main_debugger.django_exception_break) > 0:
