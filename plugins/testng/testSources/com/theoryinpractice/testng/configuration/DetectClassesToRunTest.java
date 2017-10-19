@@ -76,7 +76,7 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testOneMethodWhenAnnotationIsOnBaseClassOnly() throws Exception {
-    myFixture.addClass("package a; @org.testng.annotations.Test public class BaseClass {}");
+    myFixture.addClass("package a; @org.testng.annotations.Test public abstract class BaseClass {}");
     final PsiClass aClass =
       myFixture.addClass("package a; public class ATest extends BaseClass {" +
                          "  public void testOne(){}\n" +
@@ -85,7 +85,7 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testPackagePrivateMethodWhenAnnotationIsOnClass() {
-    PsiClass aClass = myFixture.addClass("package a; @org.testng.annotations.Test public class MyTestClass {void testOne(){}}");
+    PsiClass aClass = myFixture.addClass("package a; /** @noinspection ALL*/ @org.testng.annotations.Test public class MyTestClass {void testOne(){}}");
     assertFalse(new TestNGFramework().isTestMethod(aClass.getMethods()[0], false));
   }
   

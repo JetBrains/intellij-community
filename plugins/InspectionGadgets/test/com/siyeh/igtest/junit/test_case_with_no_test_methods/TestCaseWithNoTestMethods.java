@@ -1,4 +1,4 @@
-public class <warning descr="JUnit test case 'TestCaseWithNoTestMethods' has no tests">TestCaseWithNoTestMethods</warning> extends junit.framework.TestCase {
+public class <warning descr="Test class 'TestCaseWithNoTestMethods' has no tests">TestCaseWithNoTestMethods</warning> extends junit.framework.TestCase {
 
   TestCaseWithNoTestMethods() {}
 
@@ -23,3 +23,12 @@ abstract class AbstractTest extends junit.framework.TestCase {
 }
 
 class MyImplTest extends AbstractTest {}
+class MyImplImplTest extends MyImplTest {}
+
+class NotATestClass {}
+
+class MySuite {
+  public static junit.framework.Test suite() {
+    return null;
+  }
+}

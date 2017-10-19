@@ -26,7 +26,7 @@ public class MalformedSetUpTearDownInspectionTest extends LightInspectionTestCas
 
   public void testSimple() {
     doTest("import junit.framework.*;" +
-           "class C extends TestCase {" +
+           " /** @noinspection ALL*/ public class C extends TestCase {" +
            "  private void /*'setUp()' has incorrect signature*/setUp/**/(int i) {}" +
            "}");
   }
