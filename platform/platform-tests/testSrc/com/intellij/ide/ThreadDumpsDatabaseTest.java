@@ -15,7 +15,7 @@
  */
 package com.intellij.ide;
 
-import groovy.json.internal.Charsets;
+import com.google.common.base.Charsets;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
 import org.junit.Test;
