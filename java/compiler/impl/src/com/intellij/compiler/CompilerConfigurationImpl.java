@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ProjectTopics;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler;
+import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerConfiguration;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.compiler.server.BuildManager;
@@ -324,20 +325,42 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   @NotNull
   @Override
   public List<String> getAdditionalOptions(@NotNull Module module) {
-    JpsJavaCompilerOptions settings = JavacConfiguration.getOptions(myProject, JavacConfiguration.class);
-    String options = settings.ADDITIONAL_OPTIONS_OVERRIDE.getOrDefault(module.getName(), settings.ADDITIONAL_OPTIONS_STRING);
-    return !StringUtil.isEmptyOrSpaces(options) ? ParametersListUtil.parse(options) : Collections.emptyList();
+    JpsJavaCompilerOptions settings = getCompilerSettings();
+    if (settings != null) {
+      String options = settings.ADDITIONAL_OPTIONS_OVERRIDE.getOrDefault(module.getName(), settings.ADDITIONAL_OPTIONS_STRING);
+      if (!StringUtil.isEmptyOrSpaces(options)) {
+        return ParametersListUtil.parse(options);
+      }
+    }
+    return Collections.emptyList();
   }
 
   @Override
   public void setAdditionalOptions(@NotNull Module module, @NotNull List<String> options) {
-    JpsJavaCompilerOptions settings = JavacConfiguration.getOptions(myProject, JavacConfiguration.class);
-    String previous = settings.ADDITIONAL_OPTIONS_OVERRIDE.getOrDefault(module.getName(), settings.ADDITIONAL_OPTIONS_STRING);
-    String newValue = ParametersListUtil.join(options);
-    if (!newValue.equals(previous)) {
-      settings.ADDITIONAL_OPTIONS_OVERRIDE.put(module.getName(), newValue);
-      BuildManager.getInstance().clearState(myProject);
+    JpsJavaCompilerOptions settings = getCompilerSettings();
+    if (settings != null) {
+      String previous = settings.ADDITIONAL_OPTIONS_OVERRIDE.getOrDefault(module.getName(), settings.ADDITIONAL_OPTIONS_STRING);
+      String newValue = ParametersListUtil.join(options);
+      if (!newValue.equals(previous)) {
+        settings.ADDITIONAL_OPTIONS_OVERRIDE.put(module.getName(), newValue);
+        BuildManager.getInstance().clearState(myProject);
+      }
     }
+  }
+
+  private JpsJavaCompilerOptions getCompilerSettings() {
+    BackendCompiler compiler = getDefaultCompiler();
+    if (compiler != null) {
+      String id = compiler.getId();
+      if (id == JavaCompilers.JAVAC_ID) {
+        return JavacConfiguration.getOptions(myProject, JavacConfiguration.class);
+      }
+      else if (JavaCompilers.ECLIPSE_ID == id) {
+        return EclipseCompilerConfiguration.getOptions(myProject, EclipseCompilerConfiguration.class);
+      }
+    }
+
+    return null;
   }
 
   public static String getTestsExternalCompilerHome() {
