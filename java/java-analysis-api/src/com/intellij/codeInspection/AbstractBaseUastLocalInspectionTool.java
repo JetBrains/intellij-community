@@ -14,6 +14,9 @@ import org.jetbrains.uast.UFile;
 import org.jetbrains.uast.UMethod;
 import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectionTool {
   private static final Condition<PsiElement> PROBLEM_ELEMENT_CONDITION = Conditions.and(Conditions.instanceOf(PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class), Conditions.notInstanceOf(PsiTypeParameter.class));
 
@@ -87,10 +90,54 @@ public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectio
       private void addDescriptors(final ProblemDescriptor[] descriptors) {
         if (descriptors != null) {
           for (ProblemDescriptor descriptor : descriptors) {
-            holder.registerProblem(descriptor);
+            // Substitution is required when reporting on light(non-physical) elements.
+            // of course it is better to fix in on reporter side,
+            // but it still not possible sometimes. So we will try to workaround here.
+            PsiElement startSubstitutor = substitute(descriptor.getStartElement(), holder.getFile());
+            PsiElement endSubstitutor = substitute(descriptor.getEndElement(), holder.getFile());
+
+            if (startSubstitutor == descriptor.getStartElement() && endSubstitutor == descriptor.getEndElement()) {
+              holder.registerProblem(descriptor);
+            }
+            else {
+              QuickFix[] fixes = descriptor.getFixes();
+              holder.registerProblem(holder.getManager().createProblemDescriptor(
+                startSubstitutor,
+                endSubstitutor,
+                descriptor.getDescriptionTemplate(),
+                descriptor.getHighlightType(),
+                isOnTheFly,
+                fixes != null ? Arrays.stream(fixes)
+                  .filter(f -> f instanceof LocalQuickFix)
+                  .map(f -> (LocalQuickFix)f)
+                  .toArray(LocalQuickFix[]::new) : LocalQuickFix.EMPTY_ARRAY
+              ));
+            }
           }
         }
       }
+
+      @NotNull
+      private PsiElement substitute(@NotNull PsiElement element, @NotNull PsiFile desiredFile) {
+        if (inFile(element, desiredFile)) return element;
+        PsiElement navigationElement = element.getNavigationElement();
+        if (navigationElement == null) return element;
+        if (inFile(navigationElement, desiredFile)) return navigationElement;
+
+        // last resort
+        PsiElement elementAtSamePosition = desiredFile.findElementAt(navigationElement.getTextRange().getStartOffset());
+        if (elementAtSamePosition != null && Objects.equals(elementAtSamePosition.getText(), navigationElement.getText())) {
+          return elementAtSamePosition;
+        }
+        return element; // it can't be helped
+      }
+
+      private boolean inFile(@NotNull PsiElement element, @NotNull PsiFile desiredFile) {
+        PsiFile file = element.getContainingFile();
+        if (file == null) return false;
+        return file.getViewProvider() == desiredFile.getViewProvider();
+      }
+
     });
   }
 
