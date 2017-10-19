@@ -193,7 +193,7 @@ public class DuplicatesFinder {
     ArrayList<PsiElement> candidates = new ArrayList<>();
     for (final PsiElement element : myPattern) {
       if (sibling == null) return null;
-      if (!canBeEquivalent(element, sibling)) return null;
+      if (!canBeEquivalent(element, sibling) || sibling != candidate && isSelf(sibling)) return null;
       candidates.add(sibling);
       sibling = PsiTreeUtil.skipSiblingsForward(sibling, PsiWhiteSpace.class, PsiComment.class, PsiEmptyStatement.class);
     }
