@@ -2309,6 +2309,17 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-26269
+  public void testDontReplaceDictValueWithReceiverType() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("Dict[str, Any]",
+                   "from typing import Any, Dict\n" +
+                   "d: Dict[str, Dict[str, Any]]\n" +
+                   "expr = d[\"k\"]")
+    );
+  }
+
   // PY-26493
   public void testAssertAndStructuralType() {
     doTest("str",

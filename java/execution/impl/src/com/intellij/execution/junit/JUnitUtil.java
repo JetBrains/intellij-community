@@ -33,7 +33,6 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.testIntegration.TestFramework;
-import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -98,7 +97,21 @@ public class JUnitUtil {
   @NonNls public static final String PARAMETERIZED_CLASS_NAME = "org.junit.runners.Parameterized";
   @NonNls public static final String SUITE_CLASS_NAME = "org.junit.runners.Suite";
   public static final String JUNIT5_NESTED = "org.junit.jupiter.api.Nested";
-  private static final String[] KNOWN_RUNNERS = {"org.junit.runners.Parameterized", "org.junit.runners.BlockJUnit4ClassRunner", "org.junit.runners.JUnit4"};
+  private static final String[] RUNNERS_UNAWARE_OF_INNER_CLASSES = {
+                                                  "org.junit.runners.Parameterized",
+                                                  "org.junit.runners.BlockJUnit4ClassRunner",
+                                                  "org.junit.runners.JUnit4",
+                                                  "org.junit.internal.runners.JUnit38ClassRunner",
+                                                  "org.junit.internal.runners.JUnit4ClassRunner",
+                                                  "org.junit.runners.Suite"
+  };
+
+  private static final String[] RUNNERS_REQUIRE_ANNOTATION_ON_TEST_METHOD = {
+                                                  "org.junit.runners.Parameterized",
+                                                  "org.junit.runners.BlockJUnit4ClassRunner",
+                                                  "org.junit.runners.JUnit4",
+                                                  "org.junit.internal.runners.JUnit4ClassRunner"
+  };
 
   public static boolean isSuiteMethod(@NotNull PsiMethod psiMethod) {
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
@@ -136,7 +149,7 @@ public class JUnitUtil {
     if (checkClass && checkRunWith) {
       PsiAnnotation annotation = getRunWithAnnotation(aClass);
       if (annotation != null) {
-        return !isRunnerWithRequiredAnnotationOnTestMethod(annotation, KNOWN_RUNNERS);
+        return !isInheritorOrSelfRunner(annotation, RUNNERS_REQUIRE_ANNOTATION_ON_TEST_METHOD);
       }
     }
     if (psiMethod.getParameterList().getParametersCount() > 0) return false;
@@ -225,7 +238,7 @@ public class JUnitUtil {
         }
 
         //default runners do not implicitly run inner classes
-        if (annotation != null && !isRunnerWithRequiredAnnotationOnTestMethod(annotation, KNOWN_RUNNERS)) {
+        if (annotation != null && !isInheritorOrSelfRunner(annotation, RUNNERS_UNAWARE_OF_INNER_CLASSES)) {
           return true;
         }
       }
@@ -427,15 +440,15 @@ public class JUnitUtil {
   }
 
   public static boolean isParameterized(PsiAnnotation annotation) {
-    return isRunnerWithRequiredAnnotationOnTestMethod(annotation,"org.junit.runners.Parameterized");
+    return isInheritorOrSelfRunner(annotation, "org.junit.runners.Parameterized");
   }
 
-  private static boolean isRunnerWithRequiredAnnotationOnTestMethod(PsiAnnotation annotation, String... runners) {
+  public static boolean isInheritorOrSelfRunner(PsiAnnotation annotation, String... runners) {
     final PsiAnnotationMemberValue value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
     if (value instanceof PsiClassObjectAccessExpression) {
       final PsiTypeElement operand = ((PsiClassObjectAccessExpression)value).getOperand();
       final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(operand.getType());
-      return psiClass != null && ArrayUtil.find(runners, psiClass.getQualifiedName()) > -1;
+      return psiClass != null && Arrays.stream(runners).anyMatch(runner -> InheritanceUtil.isInheritor(psiClass, runner));
     }
     return false;
   }

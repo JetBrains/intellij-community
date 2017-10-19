@@ -29,7 +29,7 @@ open class ChangeListData @JvmOverloads constructor(val author: VcsUser? = null,
   }
 
   @Tag(CHANGELIST_DATA)
-  inner class State @JvmOverloads constructor(@Attribute val name: String? = null, @Attribute val email: String? = null, @Attribute val date: Date? = null)
+  class State @JvmOverloads constructor(@Attribute val name: String? = null, @Attribute val email: String? = null, @Attribute val date: Date? = null)
 
   companion object {
     @JvmStatic

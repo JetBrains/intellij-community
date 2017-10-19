@@ -209,12 +209,7 @@ public class ParametrizedDuplicates {
     Map<PsiLocalVariable, ClusterOfUsages> parameterDeclarations = createParameterDeclarations(originalProcessor, expressionsMapping);
     putMatchParameters(parameterDeclarations);
 
-    JavaDuplicatesExtractMethodProcessor parametrizedProcessor = new JavaDuplicatesExtractMethodProcessor(myElements, REFACTORING_NAME) {
-      @Override
-      protected boolean isFoldingApplicable() {
-        return false;
-      }
-    };
+    JavaDuplicatesExtractMethodProcessor parametrizedProcessor = new JavaDuplicatesExtractMethodProcessor(myElements, REFACTORING_NAME);
     if (!parametrizedProcessor.prepare(false)) {
       return false;
     }
