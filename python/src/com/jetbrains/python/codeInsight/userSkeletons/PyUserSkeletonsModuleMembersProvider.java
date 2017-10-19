@@ -23,7 +23,7 @@ import java.util.List;
 public class PyUserSkeletonsModuleMembersProvider extends PyModuleMembersProvider {
   @Nullable
   @Override
-  public PsiElement resolveMember(PyFile module, String name, @NotNull PyResolveContext resolveContext) {
+  public PsiElement resolveMember(@NotNull PyFile module, @NotNull String name, @NotNull PyResolveContext resolveContext) {
     final PyFile moduleSkeleton = PyUserSkeletonsUtil.getUserSkeleton(module);
     if (moduleSkeleton != null) {
       return moduleSkeleton.getElementNamed(name);
@@ -32,7 +32,14 @@ public class PyUserSkeletonsModuleMembersProvider extends PyModuleMembersProvide
   }
 
   @Override
-  protected Collection<PyCustomMember> getMembersByQName(PyFile module, String qName, @NotNull TypeEvalContext context) {
+  protected Collection<PyCustomMember> getMembersByQName(PyFile module, String qName) {
+    // This method will be removed in 2018.2
+    return getMembersByQName(module, qName, TypeEvalContext.codeInsightFallback(module.getProject()));
+  }
+
+  @Override
+  @NotNull
+  protected Collection<PyCustomMember> getMembersByQName(@NotNull PyFile module, @NotNull String qName, @NotNull TypeEvalContext context) {
    final PyFile moduleSkeleton = PyUserSkeletonsUtil.getUserSkeletonForModuleQName(qName, module);
     if (moduleSkeleton != null) {
       final List<PyCustomMember> results = new ArrayList<>();

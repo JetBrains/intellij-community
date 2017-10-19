@@ -33,14 +33,14 @@ public class PyiClassMembersProvider extends PyClassMembersProviderBase implemen
 
   @Nullable
   @Override
-  public PsiElement resolveMember(@NotNull PyClassType classType,
+  public PsiElement resolveMember(@NotNull PyClassType type,
                                   @NotNull String name,
                                   @Nullable PsiElement location,
                                   @NotNull PyResolveContext resolveContext) {
-    final PyClass cls = classType.getPyClass();
+    final PyClass cls = type.getPyClass();
     final PsiElement pythonStub = PyiUtil.getPythonStub(cls);
     if (pythonStub instanceof PyClass) {
-      return PyUserSkeletonsClassMembersProvider.findClassMember((PyClass)pythonStub, name, classType.isDefinition());
+      return PyUserSkeletonsClassMembersProvider.findClassMember((PyClass)pythonStub, name, type.isDefinition());
     }
     return null;
   }

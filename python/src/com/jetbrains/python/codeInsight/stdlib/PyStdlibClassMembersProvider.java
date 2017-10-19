@@ -53,7 +53,11 @@ public class PyStdlibClassMembersProvider extends PyClassMembersProviderBase {
   }
 
   @Override
-  public PsiElement resolveMember(PyClassType clazz, String name, @Nullable PsiElement location, @NotNull PyResolveContext resolveContext) {
+  @Nullable
+  public PsiElement resolveMember(@NotNull PyClassType type,
+                                  @NotNull String name,
+                                  @Nullable PsiElement location,
+                                  @NotNull PyResolveContext resolveContext) {
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
     if (location instanceof PyReferenceExpression && referenceToMockPatch((PyReferenceExpression)location, context)) {
       for (PyCustomMember member : MOCK_PATCH_MEMBERS) {
@@ -63,7 +67,7 @@ public class PyStdlibClassMembersProvider extends PyClassMembersProviderBase {
       }
     }
 
-    return super.resolveMember(clazz, name, location, resolveContext);
+    return super.resolveMember(type, name, location, resolveContext);
   }
 
   public static boolean referenceToMockPatch(@NotNull PyReferenceExpression referenceExpression, @NotNull TypeEvalContext context) {
