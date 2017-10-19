@@ -23,8 +23,12 @@ import java.util.Objects;
 import java.util.Set;
 
 public class SyntheticLibraryElementNode extends ProjectViewNode<SyntheticLibrary> implements NavigatableWithText {
-  public SyntheticLibraryElementNode(@NotNull Project project, @NotNull SyntheticLibrary library, ViewSettings settings) {
+  @NotNull private final ItemPresentation myItemPresentation;
+
+  public SyntheticLibraryElementNode(@NotNull Project project, @NotNull SyntheticLibrary library,
+                                     @NotNull ItemPresentation itemPresentation, ViewSettings settings) {
     super(project, library, settings);
+    myItemPresentation = itemPresentation;
   }
 
   @Override
@@ -46,8 +50,7 @@ public class SyntheticLibraryElementNode extends ProjectViewNode<SyntheticLibrar
 
   @Override
   public String getName() {
-    SyntheticLibrary library = getLibrary();
-    return library instanceof ItemPresentation ? ((ItemPresentation)library).getPresentableText() : super.getName();
+    return myItemPresentation.getPresentableText();
   }
 
   @NotNull
@@ -57,10 +60,7 @@ public class SyntheticLibraryElementNode extends ProjectViewNode<SyntheticLibrar
 
   @Override
   protected void update(PresentationData presentation) {
-    SyntheticLibrary library = getLibrary();
-    if (library instanceof ItemPresentation) {
-      presentation.updateFrom((ItemPresentation)getLibrary());
-    }
+    presentation.updateFrom(myItemPresentation);
   }
 
   @Nullable

@@ -94,7 +94,7 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
                      + libraries.getClass().getSimpleName());
             continue;
           }
-          children.add(new SyntheticLibraryElementNode(project, library, getSettings()));
+          children.add(new SyntheticLibraryElementNode(project, library, (ItemPresentation)library, getSettings()));
         }
       }
     }
