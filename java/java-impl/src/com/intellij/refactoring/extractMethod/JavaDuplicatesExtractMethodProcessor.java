@@ -151,6 +151,11 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
     return element;
   }
 
+  @Override
+  protected boolean isFoldingApplicable() {
+    return false;
+  }
+
   @NotNull
   private PsiElement updateCallQualifier(PsiMethodCallExpression callExpression) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
