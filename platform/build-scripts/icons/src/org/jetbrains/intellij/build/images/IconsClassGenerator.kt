@@ -25,7 +25,6 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 import java.util.*
-import kotlin.comparisons.compareBy
 
 class IconsClassGenerator(val projectHome: File, val util: JpsModule) {
   private var processedClasses = 0
@@ -109,7 +108,7 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule) {
     val i = text.indexOf("package ")
     if (i == -1) return ""
     val comment = text.substring(0, i)
-    return if (comment.trim().endsWith("*/")) comment else ""
+    return if (comment.trim().endsWith("*/") || comment.trim().startsWith("//")) comment else ""
   }
 
   private fun generate(module: JpsModule, className: String, packageName: String, customLoad: Boolean, copyrightComment: String): String? {
