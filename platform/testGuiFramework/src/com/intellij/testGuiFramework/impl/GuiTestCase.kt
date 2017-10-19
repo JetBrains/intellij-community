@@ -253,7 +253,7 @@ open class GuiTestCase {
                                                                           timeout: Long = defaultTimeout): ComponentWithBrowseButtonFixture {
     if (target() is Container) {
       val boundedLabel = waitUntilFound(target() as Container, JLabel::class.java, timeout) {
-        it.text == boundedLabelText
+        it.text == boundedLabelText && it.isShowing
       }
       val component = boundedLabel.labelFor
       if (component is ComponentWithBrowseButton<*>) {
@@ -519,7 +519,7 @@ open class GuiTestCase {
     if (target() is Container) {
       val jbLabel = waitUntilFound(
         guiTestRule.robot(), target() as Container,
-        typeMatcher(JBLabel::class.java) { it.isShowing && it.text == labelName },
+        typeMatcher(JBLabel::class.java) { it.isShowing && (it.text == labelName || labelName in it.text) },
         timeout.toFestTimeout())
       JLabelFixture(guiTestRule.robot(), jbLabel)
     }
