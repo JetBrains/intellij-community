@@ -303,7 +303,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
       myTextField = textField;
       myRegisteredProjectsButton = registeredProjectsButton;
       add(myTextField, new GridBag().weightx(1).fillCellHorizontally());
-      add(myRegisteredProjectsButton, new GridBag().insets(0, 3, 0, 0));
+      add(myRegisteredProjectsButton, new GridBag().insets(0, 3, 0, 1));
     }
 
     @NotNull
