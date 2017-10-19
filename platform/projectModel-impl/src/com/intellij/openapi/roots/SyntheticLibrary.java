@@ -27,7 +27,8 @@ import java.util.Set;
  *   These roots won't be indexed and will be handled as {@link LibraryEx#getExcludedRoots()}</li>
  *   <br>
  *   Generally, {@link #getSourceRoots()} are handled similarly to {@code library.getFiles(OrderRootType.SOURCES)}.
- *   <li>An item in "External Libraries" in Project view if library is instance of {@link ItemPresentation}</li>.
+ *   <li>An item in "External Libraries" in Project view if library returns true on {@link #isShowInExternalLibrariesNode()} and
+ *   is instance of {@link ItemPresentation}</li>.
  * </ul>
  * <p/>
  * To decorate a child node of "External Libraries" node in Project view consider implementing corresponding interfaces:
@@ -68,7 +69,7 @@ public abstract class SyntheticLibrary {
   }
 
   public boolean isShowInExternalLibrariesNode() {
-    return true;
+    return this instanceof ItemPresentation;
   }
 
   /**

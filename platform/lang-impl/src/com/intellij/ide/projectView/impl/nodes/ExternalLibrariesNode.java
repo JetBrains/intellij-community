@@ -11,6 +11,7 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -28,6 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class ExternalLibrariesNode extends ProjectViewNode<String> {
+  private static final Logger LOG = Logger.getInstance(ExternalLibrariesNode.class);
+
   public ExternalLibrariesNode(@NotNull Project project, ViewSettings viewSettings) {
     super(project, "External Libraries", viewSettings);
   }
@@ -85,8 +88,12 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
     for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensions()) {
       Collection<SyntheticLibrary> libraries = provider.getAdditionalProjectLibraries(project);
       for (SyntheticLibrary library : libraries) {
-        //noinspection InstanceofIncompatibleInterface
-        if (library instanceof ItemPresentation && library.isShowInExternalLibrariesNode()) {
+        if (library.isShowInExternalLibrariesNode()) {
+          if (!(library instanceof ItemPresentation)) {
+            LOG.warn("Synthetic library must implement ItemPresentation to be shown in External Libraries node: "
+                     + libraries.getClass().getSimpleName());
+            continue;
+          }
           children.add(new SyntheticLibraryElementNode(project, library, getSettings()));
         }
       }
