@@ -20,7 +20,6 @@ import com.intellij.build.events.impl.FailureImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.SimpleTextAttributes;
@@ -28,13 +27,9 @@ import com.intellij.ui.treeStructure.CachingSimpleNode;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -69,24 +64,13 @@ public class ExecutionNode extends CachingSimpleNode {
 
   @Override
   protected void update(PresentationData presentation) {
-    Color oldColor = myColor;
-    String oldName = myName;
-    Icon oldIcon = getIcon();
-    List<ColoredFragment> oldFragments = new ArrayList<>(presentation.getColoredText());
-    myColor = UIUtil.getTreeTextForeground();
-
     setIcon(
       isRunning() ? ExecutionNodeProgressAnimator.getCurrentFrame() :
       isFailed() ? AllIcons.Process.State.RedExcl :
       isSkipped() ? AllIcons.Process.State.YellowStr :
       AllIcons.Process.State.GreenOK
     );
-
     presentation.setPresentableText(myName);
-    presentation.setChanged(!Comparing.equal(new Object[]{getIcon(), myName, oldFragments, myColor},
-                                             new Object[]{oldIcon, oldName, oldFragments, oldColor}));
-
-    presentation.setForcedTextForeground(myColor);
     presentation.setIcon(getIcon());
     if (title != null) {
       presentation.addText(title + ": ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
