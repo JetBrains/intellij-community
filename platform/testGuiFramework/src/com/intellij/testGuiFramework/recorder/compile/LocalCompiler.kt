@@ -22,7 +22,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.testGuiFramework.recorder.components.GuiRecorderComponent
+import com.intellij.testGuiFramework.recorder.GuiRecorderManager
 import com.intellij.testGuiFramework.recorder.ui.Notifier
 import com.intellij.util.download.DownloadableFileService
 import java.io.BufferedReader
@@ -73,7 +73,7 @@ class LocalCompiler {
           LOG.error(ce.message)
         }
       })
-    GuiRecorderComponent.currentTask = taskFuture
+    GuiRecorderManager.currentTask = taskFuture
 
   }
 
@@ -95,14 +95,14 @@ class LocalCompiler {
       "Unable to load by pluginClassLoader $TEST_CLASS_NAME.class file")
     val testCase = currentTest.newInstance()
     val testMethod = currentTest.getMethod(ScriptWrapper.TEST_METHOD_NAME)
-    GuiRecorderComponent.state = GuiRecorderComponent.States.RUNNING
+    GuiRecorderManager.state = GuiRecorderManager.States.RUNNING
     try {
       testMethod.invoke(testCase)
       Notifier.updateStatus("Script stopped")
-      GuiRecorderComponent.state = GuiRecorderComponent.States.IDLE
+      GuiRecorderManager.state = GuiRecorderManager.States.IDLE
     }
     catch (throwable: Throwable) {
-      GuiRecorderComponent.state = GuiRecorderComponent.States.RUNNING_ERROR
+      GuiRecorderManager.state = GuiRecorderManager.States.RUNNING_ERROR
       Notifier.updateStatus("Running error, please see idea.log")
       throw throwable
     }
@@ -117,7 +117,7 @@ class LocalCompiler {
     val libDirLocation = getApplicationLibDir().parentFile
 
     Notifier.updateStatus("${Notifier.LONG_OPERATION_PREFIX}Compiling...")
-    GuiRecorderComponent.state = GuiRecorderComponent.States.COMPILING
+    GuiRecorderManager.state = GuiRecorderManager.States.COMPILING
 
 
     val compilationProcessBuilder = if (SystemInfo.isWindows)
@@ -135,12 +135,12 @@ class LocalCompiler {
     if (process.exitValue() == 1) {
       LOG.error(BufferedReader(InputStreamReader(process.errorStream)).lines().collect(Collectors.joining("\n")))
       Notifier.updateStatus("Compilation error (see idea.log)")
-      GuiRecorderComponent.state = GuiRecorderComponent.States.COMPILATION_ERROR
+      GuiRecorderManager.state = GuiRecorderManager.States.COMPILATION_ERROR
       throw CompilationException()
     }
     else {
       Notifier.updateStatus("Compilation is done")
-      GuiRecorderComponent.state = GuiRecorderComponent.States.COMPILATION_DONE
+      GuiRecorderManager.state = GuiRecorderManager.States.COMPILATION_DONE
     }
     return wait
   }

@@ -16,7 +16,6 @@
 package com.intellij.testGuiFramework.recorder
 
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.testGuiFramework.recorder.components.GuiRecorderComponent
 
 object Writer {
 
@@ -32,7 +31,7 @@ object Writer {
   }
 
   private fun writeToEditor(str: String) {
-    val document = GuiRecorderComponent.getEditor().document
+    val document = GuiRecorderManager.getEditor().document
     WriteCommandAction.runWriteCommandAction(null, { document.insertString(document.textLength, str) })
   }
 

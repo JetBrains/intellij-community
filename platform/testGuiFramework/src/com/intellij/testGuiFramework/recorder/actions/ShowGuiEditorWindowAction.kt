@@ -17,7 +17,7 @@ package com.intellij.testGuiFramework.recorder.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.testGuiFramework.recorder.components.GuiRecorderComponent
+import com.intellij.testGuiFramework.recorder.GuiRecorderManager
 
 /**
  * @author Sergey Karashevich
@@ -25,7 +25,7 @@ import com.intellij.testGuiFramework.recorder.components.GuiRecorderComponent
 class ShowGuiEditorWindowAction : AnAction() {
 
   override fun actionPerformed(p0: AnActionEvent?) {
-    val frame = GuiRecorderComponent.frame
+    val frame = GuiRecorderManager.frame
     if (!frame.isShowing()) {
       frame.show()
     }
