@@ -1,36 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.util.containers.Convertor;
-import org.jetbrains.idea.svn.auth.AcceptResult;
-import org.jetbrains.idea.svn.auth.AuthenticationProvider;
+import org.jetbrains.idea.svn.auth.*;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.auth.SVNAuthentication;
-import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
-import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
 public class SvnTestInteractiveAuthentication implements AuthenticationProvider {
   private boolean mySaveData;
-  private final Map<String, Convertor<SVNURL, SVNAuthentication>> myData;
+  private final Map<String, Convertor<SVNURL, AuthenticationData>> myData;
 
   public SvnTestInteractiveAuthentication() {
     mySaveData = true;
@@ -46,20 +27,20 @@ public class SvnTestInteractiveAuthentication implements AuthenticationProvider 
     return AcceptResult.REJECTED;
   }
 
-  public void addAuthentication(final String kind, final Convertor<SVNURL, SVNAuthentication> authentication) {
+  public void addAuthentication(final String kind, final Convertor<SVNURL, AuthenticationData> authentication) {
     myData.put(kind, authentication);
   }
 
   @Override
-  public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, boolean canCache) {
+  public AuthenticationData requestClientAuthentication(String kind, SVNURL url, String realm, boolean canCache) {
     canCache = canCache && mySaveData;
-    Convertor<SVNURL, SVNAuthentication> convertor = myData.get(kind);
-    SVNAuthentication result = convertor == null ? null : convertor.convert(url);
+    Convertor<SVNURL, AuthenticationData> convertor = myData.get(kind);
+    AuthenticationData result = convertor == null ? null : convertor.convert(url);
     if (result == null) {
       if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
-        result = new SVNPasswordAuthentication("username", "abc", canCache, url, false);
+        result = new PasswordAuthenticationData("username", "abc", canCache);
       } else if (ISVNAuthenticationManager.SSL.equals(kind)) {
-        result = new SVNSSLAuthentication(new File("aaa"), "abc", canCache, url, false);
+        result = new CertificateAuthenticationData("aaa", "abc".toCharArray(), canCache);
       }
     }
     return result;

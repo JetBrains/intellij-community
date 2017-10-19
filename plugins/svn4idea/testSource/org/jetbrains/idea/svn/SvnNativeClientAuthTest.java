@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -30,16 +16,11 @@ import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Revision;
-import org.jetbrains.idea.svn.auth.AcceptResult;
-import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
-import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier;
+import org.jetbrains.idea.svn.auth.*;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.junit.Before;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.auth.SVNAuthentication;
-import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
-import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 
 import java.io.File;
 import java.io.IOException;
@@ -90,7 +71,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
       }
 
       @Override
-      public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, boolean canCache) {
+      public AuthenticationData requestClientAuthentication(String kind, SVNURL url, String realm, boolean canCache) {
         if (myCancelAuth) return null;
         return super.requestClientAuthentication(kind, url, realm, canCache);
       }
@@ -106,10 +87,10 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
                                        ++ myCredentialsAskedInteractivelyCount;
                                        if (myCancelAuth) return null;
                                        if (myCredentialsCorrect) {
-                                         return new SVNPasswordAuthentication(outHttpUser, outHttpPassword, mySaveCredentials, o, false);
+                                         return new PasswordAuthenticationData(outHttpUser, outHttpPassword, mySaveCredentials);
                                        } else {
                                          myCredentialsCorrect = true;// only once
-                                         return new SVNPasswordAuthentication("1234214 23 4234", "324324", mySaveCredentials, o, false);
+                                         return new PasswordAuthenticationData("1234214 23 4234", "324324", mySaveCredentials);
                                        }
                                      });
     authentication.addAuthentication(ISVNAuthenticationManager.SSL,
@@ -117,10 +98,12 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
                                        ++ myCredentialsAskedInteractivelyCount;
                                        if (myCancelAuth) return null;
                                        if (myCredentialsCorrect) {
-                                         return new SVNSSLAuthentication(certFile, "12345", mySaveCredentials, o, false);
+                                         return new CertificateAuthenticationData(certFile.getAbsolutePath(), "12345".toCharArray(),
+                                                                                  mySaveCredentials);
                                        } else {
                                          myCredentialsCorrect = true;// only once
-                                         return new SVNSSLAuthentication(new File("1232432423"), "3245321532534235445", mySaveCredentials, o, false);
+                                         return new CertificateAuthenticationData("1232432423", "3245321532534235445".toCharArray(),
+                                                                                  mySaveCredentials);
                                        }
                                      });
     myCertificateAskedInteractivelyCount = 0;

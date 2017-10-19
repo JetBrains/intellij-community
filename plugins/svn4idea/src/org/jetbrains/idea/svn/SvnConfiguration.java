@@ -21,7 +21,6 @@ import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.jetbrains.idea.svn.update.MergeRootInfo;
 import org.jetbrains.idea.svn.update.UpdateRootInfo;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
@@ -348,7 +347,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
       myPassiveAuthManager = new SvnAuthenticationManager(svnVcs, new File(getConfigurationDirectory()));
       myPassiveAuthManager.setAuthenticationProvider(new AuthenticationProvider() {
         @Override
-        public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, boolean canCache) {
+        public AuthenticationData requestClientAuthentication(String kind, SVNURL url, String realm, boolean canCache) {
           return null;
         }
 
