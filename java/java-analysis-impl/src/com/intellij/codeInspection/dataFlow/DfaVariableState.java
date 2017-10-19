@@ -20,6 +20,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiPrimitiveType;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,8 +100,7 @@ class DfaVariableState {
 
   @NotNull
   <T> DfaVariableState withFact(DfaFactType<T> type, T value) {
-    DfaFactMap factMap = myFactMap.with(type, value);
-    return myFactMap.equals(factMap) ? this : createCopy(factMap);
+    return withFacts(myFactMap.with(type, value));
   }
 
   <T> DfaVariableState withoutFact(DfaFactType<T> type) {
@@ -109,13 +109,17 @@ class DfaVariableState {
 
   @Nullable
   <T> DfaVariableState intersectFact(DfaFactType<T> type, T value) {
-    DfaFactMap factMap = myFactMap.intersect(type, value);
-    return factMap == null ? null : myFactMap.equals(factMap) ? this : createCopy(factMap);
+    return withFacts(myFactMap.intersect(type, value));
   }
 
+  @Nullable
   DfaVariableState intersectMap(DfaFactMap map) {
-    DfaFactMap factMap = myFactMap.intersect(map);
-    return factMap == null ? null : myFactMap.equals(factMap) ? this : createCopy(factMap);
+    return withFacts(myFactMap.intersect(map));
+  }
+
+  @Contract("null -> null;!null -> !null")
+  public DfaVariableState withFacts(@Nullable DfaFactMap facts) {
+    return facts == null ? null : facts.equals(myFactMap) ? this : createCopy(facts);
   }
 
   @NotNull

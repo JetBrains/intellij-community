@@ -46,14 +46,20 @@ public abstract class DfaFactType<T> extends Key<T> {
 
     @Nullable
     @Override
+    Boolean intersectFacts(@NotNull Boolean left, @NotNull Boolean right) {
+      if (Boolean.FALSE.equals(left) || Boolean.FALSE.equals(right)) {
+        return Boolean.FALSE;
+      }
+      return super.intersectFacts(left, right);
+    }
+
+    @Nullable
+    @Override
     Boolean fromDfaValue(DfaValue value) {
       if (value instanceof DfaConstValue) {
         return ((DfaConstValue)value).getValue() == null;
       }
       if (value instanceof DfaBoxedValue || value instanceof DfaUnboxedValue) return false;
-      if (value instanceof DfaTypeValue) {
-        return NullnessUtil.toBoolean(((DfaTypeValue)value).getNullness());
-      }
       if (value instanceof DfaFactMapValue) {
         DfaFactMapValue factValue = (DfaFactMapValue)value;
         if (factValue.get(OPTIONAL_PRESENCE) != null || factValue.get(RANGE) != null) return false;
@@ -75,8 +81,8 @@ public abstract class DfaFactType<T> extends Key<T> {
    */
   public static final DfaFactType<Boolean> OPTIONAL_PRESENCE = new DfaFactType<Boolean>("Optional presense") {
     @Override
-    Boolean invert(Boolean fact) {
-      return fact == null ? null : !fact;
+    public boolean isDistinct(@NotNull Boolean fact, @NotNull Boolean otherFact) {
+      return fact != otherFact;
     }
 
     @Override
@@ -93,6 +99,11 @@ public abstract class DfaFactType<T> extends Key<T> {
     @Override
     boolean isSuper(@Nullable LongRangeSet superFact, @Nullable LongRangeSet subFact) {
       return superFact == null || subFact != null && superFact.contains(subFact);
+    }
+
+    @Override
+    boolean isUnknown(@NotNull LongRangeSet fact) {
+      return LongRangeSet.all().equals(fact);
     }
 
     @Nullable
@@ -142,19 +153,14 @@ public abstract class DfaFactType<T> extends Key<T> {
    * {@link TypeConstraint#EMPTY} value is equivalent to absent fact (not constrained)
    */
   public static final DfaFactType<TypeConstraint> TYPE_CONSTRAINT = new DfaFactType<TypeConstraint>("Type") {
-    @Nullable
-    @Override
-    TypeConstraint fromDfaValue(DfaValue value) {
-      if(value instanceof DfaTypeValue) {
-        TypeConstraint constraint = TypeConstraint.EMPTY.withInstanceofValue(((DfaTypeValue)value).getDfaType());
-        return constraint == null || constraint.isEmpty() ? null : constraint;
-      }
-      return super.fromDfaValue(value);
-    }
-
     @Override
     boolean isSuper(@Nullable TypeConstraint superFact, @Nullable TypeConstraint subFact) {
       return superFact == null || (subFact != null && superFact.isSuperStateOf(subFact));
+    }
+
+    @Override
+    boolean isUnknown(@NotNull TypeConstraint fact) {
+      return fact.equals(TypeConstraint.EMPTY);
     }
 
     @Nullable
@@ -201,6 +207,14 @@ public abstract class DfaFactType<T> extends Key<T> {
     return Objects.equals(superFact, subFact);
   }
 
+  boolean isDistinct(@NotNull T fact, @NotNull T otherFact) {
+    return false;
+  }
+
+  boolean isUnknown(@NotNull T fact) {
+    return false;
+  }
+
   /**
    * Intersects two facts of this type.
    *
@@ -211,16 +225,6 @@ public abstract class DfaFactType<T> extends Key<T> {
   @Nullable
   T intersectFacts(@NotNull T left, @NotNull T right) {
     return left.equals(right) ? left : null;
-  }
-
-  /**
-   * Inverts a fact. This operation might not be reversible.
-   *
-   * @param fact
-   * @return an inverted fact
-   */
-  T invert(T fact) {
-    return null;
   }
 
   /**

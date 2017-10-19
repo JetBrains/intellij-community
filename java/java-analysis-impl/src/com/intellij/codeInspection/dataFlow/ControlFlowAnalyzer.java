@@ -1409,7 +1409,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (type instanceof PsiClassType) {
         type = ((PsiClassType)type).rawType();
       }
-      addInstruction(new PushInstruction(myFactory.createTypeValue(type, Nullness.UNKNOWN), null));
+      addInstruction(new PushInstruction(myFactory.createTypeValue(type, Nullness.NOT_NULL), null));
       addInstruction(new InstanceofInstruction(expression, myProject, operand, type));
     }
     else {

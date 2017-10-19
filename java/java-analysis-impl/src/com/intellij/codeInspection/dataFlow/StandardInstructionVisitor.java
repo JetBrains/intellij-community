@@ -95,7 +95,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         DfaMemoryStateImpl stateImpl = (DfaMemoryStateImpl)memState;
         stateImpl.setVariableState(var, stateImpl.getVariableState(var).withFact(DfaFactType.CAN_BE_NULL, true));
       }
-    } else if (dfaDest instanceof DfaTypeValue && ((DfaTypeValue)dfaDest).isNotNull()) {
+    } else if (dfaDest instanceof DfaFactMapValue && Boolean.FALSE.equals(((DfaFactMapValue)dfaDest).get(DfaFactType.CAN_BE_NULL))) {
       checkNotNullable(memState, dfaSource, problem, rValue);
     }
 
@@ -152,7 +152,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaValue array = memState.pop();
     PsiArrayAccessExpression arrayExpression = instruction.getExpression();
     if (!checkNotNullable(memState, array, NullabilityProblem.fieldAccessNPE, arrayExpression.getArrayExpression())) {
-      forceNotNull(runner, memState, array);
+      forceNotNull(memState, array);
     }
     boolean alwaysOutOfBounds = false;
     if (index != DfaUnknownValue.getInstance()) {
@@ -182,7 +182,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   public DfaInstructionState[] visitFieldReference(FieldReferenceInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     final DfaValue qualifier = memState.pop();
     if (!checkNotNullable(memState, qualifier, NullabilityProblem.fieldAccessNPE, instruction.getElementToAssert())) {
-      forceNotNull(runner, memState, qualifier);
+      forceNotNull(memState, qualifier);
     }
     PsiElement parent = instruction.getExpression().getParent();
     if (parent instanceof PsiMethodReferenceExpression) {
@@ -394,7 +394,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                    DfaMemoryState memState,
                                    boolean contractOnly) {
     DfaValue[] argValues = popCallArguments(instruction, runner, memState, contractOnly);
-    final DfaValue qualifier = popQualifier(instruction, runner, memState);
+    final DfaValue qualifier = popQualifier(instruction, memState);
     return new DfaCallArguments(qualifier, argValues);
   }
 
@@ -434,7 +434,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       Nullness requiredNullability = instruction.getArgRequiredNullability(paramIndex);
       if (requiredNullability == Nullness.NOT_NULL) {
         if (!checkNotNullable(memState, arg, NullabilityProblem.passingNullableToNotNullParameter, anchor)) {
-          forceNotNull(runner, memState, arg);
+          forceNotNull(memState, arg);
         }
       }
       else if (requiredNullability == Nullness.UNKNOWN) {
@@ -444,13 +444,13 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return argValues;
   }
 
-  private DfaValue popQualifier(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+  private DfaValue popQualifier(MethodCallInstruction instruction, DfaMemoryState memState) {
     @NotNull final DfaValue qualifier = memState.pop();
     boolean unboxing = instruction.getMethodType() == MethodCallInstruction.MethodType.UNBOXING;
     NullabilityProblem problem = unboxing ? NullabilityProblem.unboxingNullable : NullabilityProblem.callNPE;
     PsiElement anchor = instruction.getContext();
     if (!checkNotNullable(memState, qualifier, problem, anchor)) {
-      forceNotNull(runner, memState, qualifier);
+      forceNotNull(memState, qualifier);
     }
     return qualifier;
   }
@@ -503,10 +503,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return falseStates;
   }
 
-  private static void forceNotNull(DataFlowRunner runner, DfaMemoryState memState, DfaValue arg) {
+  private static void forceNotNull(DfaMemoryState memState, DfaValue arg) {
     if (arg instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue)arg;
-      memState.setVarValue(var, runner.getFactory().createTypeValue(var.getVariableType(), Nullness.NOT_NULL));
+      memState.forceNotNull(var);
     }
   }
 
@@ -620,10 +620,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       DfaValue arg = memState.peek();
       if (arg instanceof DfaVariableValue) {
         DfaVariableValue var = (DfaVariableValue)arg;
-        memState.setVarValue(var, runner.getFactory().createTypeValue(var.getVariableType(), Nullness.NOT_NULL));
-      } else if (arg instanceof DfaTypeValue) {
+        memState.forceNotNull(var);
+      } else if (arg instanceof DfaFactMapValue) {
         memState.pop();
-        memState.push(((DfaTypeValue)arg).withNullness(Nullness.NOT_NULL));
+        memState.push(((DfaFactMapValue)arg).withFact(DfaFactType.CAN_BE_NULL, false));
       } else if (memState.isNull(arg) && instruction.getProblem() == NullabilityProblem.nullableFunctionReturn) {
         memState.pop();
         memState.push(runner.getFactory().createTypeValue(PsiType.VOID, Nullness.NOT_NULL));
@@ -712,12 +712,15 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   }
 
   private void handleInstanceof(InstanceofInstruction instruction, DfaValue dfaRight, DfaValue dfaLeft) {
-    if (dfaLeft instanceof DfaTypeValue && dfaRight instanceof DfaTypeValue) {
-      if (!((DfaTypeValue)dfaLeft).isNotNull()) {
+    if (dfaLeft instanceof DfaFactMapValue && dfaRight instanceof DfaFactMapValue) {
+      DfaFactMapValue left = (DfaFactMapValue)dfaLeft;
+      DfaFactMapValue right = (DfaFactMapValue)dfaRight;
+
+      if (!Boolean.FALSE.equals(left.get(DfaFactType.CAN_BE_NULL))) {
         myCanBeNullInInstanceof.add(instruction);
       }
 
-      if (((DfaTypeValue)dfaRight).getDfaType().isAssignableFrom(((DfaTypeValue)dfaLeft).getDfaType())) {
+      if (right.getFacts().with(DfaFactType.CAN_BE_NULL, null).isSuperStateOf(left.getFacts())) {
         return;
       }
     }

@@ -52,7 +52,6 @@ public class DfaValueFactory {
     myVarFactory = new DfaVariableValue.Factory(this);
     myConstFactory = new DfaConstValue.Factory(this);
     myBoxedFactory = new DfaBoxedValue.Factory(this);
-    myTypeFactory = new DfaTypeValue.Factory(this);
     myRelationFactory = new DfaRelationValue.Factory(this);
     myExpressionFactory = new DfaExpressionFactory(this);
     myFactFactory = new DfaFactMapValue.Factory(this);
@@ -78,7 +77,9 @@ public class DfaValueFactory {
   @NotNull
   public DfaValue createTypeValue(@Nullable PsiType type, @NotNull Nullness nullability) {
     if (type == null) return DfaUnknownValue.getInstance();
-    return getTypeFactory().createTypeValue(createDfaType(type), nullability);
+    DfaFactMap facts = DfaFactMap.EMPTY.with(DfaFactType.TYPE_CONSTRAINT, TypeConstraint.EMPTY.withInstanceofValue(createDfaType(type)))
+      .with(DfaFactType.CAN_BE_NULL, NullnessUtil.toBoolean(nullability));
+    return getFactFactory().createValue(facts);
   }
 
   @NotNull
@@ -137,10 +138,12 @@ public class DfaValueFactory {
 
   @Nullable
   private DfaConstValue tryEvaluate(DfaValue dfaLeft, RelationType relationType, DfaValue dfaRight) {
-    if(dfaRight instanceof DfaTypeValue && dfaLeft == getConstFactory().getNull()) {
+    if (dfaRight instanceof DfaFactMapValue && dfaLeft == getConstFactory().getNull()) {
       return tryEvaluate(dfaRight, relationType, dfaLeft);
     }
-    if (dfaLeft instanceof DfaTypeValue && dfaRight == getConstFactory().getNull() && ((DfaTypeValue)dfaLeft).isNotNull()) {
+    if (dfaLeft instanceof DfaFactMapValue &&
+        dfaRight == getConstFactory().getNull() &&
+        Boolean.FALSE.equals(((DfaFactMapValue)dfaLeft).get(DfaFactType.CAN_BE_NULL))) {
       if (relationType == RelationType.EQ) {
         return getConstFactory().getFalse();
       }
@@ -152,8 +155,13 @@ public class DfaValueFactory {
     if(dfaLeft instanceof DfaFactMapValue && dfaRight instanceof DfaFactMapValue) {
       if(relationType == RelationType.IS || relationType == RelationType.IS_NOT) {
         boolean isSuperState = ((DfaFactMapValue)dfaRight).getFacts().isSuperStateOf(((DfaFactMapValue)dfaLeft).getFacts());
-        boolean wantedSuperState = relationType == RelationType.IS;
-        return getBoolean(isSuperState == wantedSuperState);
+        if (isSuperState) {
+          return getBoolean(relationType == RelationType.IS);
+        }
+        boolean isDistinct = ((DfaFactMapValue)dfaRight).getFacts().isDistinct(((DfaFactMapValue)dfaLeft).getFacts());
+        if (isDistinct) {
+          return getBoolean(relationType == RelationType.IS_NOT);
+        }
       }
     }
 
@@ -215,7 +223,6 @@ public class DfaValueFactory {
   private final DfaVariableValue.Factory myVarFactory;
   private final DfaConstValue.Factory myConstFactory;
   private final DfaBoxedValue.Factory myBoxedFactory;
-  private final DfaTypeValue.Factory myTypeFactory;
   private final DfaRelationValue.Factory myRelationFactory;
   private final DfaExpressionFactory myExpressionFactory;
   private final DfaFactMapValue.Factory myFactFactory;
@@ -232,11 +239,6 @@ public class DfaValueFactory {
   @NotNull
   public DfaBoxedValue.Factory getBoxedFactory() {
     return myBoxedFactory;
-  }
-
-  @NotNull
-  public DfaTypeValue.Factory getTypeFactory() {
-    return myTypeFactory;
   }
 
   @NotNull

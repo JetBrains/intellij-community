@@ -160,7 +160,8 @@ public class DfaRelationValue extends DfaValue {
     }
 
     public DfaRelationValue createRelation(DfaValue dfaLeft, RelationType relationType, DfaValue dfaRight) {
-      if ((relationType == RelationType.IS || relationType == RelationType.IS_NOT) && dfaRight instanceof DfaFactMapValue) {
+      if ((relationType == RelationType.IS || relationType == RelationType.IS_NOT) &&
+          dfaRight instanceof DfaFactMapValue && !(dfaLeft instanceof DfaFactMapValue)) {
         return createCanonicalRelation(dfaLeft, relationType, dfaRight);
       }
       if (dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue || dfaLeft instanceof DfaUnboxedValue
@@ -171,10 +172,10 @@ public class DfaRelationValue extends DfaValue {
         }
         return createCanonicalRelation(dfaLeft, relationType, dfaRight);
       }
-      if (dfaLeft instanceof DfaTypeValue && dfaRight instanceof DfaConstValue) {
+      if (dfaLeft instanceof DfaFactMapValue && dfaRight instanceof DfaConstValue) {
         return createCanonicalRelation(DfaUnknownValue.getInstance(), relationType, dfaRight);
       }
-      else if (dfaRight instanceof DfaTypeValue && dfaLeft instanceof DfaConstValue) {
+      else if (dfaRight instanceof DfaFactMapValue && dfaLeft instanceof DfaConstValue) {
         return createCanonicalRelation(DfaUnknownValue.getInstance(), relationType, dfaLeft);
       }
       return null;

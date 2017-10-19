@@ -55,6 +55,8 @@ public interface DfaMemoryState {
   @Nullable
   <T> T getValueFact(@NotNull DfaFactType<T> factType, @NotNull DfaValue value);
 
+  void forceNotNull(DfaVariableValue var);
+
   void flushFields();
 
   void flushVariable(DfaVariableValue variable);

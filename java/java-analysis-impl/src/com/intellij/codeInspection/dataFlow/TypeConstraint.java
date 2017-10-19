@@ -21,6 +21,7 @@ import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.EntryStream;
 import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
@@ -81,7 +82,7 @@ public final class TypeConstraint {
   }
 
   @Nullable
-  TypeConstraint withInstanceofValue(@NotNull DfaPsiType type) {
+  public TypeConstraint withInstanceofValue(@NotNull DfaPsiType type) {
     if (type.getPsiType() instanceof PsiPrimitiveType) return this;
 
     if (!checkInstanceofValue(type)) {
@@ -100,11 +101,14 @@ public final class TypeConstraint {
     Set<DfaPsiType> newInstanceof = ContainerUtil.newHashSet(myInstanceofValues);
     newInstanceof.removeAll(moreGeneric);
     newInstanceof.add(type);
+    if (newInstanceof.size() == 1 && TypeUtils.isJavaLangObject(newInstanceof.iterator().next().getPsiType())) {
+      newInstanceof = Collections.emptySet();
+    }
     return create(newInstanceof, myNotInstanceofValues);
   }
 
   @Nullable
-  TypeConstraint withNotInstanceofValue(DfaPsiType type) {
+  public TypeConstraint withNotInstanceofValue(DfaPsiType type) {
     if (myNotInstanceofValues.contains(type)) return this;
 
     for (DfaPsiType dfaTypeValue : myInstanceofValues) {

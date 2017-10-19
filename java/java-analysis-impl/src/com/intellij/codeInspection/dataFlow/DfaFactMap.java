@@ -65,7 +65,7 @@ public final class DfaFactMap {
    */
   @NotNull
   public <T> DfaFactMap with(@NotNull DfaFactType<T> type, @Nullable T value) {
-    KeyFMap newMap = value == null ? myMap.minus(type) : myMap.plus(type, value);
+    KeyFMap newMap = value == null || type.isUnknown(value) ? myMap.minus(type) : myMap.plus(type, value);
     return newMap == myMap ? this : new DfaFactMap(newMap);
   }
 
@@ -89,6 +89,24 @@ public final class DfaFactMap {
       if(!type.isSuper(thisValue, other)) return false;
     }
     return true;
+  }
+
+  /**
+   * Checks whether the passed fact map is always distinct from this map (i.e. any exact value
+   * which conforms the passed fact map does not conform this fact map).
+   *
+   * @param otherMap a fact map to check
+   * @return true if this fact map is always distinct from other map.
+   */
+  public boolean isDistinct(DfaFactMap otherMap) {
+    for (DfaFactType<?> key : DfaFactType.getTypes()) {
+      @SuppressWarnings("unchecked")
+      DfaFactType<Object> type = (DfaFactType<Object>)key;
+      Object thisValue = myMap.get(type);
+      Object other = otherMap.get(type);
+      if(thisValue != null && other != null && type.isDistinct(thisValue, other)) return true;
+    }
+    return false;
   }
 
   /**
@@ -126,16 +144,6 @@ public final class DfaFactMap {
     }
     return result;
   }
-
-  public DfaFactMap invert() {
-    return StreamEx.of(DfaFactType.getTypes()).foldLeft(this, DfaFactMap::invert);
-  }
-
-  private <TT> DfaFactMap invert(@NotNull DfaFactType<TT> type) {
-    TT fact = get(type);
-    return with(type, type.invert(fact));
-  }
-
 
   /**
    * Returns a fact map which additionally allows having supplied value for the supplied fact
