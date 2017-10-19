@@ -24,31 +24,31 @@ import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.testIntegration.TestFramework;
 import com.siyeh.InspectionGadgetsBundle;
 
-public class TestClassNamingConvention extends NamingConvention<PsiClass> {
+public class TestSuiteNamingConvention extends NamingConvention<PsiClass> {
 
   private static final int DEFAULT_MIN_LENGTH = 8;
   private static final int DEFAULT_MAX_LENGTH = 64;
-  public static final String TEST_CLASS_NAMING_CONVENTION_SHORT_NAME = "JUnitTestClassNamingConvention";
+  public static final String TEST_SUITE_NAMING_CONVENTION_SHORT_NAME = "TestSuiteNamingConvention";
 
   @Override
   public NamingConventionBean createDefaultBean() {
-    return new NamingConventionBean("[A-Z][A-Za-z\\d]*Test", DEFAULT_MIN_LENGTH, DEFAULT_MAX_LENGTH);
+    return new NamingConventionBean("[A-Z][A-Za-z\\d]*Suite", DEFAULT_MIN_LENGTH, DEFAULT_MAX_LENGTH);
   }
 
   @Override
   public boolean isApplicable(PsiClass member) {
     if (member instanceof PsiTypeParameter) return false;
     TestFramework framework = TestFrameworks.detectFramework(member);
-    return framework instanceof JavaTestFramework && framework.isTestClass(member) && !((JavaTestFramework)framework).isSuiteClass(member);
+    return framework instanceof JavaTestFramework && framework.isTestClass(member) && ((JavaTestFramework)framework).isSuiteClass(member);
   }
 
   @Override
   public String getShortName() {
-    return TEST_CLASS_NAMING_CONVENTION_SHORT_NAME;
+    return TEST_SUITE_NAMING_CONVENTION_SHORT_NAME;
   }
 
   @Override
   public String getElementDescription() {
-    return InspectionGadgetsBundle.message("junit.test.class.naming.convention.element.description");
+    return InspectionGadgetsBundle.message("junit.test.suite.naming.convention.element.description");
   }
 }

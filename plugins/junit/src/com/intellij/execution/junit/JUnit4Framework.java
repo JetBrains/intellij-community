@@ -174,6 +174,12 @@ public class JUnit4Framework extends JavaTestFramework {
   }
 
   @Override
+  public boolean isSuiteClass(PsiClass psiClass) {
+    PsiAnnotation annotation = JUnitUtil.getRunWithAnnotation(psiClass);
+    return annotation != null && JUnitUtil.isInheritorOrSelfRunner(annotation, "org.junit.runners.Suite");
+  }
+
+  @Override
   public boolean isParameterized(PsiClass clazz) {
     PsiAnnotation annotation = JUnitUtil.getRunWithAnnotation(clazz);
     return annotation != null && JUnitUtil.isParameterized(annotation);
