@@ -32,7 +32,6 @@ import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
-import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitUntrackedFilesHolder;
@@ -186,11 +185,11 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
    */
   public void revert(final VirtualFile root, final List<FilePath> files) throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
-      GitSimpleHandler handler = new GitSimpleHandler(myProject, root, GitCommand.CHECKOUT);
+      GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.CHECKOUT);
       handler.addParameters("HEAD");
       handler.endOptions();
       handler.addParameters(paths);
-      handler.run();
+      Git.getInstance().runCommand(handler).getOutputOrThrow();
     }
   }
 

@@ -21,8 +21,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.GitCommandResult;
+import git4idea.commands.GitLineHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +56,7 @@ public class GitConfigUtil {
    * @throws VcsException if there is a problem with running git
    */
   public static void getValues(Project project, VirtualFile root, String keyMask, Map<String, String> result) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.CONFIG);
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.CONFIG);
     h.setSilent(true);
     h.addParameters("--null");
     if (keyMask != null) {
@@ -62,7 +64,7 @@ public class GitConfigUtil {
     } else {
       h.addParameters("-l");
     }
-    String output = h.run();
+    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
     int start = 0;
     int pos;
     while ((pos = output.indexOf('\n', start)) != -1) {
@@ -88,10 +90,10 @@ public class GitConfigUtil {
    */
   public static List<Couple<String>> getAllValues(Project project, VirtualFile root, @NonNls String key) throws VcsException {
     List<Couple<String>> result = new ArrayList<>();
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.CONFIG);
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.CONFIG);
     h.setSilent(true);
     h.addParameters("--null", "--get-all", key);
-    String output = h.run();
+    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
     int start = 0;
     int pos;
     while ((pos = output.indexOf('\u0000', start)) != -1) {
@@ -114,13 +116,14 @@ public class GitConfigUtil {
    */
   @Nullable
   public static String getValue(Project project, VirtualFile root, @NonNls String key) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.CONFIG);
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.CONFIG);
     h.setSilent(true);
     h.ignoreErrorCode(1);
     h.addParameters("--null", "--get", key);
-    String output = h.run();
+    GitCommandResult result = Git.getInstance().runCommand(h);
+    String output = result.getOutputOrThrow();
     int pos = output.indexOf('\u0000');
-    if (h.getExitCode() != 0 || pos == -1) {
+    if (result.getExitCode() != 0 || pos == -1) {
       return null;
     }
     return output.substring(0, pos);
@@ -222,11 +225,11 @@ public class GitConfigUtil {
    * @throws VcsException if there is a problem with running git
    */
   public static void unsetValue(Project project, VirtualFile root, String key) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.CONFIG);
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.CONFIG);
     h.setSilent(true);
     h.ignoreErrorCode(1);
     h.addParameters("--unset", key);
-    h.run();
+    Git.getInstance().runCommand(h).getOutputOrThrow();
   }
 
   /**
@@ -239,11 +242,11 @@ public class GitConfigUtil {
    * @throws VcsException if there is a problem with running git
    */
   public static void setValue(Project project, VirtualFile root, String key, String value, String... additionalParameters) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.CONFIG);
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.CONFIG);
     h.setSilent(true);
     h.ignoreErrorCode(1);
     h.addParameters(additionalParameters);
     h.addParameters(key, value);
-    h.run();
+    Git.getInstance().runCommand(h).getOutputOrThrow();
   }
 }

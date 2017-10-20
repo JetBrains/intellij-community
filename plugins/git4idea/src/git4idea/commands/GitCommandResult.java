@@ -16,7 +16,7 @@
 package git4idea.commands;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ObjectUtils;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
 import org.jetbrains.annotations.NotNull;
@@ -112,7 +112,18 @@ public class GitCommandResult {
   }
 
   /**
+   * Check if execution was successful and return textual result or throw exception
    *
+   * @return result of {@link #getOutputAsJoinedString()}
+   * @throws VcsException with message from {@link #getErrorOutputAsJoinedString()}
+   */
+  @NotNull
+  public String getOutputOrThrow() throws VcsException {
+    if (!success()) throw new VcsException(getErrorOutputAsJoinedString());
+    return getOutputAsJoinedString();
+  }
+
+  /**
    * @return null
    * @deprecated use {@link #getErrorOutput()}
    */
@@ -135,5 +146,4 @@ public class GitCommandResult {
   private static Collection<String> cleanup(@NotNull Collection<String> errorOutput) {
     return ContainerUtil.map(errorOutput, errorMessage -> GitUtil.cleanupErrorPrefixes(errorMessage));
   }
-
 }

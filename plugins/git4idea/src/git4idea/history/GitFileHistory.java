@@ -137,7 +137,7 @@ public class GitFileHistory {
                                                                      @NotNull FilePath filePath) throws VcsException {
     // 'git show -M --name-status <commit hash>' returns the information about commit and detects renames.
     // NB: we can't specify the filepath, because then rename detection will work only with the '--follow' option, which we don't wanna use.
-    GitSimpleHandler h = new GitSimpleHandler(myProject, myRoot, GitCommand.SHOW);
+    GitLineHandler h = new GitLineHandler(myProject, myRoot, GitCommand.SHOW);
     GitLogParser parser = new GitLogParser(myProject, GitLogParser.NameStatus.STATUS, HASH, COMMIT_TIME, PARENTS);
     h.setStdoutSuppressed(true);
     h.addParameters("-M", "--name-status", parser.getPretty(), "--encoding=UTF-8", commit);
@@ -149,7 +149,7 @@ public class GitFileHistory {
     else {
       h.endOptions();
     }
-    String output = h.run();
+    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
     List<GitLogRecord> records = parser.parse(output);
 
     if (records.isEmpty()) return null;

@@ -334,12 +334,13 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
                              String failMessage)
     throws ServerRuntimeException {
     try {
-      final GitSimpleHandler handler = new GitSimpleHandler(getProject(), myContentRoot, GitCommand.REMOTE);
+      GitLineHandler handler = new GitLineHandler(getProject(), myContentRoot, GitCommand.REMOTE);
       handler.setSilent(false);
       handler.addParameters(subCommand, remoteName, application.getGitUrl());
-      handler.run();
+      GitCommandResult result = myGit.runCommand(handler);
+      result.getOutputOrThrow();
       getRepository().update();
-      if (handler.getExitCode() != 0) {
+      if (result.getExitCode() != 0) {
         throw new ServerRuntimeException(failMessage);
       }
     }
@@ -410,12 +411,12 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
   protected void commit(String message) throws ServerRuntimeException {
     try {
       if (GitUtil.hasLocalChanges(true, getProject(), myContentRoot)) {
-        GitSimpleHandler handler = new GitSimpleHandler(getProject(), myContentRoot, GitCommand.COMMIT);
+        GitLineHandler handler = new GitLineHandler(getProject(), myContentRoot, GitCommand.COMMIT);
         handler.setSilent(false);
         handler.setStdoutSuppressed(false);
         handler.addParameters("-m", message);
         handler.endOptions();
-        handler.run();
+        Git.getInstance().runCommand(handler).getOutputOrThrow();
       }
     }
     catch (VcsException e) {

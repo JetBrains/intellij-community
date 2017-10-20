@@ -112,7 +112,7 @@ public class GitImpl extends GitImplBase {
                                                        @Nullable List<String> relativePaths)
     throws VcsException {
     final Set<VirtualFile> untrackedFiles = new HashSet<>();
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LS_FILES);
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LS_FILES);
     h.setSilent(true);
     h.addParameters("--exclude-standard", "--others", "-z");
     h.endOptions();
@@ -120,7 +120,7 @@ public class GitImpl extends GitImplBase {
       h.addParameters(relativePaths);
     }
 
-    final String output = h.run();
+    final String output = runCommand(h).getOutputOrThrow();
     if (StringUtil.isEmptyOrSpaces(output)) {
       return untrackedFiles;
     }

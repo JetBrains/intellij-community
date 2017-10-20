@@ -166,12 +166,12 @@ public class GitMergeProvider implements MergeProvider2 {
   @NotNull
   private Trinity<String, String, String> getAffectedBlobs(@NotNull VirtualFile root, @NotNull VirtualFile file) {
     try {
-      GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.LS_FILES);
+      GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.LS_FILES);
       h.addParameters("--exclude-standard", "--unmerged", "-z");
       h.endOptions();
       h.addRelativeFiles(Collections.singleton(file));
 
-      String output = h.run();
+      String output = Git.getInstance().runCommand(h).getOutputOrThrow();
       StringScanner s = new StringScanner(output);
 
       String lastBlob = null;
@@ -439,12 +439,12 @@ public class GitMergeProvider implements MergeProvider2 {
           Map<String, Conflict> cs = new HashMap<>();
           VirtualFile root = e.getKey();
           List<VirtualFile> files = e.getValue();
-          GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.LS_FILES);
+          GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.LS_FILES);
           h.setStdoutSuppressed(true);
           h.setSilent(true);
           h.addParameters("--exclude-standard", "--unmerged", "-t", "-z");
           h.endOptions();
-          String output = h.run();
+          String output = Git.getInstance().runCommand(h).getOutputOrThrow();
           StringScanner s = new StringScanner(output);
           while (s.hasMoreData()) {
             if (!"M".equals(s.spaceToken())) {

@@ -28,7 +28,7 @@ import git4idea.branch.GitBranchPair;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.GitLineHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.UpdateMethod;
 import git4idea.merge.MergeChangeCollector;
@@ -172,11 +172,11 @@ public abstract class GitUpdater {
   }
 
   protected boolean hasRemoteChanges(@NotNull String remoteBranch) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(myProject, myRoot, GitCommand.REV_LIST);
+    GitLineHandler handler = new GitLineHandler(myProject, myRoot, GitCommand.REV_LIST);
     handler.setSilent(true);
     handler.addParameters("-1");
     handler.addParameters(HEAD + ".." + remoteBranch);
-    String output = handler.run();
+    String output = myGit.runCommand(handler).getOutputOrThrow();
     return output != null && !output.isEmpty();
   }
 }

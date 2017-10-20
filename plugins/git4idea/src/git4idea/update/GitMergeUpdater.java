@@ -173,13 +173,12 @@ public class GitMergeUpdater extends GitUpdater {
   }
 
   private void cancel() {
-    try {
-      GitSimpleHandler h = new GitSimpleHandler(myProject, myRoot, GitCommand.RESET);
-      h.addParameters("--merge");
-      h.run();
-    } catch (VcsException e) {
-      LOG.info("cancel git reset --merge", e);
-      GitUIUtil.notifyImportantError(myProject, "Couldn't reset merge", e.getLocalizedMessage());
+    GitLineHandler h = new GitLineHandler(myProject, myRoot, GitCommand.RESET);
+    h.addParameters("--merge");
+    GitCommandResult result = Git.getInstance().runCommand(h);
+    if (!result.success()) {
+      LOG.info("cancel git reset --merge: " + result.getErrorOutputAsJoinedString());
+      GitUIUtil.notifyImportantError(myProject, "Couldn't reset merge", result.getErrorOutputAsHtmlString());
     }
   }
 

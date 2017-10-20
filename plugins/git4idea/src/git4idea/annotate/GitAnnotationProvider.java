@@ -43,8 +43,9 @@ import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.annotate.GitFileAnnotation.LineInfo;
+import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.GitLineHandler;
 import git4idea.history.GitFileHistory;
 import git4idea.history.GitHistoryProvider;
 import git4idea.history.GitHistoryUtils;
@@ -151,7 +152,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
     setProgressIndicatorText(GitBundle.message("computing.annotation", file.getName()));
 
     VirtualFile root = GitUtil.getGitRoot(repositoryFilePath);
-    GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.BLAME);
+    GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.BLAME);
     h.setStdoutSuppressed(true);
     h.addParameters("--porcelain", "-l", "-t", "-w");
     h.addParameters("--encoding=UTF-8");
@@ -163,7 +164,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
     }
     h.endOptions();
     h.addRelativePaths(repositoryFilePath);
-    String output = h.run();
+    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
 
     GitFileAnnotation fileAnnotation = parseAnnotations(revision, file, root, output);
 
