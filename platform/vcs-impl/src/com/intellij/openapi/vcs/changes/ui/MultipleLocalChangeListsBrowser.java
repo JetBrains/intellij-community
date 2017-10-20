@@ -260,7 +260,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
   @NotNull
   @Override
   public List<Change> getDisplayedChanges() {
-    return myChanges;
+    return VcsTreeModelData.all(myViewer).userObjects(Change.class);
   }
 
   @NotNull
@@ -278,7 +278,12 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
   @NotNull
   @Override
   public List<VirtualFile> getDisplayedUnversionedFiles() {
-    return myUnversioned;
+    if (!isShowUnversioned()) return Collections.emptyList();
+
+    VcsTreeModelData treeModelData = VcsTreeModelData.allUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
+    if (containsCollapsedUnversionedNode(treeModelData)) return myUnversioned;
+
+    return treeModelData.userObjects(VirtualFile.class);
   }
 
   @NotNull
