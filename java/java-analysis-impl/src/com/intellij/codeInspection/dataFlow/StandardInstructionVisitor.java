@@ -306,7 +306,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   public DfaInstructionState[] visitTypeCast(TypeCastInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     PsiType type = instruction.getCastTo();
     final DfaValueFactory factory = runner.getFactory();
-    if (PsiUtil.resolveClassInType(type) != null && !memState.castTopOfStack(factory.createDfaType(type))) {
+    PsiType fromType = instruction.getCasted().getType();
+    if (fromType != null && type.isConvertibleFrom(fromType) && !memState.castTopOfStack(factory.createDfaType(type))) {
       onInstructionProducesCCE(instruction);
     }
 

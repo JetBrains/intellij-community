@@ -549,5 +549,4 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
   public void testTryWithResourceExpressions() { doTest(); }
   public void testArrayStoreProblems() { doTest(); }
-  public void testCastInstanceOf() { doTest(); }
 }

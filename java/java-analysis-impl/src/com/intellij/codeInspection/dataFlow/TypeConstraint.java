@@ -16,10 +16,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.EntryStream;
 import one.util.streamex.MoreCollectors;
@@ -84,7 +81,11 @@ public final class TypeConstraint {
 
   @Nullable
   public TypeConstraint withInstanceofValue(@NotNull DfaPsiType type) {
-    if (type.getPsiType() instanceof PsiPrimitiveType) return this;
+    PsiType psiType = type.getPsiType();
+    if (psiType instanceof PsiPrimitiveType || psiType instanceof PsiLambdaExpressionType ||
+        psiType instanceof PsiMethodReferenceType) {
+      return this;
+    }
 
     if (!checkInstanceofValue(type)) {
       return null;

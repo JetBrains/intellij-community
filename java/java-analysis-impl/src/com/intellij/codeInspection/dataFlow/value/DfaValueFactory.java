@@ -84,8 +84,13 @@ public class DfaValueFactory {
 
   @NotNull
   public DfaPsiType createDfaType(@NotNull PsiType psiType) {
+    int dimensions = psiType.getArrayDimensions();
+    psiType = psiType.getDeepComponentType();
     if (psiType instanceof PsiClassType) {
       psiType = ((PsiClassType)psiType).rawType();
+    }
+    while (dimensions-- > 0) {
+      psiType = psiType.createArrayType();
     }
     DfaPsiType dfaType = myDfaTypes.get(psiType);
     if (dfaType == null) {
@@ -205,9 +210,7 @@ public class DfaValueFactory {
       final PsiJavaCodeReferenceElement thisQualifier = ((PsiQualifiedExpression)qualifier).getQualifier();
       if (thisQualifier == null) return true;
       final PsiClass innerMostClass = PsiTreeUtil.getParentOfType(refExpression, PsiClass.class);
-      if (innerMostClass == thisQualifier.resolve()) {
-        return true;
-      }
+      return innerMostClass == thisQualifier.resolve();
     }
     return false;
   }
