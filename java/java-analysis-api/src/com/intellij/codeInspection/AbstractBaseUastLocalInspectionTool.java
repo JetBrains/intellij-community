@@ -15,7 +15,6 @@ import org.jetbrains.uast.UFile;
 import org.jetbrains.uast.UMethod;
 import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
-import java.util.Arrays;
 import java.util.Objects;
 
 public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectionTool {
@@ -94,8 +93,9 @@ public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectio
             // Substitution is required when reporting on light(non-physical) elements.
             // of course it is better to fix in on reporter side,
             // but it still not possible sometimes. So we will try to workaround here.
-            PsiElement startSubstitutor = substitute(descriptor.getStartElement(), holder.getFile());
-            PsiElement endSubstitutor = substitute(descriptor.getEndElement(), holder.getFile());
+            // TODO: remove it when implementations will be able to provide elements strictly from the file under inspection
+            PsiElement startSubstitutor = getSubstitutorIfNeeded(descriptor.getStartElement(), holder.getFile());
+            PsiElement endSubstitutor = getSubstitutorIfNeeded(descriptor.getEndElement(), holder.getFile());
 
             if (startSubstitutor == descriptor.getStartElement() && endSubstitutor == descriptor.getEndElement()) {
               holder.registerProblem(descriptor);
@@ -116,7 +116,7 @@ public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectio
       }
 
       @NotNull
-      private PsiElement substitute(@NotNull PsiElement element, @NotNull PsiFile desiredFile) {
+      private PsiElement getSubstitutorIfNeeded(@NotNull PsiElement element, @NotNull PsiFile desiredFile) {
         if (inFile(element, desiredFile)) return element;
         PsiElement navigationElement = element.getNavigationElement();
         if (navigationElement == null) return element;
