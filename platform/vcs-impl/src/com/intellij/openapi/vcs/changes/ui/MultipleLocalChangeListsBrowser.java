@@ -118,8 +118,9 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
     else {
       // avoid duplicated actions on toolbar
       result.add(ActionManager.getInstance().getAction(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST));
-      EmptyAction.registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), myViewer);
     }
+
+    EmptyAction.registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), myViewer);
 
     RollbackDialogAction rollbackAction = new RollbackDialogAction();
     rollbackAction.registerCustomShortcutSet(this, null);
