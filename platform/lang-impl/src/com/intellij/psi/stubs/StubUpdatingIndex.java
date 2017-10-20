@@ -146,6 +146,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       public Collection<Integer> read(@NotNull DataInput in) throws IOException {
         if (!myEnsuredStubElementTypesLoaded) {
           SerializationManager.getInstance().initSerializers();
+          StubIndexImpl.initExtensions();
           myEnsuredStubElementTypesLoaded = true;
         }
         int fileId = DataInputOutputUtil.readINT(in);
