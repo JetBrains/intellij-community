@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-@SuppressWarnings({"EqualsBetweenInconvertibleTypes", "ResultOfMethodCallIgnored"})
+@SuppressWarnings({"EqualsBetweenInconvertibleTypes", "ResultOfMethodCallIgnored", "StringEqualsCharSequence"})
 public class EqualsBetweenInconvertibleTypesInspectionTest extends LightInspectionTestCase {
 
   public void testSimple() {
@@ -88,6 +88,32 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightInspecti
            "  BiPredicate<Long, Double> bp2 = Object::/*'equals()' between objects of inconvertible types 'Long' and 'Double'*/equals/**/;\n" +
            "  BiPredicate<Long, Long> bpOk = Object::equals;\n" +
            "}\n");
+  }
+
+  public void testNoCommonSubclass() {
+    doTest("import java.util.Date;\n" +
+           "import java.util.Map;\n" +
+           "import java.util.Objects;\n" +
+           "\n" +
+           "class X {\n" +
+           "  public static void foo(Date date, Map<String, String> map) {\n" +
+           "    boolean res = Objects./*No class found which is a subtype of both 'Map<String, String>' and 'Date'*/equals/**/(map, date);\n" +
+           "  }\n" +
+           "}");
+  }
+
+  public void testCommonSubclass() {
+    doTest("import java.util.Date;\n" +
+           "import java.util.Map;\n" +
+           "import java.util.Objects;\n" +
+           "\n" +
+           "class X {\n" +
+           "  static abstract class Y extends Date implements Map<String, String> {}\n" +
+           "  \n" +
+           "  public static void foo(Date date, Map<String, String> map) {\n" +
+           "    boolean res = Objects.equals(map, date);\n" +
+           "  }\n" +
+           "}");
   }
 
   @Override
