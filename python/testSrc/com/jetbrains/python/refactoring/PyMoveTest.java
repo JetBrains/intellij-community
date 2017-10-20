@@ -403,6 +403,21 @@ public class PyMoveTest extends PyTestCase {
     doMoveSymbolsTest("other.py", "C1", "C2");
   }
 
+  // PY-18216
+  public void testMoveSymbolDoesntReorderImportsInOriginFile() {
+    doMoveSymbolTest("func", "other.py");
+  }
+
+  // PY-18216
+  public void testMoveSymbolDoesntReorderImportsInUsageFile() {
+    doMoveSymbolTest("func", "other.py");
+  }
+
+  // PY-18216
+  public void testMoveFileDoesntReorderImports() {
+    doMoveFileTest("b.py", "pkg");
+  }
+
   private void doMoveFileTest(String fileName, String toDirName) {
     Project project = myFixture.getProject();
     PsiManager manager = PsiManager.getInstance(project);

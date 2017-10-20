@@ -46,6 +46,15 @@ import static com.jetbrains.python.psi.PyUtil.as;
  */
 public class PyImportOptimizer implements ImportOptimizer {
 
+  private boolean mySortImports = true;
+
+  @NotNull
+  public static PyImportOptimizer onlyRemoveUnused() {
+    final PyImportOptimizer optimizer = new PyImportOptimizer();
+    optimizer.mySortImports = false;
+    return optimizer;
+  }
+
   @Override
   public boolean supports(PsiFile file) {
     return true;
@@ -67,7 +76,7 @@ public class PyImportOptimizer implements ImportOptimizer {
     });
     return () -> {
       visitor.optimizeImports();
-      if (file instanceof PyFile) {
+      if (mySortImports && file instanceof PyFile) {
         new ImportSorter((PyFile)file).run();
       }
     };
