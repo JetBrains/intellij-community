@@ -270,18 +270,23 @@ public class TemplateFormatUtil {
   public static Block buildTemplateLanguageBlock(@NotNull OuterLanguageElement outerElement,
                                                  @NotNull CodeStyleSettings settings,
                                                  @Nullable Indent indent) {
-    PsiFile file = outerElement.getContainingFile();
-    FileViewProvider viewProvider = outerElement.getContainingFile().getViewProvider();
-    if (viewProvider instanceof TemplateLanguageFileViewProvider) {
-      Language language = outerElement.getLanguage();
-      FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(language, outerElement);
-      if (builder instanceof AbstractXmlTemplateFormattingModelBuilder) {
-        FormattingModel model = ((AbstractXmlTemplateFormattingModelBuilder)builder)
-          .createTemplateFormattingModel(file, (TemplateLanguageFileViewProvider)viewProvider, outerElement, settings, indent);
-        if (model != null) {
-          return model.getRootBlock();
+    try {
+      PsiFile file = outerElement.getContainingFile();
+      FileViewProvider viewProvider = outerElement.getContainingFile().getViewProvider();
+      if (viewProvider instanceof TemplateLanguageFileViewProvider) {
+        Language language = outerElement.getLanguage();
+        FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(language, outerElement);
+        if (builder instanceof AbstractXmlTemplateFormattingModelBuilder) {
+          FormattingModel model = ((AbstractXmlTemplateFormattingModelBuilder)builder)
+            .createTemplateFormattingModel(file, (TemplateLanguageFileViewProvider)viewProvider, outerElement, settings, indent);
+          if (model != null) {
+            return model.getRootBlock();
+          }
         }
       }
+    }
+    catch (FragmentedTemplateException e) {
+      // Ignore and return null
     }
     return null;
   }

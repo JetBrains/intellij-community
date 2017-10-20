@@ -69,11 +69,11 @@ public class TemplateXmlBlock extends XmlBlock implements IndentInheritingBlock 
 
   @Override
   protected List<Block> buildChildren() {
-    List<Block> childBlocks = patchTopLevelChildBlocks(buildChildrenNoMerge());
     try {
+      List<Block> childBlocks = patchTopLevelChildBlocks(buildChildrenNoMerge());
       return myBuilder.mergeWithTemplateBlocks(childBlocks, myXmlFormattingPolicy.getSettings(), myXmlFormattingPolicy, getChildDefaultIndent());
     }
-    catch (FragmentedTemplateException e) {
+    catch (FragmentedTemplateException fte) {
       return EMPTY_BLOCK_LIST;
     }
   }
