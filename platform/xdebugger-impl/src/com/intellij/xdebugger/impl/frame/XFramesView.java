@@ -42,7 +42,6 @@ import java.util.List;
  */
 public class XFramesView extends XDebugView {
   private static final Logger LOG = Logger.getInstance(XFramesView.class);
-  public static final DataKey<XFramesView> DATA_KEY = DataKey.create("XDEBUGGER_FRAMES_VIEW");
 
   private final JPanel myMainPanel;
   private final XDebuggerFramesList myFramesList;
@@ -210,14 +209,6 @@ public class XFramesView extends XDebugView {
     void removeLoading() {
       myThreadComboBox.removeItem(null);
     }
-  }
-
-  public void selectFrame(XExecutionStack stack, XStackFrame frame) {
-    myThreadComboBox.setSelectedItem(stack);
-
-    myLaterInvocator.offer(() ->
-      myFramesList.setSelectedValue(frame, true)
-    );
   }
 
   private ActionToolbarImpl createToolbar() {
