@@ -53,7 +53,7 @@ public abstract class AbstractTreeNodeVisitor<T> implements TreeVisitor {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)component;
       Object object = node.getUserObject();
       if (object instanceof AbstractTreeNode) {
-        return accept(path, (AbstractTreeNode)object, element);
+        return visit(path, (AbstractTreeNode)object, element);
       }
       else {
         LOG.warn(object == null ? "no object" : "unexpected object " + object.getClass());
@@ -72,7 +72,7 @@ public abstract class AbstractTreeNodeVisitor<T> implements TreeVisitor {
    * @return an action that controls visiting a tree
    */
   @NotNull
-  protected Action accept(@NotNull TreePath path, @NotNull AbstractTreeNode node, @NotNull T element) {
+  protected Action visit(@NotNull TreePath path, @NotNull AbstractTreeNode node, @NotNull T element) {
     if (found(node, element)) {
       LOG.debug("found ", path);
       if (predicate == null) return Action.INTERRUPT;
