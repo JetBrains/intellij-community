@@ -66,6 +66,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
+import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.packaging.PyCondaPackageManagerImpl;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -760,6 +761,10 @@ public final class PythonSdkType extends SdkType {
       final VirtualFile skeletonsDir = PySdkUtil.findSkeletonsDir(pythonSdk);
       if (skeletonsDir != null &&
           Comparing.equal(vFile.getParent(), skeletonsDir)) {   // note: this will pick up some of the binary libraries not in packages
+        return true;
+      }
+      final VirtualFile userSkeletonsDir = PyUserSkeletonsUtil.getUserSkeletonsDirectory();
+      if (userSkeletonsDir != null && userSkeletonsDir.equals(vFile.getParent())) {
         return true;
       }
       if (PyTypeShed.INSTANCE.isInStandardLibrary(vFile) && PyTypeShed.INSTANCE.isInside(vFile)) {
