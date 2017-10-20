@@ -393,6 +393,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     // http://www.jetbrains.net/jira/browse/IDEADEV-12372
     if (myLeftCtrlPressed && myRightAltPressed && focusOwner != null && e.getModifiers() == (InputEvent.CTRL_MASK | InputEvent.ALT_MASK)) {
+      if (Registry.is("actionSystem.new.alt.gr.detect") && e.getKeyChar() != KeyEvent.CHAR_UNDEFINED) {
+        return false;
+      }
       if (Registry.is("actionSystem.force.alt.gr")) {
         return false;
       }
