@@ -62,6 +62,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.containers.TransferToEDTQueue;
+import com.intellij.util.containers.WeakInterner;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
@@ -555,6 +556,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return viewProvider.getPsi(viewProvider.getBaseLanguage());
   }
 
+
+  private static final WeakInterner<String> tooltips = new WeakInterner<>();
   @Nullable
   private HighlightInfo createHighlightInfo(@NotNull ProblemDescriptor descriptor,
                                             @NotNull LocalInspectionToolWrapper tool,
@@ -580,7 +583,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     @NonNls String tooltip = null;
     if (descriptor.showTooltip()) {
-      tooltip = XmlStringUtil.wrapInHtml((message.startsWith("<html>") ? XmlStringUtil.stripHtml(message): XmlStringUtil.escapeString(message)) + link);
+      tooltip = tooltips.intern(XmlStringUtil.wrapInHtml((message.startsWith("<html>") ? XmlStringUtil.stripHtml(message): XmlStringUtil.escapeString(message)) + link));
     }
     List<IntentionAction> quickFixes = getQuickFixes(tool, descriptor, emptyActionRegistered);
     HighlightInfo info = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip, element, quickFixes);
