@@ -91,17 +91,17 @@ class AsyncProjectViewSupport {
     connection.subscribe(BookmarksListener.TOPIC, new BookmarksListener() {
       @Override
       public void bookmarkAdded(@NotNull Bookmark bookmark) {
-        updateByFile(bookmark.getFile());
+        updateByFile(bookmark.getFile(), false);
       }
 
       @Override
       public void bookmarkRemoved(@NotNull Bookmark bookmark) {
-        updateByFile(bookmark.getFile());
+        updateByFile(bookmark.getFile(), false);
       }
 
       @Override
       public void bookmarkChanged(@NotNull Bookmark bookmark) {
-        updateByFile(bookmark.getFile());
+        updateByFile(bookmark.getFile(), false);
       }
     });
     PsiManager.getInstance(project).addPsiTreeChangeListener(new ProjectViewPsiTreeChangeListener(project) {
@@ -127,7 +127,7 @@ class AsyncProjectViewSupport {
 
       @Override
       protected boolean addSubtreeToUpdateByElement(PsiElement element) {
-        updateByElement(element);
+        updateByElement(element, true);
         return true;
       }
     }, parent);
@@ -139,19 +139,19 @@ class AsyncProjectViewSupport {
 
       @Override
       public void fileStatusChanged(@NotNull VirtualFile file) {
-        updateByFile(file);
+        updateByFile(file, false);
       }
     }, parent);
-    CopyPasteManager.getInstance().addContentChangedListener(new CopyPasteUtil.DefaultCopyPasteListener(this::updateByElement), parent);
+    CopyPasteManager.getInstance().addContentChangedListener(new CopyPasteUtil.DefaultCopyPasteListener(element -> updateByElement(element, true)), parent);
     WolfTheProblemSolver.getInstance(project).addProblemListener(new WolfTheProblemSolver.ProblemListener() {
       @Override
       public void problemsAppeared(@NotNull VirtualFile file) {
-        updateByFile(file);
+        updateByFileToRoot(file);
       }
 
       @Override
       public void problemsDisappeared(@NotNull VirtualFile file) {
-        updateByFile(file);
+        updateByFileToRoot(file);
       }
     }, parent);
   }
@@ -194,28 +194,44 @@ class AsyncProjectViewSupport {
     myStructureTreeModel.invalidate();
   }
 
-  public void update(@NotNull TreePath path) {
-    myStructureTreeModel.invalidate(path, true);
+  public void update(@NotNull TreePath path, boolean structure) {
+    myStructureTreeModel.invalidate(path, structure);
   }
 
-  public void update(@NotNull List<TreePath> list) {
-    for (TreePath path : list) update(path);
+  public void update(@NotNull List<TreePath> list, boolean structure) {
+    for (TreePath path : list) update(path, structure);
   }
 
-  public void updateByFile(@NotNull VirtualFile file) {
-    LOG.debug("updateByFile: ", file);
-    update(null, file, this::update);
+  public void updateByFile(@NotNull VirtualFile file, boolean structure) {
+    LOG.debug(structure ? "updateChildrenByFile: " : "updatePresentationByFile: ", file);
+    update(null, file, structure);
   }
 
-  public void updateByElement(@NotNull PsiElement element) {
-    LOG.debug("updateByElement: ", element);
-    update(element, null, this::update);
+  public void updateByElement(@NotNull PsiElement element, boolean structure) {
+    LOG.debug(structure ? "updateChildrenByElement: " : "updatePresentationByElement: ", element);
+    update(element, null, structure);
   }
 
-  private void update(PsiElement element, VirtualFile file, Consumer<List<TreePath>> consumer) {
+  private void update(PsiElement element, VirtualFile file, boolean structure) {
     SmartList<TreePath> list = new SmartList<>();
-    TreeVisitor visitor = createVisitor(element, file, path -> !list.add(path));
-    if (visitor != null) myAsyncTreeModel.accept(visitor).done(path -> consumer.consume(list));
+    acceptAndUpdate(createVisitor(element, file, path -> !list.add(path)), list, structure);
+  }
+
+  private void acceptAndUpdate(TreeVisitor visitor, List<TreePath> list, boolean structure) {
+    if (visitor != null) myAsyncTreeModel.accept(visitor, false).done(path -> update(list, structure));
+  }
+
+  private void updateByFileToRoot(@NotNull VirtualFile file) {
+    SmartList<TreePath> list = new SmartList<>();
+    acceptAndUpdate(new ProjectViewFileVisitor(file, null) {
+      @NotNull
+      @Override
+      protected Action visit(@NotNull TreePath path, @NotNull AbstractTreeNode node, @NotNull VirtualFile element) {
+        Action action = super.visit(path, node, element);
+        if (action != Action.SKIP_CHILDREN) list.add(path);
+        return action;
+      }
+    }, list, false);
   }
 
   void accept(List<TreeVisitor> visitors, Consumer<List<TreePath>> consumer) {
