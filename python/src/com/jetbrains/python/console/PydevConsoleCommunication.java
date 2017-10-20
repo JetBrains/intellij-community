@@ -570,7 +570,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
           }
         }
         catch (PyDebuggerException e) {
-          if (myWebServer != null) {
+          if (myWebServer != null && !e.getMessage().startsWith("Console already exited")) {
             LOG.error(e);
           }
         }
