@@ -499,6 +499,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       myProgressManager.run(new Task.WithResult<Project, IOException>(project, ProjectBundle.message("project.load.progress"), true) {
         @Override
         protected Project compute(@NotNull ProgressIndicator indicator) throws IOException {
+          indicator.setIndeterminate(false);
           if (!loadProjectWithProgress(project)) {
             return null;
           }
