@@ -182,6 +182,7 @@ public class PyImportOptimizer implements ImportOptimizer {
           final PyFromImportStatement fromImport = (PyFromImportStatement)statement;
           final String source = getNormalizedFromImportSource(fromImport);
           final List<PyImportElement> newStatementElements = new ArrayList<>();
+          boolean forceParentheses = false;
 
           // We can neither sort, nor combine star imports
           if (!fromImport.isStarImport()) {
@@ -189,6 +190,8 @@ public class PyImportOptimizer implements ImportOptimizer {
             if (sameSourceImports.isEmpty()) {
               continue;
             }
+
+            forceParentheses = sameSourceImports.size() == 1 && fromImport.getLeftParen() != null;
 
             // Join multiple "from" imports with the same source, like "from module import foo; from module import bar as b"
             if (myPySettings.OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE && sameSourceImports.size() > 1) {
@@ -210,7 +213,10 @@ public class PyImportOptimizer implements ImportOptimizer {
             if (myPySettings.OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS) {
               Collections.sort(newStatementElements, IMPORT_ELEMENT_COMPARATOR);
             }
-            final String importedNames = StringUtil.join(newStatementElements, ImportSorter::getNormalizedImportElementText, ", ");
+            String importedNames = StringUtil.join(newStatementElements, ImportSorter::getNormalizedImportElementText, ", ");
+            if (forceParentheses) {
+              importedNames = "(" + importedNames + ")";
+            }
             final PyFromImportStatement combinedImport = generator.createFromImportStatement(langLevel, source, importedNames, null);
             ContainerUtil.map2LinkedSet(newStatementElements, e -> (PyImportStatementBase)e.getParent()).forEach(affected -> {
               myNewImportToLineComments.putValues(combinedImport, myOldImportToLineComments.get(affected));
