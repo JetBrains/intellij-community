@@ -11,7 +11,6 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.HashSet;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XSuspendContext;
@@ -274,11 +273,9 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   private static final Comparator<JavaExecutionStack> THREAD_NAME_COMPARATOR =
     Comparator.comparing(XExecutionStack::getDisplayName, String.CASE_INSENSITIVE_ORDER);
 
-  private static final Comparator<JavaExecutionStack> THREADS_SUSPEND_AND_NAME_COMPARATOR = (th1, th2) -> {
-    int res = Comparing.compare(th2.getThreadProxy().isSuspended(), th1.getThreadProxy().isSuspended());
-    if (res == 0) {
-      return th1.getDisplayName().compareToIgnoreCase(th2.getDisplayName());
-    }
-    return res;
-  };
+  private static final Comparator<ThreadReferenceProxyImpl> SUSPEND_FIRST_COMPARATOR =
+    Comparator.comparing(ThreadReferenceProxyImpl::isSuspended).reversed();
+
+  private static final Comparator<JavaExecutionStack> THREADS_SUSPEND_AND_NAME_COMPARATOR =
+    Comparator.comparing(JavaExecutionStack::getThreadProxy, SUSPEND_FIRST_COMPARATOR).thenComparing(THREAD_NAME_COMPARATOR);
 }
