@@ -37,15 +37,12 @@ public class GitCommandResult {
   private final int myExitCode;               // non-zero exit code doesn't necessarily mean an error
   private final List<String> myErrorOutput;
   private final List<String> myOutput;
-  @Nullable private final Throwable myException;
 
-  public GitCommandResult(boolean success, int exitCode, @NotNull List<String> errorOutput, @NotNull List<String> output,
-                          @Nullable Throwable exception) {
+  public GitCommandResult(boolean success, int exitCode, @NotNull List<String> errorOutput, @NotNull List<String> output) {
     myExitCode = exitCode;
     mySuccess = success;
     myErrorOutput = errorOutput;
     myOutput = output;
-    myException = exception;
   }
 
   @NotNull
@@ -64,8 +61,7 @@ public class GitCommandResult {
     }
     return new GitCommandResult(first.success() && second.success(), mergedExitCode,
                                 ContainerUtil.concat(first.myErrorOutput, second.myErrorOutput),
-                                ContainerUtil.concat(first.myOutput, second.myOutput),
-                                ObjectUtils.chooseNotNull(second.myException, first.myException));
+                                ContainerUtil.concat(first.myOutput, second.myOutput));
   }
 
   /**
@@ -115,14 +111,20 @@ public class GitCommandResult {
     return StringUtil.join(myOutput, "\n");
   }
 
+  /**
+   *
+   * @return null
+   * @deprecated use {@link #getErrorOutput()}
+   */
+  @Deprecated
   @Nullable
   public Throwable getException() {
-    return myException;
+    return null;
   }
 
   @NotNull
   public static GitCommandResult error(@NotNull String error) {
-    return new GitCommandResult(false, 1, Collections.singletonList(error), Collections.emptyList(), null);
+    return new GitCommandResult(false, 1, Collections.singletonList(error), Collections.emptyList());
   }
 
   public boolean cancelled() {

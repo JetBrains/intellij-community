@@ -639,7 +639,7 @@ public class GitImpl implements Git {
   @NotNull
   private static GitCommandResult toCancelledResult(@NotNull GitCommandResult result) {
     int exitCode = result.getExitCode() == 0 ? 1 : result.getExitCode();
-    return new GitCommandResult(false, exitCode, result.getErrorOutput(), result.getOutput(), result.getException()) {
+    return new GitCommandResult(false, exitCode, result.getErrorOutput(), result.getOutput()) {
       @Override
       public boolean cancelled() {
         return true;
@@ -706,7 +706,6 @@ public class GitImpl implements Git {
     final List<String> output = new ArrayList<>();
     final AtomicInteger exitCode = new AtomicInteger();
     final AtomicBoolean startFailed = new AtomicBoolean();
-    final AtomicReference<Throwable> exception = new AtomicReference<>();
 
     int authAttempt = 0;
     boolean authFailed;
@@ -716,7 +715,6 @@ public class GitImpl implements Git {
       output.clear();
       exitCode.set(0);
       startFailed.set(false);
-      exception.set(null);
 
       GitLineHandler handler = handlerConstructor.compute();
       handler.addLineListener(new GitLineHandlerListener() {
@@ -739,7 +737,6 @@ public class GitImpl implements Git {
         @Override public void startFailed(Throwable t) {
           startFailed.set(true);
           errorOutput.add("Failed to start Git process");
-          exception.set(t);
         }
       });
 
@@ -748,7 +745,7 @@ public class GitImpl implements Git {
       success = !startFailed.get() && (handler.isIgnoredErrorCode(exitCode.get()) || exitCode.get() == 0);
     }
     while (authFailed && authAttempt++ < 2);
-    return new GitCommandResult(success, exitCode.get(), errorOutput, output, null);
+    return new GitCommandResult(success, exitCode.get(), errorOutput, output);
   }
 
   /**
