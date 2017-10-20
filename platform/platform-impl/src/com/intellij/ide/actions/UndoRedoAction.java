@@ -35,8 +35,6 @@ import javax.swing.*;
 import java.awt.*;
 
 public abstract class UndoRedoAction extends DumbAwareAction {
-  private static boolean ourInProgress = false;//We should disable both undo and redo while Undo/Redo confirmation dialog is shown
-  
   public UndoRedoAction() {
     setEnabledInModalContext(true);
   }
@@ -45,20 +43,11 @@ public abstract class UndoRedoAction extends DumbAwareAction {
     DataContext dataContext = e.getDataContext();
     FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
     UndoManager undoManager = getUndoManager(editor, dataContext);
-    try {
-      ourInProgress = true;
-      perform(editor, undoManager);
-    } finally {
-      ourInProgress = false;
-    }
+    perform(editor, undoManager);
   }
 
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
-    if (ourInProgress) {
-      presentation.setEnabled(false);
-      return;
-    }
     DataContext dataContext = event.getDataContext();
     FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
     UndoManager undoManager = getUndoManager(editor, dataContext);
@@ -75,11 +64,13 @@ public abstract class UndoRedoAction extends DumbAwareAction {
   }
 
   private static UndoManager getUndoManager(FileEditor editor, DataContext dataContext) {
-    if (editor == null && Registry.is("undo.use.for.swing.in.modal.context")) {
+    if (editor == null) {
       Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       JRootPane rootPane = UIUtil.getRootPane(component);
       JBPopup popup = rootPane != null ? (JBPopup)rootPane.getClientProperty(JBPopup.KEY) : null;
-      if (popup != null && popup.isModalContext()) {
+      boolean modalPopup = popup != null && popup.isModalContext();
+      boolean modalContext = Boolean.TRUE.equals(PlatformDataKeys.IS_MODAL_CONTEXT.getData(dataContext));
+      if (Registry.is("undo.use.for.swing.in.modal.context") && (modalPopup || modalContext)) {
         return SwingUndoManagerWrapper.fromContext(dataContext);
       }
     }
