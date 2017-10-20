@@ -18,6 +18,7 @@ package com.intellij.testGuiFramework.impl
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeTable
 import com.intellij.testGuiFramework.cellReader.ExtendedJComboboxCellReader
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
 import com.intellij.testGuiFramework.cellReader.ExtendedJTableCellReader
@@ -261,6 +262,18 @@ open class GuiTestCase {
       }
     }
     throw UnableToFindComponent("ComponentWithBrowseButton with labelFor=$boundedLabelText")
+  }
+
+  fun <S, C : Component> ComponentFixture<S, C>.inspectionsTree(timeout: Long = defaultTimeout): InspectionsTreeFixture {
+    if (target() is Container) {
+      val inspectionsTable = waitUntilFound(guiTestRule.robot(), target() as Container,
+                                            typeMatcher(InspectionsConfigTreeTable::class.java) { true },
+                                            timeout.toFestTimeout()
+      )
+      return InspectionsTreeFixture(guiTestRule.robot(), inspectionsTable)
+    }
+    else throw UnsupportedOperationException(
+      "Sorry, unable to find inspections tree with ${target()} as a Container")
   }
 
   fun <S, C : Component> ComponentFixture<S, C>.spinner(boundedLabelText: String, timeout: Long = defaultTimeout): JSpinnerFixture {

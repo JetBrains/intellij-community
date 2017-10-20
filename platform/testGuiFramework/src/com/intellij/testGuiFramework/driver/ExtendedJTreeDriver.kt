@@ -20,6 +20,7 @@ import com.intellij.testGuiFramework.impl.GuiTestUtilKt.computeOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.computeOnEdtWithTry
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.runOnEdt
 import com.intellij.ui.LoadingNode
+import com.intellij.ui.treeStructure.treetable.TreeTableTree
 import org.fest.assertions.Assertions
 import org.fest.reflect.core.Reflection
 import org.fest.swing.cell.JTreeCellReader
@@ -68,7 +69,10 @@ open class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
                 times: Int = 1,
                 attempts: Int = DEFAULT_FIND_PATH_ATTEMPTS) {
     val point = scrollToPath(tree, pathStrings)
-    robot.click(tree, point, button, times)
+    if(tree is TreeTableTree)
+      robot.click(tree.treeTable, point, button, times)
+    else
+      robot.click(tree, point, button, times)
     //check that path is selected or click it again
     if (!checkPathIsSelected(tree, pathStrings)) {
       if (attempts == 0) throw Exception(
