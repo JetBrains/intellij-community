@@ -77,7 +77,8 @@ public class UrlClassLoader extends ClassLoader {
   @SuppressWarnings("unused")
   void appendToClassPathForInstrumentation(String jar) {
     try {
-      getClassPath().addURL(new File(jar).toURL());
+      //noinspection deprecation
+      addURL(new File(jar).toURL());
     } catch(MalformedURLException ignore) {}
   }
 
