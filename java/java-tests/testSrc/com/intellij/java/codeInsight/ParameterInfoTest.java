@@ -14,7 +14,6 @@ import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -32,10 +31,10 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/parameterInfo/";
   }
 
-  public void testPrivateMethodOfEnclosingClass() { doTest("param"); }
-  public void testNotAccessible() { doTest("param"); }
+  public void testPrivateMethodOfEnclosingClass() { doTest(); }
+  public void testNotAccessible() { doTest(); }
 
-  private void doTest(String paramsList) {
+  private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");
 
     MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
@@ -45,10 +44,6 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
     Object[] itemsToShow = context.getItemsToShow();
     assertNotNull(itemsToShow);
     assertTrue(itemsToShow.length > 0);
-    Object[] params = handler.getParametersForDocumentation(itemsToShow[0], context);
-    assertNotNull(params);
-    String joined = StringUtil.join(params, o -> ((PsiParameter)o).getName(), ",");
-    assertEquals(paramsList, joined);
   }
 
   public void testParameterInfoDoesNotShowInternalJetbrainsAnnotations() {
