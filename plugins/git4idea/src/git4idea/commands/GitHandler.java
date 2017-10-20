@@ -80,24 +80,18 @@ public abstract class GitHandler {
   private final List<VcsException> myErrors = Collections.synchronizedList(new ArrayList<VcsException>());
   private final List<String> myLastOutput = Collections.synchronizedList(new ArrayList<String>());
   private final int LAST_OUTPUT_SIZE = 5;
-  final GeneralCommandLine myCommandLine;
+  protected final GeneralCommandLine myCommandLine;
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
-  Process myProcess;
+  protected Process myProcess;
 
   private boolean myStdoutSuppressed; // If true, the standard output is not copied to version control console
   private boolean myStderrSuppressed; // If true, the standard error is not copied to version control console
-  private final File myWorkingDirectory;
 
   private UUID mySshHandler;
   // the flag indicating that environment has been cleaned up, by default is true because there is nothing to clean
   private boolean myEnvironmentCleanedUp = true;
   private UUID myHttpHandler;
   @Nullable private ThrowableConsumer<OutputStream, IOException> myInputProcessor; // The processor for stdin
-
-  // if true process might be cancelled
-  // note that access is safe because it accessed in unsynchronized block only after process is started, and it does not change after that
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
-  private boolean myIsCancellable = true;
 
   private Integer myExitCode; // exit code or null if exit code is not yet available
 
@@ -138,9 +132,8 @@ public abstract class GitHandler {
     myProjectSettings = GitVcsSettings.getInstance(myProject);
     myEnv = new HashMap<>(EnvironmentUtil.getEnvironmentMap());
     myVcs = GitVcs.getInstance(project);
-    myWorkingDirectory = directory;
     myCommandLine = new GeneralCommandLine().withExePath(GitExecutableManager.getInstance().getPathToGit(project));
-    myCommandLine.setWorkDirectory(myWorkingDirectory);
+    myCommandLine.setWorkDirectory(directory);
     if (GitVersionSpecialty.CAN_OVERRIDE_GIT_CONFIG_FOR_COMMAND.existsIn(myVcs.getVersion())) {
       myCommandLine.addParameters("-c", "core.quotepath=false");
       myCommandLine.addParameters("-c", "log.showSignature=false");
@@ -203,20 +196,6 @@ public abstract class GitHandler {
     myErrors.add(ex);
   }
 
-  public void addLastOutput(String line) {
-    if (myLastOutput.size() < LAST_OUTPUT_SIZE) {
-      myLastOutput.add(line);
-    }
-    else {
-      myLastOutput.add(0, line);
-      Collections.rotate(myLastOutput, -1);
-    }
-  }
-
-  public List<String> getLastOutput() {
-    return myLastOutput;
-  }
-
   /**
    * @return unmodifiable list of errors.
    */
@@ -234,21 +213,20 @@ public abstract class GitHandler {
   /**
    * @return the current working directory
    */
-  public File workingDirectory() {
-    return myWorkingDirectory;
+  public File getWorkingDirectory() {
+    return myCommandLine.getWorkDirectory();
   }
 
   /**
    * @return the current working directory
    */
-  public VirtualFile workingDirectoryFile() {
-    final VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(workingDirectory());
+  public VirtualFile getWorkingDirectoryFile() {
+    final VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(getWorkingDirectory());
     if (file == null) {
-      throw new IllegalStateException("The working directly should be available: " + workingDirectory());
+      throw new IllegalStateException("The working directly should be available: " + getWorkingDirectory());
     }
     return file;
   }
-
   public void setUrl(@NotNull String url) {
     setUrls(singletonList(url));
   }
@@ -343,7 +321,7 @@ public abstract class GitHandler {
   public void addRelativePaths(@NotNull final Collection<FilePath> filePaths) {
     checkNotStarted();
     for (FilePath path : filePaths) {
-      myCommandLine.addParameter(VcsFileUtil.relativePath(myWorkingDirectory, path));
+      myCommandLine.addParameter(VcsFileUtil.relativePath(getWorkingDirectory(), path));
     }
   }
 
@@ -357,7 +335,7 @@ public abstract class GitHandler {
   public void addRelativeFiles(@NotNull final Collection<VirtualFile> files) {
     checkNotStarted();
     for (VirtualFile file : files) {
-      myCommandLine.addParameter(VcsFileUtil.relativePath(myWorkingDirectory, file));
+      myCommandLine.addParameter(VcsFileUtil.relativePath(getWorkingDirectory(), file));
     }
   }
 
@@ -390,7 +368,7 @@ public abstract class GitHandler {
    *
    * @throws IllegalStateException if process has not been started
    */
-  protected final void checkStarted() {
+  private void checkStarted() {
     if (!isStarted()) {
       throw new IllegalStateException("The process is not started yet");
     }
@@ -399,32 +377,14 @@ public abstract class GitHandler {
   /**
    * @return true if process is started
    */
-  public final synchronized boolean isStarted() {
+  final synchronized boolean isStarted() {
     return myProcess != null;
-  }
-
-
-  /**
-   * Set new value of cancellable flag (by default true)
-   *
-   * @param value a new value of the flag
-   */
-  public void setCancellable(boolean value) {
-    checkNotStarted();
-    myIsCancellable = value;
-  }
-
-  /**
-   * @return cancellable state
-   */
-  public boolean isCancellable() {
-    return myIsCancellable;
   }
 
   /**
    * Start process
    */
-  public synchronized void start() {
+  synchronized void start() {
     checkNotStarted();
 
     try {
@@ -570,22 +530,6 @@ public abstract class GitHandler {
   }
 
   /**
-   * Cancel activity
-   */
-  public synchronized void cancel() {
-    checkStarted();
-    if (!myIsCancellable) {
-      throw new IllegalStateException("The process is not cancellable.");
-    }
-    destroyProcess();
-  }
-
-  /**
-   * Destroy process
-   */
-  public abstract void destroyProcess();
-
-  /**
    * @return exit code for process if it is available
    */
   public synchronized int getExitCode() {
@@ -626,7 +570,7 @@ public abstract class GitHandler {
   /**
    * Wait for process termination
    */
-  public void waitFor() {
+  void waitFor() {
     checkStarted();
     try {
       if (myInputProcessor != null && myProcess != null) {
@@ -762,15 +706,15 @@ public abstract class GitHandler {
   private String stringifyWorkingDir() {
     String basePath = myProject.getBasePath();
     if (basePath != null) {
-      String relPath = FileUtil.getRelativePath(basePath, FileUtil.toSystemIndependentName(myWorkingDirectory.getPath()), '/');
+      String relPath = FileUtil.getRelativePath(basePath, FileUtil.toSystemIndependentName(getWorkingDirectory().getPath()), '/');
       if (".".equals(relPath)) {
-        return myWorkingDirectory.getName();
+        return getWorkingDirectory().getName();
       }
       else if (relPath != null) {
         return FileUtil.toSystemDependentName(relPath);
       }
     }
-    return myWorkingDirectory.getPath();
+    return getWorkingDirectory().getPath();
   }
 
   private void logTime() {
@@ -794,22 +738,54 @@ public abstract class GitHandler {
   }
 
   /**
-     * Set processor for standard input. This is a place where input to the git application could be generated.
-     *
-     * @param inputProcessor the processor
-     */
-    public void setInputProcessor(@Nullable ThrowableConsumer<OutputStream, IOException> inputProcessor) {
-      myInputProcessor = inputProcessor;
-    }
+   * Set processor for standard input. This is a place where input to the git application could be generated.
+   *
+   * @param inputProcessor the processor
+   */
+  public void setInputProcessor(@Nullable ThrowableConsumer<OutputStream, IOException> inputProcessor) {
+    myInputProcessor = inputProcessor;
+  }
 
   @NotNull
   public static Map<String, String> getCommonEnvironment() {
-    Map<String,String> commonEnv = new HashMap<>();
-    commonEnv.put("GIT_TRACE","0");
-    commonEnv.put("GIT_TRACE_PACK_ACCESS","");
-    commonEnv.put("GIT_TRACE_PACKET","");
-    commonEnv.put("GIT_TRACE_PERFORMANCE","0");
-    commonEnv.put("GIT_TRACE_SETUP","0");
+    Map<String, String> commonEnv = new HashMap<>();
+    commonEnv.put("GIT_TRACE", "0");
+    commonEnv.put("GIT_TRACE_PACK_ACCESS", "");
+    commonEnv.put("GIT_TRACE_PACKET", "");
+    commonEnv.put("GIT_TRACE_PERFORMANCE", "0");
+    commonEnv.put("GIT_TRACE_SETUP", "0");
     return commonEnv;
   }
+
+  //region deprecated stuff
+  /**
+   * @deprecated only used in {@link GitTask}
+   */
+  @Deprecated
+  public void addLastOutput(String line) {
+    if (myLastOutput.size() < LAST_OUTPUT_SIZE) {
+      myLastOutput.add(line);
+    }
+    else {
+      myLastOutput.add(0, line);
+      Collections.rotate(myLastOutput, -1);
+    }
+  }
+
+  /**
+   * @deprecated only used in {@link GitTask}
+   */
+  @Deprecated
+  public List<String> getLastOutput() {
+    return myLastOutput;
+  }
+
+  /**
+   * Destroy process
+   *
+   * @deprecated only used in {@link GitTask}
+   */
+  @Deprecated
+  abstract void destroyProcess();
+  //endregion
 }
