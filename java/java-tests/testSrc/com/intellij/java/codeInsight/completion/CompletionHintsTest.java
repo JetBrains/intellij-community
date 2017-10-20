@@ -754,6 +754,15 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     checkHintContents(null);
   }
 
+  public void testOverloadsWithOneAndNoParameters() throws Exception {
+    configureJava("class C { void method() {} void method(int a) {} void m() { m<caret> } }");
+    complete("method(int a)");
+    checkResultWithInlays("class C { void method() {} void method(int a) {} void m() { method(<HINT text=\"a:\"/><caret>); } }");
+    home();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("<caret>class C { void method() {} void method(int a) {} void m() { method(); } }");
+  }
+
   public void testCodeFragment() {
     PsiExpressionCodeFragment fragment =
       JavaCodeFragmentFactory.getInstance(getProject()).createExpressionCodeFragment("System.getPro<caret>", null, null, true);
