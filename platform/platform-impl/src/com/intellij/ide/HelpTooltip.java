@@ -54,6 +54,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
+/**
+ * Standard implementation of help context tooltip.
+ * Detailed description can be found here: https://jetpeople.jetbrains.com/article/21-52724
+ */
+
 public class HelpTooltip implements Disposable {
   private static Color BACKGROUND_COLOR = new JBColor(Gray.xF7, new Color(0x474a4c));
   private static Color FONT_COLOR = new JBColor(() -> UIUtil.isUnderDarcula() ? Gray.xBF : SystemInfo.isMac ? Gray.x33 : Gray.x1A);
