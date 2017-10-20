@@ -19,6 +19,7 @@ import com.intellij.formatting.*;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 public class CompositeTemplateBlock implements Block {
@@ -29,6 +30,11 @@ public class CompositeTemplateBlock implements Block {
     mySubBlocks = subBlocks;
     myTextRange = new TextRange(mySubBlocks.get(0).getTextRange().getStartOffset(),
                                 mySubBlocks.get(mySubBlocks.size() - 1).getTextRange().getEndOffset());
+  }
+
+  public CompositeTemplateBlock(@NotNull TextRange range) {
+    mySubBlocks = Collections.emptyList();
+    myTextRange = range;
   }
 
   @NotNull
