@@ -751,6 +751,15 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     checkHintContents(null);
   }
 
+  public void testOverloadsWithOneAndNoParameters() throws Exception {
+    configureJava("class C { void method() {} void method(int a) {} void m() { m<caret> } }");
+    complete("method(int a)");
+    checkResultWithInlays("class C { void method() {} void method(int a) {} void m() { method(<HINT text=\"a:\"/><caret>); } }");
+    home();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("<caret>class C { void method() {} void method(int a) {} void m() { method(); } }");
+  }
+
   private void checkResult(String text) {
     myFixture.checkResult(text);
   }
