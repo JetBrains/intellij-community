@@ -206,24 +206,27 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
     ExecutionTargetProvider[] providers = Extensions.getExtensions(ExecutionTargetProvider.EXTENSION_NAME);
     LinkedHashSet<ExecutionTarget> result = new LinkedHashSet<>();
 
+    Set<ExecutionTarget> specifiedTargets = new THashSet<>();
     doWithEachNonCompoundWithSpecifiedTarget(settings, each -> {
-      if (each.second != null) {
-        result.add(each.second);
-      }
-      else {
-        for (ExecutionTargetProvider eachTargetProvider : providers) {
-          result.addAll(eachTargetProvider.getTargets(myProject, each.first));
+      for (ExecutionTargetProvider eachTargetProvider : providers) {
+        List<ExecutionTarget> supportedTargets = eachTargetProvider.getTargets(myProject, each.first);
+
+        if (each.second != null) {
+          if (supportedTargets.contains(each.second)) {
+            result.add(each.second);
+            specifiedTargets.add(each.second);
+            break;
+          }
+        }
+        else {
+          result.addAll(supportedTargets);
         }
       }
       return true;
     });
+
     if (!result.isEmpty()) {
-      doWithEachNonCompoundWithSpecifiedTarget(settings, each -> {
-        if (each.second != null) {
-          result.retainAll(Collections.singleton(each.second));
-        }
-        return true;
-      });
+      specifiedTargets.forEach(it -> result.retainAll(Collections.singleton(it)));
       if (result.isEmpty()) {
         result.add(MULTIPLE_TARGETS);
       }
