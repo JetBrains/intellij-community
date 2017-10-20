@@ -1075,6 +1075,7 @@ public class AbstractTreeUi {
   }
 
   private void updateRow(final int row, @NotNull final TreeUpdatePass pass) {
+    LOG.debug("updateRow: ", row, " - ", pass);
     invokeLaterIfNeeded(false, new TreeRunnable("AbstractTreeUi.updateRow") {
       @Override
       public void perform() {
