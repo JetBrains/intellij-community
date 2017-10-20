@@ -2,8 +2,6 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.*;
-import com.intellij.execution.compound.ConfigurationSelectionUtil;
-import com.intellij.execution.compound.TypeNameTarget;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessHandler;
@@ -18,16 +16,26 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -72,13 +80,11 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
 
   @Override
   public String getDescription(RunConfigurableBeforeRunTask task) {
-    Pair<RunnerAndConfigurationSettings, ExecutionTarget> settingsWithTarget = task.getSettingsWithTarget();
-    if (settingsWithTarget == null) {
+    if (task.getSettings() == null) {
       return ExecutionBundle.message("before.launch.run.another.configuration");
     }
     else {
-      String text = ConfigurationSelectionUtil.getDisplayText(settingsWithTarget.first.getConfiguration(), settingsWithTarget.second);
-      return ExecutionBundle.message("before.launch.run.certain.configuration", text);
+      return ExecutionBundle.message("before.launch.run.certain.configuration", task.getSettings().getName());
     }
   }
 
@@ -105,29 +111,18 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
   }
 
   @Override
-  public Promise<Boolean> configureTask(@NotNull DataContext context,
-                                        @NotNull RunConfiguration configuration,
-                                        @NotNull RunConfigurableBeforeRunTask task) {
-    Project project = configuration.getProject();
-    RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
-
-    List<RunConfiguration> configurations = ContainerUtil.map(getAvailableConfigurations(configuration), it -> it.getConfiguration());
-
-    AsyncPromise<Boolean> result = new AsyncPromise<>();
-    ConfigurationSelectionUtil.createPopup(project, runManager, configurations, (selectedConfigs, selectedTarget) -> {
-      RunConfiguration selectedConfig = ContainerUtil.getFirstItem(selectedConfigs);
-      RunnerAndConfigurationSettings selectedSettings = selectedConfig == null ? null : runManager.getSettings(selectedConfig);
-
-      if (selectedSettings != null) {
-        task.setSettingsWithTarget(selectedSettings, selectedTarget);
-        result.setResult(true);
-      }
-      else {
-        result.setResult(false);
-      }
-    }).showInBestPositionFor(context);
-
-    return result;
+  public boolean configureTask(@NotNull RunConfiguration runConfiguration, @NotNull RunConfigurableBeforeRunTask task) {
+    SelectionDialog dialog =
+      new SelectionDialog(task.getSettings(), getAvailableConfigurations(runConfiguration));
+    dialog.show();
+    RunnerAndConfigurationSettings settings = dialog.getSelectedSettings();
+    if (settings != null) {
+      task.setSettings(settings);
+      return true;
+    }
+    else {
+      return false;
+    }
   }
 
   @NotNull
@@ -166,16 +161,14 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
                              @NotNull RunConfiguration configuration,
                              @NotNull final ExecutionEnvironment env,
                              @NotNull RunConfigurableBeforeRunTask task) {
-    Pair<RunnerAndConfigurationSettings, ExecutionTarget> settings = task.getSettingsWithTarget();
+    RunnerAndConfigurationSettings settings = task.getSettings();
     if (settings == null) {
       return true; // ignore missing configurations: IDEA-155476 Run/debug silently fails when 'Run another configuration' step is broken
     }
-    return doExecuteTask(env, settings.first, settings.second);
+    return doExecuteTask(env, settings);
   }
 
-  public static boolean doExecuteTask(@NotNull final ExecutionEnvironment env, 
-                                      @NotNull final RunnerAndConfigurationSettings settings,
-                                      @Nullable final ExecutionTarget target) {
+  public static boolean doExecuteTask(@NotNull final ExecutionEnvironment env, @NotNull final RunnerAndConfigurationSettings settings) {
     final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     final String executorId = executor.getId();
     ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.createOrNull(executor, settings);
@@ -183,25 +176,12 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
       return false;
     }
 
-    ExecutionTarget effectiveTarget = target;
-
-    if (effectiveTarget == null && ExecutionTargetManager.canRun(settings, env.getExecutionTarget())) {
-      effectiveTarget = env.getExecutionTarget();
-    }
-
-    List<ExecutionTarget> allTargets = ExecutionTargetManager.getInstance(env.getProject()).getTargetsFor(settings);
-    if (effectiveTarget == null) {
-      effectiveTarget = ContainerUtil.find(allTargets, it -> it.isReady());
-    }
-    if (effectiveTarget == null) {
-      effectiveTarget = ContainerUtil.getFirstItem(allTargets);
-    }
-    
-    if (effectiveTarget == null) {
+    ExecutionTarget compatibleTarget = getCompatibleTarget(env, settings);
+    if (compatibleTarget == null) {
       return false;
     }
 
-    final ExecutionEnvironment environment = builder.target(effectiveTarget).build();
+    final ExecutionEnvironment environment = builder.target(compatibleTarget).build();
     environment.setExecutionId(env.getExecutionId());
 
     if (!environment.getRunner().canRun(executorId, environment.getRunProfile())) {
@@ -211,6 +191,14 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
       beforeRun(environment);
       return doRunTask(executorId, environment, environment.getRunner());
     }
+  }
+
+  @Nullable
+  private static ExecutionTarget getCompatibleTarget(@NotNull ExecutionEnvironment env, @NotNull RunnerAndConfigurationSettings settings) {
+    if (ExecutionTargetManager.canRun(settings, env.getExecutionTarget())) {
+      return env.getExecutionTarget();
+    }
+    return ContainerUtil.getFirstItem(ExecutionTargetManager.getInstance(env.getProject()).getTargetsFor(settings));
   }
 
   public static boolean doRunTask(final String executorId, final ExecutionEnvironment environment, ProgramRunner<?> runner) {
@@ -279,9 +267,10 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
   }
 
   public class RunConfigurableBeforeRunTask extends BeforeRunTask<RunConfigurableBeforeRunTask> {
-    private @Nullable TypeNameTarget myTypeNameTarget;
+    private String myConfigurationName;
+    private String myConfigurationType;
 
-    private @Nullable Pair</*@NotNull*/RunnerAndConfigurationSettings, /*@Nullable*/ExecutionTarget> mySettingsWithTarget;
+    private RunnerAndConfigurationSettings mySettings;
 
     RunConfigurableBeforeRunTask() {
       super(ID);
@@ -290,12 +279,13 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     @Override
     public void writeExternal(@NotNull Element element) {
       super.writeExternal(element);
-      if (myTypeNameTarget != null) {
-        element.setAttribute("run_configuration_name", myTypeNameTarget.getName());
-        element.setAttribute("run_configuration_type", myTypeNameTarget.getType());
-        if (myTypeNameTarget.getTargetId() != null) {
-          element.setAttribute("run_configuration_target", myTypeNameTarget.getTargetId());
-        }
+      if (myConfigurationName != null && myConfigurationType != null) {
+        element.setAttribute("run_configuration_name", myConfigurationName);
+        element.setAttribute("run_configuration_type", myConfigurationType);
+      }
+      else if (mySettings != null) {
+        element.setAttribute("run_configuration_name", mySettings.getName());
+        element.setAttribute("run_configuration_type", mySettings.getType().getId());
       }
     }
 
@@ -303,57 +293,35 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     public void readExternal(@NotNull Element element) {
       super.readExternal(element);
 
-      String name = element.getAttributeValue("run_configuration_name");
-      String type = element.getAttributeValue("run_configuration_type");
-      String targetId = element.getAttributeValue("run_configuration_target");
-      if (name != null && type != null) myTypeNameTarget = new TypeNameTarget(type, name, targetId);
-      
-      mySettingsWithTarget = null;
+      myConfigurationName = element.getAttributeValue("run_configuration_name");
+      myConfigurationType = element.getAttributeValue("run_configuration_type");
     }
 
     // avoid RunManagerImpl.getInstanceImpl and findConfigurationByTypeAndName calls (can be called during RunManagerImpl initialization)
     boolean isMySettings(@NotNull RunnerAndConfigurationSettings settings) {
-      if (mySettingsWithTarget != null) {
+      if (mySettings != null) {
         // instance equality
-        return mySettingsWithTarget.first == settings;
+        return mySettings == settings;
       }
-
-      return myTypeNameTarget != null
-             && settings.getType().getId().equals(myTypeNameTarget.getType())
-             && settings.getName().equals(myTypeNameTarget.getName());
+      return settings.getType().getId().equals(myConfigurationType) && settings.getName().equals(myConfigurationName);
     }
 
     void init() {
-      if (mySettingsWithTarget != null) {
+      if (mySettings != null) {
         return;
       }
-      
-      if (myTypeNameTarget != null) {
-        RunnerAndConfigurationSettings settings = RunManagerImpl.getInstanceImpl(myProject).findConfigurationByTypeAndName(
-          myTypeNameTarget.getType(), myTypeNameTarget.getName());
-        ExecutionTarget target = ((ExecutionTargetManagerImpl)ExecutionTargetManager.getInstance(myProject)).findTargetByIdFor(
-          settings, myTypeNameTarget.getTargetId());
-
-        setSettingsWithTarget(settings, target);
+      if (myConfigurationType != null && myConfigurationName != null) {
+        setSettings(RunManagerImpl.getInstanceImpl(myProject).findConfigurationByTypeAndName(myConfigurationType, myConfigurationName));
       }
     }
 
-    public void setSettingsWithTarget(@Nullable RunnerAndConfigurationSettings settings, @Nullable ExecutionTarget target) {
-      mySettingsWithTarget = settings == null ? null : Pair.create(settings, target);
-      myTypeNameTarget = settings == null ? null : new TypeNameTarget(settings.getType().getId(), settings.getName(),
-                                                                      target == null ? null : target.getId());
+    public void setSettings(RunnerAndConfigurationSettings settings) {
+      mySettings = settings;
     }
 
-    @Nullable
     public RunnerAndConfigurationSettings getSettings() {
-      Pair<RunnerAndConfigurationSettings, ExecutionTarget> settingsWithTarget = getSettingsWithTarget();
-      return settingsWithTarget == null ? null : settingsWithTarget.first;
-    }
-
-    @Nullable
-    public Pair</*NotNull*/ RunnerAndConfigurationSettings, /*Nullable*/ExecutionTarget> getSettingsWithTarget() {
       init();
-      return mySettingsWithTarget;
+      return mySettings;
     }
 
     @Override
@@ -364,14 +332,92 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
 
       RunConfigurableBeforeRunTask that = (RunConfigurableBeforeRunTask)o;
 
-      return Comparing.equal(myTypeNameTarget, that.myTypeNameTarget);
+      if (myConfigurationName != null ? !myConfigurationName.equals(that.myConfigurationName) : that.myConfigurationName != null) return false;
+      if (myConfigurationType != null ? !myConfigurationType.equals(that.myConfigurationType) : that.myConfigurationType != null) return false;
+
+      return true;
     }
 
     @Override
     public int hashCode() {
       int result = super.hashCode();
-      result = 31 * result + (myTypeNameTarget != null ? myTypeNameTarget.hashCode() : 0);
+      result = 31 * result + (myConfigurationName != null ? myConfigurationName.hashCode() : 0);
+      result = 31 * result + (myConfigurationType != null ? myConfigurationType.hashCode() : 0);
       return result;
+    }
+  }
+
+  private class SelectionDialog extends DialogWrapper {
+    private RunnerAndConfigurationSettings mySelectedSettings;
+    @NotNull private final List<RunnerAndConfigurationSettings> mySettings;
+    private JBList myJBList;
+
+    private SelectionDialog(RunnerAndConfigurationSettings selectedSettings, @NotNull List<RunnerAndConfigurationSettings> settings) {
+      super(myProject);
+      setTitle(ExecutionBundle.message("before.launch.run.another.configuration.choose"));
+      mySelectedSettings = selectedSettings;
+      mySettings = settings;
+      init();
+      myJBList.setSelectedValue(mySelectedSettings, true);
+      myJBList.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+          if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() ==2) {
+            doOKAction();
+          }
+        }
+      });
+      FontMetrics fontMetrics = myJBList.getFontMetrics(myJBList.getFont());
+      int maxWidth = fontMetrics.stringWidth("m") * 30;
+      for (RunnerAndConfigurationSettings setting : settings) {
+        maxWidth = Math.max(fontMetrics.stringWidth(setting.getConfiguration().getName()), maxWidth);
+      }
+      maxWidth += 24;//icon and gap
+      myJBList.setMinimumSize(new Dimension(maxWidth, myJBList.getPreferredSize().height));
+    }
+
+    @Nullable
+    @Override
+    protected String getDimensionServiceKey() {
+      return "com.intellij.execution.impl.RunConfigurationBeforeRunProvider.dimensionServiceKey;";
+    }
+
+    @Override
+    protected JComponent createCenterPanel() {
+      myJBList = new JBList(mySettings);
+      myJBList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+      myJBList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+        @Override
+        public void valueChanged(ListSelectionEvent e) {
+          Object selectedValue = myJBList.getSelectedValue();
+          if (selectedValue instanceof RunnerAndConfigurationSettings) {
+            mySelectedSettings = (RunnerAndConfigurationSettings)selectedValue;
+          }
+          else {
+            mySelectedSettings = null;
+          }
+          setOKActionEnabled(mySelectedSettings != null);
+        }
+      });
+      myJBList.setCellRenderer(new ColoredListCellRenderer() {
+        @Override
+        protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
+          if (value instanceof RunnerAndConfigurationSettings) {
+            RunnerAndConfigurationSettings settings = (RunnerAndConfigurationSettings)value;
+            setIcon(RunManagerEx.getInstanceEx(myProject).getConfigurationIcon(settings));
+            RunConfiguration configuration = settings.getConfiguration();
+            append(configuration.getName(), settings.isTemporary()
+                                            ? SimpleTextAttributes.GRAY_ATTRIBUTES
+                                            : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          }
+        }
+      });
+      return new JBScrollPane(myJBList);
+    }
+
+    @Nullable
+    RunnerAndConfigurationSettings getSelectedSettings() {
+      return isOK() ? mySelectedSettings : null;
     }
   }
 }

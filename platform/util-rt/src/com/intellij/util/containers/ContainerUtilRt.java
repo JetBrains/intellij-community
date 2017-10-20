@@ -368,20 +368,6 @@ public class ContainerUtilRt {
     }
     return list;
   }
-  
-  /**
-   * @return read-only list consisting key-value pairs of a map
-   */
-  @NotNull
-  @Contract(pure=true)
-  public static <K, V> List<Pair<K, V>> map2List(@NotNull Map<K, V> map) {
-    if (map.isEmpty()) return emptyList();
-    final List<Pair<K, V>> result = new ArrayList<Pair<K, V>>(map.size());
-    for (Map.Entry<K, V> entry : map.entrySet()) {
-      result.add(Pair.create(entry.getKey(), entry.getValue()));
-    }
-    return result;
-  }
 
   /**
    * @return read-only set consisting of the elements from collection converted by mapper

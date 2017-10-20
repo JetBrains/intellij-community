@@ -32,11 +32,6 @@ public class MockExecutionTargetManager extends ExecutionTargetManager {
   }
 
   @Override
-  protected boolean doCanRun(@Nullable RunnerAndConfigurationSettings settings, @NotNull ExecutionTarget target) {
-    return true;
-  }
-
-  @Override
   public void update() {
   }
 }

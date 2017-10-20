@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 
@@ -61,17 +60,9 @@ public abstract class BeforeRunTaskProvider<T extends BeforeRunTask> {
 
   /**
    * @return {@code true} if task configuration is changed
-   * @deprecated do not call directly, use {@link #configureTask(DataContext, RunConfiguration, BeforeRunTask)} instead
    */
   public boolean configureTask(@NotNull RunConfiguration runConfiguration, @NotNull T task) {
     return false;
-  }
-  
-  /**
-   * @return {@code true} a promise returning true, if the tassk was changed
-   */
-  public Promise<Boolean> configureTask(@NotNull DataContext context, @NotNull RunConfiguration configuration, @NotNull T task) {
-    return Promise.resolve(configureTask(configuration, task));
   }
 
   public boolean canExecuteTask(@NotNull RunConfiguration configuration, @NotNull T task) {

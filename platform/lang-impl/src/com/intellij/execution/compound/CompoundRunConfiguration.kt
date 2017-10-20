@@ -1,12 +1,13 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.compound
 
-import com.intellij.execution.*
+import com.intellij.execution.ExecutionException
+import com.intellij.execution.Executor
+import com.intellij.execution.RunnerIconProvider
 import com.intellij.execution.configurations.*
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.impl.RunManagerImpl
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.icons.AllIcons
@@ -18,7 +19,7 @@ import org.jdom.Element
 import java.util.*
 import javax.swing.Icon
 
-data class TypeNameTarget(val type: String, val name: String, val targetId: String?)
+private data class TypeAndName(val type: String, val name: String)
 
 class CompoundRunConfiguration(project: Project, type: CompoundRunConfigurationType, name: String) : RunConfigurationBase(project,
                                                                                                                           type.configurationFactories[0],
@@ -35,27 +36,23 @@ class CompoundRunConfiguration(project: Project, type: CompoundRunConfigurationT
   }
 
   // we cannot compute setToRun on read because we need type.displayName to sort, but to get type we need runManager - it is prohibited to get runManager in the readExternal
-  private var myUnsortedConfigurations: List<TypeNameTarget> = emptyList()
+  private var unsortedConfigurationTypeAndNames: List<TypeAndName> = emptyList()
 
   // have to use RunConfiguration instead of RunnerAndConfigurationSettings because setConfigurations (called from CompoundRunConfigurationSettingsEditor.applyEditorTo) cannot use RunnerAndConfigurationSettings
-  private var sortedConfigurationsWithTargets = TreeMap<RunConfiguration, ExecutionTarget?>(COMPARATOR)
+  private var sortedConfigurations = TreeSet<RunConfiguration>(COMPARATOR)
   private var isInitialized = false
 
   @JvmOverloads
-  fun getConfigurationsWithTargets(runManager: RunManagerImpl? = null): Map<RunConfiguration, ExecutionTarget?> {
+  fun getConfigurations(runManager: RunManagerImpl? = null): Collection<RunConfiguration> {
     initIfNeed(runManager)
-    return sortedConfigurationsWithTargets
+    return sortedConfigurations
   }
 
-  fun setConfigurationsWithTargets(value: Map<RunConfiguration, ExecutionTarget?>) {
-    markInitialized()
-    
-    sortedConfigurationsWithTargets.clear()
-    sortedConfigurationsWithTargets.putAll(value)
-  }
-
-  fun setConfigurationsWithoutTargets(value: Collection<RunConfiguration>) {
-    setConfigurationsWithTargets(value.associate { it to null });
+  fun setConfigurations(value: Collection<RunConfiguration>) {
+    // invalidate, we don't use it
+    unsortedConfigurationTypeAndNames = emptyList()
+    sortedConfigurations.clear()
+    sortedConfigurations.addAll(value)
   }
 
   private fun initIfNeed(_runManager: RunManagerImpl?) {
@@ -63,24 +60,15 @@ class CompoundRunConfiguration(project: Project, type: CompoundRunConfigurationT
       return
     }
 
-    sortedConfigurationsWithTargets.clear()
+    sortedConfigurations.clear()
 
     val runManager = _runManager ?: RunManagerImpl.getInstanceImpl(project)
-    val targetManager = ExecutionTargetManager.getInstance(project) as ExecutionTargetManagerImpl
-
-    for ((type, name, targetId) in myUnsortedConfigurations) {
+    for ((type, name) in unsortedConfigurationTypeAndNames) {
       val settings = runManager.findConfigurationByTypeAndName(type, name)
       if (settings != null && settings.configuration !== this) {
-        val target = targetId?.let { targetManager.findTargetByIdFor(settings, it) }
-        sortedConfigurationsWithTargets.put(settings.configuration, target)
+        sortedConfigurations.add(settings.configuration)
       }
     }
-
-    markInitialized()
-  }
-
-  private fun markInitialized() {
-    myUnsortedConfigurations = emptyList()
     isInitialized = true
   }
 
@@ -90,13 +78,8 @@ class CompoundRunConfiguration(project: Project, type: CompoundRunConfigurationT
 
   @Throws(RuntimeConfigurationException::class)
   override fun checkConfiguration() {
-    if (sortedConfigurationsWithTargets.isEmpty()) {
+    if (sortedConfigurations.isEmpty()) {
       throw RuntimeConfigurationException("There is nothing to run")
-    }
-
-    val temp = RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(project), this, false)
-    if (ExecutionTargetManager.getInstance(project).getTargetsFor(temp).isEmpty()) {
-      throw RuntimeConfigurationException("No suitable targets to run on; please choose a target for each configuration")
     }
   }
 
@@ -111,22 +94,14 @@ class CompoundRunConfiguration(project: Project, type: CompoundRunConfigurationT
 
     return RunProfileState { _, _ ->
       ApplicationManager.getApplication().invokeLater {
-        getConfigurationsWithEffectiveRunTargets().forEach { (config, target) -> ExecutionUtil.runConfiguration(config, executor, target) }
+        val runManager = RunManagerImpl.getInstanceImpl(project)
+        for (configuration in sortedConfigurations) {
+          runManager.getSettings(configuration)?.let {
+            ExecutionUtil.runConfiguration(it, executor)
+          }
+        }
       }
       null
-    }
-  }
-
-  fun getConfigurationsWithEffectiveRunTargets() : List<Pair<RunnerAndConfigurationSettings, ExecutionTarget>> {
-    val runManager = RunManagerImpl.getInstanceImpl(project)
-    val activeTarget = ExecutionTargetManager.getActiveTarget(project)
-    val defaultTarget = DefaultExecutionTarget.INSTANCE
-
-    return sortedConfigurationsWithTargets.mapNotNull { (configuration, specifiedTarget) ->
-      runManager.getSettings(configuration)?.let {
-        val effectiveTarget = specifiedTarget ?: if (ExecutionTargetManager.canRun(it, activeTarget)) activeTarget else defaultTarget
-        it to effectiveTarget
-      }
     }
   }
 
@@ -135,38 +110,36 @@ class CompoundRunConfiguration(project: Project, type: CompoundRunConfigurationT
 
     val children = element.getChildren("toRun")
     if (children.isEmpty()) {
-      myUnsortedConfigurations = emptyList()
+      unsortedConfigurationTypeAndNames = emptyList()
       return
     }
 
-    val list = THashSet<TypeNameTarget>()
+    val list = THashSet<TypeAndName>()
     for (child in children) {
       val type = child.getAttributeValue("type") ?: continue
       val name = child.getAttributeValue("name") ?: continue
-
-      list.add(TypeNameTarget(type, name, child.getAttributeValue("targetId")))
+      list.add(TypeAndName(type, name))
     }
 
-    myUnsortedConfigurations = list.toList()
+    unsortedConfigurationTypeAndNames = list.toList()
   }
 
   override fun writeExternal(element: Element) {
     super.writeExternal(element)
 
-    for ((configuration, target) in sortedConfigurationsWithTargets) {
+    for (configuration in sortedConfigurations) {
       val child = Element("toRun")
       child.setAttribute("type", configuration.type.id)
       child.setAttribute("name", configuration.name)
-      target?.let { child.setAttribute("targetId", it.id) }
       element.addContent(child)
     }
   }
 
   override fun clone(): RunConfiguration {
     val clone = super<RunConfigurationBase>.clone() as CompoundRunConfiguration
-    clone.myUnsortedConfigurations = myUnsortedConfigurations
-    clone.sortedConfigurationsWithTargets = TreeMap(COMPARATOR)
-    clone.sortedConfigurationsWithTargets.putAll(sortedConfigurationsWithTargets)
+    clone.unsortedConfigurationTypeAndNames = unsortedConfigurationTypeAndNames.toList()
+    clone.sortedConfigurations = TreeSet(COMPARATOR)
+    clone.sortedConfigurations.addAll(sortedConfigurations)
     return clone
   }
 
@@ -185,7 +158,7 @@ class CompoundRunConfiguration(project: Project, type: CompoundRunConfigurationT
 
     return ExecutionManagerImpl.getInstance(project).getRunningDescriptors { s ->
       val manager = RunManagerImpl.getInstanceImpl(project)
-      for ((configuration, _) in sortedConfigurationsWithTargets) {
+      for (configuration in sortedConfigurations) {
         if (configuration is CompoundRunConfiguration && configuration.hasRunningSingletons()) {
           return@getRunningDescriptors true
         }

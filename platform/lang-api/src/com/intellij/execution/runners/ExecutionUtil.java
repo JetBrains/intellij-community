@@ -188,23 +188,11 @@ public class ExecutionUtil {
   }
 
   public static void runConfiguration(@NotNull RunnerAndConfigurationSettings configuration, @NotNull Executor executor) {
-    doRunConfiguration(configuration, executor, null);
-  }
-
-  public static void runConfiguration(@NotNull RunnerAndConfigurationSettings configuration, @NotNull Executor executor, @NotNull ExecutionTarget target) {
-    doRunConfiguration(configuration, executor, target);
-  }
-  
-  private static void doRunConfiguration(@NotNull RunnerAndConfigurationSettings configuration, @NotNull Executor executor, @Nullable ExecutionTarget targetOrNullForDefault) {
     ExecutionEnvironmentBuilder builder = createEnvironment(executor, configuration);
     if (builder != null) {
-      if (targetOrNullForDefault != null) {
-        builder.target(targetOrNullForDefault);
-      }
-      else {
-        builder.activeTarget();
-      }
-      ExecutionManager.getInstance(configuration.getConfiguration().getProject()).restartRunProfile(builder.build());
+      ExecutionManager.getInstance(configuration.getConfiguration().getProject()).restartRunProfile(builder
+                                                                                                      .activeTarget()
+                                                                                                      .build());
     }
   }
 

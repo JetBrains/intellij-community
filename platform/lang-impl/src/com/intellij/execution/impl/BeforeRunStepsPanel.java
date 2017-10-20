@@ -94,13 +94,10 @@ class BeforeRunStepsPanel extends JPanel {
           return;
         BeforeRunTask task = selection.getFirst();
         BeforeRunTaskProvider<BeforeRunTask> provider = selection.getSecond();
-        
-        provider.configureTask(button.getDataContext(), myRunConfiguration, task).done(changed -> {
-          if (changed) {
-            myModel.setElementAt(task, index);
-            updateText();
-          }
-        });
+        if (provider.configureTask(myRunConfiguration, task)) {
+          myModel.setElementAt(task, index);
+          updateText();
+        }
       }
     });
     myDecorator.setEditActionUpdater(new AnActionButtonUpdater() {
@@ -281,27 +278,27 @@ class BeforeRunStepsPanel extends JPanel {
           @Override
           public void actionPerformed(AnActionEvent e) {
             BeforeRunTask task = provider.createTask(myRunConfiguration);
-            if (task == null)  return;
-
-            provider.configureTask(button.getDataContext(), myRunConfiguration, task).done(changed -> {
-              if (!provider.canExecuteTask(myRunConfiguration, task)) {
+            if (task != null) {
+              provider.configureTask(myRunConfiguration, task);
+              if (!provider.canExecuteTask(myRunConfiguration, task))
                 return;
-              }
-              task.setEnabled(true);
+            } else {
+              return;
+            }
+            task.setEnabled(true);
 
-              Set<RunConfiguration> configurationSet = new HashSet<>();
-              getAllRunBeforeRuns(task, configurationSet);
-              if (configurationSet.contains(myRunConfiguration)) {
-                JOptionPane.showMessageDialog(BeforeRunStepsPanel.this,
-                                              ExecutionBundle.message("before.launch.panel.cyclic_dependency_warning",
-                                                                      myRunConfiguration.getName(),
-                                                                      provider.getDescription(task)),
-                                              ExecutionBundle.message("warning.common.title"), JOptionPane.WARNING_MESSAGE);
-                return;
-              }
-              addTask(task);
-              myListener.fireStepsBeforeRunChanged();
-            });
+            Set<RunConfiguration> configurationSet = new HashSet<>();
+            getAllRunBeforeRuns(task, configurationSet);
+            if (configurationSet.contains(myRunConfiguration)) {
+              JOptionPane.showMessageDialog(BeforeRunStepsPanel.this,
+                                            ExecutionBundle.message("before.launch.panel.cyclic_dependency_warning",
+                                                                    myRunConfiguration.getName(),
+                                                                    provider.getDescription(task)),
+                                            ExecutionBundle.message("warning.common.title"),JOptionPane.WARNING_MESSAGE);
+              return;
+            }
+            addTask(task);
+            myListener.fireStepsBeforeRunChanged();
           }
         };
         actionGroup.add(providerAction);
