@@ -123,14 +123,16 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
 
   protected fun assertOnlyDefaultChangelist() {
     val DEFAULT = MockChangeListManager.DEFAULT_CHANGE_LIST_NAME
-    assertEquals("Only default changelist is expected", 1, changeListManager.changeListsNumber)
+    assertEquals("Only default changelist is expected among: ${dumpChangeLists()}", 1, changeListManager.changeListsNumber)
     assertEquals("Default changelist is not active", DEFAULT, changeListManager.defaultChangeList!!.name)
   }
 
-  protected fun assertChangelistCreated(name: String): LocalChangeList {
+  protected fun assertChangelistCreated(comment: String): LocalChangeList {
     val changeLists = changeListManager.changeListsCopy
-    val list = changeLists.find { it.name == name }
-    assertNotNull("Didn't find changelist with name '$name' among :$changeLists", list)
+    val list = changeLists.find { it.comment == comment }
+    assertNotNull("Didn't find changelist with comment '$comment' among: ${dumpChangeLists()}", list)
     return list!!
   }
+
+  private fun dumpChangeLists() = changeListManager.changeLists.joinToString { "'${it.name}' - '${it.comment}'" }
 }

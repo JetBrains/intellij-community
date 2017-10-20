@@ -63,7 +63,7 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
 
     cherryPick(commit)
 
-    val list = assertChangelistCreated("fix #1 (cherry picked from commit ${shortHash(commit)})")
+    val list = assertChangelistCreated("fix #1\n\n(cherry picked from commit ${shortHash(commit)})")
     assertNoNotification()
     updateChangeListManager()
     assertChanges(list, "f.txt")
@@ -113,7 +113,7 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
       ${shortHash(commit2)} fix #2
       However cherry-pick succeeded for the following commit:
       ${shortHash(commit1)} fix #1""".trimIndent())
-    val list = assertChangelistCreated("fix #2 (cherry picked from commit ${shortHash(commit2)})")
+    val list = assertChangelistCreated("fix #2\n\n(cherry picked from commit ${shortHash(commit2)})")
     assertChanges(list, "2.txt")
   }
 

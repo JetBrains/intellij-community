@@ -58,7 +58,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
     cherryPick(commit)
 
     `assert merge dialog was shown`()
-    assertChangelistCreated("on_master (cherry picked from commit ${shortHash(commit)})")
+    assertChangelistCreated("on_master\n\n(cherry picked from commit ${shortHash(commit)})")
     assertWarningNotification("Cherry-picked with conflicts", """
       ${shortHash(commit)} on_master
       Unresolved conflicts remain in the working tree. <a href='resolve'>Resolve them.<a/>
@@ -77,7 +77,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
     cherryPick(commit)
 
     `assert merge dialog was shown`()
-    assertChangelistCreated("on_master (cherry picked from commit ${shortHash(commit)})")
+    assertChangelistCreated("on_master\n\n(cherry picked from commit ${shortHash(commit)})")
     assertNoNotification()
   }
 
