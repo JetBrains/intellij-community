@@ -63,7 +63,7 @@ public class CompilerBackwardReferenceIndex {
       }
     }
   });
-  private volatile Exception myRebuildRequestCause;
+  private volatile Throwable myRebuildRequestCause;
 
   public CompilerBackwardReferenceIndex(File buildDir, boolean readOnly) {
     myIndicesDir = getIndexDir(buildDir);
@@ -136,7 +136,7 @@ public class CompilerBackwardReferenceIndex {
     }
   }
 
-  Exception getRebuildRequestCause() {
+  Throwable getRebuildRequestCause() {
     return myRebuildRequestCause;
   }
 
@@ -195,7 +195,7 @@ public class CompilerBackwardReferenceIndex {
     }
   }
 
-  void setRebuildRequestCause(Exception e) {
+  void setRebuildRequestCause(Throwable e) {
     myRebuildRequestCause = e;
   }
 
@@ -246,7 +246,7 @@ public class CompilerBackwardReferenceIndex {
     }
 
     @Override
-    protected void requestRebuild(Exception e) {
+    protected void requestRebuild(Throwable e) {
       setRebuildRequestCause(e);
     }
   }

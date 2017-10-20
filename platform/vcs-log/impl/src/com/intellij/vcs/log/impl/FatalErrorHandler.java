@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface FatalErrorHandler {
-  void consume(@Nullable Object source, @NotNull Exception exception);
+  void consume(@Nullable Object source, @NotNull Throwable throwable);
 
   void displayFatalErrorMessage(@NotNull String message);
 }

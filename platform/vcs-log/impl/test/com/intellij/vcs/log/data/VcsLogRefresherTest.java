@@ -199,8 +199,8 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
   private VcsLogRefresherImpl createLoader(Consumer<DataPack> dataPackConsumer) {
     myLogData = new VcsLogData(myProject, myLogProviders, new FatalErrorHandler() {
       @Override
-      public void consume(@Nullable Object source, @NotNull Exception exception) {
-        LOG.error(exception);
+      public void consume(@Nullable Object source, @NotNull Throwable throwable) {
+        LOG.error(throwable);
       }
 
       @Override

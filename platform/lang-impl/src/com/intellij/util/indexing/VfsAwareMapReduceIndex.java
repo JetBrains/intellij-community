@@ -164,7 +164,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
   }
 
   @Override
-  protected void requestRebuild(@NotNull Exception ex) {
+  protected void requestRebuild(@NotNull Throwable ex) {
     Runnable action = () -> FileBasedIndex.getInstance().requestRebuild(myIndexId, ex);
     Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
