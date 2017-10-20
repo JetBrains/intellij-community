@@ -63,9 +63,11 @@ public class FileUtilRt {
     }
   };
 
+  public static final int THREAD_LOCAL_BUFFER_LENGTH = 1024 * 20;
   protected static final ThreadLocal<byte[]> BUFFER = new ThreadLocal<byte[]>() {
+    @Override
     protected byte[] initialValue() {
-      return new byte[1024 * 20];
+      return new byte[THREAD_LOCAL_BUFFER_LENGTH];
     }
   };
 

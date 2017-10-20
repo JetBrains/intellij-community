@@ -19,7 +19,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.XmlCharsetDetector;
@@ -34,10 +33,10 @@ public abstract class XmlLikeFileType extends LanguageFileType {
   }
   @Override
   public String getCharset(@NotNull VirtualFile file, @NotNull final byte[] content) {
-    Trinity<Charset, CharsetToolkit.GuessedEncoding, byte[]> guessed = LoadTextUtil.guessFromContent(file, content, content.length);
+    LoadTextUtil.DetectResult guessed = LoadTextUtil.guessFromContent(file, content);
     String charset =
-      guessed != null && guessed.first != null
-      ? guessed.first.name()
+      guessed.hardCodedCharset != null
+      ? guessed.hardCodedCharset.name()
       : XmlCharsetDetector.extractXmlEncodingFromProlog(content);
     return charset == null ? CharsetToolkit.UTF8 : charset;
   }
