@@ -143,7 +143,7 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
     }
 
     @Override
-    public void requestRebuild(@NotNull Exception ex) {
+    public void requestRebuild(@NotNull Throwable ex) {
       myFatalErrorHandler.consume(this, ex);
     }
   }
