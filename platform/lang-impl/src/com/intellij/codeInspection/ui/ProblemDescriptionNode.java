@@ -26,6 +26,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.WeakStringInterner;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -144,6 +145,8 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     return getPresentation().isExcluded(getDescriptor());
   }
 
+  private final static WeakStringInterner NAME_INTERNER = new WeakStringInterner();
+
   @NotNull
   @Override
   protected String calculatePresentableName() {
@@ -151,7 +154,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     if (descriptor == null) return "";
     PsiElement element = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
 
-    return XmlStringUtil.stripHtml(ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element, TRIM_AT_TREE_END));
+    return NAME_INTERNER.intern(XmlStringUtil.stripHtml(ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element, TRIM_AT_TREE_END)));
   }
 
   @Override
