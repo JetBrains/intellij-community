@@ -76,6 +76,13 @@ public class CaptureSettingsProvider {
     addCapture("io/netty/util/concurrent/SingleThreadEventExecutor", "addTask", FIRST_PARAM);
     addInsert("io/netty/util/concurrent/AbstractEventExecutor", "safeExecute", FIRST_PARAM);
 
+    // scala
+    addCapture("scala/concurrent/impl/Future$PromiseCompletingRunnable", "<init>", THIS_KEY);
+    addInsert("scala/concurrent/impl/Future$PromiseCompletingRunnable", "run", THIS_KEY);
+
+    addCapture("scala/concurrent/impl/CallbackRunnable", "<init>", THIS_KEY);
+    addInsert("scala/concurrent/impl/CallbackRunnable", "run", THIS_KEY);
+
     IDE_INSERT_POINTS = StreamEx.of(INSERT_POINTS).map(p -> p.myInsertPoint).nonNull().toList();
   }
 
