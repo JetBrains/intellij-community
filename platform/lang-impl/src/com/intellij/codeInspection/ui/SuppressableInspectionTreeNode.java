@@ -20,11 +20,12 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
-import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Interner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -176,6 +177,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   }
 
   private static class NodeState {
+    private static final Interner<NodeState> INTERNER = new Interner<>();
     private final boolean isValid;
     private final boolean isSuppressed;
     private final boolean isFixApplied;
@@ -199,9 +201,14 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
 
       return true;
     }
+
+    @Override
+    public int hashCode() {
+     return (isValid ? 0x1 : 0) + (isFixApplied ? 0x2 : 0) + (isSuppressed ? 0x4 : 0);
+    }
   }
 
   protected NodeState calculateState() {
-    return new NodeState(isValid(), isAlreadySuppressedFromView(), isQuickFixAppliedFromView());
+    return NodeState.INTERNER.intern(new NodeState(isValid(), isAlreadySuppressedFromView(), isQuickFixAppliedFromView()));
   }
 }
