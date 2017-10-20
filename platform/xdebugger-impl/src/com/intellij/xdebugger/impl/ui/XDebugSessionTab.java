@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
@@ -65,7 +51,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   public static final DataKey<XDebugSessionTab> TAB_KEY = DataKey.create("XDebugSessionTab");
 
   private XWatchesViewImpl myWatchesView;
-  private XFramesView myFramesView;
   private boolean myWatchesInVariables = Registry.is("debugger.watches.in.variables");
   private final LinkedHashMap<String, XDebugView> myViews = new LinkedHashMap<>();
 
@@ -172,9 +157,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     if (XWatchesView.DATA_KEY.is(dataId)) {
       return myWatchesView;
     }
-    else if (XFramesView.DATA_KEY.is(dataId)) {
-      return myFramesView;
-    }
     else if (TAB_KEY.is(dataId)) {
       return this;
     }
@@ -224,9 +206,9 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   @NotNull
   private Content createFramesContent() {
-    myFramesView = new XFramesView(myProject);
-    registerView(DebuggerContentInfo.FRAME_CONTENT, myFramesView);
-    Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, myFramesView.getMainPanel(),
+    XFramesView framesView = new XFramesView(myProject);
+    registerView(DebuggerContentInfo.FRAME_CONTENT, framesView);
+    Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, framesView.getMainPanel(),
                                                XDebuggerBundle.message("debugger.session.tab.frames.title"), AllIcons.Debugger.Frame, null);
     framesContent.setCloseable(false);
     return framesContent;
