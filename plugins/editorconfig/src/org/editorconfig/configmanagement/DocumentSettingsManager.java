@@ -57,7 +57,11 @@ public class DocumentSettingsManager extends FileDocumentManagerAdapter {
 
   private void applySettings(VirtualFile file) {
     if (file == null) return;
-    if (!Utils.isEnabled(CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings())) return;
+    if (!Utils.isEnabled(CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings())) {
+      file.putUserData(TrailingSpacesStripper.OVERRIDE_STRIP_TRAILING_SPACES_KEY, null);
+      file.putUserData(TrailingSpacesStripper.OVERRIDE_ENSURE_NEWLINE_KEY, null);
+      return;
+    }
     // Get editorconfig settings
     final List<EditorConfig.OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(myProject, file);
     // Apply trailing spaces setting
