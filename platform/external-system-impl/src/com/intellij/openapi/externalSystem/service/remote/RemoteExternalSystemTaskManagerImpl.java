@@ -43,7 +43,7 @@ public class RemoteExternalSystemTaskManagerImpl<S extends ExternalSystemExecuti
                            @NotNull final List<String> taskNames,
                            @NotNull final String projectPath,
                            @Nullable final S settings,
-                           @Nullable final String jvmAgentSetup) throws RemoteException, ExternalSystemException {
+                           @Nullable final String jvmAgentSetup) throws ExternalSystemException {
     execute(id, () -> {
       myDelegate.executeTasks(
         id, taskNames, projectPath, settings, jvmAgentSetup, getNotificationListener());
@@ -52,7 +52,7 @@ public class RemoteExternalSystemTaskManagerImpl<S extends ExternalSystemExecuti
   }
 
   @Override
-  public boolean cancelTask(@NotNull final ExternalSystemTaskId id) throws RemoteException, ExternalSystemException {
+  public boolean cancelTask(@NotNull final ExternalSystemTaskId id) throws ExternalSystemException {
     return myDelegate.cancelTask(id, getNotificationListener());
   }
 }

@@ -327,7 +327,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
         if (isProjectOpen && myProject.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) != Boolean.TRUE) {
           Long affectedFilesTimestamp = modificationStamps.get(settings.getExternalProjectPath());
           affectedFilesTimestamp = affectedFilesTimestamp == null ? -1L : affectedFilesTimestamp;
-          if (timeStamp != affectedFilesTimestamp.longValue()) {
+          if (timeStamp != affectedFilesTimestamp) {
             scheduleUpdate(settings.getExternalProjectPath());
           }
         }

@@ -99,7 +99,7 @@ public class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecutionSet
   @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed", "unchecked", "UseOfSystemOutOrSystemErr"})
   @Override
   protected <I extends RemoteExternalSystemService<S>, C extends I> I createService(@NotNull Class<I> interfaceClass, @NotNull final C impl)
-    throws ClassNotFoundException, IllegalAccessException, InstantiationException, RemoteException
+    throws RemoteException
   {
     if (!myStdOutputConfigured) {
       myStdOutputConfigured = true;
@@ -157,7 +157,7 @@ public class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecutionSet
         @NotNull private final StringBuilder myBuffer = new StringBuilder();
 
         @Override
-        public void write(int b) throws IOException {
+        public void write(int b) {
           char c = (char)b;
           myBuffer.append(Character.toString(c));
           if (c == '\n') {
@@ -166,7 +166,7 @@ public class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecutionSet
         }
 
         @Override
-        public void write(byte[] b, int off, int len) throws IOException {
+        public void write(byte[] b, int off, int len) {
           int start = off;
           int maxOffset = off + len;
           for (int i = off; i < maxOffset; i++) {
