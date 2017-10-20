@@ -47,11 +47,11 @@ public class BackwardReferenceIndexWriter {
     myIndex = index;
   }
 
-  Exception getRebuildRequestCause() {
+  Throwable getRebuildRequestCause() {
     return myIndex.getRebuildRequestCause();
   }
 
-  void setRebuildCause(Exception e) {
+  void setRebuildCause(Throwable e) {
     myIndex.setRebuildRequestCause(e);
   }
 
