@@ -5,6 +5,7 @@ import com.intellij.execution.compound.CompoundRunConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.TargetAwareRunProfile;
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -19,6 +20,7 @@ import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.*;
@@ -247,7 +249,10 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
       if (eachConfiguration instanceof CompoundRunConfiguration) {
         for (Map.Entry<RunConfiguration, ExecutionTarget> subConfigWithTarget
           : ((CompoundRunConfiguration)eachConfiguration).getConfigurationsWithTargets().entrySet()) {
-          toProcess.add(Pair.create(runManager.getSettings(subConfigWithTarget.getKey()), subConfigWithTarget.getValue()));
+          RunnerAndConfigurationSettingsImpl subSettings = runManager.getSettings(subConfigWithTarget.getKey());
+          if (subSettings != null /* it might have been already deleted */) {
+            toProcess.add(Pair.create(subSettings, subConfigWithTarget.getValue()));
+          }
         }
       }
       else {
@@ -267,5 +272,11 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
   public void update() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     updateActiveTarget();
+  }
+  
+  @TestOnly
+  public void reset() {
+    mySavedActiveTargetId = null;
+    myActiveTarget = null;
   }
 }
