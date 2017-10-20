@@ -158,7 +158,9 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   public final List<TreeNode> getChildren(Object object) {
     Node node = getNode(object);
     List<Node> list = node == null ? null : node.children.get();
-    return list == null || list.isEmpty() ? emptyList() : unmodifiableList(list);
+    if (list == null || list.isEmpty()) return emptyList();
+    list.forEach(child -> child.update());
+    return unmodifiableList(list);
   }
 
   @Override
