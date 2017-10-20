@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 import static com.jetbrains.python.debugger.pydev.transport.BaseDebuggerTransport.logFrame;
 
 
-public class RemoteDebugger implements ProcessDebugger {
+public class RemoteDebugger implements DebuggerMessageHandler, ProcessDebugger {
   private static final int RESPONSE_TIMEOUT = 60000;
 
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.pydev.remote.RemoteDebugger");
@@ -45,10 +45,8 @@ public class RemoteDebugger implements ProcessDebugger {
 
   private final IPyDebugProcess myDebugProcess;
 
-  private int mySequence = -1;
-  private final Object mySequenceObject = new Object(); // for synchronization on mySequence
+  @NotNull private final ResponseHolder myResponseHolder;
   private final Map<String, PyThreadInfo> myThreads = new ConcurrentHashMap<>();
-  private final Map<Integer, ProtocolFrame> myResponseQueue = new HashMap<>();
   private final TempVarsHolder myTempVars = new TempVarsHolder();
 
   private Map<Pair<String, Integer>, String> myTempBreakpoints = Maps.newHashMap();
@@ -61,20 +59,33 @@ public class RemoteDebugger implements ProcessDebugger {
   public RemoteDebugger(@NotNull IPyDebugProcess debugProcess, @NotNull String host, int port) {
     myDebugProcess = debugProcess;
     myDebuggerTransport = new ClientModeDebuggerTransport(this, host, port);
+    myResponseHolder = new ResponseHolder(myDebuggerTransport);
   }
 
   public RemoteDebugger(@NotNull IPyDebugProcess debugProcess, @NotNull ServerSocket socket, int timeout) {
     myDebugProcess = debugProcess;
     myDebuggerTransport = new ServerModeDebuggerTransport(this, socket, timeout);
+    myResponseHolder = new ResponseHolder(myDebuggerTransport);
   }
 
   protected RemoteDebugger(@NotNull IPyDebugProcess debugProcess, @NotNull DebuggerTransport debuggerTransport) {
     myDebugProcess = debugProcess;
     myDebuggerTransport = debuggerTransport;
+    myResponseHolder = new ResponseHolder(myDebuggerTransport);
   }
 
   public IPyDebugProcess getDebugProcess() {
     return myDebugProcess;
+  }
+
+  @NotNull
+  ResponseHolder getResponseHolder() {
+    return myResponseHolder;
+  }
+
+  @NotNull
+  DebuggerTransport getDebuggerTransport() {
+    return myDebuggerTransport;
   }
 
   @Override
@@ -219,10 +230,7 @@ public class RemoteDebugger implements ProcessDebugger {
 
   private void cleanUp() {
     myThreads.clear();
-    myResponseQueue.clear();
-    synchronized (mySequenceObject) {
-      mySequence = -1;
-    }
+    myResponseHolder.cleanUp();
     myTempVars.clear();
   }
 
@@ -283,44 +291,7 @@ public class RemoteDebugger implements ProcessDebugger {
     return Collections.unmodifiableCollection(new ArrayList<>(myThreads.values()));
   }
 
-  int getNextSequence() {
-    synchronized (mySequenceObject) {
-      mySequence += 2;
-      return mySequence;
-    }
-  }
 
-  void placeResponse(final int sequence, final ProtocolFrame response) {
-    synchronized (myResponseQueue) {
-      if (response == null || myResponseQueue.containsKey(sequence)) {
-        myResponseQueue.put(sequence, response);
-      }
-      if (response != null) {
-        myResponseQueue.notifyAll();
-      }
-    }
-  }
-
-  @Nullable
-  ProtocolFrame waitForResponse(final int sequence) {
-    ProtocolFrame response;
-    long until = System.currentTimeMillis() + RESPONSE_TIMEOUT;
-
-    synchronized (myResponseQueue) {
-      do {
-        try {
-          myResponseQueue.wait(1000);
-        }
-        catch (InterruptedException ignore) {
-        }
-        response = myResponseQueue.get(sequence);
-      }
-      while (response == null && isConnected() && System.currentTimeMillis() < until);
-      myResponseQueue.remove(sequence);
-    }
-
-    return response;
-  }
 
   @Override
   public void execute(@NotNull final AbstractCommand command) {
@@ -350,10 +321,6 @@ public class RemoteDebugger implements ProcessDebugger {
     }
   }
 
-  boolean sendFrame(final ProtocolFrame frame) {
-    return myDebuggerTransport.sendFrame(frame);
-  }
-
   @Override
   public void suspendAllThreads() {
     for (PyThreadInfo thread : getThreads()) {
@@ -377,7 +344,6 @@ public class RemoteDebugger implements ProcessDebugger {
   @Override
   public void disconnect() {
     myDebuggerTransport.disconnect();
-
     cleanUp();
   }
 
@@ -480,7 +446,7 @@ public class RemoteDebugger implements ProcessDebugger {
         myDebugProcess.showCythonWarning();
       }
       else {
-        placeResponse(frame.getSequence(), frame);
+        myResponseHolder.placeResponse(frame.getSequence(), frame);
       }
     }
     catch (Throwable t) {

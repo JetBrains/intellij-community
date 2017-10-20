@@ -4,7 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.io.BaseOutputReader;
-import com.jetbrains.python.debugger.pydev.RemoteDebugger;
+import com.jetbrains.python.debugger.pydev.DebuggerMessageHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -19,17 +19,17 @@ import java.util.concurrent.Future;
 public abstract class BaseDebuggerReader extends BaseOutputReader {
   private static final Logger LOG = Logger.getInstance(BaseDebuggerReader.class);
 
-  @NotNull private final RemoteDebugger myDebugger;
+  @NotNull private final DebuggerMessageHandler myDebuggerMessageHandler;
   @NotNull private StringBuilder myTextBuilder = new StringBuilder();
 
-  public BaseDebuggerReader(@NotNull InputStream inputStream, @NotNull Charset charset, @NotNull RemoteDebugger debugger) {
+  public BaseDebuggerReader(@NotNull InputStream inputStream, @NotNull Charset charset, @NotNull DebuggerMessageHandler debuggerMessageHandler) {
     super(inputStream, charset);
-    myDebugger = debugger;
+    myDebuggerMessageHandler = debuggerMessageHandler;
   }
 
   @NotNull
-  protected RemoteDebugger getDebugger() {
-    return myDebugger;
+  protected DebuggerMessageHandler getDebuggerMessageHandler() {
+    return myDebuggerMessageHandler;
   }
 
   protected void doRun() {
@@ -97,7 +97,7 @@ public abstract class BaseDebuggerReader extends BaseOutputReader {
       }
 
       for (String line : lines) {
-        myDebugger.processResponse(line + "\n");
+        myDebuggerMessageHandler.processResponse(line + "\n");
       }
     }
   }

@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.pydev.AbstractCommand;
 import com.jetbrains.python.debugger.pydev.ClientModeMultiProcessDebugger;
-import com.jetbrains.python.debugger.pydev.RemoteDebugger;
+import com.jetbrains.python.debugger.pydev.DebuggerMessageHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,10 +59,10 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
   @Nullable private Socket mySocket;
   @Nullable private volatile DebuggerReader myDebuggerReader;
 
-  public ClientModeDebuggerTransport(@NotNull RemoteDebugger debugger,
+  public ClientModeDebuggerTransport(@NotNull DebuggerMessageHandler debuggerMessageHandler,
                                      @NotNull String host,
                                      int port) {
-    super(debugger);
+    super(debuggerMessageHandler);
     myHost = host;
     myPort = port;
   }
@@ -111,7 +111,7 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
           synchronized (mySocketObject) {
             stream = mySocket.getInputStream();
           }
-          myDebuggerReader = new DebuggerReader(myDebugger, stream);
+          myDebuggerReader = new DebuggerReader(myDebuggerMessageHandler, stream);
         }
         catch (IOException e) {
           LOG.debug("Failed to create debugger reader", e);
@@ -122,7 +122,7 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
         Future<Boolean> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
           beforeHandshake.countDown();
           try {
-            myDebugger.handshake();
+            myDebuggerMessageHandler.handshake();
             myDebuggerReader.connectionApproved();
             return true;
           }
@@ -194,9 +194,9 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
 
   @Override
   protected void onSocketException() {
-    myDebugger.disconnect();
+    myDebuggerMessageHandler.disconnect();
     if (myState == State.APPROVED) {
-      myDebugger.fireCommunicationError();
+      myDebuggerMessageHandler.fireCommunicationError();
     }
   }
 
@@ -258,22 +258,22 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
      */
     private final AtomicBoolean myConnectionApproved = new AtomicBoolean(false);
 
-    public DebuggerReader(@NotNull RemoteDebugger debugger, @NotNull InputStream stream) throws IOException {
-      super(stream, CharsetToolkit.UTF8_CHARSET, debugger); //TODO: correct encoding?
+    public DebuggerReader(@NotNull DebuggerMessageHandler debuggerMessageHandler, @NotNull InputStream stream) throws IOException {
+      super(stream, CharsetToolkit.UTF8_CHARSET, debuggerMessageHandler); //TODO: correct encoding?
       start(getClass().getName());
     }
 
     @Override
     protected void onExit() {
       if (myConnectionApproved.get()) {
-        getDebugger().fireExitEvent();
+        getDebuggerMessageHandler().fireExitEvent();
       }
     }
 
     @Override
     protected void onCommunicationError() {
       if (myConnectionApproved.get()) {
-        getDebugger().fireCommunicationError();
+        getDebuggerMessageHandler().fireCommunicationError();
       }
     }
 

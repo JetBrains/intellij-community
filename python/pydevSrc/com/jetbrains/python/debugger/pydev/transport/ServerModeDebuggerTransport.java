@@ -2,7 +2,7 @@ package com.jetbrains.python.debugger.pydev.transport;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.jetbrains.python.debugger.pydev.RemoteDebugger;
+import com.jetbrains.python.debugger.pydev.DebuggerMessageHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -24,8 +24,8 @@ public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
   private volatile Socket mySocket;
   private int myConnectionTimeout;
 
-  public ServerModeDebuggerTransport(RemoteDebugger debugger, @NotNull ServerSocket socket, int connectionTimeout) {
-    super(debugger);
+  public ServerModeDebuggerTransport(DebuggerMessageHandler debuggerMessageHandler, @NotNull ServerSocket socket, int connectionTimeout) {
+    super(debuggerMessageHandler);
     myServerSocket = socket;
     myConnectionTimeout = connectionTimeout;
   }
@@ -41,7 +41,7 @@ public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
     }
     try {
       synchronized (mySocketObject) {
-        myDebuggerReader = new DebuggerReader(myDebugger, mySocket.getInputStream());
+        myDebuggerReader = new DebuggerReader(myDebuggerMessageHandler, mySocket.getInputStream());
       }
     }
     catch (IOException e) {
@@ -110,22 +110,22 @@ public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
 
   @Override
   protected void onSocketException() {
-    myDebugger.disconnect();
-    myDebugger.fireCommunicationError();
+    myDebuggerMessageHandler.disconnect();
+    myDebuggerMessageHandler.fireCommunicationError();
   }
 
   public static class DebuggerReader extends BaseDebuggerReader {
-    public DebuggerReader(@NotNull RemoteDebugger debugger, @NotNull InputStream stream) throws IOException {
-      super(stream, CharsetToolkit.UTF8_CHARSET, debugger); //TODO: correct encoding?
+    public DebuggerReader(@NotNull DebuggerMessageHandler debuggerMessageHandler, @NotNull InputStream stream) throws IOException {
+      super(stream, CharsetToolkit.UTF8_CHARSET, debuggerMessageHandler); //TODO: correct encoding?
       start(getClass().getName());
     }
 
     @Override
     protected void onExit() {
-      getDebugger().fireExitEvent();
+      getDebuggerMessageHandler().fireExitEvent();
     }
 
     @Override
-    protected void onCommunicationError() {getDebugger().fireCommunicationError();}
+    protected void onCommunicationError() {getDebuggerMessageHandler().fireCommunicationError();}
   }
 }

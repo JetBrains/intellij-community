@@ -2,6 +2,8 @@ package com.jetbrains.python.debugger.pydev;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.jetbrains.python.debugger.PyDebuggerException;
+import com.jetbrains.python.debugger.PyFrameAccessor;
+import com.jetbrains.python.debugger.pydev.transport.DebuggerTransport;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -65,14 +67,24 @@ public abstract class AbstractCommand<T> {
 
   
 
-  @NotNull private final RemoteDebugger myDebugger;
+  @NotNull private final ResponseHolder myHolder;
+  @NotNull private final DebuggerTransport myTransport;
+  @NotNull private final PyFrameAccessor myFrameAccessor;
   private final int myCommandCode;
 
   private final ResponseProcessor<T> myResponseProcessor;
 
+  protected AbstractCommand(@NotNull RemoteDebugger remoteDebugger, final int commandCode) {
+    this(remoteDebugger.getResponseHolder(), remoteDebugger.getDebuggerTransport(), remoteDebugger.getDebugProcess(), commandCode);
+  }
 
-  protected AbstractCommand(@NotNull final RemoteDebugger debugger, final int commandCode) {
-    myDebugger = debugger;
+  protected AbstractCommand(@NotNull final ResponseHolder responseHolder,
+                            @NotNull final DebuggerTransport transport,
+                            @NotNull final PyFrameAccessor frameAccessor,
+                            final int commandCode) {
+    myHolder = responseHolder;
+    myTransport = transport;
+    myFrameAccessor = frameAccessor;
     myCommandCode = commandCode;
     myResponseProcessor = createResponseProcessor();
   }
@@ -114,16 +126,16 @@ public abstract class AbstractCommand<T> {
   }
 
   public void execute() throws PyDebuggerException {
-    final int sequence = myDebugger.getNextSequence();
+    final int sequence = myHolder.getNextSequence();
 
     final ResponseProcessor<T> processor = getResponseProcessor();
 
     if (processor != null || isResponseExpected()) {
-      myDebugger.placeResponse(sequence, null);
+      myHolder.placeResponse(sequence, null);
     }
 
     ProtocolFrame frame = new ProtocolFrame(myCommandCode, sequence, getPayload());
-    boolean frameSent = myDebugger.sendFrame(frame);
+    boolean frameSent = myTransport.sendFrame(frame);
 
     if (processor == null && !isResponseExpected()) return;
 
@@ -131,9 +143,9 @@ public abstract class AbstractCommand<T> {
       throw new PyDebuggerException("Couldn't send frame " + myCommandCode);
     }
 
-    frame = myDebugger.waitForResponse(sequence);
+    frame = myHolder.waitForResponse(sequence);
     if (frame == null) {
-      if (!myDebugger.isConnected()) {
+      if (!myTransport.isConnected()) {
         throw new PyDebuggerException("No connection (command:  " + myCommandCode + " )");
       }
       throw new PyDebuggerException("Timeout waiting for response on " + myCommandCode);
@@ -147,17 +159,17 @@ public abstract class AbstractCommand<T> {
   }
 
   public void execute(final PyDebugCallback<T> callback) {
-    final int sequence = myDebugger.getNextSequence();
+    final int sequence = myHolder.getNextSequence();
 
     final ResponseProcessor<T> processor = getResponseProcessor();
 
     if (processor != null) {
-      myDebugger.placeResponse(sequence, null);
+      myHolder.placeResponse(sequence, null);
     }
 
     try {
       ProtocolFrame frame = new ProtocolFrame(myCommandCode, sequence, getPayload());
-      boolean frameSent = myDebugger.sendFrame(frame);
+      boolean frameSent = myTransport.sendFrame(frame);
 
       if (processor == null) return;
 
@@ -172,9 +184,9 @@ public abstract class AbstractCommand<T> {
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
-        ProtocolFrame frame = myDebugger.waitForResponse(sequence);
+        ProtocolFrame frame = myHolder.waitForResponse(sequence);
         if (frame == null) {
-          if (!myDebugger.isConnected()) {
+          if (!myTransport.isConnected()) {
             throw new PyDebuggerException("No connection (command:  " + myCommandCode + " )");
           }
           throw new PyDebuggerException("Timeout waiting for response on " + myCommandCode);
@@ -235,8 +247,8 @@ public abstract class AbstractCommand<T> {
   }
 
   @NotNull
-  public RemoteDebugger getDebugger() {
-    return myDebugger;
+  public PyFrameAccessor getFrameAccessor() {
+    return myFrameAccessor;
   }
 
   protected static class Payload {

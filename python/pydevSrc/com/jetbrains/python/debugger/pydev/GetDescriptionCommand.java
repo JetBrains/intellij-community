@@ -26,7 +26,7 @@ public class GetDescriptionCommand extends AbstractFrameCommand {
   protected void processResponse(ProtocolFrame response) throws PyDebuggerException {
     super.processResponse(response);
     try {
-      PyDebugValue pyDebugValue = ProtocolParser.parseValue(response.getPayload(), getDebugger().getDebugProcess());
+      PyDebugValue pyDebugValue = ProtocolParser.parseValue(response.getPayload(), getFrameAccessor());
       result = pyDebugValue.getValue();
     }
     catch (Exception e) {

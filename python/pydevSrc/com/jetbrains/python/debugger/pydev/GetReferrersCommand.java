@@ -21,7 +21,7 @@ public class GetReferrersCommand extends RunCustomOperationCommand<List<PyDebugV
     return new ResponseProcessor<List<PyDebugValue>>() {
       @Override
       protected List<PyDebugValue> parseResponse(ProtocolFrame response) throws PyDebuggerException {
-        return ProtocolParser.parseReferrers(decode(response.getPayload()), getDebugger().getDebugProcess());
+        return ProtocolParser.parseReferrers(decode(response.getPayload()), getFrameAccessor());
       }
     };
   }
