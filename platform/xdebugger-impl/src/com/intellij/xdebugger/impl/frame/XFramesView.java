@@ -129,7 +129,7 @@ public class XFramesView extends XDebugView {
 
       private void stopBuilder() {
         if (myBuilder != null) {
-          myBuilder.setObsolete(true);
+          myBuilder.setObsolete();
           myBuilder = null;
         }
       }
@@ -199,9 +199,11 @@ public class XFramesView extends XDebugView {
       return myObsolete;
     }
 
-    public void setObsolete(boolean obsolete) {
-      myObsolete = obsolete;
-      removeLoading();
+    public void setObsolete() {
+      if (!myObsolete) {
+        myObsolete = true;
+        removeLoading();
+      }
     }
 
     void removeLoading() {
