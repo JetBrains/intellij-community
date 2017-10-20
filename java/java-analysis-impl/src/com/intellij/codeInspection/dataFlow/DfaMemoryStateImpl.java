@@ -490,7 +490,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return box(value) == box(value);
   }
 
-  @SuppressWarnings("UnnecessaryBoxing")
+  @SuppressWarnings({"UnnecessaryBoxing", "UnnecessaryUnboxing"})
   private static Object box(final Object value) {
     Object newBoxedValue;
     if (value instanceof Integer) {
@@ -935,9 +935,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (!applyUnboxedRelation((DfaVariableValue)dfaLeft, dfaRight, isNegated)) {
         return false;
       }
-      if (!applyBoxedRelation((DfaVariableValue)dfaLeft, dfaRight, isNegated)) {
-        return false;
-      }
+      return applyBoxedRelation((DfaVariableValue)dfaLeft, dfaRight, isNegated);
     }
 
     return true;
@@ -973,13 +971,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (dfaRight instanceof DfaConstValue) {
       Object constVal = ((DfaConstValue)dfaRight).getValue();
       if (constVal instanceof Boolean) {
-        DfaConstValue negVal = myFactory.getBoolean(!((Boolean)constVal).booleanValue());
-        if (!applyRelation(dfaLeft, negVal, !negated)) {
-          return false;
-        }
-        if (!applyRelation(dfaLeft.createNegated(), negVal, negated)) {
-          return false;
-        }
+        DfaConstValue negVal = myFactory.getBoolean(!(Boolean)constVal);
+        return applyRelation(dfaLeft, negVal, !negated) &&
+               applyRelation(dfaLeft.createNegated(), negVal, negated);
       }
     }
     return true;
@@ -1071,7 +1065,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       DfaVariableValue varValue = (DfaVariableValue)value;
       if (varValue.getVariableType() instanceof PsiPrimitiveType) return true;
       if (isNotNull(varValue)) return true;
-      if (getVariableState(varValue).getNullability() == Nullness.NULLABLE) return false;
+      return getVariableState(varValue).getNullability() != Nullness.NULLABLE;
     }
     return true;
   }
