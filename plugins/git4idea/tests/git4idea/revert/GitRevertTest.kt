@@ -226,6 +226,27 @@ class GitRevertTest : GitSingleRepoTest() {
     assertNull("There should be no author information in the changelist: $data", data)
   }
 
+  fun `test revert commit which was renamed later`() {
+    val initialName = "a.txt"
+    file(initialName).create("initial\n").addCommit("create $initialName")
+    val commit = file(initialName).append("more\n").addCommit("add content").details()
+    val renamed = "renamed.txt"
+    git("mv $initialName $renamed")
+    commit("Rename $initialName to $renamed")
+
+    vcsHelper.onCommit { msg ->
+      git("commit -am '$msg'")
+      true
+    }
+
+    GitRevertOperation(myProject, listOf(commit), false).execute()
+
+    assertSuccessfulNotification("Revert successful", "${commit.id.toShortString()} ${commit.subject}")
+    myRepo.assertCommitted {
+      modified(renamed)
+    }
+  }
+
   private fun commitMessageForRevert(commit: VcsFullCommitDetails): String {
     return """
         Revert "${commit.subject}"

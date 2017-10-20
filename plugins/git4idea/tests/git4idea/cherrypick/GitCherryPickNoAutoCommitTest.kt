@@ -130,6 +130,32 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
     `check resolve conflicts and commit`()
   }
 
+  fun `test cherry-pick changes in renamed file`() {
+    val initialName = "a.txt"
+    file(initialName).create("This file has name $initialName").addCommit("Create $initialName")
+
+    val renamed = "renamed.txt"
+    checkoutNew("feature")
+    git("mv $initialName $renamed")
+    commit("Rename $initialName to $renamed")
+    val commit = file(renamed).write("This file has name $renamed").addCommit("Modify the file").hash()
+    checkout("master")
+
+    vcsHelper.onCommit { msg ->
+      git("commit -am '$msg'")
+      true
+    }
+
+    cherryPick(commit)
+
+    assertSuccessfulNotification("Cherry-pick successful", "${shortHash(commit)} Modify the file")
+    assertLastMessage("Modify the file\n\n(cherry picked from commit ${shortHash(commit)})")
+    myRepo.assertCommitted {
+      modified(initialName)
+    }
+    changeListManager.assertOnlyDefaultChangelist()
+  }
+
   private fun assertChanges(list: LocalChangeList, file: String) {
     assertEquals("Changelist size is incorrect", 1, list.changes.size)
     assertEquals("Incorrect changed file", file, list.changes.first().afterRevision!!.file.name)
