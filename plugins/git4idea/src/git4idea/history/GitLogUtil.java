@@ -128,7 +128,7 @@ public class GitLogUtil {
 
       userConsumer.consume(factory.createUser(record.getAuthorName(), record.getAuthorEmail()));
     });
-    handler.runInCurrentThread(null);
+    Git.getInstance().runCommandWithoutCollectingOutput(handler);
     handlerListener.reportErrors();
   }
 
@@ -296,7 +296,7 @@ public class GitLogUtil {
     StopWatch sw = StopWatch.start("loading details in [" + root.getName() + "]");
 
     GitLogOutputSplitter handlerListener = new GitLogOutputSplitter(handler, parser, converter);
-    handler.runInCurrentThread(null);
+    Git.getInstance().runCommandWithoutCollectingOutput(handler);
     handlerListener.reportErrors();
 
     sw.report();

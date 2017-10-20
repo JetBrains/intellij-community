@@ -39,8 +39,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * All Git commands are cancellable when called via {@link GitHandler}. <br/>
- * To execute the command synchronously, call {@link GitHandler#runInCurrentThread(Runnable)}
- * or better {@link Git#runCommand(Computable)}.<br/>
+ * To execute the command synchronously, call {@link Git#runCommand(Computable)}.<br/>
  * To execute in the background or under a modal progress, use the standard {@link Task}. <br/>
  * To watch the progress, call {@link GitStandardProgressAnalyzer#createListener(ProgressIndicator)}.
  *

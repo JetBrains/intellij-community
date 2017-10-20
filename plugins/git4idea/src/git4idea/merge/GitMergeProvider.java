@@ -270,7 +270,7 @@ public class GitMergeProvider implements MergeProvider2 {
         }
       }
     });
-    h.runInCurrentThread(null);
+    Git.getInstance().runCommandWithoutCollectingOutput(h);
 
     if (pathAmbiguous[0]) return null;
     return result[0];

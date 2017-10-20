@@ -733,7 +733,7 @@ public abstract class GitHandler {
     return myCommandLine.getCommandLineString().length() > VcsFileUtil.FILE_PATH_LIMIT;
   }
 
-  public void runInCurrentThread(@Nullable Runnable postStartAction) {
+  void runInCurrentThread(@Nullable Runnable postStartAction) {
     //LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread(), "Git process should never start in the dispatch thread.");
 
     if (WRITE == myCommand.lockingPolicy()) {
