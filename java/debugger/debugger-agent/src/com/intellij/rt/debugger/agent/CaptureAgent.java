@@ -147,33 +147,33 @@ public class CaptureAgent {
         List<CapturePoint> capturePoints = getNotNull(myCapturePoints.get(className));
         List<InsertPoint> insertPoints = getNotNull(myInsertPoints.get(className));
         if (!capturePoints.isEmpty() || !insertPoints.isEmpty()) {
-          ClassReader reader = new ClassReader(classfileBuffer);
-          ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES);
-
           try {
+            ClassReader reader = new ClassReader(classfileBuffer);
+            ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES);
+
             reader.accept(new CaptureInstrumentor(Opcodes.ASM6, writer, capturePoints, insertPoints), 0);
+            byte[] bytes = writer.toByteArray();
+
+            if (DEBUG) {
+              try {
+                FileOutputStream stream = new FileOutputStream("instrumented_" + className.replaceAll("/", "_") + ".class");
+                try {
+                  stream.write(bytes);
+                }
+                finally {
+                  stream.close();
+                }
+              }
+              catch (IOException e) {
+                e.printStackTrace();
+              }
+            }
+
+            return bytes;
           }
           catch (Exception e) {
             e.printStackTrace();
           }
-
-          byte[] bytes = writer.toByteArray();
-
-          if (DEBUG) {
-            try {
-              FileOutputStream stream = new FileOutputStream("instrumented_" + className.replaceAll("/", "_") + ".class");
-              try {
-                stream.write(bytes);
-              } finally {
-                stream.close();
-              }
-            }
-            catch (IOException e) {
-              e.printStackTrace();
-            }
-          }
-
-          return bytes;
         }
       }
       return null;
