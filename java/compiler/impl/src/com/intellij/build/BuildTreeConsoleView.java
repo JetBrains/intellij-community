@@ -31,10 +31,8 @@ import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SideBorder;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.treeStructure.SimpleTreeBuilder;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.ui.treeStructure.Tree;
@@ -60,6 +58,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.*;
@@ -134,6 +133,40 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         return super.getCellRenderer(row, column);
       }
     };
+
+    final TreeCellRenderer treeCellRenderer = treeTable.getTree().getCellRenderer();
+    treeTable.getTree().setCellRenderer(new TreeCellRenderer() {
+      @Override
+      public Component getTreeCellRendererComponent(JTree tree,
+                                                    Object value,
+                                                    boolean selected,
+                                                    boolean expanded,
+                                                    boolean leaf,
+                                                    int row,
+                                                    boolean hasFocus) {
+        final Component rendererComponent =
+          treeCellRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+        if (rendererComponent instanceof SimpleColoredComponent) {
+          final Color bg = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+          final Color fg = selected ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground();
+          if (selected) {
+            for (SimpleColoredComponent.ColoredIterator it = ((SimpleColoredComponent)rendererComponent).iterator(); it.hasNext(); ) {
+              it.next();
+              int offset = it.getOffset();
+              int endOffset = it.getEndOffset();
+              SimpleTextAttributes currentAttributes = it.getTextAttributes();
+              SimpleTextAttributes newAttributes =
+                new SimpleTextAttributes(bg, fg, currentAttributes.getWaveColor(), currentAttributes.getStyle());
+              it.split(endOffset - offset, newAttributes);
+            }
+          }
+
+          SpeedSearchUtil.applySpeedSearchHighlighting(treeTable, (SimpleColoredComponent)rendererComponent, true, selected);
+        }
+        return rendererComponent;
+      }
+    });
+    new TreeTableSpeedSearch(treeTable).setComparator(new SpeedSearchComparator(false));
     treeTable.setTableHeader(null);
 
     myTimeColumn = treeTable.getColumnModel().getColumn(1);
