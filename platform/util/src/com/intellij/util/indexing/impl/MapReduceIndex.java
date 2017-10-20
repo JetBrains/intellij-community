@@ -68,8 +68,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
           }
         }
         flush();
-      } catch (StorageException e) {
-        LOG.info(e);
+      } catch (Throwable e) {
         requestRebuild(e);
       }
     }
@@ -278,7 +277,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
 
   public abstract void checkCanceled();
 
-  protected abstract void requestRebuild(Exception e);
+  protected abstract void requestRebuild(Throwable e);
 
   public long getModificationStamp() {
     return myModificationStamp.get();

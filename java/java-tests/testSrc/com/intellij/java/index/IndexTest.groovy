@@ -709,9 +709,9 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     try {
       assertFalse(index.update("qwe/asd", "some_string", null))
-      def rebuildException = index.getRebuildException()
-      assertInstanceOf(rebuildException, StorageException.class)
-      def rebuildCause = rebuildException.getCause()
+      def rebuildThrowable = index.getRebuildThrowable()
+      assertInstanceOf(rebuildThrowable, StorageException.class)
+      def rebuildCause = rebuildThrowable.getCause()
       assertInstanceOf(rebuildCause, IncorrectOperationException.class)
     } finally {
       index.dispose()
