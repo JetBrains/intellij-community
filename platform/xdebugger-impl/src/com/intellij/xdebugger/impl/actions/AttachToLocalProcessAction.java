@@ -109,6 +109,7 @@ public class AttachToLocalProcessAction extends AnAction {
               String debuggerName = ((AttachItem)item).getSelectedDebugger().getDebuggerDisplayName();
               debuggerName = StringUtil.shortenTextWithEllipsis(debuggerName, 50, 0);
               ((ListPopupImpl)popup).setCaption(XDebuggerBundle.message("xdebugger.attach.toLocal.popup.title", debuggerName));
+              ((ListPopupImpl) popup).setAdText(((AttachItem) item).getTooltipText(project));
             }
           };
           popup.addListSelectionListener(listener);
