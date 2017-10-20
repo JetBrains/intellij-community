@@ -198,7 +198,7 @@ public class VcsLogManager implements Disposable {
     private final AtomicBoolean myIsBroken = new AtomicBoolean(false);
 
     @Override
-    public void consume(@Nullable Object source, @NotNull Exception e) {
+    public void consume(@Nullable Object source, @NotNull Throwable e) {
       if (myIsBroken.compareAndSet(false, true)) {
         processError(source, e);
       }
@@ -207,7 +207,7 @@ public class VcsLogManager implements Disposable {
       }
     }
 
-    protected void processError(@Nullable Object source, @NotNull Exception e) {
+    protected void processError(@Nullable Object source, @NotNull Throwable e) {
       if (myRecreateMainLogHandler != null) {
         ApplicationManager.getApplication().invokeLater(() -> myRecreateMainLogHandler.consume(e));
       }
