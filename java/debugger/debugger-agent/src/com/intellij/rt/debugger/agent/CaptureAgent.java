@@ -203,14 +203,28 @@ public class CaptureAgent {
               System.out.println("Capture agent: instrumented capture point at " + capturePoint.myClassName + "." + name + desc);
 
             }
-            return new MethodVisitor(api, super.visitMethod(access, name, desc, signature, exceptions)) {
-              @Override
-              public void visitCode() {
-                capturePoint.myKeyProvider.loadKey(mv, (access & Opcodes.ACC_STATIC) != 0, Type.getMethodType(desc).getArgumentTypes());
-                visitMethodInsn(Opcodes.INVOKESTATIC, CaptureStorage.class.getName().replaceAll("\\.", "/"), "capture", "(Ljava/lang/Object;)V", false);
-                super.visitCode();
-              }
-            };
+            // for constructors and "this" key - move capture to the end
+            if ("<init>".equals(name) && capturePoint.myKeyProvider == THIS_KEY_PROVIDER) {
+              return new MethodVisitor(api, super.visitMethod(access, name, desc, signature, exceptions)) {
+                @Override
+                public void visitInsn(int opcode) {
+                  if (opcode == Opcodes.RETURN) {
+                    capture(mv, capturePoint.myKeyProvider, (access & Opcodes.ACC_STATIC) != 0,
+                            Type.getMethodType(desc).getArgumentTypes());
+                  }
+                  super.visitInsn(opcode);
+                }
+              };
+            }
+            else {
+              return new MethodVisitor(api, super.visitMethod(access, name, desc, signature, exceptions)) {
+                @Override
+                public void visitCode() {
+                  capture(mv, capturePoint.myKeyProvider, (access & Opcodes.ACC_STATIC) != 0, Type.getMethodType(desc).getArgumentTypes());
+                  super.visitCode();
+                }
+              };
+            }
           }
         }
 
@@ -242,7 +256,7 @@ public class CaptureAgent {
       boolean isStatic = (access & Opcodes.ACC_STATIC) != 0;
       Type[] argumentTypes = Type.getMethodType(desc).getArgumentTypes();
 
-      insertEnter(mv, insertPoint, isStatic, argumentTypes);
+      insertEnter(mv, insertPoint.myKeyProvider, isStatic, argumentTypes);
 
       // this
       mv.visitVarInsn(Opcodes.ALOAD, 0);
@@ -260,7 +274,7 @@ public class CaptureAgent {
       mv.visitLabel(end);
 
       // regular exit
-      insertExit(mv, insertPoint, isStatic, argumentTypes);
+      insertExit(mv, insertPoint.myKeyProvider, isStatic, argumentTypes);
       mv.visitInsn(Type.getReturnType(desc).getOpcode(Opcodes.IRETURN));
 
       Label catchLabel = new Label();
@@ -268,22 +282,32 @@ public class CaptureAgent {
       mv.visitTryCatchBlock(start, end, catchLabel, null);
 
       // exception exit
-      insertExit(mv, insertPoint, isStatic, argumentTypes);
+      insertExit(mv, insertPoint.myKeyProvider, isStatic, argumentTypes);
       mv.visitInsn(Opcodes.ATHROW);
 
       mv.visitMaxs(0, 0);
       mv.visitEnd();
     }
 
-    private static void insertEnter(MethodVisitor mv, InsertPoint insertPoint, boolean isStatic, Type[] argumentTypes) {
-      insertPoint.myKeyProvider.loadKey(mv, isStatic, argumentTypes);
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, CaptureStorage.class.getName().replaceAll("\\.", "/"), "insertEnter",
-                         "(Ljava/lang/Object;)V", false);
+    private static void capture(MethodVisitor mv, KeyProvider keyProvider, boolean isStatic, Type[] argumentTypes) {
+      storageCall(mv, keyProvider, isStatic, argumentTypes, "capture");
     }
 
-    private static void insertExit(MethodVisitor mv, InsertPoint insertPoint, boolean isStatic, Type[] argumentTypes) {
-      insertPoint.myKeyProvider.loadKey(mv, isStatic, argumentTypes);
-      mv.visitMethodInsn(Opcodes.INVOKESTATIC, CaptureStorage.class.getName().replaceAll("\\.", "/"), "insertExit",
+    private static void insertEnter(MethodVisitor mv, KeyProvider keyProvider, boolean isStatic, Type[] argumentTypes) {
+      storageCall(mv, keyProvider, isStatic, argumentTypes, "insertEnter");
+    }
+
+    private static void insertExit(MethodVisitor mv, KeyProvider keyProvider, boolean isStatic, Type[] argumentTypes) {
+      storageCall(mv, keyProvider, isStatic, argumentTypes, "insertExit");
+    }
+
+    private static void storageCall(MethodVisitor mv,
+                                    KeyProvider keyProvider,
+                                    boolean isStatic,
+                                    Type[] argumentTypes,
+                                    String storageMethodName) {
+      keyProvider.loadKey(mv, isStatic, argumentTypes);
+      mv.visitMethodInsn(Opcodes.INVOKESTATIC, CaptureStorage.class.getName().replaceAll("\\.", "/"), storageMethodName,
                          "(Ljava/lang/Object;)V", false);
     }
   }
