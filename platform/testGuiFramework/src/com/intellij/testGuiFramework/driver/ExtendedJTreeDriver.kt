@@ -39,6 +39,7 @@ import org.fest.swing.util.Pair
 import org.fest.swing.util.Triple
 import org.fest.util.Lists
 import org.fest.util.Preconditions
+import java.awt.Dimension
 import java.awt.Point
 import java.awt.Rectangle
 import javax.annotation.Nonnull
@@ -69,10 +70,14 @@ open class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
                 times: Int = 1,
                 attempts: Int = DEFAULT_FIND_PATH_ATTEMPTS) {
     val point = scrollToPath(tree, pathStrings)
-    if(tree is TreeTableTree)
+    if (tree is TreeTableTree) {
+      val inspectionPanelHeight = tree.treeTable.visibleRect.height
+      tree.treeTable.scrollRectToVisible(Rectangle(Point(0, point.y + inspectionPanelHeight / 2), Dimension(0, 0)))
       robot.click(tree.treeTable, point, button, times)
-    else
+    }
+    else {
       robot.click(tree, point, button, times)
+    }
     //check that path is selected or click it again
     if (!checkPathIsSelected(tree, pathStrings)) {
       if (attempts == 0) throw Exception(
@@ -519,7 +524,10 @@ open class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
 
   private fun verifyJTreeIsReadyAndFindMatchingPath(tree: JTree, pathStrings: List<String>): TreePath {
     return computeOnEdt {
-      ComponentPreconditions.checkEnabledAndShowing(tree)
+      if (tree is TreeTableTree)
+        ComponentPreconditions.checkEnabledAndShowing(tree.treeTable)
+      else
+        ComponentPreconditions.checkEnabledAndShowing(tree)
       matchingPathWithRootIfInvisible(tree, pathStrings, true)
     }!!
   }
