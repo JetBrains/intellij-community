@@ -29,6 +29,10 @@ import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class SvnAuthenticationManager {
 
+  // TODO Looks reasonable to introduce some AuthType/AuthKind class
+  public static final String PASSWORD = "svn.simple";
+  public static final String SSL = "svn.ssl.client-passphrase";
+
   public static final String SVN_SSH = "svn+ssh";
   public static final String HTTP = "http";
   public static final String HTTPS = "https";

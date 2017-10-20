@@ -5,8 +5,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.auth.PasswordAuthenticationData;
+import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -71,7 +71,7 @@ public class TerminalUserNamePasswordModule extends BaseTerminalModule {
       // TODO: Probably pass real realm to dialog
       // TODO: Extend interface to pass username to dialog (probably using some kind of previousAuth, like in SVNKit)
       authentication = (PasswordAuthenticationData)myRuntime.getAuthenticationService()
-        .requestCredentials(repositoryUrl, ISVNAuthenticationManager.PASSWORD);
+        .requestCredentials(repositoryUrl, SvnAuthenticationManager.PASSWORD);
     }
 
     return sendData(isUserName);

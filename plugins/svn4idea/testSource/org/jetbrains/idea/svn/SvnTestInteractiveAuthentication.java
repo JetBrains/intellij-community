@@ -4,7 +4,6 @@ package org.jetbrains.idea.svn;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.idea.svn.auth.*;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -37,9 +36,10 @@ public class SvnTestInteractiveAuthentication implements AuthenticationProvider 
     Convertor<SVNURL, AuthenticationData> convertor = myData.get(kind);
     AuthenticationData result = convertor == null ? null : convertor.convert(url);
     if (result == null) {
-      if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
+      if (SvnAuthenticationManager.PASSWORD.equals(kind)) {
         result = new PasswordAuthenticationData("username", "abc", canCache);
-      } else if (ISVNAuthenticationManager.SSL.equals(kind)) {
+      }
+      else if (SvnAuthenticationManager.SSL.equals(kind)) {
         result = new CertificateAuthenticationData("aaa", "abc".toCharArray(), canCache);
       }
     }

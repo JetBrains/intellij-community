@@ -17,7 +17,6 @@ import org.jetbrains.idea.svn.dialogs.SSLCredentialsDialog;
 import org.jetbrains.idea.svn.dialogs.ServerSSLDialog;
 import org.jetbrains.idea.svn.dialogs.SimpleCredentialsDialog;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 
 import java.security.cert.X509Certificate;
 
@@ -62,7 +61,7 @@ public class SvnInteractiveAuthenticationProvider implements AuthenticationProvi
     final boolean authCredsOn = canCache && myManager.getHostOptions(url).isAuthStorageEnabled();
 
     final String userName = myManager.getDefaultUsername();
-    if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {// || ISVNAuthenticationManager.USERNAME.equals(kind)) {
+    if (SvnAuthenticationManager.PASSWORD.equals(kind)) {
       command = () -> {
         SimpleCredentialsDialog dialog = new SimpleCredentialsDialog(myProject);
         dialog.setup(realm, userName, authCredsOn);
@@ -72,7 +71,7 @@ public class SvnInteractiveAuthenticationProvider implements AuthenticationProvi
         }
       };
     }
-    else if (ISVNAuthenticationManager.SSL.equals(kind)) {
+    else if (SvnAuthenticationManager.SSL.equals(kind)) {
       command = () -> {
         SvnAuthenticationManager.HostOptions options = myManager.getHostOptions(url);
         final String file = options.getSSLClientCertFile();

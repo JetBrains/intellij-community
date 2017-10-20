@@ -20,7 +20,6 @@ import org.jetbrains.idea.svn.auth.*;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.junit.Before;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -82,7 +81,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     // will be the same as in interactive -> authentication notifier is not used
     manager.setAuthenticationProvider(authentication);
 
-    authentication.addAuthentication(ISVNAuthenticationManager.PASSWORD,
+    authentication.addAuthentication(SvnAuthenticationManager.PASSWORD,
                                      o -> {
                                        ++ myCredentialsAskedInteractivelyCount;
                                        if (myCancelAuth) return null;
@@ -93,7 +92,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
                                          return new PasswordAuthenticationData("1234214 23 4234", "324324", mySaveCredentials);
                                        }
                                      });
-    authentication.addAuthentication(ISVNAuthenticationManager.SSL,
+    authentication.addAuthentication(SvnAuthenticationManager.SSL,
                                      o -> {
                                        ++ myCredentialsAskedInteractivelyCount;
                                        if (myCancelAuth) return null;

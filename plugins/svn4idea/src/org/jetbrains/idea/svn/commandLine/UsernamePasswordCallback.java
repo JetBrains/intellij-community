@@ -6,8 +6,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.auth.AuthenticationData;
 import org.jetbrains.idea.svn.auth.AuthenticationService;
 import org.jetbrains.idea.svn.auth.PasswordAuthenticationData;
+import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -56,7 +56,7 @@ public class UsernamePasswordCallback extends AuthCallbackCase {
   }
 
   public String getType() {
-    return ISVNAuthenticationManager.PASSWORD;
+    return SvnAuthenticationManager.PASSWORD;
   }
 
   @Override

@@ -4,8 +4,8 @@ package org.jetbrains.idea.svn.commandLine;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.auth.AuthenticationService;
 import org.jetbrains.idea.svn.auth.CertificateAuthenticationData;
+import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -27,7 +27,7 @@ public class TwoWaySslCallback extends UsernamePasswordCallback {
 
   @Override
   public String getType() {
-    return ISVNAuthenticationManager.SSL;
+    return SvnAuthenticationManager.SSL;
   }
 
   @Override

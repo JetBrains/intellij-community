@@ -32,7 +32,6 @@ import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.junit.Before;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -82,7 +81,7 @@ public class SvnProtocolsTest extends Svn17TestCase {
     manager.setAuthenticationProvider(authentication);
 
     authentication
-      .addAuthentication(ISVNAuthenticationManager.PASSWORD, o -> new PasswordAuthenticationData("sally", "abcde", true));
+      .addAuthentication(SvnAuthenticationManager.PASSWORD, o -> new PasswordAuthenticationData("sally", "abcde", true));
   }
 
   @Test

@@ -38,7 +38,6 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.info.InfoClient;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 
 import javax.swing.*;
@@ -56,8 +55,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
   private static final Logger LOG = Logger.getInstance(SvnAuthenticationNotifier.class);
 
   private static final List<String> ourAuthKinds = Arrays
-    .asList(ISVNAuthenticationManager.PASSWORD, "svn.ssh", ISVNAuthenticationManager.SSL, "svn.username", "svn.ssl.server",
-            "svn.ssh.server");
+    .asList(SvnAuthenticationManager.PASSWORD, "svn.ssh", SvnAuthenticationManager.SSL, "svn.username", "svn.ssl.server", "svn.ssh.server");
 
   private final SvnVcs myVcs;
   private final RootsToWorkingCopies myRootsToWorkingCopies;
