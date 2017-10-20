@@ -94,17 +94,17 @@ public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectio
             // of course it is better to fix in on reporter side,
             // but it still not possible sometimes. So we will try to workaround here.
             // TODO: remove it when implementations will be able to provide elements strictly from the file under inspection
-            PsiElement startSubstitutor = getSubstitutorIfNeeded(descriptor.getStartElement(), holder.getFile());
-            PsiElement endSubstitutor = getSubstitutorIfNeeded(descriptor.getEndElement(), holder.getFile());
+            PsiElement startElement = substitute(descriptor.getStartElement(), holder.getFile());
+            PsiElement endElement = substitute(descriptor.getEndElement(), holder.getFile());
 
-            if (startSubstitutor == descriptor.getStartElement() && endSubstitutor == descriptor.getEndElement()) {
+            if (startElement == descriptor.getStartElement() && endElement == descriptor.getEndElement()) {
               holder.registerProblem(descriptor);
             }
             else {
               QuickFix[] fixes = descriptor.getFixes();
               holder.registerProblem(holder.getManager().createProblemDescriptor(
-                startSubstitutor,
-                endSubstitutor,
+                startElement,
+                endElement,
                 descriptor.getDescriptionTemplate(),
                 descriptor.getHighlightType(),
                 isOnTheFly,
@@ -116,7 +116,7 @@ public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectio
       }
 
       @NotNull
-      private PsiElement getSubstitutorIfNeeded(@NotNull PsiElement element, @NotNull PsiFile desiredFile) {
+      private PsiElement substitute(@NotNull PsiElement element, @NotNull PsiFile desiredFile) {
         if (inFile(element, desiredFile)) return element;
         PsiElement navigationElement = element.getNavigationElement();
         if (navigationElement == null) return element;
