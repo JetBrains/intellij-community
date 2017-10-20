@@ -35,6 +35,8 @@ import javax.swing.*;
 import java.awt.*;
 
 public abstract class UndoRedoAction extends DumbAwareAction {
+  private static boolean ourInProgress = false;//We should disable both undo and redo while Undo/Redo confirmation dialog is shown
+  
   public UndoRedoAction() {
     setEnabledInModalContext(true);
   }
@@ -43,11 +45,20 @@ public abstract class UndoRedoAction extends DumbAwareAction {
     DataContext dataContext = e.getDataContext();
     FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
     UndoManager undoManager = getUndoManager(editor, dataContext);
-    perform(editor, undoManager);
+    try {
+      ourInProgress = true;
+      perform(editor, undoManager);
+    } finally {
+      ourInProgress = false;
+    }
   }
 
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
+    if (ourInProgress) {
+      presentation.setEnabled(false);
+      return;
+    }
     DataContext dataContext = event.getDataContext();
     FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
     UndoManager undoManager = getUndoManager(editor, dataContext);
