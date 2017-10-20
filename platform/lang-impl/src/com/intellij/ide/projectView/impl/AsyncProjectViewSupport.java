@@ -52,16 +52,16 @@ import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import static com.intellij.ide.util.treeView.TreeState.VISIT;
 import static com.intellij.ide.util.treeView.TreeState.expand;
 import static com.intellij.util.ui.UIUtil.putClientProperty;
+import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toList;
 import static org.jetbrains.concurrency.Promises.collectResults;
 
 class AsyncProjectViewSupport {
@@ -203,10 +203,12 @@ class AsyncProjectViewSupport {
   }
 
   public void updateByFile(@NotNull VirtualFile file) {
+    LOG.debug("updateByFile: ", file);
     update(null, file, this::update);
   }
 
   public void updateByElement(@NotNull PsiElement element) {
+    LOG.debug("updateByElement: ", element);
     update(element, null, this::update);
   }
 
@@ -216,23 +218,23 @@ class AsyncProjectViewSupport {
     if (visitor != null) myAsyncTreeModel.accept(visitor).done(path -> consumer.consume(list));
   }
 
-  void accept(List<TreeVisitor> visitors, Consumer<TreePath[]> consumer) {
+  void accept(List<TreeVisitor> visitors, Consumer<List<TreePath>> consumer) {
     int size = visitors == null ? 0 : visitors.size();
-    if (size == 1) {
-      myAsyncTreeModel.accept(visitors.get(0)).done(path -> {
-        if (path != null) consumer.consume(new TreePath[]{path});
-      });
-    }
-    else if (size > 1) {
-      List<Promise<TreePath>> promises = visitors.stream().map(visitor -> myAsyncTreeModel.accept(visitor)).collect(Collectors.toList());
-      collectResults(promises, true).done(list -> {
-        TreePath[] array = list.toArray(new TreePath[list.size()]);
-        int count = 0;
-        for (int i = 0; i < array.length; i++) {
-          if (array[i] != null) array[count++] = array[i];
+    if (visitors != null && !visitors.isEmpty()) {
+      // start visiting on the background thread to ensure that root node is already invalidated
+      myStructureTreeModel.getInvoker().invokeLater(() -> {
+        if (1 == visitors.size()) {
+          myAsyncTreeModel.accept(visitors.get(0)).done(path -> {
+            if (path != null) consumer.consume(singletonList(path));
+          });
         }
-        if (count > 0) {
-          consumer.consume(count == array.length ? array : Arrays.copyOf(array, count));
+        else if (size > 1) {
+          myStructureTreeModel.getInvoker().invokeLater(() -> {
+            List<Promise<TreePath>> promises = visitors.stream().map(visitor -> myAsyncTreeModel.accept(visitor)).collect(toList());
+            collectResults(promises, true).done(list -> {
+              if (list != null && !list.isEmpty()) consumer.consume(list);
+            });
+          });
         }
       });
     }
