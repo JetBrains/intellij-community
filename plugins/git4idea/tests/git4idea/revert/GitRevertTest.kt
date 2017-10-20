@@ -19,7 +19,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.impl.VcsLogUtil
-import com.intellij.vcs.log.impl.VcsUserImpl
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 import git4idea.GitContentRevision.createRevision
 import git4idea.GitRevisionNumber
@@ -35,10 +34,6 @@ import java.nio.charset.Charset
  * except the case of reverting with conflicts when the commit dialog is shown anyway.
  */
 class GitRevertTest : GitSingleRepoTest() {
-
-  override fun setUp() {
-    super.setUp()
-  }
 
   fun `test simple revert`() {
     val file = file("r.txt")
