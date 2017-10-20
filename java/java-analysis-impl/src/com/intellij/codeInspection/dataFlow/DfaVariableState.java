@@ -46,10 +46,7 @@ class DfaVariableState {
   @Nullable
   DfaVariableState withInstanceofValue(@NotNull DfaPsiType dfaType) {
     if (dfaType.getPsiType() instanceof PsiPrimitiveType) return this;
-    TypeConstraint typeConstraint = getTypeConstraint();
-    TypeConstraint newTypeConstraint = typeConstraint.withInstanceofValue(dfaType);
-    if (newTypeConstraint == null) return null;
-    return withFact(DfaFactType.TYPE_CONSTRAINT, newTypeConstraint);
+    return withFacts(TypeConstraint.withInstanceOf(myFactMap, dfaType));
   }
 
   @Nullable

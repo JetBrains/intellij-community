@@ -1435,8 +1435,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  private void throwException(PsiType ref, @Nullable PsiElement anchor) {
-    throwException(new ExceptionTransfer(myFactory.createDfaType(ref)), anchor);
+  private void throwException(@Nullable PsiType ref, @Nullable PsiElement anchor) {
+    if (ref != null) {
+      throwException(new ExceptionTransfer(myFactory.createDfaType(ref)), anchor);
+    }
   }
 
   private void throwException(ExceptionTransfer kind, @Nullable PsiElement anchor) {

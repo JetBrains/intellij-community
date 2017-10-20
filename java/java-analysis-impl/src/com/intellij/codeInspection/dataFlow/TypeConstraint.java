@@ -21,7 +21,6 @@ import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.EntryStream;
 import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
@@ -33,6 +32,8 @@ import java.util.*;
 /**
  * Immutable class representing a number of non-primitive type constraints applied to some value.
  * There are two types of constrains: value is instance of some type and value is not an instance of some type.
+ * Unlike usual Java semantics, the {@code null} value is considered to be instanceof any type (non-null instanceof can be expressed
+ * via additional restriction {@link DfaFactType#CAN_BE_NULL} {@code = false}).
  */
 public final class TypeConstraint {
   /**
@@ -101,9 +102,6 @@ public final class TypeConstraint {
     Set<DfaPsiType> newInstanceof = ContainerUtil.newHashSet(myInstanceofValues);
     newInstanceof.removeAll(moreGeneric);
     newInstanceof.add(type);
-    if (newInstanceof.size() == 1 && TypeUtils.isJavaLangObject(newInstanceof.iterator().next().getPsiType())) {
-      newInstanceof = Collections.emptySet();
-    }
     return create(newInstanceof, myNotInstanceofValues);
   }
 
@@ -210,5 +208,13 @@ public final class TypeConstraint {
       .removeValues(Set::isEmpty)
       .mapKeyValue((prefix, set) -> StreamEx.of(set).joining(",", prefix, ""))
       .joining(" ");
+  }
+
+  @Nullable
+  public static DfaFactMap withInstanceOf(@NotNull DfaFactMap map, @NotNull DfaPsiType type) {
+    TypeConstraint constraint = map.get(DfaFactType.TYPE_CONSTRAINT);
+    if (constraint == null) constraint = EMPTY;
+    constraint = constraint.withInstanceofValue(type);
+    return constraint == null ? null : map.with(DfaFactType.TYPE_CONSTRAINT, constraint);
   }
 }

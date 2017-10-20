@@ -221,12 +221,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return result.toString();
   }
 
+  @NotNull
   @Override
   public DfaValue pop() {
     myCachedHash = null;
     return myStack.pop();
   }
 
+  @NotNull
   @Override
   public DfaValue peek() {
     return myStack.peek();
@@ -275,7 +277,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     if (getVariableState(var).isNotNull()) {
       DfaConstValue dfaNull = myFactory.getConstFactory().getNull();
-      applyCondition(myFactory.getRelationFactory().createRelation(var, RelationType.NE, dfaNull));
+      applyRelation(var, dfaNull, true);
     }
   }
 
@@ -685,20 +687,31 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
-  public boolean applyInstanceofOrNull(DfaValue operand, DfaPsiType type) {
-    DfaValue left = unwrap(operand);
+  public boolean castTopOfStack(DfaPsiType type) {
+    DfaValue value = unwrap(peek());
 
-    if (!(left instanceof DfaVariableValue)) return true;
+    DfaFactMap facts = null;
+    if (value instanceof DfaVariableValue) {
+      DfaVariableValue dfaVar = (DfaVariableValue)value;
 
-    DfaVariableValue dfaVar = (DfaVariableValue)left;
-
-    if (isUnknownState(dfaVar) || isNull(dfaVar)) return true;
-    DfaVariableState newState = getVariableState(dfaVar).withInstanceofValue(type);
-    if (newState != null) {
-      setVariableState(dfaVar, newState);
-      return true;
+      if (isNull(dfaVar)) return true;
+      if (isUnknownState(dfaVar)) {
+        facts = getVariableState(dfaVar).myFactMap;
+      } else {
+        DfaVariableState newState = getVariableState(dfaVar).withInstanceofValue(type);
+        if (newState == null) return false;
+        setVariableState(dfaVar, newState);
+      }
+    } else if (value instanceof DfaFactMapValue) {
+      facts = ((DfaFactMapValue)value).getFacts();
     }
-    return false;
+    if (facts != null) {
+      DfaFactMap newFacts = TypeConstraint.withInstanceOf(facts, type);
+      if (newFacts == null) return false;
+      pop();
+      push(myFactory.getFactFactory().createValue(newFacts));
+    }
+    return true;
   }
 
   <T> void setFact(DfaValue target, DfaFactType<T> factType, T fact) {
@@ -925,9 +938,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (!applyBoxedRelation((DfaVariableValue)dfaLeft, dfaRight, isNegated)) {
         return false;
       }
-    }
-    if (!isNegated && dfaRight instanceof DfaFactMapValue) {
-      return applyFacts(dfaLeft, ((DfaFactMapValue)dfaRight).getFacts());
     }
 
     return true;
