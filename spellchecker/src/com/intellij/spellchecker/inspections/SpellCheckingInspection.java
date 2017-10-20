@@ -87,6 +87,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     return new PsiElementVisitor() {
       @Override
       public void visitElement(final PsiElement element) {
+        if (holder.getResultCount()>1000) return;
 
         final ASTNode node = element.getNode();
         if (node == null) {
@@ -167,8 +168,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     assert textRange.getStartOffset() >= 0;
 
     final String description = SpellCheckerBundle.message("typo.in.word.ref");
-    return holder.getManager()
-      .createProblemDescriptor(element, textRange, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, onTheFly, fixes);
+    return new ProblemDescriptorBase(element, element, description, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false, textRange, false, onTheFly);
   }
 
   @SuppressWarnings({"PublicField"})
