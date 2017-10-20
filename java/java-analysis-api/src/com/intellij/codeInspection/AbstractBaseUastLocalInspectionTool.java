@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.uast.UastVisitorAdapter;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UClass;
@@ -107,10 +108,7 @@ public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectio
                 descriptor.getDescriptionTemplate(),
                 descriptor.getHighlightType(),
                 isOnTheFly,
-                fixes != null ? Arrays.stream(fixes)
-                  .filter(f -> f instanceof LocalQuickFix)
-                  .map(f -> (LocalQuickFix)f)
-                  .toArray(LocalQuickFix[]::new) : LocalQuickFix.EMPTY_ARRAY
+                fixes != null ? ContainerUtil.findAllAsArray(fixes, LocalQuickFix.class) : LocalQuickFix.EMPTY_ARRAY
               ));
             }
           }
