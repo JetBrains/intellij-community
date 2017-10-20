@@ -130,7 +130,9 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
     if (!isDefaultModuleCreation && !myCustomizer.isCreateEmptyContentRootDirectoriesBoxHidden() && myCreateEmptyContentRootDirectoriesBox != null) {
       myCreateEmptyContentRootDirectoriesBox.setSelected(getInitialSettings().isCreateEmptyContentRootDirectories());
     }
-    myUseModuleGroupsRadioButton.setSelected(getInitialSettings().isUseQualifiedModuleNames());
+    boolean useQualifiedModuleNames = getInitialSettings().isUseQualifiedModuleNames();
+    myUseModuleGroupsRadioButton.setSelected(!useQualifiedModuleNames);
+    myUseQualifiedModuleNamesRadioButton.setSelected(useQualifiedModuleNames);
     resetExtraSettings(isDefaultModuleCreation);
   }
 
