@@ -3,7 +3,6 @@ package git4idea.history;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -122,10 +121,10 @@ public class GitLogParser {
     List<String> options = myOptionsParser.getResult();
     myOptionsParser.clear();
 
-    Pair<List<String>, List<GitLogStatusInfo>> result = myPathsParser.getResult();
+    List<GitLogStatusInfo> result = myPathsParser.getResult();
     myPathsParser.clear();
 
-    return new GitLogRecord(createOptions(options), result.first, result.second, mySupportsRawBody);
+    return new GitLogRecord(createOptions(options), result, mySupportsRawBody);
   }
 
   public void clear() {
@@ -203,10 +202,6 @@ public class GitLogParser {
      */
     NONE,
     /**
-     * --name-only
-     */
-    NAME,
-    /**
      * --name-status
      */
     STATUS
@@ -278,7 +273,6 @@ public class GitLogParser {
   }
 
   private class PathsParser {
-    @NotNull private List<String> myPaths = ContainerUtil.newArrayList();
     @NotNull private List<GitLogStatusInfo> myStatuses = ContainerUtil.newArrayList();
 
     public void parseLine(@NotNull CharSequence line) {
@@ -290,28 +284,13 @@ public class GitLogParser {
         // ignore
       }
       else {
-        if (myNameStatusOption == NameStatus.NAME) {
-          if (match.size() > 2) {
-            throwGFE("Paths list " + match + " does not match", line);
-          }
+        if (myNameStatusOption != NameStatus.STATUS) throwGFE("Status list not expected", line);
 
-          myPaths.add(match.get(0));
-          if (match.size() == 2) {
-            myPaths.add(match.get(1));
-          }
+        if (match.size() == 2) {
+          myStatuses.add(new GitLogStatusInfo(GitChangeType.fromString(match.get(0)), match.get(1), null));
         }
         else {
-          if (myNameStatusOption != NameStatus.STATUS) throwGFE("Status list not expected", line);
-
-          if (match.size() == 2) {
-            myStatuses.add(new GitLogStatusInfo(GitChangeType.fromString(match.get(0)), match.get(1), null));
-          }
-          else if (match.size() == 3) {
-            myStatuses.add(new GitLogStatusInfo(GitChangeType.fromString(match.get(0)), match.get(1), match.get(2)));
-          }
-          else {
-            throwGFE("Status list " + match + " does not match", line);
-          }
+          myStatuses.add(new GitLogStatusInfo(GitChangeType.fromString(match.get(0)), match.get(1), match.get(2)));
         }
       }
     }
@@ -348,12 +327,11 @@ public class GitLogParser {
     }
 
     @NotNull
-    public Pair<List<String>, List<GitLogStatusInfo>> getResult() {
-      return Pair.create(myPaths, myStatuses);
+    public List<GitLogStatusInfo> getResult() {
+      return myStatuses;
     }
 
     public void clear() {
-      myPaths = ContainerUtil.newArrayList();
       myStatuses = ContainerUtil.newArrayList();
     }
   }

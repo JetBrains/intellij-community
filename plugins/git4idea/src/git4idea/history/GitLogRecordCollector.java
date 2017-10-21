@@ -171,8 +171,7 @@ abstract class GitLogRecordCollector implements Consumer<GitLogRecord> {
       String parentTreeHash = hashToTreeMap.get(parent);
       LOG.assertTrue(parentTreeHash != null, "Could not get tree hash for commit " + parent);
       if (parentTreeHash.equals(commitTreeHash) && records.size() < parents.length) {
-        records.add(parentIndex, new GitLogRecord(firstRecord.getOptions(), ContainerUtil.emptyList(), ContainerUtil.emptyList(),
-                                                  firstRecord.isSupportsRawBody()));
+        records.add(parentIndex, new GitLogRecord(firstRecord.getOptions(), ContainerUtil.emptyList(), firstRecord.isSupportsRawBody()));
       }
     }
   }

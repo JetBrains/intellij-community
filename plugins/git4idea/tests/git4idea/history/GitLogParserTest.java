@@ -32,7 +32,8 @@ import java.util.*;
 
 import static git4idea.history.GitLogParser.*;
 import static git4idea.history.GitLogParser.GitLogOption.*;
-import static git4idea.history.GitLogParser.NameStatus.*;
+import static git4idea.history.GitLogParser.NameStatus.NONE;
+import static git4idea.history.GitLogParser.NameStatus.STATUS;
 
 public class GitLogParserTest extends GitPlatformTest {
 
@@ -111,10 +112,6 @@ public class GitLogParserTest extends GitPlatformTest {
     doTestAllRecords(NONE);
   }
 
-  public void testparseAllWithName() throws VcsException {
-    doTestAllRecords(NAME);
-  }
-
   public void testparseAllWithNameStatus() throws VcsException {
     doTestAllRecords(STATUS);
   }
@@ -123,7 +120,6 @@ public class GitLogParserTest extends GitPlatformTest {
     NameStatus option;
     switch (nameStatusOption) {
       case NONE:   option = NONE; break;
-      case NAME:   option = NAME; break;
       case STATUS: option = STATUS; break;
       default: throw new AssertionError();
     }
@@ -138,11 +134,6 @@ public class GitLogParserTest extends GitPlatformTest {
   public void testparseOneRecordWithoutNameStatus() throws VcsException {
     myParser = new GitLogParser(myProject, GIT_LOG_OPTIONS);
     doTestOneRecord(NONE);
-  }
-
-  public void testparseOneRecordWithName() throws VcsException {
-    myParser = new GitLogParser(myProject, NAME,  GIT_LOG_OPTIONS);
-    doTestOneRecord(NAME);
   }
 
   public void testparseOneRecordWithNameStatus() throws VcsException {
@@ -253,9 +244,7 @@ public class GitLogParserTest extends GitPlatformTest {
 
     assertSameElements(actual.getRefs(), expected.getRefs());
 
-    if (option == NAME) {
-      assertPaths(actual.getFilePaths(myRoot), expected.paths());
-    } else if (option == STATUS) {
+    if (option == STATUS) {
       assertPaths(actual.getFilePaths(myRoot), expected.paths());
       assertChanges(actual.parseChanges(myProject, myRoot), expected.changes());
     }
@@ -462,14 +451,6 @@ public class GitLogParserTest extends GitPlatformTest {
       return paths;
     }
 
-    private String pathsAsString() {
-      StringBuilder sb = new StringBuilder();
-      for (String path : paths()) {
-        sb.append(path).append("\n");
-      }
-      return sb.toString();
-    }
-
     String prepareOutputLine(NameStatus nameStatusOption) {
       StringBuilder sb = new StringBuilder(RECORD_START);
       for (GitLogOption option : GIT_LOG_OPTIONS) {
@@ -477,10 +458,7 @@ public class GitLogParserTest extends GitPlatformTest {
       }
       sb.append(RECORD_END);
 
-      if (nameStatusOption == NAME) {
-        sb.append("\n\n").append(pathsAsString());
-      }
-      else if (nameStatusOption == STATUS) {
+      if (nameStatusOption == STATUS) {
         sb.append("\n\n").append(changesAsString());
       }
 

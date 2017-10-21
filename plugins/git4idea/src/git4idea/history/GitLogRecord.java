@@ -46,33 +46,27 @@ class GitLogRecord {
   private static final Logger LOG = Logger.getInstance(GitLogRecord.class);
 
   @NotNull private final Map<GitLogParser.GitLogOption, String> myOptions;
-  @NotNull private final List<String> myPaths;
   @NotNull private final List<GitLogStatusInfo> myStatusInfo;
   private final boolean mySupportsRawBody;
 
   private GitHandler myHandler;
 
   GitLogRecord(@NotNull Map<GitLogParser.GitLogOption, String> options,
-               @NotNull List<String> paths,
                @NotNull List<GitLogStatusInfo> statusInfo,
                boolean supportsRawBody) {
     myOptions = options;
-    myPaths = paths;
     myStatusInfo = statusInfo;
     mySupportsRawBody = supportsRawBody;
   }
 
   @NotNull
   private Collection<String> getPaths() {
-    if (!myStatusInfo.isEmpty()) {
-      LinkedHashSet<String> result = ContainerUtil.newLinkedHashSet();
-      for (GitLogStatusInfo info : myStatusInfo) {
-        result.add(info.getFirstPath());
-        if (info.getSecondPath() != null) result.add(info.getSecondPath());
-      }
-      return result;
+    LinkedHashSet<String> result = ContainerUtil.newLinkedHashSet();
+    for (GitLogStatusInfo info : myStatusInfo) {
+      result.add(info.getFirstPath());
+      if (info.getSecondPath() != null) result.add(info.getSecondPath());
     }
-    return myPaths;
+    return result;
   }
 
   @NotNull
@@ -251,7 +245,7 @@ class GitLogRecord {
 
   @Override
   public String toString() {
-    return String.format("GitLogRecord{myOptions=%s, myPaths=%s, myStatusInfo=%s, mySupportsRawBody=%s, myHandler=%s}",
-                         myOptions, myPaths, myStatusInfo, mySupportsRawBody, myHandler);
+    return String.format("GitLogRecord{myOptions=%s, myStatusInfo=%s, mySupportsRawBody=%s, myHandler=%s}",
+                         myOptions, myStatusInfo, mySupportsRawBody, myHandler);
   }
 }
