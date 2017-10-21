@@ -108,11 +108,11 @@ public class GitLogParserTest extends GitPlatformTest {
     myNewRefsFormat = false;
   }
 
-  public void testparseAllWithoutNameStatus() throws VcsException {
+  public void testParseAllWithoutNameStatus() throws VcsException {
     doTestAllRecords(NONE);
   }
 
-  public void testparseAllWithNameStatus() throws VcsException {
+  public void testParseAllWithNameStatus() throws VcsException {
     doTestAllRecords(STATUS);
   }
 
@@ -131,12 +131,12 @@ public class GitLogParserTest extends GitPlatformTest {
     assertAllRecords(actualRecords, expectedRecords, nameStatusOption);
   }
 
-  public void testparseOneRecordWithoutNameStatus() throws VcsException {
+  public void testParseOneRecordWithoutNameStatus() throws VcsException {
     myParser = new GitLogParser(myProject, GIT_LOG_OPTIONS);
     doTestOneRecord(NONE);
   }
 
-  public void testparseOneRecordWithNameStatus() throws VcsException {
+  public void testParseOneRecordWithNameStatus() throws VcsException {
     myParser = new GitLogParser(myProject, STATUS, GIT_LOG_OPTIONS);
     doTestOneRecord(STATUS);
   }
