@@ -151,38 +151,36 @@ public class GitLogParserTest extends GitPlatformTest {
   }
 
   public void test_char_0001_in_commit_message() {
-    doTestCustomCommitMessage("Commit \u0001subject", "Commit \u0001subject");
+    doTestCustomCommitMessage("Commit \u0001subject");
   }
 
   public void test_double_char_0001_in_commit_message() {
-    doTestCustomCommitMessage("Commit \u0001\u0001subject", "Commit subject");
+    doTestCustomCommitMessage("Commit \u0001\u0001subject");
   }
 
   public void test_char_0003_in_commit_message() {
-    doTestCustomCommitMessage("Commit \u0003subject", "Commit \u0003subject");
+    doTestCustomCommitMessage("Commit \u0003subject");
   }
 
   public void test_double_char_0003_in_commit_message() {
-    doTestCustomCommitMessage("Commit \u0003\u0003subject", "Commit \u0003\u0003subject");
+    doTestCustomCommitMessage("Commit \u0003\u0003subject");
   }
 
   public void test_both_chars_0001_and_0003_in_commit_message() {
-    doTestCustomCommitMessage("Subject \u0001of the \u0003# weirdmessage", "Subject \u0001of the \u0003# weirdmessage");
+    doTestCustomCommitMessage("Subject \u0001of the \u0003# weirdmessage");
   }
 
   // this is not fixed, keeping the test for the record and possible future fix
-  @SuppressWarnings("unused")
-  public void _test_both_double_chars_0001_and_0003_in_commit_message() {
-    doTestCustomCommitMessage("Subject \u0001\u0001of the \u0003\u0003# weirdmessage",
-                              "Subject of the \u0003\u0003# weirdmessage");
+  public void test_both_double_chars_0001_and_0003_in_commit_message() {
+    doTestCustomCommitMessage("Subject \u0001\u0001of the \u0003\u0003# weirdmessage");
   }
 
   public void test_char_0001_twice_in_commit_message() {
-    doTestCustomCommitMessage("Subject \u0001of the \u0001# weird message", "Subject \u0001of the \u0001# weird message");
+    doTestCustomCommitMessage("Subject \u0001of the \u0001# weird message");
   }
 
   public void test_double_char_0001_twice_in_commit_message() {
-    doTestCustomCommitMessage("Subject \u0001\u0001of the \u0001\u0001# weird message", "Subject of the # weird message");
+    doTestCustomCommitMessage("Subject \u0001\u0001of the \u0001\u0001# weird message");
   }
 
   public void test_old_refs_format() throws VcsException {
@@ -195,7 +193,7 @@ public class GitLogParserTest extends GitPlatformTest {
     doTestAllRecords(STATUS);
   }
 
-  private void doTestCustomCommitMessage(@NotNull String subject, @NotNull String expectedSubject) {
+  private void doTestCustomCommitMessage(@NotNull String subject) {
     Map<GitTestLogRecordInfo, Object> data = ContainerUtil.newHashMap(myRecord.myData);
     data.put(GitTestLogRecordInfo.SUBJECT, subject);
     myRecord = new GitTestLogRecord(data);
@@ -204,7 +202,7 @@ public class GitLogParserTest extends GitPlatformTest {
     String s = myRecord.prepareOutputLine(NONE);
     List<GitLogRecord> records = myParser.parse(s);
     assertEquals("Incorrect amount of actual records: " + StringUtil.join(records, "\n"), 1, records.size());
-    assertEquals("Commit subject is incorrect", expectedSubject, records.get(0).getSubject());
+    assertEquals("Commit subject is incorrect", subject, records.get(0).getSubject());
   }
 
   private void doTestOneRecord(NameStatus option) throws VcsException {
