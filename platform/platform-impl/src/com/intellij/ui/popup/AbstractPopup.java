@@ -921,12 +921,38 @@ public class AbstractPopup implements JBPopup {
       window.setAutoRequestFocus(true);
       window.setFocusableWindowState(true);
       window.setFocusable(true);
+      window.setFocusTraversalPolicy(new FocusTraversalPolicy() {
+        @Override
+        public Component getComponentAfter(Container aContainer, Component aComponent) {
+          return myPreferredFocusedComponent;
+        }
+
+        @Override
+        public Component getComponentBefore(Container aContainer, Component aComponent) {
+          return myPreferredFocusedComponent;
+        }
+
+        @Override
+        public Component getFirstComponent(Container aContainer) {
+          return myPreferredFocusedComponent;
+        }
+
+        @Override
+        public Component getLastComponent(Container aContainer) {
+          return myPreferredFocusedComponent;
+        }
+
+        @Override
+        public Component getDefaultComponent(Container aContainer) {
+          return myPreferredFocusedComponent;
+        }
+      });
     }
 
     myPopup.show();
 
     if (myPreferredFocusedComponent != null) {
-      myPreferredFocusedComponent.requestFocusInWindow();
+      myPreferredFocusedComponent.requestFocus();
     }
 
     WindowAction.setEnabledFor(myPopup.getWindow(), myResizable);
