@@ -15,6 +15,7 @@
  */
 package git4idea.history;
 
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -338,10 +339,12 @@ public class GitFileHistory {
 
     @Override
     public void onLineAvailable(String line, Key outputType) {
-      final GitLogRecord record = myAccumulator.acceptLine(line);
-      if (record != null) {
-        record.setUsedHandler(myHandler);
-        myRecordConsumer.consume(record);
+      if (outputType == ProcessOutputTypes.STDOUT) {
+        GitLogRecord record = myAccumulator.acceptLine(line);
+        if (record != null) {
+          record.setUsedHandler(myHandler);
+          myRecordConsumer.consume(record);
+        }
       }
     }
 
