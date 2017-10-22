@@ -38,8 +38,6 @@ import java.util.List;
  */
 public class ExecutionNode extends CachingSimpleNode {
   private final List<ExecutionNode> myChildrenList = ContainerUtil.newSmartList();
-  @Nullable
-  private final ExecutionNodeProgressAnimator myAnimator;
   private long startTime;
   private long endTime;
   @Nullable
@@ -52,9 +50,8 @@ public class ExecutionNode extends CachingSimpleNode {
   private EventResult myResult;
   private boolean myAutoExpandNode;
 
-  public ExecutionNode(Project aProject, @Nullable ExecutionNodeProgressAnimator animator) {
+  public ExecutionNode(Project aProject) {
     super(aProject, null);
-    myAnimator = animator;
   }
 
   @Override
@@ -83,15 +80,6 @@ public class ExecutionNode extends CachingSimpleNode {
     }
     if (tooltip != null) {
       presentation.setTooltip(tooltip);
-    }
-
-    if (myAnimator != null) {
-      if (isRunning()) {
-        myAnimator.addNode(this);
-      }
-      else {
-        myAnimator.removeNode(this);
-      }
     }
   }
 

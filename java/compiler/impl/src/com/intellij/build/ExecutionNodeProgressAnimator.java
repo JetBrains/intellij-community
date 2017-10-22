@@ -16,25 +16,22 @@
 package com.intellij.build;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.SmartList;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
  */
 public class ExecutionNodeProgressAnimator implements Runnable, Disposable {
   private static final int FRAMES_COUNT = 8;
-  private static final int MOVIE_TIME = 1600;
+  private static final int MOVIE_TIME = 1200;
   private static final int FRAME_TIME = MOVIE_TIME / FRAMES_COUNT;
 
   public static final Icon[] FRAMES = new Icon[FRAMES_COUNT];
@@ -42,12 +39,13 @@ public class ExecutionNodeProgressAnimator implements Runnable, Disposable {
   private long myLastInvocationTime = -1;
 
   private Alarm myAlarm;
-  private Set<ExecutionNode> myNodes = new HashSet<>();
-  private AbstractTreeBuilder myTreeBuilder;
+  private List<ExecutionNode> myNodes = new SmartList<>();
+  private BuildTreeConsoleView myTreeView;
 
-  public ExecutionNodeProgressAnimator(AbstractTreeBuilder builder) {
-    Disposer.register(builder, this);
-    init(builder);
+  public ExecutionNodeProgressAnimator(BuildTreeConsoleView treeConsoleView) {
+    Disposer.register(treeConsoleView, this);
+    myAlarm = new Alarm();
+    myTreeView = treeConsoleView;
   }
 
   static {
@@ -69,67 +67,56 @@ public class ExecutionNodeProgressAnimator implements Runnable, Disposable {
     return FRAMES[getCurrentFrameIndex()];
   }
 
-  /**
-   * Initializes animator: creates alarm and sets tree builder
-   *
-   * @param treeBuilder tree builder
-   */
-  protected void init(final AbstractTreeBuilder treeBuilder) {
-    myAlarm = new Alarm();
-    myTreeBuilder = treeBuilder;
-  }
-
   public void run() {
     if (!myNodes.isEmpty()) {
       final long time = System.currentTimeMillis();
       // optimization:
       // we shouldn't repaint if this frame was painted in current interval
       if (time - myLastInvocationTime >= FRAME_TIME) {
-        repaintSubTree();
+        repaintTree();
         myLastInvocationTime = time;
       }
     }
     scheduleRepaint();
   }
 
-  public void addNode(@NotNull ExecutionNode node) {
-    if (myNodes.add(node) && myNodes.size() == 1) {
-      scheduleRepaint();
-    }
+  public void addNode(@Nullable final ExecutionNode currentNode) {
+    myNodes.add(currentNode);
   }
 
-  public void removeNode(@NotNull ExecutionNode node) {
-    if (myNodes.remove(node) && myNodes.isEmpty()) {
-      repaintSubTree();
-      if (myAlarm != null) {
-        myAlarm.cancelAllRequests();
-      }
-    }
+  public void startMovie() {
+    scheduleRepaint();
+  }
+
+  public void stopMovie() {
+    repaintTree();
+    myNodes.clear();
+    cancelAlarm();
   }
 
   public void dispose() {
-    myTreeBuilder = null;
+    myTreeView = null;
     myNodes.clear();
+    cancelAlarm();
+  }
+
+  private void cancelAlarm() {
     if (myAlarm != null) {
       myAlarm.cancelAllRequests();
       myAlarm = null;
     }
   }
 
-  private void repaintSubTree() {
-    if (myTreeBuilder == null || myTreeBuilder.isDisposed()) return;
+  private void repaintTree() {
+    if (myTreeView == null || myTreeView.isDisposed()) return;
 
-    List<ExecutionNode> toRemove = ContainerUtil.newSmartList();
-    for (ExecutionNode node : myNodes) {
-      DefaultMutableTreeNode treeNode = myTreeBuilder.getUi().getNodeForElement(node, false);
-      if (treeNode != null) {
-        myTreeBuilder.queueUpdateFrom(node, false, false);
-      }
-      else {
-        toRemove.add(node);
+    for (Iterator<ExecutionNode> iterator = myNodes.iterator(); iterator.hasNext(); ) {
+      ExecutionNode node = iterator.next();
+      myTreeView.scheduleUpdate(node);
+      if (!node.isRunning()) {
+        iterator.remove();
       }
     }
-    myNodes.removeAll(toRemove);
   }
 
   private void scheduleRepaint() {
@@ -137,8 +124,6 @@ public class ExecutionNodeProgressAnimator implements Runnable, Disposable {
       return;
     }
     myAlarm.cancelAllRequests();
-    if (!myNodes.isEmpty()) {
-      myAlarm.addRequest(this, FRAME_TIME);
-    }
+    myAlarm.addRequest(this, FRAME_TIME);
   }
 }
