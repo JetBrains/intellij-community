@@ -198,32 +198,6 @@ class GitLogRecord {
     return mySupportsRawBody;
   }
 
-  /**
-   * Returns the list of tags and the list of branches.
-   * A single method is used to return both, because they are returned together by Git and we don't want to parse them twice.
-   *
-   * @param allBranchesSet
-   * @return
-   */
-  /*Pair<List<String>, List<String>> getTagsAndBranches(SymbolicRefs refs) {
-    final String decorate = myOptions.get(REF_NAMES);
-    final String[] refNames = parseRefNames(decorate);
-    final List<String> tags = refNames.length > 0 ? new ArrayList<String>() : Collections.<String>emptyList();
-    final List<String> branches = refNames.length > 0 ? new ArrayList<String>() : Collections.<String>emptyList();
-    for (String refName : refNames) {
-      if (refs.contains(refName)) {
-        // also some gits can return ref name twice (like (HEAD, HEAD), so check we will show it only once)
-        if (!branches.contains(refName)) {
-          branches.add(shortBuffer(refName));
-        }
-      } else {
-        if (!tags.contains(refName)) {
-          tags.add(shortBuffer(refName));
-        }
-      }
-    }
-    return Pair.create(tags, branches);
-  }*/
   @NotNull
   private static List<String> parseRefNames(@Nullable final String decoration) {
     if (decoration == null) {
