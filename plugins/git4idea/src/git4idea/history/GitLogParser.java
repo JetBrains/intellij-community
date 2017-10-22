@@ -13,10 +13,7 @@ import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class GitLogParser {
   private static final Logger LOG = Logger.getInstance(GitLogParser.class);
@@ -32,23 +29,22 @@ public class GitLogParser {
   private static final int INPUT_ERROR_MESSAGE_HEAD_LIMIT = 1000000; // limit the string by ~2mb
   private static final int INPUT_ERROR_MESSAGE_TAIL_LIMIT = 100;
 
-  @NotNull private final GitLogOption[] myOptions;
   private final boolean mySupportsRawBody;
-  @NotNull private final NameStatus myNameStatusOption;
   @NotNull private final String myPretty;
 
-  @NotNull private OptionsParser myOptionsParser = new OptionsParser();
-  @NotNull private PathsParser myPathsParser = new PathsParser();
+  @NotNull private OptionsParser myOptionsParser;
+  @NotNull private PathsParser myPathsParser;
 
   private boolean myIsInBody = true;
 
   private GitLogParser(boolean supportsRawBody,
-                       @NotNull NameStatus option,
+                       @NotNull NameStatus nameStatusOption,
                        @NotNull GitLogOption... options) {
     myPretty = "--pretty=format:" + makeFormatFromOptions(options);
-    myNameStatusOption = option;
-    myOptions = options;
     mySupportsRawBody = supportsRawBody;
+
+    myOptionsParser = new OptionsParser(options);
+    myPathsParser = new PathsParser(nameStatusOption);
   }
 
   public GitLogParser(@NotNull Project project,
@@ -118,36 +114,19 @@ public class GitLogParser {
 
   @NotNull
   private GitLogRecord createRecord() {
-    List<String> options = myOptionsParser.getResult();
+    Map<GitLogOption, String> options = myOptionsParser.getResult();
     myOptionsParser.clear();
 
     List<GitLogStatusInfo> result = myPathsParser.getResult();
     myPathsParser.clear();
 
-    return new GitLogRecord(createOptions(options), result, mySupportsRawBody);
+    return new GitLogRecord(options, result, mySupportsRawBody);
   }
 
   public void clear() {
     myOptionsParser.clear();
     myPathsParser.clear();
     myIsInBody = true;
-  }
-
-  @NotNull
-  private Map<GitLogOption, String> createOptions(@NotNull List<String> options) {
-    Map<GitLogOption, String> optionsMap = new HashMap<>(options.size());
-    int index = 0;
-    for (String value : options) {
-      if (index >= myOptions.length) {
-        break;
-      }
-      optionsMap.put(myOptions[index], value);
-      index++;
-    }
-    for (; index < myOptions.length; index++) {
-      optionsMap.put(myOptions[index], "");
-    }
-    return optionsMap;
   }
 
   @NotNull
@@ -228,7 +207,12 @@ public class GitLogParser {
   }
 
   private static class OptionsParser {
+    @NotNull private final GitLogOption[] myOptions;
     @NotNull private final PartialResult myResult = new PartialResult();
+
+    public OptionsParser(@NotNull GitLogOption[] options) {
+      myOptions = options;
+    }
 
     public boolean parseLine(@NotNull CharSequence line) {
       int offset = 0;
@@ -238,8 +222,12 @@ public class GitLogParser {
       }
 
       while (offset < line.length()) {
-        if (offset == line.length() - RECORD_END.length() && CharArrayUtil.regionMatches(line, offset, RECORD_END)) {
+        if (atRecordEnd(line, offset)) {
           myResult.finishItem();
+          if (myResult.getResult().size() != myOptions.length) {
+            throwGFE("Parsed incorrect options " + myResult.getResult() + " for " +
+                     Arrays.toString(myOptions), line);
+          }
           return true;
         }
 
@@ -258,9 +246,22 @@ public class GitLogParser {
       return false;
     }
 
+    private static boolean atRecordEnd(@NotNull CharSequence line, int offset) {
+      return (offset == line.length() - RECORD_END.length() && CharArrayUtil.regionMatches(line, offset, RECORD_END));
+    }
+
     @NotNull
-    public List<String> getResult() {
-      return myResult.getResult();
+    public Map<GitLogOption, String> getResult() {
+      return createOptions(myResult.getResult());
+    }
+
+    @NotNull
+    private Map<GitLogOption, String> createOptions(@NotNull List<String> options) {
+      Map<GitLogOption, String> optionsMap = new HashMap<>(options.size());
+      for (int index = 0; index < options.size(); index++) {
+        optionsMap.put(myOptions[index], options.get(index));
+      }
+      return optionsMap;
     }
 
     public void clear() {
@@ -272,8 +273,13 @@ public class GitLogParser {
     }
   }
 
-  private class PathsParser {
+  private static class PathsParser {
+    @NotNull private final NameStatus myNameStatusOption;
     @NotNull private List<GitLogStatusInfo> myStatuses = ContainerUtil.newArrayList();
+
+    public PathsParser(@NotNull NameStatus nameStatusOption) {
+      myNameStatusOption = nameStatusOption;
+    }
 
     public void parseLine(@NotNull CharSequence line) {
       if (line.length() == 0) return;
@@ -296,7 +302,7 @@ public class GitLogParser {
     }
 
     @NotNull
-    private List<String> parsePathsLine(@NotNull CharSequence line) {
+    private static List<String> parsePathsLine(@NotNull CharSequence line) {
       int offset = 0;
 
       PartialResult result = new PartialResult();
@@ -320,7 +326,7 @@ public class GitLogParser {
       return result.getResult();
     }
 
-    private boolean atLineEnd(@NotNull CharSequence line, int offset) {
+    private static boolean atLineEnd(@NotNull CharSequence line, int offset) {
       while (offset < line.length() && (line.charAt(offset) == '\t' || line.charAt(offset) == ' ')) offset++;
       if (offset == line.length() || (line.charAt(offset) == '\n' || line.charAt(offset) == '\r')) return true;
       return false;
