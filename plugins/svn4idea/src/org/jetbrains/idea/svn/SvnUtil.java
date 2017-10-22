@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.notification.NotificationType;
@@ -56,8 +42,6 @@ import org.jetbrains.idea.svn.dialogs.LockDialog;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.status.Status;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
@@ -86,13 +70,13 @@ public class SvnUtil {
   @NonNls public static final String ENTRIES_FILE_NAME = "entries";
   @NonNls public static final String WC_DB_FILE_NAME = "wc.db";
   @NonNls public static final String PATH_TO_LOCK_FILE = SVN_ADMIN_DIR_NAME + "/lock";
-  public static final int DEFAULT_PORT_INDICATOR = -1;
+
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnUtil");
 
   public static final Pattern ERROR_PATTERN = Pattern.compile("^svn: (E(\\d+)): (.*)$", Pattern.MULTILINE);
   public static final Pattern WARNING_PATTERN = Pattern.compile("^svn: warning: (W(\\d+)): (.*)$", Pattern.MULTILINE);
 
-  private static final Pair<SVNURL, WorkingCopyFormat> UNKNOWN_REPOSITORY_AND_FORMAT = Pair.create(null, WorkingCopyFormat.UNKNOWN);
+  private static final Pair<Url, WorkingCopyFormat> UNKNOWN_REPOSITORY_AND_FORMAT = Pair.create(null, WorkingCopyFormat.UNKNOWN);
 
   private SvnUtil() { }
 
@@ -317,14 +301,14 @@ public class SvnUtil {
   }
 
   @NotNull
-  public static MultiMap<Pair<SVNURL, WorkingCopyFormat>, Change> splitChangesIntoWc(@NotNull SvnVcs vcs, @NotNull List<Change> changes) {
+  public static MultiMap<Pair<Url, WorkingCopyFormat>, Change> splitChangesIntoWc(@NotNull SvnVcs vcs, @NotNull List<Change> changes) {
     return splitIntoRepositoriesMap(vcs, changes, change -> ChangesUtil.getFilePath(change));
   }
 
   @NotNull
-  public static <T> MultiMap<Pair<SVNURL, WorkingCopyFormat>, T> splitIntoRepositoriesMap(@NotNull final SvnVcs vcs,
-                                                                                          @NotNull Collection<T> items,
-                                                                                          @NotNull final Convertor<T, FilePath> converter) {
+  public static <T> MultiMap<Pair<Url, WorkingCopyFormat>, T> splitIntoRepositoriesMap(@NotNull final SvnVcs vcs,
+                                                                                       @NotNull Collection<T> items,
+                                                                                       @NotNull final Convertor<T, FilePath> converter) {
     return ContainerUtil.groupBy(items, item -> {
       RootUrlInfo path = vcs.getSvnFileUrlMapping().getWcRootForFilePath(converter.convert(item).getIOFile());
 
@@ -381,7 +365,7 @@ public class SvnUtil {
   }
 
   @Nullable
-  public static String getRepositoryUUID(final SvnVcs vcs, final SVNURL url) {
+  public static String getRepositoryUUID(final SvnVcs vcs, final Url url) {
     try {
       final Info info = vcs.getInfo(url, Revision.UNDEFINED);
 
@@ -393,13 +377,13 @@ public class SvnUtil {
   }
 
   @Nullable
-  public static SVNURL getRepositoryRoot(final SvnVcs vcs, final File file) {
+  public static Url getRepositoryRoot(final SvnVcs vcs, final File file) {
     final Info info = vcs.getInfo(file);
     return info != null ? info.getRepositoryRootURL() : null;
   }
 
   @Nullable
-  public static SVNURL getRepositoryRoot(final SvnVcs vcs, final String url) {
+  public static Url getRepositoryRoot(final SvnVcs vcs, final String url) {
     try {
       return getRepositoryRoot(vcs, createUrl(url));
     }
@@ -409,7 +393,7 @@ public class SvnUtil {
   }
 
   @Nullable
-  public static SVNURL getRepositoryRoot(final SvnVcs vcs, final SVNURL url) throws SvnBindException {
+  public static Url getRepositoryRoot(final SvnVcs vcs, final Url url) throws SvnBindException {
     Info info = vcs.getInfo(url, Revision.HEAD);
 
     return (info == null) ? null : info.getRepositoryRootURL();
@@ -434,8 +418,8 @@ public class SvnUtil {
 
   @Nullable
   @Deprecated // Required for compatibility with external plugins.
-  public static SVNURL getBranchForUrl(@NotNull SvnVcs vcs, @NotNull VirtualFile vcsRoot, @NotNull String urlValue) {
-    SVNURL url = null;
+  public static Url getBranchForUrl(@NotNull SvnVcs vcs, @NotNull VirtualFile vcsRoot, @NotNull String urlValue) {
+    Url url = null;
 
     try {
       url = createUrl(urlValue);
@@ -448,8 +432,8 @@ public class SvnUtil {
   }
 
   @Nullable
-  public static SVNURL getBranchForUrl(@NotNull SvnVcs vcs, @NotNull VirtualFile vcsRoot, @NotNull SVNURL url) {
-    SVNURL result = null;
+  public static Url getBranchForUrl(@NotNull SvnVcs vcs, @NotNull VirtualFile vcsRoot, @NotNull Url url) {
+    Url result = null;
     SvnBranchConfigurationNew configuration = SvnBranchConfigurationManager.getInstance(vcs.getProject()).get(vcsRoot);
 
     try {
@@ -462,7 +446,7 @@ public class SvnUtil {
     return result;
   }
 
-  public static boolean checkRepositoryVersion15(@NotNull SvnVcs vcs, @NotNull SVNURL url) {
+  public static boolean checkRepositoryVersion15(@NotNull SvnVcs vcs, @NotNull Url url) {
     // Merge info tracking is supported in repositories since svn 1.5 (June 2008) - see http://subversion.apache.org/docs/release-notes/.
     // But still some users use 1.4 repositories and currently we need to know if repository supports merge info for some code flows.
 
@@ -525,7 +509,7 @@ public class SvnUtil {
   }
 
   @Nullable
-  public static SVNURL getUrl(final SvnVcs vcs, final File file) {
+  public static Url getUrl(final SvnVcs vcs, final File file) {
     // todo for moved items?
     final Info info = vcs.getInfo(file);
 
@@ -582,11 +566,11 @@ public class SvnUtil {
     return current;
   }
 
-  public static boolean isAncestor(@NotNull SVNURL parentUrl, @NotNull SVNURL childUrl) {
+  public static boolean isAncestor(@NotNull Url parentUrl, @NotNull Url childUrl) {
     return SVNPathUtil.isAncestor(parentUrl.toDecodedString(), childUrl.toDecodedString());
   }
 
-  public static String getRelativeUrl(@NotNull SVNURL parentUrl, @NotNull SVNURL childUrl) {
+  public static String getRelativeUrl(@NotNull Url parentUrl, @NotNull Url childUrl) {
     return getRelativeUrl(parentUrl.toDecodedString(), childUrl.toDecodedString());
   }
 
@@ -624,12 +608,12 @@ public class SvnUtil {
   }
 
   @NotNull
-  public static SVNURL removePathTail(@NotNull SVNURL url) throws SvnBindException {
+  public static Url removePathTail(@NotNull Url url) throws SvnBindException {
     return createUrl(SVNPathUtil.removeTail(url.toDecodedString()));
   }
 
   @NotNull
-  public static Revision getHeadRevision(@NotNull SvnVcs vcs, @NotNull SVNURL url) throws SvnBindException {
+  public static Revision getHeadRevision(@NotNull SvnVcs vcs, @NotNull Url url) throws SvnBindException {
     Info info = vcs.getInfo(url, Revision.HEAD);
 
     if (info == null) {
@@ -650,43 +634,18 @@ public class SvnUtil {
     return vcs.getFactory(target).createContentClient().getContent(target, revision, pegRevision);
   }
 
-  public static boolean hasDefaultPort(@NotNull SVNURL result) {
-    return !result.hasPort() || SVNURL.getDefaultPortNumber(result.getProtocol()) == result.getPort();
-  }
-
-  /**
-   * When creating SVNURL with default port, some negative value should be specified as port number, otherwise specified port value (even
-   * if equals to default) will occur in toString() result.
-   */
-  public static int resolvePort(@NotNull SVNURL url) {
-    return !hasDefaultPort(url) ? url.getPort() : DEFAULT_PORT_INDICATOR;
-  }
-
   @NotNull
-  public static SVNURL createUrl(@NotNull String url) throws SvnBindException {
+  public static Url createUrl(@NotNull String url) throws SvnBindException {
     return createUrl(url, true);
   }
 
   @NotNull
-  public static SVNURL createUrl(@NotNull String url, boolean encoded) throws SvnBindException {
-    try {
-      SVNURL result = encoded ? SVNURL.parseURIEncoded(url) : SVNURL.parseURIDecoded(url);
-
-      // explicitly check if port corresponds to default port and recreate url specifying default port indicator
-      if (result.hasPort() && hasDefaultPort(result)) {
-        result = SVNURL
-          .create(result.getProtocol(), result.getUserInfo(), result.getHost(), DEFAULT_PORT_INDICATOR, result.getURIEncodedPath(), true);
-      }
-
-      return result;
-    }
-    catch (SVNException e) {
-      throw new SvnBindException(e);
-    }
+  public static Url createUrl(@NotNull String url, boolean encoded) throws SvnBindException {
+    return Url.parse(url, encoded);
   }
 
   @NotNull
-  public static SVNURL parseUrl(@NotNull String url) {
+  public static Url parseUrl(@NotNull String url) {
     try {
       return createUrl(url);
     }
@@ -696,7 +655,7 @@ public class SvnUtil {
   }
 
   @NotNull
-  public static SVNURL parseUrl(@NotNull String url, boolean encoded) {
+  public static Url parseUrl(@NotNull String url, boolean encoded) {
     try {
       return createUrl(url, encoded);
     }
@@ -706,18 +665,13 @@ public class SvnUtil {
   }
 
   @NotNull
-  public static SVNURL append(@NotNull SVNURL parent, @NotNull String child) throws SvnBindException {
+  public static Url append(@NotNull Url parent, @NotNull String child) throws SvnBindException {
     return append(parent, child, false);
   }
 
   @NotNull
-  public static SVNURL append(@NotNull SVNURL parent, @NotNull String child, boolean encoded) throws SvnBindException {
-    try {
-      return parent.appendPath(child, encoded);
-    }
-    catch (SVNException e) {
-      throw new SvnBindException(e);
-    }
+  public static Url append(@NotNull Url parent, @NotNull String child, boolean encoded) throws SvnBindException {
+    return parent.appendPath(child, encoded);
   }
 
   @NotNull
@@ -783,8 +737,8 @@ public class SvnUtil {
   }
 
   /**
-   * {@code SvnTarget.getPathOrUrlDecodedString} does not correctly work for URL targets - {@code SVNURL.toString} instead of
-   * {@code SVNURL.toDecodedString} is used.
+   * {@code SvnTarget.getPathOrUrlDecodedString} does not correctly work for URL targets - {@code Url.toString} instead of
+   * {@code Url.toDecodedString} is used.
    * <p/>
    * Current utility method fixes this case.
    */

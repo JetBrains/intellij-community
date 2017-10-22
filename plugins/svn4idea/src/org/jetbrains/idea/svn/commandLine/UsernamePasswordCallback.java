@@ -3,11 +3,11 @@ package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.auth.AuthenticationData;
 import org.jetbrains.idea.svn.auth.AuthenticationService;
 import org.jetbrains.idea.svn.auth.PasswordAuthenticationData;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
-import org.tmatesoft.svn.core.SVNURL;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -29,7 +29,7 @@ public class UsernamePasswordCallback extends AuthCallbackCase {
 
   protected AuthenticationData myAuthentication;
 
-  UsernamePasswordCallback(@NotNull AuthenticationService authenticationService, SVNURL url) {
+  UsernamePasswordCallback(@NotNull AuthenticationService authenticationService, Url url) {
     super(authenticationService, url);
   }
 
@@ -74,7 +74,7 @@ public class UsernamePasswordCallback extends AuthCallbackCase {
     }
   }
 
-  private SVNURL parseUrlFromError(String errorText) {
+  private Url parseUrlFromError(String errorText) {
     Matcher matcher = UNABLE_TO_CONNECT_TO_URL_PATTERN.matcher(errorText);
     String urlValue = null;
 

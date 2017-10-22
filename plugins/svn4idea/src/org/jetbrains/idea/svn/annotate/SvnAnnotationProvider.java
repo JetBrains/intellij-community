@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.annotate;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,6 +25,7 @@ import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.jetbrains.idea.svn.history.HistoryClient;
@@ -46,7 +33,6 @@ import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
 import java.io.IOException;
@@ -123,7 +109,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
           exception[0] = new SvnBindException("File '" + ioFile + "' is not under version control");
           return;
         }
-        SVNURL url = info.getURL();
+        Url url = info.getURL();
         Revision endRevision = revisionNumber.getRevision();
         if (Revision.WORKING.equals(endRevision)) {
           endRevision = info.getRevision();
@@ -256,7 +242,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     if (wcRootInfo == null || wcRootInfo.getURL() == null) {
       throw new VcsException("Can not find relative path for " + wasFile.getPath() + "@" + revisionNumber.asString());
     }
-    SVNURL wasUrl = wcRootInfo.getURL();
+    Url wasUrl = wcRootInfo.getURL();
     final String[] strings = relativePath.replace('\\', '/').split("/");
     for (String string : strings) {
       wasUrl = append(wasUrl, string, true);
@@ -376,13 +362,13 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     private final Revision myEndRevision;
     private final boolean myCalculateMergeinfo;
     private final SvnFileAnnotation myResult;
-    private final SVNURL myUrl;
+    private final Url myUrl;
     private final Charset myCharset;
 
     private MySteppedLogGetter(final SvnVcs vcs, final File ioFile, final ProgressIndicator progress, final HistoryClient client,
                                final Revision endRevision,
                                final SvnFileAnnotation result,
-                               SVNURL url,
+                               Url url,
                                final boolean calculateMergeinfo,
                                Charset charset) {
       myVcs = vcs;

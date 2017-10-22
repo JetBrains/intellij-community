@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,9 +15,9 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.util.ArrayList;
@@ -73,7 +59,7 @@ public class DefaultBranchConfigInitializer implements Runnable {
   public SvnBranchConfigurationNew getDefaultConfiguration() {
     SvnBranchConfigurationNew result = null;
     SvnVcs vcs = SvnVcs.getInstance(myProject);
-    SVNURL rootUrl = SvnUtil.getUrl(vcs, VfsUtilCore.virtualToIoFile(myRoot));
+    Url rootUrl = SvnUtil.getUrl(vcs, VfsUtilCore.virtualToIoFile(myRoot));
 
     if (rootUrl != null) {
       try {
@@ -91,11 +77,11 @@ public class DefaultBranchConfigInitializer implements Runnable {
   }
 
   @NotNull
-  private static SvnBranchConfigurationNew getDefaultConfiguration(@NotNull SvnVcs vcs, @NotNull SVNURL url) throws VcsException {
+  private static SvnBranchConfigurationNew getDefaultConfiguration(@NotNull SvnVcs vcs, @NotNull Url url) throws VcsException {
     SvnBranchConfigurationNew result = new SvnBranchConfigurationNew();
     result.setTrunkUrl(url.toString());
 
-    SVNURL branchLocationsParent = getBranchLocationsParent(url);
+    Url branchLocationsParent = getBranchLocationsParent(url);
     if (branchLocationsParent != null) {
       Target target = Target.on(branchLocationsParent);
 
@@ -106,7 +92,7 @@ public class DefaultBranchConfigInitializer implements Runnable {
   }
 
   @Nullable
-  private static SVNURL getBranchLocationsParent(@NotNull SVNURL url) throws SvnBindException {
+  private static Url getBranchLocationsParent(@NotNull Url url) throws SvnBindException {
     while (!hasEmptyName(url) && !hasDefaultName(url)) {
       url = removePathTail(url);
     }
@@ -114,11 +100,11 @@ public class DefaultBranchConfigInitializer implements Runnable {
     return hasDefaultName(url) ? removePathTail(url) : null;
   }
 
-  private static boolean hasEmptyName(@NotNull SVNURL url) {
+  private static boolean hasEmptyName(@NotNull Url url) {
     return StringUtil.isEmpty(SVNPathUtil.tail(url.getPath()));
   }
 
-  private static boolean hasDefaultName(@NotNull SVNURL url) {
+  private static boolean hasDefaultName(@NotNull Url url) {
     String name = SVNPathUtil.tail(url.getPath());
 
     return name.equalsIgnoreCase(DEFAULT_TRUNK_NAME) ||
@@ -127,10 +113,10 @@ public class DefaultBranchConfigInitializer implements Runnable {
   }
 
   @NotNull
-  private static DirectoryEntryConsumer createHandler(@NotNull final SvnBranchConfigurationNew result, @NotNull final SVNURL rootPath) {
+  private static DirectoryEntryConsumer createHandler(@NotNull final SvnBranchConfigurationNew result, @NotNull final Url rootPath) {
     return entry -> {
       if (entry.isDirectory()) {
-        SVNURL childUrl = append(rootPath, entry.getName());
+        Url childUrl = append(rootPath, entry.getName());
 
         if (StringUtil.endsWithIgnoreCase(entry.getName(), DEFAULT_TRUNK_NAME)) {
           result.setTrunkUrl(childUrl.toString());

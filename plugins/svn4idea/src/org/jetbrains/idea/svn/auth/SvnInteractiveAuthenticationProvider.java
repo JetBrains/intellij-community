@@ -13,10 +13,10 @@ import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.dialogs.SSLCredentialsDialog;
 import org.jetbrains.idea.svn.dialogs.ServerSSLDialog;
 import org.jetbrains.idea.svn.dialogs.SimpleCredentialsDialog;
-import org.tmatesoft.svn.core.SVNURL;
 
 import java.security.cert.X509Certificate;
 
@@ -47,7 +47,7 @@ public class SvnInteractiveAuthenticationProvider implements AuthenticationProvi
 
   @Override
   public AuthenticationData requestClientAuthentication(final String kind,
-                                                        final SVNURL url,
+                                                        final Url url,
                                                         final String realm,
                                                         final boolean canCache) {
     final MyCallState callState = new MyCallState(true, false);
@@ -101,7 +101,7 @@ public class SvnInteractiveAuthenticationProvider implements AuthenticationProvi
   }
 
   @Override
-  public AcceptResult acceptServerAuthentication(final SVNURL url,
+  public AcceptResult acceptServerAuthentication(final Url url,
                                                  String realm,
                                                  final Object certificate,
                                                  final boolean canCache) {

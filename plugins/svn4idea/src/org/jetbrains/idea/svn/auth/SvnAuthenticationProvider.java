@@ -3,7 +3,7 @@ package org.jetbrains.idea.svn.auth;
 
 import com.intellij.openapi.project.Project;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNURL;
+import org.jetbrains.idea.svn.api.Url;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -26,12 +26,12 @@ public class SvnAuthenticationProvider implements AuthenticationProvider {
   }
 
   public AuthenticationData requestClientAuthentication(final String kind,
-                                                        final SVNURL url,
+                                                        final Url url,
                                                         final String realm,
                                                         final boolean canCache) {
     final SvnAuthenticationNotifier.AuthenticationRequest obj =
       new SvnAuthenticationNotifier.AuthenticationRequest(myProject, kind, url, realm);
-    final SVNURL wcUrl = myAuthenticationNotifier.getWcUrl(obj);
+    final Url wcUrl = myAuthenticationNotifier.getWcUrl(obj);
     if (wcUrl == null || ourForceInteractive.contains(Thread.currentThread())) {
       // outside-project url
       return mySvnInteractiveAuthenticationProvider.requestClientAuthentication(kind, url, realm, canCache);
@@ -51,7 +51,7 @@ public class SvnAuthenticationProvider implements AuthenticationProvider {
     ourForceInteractive.remove(Thread.currentThread());
   }
 
-  public AcceptResult acceptServerAuthentication(SVNURL url, String realm, final Object certificate, final boolean canCache) {
+  public AcceptResult acceptServerAuthentication(Url url, String realm, final Object certificate, final boolean canCache) {
     return mySvnInteractiveAuthenticationProvider.acceptServerAuthentication(url, realm, certificate, canCache);
   }
 }

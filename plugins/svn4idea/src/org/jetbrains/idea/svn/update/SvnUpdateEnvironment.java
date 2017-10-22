@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.options.Configurable;
@@ -28,9 +14,9 @@ import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -79,7 +65,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       SvnConfiguration configuration = myVcs.getSvnConfiguration();
       final UpdateRootInfo rootInfo = configuration.getUpdateRootInfo(root, myVcs);
 
-      final SVNURL sourceUrl = getSourceUrl(myVcs, root);
+      final Url sourceUrl = getSourceUrl(myVcs, root);
       final boolean isSwitch = rootInfo != null && rootInfo.getUrl() != null && ! rootInfo.getUrl().equals(sourceUrl);
       final Revision updateTo = rootInfo != null && rootInfo.isUpdateToRevision() ? rootInfo.getRevision() : Revision.HEAD;
       if (isSwitch) {
@@ -95,7 +81,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       return rev;
     }
 
-    private UpdateClient createUpdateClient(SvnConfiguration configuration, File root, boolean isSwitch, SVNURL sourceUrl) {
+    private UpdateClient createUpdateClient(SvnConfiguration configuration, File root, boolean isSwitch, Url sourceUrl) {
       final UpdateClient updateClient = myVcs.getFactory(root).createUpdateClient();
 
       if (! isSwitch) {
@@ -113,7 +99,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
   }
 
   @Nullable
-  private static SVNURL getSourceUrl(final SvnVcs vcs, final File root) {
+  private static Url getSourceUrl(final SvnVcs vcs, final File root) {
     final Info svnInfo = vcs.getInfo(root);
     return svnInfo != null ? svnInfo.getURL() : null;
   }
@@ -131,7 +117,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
         if (value == null) {
           continue;
         }
-        final SVNURL url = value.getUrl();
+        final Url url = value.getUrl();
         if (url != null && (! url.equals(getSourceUrl(myVcs, root.getIOFile())))) {
           // switch
           final Revision updateRevision = correctRevision(value);
@@ -158,7 +144,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
   }
 
   // false - do not do update
-  private boolean checkAncestry(final File sourceFile, final SVNURL targetUrl, final Revision targetRevision) throws SvnBindException {
+  private boolean checkAncestry(final File sourceFile, final Url targetUrl, final Revision targetRevision) throws SvnBindException {
     final Info sourceSvnInfo = myVcs.getInfo(sourceFile);
     final Info targetSvnInfo = myVcs.getInfo(targetUrl, targetRevision);
 
@@ -167,8 +153,8 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       return true;
     }
 
-    final SVNURL copyFromTarget = targetSvnInfo.getCopyFromURL();
-    final SVNURL copyFromSource = sourceSvnInfo.getCopyFromURL();
+    final Url copyFromTarget = targetSvnInfo.getCopyFromURL();
+    final Url copyFromSource = sourceSvnInfo.getCopyFromURL();
 
     if ((copyFromSource != null) || (copyFromTarget != null)) {
       if (sourceSvnInfo.getURL().equals(copyFromTarget) || targetUrl.equals(copyFromSource)) {

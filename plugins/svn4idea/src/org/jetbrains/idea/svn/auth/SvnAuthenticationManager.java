@@ -13,9 +13,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.IdeaSVNConfigFile;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.config.ProxyGroup;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNCompositeConfigFile;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
@@ -98,11 +98,11 @@ public class SvnAuthenticationManager {
   }
 
   @NotNull
-  public HostOptions getHostOptions(@NotNull SVNURL url) {
+  public HostOptions getHostOptions(@NotNull Url url) {
     return new HostOptions(url);
   }
 
-  public void acknowledgeAuthentication(String kind, SVNURL url, String realm, AuthenticationData authentication) {
+  public void acknowledgeAuthentication(String kind, Url url, String realm, AuthenticationData authentication) {
     boolean authStorageEnabled = getHostOptions(url).isAuthStorageEnabled();
     AuthenticationData proxy = ProxySvnAuthentication.proxy(authentication, authStorageEnabled);
     getConfig().acknowledge(kind, realm, proxy);
@@ -111,7 +111,7 @@ public class SvnAuthenticationManager {
   private final static int DEFAULT_READ_TIMEOUT = 30 * 1000;
   private final static int DEFAULT_CONNECT_TIMEOUT = 60 * 1000;
 
-  public int getReadTimeout(@NotNull SVNURL url) {
+  public int getReadTimeout(@NotNull Url url) {
     String protocol = url.getProtocol();
     if (HTTP.equals(protocol) || HTTPS.equals(protocol)) {
       String host = url.getHost();
@@ -132,7 +132,7 @@ public class SvnAuthenticationManager {
     return 0;
   }
 
-  public int getConnectTimeout(@NotNull SVNURL url) {
+  public int getConnectTimeout(@NotNull Url url) {
     String protocol = url.getProtocol();
     if (SVN_SSH.equals(protocol)) {
       return (int)getConfig().getSshConnectionTimeout();
@@ -155,7 +155,7 @@ public class SvnAuthenticationManager {
   }
 
   public static boolean checkHostGroup(final String url, final String patterns, final String exceptions) {
-    final SVNURL svnurl;
+    final Url svnurl;
     try {
       svnurl = createUrl(url);
     }
@@ -218,9 +218,9 @@ public class SvnAuthenticationManager {
   }
 
   public class HostOptions {
-    @NotNull private final SVNURL myUrl;
+    @NotNull private final Url myUrl;
 
-    private HostOptions(@NotNull SVNURL url) {
+    private HostOptions(@NotNull Url url) {
       myUrl = url;
     }
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 
 package org.jetbrains.idea.svn.branchConfig;
@@ -35,13 +21,13 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.BasicAction;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.checkin.CommitEventHandler;
 import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.update.AutoSvnUpdater;
 import org.jetbrains.idea.svn.update.SingleRootSwitcher;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
 
@@ -72,9 +58,9 @@ public class CreateBranchOrTagAction extends BasicAction {
       Ref<Exception> exception = new Ref<>();
       boolean isSrcFile = dialog.isCopyFromWorkingCopy();
       File srcFile = new File(dialog.getCopyFromPath());
-      SVNURL srcUrl = createUrl(dialog.getCopyFromUrl());
-      SVNURL dstSvnUrl = createUrl(dstURL);
-      SVNURL parentUrl = removePathTail(dstSvnUrl);
+      Url srcUrl = createUrl(dialog.getCopyFromUrl());
+      Url dstSvnUrl = createUrl(dstURL);
+      Url parentUrl = removePathTail(dstSvnUrl);
 
       if (!dirExists(vcs, parentUrl)) {
         int rc =
@@ -128,7 +114,7 @@ public class CreateBranchOrTagAction extends BasicAction {
     }
   }
 
-  private static boolean dirExists(@NotNull SvnVcs vcs, @NotNull SVNURL url) throws SvnBindException {
+  private static boolean dirExists(@NotNull SvnVcs vcs, @NotNull Url url) throws SvnBindException {
     Ref<SvnBindException> excRef = new Ref<>();
     Ref<Boolean> resultRef = new Ref<>(Boolean.TRUE);
     Runnable taskImpl = () -> {

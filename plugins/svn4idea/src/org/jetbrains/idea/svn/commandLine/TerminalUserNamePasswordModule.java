@@ -4,9 +4,9 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.auth.PasswordAuthenticationData;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
-import org.tmatesoft.svn.core.SVNURL;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -65,7 +65,7 @@ public class TerminalUserNamePasswordModule extends BaseTerminalModule {
    * (before any user name prompt) for pre-configured/system user name.
    */
   private boolean handleAuthPrompt(boolean isUserName) {
-    SVNURL repositoryUrl = myExecutor.getCommand().requireRepositoryUrl();
+    Url repositoryUrl = myExecutor.getCommand().requireRepositoryUrl();
 
     if (needAskAuthentication(isUserName)) {
       // TODO: Probably pass real realm to dialog

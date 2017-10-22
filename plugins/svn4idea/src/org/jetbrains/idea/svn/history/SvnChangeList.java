@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.svn.history;
 
@@ -39,9 +25,9 @@ import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.io.DataInput;
@@ -70,7 +56,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
 
   private ChangesListCreationHelper myListsHolder;
 
-  private SVNURL myBranchUrl;
+  private Url myBranchUrl;
 
   private boolean myCachedInfoLoaded;
 
@@ -105,7 +91,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
   public SvnChangeList(@NotNull SvnVcs vcs,
                        @NotNull SvnRepositoryLocation location,
                        @NotNull LogEntry logEntry,
-                       @NotNull SVNURL repositoryRoot) {
+                       @NotNull Url repositoryRoot) {
     this(vcs, location, logEntry, repositoryRoot.toDecodedString());
   }
 
@@ -308,7 +294,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
   private FilePath getLocalPath(@NotNull String path, final NotNullFunction<File, Boolean> detector) {
     if (myVcs.getProject().isDefault()) return null;
 
-    SVNURL absoluteUrl = parseUrl(myRepositoryRoot + path, false);
+    Url absoluteUrl = parseUrl(myRepositoryRoot + path, false);
     final RootUrlInfo rootForUrl = myVcs.getSvnFileUrlMapping().getWcRootForUrl(absoluteUrl);
     FilePath result = null;
 
@@ -356,7 +342,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     }
 
     @Nullable
-    private FilePath localDeletedPath(@NotNull SVNURL url, final boolean isDir) {
+    private FilePath localDeletedPath(@NotNull Url url, final boolean isDir) {
       final SvnFileUrlMapping urlMapping = myVcs.getSvnFileUrlMapping();
       final File file = urlMapping.getLocalPath(url);
       if (file != null) {
@@ -368,7 +354,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
 
     public SvnRepositoryContentRevision createDeletedItemRevision(@NotNull String path, final boolean isBeforeRevision) {
       final boolean knownAsDirectory = myKnownAsDirectories.contains(path);
-      SVNURL url = parseUrl(myRepositoryRoot + path, false);
+      Url url = parseUrl(myRepositoryRoot + path, false);
       if (! knownAsDirectory) {
         myWithoutDirStatus.add(Pair.create(myList.size(), isBeforeRevision));
       }
@@ -501,7 +487,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
       final List<Change> result = new ArrayList<>();
 
       final String path = getRelativePath(contentRevision);
-      SVNURL fullPath = createUrl(((SvnRepositoryContentRevision)contentRevision).getFullPath());
+      Url fullPath = createUrl(((SvnRepositoryContentRevision)contentRevision).getFullPath());
       Revision revisionNumber = Revision.of(getRevision(isBefore));
       Target target = Target.on(fullPath, revisionNumber);
 
@@ -539,8 +525,8 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
   }
 
   private void patchChange(Change change, final String path) {
-    final SVNURL becameUrl;
-    SVNURL wasUrl;
+    final Url becameUrl;
+    Url wasUrl;
     try {
       becameUrl = createUrl(SVNPathUtil.append(myRepositoryRoot, path));
       wasUrl = becameUrl;
@@ -568,7 +554,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
   @Nullable
   private SvnLazyPropertyContentRevision createPropertyRevision(@NotNull FilePath filePath,
                                                                 @Nullable ContentRevision revision,
-                                                                @NotNull SVNURL url) {
+                                                                @NotNull Url url) {
     return revision == null ? null : new SvnLazyPropertyContentRevision(myVcs, filePath, revision.getRevisionNumber(), url);
   }
 
@@ -723,7 +709,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     }
   }
 
-  public SVNURL getBranchUrl() {
+  public Url getBranchUrl() {
     ensureCacheUpdated();
 
     return myBranchUrl;
@@ -795,7 +781,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
         myCachedInfoLoaded = false;
         return;
       }
-      SVNURL absoluteUrl = parseUrl(SVNPathUtil.append(myRepositoryRoot, commonPath), false);
+      Url absoluteUrl = parseUrl(SVNPathUtil.append(myRepositoryRoot, commonPath), false);
       myWcRoot = urlMapping.getWcRootForUrl(absoluteUrl);
       if (myWcRoot != null) {
         myBranchUrl = SvnUtil.getBranchForUrl(myVcs, myWcRoot.getVirtualFile(), absoluteUrl);

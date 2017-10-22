@@ -1,28 +1,14 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs.browserCache;
 
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.NodeKind;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
-import org.tmatesoft.svn.core.SVNURL;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -34,9 +20,9 @@ import static org.jetbrains.idea.svn.SvnUtil.removePathTail;
 
 public class SyntheticWorker {
   private final SvnRepositoryCache myCache;
-  private final SVNURL myUrl;
+  private final Url myUrl;
 
-  public SyntheticWorker(final SVNURL url) {
+  public SyntheticWorker(final Url url) {
     myCache = SvnRepositoryCache.getInstance();
     myUrl = url;
   }
@@ -63,7 +49,7 @@ public class SyntheticWorker {
     myCache.put(parentUrl, children);
   }
 
-  public void addSyntheticChildToSelf(final SVNURL newUrl, final SVNURL repositoryUrl, final String name, final boolean isDir) {
+  public void addSyntheticChildToSelf(final Url newUrl, final Url repositoryUrl, final String name, final boolean isDir) {
     final String currentUrlAsString = myUrl.toString();
 
     final List<DirectoryEntry> children = myCache.getChildren(currentUrlAsString);
@@ -88,7 +74,7 @@ public class SyntheticWorker {
     node.doOnSubtree(new Remover());
   }
 
-  public static DirectoryEntry createSyntheticEntry(final SVNURL newUrl, final SVNURL repositoryUrl, final String name, final boolean isDir) {
+  public static DirectoryEntry createSyntheticEntry(final Url newUrl, final Url repositoryUrl, final String name, final boolean isDir) {
     return new DirectoryEntry(newUrl, repositoryUrl, name, NodeKind.from(isDir), CommitInfo.EMPTY, null);
   }
 
@@ -104,9 +90,9 @@ public class SyntheticWorker {
 
   private class Adder implements NotNullFunction<RepositoryTreeNode, Object> {
     private final int myOldPrefixLen;
-    private final SVNURL myNewParentUrl;
+    private final Url myNewParentUrl;
 
-    private Adder(final int oldPrefixLen, final SVNURL newParentUrl) {
+    private Adder(final int oldPrefixLen, final Url newParentUrl) {
       myOldPrefixLen = oldPrefixLen;
       myNewParentUrl = newParentUrl;
     }
@@ -131,7 +117,7 @@ public class SyntheticWorker {
     }
 
     @NotNull
-    private SVNURL convertUrl(@NotNull SVNURL currentUrl) throws SvnBindException {
+    private Url convertUrl(@NotNull Url currentUrl) throws SvnBindException {
       return append(myNewParentUrl, currentUrl.toString().substring(myOldPrefixLen), true);
     }
   }

@@ -30,10 +30,10 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.branchConfig.ConfigureBranchesAction;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.StatusType;
-import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -104,7 +104,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
                                    @NotNull AsynchConsumer<CommittedChangeList> consumer) throws VcsException {
     try {
       SvnRepositoryLocation svnLocation = (SvnRepositoryLocation)location;
-      SVNURL repositoryRoot = getRepositoryRoot(svnLocation);
+      Url repositoryRoot = getRepositoryRoot(svnLocation);
       ChangeBrowserSettings.Filter filter = settings.createFilter();
       ThrowableConsumer<LogEntry, SvnBindException> resultConsumer = logEntry -> {
         SvnChangeList list = new SvnChangeList(myVcs, svnLocation, logEntry, repositoryRoot);
@@ -128,7 +128,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
                                                  int maxCount) throws VcsException {
     SvnRepositoryLocation svnLocation = (SvnRepositoryLocation)location;
     List<SvnChangeList> result = newArrayList();
-    SVNURL repositoryRoot = getRepositoryRoot(svnLocation);
+    Url repositoryRoot = getRepositoryRoot(svnLocation);
     ThrowableConsumer<LogEntry, SvnBindException> resultConsumer =
       logEntry -> result.add(new SvnChangeList(myVcs, svnLocation, logEntry, repositoryRoot));
     Target target = Target.on(svnLocation.toSvnUrl(), createBeforeRevision(settings));
@@ -144,7 +144,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
                                                     @NotNull PairConsumer<SvnChangeList, LogHierarchyNode> finalConsumer)
     throws VcsException {
     SvnRepositoryLocation svnLocation = (SvnRepositoryLocation)location;
-    SVNURL repositoryRoot = getRepositoryRoot(svnLocation);
+    Url repositoryRoot = getRepositoryRoot(svnLocation);
     MergeSourceHierarchyBuilder builder = new MergeSourceHierarchyBuilder(
       node -> finalConsumer.consume(new SvnChangeList(myVcs, svnLocation, node.getMe(), repositoryRoot), node));
     SvnMergeSourceTracker mergeSourceTracker = new SvnMergeSourceTracker(builder);
@@ -155,11 +155,11 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   @NotNull
-  private SVNURL getRepositoryRoot(@NotNull SvnRepositoryLocation svnLocation) throws VcsException {
+  private Url getRepositoryRoot(@NotNull SvnRepositoryLocation svnLocation) throws VcsException {
     // TODO: Additionally SvnRepositoryLocation could possibly be refactored to always contain FilePath (or similar local item)
     // TODO: So here we could get repository url without performing remote svn command
 
-    SVNURL rootUrl = SvnUtil.getRepositoryRoot(myVcs, svnLocation.toSvnUrl());
+    Url rootUrl = SvnUtil.getRepositoryRoot(myVcs, svnLocation.toSvnUrl());
 
     if (rootUrl == null) {
       throw new SvnBindException("Could not resolve repository root url for " + svnLocation);

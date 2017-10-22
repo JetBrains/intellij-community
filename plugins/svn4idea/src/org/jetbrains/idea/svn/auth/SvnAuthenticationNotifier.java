@@ -34,11 +34,10 @@ import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.api.ClientFactory;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.info.InfoClient;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -51,7 +50,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.jetbrains.idea.svn.SvnUtil.isAuthError;
 
-public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthenticationNotifier.AuthenticationRequest, SVNURL> {
+public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthenticationNotifier.AuthenticationRequest, Url> {
   private static final Logger LOG = Logger.getInstance(SvnAuthenticationNotifier.class);
 
   private static final List<String> ourAuthKinds = Arrays
@@ -59,7 +58,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
 
   private final SvnVcs myVcs;
   private final RootsToWorkingCopies myRootsToWorkingCopies;
-  private final Map<SVNURL, Boolean> myCopiesPassiveResults;
+  private final Map<Url, Boolean> myCopiesPassiveResults;
   private ScheduledFuture<?> myTimer;
   private volatile boolean myVerificationInProgress;
 
@@ -67,7 +66,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     super(svnVcs.getProject(), svnVcs.getDisplayName(), "Not Logged In to Subversion", NotificationType.ERROR);
     myVcs = svnVcs;
     myRootsToWorkingCopies = myVcs.getRootsToWorkingCopies();
-    myCopiesPassiveResults = Collections.synchronizedMap(new HashMap<SVNURL, Boolean>());
+    myCopiesPassiveResults = Collections.synchronizedMap(new HashMap<Url, Boolean>());
     myVerificationInProgress = false;
   }
 
@@ -139,10 +138,10 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     myCopiesPassiveResults.put(getKey(obj), true);
     myVcs.invokeRefreshSvnRoots();
 
-    final List<SVNURL> outdatedRequests = new LinkedList<>();
-    final Collection<SVNURL> keys = getAllCurrentKeys();
-    for (SVNURL key : keys) {
-      final SVNURL commonURLAncestor = SVNURLUtil.getCommonURLAncestor(key, obj.getUrl());
+    final List<Url> outdatedRequests = new LinkedList<>();
+    final Collection<Url> keys = getAllCurrentKeys();
+    for (Url key : keys) {
+      final Url commonURLAncestor = key.commonAncestorWith(obj.getUrl());
       if ((commonURLAncestor != null) && (! StringUtil.isEmptyOrSpaces(commonURLAncestor.getHost())) &&
           (! StringUtil.isEmptyOrSpaces(commonURLAncestor.getPath()))) {
         //final AuthenticationRequest currObj = getObj(key);
@@ -153,7 +152,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     }
     log("on state changed ");
     ApplicationManager.getApplication().invokeLater(() -> {
-      for (SVNURL key : outdatedRequests) {
+      for (Url key : outdatedRequests) {
         removeLazyNotificationByKey(key);
       }
     }, ModalityState.NON_MODAL);
@@ -161,7 +160,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
 
   @Override
   public boolean ensureNotify(AuthenticationRequest obj) {
-    final SVNURL key = getKey(obj);
+    final Url key = getKey(obj);
     myCopiesPassiveResults.remove(key);
     /*VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "You are not authenticated to '" + obj.getRealm() + "'." +
       "To login, see pending notifications.", MessageType.ERROR);*/
@@ -179,13 +178,13 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
 
   @NotNull
   @Override
-  public SVNURL getKey(final AuthenticationRequest obj) {
+  public Url getKey(final AuthenticationRequest obj) {
     // !!! wc's URL
     return obj.getWcUrl();
   }
 
   @Nullable
-  public SVNURL getWcUrl(final AuthenticationRequest obj) {
+  public Url getWcUrl(final AuthenticationRequest obj) {
     if (obj.isOutsideCopies()) return null;
     if (obj.getWcUrl() != null) return obj.getWcUrl();
 
@@ -224,7 +223,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
   // TODO: reuse some logic from validationImpl().
   // TODO: Also SvnAuthenticationNotifier is not called for command line integration (ensureNotify() is called only in SVNKit lifecycle).
   // TODO: Though its logic with notifications seems rather convenient. Fix this.
-  private static boolean passiveValidation(@NotNull ClientFactory factory, @NotNull SVNURL url) {
+  private static boolean passiveValidation(@NotNull ClientFactory factory, @NotNull Url url) {
     Info info = null;
 
     try {
@@ -245,14 +244,14 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
   public static class AuthenticationRequest {
     private final Project myProject;
     private final String myKind;
-    private final SVNURL myUrl;
+    private final Url myUrl;
     private final String myRealm;
 
-    private SVNURL myWcUrl;
+    private Url myWcUrl;
     private boolean myOutsideCopies;
     private boolean myForceSaving;
 
-    public AuthenticationRequest(Project project, String kind, SVNURL url, String realm) {
+    public AuthenticationRequest(Project project, String kind, Url url, String realm) {
       myProject = project;
       myKind = kind;
       myUrl = url;
@@ -275,11 +274,11 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
       myOutsideCopies = outsideCopies;
     }
 
-    public SVNURL getWcUrl() {
+    public Url getWcUrl() {
       return myWcUrl;
     }
 
-    public void setWcUrl(SVNURL wcUrl) {
+    public void setWcUrl(Url wcUrl) {
       myWcUrl = wcUrl;
     }
 
@@ -287,7 +286,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
       return myKind;
     }
 
-    public SVNURL getUrl() {
+    public Url getUrl() {
       return myUrl;
     }
 
@@ -304,19 +303,19 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     LOG.debug(s);
   }
 
-  public static boolean passiveValidation(@NotNull SvnVcs vcs, final SVNURL url) {
+  public static boolean passiveValidation(@NotNull SvnVcs vcs, final Url url) {
     SvnConfiguration configuration = vcs.getSvnConfiguration();
     SvnAuthenticationManager passiveManager = configuration.getPassiveAuthenticationManager(vcs);
     return validationImpl(vcs.getProject(), url, configuration, passiveManager, false, null, null, false);
   }
 
-  public static boolean interactiveValidation(final Project project, final SVNURL url, final String realm, final String kind) {
+  public static boolean interactiveValidation(final Project project, final Url url, final String realm, final String kind) {
     final SvnConfiguration configuration = SvnConfiguration.getInstance(project);
     final SvnAuthenticationManager passiveManager = configuration.getInteractiveManager(SvnVcs.getInstance(project));
     return validationImpl(project, url, configuration, passiveManager, true, realm, kind, true);
   }
 
-  private static boolean validationImpl(final Project project, final SVNURL url,
+  private static boolean validationImpl(final Project project, final Url url,
                                         final SvnConfiguration configuration, final SvnAuthenticationManager manager,
                                         final boolean checkWrite,
                                         final String realm,

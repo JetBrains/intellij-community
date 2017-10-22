@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.application.Application;
@@ -26,9 +12,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNURL;
 
 import java.util.Iterator;
 import java.util.List;
@@ -36,7 +22,7 @@ import java.util.List;
 public class LiveProvider implements BunchProvider {
   private final SvnLogLoader myLoader;
   private final SvnRepositoryLocation myLocation;
-  private final SVNURL myRepositoryUrl;
+  private final Url myRepositoryUrl;
   private boolean myEarliestRevisionWasAccessed;
   private final long myYoungestRevision;
   private final SvnVcs myVcs;
@@ -45,7 +31,7 @@ public class LiveProvider implements BunchProvider {
                       final SvnRepositoryLocation location,
                       final long latestRevision,
                       final SvnLogLoader loader,
-                      SVNURL repositoryUrl) {
+                      Url repositoryUrl) {
     myVcs = vcs;
     myLoader = loader;
     myLocation = location;

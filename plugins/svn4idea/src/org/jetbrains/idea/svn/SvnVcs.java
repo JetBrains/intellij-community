@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 
 package org.jetbrains.idea.svn;
@@ -84,7 +70,6 @@ import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 
 import java.io.File;
@@ -563,12 +548,12 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @Nullable
-  public Info getInfo(@NotNull SVNURL url, Revision pegRevision, Revision revision) throws SvnBindException {
+  public Info getInfo(@NotNull Url url, Revision pegRevision, Revision revision) throws SvnBindException {
     return getFactory().createInfoClient().doInfo(Target.on(url, pegRevision), revision);
   }
 
   @Nullable
-  public Info getInfo(@NotNull SVNURL url, Revision revision) throws SvnBindException {
+  public Info getInfo(@NotNull Url url, Revision revision) throws SvnBindException {
     return getInfo(url, Revision.UNDEFINED, revision);
   }
 
@@ -775,7 +760,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       if (vf == null) continue;
 
       File ioFile = virtualToIoFile(vf);
-      SVNURL url = getSvnFileUrlMapping().getUrlForFile(ioFile);
+      Url url = getSvnFileUrlMapping().getUrlForFile(ioFile);
       if (url == null) {
         url = SvnUtil.getUrl(this, ioFile);
         if (url == null) {
@@ -794,10 +779,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   private static class MyPair<T> implements RootUrlPair {
     @NotNull private final VirtualFile myFile;
-    @NotNull private final SVNURL myUrl;
+    @NotNull private final Url myUrl;
     private final T mySrc;
 
-    private MyPair(@NotNull VirtualFile file, @NotNull SVNURL url, T src) {
+    private MyPair(@NotNull VirtualFile file, @NotNull Url url, T src) {
       myFile = file;
       myUrl = url;
       mySrc = src;
@@ -815,7 +800,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
     @NotNull
     @Override
-    public SVNURL getUrl() {
+    public Url getUrl() {
       return myUrl;
     }
   }

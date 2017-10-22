@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.icons.AllIcons;
@@ -36,11 +22,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.update.SvnRevisionPanel;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import javax.swing.*;
@@ -58,9 +44,9 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.dialogs.CopyDialog");
 
   private final File mySrcFile;
-  private SVNURL mySrcURL;
+  private Url mySrcURL;
   private final Project myProject;
-  private SVNURL myURL;
+  private Url myURL;
 
   private TextFieldWithBrowseButton myToURLText;
 
@@ -83,7 +69,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
   @NonNls private static final String HELP_ID = "vcs.subversion.branch";
   private SvnBranchConfigurationNew myBranchConfiguration;
   private final VirtualFile mySrcVirtualFile;
-  private final SVNURL myWcRootUrl;
+  private final Url myWcRootUrl;
 
   public CreateBranchOrTagDialog(final Project project, boolean canBeParent, File file) throws VcsException {
     super(project, canBeParent);
@@ -105,7 +91,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
       }
     });
     myRepositoryField.addActionListener(e -> {
-      SVNURL url = SelectLocationDialog.selectLocation(project, mySrcURL);
+      Url url = SelectLocationDialog.selectLocation(project, mySrcURL);
       if (url != null) {
         myRepositoryField.setText(url.toString());
       }
@@ -117,9 +103,9 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     });
     myToURLText.addActionListener(e -> {
       try {
-        SVNURL url = createUrl(myToURLText.getText());
+        Url url = createUrl(myToURLText.getText());
         String dstName = SVNPathUtil.tail(mySrcURL.toDecodedString());
-        SVNURL destination = SelectLocationDialog
+        Url destination = SelectLocationDialog
           .selectCopyDestination(myProject, removePathTail(url), message("label.copy.select.location.dialog.copy.as"), dstName, false);
 
         if (destination != null) {

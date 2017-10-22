@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -29,13 +15,9 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.api.EventAction;
-import org.jetbrains.idea.svn.api.ProgressEvent;
-import org.jetbrains.idea.svn.api.ProgressTracker;
-import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.*;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.jetbrains.idea.svn.status.StatusType;
-import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
 import java.util.HashMap;
@@ -51,7 +33,7 @@ public class UpdateEventHandler implements ProgressTracker {
   private int myExternalsCount;
   private final SvnVcs myVCS;
   @Nullable private final SvnUpdateContext mySequentialUpdatesContext;
-  private final Map<File, SVNURL> myUrlToCheckForSwitch;
+  private final Map<File, Url> myUrlToCheckForSwitch;
   // pair.first - group id, pair.second - file path
   // Stack is used to correctly handle cases when updates of externals occur during ordinary update, because these inner updates could have
   // its own revisions.
@@ -96,7 +78,7 @@ public class UpdateEventHandler implements ProgressTracker {
     }
   }
 
-  public void addToSwitch(final File file, final SVNURL url) {
+  public void addToSwitch(final File file, final Url url) {
     myUrlToCheckForSwitch.put(file, url);
   }
 
@@ -217,7 +199,7 @@ public class UpdateEventHandler implements ProgressTracker {
   private void possiblySwitched(ProgressEvent event) {
     final File file = event.getFile();
     if (file == null) return;
-    final SVNURL wasUrl = myUrlToCheckForSwitch.get(file);
+    final Url wasUrl = myUrlToCheckForSwitch.get(file);
     if (wasUrl != null && ! wasUrl.equals(event.getURL())) {
       myUrlToCheckForSwitch.remove(file);
       addFileToGroup(FileGroup.SWITCHED_ID, event);
@@ -227,7 +209,7 @@ public class UpdateEventHandler implements ProgressTracker {
   private boolean itemSwitched(final ProgressEvent event) {
     final File file = event.getFile();
     final SvnFileUrlMapping urlMapping = myVCS.getSvnFileUrlMapping();
-    final SVNURL currentUrl = urlMapping.getUrlForFile(file);
+    final Url currentUrl = urlMapping.getUrlForFile(file);
     return (currentUrl != null) && (! currentUrl.equals(event.getURL()));
   }
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,9 +8,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.io.File;
@@ -154,7 +140,7 @@ public class SvnBranchConfigurationNew {
   }
 
   @Nullable
-  public SVNURL getWorkingBranch(@NotNull SVNURL someUrl) throws SvnBindException {
+  public Url getWorkingBranch(@NotNull Url someUrl) throws SvnBindException {
     String baseUrl = getBaseUrl(someUrl.toString());
     return baseUrl == null ? null : createUrl(baseUrl);
   }
@@ -199,7 +185,7 @@ public class SvnBranchConfigurationNew {
 
   private static class BranchRootSearcher implements UrlListener {
     private final VirtualFile myRoot;
-    private final SVNURL myRootUrl;
+    private final Url myRootUrl;
     // url path to file path
     private final Map<String, String> myBranchesUnder;
 
@@ -215,7 +201,7 @@ public class SvnBranchConfigurationNew {
         final File baseDir = virtualToIoFile(myRoot);
         final String baseUrl = myRootUrl.getPath();
 
-        final SVNURL branchUrl = createUrl(url);
+        final Url branchUrl = createUrl(url);
         if (isAncestor(myRootUrl, branchUrl)) {
           final File file = SvnUtil.fileFromUrl(baseDir, baseUrl, branchUrl.getPath());
           myBranchesUnder.put(url, file.getAbsolutePath());

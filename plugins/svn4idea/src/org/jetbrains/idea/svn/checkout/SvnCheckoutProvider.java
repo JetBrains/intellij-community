@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.checkout;
 
 import com.intellij.openapi.application.ModalityState;
@@ -47,7 +33,6 @@ import org.jetbrains.idea.svn.checkin.CommitEventHandler;
 import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
 import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
 import org.jetbrains.idea.svn.dialogs.UpgradeFormatDialog;
-import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
 import java.util.List;
@@ -79,7 +64,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
   public static void doCheckout(@NotNull Project project,
                                 @NotNull File target,
-                                @NotNull SVNURL url,
+                                @NotNull Url url,
                                 Revision revision,
                                 Depth depth,
                                 boolean ignoreExternals,
@@ -114,7 +99,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
   public static void checkout(Project project,
                               File target,
-                              @NotNull SVNURL url,
+                              @NotNull Url url,
                               Revision revision,
                               Depth depth,
                               boolean ignoreExternals,
@@ -193,7 +178,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     return new CheckoutFormatFromUserProvider(project, target).prompt();
   }
 
-  public static void doExport(final Project project, final File target, final SVNURL url, final Depth depth,
+  public static void doExport(final Project project, final File target, final Url url, final Depth depth,
                               final boolean ignoreExternals, final boolean force, final String eolStyle) {
     try {
       final VcsException[] exception = new VcsException[1];
@@ -222,7 +207,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     }
   }
 
-  public static void doImport(final Project project, final File target, final SVNURL url, final Depth depth,
+  public static void doImport(final Project project, final File target, final Url url, final Depth depth,
                               final boolean includeIgnored, final String message) {
     final Ref<String> errorMessage = new Ref<>();
     final SvnVcs vcs = SvnVcs.getInstance(project);

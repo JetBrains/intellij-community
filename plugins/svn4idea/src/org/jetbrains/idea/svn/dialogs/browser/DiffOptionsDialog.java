@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.svn.dialogs.browser;
 
@@ -29,9 +15,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.dialogs.RepositoryBrowserComponent;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
-import org.tmatesoft.svn.core.SVNURL;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -43,10 +29,10 @@ import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
 
-  private final SVNURL myURL;
+  private final Url myURL;
   private final Project myProject;
   private RepositoryBrowserComponent myBrowser;
-  private final SVNURL myRootURL;
+  private final Url myRootURL;
 
   private JRadioButton myUnifiedDiffButton;
   private JRadioButton myUIDiffButton;
@@ -57,7 +43,7 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
   private JLabel myErrorLabel;
   @NonNls private static final String DEFAULT_PATCH_NAME = "diff.txt";
 
-  public DiffOptionsDialog(Project project, SVNURL rootURL, SVNURL url) {
+  public DiffOptionsDialog(Project project, Url rootURL, Url url) {
     super(project, true);
     myURL = url;
     myRootURL = rootURL;
@@ -102,7 +88,7 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
     Disposer.dispose(myBrowser);
   }
 
-  public SVNURL getSourceURL() {
+  public Url getSourceURL() {
     return myURL;
   }
 
@@ -110,7 +96,7 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
     return myReverseDiffButton.isSelected();
   }
 
-  public SVNURL getTargetURL() {
+  public Url getTargetURL() {
     if (getOKAction().isEnabled() && myBrowser.getSelectedNode() != null) {
         return myBrowser.getSelectedNode().getURL();
     }

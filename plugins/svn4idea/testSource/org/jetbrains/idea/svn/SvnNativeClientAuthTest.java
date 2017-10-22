@@ -16,10 +16,10 @@ import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.auth.*;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.junit.Before;
-import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,8 +39,8 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
   private String outHttpUser = "test";
   private String outHttpPassword = "test";
 
-  private final static SVNURL ourHTTP_URL = parseUrl("http://svnsrvtest/stuff/autoTest", false);
-  private final static SVNURL ourHTTPS_URL = parseUrl("https://svnsrvtest:443/TestSSL/autoTest", false);
+  private final static Url ourHTTP_URL = parseUrl("http://svnsrvtest/stuff/autoTest", false);
+  private final static Url ourHTTPS_URL = parseUrl("https://svnsrvtest:443/TestSSL/autoTest", false);
 
   private int myCertificateAskedInteractivelyCount = 0;
   private int myCredentialsAskedInteractivelyCount = 0;
@@ -64,13 +64,13 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     final SvnAuthenticationManager interactiveManager = configuration.getInteractiveManager(myVcs);
     final SvnTestInteractiveAuthentication authentication = new SvnTestInteractiveAuthentication() {
       @Override
-      public AcceptResult acceptServerAuthentication(SVNURL url, String realm, Object certificate, boolean canCache) {
+      public AcceptResult acceptServerAuthentication(Url url, String realm, Object certificate, boolean canCache) {
         ++ myCertificateAskedInteractivelyCount;
         return myCertificateAnswer;
       }
 
       @Override
-      public AuthenticationData requestClientAuthentication(String kind, SVNURL url, String realm, boolean canCache) {
+      public AuthenticationData requestClientAuthentication(String kind, Url url, String realm, boolean canCache) {
         if (myCancelAuth) return null;
         return super.requestClientAuthentication(kind, url, realm, canCache);
       }
@@ -493,7 +493,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     return file;
   }
 
-  private File testCheckoutImpl(@NotNull SVNURL url) throws IOException {
+  private File testCheckoutImpl(@NotNull Url url) throws IOException {
     final File root = FileUtil.createTempDirectory("checkoutRoot", "");
     root.deleteOnExit();
     Assert.assertTrue(root.exists());

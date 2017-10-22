@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,8 +13,8 @@ import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
-import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.IOException;
 import java.util.Date;
@@ -49,7 +35,7 @@ public class SvnFileRevision implements VcsFileRevision {
   private final String myAuthor;
   @NotNull private final SvnRevisionNumber myRevisionNumber;
   @NotNull private final SvnVcs myVCS;
-  @NotNull private final SVNURL myURL;
+  @NotNull private final Url myURL;
   private final Revision myPegRevision;
   private final String myCopyFromPath;
   @NotNull private final List<SvnFileRevision> myMergeSources = newArrayList();
@@ -69,7 +55,7 @@ public class SvnFileRevision implements VcsFileRevision {
   public SvnFileRevision(@NotNull SvnVcs vcs,
                          Revision pegRevision,
                          @NotNull Revision revision,
-                         @NotNull SVNURL url,
+                         @NotNull Url url,
                          String author,
                          Date date,
                          String commitMessage,
@@ -87,7 +73,7 @@ public class SvnFileRevision implements VcsFileRevision {
   public SvnFileRevision(@NotNull SvnVcs vcs,
                          Revision pegRevision,
                          LogEntry logEntry,
-                         @NotNull SVNURL url,
+                         @NotNull Url url,
                          String copyFromPath) {
     myRevisionNumber = new SvnRevisionNumber(Revision.of(logEntry.getRevision()));
     myPegRevision = pegRevision;
@@ -105,7 +91,7 @@ public class SvnFileRevision implements VcsFileRevision {
   }
 
   @NotNull
-  public SVNURL getURL() {
+  public Url getURL() {
     return myURL;
   }
 

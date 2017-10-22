@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.status;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -20,9 +6,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.lock.Lock;
-import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
 
@@ -30,7 +16,7 @@ import java.io.File;
  * TODO: Could also inherit BaseNodeDescription when myKind becomes final.
  */
 public class Status {
-  private SVNURL myURL;
+  private Url myURL;
   private File myFile;
   private @NotNull NodeKind myKind;
   @NotNull private Revision myRevision;
@@ -43,7 +29,7 @@ public class Status {
   private boolean myIsLocked;
   private boolean myIsCopied;
   private boolean myIsSwitched;
-  private SVNURL myCopyFromURL;
+  private Url myCopyFromURL;
   @Nullable private Lock myRemoteLock;
   @Nullable private Lock myLocalLock;
   private Revision myRemoteRevision;
@@ -52,9 +38,9 @@ public class Status {
   private boolean myIsConflicted;
 
   private StatusType myNodeStatus;
-  private SVNURL myRepositoryRootURL;
+  private Url myRepositoryRootURL;
 
-  public Status(SVNURL url,
+  public Status(Url url,
                 File file,
                 @NotNull NodeKind kind,
                 @Nullable Revision revision,
@@ -66,7 +52,7 @@ public class Status {
                 boolean isLocked,
                 boolean isCopied,
                 boolean isSwitched,
-                SVNURL copyFromURL,
+                Url copyFromURL,
                 @Nullable Lock remoteLock,
                 @Nullable Lock localLock,
                 String changelistName,
@@ -97,7 +83,7 @@ public class Status {
     myRemoteRevision = Revision.UNDEFINED;
   }
 
-  public SVNURL getURL() {
+  public Url getURL() {
     return myURL;
   }
 
@@ -165,7 +151,7 @@ public class Status {
   }
 
   @Nullable
-  public SVNURL getCopyFromURL() {
+  public Url getCopyFromURL() {
     return myCopyFromURL;
   }
 
@@ -207,11 +193,11 @@ public class Status {
     return myNodeStatus;
   }
 
-  public SVNURL getRepositoryRootURL() {
+  public Url getRepositoryRootURL() {
     return myRepositoryRootURL;
   }
 
-  public void setURL(SVNURL uRL) {
+  public void setURL(Url uRL) {
     myURL = uRL;
   }
 
@@ -283,7 +269,7 @@ public class Status {
     myNodeStatus = nodeStatus;
   }
 
-  public void setRepositoryRootURL(SVNURL repositoryRootURL) {
+  public void setRepositoryRootURL(Url repositoryRootURL) {
     myRepositoryRootURL = repositoryRootURL;
   }
 

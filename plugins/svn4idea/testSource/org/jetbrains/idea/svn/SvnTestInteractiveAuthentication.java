@@ -2,15 +2,15 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.util.containers.Convertor;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.auth.*;
-import org.tmatesoft.svn.core.SVNURL;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class SvnTestInteractiveAuthentication implements AuthenticationProvider {
   private boolean mySaveData;
-  private final Map<String, Convertor<SVNURL, AuthenticationData>> myData;
+  private final Map<String, Convertor<Url, AuthenticationData>> myData;
 
   public SvnTestInteractiveAuthentication() {
     mySaveData = true;
@@ -22,18 +22,18 @@ public class SvnTestInteractiveAuthentication implements AuthenticationProvider 
   }
 
   @Override
-  public AcceptResult acceptServerAuthentication(SVNURL url, String realm, Object certificate, boolean canCache) {
+  public AcceptResult acceptServerAuthentication(Url url, String realm, Object certificate, boolean canCache) {
     return AcceptResult.REJECTED;
   }
 
-  public void addAuthentication(final String kind, final Convertor<SVNURL, AuthenticationData> authentication) {
+  public void addAuthentication(final String kind, final Convertor<Url, AuthenticationData> authentication) {
     myData.put(kind, authentication);
   }
 
   @Override
-  public AuthenticationData requestClientAuthentication(String kind, SVNURL url, String realm, boolean canCache) {
+  public AuthenticationData requestClientAuthentication(String kind, Url url, String realm, boolean canCache) {
     canCache = canCache && mySaveData;
-    Convertor<SVNURL, AuthenticationData> convertor = myData.get(kind);
+    Convertor<Url, AuthenticationData> convertor = myData.get(kind);
     AuthenticationData result = convertor == null ? null : convertor.convert(url);
     if (result == null) {
       if (SvnAuthenticationManager.PASSWORD.equals(kind)) {

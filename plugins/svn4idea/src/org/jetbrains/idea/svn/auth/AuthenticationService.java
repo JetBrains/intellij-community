@@ -27,9 +27,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.SimpleCredentialsDialog;
-import org.tmatesoft.svn.core.SVNURL;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
@@ -68,7 +68,7 @@ public class AuthenticationService {
   }
 
   @Nullable
-  public AuthenticationData requestCredentials(final SVNURL repositoryUrl, final String type) {
+  public AuthenticationData requestCredentials(final Url repositoryUrl, final String type) {
     AuthenticationData authentication = null;
 
     if (repositoryUrl != null) {
@@ -141,7 +141,7 @@ public class AuthenticationService {
   }
 
   @NotNull
-  public AcceptResult acceptCertificate(@NotNull final SVNURL url, @NotNull final String certificateInfo) {
+  public AcceptResult acceptCertificate(@NotNull final Url url, @NotNull final String certificateInfo) {
     // TODO: Probably explicitly construct server url for realm here - like in CertificateTrustManager.
     String kind = "terminal.ssl.server";
     String realm = url.toDecodedString();
@@ -162,7 +162,7 @@ public class AuthenticationService {
     return result;
   }
 
-  public boolean acceptSSLServerCertificate(@Nullable SVNURL repositoryUrl) throws SvnBindException {
+  public boolean acceptSSLServerCertificate(@Nullable Url repositoryUrl) throws SvnBindException {
     if (repositoryUrl == null) {
       return false;
     }
@@ -196,7 +196,7 @@ public class AuthenticationService {
   }
 
   @NotNull
-  private HttpClient getClient(@NotNull SVNURL repositoryUrl) {
+  private HttpClient getClient(@NotNull Url repositoryUrl) {
     // TODO: Implement algorithm of resolving necessary enabled protocols (TLSv1 vs SSLv3) instead of just using values from Settings.
     SSLContext sslContext = createSslContext(repositoryUrl);
     List<String> supportedProtocols = getSupportedSslProtocols();
@@ -241,7 +241,7 @@ public class AuthenticationService {
   }
 
   @NotNull
-  private SSLContext createSslContext(@NotNull SVNURL url) {
+  private SSLContext createSslContext(@NotNull Url url) {
     SSLContext result = CertificateManager.getSystemSslContext();
     TrustManager trustManager = new CertificateTrustManager(this, url);
 
@@ -267,7 +267,7 @@ public class AuthenticationService {
   }
 
   @Nullable
-  public static Proxy getIdeaDefinedProxy(@NotNull final SVNURL url) {
+  public static Proxy getIdeaDefinedProxy(@NotNull final Url url) {
     // TODO: Check if removeNoProxy() is still needed
     // SVNKit authentication implementation sets repositories as noProxy() to provide custom proxy authentication logic - see for instance,
     // SvnAuthenticationManager.getProxyManager(). But noProxy() setting is not cleared correctly in all cases - so if svn command
@@ -291,7 +291,7 @@ public class AuthenticationService {
   }
 
   @Nullable
-  public PasswordAuthentication getProxyAuthentication(@NotNull SVNURL repositoryUrl) {
+  public PasswordAuthentication getProxyAuthentication(@NotNull Url repositoryUrl) {
     Proxy proxy = getIdeaDefinedProxy(repositoryUrl);
     PasswordAuthentication result = null;
 
@@ -318,7 +318,7 @@ public class AuthenticationService {
   }
 
   @Nullable
-  private static PasswordAuthentication getProxyAuthentication(@NotNull Proxy proxy, @NotNull SVNURL repositoryUrl) {
+  private static PasswordAuthentication getProxyAuthentication(@NotNull Proxy proxy, @NotNull Url repositoryUrl) {
     PasswordAuthentication result = null;
 
     try {

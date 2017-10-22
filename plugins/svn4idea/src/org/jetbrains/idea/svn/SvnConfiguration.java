@@ -14,13 +14,13 @@ import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.auth.*;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.config.SvnServerFileKeys;
 import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.jetbrains.idea.svn.update.MergeRootInfo;
 import org.jetbrains.idea.svn.update.UpdateRootInfo;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
@@ -347,12 +347,12 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
       myPassiveAuthManager = new SvnAuthenticationManager(svnVcs, new File(getConfigurationDirectory()));
       myPassiveAuthManager.setAuthenticationProvider(new AuthenticationProvider() {
         @Override
-        public AuthenticationData requestClientAuthentication(String kind, SVNURL url, String realm, boolean canCache) {
+        public AuthenticationData requestClientAuthentication(String kind, Url url, String realm, boolean canCache) {
           return null;
         }
 
         @Override
-        public AcceptResult acceptServerAuthentication(SVNURL url, String realm, Object certificate, boolean canCache) {
+        public AcceptResult acceptServerAuthentication(Url url, String realm, Object certificate, boolean canCache) {
           return AcceptResult.REJECTED;
         }
       });

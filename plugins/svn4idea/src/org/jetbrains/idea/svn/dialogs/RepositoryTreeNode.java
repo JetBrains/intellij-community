@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.CommonBundle;
@@ -24,10 +10,10 @@ import com.intellij.util.containers.FilteringIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.dialogs.browserCache.Expander;
 import org.jetbrains.idea.svn.dialogs.browserCache.NodeLoadState;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import javax.swing.tree.TreeNode;
@@ -41,14 +27,14 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
   private TreeNode myParentNode;
   @NotNull private final List<TreeNode> myChildren;
   private final RepositoryTreeModel myModel;
-  private final SVNURL myURL;
+  private final Url myURL;
   private final Object myUserObject;
 
   @NotNull private final NodeLoadState myLoadState;
   private NodeLoadState myChildrenLoadState;
 
   public RepositoryTreeNode(RepositoryTreeModel model, TreeNode parentNode,
-                            @NotNull SVNURL url, Object userObject, @NotNull NodeLoadState state) {
+                            @NotNull Url url, Object userObject, @NotNull NodeLoadState state) {
     myParentNode = parentNode;
 
     myURL = url;
@@ -60,7 +46,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     myChildrenLoadState = NodeLoadState.EMPTY;
   }
 
-  public RepositoryTreeNode(RepositoryTreeModel model, TreeNode parentNode, @NotNull SVNURL url, Object userObject) {
+  public RepositoryTreeNode(RepositoryTreeModel model, TreeNode parentNode, @NotNull Url url, Object userObject) {
     // created outside: only roots
     this(model, parentNode, url, userObject, NodeLoadState.REFRESHED);
   }
@@ -142,7 +128,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     return myChildren;
   }
 
-  public SVNURL getURL() {
+  public Url getURL() {
     return myURL;
   }
 
