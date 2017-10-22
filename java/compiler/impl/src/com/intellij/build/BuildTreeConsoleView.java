@@ -17,6 +17,7 @@ package com.intellij.build;
 
 import com.intellij.build.events.*;
 import com.intellij.build.events.impl.FailureImpl;
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
@@ -46,6 +47,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,6 +65,8 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -77,12 +81,14 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   private final SimpleTreeBuilder myBuilder;
   private final Map<Object, ExecutionNode> nodesMap = ContainerUtil.newConcurrentMap();
   private final ExecutionNodeProgressAnimator myProgressAnimator;
+  private Set<Update> myRequests = Collections.synchronizedSet(new HashSet<Update>());
 
   private final Project myProject;
   private final SimpleTreeStructure myTreeStructure;
   private final DetailsHandler myDetailsHandler;
   private final TableColumn myTimeColumn;
   private volatile int myTimeColumnWidth;
+  private final AtomicBoolean myDisposed = new AtomicBoolean();
 
   public BuildTreeConsoleView(Project project) {
     myProject = project;
@@ -104,7 +110,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         }
       }
     };
-    final ExecutionNode rootNode = new ExecutionNode(myProject, null);
+    final ExecutionNode rootNode = new ExecutionNode(myProject);
     rootNode.setAutoExpandNode(true);
     final ListTreeTableModelOnColumns model = new ListTreeTableModelOnColumns(new DefaultMutableTreeNode(rootNode), COLUMNS);
 
@@ -180,9 +186,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     Disposer.register(this, myBuilder);
     myBuilder.initRootNode();
     myBuilder.updateFromRoot();
-    myBuilder.expand(rootNode, null);
-
-    myProgressAnimator = new ExecutionNodeProgressAnimator(myBuilder);
 
     JPanel myContentPanel = new JPanel();
     myContentPanel.setLayout(new CardLayout());
@@ -209,6 +212,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     myDetailsHandler = new DetailsHandler(myProject, tree, myThreeComponentsSplitter);
     myThreeComponentsSplitter.setLastComponent(myDetailsHandler.getComponent());
     myPanel.add(myThreeComponentsSplitter, BorderLayout.CENTER);
+
+    myProgressAnimator = new ExecutionNodeProgressAnimator(this);
   }
 
   private ExecutionNode getRootElement() {
@@ -297,6 +302,11 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
   @Override
   public void dispose() {
+    myDisposed.set(true);
+  }
+
+  public boolean isDisposed() {
+    return myDisposed.get();
   }
 
   @Override
@@ -306,7 +316,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     if (event instanceof StartEvent) {
       ExecutionNode rootElement = getRootElement();
       if (currentNode == null) {
-        currentNode = event instanceof StartBuildEvent ? rootElement : new ExecutionNode(myProject, myProgressAnimator);
+        currentNode = event instanceof StartBuildEvent ? rootElement : new ExecutionNode(myProject);
         currentNode.setAutoExpandNode(currentNode == rootElement || parentNode == rootElement);
         nodesMap.put(event.getId(), currentNode);
       }
@@ -322,12 +332,13 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         String buildTitle = ((StartBuildEvent)event).getBuildTitle();
         currentNode.setTitle(buildTitle);
         currentNode.setAutoExpandNode(true);
+        myProgressAnimator.startMovie();
       }
     }
     else {
       currentNode = nodesMap.get(event.getId());
       if (currentNode == null && event instanceof ProgressBuildEvent) {
-        currentNode = new ExecutionNode(myProject, myProgressAnimator);
+        currentNode = new ExecutionNode(myProject);
         nodesMap.put(event.getId(), currentNode);
         if (parentNode != null) {
           parentNode.add(currentNode);
@@ -354,8 +365,12 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         myTimeColumnWidth = timeColumnWidth;
       }
     }
-
-    myBuilder.queueUpdateFrom(currentNode, false, false);
+    else {
+      scheduleUpdate(currentNode);
+      if (event instanceof StartEvent) {
+        myProgressAnimator.addNode(currentNode);
+      }
+    }
 
     if (event instanceof FinishBuildEvent) {
       String aHint = event.getHint();
@@ -371,7 +386,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         JTree tree = myBuilder.getTree();
         if (tree != null && !tree.isRootVisible()) {
           ExecutionNode rootElement = getRootElement();
-          ExecutionNode resultNode = new ExecutionNode(myProject, null);
+          ExecutionNode resultNode = new ExecutionNode(myProject);
           resultNode.setName(StringUtil.toTitleCase(rootElement.getName()));
           resultNode.setHint(rootElement.getHint());
           resultNode.setEndTime(rootElement.getEndTime());
@@ -379,9 +394,25 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
           resultNode.setResult(rootElement.getResult());
           resultNode.setTooltip(rootElement.getTooltip());
           rootElement.add(resultNode);
-          myBuilder.queueUpdateFrom(resultNode, false, false);
+
+          scheduleUpdate(resultNode);
         }
       }
+      myProgressAnimator.stopMovie();
+      myBuilder.updateFromRoot();
+    }
+  }
+
+  void scheduleUpdate(ExecutionNode executionNode) {
+    final Update update = new Update(executionNode) {
+      @Override
+      public void run() {
+        myRequests.remove(this);
+        myBuilder.queueUpdateFrom(executionNode, false, true);
+      }
+    };
+    if (myRequests.add(update)) {
+      JobScheduler.getScheduler().schedule(update, 100, TimeUnit.MILLISECONDS);
     }
   }
 
