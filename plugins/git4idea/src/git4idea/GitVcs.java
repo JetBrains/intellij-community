@@ -365,15 +365,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   /**
-   * Shows a plain message in the Version Control Console.
-   * @deprecated use {@link GitVcsConsoleWriter}
-   */
-  @Deprecated
-  public void showMessages(@NotNull String message) {
-    myVcsConsoleWriter.showMessage(message);
-  }
-
-  /**
    * Checks Git version and updates the myVersion variable.
    * In the case of exception or unsupported version reports the problem.
    * Note that unsupported version is also applied - some functionality might not work (we warn about that), but no need to disable at all.
@@ -418,15 +409,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Deprecated
   public void showCommandLine(final String cmdLine) {
     myVcsConsoleWriter.showCommandLine(cmdLine);
-  }
-
-  /**
-   * Shows error message in the Version Control Console
-   * @deprecated use {@link GitVcsConsoleWriter}
-   */
-  @Deprecated
-  public void showErrorMessages(final String line) {
-    myVcsConsoleWriter.showErrorMessage(line);
   }
 
   @Override
