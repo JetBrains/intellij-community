@@ -21,92 +21,9 @@ import com.intellij.codeInsight.completion.CompletionResult.wrap
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl
 import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.ide.plugins.PluginManager
-import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PreloadingActivity
-import com.intellij.openapi.extensions.ExtensionPoint
-import com.intellij.openapi.extensions.Extensions
-import com.intellij.openapi.extensions.LoadingOrder
-import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.sorting.language
 import com.intellij.stats.completion.prefixLength
-import com.intellij.util.ReflectionUtil
-import org.picocontainer.ComponentAdapter
-
-
-object CompletionContributors {
-
-    fun add(contributorEP: CompletionContributorEP) {
-        val extensionPoint = extensionPoint()
-        extensionPoint.registerExtension(contributorEP)
-    }
-
-    fun remove(contributorEP: CompletionContributorEP) {
-        val extensionPoint = extensionPoint()
-        extensionPoint.unregisterExtension(contributorEP)
-    }
-
-    fun first(): CompletionContributorEP {
-        val extensionPoint = extensionPoint()
-        return extensionPoint.extensions.first()
-    }
-
-    fun addFirst(contributorEP: CompletionContributorEP) {
-        val extensionPoint = extensionPoint()
-        val first = extensionPoint.extensions.first() as CompletionContributorEP
-        val id = contributorOrderId(first)
-        val order = LoadingOrder.readOrder("first, before $id")
-        extensionPoint.registerExtension(contributorEP, order)
-    }
-
-    private fun extensionPoint(): ExtensionPoint<CompletionContributorEP> {
-        return Extensions.getRootArea().getExtensionPoint<CompletionContributorEP>("com.intellij.completion.contributor")
-    }
-
-    fun removeFirst() {
-        val point = extensionPoint()
-        val first = point.extensions.first()
-        point.unregisterExtension(first)
-    }
-
-    private fun contributorOrderId(contributorEP: CompletionContributorEP): String? {
-        val className = contributorEP.implementationClass
-        val picoContainer = Extensions.getRootArea().picoContainer
-        val adapterForFirstContributor = (picoContainer.componentAdapters as Collection<ComponentAdapter>)
-                .asSequence()
-                .filter {
-                    it is ExtensionComponentAdapter
-                            && ReflectionUtil.isAssignable(CompletionContributorEP::class.java, it.componentImplementation)
-                }
-                .map { it to it.getComponentInstance(picoContainer) as CompletionContributorEP }
-                .find { it.second.implementationClass == className }?.first as? ExtensionComponentAdapter
-
-        return adapterForFirstContributor?.orderId
-    }
-
-}
-
-
-
-class FirstContributorPreloader : PreloadingActivity() {
-
-    override fun preload(indicator: ProgressIndicator) {
-        val id = PluginId.findId("com.intellij.stats.completion")
-        val descriptor = PluginManager.getPlugin(id)
-
-        CompletionContributorEP().apply {
-            implementationClass = InvocationCountEnhancingContributor::class.java.name
-            language = "any"
-            pluginDescriptor = descriptor
-        }.let {
-            CompletionContributors.addFirst(it)
-        }
-    }
-
-}
 
 
 /**
@@ -180,21 +97,4 @@ class InvocationCountEnhancingContributor : CompletionContributor() {
         parameters.language()?.registerSecondCompletionContributorsTime(end - start)
     }
 
-}
-
-
-private fun Language.registerCompletionContributorsTime(time: Long) {
-    ContributorsTimeStatistics.getInstance().registerCompletionContributorsTime(this, time)
-}
-
-
-private fun Language.registerSecondCompletionContributorsTime(time: Long) {
-    ContributorsTimeStatistics.getInstance().registerSecondCompletionContributorsTime(this, time)
-}
-
-
-class CompletionNumberWeigher : LookupElementWeigher("invokationCount") {
-    override fun weigh(element: LookupElement): Comparable<Nothing> {
-        return InvokationCountOrigin.invokationTime(element)
-    }
 }
