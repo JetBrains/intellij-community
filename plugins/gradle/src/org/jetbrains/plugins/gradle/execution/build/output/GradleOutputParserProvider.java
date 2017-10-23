@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.execution.build.output;
 
 import com.intellij.build.output.BuildOutputParser;
 import com.intellij.build.output.JavacOutputParser;
+import com.intellij.build.output.KotlincOutputParser;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputParserProvider;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
@@ -22,6 +23,6 @@ public class GradleOutputParserProvider implements ExternalSystemOutputParserPro
 
   @Override
   public List<BuildOutputParser> getBuildOutputParsers(ExternalSystemExecuteTaskTask task) {
-    return ContainerUtil.list(new JavacOutputParser());
+    return ContainerUtil.list(new JavacOutputParser(), new KotlincOutputParser());
   }
 }
