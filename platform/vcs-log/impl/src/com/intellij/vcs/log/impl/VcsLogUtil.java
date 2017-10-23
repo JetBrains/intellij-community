@@ -31,6 +31,7 @@ import com.intellij.vcs.CommittedChangeListForRevision;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.VisibleGraph;
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -200,12 +201,16 @@ public class VcsLogUtil {
   public static void triggerUsage(@NotNull AnActionEvent e) {
     String text = e.getPresentation().getText();
     if (text != null) {
-      triggerUsage(text);
+      triggerUsage(text, e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI) != null);
     }
   }
 
   public static void triggerUsage(@NotNull String text) {
-    UsageTrigger.trigger("vcs.log." + ConvertUsagesUtil.ensureProperKey(text).replace(" ", ""));
+    triggerUsage(text, false);
+  }
+
+  public static void triggerUsage(@NotNull String text, boolean isFromHistory) {
+    UsageTrigger.trigger(isFromHistory ? "vcs.history." : "vcs.log." + ConvertUsagesUtil.ensureProperKey(text).replace(" ", ""));
   }
 
   public static boolean maybeRegexp(@NotNull String text) {
