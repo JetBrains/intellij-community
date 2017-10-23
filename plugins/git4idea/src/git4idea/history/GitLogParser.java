@@ -13,14 +13,17 @@ import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Parser for git log output.
  * <p>
  * Commit records have the following format:
  * <pre>
- * (RECORD_START)? (commit information, separated by ITEMS_SEPARATOR) RECORD_END \n (changed paths with statuses)?</pre>
+ * RECORD_START (commit information, separated by ITEMS_SEPARATOR) RECORD_END \n (changed paths with statuses)?</pre>
  * Example:
  * <pre>
  * 2c815939f45fbcfda9583f84b14fe9d393ada790&lt;ITEMS_SEPARATOR&gt;sample commit&lt;RECORD_END&gt;
@@ -76,7 +79,10 @@ public class GitLogParser {
     List<CharSequence> lines = StringUtil.split(output, "\n", true, false);
     for (CharSequence line : lines) {
       try {
-        result.addAll(parseLine(line));
+        GitLogRecord record = parseLine(line);
+        if (record != null) {
+          result.add(record);
+        }
       }
       catch (GitFormatException e) {
         clear();
@@ -98,23 +104,38 @@ public class GitLogParser {
     return ContainerUtil.getFirstItem(records);
   }
 
-  @NotNull
-  public List<GitLogRecord> parseLine(@NotNull CharSequence line) {
+  @Nullable
+  public GitLogRecord parseLine(@NotNull CharSequence line) {
+    if (myPathsParser.expectsPaths()) {
+      return parseLineWithPaths(line);
+    }
+    return parseLineWithoutPaths(line);
+  }
+
+  @Nullable
+  private GitLogRecord parseLineWithPaths(@NotNull CharSequence line) {
     if (myIsInBody) {
-      if (myOptionsParser.parseLine(line)) {
-        myIsInBody = false;
-      }
+      myIsInBody = !myOptionsParser.parseLine(line);
     }
     else {
       if (CharArrayUtil.regionMatches(line, 0, RECORD_START)) {
-        myIsInBody = true;
-        return ContainerUtil.concat(Collections.singletonList(createRecord()), parseLine(line));
+        GitLogRecord record = createRecord();
+        myIsInBody = !myOptionsParser.parseLine(line);
+        return record;
       }
 
       myPathsParser.parseLine(line);
     }
 
-    return ContainerUtil.emptyList();
+    return null;
+  }
+
+  @Nullable
+  private GitLogRecord parseLineWithoutPaths(@NotNull CharSequence line) {
+    if (myOptionsParser.parseLine(line)) {
+      return createRecord();
+    }
+    return null;
   }
 
   @Nullable
@@ -217,7 +238,10 @@ public class GitLogParser {
     public boolean parseLine(@NotNull CharSequence line) {
       int offset = 0;
 
-      if (myResult.isEmpty() && CharArrayUtil.regionMatches(line, offset, RECORD_START)) {
+      if (myResult.isEmpty()) {
+        if (!CharArrayUtil.regionMatches(line, offset, RECORD_START)) {
+          return false;
+        }
         offset += RECORD_START.length();
       }
 
@@ -339,6 +363,10 @@ public class GitLogParser {
 
     public void clear() {
       myStatuses = ContainerUtil.newArrayList();
+    }
+
+    public boolean expectsPaths() {
+      return myNameStatusOption == NameStatus.STATUS;
     }
   }
 

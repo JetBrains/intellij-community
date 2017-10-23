@@ -66,7 +66,8 @@ class GitLogOutputSplitter implements GitLineHandlerListener {
 
   private void processOutputLine(@NotNull String line) {
     try {
-      for (GitLogRecord record : myParser.parseLine(line)) {
+      GitLogRecord record = myParser.parseLine(line);
+      if (record != null) {
         record.setUsedHandler(myHandler);
         myRecordConsumer.consume(record);
       }
