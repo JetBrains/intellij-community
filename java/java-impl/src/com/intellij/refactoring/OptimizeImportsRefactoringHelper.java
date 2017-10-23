@@ -58,6 +58,9 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
     final Runnable findRedundantImports = () -> ReadAction.run(() -> {
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
       final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+      if (progressIndicator != null) {
+        progressIndicator.setIndeterminate(false);
+      }
       final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
       int i = 0;
       final int fileCount = javaFiles.size();
