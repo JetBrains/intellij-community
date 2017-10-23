@@ -16,6 +16,8 @@
 
 package com.intellij.ide.projectView;
 
+import com.intellij.ide.scratch.RootType;
+import com.intellij.ide.scratch.ScratchProjectViewPane;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
@@ -95,6 +97,12 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
           parent = ((PsiFile)parent).getContainingDirectory();
           if (parent == null) break;
         }
+      }
+      else if (parent instanceof PsiDirectory &&
+               ScratchProjectViewPane.isScratchesMergedIntoProjectTab() &&
+               RootType.forFile(((PsiDirectory)parent).getVirtualFile()) != null) {
+        addSubtreeToUpdateByRoot();
+        break;
       }
 
       if (addSubtreeToUpdateByElement(parent)) {
