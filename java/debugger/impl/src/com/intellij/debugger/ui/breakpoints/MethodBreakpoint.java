@@ -580,6 +580,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     if (LOG.isDebugEnabled()) {
       start = System.currentTimeMillis();
     }
+    progressIndicator.setIndeterminate(false);
     progressIndicator.start();
     progressIndicator.setText(DebuggerBundle.message("label.method.breakpoints.processing.classes"));
     try {
