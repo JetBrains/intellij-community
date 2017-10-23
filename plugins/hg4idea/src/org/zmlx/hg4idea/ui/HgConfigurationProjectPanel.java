@@ -95,7 +95,7 @@ public class HgConfigurationProjectPanel {
   public void loadSettings() {
     myCheckIncomingOutgoingCbx.setSelected(myProjectSettings.isCheckIncomingOutgoing());
     myIgnoredWhitespacesInAnnotationsCbx.setSelected(myProjectSettings.isWhitespacesIgnoredInAnnotations());
-    myPathSelector.setText(myProjectSettings.getGlobalSettings().getHgExecutable());
+    myPathSelector.setText(myProjectSettings.getHgExecutable());
     mySyncControl.setSelected(myProjectSettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC);
   }
 

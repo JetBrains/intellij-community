@@ -23,7 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgGlobalSettings;
+import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.util.HgEncodingUtil;
@@ -170,7 +170,7 @@ public class HgCommandExecutor {
     logCommand(operation, arguments);
 
     final List<String> cmdLine = new LinkedList<>();
-    cmdLine.add(myVcs.getGlobalSettings().getHgExecutable());
+    cmdLine.add(myVcs.getProjectSettings().getHgExecutable());
     if (repo != null) {
       cmdLine.add("--repository");
       cmdLine.add(repo.getPath());
@@ -198,7 +198,7 @@ public class HgCommandExecutor {
     if (myProject.isDisposed()) {
       return;
     }
-    final HgGlobalSettings settings = myVcs.getGlobalSettings();
+    final HgProjectSettings settings = myVcs.getProjectSettings();
     String exeName;
     final int lastSlashIndex = settings.getHgExecutable().lastIndexOf(File.separator);
     exeName = settings.getHgExecutable().substring(lastSlashIndex + 1);
@@ -246,7 +246,7 @@ public class HgCommandExecutor {
   protected void showError(Exception e) {
     final HgVcs vcs = HgVcs.getInstance(myProject);
     if (vcs == null) return;
-    String message = HgVcsMessages.message("hg4idea.command.executable.error", vcs.getGlobalSettings().getHgExecutable()) +
+    String message = HgVcsMessages.message("hg4idea.command.executable.error", vcs.getProjectSettings().getHgExecutable()) +
                      "\nOriginal Error:\n" +
                      e.getMessage();
     VcsImplUtil.showErrorMessage(myProject, message, HgVcsMessages.message("hg4idea.error"));
