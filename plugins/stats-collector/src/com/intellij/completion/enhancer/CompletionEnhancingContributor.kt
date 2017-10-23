@@ -17,7 +17,8 @@
 package com.intellij.completion.enhancer
 
 import com.intellij.codeInsight.completion.*
-import com.intellij.codeInsight.completion.CompletionResult.*
+import com.intellij.codeInsight.completion.CompletionResult.wrap
+import com.intellij.codeInsight.completion.impl.CompletionSorterImpl
 import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.ide.plugins.PluginManager
@@ -124,8 +125,12 @@ class InvocationCountEnhancingContributor : CompletionContributor() {
     override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
         if (ApplicationManager.getApplication().isUnitTestMode && !isEnabledInTests) return
 
+        val lookup = LookupManager.getActiveLookup(parameters.editor) as LookupImpl? ?: return
+
         val addedElements = HashSet<LookupElement>()
-        val newSorter = sorter(parameters, result.prefixMatcher).weighBefore("templates", CompletionNumberWeigher())
+        val newSorter = sorter(parameters, result.prefixMatcher)
+                .weighBefore("templates", CompletionNumberWeigher())
+                .withClassifier(lookupElementPositionHistory(lookup))
 
         val start = System.currentTimeMillis()
         result.runRemainingContributors(parameters, {
@@ -137,15 +142,22 @@ class InvocationCountEnhancingContributor : CompletionContributor() {
 
         parameters.language()?.registerCompletionContributorsTime(end - start)
 
-        val lookup = LookupManager.getActiveLookup(parameters.editor) as LookupImpl? ?: return
         val typedChars = lookup.prefixLength()
         if (parameters.invocationCount < MAX_INVOCATION_COUNT && typedChars > RUN_COMPLETION_AFTER_CHARS) {
             startMaxInvocationCountCompletion(parameters, result, newSorter, addedElements)
         }
     }
 
-    private fun sorter(parameters: CompletionParameters, matcher: PrefixMatcher): CompletionSorter {
-        return CompletionService.getCompletionService().defaultSorter(parameters, matcher)
+    private fun lookupElementPositionHistory(lookup: LookupImpl): ClassifierFactory<LookupElement> {
+        return object : ClassifierFactory<LookupElement>("positionHistory") {
+            override fun createClassifier(next: Classifier<LookupElement>?): Classifier<LookupElement> {
+                return ElementPositionHistoryEmptyClassifier(lookup, next)
+            }
+        }
+    }
+
+    private fun sorter(parameters: CompletionParameters, matcher: PrefixMatcher): CompletionSorterImpl {
+        return CompletionService.getCompletionService().defaultSorter(parameters, matcher) as CompletionSorterImpl
     }
 
     private fun startMaxInvocationCountCompletion(parameters: CompletionParameters,
@@ -171,19 +183,15 @@ class InvocationCountEnhancingContributor : CompletionContributor() {
 
 }
 
-
 private fun Language.registerCompletionContributorsTime(time: Long) {
     ContributorsTimeStatistics.getInstance().registerCompletionContributorsTime(this, time)
 }
-
 
 private fun Language.registerSecondCompletionContributorsTime(time: Long) {
     ContributorsTimeStatistics.getInstance().registerSecondCompletionContributorsTime(this, time)
 }
 
-
 object InvocationCountOrigin {
-
     private val ORIGIN_KEY = Key.create<Int>("second.completion.run")
 
     fun setInvocationTime(element: LookupElement, number: Int) {
@@ -191,14 +199,10 @@ object InvocationCountOrigin {
     }
 
     fun invocationTime(element: LookupElement): Int = element.getUserData(ORIGIN_KEY) ?: 0
-
 }
 
-
-class CompletionNumberWeigher : LookupElementWeigher("completion.invocation.count") {
-
+class CompletionNumberWeigher : LookupElementWeigher("invokationCount") {
     override fun weigh(element: LookupElement): Comparable<Nothing> {
         return InvocationCountOrigin.invocationTime(element)
     }
-
 }
