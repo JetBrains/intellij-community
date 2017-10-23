@@ -20,6 +20,7 @@ import com.intellij.build.events.impl.FailureImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.SimpleTextAttributes;
@@ -30,8 +31,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * @author Vladislav.Soroka
@@ -49,6 +52,10 @@ public class ExecutionNode extends CachingSimpleNode {
   @Nullable
   private EventResult myResult;
   private boolean myAutoExpandNode;
+  @Nullable
+  private Navigatable myNavigatable;
+  @Nullable
+  private NullableLazyValue<Icon> myPreferredIconValue;
 
   public ExecutionNode(Project aProject) {
     super(aProject, null);
@@ -61,12 +68,7 @@ public class ExecutionNode extends CachingSimpleNode {
 
   @Override
   protected void update(PresentationData presentation) {
-    setIcon(
-      isRunning() ? ExecutionNodeProgressAnimator.getCurrentFrame() :
-      isFailed() ? AllIcons.Process.State.RedExcl :
-      isSkipped() ? AllIcons.Process.State.YellowStr :
-      AllIcons.Process.State.GreenOK
-    );
+    setIcon(getCurrentIcon());
     presentation.setPresentableText(myName);
     presentation.setIcon(getIcon());
     if (title != null) {
@@ -136,6 +138,7 @@ public class ExecutionNode extends CachingSimpleNode {
 
   @Nullable
   public String getDuration() {
+    if (startTime == endTime) return null;
     if (isRunning()) {
       final long duration = startTime == 0 ? 0 : System.currentTimeMillis() - startTime;
       return "Running for " + StringUtil.formatDuration(duration);
@@ -191,8 +194,15 @@ public class ExecutionNode extends CachingSimpleNode {
     myAutoExpandNode = autoExpandNode;
   }
 
+  public void setNavigatable(@Nullable Navigatable navigatable) {
+    myNavigatable = navigatable;
+  }
+
   @NotNull
   public List<Navigatable> getNavigatables() {
+    if (myNavigatable != null) {
+      return Collections.singletonList(myNavigatable);
+    }
     if (myResult == null) return Collections.emptyList();
 
     if (myResult instanceof FailureResult) {
@@ -206,5 +216,46 @@ public class ExecutionNode extends CachingSimpleNode {
       return result;
     }
     return Collections.emptyList();
+  }
+
+  public void setIconProvider(Supplier<Icon> iconProvider) {
+    myPreferredIconValue = new NullableLazyValue<Icon>() {
+      @Nullable
+      @Override
+      protected Icon compute() {
+        return iconProvider.get();
+      }
+    };
+  }
+
+  private Icon getCurrentIcon() {
+    if (myPreferredIconValue != null) {
+      return myPreferredIconValue.getValue();
+    }
+    else if (myResult instanceof MessageEventResult) {
+      return getIcon(((MessageEventResult)myResult).getKind());
+    }
+    else {
+      return isRunning() ? ExecutionNodeProgressAnimator.getCurrentFrame() :
+             isFailed() ? AllIcons.Process.State.RedExcl :
+             isSkipped() ? AllIcons.Process.State.YellowStr :
+             AllIcons.Process.State.GreenOK;
+    }
+  }
+
+  private static Icon getIcon(MessageEvent.Kind kind) {
+    switch (kind) {
+      case ERROR:
+        return AllIcons.General.Error;
+      case WARNING:
+        return AllIcons.General.Warning;
+      case INFO:
+        return AllIcons.General.Information;
+      case STATISTICS:
+        return AllIcons.General.Mdot_empty;
+      case SIMPLE:
+        return AllIcons.General.Mdot_empty;
+    }
+    return AllIcons.General.Mdot_empty;
   }
 }

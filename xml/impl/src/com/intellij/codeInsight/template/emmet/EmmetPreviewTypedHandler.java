@@ -37,7 +37,7 @@ public class EmmetPreviewTypedHandler extends TypedActionHandlerBase {
   @Override
   public void execute(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
     if (myOriginalHandler != null) myOriginalHandler.execute(editor, charTyped, dataContext);
-    if (EmmetOptions.getInstance().isPreviewEnabled()) {
+    if (EmmetOptions.getInstance().isEmmetEnabled() && EmmetOptions.getInstance().isPreviewEnabled()) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
       PsiFile file = project == null ? null : PsiUtilBase.getPsiFileInEditor(editor, project);
       if (file == null) return;

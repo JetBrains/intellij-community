@@ -42,9 +42,12 @@ public class AddList implements ChangeListCommand {
   public void apply(final ChangeListWorker worker) {
     LocalChangeList list = worker.getChangeListByName(myName);
     if (list == null) {
+      // Create list with the same id, if we were invoked before (on "temp" worker during CLM update).
+      String id = myNewListCopy != null ? myNewListCopy.getId() : null;
+
       myWasListCreated = true;
       myOldComment = null;
-      myNewListCopy = worker.addChangeList(myName, myComment, myData).copy();
+      myNewListCopy = worker.addChangeList(myName, myComment, id, myData).copy();
     }
     else if (StringUtil.isNotEmpty(myComment)) {
       myWasListCreated = false;

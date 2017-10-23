@@ -40,7 +40,9 @@ class BuildView extends CompositeView<BuildConsoleView, ComponentContainer> impl
                    StartBuildEvent event,
                    String selectionStateKey,
                    boolean isConsoleEnabledByDefault) {
-    super(new BuildTreeConsoleView(project), componentContainer, selectionStateKey, !isConsoleEnabledByDefault);
+    super(new BuildTreeConsoleView(project, new DefaultBuildDescriptor(
+            event.getId(), event.getBuildTitle(), event.getWorkingDir(), event.getEventTime())),
+          componentContainer, selectionStateKey, !isConsoleEnabledByDefault);
     myComponentContainer = componentContainer;
     myEvent = event;
   }
