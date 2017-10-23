@@ -361,6 +361,10 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
+  void testOrderAttributeHighlighting() {
+    myFixture.testHighlighting("orderAttribute.xml")
+  }
+
   private void testHighlightingInIdeaProject(String path) {
     myFixture.enableInspections(PluginXmlDomInspection.class)
     PsiUtil.markAsIdeaProject(project, true)
