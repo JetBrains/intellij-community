@@ -74,9 +74,9 @@ public class PyCharmInitialConfigurator {
       propertiesComponent.setValue("PyCharm.InitialConfiguration.V6", true);
       CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE = true;
     }
+
     if (!propertiesComponent.getBoolean("PyCharm.InitialConfiguration.V7")) {
       propertiesComponent.setValue("PyCharm.InitialConfiguration.V7", true);
-      Registry.get("dumb.aware.run.configurations").setValue(true);
     }
 
     if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {

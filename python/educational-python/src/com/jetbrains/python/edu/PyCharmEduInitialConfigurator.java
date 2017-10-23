@@ -60,7 +60,6 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
@@ -153,7 +152,6 @@ public class PyCharmEduInitialConfigurator {
     final UISettings uiSettings = UISettings.getInstance();
 
     if (!propertiesComponent.getBoolean(CONFIGURED_V4)) {
-      Registry.get("dumb.aware.run.configurations").setValue(true);
       propertiesComponent.setValue(CONFIGURED_V4, true);
     }
 
