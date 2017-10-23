@@ -110,6 +110,8 @@ public final class PythonSdkType extends SdkType {
   private static final Key<WeakReference<Component>> SDK_CREATOR_COMPONENT_KEY = Key.create("#com.jetbrains.python.sdk.creatorComponent");
   private static final Predicate<Sdk> REMOTE_SDK_PREDICATE = PythonSdkType::isRemote;
 
+  public static final Key<Map<String, String>> ENVIRONMENT_KEY = Key.create("ENVIRONMENT_KEY");
+
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);
   }
