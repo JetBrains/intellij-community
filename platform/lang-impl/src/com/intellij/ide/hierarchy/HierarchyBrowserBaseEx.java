@@ -494,7 +494,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     myType2BuilderMap.clear();
   }
 
-  void doRefresh(boolean currentBuilderOnly) {
+  protected void doRefresh(boolean currentBuilderOnly) {
     if (currentBuilderOnly) LOG.assertTrue(getCurrentViewType() != null);
 
     if (!isValidBase()) return;
@@ -559,7 +559,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
   }
 
-  static class BaseOnThisElementAction extends AnAction {
+  protected static class BaseOnThisElementAction extends AnAction {
     private final String myBrowserDataKey;
     private final LanguageExtension<HierarchyProvider> myProviderLanguageExtension;
 
@@ -650,6 +650,23 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
   }
 
+  protected Collection<String> getValidScopeNames() {
+    List<String> result = new ArrayList<>();
+    result.add(SCOPE_PROJECT);
+    result.add(SCOPE_TEST);
+    result.add(SCOPE_ALL);
+    result.add(SCOPE_CLASS);
+
+    final NamedScopesHolder[] holders = NamedScopesHolder.getAllNamedScopeHolders(myProject);
+    for (NamedScopesHolder holder : holders) {
+      NamedScope[] scopes = holder.getEditableScopes(); //predefined scopes already included
+      for (NamedScope scope : scopes) {
+        result.add(scope.getName());
+      }
+    }
+    return result;
+  }
+
   public class ChangeScopeAction extends ComboBoxAction {
     @Override
     public final void update(final AnActionEvent e) {
@@ -676,23 +693,6 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       group.add(new ConfigureScopesAction());
 
       return group;
-    }
-
-    private Collection<String> getValidScopeNames() {
-      List<String> result = new ArrayList<>();
-      result.add(SCOPE_PROJECT);
-      result.add(SCOPE_TEST);
-      result.add(SCOPE_ALL);
-      result.add(SCOPE_CLASS);
-
-      final NamedScopesHolder[] holders = NamedScopesHolder.getAllNamedScopeHolders(myProject);
-      for (NamedScopesHolder holder : holders) {
-        NamedScope[] scopes = holder.getEditableScopes(); //predefined scopes already included
-        for (NamedScope scope : scopes) {
-          result.add(scope.getName());
-        }
-      }
-      return result;
     }
 
     private void selectScope(final String scopeType) {
