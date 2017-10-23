@@ -31,7 +31,6 @@ import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.util.Key
 import com.intellij.sorting.language
 import com.intellij.stats.completion.prefixLength
 import com.intellij.util.ReflectionUtil
@@ -134,7 +133,7 @@ class InvocationCountEnhancingContributor : CompletionContributor() {
 
         val start = System.currentTimeMillis()
         result.runRemainingContributors(parameters, {
-            InvocationCountOrigin.setInvocationTime(it.lookupElement, parameters.invocationCount)
+            InvokationCountOrigin.setInvocationTime(it.lookupElement, parameters.invocationCount)
             addedElements.add(it.lookupElement)
             wrap(it.lookupElement, it.prefixMatcher, newSorter)?.let { result.passResult(it) }
         })
@@ -173,7 +172,7 @@ class InvocationCountEnhancingContributor : CompletionContributor() {
             if (it.lookupElement in alreadyAddedElements) return@getVariantsFromContributors
 
             val element = UnmatchableLookupElement(it.lookupElement)
-            InvocationCountOrigin.setInvocationTime(element, MAX_INVOCATION_COUNT)
+            InvokationCountOrigin.setInvocationTime(element, MAX_INVOCATION_COUNT)
             wrap(element, it.prefixMatcher, sorter)?.let { result.passResult(it) }
         })
         val end = System.currentTimeMillis()
@@ -183,26 +182,19 @@ class InvocationCountEnhancingContributor : CompletionContributor() {
 
 }
 
+
 private fun Language.registerCompletionContributorsTime(time: Long) {
     ContributorsTimeStatistics.getInstance().registerCompletionContributorsTime(this, time)
 }
+
 
 private fun Language.registerSecondCompletionContributorsTime(time: Long) {
     ContributorsTimeStatistics.getInstance().registerSecondCompletionContributorsTime(this, time)
 }
 
-object InvocationCountOrigin {
-    private val ORIGIN_KEY = Key.create<Int>("second.completion.run")
-
-    fun setInvocationTime(element: LookupElement, number: Int) {
-        element.putUserData(ORIGIN_KEY, number)
-    }
-
-    fun invocationTime(element: LookupElement): Int = element.getUserData(ORIGIN_KEY) ?: 0
-}
 
 class CompletionNumberWeigher : LookupElementWeigher("invokationCount") {
     override fun weigh(element: LookupElement): Comparable<Nothing> {
-        return InvocationCountOrigin.invocationTime(element)
+        return InvokationCountOrigin.invokationTime(element)
     }
 }
