@@ -19,6 +19,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.BasicAction;
+import org.jetbrains.idea.svn.api.ErrorCode;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.api.Url;
@@ -27,7 +28,6 @@ import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.update.AutoSvnUpdater;
 import org.jetbrains.idea.svn.update.SingleRootSwitcher;
-import org.tmatesoft.svn.core.SVNErrorCode;
 
 import java.io.File;
 
@@ -122,7 +122,7 @@ public class CreateBranchOrTagAction extends BasicAction {
         vcs.getInfo(url, Revision.HEAD);
       }
       catch (SvnBindException e) {
-        if (e.contains(SVNErrorCode.RA_ILLEGAL_URL)) {
+        if (e.contains(ErrorCode.RA_ILLEGAL_URL)) {
           resultRef.set(Boolean.FALSE);
         }
         else {

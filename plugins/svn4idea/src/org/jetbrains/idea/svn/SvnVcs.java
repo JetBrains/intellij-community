@@ -68,7 +68,6 @@ import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
-import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 
@@ -617,8 +616,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     if (!myLogExceptions ||
         SvnUtil.isUnversionedOrNotFound(e) ||
         // do not log working copy format vs client version inconsistencies as errors
-        e.contains(SVNErrorCode.WC_UNSUPPORTED_FORMAT) ||
-        e.contains(SVNErrorCode.WC_UPGRADE_REQUIRED)) {
+        e.contains(ErrorCode.WC_UNSUPPORTED_FORMAT) ||
+        e.contains(ErrorCode.WC_UPGRADE_REQUIRED)) {
       LOG.debug(e);
     }
     else {

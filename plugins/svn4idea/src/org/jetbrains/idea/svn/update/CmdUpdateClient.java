@@ -11,7 +11,6 @@ import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.SVNErrorCode;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -41,7 +40,7 @@ public class CmdUpdateClient extends BaseSvnClient implements UpdateClient {
     final Info info = myFactory.createInfoClient().doInfo(path, Revision.UNDEFINED);
 
     if (info == null || info.getURL() == null) {
-      throw new SvnBindException(SVNErrorCode.WC_NOT_WORKING_COPY, path.getPath());
+      throw new SvnBindException(ErrorCode.WC_NOT_WORKING_COPY, path.getPath());
     }
   }
 

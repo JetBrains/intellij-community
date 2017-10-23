@@ -15,7 +15,6 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.properties.PropertiesMap;
 import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
-import org.tmatesoft.svn.core.SVNErrorCode;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,7 +49,7 @@ public class Reverter {
     }
     catch (SvnBindException e) {
       // skip errors on unversioned resources.
-      if (!e.contains(SVNErrorCode.WC_NOT_DIRECTORY)) {
+      if (!e.contains(ErrorCode.WC_NOT_WORKING_COPY)) {
         myExceptions.add(e);
       }
     }

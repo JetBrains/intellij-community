@@ -17,12 +17,12 @@ import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.ErrorCategory;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.SVNErrorCode;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
@@ -154,7 +154,7 @@ public class SingleCommittedListProvider {
     }
     catch (SvnBindException e) {
       LOG.info(e);
-      if (!e.containsCategory(SVNErrorCode.FS_CATEGORY)) {
+      if (!e.containsCategory(ErrorCategory.FS)) {
         throw e;
       }
     }

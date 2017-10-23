@@ -11,10 +11,10 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.ErrorCode;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.SVNErrorCode;
 
 import java.util.Iterator;
 import java.util.List;
@@ -123,7 +123,7 @@ public class LiveProvider implements BunchProvider {
   }
 
   private static boolean isElementNotFound(@NotNull VcsException e) {
-    return e instanceof SvnBindException && ((SvnBindException)e).contains(SVNErrorCode.FS_NOT_FOUND);
+    return e instanceof SvnBindException && ((SvnBindException)e).contains(ErrorCode.FS_NOT_FOUND);
   }
 
   public boolean isEarliestRevisionWasAccessed() {

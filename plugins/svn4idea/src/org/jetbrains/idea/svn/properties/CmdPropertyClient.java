@@ -9,7 +9,6 @@ import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.*;
 import org.jetbrains.idea.svn.commandLine.*;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.SVNErrorCode;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.XmlAttribute;
@@ -123,7 +122,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
    * Such error is thrown (if there is no requested property on the given target) by svn 1.9 client.
    */
   private static boolean isPropertyNotFoundError(@NotNull SvnBindException e) {
-    return e.contains(SVNErrorCode.BASE) && e.contains(SVNErrorCode.PROPERTY_NOT_FOUND);
+    return e.contains(ErrorCode.BASE) && e.contains(ErrorCode.PROPERTY_NOT_FOUND);
   }
 
   @NotNull

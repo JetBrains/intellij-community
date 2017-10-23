@@ -11,12 +11,12 @@ import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.ErrorCode;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.SVNErrorCode;
 
 import java.util.Map;
 
@@ -152,7 +152,7 @@ public class LatestExistentSearcher {
     }
     catch (SvnBindException e) {
       // throw error if not "does not exist" error code
-      if (!e.contains(SVNErrorCode.RA_ILLEGAL_URL)) {
+      if (!e.contains(ErrorCode.RA_ILLEGAL_URL)) {
         throw e;
       }
     }

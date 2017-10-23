@@ -23,6 +23,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnDiffProvider;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.ErrorCode;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.api.Url;
@@ -32,7 +33,6 @@ import org.jetbrains.idea.svn.history.HistoryClient;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.SVNErrorCode;
 
 import java.io.File;
 import java.io.IOException;
@@ -173,7 +173,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
                                   @NotNull FileAnnotation[] annotation,
                                   @NotNull VcsException[] exception) {
     // TODO: Check how this scenario could be reproduced by user and what changes needs to be done for command line client
-    if (e.contains(SVNErrorCode.FS_NOT_FOUND)) {
+    if (e.contains(ErrorCode.FS_NOT_FOUND)) {
       final CommittedChangesProvider<SvnChangeList, ChangeBrowserSettings> provider = myVcs.getCommittedChangesProvider();
       try {
         final Pair<SvnChangeList, FilePath> pair = provider.getOneList(file, revisionNumber);

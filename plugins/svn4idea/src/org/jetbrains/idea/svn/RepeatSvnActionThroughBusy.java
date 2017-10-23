@@ -4,15 +4,15 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Processor;
 import com.intellij.util.TimeoutUtil;
+import org.jetbrains.idea.svn.api.ErrorCode;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.SVNErrorCode;
 
 public abstract class RepeatSvnActionThroughBusy {
   public static final int REPEAT = 10;
 
   public static final Processor<Exception> ourBusyExceptionProcessor = e -> {
     if (e instanceof SvnBindException) {
-      return ((SvnBindException)e).contains(SVNErrorCode.WC_LOCKED);
+      return ((SvnBindException)e).contains(ErrorCode.WC_LOCKED);
     }
     return false;
   };

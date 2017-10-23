@@ -9,24 +9,23 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
-import org.tmatesoft.svn.core.SVNErrorCode;
+import org.jetbrains.idea.svn.api.ErrorCategory;
+import org.jetbrains.idea.svn.api.ErrorCode;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.util.ObjectUtils.chooseNotNull;
+import static org.jetbrains.idea.svn.api.ErrorCategory.categoryCodeOf;
 
 public class SvnBindException extends VcsException {
-
-  public static final int ERROR_BASE = 120000;
-  public static final int CATEGORY_SIZE = 5000;
 
   public static final String ERROR_MESSAGE_FORMAT = "svn: E%d: %s";
 
   @NotNull private final MultiMap<Integer, String> errors = MultiMap.create();
   @NotNull private final MultiMap<Integer, String> warnings = MultiMap.create();
 
-  public SvnBindException(@NotNull SVNErrorCode code, @NotNull String message) {
+  public SvnBindException(@NotNull ErrorCode code, @NotNull String message) {
     super(String.format(ERROR_MESSAGE_FORMAT, code.getCode(), message));
     errors.putValue(code.getCode(), getMessage());
   }
@@ -56,20 +55,15 @@ public class SvnBindException extends VcsException {
     return errors.containsKey(code) || warnings.containsKey(code);
   }
 
-  public boolean contains(@NotNull SVNErrorCode code) {
+  public boolean contains(@NotNull ErrorCode code) {
     return contains(code.getCode());
   }
 
-  public boolean containsCategory(int category) {
-    final int categoryCode = getCategoryCode(category);
-    Condition<Integer> belongsToCategoryCondition = code -> getCategoryCode(code) == categoryCode;
+  public boolean containsCategory(ErrorCategory category) {
+    Condition<Integer> belongsToCategoryCondition = errorCode -> categoryCodeOf(errorCode) == category.getCode();
 
     return ContainerUtil.exists(errors.keySet(), belongsToCategoryCondition) ||
            ContainerUtil.exists(warnings.keySet(), belongsToCategoryCondition);
-  }
-
-  private static int getCategoryCode(int category) {
-    return (category - ERROR_BASE) / CATEGORY_SIZE;
   }
 
   private static void parse(@NotNull String message, @NotNull Pattern pattern, @NotNull MultiMap<Integer, String> map) {

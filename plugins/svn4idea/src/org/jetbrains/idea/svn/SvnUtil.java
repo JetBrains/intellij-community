@@ -41,7 +41,6 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.LockDialog;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.status.Status;
-import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
@@ -689,20 +688,20 @@ public class SvnUtil {
   }
 
   public static boolean isUnversionedOrNotFound(@NotNull SvnBindException e) {
-    return e.contains(SVNErrorCode.WC_PATH_NOT_FOUND) ||
-           e.contains(SVNErrorCode.UNVERSIONED_RESOURCE) ||
-           e.contains(SVNErrorCode.WC_NOT_WORKING_COPY) ||
+    return e.contains(ErrorCode.WC_PATH_NOT_FOUND) ||
+           e.contains(ErrorCode.UNVERSIONED_RESOURCE) ||
+           e.contains(ErrorCode.WC_NOT_WORKING_COPY) ||
            // thrown when getting info from repository for non-existent item - like HEAD revision for deleted file
-           e.contains(SVNErrorCode.ILLEGAL_TARGET) ||
+           e.contains(ErrorCode.ILLEGAL_TARGET) ||
            // for svn 1.6
            StringUtil.containsIgnoreCase(e.getMessage(), "(not a versioned resource)");
   }
 
   public static boolean isAuthError(@NotNull SvnBindException e) {
-    return e.contains(SVNErrorCode.RA_NOT_AUTHORIZED) ||
-           e.contains(SVNErrorCode.RA_UNKNOWN_AUTH) ||
-           e.containsCategory(SVNErrorCode.AUTHZ_CATEGORY) ||
-           e.containsCategory(SVNErrorCode.AUTHN_CATEGORY);
+    return e.contains(ErrorCode.RA_NOT_AUTHORIZED) ||
+           e.contains(ErrorCode.RA_UNKNOWN_AUTH) ||
+           e.containsCategory(ErrorCategory.AUTHZ) ||
+           e.containsCategory(ErrorCategory.AUTHN);
   }
 
   // TODO: Create custom Target class and implement append there

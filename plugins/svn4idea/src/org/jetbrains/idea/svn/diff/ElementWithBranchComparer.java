@@ -12,9 +12,9 @@ import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.api.ErrorCode;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.io.File;
@@ -105,11 +105,11 @@ public abstract class ElementWithBranchComparer {
   }
 
   private void reportException(final SvnBindException e) {
-    if (e.contains(SVNErrorCode.RA_ILLEGAL_URL) ||
-        e.contains(SVNErrorCode.CLIENT_UNRELATED_RESOURCES) ||
-        e.contains(SVNErrorCode.RA_DAV_PATH_NOT_FOUND) ||
-        e.contains(SVNErrorCode.FS_NOT_FOUND) ||
-        e.contains(SVNErrorCode.ILLEGAL_TARGET)) {
+    if (e.contains(ErrorCode.RA_ILLEGAL_URL) ||
+        e.contains(ErrorCode.CLIENT_UNRELATED_RESOURCES) ||
+        e.contains(ErrorCode.RA_DAV_PATH_NOT_FOUND) ||
+        e.contains(ErrorCode.FS_NOT_FOUND) ||
+        e.contains(ErrorCode.ILLEGAL_TARGET)) {
       reportNotFound();
     }
     else {

@@ -4,7 +4,6 @@ package org.jetbrains.idea.svn.api;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.SVNErrorCode;
 
 public class CmdRepositoryFeaturesClient extends BaseSvnClient implements RepositoryFeaturesClient {
 
@@ -18,7 +17,7 @@ public class CmdRepositoryFeaturesClient extends BaseSvnClient implements Reposi
       result = true;
     }
     catch (SvnBindException e) {
-      if (e.contains(SVNErrorCode.UNSUPPORTED_FEATURE) && e.getMessage().contains("mergeinfo")) {
+      if (e.contains(ErrorCode.UNSUPPORTED_FEATURE) && e.getMessage().contains("mergeinfo")) {
         result = false;
       }
       else {
