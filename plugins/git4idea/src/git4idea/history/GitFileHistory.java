@@ -109,10 +109,10 @@ public class GitFileHistory {
       recordConsumer.reset(currentPath);
 
       GitLineHandler handler = createLogHandler(logParser, currentPath, firstCommitParent, parameters);
-      MyGitLineHandlerAdapter lineListener = new MyGitLineHandlerAdapter(handler, logParser, recordConsumer, exceptionConsumer);
+      GitLogOutputSplitter splitter = new GitLogOutputSplitter(handler, logParser, recordConsumer);
 
-      lineListener.runAndWait();
-      if (lineListener.hasCriticalFailure()) {
+      handler.runInCurrentThread(null);
+      if (splitter.hasErrors()) {
         return;
       }
 
@@ -258,133 +258,6 @@ public class GitFileHistory {
   public static List<VcsFileRevision> collectHistory(@NotNull Project project, @NotNull FilePath path, String... parameters)
     throws VcsException {
     return collectHistoryForRevision(project, path, GitRevisionNumber.HEAD, parameters);
-  }
-
-  private static class MyTokenAccumulator {
-    @NotNull private final StringBuilder myBuffer = new StringBuilder();
-    @NotNull private final GitLogParser myParser;
-
-    private boolean myNotStarted = true;
-
-    public MyTokenAccumulator(@NotNull GitLogParser parser) {
-      myParser = parser;
-    }
-
-    @Nullable
-    public GitLogRecord acceptLine(String s) {
-      final boolean recordStart = s.startsWith(GitLogParser.RECORD_START);
-      if (recordStart) {
-        s = s.substring(GitLogParser.RECORD_START.length());
-      }
-
-      if (myNotStarted) {
-        myBuffer.append(s);
-        myBuffer.append("\n");
-
-        myNotStarted = false;
-        return null;
-      }
-      else if (recordStart) {
-        final String line = myBuffer.toString();
-        myBuffer.setLength(0);
-
-        myBuffer.append(s);
-        myBuffer.append("\n");
-
-        return processResult(line);
-      }
-      else {
-        myBuffer.append(s);
-        myBuffer.append("\n");
-        return null;
-      }
-    }
-
-    @Nullable
-    public GitLogRecord processLast() {
-      return processResult(myBuffer.toString());
-    }
-
-    @Nullable
-    private GitLogRecord processResult(@NotNull String line) {
-      return myParser.parseOneRecord(line);
-    }
-  }
-
-  private static class MyGitLineHandlerAdapter extends GitLineHandlerAdapter {
-    @NotNull private final AtomicBoolean myCriticalFailure = new AtomicBoolean();
-    @NotNull private final Semaphore mySemaphore = new Semaphore();
-    @NotNull private final GitLineHandler myHandler;
-    @NotNull private final MyTokenAccumulator myAccumulator;
-    @NotNull private final Consumer<GitLogRecord> myRecordConsumer;
-    @NotNull private final Consumer<VcsException> myExceptionConsumer;
-
-    public MyGitLineHandlerAdapter(@NotNull GitLineHandler handler,
-                                   @NotNull GitLogParser logParser,
-                                   @NotNull Consumer<GitLogRecord> recordConsumer,
-                                   @NotNull Consumer<VcsException> exceptionConsumer) {
-      myHandler = handler;
-      myRecordConsumer = recordConsumer;
-      myExceptionConsumer = exceptionConsumer;
-      myAccumulator = new MyTokenAccumulator(logParser);
-
-      myHandler.addLineListener(this);
-    }
-
-    public void runAndWait() {
-      mySemaphore.down();
-      myHandler.start();
-      mySemaphore.waitFor();
-    }
-
-    @Override
-    public void onLineAvailable(String line, Key outputType) {
-      if (outputType == ProcessOutputTypes.STDOUT) {
-        GitLogRecord record = myAccumulator.acceptLine(line);
-        if (record != null) {
-          record.setUsedHandler(myHandler);
-          myRecordConsumer.consume(record);
-        }
-      }
-    }
-
-    @Override
-    public void startFailed(Throwable exception) {
-      //noinspection ThrowableInstanceNeverThrown
-      try {
-        myExceptionConsumer.consume(new VcsException(exception));
-      }
-      finally {
-        myCriticalFailure.set(true);
-        mySemaphore.up();
-      }
-    }
-
-    @Override
-    public void processTerminated(int exitCode) {
-      try {
-        super.processTerminated(exitCode);
-        final GitLogRecord record = myAccumulator.processLast();
-        if (record != null) {
-          record.setUsedHandler(myHandler);
-          myRecordConsumer.consume(record);
-        }
-      }
-      catch (ProcessCanceledException ignored) {
-      }
-      catch (Throwable t) {
-        LOG.error(t);
-        myExceptionConsumer.consume(new VcsException("Internal error " + t.getMessage(), t));
-        myCriticalFailure.set(true);
-      }
-      finally {
-        mySemaphore.up();
-      }
-    }
-
-    public boolean hasCriticalFailure() {
-      return myCriticalFailure.get();
-    }
   }
 
   private class GitLogRecordConsumer implements Consumer<GitLogRecord> {

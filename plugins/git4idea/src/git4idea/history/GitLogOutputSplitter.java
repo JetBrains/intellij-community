@@ -111,6 +111,10 @@ class GitLogOutputSplitter implements GitLineHandlerListener {
     myException = new VcsException(exception);
   }
 
+  public boolean hasErrors() {
+    return myException != null;
+  }
+
   public void reportErrors() throws VcsException {
     if (myException != null) {
       if (myException.getCause() instanceof ProcessCanceledException) {

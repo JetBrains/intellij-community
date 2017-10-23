@@ -131,6 +131,8 @@ public class GitLogParser {
     List<GitLogStatusInfo> result = myPathsParser.getResult();
     myPathsParser.clear();
 
+    myIsInBody = true;
+
     return new GitLogRecord(options, result, mySupportsRawBody);
   }
 
