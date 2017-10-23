@@ -18,6 +18,7 @@ package com.jetbrains.python.codeInsight.imports;
 import com.google.common.collect.Ordering;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.lang.ImportOptimizer;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
@@ -45,6 +46,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * @author yole
  */
 public class PyImportOptimizer implements ImportOptimizer {
+  private static final Logger LOG = Logger.getInstance(PyImportOptimizer.class);
 
   private boolean mySortImports = true;
 
@@ -75,10 +77,12 @@ public class PyImportOptimizer implements ImportOptimizer {
       }
     });
     return () -> {
+      LOG.debug(String.format("----------------- OPTIMIZE IMPORTS STARTED (%s) -----------------", file.getVirtualFile()));
       visitor.optimizeImports();
       if (mySortImports && file instanceof PyFile) {
         new ImportSorter((PyFile)file).run();
       }
+      LOG.debug("----------------- OPTIMIZE IMPORTS FINISHED -----------------");
     };
   }
 
@@ -95,11 +99,11 @@ public class PyImportOptimizer implements ImportOptimizer {
     private final PyCodeStyleSettings myPySettings;
     private final List<PyImportStatementBase> myImportBlock;
     private final Map<ImportPriority, List<PyImportStatementBase>> myGroups;
-    
+
     private final MultiMap<PyImportStatementBase, PsiComment> myOldImportToLineComments = MultiMap.create();
     private final MultiMap<PyImportStatementBase, PsiComment> myOldImportToInnerComments = MultiMap.create();
     private final MultiMap<String, PyFromImportStatement> myOldFromImportBySources = MultiMap.create();
-    
+
     private final MultiMap<PyImportStatementBase, PsiComment> myNewImportToLineComments = MultiMap.create();
     // Contains trailing and nested comments of modified (split and joined) imports
     private final MultiMap<PyImportStatementBase, PsiComment> myNewImportToInnerComments = MultiMap.create();
@@ -123,8 +127,10 @@ public class PyImportOptimizer implements ImportOptimizer {
       analyzeImports(myImportBlock);
 
       for (PyImportStatementBase importStatement : myImportBlock) {
-        final ImportPriority priority = AddImportHelper.getImportPriority(importStatement);
-        myGroups.get(priority).add(importStatement);
+        final AddImportHelper.ImportPriorityChoice choice = AddImportHelper.getImportPriorityWithReason(importStatement);
+        LOG.debug(String.format("Import group for '%s' is %s: %s",
+                                importStatement.getText(), choice.getPriority(), choice.getDescription()));
+        myGroups.get(choice.getPriority()).add(importStatement);
       }
 
       boolean hasTransformedImports = false;
