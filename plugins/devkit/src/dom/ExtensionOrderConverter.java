@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.codeInsight.completion.AddSpaceInsertHandler;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -31,7 +32,7 @@ import java.util.List;
 public class ExtensionOrderConverter implements CustomReferenceConverter<String> {
   private static final Logger LOG = Logger.getInstance(ExtensionOrderConverter.class);
 
-  private static final LookupElement[] COMPLETION_VARIANTS = new LookupElement[] {
+  private static final LookupElement[] KEYWORD_COMPLETION_VARIANTS = new LookupElement[] {
     LookupElementBuilder.create(LoadingOrder.FIRST_STR), LookupElementBuilder.create(LoadingOrder.LAST_STR),
     LookupElementBuilder.create(LoadingOrder.BEFORE_STR.trim()).withInsertHandler(new AddSpaceInsertHandler(true)),
     LookupElementBuilder.create(LoadingOrder.AFTER_STR.trim()).withInsertHandler(new AddSpaceInsertHandler(true))
@@ -40,7 +41,8 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
   @NotNull
   @Override
   public PsiReference[] createReferences(GenericDomValue<String> value, PsiElement element, ConvertContext context) {
-    String orderValue = ElementManipulators.getValueText(element);
+    PsiElement originalElement = CompletionUtil.getOriginalOrSelf(element);
+    String orderValue = ElementManipulators.getValueText(originalElement);
     if (StringUtil.isEmpty(orderValue)) {
       return PsiReference.EMPTY_ARRAY;
     }
@@ -53,6 +55,8 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
       @Override
       protected List<PsiReference> createReferences(TextRange range, int index) {
         String orderPart = range.substring(orderValue);
+
+        // reference range and attribute text range are not equal
         range = new TextRange(range.getStartOffset() + 1, range.getEndOffset() + 1);
 
         List<String> subParts = splitOrderPart(orderPart);
@@ -138,7 +142,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
     @NotNull
     @Override
     public Object[] getVariants() {
-      return COMPLETION_VARIANTS;
+      return KEYWORD_COMPLETION_VARIANTS;
     }
 
     @NotNull
@@ -170,7 +174,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
     @NotNull
     @Override
     public Object[] getVariants() {
-      return COMPLETION_VARIANTS;
+      return KEYWORD_COMPLETION_VARIANTS;
     }
 
     @NotNull
