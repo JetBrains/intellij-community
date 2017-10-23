@@ -2,12 +2,17 @@
 package git4idea.commands;
 
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import git4idea.util.GitVcsConsoleWriter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -72,7 +77,9 @@ abstract class GitImplBase implements Git {
 
       handler.addLineListener(resultListener);
 
-      handler.runInCurrentThread(null);
+      writeOutputToConsole(handler);
+
+      handler.runInCurrentThread();
       authFailed = handler.hasHttpAuthFailed();
     }
     while (authFailed && authAttempt++ < 2);
@@ -136,6 +143,30 @@ abstract class GitImplBase implements Git {
     abstract void errorLineReceived(@NotNull String line);
   }
 
+  private static void writeOutputToConsole(@NotNull GitLineHandler handler) {
+    Project project = handler.project();
+    if (project != null && !project.isDefault()) {
+      GitVcsConsoleWriter vcsConsoleWriter = GitVcsConsoleWriter.getInstance(project);
+      handler.addLineListener(new GitLineHandlerAdapter() {
+        @Override
+        public void onLineAvailable(String line, Key outputType) {
+          if (!handler.isSilent() && !StringUtil.isEmptyOrSpaces(line)) {
+            if (outputType == ProcessOutputTypes.STDOUT && !handler.isStdoutSuppressed()) {
+              vcsConsoleWriter.showMessage(line);
+            }
+            else if (outputType == ProcessOutputTypes.STDERR && !handler.isStderrSuppressed()) {
+              vcsConsoleWriter.showErrorMessage(line);
+            }
+          }
+        }
+      });
+      if (!handler.isSilent()) {
+        vcsConsoleWriter.showCommandLine("[" + stringifyWorkingDir(project.getBasePath(), handler.getWorkingDirectory()) + "] "
+                                         + handler.printableCommandLine());
+      }
+    }
+  }
+
   private static boolean looksLikeError(@NotNull final String text) {
     return ContainerUtil.exists(ERROR_INDICATORS, indicator -> StringUtil.startsWithIgnoreCase(text.trim(), indicator));
   }
@@ -155,4 +186,18 @@ abstract class GitImplBase implements Git {
     "unable",
     "runnerw:"
   };
+
+  @NotNull
+  static String stringifyWorkingDir(@Nullable String basePath, @NotNull File workingDir) {
+    if (basePath != null) {
+      String relPath = FileUtil.getRelativePath(basePath, FileUtil.toSystemIndependentName(workingDir.getPath()), '/');
+      if (".".equals(relPath)) {
+        return workingDir.getName();
+      }
+      else if (relPath != null) {
+        return FileUtil.toSystemDependentName(relPath);
+      }
+    }
+    return workingDir.getPath();
+  }
 }

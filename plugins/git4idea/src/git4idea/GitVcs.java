@@ -288,7 +288,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     checkExecutableAndVersion();
 
     if (myVFSListener == null) {
-      myVFSListener = new GitVFSListener(myProject, this, myGit);
+      myVFSListener = new GitVFSListener(myProject, this, myGit, myVcsConsoleWriter);
     }
     ServiceManager.getService(myProject, VcsUserRegistry.class); // make sure to read the registry before opening commit dialog
 

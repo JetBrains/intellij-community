@@ -77,7 +77,6 @@ public class GitLineHandler extends GitTextHandler {
   private void notifyLine(String line, Key outputType) {
     if (outputType == ProcessOutputTypes.STDOUT) {
       if (!isStdoutSuppressed() && !mySilent && !StringUtil.isEmptyOrSpaces(line)) {
-        myVcs.showMessages(line);
         LOG.info(line.trim());
       }
       else {
@@ -85,7 +84,6 @@ public class GitLineHandler extends GitTextHandler {
       }
     }
     else if (outputType == ProcessOutputTypes.STDERR && !isStderrSuppressed() && !mySilent && !StringUtil.isEmptyOrSpaces(line)) {
-      myVcs.showErrorMessages(line);
       LOG.info(line.trim());
     }
     else {

@@ -389,12 +389,11 @@ public abstract class GitHandler {
 
     try {
       myStartTime = System.currentTimeMillis();
-      if (!myProject.isDefault() && !mySilent && (myVcs != null)) {
-        myVcs.showCommandLine("[" + stringifyWorkingDir() + "] " + printableCommandLine());
-        LOG.info("[" + stringifyWorkingDir() + "] " + printableCommandLine());
+      if (!mySilent) {
+        LOG.info("[" + myCommandLine.getWorkDirectory().getPath() + "] " + printableCommandLine());
       }
       else {
-        LOG.debug("[" + stringifyWorkingDir() + "] " + printableCommandLine());
+        LOG.debug("[" + myCommandLine.getWorkDirectory().getPath() + "] " + printableCommandLine());
       }
 
       // setup environment
@@ -608,6 +607,10 @@ public abstract class GitHandler {
     }
   }
 
+  boolean isSilent() {
+    return mySilent;
+  }
+
   /**
    * @return a character set to use for IO
    */
@@ -629,7 +632,7 @@ public abstract class GitHandler {
   /**
    * @return true if standard output is not copied to the console
    */
-  public boolean isStdoutSuppressed() {
+  boolean isStdoutSuppressed() {
     return myStdoutSuppressed;
   }
 
@@ -646,7 +649,7 @@ public abstract class GitHandler {
   /**
    * @return true if standard output is not copied to the console
    */
-  public boolean isStderrSuppressed() {
+  boolean isStderrSuppressed() {
     return myStderrSuppressed;
   }
 
@@ -700,21 +703,6 @@ public abstract class GitHandler {
 
       logTime();
     }
-  }
-
-  @NotNull
-  private String stringifyWorkingDir() {
-    String basePath = myProject.getBasePath();
-    if (basePath != null) {
-      String relPath = FileUtil.getRelativePath(basePath, FileUtil.toSystemIndependentName(getWorkingDirectory().getPath()), '/');
-      if (".".equals(relPath)) {
-        return getWorkingDirectory().getName();
-      }
-      else if (relPath != null) {
-        return FileUtil.toSystemDependentName(relPath);
-      }
-    }
-    return getWorkingDirectory().getPath();
   }
 
   private void logTime() {

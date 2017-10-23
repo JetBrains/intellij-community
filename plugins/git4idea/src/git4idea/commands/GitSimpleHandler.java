@@ -90,12 +90,10 @@ public class GitSimpleHandler extends GitTextHandler {
     String stdout = myStdoutLine.toString();
     String stderr = myStderrLine.toString();
     if (!isStdoutSuppressed() && !StringUtil.isEmptyOrSpaces(stdout)) {
-      myVcs.showMessages(stdout);
       LOG.info(stdout.trim());
       myStdoutLine.setLength(0);
     }
     else if (!isStderrSuppressed() && !StringUtil.isEmptyOrSpaces(stderr)) {
-      myVcs.showErrorMessages(stderr);
       LOG.info(stderr.trim());
       myStderrLine.setLength(0);
     }
@@ -109,14 +107,6 @@ public class GitSimpleHandler extends GitTextHandler {
    * For silent handlers, print out everything
    */
   public void unsilence() {
-    if (myVcs == null) { return; }
-    myVcs.showCommandLine(printableCommandLine());
-    if (myStderr.length() != 0) {
-      myVcs.showErrorMessages(myStderr.toString());
-    }
-    if (myStdout.length() != 0) {
-      myVcs.showMessages(myStdout.toString());
-    }
   }
 
   /**
@@ -167,12 +157,6 @@ public class GitSimpleHandler extends GitTextHandler {
           if (!StringUtil.isEmptyOrSpaces(line)) {
             if (!suppressed) {
               LOG.info(line.trim());
-              if (ProcessOutputTypes.STDOUT == outputType) {
-                myVcs.showMessages(line);
-              }
-              else if (ProcessOutputTypes.STDERR == outputType) {
-                myVcs.showErrorMessages(line);
-              }
             }
             else {
               LOG.debug(line.trim());
