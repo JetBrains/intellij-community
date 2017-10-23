@@ -127,6 +127,14 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       }
     };
 
+    // TODO compiler options should be configurable
+    @Language("Groovy")
+    String compilerOptionsInitScript = "allprojects {\n" +
+                                       "  tasks.withType(JavaCompile) {\n" +
+                                       "    options.compilerArgs += [\"-Xlint:deprecation\"]\n" +
+                                       "  }" +
+                                       "}\n";
+
     String gradleVmOptions = GradleSettings.getInstance(project).getGradleVmOptions();
     for (String rootProjectPath : rootPaths) {
       Collection<String> buildTasks = buildTasksMap.get(rootProjectPath);
@@ -154,10 +162,10 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       UserDataHolderBase userData = new UserDataHolderBase();
       userData.putUserData(PROGRESS_LISTENER_KEY, BuildViewManager.class);
 
-      String initScript = StringUtil.join(initScripts.get(rootProjectPath), SystemProperties.getLineSeparator());
-      if (StringUtil.isNotEmpty(initScript)) {
-        userData.putUserData(GradleTaskManager.INIT_SCRIPT_KEY, initScript);
-      }
+      Collection<String> scripts = initScripts.getModifiable(rootProjectPath);
+      scripts.add(compilerOptionsInitScript);
+      userData.putUserData(GradleTaskManager.INIT_SCRIPT_KEY, StringUtil.join(scripts, SystemProperties.getLineSeparator()));
+
       ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID, project, GradleConstants.SYSTEM_ID,
                                  taskCallback, ProgressExecutionMode.IN_BACKGROUND_ASYNC, false, userData);
     }
