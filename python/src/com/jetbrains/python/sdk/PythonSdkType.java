@@ -17,6 +17,7 @@ package com.jetbrains.python.sdk;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
@@ -73,6 +74,7 @@ import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
+import com.jetbrains.python.run.PyVirtualEnvReader;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.PythonIcons;
@@ -933,6 +935,26 @@ public final class PythonSdkType extends SdkType {
   @Override
   public boolean isLocalSdk(@NotNull Sdk sdk) {
     return !isRemote(sdk);
+  }
+
+
+  @NotNull
+  public static Map<String, String> activateVirtualEnv(@NotNull String sdkHome) {
+    Map<String, String> env = Maps.newHashMap();
+
+    PyVirtualEnvReader reader = new PyVirtualEnvReader(sdkHome);
+    if (reader.getActivate() != null) {
+      try {
+        env.putAll(reader.readShellEnv().entrySet().stream()
+                     .filter((entry) -> PyVirtualEnvReader.Companion.getVirtualEnvVars().contains(entry.getKey())
+                     ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+      }
+      catch (Exception e) {
+        LOG.error("Couldn't read virtualenv variables", e);
+      }
+    }
+
+    return ImmutableMap.copyOf(env);
   }
 }
 

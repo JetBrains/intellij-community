@@ -113,6 +113,17 @@ public class PythonSdkUpdater implements StartupActivity {
     synchronized (ourLock) {
       ourScheduledToRefresh.add(key);
     }
+
+    final Application application = ApplicationManager.getApplication();
+
+    String sdkHome = sdk.getHomePath();
+    if (sdkHome != null && (PythonSdkType.isVirtualEnv(sdkHome) || PythonSdkType.isCondaVirtualEnv(sdk))) {
+      application.executeOnPooledThread(() -> {
+        sdk.putUserData(PythonSdkType.ENVIRONMENT_KEY,
+                        PythonSdkType.activateVirtualEnv(sdkHome)); // pre-cache virtualenv activated environment
+      });
+    }
+
     if (!updateLocalSdkPaths(sdk, sdkModificator, project)) {
       return false;
     }
@@ -120,8 +131,6 @@ public class PythonSdkUpdater implements StartupActivity {
     if (project == null) {
       return true;
     }
-
-    final Application application = ApplicationManager.getApplication();
 
     if (application.isUnitTestMode()) {
       // All actions we take after this line are dedicated to skeleton update process. Not all tests do need them. To find test API that
