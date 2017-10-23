@@ -104,7 +104,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private final GitHistoryProvider myHistoryProvider;
   @NotNull private final Git myGit;
   private final ProjectLevelVcsManager myVcsManager;
-  private final GitVcsApplicationSettings myAppSettings;
+  private final GitVcsSettings myProjectSettings;
   private final Configurable myConfigurable;
   private final RevisionSelector myRevSelector;
   private final GitCommittedChangeListProvider myCommittedChangeListProvider;
@@ -134,13 +134,12 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
                 @NotNull final GitDiffProvider gitDiffProvider,
                 @NotNull final GitHistoryProvider gitHistoryProvider,
                 @NotNull final GitRollbackEnvironment gitRollbackEnvironment,
-                @NotNull final GitVcsApplicationSettings gitSettings,
                 @NotNull final GitVcsSettings gitProjectSettings,
                 @NotNull GitSharedSettings sharedSettings) {
     super(project, NAME);
     myGit = git;
     myVcsManager = gitVcsManager;
-    myAppSettings = gitSettings;
+    myProjectSettings = gitProjectSettings;
     myChangeProvider = project.isDefault() ? null : ServiceManager.getService(project, GitChangeProvider.class);
     myCheckinEnvironment = project.isDefault() ? null : ServiceManager.getService(project, GitCheckinEnvironment.class);
     myAnnotationProvider = gitAnnotationProvider;
@@ -303,11 +302,11 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   private void checkExecutableAndVersion() {
     boolean executableIsAlreadyCheckedAndFine = false;
-    String pathToGit = myAppSettings.getPathToGit();
+    String pathToGit = myProjectSettings.getPathToGit();
     if (!pathToGit.contains(File.separator)) { // no path, just sole executable, with a hope that it is in path
       // subject to redetect the path if executable validator fails
       if (!myExecutableValidator.isExecutableValid()) {
-        myAppSettings.setPathToGit(new GitExecutableDetector().detect());
+        myProjectSettings.setPathToGit(new GitExecutableDetector().detect());
       }
       else {
         executableIsAlreadyCheckedAndFine = true; // not to check it twice
@@ -389,7 +388,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    * Note that unsupported version is also applied - some functionality might not work (we warn about that), but no need to disable at all.
    */
   public void checkVersion() {
-    final String executable = myAppSettings.getPathToGit();
+    final String executable = myProjectSettings.getPathToGit();
     try {
       myVersion = GitVersion.identifyVersion(executable);
       LOG.info("Git version: " + myVersion);
