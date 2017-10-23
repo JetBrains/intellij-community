@@ -203,7 +203,7 @@ public class ToolkitBugsProcessor {
     @Override
     public boolean process(Throwable e, StackTraceElement[] stack) {
       // http://bugs.java.com/bugdatabase/view_bug.do?bug_id=6607186
-      if (e instanceof ClassCastException && stack.length > 1) {
+      if (e instanceof ClassCastException && stack.length > 1 && e.getMessage() != null) {
         return e.getMessage().equals("sun.java2d.HeadlessGraphicsEnvironment cannot be cast to sun.awt.Win32GraphicsEnvironment");
       }
       return false;
