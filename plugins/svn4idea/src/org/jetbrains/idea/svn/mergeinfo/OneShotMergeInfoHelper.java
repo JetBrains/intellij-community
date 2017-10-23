@@ -20,7 +20,6 @@ import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.integrate.MergeContext;
 import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
-import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.io.File;
@@ -41,7 +40,7 @@ public class OneShotMergeInfoHelper implements MergeChecker {
   @NotNull private final MergeContext myMergeContext;
   @NotNull private final Map<Long, Collection<String>> myPartiallyMerged;
   // subpath [file] (local) to (subpathURL - merged FROM - to ranges list)
-  @NotNull private final NavigableMap<String, Map<String, SVNMergeRangeList>> myMergeInfoMap;
+  @NotNull private final NavigableMap<String, Map<String, MergeRangeList>> myMergeInfoMap;
   @NotNull private final Object myMergeInfoLock;
 
   public OneShotMergeInfoHelper(@NotNull MergeContext mergeContext) {
@@ -103,12 +102,12 @@ public class OneShotMergeInfoHelper implements MergeChecker {
       String key = toKey(sourceRelativePath);
 
       synchronized (myMergeInfoLock) {
-        Map<String, SVNMergeRangeList> mergeInfo = myMergeInfoMap.get(key);
+        Map<String, MergeRangeList> mergeInfo = myMergeInfoMap.get(key);
         if (mergeInfo != null) {
           processor.process(key, mergeInfo);
         }
         else {
-          for (Map.Entry<String, Map<String, SVNMergeRangeList>> entry : myMergeInfoMap.tailMap(key).entrySet()) {
+          for (Map.Entry<String, Map<String, MergeRangeList>> entry : myMergeInfoMap.tailMap(key).entrySet()) {
             if (isUnder(entry.getKey(), key) && processor.process(entry.getKey(), entry.getValue())) {
               break;
             }
@@ -126,7 +125,7 @@ public class OneShotMergeInfoHelper implements MergeChecker {
     return ".".equals(parentUrl) || isAncestor(ensureStartSlash(parentUrl), ensureStartSlash(childUrl));
   }
 
-  private static class InfoProcessor implements PairProcessor<String, Map<String, SVNMergeRangeList>> {
+  private static class InfoProcessor implements PairProcessor<String, Map<String, MergeRangeList>> {
 
     @NotNull private final String myRepositoryRelativeSourcePath;
     private boolean myIsMerged;
@@ -144,7 +143,7 @@ public class OneShotMergeInfoHelper implements MergeChecker {
     }
 
     // TODO: Try to unify with BranchInfo.processMergeinfoProperty()
-    public boolean process(@NotNull String workingCopyRelativePath, @NotNull Map<String, SVNMergeRangeList> mergedPathsMap) {
+    public boolean process(@NotNull String workingCopyRelativePath, @NotNull Map<String, MergeRangeList> mergedPathsMap) {
       boolean processed = false;
       boolean isCurrentPath = workingCopyRelativePath.equals(mySourceRelativePath);
 
@@ -157,11 +156,11 @@ public class OneShotMergeInfoHelper implements MergeChecker {
           find(mergedPathsMap.keySet(), path -> isAncestor(myRepositoryRelativeSourcePath, ensureStartSlash(path)));
 
         if (mergedPathAffectingSourcePath != null) {
-          SVNMergeRangeList mergeRangeList = mergedPathsMap.get(mergedPathAffectingSourcePath);
+          MergeRangeList mergeRangeList = mergedPathsMap.get(mergedPathAffectingSourcePath);
 
           processed = true;
-          myIsMerged = exists(mergeRangeList.getRanges(),
-                              range -> BranchInfo.isInRange(range, myRevisionNumber) && (range.isInheritable() || isCurrentPath));
+          myIsMerged =
+            exists(mergeRangeList.getRanges(), range -> range.contains(myRevisionNumber) && (range.isInheritable() || isCurrentPath));
         }
       }
 
@@ -174,7 +173,7 @@ public class OneShotMergeInfoHelper implements MergeChecker {
     return new PropertyConsumer() {
       public void handleProperty(@NotNull File path, @NotNull PropertyData property) throws SvnBindException {
         String workingCopyRelativePath = getWorkingCopyRelativePath(path);
-        Map<String, SVNMergeRangeList> mergeInfo = BranchInfo.parseMergeInfo(notNull(property.getValue()));
+        Map<String, MergeRangeList> mergeInfo = MergeRangeList.parseMergeInfo(notNull(property.getValue()).toString());
 
         synchronized (myMergeInfoLock) {
           myMergeInfoMap.put(toKey(workingCopyRelativePath), mergeInfo);

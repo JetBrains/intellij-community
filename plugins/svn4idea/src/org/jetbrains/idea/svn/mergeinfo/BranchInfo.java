@@ -18,15 +18,15 @@ import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.properties.PropertyValue;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNMergeRange;
-import org.tmatesoft.svn.core.SVNMergeRangeList;
-import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
+import static com.intellij.util.containers.ContainerUtil.addAll;
 import static org.jetbrains.idea.svn.SvnUtil.append;
 import static org.jetbrains.idea.svn.SvnUtil.removePathTail;
 
@@ -310,16 +310,16 @@ public class BranchInfo {
                                                                       final String trunkRelativeUrl,
                                                                       final boolean self) throws SvnBindException {
     SvnMergeInfoCache.MergeCheckResult result;
-    Map<String, SVNMergeRangeList> mergedPathsMap = parseMergeInfo(value);
+    Map<String, MergeRangeList> mergedPathsMap = MergeRangeList.parseMergeInfo(value.toString());
     String mergedPathAffectingTrunkUrl = ContainerUtil.find(mergedPathsMap.keySet(), path -> trunkRelativeUrl.startsWith(path));
 
     if (mergedPathAffectingTrunkUrl != null) {
-      SVNMergeRangeList mergeRangeList = mergedPathsMap.get(mergedPathAffectingTrunkUrl);
+      MergeRangeList mergeRangeList = mergedPathsMap.get(mergedPathAffectingTrunkUrl);
 
       fillMergedRevisions(pathWithRevisionNumber, mergeRangeList);
 
       boolean isAskedRevisionMerged =
-        ContainerUtil.or(mergeRangeList.getRanges(), range -> isInRange(range, revisionAsked) && (range.isInheritable() || self));
+        ContainerUtil.or(mergeRangeList.getRanges(), range -> range.contains(revisionAsked) && (range.isInheritable() || self));
 
       result = SvnMergeInfoCache.MergeCheckResult.getInstance(isAskedRevisionMerged);
     }
@@ -331,47 +331,20 @@ public class BranchInfo {
     return result;
   }
 
-  @NotNull
-  public static Map<String, SVNMergeRangeList> parseMergeInfo(@NotNull PropertyValue value) throws SvnBindException {
-    try {
-      return SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(value.toString().replace('\r', '\n').replace("\n\n", "\n")), null);
-    }
-    catch (SVNException e) {
-      throw new SvnBindException(e);
-    }
-  }
-
-  private void fillMergedRevisions(String pathWithRevisionNumber, @NotNull SVNMergeRangeList mergeRangeList) {
+  private void fillMergedRevisions(String pathWithRevisionNumber, @NotNull MergeRangeList mergeRangeList) {
     Set<Long> revisions = ContainerUtil.newHashSet();
     Set<Long> nonInheritableRevisions = ContainerUtil.newHashSet();
 
-    for (SVNMergeRange range : mergeRangeList.getRanges()) {
+    for (MergeRange range : mergeRangeList.getRanges()) {
       // TODO: Seems there is no much sense in converting merge range to list of revisions - we need just implement smart search
       // TODO: of revision in sorted list of ranges
-      (range.isInheritable() ? revisions : nonInheritableRevisions).addAll(toRevisionsList(range));
+      addAll(range.isInheritable() ? revisions : nonInheritableRevisions, range.getRevisions());
     }
 
     myPathMergedMap.put(pathWithRevisionNumber, revisions);
     if (!nonInheritableRevisions.isEmpty()) {
       myNonInheritablePathMergedMap.put(pathWithRevisionNumber, nonInheritableRevisions);
     }
-  }
-
-  @NotNull
-  private static Collection<Long> toRevisionsList(@NotNull SVNMergeRange range) {
-    List<Long> result = ContainerUtil.newArrayList();
-
-    // SVN does not include start revision in range
-    for (long i = range.getStartRevision() + 1; i <= range.getEndRevision(); i++) {
-      result.add(i);
-    }
-
-    return result;
-  }
-
-  public static boolean isInRange(@NotNull SVNMergeRange range, long revision) {
-    // SVN does not include start revision in range
-    return revision > range.getStartRevision() && revision <= range.getEndRevision();
   }
 
   public boolean isMixedRevisionsFound() {
