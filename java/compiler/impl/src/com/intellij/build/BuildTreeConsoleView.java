@@ -39,6 +39,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
+import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTreeBuilder;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.ui.treeStructure.Tree;
@@ -119,7 +120,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         }
       }
     };
-    final ExecutionNode rootNode = new ExecutionNode(myProject);
+    final ExecutionNode rootNode = new ExecutionNode(myProject, null);
     rootNode.setAutoExpandNode(true);
     final ListTreeTableModelOnColumns model = new ListTreeTableModelOnColumns(new DefaultMutableTreeNode(rootNode), COLUMNS);
 
@@ -325,7 +326,16 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     if (event instanceof StartEvent || event instanceof MessageEvent) {
       ExecutionNode rootElement = getRootElement();
       if (currentNode == null) {
-        currentNode = event instanceof StartBuildEvent ? rootElement : new ExecutionNode(myProject);
+        if (event instanceof StartBuildEvent) {
+          currentNode = rootElement;
+        }
+        else {
+          if (event instanceof MessageEvent) {
+            MessageEvent messageEvent = (MessageEvent)event;
+            parentNode = createMessageParentNodes(messageEvent, parentNode);
+          }
+          currentNode = new ExecutionNode(myProject, parentNode);
+        }
         currentNode.setAutoExpandNode(currentNode == rootElement || parentNode == rootElement);
         nodesMap.put(event.getId(), currentNode);
       }
@@ -334,15 +344,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         return;
       }
 
-      if (event instanceof MessageEvent) {
-        MessageEvent messageEvent = (MessageEvent)event;
-        currentNode.setStartTime(messageEvent.getEventTime());
-        currentNode.setEndTime(messageEvent.getEventTime());
-        currentNode.setNavigatable(messageEvent.getNavigatable(myProject));
-        final MessageEventResult messageEventResult = messageEvent.getResult();
-        currentNode.setResult(messageEventResult);
-        parentNode = createMessageParentNodes(messageEvent, parentNode);
-      }
       if (parentNode != null) {
         parentNode.add(currentNode);
       }
@@ -353,11 +354,19 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         currentNode.setAutoExpandNode(true);
         myProgressAnimator.startMovie();
       }
+      else if (event instanceof MessageEvent) {
+        MessageEvent messageEvent = (MessageEvent)event;
+        currentNode.setStartTime(messageEvent.getEventTime());
+        currentNode.setEndTime(messageEvent.getEventTime());
+        currentNode.setNavigatable(messageEvent.getNavigatable(myProject));
+        final MessageEventResult messageEventResult = messageEvent.getResult();
+        currentNode.setResult(messageEventResult);
+      }
     }
     else {
       currentNode = nodesMap.get(event.getId());
       if (currentNode == null && event instanceof ProgressBuildEvent) {
-        currentNode = new ExecutionNode(myProject);
+        currentNode = new ExecutionNode(myProject, parentNode);
         nodesMap.put(event.getId(), currentNode);
         if (parentNode != null) {
           parentNode.add(currentNode);
@@ -405,7 +414,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         JTree tree = myBuilder.getTree();
         if (tree != null && !tree.isRootVisible()) {
           ExecutionNode rootElement = getRootElement();
-          ExecutionNode resultNode = new ExecutionNode(myProject);
+          ExecutionNode resultNode = new ExecutionNode(myProject, rootElement);
           resultNode.setName(StringUtil.toTitleCase(rootElement.getName()));
           resultNode.setHint(rootElement.getHint());
           resultNode.setEndTime(rootElement.getEndTime());
@@ -445,12 +454,13 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       getOrCreateMessagesNode(messageEvent, groupNodeId, parentNode, null, group, true, null, null, nodesMap, myProject);
 
     EventResult groupNodeResult = messagesGroupNode.getResult();
+    final MessageEvent.Kind eventKind = messageEvent.getKind();
     if (!(groupNodeResult instanceof MessageEventResult) ||
-        ((MessageEventResult)groupNodeResult).getKind().compareTo(messageEvent.getKind()) > 0) {
+        ((MessageEventResult)groupNodeResult).getKind().compareTo(eventKind) > 0) {
       messagesGroupNode.setResult(new MessageEventResult() {
         @Override
         public MessageEvent.Kind getKind() {
-          return messageEvent.getKind();
+          return eventKind;
         }
       });
     }
@@ -499,6 +509,13 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       parentNode = messagesGroupNode;
     }
 
+    if (eventKind == MessageEvent.Kind.ERROR || eventKind == MessageEvent.Kind.WARNING) {
+      SimpleNode p = parentNode;
+      do {
+        ((ExecutionNode)p).reportChildMessageKind(eventKind);
+      }
+      while ((p = p.getParent()) instanceof ExecutionNode);
+    }
     return parentNode;
   }
 
@@ -515,7 +532,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
                                                        Project project) {
     ExecutionNode node = nodesMap.get(nodeId);
     if (node == null) {
-      node = new ExecutionNode(project);
+      node = new ExecutionNode(project, parentNode);
       node.setName(nodeName);
       node.setTitle(nodeTitle);
       if (autoExpandNode) {

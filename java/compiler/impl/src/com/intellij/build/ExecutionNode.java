@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 /**
@@ -44,11 +45,11 @@ public class ExecutionNode extends CachingSimpleNode {
   private long startTime;
   private long endTime;
   @Nullable
-  private String title;
+  private String myTitle;
   @Nullable
-  private String tooltip;
+  private String myTooltip;
   @Nullable
-  private String hint;
+  private String myHint;
   @Nullable
   private EventResult myResult;
   private boolean myAutoExpandNode;
@@ -56,9 +57,11 @@ public class ExecutionNode extends CachingSimpleNode {
   private Navigatable myNavigatable;
   @Nullable
   private NullableLazyValue<Icon> myPreferredIconValue;
+  private final AtomicInteger myErrors = new AtomicInteger();
+  private final AtomicInteger myWarnings = new AtomicInteger();
 
-  public ExecutionNode(Project aProject) {
-    super(aProject, null);
+  public ExecutionNode(Project aProject, ExecutionNode parentNode) {
+    super(aProject, parentNode);
   }
 
   @Override
@@ -71,17 +74,19 @@ public class ExecutionNode extends CachingSimpleNode {
     setIcon(getCurrentIcon());
     presentation.setPresentableText(myName);
     presentation.setIcon(getIcon());
-    if (title != null) {
-      presentation.addText(title + ": ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+    if (myTitle != null) {
+      presentation.addText(myTitle + ": ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
-    if(title != null || hint != null) {
+
+    String hint = getCurrentHint();
+    if (myTitle != null || hint != null) {
       presentation.addText(myName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
     if (hint != null) {
       presentation.addText("  " + hint, SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
-    if (tooltip != null) {
-      presentation.setTooltip(tooltip);
+    if (myTooltip != null) {
+      presentation.setTooltip(myTooltip);
     }
   }
 
@@ -96,29 +101,29 @@ public class ExecutionNode extends CachingSimpleNode {
 
   @Nullable
   public String getTitle() {
-    return title;
+    return myTitle;
   }
 
   public void setTitle(@Nullable String title) {
-    this.title = title;
+    myTitle = title;
   }
 
   @Nullable
   public String getTooltip() {
-    return tooltip;
+    return myTooltip;
   }
 
   public void setTooltip(@Nullable String tooltip) {
-    this.tooltip = tooltip;
+    myTooltip = tooltip;
   }
 
   @Nullable
   public String getHint() {
-    return hint;
+    return myHint;
   }
 
   public void setHint(@Nullable String hint) {
-    this.hint = hint;
+    myHint = hint;
   }
 
   public void add(ExecutionNode node) {
@@ -226,6 +231,40 @@ public class ExecutionNode extends CachingSimpleNode {
         return iconProvider.get();
       }
     };
+  }
+
+  public void reportChildMessageKind(MessageEvent.Kind kind) {
+    if (kind == MessageEvent.Kind.ERROR) {
+      myErrors.incrementAndGet();
+    }
+    else if (kind == MessageEvent.Kind.WARNING) {
+      myWarnings.incrementAndGet();
+    }
+  }
+
+  private String getCurrentHint() {
+    String hint = myHint;
+    int warnings = myWarnings.get();
+    int errors = myErrors.get();
+    if (warnings > 0 || errors > 0) {
+      if (hint == null) {
+        hint = "";
+      }
+      hint += (getParent() == null ? isRunning() ? "   " : "   with " : " (");
+      if (errors > 0) {
+        hint += (errors + " " + StringUtil.pluralize("error", errors));
+        if (warnings > 0) {
+          hint += ", ";
+        }
+      }
+      if (warnings > 0) {
+        hint += (warnings + " " + StringUtil.pluralize("warning", warnings));
+      }
+      if (getParent() != null) {
+        hint += ")";
+      }
+    }
+    return hint;
   }
 
   private Icon getCurrentIcon() {
