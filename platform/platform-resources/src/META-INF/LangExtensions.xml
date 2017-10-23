@@ -620,7 +620,7 @@
     <filePropertyPusher implementation="com.intellij.psi.templateLanguages.TemplateDataLanguagePusher"/>
 
     <!-- execution -->
-    <!--<executor implementation="com.intellij.execution.executors.DefaultRunExecutor" order="first" id="run"/>-->
+    <executor implementation="com.intellij.execution.executors.DefaultRunExecutor" order="last" id="run"/>
     <executionTargetProvider implementation="com.intellij.execution.DefaultExecutionTargetProvider"/>
     <projectService serviceImplementation="com.intellij.execution.RunConfigurationProducerService" />
     <configurationType implementation="com.intellij.execution.compound.CompoundRunConfigurationType"/>

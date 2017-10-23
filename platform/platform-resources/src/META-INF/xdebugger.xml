@@ -40,7 +40,7 @@
     <xdebugger.configurableProvider implementation="com.intellij.xdebugger.impl.settings.XDebuggerConfigurableProvider" order="first"/>
     <editor.linePainter implementation="com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter"/>
 
-    <executor implementation="com.intellij.execution.executors.DefaultDebugExecutor" order="first,after run"/>
+    <executor implementation="com.intellij.execution.executors.DefaultDebugExecutor" order="first"/>
 
     <copyPastePreProcessor implementation="com.intellij.xdebugger.impl.ui.DebuggerCopyPastePreprocessor"/>
   </extensions>
