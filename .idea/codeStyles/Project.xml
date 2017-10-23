@@ -1,17 +1,5 @@
 <component name="ProjectCodeStyleConfiguration">
   <code_scheme name="Project" version="173">
-    <option name="OTHER_INDENT_OPTIONS">
-      <value>
-        <option name="INDENT_SIZE" value="2" />
-        <option name="CONTINUATION_INDENT_SIZE" value="4" />
-        <option name="TAB_SIZE" value="8" />
-        <option name="USE_TAB_CHARACTER" value="false" />
-        <option name="SMART_TABS" value="false" />
-        <option name="LABEL_INDENT_SIZE" value="0" />
-        <option name="LABEL_INDENT_ABSOLUTE" value="false" />
-        <option name="USE_RELATIVE_INDENTS" value="false" />
-      </value>
-    </option>
     <option name="LINE_SEPARATOR" value="&#10;" />
     <option name="RIGHT_MARGIN" value="140" />
     <option name="FORMATTER_TAGS_ENABLED" value="true" />
@@ -42,9 +30,6 @@
         </value>
       </option>
     </JetCodeStyleSettings>
-    <XML>
-      <option name="XML_LEGACY_SETTINGS_IMPORTED" value="true" />
-    </XML>
     <codeStyleSettings language="CFML">
       <option name="ELSE_ON_NEW_LINE" value="true" />
       <option name="WHILE_ON_NEW_LINE" value="true" />
@@ -59,7 +44,6 @@
       <option name="TERNARY_OPERATION_SIGNS_ON_NEXT_LINE" value="true" />
       <option name="FOR_STATEMENT_WRAP" value="5" />
       <option name="ASSIGNMENT_WRAP" value="1" />
-      <option name="PARENT_SETTINGS_INSTALLED" value="true" />
     </codeStyleSettings>
     <codeStyleSettings language="ECMA Script Level 4">
       <option name="ELSE_ON_NEW_LINE" value="true" />
@@ -84,7 +68,6 @@
       <option name="DOWHILE_BRACE_FORCE" value="1" />
       <option name="WHILE_BRACE_FORCE" value="1" />
       <option name="FOR_BRACE_FORCE" value="1" />
-      <option name="PARENT_SETTINGS_INSTALLED" value="true" />
     </codeStyleSettings>
     <codeStyleSettings language="Groovy">
       <option name="KEEP_BLANK_LINES_BEFORE_RBRACE" value="0" />
@@ -113,7 +96,6 @@
       <option name="WHILE_BRACE_FORCE" value="1" />
       <option name="FOR_BRACE_FORCE" value="1" />
       <option name="FIELD_ANNOTATION_WRAP" value="0" />
-      <option name="PARENT_SETTINGS_INSTALLED" value="true" />
       <indentOptions>
         <option name="INDENT_SIZE" value="2" />
         <option name="CONTINUATION_INDENT_SIZE" value="2" />
@@ -163,7 +145,6 @@
       <option name="WHILE_BRACE_FORCE" value="1" />
       <option name="FOR_BRACE_FORCE" value="1" />
       <option name="FIELD_ANNOTATION_WRAP" value="0" />
-      <option name="PARENT_SETTINGS_INSTALLED" value="true" />
       <indentOptions>
         <option name="INDENT_SIZE" value="2" />
         <option name="CONTINUATION_INDENT_SIZE" value="2" />
@@ -190,7 +171,6 @@
       <option name="DOWHILE_BRACE_FORCE" value="1" />
       <option name="WHILE_BRACE_FORCE" value="1" />
       <option name="FOR_BRACE_FORCE" value="1" />
-      <option name="PARENT_SETTINGS_INSTALLED" value="true" />
       <indentOptions>
         <option name="INDENT_SIZE" value="2" />
         <option name="TAB_SIZE" value="2" />
@@ -217,10 +197,6 @@
       <option name="DOWHILE_BRACE_FORCE" value="1" />
       <option name="WHILE_BRACE_FORCE" value="1" />
       <option name="FOR_BRACE_FORCE" value="1" />
-      <option name="PARENT_SETTINGS_INSTALLED" value="true" />
-    </codeStyleSettings>
-    <codeStyleSettings language="Python">
-      <option name="PARENT_SETTINGS_INSTALLED" value="true" />
     </codeStyleSettings>
     <codeStyleSettings language="XML">
       <indentOptions>
