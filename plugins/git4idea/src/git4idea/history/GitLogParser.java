@@ -215,7 +215,7 @@ public class GitLogParser {
     public boolean parseLine(@NotNull CharSequence line) {
       int offset = 0;
 
-      if (CharArrayUtil.regionMatches(line, offset, RECORD_START)) {
+      if (myResult.isEmpty() && CharArrayUtil.regionMatches(line, offset, RECORD_START)) {
         offset += RECORD_START.length();
       }
 
