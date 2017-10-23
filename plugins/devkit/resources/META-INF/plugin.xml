@@ -175,7 +175,6 @@
     <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.devkit.dom.impl.I18nReferenceContributor"/>
     <psi.referenceContributor implementation="org.jetbrains.idea.devkit.references.IconsReferencesContributor"/>
     <psi.referenceContributor implementation="org.jetbrains.idea.devkit.references.TestDataFilesReferencesContributor"/>
-    <psi.referenceContributor implementation="org.jetbrains.idea.devkit.references.OrderReferencesContributor"/>
     <referencesSearch implementation="org.jetbrains.idea.devkit.references.IconsReferencesContributor"/>
     <unusedDeclarationFixProvider implementation="org.jetbrains.idea.devkit.inspections.quickfix.RegisterExtensionFixProvider"/>
 

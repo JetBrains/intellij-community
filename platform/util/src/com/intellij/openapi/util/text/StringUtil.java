@@ -1391,11 +1391,23 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static List<TextRange> getWordIndicesIn(@NotNull String text) {
+    return getWordIndicesIn(text, null);
+  }
+
+  /**
+   * @param text text to get word ranges in.
+   * @param separatorsSet if not null, only these characters will be considered as separators (i.e. not a part of word).
+   *                   Otherwise {@link Character#isJavaIdentifierPart(char)} will be used to determine if a symbol is part of word.
+   * @return ranges ranges of words in passed text.
+   */
+  @NotNull
+  @Contract(pure = true)
+  public static List<TextRange> getWordIndicesIn(@NotNull String text, @Nullable Set<Character> separatorsSet) {
     List<TextRange> result = new SmartList<TextRange>();
     int start = -1;
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
-      boolean isIdentifierPart = Character.isJavaIdentifierPart(c);
+      boolean isIdentifierPart = separatorsSet == null ? Character.isJavaIdentifierPart(c) : !separatorsSet.contains(c);
       if (isIdentifierPart && start == -1) {
         start = i;
       }

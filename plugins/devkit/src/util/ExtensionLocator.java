@@ -36,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -48,8 +47,12 @@ public abstract class ExtensionLocator {
     return new ExtensionByPsiClassLocator(psiClass);
   }
 
-  public static ExtensionLocator byExtensionPoint(ExtensionPoint extensionPoint) {
-    return new ExtensionByExtensionPointLocator(extensionPoint);
+  public static ExtensionLocator byExtensionPoint(@NotNull ExtensionPoint extensionPoint) {
+    return new ExtensionByExtensionPointLocator(extensionPoint, null);
+  }
+
+  public static ExtensionLocator byExtensionPointAndId(@NotNull ExtensionPoint extensionPoint, @NotNull String extensionId) {
+    return new ExtensionByExtensionPointLocator(extensionPoint, extensionId);
   }
 
 
@@ -83,9 +86,11 @@ public abstract class ExtensionLocator {
 
   private static class ExtensionByExtensionPointLocator extends ExtensionLocator {
     private final ExtensionPoint myExtensionPoint;
+    private final String myExtensionId;
 
-    private ExtensionByExtensionPointLocator(ExtensionPoint extensionPoint) {
+    private ExtensionByExtensionPointLocator(@NotNull ExtensionPoint extensionPoint, @Nullable String extensionId) {
       myExtensionPoint = extensionPoint;
+      myExtensionId = extensionId;
     }
 
     @NotNull
@@ -100,7 +105,7 @@ public abstract class ExtensionLocator {
       DomManager domManager = DomManager.getDomManager(project);
       String epName = myExtensionPoint.getEffectiveName();
 
-      List<ExtensionCandidate> result = new ArrayList<>();
+      List<ExtensionCandidate> result = new SmartList<>();
       processExtensionDeclarations(myExtensionPoint.getEffectiveName(), project, (file, startOffset, endOffset) -> {
         XmlTag tag = getXmlTagOfTokenElement(file, startOffset, epName, false);
         if (tag == null) {
@@ -118,9 +123,12 @@ public abstract class ExtensionLocator {
           return true;
         }
 
-        if (StringUtil.equals(ep.getEffectiveQualifiedName(), myExtensionPoint.getEffectiveQualifiedName())) {
+        if (StringUtil.equals(ep.getEffectiveQualifiedName(), myExtensionPoint.getEffectiveQualifiedName())
+            && (myExtensionId == null || myExtensionId.equals(extension.getId().getStringValue()))) {
           result.add(new ExtensionCandidate(SmartPointerManager.getInstance(tag.getProject()).createSmartPsiElementPointer(tag)));
+          return myExtensionId == null; // stop after the first found candidate if ID is specified
         }
+
         return true;
       });
 
