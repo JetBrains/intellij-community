@@ -168,7 +168,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     assert textRange.getStartOffset() >= 0;
 
     final String description = SpellCheckerBundle.message("typo.in.word.ref");
-    return new ProblemDescriptorBase(element, element, description, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false, textRange, false, onTheFly);
+    return new ProblemDescriptorBase(element, element, description, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false, textRange, onTheFly, onTheFly);
   }
 
   @SuppressWarnings({"PublicField"})
