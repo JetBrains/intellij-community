@@ -49,7 +49,6 @@ import org.jetbrains.idea.svn.dialogs.browserCache.Expander;
 import org.jetbrains.idea.svn.dialogs.browserCache.KeepingExpandedExpander;
 import org.jetbrains.idea.svn.dialogs.browserCache.SyntheticWorker;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
-import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import javax.swing.*;
@@ -570,13 +569,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
               doGraphicalDiff(sURL, tURL);
             }
             catch (final VcsException ex) {
-              //noinspection InstanceofCatchParameter
-              boolean isCancelled = ex instanceof SvnBindException && ((SvnBindException)ex).contains(SVNErrorCode.CANCELLED);
-
-              if (!isCancelled) {
-                WaitForProgressToShow
-                  .runOrInvokeLaterAboveProgress(() -> Messages.showErrorDialog(myProject, ex.getMessage(), "Error"), null, myProject);
-              }
+              WaitForProgressToShow
+                .runOrInvokeLaterAboveProgress(() -> Messages.showErrorDialog(myProject, ex.getMessage(), "Error"), null, myProject);
             }
           };
           cancelable = true;
