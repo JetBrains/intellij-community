@@ -196,13 +196,13 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.messages.block("Build Linux .snap package") {
       buildContext.messages.progress("Preparing files")
 
-      def desktopTemplate = "${buildContext.paths.communityHome}/platform/platform-resources/src/entry.desktop"
+      def desktopTemplate = "${buildContext.paths.communityHome}/platform/build-scripts/resources/linux/snap/entry.desktop"
       def productName = buildContext.applicationInfo.productNameWithEdition
       buildContext.ant.copy(file: desktopTemplate, tofile: "${snapDir}/snap/gui/${customizer.snapName}.desktop") {
         filterset(begintoken: '$', endtoken: '$') {
           filter(token: "NAME", value: productName)
-          filter(token: "ICON", value: "/bin/${buildContext.productProperties.baseFileName}.png")
-          filter(token: "SCRIPT", value: "/bin/${buildContext.productProperties.baseFileName}.sh")
+          filter(token: "ICON", value: "\${SNAP}/bin/${buildContext.productProperties.baseFileName}.png")
+          filter(token: "SCRIPT", value: customizer.snapName)
           filter(token: "WM_CLASS", value: getFrameClass())
         }
       }
