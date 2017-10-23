@@ -171,7 +171,7 @@ public class ExternalSystemApiUtil {
   }
 
   public static boolean isExternalSystemLibrary(@NotNull Library library, @NotNull ProjectSystemId externalSystemId) {
-    return library.getName() != null && StringUtil.startsWith(library.getName(), externalSystemId.getReadableName() + ": ");
+    return library.getName() != null && StringUtil.startsWithIgnoreCase(library.getName(), externalSystemId.getId() + ": ");
   }
 
   @Nullable
