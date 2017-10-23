@@ -44,7 +44,6 @@ import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import org.jetbrains.annotations.NotNull;
@@ -188,13 +187,7 @@ public class PythonSdkUpdater implements StartupActivity {
                 }
               }
               catch (InvalidSdkException e) {
-                if (PythonSdkType.isVagrant(sdkInsideTask)
-                    || new CredentialsTypeExChecker() {
-                  @Override
-                  protected boolean checkLanguageContribution(PyCredentialsContribution languageContribution) {
-                    return languageContribution.shouldNotifySdkSkeletonFail();
-                  }
-                }.check(sdkInsideTask)) {
+                if (PythonSdkType.isRemote(sdkInsideTask)) {
                   PythonSdkType.notifyRemoteSdkSkeletonsFail(e, () -> {
                     final Sdk sdkInsideNotify = PythonSdkType.findSdkByKey(key);
                     if (sdkInsideNotify != null) {
