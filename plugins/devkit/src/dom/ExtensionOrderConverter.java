@@ -41,7 +41,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
   @NotNull
   @Override
   public PsiReference[] createReferences(GenericDomValue<String> value, PsiElement element, ConvertContext context) {
-    PsiElement originalElement = CompletionUtil.getOriginalOrSelf(element);
+    PsiElement originalElement = CompletionUtil.getOriginalOrSelf(element); // avoid 'IntellijIdeaRulezzz' placeholder
     String orderValue = ElementManipulators.getValueText(originalElement);
     if (StringUtil.isEmpty(orderValue)) {
       return PsiReference.EMPTY_ARRAY;
@@ -66,7 +66,14 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
         }
 
         String firstSubPart = subParts.get(0);
-        String secondSubPart = subParts.size() > 1 ? subParts.get(1) : null;
+        String secondSubPart = null;
+        if (subParts.size() > 1) {
+          secondSubPart = subParts.get(1);
+        }
+        else if (isBeforeOrAfterKeyword(StringUtil.trimLeading(orderPart, ' '), false)) {
+          // This order part is, for instance, 'after ' or 'before:'. In such cases IDs reference should be provided.
+          secondSubPart = "";
+        }
         if (subParts.size() > 2 || (secondSubPart != null && !isBeforeOrAfterKeyword(firstSubPart))) {
           // Order value can't contain more than 3 subparts. If there are two subparts, first one must be 'before' or 'after'.
           return Collections.singletonList(new InvalidOrderPartPsiReference(getElement(), range, orderPart));
@@ -76,6 +83,10 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
         if (wordIndices.isEmpty()) {
           LOG.error("Unexpected empty word indices list for 'order' part: " + orderPart);
           return Collections.singletonList(new InvalidOrderPartPsiReference(getElement(), range, orderPart));
+        }
+        //noinspection StringEqualsEmptyString - IDEA-181031
+        if ("".equals(secondSubPart)) {
+          wordIndices.add(new TextRange(orderPart.length(), orderPart.length()));
         }
 
         TextRange firstSubPartRange = wordIndices.get(0).shiftRight(range.getStartOffset());
@@ -118,10 +129,14 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
   }
 
   private static boolean isBeforeOrAfterKeyword(String str) {
-    return LoadingOrder.BEFORE_STR.trim().equalsIgnoreCase(str) ||
-           LoadingOrder.BEFORE_STR_OLD.trim().equalsIgnoreCase(str) ||
-           LoadingOrder.AFTER_STR.trim().equalsIgnoreCase(str) ||
-           LoadingOrder.AFTER_STR_OLD.trim().equalsIgnoreCase(str);
+    return isBeforeOrAfterKeyword(str, true);
+  }
+
+  private static boolean isBeforeOrAfterKeyword(String str, boolean trimKeyword) {
+    return (trimKeyword ? LoadingOrder.BEFORE_STR.trim() : LoadingOrder.BEFORE_STR).equalsIgnoreCase(str) ||
+           (trimKeyword ? LoadingOrder.AFTER_STR.trim(): LoadingOrder.AFTER_STR).equalsIgnoreCase(str) ||
+           LoadingOrder.BEFORE_STR_OLD.equalsIgnoreCase(str) ||
+           LoadingOrder.BEFORE_STR_OLD.equalsIgnoreCase(str);
   }
 
 
