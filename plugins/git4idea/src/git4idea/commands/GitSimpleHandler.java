@@ -86,7 +86,6 @@ public class GitSimpleHandler extends GitTextHandler {
    * {@inheritDoc}
    */
   protected void processTerminated(final int exitCode) {
-    if (myVcs == null) { return; }
     String stdout = myStdoutLine.toString();
     String stderr = myStderrLine.toString();
     if (!isStdoutSuppressed() && !StringUtil.isEmptyOrSpaces(stdout)) {
@@ -130,7 +129,7 @@ public class GitSimpleHandler extends GitTextHandler {
       return;
     }
     entire.append(text);
-    if (myVcs == null || (suppressed && !LOG.isDebugEnabled())) {
+    if (suppressed && !LOG.isDebugEnabled()) {
       return;
     }
     int last = lineRest.length() > 0 ? lineRest.charAt(lineRest.length() - 1) : -1;
