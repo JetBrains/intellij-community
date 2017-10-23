@@ -179,6 +179,7 @@ public class CompilerTask extends Task.Backgroundable {
   @Override
   public void run(@NotNull final ProgressIndicator indicator) {
     myIndicator = indicator;
+    myIndicator.setIndeterminate(false);
 
     final ProjectManager projectManager = ProjectManager.getInstance();
     projectManager.addProjectManagerListener(myProject, myCloseListener = new CloseListener());
