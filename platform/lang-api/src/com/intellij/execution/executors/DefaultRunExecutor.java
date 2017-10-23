@@ -20,6 +20,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NonNls;
@@ -36,7 +37,13 @@ public class DefaultRunExecutor extends Executor {
   @Override
   @NotNull
   public String getStartActionText() {
-    return ExecutionBundle.message("default.runner.start.action.text");
+    return "_Run without Debugging";
+  }
+
+  @Override
+  public String getStartActionText(String configurationName) {
+    final String name = configurationName != null ? shortenNameIfNeed(configurationName) : null;
+    return "_Run" + (StringUtil.isEmpty(name) ? "" : " '" + name + "'") + " without Debugging";
   }
 
   @Override
