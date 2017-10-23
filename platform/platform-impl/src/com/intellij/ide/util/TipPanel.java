@@ -36,6 +36,7 @@ import java.util.List;
 
 import static com.intellij.openapi.util.SystemInfo.isWin10OrNewer;
 import static com.intellij.openapi.util.text.StringUtil.isEmpty;
+import static com.intellij.ui.Gray.xD0;
 import static com.intellij.util.ui.UIUtil.isUnderDarcula;
 
 public class TipPanel extends JPanel implements DoNotAskOption {
@@ -50,7 +51,7 @@ public class TipPanel extends JPanel implements DoNotAskOption {
   public TipPanel() {
     setLayout(new BorderLayout());
     if (isWin10OrNewer && !isUnderDarcula()) {
-      setBorder(JBUI.Borders.customLine(DIVIDER_COLOR, 1, 0, 0, 0));
+      setBorder(JBUI.Borders.customLine(xD0, 1, 0, 0, 0));
     }
     myBrowser = TipUIUtil.createTipBrowser();
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myBrowser, true);
