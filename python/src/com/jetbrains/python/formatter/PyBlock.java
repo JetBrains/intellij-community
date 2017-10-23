@@ -81,23 +81,10 @@ public class PyBlock implements ASTBlock {
   public static final Key<Boolean> IMPORT_GROUP_BEGIN = Key.create("com.jetbrains.python.formatter.importGroupBegin");
   private static final boolean ALIGN_CONDITIONS_WITHOUT_PARENTHESES = false;
 
-  @NotNull
-  public static PyBlock createBlock(@Nullable PyBlock parent,
-                                    @NotNull ASTNode node,
-                                    @Nullable Alignment alignment,
-                                    @NotNull Indent indent,
-                                    @Nullable Wrap wrap,
-                                    @NotNull PyBlockContext context) {
-    if (node.getElementType() == PyElementTypes.BINARY_EXPRESSION) {
-      return new PyBinaryExpressionBlock(parent, node, alignment, indent, wrap, context);
-    }
-    return new PyBlock(parent, node, alignment, indent, wrap, context);
-  }
-
   private final PyBlock myParent;
   private final Alignment myAlignment;
   private final Indent myIndent;
-  protected final ASTNode myNode;
+  private final ASTNode myNode;
   private final Wrap myWrap;
   private final PyBlockContext myContext;
   private List<PyBlock> mySubBlocks = null;
@@ -110,12 +97,12 @@ public class PyBlock implements ASTBlock {
   private Wrap myDictWrapping = null;
   private Wrap myFromImportWrapping = null;
 
-  protected PyBlock(@Nullable PyBlock parent,
-                    @NotNull ASTNode node,
-                    @Nullable Alignment alignment,
-                    @NotNull Indent indent,
-                    @Nullable Wrap wrap,
-                    @NotNull PyBlockContext context) {
+  public PyBlock(@Nullable PyBlock parent,
+                 @NotNull ASTNode node,
+                 @Nullable Alignment alignment,
+                 @NotNull Indent indent,
+                 @Nullable Wrap wrap,
+                 @NotNull PyBlockContext context) {
     myParent = parent;
     myAlignment = alignment;
     myIndent = indent;
@@ -193,7 +180,23 @@ public class PyBlock implements ASTBlock {
 
   @NotNull
   protected Iterable<ASTNode> getSubBlockNodes() {
+    if (myNode.getElementType() == PyElementTypes.BINARY_EXPRESSION) {
+      final ArrayList<ASTNode> result = new ArrayList<>();
+      collectChildrenOperatorAndOperandNodes(myNode, result);
+      return result;
+    }
     return Arrays.asList(myNode.getChildren(null));
+  }
+
+  private static void collectChildrenOperatorAndOperandNodes(@NotNull ASTNode node, @NotNull List<ASTNode> result) {
+    if (node.getElementType() == PyElementTypes.BINARY_EXPRESSION) {
+      for (ASTNode child : node.getChildren(null)) {
+        collectChildrenOperatorAndOperandNodes(child, result);
+      }
+    }
+    else {
+      result.add(node);
+    }
   }
 
   @NotNull
@@ -433,7 +436,7 @@ public class PyBlock implements ASTBlock {
       prev = prev.getTreePrev();
     }
 
-    return createBlock(this, child, childAlignment, childIndent, childWrap, myContext);
+    return new PyBlock(this, child, childAlignment, childIndent, childWrap, myContext);
   }
 
   private static boolean isIfCondition(@NotNull ASTNode node) {
