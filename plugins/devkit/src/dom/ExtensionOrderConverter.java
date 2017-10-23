@@ -213,7 +213,22 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
       if (candidates.isEmpty()) {
         return null;
       }
-      return candidates.iterator().next().pointer.getElement();
+      XmlTag referencedElement = candidates.iterator().next().pointer.getElement();
+      if (referencedElement == null) {
+        return null;
+      }
+
+      // return DOM target PSI for "Find Usages" to work
+      DomManager domManager = DomManager.getDomManager(referencedElement.getProject());
+      DomElement domElement = domManager.getDomElement(referencedElement);
+      if (domElement == null) {
+        return referencedElement; // fallback
+      }
+      DomTarget target = DomTarget.getTarget(domElement);
+      if (target == null) {
+        return referencedElement; // fallback
+      }
+      return PomService.convertToPsi(target);
     }
 
     @NotNull
