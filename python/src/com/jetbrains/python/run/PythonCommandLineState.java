@@ -76,7 +76,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author traff, Leonid Shalupov
@@ -349,7 +348,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
       Map<String, String> environment = sdk.getUserData(PythonSdkType.ENVIRONMENT_KEY);
 
       if (environment == null) {
-        environment = activateVirtualEnv(sdkHome);
+        environment = PythonSdkType.activateVirtualEnv(sdkHome);
 
         sdk.putUserData(PythonSdkType.ENVIRONMENT_KEY, environment);
       }
@@ -367,24 +366,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
         }
       }
     }
-  }
-
-  private static Map<String, String> activateVirtualEnv(String sdkHome) {
-    Map<String, String> env = Maps.newHashMap();
-
-    PyVirtualEnvReader reader = new PyVirtualEnvReader(sdkHome);
-    if (reader.getActivate() != null) {
-      try {
-        env.putAll(reader.readShellEnv().entrySet().stream()
-                     .filter((entry) -> PyVirtualEnvReader.Companion.getVirtualEnvVars().contains(entry.getKey())
-                     ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
-      }
-      catch (Exception e) {
-        LOG.error("Couldn't read virtualenv variables", e);
-      }
-    }
-
-    return env;
   }
 
   protected static void addCommonEnvironmentVariables(@Nullable String homePath, Map<String, String> env) {
