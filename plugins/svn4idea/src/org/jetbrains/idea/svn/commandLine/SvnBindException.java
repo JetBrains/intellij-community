@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.util.Condition;
@@ -23,11 +9,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
-import org.tmatesoft.sqljet.core.SqlJetErrorCode;
-import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -61,17 +43,6 @@ public class SvnBindException extends VcsException {
     super(chooseNotNull(message, getMessage(cause)), cause);
 
     init(message);
-    init(cause);
-  }
-
-  private void init(@Nullable Throwable throwable) {
-    if (throwable instanceof SVNException) {
-      SVNException e = (SVNException)throwable;
-      int code = e.getErrorMessage().getErrorCode().getCode();
-      int type = e.getErrorMessage().getType();
-
-      (type == SVNErrorMessage.TYPE_ERROR ? errors : warnings).putValue(code, e.getMessage());
-    }
   }
 
   private void init(@Nullable String message) {
@@ -79,17 +50,6 @@ public class SvnBindException extends VcsException {
       parse(message, SvnUtil.ERROR_PATTERN, errors);
       parse(message, SvnUtil.WARNING_PATTERN, warnings);
     }
-  }
-
-  public boolean isDbBusy() {
-    if (getCause() instanceof SVNException) {
-      Throwable svnExceptionCause = ((SVNException)getCause()).getErrorMessage().getCause();
-
-      return svnExceptionCause instanceof SqlJetException &&
-             SqlJetErrorCode.BUSY.equals(((SqlJetException)svnExceptionCause).getErrorCode());
-    }
-
-    return false;
   }
 
   public boolean contains(int code) {
