@@ -15,6 +15,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+/**
+ * Parser for git log output.
+ * <p>
+ * Commit records have the following format:
+ * <pre>
+ * (RECORD_START)? (commit information, separated by ITEMS_SEPARATOR) RECORD_END \n (changed paths with statuses)?</pre>
+ * Example:
+ * <pre>
+ * 2c815939f45fbcfda9583f84b14fe9d393ada790&lt;ITEMS_SEPARATOR&gt;sample commit&lt;RECORD_END&gt;
+ * D       a.txt</pre>
+ */
 public class GitLogParser {
   private static final Logger LOG = Logger.getInstance(GitLogParser.class);
   
@@ -160,19 +171,6 @@ public class GitLogParser {
 
     return StringUtil.escapeStringCharacters(lineString);
   }
-
-  /**
-   * Record format:
-   * <p>One git log record.
-   * RECORD_START - optional: it is split out when calling parse() but it is not when calling parseOneRecord() directly.
-   * commit information separated by ITEMS_SEPARATOR.
-   * RECORD_END
-   * Optionally: changed paths or paths with statuses (if --name-only or --name-status options are given).</p>
-   * <p>Example:
-   * <pre>
-   * 2c815939f45fbcfda9583f84b14fe9d393ada790&lt;ITEM_SEPARATOR&gt;sample commit&lt;RECORD_END&gt;
-   * D       a.txt</pre></p>
-   */
 
   // --name-only, --name-status or no flag
   enum NameStatus {
