@@ -63,8 +63,8 @@ public class CommaSeparatedIntegersValueEditor extends TextFieldValueEditor<List
   }
 
   @Override
-  public void assertValid(@NotNull List<Integer> value) {
-
+  public boolean isValid(@NotNull List<Integer> value) {
+    return true;
   }
 
   public static String intListToString(@NotNull List<Integer> valueList) {
