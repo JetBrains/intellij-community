@@ -11,15 +11,6 @@
     <orderEntry type="module" module-name="annotations" />
     <orderEntry type="library" exported="" name="Slf4j" level="project" />
     <orderEntry type="library" exported="" name="Gradle" level="project" />
-    <orderEntry type="module-library" scope="PROVIDED">
-      <library name="GradleGuava">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../lib/guava-jdk5-17.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="library" scope="PROVIDED" name="Groovy" level="project" />
   </component>
 </module>
